@@ -23,7 +23,7 @@
       display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000
     }
     .topbar h1{margin:0 12px 0 0;font-size:20px}
-    button,select,input{font:inherit}
+    button,input{font:inherit}
     button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
     button:hover{background:#f3f4f6}
     input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
@@ -71,7 +71,7 @@
       border:1px solid var(--line);
       border-top:none;
       z-index:3000;
-      max-height:180px;
+      max-height:220px;
       overflow:auto;
       box-shadow:0 6px 18px rgba(0,0,0,0.08);
       display:none;
@@ -326,7 +326,7 @@
         const slot = statsByVehicleId[id];
 
         if (x.fuelPercent?.value != null) slot.fuelPercent = x.fuelPercent.value;
-        if (x.fuelPercent != null && slot.fuelPercent == null && typeof x.fuelPercent === 'number') slot.fuelPercent = x.fuelPercent;
+        else if (typeof x.fuelPercent === 'number') slot.fuelPercent = x.fuelPercent;
 
         if (x.gps?.latitude != null && x.gps?.longitude != null) {
           slot.lat = safeNum(x.gps.latitude, HOME.lat);
@@ -423,25 +423,23 @@
             assigned: driver !== 'N/A'
           };
 
+          const score =
+            (row.assigned ? 100 : 0) +
+            (row.currentLocation !== HOME.text ? 20 : 0) +
+            (row.fuelPercent !== 50 ? 10 : 0) +
+            (row.driveRemaining != null ? 5 : 0);
+
           if (!deduped.has(unit)) {
-            deduped.set(unit, row);
+            deduped.set(unit, { row, score });
           } else {
             const existing = deduped.get(unit);
-            const existingScore =
-              (existing.assigned ? 4 : 0) +
-              (existing.currentLocation !== HOME.text ? 2 : 0) +
-              (existing.fuelPercent !== 50 ? 1 : 0);
-
-            const rowScore =
-              (row.assigned ? 4 : 0) +
-              (row.currentLocation !== HOME.text ? 2 : 0) +
-              (row.fuelPercent !== 50 ? 1 : 0);
-
-            if (rowScore > existingScore) deduped.set(unit, row);
+            if (score > existing.score) {
+              deduped.set(unit, { row, score });
+            }
           }
         });
 
-      return Array.from(deduped.values()).sort((a, b) => a.unitNum - b.unitNum);
+      return Array.from(deduped.values()).map(x => x.row).sort((a, b) => a.unitNum - b.unitNum);
     }
 
     async function loadBoard() {
@@ -574,12 +572,39 @@
       else map.setView([HOME.lat, HOME.lon], 5);
     }
 
+    function decisionSummary(row) {
+      if (!row) return { action: 'N/A', reason: '' };
+
+      if (row.driveRemaining != null && row.driveRemaining < 2) {
+        return { action: 'STOP NOW', reason: 'Drive remaining is under 2 hours' };
+      }
+
+      if (row.timeUntilBreak != null && row.timeUntilBreak <= 1.5) {
+        if (row.status.text === 'FUEL NOW' || row.status.text === 'FUEL FOR SHIFT') {
+          return { action: 'FUEL AT BREAK', reason: 'Break is due soon and fuel is needed' };
+        }
+        return { action: 'BREAK SOON', reason: 'Break is due soon' };
+      }
+
+      if (row.status.text === 'FUEL NOW') {
+        return { action: 'FUEL NOW', reason: 'Fuel is below reserve or reach before reserve is low' };
+      }
+
+      if (row.status.text === 'FUEL FOR SHIFT') {
+        return { action: 'FUEL FOR SHIFT', reason: 'Fuel is not enough for the planning shift' };
+      }
+
+      return { action: 'WAIT', reason: 'Fuel and HOS are okay for now' };
+    }
+
     function renderSelectedDetail(routeData = null) {
       const row = boardRows.find(r => r.unit === selectedUnit);
       if (!row) {
         document.getElementById('selectedDetail').innerHTML = 'Select a unit from the fleet list.';
         return;
       }
+
+      const decision = decisionSummary(row);
 
       document.getElementById('selectedDetail').innerHTML = `
         <div class="detail-grid">
@@ -598,6 +623,7 @@
           <div class="detail-card"><div class="label">Planning MPG</div><div>${row.planningMpg.toFixed(1)}</div></div>
           <div class="detail-card"><div class="label">Total Reach</div><div>${fmtMiles(row.totalReach)}</div></div>
           <div class="detail-card"><div class="label">Reach Before Reserve</div><div>${fmtMiles(row.reserveReach)}</div></div>
+          <div class="detail-card detail-wide"><div class="label">Dispatcher Action</div><div><b>${decision.action}</b> — ${decision.reason}</div></div>
           <div class="detail-card detail-wide"><div class="label">Approx ETA</div><div>${routeData ? fmtEta(routeData.etaHours) : 'N/A'}</div></div>
         </div>
       `;
@@ -704,6 +730,10 @@
         if (s.price < 5.20) score -= 0.10;
         if (s.price < 5.00) score -= 0.15;
 
+        if (row.driveRemaining != null && row.driveRemaining < 2 && routeMile < 120) score -= 0.35;
+        if (row.timeUntilBreak != null && row.timeUntilBreak <= 1.5 && routeMile < 90) score -= 0.25;
+        if (row.status.text === 'FUEL NOW' && routeMile < 100) score -= 0.20;
+
         return { ...s, offRoute: best, routeMile, recommendedBuy: buy, estimatedCost: buy * s.price, score };
       });
 
@@ -745,18 +775,51 @@
         renderMap(routeData.routeCoords, recs);
         renderSelectedDetail(routeData);
 
-        document.getElementById('recommendedStops').innerHTML = recs.length ? recs.map((s, i) => `
+        const decision = decisionSummary(row);
+
+        document.getElementById('recommendedStops').innerHTML = recs.length ? `
           <div class="stop-card">
-            <div><b>#${i + 1} Love's ${s.store || ''}</b></div>
-            <div>${s.city || ''}, ${s.state || ''}</div>
-            <div class="small">Price: $${Number(s.price).toFixed(3)}</div>
-            <div class="small">Route Mile: ${Number(s.routeMile).toFixed(0)} | Off Route: ${Number(s.offRoute).toFixed(1)} mi</div>
-            <div class="small">Buy Gallons: ${fmtGallons(s.recommendedBuy)} | Est. Cost: $${Number(s.estimatedCost).toFixed(2)}</div>
+            <div><b>Dispatcher Action:</b> ${decision.action}</div>
+            <div class="small">${decision.reason}</div>
           </div>
-        `).join('') : 'No recommended stops found.';
+          ${recs.map((s, i) => `
+            <div class="stop-card">
+              <div><b>#${i + 1} Love's ${s.store || ''}</b></div>
+              <div>${s.city || ''}, ${s.state || ''}</div>
+              <div class="small">Price: $${Number(s.price).toFixed(3)}</div>
+              <div class="small">Route Mile: ${Number(s.routeMile).toFixed(0)} | Off Route: ${Number(s.offRoute).toFixed(1)} mi</div>
+              <div class="small">Buy Gallons: ${fmtGallons(s.recommendedBuy)} | Est. Cost: $${Number(s.estimatedCost).toFixed(2)}</div>
+            </div>
+          `).join('')}
+        ` : 'No recommended stops found.';
       } catch (e) {
         document.getElementById('recommendedStops').innerHTML = `<div class="stop-card">${e.message}</div>`;
       }
+    }
+
+    function decisionSummary(row) {
+      if (!row) return { action: 'N/A', reason: '' };
+
+      if (row.driveRemaining != null && row.driveRemaining < 2) {
+        return { action: 'STOP NOW', reason: 'Drive remaining is under 2 hours' };
+      }
+
+      if (row.timeUntilBreak != null && row.timeUntilBreak <= 1.5) {
+        if (row.status.text === 'FUEL NOW' || row.status.text === 'FUEL FOR SHIFT') {
+          return { action: 'FUEL AT BREAK', reason: 'Break is due soon and fuel is needed' };
+        }
+        return { action: 'BREAK SOON', reason: 'Break is due soon' };
+      }
+
+      if (row.status.text === 'FUEL NOW') {
+        return { action: 'FUEL NOW', reason: 'Fuel is below reserve or reach before reserve is low' };
+      }
+
+      if (row.status.text === 'FUEL FOR SHIFT') {
+        return { action: 'FUEL FOR SHIFT', reason: 'Fuel is not enough for the planning shift' };
+      }
+
+      return { action: 'WAIT', reason: 'Fuel and HOS are okay for now' };
     }
 
     wireAutocomplete(document.getElementById('originInput'), document.getElementById('originAuto'));

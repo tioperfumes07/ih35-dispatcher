@@ -189,7 +189,7 @@ app.get('/api/geocode', async (req, res) => {
 
     if (known[key]) return res.json(known[key]);
 
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=8`;
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
 
     const response = await fetch(url, {
       headers: {
@@ -242,7 +242,7 @@ app.get('/api/autocomplete', async (req, res) => {
       .filter(x => x.toLowerCase().includes(q.toLowerCase()))
       .map(name => ({ name }));
 
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=8`;
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
 
     const response = await fetch(url, {
       headers: {
@@ -272,7 +272,7 @@ app.get('/api/autocomplete', async (req, res) => {
       return true;
     });
 
-    res.json(merged.slice(0, 8));
+    res.json(merged.slice(0, 12));
   } catch {
     res.json([]);
   }
