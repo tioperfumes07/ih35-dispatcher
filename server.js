@@ -187,7 +187,7 @@ app.get('/api/geocode', async (req, res) => {
 
     if (known[key]) return res.json(known[key]);
 
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=5`;
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=8`;
 
     const response = await fetch(url, {
       headers: {
@@ -217,6 +217,52 @@ app.get('/api/geocode', async (req, res) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/autocomplete', async (req, res) => {
+  try {
+    const q = (req.query.q || '').toString().trim();
+    if (!q || q.length < 2) return res.json([]);
+
+    const known = [
+      'Laredo, TX',
+      'San Antonio, TX',
+      'Dallas, TX',
+      'Houston, TX',
+      'Chicago, IL',
+      'Memphis, TN',
+      'St. Louis, MO',
+      'Joliet, IL'
+    ].filter(x => x.toLowerCase().includes(q.toLowerCase()))
+      .map(name => ({ name }));
+
+    if (known.length >= 5) return res.json(known);
+
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=8`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'IH35-Dispatcher-App',
+        Accept: 'application/json'
+      }
+    });
+
+    const raw = await response.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.json(known);
+    }
+
+    const result = (Array.isArray(data) ? data : []).map(x => ({
+      name: x.display_name
+    }));
+
+    res.json(result);
+  } catch {
+    res.json([]);
   }
 });
 
