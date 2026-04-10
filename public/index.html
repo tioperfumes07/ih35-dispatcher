@@ -26,7 +26,7 @@
     button,select,input{font:inherit}
     button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
     button:hover{background:#f3f4f6}
-    select,input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+    input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
     .layout{display:grid;grid-template-columns:460px 1fr 420px;gap:12px;padding:12px}
     .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
     .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--line);background:#fff}
@@ -47,7 +47,7 @@
       top:0;
       z-index:2;
     }
-    #fleetAssigned, #fleetUnassigned{max-height:calc(100vh - 190px);overflow:auto}
+    #fleetAssigned,#fleetUnassigned{max-height:calc(100vh - 190px);overflow:auto}
     .fleet-item{padding:10px 12px;border-bottom:1px solid #eef1f5;cursor:pointer}
     .fleet-item:hover{background:#f9fafb}
     .fleet-item.active{background:#eff6ff}
@@ -59,9 +59,9 @@
     .badge-green{background:#f0fdf4;color:var(--green)}
     #map{width:100%;height:calc(100vh - 260px);min-height:520px}
     .route-inputs{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px}
-    .dest-row{display:flex;gap:8px;margin-bottom:8px;position:relative}
-    .dest-row input{flex:1}
+    .dest-row{margin-bottom:8px}
     .auto-wrap{position:relative}
+    .auto-input{width:100%}
     .auto-list{
       position:absolute;
       top:100%;
@@ -130,7 +130,7 @@
           <div>
             <div class="small">Origin</div>
             <div class="auto-wrap">
-              <input id="originInput" value="Laredo, TX" style="width:100%" autocomplete="off">
+              <input id="originInput" class="auto-input" value="Laredo, TX" autocomplete="off">
               <div id="originAuto" class="auto-list"></div>
             </div>
           </div>
@@ -188,17 +188,17 @@
       const wrap = document.getElementById('destinationsWrap');
       const row = document.createElement('div');
       row.className = 'dest-row';
-      const autoId = 'auto_' + Math.random().toString(36).slice(2);
       row.innerHTML = `
-        <div class="auto-wrap" style="flex:1">
-          <input class="destinationInput" value="${value.replace(/"/g, '&quot;')}" placeholder="Destination" autocomplete="off">
-          <div class="auto-list" id="${autoId}"></div>
+        <div class="auto-wrap">
+          <input class="destinationInput auto-input" value="${value.replace(/"/g, '&quot;')}" placeholder="Destination" autocomplete="off">
+          <div class="auto-list"></div>
         </div>
       `;
       wrap.appendChild(row);
+
       const input = row.querySelector('.destinationInput');
-      const auto = row.querySelector('.auto-list');
-      wireAutocomplete(input, auto);
+      const list = row.querySelector('.auto-list');
+      wireAutocomplete(input, list);
     }
 
     function getDestinations() {
@@ -259,12 +259,12 @@
       return res[0];
     }
 
-    async function fetchAutocomplete(q) {
+    async function autocompletePlaces(q) {
       if (!q || q.trim().length < 2) return [];
       return await j('/api/autocomplete?q=' + encodeURIComponent(q.trim()));
     }
 
-    function wireAutocomplete(input, autoBox) {
+    function wireAutocomplete(input, listEl) {
       let timer = null;
 
       input.addEventListener('input', () => {
@@ -272,29 +272,27 @@
         timer = setTimeout(async () => {
           const q = input.value.trim();
           if (q.length < 2) {
-            autoBox.style.display = 'none';
-            autoBox.innerHTML = '';
+            listEl.style.display = 'none';
+            listEl.innerHTML = '';
             return;
           }
 
           let results = [];
           try {
-            results = await fetchAutocomplete(q);
+            results = await autocompletePlaces(q);
           } catch {
             results = [];
           }
 
-          autoBox.innerHTML = results.map(r =>
-            `<div class="auto-item">${r.name}</div>`
-          ).join('');
+          listEl.innerHTML = results.map(r => `<div class="auto-item">${r.name}</div>`).join('');
+          listEl.style.display = results.length ? 'block' : 'none';
 
-          autoBox.style.display = results.length ? 'block' : 'none';
-
-          Array.from(autoBox.querySelectorAll('.auto-item')).forEach(item => {
-            item.addEventListener('click', () => {
+          Array.from(listEl.querySelectorAll('.auto-item')).forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+              e.preventDefault();
               input.value = item.textContent;
-              autoBox.style.display = 'none';
-              autoBox.innerHTML = '';
+              listEl.innerHTML = '';
+              listEl.style.display = 'none';
             });
           });
         }, 250);
@@ -302,13 +300,13 @@
 
       input.addEventListener('blur', () => {
         setTimeout(() => {
-          autoBox.style.display = 'none';
+          listEl.style.display = 'none';
         }, 150);
       });
 
       input.addEventListener('focus', () => {
-        if (autoBox.innerHTML.trim()) {
-          autoBox.style.display = 'block';
+        if (listEl.innerHTML.trim()) {
+          listEl.style.display = 'block';
         }
       });
     }
@@ -319,10 +317,32 @@
       const hos = payload.hos || [];
       const assignments = payload.assignments || [];
 
-      const liveById = {};
+      const statsByVehicleId = {};
+
       live.forEach(x => {
-        const id = String(x.id || x.vehicleId || x.vehicle?.id || '');
-        if (id) liveById[id] = x;
+        const id = String(x.id || x.vehicleId || x.vehicle?.id || x.entityId || x.assetId || '');
+        if (!id) return;
+        if (!statsByVehicleId[id]) statsByVehicleId[id] = {};
+        const slot = statsByVehicleId[id];
+
+        if (x.fuelPercent?.value != null) slot.fuelPercent = x.fuelPercent.value;
+        if (x.fuelPercent != null && slot.fuelPercent == null && typeof x.fuelPercent === 'number') slot.fuelPercent = x.fuelPercent;
+
+        if (x.gps?.latitude != null && x.gps?.longitude != null) {
+          slot.lat = safeNum(x.gps.latitude, HOME.lat);
+          slot.lon = safeNum(x.gps.longitude, HOME.lon);
+        }
+
+        const loc =
+          x.gps?.reverseGeo?.formattedLocation ||
+          x.gps?.address?.name ||
+          x.locationText ||
+          '';
+        if (loc) slot.locationText = loc;
+
+        if (x.engineState?.value != null) slot.engineState = x.engineState.value;
+        if (x.mpg != null) slot.actualMpg = safeNum(x.mpg, null);
+        if (x.fuelEconomyMpg != null) slot.actualMpg = safeNum(x.fuelEconomyMpg, null);
       });
 
       const driverByVehicleId = {};
@@ -349,45 +369,24 @@
         };
       });
 
-      return vehicles
+      const deduped = new Map();
+
+      vehicles
         .filter(v => /^T\d+$/i.test(String(v.name || '')))
-        .map(v => {
+        .forEach(v => {
           const id = String(v.id);
           const unit = String(v.name);
-          const liveRow = liveById[id] || {};
+          const liveRow = statsByVehicleId[id] || {};
 
-          const fuelPercent = safeNum(
-            liveRow.fuelPercent?.value ??
-            liveRow.fuelPercent ??
-            null,
-            50
-          );
-
-          const lat = safeNum(liveRow.gps?.latitude ?? v.gps?.latitude ?? null, HOME.lat);
-          const lon = safeNum(liveRow.gps?.longitude ?? v.gps?.longitude ?? null, HOME.lon);
-
-          const currentLocation =
-            liveRow.gps?.reverseGeo?.formattedLocation ||
-            liveRow.gps?.address?.name ||
-            liveRow.locationText ||
-            HOME.text;
-
+          const fuelPercent = safeNum(liveRow.fuelPercent, 50);
           const gallons = tank(unit) * (fuelPercent / 100);
 
-          let actualMpg = safeNum(
-            liveRow.mpg ??
-            liveRow.fuelEconomyMpg ??
-            liveRow.value?.mpg ??
-            null,
-            null
-          );
+          let actualMpg = safeNum(liveRow.actualMpg, null);
           if (actualMpg === 0) actualMpg = null;
 
           const planningMpg = Number.isFinite(actualMpg) ? actualMpg : DEFAULT_PLANNING_MPG;
-
           const totalReach = totalReachMiles(gallons, planningMpg);
           const reserveReach = usableReachMiles(gallons, planningMpg);
-
           const needShift = Math.max(0, ((SHIFT_TARGET_MILES / planningMpg) + RESERVE_GALLONS) - gallons);
 
           const status = gallons <= RESERVE_GALLONS || reserveReach < 75
@@ -399,13 +398,13 @@
           const hosRow = hosByUnit[unit] || {};
           const driver = hosRow.driver || driverByVehicleId[id] || 'N/A';
 
-          return {
+          const row = {
             id,
             unit,
             unitNum: parseUnitNum(unit),
-            lat,
-            lon,
-            currentLocation,
+            lat: safeNum(liveRow.lat, HOME.lat),
+            lon: safeNum(liveRow.lon, HOME.lon),
+            currentLocation: liveRow.locationText || HOME.text,
             driver,
             dutyStatus: hosRow.dutyStatus || 'N/A',
             timeInCurrentStatus: hosRow.timeInCurrentStatus ?? null,
@@ -423,8 +422,26 @@
             status,
             assigned: driver !== 'N/A'
           };
-        })
-        .sort((a, b) => a.unitNum - b.unitNum);
+
+          if (!deduped.has(unit)) {
+            deduped.set(unit, row);
+          } else {
+            const existing = deduped.get(unit);
+            const existingScore =
+              (existing.assigned ? 4 : 0) +
+              (existing.currentLocation !== HOME.text ? 2 : 0) +
+              (existing.fuelPercent !== 50 ? 1 : 0);
+
+            const rowScore =
+              (row.assigned ? 4 : 0) +
+              (row.currentLocation !== HOME.text ? 2 : 0) +
+              (row.fuelPercent !== 50 ? 1 : 0);
+
+            if (rowScore > existingScore) deduped.set(unit, row);
+          }
+        });
+
+      return Array.from(deduped.values()).sort((a, b) => a.unitNum - b.unitNum);
     }
 
     async function loadBoard() {
@@ -432,6 +449,9 @@
       const payload = await j('/api/board');
       boardRows = buildBoardRows(payload);
       if (!selectedUnit && boardRows.length) selectedUnit = boardRows[0].unit;
+      if (selectedUnit && !boardRows.find(x => x.unit === selectedUnit) && boardRows.length) {
+        selectedUnit = boardRows[0].unit;
+      }
       renderFleet();
       renderMap();
       renderSelectedDetail();

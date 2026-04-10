@@ -70,9 +70,10 @@ app.get('/api/samsara/vehicles', async (_req, res) => {
 
 app.get('/api/samsara/live', async (_req, res) => {
   try {
-    const data = await fetchJson('https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates', {
-      headers: authHeaders()
-    });
+    const data = await fetchJson(
+      'https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates',
+      { headers: authHeaders() }
+    );
     res.json(data);
   } catch {
     try {
@@ -119,6 +120,7 @@ app.get('/api/samsara/assignments', async (_req, res) => {
     const data = await fetchJson(url.toString(), {
       headers: authHeaders()
     });
+
     res.json(data);
   } catch {
     res.json({ data: [] });
@@ -225,7 +227,7 @@ app.get('/api/autocomplete', async (req, res) => {
     const q = (req.query.q || '').toString().trim();
     if (!q || q.length < 2) return res.json([]);
 
-    const known = [
+    const seed = [
       'Laredo, TX',
       'San Antonio, TX',
       'Dallas, TX',
@@ -234,10 +236,11 @@ app.get('/api/autocomplete', async (req, res) => {
       'Memphis, TN',
       'St. Louis, MO',
       'Joliet, IL'
-    ].filter(x => x.toLowerCase().includes(q.toLowerCase()))
-      .map(name => ({ name }));
+    ];
 
-    if (known.length >= 5) return res.json(known);
+    const localMatches = seed
+      .filter(x => x.toLowerCase().includes(q.toLowerCase()))
+      .map(name => ({ name }));
 
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=8`;
 
@@ -249,18 +252,27 @@ app.get('/api/autocomplete', async (req, res) => {
     });
 
     const raw = await response.text();
-    let data;
+
+    let data = [];
     try {
       data = JSON.parse(raw);
     } catch {
-      return res.json(known);
+      return res.json(localMatches);
     }
 
-    const result = (Array.isArray(data) ? data : []).map(x => ({
+    const remoteMatches = (Array.isArray(data) ? data : []).map(x => ({
       name: x.display_name
     }));
 
-    res.json(result);
+    const seen = new Set();
+    const merged = [...localMatches, ...remoteMatches].filter(x => {
+      const key = x.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    res.json(merged.slice(0, 8));
   } catch {
     res.json([]);
   }
