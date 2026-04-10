@@ -3,196 +3,488 @@
 <head>
   <title>IH35 Fuel Optimizer</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    .box { border:1px solid #ddd; padding:10px; margin:10px 0; border-radius:8px;}
-    .bad { color:red; font-weight:bold;}
-    .warn { color:orange; font-weight:bold;}
-    .ok { color:green; font-weight:bold;}
+    body { font-family: Arial; padding: 16px; }
+    .row { margin-bottom: 12px; }
+    .box { border: 1px solid #ddd; padding: 8px; margin-bottom: 8px; border-radius: 6px; }
+    .bad { color: red; font-weight: bold; }
+    .warn { color: orange; font-weight: bold; }
+    .ok { color: green; font-weight: bold; }
+    textarea { width: 420px; height: 70px; }
+    #fleet { max-height: 320px; overflow-y: auto; border: 1px solid #ddd; padding: 8px; border-radius: 6px; }
+    #mapBox { width: 100%; max-width: 850px; height: 260px; border: 1px solid #ddd; border-radius: 6px; margin: 12px 0; background: #fafafa; }
+    svg { width: 100%; height: 100%; display: block; }
+    .mini { font-size: 13px; }
   </style>
 </head>
 <body>
 
 <h1>IH35 Fuel Optimizer</h1>
 
-<button onclick="loadFleet()">Load Live Board</button><br><br>
+<div class="row">
+  <button onclick="loadFleet()">Load Fleet</button>
+  <button onclick="run()">Recommend Fuel</button>
+</div>
 
-Truck:
-<select id="truck"></select><br><br>
+<div class="row">
+  Truck:
+  <select id="truck"></select>
+</div>
 
-Origin (always Laredo):
-<input id="origin" value="Laredo, TX"><br><br>
+<div class="row">
+  Search:
+  <input id="search" oninput="renderFleet()" placeholder="T159">
+  <label><input id="onlyUrgent" type="checkbox" onchange="renderFleet()"> FUEL NOW only</label>
+</div>
 
-Destination:
-<input id="dest" placeholder="San Antonio, TX"><br><br>
+<div class="row">
+  <b>Outbound stops</b><br>
+  <textarea id="outboundStops" placeholder="San Antonio, TX
+Dallas, TX"></textarea>
+</div>
 
-<input type="file" id="csv"><br><br>
+<div class="row">
+  <b>Reposition stops</b><br>
+  <textarea id="repositionStops" placeholder="Joliet, IL"></textarea>
+</div>
 
-<button onclick="run()">Recommend Stops</button>
+<div class="row">
+  <b>Return stops</b><br>
+  <textarea id="returnStops" placeholder="Houston, TX
+Laredo, TX"></textarea>
+</div>
 
+<div class="row">
+  <input type="file" id="csv" accept=".csv">
+  <span id="csvStatus">No CSV selected</span>
+</div>
+
+<div id="fleetSummary"></div>
 <div id="fleet"></div>
+<div id="mapBox"></div>
 <div id="output"></div>
 
 <script>
+const LAREDO = { lat: 27.5306, lon: -99.4803, text: 'Laredo, TX' };
+const EXPENSIVE_STATES = new Set(['NY','NJ','CT','MA','CA','PA','WA','OR']);
+const RESERVE_GALLONS = 35;
+const SHIFT_TARGET_MILES = 750;
+const MPG = 6.5;
 
 let trucks = [];
-let stops = [];
+let fuelStops = [];
 let route = [];
-let miles = 0;
+let totalMiles = 0;
+let totalHours = 0;
 
-function tank(n){ return n==='T169'?80:120; }
-function gallons(n,f){ return tank(n)*(f/100); }
-function reach(n,f){ return Math.max(0,gallons(n,f)-35)*6.5; }
-function hos(){ return 375; }
+function tank(name) { return name === 'T169' ? 80 : 120; }
+function gallonsLeft(name, fuel) { return tank(name) * (fuel / 100); }
+function reachMiles(name, fuel) { return Math.max(0, gallonsLeft(name, fuel) - RESERVE_GALLONS) * MPG; }
+function shiftNeedGallons(name, fuel) {
+  const need = (SHIFT_TARGET_MILES / MPG) + RESERVE_GALLONS;
+  return Math.max(0, need - gallonsLeft(name, fuel));
+}
+function coverageMilesAfterFuel(totalGallons) { return Math.max(0, totalGallons - RESERVE_GALLONS) * MPG; }
 
-function dist(a,b,c,d){
-  const R=3959;
-  const d1=(c-a)*Math.PI/180;
-  const d2=(d-b)*Math.PI/180;
-  const x=Math.sin(d1/2)**2+
-  Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(d2/2)**2;
-  return 2*R*Math.asin(Math.sqrt(x));
+function shortLocation(text) {
+  if (!text) return 'Unknown';
+  const parts = String(text).split(',').map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 2) return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
+  return text;
 }
 
-async function j(u){ return await (await fetch(u)).json(); }
-
-async function geocode(q){
-  const r = await j('/api/geocode?q='+encodeURIComponent(q));
-  if(!r[0]) throw new Error('Geocode failed: '+q);
-  return r[0];
+function truckStatus(name, fuel) {
+  const reach = reachMiles(name, fuel);
+  if (gallonsLeft(name, fuel) <= RESERVE_GALLONS || reach < 75) return { text: 'FUEL NOW', cls: 'bad', rank: 0 };
+  if (shiftNeedGallons(name, fuel) > 0) return { text: 'FUEL FOR SHIFT', cls: 'warn', rank: 1 };
+  return { text: 'WAIT', cls: 'ok', rank: 2 };
 }
 
-async function loadFleet(){
-  const v=(await j('/api/samsara/vehicles')).data||[];
-  const l=(await j('/api/samsara/live')).data||[];
-
-  const fuel={}, gps={};
-
-  l.forEach(x=>{
-    if(x.fuelPercent?.value!=null) fuel[x.id]=x.fuelPercent.value;
-    if(x.gps?.latitude) gps[x.id]={lat:x.gps.latitude,lon:x.gps.longitude};
-  });
-
-  const seen=new Set();
-
-  trucks=v.filter(x=>{
-    const m=String(x.name).match(/^T(\d+)/);
-    if(!m)return false;
-    const n=Number(m[1]);
-    if(n<139||n>178)return false;
-    if(seen.has(x.name))return false;
-    seen.add(x.name);
-    return true;
-  }).map(x=>{
-    const g=gps[x.id]||{lat:27.53,lon:-99.48};
-    return {
-      name:x.name,
-      fuel:fuel[x.id]??50,
-      lat:g.lat,
-      lon:g.lon
-    };
-  });
-
-  const sel=document.getElementById('truck');
-  sel.innerHTML='';
-  trucks.forEach(t=>sel.innerHTML+=`<option>${t.name}</option>`);
-
-  let html='';
-  trucks.forEach(t=>{
-    const rch=Math.min(reach(t.name,t.fuel),hos());
-    let s='WAIT',cls='ok';
-    if(gallons(t.name,t.fuel)<=35||rch<75){s='FUEL NOW';cls='bad';}
-    else if(rch<300){s='FUEL FOR SHIFT';cls='warn';}
-
-    html+=`<div class="box">
-      ${t.name} | Fuel ${t.fuel}% | Reach ${rch.toFixed(0)} mi |
-      <span class="${cls}">${s}</span>
-    </div>`;
-  });
-
-  document.getElementById('fleet').innerHTML=html;
+function fmtGallons(x) { return Number.isFinite(x) ? `${x.toFixed(1)} gal` : 'N/A'; }
+function fmtHours(x) { return Number.isFinite(x) ? `${x.toFixed(1)} hrs` : 'N/A'; }
+function fmtEta(hours) {
+  if (!Number.isFinite(hours)) return 'N/A';
+  const eta = new Date(Date.now() + hours * 3600 * 1000);
+  return eta.toLocaleString();
 }
 
-document.getElementById('csv').addEventListener('change',async e=>{
-  const f=e.target.files[0];
-  const txt=await f.text();
-  const lines=txt.split('\n').filter(Boolean);
-  const h=lines[0].split(',');
+function dist(lat1, lon1, lat2, lon2) {
+  const R = 3959;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
 
-  stops=lines.slice(1).map(l=>{
-    const c=l.split(',');
-    const r={};
-    h.forEach((x,i)=>r[x.trim()]=c[i]);
+async function j(url) {
+  const r = await fetch(url);
+  const text = await r.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Bad response from ${url}: ${text.slice(0, 120)}`);
+  }
+}
 
-    return {
-      store:r['Loves Store No.'],
-      city:r['City'],
-      state:r['State'],
-      price:Number(r['Best Discounted Price']),
-      lat:Number(r['Latitude']),
-      lon:Number(r['Longitude'])
-    };
-  }).filter(s=>s.price&&s.lat&&s.lon);
+async function geocodeOne(place) {
+  const res = await j('/api/geocode?q=' + encodeURIComponent(place));
+  if (!res || !res[0]) throw new Error('Could not geocode: ' + place);
+  return res[0];
+}
 
-  alert('CSV loaded: '+stops.length);
-});
+function simplifyRoute(coords, step = 40) {
+  if (!coords || coords.length <= step) return coords || [];
+  const out = [];
+  for (let i = 0; i < coords.length; i += step) out.push(coords[i]);
+  const last = coords[coords.length - 1];
+  if (out[out.length - 1] !== last) out.push(last);
+  return out;
+}
 
-async function run(){
-  const name=document.getElementById('truck').value;
-  const t=trucks.find(x=>x.name===name);
-
-  if(!t||!stops.length){
-    document.getElementById('output').innerHTML='Missing data';
+function drawRouteMap(routeCoords, truck) {
+  const box = document.getElementById('mapBox');
+  if (!routeCoords.length) {
+    box.innerHTML = '<div class="box mini">No route preview yet</div>';
     return;
   }
 
-  const o=await geocode(document.getElementById('origin').value);
-  const d=await geocode(document.getElementById('dest').value);
+  const xs = routeCoords.map(p => p[0]);
+  const ys = routeCoords.map(p => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const width = 850, height = 260, pad = 16;
 
-  const coords=`${t.lon},${t.lat};${o.lon},${o.lat};${d.lon},${d.lat}`;
+  function project(lon, lat) {
+    const x = pad + ((lon - minX) / Math.max(0.0001, maxX - minX)) * (width - pad * 2);
+    const y = height - pad - ((lat - minY) / Math.max(0.0001, maxY - minY)) * (height - pad * 2);
+    return [x, y];
+  }
 
-  const r=await j('/api/route?coords='+coords);
+  const d = routeCoords.map((p, i) => {
+    const [x, y] = project(p[0], p[1]);
+    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+  }).join(' ');
 
-  route=r.routes[0].geometry.coordinates;
-  miles=r.routes[0].distance/1609;
+  const [sx, sy] = project(routeCoords[0][0], routeCoords[0][1]);
+  const [ex, ey] = project(routeCoords[routeCoords.length - 1][0], routeCoords[routeCoords.length - 1][1]);
 
-  const maxReach=Math.min(reach(name,t.fuel),hos());
+  box.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}">
+      <rect x="0" y="0" width="${width}" height="${height}" fill="#fafafa"></rect>
+      <path d="${d}" fill="none" stroke="#2563eb" stroke-width="3"></path>
+      <circle cx="${sx}" cy="${sy}" r="5" fill="#16a34a"></circle>
+      <circle cx="${ex}" cy="${ey}" r="5" fill="#dc2626"></circle>
+      <text x="${sx + 6}" y="${sy - 6}" font-size="11">${truck.name}</text>
+    </svg>
+  `;
+}
 
-  let best=stops.map(s=>{
-    let bestDist=999,idx=0;
+async function loadFleet() {
+  const vehiclesRes = await j('/api/samsara/vehicles');
+  const liveRes = await j('/api/samsara/live');
 
-    route.forEach((p,i)=>{
-      const d=dist(s.lat,s.lon,p[1],p[0]);
-      if(d<bestDist){bestDist=d;idx=i;}
+  const vehicles = vehiclesRes.data || [];
+  const live = liveRes.data || [];
+
+  const fuelMap = {};
+  const gpsMap = {};
+  const locMap = {};
+
+  live.forEach(x => {
+    if (x.fuelPercent?.value != null) fuelMap[x.id] = x.fuelPercent.value;
+    if (x.gps?.latitude != null && x.gps?.longitude != null) {
+      gpsMap[x.id] = { lat: x.gps.latitude, lon: x.gps.longitude };
+    }
+    const loc =
+      x.gps?.reverseGeo?.formattedLocation ||
+      x.gps?.address?.name ||
+      x.locationText ||
+      '';
+    if (loc) locMap[x.id] = loc;
+  });
+
+  const seen = new Set();
+
+  trucks = vehicles.filter(v => {
+    const m = String(v.name || '').match(/^T(\d+)/);
+    if (!m) return false;
+    const n = Number(m[1]);
+    if (n < 139 || n > 178) return false;
+    if (seen.has(v.name)) return false;
+    seen.add(v.name);
+    return true;
+  }).map(v => {
+    const gps = gpsMap[v.id] || { lat: LAREDO.lat, lon: LAREDO.lon };
+    return {
+      id: v.id,
+      name: v.name,
+      fuel: fuelMap[v.id] ?? 50,
+      lat: gps.lat,
+      lon: gps.lon,
+      locationText: locMap[v.id] || LAREDO.text,
+      shortLocation: shortLocation(locMap[v.id] || LAREDO.text)
+    };
+  });
+
+  const sel = document.getElementById('truck');
+  const current = sel.value;
+  sel.innerHTML = '';
+  trucks.forEach(t => {
+    sel.innerHTML += `<option ${t.name === current ? 'selected' : ''}>${t.name}</option>`;
+  });
+
+  renderFleet();
+}
+
+function renderFleet() {
+  const search = document.getElementById('search').value.trim().toUpperCase();
+  const onlyUrgent = document.getElementById('onlyUrgent').checked;
+
+  const display = trucks
+    .map(t => ({ ...t, status: truckStatus(t.name, t.fuel) }))
+    .filter(t => !search || t.name.toUpperCase().includes(search))
+    .filter(t => !onlyUrgent || t.status.text === 'FUEL NOW')
+    .sort((a, b) => {
+      if (a.status.rank !== b.status.rank) return a.status.rank - b.status.rank;
+      return gallonsLeft(a.name, a.fuel) - gallonsLeft(b.name, b.fuel);
     });
+
+  const urgent = trucks.filter(t => truckStatus(t.name, t.fuel).text === 'FUEL NOW').length;
+  const shift = trucks.filter(t => truckStatus(t.name, t.fuel).text === 'FUEL FOR SHIFT').length;
+  const wait = trucks.filter(t => truckStatus(t.name, t.fuel).text === 'WAIT').length;
+
+  document.getElementById('fleetSummary').innerHTML = `
+    <div class="box mini"><b>Fleet Summary</b> — FUEL NOW: ${urgent} | FUEL FOR SHIFT: ${shift} | WAIT: ${wait}</div>
+  `;
+
+  let html = '';
+  display.forEach(t => {
+    const s = t.status;
+    html += `
+      <div class="box mini">
+        <b>${t.name}</b> — ${t.shortLocation} |
+        Fuel ${t.fuel}% |
+        ${fmtGallons(gallonsLeft(t.name, t.fuel))} |
+        Reach ${reachMiles(t.name, t.fuel).toFixed(0)} mi |
+        <span class="${s.cls}">${s.text}</span>
+        <button onclick="document.getElementById('truck').value='${t.name}'">Use</button>
+      </div>
+    `;
+  });
+
+  document.getElementById('fleet').innerHTML = html;
+}
+
+async function loadCsvStops() {
+  const file = document.getElementById('csv').files[0];
+  const status = document.getElementById('csvStatus');
+
+  if (!file) {
+    fuelStops = [];
+    status.textContent = 'No CSV selected';
+    return false;
+  }
+
+  const text = await file.text();
+  const lines = text.split('\n').filter(Boolean);
+  if (lines.length < 2) {
+    fuelStops = [];
+    status.textContent = 'CSV appears empty';
+    return false;
+  }
+
+  const headers = lines[0].split(',');
+
+  fuelStops = lines.slice(1).map(line => {
+    const cols = line.split(',');
+    const row = {};
+    headers.forEach((h, i) => row[h.trim()] = cols[i]);
+
+    return {
+      store: row['Loves Store No.'],
+      city: row['City'],
+      state: row['State'],
+      price: Number(row['Best Discounted Price']),
+      lat: Number(row['Latitude']),
+      lon: Number(row['Longitude'])
+    };
+  }).filter(s => s.price && s.lat && s.lon);
+
+  status.textContent = `${file.name} loaded (${fuelStops.length} stops)`;
+  return fuelStops.length > 0;
+}
+
+document.getElementById('csv').addEventListener('change', loadCsvStops);
+
+async function buildRouteForTruck(truck) {
+  const outbound = document.getElementById('outboundStops').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const reposition = document.getElementById('repositionStops').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const returning = document.getElementById('returnStops').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  const allStops = [...outbound, ...reposition, ...returning];
+  if (!allStops.length) throw new Error('Enter at least one trip stop');
+
+  const coords = [`${truck.lon},${truck.lat}`];
+  for (const stop of allStops) {
+    const geo = await geocodeOne(stop);
+    coords.push(`${geo.lon},${geo.lat}`);
+  }
+
+  const routeRes = await j('/api/route?coords=' + encodeURIComponent(coords.join(';')));
+  if (!routeRes.routes || !routeRes.routes[0]) {
+    throw new Error('No route returned by server');
+  }
+
+  totalMiles = routeRes.routes[0].distance / 1609.34;
+  totalHours = (routeRes.routes[0].duration || 0) / 3600;
+  route = simplifyRoute(routeRes.routes[0].geometry.coordinates, 40);
+
+  drawRouteMap(route, truck);
+}
+
+async function run() {
+  const csvOk = await loadCsvStops();
+  if (!csvOk) {
+    document.getElementById('output').innerHTML = '<div class="box">Load CSV first</div>';
+    return;
+  }
+
+  const truck = trucks.find(t => t.name === document.getElementById('truck').value);
+  if (!truck) {
+    document.getElementById('output').innerHTML = '<div class="box">Load fleet first</div>';
+    return;
+  }
+
+  try {
+    await buildRouteForTruck(truck);
+  } catch (e) {
+    document.getElementById('output').innerHTML = `<div class="box">Route error: ${e.message}</div>`;
+    return;
+  }
+
+  const currentGallons = gallonsLeft(truck.name, truck.fuel);
+  const maxReach = Math.min(reachMiles(truck.name, truck.fuel), 375);
+  const needForShift = shiftNeedGallons(truck.name, truck.fuel);
+  const status = truckStatus(truck.name, truck.fuel);
+
+  const allScored = fuelStops.map(s => {
+    let best = 999;
+    let idx = 0;
+
+    for (let i = 0; i < route.length; i++) {
+      const p = route[i];
+      const d = dist(s.lat, s.lon, p[1], p[0]);
+      if (d < best) {
+        best = d;
+        idx = i;
+        if (best < 1) break;
+      }
+    }
+
+    const mile = (idx / Math.max(1, route.length - 1)) * totalMiles;
+    const buy = Math.max(0, tank(truck.name) - currentGallons);
+
+    let score = s.price + best * 0.02 + mile * 0.001;
+    if (!EXPENSIVE_STATES.has((s.state || '').toUpperCase())) score -= 0.12;
+    if (s.price < 5.20) score -= 0.10;
+    if (s.price < 5.00) score -= 0.15;
 
     return {
       ...s,
-      off:bestDist,
-      mile:(idx/route.length)*miles
+      off: best,
+      mile,
+      recommendedBuy: buy,
+      coverageAfterFuel: coverageMilesAfterFuel(currentGallons + buy),
+      estimatedCost: buy * s.price,
+      score
     };
-  }).filter(s=>s.off<25&&s.mile<=maxReach)
-    .sort((a,b)=>a.price-b.price)
-    .slice(0,5);
+  });
 
-  let html=`<h2>Recommended Stops</h2>`;
+  // strict match
+  let candidates = allScored
+    .filter(s => s.off < 30)
+    .filter(s => s.mile <= maxReach)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 5);
 
-  if(!best.length){
-    html+='No stops found';
-  }else{
-    best.forEach(s=>{
-      html+=`<div class="box">
-        ${s.store} - ${s.city}, ${s.state}<br>
-        Price: $${s.price}<br>
-        Mile: ${s.mile.toFixed(0)}<br>
-        Off-route: ${s.off.toFixed(1)} mi
-      </div>`;
-    });
+  let mode = 'strict route match';
+
+  // relaxed route match
+  if (!candidates.length) {
+    candidates = allScored
+      .filter(s => s.off < 60)
+      .filter(s => s.mile <= maxReach + 50)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 5);
+    mode = 'relaxed route match';
   }
 
-  document.getElementById('output').innerHTML=html;
-}
+  // nearest cheap fallback
+  if (!candidates.length) {
+    candidates = allScored
+      .sort((a, b) => (a.off + a.price) - (b.off + b.price))
+      .slice(0, 5);
+    mode = 'nearest cheap fallback';
+  }
 
+  const best = candidates[0];
+  let action = 'WAIT FOR CHEAPER STATE';
+  if (status.text === 'FUEL NOW') action = 'FILL HERE';
+  else if (needForShift > 0) action = 'BUY FOR SHIFT';
+  else if (best && !EXPENSIVE_STATES.has((best.state || '').toUpperCase())) action = 'FILL HERE';
+
+  let html = `
+    <div class="box">
+      <div><b>${truck.name}</b> — ${truck.shortLocation}</div>
+      <b>Status:</b> <span class="${status.cls}">${status.text}</span><br>
+      <b>Action:</b> ${action}<br>
+      <b>Precise Address:</b> ${truck.locationText}<br>
+      <b>Fuel:</b> ${truck.fuel}% (${fmtGallons(currentGallons)} left)<br>
+      <b>Gallons Needed For Shift:</b> ${fmtGallons(needForShift)}<br>
+      <b>Total Trip Miles:</b> ${totalMiles.toFixed(0)}<br>
+      <b>Approx ETA:</b> ${fmtEta(totalHours)}<br>
+      <b>Route Time:</b> ${fmtHours(totalHours)}<br>
+      <b>Max Reach:</b> ${maxReach.toFixed(0)} mi<br>
+      <b>CSV Stops Loaded:</b> ${fuelStops.length}<br>
+      <b>Recommendation Mode:</b> ${mode}
+    </div>
+  `;
+
+  if (!candidates.length) {
+    html += `<div class="box">No recommended stops found at all.</div>`;
+    document.getElementById('output').innerHTML = html;
+    return;
+  }
+
+  html += `
+    <div class="box">
+      <b>BEST RECOMMENDED STOP</b><br>
+      ${best.store} - ${best.city}, ${best.state}<br>
+      Price: $${best.price.toFixed(3)}<br>
+      Approx Route Mile: ${best.mile.toFixed(0)}<br>
+      Off Route: ${best.off.toFixed(1)} mi<br>
+      Buy Gallons: ${fmtGallons(best.recommendedBuy)}<br>
+      Coverage After Fuel: ${best.coverageAfterFuel.toFixed(0)} mi<br>
+      Estimated Cost: $${best.estimatedCost.toFixed(2)}
+    </div>
+  `;
+
+  candidates.forEach((s, i) => {
+    html += `
+      <div class="box mini">
+        <b>#${i + 1}</b> ${s.store} - ${s.city}, ${s.state}<br>
+        Price: $${s.price.toFixed(3)} |
+        Route Mile: ${s.mile.toFixed(0)} |
+        Off Route: ${s.off.toFixed(1)} mi
+      </div>
+    `;
+  });
+
+  document.getElementById('output').innerHTML = html;
+}
 </script>
 </body>
 </html>
-
