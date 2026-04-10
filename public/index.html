@@ -1,490 +1,1011 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>IH35 Fuel Optimizer</title>
+  <meta charset="UTF-8" />
+  <title>IH35 Dispatcher Board</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+
   <style>
-    body { font-family: Arial; padding: 16px; }
-    .row { margin-bottom: 12px; }
-    .box { border: 1px solid #ddd; padding: 8px; margin-bottom: 8px; border-radius: 6px; }
-    .bad { color: red; font-weight: bold; }
-    .warn { color: orange; font-weight: bold; }
-    .ok { color: green; font-weight: bold; }
-    textarea { width: 420px; height: 70px; }
-    #fleet { max-height: 320px; overflow-y: auto; border: 1px solid #ddd; padding: 8px; border-radius: 6px; }
-    #mapBox { width: 100%; max-width: 850px; height: 260px; border: 1px solid #ddd; border-radius: 6px; margin: 12px 0; background: #fafafa; }
-    svg { width: 100%; height: 100%; display: block; }
-    .mini { font-size: 13px; }
+    :root{
+      --bg:#f6f7fb;
+      --panel:#ffffff;
+      --line:#d9dde7;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --red:#dc2626;
+      --yellow:#d97706;
+      --green:#16a34a;
+      --blue:#2563eb;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .topbar{
+      padding:12px 16px;
+      background:#fff;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      position:sticky;
+      top:0;
+      z-index:1000;
+    }
+    .topbar h1{
+      margin:0 12px 0 0;
+      font-size:20px;
+    }
+    button, select, input, textarea{
+      font:inherit;
+    }
+    button{
+      padding:8px 12px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#fff;
+      cursor:pointer;
+    }
+    button:hover{background:#f3f4f6}
+    select, input{
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#fff;
+    }
+    textarea{
+      width:100%;
+      min-height:72px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      resize:vertical;
+      background:#fff;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns: 360px 1fr 380px;
+      gap:12px;
+      padding:12px;
+    }
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+    }
+    .panel h2{
+      margin:0;
+      padding:12px 14px;
+      font-size:16px;
+      border-bottom:1px solid var(--line);
+      background:#fff;
+    }
+    .panel-body{
+      padding:12px;
+    }
+    #fleetList{
+      max-height:calc(100vh - 150px);
+      overflow:auto;
+    }
+    .fleet-summary{
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      font-size:13px;
+      color:var(--muted);
+      background:#fafafa;
+    }
+    .fleet-item{
+      padding:10px 12px;
+      border-bottom:1px solid #eef1f5;
+      cursor:pointer;
+    }
+    .fleet-item:hover{background:#f9fafb}
+    .fleet-item.active{background:#eff6ff}
+    .fleet-title{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      align-items:center;
+      font-weight:700;
+      margin-bottom:4px;
+    }
+    .fleet-sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+    .status-red{color:var(--red);font-weight:700}
+    .status-yellow{color:var(--yellow);font-weight:700}
+    .status-green{color:var(--green);font-weight:700}
+    .badge{
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      border:1px solid var(--line);
+      white-space:nowrap;
+    }
+    .badge-red{background:#fef2f2;color:var(--red)}
+    .badge-yellow{background:#fff7ed;color:var(--yellow)}
+    .badge-green{background:#f0fdf4;color:var(--green)}
+    #map{
+      width:100%;
+      height:calc(100vh - 220px);
+      min-height:520px;
+    }
+    .form-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .detail-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px 12px;
+      font-size:13px;
+    }
+    .detail-grid .label{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:2px;
+    }
+    .detail-card{
+      border:1px solid #eef1f5;
+      border-radius:10px;
+      padding:8px 10px;
+      background:#fafafa;
+    }
+    .detail-wide{
+      grid-column:1 / -1;
+    }
+    .section-title{
+      margin:14px 0 8px;
+      font-size:13px;
+      font-weight:700;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+    .stop-card{
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      padding:10px;
+      margin-bottom:8px;
+      background:#fff;
+    }
+    .small{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .helper{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .csv-line{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    @media (max-width: 1300px){
+      .layout{grid-template-columns:320px 1fr}
+      .right-panel{grid-column:1 / -1}
+      #map{height:520px}
+    }
+    @media (max-width: 900px){
+      .layout{grid-template-columns:1fr}
+      #fleetList{max-height:360px}
+      #map{height:420px;min-height:420px}
+    }
   </style>
 </head>
 <body>
 
-<h1>IH35 Fuel Optimizer</h1>
+  <div class="topbar">
+    <h1>IH35 Dispatcher Board</h1>
+    <button onclick="loadBoard()">Load Live Board</button>
+    <button onclick="recommendForSelected()">Recommend Stops</button>
+    <input id="unitSearch" placeholder="Search unit e.g. T148" oninput="renderFleet()" />
+    <label><input type="checkbox" id="urgentOnly" onchange="renderFleet()"> FUEL NOW only</label>
+    <span id="lastUpdated" class="small">Not loaded</span>
+  </div>
 
-<div class="row">
-  <button onclick="loadFleet()">Load Fleet</button>
-  <button onclick="run()">Recommend Fuel</button>
-</div>
+  <div class="layout">
+    <div class="panel">
+      <h2>Fleet</h2>
+      <div class="fleet-summary" id="fleetSummary">No data loaded</div>
+      <div id="fleetList"></div>
+    </div>
 
-<div class="row">
-  Truck:
-  <select id="truck"></select>
-</div>
-
-<div class="row">
-  Search:
-  <input id="search" oninput="renderFleet()" placeholder="T159">
-  <label><input id="onlyUrgent" type="checkbox" onchange="renderFleet()"> FUEL NOW only</label>
-</div>
-
-<div class="row">
-  <b>Outbound stops</b><br>
-  <textarea id="outboundStops" placeholder="San Antonio, TX
-Dallas, TX"></textarea>
-</div>
-
-<div class="row">
-  <b>Reposition stops</b><br>
-  <textarea id="repositionStops" placeholder="Joliet, IL"></textarea>
-</div>
-
-<div class="row">
-  <b>Return stops</b><br>
-  <textarea id="returnStops" placeholder="Houston, TX
-Laredo, TX"></textarea>
-</div>
-
-<div class="row">
-  <input type="file" id="csv" accept=".csv">
-  <span id="csvStatus">No CSV selected</span>
-</div>
-
-<div id="fleetSummary"></div>
-<div id="fleet"></div>
-<div id="mapBox"></div>
-<div id="output"></div>
-
-<script>
-const LAREDO = { lat: 27.5306, lon: -99.4803, text: 'Laredo, TX' };
-const EXPENSIVE_STATES = new Set(['NY','NJ','CT','MA','CA','PA','WA','OR']);
-const RESERVE_GALLONS = 35;
-const SHIFT_TARGET_MILES = 750;
-const MPG = 6.5;
-
-let trucks = [];
-let fuelStops = [];
-let route = [];
-let totalMiles = 0;
-let totalHours = 0;
-
-function tank(name) { return name === 'T169' ? 80 : 120; }
-function gallonsLeft(name, fuel) { return tank(name) * (fuel / 100); }
-function reachMiles(name, fuel) { return Math.max(0, gallonsLeft(name, fuel) - RESERVE_GALLONS) * MPG; }
-function shiftNeedGallons(name, fuel) {
-  const need = (SHIFT_TARGET_MILES / MPG) + RESERVE_GALLONS;
-  return Math.max(0, need - gallonsLeft(name, fuel));
-}
-function coverageMilesAfterFuel(totalGallons) { return Math.max(0, totalGallons - RESERVE_GALLONS) * MPG; }
-
-function shortLocation(text) {
-  if (!text) return 'Unknown';
-  const parts = String(text).split(',').map(s => s.trim()).filter(Boolean);
-  if (parts.length >= 2) return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
-  return text;
-}
-
-function truckStatus(name, fuel) {
-  const reach = reachMiles(name, fuel);
-  if (gallonsLeft(name, fuel) <= RESERVE_GALLONS || reach < 75) return { text: 'FUEL NOW', cls: 'bad', rank: 0 };
-  if (shiftNeedGallons(name, fuel) > 0) return { text: 'FUEL FOR SHIFT', cls: 'warn', rank: 1 };
-  return { text: 'WAIT', cls: 'ok', rank: 2 };
-}
-
-function fmtGallons(x) { return Number.isFinite(x) ? `${x.toFixed(1)} gal` : 'N/A'; }
-function fmtHours(x) { return Number.isFinite(x) ? `${x.toFixed(1)} hrs` : 'N/A'; }
-function fmtEta(hours) {
-  if (!Number.isFinite(hours)) return 'N/A';
-  const eta = new Date(Date.now() + hours * 3600 * 1000);
-  return eta.toLocaleString();
-}
-
-function dist(lat1, lon1, lat2, lon2) {
-  const R = 3959;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(a));
-}
-
-async function j(url) {
-  const r = await fetch(url);
-  const text = await r.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(`Bad response from ${url}: ${text.slice(0, 120)}`);
-  }
-}
-
-async function geocodeOne(place) {
-  const res = await j('/api/geocode?q=' + encodeURIComponent(place));
-  if (!res || !res[0]) throw new Error('Could not geocode: ' + place);
-  return res[0];
-}
-
-function simplifyRoute(coords, step = 40) {
-  if (!coords || coords.length <= step) return coords || [];
-  const out = [];
-  for (let i = 0; i < coords.length; i += step) out.push(coords[i]);
-  const last = coords[coords.length - 1];
-  if (out[out.length - 1] !== last) out.push(last);
-  return out;
-}
-
-function drawRouteMap(routeCoords, truck) {
-  const box = document.getElementById('mapBox');
-  if (!routeCoords.length) {
-    box.innerHTML = '<div class="box mini">No route preview yet</div>';
-    return;
-  }
-
-  const xs = routeCoords.map(p => p[0]);
-  const ys = routeCoords.map(p => p[1]);
-  const minX = Math.min(...xs), maxX = Math.max(...xs);
-  const minY = Math.min(...ys), maxY = Math.max(...ys);
-  const width = 850, height = 260, pad = 16;
-
-  function project(lon, lat) {
-    const x = pad + ((lon - minX) / Math.max(0.0001, maxX - minX)) * (width - pad * 2);
-    const y = height - pad - ((lat - minY) / Math.max(0.0001, maxY - minY)) * (height - pad * 2);
-    return [x, y];
-  }
-
-  const d = routeCoords.map((p, i) => {
-    const [x, y] = project(p[0], p[1]);
-    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ');
-
-  const [sx, sy] = project(routeCoords[0][0], routeCoords[0][1]);
-  const [ex, ey] = project(routeCoords[routeCoords.length - 1][0], routeCoords[routeCoords.length - 1][1]);
-
-  box.innerHTML = `
-    <svg viewBox="0 0 ${width} ${height}">
-      <rect x="0" y="0" width="${width}" height="${height}" fill="#fafafa"></rect>
-      <path d="${d}" fill="none" stroke="#2563eb" stroke-width="3"></path>
-      <circle cx="${sx}" cy="${sy}" r="5" fill="#16a34a"></circle>
-      <circle cx="${ex}" cy="${ey}" r="5" fill="#dc2626"></circle>
-      <text x="${sx + 6}" y="${sy - 6}" font-size="11">${truck.name}</text>
-    </svg>
-  `;
-}
-
-async function loadFleet() {
-  const vehiclesRes = await j('/api/samsara/vehicles');
-  const liveRes = await j('/api/samsara/live');
-
-  const vehicles = vehiclesRes.data || [];
-  const live = liveRes.data || [];
-
-  const fuelMap = {};
-  const gpsMap = {};
-  const locMap = {};
-
-  live.forEach(x => {
-    if (x.fuelPercent?.value != null) fuelMap[x.id] = x.fuelPercent.value;
-    if (x.gps?.latitude != null && x.gps?.longitude != null) {
-      gpsMap[x.id] = { lat: x.gps.latitude, lon: x.gps.longitude };
-    }
-    const loc =
-      x.gps?.reverseGeo?.formattedLocation ||
-      x.gps?.address?.name ||
-      x.locationText ||
-      '';
-    if (loc) locMap[x.id] = loc;
-  });
-
-  const seen = new Set();
-
-  trucks = vehicles.filter(v => {
-    const m = String(v.name || '').match(/^T(\d+)/);
-    if (!m) return false;
-    const n = Number(m[1]);
-    if (n < 139 || n > 178) return false;
-    if (seen.has(v.name)) return false;
-    seen.add(v.name);
-    return true;
-  }).map(v => {
-    const gps = gpsMap[v.id] || { lat: LAREDO.lat, lon: LAREDO.lon };
-    return {
-      id: v.id,
-      name: v.name,
-      fuel: fuelMap[v.id] ?? 50,
-      lat: gps.lat,
-      lon: gps.lon,
-      locationText: locMap[v.id] || LAREDO.text,
-      shortLocation: shortLocation(locMap[v.id] || LAREDO.text)
-    };
-  });
-
-  const sel = document.getElementById('truck');
-  const current = sel.value;
-  sel.innerHTML = '';
-  trucks.forEach(t => {
-    sel.innerHTML += `<option ${t.name === current ? 'selected' : ''}>${t.name}</option>`;
-  });
-
-  renderFleet();
-}
-
-function renderFleet() {
-  const search = document.getElementById('search').value.trim().toUpperCase();
-  const onlyUrgent = document.getElementById('onlyUrgent').checked;
-
-  const display = trucks
-    .map(t => ({ ...t, status: truckStatus(t.name, t.fuel) }))
-    .filter(t => !search || t.name.toUpperCase().includes(search))
-    .filter(t => !onlyUrgent || t.status.text === 'FUEL NOW')
-    .sort((a, b) => {
-      if (a.status.rank !== b.status.rank) return a.status.rank - b.status.rank;
-      return gallonsLeft(a.name, a.fuel) - gallonsLeft(b.name, b.fuel);
-    });
-
-  const urgent = trucks.filter(t => truckStatus(t.name, t.fuel).text === 'FUEL NOW').length;
-  const shift = trucks.filter(t => truckStatus(t.name, t.fuel).text === 'FUEL FOR SHIFT').length;
-  const wait = trucks.filter(t => truckStatus(t.name, t.fuel).text === 'WAIT').length;
-
-  document.getElementById('fleetSummary').innerHTML = `
-    <div class="box mini"><b>Fleet Summary</b> — FUEL NOW: ${urgent} | FUEL FOR SHIFT: ${shift} | WAIT: ${wait}</div>
-  `;
-
-  let html = '';
-  display.forEach(t => {
-    const s = t.status;
-    html += `
-      <div class="box mini">
-        <b>${t.name}</b> — ${t.shortLocation} |
-        Fuel ${t.fuel}% |
-        ${fmtGallons(gallonsLeft(t.name, t.fuel))} |
-        Reach ${reachMiles(t.name, t.fuel).toFixed(0)} mi |
-        <span class="${s.cls}">${s.text}</span>
-        <button onclick="document.getElementById('truck').value='${t.name}'">Use</button>
+    <div class="panel">
+      <h2>Map</h2>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="small">Outbound / northbound stops</div>
+            <textarea id="outboundStops" placeholder="San Antonio, TX&#10;Dallas, TX&#10;Chicago, IL"></textarea>
+          </div>
+          <div>
+            <div class="small">Reposition / pickup stops</div>
+            <textarea id="repositionStops" placeholder="Joliet, IL&#10;St. Louis, MO"></textarea>
+          </div>
+          <div>
+            <div class="small">Return / southbound stops</div>
+            <textarea id="returnStops" placeholder="Memphis, TN&#10;Houston, TX&#10;Laredo, TX"></textarea>
+          </div>
+          <div>
+            <input type="file" id="csv" accept=".csv">
+            <div id="csvStatus" class="csv-line">No CSV selected</div>
+          </div>
+        </div>
+        <div id="map"></div>
       </div>
-    `;
-  });
+    </div>
 
-  document.getElementById('fleet').innerHTML = html;
-}
+    <div class="panel right-panel">
+      <h2>Selected Unit</h2>
+      <div class="panel-body">
+        <div id="selectedDetail">Select a unit from the fleet list.</div>
 
-async function loadCsvStops() {
-  const file = document.getElementById('csv').files[0];
-  const status = document.getElementById('csvStatus');
+        <div class="section-title">Recommended Stops</div>
+        <div id="recommendedStops">No recommendations yet.</div>
+      </div>
+    </div>
+  </div>
 
-  if (!file) {
-    fuelStops = [];
-    status.textContent = 'No CSV selected';
-    return false;
-  }
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
 
-  const text = await file.text();
-  const lines = text.split('\n').filter(Boolean);
-  if (lines.length < 2) {
-    fuelStops = [];
-    status.textContent = 'CSV appears empty';
-    return false;
-  }
+  <script>
+    const HOME = { lat: 27.5306, lon: -99.4803, text: 'Laredo, TX' };
+    const EXPENSIVE_STATES = new Set(['NY','NJ','CT','MA','CA','PA','WA','OR']);
+    const RESERVE_GALLONS = 35;
+    const SHIFT_TARGET_MILES = 750;
+    const DEFAULT_MPG = 6.5;
 
-  const headers = lines[0].split(',');
+    let boardRows = [];
+    let csvStops = [];
+    let selectedUnit = null;
+    let map, unitsLayer, stopsLayer, routeLayer, selectedLayer;
 
-  fuelStops = lines.slice(1).map(line => {
-    const cols = line.split(',');
-    const row = {};
-    headers.forEach((h, i) => row[h.trim()] = cols[i]);
+    function initMap() {
+      if (map) return;
 
-    return {
-      store: row['Loves Store No.'],
-      city: row['City'],
-      state: row['State'],
-      price: Number(row['Best Discounted Price']),
-      lat: Number(row['Latitude']),
-      lon: Number(row['Longitude'])
-    };
-  }).filter(s => s.price && s.lat && s.lon);
+      map = L.map('map', { zoomControl: true }).setView([HOME.lat, HOME.lon], 5);
 
-  status.textContent = `${file.name} loaded (${fuelStops.length} stops)`;
-  return fuelStops.length > 0;
-}
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
 
-document.getElementById('csv').addEventListener('change', loadCsvStops);
+      unitsLayer = L.layerGroup().addTo(map);
+      stopsLayer = L.layerGroup().addTo(map);
+      routeLayer = L.layerGroup().addTo(map);
+      selectedLayer = L.layerGroup().addTo(map);
+    }
 
-async function buildRouteForTruck(truck) {
-  const outbound = document.getElementById('outboundStops').value.split('\n').map(s => s.trim()).filter(Boolean);
-  const reposition = document.getElementById('repositionStops').value.split('\n').map(s => s.trim()).filter(Boolean);
-  const returning = document.getElementById('returnStops').value.split('\n').map(s => s.trim()).filter(Boolean);
+    function safeNum(v, fallback = null) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    }
 
-  const allStops = [...outbound, ...reposition, ...returning];
-  if (!allStops.length) throw new Error('Enter at least one trip stop');
+    function fmtHours(v) {
+      return Number.isFinite(v) ? `${v.toFixed(1)} hrs` : 'N/A';
+    }
 
-  const coords = [`${truck.lon},${truck.lat}`];
-  for (const stop of allStops) {
-    const geo = await geocodeOne(stop);
-    coords.push(`${geo.lon},${geo.lat}`);
-  }
+    function fmtMiles(v) {
+      return Number.isFinite(v) ? `${v.toFixed(0)} mi` : 'N/A';
+    }
 
-  const routeRes = await j('/api/route?coords=' + encodeURIComponent(coords.join(';')));
-  if (!routeRes.routes || !routeRes.routes[0]) {
-    throw new Error('No route returned by server');
-  }
+    function fmtGallons(v) {
+      return Number.isFinite(v) ? `${v.toFixed(1)} gal` : 'N/A';
+    }
 
-  totalMiles = routeRes.routes[0].distance / 1609.34;
-  totalHours = (routeRes.routes[0].duration || 0) / 3600;
-  route = simplifyRoute(routeRes.routes[0].geometry.coordinates, 40);
+    function fmtPct(v) {
+      return Number.isFinite(v) ? `${v.toFixed(0)}%` : 'N/A';
+    }
 
-  drawRouteMap(route, truck);
-}
+    function fmtEta(hours) {
+      if (!Number.isFinite(hours)) return 'N/A';
+      const eta = new Date(Date.now() + hours * 3600 * 1000);
+      return eta.toLocaleString();
+    }
 
-async function run() {
-  const csvOk = await loadCsvStops();
-  if (!csvOk) {
-    document.getElementById('output').innerHTML = '<div class="box">Load CSV first</div>';
-    return;
-  }
+    function tank(unit) {
+      return unit === 'T169' ? 80 : 120;
+    }
 
-  const truck = trucks.find(t => t.name === document.getElementById('truck').value);
-  if (!truck) {
-    document.getElementById('output').innerHTML = '<div class="box">Load fleet first</div>';
-    return;
-  }
+    function gallonsLeft(unit, fuelPercent) {
+      return tank(unit) * ((safeNum(fuelPercent, 0)) / 100);
+    }
 
-  try {
-    await buildRouteForTruck(truck);
-  } catch (e) {
-    document.getElementById('output').innerHTML = `<div class="box">Route error: ${e.message}</div>`;
-    return;
-  }
+    function reachMiles(unit, fuelPercent, mpg = DEFAULT_MPG) {
+      return Math.max(0, gallonsLeft(unit, fuelPercent) - RESERVE_GALLONS) * mpg;
+    }
 
-  const currentGallons = gallonsLeft(truck.name, truck.fuel);
-  const maxReach = Math.min(reachMiles(truck.name, truck.fuel), 375);
-  const needForShift = shiftNeedGallons(truck.name, truck.fuel);
-  const status = truckStatus(truck.name, truck.fuel);
+    function shiftNeedGallons(unit, fuelPercent, mpg = DEFAULT_MPG) {
+      const needed = (SHIFT_TARGET_MILES / mpg) + RESERVE_GALLONS;
+      return Math.max(0, needed - gallonsLeft(unit, fuelPercent));
+    }
 
-  const allScored = fuelStops.map(s => {
-    let best = 999;
-    let idx = 0;
+    function shortLocation(text) {
+      if (!text) return 'Unknown';
+      const parts = String(text).split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 2) return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
+      return text;
+    }
 
-    for (let i = 0; i < route.length; i++) {
-      const p = route[i];
-      const d = dist(s.lat, s.lon, p[1], p[0]);
-      if (d < best) {
-        best = d;
-        idx = i;
-        if (best < 1) break;
+    function parseUnitNum(name) {
+      const m = String(name || '').match(/^T(\d+)/i);
+      return m ? Number(m[1]) : 999999;
+    }
+
+    function statusForTruck(unit, fuelPercent, mpg = DEFAULT_MPG) {
+      const reach = reachMiles(unit, fuelPercent, mpg);
+      const needShift = shiftNeedGallons(unit, fuelPercent, mpg);
+
+      if (gallonsLeft(unit, fuelPercent) <= RESERVE_GALLONS || reach < 75) {
+        return { text: 'FUEL NOW', cls: 'status-red', badge: 'badge badge-red', rank: 0 };
+      }
+      if (needShift > 0) {
+        return { text: 'FUEL FOR SHIFT', cls: 'status-yellow', badge: 'badge badge-yellow', rank: 1 };
+      }
+      return { text: 'WAIT', cls: 'status-green', badge: 'badge badge-green', rank: 2 };
+    }
+
+    function dist(lat1, lon1, lat2, lon2) {
+      const R = 3959;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    function msToHours(ms) {
+      const n = safeNum(ms);
+      return Number.isFinite(n) ? n / 1000 / 3600 : null;
+    }
+
+    function secToHours(sec) {
+      const n = safeNum(sec);
+      return Number.isFinite(n) ? n / 3600 : null;
+    }
+
+    function jpick(obj, keys) {
+      for (const k of keys) {
+        if (obj && obj[k] != null) return obj[k];
+      }
+      return null;
+    }
+
+    async function j(url) {
+      const r = await fetch(url);
+      const text = await r.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error(`Bad response from ${url}: ${text.slice(0, 160)}`);
       }
     }
 
-    const mile = (idx / Math.max(1, route.length - 1)) * totalMiles;
-    const buy = Math.max(0, tank(truck.name) - currentGallons);
+    async function geocodeOne(place) {
+      const res = await j('/api/geocode?q=' + encodeURIComponent(place));
+      if (!res || !res[0]) throw new Error('Could not geocode: ' + place);
+      return res[0];
+    }
 
-    let score = s.price + best * 0.02 + mile * 0.001;
-    if (!EXPENSIVE_STATES.has((s.state || '').toUpperCase())) score -= 0.12;
-    if (s.price < 5.20) score -= 0.10;
-    if (s.price < 5.00) score -= 0.15;
+    function buildBoardRows(vehicles, live, hos, assignments) {
+      const fuelMap = {};
+      const gpsMap = {};
+      const locMap = {};
+      const mpgMap = {};
+      const speedMap = {};
+      const engineMap = {};
 
-    return {
-      ...s,
-      off: best,
-      mile,
-      recommendedBuy: buy,
-      coverageAfterFuel: coverageMilesAfterFuel(currentGallons + buy),
-      estimatedCost: buy * s.price,
-      score
-    };
-  });
+      (live || []).forEach(x => {
+        const id = String(x.id || x.vehicleId || x.vehicle?.id || '');
+        if (!id) return;
 
-  // strict match
-  let candidates = allScored
-    .filter(s => s.off < 30)
-    .filter(s => s.mile <= maxReach)
-    .sort((a, b) => a.score - b.score)
-    .slice(0, 5);
+        const fuel =
+          jpick(x, ['fuelPercent'])?.value ??
+          x.fuelPercent?.value ??
+          x.fuelPercent ??
+          x.value?.fuelPercent ??
+          null;
 
-  let mode = 'strict route match';
+        if (fuel != null) fuelMap[id] = safeNum(fuel);
 
-  // relaxed route match
-  if (!candidates.length) {
-    candidates = allScored
-      .filter(s => s.off < 60)
-      .filter(s => s.mile <= maxReach + 50)
-      .sort((a, b) => a.score - b.score)
-      .slice(0, 5);
-    mode = 'relaxed route match';
-  }
+        const glat = x.gps?.latitude ?? x.latitude ?? null;
+        const glon = x.gps?.longitude ?? x.longitude ?? null;
+        if (glat != null && glon != null) {
+          gpsMap[id] = { lat: safeNum(glat, HOME.lat), lon: safeNum(glon, HOME.lon) };
+        }
 
-  // nearest cheap fallback
-  if (!candidates.length) {
-    candidates = allScored
-      .sort((a, b) => (a.off + a.price) - (b.off + b.price))
-      .slice(0, 5);
-    mode = 'nearest cheap fallback';
-  }
+        const loc =
+          x.gps?.reverseGeo?.formattedLocation ||
+          x.gps?.address?.name ||
+          x.locationText ||
+          '';
+        if (loc) locMap[id] = loc;
 
-  const best = candidates[0];
-  let action = 'WAIT FOR CHEAPER STATE';
-  if (status.text === 'FUEL NOW') action = 'FILL HERE';
-  else if (needForShift > 0) action = 'BUY FOR SHIFT';
-  else if (best && !EXPENSIVE_STATES.has((best.state || '').toUpperCase())) action = 'FILL HERE';
+        const mpg =
+          x.obdOdometerMetersPerSecond ??
+          x.mpg ??
+          x.fuelEconomyMpg ??
+          x.value?.mpg ??
+          null;
+        if (mpg != null) mpgMap[id] = safeNum(mpg);
 
-  let html = `
-    <div class="box">
-      <div><b>${truck.name}</b> — ${truck.shortLocation}</div>
-      <b>Status:</b> <span class="${status.cls}">${status.text}</span><br>
-      <b>Action:</b> ${action}<br>
-      <b>Precise Address:</b> ${truck.locationText}<br>
-      <b>Fuel:</b> ${truck.fuel}% (${fmtGallons(currentGallons)} left)<br>
-      <b>Gallons Needed For Shift:</b> ${fmtGallons(needForShift)}<br>
-      <b>Total Trip Miles:</b> ${totalMiles.toFixed(0)}<br>
-      <b>Approx ETA:</b> ${fmtEta(totalHours)}<br>
-      <b>Route Time:</b> ${fmtHours(totalHours)}<br>
-      <b>Max Reach:</b> ${maxReach.toFixed(0)} mi<br>
-      <b>CSV Stops Loaded:</b> ${fuelStops.length}<br>
-      <b>Recommendation Mode:</b> ${mode}
-    </div>
-  `;
+        const spd =
+          x.gps?.speedMilesPerHour ??
+          x.speedMilesPerHour ??
+          null;
+        if (spd != null) speedMap[id] = safeNum(spd);
 
-  if (!candidates.length) {
-    html += `<div class="box">No recommended stops found at all.</div>`;
-    document.getElementById('output').innerHTML = html;
-    return;
-  }
+        const eng =
+          x.engineState?.value ??
+          x.engineState ??
+          null;
+        if (eng != null) engineMap[id] = eng;
+      });
 
-  html += `
-    <div class="box">
-      <b>BEST RECOMMENDED STOP</b><br>
-      ${best.store} - ${best.city}, ${best.state}<br>
-      Price: $${best.price.toFixed(3)}<br>
-      Approx Route Mile: ${best.mile.toFixed(0)}<br>
-      Off Route: ${best.off.toFixed(1)} mi<br>
-      Buy Gallons: ${fmtGallons(best.recommendedBuy)}<br>
-      Coverage After Fuel: ${best.coverageAfterFuel.toFixed(0)} mi<br>
-      Estimated Cost: $${best.estimatedCost.toFixed(2)}
-    </div>
-  `;
+      const hosByVehicle = {};
+      (hos || []).forEach(row => {
+        const id = String(row.vehicleId || row.assetId || row.id || '');
+        const unit = String(row.vehicleName || row.name || '');
+        const key = id || unit;
+        hosByVehicle[key] = {
+          dutyStatus:
+            row.dutyStatus ||
+            row.status ||
+            row.currentDutyStatus ||
+            row.driverDutyStatus ||
+            'N/A',
+          timeInCurrentStatus:
+            msToHours(jpick(row, ['timeInCurrentStatusMs', 'currentStatusDurationMs'])) ??
+            secToHours(jpick(row, ['timeInCurrentStatusSeconds', 'currentStatusDurationSeconds'])) ??
+            null,
+          timeUntilBreak:
+            msToHours(jpick(row, ['breakTimeRemainingMs'])) ??
+            secToHours(jpick(row, ['breakTimeRemainingSeconds'])) ??
+            null,
+          driveRemaining:
+            msToHours(jpick(row, ['driveTimeRemainingMs', 'driveRemainingMs'])) ??
+            secToHours(jpick(row, ['driveTimeRemainingSeconds', 'driveRemainingSeconds'])) ??
+            null,
+          shiftRemaining:
+            msToHours(jpick(row, ['shiftTimeRemainingMs', 'shiftRemainingMs'])) ??
+            secToHours(jpick(row, ['shiftTimeRemainingSeconds', 'shiftRemainingSeconds'])) ??
+            null,
+          cycleRemaining:
+            msToHours(jpick(row, ['cycleTimeRemainingMs'])) ??
+            secToHours(jpick(row, ['cycleTimeRemainingSeconds'])) ??
+            null,
+          milesDrivenShift:
+            safeNum(jpick(row, ['milesDriven', 'distanceMiles', 'drivingMiles']), null)
+        };
+      });
 
-  candidates.forEach((s, i) => {
-    html += `
-      <div class="box mini">
-        <b>#${i + 1}</b> ${s.store} - ${s.city}, ${s.state}<br>
-        Price: $${s.price.toFixed(3)} |
-        Route Mile: ${s.mile.toFixed(0)} |
-        Off Route: ${s.off.toFixed(1)} mi
-      </div>
-    `;
-  });
+      const driverByVehicle = {};
+      (assignments || []).forEach(row => {
+        const vid = String(
+          row.vehicleId ||
+          row.vehicle?.id ||
+          row.assetId ||
+          row.id ||
+          ''
+        );
+        if (!vid) return;
+        driverByVehicle[vid] =
+          row.driverName ||
+          row.driver?.name ||
+          row.assignedDriverName ||
+          'N/A';
+      });
 
-  document.getElementById('output').innerHTML = html;
-}
-</script>
+      const rows = (vehicles || [])
+        .filter(v => /^T\d+$/i.test(String(v.name || '')))
+        .map(v => {
+          const id = String(v.id);
+          const unit = String(v.name);
+          const gps = gpsMap[id] || {
+            lat: safeNum(v.gps?.latitude, HOME.lat),
+            lon: safeNum(v.gps?.longitude, HOME.lon)
+          };
+
+          const hosData =
+            hosByVehicle[id] ||
+            hosByVehicle[unit] ||
+            {};
+
+          const mpg =
+            mpgMap[id] ||
+            safeNum(v.mpg, null) ||
+            DEFAULT_MPG;
+
+          const fuelPercent = fuelMap[id] ?? 50;
+          const status = statusForTruck(unit, fuelPercent, mpg);
+
+          return {
+            id,
+            unit,
+            unitNum: parseUnitNum(unit),
+            lat: gps.lat,
+            lon: gps.lon,
+            currentLocation: locMap[id] || v.gps?.reverseGeo?.formattedLocation || HOME.text,
+            driver: driverByVehicle[id] || v.staticAssignedDriver?.name || 'N/A',
+            dutyStatus: hosData.dutyStatus || 'N/A',
+            timeInCurrentStatus: hosData.timeInCurrentStatus ?? null,
+            timeUntilBreak: hosData.timeUntilBreak ?? null,
+            driveRemaining: hosData.driveRemaining ?? null,
+            shiftRemaining: hosData.shiftRemaining ?? null,
+            cycleRemaining: hosData.cycleRemaining ?? null,
+            fuelPercent,
+            gallonsLeft: gallonsLeft(unit, fuelPercent),
+            milesDrivenShift: hosData.milesDrivenShift ?? null,
+            mpg: mpg ?? null,
+            speedMph: speedMap[id] ?? null,
+            engineState: engineMap[id] ?? 'N/A',
+            reachMiles: reachMiles(unit, fuelPercent, mpg),
+            status
+          };
+        })
+        .sort((a, b) => a.unitNum - b.unitNum);
+
+      return rows;
+    }
+
+    async function loadBoard() {
+      initMap();
+
+      const vehiclesRes = await j('/api/samsara/vehicles');
+      const liveRes = await j('/api/samsara/live');
+
+      let hosData = [];
+      let assignmentData = [];
+
+      try {
+        const hosRes = await j('/api/samsara/hos');
+        hosData = hosRes.data || hosRes.results || hosRes.rows || (Array.isArray(hosRes) ? hosRes : []);
+      } catch {
+        hosData = [];
+      }
+
+      try {
+        const assignmentsRes = await j('/api/samsara/assignments');
+        assignmentData = assignmentsRes.data || assignmentsRes.results || (Array.isArray(assignmentsRes) ? assignmentsRes : []);
+      } catch {
+        assignmentData = [];
+      }
+
+      boardRows = buildBoardRows(
+        vehiclesRes.data || [],
+        liveRes.data || [],
+        hosData,
+        assignmentData
+      );
+
+      if (!selectedUnit && boardRows.length) {
+        selectedUnit = boardRows[0].unit;
+      }
+
+      renderFleet();
+      renderMap();
+      renderSelectedDetail();
+
+      document.getElementById('lastUpdated').textContent =
+        'Last updated: ' + new Date().toLocaleTimeString();
+    }
+
+    function renderFleet() {
+      const search = document.getElementById('unitSearch').value.trim().toUpperCase();
+      const urgentOnly = document.getElementById('urgentOnly').checked;
+
+      const filtered = boardRows
+        .filter(r => !search || r.unit.includes(search))
+        .filter(r => !urgentOnly || r.status.text === 'FUEL NOW')
+        .sort((a, b) => a.unitNum - b.unitNum);
+
+      const urgent = boardRows.filter(r => r.status.text === 'FUEL NOW').length;
+      const shift = boardRows.filter(r => r.status.text === 'FUEL FOR SHIFT').length;
+      const wait = boardRows.filter(r => r.status.text === 'WAIT').length;
+
+      document.getElementById('fleetSummary').textContent =
+        `Units: ${boardRows.length} | FUEL NOW: ${urgent} | FUEL FOR SHIFT: ${shift} | WAIT: ${wait}`;
+
+      const html = filtered.map(r => `
+        <div class="fleet-item ${r.unit === selectedUnit ? 'active' : ''}" onclick="selectUnit('${r.unit}')">
+          <div class="fleet-title">
+            <span>${r.unit}</span>
+            <span class="${r.status.badge}">${r.status.text}</span>
+          </div>
+          <div class="fleet-sub">${shortLocation(r.currentLocation)}</div>
+          <div class="fleet-sub">
+            Fuel ${fmtPct(r.fuelPercent)} | ${fmtGallons(r.gallonsLeft)} | Reach ${fmtMiles(r.reachMiles)}
+          </div>
+          <div class="fleet-sub">
+            Driver: ${r.driver}
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('fleetList').innerHTML = html || '<div class="panel-body">No matching units.</div>';
+    }
+
+    function selectUnit(unit) {
+      selectedUnit = unit;
+      renderFleet();
+      renderMap();
+      renderSelectedDetail();
+    }
+
+    function unitMarkerColor(row) {
+      if (row.status.text === 'FUEL NOW') return '#dc2626';
+      if (row.status.text === 'FUEL FOR SHIFT') return '#d97706';
+      return '#16a34a';
+    }
+
+    function renderMap(routeCoords = [], recommended = []) {
+      initMap();
+
+      unitsLayer.clearLayers();
+      stopsLayer.clearLayers();
+      routeLayer.clearLayers();
+      selectedLayer.clearLayers();
+
+      const bounds = [];
+
+      boardRows.forEach(r => {
+        const marker = L.circleMarker([r.lat, r.lon], {
+          radius: r.unit === selectedUnit ? 9 : 6,
+          color: unitMarkerColor(r),
+          weight: 2,
+          fillOpacity: 0.9
+        }).bindPopup(`
+          <b>${r.unit}</b><br>
+          ${r.currentLocation}<br>
+          Driver: ${r.driver}<br>
+          Fuel: ${fmtPct(r.fuelPercent)} (${fmtGallons(r.gallonsLeft)})
+        `);
+
+        marker.on('click', () => selectUnit(r.unit));
+        marker.addTo(unitsLayer);
+        bounds.push([r.lat, r.lon]);
+      });
+
+      csvStops.forEach(s => {
+        const m = L.circleMarker([s.lat, s.lon], {
+          radius: 4,
+          color: '#2563eb',
+          weight: 1,
+          fillOpacity: 0.6
+        }).bindPopup(`
+          <b>Love's ${s.store || ''}</b><br>
+          ${s.city || ''}, ${s.state || ''}<br>
+          Price: $${Number(s.price || 0).toFixed(3)}
+        `);
+        m.addTo(stopsLayer);
+      });
+
+      recommended.forEach((s, i) => {
+        const m = L.circleMarker([s.lat, s.lon], {
+          radius: i === 0 ? 8 : 6,
+          color: i === 0 ? '#7c3aed' : '#0ea5e9',
+          weight: 3,
+          fillOpacity: 0.9
+        }).bindPopup(`
+          <b>#${i + 1} Love's ${s.store || ''}</b><br>
+          ${s.city || ''}, ${s.state || ''}<br>
+          Price: $${Number(s.price || 0).toFixed(3)}
+        `);
+        m.addTo(selectedLayer);
+        bounds.push([s.lat, s.lon]);
+      });
+
+      if (routeCoords.length) {
+        const latlngs = routeCoords.map(p => [p[1], p[0]]);
+        L.polyline(latlngs, {
+          color: '#2563eb',
+          weight: 4
+        }).addTo(routeLayer);
+
+        latlngs.forEach(ll => bounds.push(ll));
+      }
+
+      if (bounds.length) {
+        map.fitBounds(bounds, { padding: [30, 30] });
+      } else {
+        map.setView([HOME.lat, HOME.lon], 5);
+      }
+    }
+
+    function renderSelectedDetail(recData = null) {
+      const row = boardRows.find(r => r.unit === selectedUnit);
+      if (!row) {
+        document.getElementById('selectedDetail').innerHTML = 'Select a unit from the fleet list.';
+        return;
+      }
+
+      const eta = recData?.etaHours ?? null;
+
+      document.getElementById('selectedDetail').innerHTML = `
+        <div class="detail-grid">
+          <div class="detail-card detail-wide">
+            <div class="label">Vehicle</div>
+            <div><b>${row.unit}</b></div>
+          </div>
+
+          <div class="detail-card detail-wide">
+            <div class="label">Current Location</div>
+            <div>${row.currentLocation}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Driver</div>
+            <div>${row.driver}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Duty Status</div>
+            <div>${row.dutyStatus}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Time in Current Status</div>
+            <div>${fmtHours(row.timeInCurrentStatus)}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Time Until Break</div>
+            <div>${fmtHours(row.timeUntilBreak)}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Drive Remaining</div>
+            <div>${fmtHours(row.driveRemaining)}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Shift Remaining</div>
+            <div>${fmtHours(row.shiftRemaining)}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Cycle Remaining</div>
+            <div>${fmtHours(row.cycleRemaining)}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Current Fuel</div>
+            <div>${fmtPct(row.fuelPercent)} (${fmtGallons(row.gallonsLeft)})</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Miles Driven in Current Shift</div>
+            <div>${fmtMiles(row.milesDrivenShift)}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">MPG</div>
+            <div>${Number.isFinite(row.mpg) ? row.mpg.toFixed(1) : 'N/A'}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Engine State</div>
+            <div>${row.engineState}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Speed</div>
+            <div>${fmtMiles(row.speedMph)}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Reach</div>
+            <div>${fmtMiles(row.reachMiles)}</div>
+          </div>
+
+          <div class="detail-card">
+            <div class="label">Approx ETA to Destination</div>
+            <div>${fmtEta(eta)}</div>
+          </div>
+        </div>
+        <div class="helper">
+          Click a unit on the map or fleet list, then click <b>Recommend Stops</b>.
+        </div>
+      `;
+    }
+
+    async function loadCsvStops() {
+      const file = document.getElementById('csv').files[0];
+      const status = document.getElementById('csvStatus');
+
+      if (!file) {
+        csvStops = [];
+        status.textContent = 'No CSV selected';
+        renderMap();
+        return false;
+      }
+
+      const text = await file.text();
+      const lines = text.split('\n').filter(Boolean);
+
+      if (lines.length < 2) {
+        csvStops = [];
+        status.textContent = 'CSV appears empty';
+        renderMap();
+        return false;
+      }
+
+      const headers = lines[0].split(',');
+
+      csvStops = lines.slice(1).map(line => {
+        const cols = line.split(',');
+        const row = {};
+        headers.forEach((h, i) => row[h.trim()] = cols[i]);
+
+        return {
+          store: row['Loves Store No.'],
+          city: row['City'],
+          state: row['State'],
+          price: safeNum(row['Best Discounted Price'], null),
+          lat: safeNum(row['Latitude'], null),
+          lon: safeNum(row['Longitude'], null)
+        };
+      }).filter(s => Number.isFinite(s.price) && Number.isFinite(s.lat) && Number.isFinite(s.lon));
+
+      status.textContent = `${file.name} loaded (${csvStops.length} stops)`;
+      renderMap();
+      return csvStops.length > 0;
+    }
+
+    document.getElementById('csv').addEventListener('change', loadCsvStops);
+
+    async function buildRouteForSelected() {
+      const row = boardRows.find(r => r.unit === selectedUnit);
+      if (!row) throw new Error('No unit selected');
+
+      const outbound = document.getElementById('outboundStops').value.split('\n').map(s => s.trim()).filter(Boolean);
+      const reposition = document.getElementById('repositionStops').value.split('\n').map(s => s.trim()).filter(Boolean);
+      const returning = document.getElementById('returnStops').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+      const allStops = [...outbound, ...reposition, ...returning];
+      if (!allStops.length) throw new Error('Enter at least one trip stop');
+
+      const coords = [`${row.lon},${row.lat}`];
+      for (const stop of allStops) {
+        const geo = await geocodeOne(stop);
+        coords.push(`${geo.lon},${geo.lat}`);
+      }
+
+      const routeRes = await j('/api/route?coords=' + encodeURIComponent(coords.join(';')));
+      if (!routeRes.routes || !routeRes.routes[0]) {
+        throw new Error('No route returned');
+      }
+
+      return {
+        routeCoords: routeRes.routes[0].geometry.coordinates,
+        tripMiles: routeRes.routes[0].distance / 1609.34,
+        etaHours: (routeRes.routes[0].duration || 0) / 3600
+      };
+    }
+
+    function recommendStopsForRow(row, routeCoords, tripMiles) {
+      if (!csvStops.length) return [];
+
+      const currentGallons = row.gallonsLeft;
+      const maxReach = Math.min(row.reachMiles, 375);
+      const routeLite = routeCoords.length > 400 ? routeCoords.filter((_, i) => i % 25 === 0) : routeCoords;
+
+      const scored = csvStops.map(s => {
+        let best = 999;
+        let bestIdx = 0;
+
+        for (let i = 0; i < routeLite.length; i++) {
+          const p = routeLite[i];
+          const d = dist(s.lat, s.lon, p[1], p[0]);
+          if (d < best) {
+            best = d;
+            bestIdx = i;
+            if (best < 1) break;
+          }
+        }
+
+        const routeMile = (bestIdx / Math.max(1, routeLite.length - 1)) * tripMiles;
+        const buy = Math.max(0, tank(row.unit) - currentGallons);
+
+        let score = s.price + best * 0.02 + routeMile * 0.001;
+        if (!EXPENSIVE_STATES.has((s.state || '').toUpperCase())) score -= 0.12;
+        if (s.price < 5.20) score -= 0.10;
+        if (s.price < 5.00) score -= 0.15;
+
+        return {
+          ...s,
+          offRoute: best,
+          routeMile,
+          recommendedBuy: buy,
+          estimatedCost: buy * s.price,
+          score
+        };
+      });
+
+      let candidates = scored
+        .filter(s => s.offRoute < 30)
+        .filter(s => s.routeMile <= maxReach)
+        .sort((a, b) => a.score - b.score)
+        .slice(0, 5);
+
+      if (!candidates.length) {
+        candidates = scored
+          .filter(s => s.offRoute < 60)
+          .filter(s => s.routeMile <= maxReach + 50)
+          .sort((a, b) => a.score - b.score)
+          .slice(0, 5);
+      }
+
+      if (!candidates.length) {
+        candidates = scored
+          .sort((a, b) => (a.offRoute + a.price) - (b.offRoute + b.price))
+          .slice(0, 5);
+      }
+
+      return candidates;
+    }
+
+    async function recommendForSelected() {
+      try {
+        await loadCsvStops();
+        const row = boardRows.find(r => r.unit === selectedUnit);
+        if (!row) {
+          document.getElementById('recommendedStops').innerHTML = 'Select a unit first.';
+          return;
+        }
+
+        const routeData = await buildRouteForSelected();
+        const recs = recommendStopsForRow(row, routeData.routeCoords, routeData.tripMiles);
+
+        renderMap(routeData.routeCoords, recs);
+        renderSelectedDetail(routeData);
+
+        if (!recs.length) {
+          document.getElementById('recommendedStops').innerHTML = 'No recommended stops found.';
+          return;
+        }
+
+        document.getElementById('recommendedStops').innerHTML = recs.map((s, i) => `
+          <div class="stop-card">
+            <div><b>#${i + 1} Love's ${s.store || ''}</b></div>
+            <div>${s.city || ''}, ${s.state || ''}</div>
+            <div class="small">Price: $${Number(s.price).toFixed(3)}</div>
+            <div class="small">Route Mile: ${Number(s.routeMile).toFixed(0)} | Off Route: ${Number(s.offRoute).toFixed(1)} mi</div>
+            <div class="small">Buy Gallons: ${fmtGallons(s.recommendedBuy)} | Est. Cost: $${Number(s.estimatedCost).toFixed(2)}</div>
+          </div>
+        `).join('');
+
+      } catch (e) {
+        document.getElementById('recommendedStops').innerHTML = `<div class="stop-card">${e.message}</div>`;
+      }
+    }
+
+    initMap();
+  </script>
 </body>
 </html>
