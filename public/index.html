@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+k<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
@@ -19,7 +19,6 @@
       --red:#dc2626;
       --yellow:#d97706;
       --green:#16a34a;
-      --blue:#2563eb;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
@@ -28,17 +27,25 @@
       display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000
     }
     .topbar h1{margin:0 12px 0 0;font-size:20px}
-    button,select,input,textarea{font:inherit}
+    button,select,input{font:inherit}
     button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
     button:hover{background:#f3f4f6}
     select,input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
-    textarea{width:100%;min-height:60px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;resize:vertical;background:#fff}
-    .layout{display:grid;grid-template-columns:360px 1fr 390px;gap:12px;padding:12px}
+    .layout{display:grid;grid-template-columns:360px 1fr 400px;gap:12px;padding:12px}
     .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
     .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--line);background:#fff}
     .panel-body{padding:12px}
-    #fleetList{max-height:calc(100vh - 150px);overflow:auto}
+    .fleet-section-title{
+      padding:10px 12px;
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted);
+      text-transform:uppercase;
+      border-top:1px solid #eef1f5;
+      background:#fafafa;
+    }
     .fleet-summary{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);background:#fafafa}
+    #fleetList{max-height:calc(100vh - 150px);overflow:auto}
     .fleet-item{padding:10px 12px;border-bottom:1px solid #eef1f5;cursor:pointer}
     .fleet-item:hover{background:#f9fafb}
     .fleet-item.active{background:#eff6ff}
@@ -48,8 +55,8 @@
     .badge-red{background:#fef2f2;color:var(--red)}
     .badge-yellow{background:#fff7ed;color:var(--yellow)}
     .badge-green{background:#f0fdf4;color:var(--green)}
-    #map{width:100%;height:calc(100vh - 260px);min-height:520px}
-    .inputs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    #map{width:100%;height:calc(100vh - 250px);min-height:520px}
+    .route-inputs{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px}
     .dest-row{display:flex;gap:8px;margin-bottom:8px}
     .dest-row input{flex:1}
     .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:13px}
@@ -68,7 +75,6 @@
       .layout{grid-template-columns:1fr}
       #fleetList{max-height:360px}
       #map{height:420px;min-height:420px}
-      .inputs-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -92,26 +98,21 @@
     <div class="panel">
       <h2>Map</h2>
       <div class="panel-body">
-        <div class="inputs-grid">
+        <div class="route-inputs">
           <div>
             <div class="small">Origin</div>
-            <div class="dest-row">
-              <input id="originInput" value="Laredo, TX" />
-              <button onclick="openGoogleMaps(document.getElementById('originInput').value)">Google Maps</button>
-            </div>
+            <input id="originInput" value="Laredo, TX" style="width:100%">
           </div>
           <div>
             <div class="small">Destinations</div>
             <div id="destinationsWrap"></div>
             <button onclick="addDestination()">+ Add Destination</button>
           </div>
+          <div>
+            <input type="file" id="csv" accept=".csv">
+            <div id="csvStatus" class="small" style="margin-top:6px">No CSV selected</div>
+          </div>
         </div>
-
-        <div style="margin-bottom:12px">
-          <input type="file" id="csv" accept=".csv">
-          <div id="csvStatus" class="small" style="margin-top:6px">No CSV selected</div>
-        </div>
-
         <div id="map"></div>
       </div>
     </div>
@@ -132,13 +133,12 @@
     const EXPENSIVE_STATES = new Set(['NY','NJ','CT','MA','CA','PA','WA','OR']);
     const RESERVE_GALLONS = 35;
     const SHIFT_TARGET_MILES = 750;
-    const DEFAULT_MPG = 6.5;
+    const DEFAULT_PLANNING_MPG = 6.5;
 
     let boardRows = [];
     let csvStops = [];
     let selectedUnit = null;
     let map, unitsLayer, stopsLayer, routeLayer, selectedLayer;
-    let destinationCount = 0;
 
     function initMap() {
       if (map) return;
@@ -154,14 +154,10 @@
     }
 
     function addDestination(value = '') {
-      destinationCount += 1;
       const wrap = document.getElementById('destinationsWrap');
       const row = document.createElement('div');
       row.className = 'dest-row';
-      row.innerHTML = `
-        <input class="destinationInput" value="${value.replace(/"/g, '&quot;')}" placeholder="Destination ${destinationCount}">
-        <button onclick="openGoogleMaps(this.parentElement.querySelector('input').value)">Google Maps</button>
-      `;
+      row.innerHTML = `<input class="destinationInput" value="${value.replace(/"/g, '&quot;')}" placeholder="Destination">`;
       wrap.appendChild(row);
     }
 
@@ -169,11 +165,6 @@
       return Array.from(document.querySelectorAll('.destinationInput'))
         .map(x => x.value.trim())
         .filter(Boolean);
-    }
-
-    function openGoogleMaps(text) {
-      if (!text) return;
-      window.open('https://www.google.com/maps/search/' + encodeURIComponent(text), '_blank');
     }
 
     function safeNum(v, fallback = null) {
@@ -192,42 +183,19 @@
     }
 
     function tank(unit) { return unit === 'T169' ? 80 : 120; }
-    function gallonsLeft(unit, fuelPercent) { return tank(unit) * ((safeNum(fuelPercent, 0)) / 100); }
-    function reachMiles(unit, fuelPercent, mpg = DEFAULT_MPG) {
-      return Math.max(0, gallonsLeft(unit, fuelPercent) - RESERVE_GALLONS) * mpg;
-    }
+    function totalReachMiles(gallons, mpg) { return gallons * mpg; }
+    function usableReachMiles(gallons, mpg) { return Math.max(0, gallons - RESERVE_GALLONS) * mpg; }
+
     function shortLocation(text) {
       if (!text) return 'Unknown';
       const parts = String(text).split(',').map(s => s.trim()).filter(Boolean);
       if (parts.length >= 2) return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
       return text;
     }
+
     function parseUnitNum(name) {
       const m = String(name || '').match(/^T(\d+)/i);
       return m ? Number(m[1]) : 999999;
-    }
-    function statusForTruck(unit, fuelPercent, mpg = DEFAULT_MPG) {
-      const reach = reachMiles(unit, fuelPercent, mpg);
-      const needShift = Math.max(0, ((SHIFT_TARGET_MILES / mpg) + RESERVE_GALLONS) - gallonsLeft(unit, fuelPercent));
-      if (gallonsLeft(unit, fuelPercent) <= RESERVE_GALLONS || reach < 75) {
-        return { text: 'FUEL NOW', badge: 'badge badge-red' };
-      }
-      if (needShift > 0) {
-        return { text: 'FUEL FOR SHIFT', badge: 'badge badge-yellow' };
-      }
-      return { text: 'WAIT', badge: 'badge badge-green' };
-    }
-
-    function dist(lat1, lon1, lat2, lon2) {
-      const R = 3959;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(lat1 * Math.PI / 180) *
-        Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) ** 2;
-      return 2 * R * Math.asin(Math.sqrt(a));
     }
 
     function msToHours(ms) {
@@ -269,96 +237,122 @@
       const hos = payload.hos || [];
       const assignments = payload.assignments || [];
 
-      const fuelMap = {}, gpsMap = {}, locMap = {}, speedMap = {}, engineMap = {};
+      const liveById = {};
       live.forEach(x => {
         const id = String(x.id || x.vehicleId || x.vehicle?.id || '');
-        if (!id) return;
-        const fuel = x.fuelPercent?.value ?? x.fuelPercent ?? null;
-        if (fuel != null) fuelMap[id] = safeNum(fuel);
-        const lat = x.gps?.latitude ?? null;
-        const lon = x.gps?.longitude ?? null;
-        if (lat != null && lon != null) gpsMap[id] = { lat: safeNum(lat, HOME.lat), lon: safeNum(lon, HOME.lon) };
-        const loc = x.gps?.reverseGeo?.formattedLocation || x.gps?.address?.name || x.locationText || '';
-        if (loc) locMap[id] = loc;
-        if (x.gps?.speedMilesPerHour != null) speedMap[id] = safeNum(x.gps.speedMilesPerHour);
-        if (x.engineState?.value != null) engineMap[id] = x.engineState.value;
+        if (id) liveById[id] = x;
       });
 
-      const hosByVehicle = {};
-      hos.forEach(row => {
-        const id = String(row.vehicleId || row.assetId || row.id || '');
-        const unit = String(row.vehicleName || row.name || '');
-        const key = id || unit;
-        hosByVehicle[key] = {
-          dutyStatus: row.dutyStatus || row.status || row.currentDutyStatus || row.driverDutyStatus || 'N/A',
-          timeInCurrentStatus:
-            msToHours(jpick(row, ['timeInCurrentStatusMs', 'currentStatusDurationMs'])) ??
-            secToHours(jpick(row, ['timeInCurrentStatusSeconds', 'currentStatusDurationSeconds'])) ??
-            null,
-          timeUntilBreak:
-            msToHours(jpick(row, ['breakTimeRemainingMs'])) ??
-            secToHours(jpick(row, ['breakTimeRemainingSeconds'])) ??
-            null,
-          driveRemaining:
-            msToHours(jpick(row, ['driveTimeRemainingMs', 'driveRemainingMs'])) ??
-            secToHours(jpick(row, ['driveTimeRemainingSeconds', 'driveRemainingSeconds'])) ??
-            null,
-          shiftRemaining:
-            msToHours(jpick(row, ['shiftTimeRemainingMs', 'shiftRemainingMs'])) ??
-            secToHours(jpick(row, ['shiftTimeRemainingSeconds', 'shiftRemainingSeconds'])) ??
-            null,
-          cycleRemaining:
-            msToHours(jpick(row, ['cycleTimeRemainingMs'])) ??
-            secToHours(jpick(row, ['cycleTimeRemainingSeconds'])) ??
-            null,
-          milesDrivenShift:
-            safeNum(jpick(row, ['milesDriven', 'distanceMiles', 'drivingMiles']), null)
-        };
-      });
-
-      const driverByVehicle = {};
+      const driverByVehicleId = {};
       assignments.forEach(row => {
         const vid = String(row.vehicleId || row.vehicle?.id || row.assetId || row.id || '');
         if (!vid) return;
-        driverByVehicle[vid] = row.driverName || row.driver?.name || row.assignedDriverName || 'N/A';
+        driverByVehicleId[vid] =
+          row.driverName ||
+          row.driver?.name ||
+          row.assignedDriverName ||
+          'N/A';
       });
 
-      return vehicles
+      const hosByUnit = {};
+      hos.forEach(row => {
+        const unit = String(row.currentVehicle?.name || '');
+        if (!unit) return;
+
+        hosByUnit[unit] = {
+          driver: row.driver?.name || 'N/A',
+          dutyStatus: row.currentDutyStatus?.hosStatusType || 'N/A',
+          timeInCurrentStatus: null,
+          timeUntilBreak: msToHours(row.clocks?.break?.timeUntilBreakDurationMs),
+          driveRemaining: msToHours(row.clocks?.drive?.driveRemainingDurationMs),
+          shiftRemaining: msToHours(row.clocks?.shift?.shiftRemainingDurationMs),
+          cycleRemaining: msToHours(row.clocks?.cycle?.cycleRemainingDurationMs),
+          milesDrivenShift: null
+        };
+      });
+
+      const rows = vehicles
         .filter(v => /^T\d+$/i.test(String(v.name || '')))
         .map(v => {
           const id = String(v.id);
           const unit = String(v.name);
-          const hosData = hosByVehicle[id] || hosByVehicle[unit] || {};
-          const fuelPercent = fuelMap[id] ?? 50;
-          const mpg = DEFAULT_MPG;
-          const status = statusForTruck(unit, fuelPercent, mpg);
-          const gps = gpsMap[id] || { lat: HOME.lat, lon: HOME.lon };
+          const liveRow = liveById[id] || {};
+
+          const fuelPercent = safeNum(
+            liveRow.fuelPercent?.value ??
+            liveRow.fuelPercent ??
+            null,
+            50
+          );
+
+          const lat = safeNum(
+            liveRow.gps?.latitude ?? v.gps?.latitude ?? null,
+            HOME.lat
+          );
+          const lon = safeNum(
+            liveRow.gps?.longitude ?? v.gps?.longitude ?? null,
+            HOME.lon
+          );
+
+          const currentLocation =
+            liveRow.gps?.reverseGeo?.formattedLocation ||
+            liveRow.gps?.address?.name ||
+            liveRow.locationText ||
+            HOME.text;
+
+          const gallons = tank(unit) * (fuelPercent / 100);
+
+          const actualMpg = safeNum(
+            liveRow.mpg ??
+            liveRow.fuelEconomyMpg ??
+            liveRow.value?.mpg ??
+            null,
+            null
+          );
+
+          const planningMpg = Number.isFinite(actualMpg) ? actualMpg : DEFAULT_PLANNING_MPG;
+
+          const totalReach = totalReachMiles(gallons, planningMpg);
+          const reserveReach = usableReachMiles(gallons, planningMpg);
+
+          const status = gallons <= RESERVE_GALLONS || reserveReach < 75
+            ? { text: 'FUEL NOW', badge: 'badge badge-red' }
+            : (((SHIFT_TARGET_MILES / planningMpg) + RESERVE_GALLONS) - gallons > 0)
+              ? { text: 'FUEL FOR SHIFT', badge: 'badge badge-yellow' }
+              : { text: 'WAIT', badge: 'badge badge-green' };
+
+          const hosRow = hosByUnit[unit] || {};
+
+          const driver = hosRow.driver || driverByVehicleId[id] || 'N/A';
 
           return {
             id,
             unit,
             unitNum: parseUnitNum(unit),
-            lat: gps.lat,
-            lon: gps.lon,
-            currentLocation: locMap[id] || HOME.text,
-            driver: driverByVehicle[id] || v.staticAssignedDriver?.name || 'N/A',
-            dutyStatus: hosData.dutyStatus || 'N/A',
-            timeInCurrentStatus: hosData.timeInCurrentStatus ?? null,
-            timeUntilBreak: hosData.timeUntilBreak ?? null,
-            driveRemaining: hosData.driveRemaining ?? null,
-            shiftRemaining: hosData.shiftRemaining ?? null,
-            cycleRemaining: hosData.cycleRemaining ?? null,
+            lat,
+            lon,
+            currentLocation,
+            driver,
+            dutyStatus: hosRow.dutyStatus || 'N/A',
+            timeInCurrentStatus: hosRow.timeInCurrentStatus ?? null,
+            timeUntilBreak: hosRow.timeUntilBreak ?? null,
+            driveRemaining: hosRow.driveRemaining ?? null,
+            shiftRemaining: hosRow.shiftRemaining ?? null,
+            cycleRemaining: hosRow.cycleRemaining ?? null,
             fuelPercent,
-            gallonsLeft: gallonsLeft(unit, fuelPercent),
-            milesDrivenShift: hosData.milesDrivenShift ?? null,
-            mpg,
-            speedMph: speedMap[id] ?? null,
-            engineState: engineMap[id] ?? 'N/A',
-            reachMiles: reachMiles(unit, fuelPercent, mpg),
-            status
+            gallonsLeft: gallons,
+            milesDrivenShift: hosRow.milesDrivenShift ?? null,
+            actualMpg,
+            planningMpg,
+            totalReach,
+            reserveReach,
+            status,
+            assigned: driver !== 'N/A'
           };
         })
         .sort((a, b) => a.unitNum - b.unitNum);
+
+      return rows;
     }
 
     async function loadBoard() {
@@ -373,6 +367,25 @@
         'Last updated: ' + new Date(payload.refreshedAt || Date.now()).toLocaleTimeString();
     }
 
+    function renderFleetSection(rows, title) {
+      if (!rows.length) return '';
+      return `
+        <div class="fleet-section-title">${title}</div>
+        ${rows.map(r => `
+          <div class="fleet-item ${r.unit === selectedUnit ? 'active' : ''}" onclick="selectUnit('${r.unit}')">
+            <div class="fleet-title">
+              <span>${r.unit}</span>
+              <span class="${r.status.badge}">${r.status.text}</span>
+            </div>
+            <div class="fleet-sub">${shortLocation(r.currentLocation)}</div>
+            <div class="fleet-sub">Fuel ${fmtPct(r.fuelPercent)} | ${fmtGallons(r.gallonsLeft)}</div>
+            <div class="fleet-sub">Total Reach ${fmtMiles(r.totalReach)} | Reach Before Reserve ${fmtMiles(r.reserveReach)}</div>
+            <div class="fleet-sub">Driver: ${r.driver}</div>
+          </div>
+        `).join('')}
+      `;
+    }
+
     function renderFleet() {
       const search = document.getElementById('unitSearch').value.trim().toUpperCase();
       const urgentOnly = document.getElementById('urgentOnly').checked;
@@ -382,6 +395,9 @@
         .filter(r => !urgentOnly || r.status.text === 'FUEL NOW')
         .sort((a, b) => a.unitNum - b.unitNum);
 
+      const assigned = filtered.filter(r => r.assigned);
+      const unassigned = filtered.filter(r => !r.assigned);
+
       const urgent = boardRows.filter(r => r.status.text === 'FUEL NOW').length;
       const shift = boardRows.filter(r => r.status.text === 'FUEL FOR SHIFT').length;
       const wait = boardRows.filter(r => r.status.text === 'WAIT').length;
@@ -389,17 +405,9 @@
       document.getElementById('fleetSummary').textContent =
         `Units: ${boardRows.length} | FUEL NOW: ${urgent} | FUEL FOR SHIFT: ${shift} | WAIT: ${wait}`;
 
-      document.getElementById('fleetList').innerHTML = filtered.map(r => `
-        <div class="fleet-item ${r.unit === selectedUnit ? 'active' : ''}" onclick="selectUnit('${r.unit}')">
-          <div class="fleet-title">
-            <span>${r.unit}</span>
-            <span class="${r.status.badge}">${r.status.text}</span>
-          </div>
-          <div class="fleet-sub">${shortLocation(r.currentLocation)}</div>
-          <div class="fleet-sub">Fuel ${fmtPct(r.fuelPercent)} | ${fmtGallons(r.gallonsLeft)} | Reach ${fmtMiles(r.reachMiles)}</div>
-          <div class="fleet-sub">Driver: ${r.driver}</div>
-        </div>
-      `).join('') || '<div class="panel-body">No matching units.</div>';
+      document.getElementById('fleetList').innerHTML =
+        renderFleetSection(assigned, 'Assigned / Working') +
+        renderFleetSection(unassigned, 'Unassigned Vehicles');
     }
 
     function selectUnit(unit) {
@@ -425,22 +433,33 @@
           color,
           weight: 2,
           fillOpacity: 0.9
-        }).bindTooltip(r.unit, { permanent: true, direction: 'top', offset: [0, -8] })
-          .bindPopup(`<b>${r.unit}</b><br>${r.currentLocation}<br>Driver: ${r.driver}<br>Fuel: ${fmtPct(r.fuelPercent)} (${fmtGallons(r.gallonsLeft)})`);
+        })
+        .bindTooltip(r.unit, { permanent: true, direction: 'top', offset: [0, -8] })
+        .bindPopup(`
+          <b>${r.unit}</b><br>
+          ${r.currentLocation}<br>
+          Driver: ${r.driver}<br>
+          Fuel: ${fmtPct(r.fuelPercent)} (${fmtGallons(r.gallonsLeft)})<br>
+          Total Reach: ${fmtMiles(r.totalReach)}<br>
+          Reach Before Reserve: ${fmtMiles(r.reserveReach)}
+        `);
 
         marker.on('click', () => selectUnit(r.unit));
         marker.addTo(unitsLayer);
         bounds.push([r.lat, r.lon]);
       });
 
-      csvStops.slice(0, 150).forEach(s => {
+      csvStops.slice(0, 250).forEach(s => {
         L.circleMarker([s.lat, s.lon], {
           radius: 4,
           color: '#2563eb',
           weight: 1,
           fillOpacity: 0.55
-        }).bindPopup(`<b>Love's ${s.store || ''}</b><br>${s.city || ''}, ${s.state || ''}<br>Price: $${Number(s.price || 0).toFixed(3)}`)
-          .addTo(stopsLayer);
+        }).bindPopup(`
+          <b>Love's ${s.store || ''}</b><br>
+          ${s.city || ''}, ${s.state || ''}<br>
+          Price: $${Number(s.price || 0).toFixed(3)}
+        `).addTo(stopsLayer);
       });
 
       recommended.forEach((s, i) => {
@@ -449,8 +468,11 @@
           color: i === 0 ? '#7c3aed' : '#0ea5e9',
           weight: 3,
           fillOpacity: 0.9
-        }).bindPopup(`<b>#${i + 1} Love's ${s.store || ''}</b><br>${s.city || ''}, ${s.state || ''}<br>Price: $${Number(s.price || 0).toFixed(3)}`)
-          .addTo(selectedLayer);
+        }).bindPopup(`
+          <b>#${i + 1} Love's ${s.store || ''}</b><br>
+          ${s.city || ''}, ${s.state || ''}<br>
+          Price: $${Number(s.price || 0).toFixed(3)}
+        `).addTo(selectedLayer);
         bounds.push([s.lat, s.lon]);
       });
 
@@ -484,10 +506,11 @@
           <div class="detail-card"><div class="label">Cycle Remaining</div><div>${fmtHours(row.cycleRemaining)}</div></div>
           <div class="detail-card"><div class="label">Current Fuel</div><div>${fmtPct(row.fuelPercent)} (${fmtGallons(row.gallonsLeft)})</div></div>
           <div class="detail-card"><div class="label">Miles Driven in Current Shift</div><div>${fmtMiles(row.milesDrivenShift)}</div></div>
-          <div class="detail-card"><div class="label">MPG</div><div>${Number.isFinite(row.mpg) ? row.mpg.toFixed(1) : 'N/A'}</div></div>
-          <div class="detail-card"><div class="label">Engine State</div><div>${row.engineState}</div></div>
-          <div class="detail-card"><div class="label">Speed</div><div>${fmtMiles(row.speedMph)}</div></div>
-          <div class="detail-card"><div class="label">Approx ETA</div><div>${routeData ? fmtEta(routeData.etaHours) : 'N/A'}</div></div>
+          <div class="detail-card"><div class="label">Actual MPG</div><div>${Number.isFinite(row.actualMpg) ? row.actualMpg.toFixed(1) : 'N/A'}</div></div>
+          <div class="detail-card"><div class="label">Planning MPG</div><div>${row.planningMpg.toFixed(1)}</div></div>
+          <div class="detail-card"><div class="label">Total Reach</div><div>${fmtMiles(row.totalReach)}</div></div>
+          <div class="detail-card"><div class="label">Reach Before Reserve</div><div>${fmtMiles(row.reserveReach)}</div></div>
+          <div class="detail-card detail-wide"><div class="label">Approx ETA</div><div>${routeData ? fmtEta(routeData.etaHours) : 'N/A'}</div></div>
         </div>
       `;
     }
@@ -521,7 +544,7 @@
       }).filter(s => Number.isFinite(s.price) && Number.isFinite(s.lat) && Number.isFinite(s.lon));
 
       document.getElementById('csvStatus').textContent =
-        `${file.name} loaded (${csvStops.length} stops shown partially on map)`;
+        `${file.name} loaded (${csvStops.length} stops)`;
       renderMap();
       return csvStops.length > 0;
     }
@@ -557,7 +580,7 @@
     function recommendStopsForRow(row, routeCoords, tripMiles) {
       if (!csvStops.length) return [];
       const currentGallons = row.gallonsLeft;
-      const maxReach = Math.min(row.reachMiles, 375);
+      const maxReach = Math.min(row.reserveReach, 375);
       const routeLite = routeCoords.length > 400 ? routeCoords.filter((_, i) => i % 25 === 0) : routeCoords;
 
       const scored = csvStops.map(s => {
@@ -566,7 +589,18 @@
 
         for (let i = 0; i < routeLite.length; i++) {
           const p = routeLite[i];
-          const d = dist(s.lat, s.lon, p[1], p[0]);
+          const d = (function(lat1, lon1, lat2, lon2){
+            const R = 3959;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a =
+              Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * Math.PI / 180) *
+              Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
+            return 2 * R * Math.asin(Math.sqrt(a));
+          })(s.lat, s.lon, p[1], p[0]);
+
           if (d < best) {
             best = d;
             bestIdx = i;

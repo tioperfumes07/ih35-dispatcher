@@ -92,7 +92,6 @@ app.get('/api/samsara/live', async (_req, res) => {
 app.get('/api/samsara/hos', async (_req, res) => {
   const tries = [
     'https://api.samsara.com/fleet/hos/clocks',
-    'https://api.samsara.com/fleet/hos/logs',
     'https://api.samsara.com/fleet/drivers/hos/clocks'
   ];
 
@@ -128,20 +127,20 @@ app.get('/api/samsara/assignments', async (_req, res) => {
 
 app.get('/api/board', async (_req, res) => {
   try {
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
+    const endTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
+
+    const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
+    assignmentsUrl.searchParams.set('filterBy', 'vehicles');
+    assignmentsUrl.searchParams.set('startTime', startTime);
+    assignmentsUrl.searchParams.set('endTime', endTime);
+
     const [vehicles, live, hos, assignments] = await Promise.all([
       fetchJson('https://api.samsara.com/fleet/vehicles', { headers: authHeaders() }).catch(() => ({ data: [] })),
       fetchJson('https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates', { headers: authHeaders() }).catch(() => ({ data: [] })),
       fetchJson('https://api.samsara.com/fleet/hos/clocks', { headers: authHeaders() }).catch(() => ({ data: [] })),
-      (async () => {
-        const now = new Date();
-        const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
-        const endTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
-        const url = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
-        url.searchParams.set('filterBy', 'vehicles');
-        url.searchParams.set('startTime', startTime);
-        url.searchParams.set('endTime', endTime);
-        return fetchJson(url.toString(), { headers: authHeaders() }).catch(() => ({ data: [] }));
-      })()
+      fetchJson(assignmentsUrl.toString(), { headers: authHeaders() }).catch(() => ({ data: [] }))
     ]);
 
     res.json({
@@ -176,7 +175,14 @@ app.get('/api/geocode', async (req, res) => {
       'houston, tx': [{ lat: 29.7604, lon: -95.3698, name: 'Houston, TX' }],
       'houston tx': [{ lat: 29.7604, lon: -95.3698, name: 'Houston, TX' }],
       'chicago, il': [{ lat: 41.8781, lon: -87.6298, name: 'Chicago, IL' }],
-      'chicago il': [{ lat: 41.8781, lon: -87.6298, name: 'Chicago, IL' }]
+      'chicago il': [{ lat: 41.8781, lon: -87.6298, name: 'Chicago, IL' }],
+      'memphis, tn': [{ lat: 35.1495, lon: -90.0490, name: 'Memphis, TN' }],
+      'memphis tn': [{ lat: 35.1495, lon: -90.0490, name: 'Memphis, TN' }],
+      'st. louis, mo': [{ lat: 38.6270, lon: -90.1994, name: 'St. Louis, MO' }],
+      'st louis, mo': [{ lat: 38.6270, lon: -90.1994, name: 'St. Louis, MO' }],
+      'st louis mo': [{ lat: 38.6270, lon: -90.1994, name: 'St. Louis, MO' }],
+      'joliet, il': [{ lat: 41.5250, lon: -88.0817, name: 'Joliet, IL' }],
+      'joliet il': [{ lat: 41.5250, lon: -88.0817, name: 'Joliet, IL' }]
     };
 
     if (known[key]) return res.json(known[key]);
