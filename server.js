@@ -1,4 +1,4 @@
-import express from 'express';
+Kimport express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3400;
 const TOKEN = process.env.SAMSARA_API_TOKEN || '';
+const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY || '';
 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
@@ -50,6 +51,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     hasToken: !!TOKEN,
+    hasGeoapifyKey: !!GEOAPIFY_API_KEY,
     serverTime: new Date().toISOString()
   });
 });
@@ -165,29 +167,22 @@ app.get('/api/geocode', async (req, res) => {
     const q = (req.query.q || '').toString().trim();
     if (!q) return res.json([]);
 
-    const key = q.toLowerCase().trim();
+    if (GEOAPIFY_API_KEY) {
+      const url = new URL('https://api.geoapify.com/v1/geocode/search');
+      url.searchParams.set('text', q);
+      url.searchParams.set('filter', 'countrycode:us');
+      url.searchParams.set('limit', '8');
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
 
-    const known = {
-      'laredo, tx': [{ lat: 27.5306, lon: -99.4803, name: 'Laredo, TX' }],
-      'laredo tx': [{ lat: 27.5306, lon: -99.4803, name: 'Laredo, TX' }],
-      'san antonio, tx': [{ lat: 29.4241, lon: -98.4936, name: 'San Antonio, TX' }],
-      'san antonio tx': [{ lat: 29.4241, lon: -98.4936, name: 'San Antonio, TX' }],
-      'dallas, tx': [{ lat: 32.7767, lon: -96.7970, name: 'Dallas, TX' }],
-      'dallas tx': [{ lat: 32.7767, lon: -96.7970, name: 'Dallas, TX' }],
-      'houston, tx': [{ lat: 29.7604, lon: -95.3698, name: 'Houston, TX' }],
-      'houston tx': [{ lat: 29.7604, lon: -95.3698, name: 'Houston, TX' }],
-      'chicago, il': [{ lat: 41.8781, lon: -87.6298, name: 'Chicago, IL' }],
-      'chicago il': [{ lat: 41.8781, lon: -87.6298, name: 'Chicago, IL' }],
-      'memphis, tn': [{ lat: 35.1495, lon: -90.0490, name: 'Memphis, TN' }],
-      'memphis tn': [{ lat: 35.1495, lon: -90.0490, name: 'Memphis, TN' }],
-      'st. louis, mo': [{ lat: 38.6270, lon: -90.1994, name: 'St. Louis, MO' }],
-      'st louis, mo': [{ lat: 38.6270, lon: -90.1994, name: 'St. Louis, MO' }],
-      'st louis mo': [{ lat: 38.6270, lon: -90.1994, name: 'St. Louis, MO' }],
-      'joliet, il': [{ lat: 41.5250, lon: -88.0817, name: 'Joliet, IL' }],
-      'joliet il': [{ lat: 41.5250, lon: -88.0817, name: 'Joliet, IL' }]
-    };
-
-    if (known[key]) return res.json(known[key]);
+      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
+      const results = (data.results || []).map(x => ({
+        lat: Number(x.lat),
+        lon: Number(x.lon),
+        name: x.formatted || q
+      }));
+      return res.json(results);
+    }
 
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
 
@@ -199,15 +194,11 @@ app.get('/api/geocode', async (req, res) => {
     });
 
     const raw = await response.text();
-
-    let data;
+    let data = [];
     try {
       data = JSON.parse(raw);
     } catch {
-      return res.status(502).json({
-        error: 'Geocoder returned non-JSON response',
-        details: raw.slice(0, 200)
-      });
+      return res.json([]);
     }
 
     const result = (Array.isArray(data) ? data : []).map(x => ({
@@ -227,20 +218,20 @@ app.get('/api/autocomplete', async (req, res) => {
     const q = (req.query.q || '').toString().trim();
     if (!q || q.length < 2) return res.json([]);
 
-    const seed = [
-      'Laredo, TX',
-      'San Antonio, TX',
-      'Dallas, TX',
-      'Houston, TX',
-      'Chicago, IL',
-      'Memphis, TN',
-      'St. Louis, MO',
-      'Joliet, IL'
-    ];
+    if (GEOAPIFY_API_KEY) {
+      const url = new URL('https://api.geoapify.com/v1/geocode/autocomplete');
+      url.searchParams.set('text', q);
+      url.searchParams.set('filter', 'countrycode:us');
+      url.searchParams.set('limit', '10');
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
 
-    const localMatches = seed
-      .filter(x => x.toLowerCase().includes(q.toLowerCase()))
-      .map(name => ({ name }));
+      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
+      const results = (data.results || []).map(x => ({
+        name: x.formatted || x.address_line1 || x.city || q
+      }));
+      return res.json(results);
+    }
 
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
 
@@ -252,27 +243,18 @@ app.get('/api/autocomplete', async (req, res) => {
     });
 
     const raw = await response.text();
-
     let data = [];
     try {
       data = JSON.parse(raw);
     } catch {
-      return res.json(localMatches);
+      return res.json([]);
     }
 
-    const remoteMatches = (Array.isArray(data) ? data : []).map(x => ({
+    const results = (Array.isArray(data) ? data : []).map(x => ({
       name: x.display_name
     }));
 
-    const seen = new Set();
-    const merged = [...localMatches, ...remoteMatches].filter(x => {
-      const key = x.name.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    res.json(merged.slice(0, 12));
+    res.json(results);
   } catch {
     res.json([]);
   }
