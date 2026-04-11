@@ -165,6 +165,7 @@
     const RESERVE_GALLONS = 35;
     const SHIFT_TARGET_MILES = 750;
     const DEFAULT_PLANNING_MPG = 6.5;
+    const PERSONAL_CONVEYANCE_MILES = 45;
 
     let boardRows = [];
     let csvStops = [];
@@ -503,7 +504,7 @@
       renderSelectedDetail();
     }
 
-    function renderMap(routeCoords = [], recommended = []) {
+    function renderMap(routeCoords = [], recommended = [], visibleStops = []) {
       initMap();
       unitsLayer.clearLayers();
       stopsLayer.clearLayers();
@@ -535,7 +536,7 @@
         bounds.push([r.lat, r.lon]);
       });
 
-      csvStops.slice(0, 250).forEach(s => {
+      visibleStops.forEach(s => {
         L.circleMarker([s.lat, s.lon], {
           radius: 4,
           color: '#2563eb',
@@ -544,8 +545,10 @@
         }).bindPopup(`
           <b>Love's ${s.store || ''}</b><br>
           ${s.city || ''}, ${s.state || ''}<br>
-          Price: $${Number(s.price || 0).toFixed(3)}
+          Price: $${Number(s.price || 0).toFixed(3)}<br>
+          Scope Mile: ${Number(s.routeMile || 0).toFixed(0)}
         `).addTo(stopsLayer);
+        bounds.push([s.lat, s.lon]);
       });
 
       recommended.forEach((s, i) => {
@@ -553,11 +556,13 @@
           radius: i === 0 ? 8 : 6,
           color: i === 0 ? '#7c3aed' : '#0ea5e9',
           weight: 3,
-          fillOpacity: 0.9
+          fillOpacity: 0.95
         }).bindPopup(`
           <b>#${i + 1} Love's ${s.store || ''}</b><br>
           ${s.city || ''}, ${s.state || ''}<br>
-          Price: $${Number(s.price || 0).toFixed(3)}
+          Price: $${Number(s.price || 0).toFixed(3)}<br>
+          Route Mile: ${Number(s.routeMile || 0).toFixed(0)}<br>
+          Off Route: ${Number(s.offRoute || 0).toFixed(1)} mi
         `).addTo(selectedLayer);
         bounds.push([s.lat, s.lon]);
       });
@@ -702,13 +707,17 @@
       return 2 * R * Math.asin(Math.sqrt(a));
     }
 
-    function recommendStopsForRow(row, routeCoords, tripMiles) {
-      if (!csvStops.length) return [];
+    function practicalScopeMiles(row) {
+      const hosMiles = row.driveRemaining != null ? (row.driveRemaining * 55) : 375;
+      return Math.max(0, Math.min(row.reserveReach, hosMiles) + PERSONAL_CONVEYANCE_MILES);
+    }
+
+    function scoreStopsForRow(row, routeCoords, tripMiles) {
       const currentGallons = row.gallonsLeft;
-      const maxReach = Math.min(row.reserveReach, 375);
+      const scopeMiles = practicalScopeMiles(row);
       const routeLite = routeCoords.length > 400 ? routeCoords.filter((_, i) => i % 25 === 0) : routeCoords;
 
-      const scored = csvStops.map(s => {
+      return csvStops.map(s => {
         let best = 999;
         let bestIdx = 0;
 
@@ -734,25 +743,34 @@
         if (row.timeUntilBreak != null && row.timeUntilBreak <= 1.5 && routeMile < 90) score -= 0.25;
         if (row.status.text === 'FUEL NOW' && routeMile < 100) score -= 0.20;
 
-        return { ...s, offRoute: best, routeMile, recommendedBuy: buy, estimatedCost: buy * s.price, score };
+        return {
+          ...s,
+          offRoute: best,
+          routeMile,
+          recommendedBuy: buy,
+          estimatedCost: buy * s.price,
+          score,
+          inScope: routeMile <= scopeMiles && best <= 60
+        };
       });
+    }
 
-      let candidates = scored
+    function recommendStopsForRow(row, scoredStops) {
+      let candidates = scoredStops
+        .filter(s => s.inScope)
         .filter(s => s.offRoute < 30)
-        .filter(s => s.routeMile <= maxReach)
         .sort((a, b) => a.score - b.score)
         .slice(0, 8);
 
       if (!candidates.length) {
-        candidates = scored
-          .filter(s => s.offRoute < 60)
-          .filter(s => s.routeMile <= maxReach + 50)
+        candidates = scoredStops
+          .filter(s => s.inScope)
           .sort((a, b) => a.score - b.score)
           .slice(0, 8);
       }
 
       if (!candidates.length) {
-        candidates = scored
+        candidates = scoredStops
           .sort((a, b) => (a.offRoute + a.price) - (b.offRoute + b.price))
           .slice(0, 8);
       }
@@ -770,17 +788,25 @@
         }
 
         const routeData = await buildRouteForSelected();
-        const recs = recommendStopsForRow(row, routeData.routeCoords, routeData.tripMiles);
+        const scoredStops = scoreStopsForRow(row, routeData.routeCoords, routeData.tripMiles);
+        const recs = recommendStopsForRow(row, scoredStops);
+        const visibleStops = scoredStops
+          .filter(s => s.inScope)
+          .sort((a, b) => a.routeMile - b.routeMile)
+          .slice(0, 120);
 
-        renderMap(routeData.routeCoords, recs);
+        renderMap(routeData.routeCoords, recs, visibleStops);
         renderSelectedDetail(routeData);
 
         const decision = decisionSummary(row);
+        const scopeMiles = practicalScopeMiles(row);
 
         document.getElementById('recommendedStops').innerHTML = recs.length ? `
           <div class="stop-card">
             <div><b>Dispatcher Action:</b> ${decision.action}</div>
             <div class="small">${decision.reason}</div>
+            <div class="small">Visible Love's stops on map: ${visibleStops.length}</div>
+            <div class="small">Practical scope: ${Math.round(scopeMiles)} miles (includes personal conveyance buffer)</div>
           </div>
           ${recs.map((s, i) => `
             <div class="stop-card">
@@ -795,31 +821,6 @@
       } catch (e) {
         document.getElementById('recommendedStops').innerHTML = `<div class="stop-card">${e.message}</div>`;
       }
-    }
-
-    function decisionSummary(row) {
-      if (!row) return { action: 'N/A', reason: '' };
-
-      if (row.driveRemaining != null && row.driveRemaining < 2) {
-        return { action: 'STOP NOW', reason: 'Drive remaining is under 2 hours' };
-      }
-
-      if (row.timeUntilBreak != null && row.timeUntilBreak <= 1.5) {
-        if (row.status.text === 'FUEL NOW' || row.status.text === 'FUEL FOR SHIFT') {
-          return { action: 'FUEL AT BREAK', reason: 'Break is due soon and fuel is needed' };
-        }
-        return { action: 'BREAK SOON', reason: 'Break is due soon' };
-      }
-
-      if (row.status.text === 'FUEL NOW') {
-        return { action: 'FUEL NOW', reason: 'Fuel is below reserve or reach before reserve is low' };
-      }
-
-      if (row.status.text === 'FUEL FOR SHIFT') {
-        return { action: 'FUEL FOR SHIFT', reason: 'Fuel is not enough for the planning shift' };
-      }
-
-      return { action: 'WAIT', reason: 'Fuel and HOS are okay for now' };
     }
 
     wireAutocomplete(document.getElementById('originInput'), document.getElementById('originAuto'));
