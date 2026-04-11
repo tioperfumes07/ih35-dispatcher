@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -12,7 +13,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3400;
 const TOKEN = process.env.SAMSARA_API_TOKEN || '';
-const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY || '';
+const DATA_DIR = path.join(__dirname, 'data');
+const MAINT_FILE = path.join(DATA_DIR, 'maintenance.json');
 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
@@ -47,21 +49,261 @@ async function fetchJson(url, options = {}) {
   return data;
 }
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    ok: true,
-    hasToken: !!TOKEN,
-    hasGeoapifyKey: !!GEOAPIFY_API_KEY,
-    serverTime: new Date().toISOString()
-  });
-});
+function ensureDataFile() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(MAINT_FILE)) {
+    fs.writeFileSync(
+      MAINT_FILE,
+      JSON.stringify(
+        {
+          currentMileage: {},
+          records: [],
+          unitOverrides: {}
+        },
+        null,
+        2
+      )
+    );
+  }
+}
 
-app.get('/api/samsara/vehicles', async (_req, res) => {
+function readMaint() {
+  ensureDataFile();
+  return JSON.parse(fs.readFileSync(MAINT_FILE, 'utf8'));
+}
+
+function writeMaint(data) {
+  ensureDataFile();
+  fs.writeFileSync(MAINT_FILE, JSON.stringify(data, null, 2));
+}
+
+function safeNum(v, fallback = null) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function parseUnitNumber(name) {
+  const m = String(name || '').match(/^T(\d+)$/i);
+  return m ? Number(m[1]) : null;
+}
+
+function isTrackedAsset(v) {
+  const unitNum = parseUnitNumber(v.name);
+  const inTruckRange = unitNum !== null && unitNum >= 120 && unitNum <= 177;
+
+  const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
+  const reeferLike =
+    text.includes('reefer') ||
+    text.includes('utility 3000r') ||
+    text.includes('thermo king') ||
+    text.includes('carrier');
+  const flatbedLike =
+    text.includes('flatbed') ||
+    text.includes('step deck') ||
+    text.includes('drop deck');
+
+  return inTruckRange || reeferLike || flatbedLike;
+}
+
+function normalizeUnitType(v) {
+  const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
+  if (
+    text.includes('reefer') ||
+    text.includes('utility 3000r') ||
+    text.includes('thermo king') ||
+    text.includes('carrier')
+  ) return 'reefer';
+  if (
+    text.includes('flatbed') ||
+    text.includes('step deck') ||
+    text.includes('drop deck')
+  ) return 'flatbed';
+  return 'tractor';
+}
+
+function defaultRulesForVehicle(v) {
+  const make = String(v.make || '').toUpperCase();
+  const type = normalizeUnitType(v);
+
+  const tractorBase = [
+    { serviceType: 'PM Service', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Oil Change', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Lubrication', intervalMiles: 15000, intervalDays: 60 },
+    { serviceType: 'Air Dryer Cartridge', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Power Steering Service', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Differential Service', intervalMiles: 250000, intervalDays: 365 },
+    { serviceType: 'Coolant Filter', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Air Filters', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Second Fuel Filter', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Valve Adjustment', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'DPF Burn Check', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'DPF Ash Clean', intervalMiles: 250000, intervalDays: 365 },
+    { serviceType: 'Annual Inspection', intervalMiles: null, intervalDays: 365 },
+    { serviceType: 'Brakes', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Tires', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Repair', intervalMiles: null, intervalDays: null }
+  ];
+
+  const reeferBase = [
+    { serviceType: 'Reefer PM', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Reefer Oil Service', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Reefer Fuel Filter', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Reefer Air Filter', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Tires', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Brakes', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Annual Inspection', intervalMiles: null, intervalDays: 365 },
+    { serviceType: 'Repair', intervalMiles: null, intervalDays: null }
+  ];
+
+  const flatbedBase = [
+    { serviceType: 'Trailer PM', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Lubrication', intervalMiles: null, intervalDays: 90 },
+    { serviceType: 'Tires', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Brakes', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Annual Inspection', intervalMiles: null, intervalDays: 365 },
+    { serviceType: 'Repair', intervalMiles: null, intervalDays: null }
+  ];
+
+  if (type === 'reefer') return reeferBase;
+  if (type === 'flatbed') return flatbedBase;
+
+  if (make.includes('MACK') || make.includes('VOLVO')) {
+    return tractorBase.map(x => {
+      if (x.serviceType === 'Differential Service') return { ...x, intervalMiles: 250000 };
+      if (x.serviceType === 'DPF Ash Clean') return { ...x, intervalMiles: 250000 };
+      return x;
+    });
+  }
+
+  if (make.includes('PETERBILT')) {
+    return tractorBase.map(x => {
+      if (x.serviceType === 'Air Dryer Cartridge') return { ...x, intervalMiles: 150000, intervalDays: 365 };
+      if (x.serviceType === 'DPF Ash Clean') return { ...x, intervalMiles: 250000 };
+      return x;
+    });
+  }
+
+  if (
+    make.includes('FREIGHTLINER') ||
+    make.includes('INTERNATIONAL') ||
+    make.includes('KENWORTH')
+  ) {
+    return tractorBase.map(x => {
+      if (x.serviceType === 'DPF Ash Clean') return { ...x, intervalMiles: 250000 };
+      return x;
+    });
+  }
+
+  return tractorBase;
+}
+
+function addDays(dateStr, days) {
+  if (!dateStr || !days) return null;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + Number(days));
+  return d.toISOString().slice(0, 10);
+}
+
+function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  let milesState = 'current';
+  if (nextDueMiles != null && currentMileage != null) {
+    const diff = nextDueMiles - currentMileage;
+    if (diff < 0) milesState = 'past due';
+    else if (diff <= 1000) milesState = 'due soon';
+  }
+
+  let dateState = 'current';
+  if (nextDueDate) {
+    if (nextDueDate < today) dateState = 'past due';
+    else {
+      const d1 = new Date(today);
+      const d2 = new Date(nextDueDate);
+      const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 7) dateState = 'due soon';
+    }
+  }
+
+  const states = [milesState, dateState];
+  if (states.includes('past due')) return 'past due';
+  if (states.includes('due soon')) return 'due soon';
+  return 'current';
+}
+
+function buildDashboardRows(vehicles, maintStore) {
+  const records = maintStore.records || [];
+  const currentMileage = maintStore.currentMileage || {};
+  const unitOverrides = maintStore.unitOverrides || {};
+
+  return vehicles.map(v => {
+    const unit = v.name;
+    const rules = unitOverrides[unit]?.rules || defaultRulesForVehicle(v);
+
+    const unitRecords = records.filter(r => r.unit === unit);
+
+    const rows = rules.map(rule => {
+      const sameType = unitRecords
+        .filter(r => r.serviceType === rule.serviceType)
+        .sort((a, b) => {
+          const da = `${a.serviceDate || ''} ${a.serviceMileage || ''}`;
+          const db = `${b.serviceDate || ''} ${b.serviceMileage || ''}`;
+          return da < db ? 1 : -1;
+        });
+
+      const last = sameType[0] || null;
+      const currentMiles = safeNum(currentMileage[unit], null);
+      const lastMiles = last ? safeNum(last.serviceMileage, null) : null;
+      const nextDueMiles =
+        last && rule.intervalMiles != null && lastMiles != null
+          ? lastMiles + Number(rule.intervalMiles)
+          : null;
+      const nextDueDate =
+        last && rule.intervalDays != null && last.serviceDate
+          ? addDays(last.serviceDate, rule.intervalDays)
+          : null;
+
+      return {
+        unit,
+        make: v.make || '',
+        model: v.model || '',
+        year: v.year || '',
+        vin: v.vin || '',
+        unitType: normalizeUnitType(v),
+        serviceType: rule.serviceType,
+        intervalMiles: rule.intervalMiles,
+        intervalDays: rule.intervalDays,
+        currentMileage: currentMiles,
+        lastServiceDate: last?.serviceDate || '',
+        lastServiceMileage: last?.serviceMileage ?? '',
+        nextDueMileage: nextDueMiles,
+        nextDueDate,
+        vendor: last?.vendor || '',
+        cost: last?.cost ?? '',
+        notes: last?.notes || '',
+        status: calcStatus(nextDueMiles, nextDueDate, currentMiles)
+      };
+    });
+
+    return rows;
+  }).flat();
+}
+
+app.get('/api/maintenance/vehicles', async (_req, res) => {
   try {
     const data = await fetchJson('https://api.samsara.com/fleet/vehicles', {
       headers: authHeaders()
     });
-    res.json(data);
+    const tracked = (data.data || []).filter(isTrackedAsset).sort((a, b) => {
+      const ua = parseUnitNumber(a.name);
+      const ub = parseUnitNumber(b.name);
+      if (ua == null && ub == null) return String(a.name).localeCompare(String(b.name));
+      if (ua == null) return 1;
+      if (ub == null) return -1;
+      return ua - ub;
+    });
+    res.json({ data: tracked });
   } catch (error) {
     res.status(error.status || 500).json({
       error: error.message,
@@ -70,215 +312,85 @@ app.get('/api/samsara/vehicles', async (_req, res) => {
   }
 });
 
-app.get('/api/samsara/live', async (_req, res) => {
+app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
-    const data = await fetchJson(
-      'https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates',
-      { headers: authHeaders() }
-    );
-    res.json(data);
-  } catch {
-    try {
-      const data = await fetchJson('https://api.samsara.com/fleet/vehicles', {
-        headers: authHeaders()
-      });
-      res.json(data);
-    } catch (error) {
-      res.status(error.status || 500).json({
-        error: error.message,
-        details: error.details || null
-      });
-    }
-  }
-});
-
-app.get('/api/samsara/hos', async (_req, res) => {
-  const tries = [
-    'https://api.samsara.com/fleet/hos/clocks',
-    'https://api.samsara.com/fleet/drivers/hos/clocks'
-  ];
-
-  for (const url of tries) {
-    try {
-      const data = await fetchJson(url, { headers: authHeaders() });
-      return res.json(data);
-    } catch {}
-  }
-
-  res.json({ data: [] });
-});
-
-app.get('/api/samsara/assignments', async (_req, res) => {
-  try {
-    const now = new Date();
-    const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
-    const endTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
-
-    const url = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
-    url.searchParams.set('filterBy', 'vehicles');
-    url.searchParams.set('startTime', startTime);
-    url.searchParams.set('endTime', endTime);
-
-    const data = await fetchJson(url.toString(), {
+    const vehiclesRes = await fetchJson('https://api.samsara.com/fleet/vehicles', {
       headers: authHeaders()
     });
 
-    res.json(data);
-  } catch {
-    res.json({ data: [] });
-  }
-});
-
-app.get('/api/board', async (_req, res) => {
-  try {
-    const now = new Date();
-    const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
-    const endTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
-
-    const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
-    assignmentsUrl.searchParams.set('filterBy', 'vehicles');
-    assignmentsUrl.searchParams.set('startTime', startTime);
-    assignmentsUrl.searchParams.set('endTime', endTime);
-
-    const [vehicles, live, hos, assignments] = await Promise.all([
-      fetchJson('https://api.samsara.com/fleet/vehicles', { headers: authHeaders() }).catch(() => ({ data: [] })),
-      fetchJson('https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates', { headers: authHeaders() }).catch(() => ({ data: [] })),
-      fetchJson('https://api.samsara.com/fleet/hos/clocks', { headers: authHeaders() }).catch(() => ({ data: [] })),
-      fetchJson(assignmentsUrl.toString(), { headers: authHeaders() }).catch(() => ({ data: [] }))
-    ]);
+    const tracked = (vehiclesRes.data || []).filter(isTrackedAsset);
+    const maintStore = readMaint();
+    const dashboard = buildDashboardRows(tracked, maintStore);
 
     res.json({
-      vehicles: vehicles.data || [],
-      live: live.data || [],
-      hos: hos.data || [],
-      assignments: assignments.data || [],
-      refreshedAt: new Date().toISOString()
+      vehicles: tracked,
+      dashboard
     });
-  } catch (error) {
-    res.status(500).json({
-      error: error.message,
-      details: error.details || null
-    });
-  }
-});
-
-app.get('/api/geocode', async (req, res) => {
-  try {
-    const q = (req.query.q || '').toString().trim();
-    if (!q) return res.json([]);
-
-    if (GEOAPIFY_API_KEY) {
-      const url = new URL('https://api.geoapify.com/v1/geocode/search');
-      url.searchParams.set('text', q);
-      url.searchParams.set('filter', 'countrycode:us');
-      url.searchParams.set('limit', '8');
-      url.searchParams.set('format', 'json');
-      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
-
-      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
-      const results = (data.results || []).map(x => ({
-        lat: Number(x.lat),
-        lon: Number(x.lon),
-        name: x.formatted || q
-      }));
-      return res.json(results);
-    }
-
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'IH35-Dispatcher-App',
-        Accept: 'application/json'
-      }
-    });
-
-    const raw = await response.text();
-    let data = [];
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      return res.json([]);
-    }
-
-    const result = (Array.isArray(data) ? data : []).map(x => ({
-      lat: Number(x.lat),
-      lon: Number(x.lon),
-      name: x.display_name || q
-    }));
-
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/autocomplete', async (req, res) => {
-  try {
-    const q = (req.query.q || '').toString().trim();
-    if (!q || q.length < 2) return res.json([]);
-
-    if (GEOAPIFY_API_KEY) {
-      const url = new URL('https://api.geoapify.com/v1/geocode/autocomplete');
-      url.searchParams.set('text', q);
-      url.searchParams.set('filter', 'countrycode:us');
-      url.searchParams.set('limit', '10');
-      url.searchParams.set('format', 'json');
-      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
-
-      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
-      const results = (data.results || []).map(x => ({
-        name: x.formatted || x.address_line1 || x.city || q
-      }));
-      return res.json(results);
-    }
-
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'IH35-Dispatcher-App',
-        Accept: 'application/json'
-      }
-    });
-
-    const raw = await response.text();
-    let data = [];
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      return res.json([]);
-    }
-
-    const results = (Array.isArray(data) ? data : []).map(x => ({
-      name: x.display_name
-    }));
-
-    res.json(results);
-  } catch {
-    res.json([]);
-  }
-});
-
-app.get('/api/route', async (req, res) => {
-  try {
-    const coords = String(req.query.coords || '').trim();
-    if (!coords) {
-      return res.status(400).json({ error: 'Missing coords' });
-    }
-
-    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
-    const data = await fetchJson(url, {
-      headers: { Accept: 'application/json' }
-    });
-
-    res.json(data);
   } catch (error) {
     res.status(error.status || 500).json({
       error: error.message,
       details: error.details || null
     });
   }
+});
+
+app.get('/api/maintenance/records', (_req, res) => {
+  const data = readMaint();
+  res.json(data);
+});
+
+app.post('/api/maintenance/mileage', (req, res) => {
+  const { unit, currentMileage } = req.body || {};
+  if (!unit) return res.status(400).json({ error: 'unit is required' });
+
+  const store = readMaint();
+  if (!store.currentMileage) store.currentMileage = {};
+  store.currentMileage[unit] = safeNum(currentMileage, null);
+  writeMaint(store);
+
+  res.json({ ok: true });
+});
+
+app.post('/api/maintenance/record', (req, res) => {
+  const body = req.body || {};
+  if (!body.unit || !body.serviceType) {
+    return res.status(400).json({ error: 'unit and serviceType are required' });
+  }
+
+  const store = readMaint();
+  if (!Array.isArray(store.records)) store.records = [];
+
+  store.records.push({
+    id: Date.now().toString(),
+    unit: body.unit,
+    serviceType: body.serviceType,
+    serviceDate: body.serviceDate || '',
+    serviceMileage: safeNum(body.serviceMileage, null),
+    vendor: body.vendor || '',
+    cost: safeNum(body.cost, null),
+    notes: body.notes || ''
+  });
+
+  writeMaint(store);
+  res.json({ ok: true });
+});
+
+app.post('/api/maintenance/rules', (req, res) => {
+  const { unit, rules } = req.body || {};
+  if (!unit || !Array.isArray(rules)) {
+    return res.status(400).json({ error: 'unit and rules array are required' });
+  }
+
+  const store = readMaint();
+  if (!store.unitOverrides) store.unitOverrides = {};
+  store.unitOverrides[unit] = { rules };
+  writeMaint(store);
+
+  res.json({ ok: true });
+});
+
+app.get('/maintenance.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'maintenance.html'));
 });
 
 app.get('/', (_req, res) => {

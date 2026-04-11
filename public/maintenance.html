@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>IH35 Maintenance Module</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --panel:#ffffff;
+      --line:#d9dde7;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --red:#dc2626;
+      --yellow:#d97706;
+      --green:#16a34a;
+      --blue:#2563eb;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .topbar{
+      padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000
+    }
+    .topbar h1{margin:0 12px 0 0;font-size:20px}
+    a.btn, button, input, select, textarea{font:inherit}
+    a.btn, button{
+      display:inline-block;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#fff;
+      text-decoration:none;
+      color:var(--text);
+      cursor:pointer;
+    }
+    button:hover, a.btn:hover{background:#f3f4f6}
+    input, select, textarea{
+      width:100%;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#fff;
+    }
+    textarea{min-height:80px;resize:vertical}
+    .layout{
+      display:grid;
+      grid-template-columns: 330px 1fr 360px;
+      gap:12px;
+      padding:12px;
+    }
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+    }
+    .panel h2{
+      margin:0;
+      padding:12px 14px;
+      font-size:16px;
+      border-bottom:1px solid var(--line);
+      background:#fff;
+    }
+    .panel-body{padding:12px}
+    .summary{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .card{
+      background:#fafafa;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      padding:10px;
+    }
+    .label{font-size:12px;color:var(--muted);margin-bottom:4px}
+    .value{font-size:18px;font-weight:700}
+    .unit-list{
+      max-height:calc(100vh - 180px);
+      overflow:auto;
+      border-top:1px solid #eef1f5;
+    }
+    .unit-row{
+      padding:10px 12px;
+      border-bottom:1px solid #eef1f5;
+      cursor:pointer;
+    }
+    .unit-row:hover{background:#f9fafb}
+    .unit-row.active{background:#eff6ff}
+    .small{font-size:12px;color:var(--muted)}
+    .status{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      border:1px solid var(--line);
+    }
+    .current{background:#f0fdf4;color:var(--green)}
+    .soon{background:#fff7ed;color:var(--yellow)}
+    .past{background:#fef2f2;color:var(--red)}
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .table-wrap{
+      overflow:auto;
+      border:1px solid #eef1f5;
+      border-radius:10px;
+      background:#fff;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1200px;
+      font-size:13px;
+    }
+    th, td{
+      border-bottom:1px solid #eef1f5;
+      padding:8px 10px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      position:sticky;
+      top:0;
+      background:#fafafa;
+      z-index:1;
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+    }
+    .form-stack{display:grid;gap:10px}
+    @media (max-width:1400px){
+      .layout{grid-template-columns:1fr}
+      .summary{grid-template-columns:1fr 1fr}
+      .unit-list{max-height:300px}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>IH35 Maintenance Module</h1>
+    <a class="btn" href="/">Dispatcher Board</a>
+    <button onclick="loadAll()">Refresh</button>
+    <input id="unitSearch" placeholder="Search unit" oninput="renderUnitList()" style="max-width:220px">
+    <span id="lastUpdated" class="small">Not loaded</span>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <h2>Units</h2>
+      <div class="panel-body">
+        <div class="small">Tracked: T120–T177 + reefers + flatbeds</div>
+      </div>
+      <div id="unitList" class="unit-list"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Maintenance Dashboard</h2>
+      <div class="panel-body">
+        <div class="summary">
+          <div class="card"><div class="label">Units</div><div class="value" id="sumUnits">0</div></div>
+          <div class="card"><div class="label">Due Soon</div><div class="value" id="sumSoon">0</div></div>
+          <div class="card"><div class="label">Past Due</div><div class="value" id="sumPast">0</div></div>
+          <div class="card"><div class="label">Critical</div><div class="value" id="sumCritical">0</div></div>
+        </div>
+
+        <div class="toolbar">
+          <select id="statusFilter" onchange="renderDashboard()">
+            <option value="">All statuses</option>
+            <option value="current">Current</option>
+            <option value="due soon">Due soon</option>
+            <option value="past due">Past due</option>
+          </select>
+          <select id="serviceFilter" onchange="renderDashboard()">
+            <option value="">All services</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Unit</th>
+                <th>Type</th>
+                <th>Service</th>
+                <th>Status</th>
+                <th>Current Mileage</th>
+                <th>Last Date</th>
+                <th>Last Mileage</th>
+                <th>Next Due Date</th>
+                <th>Next Due Mileage</th>
+                <th>Vendor</th>
+                <th>Cost</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Selected Unit</h2>
+      <div class="panel-body">
+        <div id="unitInfo" class="small">Select a unit.</div>
+
+        <div style="margin-top:14px">
+          <div class="label">Edit Current Mileage</div>
+          <div class="grid2">
+            <input id="mileageInput" type="number" placeholder="Current mileage">
+            <button onclick="saveMileage()">Save Mileage</button>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <div class="label">Add Maintenance Record</div>
+          <div class="form-stack">
+            <select id="serviceTypeInput"></select>
+            <input id="serviceDateInput" type="date">
+            <input id="serviceMileageInput" type="number" placeholder="Service mileage">
+            <input id="vendorInput" placeholder="Vendor">
+            <input id="costInput" type="number" step="0.01" placeholder="Cost">
+            <textarea id="notesInput" placeholder="Notes"></textarea>
+            <button onclick="saveRecord()">Save Record</button>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <div class="label">Unit History</div>
+          <div id="unitHistory" class="small">No records yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let vehicles = [];
+    let dashboard = [];
+    let maintenanceStore = {};
+    let selectedUnit = '';
+
+    async function j(url, options = {}) {
+      const r = await fetch(url, options);
+      const text = await r.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error(text.slice(0, 200));
+      }
+    }
+
+    function statusClass(s) {
+      if (s === 'past due') return 'status past';
+      if (s === 'due soon') return 'status soon';
+      return 'status current';
+    }
+
+    function byUnitOrder(a, b) {
+      const pa = parseInt(String(a.name || a.unit).replace(/\D/g, ''), 10);
+      const pb = parseInt(String(b.name || b.unit).replace(/\D/g, ''), 10);
+      if (Number.isFinite(pa) && Number.isFinite(pb)) return pa - pb;
+      return String(a.name || a.unit).localeCompare(String(b.name || b.unit));
+    }
+
+    async function loadAll() {
+      const dashRes = await j('/api/maintenance/dashboard');
+      const storeRes = await j('/api/maintenance/records');
+
+      vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
+      dashboard = dashRes.dashboard || [];
+      maintenanceStore = storeRes || {};
+
+      if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
+
+      fillServiceFilter();
+      renderSummary();
+      renderUnitList();
+      renderDashboard();
+      renderSelectedUnit();
+
+      document.getElementById('lastUpdated').textContent =
+        'Last updated: ' + new Date().toLocaleTimeString();
+    }
+
+    function fillServiceFilter() {
+      const select = document.getElementById('serviceFilter');
+      const values = Array.from(new Set(dashboard.map(x => x.serviceType))).sort();
+      select.innerHTML = '<option value="">All services</option>' +
+        values.map(v => `<option>${v}</option>`).join('');
+    }
+
+    function renderSummary() {
+      const unitCount = new Set(dashboard.map(x => x.unit)).size;
+      const soon = dashboard.filter(x => x.status === 'due soon').length;
+      const past = dashboard.filter(x => x.status === 'past due').length;
+      const critical = dashboard.filter(x =>
+        x.status === 'past due' &&
+        ['PM Service','Oil Change','Brakes','Annual Inspection','DPF Ash Clean'].includes(x.serviceType)
+      ).length;
+
+      document.getElementById('sumUnits').textContent = unitCount;
+      document.getElementById('sumSoon').textContent = soon;
+      document.getElementById('sumPast').textContent = past;
+      document.getElementById('sumCritical').textContent = critical;
+    }
+
+    function renderUnitList() {
+      const q = document.getElementById('unitSearch').value.trim().toUpperCase();
+      const html = vehicles
+        .filter(v => !q || String(v.name || '').toUpperCase().includes(q))
+        .map(v => {
+          const rows = dashboard.filter(d => d.unit === v.name);
+          const past = rows.filter(r => r.status === 'past due').length;
+          const soon = rows.filter(r => r.status === 'due soon').length;
+          return `
+            <div class="unit-row ${selectedUnit === v.name ? 'active' : ''}" onclick="selectUnit('${v.name}')">
+              <div><b>${v.name}</b></div>
+              <div class="small">${v.make || ''} ${v.model || ''} ${v.year || ''}</div>
+              <div class="small">Past due: ${past} | Due soon: ${soon}</div>
+            </div>
+          `;
+        }).join('');
+
+      document.getElementById('unitList').innerHTML = html || '<div class="unit-row">No units found.</div>';
+    }
+
+    function renderDashboard() {
+      const statusFilter = document.getElementById('statusFilter').value;
+      const serviceFilter = document.getElementById('serviceFilter').value;
+
+      const rows = dashboard
+        .filter(r => !selectedUnit || r.unit === selectedUnit)
+        .filter(r => !statusFilter || r.status === statusFilter)
+        .filter(r => !serviceFilter || r.serviceType === serviceFilter);
+
+      document.getElementById('dashboardBody').innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.unit}</td>
+          <td>${r.unitType || ''}</td>
+          <td>${r.serviceType}</td>
+          <td><span class="${statusClass(r.status)}">${r.status}</span></td>
+          <td>${r.currentMileage ?? ''}</td>
+          <td>${r.lastServiceDate || ''}</td>
+          <td>${r.lastServiceMileage ?? ''}</td>
+          <td>${r.nextDueDate || ''}</td>
+          <td>${r.nextDueMileage ?? ''}</td>
+          <td>${r.vendor || ''}</td>
+          <td>${r.cost ?? ''}</td>
+          <td>${r.notes || ''}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="12">No rows found.</td></tr>';
+    }
+
+    function selectUnit(unit) {
+      selectedUnit = unit;
+      renderUnitList();
+      renderDashboard();
+      renderSelectedUnit();
+    }
+
+    function renderSelectedUnit() {
+      const v = vehicles.find(x => x.name === selectedUnit);
+      if (!v) {
+        document.getElementById('unitInfo').textContent = 'Select a unit.';
+        return;
+      }
+
+      const rows = dashboard.filter(x => x.unit === selectedUnit);
+      const services = rows.map(x => x.serviceType);
+
+      document.getElementById('unitInfo').innerHTML = `
+        <div><b>${v.name}</b></div>
+        <div class="small">${v.make || ''} ${v.model || ''} ${v.year || ''}</div>
+        <div class="small">VIN: ${v.vin || ''}</div>
+      `;
+
+      document.getElementById('mileageInput').value =
+        maintenanceStore.currentMileage?.[selectedUnit] ?? '';
+
+      document.getElementById('serviceTypeInput').innerHTML =
+        services.map(s => `<option>${s}</option>`).join('');
+
+      const records = (maintenanceStore.records || [])
+        .filter(r => r.unit === selectedUnit)
+        .sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
+
+      document.getElementById('unitHistory').innerHTML = records.length
+        ? records.map(r => `
+            <div class="card" style="margin-bottom:8px">
+              <div><b>${r.serviceType}</b></div>
+              <div class="small">Date: ${r.serviceDate || ''} | Mileage: ${r.serviceMileage ?? ''}</div>
+              <div class="small">Vendor: ${r.vendor || ''} | Cost: ${r.cost ?? ''}</div>
+              <div class="small">${r.notes || ''}</div>
+            </div>
+          `).join('')
+        : 'No records yet.';
+    }
+
+    async function saveMileage() {
+      if (!selectedUnit) return;
+
+      await j('/api/maintenance/mileage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unit: selectedUnit,
+          currentMileage: document.getElementById('mileageInput').value
+        })
+      });
+
+      await loadAll();
+    }
+
+    async function saveRecord() {
+      if (!selectedUnit) return;
+
+      await j('/api/maintenance/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unit: selectedUnit,
+          serviceType: document.getElementById('serviceTypeInput').value,
+          serviceDate: document.getElementById('serviceDateInput').value,
+          serviceMileage: document.getElementById('serviceMileageInput').value,
+          vendor: document.getElementById('vendorInput').value,
+          cost: document.getElementById('costInput').value,
+          notes: document.getElementById('notesInput').value
+        })
+      });
+
+      document.getElementById('serviceDateInput').value = '';
+      document.getElementById('serviceMileageInput').value = '';
+      document.getElementById('vendorInput').value = '';
+      document.getElementById('costInput').value = '';
+      document.getElementById('notesInput').value = '';
+
+      await loadAll();
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>
