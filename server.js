@@ -126,42 +126,45 @@ function defaultRulesForVehicle(v) {
   const type = normalizeUnitType(v);
 
   const tractorBase = [
-    { serviceType: 'PM Service', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Oil Change', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Lubrication', intervalMiles: 15000, intervalDays: 60 },
-    { serviceType: 'Air Dryer Cartridge', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Power Steering Service', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Differential Service', intervalMiles: 250000, intervalDays: 365 },
-    { serviceType: 'Coolant Filter', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Air Filters', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Second Fuel Filter', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Valve Adjustment', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'DPF Burn Check', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'DPF Ash Clean', intervalMiles: 250000, intervalDays: 365 },
-    { serviceType: 'Annual Inspection', intervalMiles: null, intervalDays: 365 },
-    { serviceType: 'Brakes', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Tires', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Repair', intervalMiles: null, intervalDays: null }
+    { serviceType: 'PM Service', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: 15000, intervalDays: 60 },
+    { serviceType: 'Air Dryer Cartridge', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Power Steering Service', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Differential Service', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
+    { serviceType: 'Coolant Filter', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Air Filters', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Second Fuel Filter', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Valve Adjustment', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'DPF Burn Check', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'DPF Ash Clean', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
+    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
+    { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
   ];
 
   const reeferBase = [
-    { serviceType: 'Reefer PM', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Reefer Oil Service', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Reefer Fuel Filter', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Reefer Air Filter', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Tires', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Brakes', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Annual Inspection', intervalMiles: null, intervalDays: 365 },
-    { serviceType: 'Repair', intervalMiles: null, intervalDays: null }
+    { serviceType: 'Reefer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Reefer Oil Service', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Reefer Fuel Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Reefer Air Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
+    { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
   ];
 
   const flatbedBase = [
-    { serviceType: 'Trailer PM', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Lubrication', intervalMiles: null, intervalDays: 90 },
-    { serviceType: 'Tires', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Brakes', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Annual Inspection', intervalMiles: null, intervalDays: 365 },
-    { serviceType: 'Repair', intervalMiles: null, intervalDays: null }
+    { serviceType: 'Trailer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+    { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: null, intervalDays: 90 },
+    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
+    { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
   ];
 
   if (type === 'reefer') return reeferBase;
@@ -178,17 +181,6 @@ function defaultRulesForVehicle(v) {
   if (make.includes('PETERBILT')) {
     return tractorBase.map(x => {
       if (x.serviceType === 'Air Dryer Cartridge') return { ...x, intervalMiles: 150000, intervalDays: 365 };
-      if (x.serviceType === 'DPF Ash Clean') return { ...x, intervalMiles: 250000 };
-      return x;
-    });
-  }
-
-  if (
-    make.includes('FREIGHTLINER') ||
-    make.includes('INTERNATIONAL') ||
-    make.includes('KENWORTH')
-  ) {
-    return tractorBase.map(x => {
       if (x.serviceType === 'DPF Ash Clean') return { ...x, intervalMiles: 250000 };
       return x;
     });
@@ -240,7 +232,6 @@ function buildDashboardRows(vehicles, maintStore) {
   return vehicles.map(v => {
     const unit = v.name;
     const rules = unitOverrides[unit]?.rules || defaultRulesForVehicle(v);
-
     const unitRecords = records.filter(r => r.unit === unit);
 
     const rows = rules.map(rule => {
@@ -271,6 +262,7 @@ function buildDashboardRows(vehicles, maintStore) {
         year: v.year || '',
         vin: v.vin || '',
         unitType: normalizeUnitType(v),
+        category: rule.category || 'maintenance',
         serviceType: rule.serviceType,
         intervalMiles: rule.intervalMiles,
         intervalDays: rule.intervalDays,
@@ -290,12 +282,86 @@ function buildDashboardRows(vehicles, maintStore) {
   }).flat();
 }
 
+function buildTireAlerts(records) {
+  const tireRecords = records.filter(r => r.recordType === 'tire');
+  const byUnit = {};
+
+  tireRecords.forEach(r => {
+    if (!byUnit[r.unit]) byUnit[r.unit] = [];
+    byUnit[r.unit].push(r);
+  });
+
+  const alerts = [];
+  Object.entries(byUnit).forEach(([unit, rows]) => {
+    rows.sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
+
+    const recent = rows.filter(r => r.serviceDate);
+    if (recent.length >= 3) {
+      const lastThree = recent.slice(0, 3);
+      const first = new Date(lastThree[2].serviceDate);
+      const last = new Date(lastThree[0].serviceDate);
+      const diffDays = Math.ceil((last - first) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 90) {
+        alerts.push({
+          unit,
+          type: 'Tire Frequency',
+          severity: 'due soon',
+          message: 'Too many tire replacements in a short period'
+        });
+      }
+    }
+
+    rows.forEach(r => {
+      const expected = safeNum(r.expectedTireLifeMiles, null);
+      const install = safeNum(r.installMileage, null);
+      const remove = safeNum(r.removeMileage, null);
+      if (expected != null && install != null && remove != null) {
+        const life = remove - install;
+        if (life > 0 && life < expected * 0.5) {
+          alerts.push({
+            unit,
+            type: 'Low Tire Life',
+            severity: 'past due',
+            message: `Tire removed early at ${life} miles vs expected ${expected}`
+          });
+        }
+      }
+    });
+  });
+
+  return alerts;
+}
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    hasToken: !!TOKEN,
+    serverTime: new Date().toISOString()
+  });
+});
+
 app.get('/api/maintenance/vehicles', async (_req, res) => {
   try {
     const data = await fetchJson('https://api.samsara.com/fleet/vehicles', {
       headers: authHeaders()
     });
-    const tracked = (data.data || []).filter(isTrackedAsset).sort((a, b) => {
+
+    const tracked = (data.data || [])
+      .filter(isTrackedAsset)
+      .reduce((acc, v) => {
+        const key = String(v.name || '').trim().toUpperCase();
+        if (!key) return acc;
+        if (!acc.has(key)) acc.set(key, v);
+        else {
+          const existing = acc.get(key);
+          const oldTs = String(existing.updatedAtTime || '');
+          const newTs = String(v.updatedAtTime || '');
+          if (newTs > oldTs) acc.set(key, v);
+        }
+        return acc;
+      }, new Map());
+
+    const result = Array.from(tracked.values()).sort((a, b) => {
       const ua = parseUnitNumber(a.name);
       const ub = parseUnitNumber(b.name);
       if (ua == null && ub == null) return String(a.name).localeCompare(String(b.name));
@@ -303,7 +369,8 @@ app.get('/api/maintenance/vehicles', async (_req, res) => {
       if (ub == null) return -1;
       return ua - ub;
     });
-    res.json({ data: tracked });
+
+    res.json({ data: result });
   } catch (error) {
     res.status(error.status || 500).json({
       error: error.message,
@@ -318,16 +385,39 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
       headers: authHeaders()
     });
 
-    const tracked = (vehiclesRes.data || []).filter(isTrackedAsset);
+    const trackedMap = new Map();
+    (vehiclesRes.data || []).filter(isTrackedAsset).forEach(v => {
+      const key = String(v.name || '').trim().toUpperCase();
+      if (!key) return;
+      if (!trackedMap.has(key)) trackedMap.set(key, v);
+      else {
+        const existing = trackedMap.get(key);
+        const oldTs = String(existing.updatedAtTime || '');
+        const newTs = String(v.updatedAtTime || '');
+        if (newTs > oldTs) trackedMap.set(key, v);
+      }
+    });
+
+    const tracked = Array.from(trackedMap.values()).sort((a, b) => {
+      const ua = parseUnitNumber(a.name);
+      const ub = parseUnitNumber(b.name);
+      if (ua == null && ub == null) return String(a.name).localeCompare(String(b.name));
+      if (ua == null) return 1;
+      if (ub == null) return -1;
+      return ua - ub;
+    });
+
     const maintStore = readMaint();
     const dashboard = buildDashboardRows(tracked, maintStore);
+    const tireAlerts = buildTireAlerts(maintStore.records || []);
 
     res.json({
       vehicles: tracked,
-      dashboard
+      dashboard,
+      tireAlerts
     });
   } catch (error) {
-    res.status(error.status || 500).json({
+    res.status(500).json({
       error: error.message,
       details: error.details || null
     });
@@ -362,13 +452,28 @@ app.post('/api/maintenance/record', (req, res) => {
 
   store.records.push({
     id: Date.now().toString(),
+    recordType: body.recordType || 'maintenance',
     unit: body.unit,
     serviceType: body.serviceType,
     serviceDate: body.serviceDate || '',
     serviceMileage: safeNum(body.serviceMileage, null),
     vendor: body.vendor || '',
     cost: safeNum(body.cost, null),
-    notes: body.notes || ''
+    notes: body.notes || '',
+
+    tireCondition: body.tireCondition || '',
+    tirePosition: body.tirePosition || '',
+    tireBrand: body.tireBrand || '',
+    tireDot: body.tireDot || '',
+    installMileage: safeNum(body.installMileage, null),
+    removeMileage: safeNum(body.removeMileage, null),
+    expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
+
+    accidentAtFault: body.accidentAtFault || '',
+    accidentLocation: body.accidentLocation || '',
+    accidentReportNumber: body.accidentReportNumber || '',
+
+    repairLocationType: body.repairLocationType || ''
   });
 
   writeMaint(store);

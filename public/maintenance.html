@@ -14,7 +14,6 @@
       --red:#dc2626;
       --yellow:#d97706;
       --green:#16a34a;
-      --blue:#2563eb;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
@@ -45,7 +44,7 @@
     textarea{min-height:80px;resize:vertical}
     .layout{
       display:grid;
-      grid-template-columns: 330px 1fr 360px;
+      grid-template-columns: 330px 1fr 380px;
       gap:12px;
       padding:12px;
     }
@@ -112,6 +111,11 @@
       grid-template-columns:1fr 1fr;
       gap:10px;
     }
+    .grid3{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+    }
     .table-wrap{
       overflow:auto;
       border:1px solid #eef1f5;
@@ -121,7 +125,7 @@
     table{
       width:100%;
       border-collapse:collapse;
-      min-width:1200px;
+      min-width:1450px;
       font-size:13px;
     }
     th, td{
@@ -140,7 +144,7 @@
       text-transform:uppercase;
     }
     .form-stack{display:grid;gap:10px}
-    @media (max-width:1400px){
+    @media (max-width:1450px){
       .layout{grid-template-columns:1fr}
       .summary{grid-template-columns:1fr 1fr}
       .unit-list{max-height:300px}
@@ -172,7 +176,7 @@
           <div class="card"><div class="label">Units</div><div class="value" id="sumUnits">0</div></div>
           <div class="card"><div class="label">Due Soon</div><div class="value" id="sumSoon">0</div></div>
           <div class="card"><div class="label">Past Due</div><div class="value" id="sumPast">0</div></div>
-          <div class="card"><div class="label">Critical</div><div class="value" id="sumCritical">0</div></div>
+          <div class="card"><div class="label">Tire Alerts</div><div class="value" id="sumTire">0</div></div>
         </div>
 
         <div class="toolbar">
@@ -185,6 +189,9 @@
           <select id="serviceFilter" onchange="renderDashboard()">
             <option value="">All services</option>
           </select>
+          <select id="unitFilter" onchange="renderDashboard()">
+            <option value="">All units</option>
+          </select>
         </div>
 
         <div class="table-wrap">
@@ -193,6 +200,7 @@
               <tr>
                 <th>Unit</th>
                 <th>Type</th>
+                <th>Category</th>
                 <th>Service</th>
                 <th>Status</th>
                 <th>Current Mileage</th>
@@ -207,6 +215,11 @@
             </thead>
             <tbody id="dashboardBody"></tbody>
           </table>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="label">Tire / frequency alerts</div>
+          <div id="tireAlerts" class="small">No tire alerts.</div>
         </div>
       </div>
     </div>
@@ -225,14 +238,68 @@
         </div>
 
         <div style="margin-top:16px">
-          <div class="label">Add Maintenance Record</div>
+          <div class="label">Add Record</div>
           <div class="form-stack">
+            <select id="recordTypeInput" onchange="toggleRecordFields()">
+              <option value="maintenance">Maintenance</option>
+              <option value="tire">Tire</option>
+              <option value="repair">Repair</option>
+              <option value="accident">Accident</option>
+              <option value="custom">Custom</option>
+            </select>
+
             <select id="serviceTypeInput"></select>
+            <input id="customServiceTypeInput" placeholder="Custom service type" style="display:none">
+
             <input id="serviceDateInput" type="date">
             <input id="serviceMileageInput" type="number" placeholder="Service mileage">
             <input id="vendorInput" placeholder="Vendor">
             <input id="costInput" type="number" step="0.01" placeholder="Cost">
             <textarea id="notesInput" placeholder="Notes"></textarea>
+
+            <div id="tireFields" style="display:none">
+              <div class="grid2">
+                <select id="tireConditionInput">
+                  <option value="">Tire condition</option>
+                  <option value="new">New</option>
+                  <option value="used">Used</option>
+                  <option value="recap">Recap</option>
+                </select>
+                <input id="tirePositionInput" placeholder="Position e.g. LF Outer">
+              </div>
+              <div class="grid2">
+                <input id="tireBrandInput" placeholder="Tire brand">
+                <input id="tireDotInput" placeholder="DOT / serial">
+              </div>
+              <div class="grid3">
+                <input id="installMileageInput" type="number" placeholder="Install mileage">
+                <input id="removeMileageInput" type="number" placeholder="Remove mileage">
+                <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
+              </div>
+            </div>
+
+            <div id="repairFields" style="display:none">
+              <select id="repairLocationTypeInput">
+                <option value="">Repair type</option>
+                <option value="in-house">In-house mechanic shop</option>
+                <option value="external">External mechanic shop</option>
+                <option value="over-the-road">Over the road</option>
+                <option value="road-service">Road service</option>
+              </select>
+            </div>
+
+            <div id="accidentFields" style="display:none">
+              <div class="grid2">
+                <select id="accidentAtFaultInput">
+                  <option value="">At fault?</option>
+                  <option value="at-fault">At fault</option>
+                  <option value="not-at-fault">Not at fault</option>
+                </select>
+                <input id="accidentReportNumberInput" placeholder="Accident report #">
+              </div>
+              <input id="accidentLocationInput" placeholder="Accident location">
+            </div>
+
             <button onclick="saveRecord()">Save Record</button>
           </div>
         </div>
@@ -250,6 +317,7 @@
     let dashboard = [];
     let maintenanceStore = {};
     let selectedUnit = '';
+    let tireAlerts = [];
 
     async function j(url, options = {}) {
       const r = await fetch(url, options);
@@ -280,11 +348,15 @@
 
       vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
       dashboard = dashRes.dashboard || [];
+      tireAlerts = dashRes.tireAlerts || [];
       maintenanceStore = storeRes || {};
 
       if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
+      if (selectedUnit && !vehicles.find(v => v.name === selectedUnit) && vehicles.length) {
+        selectedUnit = vehicles[0].name;
+      }
 
-      fillServiceFilter();
+      fillFilters();
       renderSummary();
       renderUnitList();
       renderDashboard();
@@ -294,26 +366,26 @@
         'Last updated: ' + new Date().toLocaleTimeString();
     }
 
-    function fillServiceFilter() {
-      const select = document.getElementById('serviceFilter');
-      const values = Array.from(new Set(dashboard.map(x => x.serviceType))).sort();
-      select.innerHTML = '<option value="">All services</option>' +
-        values.map(v => `<option>${v}</option>`).join('');
+    function fillFilters() {
+      const serviceValues = Array.from(new Set(dashboard.map(x => x.serviceType))).sort();
+      document.getElementById('serviceFilter').innerHTML =
+        '<option value="">All services</option>' +
+        serviceValues.map(v => `<option>${v}</option>`).join('');
+
+      document.getElementById('unitFilter').innerHTML =
+        '<option value="">All units</option>' +
+        vehicles.map(v => `<option>${v.name}</option>`).join('');
     }
 
     function renderSummary() {
       const unitCount = new Set(dashboard.map(x => x.unit)).size;
       const soon = dashboard.filter(x => x.status === 'due soon').length;
       const past = dashboard.filter(x => x.status === 'past due').length;
-      const critical = dashboard.filter(x =>
-        x.status === 'past due' &&
-        ['PM Service','Oil Change','Brakes','Annual Inspection','DPF Ash Clean'].includes(x.serviceType)
-      ).length;
 
       document.getElementById('sumUnits').textContent = unitCount;
       document.getElementById('sumSoon').textContent = soon;
       document.getElementById('sumPast').textContent = past;
-      document.getElementById('sumCritical').textContent = critical;
+      document.getElementById('sumTire').textContent = tireAlerts.length;
     }
 
     function renderUnitList() {
@@ -339,9 +411,10 @@
     function renderDashboard() {
       const statusFilter = document.getElementById('statusFilter').value;
       const serviceFilter = document.getElementById('serviceFilter').value;
+      const unitFilter = document.getElementById('unitFilter').value;
 
       const rows = dashboard
-        .filter(r => !selectedUnit || r.unit === selectedUnit)
+        .filter(r => !unitFilter || r.unit === unitFilter)
         .filter(r => !statusFilter || r.status === statusFilter)
         .filter(r => !serviceFilter || r.serviceType === serviceFilter);
 
@@ -349,6 +422,7 @@
         <tr>
           <td>${r.unit}</td>
           <td>${r.unitType || ''}</td>
+          <td>${r.category || ''}</td>
           <td>${r.serviceType}</td>
           <td><span class="${statusClass(r.status)}">${r.status}</span></td>
           <td>${r.currentMileage ?? ''}</td>
@@ -360,14 +434,41 @@
           <td>${r.cost ?? ''}</td>
           <td>${r.notes || ''}</td>
         </tr>
-      `).join('') || '<tr><td colspan="12">No rows found.</td></tr>';
+      `).join('') || '<tr><td colspan="13">No rows found.</td></tr>';
+
+      document.getElementById('tireAlerts').innerHTML = tireAlerts.length
+        ? tireAlerts.map(a => `
+            <div class="card" style="margin-bottom:8px">
+              <div><b>${a.unit}</b> — ${a.type}</div>
+              <div class="small">${a.message}</div>
+            </div>
+          `).join('')
+        : 'No tire alerts.';
     }
 
     function selectUnit(unit) {
       selectedUnit = unit;
       renderUnitList();
-      renderDashboard();
       renderSelectedUnit();
+    }
+
+    function setServiceOptions() {
+      const rows = dashboard.filter(x => x.unit === selectedUnit);
+      const services = Array.from(new Set(rows.map(x => x.serviceType))).sort();
+      document.getElementById('serviceTypeInput').innerHTML =
+        services.map(s => `<option>${s}</option>`).join('') || '<option>PM Service</option>';
+    }
+
+    function toggleRecordFields() {
+      const type = document.getElementById('recordTypeInput').value;
+      document.getElementById('tireFields').style.display = type === 'tire' ? 'block' : 'none';
+      document.getElementById('repairFields').style.display = type === 'repair' ? 'block' : 'none';
+      document.getElementById('accidentFields').style.display = type === 'accident' ? 'block' : 'none';
+      document.getElementById('customServiceTypeInput').style.display = type === 'custom' ? 'block' : 'none';
+
+      if (type === 'tire') document.getElementById('serviceTypeInput').value = 'Tires';
+      if (type === 'repair') document.getElementById('serviceTypeInput').value = 'Repair';
+      if (type === 'accident') document.getElementById('serviceTypeInput').value = 'Accident Report';
     }
 
     function renderSelectedUnit() {
@@ -376,9 +477,6 @@
         document.getElementById('unitInfo').textContent = 'Select a unit.';
         return;
       }
-
-      const rows = dashboard.filter(x => x.unit === selectedUnit);
-      const services = rows.map(x => x.serviceType);
 
       document.getElementById('unitInfo').innerHTML = `
         <div><b>${v.name}</b></div>
@@ -389,8 +487,8 @@
       document.getElementById('mileageInput').value =
         maintenanceStore.currentMileage?.[selectedUnit] ?? '';
 
-      document.getElementById('serviceTypeInput').innerHTML =
-        services.map(s => `<option>${s}</option>`).join('');
+      setServiceOptions();
+      toggleRecordFields();
 
       const records = (maintenanceStore.records || [])
         .filter(r => r.unit === selectedUnit)
@@ -399,9 +497,12 @@
       document.getElementById('unitHistory').innerHTML = records.length
         ? records.map(r => `
             <div class="card" style="margin-bottom:8px">
-              <div><b>${r.serviceType}</b></div>
+              <div><b>${r.serviceType}</b> <span class="small">(${r.recordType || 'maintenance'})</span></div>
               <div class="small">Date: ${r.serviceDate || ''} | Mileage: ${r.serviceMileage ?? ''}</div>
               <div class="small">Vendor: ${r.vendor || ''} | Cost: ${r.cost ?? ''}</div>
+              ${r.tirePosition ? `<div class="small">Tire: ${r.tireCondition || ''} | ${r.tirePosition} | ${r.tireBrand || ''}</div>` : ''}
+              ${r.repairLocationType ? `<div class="small">Repair type: ${r.repairLocationType}</div>` : ''}
+              ${r.accidentAtFault ? `<div class="small">Accident: ${r.accidentAtFault} | ${r.accidentLocation || ''}</div>` : ''}
               <div class="small">${r.notes || ''}</div>
             </div>
           `).join('')
@@ -426,17 +527,38 @@
     async function saveRecord() {
       if (!selectedUnit) return;
 
+      const recordType = document.getElementById('recordTypeInput').value;
+      const serviceType =
+        recordType === 'custom'
+          ? (document.getElementById('customServiceTypeInput').value || 'Custom Service')
+          : document.getElementById('serviceTypeInput').value;
+
       await j('/api/maintenance/record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           unit: selectedUnit,
-          serviceType: document.getElementById('serviceTypeInput').value,
+          recordType,
+          serviceType,
           serviceDate: document.getElementById('serviceDateInput').value,
           serviceMileage: document.getElementById('serviceMileageInput').value,
           vendor: document.getElementById('vendorInput').value,
           cost: document.getElementById('costInput').value,
-          notes: document.getElementById('notesInput').value
+          notes: document.getElementById('notesInput').value,
+
+          tireCondition: document.getElementById('tireConditionInput').value,
+          tirePosition: document.getElementById('tirePositionInput').value,
+          tireBrand: document.getElementById('tireBrandInput').value,
+          tireDot: document.getElementById('tireDotInput').value,
+          installMileage: document.getElementById('installMileageInput').value,
+          removeMileage: document.getElementById('removeMileageInput').value,
+          expectedTireLifeMiles: document.getElementById('expectedTireLifeMilesInput').value,
+
+          accidentAtFault: document.getElementById('accidentAtFaultInput').value,
+          accidentLocation: document.getElementById('accidentLocationInput').value,
+          accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
+
+          repairLocationType: document.getElementById('repairLocationTypeInput').value
         })
       });
 
@@ -445,6 +567,21 @@
       document.getElementById('vendorInput').value = '';
       document.getElementById('costInput').value = '';
       document.getElementById('notesInput').value = '';
+      document.getElementById('customServiceTypeInput').value = '';
+
+      document.getElementById('tireConditionInput').value = '';
+      document.getElementById('tirePositionInput').value = '';
+      document.getElementById('tireBrandInput').value = '';
+      document.getElementById('tireDotInput').value = '';
+      document.getElementById('installMileageInput').value = '';
+      document.getElementById('removeMileageInput').value = '';
+      document.getElementById('expectedTireLifeMilesInput').value = '';
+
+      document.getElementById('accidentAtFaultInput').value = '';
+      document.getElementById('accidentLocationInput').value = '';
+      document.getElementById('accidentReportNumberInput').value = '';
+
+      document.getElementById('repairLocationTypeInput').value = '';
 
       await loadAll();
     }
