@@ -2,490 +2,999 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>IH35 Maintenance + Live QuickBooks AP Center</title>
+  <title>IH35 Unified Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
-      --bg:#f6f7fb;
+      --bg:#f4f6fa;
       --panel:#ffffff;
-      --line:#d9dde7;
-      --text:#1f2937;
+      --line:#d8deea;
+      --text:#17212f;
       --muted:#6b7280;
-      --red:#dc2626;
-      --yellow:#d97706;
-      --green:#16a34a;
       --blue:#2563eb;
+      --blueSoft:#eff6ff;
+      --green:#15803d;
+      --greenSoft:#f0fdf4;
+      --yellow:#b45309;
+      --yellowSoft:#fff7ed;
+      --red:#b91c1c;
+      --redSoft:#fef2f2;
+      --shadow:0 8px 24px rgba(15,23,42,.06);
+      --radius:14px;
     }
+
     *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-    .topbar{
-      padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);
-      display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000
+    html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    a{text-decoration:none;color:inherit}
+
+    .app{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns:280px 1fr;
     }
-    .topbar h1{margin:0 12px 0 0;font-size:20px}
-    a.btn, button, input, select, textarea{font:inherit}
-    a.btn, button{
-      display:inline-block;
-      padding:8px 12px;
-      border:1px solid var(--line);
-      border-radius:8px;
-      background:#fff;
-      text-decoration:none;
-      color:var(--text);
+
+    .sidebar{
+      background:#0f172a;
+      color:#fff;
+      padding:18px 16px;
+      position:sticky;
+      top:0;
+      height:100vh;
+      overflow:auto;
+    }
+
+    .brand{
+      font-size:22px;
+      font-weight:700;
+      margin-bottom:18px;
+    }
+
+    .brand-sub{
+      font-size:12px;
+      color:#cbd5e1;
+      margin-top:4px;
+      margin-bottom:18px;
+    }
+
+    .nav-section-title{
+      font-size:11px;
+      letter-spacing:.08em;
+      color:#94a3b8;
+      text-transform:uppercase;
+      margin:16px 0 8px;
+    }
+
+    .nav-btn{
+      width:100%;
+      display:block;
+      text-align:left;
+      background:transparent;
+      color:#fff;
+      border:1px solid transparent;
+      padding:11px 12px;
+      border-radius:10px;
       cursor:pointer;
+      margin-bottom:6px;
+      font-size:14px;
     }
-    button:hover, a.btn:hover{background:#f3f4f6}
+
+    .nav-btn:hover{background:rgba(255,255,255,.06)}
+    .nav-btn.active{
+      background:#1e293b;
+      border-color:#334155;
+    }
+
+    .sidebar-foot{
+      margin-top:18px;
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,.1);
+      font-size:12px;
+      color:#cbd5e1;
+    }
+
+    .main{
+      padding:18px;
+      overflow:auto;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+
+    .title{
+      font-size:28px;
+      font-weight:700;
+      margin-right:auto;
+    }
+
+    .btn, button{
+      font:inherit;
+      border:1px solid var(--line);
+      background:#fff;
+      padding:9px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      color:var(--text);
+    }
+
+    .btn:hover, button:hover{background:#f8fafc}
+
     input, select, textarea{
       width:100%;
-      padding:8px 10px;
       border:1px solid var(--line);
-      border-radius:8px;
       background:#fff;
+      padding:10px 12px;
+      border-radius:10px;
+      font:inherit;
+      color:var(--text);
     }
-    textarea{min-height:80px;resize:vertical}
-    .layout{
+
+    textarea{
+      min-height:84px;
+      resize:vertical;
+    }
+
+    .hidden{display:none !important}
+
+    .hero-grid{
       display:grid;
-      grid-template-columns: 320px 1fr 430px;
+      grid-template-columns:repeat(5,minmax(0,1fr));
       gap:12px;
-      padding:12px;
+      margin-bottom:16px;
     }
+
+    .hero-card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      cursor:pointer;
+    }
+
+    .hero-card:hover{border-color:#bfd3ff;background:#fbfdff}
+    .hero-card h3{
+      margin:0 0 4px;
+      font-size:15px;
+    }
+    .hero-card p{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .section{
+      display:none;
+    }
+    .section.active{
+      display:block;
+    }
+
+    .grid{
+      display:grid;
+      gap:12px;
+    }
+
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+
     .panel{
       background:var(--panel);
       border:1px solid var(--line);
-      border-radius:12px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       overflow:hidden;
     }
-    .panel h2{
-      margin:0;
-      padding:12px 14px;
+
+    .panel-head{
+      padding:14px 16px;
+      border-bottom:1px solid #edf1f7;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .panel-title{
       font-size:16px;
-      border-bottom:1px solid var(--line);
+      font-weight:700;
+    }
+
+    .panel-body{
+      padding:14px 16px;
+    }
+
+    .metric{
+      background:#fafcff;
+      border:1px solid #e8eef8;
+      border-radius:12px;
+      padding:12px;
+    }
+
+    .metric-label{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+
+    .metric-value{
+      font-size:22px;
+      font-weight:700;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .chip{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:7px 11px;
+      cursor:pointer;
+      font-size:13px;
+    }
+
+    .chip.active{
+      background:var(--blueSoft);
+      border-color:#bcd0ff;
+      color:#1d4ed8;
+      font-weight:700;
+    }
+
+    .split{
+      display:grid;
+      grid-template-columns:330px 1fr;
+      gap:12px;
+    }
+
+    .list{
+      max-height:720px;
+      overflow:auto;
+      border:1px solid #edf1f7;
+      border-radius:12px;
       background:#fff;
     }
-    .panel-body{padding:12px}
-    .tabs{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:12px;
-    }
-    .tab-btn.active{background:#eff6ff;border-color:#bfdbfe}
-    .hidden{display:none}
-    .summary{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:10px;
-      margin-bottom:12px;
-    }
-    .card{
-      background:#fafafa;
-      border:1px solid #e5e7eb;
-      border-radius:10px;
-      padding:10px;
-    }
-    .label{font-size:12px;color:var(--muted);margin-bottom:4px}
-    .value{font-size:18px;font-weight:700}
-    .unit-list{
-      max-height:calc(100vh - 180px);
-      overflow:auto;
-      border-top:1px solid #eef1f5;
-    }
-    .unit-row{
-      padding:10px 12px;
-      border-bottom:1px solid #eef1f5;
+
+    .list-row{
+      padding:12px 14px;
+      border-bottom:1px solid #edf1f7;
       cursor:pointer;
     }
-    .unit-row:hover{background:#f9fafb}
-    .unit-row.active{background:#eff6ff}
-    .small{font-size:12px;color:var(--muted)}
+
+    .list-row:last-child{border-bottom:none}
+    .list-row:hover{background:#fafcff}
+    .list-row.active{background:var(--blueSoft)}
+    .list-title{
+      font-size:14px;
+      font-weight:700;
+      margin-bottom:4px;
+    }
+    .list-sub{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+
     .status{
       display:inline-block;
-      padding:2px 8px;
+      padding:3px 9px;
       border-radius:999px;
       font-size:11px;
       font-weight:700;
-      border:1px solid var(--line);
+      border:1px solid transparent;
     }
-    .current{background:#f0fdf4;color:var(--green)}
-    .soon{background:#fff7ed;color:var(--yellow)}
-    .past{background:#fef2f2;color:var(--red)}
-    .posted{background:#eff6ff;color:#1d4ed8}
-    .error{background:#fef2f2;color:#b91c1c}
+    .status-current{background:var(--greenSoft);color:var(--green)}
+    .status-soon{background:var(--yellowSoft);color:var(--yellow)}
+    .status-past{background:var(--redSoft);color:var(--red)}
+    .status-posted{background:var(--blueSoft);color:#1d4ed8}
+    .status-error{background:var(--redSoft);color:var(--red)}
+
     .toolbar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:12px;
-    }
-    .grid2{
       display:grid;
-      grid-template-columns:1fr 1fr;
+      grid-template-columns:repeat(4,minmax(0,1fr));
       gap:10px;
     }
-    .grid3{
-      display:grid;
-      grid-template-columns:1fr 1fr 1fr;
-      gap:10px;
-    }
+
     .table-wrap{
       overflow:auto;
-      border:1px solid #eef1f5;
-      border-radius:10px;
+      border:1px solid #edf1f7;
+      border-radius:12px;
       background:#fff;
     }
+
     table{
-      width:100%;
       border-collapse:collapse;
-      min-width:1600px;
+      width:100%;
+      min-width:1400px;
       font-size:13px;
     }
+
     th, td{
-      border-bottom:1px solid #eef1f5;
-      padding:8px 10px;
+      padding:9px 10px;
+      border-bottom:1px solid #edf1f7;
       text-align:left;
       vertical-align:top;
     }
+
     th{
+      background:#fafcff;
       position:sticky;
       top:0;
-      background:#fafafa;
       z-index:1;
       color:var(--muted);
       font-size:12px;
       text-transform:uppercase;
+      letter-spacing:.03em;
     }
-    .form-stack{display:grid;gap:10px}
-    .qb-status{
-      display:flex;
+
+    .form-stack{
+      display:grid;
       gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
+    }
+
+    .unit-summary{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
       margin-bottom:12px;
     }
-    .search-note{
+
+    .unit-box{
+      background:#fafcff;
+      border:1px solid #e8eef8;
+      border-radius:12px;
+      padding:10px;
+    }
+
+    .unit-box .k{
       font-size:11px;
       color:var(--muted);
-      margin-top:-4px;
+      margin-bottom:4px;
     }
-    @media (max-width:1450px){
-      .layout{grid-template-columns:1fr}
-      .summary{grid-template-columns:1fr 1fr}
-      .unit-list{max-height:300px}
+
+    .unit-box .v{
+      font-size:17px;
+      font-weight:700;
+    }
+
+    .mini-note{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .card-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .record-card{
+      background:#fafcff;
+      border:1px solid #e8eef8;
+      border-radius:12px;
+      padding:12px;
+    }
+
+    .record-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+
+    .search-row{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .subtabs{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .subtab{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:10px;
+      padding:8px 12px;
+      cursor:pointer;
+    }
+
+    .subtab.active{
+      background:var(--blueSoft);
+      border-color:#bcd0ff;
+      color:#1d4ed8;
+      font-weight:700;
+    }
+
+    .report-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    @media (max-width:1400px){
+      .hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .split{grid-template-columns:1fr}
+      .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .unit-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .app{grid-template-columns:1fr}
+      .sidebar{
+        position:relative;
+        height:auto;
+      }
+    }
+
+    @media (max-width:800px){
+      .hero-grid,.grid-2,.grid-3,.grid-4,.toolbar,.search-row,.unit-summary{
+        grid-template-columns:1fr;
+      }
     }
   </style>
 </head>
 <body>
+  <datalist id="unitOptions"></datalist>
+  <datalist id="serviceOptions"></datalist>
   <datalist id="qboVendorOptions"></datalist>
   <datalist id="qboItemOptions"></datalist>
   <datalist id="qboAccountOptions"></datalist>
   <datalist id="paymentMethodOptions"></datalist>
-  <datalist id="unitOptions"></datalist>
-  <datalist id="serviceOptions"></datalist>
 
-  <div class="topbar">
-    <h1>IH35 Maintenance + Live QuickBooks AP Center</h1>
-    <a class="btn" href="/">Dispatcher Board</a>
-    <button onclick="loadAll()">Refresh</button>
-    <input id="unitSearch" placeholder="Search unit" oninput="renderUnitList()" style="max-width:220px">
-    <span id="lastUpdated" class="small">Not loaded</span>
-  </div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">IH35 ERP</div>
+      <div class="brand-sub">Dispatch · Fuel · Maintenance · Tracking · Accounting</div>
 
-  <div class="layout">
-    <div class="panel">
-      <h2>Units</h2>
-      <div class="panel-body">
-        <div class="small">Tracked: T120–T177 + reefers + flatbeds</div>
+      <div class="nav-section-title">Main</div>
+      <button class="nav-btn active" data-section="dashboard" onclick="openSection('dashboard', this)">Dashboard</button>
+      <button class="nav-btn" data-section="dispatch" onclick="openSection('dispatch', this)">Dispatch Board</button>
+      <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Fuel Board</button>
+      <button class="nav-btn" data-section="maintenance" onclick="openSection('maintenance', this)">Maintenance Board</button>
+      <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
+      <button class="nav-btn" data-section="accounting" onclick="openSection('accounting', this)">Accounting Board</button>
+
+      <div class="nav-section-title">Actions</div>
+      <button class="nav-btn" onclick="loadAll()">Refresh All</button>
+      <button class="nav-btn" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
+      <button class="nav-btn" onclick="connectQuickBooks()">Connect QuickBooks</button>
+      <a class="nav-btn" href="/">Open Dispatcher Route Page</a>
+
+      <div class="sidebar-foot">
+        <div id="sidebarQboStatus">QuickBooks not checked</div>
+        <div id="sidebarLastUpdated" style="margin-top:8px;">Not loaded</div>
       </div>
-      <div id="unitList" class="unit-list"></div>
-    </div>
+    </aside>
 
-    <div class="panel">
-      <h2>ERP Center</h2>
-      <div class="panel-body">
-        <div class="tabs">
-          <button class="tab-btn active" onclick="showTab('maintenanceTab', this)">Maintenance</button>
-          <button class="tab-btn" onclick="showTab('apTab', this)">AP Transactions</button>
-          <button class="tab-btn" onclick="showTab('qboTab', this)">QuickBooks Live Master</button>
-        </div>
+    <main class="main">
+      <div class="topbar">
+        <div class="title" id="pageTitle">Unified Dashboard</div>
+        <button onclick="loadAll()">Refresh</button>
+        <button onclick="testQuickBooks()">Test QuickBooks</button>
+        <button onclick="refreshQboMaster()">Refresh QBO Master</button>
+      </div>
 
-        <div id="maintenanceTab">
-          <div class="qb-status">
-            <button onclick="connectQuickBooks()">Connect QuickBooks</button>
-            <button onclick="testQuickBooks()">Test QuickBooks</button>
-            <button onclick="refreshQboMaster()">Refresh QBO Master Data</button>
-            <span id="qbStatusText" class="small">QuickBooks not checked</span>
+      <section id="section-dashboard" class="section active">
+        <div class="hero-grid">
+          <div class="hero-card" onclick="openSectionByName('dispatch')">
+            <h3>Dispatch Board</h3>
+            <p>Assigned trucks, HOS, route and dispatch visibility</p>
           </div>
-
-          <div class="summary">
-            <div class="card"><div class="label">Units</div><div class="value" id="sumUnits">0</div></div>
-            <div class="card"><div class="label">Due Soon</div><div class="value" id="sumSoon">0</div></div>
-            <div class="card"><div class="label">Past Due</div><div class="value" id="sumPast">0</div></div>
-            <div class="card"><div class="label">Tire Alerts</div><div class="value" id="sumTire">0</div></div>
+          <div class="hero-card" onclick="openSectionByName('fuel')">
+            <h3>Fuel Board</h3>
+            <p>Fuel reach, stop planning and unit fuel overview</p>
           </div>
-
-          <div class="toolbar">
-            <select id="statusFilter" onchange="renderDashboard()">
-              <option value="">All statuses</option>
-              <option value="current">Current</option>
-              <option value="due soon">Due soon</option>
-              <option value="past due">Past due</option>
-            </select>
-            <div style="min-width:220px;flex:1">
-              <input id="serviceFilterSearch" list="serviceOptions" placeholder="Type service to filter" oninput="renderDashboard()">
-            </div>
-            <div style="min-width:220px;flex:1">
-              <input id="unitFilterSearch" list="unitOptions" placeholder="Type unit to filter" oninput="renderDashboard()">
-            </div>
+          <div class="hero-card" onclick="openSectionByName('maintenance')">
+            <h3>Maintenance Board</h3>
+            <p>Service planning, records, vendors and reports</p>
           </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Unit</th>
-                  <th>Type</th>
-                  <th>Category</th>
-                  <th>Service</th>
-                  <th>Status</th>
-                  <th>Current Mileage</th>
-                  <th>Last Date</th>
-                  <th>Last Mileage</th>
-                  <th>Next Due Date</th>
-                  <th>Next Due Mileage</th>
-                  <th>Vendor</th>
-                  <th>Cost</th>
-                  <th>QB Sync</th>
-                  <th>QB Purchase</th>
-                  <th>Notes</th>
-                </tr>
-              </thead>
-              <tbody id="dashboardBody"></tbody>
-            </table>
+          <div class="hero-card" onclick="openSectionByName('tracking')">
+            <h3>Vehicle Tracking Board</h3>
+            <p>Live locations, categories and activity overview</p>
           </div>
-
-          <div style="margin-top:14px">
-            <div class="label">QuickBooks connection test</div>
-            <div id="qboTestBox" class="small">Not tested yet.</div>
-          </div>
-
-          <div style="margin-top:14px">
-            <div class="label">Tire / frequency alerts</div>
-            <div id="tireAlerts" class="small">No tire alerts.</div>
+          <div class="hero-card" onclick="openSectionByName('accounting')">
+            <h3>Accounting Board</h3>
+            <p>Maintenance expense transactions, bills and QuickBooks</p>
           </div>
         </div>
 
-        <div id="apTab" class="hidden">
-          <div class="label">QuickBooks-style Expense / Bill</div>
-          <div class="form-stack">
-            <div class="grid2">
-              <select id="apTxnType">
-                <option value="expense">Expense</option>
-                <option value="bill">Bill</option>
-              </select>
-              <select id="apDetailMode" onchange="toggleApDetailMode()">
-                <option value="category">Category details</option>
-                <option value="item">Item details</option>
-              </select>
+        <div class="grid grid-4">
+          <div class="metric">
+            <div class="metric-label">Tracked Assets</div>
+            <div class="metric-value" id="dashTrackedAssets">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Assigned / Working</div>
+            <div class="metric-value" id="dashAssignedAssets">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Maintenance Past Due</div>
+            <div class="metric-value" id="dashPastDue">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">QBO Vendor Count</div>
+            <div class="metric-value" id="dashQboVendors">0</div>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:12px;">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">System Summary</div>
+            </div>
+            <div class="panel-body card-list" id="dashboardSummaryCards"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">QuickBooks / Sync Summary</div>
+            </div>
+            <div class="panel-body">
+              <div id="dashboardQboSummary" class="mini-note">No data yet.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-dispatch" class="section">
+        <div class="grid grid-4">
+          <div class="metric">
+            <div class="metric-label">Vehicles Loaded</div>
+            <div class="metric-value" id="dispatchVehiclesCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Assigned</div>
+            <div class="metric-value" id="dispatchAssignedCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Unassigned</div>
+            <div class="metric-value" id="dispatchUnassignedCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">HOS Rows</div>
+            <div class="metric-value" id="dispatchHosCount">0</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px;">
+          <div class="panel-head">
+            <div class="panel-title">Dispatch Summary</div>
+          </div>
+          <div class="panel-body">
+            <div id="dispatchSummaryText" class="mini-note">No dispatch data loaded yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-fuel" class="section">
+        <div class="grid grid-4">
+          <div class="metric">
+            <div class="metric-label">Units With Fuel Data</div>
+            <div class="metric-value" id="fuelUnitsCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Low Fuel Units</div>
+            <div class="metric-value" id="fuelLowCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Average Fuel %</div>
+            <div class="metric-value" id="fuelAvgPct">0%</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Tracking Updates</div>
+            <div class="metric-value" id="fuelTrackingCount">0</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px;">
+          <div class="panel-head">
+            <div class="panel-title">Fuel Summary</div>
+          </div>
+          <div class="panel-body">
+            <div id="fuelSummaryText" class="mini-note">No fuel data loaded yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-maintenance" class="section">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Maintenance Board</div>
+            <div class="report-actions">
+              <button onclick="downloadUnitMaintenanceReport()">Maintenance Report by Unit</button>
+              <button onclick="downloadUnitExpenseReport()">Expense Report by Unit</button>
+              <button onclick="downloadAllMaintenanceCsv()">All Maintenance CSV</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chips" id="assetCategoryChips"></div>
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:12px;">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title" id="assetCategoryTitle">Trucks</div>
+            </div>
+            <div class="panel-body">
+              <div class="search-row" style="margin-bottom:10px;">
+                <input id="maintenanceUnitSearch" list="unitOptions" placeholder="Search unit" oninput="renderMaintenanceUnitList()">
+                <input id="maintenanceServiceFilter" list="serviceOptions" placeholder="Filter service" oninput="renderMaintenanceTable()">
+              </div>
+              <div class="list" id="maintenanceUnitList"></div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">Selected Asset</div>
+              </div>
+              <div class="panel-body">
+                <div id="selectedUnitInfo" class="mini-note">Select an asset.</div>
+
+                <div class="unit-summary">
+                  <div class="unit-box">
+                    <div class="k">Actual Mileage</div>
+                    <div class="v" id="unitMileageBox">N/A</div>
+                  </div>
+                  <div class="unit-box">
+                    <div class="k">Fuel</div>
+                    <div class="v" id="unitFuelBox">N/A</div>
+                  </div>
+                  <div class="unit-box">
+                    <div class="k">Past Due</div>
+                    <div class="v" id="unitPastDueBox">0</div>
+                  </div>
+                  <div class="unit-box">
+                    <div class="k">Due Soon</div>
+                    <div class="v" id="unitDueSoonBox">0</div>
+                  </div>
+                </div>
+
+                <div class="form-stack">
+                  <div class="search-row">
+                    <input id="mileageInput" type="number" placeholder="Edit current mileage">
+                    <button onclick="saveMileage()">Save Mileage</button>
+                  </div>
+
+                  <select id="recordTypeInput" onchange="toggleRecordFields()">
+                    <option value="maintenance">Maintenance</option>
+                    <option value="tire">Tire</option>
+                    <option value="repair">Repair</option>
+                    <option value="accident">Accident</option>
+                    <option value="custom">Custom</option>
+                  </select>
+
+                  <input id="serviceSearchInput" list="serviceOptions" placeholder="Type service name" oninput="resolveServiceSearch()">
+                  <input id="serviceTypeInput" type="hidden">
+                  <input id="customServiceTypeInput" class="hidden" placeholder="Custom service type">
+
+                  <input id="serviceDateInput" type="date">
+                  <input id="serviceMileageInput" type="number" placeholder="Service mileage">
+                  <input id="vendorInput" list="qboVendorOptions" placeholder="Type vendor name">
+                  <input id="costInput" type="number" step="0.01" placeholder="Cost">
+                  <textarea id="notesInput" placeholder="Notes"></textarea>
+
+                  <div id="tireFields" class="hidden">
+                    <div class="search-row">
+                      <select id="tireConditionInput">
+                        <option value="">Tire condition</option>
+                        <option value="new">New</option>
+                        <option value="used">Used</option>
+                        <option value="recap">Recap</option>
+                      </select>
+                      <input id="tirePositionInput" placeholder="Position e.g. LF Outer">
+                    </div>
+                    <div class="search-row">
+                      <input id="tireBrandInput" placeholder="Tire brand">
+                      <input id="tireDotInput" placeholder="DOT / serial">
+                    </div>
+                    <div class="grid grid-3">
+                      <input id="installMileageInput" type="number" placeholder="Install mileage">
+                      <input id="removeMileageInput" type="number" placeholder="Remove mileage">
+                      <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
+                    </div>
+                  </div>
+
+                  <div id="repairFields" class="hidden">
+                    <select id="repairLocationTypeInput">
+                      <option value="">Repair type</option>
+                      <option value="in-house">In-house mechanic shop</option>
+                      <option value="external">External mechanic shop</option>
+                      <option value="over-the-road">Over the road</option>
+                      <option value="road-service">Road service</option>
+                    </select>
+                  </div>
+
+                  <div id="accidentFields" class="hidden">
+                    <div class="search-row">
+                      <select id="accidentAtFaultInput">
+                        <option value="">At fault?</option>
+                        <option value="at-fault">At fault</option>
+                        <option value="not-at-fault">Not at fault</option>
+                      </select>
+                      <input id="accidentReportNumberInput" placeholder="Accident report #">
+                    </div>
+                    <input id="accidentLocationInput" placeholder="Accident location">
+                  </div>
+
+                  <div class="panel" style="border-radius:12px;box-shadow:none;">
+                    <div class="panel-head">
+                      <div class="panel-title">Link to Maintenance Expense Transaction</div>
+                    </div>
+                    <div class="panel-body form-stack">
+                      <label class="mini-note">
+                        <input id="linkAccountingToggle" type="checkbox" checked>
+                        Create linked Maintenance Expense Transaction when saving this record
+                      </label>
+
+                      <div class="search-row">
+                        <select id="linkedTxnType">
+                          <option value="expense">Expense</option>
+                          <option value="bill">Bill</option>
+                        </select>
+                        <select id="linkedDetailMode" onchange="toggleLinkedDetailMode()">
+                          <option value="category">Category details</option>
+                          <option value="item">Item details</option>
+                        </select>
+                      </div>
+
+                      <div class="search-row">
+                        <input id="linkedDocNumber" placeholder="Expense No. / Bill No.">
+                        <input id="linkedVendorSearch" list="qboVendorOptions" placeholder="Type vendor name" oninput="resolveLinkedVendorSearch()">
+                      </div>
+                      <input id="linkedVendorQboId" type="hidden">
+
+                      <div class="search-row">
+                        <input id="linkedPaymentMethodSearch" list="paymentMethodOptions" placeholder="Type payment method" oninput="resolveLinkedPaymentMethodSearch()">
+                        <input id="linkedDueDate" type="date">
+                      </div>
+                      <input id="linkedPaymentMethodId" type="hidden">
+
+                      <div id="linkedCategoryBlock">
+                        <input id="linkedAccountSearch" list="qboAccountOptions" placeholder="Type category / account" oninput="resolveLinkedAccountSearch()">
+                        <input id="linkedAccountQboId" type="hidden">
+                      </div>
+
+                      <div id="linkedItemBlock" class="hidden">
+                        <div class="search-row">
+                          <input id="linkedItemSearch" list="qboItemOptions" placeholder="Type item / service" oninput="resolveLinkedItemSearch()">
+                          <input id="linkedQty" type="number" step="1" value="1" placeholder="Qty">
+                        </div>
+                        <input id="linkedItemQboId" type="hidden">
+                      </div>
+                    </div>
+                  </div>
+
+                  <button onclick="saveRecord()">Save Record</button>
+                </div>
+              </div>
             </div>
 
-            <div class="grid2">
-              <input id="apDocNumber" placeholder="Expense No. / Bill No.">
-              <div>
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">Maintenance Table</div>
+              </div>
+              <div class="panel-body">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Unit</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Actual Mileage</th>
+                        <th>Last Date</th>
+                        <th>Next Due Date</th>
+                        <th>Next Due Mileage</th>
+                        <th>Vendor</th>
+                        <th>Cost</th>
+                        <th>QB Sync</th>
+                      </tr>
+                    </thead>
+                    <tbody id="maintenanceTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">Unit History</div>
+              </div>
+              <div class="panel-body">
+                <div id="unitHistory" class="card-list">No records yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-tracking" class="section">
+        <div class="grid grid-4">
+          <div class="metric">
+            <div class="metric-label">Trucks</div>
+            <div class="metric-value" id="trackTruckCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Refrigerated Vans</div>
+            <div class="metric-value" id="trackReeferCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Flatbeds</div>
+            <div class="metric-value" id="trackFlatbedCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Other / Company Vehicles</div>
+            <div class="metric-value" id="trackOtherCount">0</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px;">
+          <div class="panel-head">
+            <div class="panel-title">Tracking Summary</div>
+          </div>
+          <div class="panel-body" id="trackingSummaryText">
+            No tracking data loaded yet.
+          </div>
+        </div>
+      </section>
+
+      <section id="section-accounting" class="section">
+        <div class="subtabs">
+          <button class="subtab active" onclick="openAccountingTab('acct-transactions', this)">Maintenance Expense Transactions</button>
+          <button class="subtab" onclick="openAccountingTab('acct-qbo', this)">QuickBooks Live Master</button>
+        </div>
+
+        <div id="acct-transactions" class="accounting-tab">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">New Maintenance Expense Transaction</div>
+            </div>
+            <div class="panel-body form-stack">
+              <div class="search-row">
+                <select id="apTxnType">
+                  <option value="expense">Expense</option>
+                  <option value="bill">Bill</option>
+                </select>
+                <select id="apDetailMode" onchange="toggleApDetailMode()">
+                  <option value="category">Category details</option>
+                  <option value="item">Item details</option>
+                </select>
+              </div>
+
+              <div class="search-row">
+                <input id="apDocNumber" placeholder="Expense No. / Bill No.">
                 <input id="apVendorSearch" list="qboVendorOptions" placeholder="Type vendor name" oninput="resolveApVendorSearch()">
-                <input id="apVendorQboId" type="hidden">
               </div>
-            </div>
-            <div class="search-note">Type to search vendors directly. No need to scroll the list.</div>
+              <input id="apVendorQboId" type="hidden">
 
-            <div class="grid2">
-              <input id="apTxnDate" type="date">
-              <input id="apDueDate" type="date">
-            </div>
+              <div class="search-row">
+                <input id="apTxnDate" type="date">
+                <input id="apDueDate" type="date">
+              </div>
 
-            <div class="grid2">
-              <div>
+              <div class="search-row">
                 <input id="apPaymentMethodSearch" list="paymentMethodOptions" placeholder="Type payment method" oninput="resolveApPaymentMethodSearch()">
-                <input id="apPaymentMethodId" type="hidden">
+                <input id="apAssetUnit" list="unitOptions" placeholder="Type unit / asset">
               </div>
-              <input id="apAssetUnit" placeholder="Unit / asset">
-            </div>
+              <input id="apPaymentMethodId" type="hidden">
 
-            <div id="apCategoryBlock">
-              <div>
+              <div id="apCategoryBlock">
                 <input id="apAccountSearch" list="qboAccountOptions" placeholder="Type category / account" oninput="resolveApAccountSearch()">
                 <input id="apAccountQboId" type="hidden">
               </div>
-            </div>
 
-            <div id="apItemBlock" class="hidden">
-              <div class="grid2">
-                <div>
+              <div id="apItemBlock" class="hidden">
+                <div class="search-row">
                   <input id="apItemSearch" list="qboItemOptions" placeholder="Type item / service" oninput="resolveApItemSearch()">
-                  <input id="apItemQboId" type="hidden">
+                  <input id="apQty" type="number" step="1" value="1" placeholder="Qty">
                 </div>
-                <input id="apQty" type="number" step="1" value="1" placeholder="Qty">
+                <input id="apItemQboId" type="hidden">
+              </div>
+
+              <div class="search-row">
+                <input id="apAmount" type="number" step="0.01" placeholder="Amount">
+                <input id="apDescription" placeholder="Description">
+              </div>
+
+              <textarea id="apMemo" placeholder="Memo"></textarea>
+
+              <button onclick="saveApTransaction()">Save Maintenance Expense Transaction</button>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:12px;">
+            <div class="panel-head">
+              <div class="panel-title">Saved Maintenance Expense Transactions</div>
+              <div class="report-actions">
+                <button onclick="downloadExpenseTransactionsCsv()">Export Transactions CSV</button>
               </div>
             </div>
-
-            <div class="grid2">
-              <input id="apAmount" type="number" step="0.01" placeholder="Amount">
-              <input id="apDescription" placeholder="Description">
+            <div class="panel-body">
+              <div id="apList" class="card-list">No transactions yet.</div>
             </div>
-
-            <textarea id="apMemo" placeholder="Memo"></textarea>
-
-            <button onclick="saveApTransaction()">Save AP Transaction</button>
-          </div>
-
-          <div style="margin-top:14px" class="label">AP Transactions</div>
-          <div id="apList"></div>
-        </div>
-
-        <div id="qboTab" class="hidden">
-          <div class="qb-status">
-            <button onclick="refreshQboMaster()">Refresh Live QuickBooks Master</button>
-            <span id="qboMasterStatus" class="small">Not refreshed yet</span>
-          </div>
-
-          <div class="label">Create Vendor Directly in QuickBooks</div>
-          <div class="form-stack">
-            <div class="grid2">
-              <input id="newVendorName" placeholder="Vendor name">
-              <input id="newVendorCompanyName" placeholder="Company name">
-            </div>
-            <div class="grid2">
-              <input id="newVendorPhone" placeholder="Phone">
-              <input id="newVendorEmail" placeholder="Email">
-            </div>
-            <input id="newVendorAddress" placeholder="Address">
-            <button onclick="createQboVendor()">Create Vendor in QuickBooks</button>
-          </div>
-
-          <div class="grid3" style="margin-top:14px">
-            <div class="card">
-              <div class="label">QuickBooks Vendors</div>
-              <div class="value" id="qboVendorCount">0</div>
-            </div>
-            <div class="card">
-              <div class="label">QuickBooks Items</div>
-              <div class="value" id="qboItemCount">0</div>
-            </div>
-            <div class="card">
-              <div class="label">QuickBooks Accounts</div>
-              <div class="value" id="qboAccountCount">0</div>
-            </div>
-          </div>
-
-          <div style="margin-top:14px">
-            <input id="qboVendorFilter" placeholder="Search QuickBooks vendors" oninput="renderQboMaster()">
-          </div>
-          <div style="margin-top:8px" class="label">Live QuickBooks Vendors</div>
-          <div id="qboVendorList"></div>
-
-          <div style="margin-top:14px">
-            <input id="qboItemFilter" placeholder="Search QuickBooks items" oninput="renderQboMaster()">
-          </div>
-          <div style="margin-top:8px" class="label">Live QuickBooks Items</div>
-          <div id="qboItemList"></div>
-
-          <div style="margin-top:14px">
-            <input id="qboAccountFilter" placeholder="Search QuickBooks accounts" oninput="renderQboMaster()">
-          </div>
-          <div style="margin-top:8px" class="label">Live QuickBooks Accounts</div>
-          <div id="qboAccountList"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Selected Unit</h2>
-      <div class="panel-body">
-        <div id="unitInfo" class="small">Select a unit.</div>
-
-        <div style="margin-top:14px">
-          <div class="label">Edit Current Mileage</div>
-          <div class="grid2">
-            <input id="mileageInput" type="number" placeholder="Current mileage">
-            <button onclick="saveMileage()">Save Mileage</button>
           </div>
         </div>
 
-        <div style="margin-top:16px">
-          <div class="label">Add Maintenance Record</div>
-          <div class="form-stack">
-            <select id="recordTypeInput" onchange="toggleRecordFields()">
-              <option value="maintenance">Maintenance</option>
-              <option value="tire">Tire</option>
-              <option value="repair">Repair</option>
-              <option value="accident">Accident</option>
-              <option value="custom">Custom</option>
-            </select>
-
-            <div>
-              <input id="serviceSearchInput" list="serviceOptions" placeholder="Type service name" oninput="resolveServiceSearch()">
-              <input id="serviceTypeInput" type="hidden">
-            </div>
-            <input id="customServiceTypeInput" placeholder="Custom service type" class="hidden">
-
-            <input id="serviceDateInput" type="date">
-            <input id="serviceMileageInput" type="number" placeholder="Service mileage">
-            <input id="vendorInput" list="qboVendorOptions" placeholder="Type vendor name">
-            <input id="costInput" type="number" step="0.01" placeholder="Cost">
-            <textarea id="notesInput" placeholder="Notes"></textarea>
-
-            <div id="tireFields" class="hidden">
-              <div class="grid2">
-                <select id="tireConditionInput">
-                  <option value="">Tire condition</option>
-                  <option value="new">New</option>
-                  <option value="used">Used</option>
-                  <option value="recap">Recap</option>
-                </select>
-                <input id="tirePositionInput" placeholder="Position e.g. LF Outer">
-              </div>
-              <div class="grid2">
-                <input id="tireBrandInput" placeholder="Tire brand">
-                <input id="tireDotInput" placeholder="DOT / serial">
-              </div>
-              <div class="grid3">
-                <input id="installMileageInput" type="number" placeholder="Install mileage">
-                <input id="removeMileageInput" type="number" placeholder="Remove mileage">
-                <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
+        <div id="acct-qbo" class="accounting-tab hidden">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">QuickBooks Live Master</div>
+              <div class="report-actions">
+                <button onclick="refreshQboMaster()">Refresh Live QuickBooks Master</button>
               </div>
             </div>
+            <div class="panel-body">
+              <div id="qboMasterStatus" class="mini-note">Not refreshed yet.</div>
 
-            <div id="repairFields" class="hidden">
-              <select id="repairLocationTypeInput">
-                <option value="">Repair type</option>
-                <option value="in-house">In-house mechanic shop</option>
-                <option value="external">External mechanic shop</option>
-                <option value="over-the-road">Over the road</option>
-                <option value="road-service">Road service</option>
-              </select>
-            </div>
-
-            <div id="accidentFields" class="hidden">
-              <div class="grid2">
-                <select id="accidentAtFaultInput">
-                  <option value="">At fault?</option>
-                  <option value="at-fault">At fault</option>
-                  <option value="not-at-fault">Not at fault</option>
-                </select>
-                <input id="accidentReportNumberInput" placeholder="Accident report #">
+              <div class="form-stack" style="margin-top:12px;">
+                <div class="label">Create Vendor Directly in QuickBooks</div>
+                <div class="search-row">
+                  <input id="newVendorName" placeholder="Vendor name">
+                  <input id="newVendorCompanyName" placeholder="Company name">
+                </div>
+                <div class="search-row">
+                  <input id="newVendorPhone" placeholder="Phone">
+                  <input id="newVendorEmail" placeholder="Email">
+                </div>
+                <input id="newVendorAddress" placeholder="Address">
+                <button onclick="createQboVendor()">Create Vendor in QuickBooks</button>
               </div>
-              <input id="accidentLocationInput" placeholder="Accident location">
-            </div>
 
-            <button onclick="saveRecord()">Save Record</button>
+              <div class="grid grid-3" style="margin-top:14px;">
+                <div class="metric">
+                  <div class="metric-label">QuickBooks Vendors</div>
+                  <div class="metric-value" id="qboVendorCount">0</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">QuickBooks Items</div>
+                  <div class="metric-value" id="qboItemCount">0</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">QuickBooks Accounts</div>
+                  <div class="metric-value" id="qboAccountCount">0</div>
+                </div>
+              </div>
+
+              <div class="search-row" style="margin-top:14px;">
+                <input id="qboVendorFilter" placeholder="Search QuickBooks vendors" oninput="renderQboMaster()">
+                <input id="qboItemFilter" placeholder="Search QuickBooks items" oninput="renderQboMaster()">
+              </div>
+              <input id="qboAccountFilter" placeholder="Search QuickBooks accounts" oninput="renderQboMaster()" style="margin-top:10px;">
+
+              <div class="grid grid-3" style="margin-top:14px;">
+                <div class="panel">
+                  <div class="panel-head"><div class="panel-title">Vendors</div></div>
+                  <div class="panel-body" id="qboVendorList"></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head"><div class="panel-title">Items</div></div>
+                  <div class="panel-body" id="qboItemList"></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head"><div class="panel-title">Accounts</div></div>
+                  <div class="panel-body" id="qboAccountList"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div style="margin-top:16px">
-          <div class="label">Unit History</div>
-          <div id="unitHistory" class="small">No records yet.</div>
-        </div>
-      </div>
-    </div>
+      </section>
+    </main>
   </div>
 
   <script>
@@ -494,6 +1003,9 @@
     let erp = {};
     let selectedUnit = '';
     let tireAlerts = [];
+    let board = {};
+    let activeSection = 'dashboard';
+    let activeAssetCategory = 'Trucks';
 
     async function j(url, options = {}) {
       const r = await fetch(url, options);
@@ -505,12 +1017,20 @@
       }
     }
 
+    function escapeHtml(str) {
+      return String(str || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
     function statusClass(s) {
-      if (s === 'past due') return 'status past';
-      if (s === 'due soon') return 'status soon';
-      if (s === 'posted') return 'status posted';
-      if (s === 'error') return 'status error';
-      return 'status current';
+      if (s === 'past due') return 'status status-past';
+      if (s === 'due soon') return 'status status-soon';
+      if (s === 'posted') return 'status status-posted';
+      if (s === 'error') return 'status status-error';
+      return 'status status-current';
     }
 
     function byUnitOrder(a, b) {
@@ -520,24 +1040,127 @@
       return String(a.name || a.unit).localeCompare(String(b.name || b.unit));
     }
 
-    function showTab(tabId, btn) {
-      document.querySelectorAll('#maintenanceTab,#apTab,#qboTab').forEach(el => el.classList.add('hidden'));
-      document.getElementById(tabId).classList.remove('hidden');
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    function cacheVendors() { return erp.qboCache?.vendors || []; }
+    function cacheItems() { return erp.qboCache?.items || []; }
+    function cacheAccounts() { return erp.qboCache?.accounts || []; }
+    function paymentMethods() { return erp.paymentMethods || []; }
+
+    function openSection(name, btn) {
+      activeSection = name;
+      document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+      document.getElementById(`section-${name}`).classList.add('active');
+      document.querySelectorAll('.nav-btn[data-section]').forEach(el => el.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const titleMap = {
+        dashboard: 'Unified Dashboard',
+        dispatch: 'Dispatch Board',
+        fuel: 'Fuel Board',
+        maintenance: 'Maintenance Board',
+        tracking: 'Vehicle Tracking Board',
+        accounting: 'Accounting Board'
+      };
+      document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
+    }
+
+    function openSectionByName(name) {
+      const btn = document.querySelector(`.nav-btn[data-section="${name}"]`);
+      openSection(name, btn);
+    }
+
+    function openAccountingTab(id, btn) {
+      document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+      document.querySelectorAll('.subtab').forEach(el => el.classList.remove('active'));
       btn.classList.add('active');
     }
 
-    function cacheVendors() {
-      return erp.qboCache?.vendors || [];
+    function assetCategoryForVehicle(v) {
+      const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
+
+      if (text.includes('reefer') || text.includes('refrigerated')) return 'Refrigerated Vans';
+      if (text.includes('flatbed') || text.includes('step deck') || text.includes('drop deck')) return 'Flatbeds';
+      if (text.includes('dry van')) return 'Dry Vans';
+      if (
+        text.includes('pickup') ||
+        text.includes('suv') ||
+        text.includes('car') ||
+        text.includes('company vehicle') ||
+        text.includes('silverado') ||
+        text.includes('f-150')
+      ) return 'Company Vehicles';
+      return 'Trucks';
     }
-    function cacheItems() {
-      return erp.qboCache?.items || [];
+
+    function vehiclesByCategory() {
+      const map = {
+        'Trucks': [],
+        'Refrigerated Vans': [],
+        'Flatbeds': [],
+        'Dry Vans': [],
+        'Company Vehicles': []
+      };
+      vehicles.forEach(v => {
+        const cat = assetCategoryForVehicle(v);
+        if (!map[cat]) map[cat] = [];
+        map[cat].push(v);
+      });
+      Object.keys(map).forEach(k => map[k] = map[k].sort(byUnitOrder));
+      return map;
     }
-    function cacheAccounts() {
-      return erp.qboCache?.accounts || [];
+
+    function findSelectedVehicle() {
+      return vehicles.find(v => v.name === selectedUnit) || null;
     }
-    function paymentMethods() {
-      return erp.paymentMethods || [];
+
+    function getVehicleMileage(v) {
+      if (!v) return null;
+      const meters =
+        v.odometerMeters ??
+        v.obdOdometerMeters ??
+        v.syntheticOdometerMeters ??
+        v.odometer?.meters ??
+        v.stats?.odometerMeters ??
+        null;
+
+      if (meters != null && Number.isFinite(Number(meters))) {
+        return Math.round(Number(meters) * 0.000621371);
+      }
+
+      const miles =
+        v.odometerMiles ??
+        v.odometer?.miles ??
+        v.stats?.odometerMiles ??
+        null;
+
+      if (miles != null && Number.isFinite(Number(miles))) {
+        return Math.round(Number(miles));
+      }
+
+      return null;
+    }
+
+    function fuelPercentForVehicle(name) {
+      const live = board.live || [];
+      const row = live.find(x => x.name === name || x.vehicleName === name || x.vehicle?.name === name);
+      const pct =
+        row?.fuelPercent ??
+        row?.fuelPercents?.[0]?.percent ??
+        row?.fuelPercents?.[0]?.value ??
+        row?.stats?.fuelPercent ??
+        null;
+
+      if (pct == null || !Number.isFinite(Number(pct))) return null;
+      return Math.round(Number(pct));
+    }
+
+    function assignedVehicleNames() {
+      const set = new Set();
+      (board.assignments || []).forEach(a => {
+        const n = a?.vehicle?.name || a?.vehicleName || a?.vehicle?.id || '';
+        if (n) set.add(n);
+      });
+      return set;
     }
 
     async function loadQboStatus() {
@@ -545,16 +1168,20 @@
         const s = await j('/api/qbo/status');
         if (!s.configured) {
           document.getElementById('qbStatusText').textContent = 'QuickBooks env is missing';
+          document.getElementById('sidebarQboStatus').textContent = 'QuickBooks env is missing';
           return;
         }
         if (!s.connected) {
           document.getElementById('qbStatusText').textContent = 'QuickBooks not connected yet';
+          document.getElementById('sidebarQboStatus').textContent = 'QuickBooks not connected yet';
           return;
         }
-        document.getElementById('qbStatusText').textContent =
-          `Connected to QuickBooks${s.companyName ? ' - ' + s.companyName : ''}`;
+        const txt = `Connected to QuickBooks${s.companyName ? ' - ' + s.companyName : ''}`;
+        document.getElementById('qbStatusText').textContent = txt;
+        document.getElementById('sidebarQboStatus').textContent = txt;
       } catch {
         document.getElementById('qbStatusText').textContent = 'QuickBooks status check failed';
+        document.getElementById('sidebarQboStatus').textContent = 'QuickBooks status check failed';
       }
     }
 
@@ -569,7 +1196,7 @@
           company?.CompanyInfo?.CompanyName ||
           company?.QueryResponse?.CompanyInfo?.[0]?.CompanyName ||
           'Connected';
-        document.getElementById('qboTestBox').innerHTML = `Company: ${companyName}`;
+        document.getElementById('qboTestBox').innerHTML = `Company: ${escapeHtml(companyName)}`;
       } catch (e) {
         document.getElementById('qboTestBox').textContent = 'QuickBooks test failed: ' + e.message;
       }
@@ -586,6 +1213,7 @@
         };
         fillDataLists();
         renderQboMaster();
+        renderDashboardHome();
         document.getElementById('qboMasterStatus').textContent =
           `Refreshed: ${new Date(data.refreshedAt || Date.now()).toLocaleString()}`;
       } catch (e) {
@@ -615,6 +1243,8 @@
         const vendorId = result.vendor?.Id || '';
         document.getElementById('apVendorSearch').value = displayName;
         document.getElementById('apVendorQboId').value = vendorId;
+        document.getElementById('linkedVendorSearch').value = displayName;
+        document.getElementById('linkedVendorQboId').value = vendorId;
         document.getElementById('vendorInput').value = displayName;
 
         ['newVendorName','newVendorCompanyName','newVendorPhone','newVendorEmail','newVendorAddress'].forEach(id => {
@@ -628,13 +1258,17 @@
     }
 
     async function loadAll() {
-      const dashRes = await j('/api/maintenance/dashboard');
-      const erpRes = await j('/api/maintenance/records');
+      const [dashRes, erpRes, boardRes] = await Promise.all([
+        j('/api/maintenance/dashboard'),
+        j('/api/maintenance/records'),
+        j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] }))
+      ]);
 
       vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
       dashboard = dashRes.dashboard || [];
       tireAlerts = dashRes.tireAlerts || [];
       erp = erpRes || {};
+      board = boardRes || {};
 
       if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
       if (selectedUnit && !vehicles.find(v => v.name === selectedUnit) && vehicles.length) {
@@ -642,19 +1276,31 @@
       }
 
       fillDataLists();
-      renderSummary();
-      renderUnitList();
-      renderDashboard();
+      renderDashboardHome();
+      renderDispatchBoard();
+      renderFuelBoard();
+      renderTrackingBoard();
+      renderMaintenanceCategoryChips();
+      renderMaintenanceUnitList();
       renderSelectedUnit();
+      renderMaintenanceTable();
       renderApTransactions();
       renderQboMaster();
       await loadQboStatus();
 
-      document.getElementById('lastUpdated').textContent =
-        'Last updated: ' + new Date().toLocaleTimeString();
+      const nowText = 'Last updated: ' + new Date().toLocaleTimeString();
+      document.getElementById('lastUpdated').textContent = nowText;
+      document.getElementById('sidebarLastUpdated').textContent = nowText;
     }
 
     function fillDataLists() {
+      document.getElementById('unitOptions').innerHTML =
+        vehicles.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+
+      const serviceValues = Array.from(new Set(dashboard.map(x => x.serviceType))).sort();
+      document.getElementById('serviceOptions').innerHTML =
+        serviceValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+
       document.getElementById('qboVendorOptions').innerHTML =
         cacheVendors().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
 
@@ -666,99 +1312,129 @@
 
       document.getElementById('paymentMethodOptions').innerHTML =
         paymentMethods().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
-
-      document.getElementById('unitOptions').innerHTML =
-        vehicles.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
-
-      const serviceValues = Array.from(new Set(dashboard.map(x => x.serviceType))).sort();
-      document.getElementById('serviceOptions').innerHTML =
-        serviceValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
     }
 
-    function escapeHtml(str) {
-      return String(str || '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;');
-    }
-
-    function renderSummary() {
-      const unitCount = new Set(dashboard.map(x => x.unit)).size;
-      const soon = dashboard.filter(x => x.status === 'due soon').length;
+    function renderDashboardHome() {
+      const assigned = assignedVehicleNames();
       const past = dashboard.filter(x => x.status === 'past due').length;
 
-      document.getElementById('sumUnits').textContent = unitCount;
-      document.getElementById('sumSoon').textContent = soon;
-      document.getElementById('sumPast').textContent = past;
-      document.getElementById('sumTire').textContent = tireAlerts.length;
+      document.getElementById('dashTrackedAssets').textContent = vehicles.length;
+      document.getElementById('dashAssignedAssets').textContent = assigned.size;
+      document.getElementById('dashPastDue').textContent = past;
+      document.getElementById('dashQboVendors').textContent = cacheVendors().length;
+
+      const byCat = vehiclesByCategory();
+      document.getElementById('dashboardSummaryCards').innerHTML = `
+        <div class="record-card"><b>Trucks:</b> ${byCat['Trucks'].length}</div>
+        <div class="record-card"><b>Refrigerated Vans:</b> ${byCat['Refrigerated Vans'].length}</div>
+        <div class="record-card"><b>Flatbeds:</b> ${byCat['Flatbeds'].length}</div>
+        <div class="record-card"><b>Dry Vans:</b> ${byCat['Dry Vans'].length}</div>
+        <div class="record-card"><b>Company Vehicles:</b> ${byCat['Company Vehicles'].length}</div>
+      `;
+
+      const qboTxt = `
+        QuickBooks vendors: ${cacheVendors().length}<br>
+        QuickBooks items: ${cacheItems().length}<br>
+        QuickBooks accounts: ${cacheAccounts().length}<br>
+        Saved maintenance expense transactions: ${(erp.apTransactions || []).length}
+      `;
+      document.getElementById('dashboardQboSummary').innerHTML = qboTxt;
     }
 
-    function renderUnitList() {
-      const q = document.getElementById('unitSearch').value.trim().toUpperCase();
-      const html = vehicles
-        .filter(v => !q || String(v.name || '').toUpperCase().includes(q))
+    function renderDispatchBoard() {
+      const assigned = assignedVehicleNames();
+      document.getElementById('dispatchVehiclesCount').textContent = (board.vehicles || []).length;
+      document.getElementById('dispatchAssignedCount').textContent = assigned.size;
+      document.getElementById('dispatchUnassignedCount').textContent = Math.max((board.vehicles || []).length - assigned.size, 0);
+      document.getElementById('dispatchHosCount').textContent = (board.hos || []).length;
+
+      document.getElementById('dispatchSummaryText').innerHTML =
+        `Vehicles loaded: ${(board.vehicles || []).length}<br>` +
+        `Assigned / working: ${assigned.size}<br>` +
+        `HOS rows available: ${(board.hos || []).length}`;
+    }
+
+    function renderFuelBoard() {
+      const live = board.live || [];
+      const fuelRows = live.map(x => {
+        const val = x?.fuelPercent ?? x?.fuelPercents?.[0]?.percent ?? x?.fuelPercents?.[0]?.value ?? null;
+        return Number.isFinite(Number(val)) ? Number(val) : null;
+      }).filter(v => v != null);
+
+      const low = fuelRows.filter(v => v <= 25).length;
+      const avg = fuelRows.length ? Math.round(fuelRows.reduce((a,b) => a+b, 0) / fuelRows.length) : 0;
+
+      document.getElementById('fuelUnitsCount').textContent = fuelRows.length;
+      document.getElementById('fuelLowCount').textContent = low;
+      document.getElementById('fuelAvgPct').textContent = `${avg}%`;
+      document.getElementById('fuelTrackingCount').textContent = live.length;
+
+      document.getElementById('fuelSummaryText').innerHTML =
+        `Units with fuel data: ${fuelRows.length}<br>` +
+        `Low fuel units (≤25%): ${low}<br>` +
+        `Average fuel percent: ${avg}%`;
+    }
+
+    function renderTrackingBoard() {
+      const cats = vehiclesByCategory();
+      document.getElementById('trackTruckCount').textContent = cats['Trucks'].length;
+      document.getElementById('trackReeferCount').textContent = cats['Refrigerated Vans'].length;
+      document.getElementById('trackFlatbedCount').textContent = cats['Flatbeds'].length;
+      document.getElementById('trackOtherCount').textContent = cats['Dry Vans'].length + cats['Company Vehicles'].length;
+
+      document.getElementById('trackingSummaryText').innerHTML =
+        `Tracked assets: ${vehicles.length}<br>` +
+        `Trucks: ${cats['Trucks'].length}<br>` +
+        `Refrigerated vans: ${cats['Refrigerated Vans'].length}<br>` +
+        `Flatbeds: ${cats['Flatbeds'].length}<br>` +
+        `Dry vans: ${cats['Dry Vans'].length}<br>` +
+        `Company vehicles: ${cats['Company Vehicles'].length}`;
+    }
+
+    function renderMaintenanceCategoryChips() {
+      const cats = ['Trucks','Refrigerated Vans','Flatbeds','Dry Vans','Company Vehicles'];
+      document.getElementById('assetCategoryChips').innerHTML = cats.map(c => `
+        <button class="chip ${activeAssetCategory === c ? 'active' : ''}" onclick="setAssetCategory('${c}')">${escapeHtml(c)}</button>
+      `).join('');
+      document.getElementById('assetCategoryTitle').textContent = activeAssetCategory;
+    }
+
+    function setAssetCategory(cat) {
+      activeAssetCategory = cat;
+      renderMaintenanceCategoryChips();
+      renderMaintenanceUnitList();
+      if (!vehiclesByCategory()[activeAssetCategory].find(v => v.name === selectedUnit)) {
+        const first = vehiclesByCategory()[activeAssetCategory][0];
+        if (first) selectedUnit = first.name;
+      }
+      renderSelectedUnit();
+      renderMaintenanceTable();
+    }
+
+    function renderMaintenanceUnitList() {
+      const q = document.getElementById('maintenanceUnitSearch').value.trim().toLowerCase();
+      const list = vehiclesByCategory()[activeAssetCategory] || [];
+
+      const html = list
+        .filter(v => !q || String(v.name || '').toLowerCase().includes(q))
         .map(v => {
           const rows = dashboard.filter(d => d.unit === v.name);
           const past = rows.filter(r => r.status === 'past due').length;
           const soon = rows.filter(r => r.status === 'due soon').length;
+          const mileage = getVehicleMileage(v);
           return `
-            <div class="unit-row ${selectedUnit === v.name ? 'active' : ''}" onclick="selectUnit('${v.name}')">
-              <div><b>${escapeHtml(v.name)}</b></div>
-              <div class="small">${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}</div>
-              <div class="small">Past due: ${past} | Due soon: ${soon}</div>
+            <div class="list-row ${selectedUnit === v.name ? 'active' : ''}" onclick="selectUnit('${v.name}')">
+              <div class="list-title">${escapeHtml(v.name)}</div>
+              <div class="list-sub">
+                ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}<br>
+                Mileage: ${mileage != null ? mileage.toLocaleString() : 'N/A'}<br>
+                Past due: ${past} | Due soon: ${soon}
+              </div>
             </div>
           `;
         }).join('');
 
-      document.getElementById('unitList').innerHTML = html || '<div class="unit-row">No units found.</div>';
-    }
-
-    function renderDashboard() {
-      const statusFilter = document.getElementById('statusFilter').value.trim();
-      const serviceFilter = document.getElementById('serviceFilterSearch').value.trim().toLowerCase();
-      const unitFilter = document.getElementById('unitFilterSearch').value.trim().toLowerCase();
-
-      const rows = dashboard
-        .filter(r => !statusFilter || r.status === statusFilter)
-        .filter(r => !serviceFilter || String(r.serviceType || '').toLowerCase().includes(serviceFilter))
-        .filter(r => !unitFilter || String(r.unit || '').toLowerCase().includes(unitFilter));
-
-      document.getElementById('dashboardBody').innerHTML = rows.map(r => `
-        <tr>
-          <td>${escapeHtml(r.unit)}</td>
-          <td>${escapeHtml(r.unitType || '')}</td>
-          <td>${escapeHtml(r.category || '')}</td>
-          <td>${escapeHtml(r.serviceType)}</td>
-          <td><span class="${statusClass(r.status)}">${escapeHtml(r.status)}</span></td>
-          <td>${r.currentMileage ?? ''}</td>
-          <td>${escapeHtml(r.lastServiceDate || '')}</td>
-          <td>${r.lastServiceMileage ?? ''}</td>
-          <td>${escapeHtml(r.nextDueDate || '')}</td>
-          <td>${r.nextDueMileage ?? ''}</td>
-          <td>${escapeHtml(r.vendor || '')}</td>
-          <td>${r.cost ?? ''}</td>
-          <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || '')}</span></td>
-          <td>${escapeHtml(r.qboPurchaseId || '')}</td>
-          <td>${escapeHtml(r.notes || '')}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="15">No rows found.</td></tr>';
-
-      document.getElementById('tireAlerts').innerHTML = tireAlerts.length
-        ? tireAlerts.map(a => `
-            <div class="card" style="margin-bottom:8px">
-              <div><b>${escapeHtml(a.unit)}</b> — ${escapeHtml(a.type)}</div>
-              <div class="small">${escapeHtml(a.message)}</div>
-            </div>
-          `).join('')
-        : 'No tire alerts.';
-    }
-
-    function selectUnit(unit) {
-      selectedUnit = unit;
-      renderUnitList();
-      renderSelectedUnit();
-      document.getElementById('apAssetUnit').value = unit;
+      document.getElementById('maintenanceUnitList').innerHTML = html || '<div class="list-row">No assets found.</div>';
     }
 
     function setServiceOptions() {
@@ -799,6 +1475,30 @@
       document.getElementById('apPaymentMethodId').value = match ? match.id : '';
     }
 
+    function resolveLinkedVendorSearch() {
+      const name = document.getElementById('linkedVendorSearch').value.trim().toLowerCase();
+      const match = cacheVendors().find(v => String(v.name).toLowerCase() === name);
+      document.getElementById('linkedVendorQboId').value = match ? match.qboId : '';
+    }
+
+    function resolveLinkedItemSearch() {
+      const name = document.getElementById('linkedItemSearch').value.trim().toLowerCase();
+      const match = cacheItems().find(v => String(v.name).toLowerCase() === name);
+      document.getElementById('linkedItemQboId').value = match ? match.qboId : '';
+    }
+
+    function resolveLinkedAccountSearch() {
+      const name = document.getElementById('linkedAccountSearch').value.trim().toLowerCase();
+      const match = cacheAccounts().find(v => String(v.name).toLowerCase() === name);
+      document.getElementById('linkedAccountQboId').value = match ? match.qboId : '';
+    }
+
+    function resolveLinkedPaymentMethodSearch() {
+      const name = document.getElementById('linkedPaymentMethodSearch').value.trim().toLowerCase();
+      const match = paymentMethods().find(v => String(v.name).toLowerCase() === name);
+      document.getElementById('linkedPaymentMethodId').value = match ? match.id : '';
+    }
+
     function toggleRecordFields() {
       const type = document.getElementById('recordTypeInput').value;
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
@@ -826,6 +1526,95 @@
       document.getElementById('apItemBlock').classList.toggle('hidden', mode !== 'item');
     }
 
+    function toggleLinkedDetailMode() {
+      const mode = document.getElementById('linkedDetailMode').value;
+      document.getElementById('linkedCategoryBlock').classList.toggle('hidden', mode !== 'category');
+      document.getElementById('linkedItemBlock').classList.toggle('hidden', mode !== 'item');
+    }
+
+    function renderSelectedUnit() {
+      const v = findSelectedVehicle();
+      if (!v) {
+        document.getElementById('selectedUnitInfo').textContent = 'Select an asset.';
+        return;
+      }
+
+      const mileage = getVehicleMileage(v);
+      const fuel = fuelPercentForVehicle(v.name);
+      const rows = dashboard.filter(x => x.unit === v.name);
+      const past = rows.filter(x => x.status === 'past due').length;
+      const soon = rows.filter(x => x.status === 'due soon').length;
+
+      document.getElementById('selectedUnitInfo').innerHTML = `
+        <b>${escapeHtml(v.name)}</b><br>
+        ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}<br>
+        VIN: ${escapeHtml(v.vin || '')}
+      `;
+
+      document.getElementById('unitMileageBox').textContent = mileage != null ? mileage.toLocaleString() : 'N/A';
+      document.getElementById('unitFuelBox').textContent = fuel != null ? `${fuel}%` : 'N/A';
+      document.getElementById('unitPastDueBox').textContent = past;
+      document.getElementById('unitDueSoonBox').textContent = soon;
+
+      document.getElementById('mileageInput').value = erp.currentMileage?.[selectedUnit] ?? '';
+      document.getElementById('apAssetUnit').value = selectedUnit;
+
+      setServiceOptions();
+      toggleRecordFields();
+      renderUnitHistory();
+    }
+
+    function renderMaintenanceTable() {
+      const selectedServiceFilter = document.getElementById('maintenanceServiceFilter').value.trim().toLowerCase();
+      const listNames = new Set((vehiclesByCategory()[activeAssetCategory] || []).map(v => v.name));
+
+      const rows = dashboard
+        .filter(r => listNames.has(r.unit))
+        .filter(r => !selectedServiceFilter || String(r.serviceType || '').toLowerCase().includes(selectedServiceFilter));
+
+      document.getElementById('maintenanceTableBody').innerHTML = rows.map(r => `
+        <tr>
+          <td>${escapeHtml(r.unit)}</td>
+          <td>${escapeHtml(r.serviceType)}</td>
+          <td><span class="${statusClass(r.status)}">${escapeHtml(r.status)}</span></td>
+          <td>${r.currentMileage ?? ''}</td>
+          <td>${escapeHtml(r.lastServiceDate || '')}</td>
+          <td>${escapeHtml(r.nextDueDate || '')}</td>
+          <td>${r.nextDueMileage ?? ''}</td>
+          <td>${escapeHtml(r.vendor || '')}</td>
+          <td>${r.cost ?? ''}</td>
+          <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || '')}</span></td>
+        </tr>
+      `).join('') || '<tr><td colspan="10">No rows found.</td></tr>';
+    }
+
+    function renderUnitHistory() {
+      const records = (erp.records || [])
+        .filter(r => r.unit === selectedUnit)
+        .sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
+
+      document.getElementById('unitHistory').innerHTML = records.length
+        ? records.map(r => `
+            <div class="record-card">
+              <div class="record-head">
+                <div><b>${escapeHtml(r.serviceType)}</b> <span class="mini-note">(${escapeHtml(r.recordType || 'maintenance')})</span></div>
+                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
+              </div>
+              <div class="mini-note">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
+              <div class="mini-note">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
+              ${r.repairLocationType ? `<div class="mini-note">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
+              ${r.accidentAtFault ? `<div class="mini-note">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
+              ${r.qboPurchaseId ? `<div class="mini-note">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              <div class="mini-note">${escapeHtml(r.notes || '')}</div>
+              <div style="margin-top:8px;">
+                <button onclick="postRecordToQbo('${r.id}')">Send to QuickBooks</button>
+              </div>
+            </div>
+          `).join('')
+        : 'No records yet.';
+    }
+
     async function postRecordToQbo(recordId) {
       try {
         const result = await j(`/api/qbo/post-record/${recordId}`, { method: 'POST' });
@@ -837,63 +1626,6 @@
       }
     }
 
-    async function postApToQbo(apId) {
-      try {
-        const result = await j(`/api/qbo/post-ap/${apId}`, { method: 'POST' });
-        alert(`Posted to QuickBooks. ${result.ap.qboEntityType} ID: ${result.ap.qboEntityId || ''}`);
-        await loadAll();
-      } catch (e) {
-        alert(`QuickBooks posting failed: ${e.message}`);
-        await loadAll();
-      }
-    }
-
-    function renderSelectedUnit() {
-      const v = vehicles.find(x => x.name === selectedUnit);
-      if (!v) {
-        document.getElementById('unitInfo').textContent = 'Select a unit.';
-        return;
-      }
-
-      document.getElementById('unitInfo').innerHTML = `
-        <div><b>${escapeHtml(v.name)}</b></div>
-        <div class="small">${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}</div>
-        <div class="small">VIN: ${escapeHtml(v.vin || '')}</div>
-      `;
-
-      document.getElementById('mileageInput').value =
-        erp.currentMileage?.[selectedUnit] ?? '';
-
-      setServiceOptions();
-      toggleRecordFields();
-
-      const records = (erp.records || [])
-        .filter(r => r.unit === selectedUnit)
-        .sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
-
-      document.getElementById('unitHistory').innerHTML = records.length
-        ? records.map(r => `
-            <div class="card" style="margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-                <div><b>${escapeHtml(r.serviceType)}</b> <span class="small">(${escapeHtml(r.recordType || 'maintenance')})</span></div>
-                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
-              </div>
-              <div class="small">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
-              <div class="small">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
-              ${r.tirePosition ? `<div class="small">Tire: ${escapeHtml(r.tireCondition || '')} | ${escapeHtml(r.tirePosition)} | ${escapeHtml(r.tireBrand || '')}</div>` : ''}
-              ${r.repairLocationType ? `<div class="small">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
-              ${r.accidentAtFault ? `<div class="small">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
-              ${r.qboPurchaseId ? `<div class="small">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
-              ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
-              <div class="small">${escapeHtml(r.notes || '')}</div>
-              <div style="margin-top:8px">
-                <button onclick="postRecordToQbo('${r.id}')">Send to QuickBooks</button>
-              </div>
-            </div>
-          `).join('')
-        : 'No records yet.';
-    }
-
     function renderApTransactions() {
       const rows = (erp.apTransactions || []).slice().reverse();
 
@@ -903,27 +1635,38 @@
 
       document.getElementById('apList').innerHTML = rows.length
         ? rows.map(r => `
-            <div class="card" style="margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+            <div class="record-card">
+              <div class="record-head">
                 <div><b>${escapeHtml(r.txnType.toUpperCase())}</b> — ${escapeHtml(r.detailMode)}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
-              <div class="small">No.: ${escapeHtml(r.docNumber || '')}</div>
-              <div class="small">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
-              <div class="small">Date: ${escapeHtml(r.txnDate || '')} ${r.dueDate ? '| Due: ' + escapeHtml(r.dueDate) : ''}</div>
-              <div class="small">Unit: ${escapeHtml(r.assetUnit || '')}</div>
-              <div class="small">Amount: ${r.amount ?? ''}</div>
-              <div class="small">Description: ${escapeHtml(r.description || '')}</div>
-              ${r.detailMode === 'item' ? `<div class="small">Item: ${escapeHtml(itemName(r.qboItemId))}</div>` : ''}
-              ${r.detailMode === 'category' ? `<div class="small">Category: ${escapeHtml(accountName(r.qboAccountId))}</div>` : ''}
-              ${r.qboEntityType ? `<div class="small">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
-              ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
-              <div style="margin-top:8px">
+              <div class="mini-note">No.: ${escapeHtml(r.docNumber || '')}</div>
+              <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
+              <div class="mini-note">Date: ${escapeHtml(r.txnDate || '')} ${r.dueDate ? '| Due: ' + escapeHtml(r.dueDate) : ''}</div>
+              <div class="mini-note">Unit: ${escapeHtml(r.assetUnit || '')}</div>
+              <div class="mini-note">Amount: ${r.amount ?? ''}</div>
+              <div class="mini-note">Description: ${escapeHtml(r.description || '')}</div>
+              ${r.detailMode === 'item' ? `<div class="mini-note">Item: ${escapeHtml(itemName(r.qboItemId))}</div>` : ''}
+              ${r.detailMode === 'category' ? `<div class="mini-note">Category: ${escapeHtml(accountName(r.qboAccountId))}</div>` : ''}
+              ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              <div style="margin-top:8px;">
                 <button onclick="postApToQbo('${r.id}')">Post to QuickBooks</button>
               </div>
             </div>
           `).join('')
-        : 'No AP transactions yet.';
+        : 'No maintenance expense transactions yet.';
+    }
+
+    async function postApToQbo(apId) {
+      try {
+        const result = await j(`/api/qbo/post-ap/${apId}`, { method: 'POST' });
+        alert(`Posted to QuickBooks. ${result.ap.qboEntityType} ID: ${result.ap.qboEntityId || ''}`);
+        await loadAll();
+      } catch (e) {
+        alert(`QuickBooks posting failed: ${e.message}`);
+        await loadAll();
+      }
     }
 
     function renderQboMaster() {
@@ -945,11 +1688,11 @@
         .filter(v => !vendorFilter || String(v.name).toLowerCase().includes(vendorFilter))
         .slice(0, 50)
         .map(v => `
-          <div class="card" style="margin-bottom:8px">
+          <div class="record-card">
             <div><b>${escapeHtml(v.name)}</b></div>
-            <div class="small">${escapeHtml(v.companyName || '')}</div>
-            <div class="small">${escapeHtml(v.phone || '')} ${v.email ? '| ' + escapeHtml(v.email) : ''}</div>
-            <div class="small">QBO ID: ${escapeHtml(v.qboId)}</div>
+            <div class="mini-note">${escapeHtml(v.companyName || '')}</div>
+            <div class="mini-note">${escapeHtml(v.phone || '')} ${v.email ? '| ' + escapeHtml(v.email) : ''}</div>
+            <div class="mini-note">QBO ID: ${escapeHtml(v.qboId)}</div>
           </div>
         `).join('') || 'No QuickBooks vendors loaded.';
 
@@ -957,10 +1700,10 @@
         .filter(v => !itemFilter || String(v.name).toLowerCase().includes(itemFilter))
         .slice(0, 50)
         .map(v => `
-          <div class="card" style="margin-bottom:8px">
+          <div class="record-card">
             <div><b>${escapeHtml(v.name)}</b></div>
-            <div class="small">${escapeHtml(v.type || '')} ${v.sku ? '| SKU: ' + escapeHtml(v.sku) : ''}</div>
-            <div class="small">QBO ID: ${escapeHtml(v.qboId)}</div>
+            <div class="mini-note">${escapeHtml(v.type || '')} ${v.sku ? '| SKU: ' + escapeHtml(v.sku) : ''}</div>
+            <div class="mini-note">QBO ID: ${escapeHtml(v.qboId)}</div>
           </div>
         `).join('') || 'No QuickBooks items loaded.';
 
@@ -968,10 +1711,10 @@
         .filter(v => !accountFilter || String(v.name).toLowerCase().includes(accountFilter))
         .slice(0, 50)
         .map(v => `
-          <div class="card" style="margin-bottom:8px">
+          <div class="record-card">
             <div><b>${escapeHtml(v.name)}</b></div>
-            <div class="small">${escapeHtml(v.accountType || '')} ${v.accountSubType ? '| ' + escapeHtml(v.accountSubType) : ''}</div>
-            <div class="small">QBO ID: ${escapeHtml(v.qboId)}</div>
+            <div class="mini-note">${escapeHtml(v.accountType || '')} ${v.accountSubType ? '| ' + escapeHtml(v.accountSubType) : ''}</div>
+            <div class="mini-note">QBO ID: ${escapeHtml(v.qboId)}</div>
           </div>
         `).join('') || 'No QuickBooks accounts loaded.';
     }
@@ -1001,6 +1744,7 @@
       ['apAmount','apDescription','apMemo','apDueDate','apDocNumber'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('apQty').value = 1;
       await loadAll();
+      openSectionByName('accounting');
     }
 
     async function saveMileage() {
@@ -1051,15 +1795,131 @@
         })
       });
 
+      if (document.getElementById('linkAccountingToggle').checked && Number(document.getElementById('costInput').value || 0) > 0) {
+        const linkedVendorId = document.getElementById('linkedVendorQboId').value || (() => {
+          const nm = document.getElementById('linkedVendorSearch').value.trim().toLowerCase();
+          const mt = cacheVendors().find(v => String(v.name).toLowerCase() === nm);
+          return mt ? mt.qboId : '';
+        })();
+
+        if (linkedVendorId) {
+          await j('/api/erp/ap-transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              txnType: document.getElementById('linkedTxnType').value,
+              detailMode: document.getElementById('linkedDetailMode').value,
+              qboVendorId: linkedVendorId,
+              paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
+              qboAccountId: document.getElementById('linkedAccountQboId').value,
+              qboItemId: document.getElementById('linkedItemQboId').value,
+              qty: document.getElementById('linkedQty').value,
+              amount: document.getElementById('costInput').value,
+              txnDate: document.getElementById('serviceDateInput').value,
+              dueDate: document.getElementById('linkedDueDate').value,
+              docNumber: document.getElementById('linkedDocNumber').value,
+              description: serviceType,
+              memo: document.getElementById('notesInput').value,
+              assetUnit: selectedUnit
+            })
+          });
+        }
+      }
+
       ['serviceDateInput','serviceMileageInput','vendorInput','costInput','notesInput','customServiceTypeInput',
        'tirePositionInput','tireBrandInput','tireDotInput','installMileageInput','removeMileageInput',
-       'expectedTireLifeMilesInput','accidentLocationInput','accidentReportNumberInput'].forEach(id => {
-        document.getElementById(id).value = '';
+       'expectedTireLifeMilesInput','accidentLocationInput','accidentReportNumberInput',
+       'linkedDocNumber','linkedVendorSearch','linkedDueDate','linkedPaymentMethodSearch',
+       'linkedAccountSearch','linkedItemSearch'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
       });
+
       document.getElementById('tireConditionInput').value = '';
       document.getElementById('accidentAtFaultInput').value = '';
       document.getElementById('repairLocationTypeInput').value = '';
+      document.getElementById('linkedVendorQboId').value = '';
+      document.getElementById('linkedPaymentMethodId').value = '';
+      document.getElementById('linkedAccountQboId').value = '';
+      document.getElementById('linkedItemQboId').value = '';
+      document.getElementById('linkedQty').value = 1;
+
       await loadAll();
+    }
+
+    function toggleLinkedDetailMode() {
+      const mode = document.getElementById('linkedDetailMode').value;
+      document.getElementById('linkedCategoryBlock').classList.toggle('hidden', mode !== 'category');
+      document.getElementById('linkedItemBlock').classList.toggle('hidden', mode !== 'item');
+    }
+
+    function downloadCsv(filename, rows) {
+      const csv = rows.map(r => r.map(v => `"${String(v ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadUnitMaintenanceReport() {
+      if (!selectedUnit) return;
+      const rows = [
+        ['Unit','Service Type','Record Type','Date','Mileage','Vendor','Cost','Notes','QBO Sync']
+      ];
+      (erp.records || [])
+        .filter(r => r.unit === selectedUnit)
+        .forEach(r => {
+          rows.push([
+            r.unit, r.serviceType, r.recordType, r.serviceDate, r.serviceMileage,
+            r.vendor, r.cost, r.notes, r.qboSyncStatus
+          ]);
+        });
+      downloadCsv(`${selectedUnit}_maintenance_report.csv`, rows);
+    }
+
+    function downloadUnitExpenseReport() {
+      if (!selectedUnit) return;
+      const rows = [
+        ['Unit','Txn Type','Doc Number','Date','Due Date','Vendor QBO ID','Amount','Description','QBO Entity Type','QBO Entity ID']
+      ];
+      (erp.apTransactions || [])
+        .filter(r => r.assetUnit === selectedUnit)
+        .forEach(r => {
+          rows.push([
+            r.assetUnit, r.txnType, r.docNumber, r.txnDate, r.dueDate,
+            r.qboVendorId, r.amount, r.description, r.qboEntityType, r.qboEntityId
+          ]);
+        });
+      downloadCsv(`${selectedUnit}_expense_report.csv`, rows);
+    }
+
+    function downloadAllMaintenanceCsv() {
+      const rows = [
+        ['Unit','Service','Status','Current Mileage','Last Date','Next Due Date','Next Due Mileage','Vendor','Cost','QBO Sync']
+      ];
+      dashboard.forEach(r => {
+        rows.push([
+          r.unit, r.serviceType, r.status, r.currentMileage, r.lastServiceDate,
+          r.nextDueDate, r.nextDueMileage, r.vendor, r.cost, r.qboSyncStatus
+        ]);
+      });
+      downloadCsv(`all_maintenance_dashboard.csv`, rows);
+    }
+
+    function downloadExpenseTransactionsCsv() {
+      const rows = [
+        ['Txn Type','Doc Number','Date','Due Date','Vendor QBO ID','Amount','Description','Unit','QBO Entity Type','QBO Entity ID','Status']
+      ];
+      (erp.apTransactions || []).forEach(r => {
+        rows.push([
+          r.txnType, r.docNumber, r.txnDate, r.dueDate, r.qboVendorId,
+          r.amount, r.description, r.assetUnit, r.qboEntityType, r.qboEntityId, r.qboSyncStatus
+        ]);
+      });
+      downloadCsv(`maintenance_expense_transactions.csv`, rows);
     }
 
     loadAll();
