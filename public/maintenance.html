@@ -14,6 +14,7 @@
       --red:#dc2626;
       --yellow:#d97706;
       --green:#16a34a;
+      --blue:#2563eb;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
@@ -144,6 +145,13 @@
       text-transform:uppercase;
     }
     .form-stack{display:grid;gap:10px}
+    .qb-status{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
     @media (max-width:1450px){
       .layout{grid-template-columns:1fr}
       .summary{grid-template-columns:1fr 1fr}
@@ -172,6 +180,12 @@
     <div class="panel">
       <h2>Maintenance Dashboard</h2>
       <div class="panel-body">
+        <div class="qb-status">
+          <button onclick="connectQuickBooks()">Connect QuickBooks</button>
+          <button onclick="testQuickBooks()">Test QuickBooks</button>
+          <span id="qbStatusText" class="small">QuickBooks not checked</span>
+        </div>
+
         <div class="summary">
           <div class="card"><div class="label">Units</div><div class="value" id="sumUnits">0</div></div>
           <div class="card"><div class="label">Due Soon</div><div class="value" id="sumSoon">0</div></div>
@@ -215,6 +229,11 @@
             </thead>
             <tbody id="dashboardBody"></tbody>
           </table>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="label">QuickBooks connection test</div>
+          <div id="qboTestBox" class="small">Not tested yet.</div>
         </div>
 
         <div style="margin-top:14px">
@@ -342,6 +361,49 @@
       return String(a.name || a.unit).localeCompare(String(b.name || b.unit));
     }
 
+    async function loadQboStatus() {
+      try {
+        const s = await j('/api/qbo/status');
+        if (!s.configured) {
+          document.getElementById('qbStatusText').textContent = 'QuickBooks env is missing';
+          return;
+        }
+        if (!s.connected) {
+          document.getElementById('qbStatusText').textContent = 'QuickBooks not connected yet';
+          return;
+        }
+        document.getElementById('qbStatusText').textContent =
+          `Connected to QuickBooks${s.companyName ? ' - ' + s.companyName : ''}`;
+      } catch (e) {
+        document.getElementById('qbStatusText').textContent = 'QuickBooks status check failed';
+      }
+    }
+
+    function connectQuickBooks() {
+      window.location.href = '/api/qbo/connect';
+    }
+
+    async function testQuickBooks() {
+      try {
+        const company = await j('/api/qbo/company');
+        const vendors = await j('/api/qbo/vendors');
+        const items = await j('/api/qbo/items');
+
+        const companyName =
+          company?.CompanyInfo?.CompanyName ||
+          company?.QueryResponse?.CompanyInfo?.[0]?.CompanyName ||
+          'Connected';
+
+        const vendorCount = vendors?.QueryResponse?.Vendor?.length || 0;
+        const itemCount = items?.QueryResponse?.Item?.length || 0;
+
+        document.getElementById('qboTestBox').innerHTML =
+          `Company: ${companyName}<br>Vendors fetched: ${vendorCount}<br>Items fetched: ${itemCount}`;
+      } catch (e) {
+        document.getElementById('qboTestBox').textContent = 'QuickBooks test failed: ' + e.message;
+      }
+    }
+
     async function loadAll() {
       const dashRes = await j('/api/maintenance/dashboard');
       const storeRes = await j('/api/maintenance/records');
@@ -361,6 +423,7 @@
       renderUnitList();
       renderDashboard();
       renderSelectedUnit();
+      await loadQboStatus();
 
       document.getElementById('lastUpdated').textContent =
         'Last updated: ' + new Date().toLocaleTimeString();
@@ -545,7 +608,6 @@
           vendor: document.getElementById('vendorInput').value,
           cost: document.getElementById('costInput').value,
           notes: document.getElementById('notesInput').value,
-
           tireCondition: document.getElementById('tireConditionInput').value,
           tirePosition: document.getElementById('tirePositionInput').value,
           tireBrand: document.getElementById('tireBrandInput').value,
@@ -553,11 +615,9 @@
           installMileage: document.getElementById('installMileageInput').value,
           removeMileage: document.getElementById('removeMileageInput').value,
           expectedTireLifeMiles: document.getElementById('expectedTireLifeMilesInput').value,
-
           accidentAtFault: document.getElementById('accidentAtFaultInput').value,
           accidentLocation: document.getElementById('accidentLocationInput').value,
           accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
-
           repairLocationType: document.getElementById('repairLocationTypeInput').value
         })
       });
@@ -568,7 +628,6 @@
       document.getElementById('costInput').value = '';
       document.getElementById('notesInput').value = '';
       document.getElementById('customServiceTypeInput').value = '';
-
       document.getElementById('tireConditionInput').value = '';
       document.getElementById('tirePositionInput').value = '';
       document.getElementById('tireBrandInput').value = '';
@@ -576,11 +635,9 @@
       document.getElementById('installMileageInput').value = '';
       document.getElementById('removeMileageInput').value = '';
       document.getElementById('expectedTireLifeMilesInput').value = '';
-
       document.getElementById('accidentAtFaultInput').value = '';
       document.getElementById('accidentLocationInput').value = '';
       document.getElementById('accidentReportNumberInput').value = '';
-
       document.getElementById('repairLocationTypeInput').value = '';
 
       await loadAll();

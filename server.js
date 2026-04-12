@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -13,8 +14,25 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3400;
 const TOKEN = process.env.SAMSARA_API_TOKEN || '';
-const DATA_DIR = path.join(__dirname, 'data');
+const PERSIST_DIR = '/var/data';
+const LOCAL_DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = fs.existsSync(PERSIST_DIR) ? PERSIST_DIR : LOCAL_DATA_DIR;
+
 const MAINT_FILE = path.join(DATA_DIR, 'maintenance.json');
+const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
+
+const QBO_CLIENT_ID = process.env.QBO_CLIENT_ID || '';
+const QBO_CLIENT_SECRET = process.env.QBO_CLIENT_SECRET || '';
+const QBO_REDIRECT_URI = process.env.QBO_REDIRECT_URI || '';
+const QBO_ENV = process.env.QBO_ENV || 'production';
+
+const INTUIT_AUTH_BASE =
+  QBO_ENV === 'sandbox'
+    ? 'https://appcenter.intuit.com/connect/oauth2'
+    : 'https://appcenter.intuit.com/connect/oauth2';
+
+const INTUIT_TOKEN_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
+const QBO_API_BASE = 'https://quickbooks.api.intuit.com';
 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
@@ -49,8 +67,12 @@ async function fetchJson(url, options = {}) {
   return data;
 }
 
-function ensureDataFile() {
+function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function ensureDataFile() {
+  ensureDataDir();
   if (!fs.existsSync(MAINT_FILE)) {
     fs.writeFileSync(
       MAINT_FILE,
@@ -67,6 +89,23 @@ function ensureDataFile() {
   }
 }
 
+function ensureQboFile() {
+  ensureDataDir();
+  if (!fs.existsSync(QBO_FILE)) {
+    fs.writeFileSync(
+      QBO_FILE,
+      JSON.stringify(
+        {
+          state: '',
+          tokens: null
+        },
+        null,
+        2
+      )
+    );
+  }
+}
+
 function readMaint() {
   ensureDataFile();
   return JSON.parse(fs.readFileSync(MAINT_FILE, 'utf8'));
@@ -75,6 +114,16 @@ function readMaint() {
 function writeMaint(data) {
   ensureDataFile();
   fs.writeFileSync(MAINT_FILE, JSON.stringify(data, null, 2));
+}
+
+function readQbo() {
+  ensureQboFile();
+  return JSON.parse(fs.readFileSync(QBO_FILE, 'utf8'));
+}
+
+function writeQbo(data) {
+  ensureQboFile();
+  fs.writeFileSync(QBO_FILE, JSON.stringify(data, null, 2));
 }
 
 function safeNum(v, fallback = null) {
@@ -332,12 +381,246 @@ function buildTireAlerts(records) {
   return alerts;
 }
 
+function qboConfigured() {
+  return !!(QBO_CLIENT_ID && QBO_CLIENT_SECRET && QBO_REDIRECT_URI);
+}
+
+async function qboRefreshIfNeeded() {
+  const store = readQbo();
+  const tokens = store.tokens;
+  if (!tokens?.refresh_token) throw new Error('QuickBooks is not connected');
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const expiresAt = Number(tokens.expires_at || 0);
+
+  if (expiresAt && expiresAt - nowSec > 300 && tokens.access_token) {
+    return store.tokens;
+  }
+
+  const basic = Buffer.from(`${QBO_CLIENT_ID}:${QBO_CLIENT_SECRET}`).toString('base64');
+
+  const body = new URLSearchParams();
+  body.set('grant_type', 'refresh_token');
+  body.set('refresh_token', tokens.refresh_token);
+
+  const response = await fetch(INTUIT_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${basic}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body.toString()
+  });
+
+  const raw = await response.text();
+  let data = {};
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(`QuickBooks refresh failed: ${raw.slice(0, 200)}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error_description || data?.error || 'QuickBooks refresh failed');
+  }
+
+  store.tokens = {
+    ...store.tokens,
+    access_token: data.access_token,
+    refresh_token: data.refresh_token || store.tokens.refresh_token,
+    id_token: data.id_token || store.tokens.id_token || '',
+    expires_in: data.expires_in,
+    x_refresh_token_expires_in: data.x_refresh_token_expires_in,
+    expires_at: nowSec + Number(data.expires_in || 3600)
+  };
+
+  writeQbo(store);
+  return store.tokens;
+}
+
+async function qboGet(pathname) {
+  const store = readQbo();
+  if (!store.tokens?.realmId) throw new Error('QuickBooks realmId is missing');
+
+  const tokens = await qboRefreshIfNeeded();
+  const url = `${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${tokens.access_token}`,
+      Accept: 'application/json'
+    }
+  });
+
+  const raw = await response.text();
+  let data = {};
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(`QuickBooks GET failed: ${raw.slice(0, 200)}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.Fault?.Error?.[0]?.Message || 'QuickBooks GET failed');
+  }
+
+  return data;
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     hasToken: !!TOKEN,
+    dataDir: DATA_DIR,
+    hasQboConfig: qboConfigured(),
     serverTime: new Date().toISOString()
   });
+});
+
+app.get('/api/qbo/status', (_req, res) => {
+  const store = readQbo();
+  res.json({
+    configured: qboConfigured(),
+    connected: !!store.tokens?.access_token,
+    realmId: store.tokens?.realmId || '',
+    connectedAt: store.tokens?.connected_at || '',
+    companyName: store.tokens?.companyName || ''
+  });
+});
+
+app.get('/api/qbo/connect', (_req, res) => {
+  if (!qboConfigured()) {
+    return res.status(400).send('QuickBooks environment variables are missing.');
+  }
+
+  const state = crypto.randomBytes(16).toString('hex');
+  const store = readQbo();
+  store.state = state;
+  writeQbo(store);
+
+  const params = new URLSearchParams();
+  params.set('client_id', QBO_CLIENT_ID);
+  params.set('response_type', 'code');
+  params.set('scope', 'com.intuit.quickbooks.accounting');
+  params.set('redirect_uri', QBO_REDIRECT_URI);
+  params.set('state', state);
+
+  return res.redirect(`${INTUIT_AUTH_BASE}?${params.toString()}`);
+});
+
+app.get('/api/qbo/callback', async (req, res) => {
+  try {
+    const { code, realmId, state } = req.query;
+    const store = readQbo();
+
+    if (!code || !realmId || !state) {
+      return res.status(400).send('Missing QuickBooks callback parameters.');
+    }
+
+    if (!store.state || store.state !== state) {
+      return res.status(400).send('Invalid QuickBooks state.');
+    }
+
+    const basic = Buffer.from(`${QBO_CLIENT_ID}:${QBO_CLIENT_SECRET}`).toString('base64');
+
+    const body = new URLSearchParams();
+    body.set('grant_type', 'authorization_code');
+    body.set('code', code);
+    body.set('redirect_uri', QBO_REDIRECT_URI);
+
+    const response = await fetch(INTUIT_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${basic}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body.toString()
+    });
+
+    const raw = await response.text();
+    let data = {};
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.status(500).send(`QuickBooks token exchange failed: ${raw.slice(0, 200)}`);
+    }
+
+    if (!response.ok) {
+      return res.status(500).send(data?.error_description || data?.error || 'QuickBooks token exchange failed');
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    store.tokens = {
+      realmId: String(realmId),
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      id_token: data.id_token || '',
+      expires_in: data.expires_in,
+      x_refresh_token_expires_in: data.x_refresh_token_expires_in,
+      expires_at: nowSec + Number(data.expires_in || 3600),
+      connected_at: new Date().toISOString(),
+      companyName: ''
+    };
+    store.state = '';
+    writeQbo(store);
+
+    try {
+      const company = await qboGet(`companyinfo/${realmId}`);
+      const companyName =
+        company?.CompanyInfo?.CompanyName ||
+        company?.QueryResponse?.CompanyInfo?.[0]?.CompanyName ||
+        '';
+      const updated = readQbo();
+      if (updated.tokens) {
+        updated.tokens.companyName = companyName;
+        writeQbo(updated);
+      }
+    } catch {}
+
+    return res.send(`
+      <html>
+        <body style="font-family:Arial;padding:24px">
+          <h2>QuickBooks connected successfully</h2>
+          <p>You can close this page and return to the maintenance module.</p>
+          <p><a href="/maintenance.html">Go to Maintenance Module</a></p>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    return res.status(500).send(`QuickBooks callback failed: ${err.message}`);
+  }
+});
+
+app.get('/api/qbo/company', async (_req, res) => {
+  try {
+    const store = readQbo();
+    if (!store.tokens?.realmId) return res.status(400).json({ error: 'QuickBooks not connected' });
+    const data = await qboGet(`companyinfo/${store.tokens.realmId}`);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/qbo/vendors', async (_req, res) => {
+  try {
+    const data = await qboGet(`query?query=${encodeURIComponent('select * from Vendor maxresults 50')}`);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/qbo/items', async (_req, res) => {
+  try {
+    const data = await qboGet(`query?query=${encodeURIComponent('select * from Item maxresults 50')}`);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/maintenance/vehicles', async (_req, res) => {
@@ -460,7 +743,6 @@ app.post('/api/maintenance/record', (req, res) => {
     vendor: body.vendor || '',
     cost: safeNum(body.cost, null),
     notes: body.notes || '',
-
     tireCondition: body.tireCondition || '',
     tirePosition: body.tirePosition || '',
     tireBrand: body.tireBrand || '',
@@ -468,11 +750,9 @@ app.post('/api/maintenance/record', (req, res) => {
     installMileage: safeNum(body.installMileage, null),
     removeMileage: safeNum(body.removeMileage, null),
     expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
-
     accidentAtFault: body.accidentAtFault || '',
     accidentLocation: body.accidentLocation || '',
     accidentReportNumber: body.accidentReportNumber || '',
-
     repairLocationType: body.repairLocationType || ''
   });
 
