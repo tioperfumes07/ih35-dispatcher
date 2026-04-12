@@ -374,7 +374,7 @@
         }
         document.getElementById('qbStatusText').textContent =
           `Connected to QuickBooks${s.companyName ? ' - ' + s.companyName : ''}`;
-      } catch (e) {
+      } catch {
         document.getElementById('qbStatusText').textContent = 'QuickBooks status check failed';
       }
     }

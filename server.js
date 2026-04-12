@@ -13,7 +13,10 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3400;
-const TOKEN = process.env.SAMSARA_API_TOKEN || '';
+
+const SAMSARA_API_TOKEN = process.env.SAMSARA_API_TOKEN || '';
+const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY || '';
+
 const PERSIST_DIR = '/var/data';
 const LOCAL_DATA_DIR = path.join(__dirname, 'data');
 const DATA_DIR = fs.existsSync(PERSIST_DIR) ? PERSIST_DIR : LOCAL_DATA_DIR;
@@ -26,11 +29,7 @@ const QBO_CLIENT_SECRET = process.env.QBO_CLIENT_SECRET || '';
 const QBO_REDIRECT_URI = process.env.QBO_REDIRECT_URI || '';
 const QBO_ENV = process.env.QBO_ENV || 'production';
 
-const INTUIT_AUTH_BASE =
-  QBO_ENV === 'sandbox'
-    ? 'https://appcenter.intuit.com/connect/oauth2'
-    : 'https://appcenter.intuit.com/connect/oauth2';
-
+const INTUIT_AUTH_BASE = 'https://appcenter.intuit.com/connect/oauth2';
 const INTUIT_TOKEN_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
 const QBO_API_BASE = 'https://quickbooks.api.intuit.com';
 
@@ -38,9 +37,9 @@ app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-function authHeaders() {
+function samsaraHeaders() {
   return {
-    Authorization: `Bearer ${TOKEN}`,
+    Authorization: `Bearer ${SAMSARA_API_TOKEN}`,
     Accept: 'application/json'
   };
 }
@@ -53,7 +52,7 @@ async function fetchJson(url, options = {}) {
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new Error(`Non-JSON response from ${url}: ${raw.slice(0, 200)}`);
+    throw new Error(`Non-JSON response from ${url}: ${raw.slice(0, 250)}`);
   }
 
   if (!response.ok) {
@@ -71,7 +70,7 @@ function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-function ensureDataFile() {
+function ensureMaintFile() {
   ensureDataDir();
   if (!fs.existsSync(MAINT_FILE)) {
     fs.writeFileSync(
@@ -107,12 +106,12 @@ function ensureQboFile() {
 }
 
 function readMaint() {
-  ensureDataFile();
+  ensureMaintFile();
   return JSON.parse(fs.readFileSync(MAINT_FILE, 'utf8'));
 }
 
 function writeMaint(data) {
-  ensureDataFile();
+  ensureMaintFile();
   fs.writeFileSync(MAINT_FILE, JSON.stringify(data, null, 2));
 }
 
@@ -267,9 +266,8 @@ function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
     }
   }
 
-  const states = [milesState, dateState];
-  if (states.includes('past due')) return 'past due';
-  if (states.includes('due soon')) return 'due soon';
+  if (milesState === 'past due' || dateState === 'past due') return 'past due';
+  if (milesState === 'due soon' || dateState === 'due soon') return 'due soon';
   return 'current';
 }
 
@@ -283,7 +281,7 @@ function buildDashboardRows(vehicles, maintStore) {
     const rules = unitOverrides[unit]?.rules || defaultRulesForVehicle(v);
     const unitRecords = records.filter(r => r.unit === unit);
 
-    const rows = rules.map(rule => {
+    return rules.map(rule => {
       const sameType = unitRecords
         .filter(r => r.serviceType === rule.serviceType)
         .sort((a, b) => {
@@ -326,8 +324,6 @@ function buildDashboardRows(vehicles, maintStore) {
         status: calcStatus(nextDueMiles, nextDueDate, currentMiles)
       };
     });
-
-    return rows;
   }).flat();
 }
 
@@ -398,7 +394,6 @@ async function qboRefreshIfNeeded() {
   }
 
   const basic = Buffer.from(`${QBO_CLIENT_ID}:${QBO_CLIENT_SECRET}`).toString('base64');
-
   const body = new URLSearchParams();
   body.set('grant_type', 'refresh_token');
   body.set('refresh_token', tokens.refresh_token);
@@ -468,15 +463,204 @@ async function qboGet(pathname) {
   return data;
 }
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    ok: true,
-    hasToken: !!TOKEN,
-    dataDir: DATA_DIR,
-    hasQboConfig: qboConfigured(),
-    serverTime: new Date().toISOString()
-  });
+/* ---------- dispatcher endpoints ---------- */
+
+app.get('/api/samsara/vehicles', async (_req, res) => {
+  try {
+    const data = await fetchJson('https://api.samsara.com/fleet/vehicles', {
+      headers: samsaraHeaders()
+    });
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message, details: error.details || null });
+  }
 });
+
+app.get('/api/samsara/live', async (_req, res) => {
+  try {
+    const data = await fetchJson(
+      'https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates',
+      { headers: samsaraHeaders() }
+    );
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message, details: error.details || null });
+  }
+});
+
+app.get('/api/samsara/hos', async (_req, res) => {
+  const tries = [
+    'https://api.samsara.com/fleet/hos/clocks',
+    'https://api.samsara.com/fleet/drivers/hos/clocks'
+  ];
+
+  for (const url of tries) {
+    try {
+      const data = await fetchJson(url, { headers: samsaraHeaders() });
+      return res.json(data);
+    } catch {}
+  }
+
+  res.json({ data: [] });
+});
+
+app.get('/api/samsara/assignments', async (_req, res) => {
+  try {
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
+    const endTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
+
+    const url = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
+    url.searchParams.set('filterBy', 'vehicles');
+    url.searchParams.set('startTime', startTime);
+    url.searchParams.set('endTime', endTime);
+
+    const data = await fetchJson(url.toString(), { headers: samsaraHeaders() });
+    res.json(data);
+  } catch {
+    res.json({ data: [] });
+  }
+});
+
+app.get('/api/board', async (_req, res) => {
+  try {
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
+    const endTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
+
+    const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
+    assignmentsUrl.searchParams.set('filterBy', 'vehicles');
+    assignmentsUrl.searchParams.set('startTime', startTime);
+    assignmentsUrl.searchParams.set('endTime', endTime);
+
+    const [vehicles, live, hos, assignments] = await Promise.all([
+      fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
+      fetchJson('https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
+      fetchJson('https://api.samsara.com/fleet/hos/clocks', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
+      fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
+    ]);
+
+    res.json({
+      vehicles: vehicles.data || [],
+      live: live.data || [],
+      hos: hos.data || [],
+      assignments: assignments.data || [],
+      refreshedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message, details: error.details || null });
+  }
+});
+
+app.get('/api/geocode', async (req, res) => {
+  try {
+    const q = (req.query.q || '').toString().trim();
+    if (!q) return res.json([]);
+
+    if (GEOAPIFY_API_KEY) {
+      const url = new URL('https://api.geoapify.com/v1/geocode/search');
+      url.searchParams.set('text', q);
+      url.searchParams.set('filter', 'countrycode:us');
+      url.searchParams.set('limit', '8');
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
+
+      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
+      const results = (data.results || []).map(x => ({
+        lat: Number(x.lat),
+        lon: Number(x.lon),
+        name: x.formatted || q
+      }));
+      return res.json(results);
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'IH35-Dispatcher-App',
+        Accept: 'application/json'
+      }
+    });
+
+    const raw = await response.text();
+    let data = [];
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.json([]);
+    }
+
+    const results = (Array.isArray(data) ? data : []).map(x => ({
+      lat: Number(x.lat),
+      lon: Number(x.lon),
+      name: x.display_name || q
+    }));
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/autocomplete', async (req, res) => {
+  try {
+    const q = (req.query.q || '').toString().trim();
+    if (!q || q.length < 2) return res.json([]);
+
+    if (GEOAPIFY_API_KEY) {
+      const url = new URL('https://api.geoapify.com/v1/geocode/autocomplete');
+      url.searchParams.set('text', q);
+      url.searchParams.set('filter', 'countrycode:us');
+      url.searchParams.set('limit', '10');
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
+
+      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
+      const results = (data.results || []).map(x => ({
+        name: x.formatted || x.address_line1 || x.city || q
+      }));
+      return res.json(results);
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'IH35-Dispatcher-App',
+        Accept: 'application/json'
+      }
+    });
+
+    const raw = await response.text();
+    let data = [];
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.json([]);
+    }
+
+    const results = (Array.isArray(data) ? data : []).map(x => ({
+      name: x.display_name
+    }));
+
+    res.json(results);
+  } catch {
+    res.json([]);
+  }
+});
+
+app.get('/api/route', async (req, res) => {
+  try {
+    const coords = String(req.query.coords || '').trim();
+    if (!coords) return res.status(400).json({ error: 'Missing coords' });
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+    const data = await fetchJson(url, { headers: { Accept: 'application/json' } });
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message, details: error.details || null });
+  }
+});
+
+/* ---------- quickbooks endpoints ---------- */
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
@@ -623,49 +807,12 @@ app.get('/api/qbo/items', async (_req, res) => {
   }
 });
 
-app.get('/api/maintenance/vehicles', async (_req, res) => {
-  try {
-    const data = await fetchJson('https://api.samsara.com/fleet/vehicles', {
-      headers: authHeaders()
-    });
-
-    const tracked = (data.data || [])
-      .filter(isTrackedAsset)
-      .reduce((acc, v) => {
-        const key = String(v.name || '').trim().toUpperCase();
-        if (!key) return acc;
-        if (!acc.has(key)) acc.set(key, v);
-        else {
-          const existing = acc.get(key);
-          const oldTs = String(existing.updatedAtTime || '');
-          const newTs = String(v.updatedAtTime || '');
-          if (newTs > oldTs) acc.set(key, v);
-        }
-        return acc;
-      }, new Map());
-
-    const result = Array.from(tracked.values()).sort((a, b) => {
-      const ua = parseUnitNumber(a.name);
-      const ub = parseUnitNumber(b.name);
-      if (ua == null && ub == null) return String(a.name).localeCompare(String(b.name));
-      if (ua == null) return 1;
-      if (ub == null) return -1;
-      return ua - ub;
-    });
-
-    res.json({ data: result });
-  } catch (error) {
-    res.status(error.status || 500).json({
-      error: error.message,
-      details: error.details || null
-    });
-  }
-});
+/* ---------- maintenance endpoints ---------- */
 
 app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
     const vehiclesRes = await fetchJson('https://api.samsara.com/fleet/vehicles', {
-      headers: authHeaders()
+      headers: samsaraHeaders()
     });
 
     const trackedMap = new Map();
@@ -700,10 +847,7 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
       tireAlerts
     });
   } catch (error) {
-    res.status(500).json({
-      error: error.message,
-      details: error.details || null
-    });
+    res.status(500).json({ error: error.message, details: error.details || null });
   }
 });
 
@@ -760,18 +904,15 @@ app.post('/api/maintenance/record', (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/maintenance/rules', (req, res) => {
-  const { unit, rules } = req.body || {};
-  if (!unit || !Array.isArray(rules)) {
-    return res.status(400).json({ error: 'unit and rules array are required' });
-  }
-
-  const store = readMaint();
-  if (!store.unitOverrides) store.unitOverrides = {};
-  store.unitOverrides[unit] = { rules };
-  writeMaint(store);
-
-  res.json({ ok: true });
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    hasSamsaraToken: !!SAMSARA_API_TOKEN,
+    hasGeoapifyKey: !!GEOAPIFY_API_KEY,
+    hasQboConfig: qboConfigured(),
+    dataDir: DATA_DIR,
+    serverTime: new Date().toISOString()
+  });
 });
 
 app.get('/maintenance.html', (_req, res) => {
