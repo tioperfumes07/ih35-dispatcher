@@ -42,11 +42,37 @@ function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+function safeNum(v, fallback = null) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function sanitizeName(value, fallback = 'Unnamed') {
+  return String(value || fallback).trim().slice(0, 150);
+}
+
+function uid(prefix = 'id') {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function parseUnitNumber(name) {
+  const m = String(name || '').match(/^T(\d+)$/i);
+  return m ? Number(m[1]) : null;
+}
+
+function byVehicleName(a, b) {
+  const pa = parseUnitNumber(a.name || a.unit);
+  const pb = parseUnitNumber(b.name || b.unit);
+  if (pa != null && pb != null) return pa - pb;
+  return String(a.name || a.unit || '').localeCompare(String(b.name || b.unit || ''));
+}
+
 function defaultErpData() {
   return {
     currentMileage: {},
-    records: [],
-    unitOverrides: {},
+    legacyRecords: [],
+    workOrders: [],
+    apTransactions: [],
     paymentMethods: [
       { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
       { id: 'pm_check', name: 'Check', qboType: 'Check' },
@@ -54,7 +80,6 @@ function defaultErpData() {
       { id: 'pm_other', name: 'Other', qboType: 'Other' },
       { id: 'pm_vendorcredit', name: 'Vendor Credit / Terms', qboType: 'Other' }
     ],
-    apTransactions: [],
     qboCache: {
       vendors: [],
       items: [],
@@ -72,11 +97,11 @@ function ensureErpFile() {
   }
   const existing = JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
   const merged = { ...defaultErpData(), ...existing };
-  if (!Array.isArray(merged.records)) merged.records = [];
   if (!merged.currentMileage) merged.currentMileage = {};
-  if (!merged.unitOverrides) merged.unitOverrides = {};
-  if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
+  if (!Array.isArray(merged.legacyRecords)) merged.legacyRecords = [];
+  if (!Array.isArray(merged.workOrders)) merged.workOrders = [];
   if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
+  if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
   if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
   if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
   if (!Array.isArray(merged.qboCache.items)) merged.qboCache.items = [];
@@ -109,24 +134,6 @@ function readQbo() {
 function writeQbo(data) {
   ensureQboFile();
   fs.writeFileSync(QBO_FILE, JSON.stringify(data, null, 2));
-}
-
-function uid(prefix = 'id') {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function safeNum(v, fallback = null) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function sanitizeName(value, fallback = 'Unnamed') {
-  return String(value || fallback).trim().slice(0, 100);
-}
-
-function parseUnitNumber(name) {
-  const m = String(name || '').match(/^T(\d+)$/i);
-  return m ? Number(m[1]) : null;
 }
 
 function samsaraHeaders() {
@@ -163,32 +170,6 @@ async function fetchJson(url, options = {}) {
   return data;
 }
 
-function isTrackedAsset(v) {
-  const unitNum = parseUnitNumber(v.name);
-  const inTruckRange = unitNum !== null && unitNum >= 120 && unitNum <= 177;
-  const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
-  const reeferLike =
-    text.includes('reefer') ||
-    text.includes('refrigerated') ||
-    text.includes('utility 3000r') ||
-    text.includes('thermo king') ||
-    text.includes('carrier');
-  const flatbedLike =
-    text.includes('flatbed') ||
-    text.includes('step deck') ||
-    text.includes('drop deck');
-  const dryVanLike = text.includes('dry van');
-  const companyVehicleLike =
-    text.includes('pickup') ||
-    text.includes('suv') ||
-    text.includes('company vehicle') ||
-    text.includes('car') ||
-    text.includes('silverado') ||
-    text.includes('f-150');
-
-  return inTruckRange || reeferLike || flatbedLike || dryVanLike || companyVehicleLike;
-}
-
 function assetCategoryForVehicle(v) {
   const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
   if (text.includes('reefer') || text.includes('refrigerated')) return 'Refrigerated Vans';
@@ -205,98 +186,21 @@ function assetCategoryForVehicle(v) {
   return 'Trucks';
 }
 
-function defaultRulesForVehicle(v) {
-  const category = assetCategoryForVehicle(v);
-
-  if (category === 'Refrigerated Vans') {
-    return [
-      { serviceType: 'Reefer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Reefer Oil Service', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Reefer Fuel Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Reefer Air Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
-      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
-      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
-      { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
-    ];
-  }
-
-  if (category === 'Flatbeds' || category === 'Dry Vans') {
-    return [
-      { serviceType: 'Trailer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: null, intervalDays: 90 },
-      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
-      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
-      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
-      { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
-    ];
-  }
-
-  if (category === 'Company Vehicles') {
-    return [
-      { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 5000, intervalDays: 180 },
-      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 180 },
-      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 30000, intervalDays: 180 },
-      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
-      { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
-    ];
-  }
-
-  return [
-    { serviceType: 'PM Service', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: 15000, intervalDays: 60 },
-    { serviceType: 'Air Dryer Cartridge', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Power Steering Service', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Differential Service', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
-    { serviceType: 'Coolant Filter', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Air Filters', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Second Fuel Filter', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Valve Adjustment', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'DPF Burn Check', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'DPF Ash Clean', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
-    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
-    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
-    { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
-  ];
-}
-
-function addDays(dateStr, days) {
-  if (!dateStr || !days) return null;
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return null;
-  d.setDate(d.getDate() + Number(days));
-  return d.toISOString().slice(0, 10);
-}
-
-function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
-  const today = new Date().toISOString().slice(0, 10);
-
-  let milesState = 'current';
-  if (nextDueMiles != null && currentMileage != null) {
-    const diff = nextDueMiles - currentMileage;
-    if (diff < 0) milesState = 'past due';
-    else if (diff <= 1000) milesState = 'due soon';
-  }
-
-  let dateState = 'current';
-  if (nextDueDate) {
-    if (nextDueDate < today) dateState = 'past due';
-    else {
-      const d1 = new Date(today);
-      const d2 = new Date(nextDueDate);
-      const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
-      if (diffDays <= 7) dateState = 'due soon';
-    }
-  }
-
-  if (milesState === 'past due' || dateState === 'past due') return 'past due';
-  if (milesState === 'due soon' || dateState === 'due soon') return 'due soon';
-  return 'current';
+function isTrackedAsset(v) {
+  const unitNum = parseUnitNumber(v.name);
+  const inTruckRange = unitNum !== null && unitNum >= 120 && unitNum <= 177;
+  const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
+  return (
+    inTruckRange ||
+    text.includes('reefer') ||
+    text.includes('refrigerated') ||
+    text.includes('flatbed') ||
+    text.includes('step deck') ||
+    text.includes('drop deck') ||
+    text.includes('dry van') ||
+    text.includes('pickup') ||
+    text.includes('company vehicle')
+  );
 }
 
 function getStatValue(entry, keys = []) {
@@ -336,7 +240,7 @@ function enrichVehicles(vehicles, liveStats = []) {
     const s = statsById.get(id) || {};
 
     const obdMeters = safeNum(
-      getStatValue(s, ['obdOdometerMeters', 'obdOdometer', 'obdOdometerMetersValue']),
+      getStatValue(s, ['obdOdometerMeters', 'obdOdometer']),
       null
     );
     const gpsMeters = safeNum(
@@ -352,43 +256,154 @@ function enrichVehicles(vehicles, liveStats = []) {
     );
 
     const gps = getStatValue(s, ['gps', 'location']) || {};
-    const lat = safeNum(gps?.latitude ?? gps?.lat, null);
-    const lon = safeNum(gps?.longitude ?? gps?.lng ?? gps?.lon, null);
+    const latitude = safeNum(gps?.latitude ?? gps?.lat, null);
+    const longitude = safeNum(gps?.longitude ?? gps?.lng ?? gps?.lon, null);
 
     const engineState = getStatValue(s, ['engineState', 'engineStates']) || '';
 
     return {
       ...v,
       assetCategory: assetCategoryForVehicle(v),
-      odometerMiles,
       odometerMeters,
+      odometerMiles,
       fuelPercent,
-      latitude: lat,
-      longitude: lon,
+      latitude,
+      longitude,
       engineState: String(engineState || '')
     };
   });
 }
 
-function buildDashboardRows(vehicles, erpStore) {
-  const records = erpStore.records || [];
-  const currentMileage = erpStore.currentMileage || {};
-  const unitOverrides = erpStore.unitOverrides || {};
+function defaultRulesForVehicle(v) {
+  const category = assetCategoryForVehicle(v);
 
-  return vehicles.map(v => {
+  if (category === 'Refrigerated Vans') {
+    return [
+      { serviceType: 'Reefer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Oil Service', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Fuel Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Air Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
+    ];
+  }
+
+  if (category === 'Flatbeds' || category === 'Dry Vans') {
+    return [
+      { serviceType: 'Trailer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: null, intervalDays: 90 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
+    ];
+  }
+
+  if (category === 'Company Vehicles') {
+    return [
+      { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 5000, intervalDays: 180 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 180 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 30000, intervalDays: 180 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
+    ];
+  }
+
+  return [
+    { serviceType: 'PM Service', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: 15000, intervalDays: 60 },
+    { serviceType: 'Air Dryer Cartridge', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Power Steering Service', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Differential Service', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
+    { serviceType: 'Coolant Filter', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Air Filters', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Second Fuel Filter', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Valve Adjustment', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'DPF Burn Check', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'DPF Ash Clean', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
+    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
+  ];
+}
+
+function addDays(dateStr, days) {
+  if (!dateStr || !days) return null;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + Number(days));
+  return d.toISOString().slice(0, 10);
+}
+
+function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  let milesState = 'current';
+  if (nextDueMiles != null && currentMileage != null) {
+    const diff = nextDueMiles - currentMileage;
+    if (diff < 0) milesState = 'past due';
+    else if (diff <= 1000) milesState = 'due soon';
+  }
+
+  let dateState = 'current';
+  if (nextDueDate) {
+    if (nextDueDate < today) dateState = 'past due';
+    else {
+      const d1 = new Date(today);
+      const d2 = new Date(nextDueDate);
+      const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 7) dateState = 'due soon';
+    }
+  }
+
+  if (milesState === 'past due' || dateState === 'past due') return 'past due';
+  if (milesState === 'due soon' || dateState === 'due soon') return 'due soon';
+  return 'current';
+}
+
+function flattenWorkOrderLines(workOrder) {
+  return (workOrder.lines || []).map(line => ({
+    workOrderId: workOrder.id,
+    workOrderNumber: workOrder.internalWorkOrderNumber || '',
+    vendorInvoiceNumber: workOrder.vendorInvoiceNumber || '',
+    vendorWorkOrderNumber: workOrder.vendorWorkOrderNumber || '',
+    unit: workOrder.unit || '',
+    serviceDate: workOrder.serviceDate || '',
+    vendor: workOrder.vendor || '',
+    lineId: line.id,
+    lineType: line.lineType || '',
+    serviceType: line.serviceType || '',
+    tirePosition: line.tirePosition || line.tirePositionText || '',
+    qty: line.qty ?? '',
+    rate: line.rate ?? '',
+    amount: line.amount ?? '',
+    notes: line.notes || '',
+    qboSyncStatus: workOrder.qboSyncStatus || '',
+    qboEntityType: workOrder.qboEntityType || '',
+    qboEntityId: workOrder.qboEntityId || ''
+  }));
+}
+
+function buildDashboardRows(vehicles, erpStore) {
+  const currentMileage = erpStore.currentMileage || {};
+  const allLines = (erpStore.workOrders || []).flatMap(flattenWorkOrderLines);
+
+  return vehicles.flatMap(v => {
     const unit = v.name;
-    const rules = unitOverrides[unit]?.rules || defaultRulesForVehicle(v);
-    const unitRecords = records.filter(r => r.unit === unit);
+    const rules = defaultRulesForVehicle(v);
     const liveMiles = v.odometerMiles ?? null;
     const manualMiles = safeNum(currentMileage[unit], null);
     const effectiveMileage = liveMiles ?? manualMiles;
 
     return rules.map(rule => {
-      const sameType = unitRecords
-        .filter(r => r.serviceType === rule.serviceType)
+      const sameType = allLines
+        .filter(r => r.unit === unit && r.serviceType === rule.serviceType)
         .sort((a, b) => {
-          const da = `${a.serviceDate || ''} ${a.serviceMileage || ''}`;
-          const db = `${b.serviceDate || ''} ${b.serviceMileage || ''}`;
+          const da = `${a.serviceDate || ''} ${a.amount || ''}`;
+          const db = `${b.serviceDate || ''} ${b.amount || ''}`;
           return da < db ? 1 : -1;
         });
 
@@ -420,34 +435,34 @@ function buildDashboardRows(vehicles, erpStore) {
         intervalMiles: rule.intervalMiles,
         intervalDays: rule.intervalDays,
         lastServiceDate: last?.serviceDate || '',
-        lastServiceMileage: last?.serviceMileage ?? '',
         nextDueMileage: nextDueMiles,
         nextDueDate,
         vendor: last?.vendor || '',
-        cost: last?.cost ?? '',
-        notes: last?.notes || '',
+        cost: last?.amount ?? '',
         qboSyncStatus: last?.qboSyncStatus || '',
-        qboPurchaseId: last?.qboPurchaseId || '',
+        qboEntityId: last?.qboEntityId || '',
         status: calcStatus(nextDueMiles, nextDueDate, effectiveMileage)
       };
     });
-  }).flat();
+  });
 }
 
-function buildTireAlerts(records) {
-  const tireRecords = records.filter(r => r.recordType === 'tire');
+function buildTireAlerts(erp) {
+  const lines = (erp.workOrders || [])
+    .flatMap(wo => (wo.lines || []).map(line => ({ ...line, unit: wo.unit, serviceDate: wo.serviceDate })))
+    .filter(line => String(line.lineType || '').toLowerCase() === 'tire');
+
   const byUnit = {};
-  tireRecords.forEach(r => {
-    if (!byUnit[r.unit]) byUnit[r.unit] = [];
-    byUnit[r.unit].push(r);
-  });
+  for (const line of lines) {
+    if (!byUnit[line.unit]) byUnit[line.unit] = [];
+    byUnit[line.unit].push(line);
+  }
 
   const alerts = [];
   Object.entries(byUnit).forEach(([unit, rows]) => {
     rows.sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
-    const recent = rows.filter(r => r.serviceDate);
-    if (recent.length >= 3) {
-      const lastThree = recent.slice(0, 3);
+    if (rows.length >= 3) {
+      const lastThree = rows.slice(0, 3);
       const first = new Date(lastThree[2].serviceDate);
       const last = new Date(lastThree[0].serviceDate);
       const diffDays = Math.ceil((last - first) / (1000 * 60 * 60 * 24));
@@ -455,8 +470,7 @@ function buildTireAlerts(records) {
         alerts.push({
           unit,
           type: 'Tire Frequency',
-          severity: 'due soon',
-          message: 'Too many tire replacements in a short period'
+          message: 'Too many tire line items created in a short period'
         });
       }
     }
@@ -465,7 +479,7 @@ function buildTireAlerts(records) {
   return alerts;
 }
 
-/* QuickBooks helpers */
+/* QuickBooks */
 
 function qboConfigured() {
   return !!(QBO_CLIENT_ID && QBO_CLIENT_SECRET && QBO_REDIRECT_URI);
@@ -478,13 +492,11 @@ async function qboRefreshIfNeeded() {
 
   const nowSec = Math.floor(Date.now() / 1000);
   const expiresAt = Number(tokens.expires_at || 0);
-
   if (expiresAt && expiresAt - nowSec > 300 && tokens.access_token) {
     return store.tokens;
   }
 
   const basic = Buffer.from(`${QBO_CLIENT_ID}:${QBO_CLIENT_SECRET}`).toString('base64');
-
   const body = new URLSearchParams();
   body.set('grant_type', 'refresh_token');
   body.set('refresh_token', tokens.refresh_token);
@@ -521,8 +533,8 @@ async function qboRefreshIfNeeded() {
 async function qboGet(pathname) {
   const store = readQbo();
   if (!store.tokens?.realmId) throw new Error('QuickBooks realmId is missing');
-
   const tokens = await qboRefreshIfNeeded();
+
   const response = await fetch(`${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`, {
     headers: {
       Authorization: `Bearer ${tokens.access_token}`,
@@ -532,19 +544,17 @@ async function qboGet(pathname) {
 
   const raw = await response.text();
   const data = JSON.parse(raw);
-
   if (!response.ok) {
     throw new Error(data?.Fault?.Error?.[0]?.Message || 'QuickBooks GET failed');
   }
-
   return data;
 }
 
 async function qboPost(pathname, payload) {
   const store = readQbo();
   if (!store.tokens?.realmId) throw new Error('QuickBooks realmId is missing');
-
   const tokens = await qboRefreshIfNeeded();
+
   const response = await fetch(`${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`, {
     method: 'POST',
     headers: {
@@ -557,7 +567,6 @@ async function qboPost(pathname, payload) {
 
   const raw = await response.text();
   const data = JSON.parse(raw);
-
   if (!response.ok) {
     throw new Error(
       data?.Fault?.Error?.[0]?.Message ||
@@ -565,7 +574,6 @@ async function qboPost(pathname, payload) {
       'QuickBooks POST failed'
     );
   }
-
   return data;
 }
 
@@ -615,7 +623,6 @@ async function qboSyncMasterData() {
     refreshedAt: new Date().toISOString()
   };
   writeErp(erp);
-
   return erp.qboCache;
 }
 
@@ -637,11 +644,6 @@ async function qboCreateVendorFromApp(body) {
 
   const created = await qboPost('vendor', payload);
   return { created: true, vendor: created?.Vendor || null };
-}
-
-async function qboFindVendorById(id) {
-  const data = await qboGet(`vendor/${id}`);
-  return data?.Vendor || null;
 }
 
 async function qboFindItemById(id) {
@@ -681,10 +683,7 @@ async function qboCreateApTransaction(ap) {
       DetailType: 'AccountBasedExpenseLineDetail',
       Description: sanitizeName(ap.description || ap.memo || ap.assetUnit || 'Expense'),
       AccountBasedExpenseLineDetail: {
-        AccountRef: {
-          value: accountQbo.Id,
-          name: accountQbo.Name
-        }
+        AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
       }
     };
     qboAccountId = accountQbo.Id;
@@ -693,18 +692,14 @@ async function qboCreateApTransaction(ap) {
     const itemQbo = await qboFindItemById(ap.qboItemId);
     if (!itemQbo) throw new Error('QuickBooks item not found');
     const qty = safeNum(ap.qty, 1) || 1;
-    const unitPrice = amount / qty;
     line = {
       Amount: amount,
       DetailType: 'ItemBasedExpenseLineDetail',
       Description: sanitizeName(ap.description || itemQbo.Name || 'Item expense'),
       ItemBasedExpenseLineDetail: {
-        ItemRef: {
-          value: itemQbo.Id,
-          name: itemQbo.Name
-        },
+        ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
         Qty: qty,
-        UnitPrice: unitPrice
+        UnitPrice: amount / qty
       }
     };
     qboItemId = itemQbo.Id;
@@ -731,29 +726,112 @@ async function qboCreateApTransaction(ap) {
     };
   }
 
-  if (txnType === 'bill') {
+  const payload = {
+    VendorRef: { value: ap.qboVendorId },
+    TxnDate: txnDate,
+    DueDate: ap.dueDate || '',
+    DocNumber: ap.docNumber || undefined,
+    Line: [line],
+    PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Bill')
+  };
+  const created = await qboPost('bill', payload);
+  return {
+    qboEntityType: 'Bill',
+    qboEntityId: created?.Bill?.Id || '',
+    qboVendorId: ap.qboVendorId,
+    qboItemId,
+    qboAccountId
+  };
+}
+
+async function qboCreateWorkOrderTransaction(workOrder) {
+  const erp = readErp();
+  if (!workOrder.qboVendorId) throw new Error('QuickBooks vendor is required on work order');
+  if (!Array.isArray(workOrder.lines) || !workOrder.lines.length) throw new Error('Work order needs at least one line');
+
+  const lines = [];
+  for (const line of workOrder.lines) {
+    const amount = safeNum(line.amount, 0);
+    if (!(amount > 0)) continue;
+
+    if (line.detailMode === 'item') {
+      if (!line.qboItemId) throw new Error(`Missing QuickBooks item for line ${line.serviceType || line.lineType}`);
+      const itemQbo = await qboFindItemById(line.qboItemId);
+      if (!itemQbo) throw new Error(`QuickBooks item not found for line ${line.serviceType || line.lineType}`);
+      const qty = safeNum(line.qty, 1) || 1;
+      lines.push({
+        Amount: amount,
+        DetailType: 'ItemBasedExpenseLineDetail',
+        Description: sanitizeName(
+          `${line.serviceType || line.lineType || 'Line'} ${line.tirePosition || line.tirePositionText || ''}`,
+          'Line'
+        ),
+        ItemBasedExpenseLineDetail: {
+          ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
+          Qty: qty,
+          UnitPrice: amount / qty
+        }
+      });
+    } else {
+      if (!line.qboAccountId) throw new Error(`Missing QuickBooks account for line ${line.serviceType || line.lineType}`);
+      const accountQbo = await qboFindAccountById(line.qboAccountId);
+      if (!accountQbo) throw new Error(`QuickBooks account not found for line ${line.serviceType || line.lineType}`);
+      lines.push({
+        Amount: amount,
+        DetailType: 'AccountBasedExpenseLineDetail',
+        Description: sanitizeName(
+          `${line.serviceType || line.lineType || 'Line'} ${line.tirePosition || line.tirePositionText || ''}`,
+          'Line'
+        ),
+        AccountBasedExpenseLineDetail: {
+          AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
+        }
+      });
+    }
+  }
+
+  if (!lines.length) throw new Error('No valid bill/expense lines found on work order');
+
+  if (workOrder.txnType === 'expense') {
+    const paymentMethod = findPaymentMethodLocal(erp, workOrder.paymentMethodId);
+    const paymentType = paymentMethod?.qboType || 'Other';
     const payload = {
-      VendorRef: { value: ap.qboVendorId },
-      TxnDate: txnDate,
-      DueDate: ap.dueDate || '',
-      DocNumber: ap.docNumber || undefined,
-      Line: [line],
-      PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Bill')
+      TxnDate: workOrder.serviceDate || new Date().toISOString().slice(0, 10),
+      DocNumber: workOrder.vendorInvoiceNumber || workOrder.internalWorkOrderNumber || undefined,
+      PaymentType: paymentType,
+      EntityRef: { type: 'Vendor', value: workOrder.qboVendorId },
+      Line: lines,
+      PrivateNote: sanitizeName(
+        `${workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} ${workOrder.unit || ''}`,
+        'Work Order'
+      )
     };
-    const created = await qboPost('bill', payload);
+    const created = await qboPost('purchase', payload);
     return {
-      qboEntityType: 'Bill',
-      qboEntityId: created?.Bill?.Id || '',
-      qboVendorId: ap.qboVendorId,
-      qboItemId,
-      qboAccountId
+      qboEntityType: 'Purchase',
+      qboEntityId: created?.Purchase?.Id || ''
     };
   }
 
-  throw new Error('Unsupported AP transaction type');
+  const payload = {
+    VendorRef: { value: workOrder.qboVendorId },
+    TxnDate: workOrder.serviceDate || new Date().toISOString().slice(0, 10),
+    DueDate: workOrder.dueDate || '',
+    DocNumber: workOrder.vendorInvoiceNumber || workOrder.internalWorkOrderNumber || undefined,
+    Line: lines,
+    PrivateNote: sanitizeName(
+      `${workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} ${workOrder.unit || ''}`,
+      'Work Order'
+    )
+  };
+  const created = await qboPost('bill', payload);
+  return {
+    qboEntityType: 'Bill',
+    qboEntityId: created?.Bill?.Id || ''
+  };
 }
 
-/* Samsara endpoints */
+/* Core endpoints */
 
 app.get('/api/board', async (_req, res) => {
   try {
@@ -776,12 +854,11 @@ app.get('/api/board', async (_req, res) => {
     ]);
 
     const rawVehicles = (vehiclesRes.data || []).filter(isTrackedAsset);
-    const live = liveRes.data || [];
-    const enrichedVehicles = enrichVehicles(rawVehicles, live).sort(byVehicleName);
+    const enrichedVehicles = enrichVehicles(rawVehicles, liveRes.data || []).sort(byVehicleName);
 
     res.json({
       vehicles: enrichedVehicles,
-      live,
+      live: liveRes.data || [],
       hos: hosRes.data || [],
       assignments: assignmentsRes.data || [],
       refreshedAt: new Date().toISOString()
@@ -790,13 +867,6 @@ app.get('/api/board', async (_req, res) => {
     res.status(500).json({ error: error.message, details: error.details || null });
   }
 });
-
-function byVehicleName(a, b) {
-  const pa = parseUnitNumber(a.name);
-  const pb = parseUnitNumber(b.name);
-  if (pa != null && pb != null) return pa - pb;
-  return String(a.name || '').localeCompare(String(b.name || ''));
-}
 
 app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
@@ -822,20 +892,19 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
 
     const tracked = enrichVehicles(Array.from(trackedMap.values()), liveRes.data || []).sort(byVehicleName);
     const erp = readErp();
-    const dashboard = buildDashboardRows(tracked, erp);
-    const tireAlerts = buildTireAlerts(erp.records || []);
 
     res.json({
       vehicles: tracked,
-      dashboard,
-      tireAlerts
+      dashboard: buildDashboardRows(tracked, erp),
+      tireAlerts: buildTireAlerts(erp),
+      workOrders: erp.workOrders || []
     });
   } catch (error) {
     res.status(500).json({ error: error.message, details: error.details || null });
   }
 });
 
-/* Geo/autocomplete */
+/* Geocoding */
 
 app.get('/api/geocode', async (req, res) => {
   try {
@@ -912,7 +981,7 @@ app.get('/api/route', async (req, res) => {
   }
 });
 
-/* QuickBooks endpoints */
+/* QuickBooks status + OAuth */
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
@@ -952,7 +1021,6 @@ app.get('/api/qbo/callback', async (req, res) => {
     if (!store.state || store.state !== state) return res.status(400).send('Invalid QuickBooks state.');
 
     const basic = Buffer.from(`${QBO_CLIENT_ID}:${QBO_CLIENT_SECRET}`).toString('base64');
-
     const body = new URLSearchParams();
     body.set('grant_type', 'authorization_code');
     body.set('code', code);
@@ -1053,61 +1121,104 @@ app.post('/api/qbo/create-vendor', async (req, res) => {
   }
 });
 
-/* Maintenance / accounting CRUD */
+/* ERP read */
 
-app.get('/api/maintenance/records', (_req, res) => {
+app.get('/api/erp/all', (_req, res) => {
   res.json(readErp());
 });
 
-app.post('/api/maintenance/mileage', (req, res) => {
-  const { unit, currentMileage } = req.body || {};
-  if (!unit) return res.status(400).json({ error: 'unit is required' });
+/* Work orders */
+
+app.post('/api/work-orders', (req, res) => {
+  const body = req.body || {};
+  if (!body.unit) return res.status(400).json({ error: 'unit is required' });
+  if (!Array.isArray(body.lines) || !body.lines.length) return res.status(400).json({ error: 'At least one work order line is required' });
 
   const erp = readErp();
-  erp.currentMileage[unit] = safeNum(currentMileage, null);
-  writeErp(erp);
-  res.json({ ok: true });
-});
+  const workOrder = {
+    id: uid('wo'),
+    unit: body.unit,
+    assetCategory: body.assetCategory || '',
+    serviceDate: body.serviceDate || '',
+    internalWorkOrderNumber: body.internalWorkOrderNumber || '',
+    vendorInvoiceNumber: body.vendorInvoiceNumber || '',
+    vendorWorkOrderNumber: body.vendorWorkOrderNumber || '',
+    vendor: body.vendor || '',
+    qboVendorId: body.qboVendorId || '',
+    repairLocationType: body.repairLocationType || '',
+    isInternalWorkOrder: !!body.isInternalWorkOrder,
+    paymentMethodId: body.paymentMethodId || '',
+    txnType: body.txnType || 'expense',
+    dueDate: body.dueDate || '',
+    notes: body.notes || '',
+    qboSyncStatus: '',
+    qboEntityType: '',
+    qboEntityId: '',
+    qboError: '',
+    createdAt: new Date().toISOString(),
+    lines: (body.lines || []).map(line => ({
+      id: uid('wol'),
+      lineType: line.lineType || 'service',
+      serviceType: line.serviceType || '',
+      detailMode: line.detailMode || 'category',
+      qboAccountId: line.qboAccountId || '',
+      qboItemId: line.qboItemId || '',
+      tirePosition: line.tirePosition || '',
+      tirePositionText: line.tirePositionText || '',
+      qty: safeNum(line.qty, 1) || 1,
+      rate: safeNum(line.rate, 0),
+      amount: safeNum(line.amount, 0),
+      vendorInvoiceNumber: line.vendorInvoiceNumber || '',
+      vendorWorkOrderNumber: line.vendorWorkOrderNumber || '',
+      notes: line.notes || '',
+      serviceMileage: safeNum(line.serviceMileage, null)
+    }))
+  };
 
-app.post('/api/maintenance/record', (req, res) => {
-  const body = req.body || {};
-  if (!body.unit || !body.serviceType) {
-    return res.status(400).json({ error: 'unit and serviceType are required' });
+  erp.workOrders.push(workOrder);
+
+  const liveMaxMileage = Math.max(
+    0,
+    ...workOrder.lines.map(l => safeNum(l.serviceMileage, 0) || 0)
+  );
+  if (liveMaxMileage > 0) {
+    erp.currentMileage[workOrder.unit] = Math.max(safeNum(erp.currentMileage[workOrder.unit], 0) || 0, liveMaxMileage);
   }
 
-  const erp = readErp();
-  erp.records.push({
-    id: uid('rec'),
-    recordType: body.recordType || 'maintenance',
-    unit: body.unit,
-    serviceType: body.serviceType,
-    serviceDate: body.serviceDate || '',
-    serviceMileage: safeNum(body.serviceMileage, null),
-    vendor: body.vendor || '',
-    cost: safeNum(body.cost, null),
-    notes: body.notes || '',
-    tireCondition: body.tireCondition || '',
-    tirePosition: body.tirePosition || '',
-    tirePositionText: body.tirePositionText || '',
-    tireBrand: body.tireBrand || '',
-    tireDot: body.tireDot || '',
-    installMileage: safeNum(body.installMileage, null),
-    removeMileage: safeNum(body.removeMileage, null),
-    expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
-    accidentAtFault: body.accidentAtFault || '',
-    accidentLocation: body.accidentLocation || '',
-    accidentReportNumber: body.accidentReportNumber || '',
-    repairLocationType: body.repairLocationType || '',
-    qboSyncStatus: '',
-    qboPurchaseId: '',
-    qboVendorId: '',
-    qboItemId: '',
-    qboAccountId: '',
-    qboError: ''
-  });
   writeErp(erp);
-  res.json({ ok: true });
+  res.json({ ok: true, workOrder });
 });
+
+app.post('/api/qbo/post-work-order/:id', async (req, res) => {
+  const erp = readErp();
+  const idx = (erp.workOrders || []).findIndex(x => String(x.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Work order not found' });
+
+  try {
+    const result = await qboCreateWorkOrderTransaction(erp.workOrders[idx]);
+    erp.workOrders[idx] = {
+      ...erp.workOrders[idx],
+      qboSyncStatus: 'posted',
+      qboEntityType: result.qboEntityType,
+      qboEntityId: result.qboEntityId,
+      qboError: '',
+      qboPostedAt: new Date().toISOString()
+    };
+    writeErp(erp);
+    res.json({ ok: true, workOrder: erp.workOrders[idx] });
+  } catch (error) {
+    erp.workOrders[idx] = {
+      ...erp.workOrders[idx],
+      qboSyncStatus: 'error',
+      qboError: error.message,
+      qboErrorAt: new Date().toISOString()
+    };
+    writeErp(erp);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/* Legacy AP transactions */
 
 app.post('/api/erp/ap-transaction', (req, res) => {
   const body = req.body || {};
@@ -1174,79 +1285,6 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
   }
 });
 
-app.post('/api/qbo/post-record/:id', async (req, res) => {
-  try {
-    const recordId = String(req.params.id);
-    const erp = readErp();
-    const idx = (erp.records || []).findIndex(r => String(r.id) === recordId);
-    if (idx === -1) return res.status(404).json({ error: 'Record not found' });
-
-    const record = erp.records[idx];
-    const cache = erp.qboCache || { vendors: [], accounts: [] };
-
-    let vendor = (cache.vendors || []).find(v => v.name === record.vendor) || (cache.vendors || [])[0];
-    if (!vendor) throw new Error('No QuickBooks vendor available. Refresh QuickBooks master data first.');
-
-    let accountName = 'Maintenance Expense';
-    if (record.recordType === 'tire' || String(record.serviceType).toLowerCase().includes('tire')) accountName = 'Tire Expense';
-    if (record.recordType === 'accident') accountName = 'Accident Expense';
-    if (record.recordType === 'repair' && record.repairLocationType === 'road-service') accountName = 'Road Service Expense';
-    if (record.recordType === 'repair' && record.repairLocationType === 'over-the-road') accountName = 'Over The Road Repair Expense';
-    if (String(record.serviceType).toLowerCase().includes('reefer')) accountName = 'Reefer Maintenance Expense';
-
-    const account = (cache.accounts || []).find(a => a.name === accountName);
-    if (!account) throw new Error(`QuickBooks account not found: ${accountName}`);
-
-    const amount = safeNum(record.cost, 0);
-    if (!(amount > 0)) throw new Error('Record cost must be greater than 0 for QuickBooks posting');
-
-    const payload = {
-      TxnDate: record.serviceDate || new Date().toISOString().slice(0, 10),
-      PaymentType: 'Other',
-      EntityRef: { type: 'Vendor', value: vendor.qboId },
-      Line: [
-        {
-          Amount: amount,
-          DetailType: 'AccountBasedExpenseLineDetail',
-          Description: sanitizeName(`Unit ${record.unit} | ${record.serviceType} | ${record.notes || ''}`, 'Maintenance'),
-          AccountBasedExpenseLineDetail: {
-            AccountRef: { value: account.qboId, name: account.name }
-          }
-        }
-      ],
-      PrivateNote: sanitizeName(`IH35 ${record.recordType} | ${record.unit} | ${record.serviceType}`, 'Maintenance')
-    };
-
-    const created = await qboPost('purchase', payload);
-
-    erp.records[idx] = {
-      ...record,
-      qboSyncStatus: 'posted',
-      qboPurchaseId: created?.Purchase?.Id || '',
-      qboVendorId: vendor?.qboId || '',
-      qboAccountId: account?.qboId || '',
-      qboError: '',
-      qboPostedAt: new Date().toISOString()
-    };
-
-    writeErp(erp);
-    res.json({ ok: true, record: erp.records[idx] });
-  } catch (error) {
-    const erp = readErp();
-    const idx = (erp.records || []).findIndex(r => String(r.id) === String(req.params.id));
-    if (idx !== -1) {
-      erp.records[idx] = {
-        ...erp.records[idx],
-        qboSyncStatus: 'error',
-        qboError: error.message,
-        qboErrorAt: new Date().toISOString()
-      };
-      writeErp(erp);
-    }
-    res.status(500).json({ error: error.message });
-  }
-});
-
 /* Imports */
 
 function lowerKeyMap(row) {
@@ -1278,44 +1316,61 @@ app.post('/api/import/maintenance', upload.single('file'), (req, res) => {
     for (const rawRow of rows) {
       const row = lowerKeyMap(rawRow);
       const unit = sanitizeName(firstValue(row, ['unit', 'vehicle', 'truck', 'asset', 'unit number']), '');
-      const serviceType = sanitizeName(firstValue(row, ['service', 'service type', 'maintenance type', 'type']), '');
+      if (!unit) continue;
 
-      if (!unit || !serviceType) continue;
-
+      const serviceType = sanitizeName(firstValue(row, ['service', 'service type', 'maintenance type', 'type']), 'Service');
       const serviceMileage = safeNum(firstValue(row, ['service mileage', 'mileage', 'odometer', 'last mileage']), null);
+      const qty = safeNum(firstValue(row, ['qty', 'quantity']), 1) || 1;
+      const amount = safeNum(firstValue(row, ['cost', 'amount', 'expense']), 0);
+      const rate = qty ? amount / qty : amount;
+
+      const workOrder = {
+        id: uid('imp_wo'),
+        unit,
+        assetCategory: '',
+        serviceDate: firstValue(row, ['date', 'service date', 'last date']) || '',
+        internalWorkOrderNumber: firstValue(row, ['internal work order', 'work order', 'wo']) || '',
+        vendorInvoiceNumber: firstValue(row, ['vendor invoice', 'invoice number']) || '',
+        vendorWorkOrderNumber: firstValue(row, ['vendor work order']) || '',
+        vendor: firstValue(row, ['vendor', 'shop', 'supplier']) || '',
+        qboVendorId: '',
+        repairLocationType: firstValue(row, ['repair type', 'repair location type']) || '',
+        isInternalWorkOrder: String(firstValue(row, ['internal', 'is internal']) || '').toLowerCase() === 'true',
+        paymentMethodId: '',
+        txnType: 'expense',
+        dueDate: '',
+        notes: firstValue(row, ['notes', 'memo', 'description']) || '',
+        qboSyncStatus: '',
+        qboEntityType: '',
+        qboEntityId: '',
+        qboError: '',
+        createdAt: new Date().toISOString(),
+        lines: [
+          {
+            id: uid('imp_wol'),
+            lineType: sanitizeName(firstValue(row, ['line type', 'category']), 'service').toLowerCase(),
+            serviceType,
+            detailMode: 'category',
+            qboAccountId: '',
+            qboItemId: '',
+            tirePosition: firstValue(row, ['tire position']) || '',
+            tirePositionText: firstValue(row, ['tire position text']) || '',
+            qty,
+            rate,
+            amount,
+            vendorInvoiceNumber: firstValue(row, ['vendor invoice', 'invoice number']) || '',
+            vendorWorkOrderNumber: firstValue(row, ['vendor work order']) || '',
+            notes: firstValue(row, ['notes', 'memo', 'description']) || '',
+            serviceMileage
+          }
+        ]
+      };
+
       if (serviceMileage != null) {
         erp.currentMileage[unit] = Math.max(safeNum(erp.currentMileage[unit], 0) || 0, serviceMileage);
       }
 
-      erp.records.push({
-        id: uid('imp_rec'),
-        recordType: sanitizeName(firstValue(row, ['record type', 'category']), 'maintenance').toLowerCase(),
-        unit,
-        serviceType,
-        serviceDate: firstValue(row, ['date', 'service date', 'last date']) || '',
-        serviceMileage,
-        vendor: firstValue(row, ['vendor', 'shop', 'supplier']) || '',
-        cost: safeNum(firstValue(row, ['cost', 'amount', 'expense']), null),
-        notes: firstValue(row, ['notes', 'memo', 'description']) || '',
-        tireCondition: firstValue(row, ['tire condition']) || '',
-        tirePosition: firstValue(row, ['tire position']) || '',
-        tirePositionText: firstValue(row, ['tire position text']) || '',
-        tireBrand: firstValue(row, ['tire brand']) || '',
-        tireDot: firstValue(row, ['tire dot', 'dot']) || '',
-        installMileage: safeNum(firstValue(row, ['install mileage']), null),
-        removeMileage: safeNum(firstValue(row, ['remove mileage']), null),
-        expectedTireLifeMiles: safeNum(firstValue(row, ['expected tire life', 'expected tire life miles']), null),
-        accidentAtFault: firstValue(row, ['accident at fault']) || '',
-        accidentLocation: firstValue(row, ['accident location']) || '',
-        accidentReportNumber: firstValue(row, ['accident report', 'accident report number']) || '',
-        repairLocationType: firstValue(row, ['repair type', 'repair location type']) || '',
-        qboSyncStatus: '',
-        qboPurchaseId: '',
-        qboVendorId: '',
-        qboItemId: '',
-        qboAccountId: '',
-        qboError: ''
-      });
+      erp.workOrders.push(workOrder);
       imported += 1;
     }
 
@@ -1382,7 +1437,7 @@ app.post('/api/import/ap', upload.single('file'), (req, res) => {
   }
 });
 
-/* Basic endpoints */
+/* Health + files */
 
 app.get('/api/health', (_req, res) => {
   res.json({
