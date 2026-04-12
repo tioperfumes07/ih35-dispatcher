@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import multer from 'multer';
+import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -16,14 +18,6 @@ const PORT = process.env.PORT || 3400;
 
 const SAMSARA_API_TOKEN = process.env.SAMSARA_API_TOKEN || '';
 const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY || '';
-
-const PERSIST_DIR = '/var/data';
-const LOCAL_DATA_DIR = path.join(__dirname, 'data');
-const DATA_DIR = fs.existsSync(PERSIST_DIR) ? PERSIST_DIR : LOCAL_DATA_DIR;
-
-const ERP_FILE = path.join(DATA_DIR, 'maintenance.json');
-const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
-
 const QBO_CLIENT_ID = process.env.QBO_CLIENT_ID || '';
 const QBO_CLIENT_SECRET = process.env.QBO_CLIENT_SECRET || '';
 const QBO_REDIRECT_URI = process.env.QBO_REDIRECT_URI || '';
@@ -32,9 +26,108 @@ const INTUIT_AUTH_BASE = 'https://appcenter.intuit.com/connect/oauth2';
 const INTUIT_TOKEN_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
 const QBO_API_BASE = 'https://quickbooks.api.intuit.com';
 
+const PERSIST_DIR = '/var/data';
+const LOCAL_DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = fs.existsSync(PERSIST_DIR) ? PERSIST_DIR : LOCAL_DATA_DIR;
+
+const ERP_FILE = path.join(DATA_DIR, 'maintenance.json');
+const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
+const upload = multer({ storage: multer.memoryStorage() });
+
 app.use(cors({ origin: '*' }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function defaultErpData() {
+  return {
+    currentMileage: {},
+    records: [],
+    unitOverrides: {},
+    paymentMethods: [
+      { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
+      { id: 'pm_check', name: 'Check', qboType: 'Check' },
+      { id: 'pm_creditcard', name: 'Credit Card', qboType: 'CreditCard' },
+      { id: 'pm_other', name: 'Other', qboType: 'Other' },
+      { id: 'pm_vendorcredit', name: 'Vendor Credit / Terms', qboType: 'Other' }
+    ],
+    apTransactions: [],
+    qboCache: {
+      vendors: [],
+      items: [],
+      accounts: [],
+      refreshedAt: ''
+    }
+  };
+}
+
+function ensureErpFile() {
+  ensureDataDir();
+  if (!fs.existsSync(ERP_FILE)) {
+    fs.writeFileSync(ERP_FILE, JSON.stringify(defaultErpData(), null, 2));
+    return;
+  }
+  const existing = JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
+  const merged = { ...defaultErpData(), ...existing };
+  if (!Array.isArray(merged.records)) merged.records = [];
+  if (!merged.currentMileage) merged.currentMileage = {};
+  if (!merged.unitOverrides) merged.unitOverrides = {};
+  if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
+  if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
+  if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
+  if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
+  if (!Array.isArray(merged.qboCache.items)) merged.qboCache.items = [];
+  if (!Array.isArray(merged.qboCache.accounts)) merged.qboCache.accounts = [];
+  fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
+}
+
+function ensureQboFile() {
+  ensureDataDir();
+  if (!fs.existsSync(QBO_FILE)) {
+    fs.writeFileSync(QBO_FILE, JSON.stringify({ state: '', tokens: null }, null, 2));
+  }
+}
+
+function readErp() {
+  ensureErpFile();
+  return JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
+}
+
+function writeErp(data) {
+  ensureErpFile();
+  fs.writeFileSync(ERP_FILE, JSON.stringify(data, null, 2));
+}
+
+function readQbo() {
+  ensureQboFile();
+  return JSON.parse(fs.readFileSync(QBO_FILE, 'utf8'));
+}
+
+function writeQbo(data) {
+  ensureQboFile();
+  fs.writeFileSync(QBO_FILE, JSON.stringify(data, null, 2));
+}
+
+function uid(prefix = 'id') {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function safeNum(v, fallback = null) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function sanitizeName(value, fallback = 'Unnamed') {
+  return String(value || fallback).trim().slice(0, 100);
+}
+
+function parseUnitNumber(name) {
+  const m = String(name || '').match(/^T(\d+)$/i);
+  return m ? Number(m[1]) : null;
+}
 
 function samsaraHeaders() {
   return {
@@ -70,120 +163,13 @@ async function fetchJson(url, options = {}) {
   return data;
 }
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-function defaultErpData() {
-  return {
-    currentMileage: {},
-    records: [],
-    unitOverrides: {},
-    vendors: [],
-    items: [],
-    accounts: [],
-    paymentMethods: [
-      { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
-      { id: 'pm_check', name: 'Check', qboType: 'Check' },
-      { id: 'pm_creditcard', name: 'Credit Card', qboType: 'CreditCard' },
-      { id: 'pm_other', name: 'Other', qboType: 'Other' },
-      { id: 'pm_vendorcredit', name: 'Vendor Credit / Terms', qboType: 'Other' }
-    ],
-    apTransactions: [],
-    qboCache: {
-      vendors: [],
-      items: [],
-      accounts: [],
-      refreshedAt: ''
-    }
-  };
-}
-
-function ensureErpFile() {
-  ensureDataDir();
-  if (!fs.existsSync(ERP_FILE)) {
-    fs.writeFileSync(ERP_FILE, JSON.stringify(defaultErpData(), null, 2));
-    return;
-  }
-
-  const data = JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
-  const merged = { ...defaultErpData(), ...data };
-
-  if (!Array.isArray(merged.records)) merged.records = [];
-  if (!merged.currentMileage) merged.currentMileage = {};
-  if (!merged.unitOverrides) merged.unitOverrides = {};
-  if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
-  if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
-  if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
-  if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
-  if (!Array.isArray(merged.qboCache.items)) merged.qboCache.items = [];
-  if (!Array.isArray(merged.qboCache.accounts)) merged.qboCache.accounts = [];
-
-  fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
-}
-
-function ensureQboFile() {
-  ensureDataDir();
-  if (!fs.existsSync(QBO_FILE)) {
-    fs.writeFileSync(
-      QBO_FILE,
-      JSON.stringify(
-        {
-          state: '',
-          tokens: null
-        },
-        null,
-        2
-      )
-    );
-  }
-}
-
-function readErp() {
-  ensureErpFile();
-  return JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
-}
-
-function writeErp(data) {
-  ensureErpFile();
-  fs.writeFileSync(ERP_FILE, JSON.stringify(data, null, 2));
-}
-
-function readQbo() {
-  ensureQboFile();
-  return JSON.parse(fs.readFileSync(QBO_FILE, 'utf8'));
-}
-
-function writeQbo(data) {
-  ensureQboFile();
-  fs.writeFileSync(QBO_FILE, JSON.stringify(data, null, 2));
-}
-
-function safeNum(v, fallback = null) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function parseUnitNumber(name) {
-  const m = String(name || '').match(/^T(\d+)$/i);
-  return m ? Number(m[1]) : null;
-}
-
-function sanitizeName(value, fallback = 'Unnamed') {
-  return String(value || fallback).trim().slice(0, 100);
-}
-
-function uid(prefix = 'id') {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
 function isTrackedAsset(v) {
   const unitNum = parseUnitNumber(v.name);
   const inTruckRange = unitNum !== null && unitNum >= 120 && unitNum <= 177;
-
   const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
   const reeferLike =
     text.includes('reefer') ||
+    text.includes('refrigerated') ||
     text.includes('utility 3000r') ||
     text.includes('thermo king') ||
     text.includes('carrier');
@@ -191,31 +177,74 @@ function isTrackedAsset(v) {
     text.includes('flatbed') ||
     text.includes('step deck') ||
     text.includes('drop deck');
+  const dryVanLike = text.includes('dry van');
+  const companyVehicleLike =
+    text.includes('pickup') ||
+    text.includes('suv') ||
+    text.includes('company vehicle') ||
+    text.includes('car') ||
+    text.includes('silverado') ||
+    text.includes('f-150');
 
-  return inTruckRange || reeferLike || flatbedLike;
+  return inTruckRange || reeferLike || flatbedLike || dryVanLike || companyVehicleLike;
 }
 
-function normalizeUnitType(v) {
+function assetCategoryForVehicle(v) {
   const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
+  if (text.includes('reefer') || text.includes('refrigerated')) return 'Refrigerated Vans';
+  if (text.includes('flatbed') || text.includes('step deck') || text.includes('drop deck')) return 'Flatbeds';
+  if (text.includes('dry van')) return 'Dry Vans';
   if (
-    text.includes('reefer') ||
-    text.includes('utility 3000r') ||
-    text.includes('thermo king') ||
-    text.includes('carrier')
-  ) return 'reefer';
-  if (
-    text.includes('flatbed') ||
-    text.includes('step deck') ||
-    text.includes('drop deck')
-  ) return 'flatbed';
-  return 'tractor';
+    text.includes('pickup') ||
+    text.includes('suv') ||
+    text.includes('company vehicle') ||
+    text.includes('car') ||
+    text.includes('silverado') ||
+    text.includes('f-150')
+  ) return 'Company Vehicles';
+  return 'Trucks';
 }
 
 function defaultRulesForVehicle(v) {
-  const make = String(v.make || '').toUpperCase();
-  const type = normalizeUnitType(v);
+  const category = assetCategoryForVehicle(v);
 
-  const tractorBase = [
+  if (category === 'Refrigerated Vans') {
+    return [
+      { serviceType: 'Reefer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Oil Service', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Fuel Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Air Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
+      { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
+    ];
+  }
+
+  if (category === 'Flatbeds' || category === 'Dry Vans') {
+    return [
+      { serviceType: 'Trailer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: null, intervalDays: 90 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
+      { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
+    ];
+  }
+
+  if (category === 'Company Vehicles') {
+    return [
+      { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 5000, intervalDays: 180 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 180 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 30000, intervalDays: 180 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
+      { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
+    ];
+  }
+
+  return [
     { serviceType: 'PM Service', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
     { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
     { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: 15000, intervalDays: 60 },
@@ -234,49 +263,6 @@ function defaultRulesForVehicle(v) {
     { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
     { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
   ];
-
-  const reeferBase = [
-    { serviceType: 'Reefer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Reefer Oil Service', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Reefer Fuel Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Reefer Air Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
-    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
-    { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
-  ];
-
-  const flatbedBase = [
-    { serviceType: 'Trailer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-    { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: null, intervalDays: 90 },
-    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
-    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null },
-    { serviceType: 'Accident Report', category: 'accident', intervalMiles: null, intervalDays: null }
-  ];
-
-  if (type === 'reefer') return reeferBase;
-  if (type === 'flatbed') return flatbedBase;
-
-  if (make.includes('MACK') || make.includes('VOLVO')) {
-    return tractorBase.map(x => {
-      if (x.serviceType === 'Differential Service') return { ...x, intervalMiles: 250000 };
-      if (x.serviceType === 'DPF Ash Clean') return { ...x, intervalMiles: 250000 };
-      return x;
-    });
-  }
-
-  if (make.includes('PETERBILT')) {
-    return tractorBase.map(x => {
-      if (x.serviceType === 'Air Dryer Cartridge') return { ...x, intervalMiles: 150000, intervalDays: 365 };
-      if (x.serviceType === 'DPF Ash Clean') return { ...x, intervalMiles: 250000 };
-      return x;
-    });
-  }
-
-  return tractorBase;
 }
 
 function addDays(dateStr, days) {
@@ -313,6 +299,77 @@ function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
   return 'current';
 }
 
+function getStatValue(entry, keys = []) {
+  for (const key of keys) {
+    const v = entry?.[key];
+    if (v == null) continue;
+    if (typeof v === 'number' || typeof v === 'string') return v;
+    if (typeof v === 'object') {
+      if (v.value != null) return v.value;
+      if (v.percent != null) return v.percent;
+      if (v.latitude != null || v.longitude != null) return v;
+    }
+  }
+  return null;
+}
+
+function vehicleIdOf(entry) {
+  return String(
+    entry?.id ||
+    entry?.vehicleId ||
+    entry?.vehicle?.id ||
+    entry?.vehicle?.ids?.samsaraId ||
+    entry?.ids?.samsaraId ||
+    ''
+  );
+}
+
+function enrichVehicles(vehicles, liveStats = []) {
+  const statsById = new Map();
+  for (const row of liveStats) {
+    const id = vehicleIdOf(row);
+    if (id) statsById.set(id, row);
+  }
+
+  return vehicles.map(v => {
+    const id = String(v.id || v.vehicleId || v.ids?.samsaraId || '');
+    const s = statsById.get(id) || {};
+
+    const obdMeters = safeNum(
+      getStatValue(s, ['obdOdometerMeters', 'obdOdometer', 'obdOdometerMetersValue']),
+      null
+    );
+    const gpsMeters = safeNum(
+      getStatValue(s, ['gpsOdometerMeters', 'syntheticOdometerMeters', 'gpsOdometer']),
+      null
+    );
+    const odometerMeters = obdMeters ?? gpsMeters ?? null;
+    const odometerMiles = odometerMeters != null ? Math.round(odometerMeters * 0.000621371) : null;
+
+    const fuelPercent = safeNum(
+      getStatValue(s, ['fuelPercent', 'fuelPercents', 'fuel']),
+      null
+    );
+
+    const gps = getStatValue(s, ['gps', 'location']) || {};
+    const lat = safeNum(gps?.latitude ?? gps?.lat, null);
+    const lon = safeNum(gps?.longitude ?? gps?.lng ?? gps?.lon, null);
+
+    const engineState = getStatValue(s, ['engineState', 'engineStates']) || '';
+
+    return {
+      ...v,
+      assetCategory: assetCategoryForVehicle(v),
+      odometerMiles,
+      odometerMeters,
+      fuelPercent,
+      latitude: lat,
+      longitude: lon,
+      engineState: String(engineState || '')
+    };
+  });
+}
+
 function buildDashboardRows(vehicles, erpStore) {
   const records = erpStore.records || [];
   const currentMileage = erpStore.currentMileage || {};
@@ -322,6 +379,9 @@ function buildDashboardRows(vehicles, erpStore) {
     const unit = v.name;
     const rules = unitOverrides[unit]?.rules || defaultRulesForVehicle(v);
     const unitRecords = records.filter(r => r.unit === unit);
+    const liveMiles = v.odometerMiles ?? null;
+    const manualMiles = safeNum(currentMileage[unit], null);
+    const effectiveMileage = liveMiles ?? manualMiles;
 
     return rules.map(rule => {
       const sameType = unitRecords
@@ -333,7 +393,6 @@ function buildDashboardRows(vehicles, erpStore) {
         });
 
       const last = sameType[0] || null;
-      const currentMiles = safeNum(currentMileage[unit], null);
       const lastMiles = last ? safeNum(last.serviceMileage, null) : null;
       const nextDueMiles =
         last && rule.intervalMiles != null && lastMiles != null
@@ -350,12 +409,16 @@ function buildDashboardRows(vehicles, erpStore) {
         model: v.model || '',
         year: v.year || '',
         vin: v.vin || '',
-        unitType: normalizeUnitType(v),
+        assetCategory: v.assetCategory || assetCategoryForVehicle(v),
+        currentMileage: effectiveMileage,
+        fuelPercent: v.fuelPercent ?? null,
+        latitude: v.latitude,
+        longitude: v.longitude,
+        engineState: v.engineState || '',
         category: rule.category || 'maintenance',
         serviceType: rule.serviceType,
         intervalMiles: rule.intervalMiles,
         intervalDays: rule.intervalDays,
-        currentMileage: currentMiles,
         lastServiceDate: last?.serviceDate || '',
         lastServiceMileage: last?.serviceMileage ?? '',
         nextDueMileage: nextDueMiles,
@@ -365,7 +428,7 @@ function buildDashboardRows(vehicles, erpStore) {
         notes: last?.notes || '',
         qboSyncStatus: last?.qboSyncStatus || '',
         qboPurchaseId: last?.qboPurchaseId || '',
-        status: calcStatus(nextDueMiles, nextDueDate, currentMiles)
+        status: calcStatus(nextDueMiles, nextDueDate, effectiveMileage)
       };
     });
   }).flat();
@@ -374,7 +437,6 @@ function buildDashboardRows(vehicles, erpStore) {
 function buildTireAlerts(records) {
   const tireRecords = records.filter(r => r.recordType === 'tire');
   const byUnit = {};
-
   tireRecords.forEach(r => {
     if (!byUnit[r.unit]) byUnit[r.unit] = [];
     byUnit[r.unit].push(r);
@@ -383,7 +445,6 @@ function buildTireAlerts(records) {
   const alerts = [];
   Object.entries(byUnit).forEach(([unit, rows]) => {
     rows.sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
-
     const recent = rows.filter(r => r.serviceDate);
     if (recent.length >= 3) {
       const lastThree = recent.slice(0, 3);
@@ -399,27 +460,12 @@ function buildTireAlerts(records) {
         });
       }
     }
-
-    rows.forEach(r => {
-      const expected = safeNum(r.expectedTireLifeMiles, null);
-      const install = safeNum(r.installMileage, null);
-      const remove = safeNum(r.removeMileage, null);
-      if (expected != null && install != null && remove != null) {
-        const life = remove - install;
-        if (life > 0 && life < expected * 0.5) {
-          alerts.push({
-            unit,
-            type: 'Low Tire Life',
-            severity: 'past due',
-            message: `Tire removed early at ${life} miles vs expected ${expected}`
-          });
-        }
-      }
-    });
   });
 
   return alerts;
 }
+
+/* QuickBooks helpers */
 
 function qboConfigured() {
   return !!(QBO_CLIENT_ID && QBO_CLIENT_SECRET && QBO_REDIRECT_URI);
@@ -454,12 +500,7 @@ async function qboRefreshIfNeeded() {
   });
 
   const raw = await response.text();
-  let data = {};
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error(`QuickBooks refresh failed: ${raw.slice(0, 200)}`);
-  }
+  const data = JSON.parse(raw);
 
   if (!response.ok) {
     throw new Error(data?.error_description || data?.error || 'QuickBooks refresh failed');
@@ -471,10 +512,8 @@ async function qboRefreshIfNeeded() {
     refresh_token: data.refresh_token || store.tokens.refresh_token,
     id_token: data.id_token || store.tokens.id_token || '',
     expires_in: data.expires_in,
-    x_refresh_token_expires_in: data.x_refresh_token_expires_in,
     expires_at: nowSec + Number(data.expires_in || 3600)
   };
-
   writeQbo(store);
   return store.tokens;
 }
@@ -484,9 +523,7 @@ async function qboGet(pathname) {
   if (!store.tokens?.realmId) throw new Error('QuickBooks realmId is missing');
 
   const tokens = await qboRefreshIfNeeded();
-  const url = `${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`;
-
-  const response = await fetch(url, {
+  const response = await fetch(`${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`, {
     headers: {
       Authorization: `Bearer ${tokens.access_token}`,
       Accept: 'application/json'
@@ -494,12 +531,7 @@ async function qboGet(pathname) {
   });
 
   const raw = await response.text();
-  let data = {};
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error(`QuickBooks GET failed: ${raw.slice(0, 200)}`);
-  }
+  const data = JSON.parse(raw);
 
   if (!response.ok) {
     throw new Error(data?.Fault?.Error?.[0]?.Message || 'QuickBooks GET failed');
@@ -513,9 +545,7 @@ async function qboPost(pathname, payload) {
   if (!store.tokens?.realmId) throw new Error('QuickBooks realmId is missing');
 
   const tokens = await qboRefreshIfNeeded();
-  const url = `${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`;
-
-  const response = await fetch(url, {
+  const response = await fetch(`${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${tokens.access_token}`,
@@ -526,19 +556,14 @@ async function qboPost(pathname, payload) {
   });
 
   const raw = await response.text();
-  let data = {};
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error(`QuickBooks POST failed: ${raw.slice(0, 200)}`);
-  }
+  const data = JSON.parse(raw);
 
   if (!response.ok) {
-    const msg =
+    throw new Error(
       data?.Fault?.Error?.[0]?.Message ||
       data?.Fault?.Error?.[0]?.Detail ||
-      'QuickBooks POST failed';
-    throw new Error(msg);
+      'QuickBooks POST failed'
+    );
   }
 
   return data;
@@ -596,32 +621,22 @@ async function qboSyncMasterData() {
 
 async function qboCreateVendorFromApp(body) {
   const displayName = sanitizeName(body.name || body.companyName || 'Vendor');
-  const companyName = sanitizeName(body.companyName || displayName);
-
   const existing = await qboQuery(
     `select * from Vendor where DisplayName = '${String(displayName).replace(/'/g, "\\'")}' maxresults 1`
   );
-
   const existingVendor = existing?.QueryResponse?.Vendor?.[0];
-  if (existingVendor) {
-    return { vendor: existingVendor, created: false };
-  }
+  if (existingVendor) return { created: false, vendor: existingVendor };
 
   const payload = {
     DisplayName: displayName,
-    CompanyName: companyName,
+    CompanyName: sanitizeName(body.companyName || displayName),
     PrimaryPhone: body.phone ? { FreeFormNumber: String(body.phone).slice(0, 21) } : undefined,
-    PrimaryEmailAddr: body.email ? { Address: String(body.email).slice(0, 100) } : undefined
+    PrimaryEmailAddr: body.email ? { Address: String(body.email).slice(0, 100) } : undefined,
+    BillAddr: body.address ? { Line1: String(body.address).slice(0, 500) } : undefined
   };
 
-  if (body.address) {
-    payload.BillAddr = {
-      Line1: String(body.address).slice(0, 500)
-    };
-  }
-
   const created = await qboPost('vendor', payload);
-  return { vendor: created?.Vendor || null, created: true };
+  return { created: true, vendor: created?.Vendor || null };
 }
 
 async function qboFindVendorById(id) {
@@ -645,25 +660,22 @@ function findPaymentMethodLocal(erp, paymentMethodId) {
 
 async function qboCreateApTransaction(ap) {
   const erp = readErp();
-
   const txnDate = ap.txnDate || new Date().toISOString().slice(0, 10);
   const detailMode = ap.detailMode || 'category';
   const txnType = ap.txnType || 'expense';
   const amount = safeNum(ap.amount, 0);
-  if (!(amount > 0)) throw new Error('Amount must be greater than 0');
 
+  if (!(amount > 0)) throw new Error('Amount must be greater than 0');
   if (!ap.qboVendorId) throw new Error('QuickBooks vendor is required');
 
-  let line = null;
+  let line;
   let qboItemId = '';
   let qboAccountId = '';
 
   if (detailMode === 'category') {
     if (!ap.qboAccountId) throw new Error('QuickBooks category/account is required');
-
     const accountQbo = await qboFindAccountById(ap.qboAccountId);
     if (!accountQbo) throw new Error('QuickBooks account not found');
-
     line = {
       Amount: amount,
       DetailType: 'AccountBasedExpenseLineDetail',
@@ -678,13 +690,10 @@ async function qboCreateApTransaction(ap) {
     qboAccountId = accountQbo.Id;
   } else {
     if (!ap.qboItemId) throw new Error('QuickBooks item/service is required');
-
     const itemQbo = await qboFindItemById(ap.qboItemId);
     if (!itemQbo) throw new Error('QuickBooks item not found');
-
     const qty = safeNum(ap.qty, 1) || 1;
     const unitPrice = amount / qty;
-
     line = {
       Amount: amount,
       DetailType: 'ItemBasedExpenseLineDetail',
@@ -704,19 +713,14 @@ async function qboCreateApTransaction(ap) {
   if (txnType === 'expense') {
     const paymentMethod = findPaymentMethodLocal(erp, ap.paymentMethodId);
     const paymentType = paymentMethod?.qboType || 'Other';
-
     const payload = {
       TxnDate: txnDate,
       DocNumber: ap.docNumber || undefined,
       PaymentType: paymentType,
-      EntityRef: {
-        type: 'Vendor',
-        value: ap.qboVendorId
-      },
+      EntityRef: { type: 'Vendor', value: ap.qboVendorId },
       Line: [line],
       PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Expense')
     };
-
     const created = await qboPost('purchase', payload);
     return {
       qboEntityType: 'Purchase',
@@ -736,7 +740,6 @@ async function qboCreateApTransaction(ap) {
       Line: [line],
       PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Bill')
     };
-
     const created = await qboPost('bill', payload);
     return {
       qboEntityType: 'Bill',
@@ -750,64 +753,7 @@ async function qboCreateApTransaction(ap) {
   throw new Error('Unsupported AP transaction type');
 }
 
-/* dispatcher */
-
-app.get('/api/samsara/vehicles', async (_req, res) => {
-  try {
-    const data = await fetchJson('https://api.samsara.com/fleet/vehicles', {
-      headers: samsaraHeaders()
-    });
-    res.json(data);
-  } catch (error) {
-    res.status(error.status || 500).json({ error: error.message, details: error.details || null });
-  }
-});
-
-app.get('/api/samsara/live', async (_req, res) => {
-  try {
-    const data = await fetchJson(
-      'https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates',
-      { headers: samsaraHeaders() }
-    );
-    res.json(data);
-  } catch (error) {
-    res.status(error.status || 500).json({ error: error.message, details: error.details || null });
-  }
-});
-
-app.get('/api/samsara/hos', async (_req, res) => {
-  const tries = [
-    'https://api.samsara.com/fleet/hos/clocks',
-    'https://api.samsara.com/fleet/drivers/hos/clocks'
-  ];
-
-  for (const url of tries) {
-    try {
-      const data = await fetchJson(url, { headers: samsaraHeaders() });
-      return res.json(data);
-    } catch {}
-  }
-
-  res.json({ data: [] });
-});
-
-app.get('/api/samsara/assignments', async (_req, res) => {
-  try {
-    const now = new Date();
-    const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
-    const endTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
-
-    const url = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
-    url.searchParams.set('filterBy', 'vehicles');
-    url.searchParams.set('startTime', startTime);
-    url.searchParams.set('endTime', endTime);
-
-    const data = await fetchJson(url.toString(), { headers: samsaraHeaders() });
-    res.json(data);
-  } catch {
-    res.json({ data: [] });
-  }
-});
+/* Samsara endpoints */
 
 app.get('/api/board', async (_req, res) => {
   try {
@@ -820,24 +766,76 @@ app.get('/api/board', async (_req, res) => {
     assignmentsUrl.searchParams.set('startTime', startTime);
     assignmentsUrl.searchParams.set('endTime', endTime);
 
-    const [vehicles, live, hos, assignments] = await Promise.all([
+    const statsUrl = 'https://api.samsara.com/fleet/vehicles/stats?types=obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps,engineStates';
+
+    const [vehiclesRes, liveRes, hosRes, assignmentsRes] = await Promise.all([
       fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
-      fetchJson('https://api.samsara.com/fleet/vehicles/stats?types=fuelPercents,gps,engineStates', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
+      fetchJson(statsUrl, { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
       fetchJson('https://api.samsara.com/fleet/hos/clocks', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
       fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
     ]);
 
+    const rawVehicles = (vehiclesRes.data || []).filter(isTrackedAsset);
+    const live = liveRes.data || [];
+    const enrichedVehicles = enrichVehicles(rawVehicles, live).sort(byVehicleName);
+
     res.json({
-      vehicles: vehicles.data || [],
-      live: live.data || [],
-      hos: hos.data || [],
-      assignments: assignments.data || [],
+      vehicles: enrichedVehicles,
+      live,
+      hos: hosRes.data || [],
+      assignments: assignmentsRes.data || [],
       refreshedAt: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({ error: error.message, details: error.details || null });
   }
 });
+
+function byVehicleName(a, b) {
+  const pa = parseUnitNumber(a.name);
+  const pb = parseUnitNumber(b.name);
+  if (pa != null && pb != null) return pa - pb;
+  return String(a.name || '').localeCompare(String(b.name || ''));
+}
+
+app.get('/api/maintenance/dashboard', async (_req, res) => {
+  try {
+    const statsUrl = 'https://api.samsara.com/fleet/vehicles/stats?types=obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps,engineStates';
+
+    const [vehiclesRes, liveRes] = await Promise.all([
+      fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() }),
+      fetchJson(statsUrl, { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
+    ]);
+
+    const trackedMap = new Map();
+    (vehiclesRes.data || []).filter(isTrackedAsset).forEach(v => {
+      const key = String(v.name || '').trim().toUpperCase();
+      if (!key) return;
+      if (!trackedMap.has(key)) trackedMap.set(key, v);
+      else {
+        const existing = trackedMap.get(key);
+        const oldTs = String(existing.updatedAtTime || '');
+        const newTs = String(v.updatedAtTime || '');
+        if (newTs > oldTs) trackedMap.set(key, v);
+      }
+    });
+
+    const tracked = enrichVehicles(Array.from(trackedMap.values()), liveRes.data || []).sort(byVehicleName);
+    const erp = readErp();
+    const dashboard = buildDashboardRows(tracked, erp);
+    const tireAlerts = buildTireAlerts(erp.records || []);
+
+    res.json({
+      vehicles: tracked,
+      dashboard,
+      tireAlerts
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message, details: error.details || null });
+  }
+});
+
+/* Geo/autocomplete */
 
 app.get('/api/geocode', async (req, res) => {
   try {
@@ -853,29 +851,22 @@ app.get('/api/geocode', async (req, res) => {
       url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
 
       const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
-      const results = (data.results || []).map(x => ({
+      return res.json((data.results || []).map(x => ({
         lat: Number(x.lat),
         lon: Number(x.lon),
         name: x.formatted || q
-      }));
-      return res.json(results);
+      })));
     }
 
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'IH35-Dispatcher-App', Accept: 'application/json' }
-    });
-
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
+    const response = await fetch(url, { headers: { 'User-Agent': 'IH35-ERP', Accept: 'application/json' } });
     const raw = await response.text();
-    let data = [];
-    try { data = JSON.parse(raw); } catch { return res.json([]); }
-
-    const results = (Array.isArray(data) ? data : []).map(x => ({
+    const data = JSON.parse(raw);
+    res.json((Array.isArray(data) ? data : []).map(x => ({
       lat: Number(x.lat),
       lon: Number(x.lon),
       name: x.display_name || q
-    }));
-    res.json(results);
+    })));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -895,26 +886,14 @@ app.get('/api/autocomplete', async (req, res) => {
       url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
 
       const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
-      const results = (data.results || []).map(x => ({
-        name: x.formatted || x.address_line1 || x.city || q
-      }));
-      return res.json(results);
+      return res.json((data.results || []).map(x => ({ name: x.formatted || x.address_line1 || q })));
     }
 
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'IH35-Dispatcher-App', Accept: 'application/json' }
-    });
-
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
+    const response = await fetch(url, { headers: { 'User-Agent': 'IH35-ERP', Accept: 'application/json' } });
     const raw = await response.text();
-    let data = [];
-    try { data = JSON.parse(raw); } catch { return res.json([]); }
-
-    const results = (Array.isArray(data) ? data : []).map(x => ({
-      name: x.display_name
-    }));
-
-    res.json(results);
+    const data = JSON.parse(raw);
+    res.json((Array.isArray(data) ? data : []).map(x => ({ name: x.display_name })));
   } catch {
     res.json([]);
   }
@@ -929,11 +908,11 @@ app.get('/api/route', async (req, res) => {
     const data = await fetchJson(url, { headers: { Accept: 'application/json' } });
     res.json(data);
   } catch (error) {
-    res.status(error.status || 500).json({ error: error.message, details: error.details || null });
+    res.status(error.status || 500).json({ error: error.message });
   }
 });
 
-/* QuickBooks */
+/* QuickBooks endpoints */
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
@@ -990,24 +969,19 @@ app.get('/api/qbo/callback', async (req, res) => {
     });
 
     const raw = await response.text();
-    let data = {};
-    try { data = JSON.parse(raw); } catch {
-      return res.status(500).send(`QuickBooks token exchange failed: ${raw.slice(0, 200)}`);
-    }
+    const data = JSON.parse(raw);
 
     if (!response.ok) {
       return res.status(500).send(data?.error_description || data?.error || 'QuickBooks token exchange failed');
     }
 
     const nowSec = Math.floor(Date.now() / 1000);
-
     store.tokens = {
       realmId: String(realmId),
       access_token: data.access_token,
       refresh_token: data.refresh_token,
       id_token: data.id_token || '',
       expires_in: data.expires_in,
-      x_refresh_token_expires_in: data.x_refresh_token_expires_in,
       expires_at: nowSec + Number(data.expires_in || 3600),
       connected_at: new Date().toISOString(),
       companyName: ''
@@ -1032,8 +1006,8 @@ app.get('/api/qbo/callback', async (req, res) => {
       <html>
         <body style="font-family:Arial;padding:24px">
           <h2>QuickBooks connected successfully</h2>
-          <p>You can close this page and return to the maintenance module.</p>
-          <p><a href="/maintenance.html">Go to Maintenance Module</a></p>
+          <p>You can close this page and return to the dashboard.</p>
+          <p><a href="/maintenance.html">Go to Dashboard</a></p>
         </body>
       </html>
     `);
@@ -1073,28 +1047,76 @@ app.post('/api/qbo/create-vendor', async (req, res) => {
   try {
     const result = await qboCreateVendorFromApp(req.body || {});
     const cache = await qboSyncMasterData();
-    res.json({
-      ok: true,
-      created: result.created,
-      vendor: result.vendor,
-      cache
-    });
+    res.json({ ok: true, created: result.created, vendor: result.vendor, cache });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-/* AP */
+/* Maintenance / accounting CRUD */
+
+app.get('/api/maintenance/records', (_req, res) => {
+  res.json(readErp());
+});
+
+app.post('/api/maintenance/mileage', (req, res) => {
+  const { unit, currentMileage } = req.body || {};
+  if (!unit) return res.status(400).json({ error: 'unit is required' });
+
+  const erp = readErp();
+  erp.currentMileage[unit] = safeNum(currentMileage, null);
+  writeErp(erp);
+  res.json({ ok: true });
+});
+
+app.post('/api/maintenance/record', (req, res) => {
+  const body = req.body || {};
+  if (!body.unit || !body.serviceType) {
+    return res.status(400).json({ error: 'unit and serviceType are required' });
+  }
+
+  const erp = readErp();
+  erp.records.push({
+    id: uid('rec'),
+    recordType: body.recordType || 'maintenance',
+    unit: body.unit,
+    serviceType: body.serviceType,
+    serviceDate: body.serviceDate || '',
+    serviceMileage: safeNum(body.serviceMileage, null),
+    vendor: body.vendor || '',
+    cost: safeNum(body.cost, null),
+    notes: body.notes || '',
+    tireCondition: body.tireCondition || '',
+    tirePosition: body.tirePosition || '',
+    tirePositionText: body.tirePositionText || '',
+    tireBrand: body.tireBrand || '',
+    tireDot: body.tireDot || '',
+    installMileage: safeNum(body.installMileage, null),
+    removeMileage: safeNum(body.removeMileage, null),
+    expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
+    accidentAtFault: body.accidentAtFault || '',
+    accidentLocation: body.accidentLocation || '',
+    accidentReportNumber: body.accidentReportNumber || '',
+    repairLocationType: body.repairLocationType || '',
+    qboSyncStatus: '',
+    qboPurchaseId: '',
+    qboVendorId: '',
+    qboItemId: '',
+    qboAccountId: '',
+    qboError: ''
+  });
+  writeErp(erp);
+  res.json({ ok: true });
+});
 
 app.post('/api/erp/ap-transaction', (req, res) => {
   const body = req.body || {};
-  if (!body.txnType) return res.status(400).json({ error: 'Transaction type is required' });
-  if (!body.detailMode) return res.status(400).json({ error: 'Detail mode is required' });
-  if (!body.qboVendorId) return res.status(400).json({ error: 'QuickBooks vendor is required' });
-  if (!(safeNum(body.amount, 0) > 0)) return res.status(400).json({ error: 'Amount must be greater than 0' });
+  if (!body.txnType || !body.detailMode || !body.qboVendorId) {
+    return res.status(400).json({ error: 'Missing required AP transaction fields' });
+  }
 
   const erp = readErp();
-  const ap = {
+  erp.apTransactions.push({
     id: uid('ap'),
     txnType: body.txnType,
     detailMode: body.detailMode,
@@ -1115,11 +1137,9 @@ app.post('/api/erp/ap-transaction', (req, res) => {
     qboEntityId: '',
     qboError: '',
     createdAt: new Date().toISOString()
-  };
-
-  erp.apTransactions.push(ap);
+  });
   writeErp(erp);
-  res.json({ ok: true, ap });
+  res.json({ ok: true });
 });
 
 app.post('/api/qbo/post-ap/:id', async (req, res) => {
@@ -1128,11 +1148,9 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'AP transaction not found' });
 
   try {
-    const ap = erp.apTransactions[idx];
-    const result = await qboCreateApTransaction(ap);
-
+    const result = await qboCreateApTransaction(erp.apTransactions[idx]);
     erp.apTransactions[idx] = {
-      ...ap,
+      ...erp.apTransactions[idx],
       qboSyncStatus: 'posted',
       qboEntityType: result.qboEntityType,
       qboEntityId: result.qboEntityId,
@@ -1142,7 +1160,6 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
       qboError: '',
       qboPostedAt: new Date().toISOString()
     };
-
     writeErp(erp);
     res.json({ ok: true, ap: erp.apTransactions[idx] });
   } catch (error) {
@@ -1157,115 +1174,11 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
   }
 });
 
-/* maintenance */
-
-app.get('/api/maintenance/dashboard', async (_req, res) => {
-  try {
-    const vehiclesRes = await fetchJson('https://api.samsara.com/fleet/vehicles', {
-      headers: samsaraHeaders()
-    });
-
-    const trackedMap = new Map();
-    (vehiclesRes.data || []).filter(isTrackedAsset).forEach(v => {
-      const key = String(v.name || '').trim().toUpperCase();
-      if (!key) return;
-      if (!trackedMap.has(key)) trackedMap.set(key, v);
-      else {
-        const existing = trackedMap.get(key);
-        const oldTs = String(existing.updatedAtTime || '');
-        const newTs = String(v.updatedAtTime || '');
-        if (newTs > oldTs) trackedMap.set(key, v);
-      }
-    });
-
-    const tracked = Array.from(trackedMap.values()).sort((a, b) => {
-      const ua = parseUnitNumber(a.name);
-      const ub = parseUnitNumber(b.name);
-      if (ua == null && ub == null) return String(a.name).localeCompare(String(b.name));
-      if (ua == null) return 1;
-      if (ub == null) return -1;
-      return ua - ub;
-    });
-
-    const erp = readErp();
-    const dashboard = buildDashboardRows(tracked, erp);
-    const tireAlerts = buildTireAlerts(erp.records || []);
-
-    res.json({
-      vehicles: tracked,
-      dashboard,
-      tireAlerts
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message, details: error.details || null });
-  }
-});
-
-app.get('/api/maintenance/records', (_req, res) => {
-  const data = readErp();
-  res.json(data);
-});
-
-app.post('/api/maintenance/mileage', (req, res) => {
-  const { unit, currentMileage } = req.body || {};
-  if (!unit) return res.status(400).json({ error: 'unit is required' });
-
-  const erp = readErp();
-  if (!erp.currentMileage) erp.currentMileage = {};
-  erp.currentMileage[unit] = safeNum(currentMileage, null);
-  writeErp(erp);
-
-  res.json({ ok: true });
-});
-
-app.post('/api/maintenance/record', (req, res) => {
-  const body = req.body || {};
-  if (!body.unit || !body.serviceType) {
-    return res.status(400).json({ error: 'unit and serviceType are required' });
-  }
-
-  const erp = readErp();
-  if (!Array.isArray(erp.records)) erp.records = [];
-
-  erp.records.push({
-    id: uid('rec'),
-    recordType: body.recordType || 'maintenance',
-    unit: body.unit,
-    serviceType: body.serviceType,
-    serviceDate: body.serviceDate || '',
-    serviceMileage: safeNum(body.serviceMileage, null),
-    vendor: body.vendor || '',
-    cost: safeNum(body.cost, null),
-    notes: body.notes || '',
-    tireCondition: body.tireCondition || '',
-    tirePosition: body.tirePosition || '',
-    tireBrand: body.tireBrand || '',
-    tireDot: body.tireDot || '',
-    installMileage: safeNum(body.installMileage, null),
-    removeMileage: safeNum(body.removeMileage, null),
-    expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
-    accidentAtFault: body.accidentAtFault || '',
-    accidentLocation: body.accidentLocation || '',
-    accidentReportNumber: body.accidentReportNumber || '',
-    repairLocationType: body.repairLocationType || '',
-    qboSyncStatus: '',
-    qboPurchaseId: '',
-    qboVendorId: '',
-    qboItemId: '',
-    qboAccountId: '',
-    qboError: ''
-  });
-
-  writeErp(erp);
-  res.json({ ok: true });
-});
-
 app.post('/api/qbo/post-record/:id', async (req, res) => {
   try {
     const recordId = String(req.params.id);
     const erp = readErp();
     const idx = (erp.records || []).findIndex(r => String(r.id) === recordId);
-
     if (idx === -1) return res.status(404).json({ error: 'Record not found' });
 
     const record = erp.records[idx];
@@ -1311,14 +1224,12 @@ app.post('/api/qbo/post-record/:id', async (req, res) => {
       qboSyncStatus: 'posted',
       qboPurchaseId: created?.Purchase?.Id || '',
       qboVendorId: vendor?.qboId || '',
-      qboItemId: '',
       qboAccountId: account?.qboId || '',
       qboError: '',
       qboPostedAt: new Date().toISOString()
     };
 
     writeErp(erp);
-
     res.json({ ok: true, record: erp.records[idx] });
   } catch (error) {
     const erp = readErp();
@@ -1335,6 +1246,143 @@ app.post('/api/qbo/post-record/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+/* Imports */
+
+function lowerKeyMap(row) {
+  const out = {};
+  Object.keys(row || {}).forEach(k => {
+    out[String(k).trim().toLowerCase()] = row[k];
+  });
+  return out;
+}
+
+function firstValue(obj, keys) {
+  for (const k of keys) {
+    if (obj[k] != null && String(obj[k]).trim() !== '') return obj[k];
+  }
+  return '';
+}
+
+app.post('/api/import/maintenance', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+    const erp = readErp();
+    let imported = 0;
+
+    for (const rawRow of rows) {
+      const row = lowerKeyMap(rawRow);
+      const unit = sanitizeName(firstValue(row, ['unit', 'vehicle', 'truck', 'asset', 'unit number']), '');
+      const serviceType = sanitizeName(firstValue(row, ['service', 'service type', 'maintenance type', 'type']), '');
+
+      if (!unit || !serviceType) continue;
+
+      const serviceMileage = safeNum(firstValue(row, ['service mileage', 'mileage', 'odometer', 'last mileage']), null);
+      if (serviceMileage != null) {
+        erp.currentMileage[unit] = Math.max(safeNum(erp.currentMileage[unit], 0) || 0, serviceMileage);
+      }
+
+      erp.records.push({
+        id: uid('imp_rec'),
+        recordType: sanitizeName(firstValue(row, ['record type', 'category']), 'maintenance').toLowerCase(),
+        unit,
+        serviceType,
+        serviceDate: firstValue(row, ['date', 'service date', 'last date']) || '',
+        serviceMileage,
+        vendor: firstValue(row, ['vendor', 'shop', 'supplier']) || '',
+        cost: safeNum(firstValue(row, ['cost', 'amount', 'expense']), null),
+        notes: firstValue(row, ['notes', 'memo', 'description']) || '',
+        tireCondition: firstValue(row, ['tire condition']) || '',
+        tirePosition: firstValue(row, ['tire position']) || '',
+        tirePositionText: firstValue(row, ['tire position text']) || '',
+        tireBrand: firstValue(row, ['tire brand']) || '',
+        tireDot: firstValue(row, ['tire dot', 'dot']) || '',
+        installMileage: safeNum(firstValue(row, ['install mileage']), null),
+        removeMileage: safeNum(firstValue(row, ['remove mileage']), null),
+        expectedTireLifeMiles: safeNum(firstValue(row, ['expected tire life', 'expected tire life miles']), null),
+        accidentAtFault: firstValue(row, ['accident at fault']) || '',
+        accidentLocation: firstValue(row, ['accident location']) || '',
+        accidentReportNumber: firstValue(row, ['accident report', 'accident report number']) || '',
+        repairLocationType: firstValue(row, ['repair type', 'repair location type']) || '',
+        qboSyncStatus: '',
+        qboPurchaseId: '',
+        qboVendorId: '',
+        qboItemId: '',
+        qboAccountId: '',
+        qboError: ''
+      });
+      imported += 1;
+    }
+
+    writeErp(erp);
+    res.json({ ok: true, imported });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/import/ap', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+    const erp = readErp();
+    let imported = 0;
+
+    for (const rawRow of rows) {
+      const row = lowerKeyMap(rawRow);
+      const amount = safeNum(firstValue(row, ['amount', 'cost', 'expense amount']), 0);
+      if (!(amount > 0)) continue;
+
+      const vendorName = String(firstValue(row, ['vendor', 'vendor name']) || '').trim().toLowerCase();
+      const accountName = String(firstValue(row, ['account', 'category', 'account name']) || '').trim().toLowerCase();
+      const itemName = String(firstValue(row, ['item', 'item name', 'service']) || '').trim().toLowerCase();
+
+      const vendor = (erp.qboCache.vendors || []).find(v => String(v.name).toLowerCase() === vendorName);
+      const account = (erp.qboCache.accounts || []).find(v => String(v.name).toLowerCase() === accountName);
+      const item = (erp.qboCache.items || []).find(v => String(v.name).toLowerCase() === itemName);
+
+      erp.apTransactions.push({
+        id: uid('imp_ap'),
+        txnType: String(firstValue(row, ['txn type', 'type']) || 'expense').toLowerCase(),
+        detailMode: item ? 'item' : 'category',
+        qboVendorId: vendor?.qboId || '',
+        paymentMethodId: '',
+        qboAccountId: account?.qboId || '',
+        qboItemId: item?.qboId || '',
+        qty: safeNum(firstValue(row, ['qty', 'quantity']), 1) || 1,
+        amount,
+        txnDate: firstValue(row, ['date', 'txn date']) || '',
+        dueDate: firstValue(row, ['due date']) || '',
+        docNumber: firstValue(row, ['doc number', 'expense no', 'bill no']) || '',
+        description: firstValue(row, ['description', 'memo']) || '',
+        memo: firstValue(row, ['memo', 'notes']) || '',
+        assetUnit: firstValue(row, ['unit', 'vehicle', 'truck']) || '',
+        qboSyncStatus: '',
+        qboEntityType: '',
+        qboEntityId: '',
+        qboError: '',
+        createdAt: new Date().toISOString()
+      });
+      imported += 1;
+    }
+
+    writeErp(erp);
+    res.json({ ok: true, imported });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/* Basic endpoints */
 
 app.get('/api/health', (_req, res) => {
   res.json({

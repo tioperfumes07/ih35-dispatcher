@@ -22,426 +22,98 @@
       --shadow:0 8px 24px rgba(15,23,42,.06);
       --radius:14px;
     }
-
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-    a{text-decoration:none;color:inherit}
-
-    .app{
-      min-height:100vh;
-      display:grid;
-      grid-template-columns:280px 1fr;
-    }
-
-    .sidebar{
-      background:#0f172a;
-      color:#fff;
-      padding:18px 16px;
-      position:sticky;
-      top:0;
-      height:100vh;
-      overflow:auto;
-    }
-
-    .brand{
-      font-size:22px;
-      font-weight:700;
-      margin-bottom:18px;
-    }
-
-    .brand-sub{
-      font-size:12px;
-      color:#cbd5e1;
-      margin-top:4px;
-      margin-bottom:18px;
-    }
-
-    .nav-section-title{
-      font-size:11px;
-      letter-spacing:.08em;
-      color:#94a3b8;
-      text-transform:uppercase;
-      margin:16px 0 8px;
-    }
-
-    .nav-btn{
-      width:100%;
-      display:block;
-      text-align:left;
-      background:transparent;
-      color:#fff;
-      border:1px solid transparent;
-      padding:11px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      margin-bottom:6px;
-      font-size:14px;
-    }
-
+    .app{min-height:100vh;display:grid;grid-template-columns:280px 1fr}
+    .sidebar{background:#0f172a;color:#fff;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+    .brand{font-size:22px;font-weight:700;margin-bottom:18px}
+    .brand-sub{font-size:12px;color:#cbd5e1;margin-bottom:18px}
+    .nav-title{font-size:11px;letter-spacing:.08em;color:#94a3b8;text-transform:uppercase;margin:16px 0 8px}
+    .nav-btn{width:100%;display:block;text-align:left;background:transparent;color:#fff;border:1px solid transparent;padding:11px 12px;border-radius:10px;cursor:pointer;margin-bottom:6px;font-size:14px}
     .nav-btn:hover{background:rgba(255,255,255,.06)}
-    .nav-btn.active{
-      background:#1e293b;
-      border-color:#334155;
-    }
-
-    .sidebar-foot{
-      margin-top:18px;
-      padding-top:14px;
-      border-top:1px solid rgba(255,255,255,.1);
-      font-size:12px;
-      color:#cbd5e1;
-    }
-
-    .main{
-      padding:18px;
-      overflow:auto;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:16px;
-    }
-
-    .title{
-      font-size:28px;
-      font-weight:700;
-      margin-right:auto;
-    }
-
-    .btn, button{
-      font:inherit;
-      border:1px solid var(--line);
-      background:#fff;
-      padding:9px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      color:var(--text);
-    }
-
-    .btn:hover, button:hover{background:#f8fafc}
-
-    input, select, textarea{
-      width:100%;
-      border:1px solid var(--line);
-      background:#fff;
-      padding:10px 12px;
-      border-radius:10px;
-      font:inherit;
-      color:var(--text);
-    }
-
-    textarea{
-      min-height:84px;
-      resize:vertical;
-    }
-
+    .nav-btn.active{background:#1e293b;border-color:#334155}
+    .main{padding:18px;overflow:auto}
+    .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+    .title{font-size:28px;font-weight:700;margin-right:auto}
+    .btn,button,input,select,textarea{font:inherit}
+    .btn,button{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:10px;cursor:pointer;color:var(--text)}
+    .btn:hover,button:hover{background:#f8fafc}
+    input,select,textarea{width:100%;border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:10px;color:var(--text)}
+    textarea{min-height:84px;resize:vertical}
     .hidden{display:none !important}
-
-    .hero-grid{
-      display:grid;
-      grid-template-columns:repeat(5,minmax(0,1fr));
-      gap:12px;
-      margin-bottom:16px;
-    }
-
-    .hero-card{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:14px;
-      cursor:pointer;
-    }
-
+    .hero-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+    .hero-card,.panel,.metric,.record-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .hero-card{padding:14px;cursor:pointer}
     .hero-card:hover{border-color:#bfd3ff;background:#fbfdff}
-    .hero-card h3{
-      margin:0 0 4px;
-      font-size:15px;
-    }
-    .hero-card p{
-      margin:0;
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    .section{
-      display:none;
-    }
-    .section.active{
-      display:block;
-    }
-
-    .grid{
-      display:grid;
-      gap:12px;
-    }
-
+    .hero-card h3{margin:0 0 4px;font-size:15px}
+    .hero-card p{margin:0;font-size:12px;color:var(--muted)}
+    .section{display:none}
+    .section.active{display:block}
+    .grid{display:grid;gap:12px}
     .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
     .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
     .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-
-    .panel{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-
-    .panel-head{
-      padding:14px 16px;
-      border-bottom:1px solid #edf1f7;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .panel-title{
-      font-size:16px;
-      font-weight:700;
-    }
-
-    .panel-body{
-      padding:14px 16px;
-    }
-
-    .metric{
-      background:#fafcff;
-      border:1px solid #e8eef8;
-      border-radius:12px;
-      padding:12px;
-    }
-
-    .metric-label{
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:4px;
-    }
-
-    .metric-value{
-      font-size:22px;
-      font-weight:700;
-    }
-
-    .chips{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-
-    .chip{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:999px;
-      padding:7px 11px;
-      cursor:pointer;
-      font-size:13px;
-    }
-
-    .chip.active{
-      background:var(--blueSoft);
-      border-color:#bcd0ff;
-      color:#1d4ed8;
-      font-weight:700;
-    }
-
-    .split{
-      display:grid;
-      grid-template-columns:330px 1fr;
-      gap:12px;
-    }
-
-    .list{
-      max-height:720px;
-      overflow:auto;
-      border:1px solid #edf1f7;
-      border-radius:12px;
-      background:#fff;
-    }
-
-    .list-row{
-      padding:12px 14px;
-      border-bottom:1px solid #edf1f7;
-      cursor:pointer;
-    }
-
+    .panel-head{padding:14px 16px;border-bottom:1px solid #edf1f7;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .panel-title{font-size:16px;font-weight:700}
+    .panel-body{padding:14px 16px}
+    .metric{padding:12px}
+    .metric-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+    .metric-value{font-size:22px;font-weight:700}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 11px;cursor:pointer;font-size:13px}
+    .chip.active{background:var(--blueSoft);border-color:#bcd0ff;color:#1d4ed8;font-weight:700}
+    .split{display:grid;grid-template-columns:340px 1fr;gap:12px}
+    .list{max-height:720px;overflow:auto;border:1px solid #edf1f7;border-radius:12px;background:#fff}
+    .list-row{padding:12px 14px;border-bottom:1px solid #edf1f7;cursor:pointer}
     .list-row:last-child{border-bottom:none}
     .list-row:hover{background:#fafcff}
     .list-row.active{background:var(--blueSoft)}
-    .list-title{
-      font-size:14px;
-      font-weight:700;
-      margin-bottom:4px;
-    }
-    .list-sub{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.35;
-    }
-
-    .status{
-      display:inline-block;
-      padding:3px 9px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:700;
-      border:1px solid transparent;
-    }
+    .list-title{font-size:14px;font-weight:700;margin-bottom:4px}
+    .list-sub{font-size:12px;color:var(--muted);line-height:1.35}
+    .status{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
     .status-current{background:var(--greenSoft);color:var(--green)}
     .status-soon{background:var(--yellowSoft);color:var(--yellow)}
     .status-past{background:var(--redSoft);color:var(--red)}
     .status-posted{background:var(--blueSoft);color:#1d4ed8}
     .status-error{background:var(--redSoft);color:var(--red)}
-
-    .toolbar{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:10px;
-    }
-
-    .table-wrap{
-      overflow:auto;
-      border:1px solid #edf1f7;
-      border-radius:12px;
-      background:#fff;
-    }
-
-    table{
-      border-collapse:collapse;
-      width:100%;
-      min-width:1400px;
-      font-size:13px;
-    }
-
-    th, td{
-      padding:9px 10px;
-      border-bottom:1px solid #edf1f7;
-      text-align:left;
-      vertical-align:top;
-    }
-
-    th{
-      background:#fafcff;
-      position:sticky;
-      top:0;
-      z-index:1;
-      color:var(--muted);
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.03em;
-    }
-
-    .form-stack{
-      display:grid;
-      gap:10px;
-    }
-
-    .unit-summary{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:10px;
-      margin-bottom:12px;
-    }
-
-    .unit-box{
-      background:#fafcff;
-      border:1px solid #e8eef8;
-      border-radius:12px;
-      padding:10px;
-    }
-
-    .unit-box .k{
-      font-size:11px;
-      color:var(--muted);
-      margin-bottom:4px;
-    }
-
-    .unit-box .v{
-      font-size:17px;
-      font-weight:700;
-    }
-
-    .mini-note{
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    .card-list{
-      display:grid;
-      gap:10px;
-    }
-
-    .record-card{
-      background:#fafcff;
-      border:1px solid #e8eef8;
-      border-radius:12px;
-      padding:12px;
-    }
-
-    .record-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:8px;
-    }
-
-    .search-row{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:10px;
-    }
-
-    .subtabs{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-bottom:12px;
-    }
-
-    .subtab{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:10px;
-      padding:8px 12px;
-      cursor:pointer;
-    }
-
-    .subtab.active{
-      background:var(--blueSoft);
-      border-color:#bcd0ff;
-      color:#1d4ed8;
-      font-weight:700;
-    }
-
-    .report-actions{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-
+    .toolbar,.search-row,.unit-summary{display:grid;gap:10px}
+    .toolbar{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .search-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .unit-summary{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:12px}
+    .unit-box{background:#fafcff;border:1px solid #e8eef8;border-radius:12px;padding:10px}
+    .unit-box .k{font-size:11px;color:var(--muted);margin-bottom:4px}
+    .unit-box .v{font-size:17px;font-weight:700}
+    .table-wrap{overflow:auto;border:1px solid #edf1f7;border-radius:12px;background:#fff}
+    table{border-collapse:collapse;width:100%;min-width:1400px;font-size:13px}
+    th,td{padding:9px 10px;border-bottom:1px solid #edf1f7;text-align:left;vertical-align:top}
+    th{background:#fafcff;position:sticky;top:0;z-index:1;color:var(--muted);font-size:12px;text-transform:uppercase}
+    .form-stack{display:grid;gap:10px}
+    .mini-note{font-size:12px;color:var(--muted)}
+    .card-list{display:grid;gap:10px}
+    .record-card{padding:12px}
+    .record-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+    .subtabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+    .subtab{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+    .subtab.active{background:var(--blueSoft);border-color:#bcd0ff;color:#1d4ed8;font-weight:700}
+    .tire-layout-wrap{display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start}
+    .tire-svg{width:100%;height:auto;border:1px solid #e8eef8;border-radius:12px;background:#fafcff;padding:10px}
+    .tire-dot{fill:#cbd5e1;stroke:#475569;stroke-width:1.5;cursor:pointer}
+    .tire-dot.active{fill:#2563eb}
+    .iframe-wrap{border:1px solid #edf1f7;border-radius:12px;overflow:hidden;background:#fff}
+    .iframe-wrap iframe{width:100%;height:850px;border:0;background:#fff}
+    .track-grid{display:grid;grid-template-columns:360px 1fr;gap:12px}
+    .track-card{padding:12px;border:1px solid #e8eef8;border-radius:12px;background:#fafcff;cursor:pointer}
+    .track-card.active{background:var(--blueSoft);border-color:#bfd3ff}
+    .track-list{display:grid;gap:8px;max-height:820px;overflow:auto}
     @media (max-width:1400px){
       .hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .split{grid-template-columns:1fr}
-      .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .unit-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .split,.track-grid,.tire-layout-wrap{grid-template-columns:1fr}
+      .toolbar,.unit-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
       .app{grid-template-columns:1fr}
-      .sidebar{
-        position:relative;
-        height:auto;
-      }
+      .sidebar{position:relative;height:auto}
     }
-
     @media (max-width:800px){
-      .hero-grid,.grid-2,.grid-3,.grid-4,.toolbar,.search-row,.unit-summary{
-        grid-template-columns:1fr;
-      }
+      .hero-grid,.grid-2,.grid-3,.grid-4,.toolbar,.search-row,.unit-summary{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -458,7 +130,7 @@
       <div class="brand">IH35 ERP</div>
       <div class="brand-sub">Dispatch · Fuel · Maintenance · Tracking · Accounting</div>
 
-      <div class="nav-section-title">Main</div>
+      <div class="nav-title">Main</div>
       <button class="nav-btn active" data-section="dashboard" onclick="openSection('dashboard', this)">Dashboard</button>
       <button class="nav-btn" data-section="dispatch" onclick="openSection('dispatch', this)">Dispatch Board</button>
       <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Fuel Board</button>
@@ -466,16 +138,14 @@
       <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
       <button class="nav-btn" data-section="accounting" onclick="openSection('accounting', this)">Accounting Board</button>
 
-      <div class="nav-section-title">Actions</div>
+      <div class="nav-title">Actions</div>
       <button class="nav-btn" onclick="loadAll()">Refresh All</button>
       <button class="nav-btn" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
       <button class="nav-btn" onclick="connectQuickBooks()">Connect QuickBooks</button>
-      <a class="nav-btn" href="/">Open Dispatcher Route Page</a>
 
-      <div class="sidebar-foot">
-        <div id="sidebarQboStatus">QuickBooks not checked</div>
-        <div id="sidebarLastUpdated" style="margin-top:8px;">Not loaded</div>
-      </div>
+      <div class="nav-title">Status</div>
+      <div id="sidebarQboStatus" class="mini-note">QuickBooks not checked</div>
+      <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Not loaded</div>
     </aside>
 
     <main class="main">
@@ -488,122 +158,55 @@
 
       <section id="section-dashboard" class="section active">
         <div class="hero-grid">
-          <div class="hero-card" onclick="openSectionByName('dispatch')">
-            <h3>Dispatch Board</h3>
-            <p>Assigned trucks, HOS, route and dispatch visibility</p>
-          </div>
-          <div class="hero-card" onclick="openSectionByName('fuel')">
-            <h3>Fuel Board</h3>
-            <p>Fuel reach, stop planning and unit fuel overview</p>
-          </div>
-          <div class="hero-card" onclick="openSectionByName('maintenance')">
-            <h3>Maintenance Board</h3>
-            <p>Service planning, records, vendors and reports</p>
-          </div>
-          <div class="hero-card" onclick="openSectionByName('tracking')">
-            <h3>Vehicle Tracking Board</h3>
-            <p>Live locations, categories and activity overview</p>
-          </div>
-          <div class="hero-card" onclick="openSectionByName('accounting')">
-            <h3>Accounting Board</h3>
-            <p>Maintenance expense transactions, bills and QuickBooks</p>
-          </div>
+          <div class="hero-card" onclick="openSectionByName('dispatch')"><h3>Dispatch Board</h3><p>Assignments, HOS and route summary</p></div>
+          <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Fuel Board</h3><p>Dispatcher route page inside this app</p></div>
+          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Mileage, service planning, records and imports</p></div>
+          <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Samsara-style live fleet view</p></div>
+          <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Maintenance expense transactions and QuickBooks</p></div>
         </div>
 
         <div class="grid grid-4">
-          <div class="metric">
-            <div class="metric-label">Tracked Assets</div>
-            <div class="metric-value" id="dashTrackedAssets">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Assigned / Working</div>
-            <div class="metric-value" id="dashAssignedAssets">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Maintenance Past Due</div>
-            <div class="metric-value" id="dashPastDue">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">QBO Vendor Count</div>
-            <div class="metric-value" id="dashQboVendors">0</div>
-          </div>
+          <div class="metric"><div class="metric-label">Tracked Assets</div><div class="metric-value" id="dashTrackedAssets">0</div></div>
+          <div class="metric"><div class="metric-label">Assigned / Working</div><div class="metric-value" id="dashAssignedAssets">0</div></div>
+          <div class="metric"><div class="metric-label">Maintenance Past Due</div><div class="metric-value" id="dashPastDue">0</div></div>
+          <div class="metric"><div class="metric-label">QBO Vendor Count</div><div class="metric-value" id="dashQboVendors">0</div></div>
         </div>
 
         <div class="grid grid-2" style="margin-top:12px;">
           <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">System Summary</div>
-            </div>
+            <div class="panel-head"><div class="panel-title">System Summary</div></div>
             <div class="panel-body card-list" id="dashboardSummaryCards"></div>
           </div>
-
           <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">QuickBooks / Sync Summary</div>
-            </div>
-            <div class="panel-body">
-              <div id="dashboardQboSummary" class="mini-note">No data yet.</div>
-            </div>
+            <div class="panel-head"><div class="panel-title">Sync Summary</div></div>
+            <div class="panel-body"><div id="dashboardQboSummary" class="mini-note">No data yet.</div></div>
           </div>
         </div>
       </section>
 
       <section id="section-dispatch" class="section">
         <div class="grid grid-4">
-          <div class="metric">
-            <div class="metric-label">Vehicles Loaded</div>
-            <div class="metric-value" id="dispatchVehiclesCount">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Assigned</div>
-            <div class="metric-value" id="dispatchAssignedCount">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Unassigned</div>
-            <div class="metric-value" id="dispatchUnassignedCount">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">HOS Rows</div>
-            <div class="metric-value" id="dispatchHosCount">0</div>
-          </div>
+          <div class="metric"><div class="metric-label">Vehicles Loaded</div><div class="metric-value" id="dispatchVehiclesCount">0</div></div>
+          <div class="metric"><div class="metric-label">Assigned</div><div class="metric-value" id="dispatchAssignedCount">0</div></div>
+          <div class="metric"><div class="metric-label">Unassigned</div><div class="metric-value" id="dispatchUnassignedCount">0</div></div>
+          <div class="metric"><div class="metric-label">HOS Rows</div><div class="metric-value" id="dispatchHosCount">0</div></div>
         </div>
-
         <div class="panel" style="margin-top:12px;">
-          <div class="panel-head">
-            <div class="panel-title">Dispatch Summary</div>
-          </div>
-          <div class="panel-body">
-            <div id="dispatchSummaryText" class="mini-note">No dispatch data loaded yet.</div>
-          </div>
+          <div class="panel-head"><div class="panel-title">Dispatch Summary</div></div>
+          <div class="panel-body"><div id="dispatchSummaryText" class="mini-note">No dispatch data loaded yet.</div></div>
         </div>
       </section>
 
       <section id="section-fuel" class="section">
-        <div class="grid grid-4">
-          <div class="metric">
-            <div class="metric-label">Units With Fuel Data</div>
-            <div class="metric-value" id="fuelUnitsCount">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Low Fuel Units</div>
-            <div class="metric-value" id="fuelLowCount">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Average Fuel %</div>
-            <div class="metric-value" id="fuelAvgPct">0%</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Tracking Updates</div>
-            <div class="metric-value" id="fuelTrackingCount">0</div>
-          </div>
-        </div>
-
-        <div class="panel" style="margin-top:12px;">
+        <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">Fuel Summary</div>
+            <div class="panel-title">Fuel Board / Dispatcher Route Page</div>
+            <div class="mini-note">This is your dispatcher route page loaded inside the unified dashboard.</div>
           </div>
           <div class="panel-body">
-            <div id="fuelSummaryText" class="mini-note">No fuel data loaded yet.</div>
+            <div class="iframe-wrap">
+              <iframe src="/" title="Dispatcher Route Page"></iframe>
+            </div>
           </div>
         </div>
       </section>
@@ -612,7 +215,7 @@
         <div class="panel">
           <div class="panel-head">
             <div class="panel-title">Maintenance Board</div>
-            <div class="report-actions">
+            <div>
               <button onclick="downloadUnitMaintenanceReport()">Maintenance Report by Unit</button>
               <button onclick="downloadUnitExpenseReport()">Expense Report by Unit</button>
               <button onclick="downloadAllMaintenanceCsv()">All Maintenance CSV</button>
@@ -625,13 +228,11 @@
 
         <div class="split" style="margin-top:12px;">
           <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title" id="assetCategoryTitle">Trucks</div>
-            </div>
+            <div class="panel-head"><div class="panel-title" id="assetCategoryTitle">Trucks</div></div>
             <div class="panel-body">
               <div class="search-row" style="margin-bottom:10px;">
-                <input id="maintenanceUnitSearch" list="unitOptions" placeholder="Search unit" oninput="renderMaintenanceUnitList()">
-                <input id="maintenanceServiceFilter" list="serviceOptions" placeholder="Filter service" oninput="renderMaintenanceTable()">
+                <input id="maintenanceUnitSearch" list="unitOptions" placeholder="Type vehicle / unit" oninput="renderMaintenanceUnitList()">
+                <input id="maintenanceServiceFilter" list="serviceOptions" placeholder="Type service filter" oninput="renderMaintenanceTable()">
               </div>
               <div class="list" id="maintenanceUnitList"></div>
             </div>
@@ -639,34 +240,20 @@
 
           <div class="grid">
             <div class="panel">
-              <div class="panel-head">
-                <div class="panel-title">Selected Asset</div>
-              </div>
+              <div class="panel-head"><div class="panel-title">Selected Asset</div></div>
               <div class="panel-body">
                 <div id="selectedUnitInfo" class="mini-note">Select an asset.</div>
 
                 <div class="unit-summary">
-                  <div class="unit-box">
-                    <div class="k">Actual Mileage</div>
-                    <div class="v" id="unitMileageBox">N/A</div>
-                  </div>
-                  <div class="unit-box">
-                    <div class="k">Fuel</div>
-                    <div class="v" id="unitFuelBox">N/A</div>
-                  </div>
-                  <div class="unit-box">
-                    <div class="k">Past Due</div>
-                    <div class="v" id="unitPastDueBox">0</div>
-                  </div>
-                  <div class="unit-box">
-                    <div class="k">Due Soon</div>
-                    <div class="v" id="unitDueSoonBox">0</div>
-                  </div>
+                  <div class="unit-box"><div class="k">Actual Mileage</div><div class="v" id="unitMileageBox">N/A</div></div>
+                  <div class="unit-box"><div class="k">Fuel</div><div class="v" id="unitFuelBox">N/A</div></div>
+                  <div class="unit-box"><div class="k">Past Due</div><div class="v" id="unitPastDueBox">0</div></div>
+                  <div class="unit-box"><div class="k">Due Soon</div><div class="v" id="unitDueSoonBox">0</div></div>
                 </div>
 
                 <div class="form-stack">
                   <div class="search-row">
-                    <input id="mileageInput" type="number" placeholder="Edit current mileage">
+                    <input id="mileageInput" type="number" placeholder="Manual current mileage override">
                     <button onclick="saveMileage()">Save Mileage</button>
                   </div>
 
@@ -689,24 +276,75 @@
                   <textarea id="notesInput" placeholder="Notes"></textarea>
 
                   <div id="tireFields" class="hidden">
-                    <div class="search-row">
-                      <select id="tireConditionInput">
-                        <option value="">Tire condition</option>
-                        <option value="new">New</option>
-                        <option value="used">Used</option>
-                        <option value="recap">Recap</option>
-                      </select>
-                      <input id="tirePositionInput" placeholder="Position e.g. LF Outer">
+                    <div class="tire-layout-wrap">
+                      <div>
+                        <svg class="tire-svg" viewBox="0 0 240 420">
+                          <rect x="85" y="20" width="70" height="380" rx="18" fill="#e2e8f0" stroke="#64748b" />
+                          <text x="120" y="45" text-anchor="middle" font-size="12" fill="#334155">Truck / Trailer 2D</text>
+
+                          <circle id="tp-steer-l" class="tire-dot" cx="55" cy="95" r="13" onclick="setTirePosition('Steer Left')"></circle>
+                          <circle id="tp-steer-r" class="tire-dot" cx="185" cy="95" r="13" onclick="setTirePosition('Steer Right')"></circle>
+
+                          <circle id="tp-drive1-l-o" class="tire-dot" cx="45" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Left Outer')"></circle>
+                          <circle id="tp-drive1-l-i" class="tire-dot" cx="65" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Left Inner')"></circle>
+                          <circle id="tp-drive1-r-i" class="tire-dot" cx="175" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Right Inner')"></circle>
+                          <circle id="tp-drive1-r-o" class="tire-dot" cx="195" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Right Outer')"></circle>
+
+                          <circle id="tp-drive2-l-o" class="tire-dot" cx="45" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Left Outer')"></circle>
+                          <circle id="tp-drive2-l-i" class="tire-dot" cx="65" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Left Inner')"></circle>
+                          <circle id="tp-drive2-r-i" class="tire-dot" cx="175" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Right Inner')"></circle>
+                          <circle id="tp-drive2-r-o" class="tire-dot" cx="195" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Right Outer')"></circle>
+
+                          <circle id="tp-trailer1-l-o" class="tire-dot" cx="45" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Left Outer')"></circle>
+                          <circle id="tp-trailer1-l-i" class="tire-dot" cx="65" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Left Inner')"></circle>
+                          <circle id="tp-trailer1-r-i" class="tire-dot" cx="175" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Right Inner')"></circle>
+                          <circle id="tp-trailer1-r-o" class="tire-dot" cx="195" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Right Outer')"></circle>
+
+                          <circle id="tp-trailer2-l-o" class="tire-dot" cx="45" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Left Outer')"></circle>
+                          <circle id="tp-trailer2-l-i" class="tire-dot" cx="65" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Left Inner')"></circle>
+                          <circle id="tp-trailer2-r-i" class="tire-dot" cx="175" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Right Inner')"></circle>
+                          <circle id="tp-trailer2-r-o" class="tire-dot" cx="195" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Right Outer')"></circle>
+                        </svg>
+                      </div>
+                      <div class="form-stack">
+                        <select id="tirePositionSelect" onchange="syncTirePositionFromSelect()">
+                          <option value="">Choose tire position</option>
+                          <option>Steer Left</option>
+                          <option>Steer Right</option>
+                          <option>Drive Axle 1 Left Outer</option>
+                          <option>Drive Axle 1 Left Inner</option>
+                          <option>Drive Axle 1 Right Inner</option>
+                          <option>Drive Axle 1 Right Outer</option>
+                          <option>Drive Axle 2 Left Outer</option>
+                          <option>Drive Axle 2 Left Inner</option>
+                          <option>Drive Axle 2 Right Inner</option>
+                          <option>Drive Axle 2 Right Outer</option>
+                          <option>Trailer Axle 1 Left Outer</option>
+                          <option>Trailer Axle 1 Left Inner</option>
+                          <option>Trailer Axle 1 Right Inner</option>
+                          <option>Trailer Axle 1 Right Outer</option>
+                          <option>Trailer Axle 2 Left Outer</option>
+                          <option>Trailer Axle 2 Left Inner</option>
+                          <option>Trailer Axle 2 Right Inner</option>
+                          <option>Trailer Axle 2 Right Outer</option>
+                        </select>
+                        <input id="tirePositionText" placeholder="Or write tire position manually">
+                        <select id="tireConditionInput">
+                          <option value="">Tire condition</option>
+                          <option value="new">New</option>
+                          <option value="used">Used</option>
+                          <option value="recap">Recap</option>
+                        </select>
+                        <input id="tireBrandInput" placeholder="Tire brand">
+                        <input id="tireDotInput" placeholder="DOT / serial">
+                        <div class="grid grid-3">
+                          <input id="installMileageInput" type="number" placeholder="Install mileage">
+                          <input id="removeMileageInput" type="number" placeholder="Remove mileage">
+                          <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
+                        </div>
+                      </div>
                     </div>
-                    <div class="search-row">
-                      <input id="tireBrandInput" placeholder="Tire brand">
-                      <input id="tireDotInput" placeholder="DOT / serial">
-                    </div>
-                    <div class="grid grid-3">
-                      <input id="installMileageInput" type="number" placeholder="Install mileage">
-                      <input id="removeMileageInput" type="number" placeholder="Remove mileage">
-                      <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
-                    </div>
+                    <input id="tirePositionInput" type="hidden">
                   </div>
 
                   <div id="repairFields" class="hidden">
@@ -731,10 +369,8 @@
                     <input id="accidentLocationInput" placeholder="Accident location">
                   </div>
 
-                  <div class="panel" style="border-radius:12px;box-shadow:none;">
-                    <div class="panel-head">
-                      <div class="panel-title">Link to Maintenance Expense Transaction</div>
-                    </div>
+                  <div class="panel" style="box-shadow:none;">
+                    <div class="panel-head"><div class="panel-title">Link to Maintenance Expense Transaction</div></div>
                     <div class="panel-body form-stack">
                       <label class="mini-note">
                         <input id="linkAccountingToggle" type="checkbox" checked>
@@ -786,8 +422,21 @@
 
             <div class="panel">
               <div class="panel-head">
-                <div class="panel-title">Maintenance Table</div>
+                <div class="panel-title">Imports</div>
               </div>
+              <div class="panel-body form-stack">
+                <div class="mini-note">Upload CSV or Excel for prior maintenance history.</div>
+                <input id="maintenanceImportFile" type="file" accept=".csv,.xlsx,.xls">
+                <button onclick="uploadMaintenanceFile()">Upload Maintenance File</button>
+
+                <div class="mini-note" style="margin-top:8px;">Upload CSV or Excel for maintenance expense transactions.</div>
+                <input id="apImportFile" type="file" accept=".csv,.xlsx,.xls">
+                <button onclick="uploadApFile()">Upload Expense File</button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Maintenance Table</div></div>
               <div class="panel-body">
                 <div class="table-wrap">
                   <table>
@@ -797,6 +446,7 @@
                         <th>Service</th>
                         <th>Status</th>
                         <th>Actual Mileage</th>
+                        <th>Fuel</th>
                         <th>Last Date</th>
                         <th>Next Due Date</th>
                         <th>Next Due Mileage</th>
@@ -812,9 +462,7 @@
             </div>
 
             <div class="panel">
-              <div class="panel-head">
-                <div class="panel-title">Unit History</div>
-              </div>
+              <div class="panel-head"><div class="panel-title">Unit History</div></div>
               <div class="panel-body">
                 <div id="unitHistory" class="card-list">No records yet.</div>
               </div>
@@ -825,30 +473,31 @@
 
       <section id="section-tracking" class="section">
         <div class="grid grid-4">
-          <div class="metric">
-            <div class="metric-label">Trucks</div>
-            <div class="metric-value" id="trackTruckCount">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Refrigerated Vans</div>
-            <div class="metric-value" id="trackReeferCount">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Flatbeds</div>
-            <div class="metric-value" id="trackFlatbedCount">0</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Other / Company Vehicles</div>
-            <div class="metric-value" id="trackOtherCount">0</div>
-          </div>
+          <div class="metric"><div class="metric-label">Trucks</div><div class="metric-value" id="trackTruckCount">0</div></div>
+          <div class="metric"><div class="metric-label">Refrigerated Vans</div><div class="metric-value" id="trackReeferCount">0</div></div>
+          <div class="metric"><div class="metric-label">Flatbeds</div><div class="metric-value" id="trackFlatbedCount">0</div></div>
+          <div class="metric"><div class="metric-label">Other / Company Vehicles</div><div class="metric-value" id="trackOtherCount">0</div></div>
         </div>
 
-        <div class="panel" style="margin-top:12px;">
-          <div class="panel-head">
-            <div class="panel-title">Tracking Summary</div>
+        <div class="track-grid" style="margin-top:12px;">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Live Fleet List</div></div>
+            <div class="panel-body">
+              <input id="trackingSearch" list="unitOptions" placeholder="Type vehicle name" oninput="renderTrackingBoard()">
+              <div class="track-list" id="trackingList" style="margin-top:10px;"></div>
+            </div>
           </div>
-          <div class="panel-body" id="trackingSummaryText">
-            No tracking data loaded yet.
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Tracking Detail</div></div>
+              <div class="panel-body" id="trackingDetailBox">Select a vehicle.</div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Tracking Summary</div></div>
+              <div class="panel-body" id="trackingSummaryText">No tracking data loaded yet.</div>
+            </div>
           </div>
         </div>
       </section>
@@ -861,9 +510,7 @@
 
         <div id="acct-transactions" class="accounting-tab">
           <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">New Maintenance Expense Transaction</div>
-            </div>
+            <div class="panel-head"><div class="panel-title">New Maintenance Expense Transaction</div></div>
             <div class="panel-body form-stack">
               <div class="search-row">
                 <select id="apTxnType">
@@ -920,9 +567,7 @@
           <div class="panel" style="margin-top:12px;">
             <div class="panel-head">
               <div class="panel-title">Saved Maintenance Expense Transactions</div>
-              <div class="report-actions">
-                <button onclick="downloadExpenseTransactionsCsv()">Export Transactions CSV</button>
-              </div>
+              <div><button onclick="downloadExpenseTransactionsCsv()">Export Transactions CSV</button></div>
             </div>
             <div class="panel-body">
               <div id="apList" class="card-list">No transactions yet.</div>
@@ -934,15 +579,13 @@
           <div class="panel">
             <div class="panel-head">
               <div class="panel-title">QuickBooks Live Master</div>
-              <div class="report-actions">
-                <button onclick="refreshQboMaster()">Refresh Live QuickBooks Master</button>
-              </div>
+              <div><button onclick="refreshQboMaster()">Refresh Live QuickBooks Master</button></div>
             </div>
             <div class="panel-body">
               <div id="qboMasterStatus" class="mini-note">Not refreshed yet.</div>
 
               <div class="form-stack" style="margin-top:12px;">
-                <div class="label">Create Vendor Directly in QuickBooks</div>
+                <div class="mini-note">Create Vendor Directly in QuickBooks</div>
                 <div class="search-row">
                   <input id="newVendorName" placeholder="Vendor name">
                   <input id="newVendorCompanyName" placeholder="Company name">
@@ -956,18 +599,9 @@
               </div>
 
               <div class="grid grid-3" style="margin-top:14px;">
-                <div class="metric">
-                  <div class="metric-label">QuickBooks Vendors</div>
-                  <div class="metric-value" id="qboVendorCount">0</div>
-                </div>
-                <div class="metric">
-                  <div class="metric-label">QuickBooks Items</div>
-                  <div class="metric-value" id="qboItemCount">0</div>
-                </div>
-                <div class="metric">
-                  <div class="metric-label">QuickBooks Accounts</div>
-                  <div class="metric-value" id="qboAccountCount">0</div>
-                </div>
+                <div class="metric"><div class="metric-label">QuickBooks Vendors</div><div class="metric-value" id="qboVendorCount">0</div></div>
+                <div class="metric"><div class="metric-label">QuickBooks Items</div><div class="metric-value" id="qboItemCount">0</div></div>
+                <div class="metric"><div class="metric-label">QuickBooks Accounts</div><div class="metric-value" id="qboAccountCount">0</div></div>
               </div>
 
               <div class="search-row" style="margin-top:14px;">
@@ -977,18 +611,9 @@
               <input id="qboAccountFilter" placeholder="Search QuickBooks accounts" oninput="renderQboMaster()" style="margin-top:10px;">
 
               <div class="grid grid-3" style="margin-top:14px;">
-                <div class="panel">
-                  <div class="panel-head"><div class="panel-title">Vendors</div></div>
-                  <div class="panel-body" id="qboVendorList"></div>
-                </div>
-                <div class="panel">
-                  <div class="panel-head"><div class="panel-title">Items</div></div>
-                  <div class="panel-body" id="qboItemList"></div>
-                </div>
-                <div class="panel">
-                  <div class="panel-head"><div class="panel-title">Accounts</div></div>
-                  <div class="panel-body" id="qboAccountList"></div>
-                </div>
+                <div class="panel"><div class="panel-head"><div class="panel-title">Vendors</div></div><div class="panel-body" id="qboVendorList"></div></div>
+                <div class="panel"><div class="panel-head"><div class="panel-title">Items</div></div><div class="panel-body" id="qboItemList"></div></div>
+                <div class="panel"><div class="panel-head"><div class="panel-title">Accounts</div></div><div class="panel-body" id="qboAccountList"></div></div>
               </div>
             </div>
           </div>
@@ -1001,20 +626,17 @@
     let vehicles = [];
     let dashboard = [];
     let erp = {};
-    let selectedUnit = '';
-    let tireAlerts = [];
     let board = {};
+    let tireAlerts = [];
+    let selectedUnit = '';
     let activeSection = 'dashboard';
     let activeAssetCategory = 'Trucks';
+    let selectedTrackingVehicle = '';
 
     async function j(url, options = {}) {
       const r = await fetch(url, options);
       const text = await r.text();
-      try {
-        return JSON.parse(text);
-      } catch {
-        throw new Error(text.slice(0, 300));
-      }
+      try { return JSON.parse(text); } catch { throw new Error(text.slice(0, 300)); }
     }
 
     function escapeHtml(str) {
@@ -1033,17 +655,43 @@
       return 'status status-current';
     }
 
+    function parseUnitNumber(name) {
+      const m = String(name || '').match(/^T(\d+)$/i);
+      return m ? Number(m[1]) : null;
+    }
+
     function byUnitOrder(a, b) {
-      const pa = parseInt(String(a.name || a.unit).replace(/\D/g, ''), 10);
-      const pb = parseInt(String(b.name || b.unit).replace(/\D/g, ''), 10);
-      if (Number.isFinite(pa) && Number.isFinite(pb)) return pa - pb;
-      return String(a.name || a.unit).localeCompare(String(b.name || b.unit));
+      const pa = parseUnitNumber(a.name || a.unit);
+      const pb = parseUnitNumber(b.name || b.unit);
+      if (pa != null && pb != null) return pa - pb;
+      return String(a.name || a.unit || '').localeCompare(String(b.name || b.unit || ''));
     }
 
     function cacheVendors() { return erp.qboCache?.vendors || []; }
     function cacheItems() { return erp.qboCache?.items || []; }
     function cacheAccounts() { return erp.qboCache?.accounts || []; }
     function paymentMethods() { return erp.paymentMethods || []; }
+
+    function assetCategoryForVehicle(v) {
+      return v.assetCategory || 'Trucks';
+    }
+
+    function vehiclesByCategory() {
+      const map = {
+        'Trucks': [],
+        'Refrigerated Vans': [],
+        'Flatbeds': [],
+        'Dry Vans': [],
+        'Company Vehicles': []
+      };
+      vehicles.forEach(v => {
+        const cat = assetCategoryForVehicle(v);
+        if (!map[cat]) map[cat] = [];
+        map[cat].push(v);
+      });
+      Object.keys(map).forEach(k => map[k] = map[k].sort(byUnitOrder));
+      return map;
+    }
 
     function openSection(name, btn) {
       activeSection = name;
@@ -1075,112 +723,14 @@
       btn.classList.add('active');
     }
 
-    function assetCategoryForVehicle(v) {
-      const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
-
-      if (text.includes('reefer') || text.includes('refrigerated')) return 'Refrigerated Vans';
-      if (text.includes('flatbed') || text.includes('step deck') || text.includes('drop deck')) return 'Flatbeds';
-      if (text.includes('dry van')) return 'Dry Vans';
-      if (
-        text.includes('pickup') ||
-        text.includes('suv') ||
-        text.includes('car') ||
-        text.includes('company vehicle') ||
-        text.includes('silverado') ||
-        text.includes('f-150')
-      ) return 'Company Vehicles';
-      return 'Trucks';
-    }
-
-    function vehiclesByCategory() {
-      const map = {
-        'Trucks': [],
-        'Refrigerated Vans': [],
-        'Flatbeds': [],
-        'Dry Vans': [],
-        'Company Vehicles': []
-      };
-      vehicles.forEach(v => {
-        const cat = assetCategoryForVehicle(v);
-        if (!map[cat]) map[cat] = [];
-        map[cat].push(v);
-      });
-      Object.keys(map).forEach(k => map[k] = map[k].sort(byUnitOrder));
-      return map;
-    }
-
-    function findSelectedVehicle() {
-      return vehicles.find(v => v.name === selectedUnit) || null;
-    }
-
-    function getVehicleMileage(v) {
-      if (!v) return null;
-      const meters =
-        v.odometerMeters ??
-        v.obdOdometerMeters ??
-        v.syntheticOdometerMeters ??
-        v.odometer?.meters ??
-        v.stats?.odometerMeters ??
-        null;
-
-      if (meters != null && Number.isFinite(Number(meters))) {
-        return Math.round(Number(meters) * 0.000621371);
-      }
-
-      const miles =
-        v.odometerMiles ??
-        v.odometer?.miles ??
-        v.stats?.odometerMiles ??
-        null;
-
-      if (miles != null && Number.isFinite(Number(miles))) {
-        return Math.round(Number(miles));
-      }
-
-      return null;
-    }
-
-    function fuelPercentForVehicle(name) {
-      const live = board.live || [];
-      const row = live.find(x => x.name === name || x.vehicleName === name || x.vehicle?.name === name);
-      const pct =
-        row?.fuelPercent ??
-        row?.fuelPercents?.[0]?.percent ??
-        row?.fuelPercents?.[0]?.value ??
-        row?.stats?.fuelPercent ??
-        null;
-
-      if (pct == null || !Number.isFinite(Number(pct))) return null;
-      return Math.round(Number(pct));
-    }
-
-    function assignedVehicleNames() {
-      const set = new Set();
-      (board.assignments || []).forEach(a => {
-        const n = a?.vehicle?.name || a?.vehicleName || a?.vehicle?.id || '';
-        if (n) set.add(n);
-      });
-      return set;
-    }
-
     async function loadQboStatus() {
       try {
         const s = await j('/api/qbo/status');
-        if (!s.configured) {
-          document.getElementById('qbStatusText').textContent = 'QuickBooks env is missing';
-          document.getElementById('sidebarQboStatus').textContent = 'QuickBooks env is missing';
-          return;
-        }
-        if (!s.connected) {
-          document.getElementById('qbStatusText').textContent = 'QuickBooks not connected yet';
-          document.getElementById('sidebarQboStatus').textContent = 'QuickBooks not connected yet';
-          return;
-        }
-        const txt = `Connected to QuickBooks${s.companyName ? ' - ' + s.companyName : ''}`;
-        document.getElementById('qbStatusText').textContent = txt;
+        let txt = 'QuickBooks not connected yet';
+        if (!s.configured) txt = 'QuickBooks env is missing';
+        else if (s.connected) txt = `Connected to QuickBooks${s.companyName ? ' - ' + s.companyName : ''}`;
         document.getElementById('sidebarQboStatus').textContent = txt;
       } catch {
-        document.getElementById('qbStatusText').textContent = 'QuickBooks status check failed';
         document.getElementById('sidebarQboStatus').textContent = 'QuickBooks status check failed';
       }
     }
@@ -1196,9 +746,9 @@
           company?.CompanyInfo?.CompanyName ||
           company?.QueryResponse?.CompanyInfo?.[0]?.CompanyName ||
           'Connected';
-        document.getElementById('qboTestBox').innerHTML = `Company: ${escapeHtml(companyName)}`;
+        alert(`QuickBooks connected: ${companyName}`);
       } catch (e) {
-        document.getElementById('qboTestBox').textContent = 'QuickBooks test failed: ' + e.message;
+        alert('QuickBooks test failed: ' + e.message);
       }
     }
 
@@ -1214,10 +764,8 @@
         fillDataLists();
         renderQboMaster();
         renderDashboardHome();
-        document.getElementById('qboMasterStatus').textContent =
-          `Refreshed: ${new Date(data.refreshedAt || Date.now()).toLocaleString()}`;
       } catch (e) {
-        document.getElementById('qboMasterStatus').textContent = 'Refresh failed: ' + e.message;
+        alert('QBO refresh failed: ' + e.message);
       }
     }
 
@@ -1271,25 +819,21 @@
       board = boardRes || {};
 
       if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
-      if (selectedUnit && !vehicles.find(v => v.name === selectedUnit) && vehicles.length) {
-        selectedUnit = vehicles[0].name;
-      }
+      if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
 
       fillDataLists();
       renderDashboardHome();
       renderDispatchBoard();
-      renderFuelBoard();
-      renderTrackingBoard();
       renderMaintenanceCategoryChips();
       renderMaintenanceUnitList();
       renderSelectedUnit();
       renderMaintenanceTable();
+      renderTrackingBoard();
       renderApTransactions();
       renderQboMaster();
       await loadQboStatus();
 
       const nowText = 'Last updated: ' + new Date().toLocaleTimeString();
-      document.getElementById('lastUpdated').textContent = nowText;
       document.getElementById('sidebarLastUpdated').textContent = nowText;
     }
 
@@ -1314,10 +858,18 @@
         paymentMethods().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
     }
 
+    function assignedVehicleNames() {
+      const set = new Set();
+      (board.assignments || []).forEach(a => {
+        const n = a?.vehicle?.name || a?.vehicleName || '';
+        if (n) set.add(n);
+      });
+      return set;
+    }
+
     function renderDashboardHome() {
       const assigned = assignedVehicleNames();
       const past = dashboard.filter(x => x.status === 'past due').length;
-
       document.getElementById('dashTrackedAssets').textContent = vehicles.length;
       document.getElementById('dashAssignedAssets').textContent = assigned.size;
       document.getElementById('dashPastDue').textContent = past;
@@ -1332,13 +884,13 @@
         <div class="record-card"><b>Company Vehicles:</b> ${byCat['Company Vehicles'].length}</div>
       `;
 
-      const qboTxt = `
+      document.getElementById('dashboardQboSummary').innerHTML = `
         QuickBooks vendors: ${cacheVendors().length}<br>
         QuickBooks items: ${cacheItems().length}<br>
         QuickBooks accounts: ${cacheAccounts().length}<br>
-        Saved maintenance expense transactions: ${(erp.apTransactions || []).length}
+        Saved maintenance expense transactions: ${(erp.apTransactions || []).length}<br>
+        Tire alerts: ${tireAlerts.length}
       `;
-      document.getElementById('dashboardQboSummary').innerHTML = qboTxt;
     }
 
     function renderDispatchBoard() {
@@ -1354,43 +906,6 @@
         `HOS rows available: ${(board.hos || []).length}`;
     }
 
-    function renderFuelBoard() {
-      const live = board.live || [];
-      const fuelRows = live.map(x => {
-        const val = x?.fuelPercent ?? x?.fuelPercents?.[0]?.percent ?? x?.fuelPercents?.[0]?.value ?? null;
-        return Number.isFinite(Number(val)) ? Number(val) : null;
-      }).filter(v => v != null);
-
-      const low = fuelRows.filter(v => v <= 25).length;
-      const avg = fuelRows.length ? Math.round(fuelRows.reduce((a,b) => a+b, 0) / fuelRows.length) : 0;
-
-      document.getElementById('fuelUnitsCount').textContent = fuelRows.length;
-      document.getElementById('fuelLowCount').textContent = low;
-      document.getElementById('fuelAvgPct').textContent = `${avg}%`;
-      document.getElementById('fuelTrackingCount').textContent = live.length;
-
-      document.getElementById('fuelSummaryText').innerHTML =
-        `Units with fuel data: ${fuelRows.length}<br>` +
-        `Low fuel units (≤25%): ${low}<br>` +
-        `Average fuel percent: ${avg}%`;
-    }
-
-    function renderTrackingBoard() {
-      const cats = vehiclesByCategory();
-      document.getElementById('trackTruckCount').textContent = cats['Trucks'].length;
-      document.getElementById('trackReeferCount').textContent = cats['Refrigerated Vans'].length;
-      document.getElementById('trackFlatbedCount').textContent = cats['Flatbeds'].length;
-      document.getElementById('trackOtherCount').textContent = cats['Dry Vans'].length + cats['Company Vehicles'].length;
-
-      document.getElementById('trackingSummaryText').innerHTML =
-        `Tracked assets: ${vehicles.length}<br>` +
-        `Trucks: ${cats['Trucks'].length}<br>` +
-        `Refrigerated vans: ${cats['Refrigerated Vans'].length}<br>` +
-        `Flatbeds: ${cats['Flatbeds'].length}<br>` +
-        `Dry vans: ${cats['Dry Vans'].length}<br>` +
-        `Company vehicles: ${cats['Company Vehicles'].length}`;
-    }
-
     function renderMaintenanceCategoryChips() {
       const cats = ['Trucks','Refrigerated Vans','Flatbeds','Dry Vans','Company Vehicles'];
       document.getElementById('assetCategoryChips').innerHTML = cats.map(c => `
@@ -1403,10 +918,11 @@
       activeAssetCategory = cat;
       renderMaintenanceCategoryChips();
       renderMaintenanceUnitList();
-      if (!vehiclesByCategory()[activeAssetCategory].find(v => v.name === selectedUnit)) {
-        const first = vehiclesByCategory()[activeAssetCategory][0];
-        if (first) selectedUnit = first.name;
-      }
+
+      const first = (vehiclesByCategory()[activeAssetCategory] || [])[0];
+      const currentStillExists = (vehiclesByCategory()[activeAssetCategory] || []).find(v => v.name === selectedUnit);
+      if (!currentStillExists && first) selectedUnit = first.name;
+
       renderSelectedUnit();
       renderMaintenanceTable();
     }
@@ -1415,26 +931,33 @@
       const q = document.getElementById('maintenanceUnitSearch').value.trim().toLowerCase();
       const list = vehiclesByCategory()[activeAssetCategory] || [];
 
-      const html = list
+      document.getElementById('maintenanceUnitList').innerHTML = list
         .filter(v => !q || String(v.name || '').toLowerCase().includes(q))
         .map(v => {
           const rows = dashboard.filter(d => d.unit === v.name);
           const past = rows.filter(r => r.status === 'past due').length;
           const soon = rows.filter(r => r.status === 'due soon').length;
-          const mileage = getVehicleMileage(v);
+
           return `
             <div class="list-row ${selectedUnit === v.name ? 'active' : ''}" onclick="selectUnit('${v.name}')">
               <div class="list-title">${escapeHtml(v.name)}</div>
               <div class="list-sub">
                 ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}<br>
-                Mileage: ${mileage != null ? mileage.toLocaleString() : 'N/A'}<br>
+                Mileage: ${v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : 'N/A'}<br>
+                Fuel: ${v.fuelPercent != null ? `${Math.round(v.fuelPercent)}%` : 'N/A'}<br>
                 Past due: ${past} | Due soon: ${soon}
               </div>
             </div>
           `;
-        }).join('');
+        }).join('') || '<div class="list-row">No assets found.</div>';
+    }
 
-      document.getElementById('maintenanceUnitList').innerHTML = html || '<div class="list-row">No assets found.</div>';
+    function selectUnit(unit) {
+      selectedUnit = unit;
+      renderMaintenanceUnitList();
+      renderSelectedUnit();
+      renderMaintenanceTable();
+      document.getElementById('apAssetUnit').value = unit;
     }
 
     function setServiceOptions() {
@@ -1447,8 +970,7 @@
     }
 
     function resolveServiceSearch() {
-      const value = document.getElementById('serviceSearchInput').value.trim();
-      document.getElementById('serviceTypeInput').value = value;
+      document.getElementById('serviceTypeInput').value = document.getElementById('serviceSearchInput').value.trim();
     }
 
     function resolveApVendorSearch() {
@@ -1532,15 +1054,62 @@
       document.getElementById('linkedItemBlock').classList.toggle('hidden', mode !== 'item');
     }
 
+    const tirePositionMap = {
+      'Steer Left': 'tp-steer-l',
+      'Steer Right': 'tp-steer-r',
+      'Drive Axle 1 Left Outer': 'tp-drive1-l-o',
+      'Drive Axle 1 Left Inner': 'tp-drive1-l-i',
+      'Drive Axle 1 Right Inner': 'tp-drive1-r-i',
+      'Drive Axle 1 Right Outer': 'tp-drive1-r-o',
+      'Drive Axle 2 Left Outer': 'tp-drive2-l-o',
+      'Drive Axle 2 Left Inner': 'tp-drive2-l-i',
+      'Drive Axle 2 Right Inner': 'tp-drive2-r-i',
+      'Drive Axle 2 Right Outer': 'tp-drive2-r-o',
+      'Trailer Axle 1 Left Outer': 'tp-trailer1-l-o',
+      'Trailer Axle 1 Left Inner': 'tp-trailer1-l-i',
+      'Trailer Axle 1 Right Inner': 'tp-trailer1-r-i',
+      'Trailer Axle 1 Right Outer': 'tp-trailer1-r-o',
+      'Trailer Axle 2 Left Outer': 'tp-trailer2-l-o',
+      'Trailer Axle 2 Left Inner': 'tp-trailer2-l-i',
+      'Trailer Axle 2 Right Inner': 'tp-trailer2-r-i',
+      'Trailer Axle 2 Right Outer': 'tp-trailer2-r-o'
+    };
+
+    function clearTireDots() {
+      Object.values(tirePositionMap).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+    }
+
+    function setTirePosition(position) {
+      document.getElementById('tirePositionInput').value = position;
+      document.getElementById('tirePositionSelect').value = position;
+      document.getElementById('tirePositionText').value = position;
+      clearTireDots();
+      const id = tirePositionMap[position];
+      if (id) document.getElementById(id).classList.add('active');
+    }
+
+    function syncTirePositionFromSelect() {
+      const v = document.getElementById('tirePositionSelect').value;
+      if (v) setTirePosition(v);
+    }
+
+    document.addEventListener('input', (e) => {
+      if (e.target && e.target.id === 'tirePositionText') {
+        document.getElementById('tirePositionInput').value = e.target.value.trim();
+        clearTireDots();
+      }
+    });
+
     function renderSelectedUnit() {
-      const v = findSelectedVehicle();
+      const v = vehicles.find(x => x.name === selectedUnit);
       if (!v) {
         document.getElementById('selectedUnitInfo').textContent = 'Select an asset.';
         return;
       }
 
-      const mileage = getVehicleMileage(v);
-      const fuel = fuelPercentForVehicle(v.name);
       const rows = dashboard.filter(x => x.unit === v.name);
       const past = rows.filter(x => x.status === 'past due').length;
       const soon = rows.filter(x => x.status === 'due soon').length;
@@ -1548,16 +1117,17 @@
       document.getElementById('selectedUnitInfo').innerHTML = `
         <b>${escapeHtml(v.name)}</b><br>
         ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}<br>
-        VIN: ${escapeHtml(v.vin || '')}
+        VIN: ${escapeHtml(v.vin || '')}<br>
+        Category: ${escapeHtml(v.assetCategory || '')}
       `;
 
-      document.getElementById('unitMileageBox').textContent = mileage != null ? mileage.toLocaleString() : 'N/A';
-      document.getElementById('unitFuelBox').textContent = fuel != null ? `${fuel}%` : 'N/A';
+      document.getElementById('unitMileageBox').textContent =
+        v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : 'N/A';
+      document.getElementById('unitFuelBox').textContent =
+        v.fuelPercent != null ? `${Math.round(v.fuelPercent)}%` : 'N/A';
       document.getElementById('unitPastDueBox').textContent = past;
       document.getElementById('unitDueSoonBox').textContent = soon;
-
       document.getElementById('mileageInput').value = erp.currentMileage?.[selectedUnit] ?? '';
-      document.getElementById('apAssetUnit').value = selectedUnit;
 
       setServiceOptions();
       toggleRecordFields();
@@ -1577,7 +1147,8 @@
           <td>${escapeHtml(r.unit)}</td>
           <td>${escapeHtml(r.serviceType)}</td>
           <td><span class="${statusClass(r.status)}">${escapeHtml(r.status)}</span></td>
-          <td>${r.currentMileage ?? ''}</td>
+          <td>${r.currentMileage != null ? Number(r.currentMileage).toLocaleString() : ''}</td>
+          <td>${r.fuelPercent != null ? `${Math.round(r.fuelPercent)}%` : ''}</td>
           <td>${escapeHtml(r.lastServiceDate || '')}</td>
           <td>${escapeHtml(r.nextDueDate || '')}</td>
           <td>${r.nextDueMileage ?? ''}</td>
@@ -1585,7 +1156,7 @@
           <td>${r.cost ?? ''}</td>
           <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || '')}</span></td>
         </tr>
-      `).join('') || '<tr><td colspan="10">No rows found.</td></tr>';
+      `).join('') || '<tr><td colspan="11">No rows found.</td></tr>';
     }
 
     function renderUnitHistory() {
@@ -1602,6 +1173,7 @@
               </div>
               <div class="mini-note">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
               <div class="mini-note">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
+              ${r.tirePosition || r.tirePositionText ? `<div class="mini-note">Tire position: ${escapeHtml(r.tirePosition || r.tirePositionText || '')}</div>` : ''}
               ${r.repairLocationType ? `<div class="mini-note">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
               ${r.accidentAtFault ? `<div class="mini-note">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
               ${r.qboPurchaseId ? `<div class="mini-note">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
@@ -1626,9 +1198,198 @@
       }
     }
 
+    async function saveMileage() {
+      if (!selectedUnit) return;
+      await j('/api/maintenance/mileage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unit: selectedUnit,
+          currentMileage: document.getElementById('mileageInput').value
+        })
+      });
+      await loadAll();
+    }
+
+    async function saveRecord() {
+      if (!selectedUnit) return;
+
+      const recordType = document.getElementById('recordTypeInput').value;
+      const serviceType =
+        recordType === 'custom'
+          ? (document.getElementById('customServiceTypeInput').value || 'Custom Service')
+          : document.getElementById('serviceTypeInput').value;
+
+      await j('/api/maintenance/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unit: selectedUnit,
+          recordType,
+          serviceType,
+          serviceDate: document.getElementById('serviceDateInput').value,
+          serviceMileage: document.getElementById('serviceMileageInput').value,
+          vendor: document.getElementById('vendorInput').value,
+          cost: document.getElementById('costInput').value,
+          notes: document.getElementById('notesInput').value,
+          tireCondition: document.getElementById('tireConditionInput').value,
+          tirePosition: document.getElementById('tirePositionInput').value,
+          tirePositionText: document.getElementById('tirePositionText').value,
+          tireBrand: document.getElementById('tireBrandInput').value,
+          tireDot: document.getElementById('tireDotInput').value,
+          installMileage: document.getElementById('installMileageInput').value,
+          removeMileage: document.getElementById('removeMileageInput').value,
+          expectedTireLifeMiles: document.getElementById('expectedTireLifeMilesInput').value,
+          accidentAtFault: document.getElementById('accidentAtFaultInput').value,
+          accidentLocation: document.getElementById('accidentLocationInput').value,
+          accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
+          repairLocationType: document.getElementById('repairLocationTypeInput').value
+        })
+      });
+
+      if (document.getElementById('linkAccountingToggle').checked && Number(document.getElementById('costInput').value || 0) > 0) {
+        const linkedVendorId = document.getElementById('linkedVendorQboId').value;
+        if (linkedVendorId) {
+          await j('/api/erp/ap-transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              txnType: document.getElementById('linkedTxnType').value,
+              detailMode: document.getElementById('linkedDetailMode').value,
+              qboVendorId: linkedVendorId,
+              paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
+              qboAccountId: document.getElementById('linkedAccountQboId').value,
+              qboItemId: document.getElementById('linkedItemQboId').value,
+              qty: document.getElementById('linkedQty').value,
+              amount: document.getElementById('costInput').value,
+              txnDate: document.getElementById('serviceDateInput').value,
+              dueDate: document.getElementById('linkedDueDate').value,
+              docNumber: document.getElementById('linkedDocNumber').value,
+              description: serviceType,
+              memo: document.getElementById('notesInput').value,
+              assetUnit: selectedUnit
+            })
+          });
+        }
+      }
+
+      [
+        'serviceDateInput','serviceMileageInput','vendorInput','costInput','notesInput',
+        'customServiceTypeInput','tireBrandInput','tireDotInput','installMileageInput',
+        'removeMileageInput','expectedTireLifeMilesInput','accidentLocationInput',
+        'accidentReportNumberInput','linkedDocNumber','linkedVendorSearch','linkedDueDate',
+        'linkedPaymentMethodSearch','linkedAccountSearch','linkedItemSearch','tirePositionText'
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      document.getElementById('tireConditionInput').value = '';
+      document.getElementById('repairLocationTypeInput').value = '';
+      document.getElementById('accidentAtFaultInput').value = '';
+      document.getElementById('linkedVendorQboId').value = '';
+      document.getElementById('linkedPaymentMethodId').value = '';
+      document.getElementById('linkedAccountQboId').value = '';
+      document.getElementById('linkedItemQboId').value = '';
+      document.getElementById('linkedQty').value = 1;
+      document.getElementById('tirePositionSelect').value = '';
+      document.getElementById('tirePositionInput').value = '';
+      clearTireDots();
+
+      await loadAll();
+    }
+
+    async function uploadMaintenanceFile() {
+      const input = document.getElementById('maintenanceImportFile');
+      if (!input.files || !input.files[0]) return alert('Choose a maintenance CSV or Excel file first.');
+
+      const fd = new FormData();
+      fd.append('file', input.files[0]);
+
+      try {
+        const r = await fetch('/api/import/maintenance', { method: 'POST', body: fd });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Import failed');
+        alert(`Maintenance records imported: ${data.imported}`);
+        input.value = '';
+        await loadAll();
+      } catch (e) {
+        alert('Maintenance import failed: ' + e.message);
+      }
+    }
+
+    async function uploadApFile() {
+      const input = document.getElementById('apImportFile');
+      if (!input.files || !input.files[0]) return alert('Choose an expense CSV or Excel file first.');
+
+      const fd = new FormData();
+      fd.append('file', input.files[0]);
+
+      try {
+        const r = await fetch('/api/import/ap', { method: 'POST', body: fd });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Import failed');
+        alert(`Expense transactions imported: ${data.imported}`);
+        input.value = '';
+        await loadAll();
+      } catch (e) {
+        alert('Expense import failed: ' + e.message);
+      }
+    }
+
+    function renderTrackingBoard() {
+      const byCat = vehiclesByCategory();
+      document.getElementById('trackTruckCount').textContent = byCat['Trucks'].length;
+      document.getElementById('trackReeferCount').textContent = byCat['Refrigerated Vans'].length;
+      document.getElementById('trackFlatbedCount').textContent = byCat['Flatbeds'].length;
+      document.getElementById('trackOtherCount').textContent = byCat['Dry Vans'].length + byCat['Company Vehicles'].length;
+
+      const q = document.getElementById('trackingSearch').value.trim().toLowerCase();
+      const list = vehicles
+        .filter(v => !q || String(v.name || '').toLowerCase().includes(q))
+        .sort(byUnitOrder);
+
+      document.getElementById('trackingList').innerHTML = list.map(v => `
+        <div class="track-card ${selectedTrackingVehicle === v.name ? 'active' : ''}" onclick="selectTrackingVehicle('${v.name}')">
+          <div><b>${escapeHtml(v.name)}</b></div>
+          <div class="mini-note">${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}</div>
+          <div class="mini-note">Mileage: ${v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : 'N/A'}</div>
+          <div class="mini-note">Fuel: ${v.fuelPercent != null ? `${Math.round(v.fuelPercent)}%` : 'N/A'}</div>
+          <div class="mini-note">Engine: ${escapeHtml(v.engineState || 'N/A')}</div>
+          <div class="mini-note">Category: ${escapeHtml(v.assetCategory || '')}</div>
+        </div>
+      `).join('') || 'No vehicles found.';
+
+      const selected = vehicles.find(v => v.name === selectedTrackingVehicle) || list[0] || null;
+      if (selected && !selectedTrackingVehicle) selectedTrackingVehicle = selected.name;
+
+      document.getElementById('trackingDetailBox').innerHTML = selected ? `
+        <b>${escapeHtml(selected.name)}</b><br><br>
+        Make / Model / Year: ${escapeHtml(selected.make || '')} ${escapeHtml(selected.model || '')} ${escapeHtml(selected.year || '')}<br>
+        VIN: ${escapeHtml(selected.vin || '')}<br>
+        Category: ${escapeHtml(selected.assetCategory || '')}<br>
+        Mileage: ${selected.odometerMiles != null ? Number(selected.odometerMiles).toLocaleString() : 'N/A'}<br>
+        Fuel: ${selected.fuelPercent != null ? `${Math.round(selected.fuelPercent)}%` : 'N/A'}<br>
+        Engine state: ${escapeHtml(selected.engineState || 'N/A')}<br>
+        Latitude: ${selected.latitude != null ? selected.latitude : 'N/A'}<br>
+        Longitude: ${selected.longitude != null ? selected.longitude : 'N/A'}
+      ` : 'Select a vehicle.';
+
+      document.getElementById('trackingSummaryText').innerHTML =
+        `Tracked assets: ${vehicles.length}<br>` +
+        `Board vehicles loaded: ${(board.vehicles || []).length}<br>` +
+        `Live stat rows: ${(board.live || []).length}<br>` +
+        `Assignments loaded: ${(board.assignments || []).length}<br>` +
+        `HOS rows: ${(board.hos || []).length}`;
+    }
+
+    function selectTrackingVehicle(name) {
+      selectedTrackingVehicle = name;
+      renderTrackingBoard();
+    }
+
     function renderApTransactions() {
       const rows = (erp.apTransactions || []).slice().reverse();
-
       const vendorName = (id) => cacheVendors().find(v => v.qboId === id)?.name || id || '';
       const itemName = (id) => cacheItems().find(v => v.qboId === id)?.name || id || '';
       const accountName = (id) => cacheAccounts().find(v => v.qboId === id)?.name || id || '';
@@ -1667,6 +1428,34 @@
         alert(`QuickBooks posting failed: ${e.message}`);
         await loadAll();
       }
+    }
+
+    async function saveApTransaction() {
+      await j('/api/erp/ap-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          txnType: document.getElementById('apTxnType').value,
+          detailMode: document.getElementById('apDetailMode').value,
+          qboVendorId: document.getElementById('apVendorQboId').value,
+          paymentMethodId: document.getElementById('apPaymentMethodId').value,
+          qboAccountId: document.getElementById('apAccountQboId').value,
+          qboItemId: document.getElementById('apItemQboId').value,
+          qty: document.getElementById('apQty').value,
+          amount: document.getElementById('apAmount').value,
+          txnDate: document.getElementById('apTxnDate').value,
+          dueDate: document.getElementById('apDueDate').value,
+          docNumber: document.getElementById('apDocNumber').value,
+          description: document.getElementById('apDescription').value,
+          memo: document.getElementById('apMemo').value,
+          assetUnit: document.getElementById('apAssetUnit').value
+        })
+      });
+
+      ['apAmount','apDescription','apMemo','apDueDate','apDocNumber'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('apQty').value = 1;
+      await loadAll();
+      openSectionByName('accounting');
     }
 
     function renderQboMaster() {
@@ -1719,140 +1508,6 @@
         `).join('') || 'No QuickBooks accounts loaded.';
     }
 
-    async function saveApTransaction() {
-      await j('/api/erp/ap-transaction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          txnType: document.getElementById('apTxnType').value,
-          detailMode: document.getElementById('apDetailMode').value,
-          qboVendorId: document.getElementById('apVendorQboId').value,
-          paymentMethodId: document.getElementById('apPaymentMethodId').value,
-          qboAccountId: document.getElementById('apAccountQboId').value,
-          qboItemId: document.getElementById('apItemQboId').value,
-          qty: document.getElementById('apQty').value,
-          amount: document.getElementById('apAmount').value,
-          txnDate: document.getElementById('apTxnDate').value,
-          dueDate: document.getElementById('apDueDate').value,
-          docNumber: document.getElementById('apDocNumber').value,
-          description: document.getElementById('apDescription').value,
-          memo: document.getElementById('apMemo').value,
-          assetUnit: document.getElementById('apAssetUnit').value
-        })
-      });
-
-      ['apAmount','apDescription','apMemo','apDueDate','apDocNumber'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('apQty').value = 1;
-      await loadAll();
-      openSectionByName('accounting');
-    }
-
-    async function saveMileage() {
-      if (!selectedUnit) return;
-      await j('/api/maintenance/mileage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unit: selectedUnit,
-          currentMileage: document.getElementById('mileageInput').value
-        })
-      });
-      await loadAll();
-    }
-
-    async function saveRecord() {
-      if (!selectedUnit) return;
-
-      const recordType = document.getElementById('recordTypeInput').value;
-      const serviceType =
-        recordType === 'custom'
-          ? (document.getElementById('customServiceTypeInput').value || 'Custom Service')
-          : document.getElementById('serviceTypeInput').value;
-
-      await j('/api/maintenance/record', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unit: selectedUnit,
-          recordType,
-          serviceType,
-          serviceDate: document.getElementById('serviceDateInput').value,
-          serviceMileage: document.getElementById('serviceMileageInput').value,
-          vendor: document.getElementById('vendorInput').value,
-          cost: document.getElementById('costInput').value,
-          notes: document.getElementById('notesInput').value,
-          tireCondition: document.getElementById('tireConditionInput').value,
-          tirePosition: document.getElementById('tirePositionInput').value,
-          tireBrand: document.getElementById('tireBrandInput').value,
-          tireDot: document.getElementById('tireDotInput').value,
-          installMileage: document.getElementById('installMileageInput').value,
-          removeMileage: document.getElementById('removeMileageInput').value,
-          expectedTireLifeMiles: document.getElementById('expectedTireLifeMilesInput').value,
-          accidentAtFault: document.getElementById('accidentAtFaultInput').value,
-          accidentLocation: document.getElementById('accidentLocationInput').value,
-          accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
-          repairLocationType: document.getElementById('repairLocationTypeInput').value
-        })
-      });
-
-      if (document.getElementById('linkAccountingToggle').checked && Number(document.getElementById('costInput').value || 0) > 0) {
-        const linkedVendorId = document.getElementById('linkedVendorQboId').value || (() => {
-          const nm = document.getElementById('linkedVendorSearch').value.trim().toLowerCase();
-          const mt = cacheVendors().find(v => String(v.name).toLowerCase() === nm);
-          return mt ? mt.qboId : '';
-        })();
-
-        if (linkedVendorId) {
-          await j('/api/erp/ap-transaction', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              txnType: document.getElementById('linkedTxnType').value,
-              detailMode: document.getElementById('linkedDetailMode').value,
-              qboVendorId: linkedVendorId,
-              paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
-              qboAccountId: document.getElementById('linkedAccountQboId').value,
-              qboItemId: document.getElementById('linkedItemQboId').value,
-              qty: document.getElementById('linkedQty').value,
-              amount: document.getElementById('costInput').value,
-              txnDate: document.getElementById('serviceDateInput').value,
-              dueDate: document.getElementById('linkedDueDate').value,
-              docNumber: document.getElementById('linkedDocNumber').value,
-              description: serviceType,
-              memo: document.getElementById('notesInput').value,
-              assetUnit: selectedUnit
-            })
-          });
-        }
-      }
-
-      ['serviceDateInput','serviceMileageInput','vendorInput','costInput','notesInput','customServiceTypeInput',
-       'tirePositionInput','tireBrandInput','tireDotInput','installMileageInput','removeMileageInput',
-       'expectedTireLifeMilesInput','accidentLocationInput','accidentReportNumberInput',
-       'linkedDocNumber','linkedVendorSearch','linkedDueDate','linkedPaymentMethodSearch',
-       'linkedAccountSearch','linkedItemSearch'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-
-      document.getElementById('tireConditionInput').value = '';
-      document.getElementById('accidentAtFaultInput').value = '';
-      document.getElementById('repairLocationTypeInput').value = '';
-      document.getElementById('linkedVendorQboId').value = '';
-      document.getElementById('linkedPaymentMethodId').value = '';
-      document.getElementById('linkedAccountQboId').value = '';
-      document.getElementById('linkedItemQboId').value = '';
-      document.getElementById('linkedQty').value = 1;
-
-      await loadAll();
-    }
-
-    function toggleLinkedDetailMode() {
-      const mode = document.getElementById('linkedDetailMode').value;
-      document.getElementById('linkedCategoryBlock').classList.toggle('hidden', mode !== 'category');
-      document.getElementById('linkedItemBlock').classList.toggle('hidden', mode !== 'item');
-    }
-
     function downloadCsv(filename, rows) {
       const csv = rows.map(r => r.map(v => `"${String(v ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1866,63 +1521,40 @@
 
     function downloadUnitMaintenanceReport() {
       if (!selectedUnit) return;
-      const rows = [
-        ['Unit','Service Type','Record Type','Date','Mileage','Vendor','Cost','Notes','QBO Sync']
-      ];
-      (erp.records || [])
-        .filter(r => r.unit === selectedUnit)
-        .forEach(r => {
-          rows.push([
-            r.unit, r.serviceType, r.recordType, r.serviceDate, r.serviceMileage,
-            r.vendor, r.cost, r.notes, r.qboSyncStatus
-          ]);
-        });
+      const rows = [['Unit','Service Type','Record Type','Date','Mileage','Vendor','Cost','Notes','QBO Sync']];
+      (erp.records || []).filter(r => r.unit === selectedUnit).forEach(r => {
+        rows.push([r.unit, r.serviceType, r.recordType, r.serviceDate, r.serviceMileage, r.vendor, r.cost, r.notes, r.qboSyncStatus]);
+      });
       downloadCsv(`${selectedUnit}_maintenance_report.csv`, rows);
     }
 
     function downloadUnitExpenseReport() {
       if (!selectedUnit) return;
-      const rows = [
-        ['Unit','Txn Type','Doc Number','Date','Due Date','Vendor QBO ID','Amount','Description','QBO Entity Type','QBO Entity ID']
-      ];
-      (erp.apTransactions || [])
-        .filter(r => r.assetUnit === selectedUnit)
-        .forEach(r => {
-          rows.push([
-            r.assetUnit, r.txnType, r.docNumber, r.txnDate, r.dueDate,
-            r.qboVendorId, r.amount, r.description, r.qboEntityType, r.qboEntityId
-          ]);
-        });
+      const rows = [['Unit','Txn Type','Doc Number','Date','Due Date','Vendor QBO ID','Amount','Description','QBO Entity Type','QBO Entity ID']];
+      (erp.apTransactions || []).filter(r => r.assetUnit === selectedUnit).forEach(r => {
+        rows.push([r.assetUnit, r.txnType, r.docNumber, r.txnDate, r.dueDate, r.qboVendorId, r.amount, r.description, r.qboEntityType, r.qboEntityId]);
+      });
       downloadCsv(`${selectedUnit}_expense_report.csv`, rows);
     }
 
     function downloadAllMaintenanceCsv() {
-      const rows = [
-        ['Unit','Service','Status','Current Mileage','Last Date','Next Due Date','Next Due Mileage','Vendor','Cost','QBO Sync']
-      ];
+      const rows = [['Unit','Service','Status','Current Mileage','Fuel','Last Date','Next Due Date','Next Due Mileage','Vendor','Cost','QBO Sync']];
       dashboard.forEach(r => {
-        rows.push([
-          r.unit, r.serviceType, r.status, r.currentMileage, r.lastServiceDate,
-          r.nextDueDate, r.nextDueMileage, r.vendor, r.cost, r.qboSyncStatus
-        ]);
+        rows.push([r.unit, r.serviceType, r.status, r.currentMileage, r.fuelPercent, r.lastServiceDate, r.nextDueDate, r.nextDueMileage, r.vendor, r.cost, r.qboSyncStatus]);
       });
       downloadCsv(`all_maintenance_dashboard.csv`, rows);
     }
 
     function downloadExpenseTransactionsCsv() {
-      const rows = [
-        ['Txn Type','Doc Number','Date','Due Date','Vendor QBO ID','Amount','Description','Unit','QBO Entity Type','QBO Entity ID','Status']
-      ];
+      const rows = [['Txn Type','Doc Number','Date','Due Date','Vendor QBO ID','Amount','Description','Unit','QBO Entity Type','QBO Entity ID','Status']];
       (erp.apTransactions || []).forEach(r => {
-        rows.push([
-          r.txnType, r.docNumber, r.txnDate, r.dueDate, r.qboVendorId,
-          r.amount, r.description, r.assetUnit, r.qboEntityType, r.qboEntityId, r.qboSyncStatus
-        ]);
+        rows.push([r.txnType, r.docNumber, r.txnDate, r.dueDate, r.qboVendorId, r.amount, r.description, r.assetUnit, r.qboEntityType, r.qboEntityId, r.qboSyncStatus]);
       });
       downloadCsv(`maintenance_expense_transactions.csv`, rows);
     }
 
     loadAll();
+    setInterval(loadAll, 120000);
   </script>
 </body>
 </html>
