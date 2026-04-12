@@ -1121,9 +1121,14 @@ app.post('/api/qbo/create-vendor', async (req, res) => {
   }
 });
 
+
 /* ERP read */
 
 app.get('/api/erp/all', (_req, res) => {
+  res.json(readErp());
+});
+
+app.get('/api/maintenance/records', (_req, res) => {
   res.json(readErp());
 });
 
