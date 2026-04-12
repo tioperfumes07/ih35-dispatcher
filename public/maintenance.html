@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>IH35 Maintenance + AP Center</title>
+  <title>IH35 Maintenance + Live QuickBooks AP Center</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
@@ -136,7 +136,7 @@
     table{
       width:100%;
       border-collapse:collapse;
-      min-width:1500px;
+      min-width:1600px;
       font-size:13px;
     }
     th, td{
@@ -171,7 +171,7 @@
 </head>
 <body>
   <div class="topbar">
-    <h1>IH35 Maintenance + AP Center</h1>
+    <h1>IH35 Maintenance + Live QuickBooks AP Center</h1>
     <a class="btn" href="/">Dispatcher Board</a>
     <button onclick="loadAll()">Refresh</button>
     <input id="unitSearch" placeholder="Search unit" oninput="renderUnitList()" style="max-width:220px">
@@ -193,14 +193,14 @@
         <div class="tabs">
           <button class="tab-btn active" onclick="showTab('maintenanceTab', this)">Maintenance</button>
           <button class="tab-btn" onclick="showTab('apTab', this)">AP Transactions</button>
-          <button class="tab-btn" onclick="showTab('vendorsTab', this)">Vendors</button>
-          <button class="tab-btn" onclick="showTab('itemsTab', this)">Items / Services</button>
+          <button class="tab-btn" onclick="showTab('qboTab', this)">QuickBooks Live Master</button>
         </div>
 
         <div id="maintenanceTab">
           <div class="qb-status">
             <button onclick="connectQuickBooks()">Connect QuickBooks</button>
             <button onclick="testQuickBooks()">Test QuickBooks</button>
+            <button onclick="refreshQboMaster()">Refresh QBO Master Data</button>
             <span id="qbStatusText" class="small">QuickBooks not checked</span>
           </div>
 
@@ -263,7 +263,7 @@
         </div>
 
         <div id="apTab" class="hidden">
-          <div class="label">New Expense / Bill</div>
+          <div class="label">QuickBooks-style Expense / Bill</div>
           <div class="form-stack">
             <div class="grid2">
               <select id="apTxnType">
@@ -277,10 +277,8 @@
             </div>
 
             <div class="grid2">
-              <select id="apVendorId"></select>
-              <select id="apPaymentMethodId">
-                <option value="">Payment method</option>
-              </select>
+              <input id="apDocNumber" placeholder="Expense No. / Bill No.">
+              <select id="apVendorQboId"></select>
             </div>
 
             <div class="grid2">
@@ -288,23 +286,27 @@
               <input id="apDueDate" type="date">
             </div>
 
+            <div class="grid2">
+              <select id="apPaymentMethodId"></select>
+              <input id="apAssetUnit" placeholder="Unit / asset">
+            </div>
+
             <div id="apCategoryBlock">
-              <select id="apAccountId"></select>
+              <select id="apAccountQboId"></select>
             </div>
 
             <div id="apItemBlock" class="hidden">
               <div class="grid2">
-                <select id="apItemId"></select>
+                <select id="apItemQboId"></select>
                 <input id="apQty" type="number" step="1" value="1" placeholder="Qty">
               </div>
             </div>
 
             <div class="grid2">
               <input id="apAmount" type="number" step="0.01" placeholder="Amount">
-              <input id="apAssetUnit" placeholder="Unit / asset">
+              <input id="apDescription" placeholder="Description">
             </div>
 
-            <input id="apDescription" placeholder="Description">
             <textarea id="apMemo" placeholder="Memo"></textarea>
 
             <button onclick="saveApTransaction()">Save AP Transaction</button>
@@ -314,52 +316,35 @@
           <div id="apList"></div>
         </div>
 
-        <div id="vendorsTab" class="hidden">
-          <div class="label">New Vendor</div>
-          <div class="form-stack">
-            <div class="grid2">
-              <input id="vendorName" placeholder="Vendor name">
-              <input id="vendorCompanyName" placeholder="Company name">
-            </div>
-            <div class="grid2">
-              <input id="vendorPhone" placeholder="Phone">
-              <input id="vendorEmail" placeholder="Email">
-            </div>
-            <input id="vendorAddress" placeholder="Address">
-            <div class="grid2">
-              <input id="vendorType" placeholder="Vendor type">
-              <input id="vendorPaymentTerms" placeholder="Payment terms">
-            </div>
-            <select id="vendorDefaultAccountId"></select>
-            <textarea id="vendorNotes" placeholder="Notes"></textarea>
-            <button onclick="saveVendor()">Save Vendor</button>
+        <div id="qboTab" class="hidden">
+          <div class="qb-status">
+            <button onclick="refreshQboMaster()">Refresh Live QuickBooks Master</button>
+            <span id="qboMasterStatus" class="small">Not refreshed yet</span>
           </div>
 
-          <div style="margin-top:14px" class="label">Vendor List</div>
-          <div id="vendorList"></div>
-        </div>
-
-        <div id="itemsTab" class="hidden">
-          <div class="label">New Product / Service Item</div>
-          <div class="form-stack">
-            <div class="grid2">
-              <input id="itemName" placeholder="Item / service name">
-              <input id="itemSku" placeholder="SKU">
+          <div class="grid3">
+            <div class="card">
+              <div class="label">QuickBooks Vendors</div>
+              <div class="value" id="qboVendorCount">0</div>
             </div>
-            <div class="grid2">
-              <select id="itemType">
-                <option value="Service">Service</option>
-                <option value="NonInventory">NonInventory</option>
-              </select>
-              <input id="itemDefaultCost" type="number" step="0.01" placeholder="Default cost">
+            <div class="card">
+              <div class="label">QuickBooks Items</div>
+              <div class="value" id="qboItemCount">0</div>
             </div>
-            <select id="itemDefaultAccountId"></select>
-            <textarea id="itemDescription" placeholder="Description"></textarea>
-            <button onclick="saveItem()">Save Item</button>
+            <div class="card">
+              <div class="label">QuickBooks Accounts</div>
+              <div class="value" id="qboAccountCount">0</div>
+            </div>
           </div>
 
-          <div style="margin-top:14px" class="label">Item / Service List</div>
-          <div id="itemList"></div>
+          <div style="margin-top:14px" class="label">Live QuickBooks Vendors</div>
+          <div id="qboVendorList"></div>
+
+          <div style="margin-top:14px" class="label">Live QuickBooks Items</div>
+          <div id="qboItemList"></div>
+
+          <div style="margin-top:14px" class="label">Live QuickBooks Accounts</div>
+          <div id="qboAccountList"></div>
         </div>
       </div>
     </div>
@@ -485,7 +470,7 @@
     }
 
     function showTab(tabId, btn) {
-      document.querySelectorAll('#maintenanceTab,#apTab,#vendorsTab,#itemsTab').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('#maintenanceTab,#apTab,#qboTab').forEach(el => el.classList.add('hidden'));
       document.getElementById(tabId).classList.remove('hidden');
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
@@ -516,21 +501,31 @@
     async function testQuickBooks() {
       try {
         const company = await j('/api/qbo/company');
-        const vendors = await j('/api/qbo/vendors');
-        const items = await j('/api/qbo/items');
-
         const companyName =
           company?.CompanyInfo?.CompanyName ||
           company?.QueryResponse?.CompanyInfo?.[0]?.CompanyName ||
           'Connected';
-
-        const vendorCount = vendors?.QueryResponse?.Vendor?.length || 0;
-        const itemCount = items?.QueryResponse?.Item?.length || 0;
-
-        document.getElementById('qboTestBox').innerHTML =
-          `Company: ${companyName}<br>Vendors fetched: ${vendorCount}<br>Items fetched: ${itemCount}`;
+        document.getElementById('qboTestBox').innerHTML = `Company: ${companyName}`;
       } catch (e) {
         document.getElementById('qboTestBox').textContent = 'QuickBooks test failed: ' + e.message;
+      }
+    }
+
+    async function refreshQboMaster() {
+      try {
+        const data = await j('/api/qbo/master');
+        erp.qboCache = {
+          vendors: data.vendors || [],
+          items: data.items || [],
+          accounts: data.accounts || [],
+          refreshedAt: data.refreshedAt || ''
+        };
+        fillMasterSelects();
+        renderQboMaster();
+        document.getElementById('qboMasterStatus').textContent =
+          `Refreshed: ${new Date(data.refreshedAt || Date.now()).toLocaleString()}`;
+      } catch (e) {
+        document.getElementById('qboMasterStatus').textContent = 'Refresh failed: ' + e.message;
       }
     }
 
@@ -554,9 +549,8 @@
       renderUnitList();
       renderDashboard();
       renderSelectedUnit();
-      renderVendors();
-      renderItems();
       renderApTransactions();
+      renderQboMaster();
       await loadQboStatus();
 
       document.getElementById('lastUpdated').textContent =
@@ -575,28 +569,24 @@
     }
 
     function fillMasterSelects() {
-      const vendors = erp.vendors || [];
-      const items = erp.items || [];
-      const accounts = erp.accounts || [];
+      const cache = erp.qboCache || { vendors: [], items: [], accounts: [] };
       const paymentMethods = erp.paymentMethods || [];
 
-      document.getElementById('apVendorId').innerHTML =
-        '<option value="">Select vendor</option>' + vendors.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+      document.getElementById('apVendorQboId').innerHTML =
+        '<option value="">QuickBooks vendor</option>' +
+        (cache.vendors || []).map(v => `<option value="${v.qboId}">${v.name}</option>`).join('');
 
-      document.getElementById('apItemId').innerHTML =
-        '<option value="">Select item/service</option>' + items.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+      document.getElementById('apItemQboId').innerHTML =
+        '<option value="">QuickBooks item/service</option>' +
+        (cache.items || []).map(v => `<option value="${v.qboId}">${v.name}</option>`).join('');
 
-      document.getElementById('apAccountId').innerHTML =
-        '<option value="">Select category/account</option>' + accounts.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
-
-      document.getElementById('vendorDefaultAccountId').innerHTML =
-        '<option value="">Default account</option>' + accounts.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
-
-      document.getElementById('itemDefaultAccountId').innerHTML =
-        '<option value="">Default account</option>' + accounts.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+      document.getElementById('apAccountQboId').innerHTML =
+        '<option value="">QuickBooks category/account</option>' +
+        (cache.accounts || []).map(v => `<option value="${v.qboId}">${v.name}</option>`).join('');
 
       document.getElementById('apPaymentMethodId').innerHTML =
-        '<option value="">Payment method</option>' + paymentMethods.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+        '<option value="">Payment method</option>' +
+        paymentMethods.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
     }
 
     function renderSummary() {
@@ -770,36 +760,14 @@
         : 'No records yet.';
     }
 
-    function renderVendors() {
-      const vendors = erp.vendors || [];
-      document.getElementById('vendorList').innerHTML = vendors.length
-        ? vendors.map(v => `
-            <div class="card" style="margin-bottom:8px">
-              <div><b>${v.name}</b></div>
-              <div class="small">${v.vendorType || ''} | ${v.paymentTerms || ''}</div>
-              <div class="small">${v.phone || ''} | ${v.email || ''}</div>
-              <div class="small">${v.address || ''}</div>
-            </div>
-          `).join('')
-        : 'No vendors yet.';
-    }
-
-    function renderItems() {
-      const items = erp.items || [];
-      document.getElementById('itemList').innerHTML = items.length
-        ? items.map(v => `
-            <div class="card" style="margin-bottom:8px">
-              <div><b>${v.name}</b></div>
-              <div class="small">${v.type || ''} | SKU: ${v.sku || ''}</div>
-              <div class="small">Default cost: ${v.defaultCost ?? ''}</div>
-              <div class="small">${v.description || ''}</div>
-            </div>
-          `).join('')
-        : 'No items yet.';
-    }
-
     function renderApTransactions() {
       const rows = (erp.apTransactions || []).slice().reverse();
+      const cache = erp.qboCache || { vendors: [], items: [], accounts: [] };
+
+      const vendorName = (id) => (cache.vendors || []).find(v => v.qboId === id)?.name || id || '';
+      const itemName = (id) => (cache.items || []).find(v => v.qboId === id)?.name || id || '';
+      const accountName = (id) => (cache.accounts || []).find(v => v.qboId === id)?.name || id || '';
+
       document.getElementById('apList').innerHTML = rows.length
         ? rows.map(r => `
             <div class="card" style="margin-bottom:8px">
@@ -807,10 +775,14 @@
                 <div><b>${r.txnType.toUpperCase()}</b> — ${r.detailMode}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${r.qboSyncStatus || 'not posted'}</span></div>
               </div>
+              <div class="small">No.: ${r.docNumber || ''}</div>
+              <div class="small">Vendor: ${vendorName(r.qboVendorId)}</div>
               <div class="small">Date: ${r.txnDate || ''} ${r.dueDate ? '| Due: ' + r.dueDate : ''}</div>
               <div class="small">Unit: ${r.assetUnit || ''}</div>
               <div class="small">Amount: ${r.amount ?? ''}</div>
               <div class="small">Description: ${r.description || ''}</div>
+              ${r.detailMode === 'item' ? `<div class="small">Item: ${itemName(r.qboItemId)}</div>` : ''}
+              ${r.detailMode === 'category' ? `<div class="small">Category: ${accountName(r.qboAccountId)}</div>` : ''}
               ${r.qboEntityType ? `<div class="small">QB ${r.qboEntityType} ID: ${r.qboEntityId || ''}</div>` : ''}
               ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${r.qboError}</div>` : ''}
               <div style="margin-top:8px">
@@ -821,50 +793,39 @@
         : 'No AP transactions yet.';
     }
 
-    async function saveVendor() {
-      await j('/api/erp/vendor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: document.getElementById('vendorName').value,
-          companyName: document.getElementById('vendorCompanyName').value,
-          phone: document.getElementById('vendorPhone').value,
-          email: document.getElementById('vendorEmail').value,
-          address: document.getElementById('vendorAddress').value,
-          vendorType: document.getElementById('vendorType').value,
-          paymentTerms: document.getElementById('vendorPaymentTerms').value,
-          defaultAccountId: document.getElementById('vendorDefaultAccountId').value,
-          notes: document.getElementById('vendorNotes').value
-        })
-      });
+    function renderQboMaster() {
+      const cache = erp.qboCache || { vendors: [], items: [], accounts: [], refreshedAt: '' };
 
-      ['vendorName','vendorCompanyName','vendorPhone','vendorEmail','vendorAddress','vendorType','vendorPaymentTerms','vendorNotes'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-      document.getElementById('vendorDefaultAccountId').value = '';
-      await loadAll();
-    }
+      document.getElementById('qboVendorCount').textContent = (cache.vendors || []).length;
+      document.getElementById('qboItemCount').textContent = (cache.items || []).length;
+      document.getElementById('qboAccountCount').textContent = (cache.accounts || []).length;
+      document.getElementById('qboMasterStatus').textContent =
+        cache.refreshedAt ? `Last refresh: ${new Date(cache.refreshedAt).toLocaleString()}` : 'Not refreshed yet';
 
-    async function saveItem() {
-      await j('/api/erp/item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: document.getElementById('itemName').value,
-          sku: document.getElementById('itemSku').value,
-          type: document.getElementById('itemType').value,
-          defaultCost: document.getElementById('itemDefaultCost').value,
-          defaultAccountId: document.getElementById('itemDefaultAccountId').value,
-          description: document.getElementById('itemDescription').value
-        })
-      });
+      document.getElementById('qboVendorList').innerHTML = (cache.vendors || []).slice(0, 50).map(v => `
+        <div class="card" style="margin-bottom:8px">
+          <div><b>${v.name}</b></div>
+          <div class="small">${v.companyName || ''}</div>
+          <div class="small">${v.phone || ''} ${v.email ? '| ' + v.email : ''}</div>
+          <div class="small">QBO ID: ${v.qboId}</div>
+        </div>
+      `).join('') || 'No QuickBooks vendors loaded.';
 
-      ['itemName','itemSku','itemDefaultCost','itemDescription'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-      document.getElementById('itemType').value = 'Service';
-      document.getElementById('itemDefaultAccountId').value = '';
-      await loadAll();
+      document.getElementById('qboItemList').innerHTML = (cache.items || []).slice(0, 50).map(v => `
+        <div class="card" style="margin-bottom:8px">
+          <div><b>${v.name}</b></div>
+          <div class="small">${v.type || ''} ${v.sku ? '| SKU: ' + v.sku : ''}</div>
+          <div class="small">QBO ID: ${v.qboId}</div>
+        </div>
+      `).join('') || 'No QuickBooks items loaded.';
+
+      document.getElementById('qboAccountList').innerHTML = (cache.accounts || []).slice(0, 50).map(v => `
+        <div class="card" style="margin-bottom:8px">
+          <div><b>${v.name}</b></div>
+          <div class="small">${v.accountType || ''} ${v.accountSubType ? '| ' + v.accountSubType : ''}</div>
+          <div class="small">QBO ID: ${v.qboId}</div>
+        </div>
+      `).join('') || 'No QuickBooks accounts loaded.';
     }
 
     async function saveApTransaction() {
@@ -874,21 +835,22 @@
         body: JSON.stringify({
           txnType: document.getElementById('apTxnType').value,
           detailMode: document.getElementById('apDetailMode').value,
-          vendorId: document.getElementById('apVendorId').value,
+          qboVendorId: document.getElementById('apVendorQboId').value,
           paymentMethodId: document.getElementById('apPaymentMethodId').value,
-          accountId: document.getElementById('apAccountId').value,
-          itemId: document.getElementById('apItemId').value,
+          qboAccountId: document.getElementById('apAccountQboId').value,
+          qboItemId: document.getElementById('apItemQboId').value,
           qty: document.getElementById('apQty').value,
           amount: document.getElementById('apAmount').value,
           txnDate: document.getElementById('apTxnDate').value,
           dueDate: document.getElementById('apDueDate').value,
+          docNumber: document.getElementById('apDocNumber').value,
           description: document.getElementById('apDescription').value,
           memo: document.getElementById('apMemo').value,
           assetUnit: document.getElementById('apAssetUnit').value
         })
       });
 
-      ['apAmount','apDescription','apMemo','apDueDate'].forEach(id => document.getElementById(id).value = '');
+      ['apAmount','apDescription','apMemo','apDueDate','apDocNumber'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('apQty').value = 1;
       await loadAll();
     }

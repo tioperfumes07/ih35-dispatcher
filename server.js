@@ -99,7 +99,13 @@ function defaultErpData() {
       { id: 'pm_other', name: 'Other', qboType: 'Other' },
       { id: 'pm_vendorcredit', name: 'Vendor Credit / Terms', qboType: 'Other' }
     ],
-    apTransactions: []
+    apTransactions: [],
+    qboCache: {
+      vendors: [],
+      items: [],
+      accounts: [],
+      refreshedAt: ''
+    }
   };
 }
 
@@ -121,6 +127,10 @@ function ensureErpFile() {
   if (!Array.isArray(merged.records)) merged.records = [];
   if (!merged.currentMileage) merged.currentMileage = {};
   if (!merged.unitOverrides) merged.unitOverrides = {};
+  if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
+  if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
+  if (!Array.isArray(merged.qboCache.items)) merged.qboCache.items = [];
+  if (!Array.isArray(merged.qboCache.accounts)) merged.qboCache.accounts = [];
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -551,81 +561,65 @@ async function qboQuery(sql) {
   return qboGet(`query?query=${encodeURIComponent(sql)}`);
 }
 
-async function qboFindVendorByName(displayName) {
-  const safe = String(displayName).replace(/'/g, "\\'");
-  const data = await qboQuery(`select * from Vendor where DisplayName = '${safe}' maxresults 1`);
-  return data?.QueryResponse?.Vendor?.[0] || null;
-}
+async function qboSyncMasterData() {
+  const [vendorsData, itemsData, accountsData] = await Promise.all([
+    qboQuery('select * from Vendor maxresults 1000'),
+    qboQuery('select * from Item maxresults 1000'),
+    qboQuery('select * from Account maxresults 1000')
+  ]);
 
-async function qboFindItemByName(name) {
-  const safe = String(name).replace(/'/g, "\\'");
-  const data = await qboQuery(`select * from Item where Name = '${safe}' maxresults 1`);
-  return data?.QueryResponse?.Item?.[0] || null;
-}
+  const vendors = (vendorsData?.QueryResponse?.Vendor || []).map(v => ({
+    qboId: v.Id,
+    name: v.DisplayName || '',
+    companyName: v.CompanyName || '',
+    phone: v.PrimaryPhone?.FreeFormNumber || '',
+    email: v.PrimaryEmailAddr?.Address || '',
+    active: v.Active !== false
+  }));
 
-async function qboFindAccountByName(name) {
-  const safe = String(name).replace(/'/g, "\\'");
-  const data = await qboQuery(`select * from Account where Name = '${safe}' maxresults 1`);
-  return data?.QueryResponse?.Account?.[0] || null;
-}
+  const items = (itemsData?.QueryResponse?.Item || []).map(i => ({
+    qboId: i.Id,
+    name: i.Name || '',
+    type: i.Type || '',
+    sku: i.Sku || '',
+    active: i.Active !== false
+  }));
 
-async function qboEnsureVendor(vendor) {
-  const displayName = sanitizeName(vendor.displayName || vendor.name || 'Vendor');
-  let found = await qboFindVendorByName(displayName);
-  if (found) return found;
+  const accounts = (accountsData?.QueryResponse?.Account || [])
+    .filter(a => a.Active !== false)
+    .filter(a => ['Expense', 'Cost of Goods Sold'].includes(a.AccountType))
+    .map(a => ({
+      qboId: a.Id,
+      name: a.Name || '',
+      accountType: a.AccountType || '',
+      accountSubType: a.AccountSubType || ''
+    }));
 
-  const payload = {
-    DisplayName: displayName,
-    CompanyName: sanitizeName(vendor.companyName || displayName),
-    PrimaryPhone: vendor.phone ? { FreeFormNumber: String(vendor.phone).slice(0, 21) } : undefined,
-    PrimaryEmailAddr: vendor.email ? { Address: String(vendor.email).slice(0, 100) } : undefined
+  const erp = readErp();
+  erp.qboCache = {
+    vendors,
+    items,
+    accounts,
+    refreshedAt: new Date().toISOString()
   };
+  writeErp(erp);
 
-  const created = await qboPost('vendor', payload);
-  return created?.Vendor || null;
+  return erp.qboCache;
 }
 
-async function qboEnsureExpenseAccount(accountName) {
-  const name = sanitizeName(accountName || 'Maintenance Expense');
-  let found = await qboFindAccountByName(name);
-  if (found) return found;
-
-  const payload = {
-    Name: name,
-    AccountType: 'Expense',
-    AccountSubType: 'SuppliesMaterialsCogs'
-  };
-  const created = await qboPost('account', payload);
-  return created?.Account || null;
+async function qboFindVendorById(id) {
+  const data = await qboGet(`vendor/${id}`);
+  return data?.Vendor || null;
 }
 
-async function qboEnsureItem(item, fallbackAccountId) {
-  const name = sanitizeName(item.name || 'Service');
-  let found = await qboFindItemByName(name);
-  if (found) return found;
-
-  const payload = {
-    Name: name,
-    Type: 'Service',
-    IncomeAccountRef: { value: fallbackAccountId },
-    ExpenseAccountRef: { value: fallbackAccountId },
-    PurchaseCost: safeNum(item.defaultCost, 0),
-    TrackQtyOnHand: false
-  };
-  const created = await qboPost('item', payload);
-  return created?.Item || null;
+async function qboFindItemById(id) {
+  const data = await qboGet(`item/${id}`);
+  return data?.Item || null;
 }
 
-function findVendorLocal(erp, vendorId) {
-  return (erp.vendors || []).find(v => v.id === vendorId) || null;
-}
-
-function findItemLocal(erp, itemId) {
-  return (erp.items || []).find(v => v.id === itemId) || null;
-}
-
-function findAccountLocal(erp, accountId) {
-  return (erp.accounts || []).find(v => v.id === accountId) || null;
+async function qboFindAccountById(id) {
+  const data = await qboGet(`account/${id}`);
+  return data?.Account || null;
 }
 
 function findPaymentMethodLocal(erp, paymentMethodId) {
@@ -635,24 +629,23 @@ function findPaymentMethodLocal(erp, paymentMethodId) {
 async function qboCreateApTransaction(ap) {
   const erp = readErp();
 
-  const vendorLocal = findVendorLocal(erp, ap.vendorId);
-  if (!vendorLocal) throw new Error('Vendor not found');
-
-  const vendorQbo = await qboEnsureVendor(vendorLocal);
-
   const txnDate = ap.txnDate || new Date().toISOString().slice(0, 10);
   const detailMode = ap.detailMode || 'category';
   const txnType = ap.txnType || 'expense';
   const amount = safeNum(ap.amount, 0);
   if (!(amount > 0)) throw new Error('Amount must be greater than 0');
 
+  if (!ap.qboVendorId) throw new Error('QuickBooks vendor is required');
+
   let line = null;
+  let qboItemId = '';
+  let qboAccountId = '';
 
   if (detailMode === 'category') {
-    const accountLocal = findAccountLocal(erp, ap.accountId);
-    if (!accountLocal) throw new Error('Account/category not found');
+    if (!ap.qboAccountId) throw new Error('QuickBooks category/account is required');
 
-    const accountQbo = await qboEnsureExpenseAccount(accountLocal.name);
+    const accountQbo = await qboFindAccountById(ap.qboAccountId);
+    if (!accountQbo) throw new Error('QuickBooks account not found');
 
     line = {
       Amount: amount,
@@ -665,15 +658,12 @@ async function qboCreateApTransaction(ap) {
         }
       }
     };
-
-    ap.qboAccountId = accountQbo.Id;
+    qboAccountId = accountQbo.Id;
   } else {
-    const itemLocal = findItemLocal(erp, ap.itemId);
-    if (!itemLocal) throw new Error('Item/product/service not found');
+    if (!ap.qboItemId) throw new Error('QuickBooks item/service is required');
 
-    const fallbackAccountLocal = findAccountLocal(erp, itemLocal.defaultAccountId) || erp.accounts[0];
-    const fallbackQboAccount = await qboEnsureExpenseAccount(fallbackAccountLocal.name);
-    const itemQbo = await qboEnsureItem(itemLocal, fallbackQboAccount.Id);
+    const itemQbo = await qboFindItemById(ap.qboItemId);
+    if (!itemQbo) throw new Error('QuickBooks item not found');
 
     const qty = safeNum(ap.qty, 1) || 1;
     const unitPrice = amount / qty;
@@ -681,7 +671,7 @@ async function qboCreateApTransaction(ap) {
     line = {
       Amount: amount,
       DetailType: 'ItemBasedExpenseLineDetail',
-      Description: sanitizeName(ap.description || itemLocal.name || 'Item expense'),
+      Description: sanitizeName(ap.description || itemQbo.Name || 'Item expense'),
       ItemBasedExpenseLineDetail: {
         ItemRef: {
           value: itemQbo.Id,
@@ -691,8 +681,7 @@ async function qboCreateApTransaction(ap) {
         UnitPrice: unitPrice
       }
     };
-
-    ap.qboItemId = itemQbo.Id;
+    qboItemId = itemQbo.Id;
   }
 
   if (txnType === 'expense') {
@@ -701,10 +690,11 @@ async function qboCreateApTransaction(ap) {
 
     const payload = {
       TxnDate: txnDate,
+      DocNumber: ap.docNumber || undefined,
       PaymentType: paymentType,
       EntityRef: {
         type: 'Vendor',
-        value: vendorQbo.Id
+        value: ap.qboVendorId
       },
       Line: [line],
       PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Expense')
@@ -714,17 +704,18 @@ async function qboCreateApTransaction(ap) {
     return {
       qboEntityType: 'Purchase',
       qboEntityId: created?.Purchase?.Id || '',
-      vendorId: vendorQbo.Id,
-      itemId: ap.qboItemId || '',
-      accountId: ap.qboAccountId || ''
+      qboVendorId: ap.qboVendorId,
+      qboItemId,
+      qboAccountId
     };
   }
 
   if (txnType === 'bill') {
     const payload = {
-      VendorRef: { value: vendorQbo.Id },
+      VendorRef: { value: ap.qboVendorId },
       TxnDate: txnDate,
       DueDate: ap.dueDate || '',
+      DocNumber: ap.docNumber || undefined,
       Line: [line],
       PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Bill')
     };
@@ -733,16 +724,16 @@ async function qboCreateApTransaction(ap) {
     return {
       qboEntityType: 'Bill',
       qboEntityId: created?.Bill?.Id || '',
-      vendorId: vendorQbo.Id,
-      itemId: ap.qboItemId || '',
-      accountId: ap.qboAccountId || ''
+      qboVendorId: ap.qboVendorId,
+      qboItemId,
+      qboAccountId
     };
   }
 
   throw new Error('Unsupported AP transaction type');
 }
 
-/* ---------- dispatcher endpoints ---------- */
+/* dispatcher */
 
 app.get('/api/samsara/vehicles', async (_req, res) => {
   try {
@@ -925,7 +916,7 @@ app.get('/api/route', async (req, res) => {
   }
 });
 
-/* ---------- QuickBooks ---------- */
+/* quickbooks */
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
@@ -1045,25 +1036,23 @@ app.get('/api/qbo/company', async (_req, res) => {
   }
 });
 
-app.get('/api/qbo/vendors', async (_req, res) => {
+app.get('/api/qbo/master', async (_req, res) => {
   try {
-    const data = await qboQuery('select * from Vendor maxresults 50');
-    res.json(data);
+    const cache = await qboSyncMasterData();
+    res.json({ ok: true, ...cache });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const erp = readErp();
+    res.status(500).json({
+      error: error.message,
+      vendors: erp.qboCache?.vendors || [],
+      items: erp.qboCache?.items || [],
+      accounts: erp.qboCache?.accounts || [],
+      refreshedAt: erp.qboCache?.refreshedAt || ''
+    });
   }
 });
 
-app.get('/api/qbo/items', async (_req, res) => {
-  try {
-    const data = await qboQuery('select * from Item maxresults 50');
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/* ---------- ERP master data ---------- */
+/* ERP master/local */
 
 app.get('/api/erp/master', (_req, res) => {
   const erp = readErp();
@@ -1072,60 +1061,16 @@ app.get('/api/erp/master', (_req, res) => {
     items: erp.items || [],
     accounts: erp.accounts || [],
     paymentMethods: erp.paymentMethods || [],
-    apTransactions: erp.apTransactions || []
+    apTransactions: erp.apTransactions || [],
+    qboCache: erp.qboCache || { vendors: [], items: [], accounts: [], refreshedAt: '' }
   });
-});
-
-app.post('/api/erp/vendor', (req, res) => {
-  const body = req.body || {};
-  if (!body.name) return res.status(400).json({ error: 'Vendor name is required' });
-
-  const erp = readErp();
-  const vendor = {
-    id: uid('vendor'),
-    name: sanitizeName(body.name),
-    companyName: sanitizeName(body.companyName || body.name),
-    phone: body.phone || '',
-    email: body.email || '',
-    address: body.address || '',
-    vendorType: body.vendorType || '',
-    paymentTerms: body.paymentTerms || '',
-    defaultAccountId: body.defaultAccountId || '',
-    notes: body.notes || '',
-    preferred: !!body.preferred,
-    qboVendorId: ''
-  };
-  erp.vendors.push(vendor);
-  writeErp(erp);
-  res.json({ ok: true, vendor });
-});
-
-app.post('/api/erp/item', (req, res) => {
-  const body = req.body || {};
-  if (!body.name) return res.status(400).json({ error: 'Item name is required' });
-
-  const erp = readErp();
-  const item = {
-    id: uid('item'),
-    name: sanitizeName(body.name),
-    type: body.type || 'Service',
-    sku: body.sku || '',
-    defaultCost: safeNum(body.defaultCost, 0),
-    defaultAccountId: body.defaultAccountId || '',
-    description: body.description || '',
-    active: true,
-    qboItemId: ''
-  };
-  erp.items.push(item);
-  writeErp(erp);
-  res.json({ ok: true, item });
 });
 
 app.post('/api/erp/ap-transaction', (req, res) => {
   const body = req.body || {};
   if (!body.txnType) return res.status(400).json({ error: 'Transaction type is required' });
   if (!body.detailMode) return res.status(400).json({ error: 'Detail mode is required' });
-  if (!body.vendorId) return res.status(400).json({ error: 'Vendor is required' });
+  if (!body.qboVendorId) return res.status(400).json({ error: 'QuickBooks vendor is required' });
   if (!(safeNum(body.amount, 0) > 0)) return res.status(400).json({ error: 'Amount must be greater than 0' });
 
   const erp = readErp();
@@ -1133,14 +1078,15 @@ app.post('/api/erp/ap-transaction', (req, res) => {
     id: uid('ap'),
     txnType: body.txnType,
     detailMode: body.detailMode,
-    vendorId: body.vendorId,
+    qboVendorId: body.qboVendorId,
     paymentMethodId: body.paymentMethodId || '',
-    accountId: body.accountId || '',
-    itemId: body.itemId || '',
+    qboAccountId: body.qboAccountId || '',
+    qboItemId: body.qboItemId || '',
     qty: safeNum(body.qty, 1) || 1,
     amount: safeNum(body.amount, 0),
     txnDate: body.txnDate || '',
     dueDate: body.dueDate || '',
+    docNumber: body.docNumber || '',
     description: body.description || '',
     memo: body.memo || '',
     assetUnit: body.assetUnit || '',
@@ -1149,9 +1095,6 @@ app.post('/api/erp/ap-transaction', (req, res) => {
     qboSyncStatus: '',
     qboEntityType: '',
     qboEntityId: '',
-    qboVendorId: '',
-    qboItemId: '',
-    qboAccountId: '',
     qboError: '',
     createdAt: new Date().toISOString()
   };
@@ -1175,9 +1118,9 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
       qboSyncStatus: 'posted',
       qboEntityType: result.qboEntityType,
       qboEntityId: result.qboEntityId,
-      qboVendorId: result.vendorId,
-      qboItemId: result.itemId,
-      qboAccountId: result.accountId,
+      qboVendorId: result.qboVendorId,
+      qboItemId: result.qboItemId,
+      qboAccountId: result.qboAccountId,
       qboError: '',
       qboPostedAt: new Date().toISOString()
     };
@@ -1196,7 +1139,7 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
   }
 });
 
-/* ---------- Maintenance ---------- */
+/* maintenance */
 
 app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
@@ -1308,12 +1251,10 @@ app.post('/api/qbo/post-record/:id', async (req, res) => {
     if (idx === -1) return res.status(404).json({ error: 'Record not found' });
 
     const record = erp.records[idx];
+    const cache = erp.qboCache || { vendors: [], items: [], accounts: [] };
 
-    const vendorTemp = {
-      displayName: sanitizeName(record.vendor || `Vendor ${record.unit}`),
-      companyName: sanitizeName(record.vendor || `Vendor ${record.unit}`)
-    };
-    const vendorQbo = await qboEnsureVendor(vendorTemp);
+    let vendor = (cache.vendors || []).find(v => v.name === record.vendor) || (cache.vendors || [])[0];
+    if (!vendor) throw new Error('No QuickBooks vendor available. Refresh QuickBooks master data first.');
 
     let accountName = 'Maintenance Expense';
     if (record.recordType === 'tire' || String(record.serviceType).toLowerCase().includes('tire')) accountName = 'Tire Expense';
@@ -1322,7 +1263,8 @@ app.post('/api/qbo/post-record/:id', async (req, res) => {
     if (record.recordType === 'repair' && record.repairLocationType === 'over-the-road') accountName = 'Over The Road Repair Expense';
     if (String(record.serviceType).toLowerCase().includes('reefer')) accountName = 'Reefer Maintenance Expense';
 
-    const accountQbo = await qboEnsureExpenseAccount(accountName);
+    const account = (cache.accounts || []).find(a => a.name === accountName);
+    if (!account) throw new Error(`QuickBooks account not found: ${accountName}`);
 
     const amount = safeNum(record.cost, 0);
     if (!(amount > 0)) throw new Error('Record cost must be greater than 0 for QuickBooks posting');
@@ -1330,14 +1272,14 @@ app.post('/api/qbo/post-record/:id', async (req, res) => {
     const payload = {
       TxnDate: record.serviceDate || new Date().toISOString().slice(0, 10),
       PaymentType: 'Other',
-      EntityRef: { type: 'Vendor', value: vendorQbo.Id },
+      EntityRef: { type: 'Vendor', value: vendor.qboId },
       Line: [
         {
           Amount: amount,
           DetailType: 'AccountBasedExpenseLineDetail',
           Description: sanitizeName(`Unit ${record.unit} | ${record.serviceType} | ${record.notes || ''}`, 'Maintenance'),
           AccountBasedExpenseLineDetail: {
-            AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
+            AccountRef: { value: account.qboId, name: account.name }
           }
         }
       ],
@@ -1350,9 +1292,9 @@ app.post('/api/qbo/post-record/:id', async (req, res) => {
       ...record,
       qboSyncStatus: 'posted',
       qboPurchaseId: created?.Purchase?.Id || '',
-      qboVendorId: vendorQbo?.Id || '',
+      qboVendorId: vendor?.qboId || '',
       qboItemId: '',
-      qboAccountId: accountQbo?.Id || '',
+      qboAccountId: account?.qboId || '',
       qboError: '',
       qboPostedAt: new Date().toISOString()
     };
