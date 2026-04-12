@@ -21,7 +21,7 @@ const PERSIST_DIR = '/var/data';
 const LOCAL_DATA_DIR = path.join(__dirname, 'data');
 const DATA_DIR = fs.existsSync(PERSIST_DIR) ? PERSIST_DIR : LOCAL_DATA_DIR;
 
-const MAINT_FILE = path.join(DATA_DIR, 'maintenance.json');
+const ERP_FILE = path.join(DATA_DIR, 'maintenance.json');
 const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
 
 const QBO_CLIENT_ID = process.env.QBO_CLIENT_ID || '';
@@ -56,7 +56,12 @@ async function fetchJson(url, options = {}) {
   }
 
   if (!response.ok) {
-    const msg = data?.message || data?.error || response.statusText;
+    const msg =
+      data?.Fault?.Error?.[0]?.Message ||
+      data?.Fault?.Error?.[0]?.Detail ||
+      data?.message ||
+      data?.error ||
+      response.statusText;
     const err = new Error(msg);
     err.status = response.status;
     err.details = data;
@@ -70,22 +75,54 @@ function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-function ensureMaintFile() {
+function defaultErpData() {
+  return {
+    currentMileage: {},
+    records: [],
+    unitOverrides: {},
+    vendors: [],
+    items: [],
+    accounts: [
+      { id: 'acct_maint', name: 'Maintenance Expense', active: true, qboId: '' },
+      { id: 'acct_tire', name: 'Tire Expense', active: true, qboId: '' },
+      { id: 'acct_road', name: 'Road Service Expense', active: true, qboId: '' },
+      { id: 'acct_otr', name: 'Over The Road Repair Expense', active: true, qboId: '' },
+      { id: 'acct_reefer', name: 'Reefer Maintenance Expense', active: true, qboId: '' },
+      { id: 'acct_accident', name: 'Accident Expense', active: true, qboId: '' },
+      { id: 'acct_parts', name: 'Parts Expense', active: true, qboId: '' },
+      { id: 'acct_labor', name: 'Labor Expense', active: true, qboId: '' }
+    ],
+    paymentMethods: [
+      { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
+      { id: 'pm_check', name: 'Check', qboType: 'Check' },
+      { id: 'pm_creditcard', name: 'Credit Card', qboType: 'CreditCard' },
+      { id: 'pm_other', name: 'Other', qboType: 'Other' },
+      { id: 'pm_vendorcredit', name: 'Vendor Credit / Terms', qboType: 'Other' }
+    ],
+    apTransactions: []
+  };
+}
+
+function ensureErpFile() {
   ensureDataDir();
-  if (!fs.existsSync(MAINT_FILE)) {
-    fs.writeFileSync(
-      MAINT_FILE,
-      JSON.stringify(
-        {
-          currentMileage: {},
-          records: [],
-          unitOverrides: {}
-        },
-        null,
-        2
-      )
-    );
+  if (!fs.existsSync(ERP_FILE)) {
+    fs.writeFileSync(ERP_FILE, JSON.stringify(defaultErpData(), null, 2));
+    return;
   }
+
+  const data = JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
+  const merged = { ...defaultErpData(), ...data };
+
+  if (!Array.isArray(merged.vendors)) merged.vendors = [];
+  if (!Array.isArray(merged.items)) merged.items = [];
+  if (!Array.isArray(merged.accounts)) merged.accounts = defaultErpData().accounts;
+  if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
+  if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
+  if (!Array.isArray(merged.records)) merged.records = [];
+  if (!merged.currentMileage) merged.currentMileage = {};
+  if (!merged.unitOverrides) merged.unitOverrides = {};
+
+  fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
 
 function ensureQboFile() {
@@ -105,14 +142,14 @@ function ensureQboFile() {
   }
 }
 
-function readMaint() {
-  ensureMaintFile();
-  return JSON.parse(fs.readFileSync(MAINT_FILE, 'utf8'));
+function readErp() {
+  ensureErpFile();
+  return JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
 }
 
-function writeMaint(data) {
-  ensureMaintFile();
-  fs.writeFileSync(MAINT_FILE, JSON.stringify(data, null, 2));
+function writeErp(data) {
+  ensureErpFile();
+  fs.writeFileSync(ERP_FILE, JSON.stringify(data, null, 2));
 }
 
 function readQbo() {
@@ -133,6 +170,14 @@ function safeNum(v, fallback = null) {
 function parseUnitNumber(name) {
   const m = String(name || '').match(/^T(\d+)$/i);
   return m ? Number(m[1]) : null;
+}
+
+function sanitizeName(value, fallback = 'Unnamed') {
+  return String(value || fallback).trim().slice(0, 100);
+}
+
+function uid(prefix = 'id') {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function isTrackedAsset(v) {
@@ -271,10 +316,10 @@ function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
   return 'current';
 }
 
-function buildDashboardRows(vehicles, maintStore) {
-  const records = maintStore.records || [];
-  const currentMileage = maintStore.currentMileage || {};
-  const unitOverrides = maintStore.unitOverrides || {};
+function buildDashboardRows(vehicles, erpStore) {
+  const records = erpStore.records || [];
+  const currentMileage = erpStore.currentMileage || {};
+  const unitOverrides = erpStore.unitOverrides || {};
 
   return vehicles.map(v => {
     const unit = v.name;
@@ -321,6 +366,8 @@ function buildDashboardRows(vehicles, maintStore) {
         vendor: last?.vendor || '',
         cost: last?.cost ?? '',
         notes: last?.notes || '',
+        qboSyncStatus: last?.qboSyncStatus || '',
+        qboPurchaseId: last?.qboPurchaseId || '',
         status: calcStatus(nextDueMiles, nextDueDate, currentMiles)
       };
     });
@@ -394,6 +441,7 @@ async function qboRefreshIfNeeded() {
   }
 
   const basic = Buffer.from(`${QBO_CLIENT_ID}:${QBO_CLIENT_SECRET}`).toString('base64');
+
   const body = new URLSearchParams();
   body.set('grant_type', 'refresh_token');
   body.set('refresh_token', tokens.refresh_token);
@@ -461,6 +509,237 @@ async function qboGet(pathname) {
   }
 
   return data;
+}
+
+async function qboPost(pathname, payload) {
+  const store = readQbo();
+  if (!store.tokens?.realmId) throw new Error('QuickBooks realmId is missing');
+
+  const tokens = await qboRefreshIfNeeded();
+  const url = `${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${tokens.access_token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const raw = await response.text();
+  let data = {};
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(`QuickBooks POST failed: ${raw.slice(0, 200)}`);
+  }
+
+  if (!response.ok) {
+    const msg =
+      data?.Fault?.Error?.[0]?.Message ||
+      data?.Fault?.Error?.[0]?.Detail ||
+      'QuickBooks POST failed';
+    throw new Error(msg);
+  }
+
+  return data;
+}
+
+async function qboQuery(sql) {
+  return qboGet(`query?query=${encodeURIComponent(sql)}`);
+}
+
+async function qboFindVendorByName(displayName) {
+  const safe = String(displayName).replace(/'/g, "\\'");
+  const data = await qboQuery(`select * from Vendor where DisplayName = '${safe}' maxresults 1`);
+  return data?.QueryResponse?.Vendor?.[0] || null;
+}
+
+async function qboFindItemByName(name) {
+  const safe = String(name).replace(/'/g, "\\'");
+  const data = await qboQuery(`select * from Item where Name = '${safe}' maxresults 1`);
+  return data?.QueryResponse?.Item?.[0] || null;
+}
+
+async function qboFindAccountByName(name) {
+  const safe = String(name).replace(/'/g, "\\'");
+  const data = await qboQuery(`select * from Account where Name = '${safe}' maxresults 1`);
+  return data?.QueryResponse?.Account?.[0] || null;
+}
+
+async function qboEnsureVendor(vendor) {
+  const displayName = sanitizeName(vendor.displayName || vendor.name || 'Vendor');
+  let found = await qboFindVendorByName(displayName);
+  if (found) return found;
+
+  const payload = {
+    DisplayName: displayName,
+    CompanyName: sanitizeName(vendor.companyName || displayName),
+    PrimaryPhone: vendor.phone ? { FreeFormNumber: String(vendor.phone).slice(0, 21) } : undefined,
+    PrimaryEmailAddr: vendor.email ? { Address: String(vendor.email).slice(0, 100) } : undefined
+  };
+
+  const created = await qboPost('vendor', payload);
+  return created?.Vendor || null;
+}
+
+async function qboEnsureExpenseAccount(accountName) {
+  const name = sanitizeName(accountName || 'Maintenance Expense');
+  let found = await qboFindAccountByName(name);
+  if (found) return found;
+
+  const payload = {
+    Name: name,
+    AccountType: 'Expense',
+    AccountSubType: 'SuppliesMaterialsCogs'
+  };
+  const created = await qboPost('account', payload);
+  return created?.Account || null;
+}
+
+async function qboEnsureItem(item, fallbackAccountId) {
+  const name = sanitizeName(item.name || 'Service');
+  let found = await qboFindItemByName(name);
+  if (found) return found;
+
+  const payload = {
+    Name: name,
+    Type: 'Service',
+    IncomeAccountRef: { value: fallbackAccountId },
+    ExpenseAccountRef: { value: fallbackAccountId },
+    PurchaseCost: safeNum(item.defaultCost, 0),
+    TrackQtyOnHand: false
+  };
+  const created = await qboPost('item', payload);
+  return created?.Item || null;
+}
+
+function findVendorLocal(erp, vendorId) {
+  return (erp.vendors || []).find(v => v.id === vendorId) || null;
+}
+
+function findItemLocal(erp, itemId) {
+  return (erp.items || []).find(v => v.id === itemId) || null;
+}
+
+function findAccountLocal(erp, accountId) {
+  return (erp.accounts || []).find(v => v.id === accountId) || null;
+}
+
+function findPaymentMethodLocal(erp, paymentMethodId) {
+  return (erp.paymentMethods || []).find(v => v.id === paymentMethodId) || null;
+}
+
+async function qboCreateApTransaction(ap) {
+  const erp = readErp();
+
+  const vendorLocal = findVendorLocal(erp, ap.vendorId);
+  if (!vendorLocal) throw new Error('Vendor not found');
+
+  const vendorQbo = await qboEnsureVendor(vendorLocal);
+
+  const txnDate = ap.txnDate || new Date().toISOString().slice(0, 10);
+  const detailMode = ap.detailMode || 'category';
+  const txnType = ap.txnType || 'expense';
+  const amount = safeNum(ap.amount, 0);
+  if (!(amount > 0)) throw new Error('Amount must be greater than 0');
+
+  let line = null;
+
+  if (detailMode === 'category') {
+    const accountLocal = findAccountLocal(erp, ap.accountId);
+    if (!accountLocal) throw new Error('Account/category not found');
+
+    const accountQbo = await qboEnsureExpenseAccount(accountLocal.name);
+
+    line = {
+      Amount: amount,
+      DetailType: 'AccountBasedExpenseLineDetail',
+      Description: sanitizeName(ap.description || ap.memo || ap.assetUnit || 'Expense'),
+      AccountBasedExpenseLineDetail: {
+        AccountRef: {
+          value: accountQbo.Id,
+          name: accountQbo.Name
+        }
+      }
+    };
+
+    ap.qboAccountId = accountQbo.Id;
+  } else {
+    const itemLocal = findItemLocal(erp, ap.itemId);
+    if (!itemLocal) throw new Error('Item/product/service not found');
+
+    const fallbackAccountLocal = findAccountLocal(erp, itemLocal.defaultAccountId) || erp.accounts[0];
+    const fallbackQboAccount = await qboEnsureExpenseAccount(fallbackAccountLocal.name);
+    const itemQbo = await qboEnsureItem(itemLocal, fallbackQboAccount.Id);
+
+    const qty = safeNum(ap.qty, 1) || 1;
+    const unitPrice = amount / qty;
+
+    line = {
+      Amount: amount,
+      DetailType: 'ItemBasedExpenseLineDetail',
+      Description: sanitizeName(ap.description || itemLocal.name || 'Item expense'),
+      ItemBasedExpenseLineDetail: {
+        ItemRef: {
+          value: itemQbo.Id,
+          name: itemQbo.Name
+        },
+        Qty: qty,
+        UnitPrice: unitPrice
+      }
+    };
+
+    ap.qboItemId = itemQbo.Id;
+  }
+
+  if (txnType === 'expense') {
+    const paymentMethod = findPaymentMethodLocal(erp, ap.paymentMethodId);
+    const paymentType = paymentMethod?.qboType || 'Other';
+
+    const payload = {
+      TxnDate: txnDate,
+      PaymentType: paymentType,
+      EntityRef: {
+        type: 'Vendor',
+        value: vendorQbo.Id
+      },
+      Line: [line],
+      PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Expense')
+    };
+
+    const created = await qboPost('purchase', payload);
+    return {
+      qboEntityType: 'Purchase',
+      qboEntityId: created?.Purchase?.Id || '',
+      vendorId: vendorQbo.Id,
+      itemId: ap.qboItemId || '',
+      accountId: ap.qboAccountId || ''
+    };
+  }
+
+  if (txnType === 'bill') {
+    const payload = {
+      VendorRef: { value: vendorQbo.Id },
+      TxnDate: txnDate,
+      DueDate: ap.dueDate || '',
+      Line: [line],
+      PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Bill')
+    };
+
+    const created = await qboPost('bill', payload);
+    return {
+      qboEntityType: 'Bill',
+      qboEntityId: created?.Bill?.Id || '',
+      vendorId: vendorQbo.Id,
+      itemId: ap.qboItemId || '',
+      accountId: ap.qboAccountId || ''
+    };
+  }
+
+  throw new Error('Unsupported AP transaction type');
 }
 
 /* ---------- dispatcher endpoints ---------- */
@@ -576,19 +855,12 @@ app.get('/api/geocode', async (req, res) => {
 
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
     const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'IH35-Dispatcher-App',
-        Accept: 'application/json'
-      }
+      headers: { 'User-Agent': 'IH35-Dispatcher-App', Accept: 'application/json' }
     });
 
     const raw = await response.text();
     let data = [];
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      return res.json([]);
-    }
+    try { data = JSON.parse(raw); } catch { return res.json([]); }
 
     const results = (Array.isArray(data) ? data : []).map(x => ({
       lat: Number(x.lat),
@@ -623,19 +895,12 @@ app.get('/api/autocomplete', async (req, res) => {
 
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
     const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'IH35-Dispatcher-App',
-        Accept: 'application/json'
-      }
+      headers: { 'User-Agent': 'IH35-Dispatcher-App', Accept: 'application/json' }
     });
 
     const raw = await response.text();
     let data = [];
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      return res.json([]);
-    }
+    try { data = JSON.parse(raw); } catch { return res.json([]); }
 
     const results = (Array.isArray(data) ? data : []).map(x => ({
       name: x.display_name
@@ -660,7 +925,7 @@ app.get('/api/route', async (req, res) => {
   }
 });
 
-/* ---------- quickbooks endpoints ---------- */
+/* ---------- QuickBooks ---------- */
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
@@ -674,9 +939,7 @@ app.get('/api/qbo/status', (_req, res) => {
 });
 
 app.get('/api/qbo/connect', (_req, res) => {
-  if (!qboConfigured()) {
-    return res.status(400).send('QuickBooks environment variables are missing.');
-  }
+  if (!qboConfigured()) return res.status(400).send('QuickBooks environment variables are missing.');
 
   const state = crypto.randomBytes(16).toString('hex');
   const store = readQbo();
@@ -698,13 +961,8 @@ app.get('/api/qbo/callback', async (req, res) => {
     const { code, realmId, state } = req.query;
     const store = readQbo();
 
-    if (!code || !realmId || !state) {
-      return res.status(400).send('Missing QuickBooks callback parameters.');
-    }
-
-    if (!store.state || store.state !== state) {
-      return res.status(400).send('Invalid QuickBooks state.');
-    }
+    if (!code || !realmId || !state) return res.status(400).send('Missing QuickBooks callback parameters.');
+    if (!store.state || store.state !== state) return res.status(400).send('Invalid QuickBooks state.');
 
     const basic = Buffer.from(`${QBO_CLIENT_ID}:${QBO_CLIENT_SECRET}`).toString('base64');
 
@@ -725,9 +983,7 @@ app.get('/api/qbo/callback', async (req, res) => {
 
     const raw = await response.text();
     let data = {};
-    try {
-      data = JSON.parse(raw);
-    } catch {
+    try { data = JSON.parse(raw); } catch {
       return res.status(500).send(`QuickBooks token exchange failed: ${raw.slice(0, 200)}`);
     }
 
@@ -791,7 +1047,7 @@ app.get('/api/qbo/company', async (_req, res) => {
 
 app.get('/api/qbo/vendors', async (_req, res) => {
   try {
-    const data = await qboGet(`query?query=${encodeURIComponent('select * from Vendor maxresults 50')}`);
+    const data = await qboQuery('select * from Vendor maxresults 50');
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -800,14 +1056,147 @@ app.get('/api/qbo/vendors', async (_req, res) => {
 
 app.get('/api/qbo/items', async (_req, res) => {
   try {
-    const data = await qboGet(`query?query=${encodeURIComponent('select * from Item maxresults 50')}`);
+    const data = await qboQuery('select * from Item maxresults 50');
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-/* ---------- maintenance endpoints ---------- */
+/* ---------- ERP master data ---------- */
+
+app.get('/api/erp/master', (_req, res) => {
+  const erp = readErp();
+  res.json({
+    vendors: erp.vendors || [],
+    items: erp.items || [],
+    accounts: erp.accounts || [],
+    paymentMethods: erp.paymentMethods || [],
+    apTransactions: erp.apTransactions || []
+  });
+});
+
+app.post('/api/erp/vendor', (req, res) => {
+  const body = req.body || {};
+  if (!body.name) return res.status(400).json({ error: 'Vendor name is required' });
+
+  const erp = readErp();
+  const vendor = {
+    id: uid('vendor'),
+    name: sanitizeName(body.name),
+    companyName: sanitizeName(body.companyName || body.name),
+    phone: body.phone || '',
+    email: body.email || '',
+    address: body.address || '',
+    vendorType: body.vendorType || '',
+    paymentTerms: body.paymentTerms || '',
+    defaultAccountId: body.defaultAccountId || '',
+    notes: body.notes || '',
+    preferred: !!body.preferred,
+    qboVendorId: ''
+  };
+  erp.vendors.push(vendor);
+  writeErp(erp);
+  res.json({ ok: true, vendor });
+});
+
+app.post('/api/erp/item', (req, res) => {
+  const body = req.body || {};
+  if (!body.name) return res.status(400).json({ error: 'Item name is required' });
+
+  const erp = readErp();
+  const item = {
+    id: uid('item'),
+    name: sanitizeName(body.name),
+    type: body.type || 'Service',
+    sku: body.sku || '',
+    defaultCost: safeNum(body.defaultCost, 0),
+    defaultAccountId: body.defaultAccountId || '',
+    description: body.description || '',
+    active: true,
+    qboItemId: ''
+  };
+  erp.items.push(item);
+  writeErp(erp);
+  res.json({ ok: true, item });
+});
+
+app.post('/api/erp/ap-transaction', (req, res) => {
+  const body = req.body || {};
+  if (!body.txnType) return res.status(400).json({ error: 'Transaction type is required' });
+  if (!body.detailMode) return res.status(400).json({ error: 'Detail mode is required' });
+  if (!body.vendorId) return res.status(400).json({ error: 'Vendor is required' });
+  if (!(safeNum(body.amount, 0) > 0)) return res.status(400).json({ error: 'Amount must be greater than 0' });
+
+  const erp = readErp();
+  const ap = {
+    id: uid('ap'),
+    txnType: body.txnType,
+    detailMode: body.detailMode,
+    vendorId: body.vendorId,
+    paymentMethodId: body.paymentMethodId || '',
+    accountId: body.accountId || '',
+    itemId: body.itemId || '',
+    qty: safeNum(body.qty, 1) || 1,
+    amount: safeNum(body.amount, 0),
+    txnDate: body.txnDate || '',
+    dueDate: body.dueDate || '',
+    description: body.description || '',
+    memo: body.memo || '',
+    assetUnit: body.assetUnit || '',
+    sourceType: body.sourceType || 'manual',
+    sourceId: body.sourceId || '',
+    qboSyncStatus: '',
+    qboEntityType: '',
+    qboEntityId: '',
+    qboVendorId: '',
+    qboItemId: '',
+    qboAccountId: '',
+    qboError: '',
+    createdAt: new Date().toISOString()
+  };
+
+  erp.apTransactions.push(ap);
+  writeErp(erp);
+  res.json({ ok: true, ap });
+});
+
+app.post('/api/qbo/post-ap/:id', async (req, res) => {
+  const erp = readErp();
+  const idx = (erp.apTransactions || []).findIndex(x => String(x.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'AP transaction not found' });
+
+  try {
+    const ap = erp.apTransactions[idx];
+    const result = await qboCreateApTransaction(ap);
+
+    erp.apTransactions[idx] = {
+      ...ap,
+      qboSyncStatus: 'posted',
+      qboEntityType: result.qboEntityType,
+      qboEntityId: result.qboEntityId,
+      qboVendorId: result.vendorId,
+      qboItemId: result.itemId,
+      qboAccountId: result.accountId,
+      qboError: '',
+      qboPostedAt: new Date().toISOString()
+    };
+
+    writeErp(erp);
+    res.json({ ok: true, ap: erp.apTransactions[idx] });
+  } catch (error) {
+    erp.apTransactions[idx] = {
+      ...erp.apTransactions[idx],
+      qboSyncStatus: 'error',
+      qboError: error.message,
+      qboErrorAt: new Date().toISOString()
+    };
+    writeErp(erp);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/* ---------- Maintenance ---------- */
 
 app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
@@ -837,9 +1226,9 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
       return ua - ub;
     });
 
-    const maintStore = readMaint();
-    const dashboard = buildDashboardRows(tracked, maintStore);
-    const tireAlerts = buildTireAlerts(maintStore.records || []);
+    const erp = readErp();
+    const dashboard = buildDashboardRows(tracked, erp);
+    const tireAlerts = buildTireAlerts(erp.records || []);
 
     res.json({
       vehicles: tracked,
@@ -852,7 +1241,7 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
 });
 
 app.get('/api/maintenance/records', (_req, res) => {
-  const data = readMaint();
+  const data = readErp();
   res.json(data);
 });
 
@@ -860,10 +1249,10 @@ app.post('/api/maintenance/mileage', (req, res) => {
   const { unit, currentMileage } = req.body || {};
   if (!unit) return res.status(400).json({ error: 'unit is required' });
 
-  const store = readMaint();
-  if (!store.currentMileage) store.currentMileage = {};
-  store.currentMileage[unit] = safeNum(currentMileage, null);
-  writeMaint(store);
+  const erp = readErp();
+  if (!erp.currentMileage) erp.currentMileage = {};
+  erp.currentMileage[unit] = safeNum(currentMileage, null);
+  writeErp(erp);
 
   res.json({ ok: true });
 });
@@ -874,11 +1263,11 @@ app.post('/api/maintenance/record', (req, res) => {
     return res.status(400).json({ error: 'unit and serviceType are required' });
   }
 
-  const store = readMaint();
-  if (!Array.isArray(store.records)) store.records = [];
+  const erp = readErp();
+  if (!Array.isArray(erp.records)) erp.records = [];
 
-  store.records.push({
-    id: Date.now().toString(),
+  erp.records.push({
+    id: uid('rec'),
     recordType: body.recordType || 'maintenance',
     unit: body.unit,
     serviceType: body.serviceType,
@@ -897,11 +1286,94 @@ app.post('/api/maintenance/record', (req, res) => {
     accidentAtFault: body.accidentAtFault || '',
     accidentLocation: body.accidentLocation || '',
     accidentReportNumber: body.accidentReportNumber || '',
-    repairLocationType: body.repairLocationType || ''
+    repairLocationType: body.repairLocationType || '',
+    qboSyncStatus: '',
+    qboPurchaseId: '',
+    qboVendorId: '',
+    qboItemId: '',
+    qboAccountId: '',
+    qboError: ''
   });
 
-  writeMaint(store);
+  writeErp(erp);
   res.json({ ok: true });
+});
+
+app.post('/api/qbo/post-record/:id', async (req, res) => {
+  try {
+    const recordId = String(req.params.id);
+    const erp = readErp();
+    const idx = (erp.records || []).findIndex(r => String(r.id) === recordId);
+
+    if (idx === -1) return res.status(404).json({ error: 'Record not found' });
+
+    const record = erp.records[idx];
+
+    const vendorTemp = {
+      displayName: sanitizeName(record.vendor || `Vendor ${record.unit}`),
+      companyName: sanitizeName(record.vendor || `Vendor ${record.unit}`)
+    };
+    const vendorQbo = await qboEnsureVendor(vendorTemp);
+
+    let accountName = 'Maintenance Expense';
+    if (record.recordType === 'tire' || String(record.serviceType).toLowerCase().includes('tire')) accountName = 'Tire Expense';
+    if (record.recordType === 'accident') accountName = 'Accident Expense';
+    if (record.recordType === 'repair' && record.repairLocationType === 'road-service') accountName = 'Road Service Expense';
+    if (record.recordType === 'repair' && record.repairLocationType === 'over-the-road') accountName = 'Over The Road Repair Expense';
+    if (String(record.serviceType).toLowerCase().includes('reefer')) accountName = 'Reefer Maintenance Expense';
+
+    const accountQbo = await qboEnsureExpenseAccount(accountName);
+
+    const amount = safeNum(record.cost, 0);
+    if (!(amount > 0)) throw new Error('Record cost must be greater than 0 for QuickBooks posting');
+
+    const payload = {
+      TxnDate: record.serviceDate || new Date().toISOString().slice(0, 10),
+      PaymentType: 'Other',
+      EntityRef: { type: 'Vendor', value: vendorQbo.Id },
+      Line: [
+        {
+          Amount: amount,
+          DetailType: 'AccountBasedExpenseLineDetail',
+          Description: sanitizeName(`Unit ${record.unit} | ${record.serviceType} | ${record.notes || ''}`, 'Maintenance'),
+          AccountBasedExpenseLineDetail: {
+            AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
+          }
+        }
+      ],
+      PrivateNote: sanitizeName(`IH35 ${record.recordType} | ${record.unit} | ${record.serviceType}`, 'Maintenance')
+    };
+
+    const created = await qboPost('purchase', payload);
+
+    erp.records[idx] = {
+      ...record,
+      qboSyncStatus: 'posted',
+      qboPurchaseId: created?.Purchase?.Id || '',
+      qboVendorId: vendorQbo?.Id || '',
+      qboItemId: '',
+      qboAccountId: accountQbo?.Id || '',
+      qboError: '',
+      qboPostedAt: new Date().toISOString()
+    };
+
+    writeErp(erp);
+
+    res.json({ ok: true, record: erp.records[idx] });
+  } catch (error) {
+    const erp = readErp();
+    const idx = (erp.records || []).findIndex(r => String(r.id) === String(req.params.id));
+    if (idx !== -1) {
+      erp.records[idx] = {
+        ...erp.records[idx],
+        qboSyncStatus: 'error',
+        qboError: error.message,
+        qboErrorAt: new Date().toISOString()
+      };
+      writeErp(erp);
+    }
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/health', (_req, res) => {

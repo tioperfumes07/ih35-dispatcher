@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>IH35 Maintenance Module</title>
+  <title>IH35 Maintenance + AP Center</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
@@ -45,7 +45,7 @@
     textarea{min-height:80px;resize:vertical}
     .layout{
       display:grid;
-      grid-template-columns: 330px 1fr 380px;
+      grid-template-columns: 320px 1fr 430px;
       gap:12px;
       padding:12px;
     }
@@ -63,6 +63,14 @@
       background:#fff;
     }
     .panel-body{padding:12px}
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .tab-btn.active{background:#eff6ff;border-color:#bfdbfe}
+    .hidden{display:none}
     .summary{
       display:grid;
       grid-template-columns:repeat(4,1fr);
@@ -101,6 +109,8 @@
     .current{background:#f0fdf4;color:var(--green)}
     .soon{background:#fff7ed;color:var(--yellow)}
     .past{background:#fef2f2;color:var(--red)}
+    .posted{background:#eff6ff;color:#1d4ed8}
+    .error{background:#fef2f2;color:#b91c1c}
     .toolbar{
       display:flex;
       gap:10px;
@@ -126,7 +136,7 @@
     table{
       width:100%;
       border-collapse:collapse;
-      min-width:1450px;
+      min-width:1500px;
       font-size:13px;
     }
     th, td{
@@ -161,7 +171,7 @@
 </head>
 <body>
   <div class="topbar">
-    <h1>IH35 Maintenance Module</h1>
+    <h1>IH35 Maintenance + AP Center</h1>
     <a class="btn" href="/">Dispatcher Board</a>
     <button onclick="loadAll()">Refresh</button>
     <input id="unitSearch" placeholder="Search unit" oninput="renderUnitList()" style="max-width:220px">
@@ -178,67 +188,178 @@
     </div>
 
     <div class="panel">
-      <h2>Maintenance Dashboard</h2>
+      <h2>ERP Center</h2>
       <div class="panel-body">
-        <div class="qb-status">
-          <button onclick="connectQuickBooks()">Connect QuickBooks</button>
-          <button onclick="testQuickBooks()">Test QuickBooks</button>
-          <span id="qbStatusText" class="small">QuickBooks not checked</span>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="showTab('maintenanceTab', this)">Maintenance</button>
+          <button class="tab-btn" onclick="showTab('apTab', this)">AP Transactions</button>
+          <button class="tab-btn" onclick="showTab('vendorsTab', this)">Vendors</button>
+          <button class="tab-btn" onclick="showTab('itemsTab', this)">Items / Services</button>
         </div>
 
-        <div class="summary">
-          <div class="card"><div class="label">Units</div><div class="value" id="sumUnits">0</div></div>
-          <div class="card"><div class="label">Due Soon</div><div class="value" id="sumSoon">0</div></div>
-          <div class="card"><div class="label">Past Due</div><div class="value" id="sumPast">0</div></div>
-          <div class="card"><div class="label">Tire Alerts</div><div class="value" id="sumTire">0</div></div>
+        <div id="maintenanceTab">
+          <div class="qb-status">
+            <button onclick="connectQuickBooks()">Connect QuickBooks</button>
+            <button onclick="testQuickBooks()">Test QuickBooks</button>
+            <span id="qbStatusText" class="small">QuickBooks not checked</span>
+          </div>
+
+          <div class="summary">
+            <div class="card"><div class="label">Units</div><div class="value" id="sumUnits">0</div></div>
+            <div class="card"><div class="label">Due Soon</div><div class="value" id="sumSoon">0</div></div>
+            <div class="card"><div class="label">Past Due</div><div class="value" id="sumPast">0</div></div>
+            <div class="card"><div class="label">Tire Alerts</div><div class="value" id="sumTire">0</div></div>
+          </div>
+
+          <div class="toolbar">
+            <select id="statusFilter" onchange="renderDashboard()">
+              <option value="">All statuses</option>
+              <option value="current">Current</option>
+              <option value="due soon">Due soon</option>
+              <option value="past due">Past due</option>
+            </select>
+            <select id="serviceFilter" onchange="renderDashboard()">
+              <option value="">All services</option>
+            </select>
+            <select id="unitFilter" onchange="renderDashboard()">
+              <option value="">All units</option>
+            </select>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Unit</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Current Mileage</th>
+                  <th>Last Date</th>
+                  <th>Last Mileage</th>
+                  <th>Next Due Date</th>
+                  <th>Next Due Mileage</th>
+                  <th>Vendor</th>
+                  <th>Cost</th>
+                  <th>QB Sync</th>
+                  <th>QB Purchase</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardBody"></tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:14px">
+            <div class="label">QuickBooks connection test</div>
+            <div id="qboTestBox" class="small">Not tested yet.</div>
+          </div>
+
+          <div style="margin-top:14px">
+            <div class="label">Tire / frequency alerts</div>
+            <div id="tireAlerts" class="small">No tire alerts.</div>
+          </div>
         </div>
 
-        <div class="toolbar">
-          <select id="statusFilter" onchange="renderDashboard()">
-            <option value="">All statuses</option>
-            <option value="current">Current</option>
-            <option value="due soon">Due soon</option>
-            <option value="past due">Past due</option>
-          </select>
-          <select id="serviceFilter" onchange="renderDashboard()">
-            <option value="">All services</option>
-          </select>
-          <select id="unitFilter" onchange="renderDashboard()">
-            <option value="">All units</option>
-          </select>
+        <div id="apTab" class="hidden">
+          <div class="label">New Expense / Bill</div>
+          <div class="form-stack">
+            <div class="grid2">
+              <select id="apTxnType">
+                <option value="expense">Expense</option>
+                <option value="bill">Bill</option>
+              </select>
+              <select id="apDetailMode" onchange="toggleApDetailMode()">
+                <option value="category">Category details</option>
+                <option value="item">Item details</option>
+              </select>
+            </div>
+
+            <div class="grid2">
+              <select id="apVendorId"></select>
+              <select id="apPaymentMethodId">
+                <option value="">Payment method</option>
+              </select>
+            </div>
+
+            <div class="grid2">
+              <input id="apTxnDate" type="date">
+              <input id="apDueDate" type="date">
+            </div>
+
+            <div id="apCategoryBlock">
+              <select id="apAccountId"></select>
+            </div>
+
+            <div id="apItemBlock" class="hidden">
+              <div class="grid2">
+                <select id="apItemId"></select>
+                <input id="apQty" type="number" step="1" value="1" placeholder="Qty">
+              </div>
+            </div>
+
+            <div class="grid2">
+              <input id="apAmount" type="number" step="0.01" placeholder="Amount">
+              <input id="apAssetUnit" placeholder="Unit / asset">
+            </div>
+
+            <input id="apDescription" placeholder="Description">
+            <textarea id="apMemo" placeholder="Memo"></textarea>
+
+            <button onclick="saveApTransaction()">Save AP Transaction</button>
+          </div>
+
+          <div style="margin-top:14px" class="label">AP Transactions</div>
+          <div id="apList"></div>
         </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Unit</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>Service</th>
-                <th>Status</th>
-                <th>Current Mileage</th>
-                <th>Last Date</th>
-                <th>Last Mileage</th>
-                <th>Next Due Date</th>
-                <th>Next Due Mileage</th>
-                <th>Vendor</th>
-                <th>Cost</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody id="dashboardBody"></tbody>
-          </table>
+        <div id="vendorsTab" class="hidden">
+          <div class="label">New Vendor</div>
+          <div class="form-stack">
+            <div class="grid2">
+              <input id="vendorName" placeholder="Vendor name">
+              <input id="vendorCompanyName" placeholder="Company name">
+            </div>
+            <div class="grid2">
+              <input id="vendorPhone" placeholder="Phone">
+              <input id="vendorEmail" placeholder="Email">
+            </div>
+            <input id="vendorAddress" placeholder="Address">
+            <div class="grid2">
+              <input id="vendorType" placeholder="Vendor type">
+              <input id="vendorPaymentTerms" placeholder="Payment terms">
+            </div>
+            <select id="vendorDefaultAccountId"></select>
+            <textarea id="vendorNotes" placeholder="Notes"></textarea>
+            <button onclick="saveVendor()">Save Vendor</button>
+          </div>
+
+          <div style="margin-top:14px" class="label">Vendor List</div>
+          <div id="vendorList"></div>
         </div>
 
-        <div style="margin-top:14px">
-          <div class="label">QuickBooks connection test</div>
-          <div id="qboTestBox" class="small">Not tested yet.</div>
-        </div>
+        <div id="itemsTab" class="hidden">
+          <div class="label">New Product / Service Item</div>
+          <div class="form-stack">
+            <div class="grid2">
+              <input id="itemName" placeholder="Item / service name">
+              <input id="itemSku" placeholder="SKU">
+            </div>
+            <div class="grid2">
+              <select id="itemType">
+                <option value="Service">Service</option>
+                <option value="NonInventory">NonInventory</option>
+              </select>
+              <input id="itemDefaultCost" type="number" step="0.01" placeholder="Default cost">
+            </div>
+            <select id="itemDefaultAccountId"></select>
+            <textarea id="itemDescription" placeholder="Description"></textarea>
+            <button onclick="saveItem()">Save Item</button>
+          </div>
 
-        <div style="margin-top:14px">
-          <div class="label">Tire / frequency alerts</div>
-          <div id="tireAlerts" class="small">No tire alerts.</div>
+          <div style="margin-top:14px" class="label">Item / Service List</div>
+          <div id="itemList"></div>
         </div>
       </div>
     </div>
@@ -257,7 +378,7 @@
         </div>
 
         <div style="margin-top:16px">
-          <div class="label">Add Record</div>
+          <div class="label">Add Maintenance Record</div>
           <div class="form-stack">
             <select id="recordTypeInput" onchange="toggleRecordFields()">
               <option value="maintenance">Maintenance</option>
@@ -268,7 +389,7 @@
             </select>
 
             <select id="serviceTypeInput"></select>
-            <input id="customServiceTypeInput" placeholder="Custom service type" style="display:none">
+            <input id="customServiceTypeInput" placeholder="Custom service type" class="hidden">
 
             <input id="serviceDateInput" type="date">
             <input id="serviceMileageInput" type="number" placeholder="Service mileage">
@@ -276,7 +397,7 @@
             <input id="costInput" type="number" step="0.01" placeholder="Cost">
             <textarea id="notesInput" placeholder="Notes"></textarea>
 
-            <div id="tireFields" style="display:none">
+            <div id="tireFields" class="hidden">
               <div class="grid2">
                 <select id="tireConditionInput">
                   <option value="">Tire condition</option>
@@ -297,7 +418,7 @@
               </div>
             </div>
 
-            <div id="repairFields" style="display:none">
+            <div id="repairFields" class="hidden">
               <select id="repairLocationTypeInput">
                 <option value="">Repair type</option>
                 <option value="in-house">In-house mechanic shop</option>
@@ -307,7 +428,7 @@
               </select>
             </div>
 
-            <div id="accidentFields" style="display:none">
+            <div id="accidentFields" class="hidden">
               <div class="grid2">
                 <select id="accidentAtFaultInput">
                   <option value="">At fault?</option>
@@ -334,7 +455,7 @@
   <script>
     let vehicles = [];
     let dashboard = [];
-    let maintenanceStore = {};
+    let erp = {};
     let selectedUnit = '';
     let tireAlerts = [];
 
@@ -344,13 +465,15 @@
       try {
         return JSON.parse(text);
       } catch {
-        throw new Error(text.slice(0, 200));
+        throw new Error(text.slice(0, 300));
       }
     }
 
     function statusClass(s) {
       if (s === 'past due') return 'status past';
       if (s === 'due soon') return 'status soon';
+      if (s === 'posted') return 'status posted';
+      if (s === 'error') return 'status error';
       return 'status current';
     }
 
@@ -359,6 +482,13 @@
       const pb = parseInt(String(b.name || b.unit).replace(/\D/g, ''), 10);
       if (Number.isFinite(pa) && Number.isFinite(pb)) return pa - pb;
       return String(a.name || a.unit).localeCompare(String(b.name || b.unit));
+    }
+
+    function showTab(tabId, btn) {
+      document.querySelectorAll('#maintenanceTab,#apTab,#vendorsTab,#itemsTab').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
     }
 
     async function loadQboStatus() {
@@ -406,12 +536,12 @@
 
     async function loadAll() {
       const dashRes = await j('/api/maintenance/dashboard');
-      const storeRes = await j('/api/maintenance/records');
+      const erpRes = await j('/api/maintenance/records');
 
       vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
       dashboard = dashRes.dashboard || [];
       tireAlerts = dashRes.tireAlerts || [];
-      maintenanceStore = storeRes || {};
+      erp = erpRes || {};
 
       if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
       if (selectedUnit && !vehicles.find(v => v.name === selectedUnit) && vehicles.length) {
@@ -419,10 +549,14 @@
       }
 
       fillFilters();
+      fillMasterSelects();
       renderSummary();
       renderUnitList();
       renderDashboard();
       renderSelectedUnit();
+      renderVendors();
+      renderItems();
+      renderApTransactions();
       await loadQboStatus();
 
       document.getElementById('lastUpdated').textContent =
@@ -438,6 +572,31 @@
       document.getElementById('unitFilter').innerHTML =
         '<option value="">All units</option>' +
         vehicles.map(v => `<option>${v.name}</option>`).join('');
+    }
+
+    function fillMasterSelects() {
+      const vendors = erp.vendors || [];
+      const items = erp.items || [];
+      const accounts = erp.accounts || [];
+      const paymentMethods = erp.paymentMethods || [];
+
+      document.getElementById('apVendorId').innerHTML =
+        '<option value="">Select vendor</option>' + vendors.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+
+      document.getElementById('apItemId').innerHTML =
+        '<option value="">Select item/service</option>' + items.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+
+      document.getElementById('apAccountId').innerHTML =
+        '<option value="">Select category/account</option>' + accounts.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+
+      document.getElementById('vendorDefaultAccountId').innerHTML =
+        '<option value="">Default account</option>' + accounts.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+
+      document.getElementById('itemDefaultAccountId').innerHTML =
+        '<option value="">Default account</option>' + accounts.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+
+      document.getElementById('apPaymentMethodId').innerHTML =
+        '<option value="">Payment method</option>' + paymentMethods.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
     }
 
     function renderSummary() {
@@ -495,9 +654,11 @@
           <td>${r.nextDueMileage ?? ''}</td>
           <td>${r.vendor || ''}</td>
           <td>${r.cost ?? ''}</td>
+          <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${r.qboSyncStatus || ''}</span></td>
+          <td>${r.qboPurchaseId || ''}</td>
           <td>${r.notes || ''}</td>
         </tr>
-      `).join('') || '<tr><td colspan="13">No rows found.</td></tr>';
+      `).join('') || '<tr><td colspan="15">No rows found.</td></tr>';
 
       document.getElementById('tireAlerts').innerHTML = tireAlerts.length
         ? tireAlerts.map(a => `
@@ -513,6 +674,7 @@
       selectedUnit = unit;
       renderUnitList();
       renderSelectedUnit();
+      document.getElementById('apAssetUnit').value = unit;
     }
 
     function setServiceOptions() {
@@ -524,14 +686,42 @@
 
     function toggleRecordFields() {
       const type = document.getElementById('recordTypeInput').value;
-      document.getElementById('tireFields').style.display = type === 'tire' ? 'block' : 'none';
-      document.getElementById('repairFields').style.display = type === 'repair' ? 'block' : 'none';
-      document.getElementById('accidentFields').style.display = type === 'accident' ? 'block' : 'none';
-      document.getElementById('customServiceTypeInput').style.display = type === 'custom' ? 'block' : 'none';
+      document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
+      document.getElementById('repairFields').classList.toggle('hidden', type !== 'repair');
+      document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
+      document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'custom');
 
       if (type === 'tire') document.getElementById('serviceTypeInput').value = 'Tires';
       if (type === 'repair') document.getElementById('serviceTypeInput').value = 'Repair';
       if (type === 'accident') document.getElementById('serviceTypeInput').value = 'Accident Report';
+    }
+
+    function toggleApDetailMode() {
+      const mode = document.getElementById('apDetailMode').value;
+      document.getElementById('apCategoryBlock').classList.toggle('hidden', mode !== 'category');
+      document.getElementById('apItemBlock').classList.toggle('hidden', mode !== 'item');
+    }
+
+    async function postRecordToQbo(recordId) {
+      try {
+        const result = await j(`/api/qbo/post-record/${recordId}`, { method: 'POST' });
+        alert(`Posted to QuickBooks. Purchase ID: ${result.record.qboPurchaseId || ''}`);
+        await loadAll();
+      } catch (e) {
+        alert(`QuickBooks posting failed: ${e.message}`);
+        await loadAll();
+      }
+    }
+
+    async function postApToQbo(apId) {
+      try {
+        const result = await j(`/api/qbo/post-ap/${apId}`, { method: 'POST' });
+        alert(`Posted to QuickBooks. ${result.ap.qboEntityType} ID: ${result.ap.qboEntityId || ''}`);
+        await loadAll();
+      } catch (e) {
+        alert(`QuickBooks posting failed: ${e.message}`);
+        await loadAll();
+      }
     }
 
     function renderSelectedUnit() {
@@ -548,33 +738,163 @@
       `;
 
       document.getElementById('mileageInput').value =
-        maintenanceStore.currentMileage?.[selectedUnit] ?? '';
+        erp.currentMileage?.[selectedUnit] ?? '';
 
       setServiceOptions();
       toggleRecordFields();
 
-      const records = (maintenanceStore.records || [])
+      const records = (erp.records || [])
         .filter(r => r.unit === selectedUnit)
         .sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
 
       document.getElementById('unitHistory').innerHTML = records.length
         ? records.map(r => `
             <div class="card" style="margin-bottom:8px">
-              <div><b>${r.serviceType}</b> <span class="small">(${r.recordType || 'maintenance'})</span></div>
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+                <div><b>${r.serviceType}</b> <span class="small">(${r.recordType || 'maintenance'})</span></div>
+                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${r.qboSyncStatus || 'not posted'}</span></div>
+              </div>
               <div class="small">Date: ${r.serviceDate || ''} | Mileage: ${r.serviceMileage ?? ''}</div>
               <div class="small">Vendor: ${r.vendor || ''} | Cost: ${r.cost ?? ''}</div>
               ${r.tirePosition ? `<div class="small">Tire: ${r.tireCondition || ''} | ${r.tirePosition} | ${r.tireBrand || ''}</div>` : ''}
               ${r.repairLocationType ? `<div class="small">Repair type: ${r.repairLocationType}</div>` : ''}
               ${r.accidentAtFault ? `<div class="small">Accident: ${r.accidentAtFault} | ${r.accidentLocation || ''}</div>` : ''}
+              ${r.qboPurchaseId ? `<div class="small">QB Purchase ID: ${r.qboPurchaseId}</div>` : ''}
+              ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${r.qboError}</div>` : ''}
               <div class="small">${r.notes || ''}</div>
+              <div style="margin-top:8px">
+                <button onclick="postRecordToQbo('${r.id}')">Send to QuickBooks</button>
+              </div>
             </div>
           `).join('')
         : 'No records yet.';
     }
 
+    function renderVendors() {
+      const vendors = erp.vendors || [];
+      document.getElementById('vendorList').innerHTML = vendors.length
+        ? vendors.map(v => `
+            <div class="card" style="margin-bottom:8px">
+              <div><b>${v.name}</b></div>
+              <div class="small">${v.vendorType || ''} | ${v.paymentTerms || ''}</div>
+              <div class="small">${v.phone || ''} | ${v.email || ''}</div>
+              <div class="small">${v.address || ''}</div>
+            </div>
+          `).join('')
+        : 'No vendors yet.';
+    }
+
+    function renderItems() {
+      const items = erp.items || [];
+      document.getElementById('itemList').innerHTML = items.length
+        ? items.map(v => `
+            <div class="card" style="margin-bottom:8px">
+              <div><b>${v.name}</b></div>
+              <div class="small">${v.type || ''} | SKU: ${v.sku || ''}</div>
+              <div class="small">Default cost: ${v.defaultCost ?? ''}</div>
+              <div class="small">${v.description || ''}</div>
+            </div>
+          `).join('')
+        : 'No items yet.';
+    }
+
+    function renderApTransactions() {
+      const rows = (erp.apTransactions || []).slice().reverse();
+      document.getElementById('apList').innerHTML = rows.length
+        ? rows.map(r => `
+            <div class="card" style="margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+                <div><b>${r.txnType.toUpperCase()}</b> — ${r.detailMode}</div>
+                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${r.qboSyncStatus || 'not posted'}</span></div>
+              </div>
+              <div class="small">Date: ${r.txnDate || ''} ${r.dueDate ? '| Due: ' + r.dueDate : ''}</div>
+              <div class="small">Unit: ${r.assetUnit || ''}</div>
+              <div class="small">Amount: ${r.amount ?? ''}</div>
+              <div class="small">Description: ${r.description || ''}</div>
+              ${r.qboEntityType ? `<div class="small">QB ${r.qboEntityType} ID: ${r.qboEntityId || ''}</div>` : ''}
+              ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${r.qboError}</div>` : ''}
+              <div style="margin-top:8px">
+                <button onclick="postApToQbo('${r.id}')">Post to QuickBooks</button>
+              </div>
+            </div>
+          `).join('')
+        : 'No AP transactions yet.';
+    }
+
+    async function saveVendor() {
+      await j('/api/erp/vendor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('vendorName').value,
+          companyName: document.getElementById('vendorCompanyName').value,
+          phone: document.getElementById('vendorPhone').value,
+          email: document.getElementById('vendorEmail').value,
+          address: document.getElementById('vendorAddress').value,
+          vendorType: document.getElementById('vendorType').value,
+          paymentTerms: document.getElementById('vendorPaymentTerms').value,
+          defaultAccountId: document.getElementById('vendorDefaultAccountId').value,
+          notes: document.getElementById('vendorNotes').value
+        })
+      });
+
+      ['vendorName','vendorCompanyName','vendorPhone','vendorEmail','vendorAddress','vendorType','vendorPaymentTerms','vendorNotes'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('vendorDefaultAccountId').value = '';
+      await loadAll();
+    }
+
+    async function saveItem() {
+      await j('/api/erp/item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('itemName').value,
+          sku: document.getElementById('itemSku').value,
+          type: document.getElementById('itemType').value,
+          defaultCost: document.getElementById('itemDefaultCost').value,
+          defaultAccountId: document.getElementById('itemDefaultAccountId').value,
+          description: document.getElementById('itemDescription').value
+        })
+      });
+
+      ['itemName','itemSku','itemDefaultCost','itemDescription'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('itemType').value = 'Service';
+      document.getElementById('itemDefaultAccountId').value = '';
+      await loadAll();
+    }
+
+    async function saveApTransaction() {
+      await j('/api/erp/ap-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          txnType: document.getElementById('apTxnType').value,
+          detailMode: document.getElementById('apDetailMode').value,
+          vendorId: document.getElementById('apVendorId').value,
+          paymentMethodId: document.getElementById('apPaymentMethodId').value,
+          accountId: document.getElementById('apAccountId').value,
+          itemId: document.getElementById('apItemId').value,
+          qty: document.getElementById('apQty').value,
+          amount: document.getElementById('apAmount').value,
+          txnDate: document.getElementById('apTxnDate').value,
+          dueDate: document.getElementById('apDueDate').value,
+          description: document.getElementById('apDescription').value,
+          memo: document.getElementById('apMemo').value,
+          assetUnit: document.getElementById('apAssetUnit').value
+        })
+      });
+
+      ['apAmount','apDescription','apMemo','apDueDate'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('apQty').value = 1;
+      await loadAll();
+    }
+
     async function saveMileage() {
       if (!selectedUnit) return;
-
       await j('/api/maintenance/mileage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -583,7 +903,6 @@
           currentMileage: document.getElementById('mileageInput').value
         })
       });
-
       await loadAll();
     }
 
@@ -622,24 +941,14 @@
         })
       });
 
-      document.getElementById('serviceDateInput').value = '';
-      document.getElementById('serviceMileageInput').value = '';
-      document.getElementById('vendorInput').value = '';
-      document.getElementById('costInput').value = '';
-      document.getElementById('notesInput').value = '';
-      document.getElementById('customServiceTypeInput').value = '';
+      ['serviceDateInput','serviceMileageInput','vendorInput','costInput','notesInput','customServiceTypeInput',
+       'tirePositionInput','tireBrandInput','tireDotInput','installMileageInput','removeMileageInput',
+       'expectedTireLifeMilesInput','accidentLocationInput','accidentReportNumberInput'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
       document.getElementById('tireConditionInput').value = '';
-      document.getElementById('tirePositionInput').value = '';
-      document.getElementById('tireBrandInput').value = '';
-      document.getElementById('tireDotInput').value = '';
-      document.getElementById('installMileageInput').value = '';
-      document.getElementById('removeMileageInput').value = '';
-      document.getElementById('expectedTireLifeMilesInput').value = '';
       document.getElementById('accidentAtFaultInput').value = '';
-      document.getElementById('accidentLocationInput').value = '';
-      document.getElementById('accidentReportNumberInput').value = '';
       document.getElementById('repairLocationTypeInput').value = '';
-
       await loadAll();
     }
 
