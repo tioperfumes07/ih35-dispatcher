@@ -162,6 +162,11 @@
       flex-wrap:wrap;
       margin-bottom:12px;
     }
+    .search-note{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:-4px;
+    }
     @media (max-width:1450px){
       .layout{grid-template-columns:1fr}
       .summary{grid-template-columns:1fr 1fr}
@@ -170,6 +175,13 @@
   </style>
 </head>
 <body>
+  <datalist id="qboVendorOptions"></datalist>
+  <datalist id="qboItemOptions"></datalist>
+  <datalist id="qboAccountOptions"></datalist>
+  <datalist id="paymentMethodOptions"></datalist>
+  <datalist id="unitOptions"></datalist>
+  <datalist id="serviceOptions"></datalist>
+
   <div class="topbar">
     <h1>IH35 Maintenance + Live QuickBooks AP Center</h1>
     <a class="btn" href="/">Dispatcher Board</a>
@@ -218,12 +230,12 @@
               <option value="due soon">Due soon</option>
               <option value="past due">Past due</option>
             </select>
-            <select id="serviceFilter" onchange="renderDashboard()">
-              <option value="">All services</option>
-            </select>
-            <select id="unitFilter" onchange="renderDashboard()">
-              <option value="">All units</option>
-            </select>
+            <div style="min-width:220px;flex:1">
+              <input id="serviceFilterSearch" list="serviceOptions" placeholder="Type service to filter" oninput="renderDashboard()">
+            </div>
+            <div style="min-width:220px;flex:1">
+              <input id="unitFilterSearch" list="unitOptions" placeholder="Type unit to filter" oninput="renderDashboard()">
+            </div>
           </div>
 
           <div class="table-wrap">
@@ -278,8 +290,12 @@
 
             <div class="grid2">
               <input id="apDocNumber" placeholder="Expense No. / Bill No.">
-              <select id="apVendorQboId"></select>
+              <div>
+                <input id="apVendorSearch" list="qboVendorOptions" placeholder="Type vendor name" oninput="resolveApVendorSearch()">
+                <input id="apVendorQboId" type="hidden">
+              </div>
             </div>
+            <div class="search-note">Type to search vendors directly. No need to scroll the list.</div>
 
             <div class="grid2">
               <input id="apTxnDate" type="date">
@@ -287,17 +303,26 @@
             </div>
 
             <div class="grid2">
-              <select id="apPaymentMethodId"></select>
+              <div>
+                <input id="apPaymentMethodSearch" list="paymentMethodOptions" placeholder="Type payment method" oninput="resolveApPaymentMethodSearch()">
+                <input id="apPaymentMethodId" type="hidden">
+              </div>
               <input id="apAssetUnit" placeholder="Unit / asset">
             </div>
 
             <div id="apCategoryBlock">
-              <select id="apAccountQboId"></select>
+              <div>
+                <input id="apAccountSearch" list="qboAccountOptions" placeholder="Type category / account" oninput="resolveApAccountSearch()">
+                <input id="apAccountQboId" type="hidden">
+              </div>
             </div>
 
             <div id="apItemBlock" class="hidden">
               <div class="grid2">
-                <select id="apItemQboId"></select>
+                <div>
+                  <input id="apItemSearch" list="qboItemOptions" placeholder="Type item / service" oninput="resolveApItemSearch()">
+                  <input id="apItemQboId" type="hidden">
+                </div>
                 <input id="apQty" type="number" step="1" value="1" placeholder="Qty">
               </div>
             </div>
@@ -322,7 +347,21 @@
             <span id="qboMasterStatus" class="small">Not refreshed yet</span>
           </div>
 
-          <div class="grid3">
+          <div class="label">Create Vendor Directly in QuickBooks</div>
+          <div class="form-stack">
+            <div class="grid2">
+              <input id="newVendorName" placeholder="Vendor name">
+              <input id="newVendorCompanyName" placeholder="Company name">
+            </div>
+            <div class="grid2">
+              <input id="newVendorPhone" placeholder="Phone">
+              <input id="newVendorEmail" placeholder="Email">
+            </div>
+            <input id="newVendorAddress" placeholder="Address">
+            <button onclick="createQboVendor()">Create Vendor in QuickBooks</button>
+          </div>
+
+          <div class="grid3" style="margin-top:14px">
             <div class="card">
               <div class="label">QuickBooks Vendors</div>
               <div class="value" id="qboVendorCount">0</div>
@@ -337,13 +376,22 @@
             </div>
           </div>
 
-          <div style="margin-top:14px" class="label">Live QuickBooks Vendors</div>
+          <div style="margin-top:14px">
+            <input id="qboVendorFilter" placeholder="Search QuickBooks vendors" oninput="renderQboMaster()">
+          </div>
+          <div style="margin-top:8px" class="label">Live QuickBooks Vendors</div>
           <div id="qboVendorList"></div>
 
-          <div style="margin-top:14px" class="label">Live QuickBooks Items</div>
+          <div style="margin-top:14px">
+            <input id="qboItemFilter" placeholder="Search QuickBooks items" oninput="renderQboMaster()">
+          </div>
+          <div style="margin-top:8px" class="label">Live QuickBooks Items</div>
           <div id="qboItemList"></div>
 
-          <div style="margin-top:14px" class="label">Live QuickBooks Accounts</div>
+          <div style="margin-top:14px">
+            <input id="qboAccountFilter" placeholder="Search QuickBooks accounts" oninput="renderQboMaster()">
+          </div>
+          <div style="margin-top:8px" class="label">Live QuickBooks Accounts</div>
           <div id="qboAccountList"></div>
         </div>
       </div>
@@ -373,12 +421,15 @@
               <option value="custom">Custom</option>
             </select>
 
-            <select id="serviceTypeInput"></select>
+            <div>
+              <input id="serviceSearchInput" list="serviceOptions" placeholder="Type service name" oninput="resolveServiceSearch()">
+              <input id="serviceTypeInput" type="hidden">
+            </div>
             <input id="customServiceTypeInput" placeholder="Custom service type" class="hidden">
 
             <input id="serviceDateInput" type="date">
             <input id="serviceMileageInput" type="number" placeholder="Service mileage">
-            <input id="vendorInput" placeholder="Vendor">
+            <input id="vendorInput" list="qboVendorOptions" placeholder="Type vendor name">
             <input id="costInput" type="number" step="0.01" placeholder="Cost">
             <textarea id="notesInput" placeholder="Notes"></textarea>
 
@@ -476,6 +527,19 @@
       btn.classList.add('active');
     }
 
+    function cacheVendors() {
+      return erp.qboCache?.vendors || [];
+    }
+    function cacheItems() {
+      return erp.qboCache?.items || [];
+    }
+    function cacheAccounts() {
+      return erp.qboCache?.accounts || [];
+    }
+    function paymentMethods() {
+      return erp.paymentMethods || [];
+    }
+
     async function loadQboStatus() {
       try {
         const s = await j('/api/qbo/status');
@@ -520,12 +584,46 @@
           accounts: data.accounts || [],
           refreshedAt: data.refreshedAt || ''
         };
-        fillMasterSelects();
+        fillDataLists();
         renderQboMaster();
         document.getElementById('qboMasterStatus').textContent =
           `Refreshed: ${new Date(data.refreshedAt || Date.now()).toLocaleString()}`;
       } catch (e) {
         document.getElementById('qboMasterStatus').textContent = 'Refresh failed: ' + e.message;
+      }
+    }
+
+    async function createQboVendor() {
+      try {
+        const result = await j('/api/qbo/create-vendor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('newVendorName').value,
+            companyName: document.getElementById('newVendorCompanyName').value,
+            phone: document.getElementById('newVendorPhone').value,
+            email: document.getElementById('newVendorEmail').value,
+            address: document.getElementById('newVendorAddress').value
+          })
+        });
+
+        erp.qboCache = result.cache || erp.qboCache;
+        fillDataLists();
+        renderQboMaster();
+
+        const displayName = result.vendor?.DisplayName || '';
+        const vendorId = result.vendor?.Id || '';
+        document.getElementById('apVendorSearch').value = displayName;
+        document.getElementById('apVendorQboId').value = vendorId;
+        document.getElementById('vendorInput').value = displayName;
+
+        ['newVendorName','newVendorCompanyName','newVendorPhone','newVendorEmail','newVendorAddress'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+
+        alert(result.created ? 'Vendor created in QuickBooks.' : 'Vendor already existed in QuickBooks.');
+      } catch (e) {
+        alert('Create vendor failed: ' + e.message);
       }
     }
 
@@ -543,8 +641,7 @@
         selectedUnit = vehicles[0].name;
       }
 
-      fillFilters();
-      fillMasterSelects();
+      fillDataLists();
       renderSummary();
       renderUnitList();
       renderDashboard();
@@ -557,36 +654,33 @@
         'Last updated: ' + new Date().toLocaleTimeString();
     }
 
-    function fillFilters() {
-      const serviceValues = Array.from(new Set(dashboard.map(x => x.serviceType))).sort();
-      document.getElementById('serviceFilter').innerHTML =
-        '<option value="">All services</option>' +
-        serviceValues.map(v => `<option>${v}</option>`).join('');
+    function fillDataLists() {
+      document.getElementById('qboVendorOptions').innerHTML =
+        cacheVendors().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
 
-      document.getElementById('unitFilter').innerHTML =
-        '<option value="">All units</option>' +
-        vehicles.map(v => `<option>${v.name}</option>`).join('');
+      document.getElementById('qboItemOptions').innerHTML =
+        cacheItems().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+
+      document.getElementById('qboAccountOptions').innerHTML =
+        cacheAccounts().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+
+      document.getElementById('paymentMethodOptions').innerHTML =
+        paymentMethods().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+
+      document.getElementById('unitOptions').innerHTML =
+        vehicles.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+
+      const serviceValues = Array.from(new Set(dashboard.map(x => x.serviceType))).sort();
+      document.getElementById('serviceOptions').innerHTML =
+        serviceValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
     }
 
-    function fillMasterSelects() {
-      const cache = erp.qboCache || { vendors: [], items: [], accounts: [] };
-      const paymentMethods = erp.paymentMethods || [];
-
-      document.getElementById('apVendorQboId').innerHTML =
-        '<option value="">QuickBooks vendor</option>' +
-        (cache.vendors || []).map(v => `<option value="${v.qboId}">${v.name}</option>`).join('');
-
-      document.getElementById('apItemQboId').innerHTML =
-        '<option value="">QuickBooks item/service</option>' +
-        (cache.items || []).map(v => `<option value="${v.qboId}">${v.name}</option>`).join('');
-
-      document.getElementById('apAccountQboId').innerHTML =
-        '<option value="">QuickBooks category/account</option>' +
-        (cache.accounts || []).map(v => `<option value="${v.qboId}">${v.name}</option>`).join('');
-
-      document.getElementById('apPaymentMethodId').innerHTML =
-        '<option value="">Payment method</option>' +
-        paymentMethods.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+    function escapeHtml(str) {
+      return String(str || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
     }
 
     function renderSummary() {
@@ -610,8 +704,8 @@
           const soon = rows.filter(r => r.status === 'due soon').length;
           return `
             <div class="unit-row ${selectedUnit === v.name ? 'active' : ''}" onclick="selectUnit('${v.name}')">
-              <div><b>${v.name}</b></div>
-              <div class="small">${v.make || ''} ${v.model || ''} ${v.year || ''}</div>
+              <div><b>${escapeHtml(v.name)}</b></div>
+              <div class="small">${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}</div>
               <div class="small">Past due: ${past} | Due soon: ${soon}</div>
             </div>
           `;
@@ -621,40 +715,40 @@
     }
 
     function renderDashboard() {
-      const statusFilter = document.getElementById('statusFilter').value;
-      const serviceFilter = document.getElementById('serviceFilter').value;
-      const unitFilter = document.getElementById('unitFilter').value;
+      const statusFilter = document.getElementById('statusFilter').value.trim();
+      const serviceFilter = document.getElementById('serviceFilterSearch').value.trim().toLowerCase();
+      const unitFilter = document.getElementById('unitFilterSearch').value.trim().toLowerCase();
 
       const rows = dashboard
-        .filter(r => !unitFilter || r.unit === unitFilter)
         .filter(r => !statusFilter || r.status === statusFilter)
-        .filter(r => !serviceFilter || r.serviceType === serviceFilter);
+        .filter(r => !serviceFilter || String(r.serviceType || '').toLowerCase().includes(serviceFilter))
+        .filter(r => !unitFilter || String(r.unit || '').toLowerCase().includes(unitFilter));
 
       document.getElementById('dashboardBody').innerHTML = rows.map(r => `
         <tr>
-          <td>${r.unit}</td>
-          <td>${r.unitType || ''}</td>
-          <td>${r.category || ''}</td>
-          <td>${r.serviceType}</td>
-          <td><span class="${statusClass(r.status)}">${r.status}</span></td>
+          <td>${escapeHtml(r.unit)}</td>
+          <td>${escapeHtml(r.unitType || '')}</td>
+          <td>${escapeHtml(r.category || '')}</td>
+          <td>${escapeHtml(r.serviceType)}</td>
+          <td><span class="${statusClass(r.status)}">${escapeHtml(r.status)}</span></td>
           <td>${r.currentMileage ?? ''}</td>
-          <td>${r.lastServiceDate || ''}</td>
+          <td>${escapeHtml(r.lastServiceDate || '')}</td>
           <td>${r.lastServiceMileage ?? ''}</td>
-          <td>${r.nextDueDate || ''}</td>
+          <td>${escapeHtml(r.nextDueDate || '')}</td>
           <td>${r.nextDueMileage ?? ''}</td>
-          <td>${r.vendor || ''}</td>
+          <td>${escapeHtml(r.vendor || '')}</td>
           <td>${r.cost ?? ''}</td>
-          <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${r.qboSyncStatus || ''}</span></td>
-          <td>${r.qboPurchaseId || ''}</td>
-          <td>${r.notes || ''}</td>
+          <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || '')}</span></td>
+          <td>${escapeHtml(r.qboPurchaseId || '')}</td>
+          <td>${escapeHtml(r.notes || '')}</td>
         </tr>
       `).join('') || '<tr><td colspan="15">No rows found.</td></tr>';
 
       document.getElementById('tireAlerts').innerHTML = tireAlerts.length
         ? tireAlerts.map(a => `
             <div class="card" style="margin-bottom:8px">
-              <div><b>${a.unit}</b> — ${a.type}</div>
-              <div class="small">${a.message}</div>
+              <div><b>${escapeHtml(a.unit)}</b> — ${escapeHtml(a.type)}</div>
+              <div class="small">${escapeHtml(a.message)}</div>
             </div>
           `).join('')
         : 'No tire alerts.';
@@ -670,8 +764,39 @@
     function setServiceOptions() {
       const rows = dashboard.filter(x => x.unit === selectedUnit);
       const services = Array.from(new Set(rows.map(x => x.serviceType))).sort();
-      document.getElementById('serviceTypeInput').innerHTML =
-        services.map(s => `<option>${s}</option>`).join('') || '<option>PM Service</option>';
+      if (services.length && !document.getElementById('serviceSearchInput').value) {
+        document.getElementById('serviceSearchInput').value = services[0];
+        document.getElementById('serviceTypeInput').value = services[0];
+      }
+    }
+
+    function resolveServiceSearch() {
+      const value = document.getElementById('serviceSearchInput').value.trim();
+      document.getElementById('serviceTypeInput').value = value;
+    }
+
+    function resolveApVendorSearch() {
+      const name = document.getElementById('apVendorSearch').value.trim().toLowerCase();
+      const match = cacheVendors().find(v => String(v.name).toLowerCase() === name);
+      document.getElementById('apVendorQboId').value = match ? match.qboId : '';
+    }
+
+    function resolveApItemSearch() {
+      const name = document.getElementById('apItemSearch').value.trim().toLowerCase();
+      const match = cacheItems().find(v => String(v.name).toLowerCase() === name);
+      document.getElementById('apItemQboId').value = match ? match.qboId : '';
+    }
+
+    function resolveApAccountSearch() {
+      const name = document.getElementById('apAccountSearch').value.trim().toLowerCase();
+      const match = cacheAccounts().find(v => String(v.name).toLowerCase() === name);
+      document.getElementById('apAccountQboId').value = match ? match.qboId : '';
+    }
+
+    function resolveApPaymentMethodSearch() {
+      const name = document.getElementById('apPaymentMethodSearch').value.trim().toLowerCase();
+      const match = paymentMethods().find(v => String(v.name).toLowerCase() === name);
+      document.getElementById('apPaymentMethodId').value = match ? match.id : '';
     }
 
     function toggleRecordFields() {
@@ -681,9 +806,18 @@
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
       document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'custom');
 
-      if (type === 'tire') document.getElementById('serviceTypeInput').value = 'Tires';
-      if (type === 'repair') document.getElementById('serviceTypeInput').value = 'Repair';
-      if (type === 'accident') document.getElementById('serviceTypeInput').value = 'Accident Report';
+      if (type === 'tire') {
+        document.getElementById('serviceSearchInput').value = 'Tires';
+        document.getElementById('serviceTypeInput').value = 'Tires';
+      }
+      if (type === 'repair') {
+        document.getElementById('serviceSearchInput').value = 'Repair';
+        document.getElementById('serviceTypeInput').value = 'Repair';
+      }
+      if (type === 'accident') {
+        document.getElementById('serviceSearchInput').value = 'Accident Report';
+        document.getElementById('serviceTypeInput').value = 'Accident Report';
+      }
     }
 
     function toggleApDetailMode() {
@@ -722,9 +856,9 @@
       }
 
       document.getElementById('unitInfo').innerHTML = `
-        <div><b>${v.name}</b></div>
-        <div class="small">${v.make || ''} ${v.model || ''} ${v.year || ''}</div>
-        <div class="small">VIN: ${v.vin || ''}</div>
+        <div><b>${escapeHtml(v.name)}</b></div>
+        <div class="small">${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}</div>
+        <div class="small">VIN: ${escapeHtml(v.vin || '')}</div>
       `;
 
       document.getElementById('mileageInput').value =
@@ -741,17 +875,17 @@
         ? records.map(r => `
             <div class="card" style="margin-bottom:8px">
               <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-                <div><b>${r.serviceType}</b> <span class="small">(${r.recordType || 'maintenance'})</span></div>
-                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${r.qboSyncStatus || 'not posted'}</span></div>
+                <div><b>${escapeHtml(r.serviceType)}</b> <span class="small">(${escapeHtml(r.recordType || 'maintenance')})</span></div>
+                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
-              <div class="small">Date: ${r.serviceDate || ''} | Mileage: ${r.serviceMileage ?? ''}</div>
-              <div class="small">Vendor: ${r.vendor || ''} | Cost: ${r.cost ?? ''}</div>
-              ${r.tirePosition ? `<div class="small">Tire: ${r.tireCondition || ''} | ${r.tirePosition} | ${r.tireBrand || ''}</div>` : ''}
-              ${r.repairLocationType ? `<div class="small">Repair type: ${r.repairLocationType}</div>` : ''}
-              ${r.accidentAtFault ? `<div class="small">Accident: ${r.accidentAtFault} | ${r.accidentLocation || ''}</div>` : ''}
-              ${r.qboPurchaseId ? `<div class="small">QB Purchase ID: ${r.qboPurchaseId}</div>` : ''}
-              ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${r.qboError}</div>` : ''}
-              <div class="small">${r.notes || ''}</div>
+              <div class="small">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
+              <div class="small">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
+              ${r.tirePosition ? `<div class="small">Tire: ${escapeHtml(r.tireCondition || '')} | ${escapeHtml(r.tirePosition)} | ${escapeHtml(r.tireBrand || '')}</div>` : ''}
+              ${r.repairLocationType ? `<div class="small">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
+              ${r.accidentAtFault ? `<div class="small">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
+              ${r.qboPurchaseId ? `<div class="small">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
+              ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              <div class="small">${escapeHtml(r.notes || '')}</div>
               <div style="margin-top:8px">
                 <button onclick="postRecordToQbo('${r.id}')">Send to QuickBooks</button>
               </div>
@@ -762,29 +896,28 @@
 
     function renderApTransactions() {
       const rows = (erp.apTransactions || []).slice().reverse();
-      const cache = erp.qboCache || { vendors: [], items: [], accounts: [] };
 
-      const vendorName = (id) => (cache.vendors || []).find(v => v.qboId === id)?.name || id || '';
-      const itemName = (id) => (cache.items || []).find(v => v.qboId === id)?.name || id || '';
-      const accountName = (id) => (cache.accounts || []).find(v => v.qboId === id)?.name || id || '';
+      const vendorName = (id) => cacheVendors().find(v => v.qboId === id)?.name || id || '';
+      const itemName = (id) => cacheItems().find(v => v.qboId === id)?.name || id || '';
+      const accountName = (id) => cacheAccounts().find(v => v.qboId === id)?.name || id || '';
 
       document.getElementById('apList').innerHTML = rows.length
         ? rows.map(r => `
             <div class="card" style="margin-bottom:8px">
               <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-                <div><b>${r.txnType.toUpperCase()}</b> — ${r.detailMode}</div>
-                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${r.qboSyncStatus || 'not posted'}</span></div>
+                <div><b>${escapeHtml(r.txnType.toUpperCase())}</b> — ${escapeHtml(r.detailMode)}</div>
+                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
-              <div class="small">No.: ${r.docNumber || ''}</div>
-              <div class="small">Vendor: ${vendorName(r.qboVendorId)}</div>
-              <div class="small">Date: ${r.txnDate || ''} ${r.dueDate ? '| Due: ' + r.dueDate : ''}</div>
-              <div class="small">Unit: ${r.assetUnit || ''}</div>
+              <div class="small">No.: ${escapeHtml(r.docNumber || '')}</div>
+              <div class="small">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
+              <div class="small">Date: ${escapeHtml(r.txnDate || '')} ${r.dueDate ? '| Due: ' + escapeHtml(r.dueDate) : ''}</div>
+              <div class="small">Unit: ${escapeHtml(r.assetUnit || '')}</div>
               <div class="small">Amount: ${r.amount ?? ''}</div>
-              <div class="small">Description: ${r.description || ''}</div>
-              ${r.detailMode === 'item' ? `<div class="small">Item: ${itemName(r.qboItemId)}</div>` : ''}
-              ${r.detailMode === 'category' ? `<div class="small">Category: ${accountName(r.qboAccountId)}</div>` : ''}
-              ${r.qboEntityType ? `<div class="small">QB ${r.qboEntityType} ID: ${r.qboEntityId || ''}</div>` : ''}
-              ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${r.qboError}</div>` : ''}
+              <div class="small">Description: ${escapeHtml(r.description || '')}</div>
+              ${r.detailMode === 'item' ? `<div class="small">Item: ${escapeHtml(itemName(r.qboItemId))}</div>` : ''}
+              ${r.detailMode === 'category' ? `<div class="small">Category: ${escapeHtml(accountName(r.qboAccountId))}</div>` : ''}
+              ${r.qboEntityType ? `<div class="small">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
+              ${r.qboError ? `<div class="small" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px">
                 <button onclick="postApToQbo('${r.id}')">Post to QuickBooks</button>
               </div>
@@ -794,38 +927,53 @@
     }
 
     function renderQboMaster() {
-      const cache = erp.qboCache || { vendors: [], items: [], accounts: [], refreshedAt: '' };
+      const vendors = cacheVendors();
+      const items = cacheItems();
+      const accounts = cacheAccounts();
 
-      document.getElementById('qboVendorCount').textContent = (cache.vendors || []).length;
-      document.getElementById('qboItemCount').textContent = (cache.items || []).length;
-      document.getElementById('qboAccountCount').textContent = (cache.accounts || []).length;
+      const vendorFilter = document.getElementById('qboVendorFilter').value.trim().toLowerCase();
+      const itemFilter = document.getElementById('qboItemFilter').value.trim().toLowerCase();
+      const accountFilter = document.getElementById('qboAccountFilter').value.trim().toLowerCase();
+
+      document.getElementById('qboVendorCount').textContent = vendors.length;
+      document.getElementById('qboItemCount').textContent = items.length;
+      document.getElementById('qboAccountCount').textContent = accounts.length;
       document.getElementById('qboMasterStatus').textContent =
-        cache.refreshedAt ? `Last refresh: ${new Date(cache.refreshedAt).toLocaleString()}` : 'Not refreshed yet';
+        erp.qboCache?.refreshedAt ? `Last refresh: ${new Date(erp.qboCache.refreshedAt).toLocaleString()}` : 'Not refreshed yet';
 
-      document.getElementById('qboVendorList').innerHTML = (cache.vendors || []).slice(0, 50).map(v => `
-        <div class="card" style="margin-bottom:8px">
-          <div><b>${v.name}</b></div>
-          <div class="small">${v.companyName || ''}</div>
-          <div class="small">${v.phone || ''} ${v.email ? '| ' + v.email : ''}</div>
-          <div class="small">QBO ID: ${v.qboId}</div>
-        </div>
-      `).join('') || 'No QuickBooks vendors loaded.';
+      document.getElementById('qboVendorList').innerHTML = vendors
+        .filter(v => !vendorFilter || String(v.name).toLowerCase().includes(vendorFilter))
+        .slice(0, 50)
+        .map(v => `
+          <div class="card" style="margin-bottom:8px">
+            <div><b>${escapeHtml(v.name)}</b></div>
+            <div class="small">${escapeHtml(v.companyName || '')}</div>
+            <div class="small">${escapeHtml(v.phone || '')} ${v.email ? '| ' + escapeHtml(v.email) : ''}</div>
+            <div class="small">QBO ID: ${escapeHtml(v.qboId)}</div>
+          </div>
+        `).join('') || 'No QuickBooks vendors loaded.';
 
-      document.getElementById('qboItemList').innerHTML = (cache.items || []).slice(0, 50).map(v => `
-        <div class="card" style="margin-bottom:8px">
-          <div><b>${v.name}</b></div>
-          <div class="small">${v.type || ''} ${v.sku ? '| SKU: ' + v.sku : ''}</div>
-          <div class="small">QBO ID: ${v.qboId}</div>
-        </div>
-      `).join('') || 'No QuickBooks items loaded.';
+      document.getElementById('qboItemList').innerHTML = items
+        .filter(v => !itemFilter || String(v.name).toLowerCase().includes(itemFilter))
+        .slice(0, 50)
+        .map(v => `
+          <div class="card" style="margin-bottom:8px">
+            <div><b>${escapeHtml(v.name)}</b></div>
+            <div class="small">${escapeHtml(v.type || '')} ${v.sku ? '| SKU: ' + escapeHtml(v.sku) : ''}</div>
+            <div class="small">QBO ID: ${escapeHtml(v.qboId)}</div>
+          </div>
+        `).join('') || 'No QuickBooks items loaded.';
 
-      document.getElementById('qboAccountList').innerHTML = (cache.accounts || []).slice(0, 50).map(v => `
-        <div class="card" style="margin-bottom:8px">
-          <div><b>${v.name}</b></div>
-          <div class="small">${v.accountType || ''} ${v.accountSubType ? '| ' + v.accountSubType : ''}</div>
-          <div class="small">QBO ID: ${v.qboId}</div>
-        </div>
-      `).join('') || 'No QuickBooks accounts loaded.';
+      document.getElementById('qboAccountList').innerHTML = accounts
+        .filter(v => !accountFilter || String(v.name).toLowerCase().includes(accountFilter))
+        .slice(0, 50)
+        .map(v => `
+          <div class="card" style="margin-bottom:8px">
+            <div><b>${escapeHtml(v.name)}</b></div>
+            <div class="small">${escapeHtml(v.accountType || '')} ${v.accountSubType ? '| ' + escapeHtml(v.accountSubType) : ''}</div>
+            <div class="small">QBO ID: ${escapeHtml(v.qboId)}</div>
+          </div>
+        `).join('') || 'No QuickBooks accounts loaded.';
     }
 
     async function saveApTransaction() {

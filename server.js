@@ -27,7 +27,6 @@ const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
 const QBO_CLIENT_ID = process.env.QBO_CLIENT_ID || '';
 const QBO_CLIENT_SECRET = process.env.QBO_CLIENT_SECRET || '';
 const QBO_REDIRECT_URI = process.env.QBO_REDIRECT_URI || '';
-const QBO_ENV = process.env.QBO_ENV || 'production';
 
 const INTUIT_AUTH_BASE = 'https://appcenter.intuit.com/connect/oauth2';
 const INTUIT_TOKEN_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
@@ -82,16 +81,7 @@ function defaultErpData() {
     unitOverrides: {},
     vendors: [],
     items: [],
-    accounts: [
-      { id: 'acct_maint', name: 'Maintenance Expense', active: true, qboId: '' },
-      { id: 'acct_tire', name: 'Tire Expense', active: true, qboId: '' },
-      { id: 'acct_road', name: 'Road Service Expense', active: true, qboId: '' },
-      { id: 'acct_otr', name: 'Over The Road Repair Expense', active: true, qboId: '' },
-      { id: 'acct_reefer', name: 'Reefer Maintenance Expense', active: true, qboId: '' },
-      { id: 'acct_accident', name: 'Accident Expense', active: true, qboId: '' },
-      { id: 'acct_parts', name: 'Parts Expense', active: true, qboId: '' },
-      { id: 'acct_labor', name: 'Labor Expense', active: true, qboId: '' }
-    ],
+    accounts: [],
     paymentMethods: [
       { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
       { id: 'pm_check', name: 'Check', qboType: 'Check' },
@@ -119,14 +109,11 @@ function ensureErpFile() {
   const data = JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
   const merged = { ...defaultErpData(), ...data };
 
-  if (!Array.isArray(merged.vendors)) merged.vendors = [];
-  if (!Array.isArray(merged.items)) merged.items = [];
-  if (!Array.isArray(merged.accounts)) merged.accounts = defaultErpData().accounts;
-  if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
-  if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
   if (!Array.isArray(merged.records)) merged.records = [];
   if (!merged.currentMileage) merged.currentMileage = {};
   if (!merged.unitOverrides) merged.unitOverrides = {};
+  if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
+  if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
   if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
   if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
   if (!Array.isArray(merged.qboCache.items)) merged.qboCache.items = [];
@@ -607,6 +594,36 @@ async function qboSyncMasterData() {
   return erp.qboCache;
 }
 
+async function qboCreateVendorFromApp(body) {
+  const displayName = sanitizeName(body.name || body.companyName || 'Vendor');
+  const companyName = sanitizeName(body.companyName || displayName);
+
+  const existing = await qboQuery(
+    `select * from Vendor where DisplayName = '${String(displayName).replace(/'/g, "\\'")}' maxresults 1`
+  );
+
+  const existingVendor = existing?.QueryResponse?.Vendor?.[0];
+  if (existingVendor) {
+    return { vendor: existingVendor, created: false };
+  }
+
+  const payload = {
+    DisplayName: displayName,
+    CompanyName: companyName,
+    PrimaryPhone: body.phone ? { FreeFormNumber: String(body.phone).slice(0, 21) } : undefined,
+    PrimaryEmailAddr: body.email ? { Address: String(body.email).slice(0, 100) } : undefined
+  };
+
+  if (body.address) {
+    payload.BillAddr = {
+      Line1: String(body.address).slice(0, 500)
+    };
+  }
+
+  const created = await qboPost('vendor', payload);
+  return { vendor: created?.Vendor || null, created: true };
+}
+
 async function qboFindVendorById(id) {
   const data = await qboGet(`vendor/${id}`);
   return data?.Vendor || null;
@@ -916,7 +933,7 @@ app.get('/api/route', async (req, res) => {
   }
 });
 
-/* quickbooks */
+/* QuickBooks */
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
@@ -1052,19 +1069,22 @@ app.get('/api/qbo/master', async (_req, res) => {
   }
 });
 
-/* ERP master/local */
-
-app.get('/api/erp/master', (_req, res) => {
-  const erp = readErp();
-  res.json({
-    vendors: erp.vendors || [],
-    items: erp.items || [],
-    accounts: erp.accounts || [],
-    paymentMethods: erp.paymentMethods || [],
-    apTransactions: erp.apTransactions || [],
-    qboCache: erp.qboCache || { vendors: [], items: [], accounts: [], refreshedAt: '' }
-  });
+app.post('/api/qbo/create-vendor', async (req, res) => {
+  try {
+    const result = await qboCreateVendorFromApp(req.body || {});
+    const cache = await qboSyncMasterData();
+    res.json({
+      ok: true,
+      created: result.created,
+      vendor: result.vendor,
+      cache
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
+
+/* AP */
 
 app.post('/api/erp/ap-transaction', (req, res) => {
   const body = req.body || {};
@@ -1090,8 +1110,6 @@ app.post('/api/erp/ap-transaction', (req, res) => {
     description: body.description || '',
     memo: body.memo || '',
     assetUnit: body.assetUnit || '',
-    sourceType: body.sourceType || 'manual',
-    sourceId: body.sourceId || '',
     qboSyncStatus: '',
     qboEntityType: '',
     qboEntityId: '',
@@ -1251,7 +1269,7 @@ app.post('/api/qbo/post-record/:id', async (req, res) => {
     if (idx === -1) return res.status(404).json({ error: 'Record not found' });
 
     const record = erp.records[idx];
-    const cache = erp.qboCache || { vendors: [], items: [], accounts: [] };
+    const cache = erp.qboCache || { vendors: [], accounts: [] };
 
     let vendor = (cache.vendors || []).find(v => v.name === record.vendor) || (cache.vendors || [])[0];
     if (!vendor) throw new Error('No QuickBooks vendor available. Refresh QuickBooks master data first.');
