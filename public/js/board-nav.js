@@ -3,18 +3,20 @@
     {
       id: 'tms',
       label: 'TMS–Dispatch',
-      href: '/dispatch.html',
+      href: '/maintenance.html#dispatch',
       links: [
-        { label: 'Loads & dispatch board', href: '/dispatch.html' },
+        { label: 'ERP — Dispatch tab', href: '/maintenance.html#dispatch' },
+        { label: 'Full-screen dispatch', href: '/dispatch.html' },
         { label: 'Operations hub', href: '/' }
       ]
     },
     {
       id: 'fuel',
       label: 'Fuel Route Planner',
-      href: '/fuel.html',
+      href: '/maintenance.html#fuel',
       links: [
-        { label: 'Fuel & route planner', href: '/fuel.html' },
+        { label: 'ERP — Fuel tab', href: '/maintenance.html#fuel' },
+        { label: 'Full-screen fuel planner', href: '/fuel.html' },
         { label: 'Operations hub', href: '/' }
       ]
     },
@@ -30,20 +32,20 @@
     {
       id: 'safety',
       label: 'Safety Board',
-      href: '/safety.html',
+      href: '/maintenance.html#safety',
       links: [
-        { label: 'Safety overview', href: '/safety.html' },
+        { label: 'ERP — Safety (HOS)', href: '/maintenance.html#safety' },
         { label: 'Operations hub', href: '/' }
       ]
     },
     {
       id: 'track',
       label: 'Vehicle Tracking',
-      href: '/tracking.html',
+      href: '/maintenance.html#tracking',
       links: [
-        { label: 'Live fleet map (Samsara)', href: '/tracking.html' },
-        { label: 'Tracking inside ERP', href: '/maintenance.html#tracking' },
-        { label: 'Fuel board (map)', href: '/fuel.html' }
+        { label: 'ERP — Tracking (map)', href: '/maintenance.html#tracking' },
+        { label: 'Standalone map page', href: '/tracking.html' },
+        { label: 'Fuel board', href: '/maintenance.html#fuel' }
       ]
     },
     {

@@ -41,7 +41,7 @@
     input,select,textarea{width:100%;border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:10px;color:var(--text)}
     textarea{min-height:84px;resize:vertical}
     .hidden{display:none !important}
-    .hero-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+    .hero-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
     .hero-card,.panel,.metric,.record-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
     .hero-card{padding:14px;cursor:pointer}
     .hero-card:hover{border-color:#bfd3ff;background:#fbfdff}
@@ -141,13 +141,15 @@
     .asset-cat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
     .asset-cat-tile{border:1px solid var(--line);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:center;font-weight:600;font-size:13px;background:#fafcff}
     .asset-cat-tile:hover{border-color:#93c5fd;background:#eff6ff}
+    .erp-iframe{width:100%;height:min(920px,calc(100vh - 140px));border:0;background:#fff;display:block}
+    .tracking-sub.hidden{display:none !important}
+    #erpTrackingMap{height:min(560px,calc(100vh - 220px));width:100%;border-radius:12px;border:1px solid #e8eef8}
+    .safety-table-wrap{overflow:auto;max-height:min(640px,72vh);border:1px solid #edf1f7;border-radius:12px;background:#fff}
+    .safety-table-wrap table{min-width:900px;font-size:12px}
   </style>
-  <link rel="stylesheet" href="/css/board-nav.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
-  <div id="boardNavMount"></div>
-  <script src="/js/board-nav.js" defer></script>
-
   <div id="maintCatModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintCatModal()">
     <div class="maint-modal" onclick="event.stopPropagation()">
       <h3 style="margin:0 0 6px;font-size:18px">Vehicle type</h3>
@@ -168,6 +170,7 @@
   <datalist id="qboItemOptions"></datalist>
   <datalist id="qboAccountOptions"></datalist>
   <datalist id="paymentMethodOptions"></datalist>
+  <datalist id="qboBankAccountOptions"></datalist>
 
   <div class="app">
     <aside class="sidebar">
@@ -179,6 +182,7 @@
       <button class="nav-btn" data-section="dispatch" onclick="openSection('dispatch', this)">Dispatch Board</button>
       <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Fuel Board</button>
       <button class="nav-btn" data-section="maintenance" onclick="openSection('maintenance', this)">Maintenance Board</button>
+      <button class="nav-btn" data-section="safety" onclick="openSection('safety', this)">Safety Board</button>
       <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
       <button class="nav-btn" data-section="accounting" onclick="openSection('accounting', this)">Accounting Board</button>
 
@@ -196,8 +200,7 @@
       <div class="topbar">
         <div class="title" id="pageTitle">Unified Dashboard</div>
         <a href="/" style="font-weight:700;color:#1d4ed8">Home</a>
-        <a href="/dispatch.html" style="font-weight:600;color:#15803d">Dispatch</a>
-        <a href="/fuel.html" style="font-weight:600;color:#b45309">Fuel &amp; routes</a>
+        <span class="mini-note" style="margin-left:4px">Use the left nav for modules · no duplicate top tabs</span>
         <button onclick="loadAll()">Refresh</button>
         <button onclick="testQuickBooks()">Test QuickBooks</button>
         <button onclick="refreshQboMaster()">Refresh QBO Master</button>
@@ -208,8 +211,9 @@
           <div class="hero-card" onclick="openSectionByName('dispatch')"><h3>Dispatch Board</h3><p>Assignments, HOS and route summary</p></div>
           <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Fuel Board</h3><p>Dispatcher route page inside this app</p></div>
           <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Mileage, service planning, records and imports</p></div>
-          <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Samsara-style live fleet view</p></div>
-          <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Maintenance expense transactions and QuickBooks</p></div>
+          <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety Board</h3><p>Samsara HOS, drivers, assignments</p></div>
+          <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Map + assets (Samsara)</p></div>
+          <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Expenses, bills, QuickBooks</p></div>
         </div>
 
         <div class="grid grid-4">
@@ -232,29 +236,71 @@
       </section>
 
       <section id="section-dispatch" class="section">
-        <div class="grid grid-4">
-          <div class="metric"><div class="metric-label">Vehicles Loaded</div><div class="metric-value" id="dispatchVehiclesCount">0</div></div>
-          <div class="metric"><div class="metric-label">Assigned</div><div class="metric-value" id="dispatchAssignedCount">0</div></div>
-          <div class="metric"><div class="metric-label">Unassigned</div><div class="metric-value" id="dispatchUnassignedCount">0</div></div>
-          <div class="metric"><div class="metric-label">HOS Rows</div><div class="metric-value" id="dispatchHosCount">0</div></div>
-        </div>
-        <div class="panel" style="margin-top:12px;">
-          <div class="panel-head"><div class="panel-title">Dispatch Summary</div></div>
-          <div class="panel-body"><div id="dispatchSummaryText" class="mini-note">No dispatch data loaded yet.</div></div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">TMS — Dispatch</div>
+            <div class="mini-note">Full dispatch board embedded here. <a href="/dispatch.html" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:600">Open full screen</a></div>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <iframe class="erp-iframe" src="/dispatch.html?embed=1" title="Dispatch TMS"></iframe>
+          </div>
         </div>
       </section>
 
       <section id="section-fuel" class="section">
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">Fuel Board / Dispatcher Route Page</div>
-            <div class="mini-note">This is your dispatcher route page loaded inside the unified dashboard.</div>
+            <div class="panel-title">Fuel &amp; route planning</div>
+            <div class="mini-note">Same planner as the standalone page, without duplicate top navigation. <a href="/fuel.html" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:600">Open full screen</a></div>
           </div>
-          <div class="panel-body">
-            <div class="iframe-wrap">
-              <iframe src="/" title="Dispatcher Route Page"></iframe>
-            </div>
+          <div class="panel-body" style="padding:0">
+            <iframe class="erp-iframe" src="/fuel.html?embed=1" title="Fuel planner"></iframe>
           </div>
+        </div>
+      </section>
+
+      <section id="section-safety" class="section">
+        <div class="subtabs" style="margin-bottom:12px">
+          <button type="button" class="subtab active" onclick="openSafetyTab('safe-hos', this)">HOS clocks</button>
+          <button type="button" class="subtab" onclick="openSafetyTab('safe-assign', this)">Assignments</button>
+          <button type="button" class="subtab" onclick="openSafetyTab('safe-fleet', this)">Fleet snapshot</button>
+        </div>
+        <div id="safe-hos" class="tracking-sub">
+          <p class="mini-note" style="margin:0 0 10px">Samsara compliance data. Token needs <strong>Read ELD Compliance Settings (US)</strong>. Server loads all paginated HOS pages.</p>
+          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+            <input id="safetySearch" class="in" style="max-width:280px" placeholder="Search driver or vehicle…" oninput="renderSafetyHos()" />
+            <span class="mini-note" id="safetyHosMeta"></span>
+          </div>
+          <div class="safety-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>Duty</th>
+                  <th>Vehicle</th>
+                  <th>Break in</th>
+                  <th>Drive left</th>
+                  <th>Shift left</th>
+                  <th>Cycle left</th>
+                  <th>Violations</th>
+                </tr>
+              </thead>
+              <tbody id="safetyHosBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="safe-assign" class="tracking-sub hidden">
+          <p class="mini-note" style="margin:0 0 10px">Driver ↔ vehicle assignments from Samsara (current window).</p>
+          <div class="safety-table-wrap">
+            <table>
+              <thead><tr><th>Vehicle</th><th>Driver</th><th>Start</th><th>End</th></tr></thead>
+              <tbody id="safetyAssignBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="safe-fleet" class="tracking-sub hidden">
+          <p class="mini-note" style="margin:0 0 10px">Tracked fleet counts (same filter as Maintenance / Fuel).</p>
+          <div id="safetyFleetSummary" class="mini-note">—</div>
         </div>
       </section>
 
@@ -266,8 +312,8 @@
           <div class="panel-body">
             <p class="mini-note" style="margin:0 0 10px">
               Work orders bucket by <strong>repair location</strong>. <strong>Out of service</strong> lists units with a unit record whose service name contains “out of service”.
-              <a href="/tracking.html" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
-              · <a href="/safety.html" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
+              <a href="#" onclick="openSectionByName('tracking');return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
+              · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
             </p>
             <div class="shop-action-row">
               <button type="button" onclick="startMaintFlow('service-internal')">New service</button>
@@ -572,26 +618,61 @@
           <div class="metric"><div class="metric-label">Other / Company Vehicles</div><div class="metric-value" id="trackOtherCount">0</div></div>
         </div>
 
-        <div class="track-grid" style="margin-top:12px;">
-          <div class="panel">
-            <div class="panel-head"><div class="panel-title">Live Fleet List</div></div>
+        <div class="subtabs" style="margin-top:12px">
+          <button type="button" class="subtab active" onclick="openTrackingTab('tr-map', this)">Map</button>
+          <button type="button" class="subtab" onclick="openTrackingTab('tr-assets', this)">Assets</button>
+          <button type="button" class="subtab" onclick="openTrackingTab('tr-drivers', this)">Drivers</button>
+        </div>
+
+        <div id="tr-map" class="tracking-sub">
+          <div class="track-grid" style="margin-top:8px">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Units</div></div>
+              <div class="panel-body">
+                <input id="trackingSearch" list="unitOptions" placeholder="Filter unit…" oninput="renderTrackingBoard()">
+                <div class="track-list" id="trackingList" style="margin-top:10px;"></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Live map (Samsara GPS)</div></div>
+              <div class="panel-body">
+                <div id="erpTrackingMap"></div>
+                <div id="trackingDetailBox" class="mini-note" style="margin-top:10px">Select a vehicle.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tr-assets" class="tracking-sub hidden">
+          <div class="panel" style="margin-top:8px">
+            <div class="panel-head"><div class="panel-title">All tracked assets</div></div>
             <div class="panel-body">
-              <input id="trackingSearch" list="unitOptions" placeholder="Type vehicle name" oninput="renderTrackingBoard()">
-              <div class="track-list" id="trackingList" style="margin-top:10px;"></div>
+              <input id="trackingAssetFilter" class="in" placeholder="Filter unit…" style="max-width:260px;margin-bottom:10px" oninput="renderTrackingAssetsTable()">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Unit</th><th>Category</th><th>Mileage</th><th>Fuel</th><th>Engine</th><th>GPS</th></tr>
+                  </thead>
+                  <tbody id="trackingAssetsTableBody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div class="grid">
-            <div class="panel">
-              <div class="panel-head"><div class="panel-title">Tracking Detail</div></div>
-              <div class="panel-body" id="trackingDetailBox">Select a vehicle.</div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-head"><div class="panel-title">Tracking Summary</div></div>
-              <div class="panel-body" id="trackingSummaryText">No tracking data loaded yet.</div>
-            </div>
+        <div id="tr-drivers" class="tracking-sub hidden">
+          <p class="mini-note" style="margin:8px 0">Drivers from Samsara HOS clocks (same data as Safety → HOS).</p>
+          <div class="safety-table-wrap">
+            <table>
+              <thead><tr><th>Driver</th><th>Duty</th><th>Vehicle</th><th>Drive left</th></tr></thead>
+              <tbody id="trackingDriversBody"></tbody>
+            </table>
           </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head"><div class="panel-title">Summary</div></div>
+          <div class="panel-body" id="trackingSummaryText">No tracking data loaded yet.</div>
         </div>
       </section>
 
@@ -638,7 +719,12 @@
                   <input id="apPaymentMethodId" type="hidden">
                 </div>
                 <div style="grid-column:span 2">
-                  <span class="qb-l">Unit / asset</span>
+                  <span class="qb-l">Pay from bank account (QuickBooks)</span>
+                  <input id="apBankAccountSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card (for Purchase + bank feed match)" oninput="resolveApBankSearch()">
+                  <input id="apBankAccountQboId" type="hidden">
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
                   <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
                 </div>
                 <input type="hidden" id="woRepairLocationType" value="" />
@@ -825,6 +911,7 @@
     </div>
   </template>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     let vehicles = [];
     let dashboard = [];
@@ -836,6 +923,8 @@
     let activeAssetCategory = 'Trucks';
     let pendingMaintFlow = null;
     let selectedTrackingVehicle = '';
+    let trackingMap = null;
+    let trackingMarkersLayer = null;
 
     async function j(url, options = {}) {
       const r = await fetch(url, options);
@@ -874,6 +963,7 @@
     function cacheVendors() { return erp.qboCache?.vendors || []; }
     function cacheItems() { return erp.qboCache?.items || []; }
     function cacheAccounts() { return erp.qboCache?.accounts || []; }
+    function cacheBankAccounts() { return erp.qboCache?.accountsBank || []; }
     function paymentMethods() { return erp.paymentMethods || []; }
 
     function assetCategoryForVehicle(v) {
@@ -906,13 +996,17 @@
 
       const titleMap = {
         dashboard: 'Unified Dashboard',
-        dispatch: 'Dispatch Board',
-        fuel: 'Fuel Board',
+        dispatch: 'TMS — Dispatch',
+        fuel: 'Fuel & route planning',
         maintenance: 'Maintenance Board',
+        safety: 'Safety Board',
         tracking: 'Vehicle Tracking Board',
         accounting: 'Accounting Board'
       };
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
+      if (name === 'tracking') {
+        requestAnimationFrame(() => initErpTrackingMap());
+      }
     }
 
     function openSectionByName(name) {
@@ -925,11 +1019,11 @@
       if (!section) return;
       if (section === 'accounting-settlement') {
         openSectionByName('accounting');
-        const sub = document.querySelector('.subtab[onclick*="acct-settlement"]');
+        const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-settlement"]');
         openAccountingTab('acct-settlement', sub);
         return;
       }
-      const allowed = ['dashboard', 'dispatch', 'fuel', 'maintenance', 'tracking', 'accounting'];
+      const allowed = ['dashboard', 'dispatch', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting'];
       if (allowed.includes(section)) openSectionByName(section);
     }
 
@@ -938,7 +1032,7 @@
     function openAccountingTab(id, btn) {
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
-      document.querySelectorAll('.subtab').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('#section-accounting .subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
       if (id === 'acct-settlement') loadSettlementIndex();
     }
@@ -982,6 +1076,8 @@
           accountsExpense: data.accountsExpense || [],
           accountsIncome: data.accountsIncome || [],
           customers: data.customers || [],
+          classes: data.classes || [],
+          accountsBank: data.accountsBank || [],
           refreshedAt: data.refreshedAt || ''
         };
         fillDataLists();
@@ -1052,6 +1148,9 @@
       renderSelectedUnit();
       renderMaintenanceTable();
       renderTrackingBoard();
+      renderSafetyAll();
+      renderTrackingAssetsTable();
+      renderTrackingDrivers();
       renderApTransactions();
       renderShopQueues();
       renderQboMaster();
@@ -1083,6 +1182,22 @@
 
       document.getElementById('paymentMethodOptions').innerHTML =
         paymentMethods().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+
+      const bankDl = document.getElementById('qboBankAccountOptions');
+      if (bankDl) {
+        bankDl.innerHTML = cacheBankAccounts()
+          .map(b => `<option value="${escapeHtml(b.name)}"></option>`)
+          .join('');
+      }
+    }
+
+    function resolveApBankSearch() {
+      const elIn = document.getElementById('apBankAccountSearch');
+      const elId = document.getElementById('apBankAccountQboId');
+      if (!elIn || !elId) return;
+      const name = elIn.value.trim().toLowerCase();
+      const match = cacheBankAccounts().find(b => String(b.name).toLowerCase() === name);
+      elId.value = match ? match.qboId : '';
     }
 
     function assignedVehicleNames() {
@@ -1122,7 +1237,9 @@
 
     function renderDispatchBoard() {
       const assigned = assignedVehicleNames();
-      document.getElementById('dispatchVehiclesCount').textContent = (board.vehicles || []).length;
+      const elV = document.getElementById('dispatchVehiclesCount');
+      if (!elV) return;
+      elV.textContent = (board.vehicles || []).length;
       document.getElementById('dispatchAssignedCount').textContent = assigned.size;
       document.getElementById('dispatchUnassignedCount').textContent = Math.max((board.vehicles || []).length - assigned.size, 0);
       document.getElementById('dispatchHosCount').textContent = (board.hos || []).length;
@@ -1405,6 +1522,10 @@
       document.getElementById('apMemo').value = '';
       document.getElementById('apDueDate').value = '';
       document.getElementById('woRepairLocationType').value = '';
+      const abs = document.getElementById('apBankAccountSearch');
+      const abid = document.getElementById('apBankAccountQboId');
+      if (abs) abs.value = '';
+      if (abid) abid.value = '';
       document.getElementById('woLines').innerHTML = '';
       addWoLine();
     }
@@ -1760,6 +1881,188 @@
         `Live stat rows: ${(board.live || []).length}<br>` +
         `Assignments loaded: ${(board.assignments || []).length}<br>` +
         `HOS rows: ${(board.hos || []).length}`;
+
+      updateTrackingMapMarkers();
+    }
+
+    function initErpTrackingMap() {
+      const el = document.getElementById('erpTrackingMap');
+      if (!el || typeof L === 'undefined') return;
+      if (trackingMap) {
+        trackingMap.invalidateSize();
+        updateTrackingMapMarkers();
+        return;
+      }
+      trackingMap = L.map('erpTrackingMap').setView([32.8, -96.8], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(trackingMap);
+      trackingMarkersLayer = L.layerGroup().addTo(trackingMap);
+      updateTrackingMapMarkers();
+    }
+
+    function updateTrackingMapMarkers() {
+      if (!trackingMap || !trackingMarkersLayer) return;
+      trackingMarkersLayer.clearLayers();
+      const bounds = [];
+      for (const v of vehicles) {
+        if (v.latitude == null || v.longitude == null) continue;
+        bounds.push([v.latitude, v.longitude]);
+        const m = L.circleMarker([v.latitude, v.longitude], {
+          radius: v.name === selectedTrackingVehicle ? 10 : 7,
+          color: v.name === selectedTrackingVehicle ? '#1d4ed8' : '#334155',
+          fillColor: v.name === selectedTrackingVehicle ? '#3b82f6' : '#64748b',
+          fillOpacity: 0.85
+        });
+        m.bindPopup('<b>' + escapeHtml(v.name) + '</b><br>' + escapeHtml(v.engineState || ''));
+        m.on('click', () => {
+          selectedTrackingVehicle = v.name;
+          renderTrackingBoard();
+        });
+        trackingMarkersLayer.addLayer(m);
+      }
+      if (bounds.length) trackingMap.fitBounds(bounds, { padding: [32, 32], maxZoom: 8 });
+    }
+
+    function openTrackingTab(id, btn) {
+      document.querySelectorAll('#section-tracking .tracking-sub').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('#section-tracking .subtabs .subtab').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.remove('hidden');
+      if (btn) btn.classList.add('active');
+      if (id === 'tr-map') requestAnimationFrame(() => initErpTrackingMap());
+      if (id === 'tr-assets') renderTrackingAssetsTable();
+      if (id === 'tr-drivers') renderTrackingDrivers();
+    }
+
+    function fmtDurationMs(ms) {
+      if (ms == null || !Number.isFinite(Number(ms))) return '—';
+      const n = Number(ms);
+      if (n <= 0) return '0:00';
+      const totalMin = Math.floor(n / 60000);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      return h + ':' + String(m).padStart(2, '0');
+    }
+
+    function normalizeHosClock(clock) {
+      const driver = clock.driver?.name || '—';
+      const dutyType = clock.currentDutyStatus?.hosStatusType || '';
+      const vehicle = clock.currentVehicle?.name || '—';
+      const dr = clock.clocks?.drive?.driveRemainingDurationMs;
+      const br = clock.clocks?.break?.timeUntilBreakDurationMs;
+      const sr = clock.clocks?.shift?.shiftRemainingDurationMs;
+      const cr = clock.clocks?.cycle?.cycleRemainingDurationMs;
+      const vio = clock.violations || {};
+      const shiftV = Number(vio.shiftDrivingViolationDurationMs) || 0;
+      const cycleV = Number(vio.cycleViolationDurationMs) || 0;
+      const vioText = shiftV > 0 || cycleV > 0 ? 'Yes' : '—';
+      return { driver, dutyType, vehicle, dr, br, sr, cr, vioText };
+    }
+
+    function renderSafetyHos() {
+      const inp = document.getElementById('safetySearch');
+      const q = (inp?.value || '').trim().toLowerCase();
+      const rows = (board.hos || []).map(normalizeHosClock).filter(r => {
+        if (!q) return true;
+        return String(r.driver).toLowerCase().includes(q) || String(r.vehicle).toLowerCase().includes(q);
+      });
+      const tb = document.getElementById('safetyHosBody');
+      if (tb) {
+        tb.innerHTML =
+          rows
+            .map(
+              r => `<tr>
+          <td>${escapeHtml(r.driver)}</td>
+          <td>${escapeHtml(r.dutyType)}</td>
+          <td>${escapeHtml(r.vehicle)}</td>
+          <td>${escapeHtml(fmtDurationMs(r.br))}</td>
+          <td>${escapeHtml(fmtDurationMs(r.dr))}</td>
+          <td>${escapeHtml(fmtDurationMs(r.sr))}</td>
+          <td>${escapeHtml(fmtDurationMs(r.cr))}</td>
+          <td>${escapeHtml(r.vioText)}</td>
+        </tr>`
+            )
+            .join('') ||
+          '<tr><td colspan="8" class="mini-note" style="padding:16px">No HOS data.</td></tr>';
+      }
+      const meta = document.getElementById('safetyHosMeta');
+      if (meta) meta.textContent = `${(board.hos || []).length} driver(s)`;
+    }
+
+    function renderSafetyAssignments() {
+      const tb = document.getElementById('safetyAssignBody');
+      if (!tb) return;
+      const rows = board.assignments || [];
+      tb.innerHTML =
+        rows
+          .map(a => {
+            const vname = a?.vehicle?.name || a?.vehicleName || '—';
+            const dname = a?.driver?.name || a?.driverName || '—';
+            const st = a?.startTime || a?.startAt || '';
+            const en = a?.endTime || a?.endAt || '';
+            return `<tr><td>${escapeHtml(vname)}</td><td>${escapeHtml(dname)}</td><td>${escapeHtml(String(st))}</td><td>${escapeHtml(String(en))}</td></tr>`;
+          })
+          .join('') || '<tr><td colspan="4" class="mini-note">No assignments.</td></tr>';
+    }
+
+    function renderSafetyFleet() {
+      const el = document.getElementById('safetyFleetSummary');
+      if (!el) return;
+      el.innerHTML = `Tracked vehicles (ERP filter): <b>${vehicles.length}</b><br>Samsara vehicles on board: <b>${(board.vehicles || []).length}</b><br>HOS drivers: <b>${(board.hos || []).length}</b>`;
+    }
+
+    function renderSafetyAll() {
+      renderSafetyHos();
+      renderSafetyAssignments();
+      renderSafetyFleet();
+    }
+
+    function openSafetyTab(id, btn) {
+      document.querySelectorAll('#section-safety .tracking-sub').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('#section-safety .subtabs .subtab').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.remove('hidden');
+      if (btn) btn.classList.add('active');
+    }
+
+    function renderTrackingAssetsTable() {
+      const tb = document.getElementById('trackingAssetsTableBody');
+      if (!tb) return;
+      const inp = document.getElementById('trackingAssetFilter');
+      const q = (inp?.value || '').trim().toLowerCase();
+      const list = vehicles.filter(v => !q || String(v.name || '').toLowerCase().includes(q)).sort(byUnitOrder);
+      tb.innerHTML =
+        list
+          .map(
+            v => `<tr>
+          <td>${escapeHtml(v.name)}</td>
+          <td>${escapeHtml(v.assetCategory || '')}</td>
+          <td>${v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : '—'}</td>
+          <td>${v.fuelPercent != null ? Math.round(v.fuelPercent) + '%' : '—'}</td>
+          <td>${escapeHtml(v.engineState || '')}</td>
+          <td>${v.latitude != null ? escapeHtml(String(v.latitude)) + ', ' + escapeHtml(String(v.longitude)) : '—'}</td>
+        </tr>`
+          )
+          .join('') || '<tr><td colspan="6" class="mini-note">No rows.</td></tr>';
+    }
+
+    function renderTrackingDrivers() {
+      const tb = document.getElementById('trackingDriversBody');
+      if (!tb) return;
+      const rows = (board.hos || []).map(normalizeHosClock);
+      tb.innerHTML =
+        rows
+          .map(
+            r => `<tr>
+          <td>${escapeHtml(r.driver)}</td>
+          <td>${escapeHtml(r.dutyType)}</td>
+          <td>${escapeHtml(r.vehicle)}</td>
+          <td>${escapeHtml(fmtDurationMs(r.dr))}</td>
+        </tr>`
+          )
+          .join('') || '<tr><td colspan="4" class="mini-note">No rows.</td></tr>';
     }
 
     function selectTrackingVehicle(name) {
@@ -2041,6 +2344,7 @@
           dueDate: document.getElementById('apDueDate').value,
           qboVendorId: vendorId,
           paymentMethodId: document.getElementById('apPaymentMethodId').value,
+          qboBankAccountId: document.getElementById('apBankAccountQboId').value,
           loadNumber: loadInv,
           internalWorkOrderNumber: loadInv,
           vendorInvoiceNumber: loadInv,
@@ -2079,8 +2383,12 @@
       document.getElementById('qboVendorCount').textContent = vendors.length;
       document.getElementById('qboItemCount').textContent = items.length;
       document.getElementById('qboAccountCount').textContent = accounts.length;
+      const cls = erp.qboCache?.classes || [];
+      const banks = erp.qboCache?.accountsBank || [];
       document.getElementById('qboMasterStatus').textContent =
-        erp.qboCache?.refreshedAt ? `Last refresh: ${new Date(erp.qboCache.refreshedAt).toLocaleString()}` : 'Not refreshed yet';
+        (erp.qboCache?.refreshedAt
+          ? `Last refresh: ${new Date(erp.qboCache.refreshedAt).toLocaleString()}`
+          : 'Not refreshed yet') + ` · QBO classes: ${cls.length} · Bank accounts: ${banks.length}`;
 
       document.getElementById('qboVendorList').innerHTML = vendors
         .filter(v => !vendorFilter || String(v.name).toLowerCase().includes(vendorFilter))

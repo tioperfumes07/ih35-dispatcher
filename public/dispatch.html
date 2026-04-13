@@ -102,15 +102,22 @@
     .ac-item { padding: 8px 10px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
     .ac-item:hover { background: #eef2ff; }
     .stops-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    html.dispatch-embed #boardNavMount,
+    html.dispatch-embed .board-nav-wrap { display: none !important; }
+    html.dispatch-embed .topbar { padding: 8px 12px; }
+    html.dispatch-embed .topbar a:not(.keep-embed) { display: none; }
   </style>
   <link rel="stylesheet" href="/css/board-nav.css" />
+  <script>
+    if (/[?&]embed=1(?:&|$)/.test(location.search)) document.documentElement.classList.add('dispatch-embed');
+  </script>
 </head>
 <body>
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <div class="topbar">
     <h1>Dispatch — Loads &amp; TMS</h1>
-    <a href="/">Home</a>
+    <a href="/" class="keep-embed">Home</a>
     <a href="/fuel.html">Fuel &amp; routes</a>
     <a href="/maintenance.html">Maintenance</a>
     <a href="/maintenance.html#accounting-settlement">Settlement</a>
@@ -140,6 +147,7 @@
           <th>Origin → Destination</th>
           <th>Miles (Ld / Em)</th>
           <th>Rev $</th>
+          <th>QBO invoice</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -398,7 +406,7 @@
     function renderRows(rows) {
       const tb = document.getElementById('tbody');
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="10" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="11" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
         return;
       }
       tb.innerHTML = rows.map(l => {
@@ -425,8 +433,33 @@
           '<td><div>' + escapeHtml(od) + '</div><div class="muted">' + escapeHtml(addr) + '</div></td>' +
           '<td>' + escapeHtml(String(l.practical_loaded_miles ?? '0')) + ' / ' + escapeHtml(String(l.practical_empty_miles ?? '0')) + '</td>' +
           '<td class="muted">' + revCell + '</td>' +
+          '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="createQboInvoiceForLoad(' +
+          JSON.stringify(l.load_number) +
+          ')">Create in QBO</button></td>' +
           '</tr>';
       }).join('');
+    }
+
+    async function createQboInvoiceForLoad(loadNumber) {
+      showMsg('');
+      if (!loadNumber) return;
+      if (!confirm('Create QuickBooks invoice for load ' + loadNumber + '? Requires QBO customer, trip revenue, and DEFAULT_QBO_INVOICE_ITEM_ID (or paste item id).')) return;
+      let qboItemId = '';
+      try {
+        qboItemId = prompt('QuickBooks Item ID for invoice line (leave blank to use server default):', '') || '';
+      } catch (_) {}
+      try {
+        const r = await fetch('/api/qbo/invoice-from-load', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ loadNumber, qboItemId: qboItemId.trim() || undefined })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.statusText);
+        showMsg('QuickBooks invoice created. ID: ' + (j.qboEntityId || ''));
+      } catch (e) {
+        showMsg(e.message || String(e), true);
+      }
     }
 
     function escapeHtml(s) {

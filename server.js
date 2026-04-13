@@ -24,6 +24,8 @@ const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY || '';
 const QBO_CLIENT_ID = process.env.QBO_CLIENT_ID || '';
 const QBO_CLIENT_SECRET = process.env.QBO_CLIENT_SECRET || '';
 const QBO_REDIRECT_URI = process.env.QBO_REDIRECT_URI || '';
+const DEFAULT_QBO_BANK_ACCOUNT_ID = String(process.env.DEFAULT_QBO_BANK_ACCOUNT_ID || '').trim();
+const DEFAULT_QBO_INVOICE_ITEM_ID = String(process.env.DEFAULT_QBO_INVOICE_ITEM_ID || '').trim();
 
 const INTUIT_AUTH_BASE = 'https://appcenter.intuit.com/connect/oauth2';
 const INTUIT_TOKEN_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
@@ -98,6 +100,8 @@ function defaultErpData() {
       accountsExpense: [],
       accountsIncome: [],
       customers: [],
+      classes: [],
+      accountsBank: [],
       refreshedAt: ''
     }
   };
@@ -135,6 +139,8 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.accountsExpense)) merged.qboCache.accountsExpense = [];
   if (!Array.isArray(merged.qboCache.accountsIncome)) merged.qboCache.accountsIncome = [];
   if (!Array.isArray(merged.qboCache.customers)) merged.qboCache.customers = [];
+  if (!Array.isArray(merged.qboCache.classes)) merged.qboCache.classes = [];
+  if (!Array.isArray(merged.qboCache.accountsBank)) merged.qboCache.accountsBank = [];
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -199,6 +205,32 @@ function samsaraHeaders() {
     Authorization: `Bearer ${SAMSARA_API_TOKEN}`,
     Accept: 'application/json'
   };
+}
+
+/** Paginate Samsara HOS clocks (max 512 per page, up to ~10k drivers). */
+async function fetchAllSamsaraHosClocks() {
+  if (!SAMSARA_API_TOKEN) return [];
+  const all = [];
+  let after = '';
+  for (let page = 0; page < 24; page++) {
+    const url = new URL('https://api.samsara.com/fleet/hos/clocks');
+    url.searchParams.set('limit', '512');
+    if (after) url.searchParams.set('after', after);
+    let res;
+    try {
+      res = await fetchJson(url.toString(), { headers: samsaraHeaders() });
+    } catch (err) {
+      logError('fetchAllSamsaraHosClocks', err);
+      break;
+    }
+    const chunk = Array.isArray(res?.data) ? res.data : [];
+    all.push(...chunk);
+    const pag = res?.pagination || {};
+    if (!pag.hasNextPage || !chunk.length) break;
+    after = pag.endCursor || '';
+    if (!after) break;
+  }
+  return all;
 }
 
 function assetCategoryForVehicle(v) {
@@ -687,16 +719,26 @@ function readQboCatalogPayload() {
     accountsExpense: parts.accountsExpense,
     accountsIncome: parts.accountsIncome,
     customers: c.customers || [],
+    classes: c.classes || [],
+    accountsBank: c.accountsBank || [],
     refreshedAt: c.refreshedAt || null
   };
 }
 
 async function qboSyncMasterData() {
-  const [vendorsData, itemsData, accountsData, customersData] = await Promise.all([
+  const [vendorsData, itemsData, accountsData, customersData, bankData, classData] = await Promise.all([
     qboQuery('select * from Vendor maxresults 1000'),
     qboQuery('select * from Item maxresults 1000'),
     qboQuery('select * from Account maxresults 1000'),
-    qboQuery('select * from Customer maxresults 1000')
+    qboQuery('select * from Customer maxresults 1000'),
+    qboQuery("select * from Account where AccountType = 'Bank' maxresults 200").catch(err => {
+      logError('qboSync bank accounts', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery('select * from Class maxresults 500').catch(err => {
+      logError('qboSync classes', err);
+      return { QueryResponse: {} };
+    })
   ]);
 
   const vendors = (vendorsData?.QueryResponse?.Vendor || []).map(v => ({
@@ -738,6 +780,22 @@ async function qboSyncMasterData() {
     active: c.Active !== false
   }));
 
+  const accountsBank = (bankData?.QueryResponse?.Account || [])
+    .filter(a => a.Active !== false)
+    .map(a => ({
+      qboId: a.Id,
+      name: a.Name || '',
+      accountType: a.AccountType || ''
+    }));
+
+  const classes = (classData?.QueryResponse?.Class || [])
+    .filter(c => c.Active !== false)
+    .map(c => ({
+      qboId: c.Id,
+      name: c.Name || '',
+      fullyQualifiedName: c.FullyQualifiedName || c.Name || ''
+    }));
+
   const erp = readErp();
   erp.qboCache = {
     vendors,
@@ -746,6 +804,8 @@ async function qboSyncMasterData() {
     accountsExpense,
     accountsIncome,
     customers,
+    classes,
+    accountsBank,
     refreshedAt: new Date().toISOString()
   };
   writeErp(erp);
@@ -772,6 +832,73 @@ async function qboCreateVendorFromApp(body) {
   return { created: true, vendor: created?.Vendor || null };
 }
 
+async function qboCreateCustomerFromApp(body) {
+  const displayName = sanitizeName(body.name || body.companyName || 'Customer');
+  const existing = await qboQuery(
+    `select * from Customer where DisplayName = '${String(displayName).replace(/'/g, "\\'")}' maxresults 1`
+  );
+  const existingCustomer = existing?.QueryResponse?.Customer?.[0];
+  if (existingCustomer) return { created: false, customer: existingCustomer };
+
+  const payload = {
+    DisplayName: displayName,
+    CompanyName: sanitizeName(body.companyName || displayName),
+    PrimaryPhone: body.phone ? { FreeFormNumber: String(body.phone).slice(0, 21) } : undefined,
+    PrimaryEmailAddr: body.email ? { Address: String(body.email).slice(0, 100) } : undefined,
+    BillAddr: body.address ? { Line1: String(body.address).slice(0, 500) } : undefined
+  };
+
+  const created = await qboPost('customer', payload);
+  return { created: true, customer: created?.Customer || null };
+}
+
+async function qboCreateTripInvoice(opts) {
+  const {
+    customerId,
+    amount,
+    txnDate,
+    docNumber,
+    privateNote,
+    itemId,
+    classId,
+    lineDescription
+  } = opts;
+  if (!customerId) throw new Error('Customer is required');
+  if (!(amount > 0)) throw new Error('Amount must be positive');
+  if (!itemId) throw new Error('QuickBooks invoice line item id is required');
+
+  const itemQbo = await qboFindItemById(itemId);
+  if (!itemQbo) throw new Error('QuickBooks item not found for invoice');
+
+  const salesDetail = {
+    ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
+    Qty: 1,
+    UnitPrice: amount
+  };
+  if (classId) salesDetail.ClassRef = { value: classId };
+
+  const line = {
+    Amount: amount,
+    DetailType: 'SalesItemLineDetail',
+    Description: sanitizeName(lineDescription || 'Trip / linehaul', 'Line'),
+    SalesItemLineDetail: salesDetail
+  };
+
+  const payload = {
+    CustomerRef: { value: customerId },
+    TxnDate: txnDate || new Date().toISOString().slice(0, 10),
+    DocNumber: docNumber ? String(docNumber).slice(0, 21) : undefined,
+    Line: [line],
+    PrivateNote: sanitizeName(privateNote || '', 'Invoice')
+  };
+
+  const created = await qboPost('invoice', payload);
+  return {
+    qboEntityType: 'Invoice',
+    qboEntityId: created?.Invoice?.Id || ''
+  };
+}
+
 async function qboFindItemById(id) {
   const data = await qboGet(`item/${id}`);
   return data?.Item || null;
@@ -784,6 +911,22 @@ async function qboFindAccountById(id) {
 
 function findPaymentMethodLocal(erp, paymentMethodId) {
   return (erp.paymentMethods || []).find(v => v.id === paymentMethodId) || null;
+}
+
+function resolveQboBankAccountId(erp, explicit) {
+  const e = String(explicit || '').trim();
+  if (e) return e;
+  return DEFAULT_QBO_BANK_ACCOUNT_ID;
+}
+
+/** Match QBO Class name to vehicle unit (e.g. T160) for P&amp;L by truck. */
+function qboClassIdForUnit(unitRaw, erp) {
+  const u = String(unitRaw || '').trim();
+  if (!u) return '';
+  const classes = erp?.qboCache?.classes || [];
+  const lower = u.toLowerCase();
+  const hit = classes.find(c => String(c.name || '').trim().toLowerCase() === lower);
+  return hit ? String(hit.qboId) : '';
 }
 
 async function qboCreateApTransaction(ap) {
@@ -799,18 +942,21 @@ async function qboCreateApTransaction(ap) {
   let line;
   let qboItemId = '';
   let qboAccountId = '';
+  const classId = qboClassIdForUnit(ap.assetUnit, erp);
 
   if (detailMode === 'category') {
     if (!ap.qboAccountId) throw new Error('QuickBooks category/account is required');
     const accountQbo = await qboFindAccountById(ap.qboAccountId);
     if (!accountQbo) throw new Error('QuickBooks account not found');
+    const acctDetail = {
+      AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
+    };
+    if (classId) acctDetail.ClassRef = { value: classId };
     line = {
       Amount: amount,
       DetailType: 'AccountBasedExpenseLineDetail',
       Description: sanitizeName(ap.description || ap.memo || ap.assetUnit || 'Expense'),
-      AccountBasedExpenseLineDetail: {
-        AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
-      }
+      AccountBasedExpenseLineDetail: acctDetail
     };
     qboAccountId = accountQbo.Id;
   } else {
@@ -818,15 +964,17 @@ async function qboCreateApTransaction(ap) {
     const itemQbo = await qboFindItemById(ap.qboItemId);
     if (!itemQbo) throw new Error('QuickBooks item not found');
     const qty = safeNum(ap.qty, 1) || 1;
+    const itemDetail = {
+      ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
+      Qty: qty,
+      UnitPrice: amount / qty
+    };
+    if (classId) itemDetail.ClassRef = { value: classId };
     line = {
       Amount: amount,
       DetailType: 'ItemBasedExpenseLineDetail',
       Description: sanitizeName(ap.description || itemQbo.Name || 'Item expense'),
-      ItemBasedExpenseLineDetail: {
-        ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
-        Qty: qty,
-        UnitPrice: amount / qty
-      }
+      ItemBasedExpenseLineDetail: itemDetail
     };
     qboItemId = itemQbo.Id;
   }
@@ -842,6 +990,8 @@ async function qboCreateApTransaction(ap) {
       Line: [line],
       PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Expense')
     };
+    const bankId = resolveQboBankAccountId(erp, ap.qboBankAccountId);
+    if (bankId) payload.AccountRef = { value: bankId };
     const created = await qboPost('purchase', payload);
     return {
       qboEntityType: 'Purchase',
@@ -875,6 +1025,7 @@ async function qboCreateWorkOrderTransaction(workOrder) {
   if (!workOrder.qboVendorId) throw new Error('QuickBooks vendor is required on work order');
   if (!Array.isArray(workOrder.lines) || !workOrder.lines.length) throw new Error('Work order needs at least one line');
 
+  const classId = qboClassIdForUnit(workOrder.unit, erp);
   const lines = [];
   for (const line of workOrder.lines) {
     const amount = safeNum(line.amount, 0);
@@ -885,6 +1036,12 @@ async function qboCreateWorkOrderTransaction(workOrder) {
       const itemQbo = await qboFindItemById(line.qboItemId);
       if (!itemQbo) throw new Error(`QuickBooks item not found for line ${line.serviceType || line.lineType}`);
       const qty = safeNum(line.qty, 1) || 1;
+      const itemDetail = {
+        ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
+        Qty: qty,
+        UnitPrice: amount / qty
+      };
+      if (classId) itemDetail.ClassRef = { value: classId };
       lines.push({
         Amount: amount,
         DetailType: 'ItemBasedExpenseLineDetail',
@@ -892,16 +1049,16 @@ async function qboCreateWorkOrderTransaction(workOrder) {
           `${line.serviceType || line.lineType || 'Line'} ${line.tirePosition || line.tirePositionText || ''}`,
           'Line'
         ),
-        ItemBasedExpenseLineDetail: {
-          ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
-          Qty: qty,
-          UnitPrice: amount / qty
-        }
+        ItemBasedExpenseLineDetail: itemDetail
       });
     } else {
       if (!line.qboAccountId) throw new Error(`Missing QuickBooks account for line ${line.serviceType || line.lineType}`);
       const accountQbo = await qboFindAccountById(line.qboAccountId);
       if (!accountQbo) throw new Error(`QuickBooks account not found for line ${line.serviceType || line.lineType}`);
+      const acctDetail = {
+        AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
+      };
+      if (classId) acctDetail.ClassRef = { value: classId };
       lines.push({
         Amount: amount,
         DetailType: 'AccountBasedExpenseLineDetail',
@@ -909,9 +1066,7 @@ async function qboCreateWorkOrderTransaction(workOrder) {
           `${line.serviceType || line.lineType || 'Line'} ${line.tirePosition || line.tirePositionText || ''}`,
           'Line'
         ),
-        AccountBasedExpenseLineDetail: {
-          AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
-        }
+        AccountBasedExpenseLineDetail: acctDetail
       });
     }
   }
@@ -932,6 +1087,8 @@ async function qboCreateWorkOrderTransaction(workOrder) {
         'Work Order'
       )
     };
+    const bankId = resolveQboBankAccountId(erp, workOrder.qboBankAccountId);
+    if (bankId) payload.AccountRef = { value: bankId };
     const created = await qboPost('purchase', payload);
     return {
       qboEntityType: 'Purchase',
@@ -1008,10 +1165,10 @@ app.get('/api/board', async (_req, res) => {
     assignmentsUrl.searchParams.set('startTime', startTime);
     assignmentsUrl.searchParams.set('endTime', endTime);
 
-    const [vehiclesRaw, statsRows, hosRes, assignmentsRes] = await Promise.all([
+    const [vehiclesRaw, statsRows, hosAll, assignmentsRes] = await Promise.all([
       fetchVehiclesSafely(),
       fetchVehicleStatsCurrentSafely(),
-      fetchJson('https://api.samsara.com/fleet/hos/clocks', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
+      fetchAllSamsaraHosClocks(),
       fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
     ]);
 
@@ -1021,7 +1178,7 @@ app.get('/api/board', async (_req, res) => {
     res.json({
       vehicles: enrichedVehicles,
       live: statsRows,
-      hos: hosRes.data || [],
+      hos: hosAll,
       assignments: assignmentsRes.data || [],
       refreshedAt: new Date().toISOString()
     });
@@ -1167,6 +1324,7 @@ async function qboPostMaintenanceRecord(recordId) {
     detailMode: 'category',
     qboVendorId: vendorId,
     paymentMethodId: rec.paymentMethodId || 'pm_other',
+    qboBankAccountId: rec.qboBankAccountId || '',
     qboAccountId: accountId,
     qboItemId: '',
     qty: 1,
@@ -1576,6 +1734,7 @@ app.post('/api/work-orders', (req, res) => {
       repairLocationType: body.repairLocationType || '',
       isInternalWorkOrder: !!body.isInternalWorkOrder,
       paymentMethodId: body.paymentMethodId || '',
+      qboBankAccountId: String(body.qboBankAccountId || '').trim(),
       txnType: body.txnType || 'expense',
       dueDate: body.dueDate || '',
       notes: body.notes || '',
@@ -1664,6 +1823,7 @@ app.post('/api/erp/ap-transaction', (req, res) => {
       detailMode: body.detailMode,
       qboVendorId: body.qboVendorId,
       paymentMethodId: body.paymentMethodId || '',
+      qboBankAccountId: String(body.qboBankAccountId || '').trim(),
       qboAccountId: body.qboAccountId || '',
       qboItemId: body.qboItemId || '',
       qty: safeNum(body.qty, 1) || 1,
@@ -1892,6 +2052,71 @@ app.post('/api/qbo/create-vendor', async (req, res) => {
     const cache = await qboSyncMasterData();
     res.json({ ok: true, created: result.created, vendor: result.vendor, cache });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/qbo/create-customer', async (req, res) => {
+  try {
+    const result = await qboCreateCustomerFromApp(req.body || {});
+    const cache = await qboSyncMasterData();
+    res.json({ ok: true, created: result.created, customer: result.customer, cache });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/qbo/invoice-from-load', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const loadNumber = String(body.loadNumber || '').trim();
+    if (!loadNumber) return res.status(400).json({ error: 'loadNumber is required' });
+
+    const tms = await fetchLoadSettlementContextByNumber(loadNumber);
+    if (!tms?.load) return res.status(404).json({ error: 'Load not found in TMS' });
+
+    const load = tms.load;
+    const custId = load.qbo_customer_id ? String(load.qbo_customer_id).trim() : '';
+    if (!custId) {
+      return res.status(400).json({ error: 'Load has no QuickBooks customer — pick a QBO customer in Dispatch' });
+    }
+
+    const revenue = safeNum(load.revenue_amount, null);
+    if (revenue == null || !(revenue > 0)) {
+      return res.status(400).json({ error: 'Set trip revenue on the load in Dispatch before creating a QuickBooks invoice' });
+    }
+
+    const itemId = String(body.qboItemId || DEFAULT_QBO_INVOICE_ITEM_ID || '').trim();
+    if (!itemId) {
+      return res.status(400).json({
+        error:
+          'Provide qboItemId in the JSON body or set DEFAULT_QBO_INVOICE_ITEM_ID on the server (a Service item in QuickBooks)'
+      });
+    }
+
+    const erp = readErp();
+    const truckUnit = String(load.truck_code || '').trim();
+    const classId = qboClassIdForUnit(truckUnit, erp);
+
+    const result = await qboCreateTripInvoice({
+      customerId: custId,
+      amount: revenue,
+      txnDate: load.end_date || load.start_date || undefined,
+      docNumber: load.load_number || loadNumber,
+      privateNote: `TMS load ${load.load_number || loadNumber}`,
+      itemId,
+      classId,
+      lineDescription: `Linehaul / trip ${load.load_number || loadNumber}`
+    });
+
+    res.json({
+      ok: true,
+      ...result,
+      loadNumber: load.load_number || loadNumber,
+      classApplied: !!classId
+    });
+  } catch (error) {
+    logError('api/qbo/invoice-from-load', error);
     res.status(500).json({ error: error.message });
   }
 });
