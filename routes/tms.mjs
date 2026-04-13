@@ -17,6 +17,12 @@ function qboIdOrNull(v) {
   return s || null;
 }
 
+function revenueOrNull(v) {
+  if (v == null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 function dateOrNull(v) {
   if (v == null || v === '') return null;
   const s = String(v).trim();
@@ -301,6 +307,7 @@ router.post('/loads', async (req, res) => {
   const pem = body.practical_empty_miles != null ? Number(body.practical_empty_miles) : 0;
   const notes = String(body.notes || '').trim() || null;
   const qbo_customer_id = qboIdOrNull(body.qbo_customer_id);
+  const revenue_amount = revenueOrNull(body.revenue_amount);
   const stops = Array.isArray(body.stops) ? body.stops : [];
 
   const client = await pool.connect();
@@ -310,8 +317,8 @@ router.post('/loads', async (req, res) => {
       `INSERT INTO loads (
         load_number, status, customer_id, driver_id, truck_id, trailer_id,
         dispatcher_name, start_date, end_date, practical_loaded_miles, practical_empty_miles, notes,
-        qbo_customer_id
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        qbo_customer_id, revenue_amount
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       RETURNING id`,
       [
         load_number,
@@ -326,7 +333,8 @@ router.post('/loads', async (req, res) => {
         plm,
         pem,
         notes,
-        qbo_customer_id
+        qbo_customer_id,
+        revenue_amount
       ]
     );
     const loadId = ins.rows[0].id;
@@ -389,12 +397,13 @@ router.patch('/loads/:id', async (req, res) => {
       ['end_date', 'end_date'],
       ['practical_loaded_miles', 'practical_loaded_miles'],
       ['practical_empty_miles', 'practical_empty_miles'],
-      ['notes', 'notes']
+      ['notes', 'notes'],
+      ['revenue_amount', 'revenue_amount']
     ];
     for (const [key, col] of map) {
       if (b[key] !== undefined) {
         fields.push(`${col} = $${n++}`);
-        vals.push(b[key]);
+        vals.push(key === 'revenue_amount' ? revenueOrNull(b[key]) : b[key]);
       }
     }
     if (!fields.length) return res.status(400).json({ ok: false, error: 'No fields to update' });

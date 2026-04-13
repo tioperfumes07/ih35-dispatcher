@@ -1728,18 +1728,31 @@
         const lines = data.lineItems || [];
         const nRec = data.counts.maintenanceRecords != null ? data.counts.maintenanceRecords : 0;
         const totalRec = Number(data.totalMaintenanceRecords || 0);
-        document.getElementById('settlementSummary').innerHTML =
+        const rev = data.revenueAmount;
+        const net = data.netSettlement;
+        let sumHtml =
           `<b>${escapeHtml(data.loadNumber)}</b> — ${data.counts.workOrders} WO(s), ${data.counts.apTransactions} AP, ${nRec} unit record(s) → ` +
-          `<b>$${Number(data.grandTotal).toFixed(2)}</b> total ` +
+          `<b>$${Number(data.grandTotal).toFixed(2)}</b> expenses ` +
           `(WO $${Number(data.totalWorkOrderLines).toFixed(2)} + AP $${Number(data.totalAp).toFixed(2)} + records $${totalRec.toFixed(2)}).`;
+        if (rev != null && Number.isFinite(Number(rev))) {
+          sumHtml +=
+            ` <strong>Trip revenue $${Number(rev).toFixed(2)}</strong> → ` +
+            `<strong>net $${Number(net).toFixed(2)}</strong>.`;
+        }
+        document.getElementById('settlementSummary').innerHTML = sumHtml;
 
         const tmsEl = document.getElementById('settlementTmsBox');
         if (data.tms && data.tms.load) {
           const L = data.tms.load;
           tmsEl.classList.remove('hidden');
           const od = [L.origin_name, L.dest_name].filter(Boolean).join(' → ') || '—';
+          const revLine =
+            L.revenue_amount != null && String(L.revenue_amount).trim() !== ''
+              ? `Trip revenue: <b>$${Number(L.revenue_amount).toFixed(2)}</b> · `
+              : '';
           tmsEl.innerHTML =
             `<strong>TMS</strong> · status <b>${escapeHtml(L.status || '')}</b> · customer ${escapeHtml(L.customer_name || '—')}<br>` +
+            revLine +
             `Miles (ld / em): ${escapeHtml(String(L.practical_loaded_miles ?? ''))} / ${escapeHtml(String(L.practical_empty_miles ?? ''))} · ${escapeHtml(od)}<br>` +
             `<span class="mini-note">${escapeHtml(data.tms.note || '')}</span>`;
         } else {

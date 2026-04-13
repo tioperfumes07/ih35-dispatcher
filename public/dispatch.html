@@ -139,6 +139,7 @@
           <th>Customer</th>
           <th>Origin → Destination</th>
           <th>Miles (Ld / Em)</th>
+          <th>Rev $</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -215,6 +216,11 @@
               <input class="in" type="number" id="f_plm" step="0.1" placeholder="Loaded" />
               <input class="in" type="number" id="f_pem" step="0.1" placeholder="Empty" />
             </div>
+          </div>
+          <div class="row" style="grid-column:1/-1">
+            <label class="lbl">Trip revenue ($)</label>
+            <input class="in" type="number" id="f_revenue" step="0.01" min="0" placeholder="Linehaul / total for settlement net" />
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Used on Maintenance → Settlement: net = this revenue minus rolled-up expenses for the load #.</p>
           </div>
         </div>
         <div class="stops-head">
@@ -392,7 +398,7 @@
     function renderRows(rows) {
       const tb = document.getElementById('tbody');
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="9" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="10" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
         return;
       }
       tb.innerHTML = rows.map(l => {
@@ -401,6 +407,10 @@
         const tt = [l.truck_code, l.trailer_code].filter(Boolean).join(' / ') || '—';
         const dates = [l.start_date, l.end_date].filter(Boolean).join(' → ') || '—';
         const inv = l.invoice_number || l.load_number || '—';
+        const revRaw = l.revenue_amount;
+        const revNum = revRaw != null && revRaw !== '' ? Number(revRaw) : NaN;
+        const revCell =
+          Number.isFinite(revNum) ? escapeHtml(revNum.toFixed(2)) : '<span class="muted">—</span>';
         return '<tr>' +
           '<td><strong>' + escapeHtml(l.load_number) + '</strong></td>' +
           '<td class="muted">' + escapeHtml(inv) + '</td>' +
@@ -414,6 +424,7 @@
           '<td>' + escapeHtml(l.customer_name || '—') + '</td>' +
           '<td><div>' + escapeHtml(od) + '</div><div class="muted">' + escapeHtml(addr) + '</div></td>' +
           '<td>' + escapeHtml(String(l.practical_loaded_miles ?? '0')) + ' / ' + escapeHtml(String(l.practical_empty_miles ?? '0')) + '</td>' +
+          '<td class="muted">' + revCell + '</td>' +
           '</tr>';
       }).join('');
     }
@@ -635,6 +646,7 @@
       document.getElementById('f_end').value = '';
       document.getElementById('f_plm').value = '';
       document.getElementById('f_pem').value = '';
+      document.getElementById('f_revenue').value = '';
       document.getElementById('f_new_driver').value = '';
       document.getElementById('f_new_truck').value = '';
       document.getElementById('f_new_trailer').value = '';
@@ -702,6 +714,12 @@
         end_date: document.getElementById('f_end').value || null,
         practical_loaded_miles: parseFloat(document.getElementById('f_plm').value) || 0,
         practical_empty_miles: parseFloat(document.getElementById('f_pem').value) || 0,
+        revenue_amount: (() => {
+          const v = document.getElementById('f_revenue').value.trim();
+          if (!v) return null;
+          const n = parseFloat(v);
+          return Number.isFinite(n) ? n : null;
+        })(),
         stops: collectStops()
       };
       try {

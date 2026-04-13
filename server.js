@@ -1441,15 +1441,28 @@ app.get('/api/settlement/by-load/:loadNumber', async (req, res) => {
     } catch (err) {
       logError('settlement/tms-load', err);
     }
+    const revenueAmount =
+      tms?.load?.revenue_amount != null && String(tms.load.revenue_amount).trim() !== ''
+        ? safeNum(tms.load.revenue_amount, null)
+        : null;
+    const netSettlement =
+      revenueAmount != null && Number.isFinite(revenueAmount)
+        ? Math.round((revenueAmount - report.grandTotal) * 100) / 100
+        : null;
     res.json({
       ok: true,
       ...report,
+      revenueAmount,
+      netSettlement,
       tms: tms
         ? {
             load: tms.load,
             stops: tms.stops,
-            revenuePlanned: null,
-            note: 'Revenue / rate con can be stored on loads later; this response is expense rollup + trip header.'
+            revenuePlanned: revenueAmount,
+            note:
+              revenueAmount != null && Number.isFinite(revenueAmount)
+                ? 'Net settlement = TMS revenue − rolled-up expenses (WO + AP + unit records).'
+                : 'Add trip revenue on the load in Dispatch to see net P&L here.'
           }
         : null
     });
@@ -1480,6 +1493,7 @@ app.get('/api/settlement/export', async (req, res) => {
     if (tms?.load) {
       lines.push(['TMS status', csvEscape(tms.load.status)].join(','));
       lines.push(['Customer', csvEscape(tms.load.customer_name)].join(','));
+      lines.push(['Trip revenue (TMS)', csvEscape(tms.load.revenue_amount)].join(','));
       lines.push(['Loaded miles', csvEscape(tms.load.practical_loaded_miles)].join(','));
       lines.push(['Empty miles', csvEscape(tms.load.practical_empty_miles)].join(','));
     }
@@ -1507,6 +1521,13 @@ app.get('/api/settlement/export', async (req, res) => {
     lines.push(['total AP', csvEscape(r.totalAp)].join(','));
     lines.push(['total maintenance records', csvEscape(r.totalMaintenanceRecords)].join(','));
     lines.push(['grand total expenses', csvEscape(r.grandTotal)].join(','));
+    const rev =
+      tms?.load?.revenue_amount != null && String(tms.load.revenue_amount).trim() !== ''
+        ? safeNum(tms.load.revenue_amount, null)
+        : null;
+    if (rev != null && Number.isFinite(rev)) {
+      lines.push(['net settlement (revenue - expenses)', csvEscape(Math.round((rev - r.grandTotal) * 100) / 100)].join(','));
+    }
 
     const safeName = String(r.loadNumber).replace(/[^\w.-]+/g, '_') || 'load';
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
