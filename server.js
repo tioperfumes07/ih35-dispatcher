@@ -221,37 +221,6 @@ function isTrackedAsset(v) {
   );
 }
 
-function getStatObject(entry, keys = []) {
-  for (const key of keys) {
-    const v = entry?.[key];
-    if (v != null) return v;
-  }
-  return null;
-}
-
-function getStatValue(entry, keys = []) {
-  const v = getStatObject(entry, keys);
-  if (v == null) return null;
-
-  if (typeof v === 'number' || typeof v === 'string') return v;
-
-  if (Array.isArray(v)) {
-    const first = v[0];
-    if (!first) return null;
-    if (first.value != null) return first.value;
-    if (first.percent != null) return first.percent;
-    return null;
-  }
-
-  if (typeof v === 'object') {
-    if (v.value != null) return v.value;
-    if (v.percent != null) return v.percent;
-    if (v.latitude != null || v.longitude != null) return v;
-  }
-
-  return null;
-}
-
 function vehicleIdOf(entry) {
   return String(
     entry?.id ||
@@ -264,85 +233,60 @@ function vehicleIdOf(entry) {
   );
 }
 
-function readGpsObject(entry) {
-  const gps = getStatObject(entry, ['gps', 'location']);
-  if (!gps) return {};
-  if (Array.isArray(gps)) return gps[0] || {};
-  return gps;
+function getVehicleStatRows(payload) {
+  return Array.isArray(payload?.data) ? payload.data : [];
 }
 
-function readOdometerMilesFromEntry(entry) {
-  const obdMeters = safeNum(getStatValue(entry, ['obdOdometerMeters', 'obdOdometer']), null);
-  const gpsMeters = safeNum(getStatValue(entry, ['gpsOdometerMeters', 'syntheticOdometerMeters', 'gpsOdometer']), null);
+function readOdometerMilesFromStatsRow(row) {
+  const obdMeters = safeNum(row?.obdOdometerMeters?.value ?? row?.obdOdometerMeters ?? null, null);
+  const gpsMeters = safeNum(
+    row?.gpsOdometerMeters?.value ??
+      row?.gpsOdometerMeters ??
+      row?.syntheticOdometerMeters?.value ??
+      row?.syntheticOdometerMeters ??
+      null,
+    null
+  );
   const meters = obdMeters ?? gpsMeters ?? null;
   return meters != null ? Math.round(meters * 0.000621371) : null;
 }
 
-function readFuelPercentFromEntry(entry) {
-  const pct = safeNum(getStatValue(entry, ['fuelPercent', 'fuelPercents', 'fuel']), null);
+function readFuelPercentFromStatsRow(row) {
+  const pct = safeNum(
+    row?.fuelPercent?.percent ??
+      row?.fuelPercents?.percent ??
+      row?.fuelPercent ??
+      row?.fuelPercents ??
+      null,
+    null
+  );
   return pct != null ? Math.round(pct) : null;
 }
 
-function normalizeFeedRows(rawRows = []) {
-  const out = [];
-  for (const row of rawRows) {
-    if (!row || typeof row !== 'object') continue;
+function mergeVehiclesWithStats(vehicles, statsRows = []) {
+  const statsByVehicleId = new Map();
 
-    if (Array.isArray(row.data)) {
-      for (const sub of row.data) out.push(sub);
-      continue;
-    }
-
-    out.push(row);
-  }
-  return out;
-}
-
-/* ---------------------------
-   LIVE SAMSARA STATS FEED CACHE
----------------------------- */
-
-const liveStatsCache = {
-  byVehicleId: new Map(),
-  cursor: '',
-  lastSyncAt: '',
-  isSyncing: false,
-  lastError: '',
-  nextAllowedPollAt: 0
-};
-
-function updateVehicleCacheFromRows(rows = []) {
-  for (const row of rows) {
+  for (const row of statsRows) {
     const vehicleId = vehicleIdOf(row);
     if (!vehicleId) continue;
 
-    const prev = liveStatsCache.byVehicleId.get(vehicleId) || {};
-    const gps = readGpsObject(row);
-    const merged = {
+    const prev = statsByVehicleId.get(vehicleId) || {};
+    const next = {
       ...prev,
-      ...row,
-      vehicleId,
-      obdOdometerMeters:
-        safeNum(getStatValue(row, ['obdOdometerMeters', 'obdOdometer']), null) ??
-        prev.obdOdometerMeters ??
-        null,
-      gpsOdometerMeters:
-        safeNum(getStatValue(row, ['gpsOdometerMeters', 'syntheticOdometerMeters', 'gpsOdometer']), null) ??
-        prev.gpsOdometerMeters ??
-        null,
-      fuelPercent:
-        readFuelPercentFromEntry(row) ??
-        prev.fuelPercent ??
-        null,
-      gps: {
-        latitude: safeNum(gps?.latitude ?? gps?.lat, prev.gps?.latitude ?? null),
-        longitude: safeNum(gps?.longitude ?? gps?.lng ?? gps?.lon, prev.gps?.longitude ?? null)
-      },
+      row,
+      odometerMiles: readOdometerMilesFromStatsRow(row) ?? prev.odometerMiles ?? null,
+      fuelPercent: readFuelPercentFromStatsRow(row) ?? prev.fuelPercent ?? null,
+      latitude: safeNum(row?.gps?.latitude ?? row?.location?.latitude ?? prev.latitude ?? null, null),
+      longitude: safeNum(row?.gps?.longitude ?? row?.location?.longitude ?? prev.longitude ?? null, null),
       engineState:
-        String(getStatValue(row, ['engineState', 'engineStates']) || prev.engineState || ''),
+        row?.engineState?.value ??
+        row?.engineStates?.value ??
+        row?.engineState ??
+        row?.engineStates ??
+        prev.engineState ??
+        '',
       updatedAt:
         row?.time ||
-        row?.updatedAtTime ||
         row?.gps?.time ||
         row?.obdOdometerMeters?.time ||
         row?.gpsOdometerMeters?.time ||
@@ -350,128 +294,258 @@ function updateVehicleCacheFromRows(rows = []) {
         ''
     };
 
-    liveStatsCache.byVehicleId.set(vehicleId, merged);
+    statsByVehicleId.set(vehicleId, next);
+  }
+
+  return vehicles.map(v => {
+    const vehicleId = String(v.id || v.vehicleId || v.ids?.samsaraId || '');
+    const stat = statsByVehicleId.get(vehicleId) || {};
+
+    return {
+      ...v,
+      assetCategory: assetCategoryForVehicle(v),
+      odometerMiles: stat.odometerMiles ?? null,
+      fuelPercent: stat.fuelPercent ?? null,
+      latitude: stat.latitude ?? null,
+      longitude: stat.longitude ?? null,
+      engineState: stat.engineState || '',
+      liveStatsUpdatedAt: stat.updatedAt || ''
+    };
+  });
+}
+
+async function fetchVehiclesSafely() {
+  try {
+    const payload = await fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() });
+    return Array.isArray(payload?.data) ? payload.data : [];
+  } catch (error) {
+    logError('fetchVehiclesSafely', error);
+    return [];
   }
 }
 
-async function fetchVehicleStatsFeedPage(afterCursor = '') {
-  const url = new URL('https://api.samsara.com/fleet/vehicles/stats/feed');
-  url.searchParams.set(
-    'types',
-    'obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps,engineStates'
-  );
-  if (afterCursor) url.searchParams.set('after', afterCursor);
-
-  return fetchJson(url.toString(), { headers: samsaraHeaders() });
+async function fetchVehicleStatsCurrentSafely() {
+  try {
+    const url =
+      'https://api.samsara.com/fleet/vehicles/stats?types=obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps,engineStates';
+    const payload = await fetchJson(url, { headers: samsaraHeaders() });
+    return getVehicleStatRows(payload);
+  } catch (error) {
+    logError('fetchVehicleStatsCurrentSafely', error);
+    return [];
+  }
 }
 
-async function syncVehicleStatsFeedOnce() {
-  if (!SAMSARA_API_TOKEN) return;
-  if (liveStatsCache.isSyncing) return;
+function flattenWorkOrderLines(workOrder) {
+  return (workOrder.lines || []).map(line => ({
+    workOrderId: workOrder.id,
+    workOrderNumber: workOrder.internalWorkOrderNumber || '',
+    vendorInvoiceNumber: workOrder.vendorInvoiceNumber || '',
+    vendorWorkOrderNumber: workOrder.vendorWorkOrderNumber || '',
+    unit: workOrder.unit || '',
+    serviceDate: workOrder.serviceDate || '',
+    vendor: workOrder.vendor || '',
+    lineId: line.id,
+    lineType: line.lineType || '',
+    serviceType: line.serviceType || '',
+    tirePosition: line.tirePosition || line.tirePositionText || '',
+    qty: line.qty ?? '',
+    rate: line.rate ?? '',
+    amount: line.amount ?? '',
+    notes: line.notes || '',
+    serviceMileage: line.serviceMileage ?? null,
+    qboSyncStatus: workOrder.qboSyncStatus || '',
+    qboEntityType: workOrder.qboEntityType || '',
+    qboEntityId: workOrder.qboEntityId || ''
+  }));
+}
 
-  const now = Date.now();
-  if (now < liveStatsCache.nextAllowedPollAt) return;
+function defaultRulesForVehicle(v) {
+  const category = assetCategoryForVehicle(v);
 
-  liveStatsCache.isSyncing = true;
+  if (category === 'Refrigerated Vans') {
+    return [
+      { serviceType: 'Reefer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Oil Service', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Fuel Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Reefer Air Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
+    ];
+  }
 
-  try {
-    let after = liveStatsCache.cursor || '';
-    let loopGuard = 0;
+  if (category === 'Flatbeds' || category === 'Dry Vans') {
+    return [
+      { serviceType: 'Trailer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
+      { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: null, intervalDays: 90 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
+    ];
+  }
 
-    while (loopGuard < 20) {
-      loopGuard += 1;
+  if (category === 'Company Vehicles') {
+    return [
+      { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 5000, intervalDays: 180 },
+      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 180 },
+      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 30000, intervalDays: 180 },
+      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
+    ];
+  }
 
-      const payload = await fetchVehicleStatsFeedPage(after);
+  return [
+    { serviceType: 'PM Service', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: 15000, intervalDays: 60 },
+    { serviceType: 'Air Dryer Cartridge', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Power Steering Service', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Differential Service', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
+    { serviceType: 'Coolant Filter', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'Air Filters', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Second Fuel Filter', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Valve Adjustment', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
+    { serviceType: 'DPF Burn Check', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'DPF Ash Clean', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
+    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
+    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
+    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
+    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
+  ];
+}
 
-      const rows = normalizeFeedRows(payload?.data || []);
-      updateVehicleCacheFromRows(rows);
+function addDays(dateStr, days) {
+  if (!dateStr || !days) return null;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + Number(days));
+  return d.toISOString().slice(0, 10);
+}
 
-      const endCursor =
-        payload?.pagination?.endCursor ||
-        payload?.endCursor ||
-        after ||
-        '';
+function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
+  const today = new Date().toISOString().slice(0, 10);
 
-      const hasNextPage =
-        payload?.pagination?.hasNextPage === true ||
-        payload?.hasNextPage === true;
+  let milesState = 'current';
+  if (nextDueMiles != null && currentMileage != null) {
+    const diff = nextDueMiles - currentMileage;
+    if (diff < 0) milesState = 'past due';
+    else if (diff <= 1000) milesState = 'due soon';
+  }
 
-      if (endCursor) {
-        liveStatsCache.cursor = endCursor;
-        after = endCursor;
-      }
+  let dateState = 'current';
+  if (nextDueDate) {
+    if (nextDueDate < today) dateState = 'past due';
+    else {
+      const d1 = new Date(today);
+      const d2 = new Date(nextDueDate);
+      const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 7) dateState = 'due soon';
+    }
+  }
 
-      liveStatsCache.lastSyncAt = new Date().toISOString();
-      liveStatsCache.lastError = '';
+  if (milesState === 'past due' || dateState === 'past due') return 'past due';
+  if (milesState === 'due soon' || dateState === 'due soon') return 'due soon';
+  return 'current';
+}
 
-      if (!hasNextPage) {
-        liveStatsCache.nextAllowedPollAt = Date.now() + 5000;
-        break;
+function buildDashboardRows(vehicles, erpStore) {
+  const currentMileage = erpStore.currentMileage || {};
+  const allLines = (erpStore.workOrders || []).flatMap(flattenWorkOrderLines);
+
+  return vehicles.flatMap(v => {
+    const unit = v.name;
+    const rules = defaultRulesForVehicle(v);
+
+    const liveMiles = v.odometerMiles ?? null;
+    const manualMiles = safeNum(currentMileage[unit], null);
+    const effectiveMileage = liveMiles ?? manualMiles;
+
+    return rules.map(rule => {
+      const sameType = allLines
+        .filter(r => r.unit === unit && r.serviceType === rule.serviceType)
+        .sort((a, b) => {
+          const da = `${a.serviceDate || ''} ${a.serviceMileage || ''}`;
+          const db = `${b.serviceDate || ''} ${b.serviceMileage || ''}`;
+          return da < db ? 1 : -1;
+        });
+
+      const last = sameType[0] || null;
+      const lastMiles = last ? safeNum(last.serviceMileage, null) : null;
+      const nextDueMiles =
+        last && rule.intervalMiles != null && lastMiles != null
+          ? lastMiles + Number(rule.intervalMiles)
+          : null;
+      const nextDueDate =
+        last && rule.intervalDays != null && last.serviceDate
+          ? addDays(last.serviceDate, rule.intervalDays)
+          : null;
+
+      return {
+        unit,
+        make: v.make || '',
+        model: v.model || '',
+        year: v.year || '',
+        vin: v.vin || '',
+        assetCategory: v.assetCategory || assetCategoryForVehicle(v),
+        currentMileage: effectiveMileage,
+        liveMileage: liveMiles,
+        manualMileage: manualMiles,
+        fuelPercent: v.fuelPercent ?? null,
+        latitude: v.latitude,
+        longitude: v.longitude,
+        engineState: v.engineState || '',
+        category: rule.category || 'maintenance',
+        serviceType: rule.serviceType,
+        intervalMiles: rule.intervalMiles,
+        intervalDays: rule.intervalDays,
+        lastServiceDate: last?.serviceDate || '',
+        nextDueMileage: nextDueMiles,
+        nextDueDate,
+        vendor: last?.vendor || '',
+        cost: last?.amount ?? '',
+        qboSyncStatus: last?.qboSyncStatus || '',
+        qboEntityId: last?.qboEntityId || '',
+        status: calcStatus(nextDueMiles, nextDueDate, effectiveMileage)
+      };
+    });
+  });
+}
+
+function buildTireAlerts(erp) {
+  const lines = (erp.workOrders || [])
+    .flatMap(wo => (wo.lines || []).map(line => ({ ...line, unit: wo.unit, serviceDate: wo.serviceDate })))
+    .filter(line => String(line.lineType || '').toLowerCase() === 'tire');
+
+  const byUnit = {};
+  for (const line of lines) {
+    if (!byUnit[line.unit]) byUnit[line.unit] = [];
+    byUnit[line.unit].push(line);
+  }
+
+  const alerts = [];
+  Object.entries(byUnit).forEach(([unit, rows]) => {
+    rows.sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
+    if (rows.length >= 3) {
+      const lastThree = rows.slice(0, 3);
+      const first = new Date(lastThree[2].serviceDate);
+      const last = new Date(lastThree[0].serviceDate);
+      const diffDays = Math.ceil((last - first) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 90) {
+        alerts.push({
+          unit,
+          type: 'Tire Frequency',
+          message: 'Too many tire line items created in a short period'
+        });
       }
     }
-  } catch (error) {
-    liveStatsCache.lastError = error.message || 'Stats feed sync failed';
-    logError('samsara stats feed', error);
-    liveStatsCache.nextAllowedPollAt = Date.now() + 15000;
-  } finally {
-    liveStatsCache.isSyncing = false;
-  }
+  });
+
+  return alerts;
 }
 
-function startSamsaraFeedLoop() {
-  if (!SAMSARA_API_TOKEN) {
-    console.log('Samsara token missing; live mileage feed disabled.');
-    return;
-  }
-
-  syncVehicleStatsFeedOnce().catch(err => logError('initial stats feed sync', err));
-
-  setInterval(() => {
-    syncVehicleStatsFeedOnce().catch(err => logError('interval stats feed sync', err));
-  }, 10000);
-}
-
-function liveCacheForVehicle(vehicle) {
-  const vehicleId = String(vehicle.id || vehicle.vehicleId || vehicle.ids?.samsaraId || '');
-  return liveStatsCache.byVehicleId.get(vehicleId) || null;
-}
-
-function vehicleWithLiveStats(vehicle) {
-  const cached = liveCacheForVehicle(vehicle);
-
-  const liveOdometerMiles =
-    cached
-      ? (cached.obdOdometerMeters != null
-          ? Math.round(cached.obdOdometerMeters * 0.000621371)
-          : cached.gpsOdometerMeters != null
-            ? Math.round(cached.gpsOdometerMeters * 0.000621371)
-            : null)
-      : null;
-
-  const latitude =
-    cached?.gps?.latitude ??
-    vehicle.latitude ??
-    null;
-
-  const longitude =
-    cached?.gps?.longitude ??
-    vehicle.longitude ??
-    null;
-
-  return {
-    ...vehicle,
-    odometerMiles: liveOdometerMiles ?? vehicle.odometerMiles ?? null,
-    fuelPercent: cached?.fuelPercent ?? vehicle.fuelPercent ?? null,
-    engineState: cached?.engineState ?? vehicle.engineState ?? '',
-    latitude,
-    longitude,
-    liveStatsUpdatedAt: cached?.updatedAt || ''
-  };
-}
-
-/* ---------------------------
-   QUICKBOOKS HELPERS
----------------------------- */
+/* QuickBooks */
 
 function qboConfigured() {
   return !!(QBO_CLIENT_ID && QBO_CLIENT_SECRET && QBO_REDIRECT_URI);
@@ -823,23 +897,28 @@ async function qboCreateWorkOrderTransaction(workOrder) {
   };
 }
 
-/* Main API */
+/* Main endpoints */
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    ok: true,
-    hasSamsaraToken: !!SAMSARA_API_TOKEN,
-    hasGeoapifyKey: !!GEOAPIFY_API_KEY,
-    hasQboConfig: qboConfigured(),
-    dataDir: DATA_DIR,
-    serverTime: new Date().toISOString(),
-    statsFeed: {
-      lastSyncAt: liveStatsCache.lastSyncAt,
-      lastError: liveStatsCache.lastError,
-      cachedVehicles: liveStatsCache.byVehicleId.size,
-      cursorPresent: !!liveStatsCache.cursor
-    }
-  });
+app.get('/api/health', async (_req, res) => {
+  try {
+    const vehicles = await fetchVehiclesSafely();
+    const stats = await fetchVehicleStatsCurrentSafely();
+    res.json({
+      ok: true,
+      hasSamsaraToken: !!SAMSARA_API_TOKEN,
+      hasGeoapifyKey: !!GEOAPIFY_API_KEY,
+      hasQboConfig: qboConfigured(),
+      dataDir: DATA_DIR,
+      serverTime: new Date().toISOString(),
+      samsaraVehicles: vehicles.length,
+      samsaraStatsRows: stats.length
+    });
+  } catch (error) {
+    res.json({
+      ok: false,
+      error: error.message
+    });
+  }
 });
 
 app.get('/api/board', async (_req, res) => {
@@ -853,27 +932,19 @@ app.get('/api/board', async (_req, res) => {
     assignmentsUrl.searchParams.set('startTime', startTime);
     assignmentsUrl.searchParams.set('endTime', endTime);
 
-    const [vehiclesRes, hosRes, assignmentsRes] = await Promise.all([
-      fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
+    const [vehiclesRaw, statsRows, hosRes, assignmentsRes] = await Promise.all([
+      fetchVehiclesSafely(),
+      fetchVehicleStatsCurrentSafely(),
       fetchJson('https://api.samsara.com/fleet/hos/clocks', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
       fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
     ]);
 
-    const rawVehicles = (vehiclesRes.data || []).filter(isTrackedAsset).sort(byVehicleName);
-    const enrichedVehicles = rawVehicles.map(vehicleWithLiveStats);
+    const trackedVehicles = vehiclesRaw.filter(isTrackedAsset).sort(byVehicleName);
+    const enrichedVehicles = mergeVehiclesWithStats(trackedVehicles, statsRows);
 
     res.json({
       vehicles: enrichedVehicles,
-      live: enrichedVehicles.map(v => ({
-        vehicleId: String(v.id || ''),
-        name: v.name,
-        odometerMiles: v.odometerMiles,
-        fuelPercent: v.fuelPercent,
-        latitude: v.latitude,
-        longitude: v.longitude,
-        engineState: v.engineState,
-        liveStatsUpdatedAt: v.liveStatsUpdatedAt
-      })),
+      live: statsRows,
       hos: hosRes.data || [],
       assignments: assignmentsRes.data || [],
       refreshedAt: new Date().toISOString()
@@ -886,24 +957,25 @@ app.get('/api/board', async (_req, res) => {
 
 app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
-    const vehiclesRes = await fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() });
-    const tracked = (vehiclesRes.data || [])
-      .filter(isTrackedAsset)
-      .sort(byVehicleName)
-      .map(vehicleWithLiveStats);
+    const [vehiclesRaw, statsRows] = await Promise.all([
+      fetchVehiclesSafely(),
+      fetchVehicleStatsCurrentSafely()
+    ]);
+
+    const trackedVehicles = vehiclesRaw.filter(isTrackedAsset).sort(byVehicleName);
+    const enrichedVehicles = mergeVehiclesWithStats(trackedVehicles, statsRows);
 
     const erp = readErp();
-    const dashboard = buildDashboardRows(tracked, erp);
+    const dashboard = buildDashboardRows(enrichedVehicles, erp);
 
     res.json({
-      vehicles: tracked,
+      vehicles: enrichedVehicles,
       dashboard,
       tireAlerts: buildTireAlerts(erp),
       workOrders: erp.workOrders || [],
-      statsFeed: {
-        lastSyncAt: liveStatsCache.lastSyncAt,
-        lastError: liveStatsCache.lastError,
-        cachedVehicles: liveStatsCache.byVehicleId.size
+      statsInfo: {
+        vehiclesCount: trackedVehicles.length,
+        statsRowsCount: statsRows.length
       }
     });
   } catch (error) {
@@ -972,12 +1044,12 @@ app.post('/api/work-orders', (req, res) => {
 
     erp.workOrders.push(workOrder);
 
-    const liveMaxMileage = Math.max(
+    const maxMileage = Math.max(
       0,
       ...workOrder.lines.map(l => safeNum(l.serviceMileage, 0) || 0)
     );
-    if (liveMaxMileage > 0) {
-      erp.currentMileage[workOrder.unit] = Math.max(safeNum(erp.currentMileage[workOrder.unit], 0) || 0, liveMaxMileage);
+    if (maxMileage > 0) {
+      erp.currentMileage[workOrder.unit] = Math.max(safeNum(erp.currentMileage[workOrder.unit], 0) || 0, maxMileage);
     }
 
     writeErp(erp);
@@ -1462,8 +1534,6 @@ app.get('/api/route', async (req, res) => {
   }
 });
 
-/* Static */
-
 app.get('/maintenance.html', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'maintenance.html'));
 });
@@ -1471,8 +1541,6 @@ app.get('/maintenance.html', (_req, res) => {
 app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-/* Global safety */
 
 app.use((err, _req, res, _next) => {
   logError('unhandled middleware error', err);
@@ -1486,8 +1554,6 @@ process.on('uncaughtException', err => {
 process.on('unhandledRejection', err => {
   logError('unhandledRejection', err);
 });
-
-startSamsaraFeedLoop();
 
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
