@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { dbQuery, getPool } from '../lib/db.mjs';
+import { readQboCustomerLookup } from '../lib/erp-data.mjs';
 
 const router = Router();
 
@@ -165,7 +166,7 @@ router.post('/trailers', async (req, res) => {
 
 const loadSelect = `
   SELECT l.*,
-    COALESCE(NULLIF(TRIM(l.qbo_customer_name), ''), c.name) AS customer_name,
+    c.name AS customer_join_name,
     d.name AS driver_name,
     t.unit_code AS truck_code,
     tr.unit_code AS trailer_code,
@@ -179,6 +180,28 @@ const loadSelect = `
   LEFT JOIN trucks t ON t.id = l.truck_id
   LEFT JOIN trailers tr ON tr.id = l.trailer_id
 `;
+
+function enrichLoadRow(row) {
+  if (!row) return row;
+  const qboMap = readQboCustomerLookup();
+  const qboId = row.qbo_customer_id != null ? String(row.qbo_customer_id) : '';
+  const fromQbo = qboId ? qboMap.get(qboId) : null;
+  const qboName =
+    fromQbo && (fromQbo.name || fromQbo.companyName)
+      ? String(fromQbo.name || fromQbo.companyName).trim()
+      : '';
+  const stored =
+    row.qbo_customer_name != null && String(row.qbo_customer_name).trim()
+      ? String(row.qbo_customer_name).trim()
+      : '';
+  const customer_name = stored || qboName || row.customer_join_name || '';
+  const { customer_join_name, ...rest } = row;
+  return {
+    ...rest,
+    customer_name,
+    invoice_number: rest.load_number || null
+  };
+}
 
 router.get('/loads', async (req, res) => {
   try {
@@ -196,7 +219,7 @@ router.get('/loads', async (req, res) => {
       `${loadSelect} WHERE ${where} ORDER BY l.created_at DESC`,
       params
     );
-    res.json({ ok: true, data: rows, tab });
+    res.json({ ok: true, data: rows.map(enrichLoadRow), tab });
   } catch (e) {
     if (dbUnavailable(res, e)) return;
     res.status(500).json({ ok: false, error: e.message });
@@ -207,7 +230,7 @@ router.get('/loads/:id', async (req, res) => {
   try {
     const { rows } = await dbQuery(`${loadSelect} WHERE l.id = $1::uuid`, [req.params.id]);
     if (!rows.length) return res.status(404).json({ ok: false, error: 'Load not found' });
-    const load = rows[0];
+    const load = enrichLoadRow(rows[0]);
     const stops = await dbQuery(
       `SELECT id, sequence_order, stop_type, location_name, address, practical_miles, shortest_miles, stop_at, window_text,
               qbo_item_id, qbo_account_id
@@ -241,7 +264,6 @@ router.post('/loads', async (req, res) => {
   const pem = body.practical_empty_miles != null ? Number(body.practical_empty_miles) : 0;
   const notes = String(body.notes || '').trim() || null;
   const qbo_customer_id = qboIdOrNull(body.qbo_customer_id);
-  const qbo_customer_name = String(body.qbo_customer_name || '').trim() || null;
   const stops = Array.isArray(body.stops) ? body.stops : [];
 
   const client = await pool.connect();
@@ -251,8 +273,8 @@ router.post('/loads', async (req, res) => {
       `INSERT INTO loads (
         load_number, status, customer_id, driver_id, truck_id, trailer_id,
         dispatcher_name, start_date, end_date, practical_loaded_miles, practical_empty_miles, notes,
-        qbo_customer_id, qbo_customer_name
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        qbo_customer_id
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
       RETURNING id`,
       [
         load_number,
@@ -267,8 +289,7 @@ router.post('/loads', async (req, res) => {
         plm,
         pem,
         notes,
-        qbo_customer_id,
-        qbo_customer_name
+        qbo_customer_id
       ]
     );
     const loadId = ins.rows[0].id;
@@ -301,7 +322,7 @@ router.post('/loads', async (req, res) => {
       `SELECT * FROM load_stops WHERE load_id = $1::uuid ORDER BY sequence_order`,
       [loadId]
     );
-    res.json({ ok: true, data: { ...rows[0], stops: stopRows.rows } });
+    res.json({ ok: true, data: { ...enrichLoadRow(rows[0]), stops: stopRows.rows } });
   } catch (e) {
     await client.query('ROLLBACK');
     if (e.code === '23505') return res.status(409).json({ ok: false, error: 'Load number already exists' });
@@ -323,7 +344,6 @@ router.patch('/loads/:id', async (req, res) => {
       ['status', 'status'],
       ['customer_id', 'customer_id'],
       ['qbo_customer_id', 'qbo_customer_id'],
-      ['qbo_customer_name', 'qbo_customer_name'],
       ['driver_id', 'driver_id'],
       ['truck_id', 'truck_id'],
       ['trailer_id', 'trailer_id'],
@@ -346,7 +366,7 @@ router.patch('/loads/:id', async (req, res) => {
     await dbQuery(`UPDATE loads SET ${fields.join(', ')} WHERE id = $${n}::uuid`, vals);
     const { rows } = await dbQuery(`${loadSelect} WHERE l.id = $1::uuid`, [id]);
     if (!rows.length) return res.status(404).json({ ok: false, error: 'Load not found' });
-    res.json({ ok: true, data: rows[0] });
+    res.json({ ok: true, data: enrichLoadRow(rows[0]) });
   } catch (e) {
     if (dbUnavailable(res, e)) return;
     res.status(500).json({ ok: false, error: e.message });

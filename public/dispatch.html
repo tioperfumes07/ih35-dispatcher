@@ -103,8 +103,11 @@
     .ac-item:hover { background: #eef2ff; }
     .stops-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   </style>
+  <link rel="stylesheet" href="/css/board-nav.css" />
 </head>
 <body>
+  <div id="boardNavMount"></div>
+  <script src="/js/board-nav.js" defer></script>
   <div class="topbar">
     <h1>Dispatch — Loads &amp; TMS</h1>
     <a href="/">Home</a>
@@ -127,6 +130,7 @@
       <thead>
         <tr>
           <th>Load #</th>
+          <th>Inv #</th>
           <th>Status</th>
           <th>Driver</th>
           <th>Truck / Trailer</th>
@@ -147,8 +151,9 @@
       <div class="modal-body">
         <div class="grid2">
           <div class="row">
-            <label class="lbl">Load number *</label>
+            <label class="lbl">Load number * (same as invoice #)</label>
             <input class="in" id="f_load_number" placeholder="e.g. 13138" />
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Use this number on every bill, expense, and settlement for the trip so P&amp;L rolls up by load.</p>
           </div>
           <div class="row">
             <label class="lbl">Status</label>
@@ -386,7 +391,7 @@
     function renderRows(rows) {
       const tb = document.getElementById('tbody');
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="8" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="9" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
         return;
       }
       tb.innerHTML = rows.map(l => {
@@ -394,8 +399,10 @@
         const addr = [l.origin_address, l.dest_address].filter(Boolean).join(' / ') || '';
         const tt = [l.truck_code, l.trailer_code].filter(Boolean).join(' / ') || '—';
         const dates = [l.start_date, l.end_date].filter(Boolean).join(' → ') || '—';
+        const inv = l.invoice_number || l.load_number || '—';
         return '<tr>' +
           '<td><strong>' + escapeHtml(l.load_number) + '</strong></td>' +
+          '<td class="muted">' + escapeHtml(inv) + '</td>' +
           '<td><span class="badge ' + statusClass(l.status) + '">' + escapeHtml(l.status) + '</span> ' +
           '<select class="sm" data-id="' + l.id + '" onchange="patchStatus(this)">' +
           metaStatuses.map(s => '<option value="' + s + '"' + (s === l.status ? ' selected' : '') + '>' + s + '</option>').join('') +

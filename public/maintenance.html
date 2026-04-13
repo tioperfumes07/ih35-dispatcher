@@ -115,9 +115,24 @@
     @media (max-width:800px){
       .hero-grid,.grid-2,.grid-3,.grid-4,.toolbar,.search-row,.unit-summary{grid-template-columns:1fr}
     }
+    .qb-panel{font-size:12px}
+    .qb-l{display:block;font-size:10px;color:#6b7280;margin-bottom:2px;text-transform:uppercase;font-weight:600}
+    .qb-in{width:100%;padding:4px 6px;font-size:12px;border:1px solid #d8deea;border-radius:4px;box-sizing:border-box}
+    .qb-memo{min-height:48px;resize:vertical;padding:4px 6px;font-size:12px}
+    .wo-line{border-bottom:1px solid #eef1f7;padding-bottom:8px;margin-bottom:8px}
+    .wo-line:last-child{border-bottom:none}
+    .wo-line-grid{display:grid;grid-template-columns:1.3fr 88px 1.1fr 1.1fr 48px 72px 90px 28px;gap:6px;align-items:end}
+    @media (max-width:1200px){.wo-line-grid{grid-template-columns:1fr 1fr}}
+    .qb-btn-del{padding:2px 6px;font-size:13px;border:1px solid #d8deea;border-radius:4px;background:#fff;cursor:pointer}
+    .qb-btn-add{font-size:12px;padding:5px 10px;border-radius:6px}
+    .vendor-row-maint{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+    .vendor-row-maint .qb-in{max-width:220px}
   </style>
+  <link rel="stylesheet" href="/css/board-nav.css" />
 </head>
 <body>
+  <div id="boardNavMount"></div>
+  <script src="/js/board-nav.js" defer></script>
   <datalist id="unitOptions"></datalist>
   <datalist id="serviceOptions"></datalist>
   <datalist id="qboVendorOptions"></datalist>
@@ -273,10 +288,19 @@
                   <input id="customServiceTypeInput" class="hidden" placeholder="Custom service type">
 
                   <input id="serviceDateInput" type="date">
-                  <input id="serviceMileageInput" type="number" placeholder="Service mileage">
-                  <input id="vendorInput" list="qboVendorOptions" placeholder="Type vendor name">
-                  <input id="costInput" type="number" step="0.01" placeholder="Cost">
-                  <textarea id="notesInput" placeholder="Notes"></textarea>
+                  <input id="serviceMileageInput" type="number" class="qb-in" placeholder="Service mileage" style="max-width:140px">
+                  <div class="vendor-row-maint">
+                    <div>
+                      <span class="qb-l">Vendor (QuickBooks)</span>
+                      <input id="vendorInput" class="qb-in" list="qboVendorOptions" placeholder="Type vendor name">
+                    </div>
+                    <div>
+                      <span class="qb-l">Cost</span>
+                      <input id="costInput" class="qb-in" type="number" step="0.01" placeholder="0.00" style="width:88px">
+                    </div>
+                    <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
+                  </div>
+                  <textarea id="notesInput" class="qb-memo" placeholder="Notes"></textarea>
 
                   <div id="tireFields" class="hidden">
                     <div class="tire-layout-wrap">
@@ -512,58 +536,56 @@
         </div>
 
         <div id="acct-transactions" class="accounting-tab">
-          <div class="panel">
-            <div class="panel-head"><div class="panel-title">New Maintenance Expense Transaction</div></div>
+          <div class="panel qb-panel">
+            <div class="panel-head"><div class="panel-title">New maintenance expense (QuickBooks-style, multi-line)</div></div>
             <div class="panel-body form-stack">
-              <div class="search-row">
-                <select id="apTxnType">
-                  <option value="expense">Expense</option>
-                  <option value="bill">Bill</option>
-                </select>
-                <select id="apDetailMode" onchange="toggleApDetailMode()">
-                  <option value="category">Category details</option>
-                  <option value="item">Item details</option>
-                </select>
-              </div>
-
-              <div class="search-row">
-                <input id="apDocNumber" placeholder="Expense No. / Bill No.">
-                <input id="apVendorSearch" list="qboVendorOptions" placeholder="Type vendor name" oninput="resolveApVendorSearch()">
-              </div>
-              <input id="apVendorQboId" type="hidden">
-
-              <div class="search-row">
-                <input id="apTxnDate" type="date">
-                <input id="apDueDate" type="date">
-              </div>
-
-              <div class="search-row">
-                <input id="apPaymentMethodSearch" list="paymentMethodOptions" placeholder="Type payment method" oninput="resolveApPaymentMethodSearch()">
-                <input id="apAssetUnit" list="unitOptions" placeholder="Type unit / asset">
-              </div>
-              <input id="apPaymentMethodId" type="hidden">
-
-              <div id="apCategoryBlock">
-                <input id="apAccountSearch" list="qboAccountOptions" placeholder="Type category / account" oninput="resolveApAccountSearch()">
-                <input id="apAccountQboId" type="hidden">
-              </div>
-
-              <div id="apItemBlock" class="hidden">
-                <div class="search-row">
-                  <input id="apItemSearch" list="qboItemOptions" placeholder="Type item / service" oninput="resolveApItemSearch()">
-                  <input id="apQty" type="number" step="1" value="1" placeholder="Qty">
+              <p class="mini-note" style="margin:0 0 8px">Use the same <strong>load / invoice #</strong> as dispatch for every line on this trip so fuel, tolls, driver pay, and parts roll into one P&amp;L. Posting to QuickBooks sends one expense or bill with multiple lines.</p>
+              <div class="wo-line-grid">
+                <div>
+                  <span class="qb-l">Type</span>
+                  <select id="apTxnType" class="qb-in">
+                    <option value="expense">Expense</option>
+                    <option value="bill">Bill</option>
+                  </select>
                 </div>
-                <input id="apItemQboId" type="hidden">
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Vendor (QuickBooks)</span>
+                  <input id="apVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor" oninput="resolveApVendorSearch()">
+                  <input id="apVendorQboId" type="hidden">
+                </div>
+                <div>
+                  <span class="qb-l">Load / inv #</span>
+                  <input id="apLoadInvoiceNumber" class="qb-in" placeholder="Same as load no.">
+                </div>
+                <div>
+                  <span class="qb-l">Txn date</span>
+                  <input id="apTxnDate" class="qb-in" type="date">
+                </div>
+                <div>
+                  <span class="qb-l">Due</span>
+                  <input id="apDueDate" class="qb-in" type="date">
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Payment method</span>
+                  <input id="apPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Payment" oninput="resolveApPaymentMethodSearch()">
+                  <input id="apPaymentMethodId" type="hidden">
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Unit / asset</span>
+                  <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
+                </div>
               </div>
 
-              <div class="search-row">
-                <input id="apAmount" type="number" step="0.01" placeholder="Amount">
-                <input id="apDescription" placeholder="Description">
+              <div style="margin:10px 0 6px;font-weight:700;font-size:12px">Parts &amp; services (add multiple lines)</div>
+              <div id="woLines"></div>
+              <button type="button" class="qb-btn-add" onclick="addWoLine()">+ Add part / service line</button>
+
+              <div style="margin-top:10px">
+                <span class="qb-l">Memo (header)</span>
+                <textarea id="apMemo" class="qb-memo" placeholder="Optional memo for QuickBooks"></textarea>
               </div>
 
-              <textarea id="apMemo" placeholder="Memo"></textarea>
-
-              <button onclick="saveApTransaction()">Save Maintenance Expense Transaction</button>
+              <button type="button" onclick="saveApTransaction()" style="margin-top:10px">Save expense (local) — then Post to QuickBooks from list below</button>
             </div>
           </div>
 
@@ -599,6 +621,7 @@
                 </div>
                 <input id="newVendorAddress" placeholder="Address">
                 <button onclick="createQboVendor()">Create Vendor in QuickBooks</button>
+                <p class="mini-note" style="margin-top:10px">New <strong>vendors</strong> can be created here and sync immediately. New <strong>accounts (categories)</strong> and <strong>items</strong> are usually created in QuickBooks Online, then use <strong>Refresh QuickBooks Master</strong> so this app picks them up. Employees are managed in QBO payroll; refresh the master list after changes.</p>
               </div>
 
               <div class="grid grid-3" style="margin-top:14px;">
@@ -624,6 +647,50 @@
       </section>
     </main>
   </div>
+
+  <template id="woLineTemplate">
+    <div class="wo-line">
+      <div class="wo-line-grid">
+        <div>
+          <span class="qb-l">Part / service</span>
+          <input class="qb-in wo-svc" placeholder="Description">
+        </div>
+        <div>
+          <span class="qb-l">Line type</span>
+          <select class="qb-in wo-mode" onchange="toggleWoLineBlocks(this)">
+            <option value="category">Category</option>
+            <option value="item">Item</option>
+          </select>
+        </div>
+        <div class="wo-block-cat">
+          <span class="qb-l">Category</span>
+          <input class="qb-in wo-acct" list="qboAccountOptions" placeholder="Account" oninput="resolveWoLineAccount(this)">
+          <input type="hidden" class="wo-acct-id">
+        </div>
+        <div class="wo-block-item hidden">
+          <span class="qb-l">Item</span>
+          <input class="qb-in wo-item" list="qboItemOptions" placeholder="Item" oninput="resolveWoLineItem(this)">
+          <input type="hidden" class="wo-item-id">
+        </div>
+        <div class="wo-block-item hidden">
+          <span class="qb-l">Qty</span>
+          <input class="qb-in wo-qty" type="number" step="1" value="1">
+        </div>
+        <div>
+          <span class="qb-l">Amount</span>
+          <input class="qb-in wo-amt" type="number" step="0.01" placeholder="0">
+        </div>
+        <div>
+          <span class="qb-l">Tire / ref</span>
+          <input class="qb-in wo-tire" placeholder="Optional">
+        </div>
+        <div>
+          <span class="qb-l">&nbsp;</span>
+          <button type="button" class="qb-btn-del" onclick="this.closest('.wo-line').remove()" title="Remove line">×</button>
+        </div>
+      </div>
+    </div>
+  </template>
 
   <script>
     let vehicles = [];
@@ -719,11 +786,20 @@
       openSection(name, btn);
     }
 
+    function applyNavHash() {
+      const section = (location.hash || '').replace(/^#/, '').split('?')[0];
+      if (!section) return;
+      const allowed = ['dashboard', 'dispatch', 'fuel', 'maintenance', 'tracking', 'accounting'];
+      if (allowed.includes(section)) openSectionByName(section);
+    }
+
+    window.addEventListener('hashchange', applyNavHash);
+
     function openAccountingTab(id, btn) {
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
       document.querySelectorAll('.subtab').forEach(el => el.classList.remove('active'));
-      btn.classList.add('active');
+      if (btn) btn.classList.add('active');
     }
 
     async function loadQboStatus() {
@@ -841,6 +917,7 @@
 
       const nowText = 'Last updated: ' + new Date().toLocaleTimeString();
       document.getElementById('sidebarLastUpdated').textContent = nowText;
+      applyNavHash();
     }
 
     function fillDataLists() {
@@ -1048,10 +1125,49 @@
       }
     }
 
-    function toggleApDetailMode() {
-      const mode = document.getElementById('apDetailMode').value;
-      document.getElementById('apCategoryBlock').classList.toggle('hidden', mode !== 'category');
-      document.getElementById('apItemBlock').classList.toggle('hidden', mode !== 'item');
+    function goToCreateQboVendor() {
+      openSectionByName('accounting');
+      const tabs = document.querySelectorAll('#section-accounting .subtab');
+      const qboTab = Array.from(tabs).find(t => (t.getAttribute('onclick') || '').includes('acct-qbo'));
+      if (qboTab) openAccountingTab('acct-qbo', qboTab);
+      document.getElementById('newVendorName')?.focus();
+    }
+
+    function toggleWoLineBlocks(sel) {
+      const row = sel.closest('.wo-line');
+      if (!row) return;
+      const mode = sel.value;
+      row.querySelectorAll('.wo-block-cat').forEach(el => el.classList.toggle('hidden', mode !== 'category'));
+      row.querySelectorAll('.wo-block-item').forEach(el => el.classList.toggle('hidden', mode !== 'item'));
+    }
+
+    function addWoLine() {
+      const tpl = document.getElementById('woLineTemplate');
+      const host = document.getElementById('woLines');
+      if (!tpl || !host) return;
+      host.appendChild(tpl.content.cloneNode(true));
+    }
+
+    function resetWoForm() {
+      document.getElementById('apLoadInvoiceNumber').value = '';
+      document.getElementById('apMemo').value = '';
+      document.getElementById('apDueDate').value = '';
+      document.getElementById('woLines').innerHTML = '';
+      addWoLine();
+    }
+
+    function resolveWoLineAccount(input) {
+      const row = input.closest('.wo-line');
+      const name = input.value.trim().toLowerCase();
+      const match = cacheAccounts().find(v => String(v.name).toLowerCase() === name);
+      row.querySelector('.wo-acct-id').value = match ? match.qboId : '';
+    }
+
+    function resolveWoLineItem(input) {
+      const row = input.closest('.wo-line');
+      const name = input.value.trim().toLowerCase();
+      const match = cacheItems().find(v => String(v.name).toLowerCase() === name);
+      row.querySelector('.wo-item-id').value = match ? match.qboId : '';
     }
 
     function toggleLinkedDetailMode() {
@@ -1395,16 +1511,47 @@
     }
 
     function renderApTransactions() {
-      const rows = (erp.apTransactions || []).slice().reverse();
-      const vendorName = (id) => cacheVendors().find(v => v.qboId === id)?.name || id || '';
-      const itemName = (id) => cacheItems().find(v => v.qboId === id)?.name || id || '';
-      const accountName = (id) => cacheAccounts().find(v => v.qboId === id)?.name || id || '';
+      const vendorName = id => cacheVendors().find(v => v.qboId === id)?.name || id || '';
+      const itemName = id => cacheItems().find(v => v.qboId === id)?.name || id || '';
+      const accountName = id => cacheAccounts().find(v => v.qboId === id)?.name || id || '';
 
-      document.getElementById('apList').innerHTML = rows.length
-        ? rows.map(r => `
+      const wos = (erp.workOrders || []).slice().reverse();
+      const apRows = (erp.apTransactions || []).slice().reverse();
+
+      const woHtml = wos.map(r => {
+        const lines = r.lines || [];
+        const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+        const lineSumm = lines
+          .map(
+            l =>
+              `${escapeHtml(l.serviceType || '')}: $${escapeHtml(String(l.amount ?? ''))} (${escapeHtml(l.detailMode || '')})`
+          )
+          .join('<br>');
+        return `
             <div class="record-card">
               <div class="record-head">
-                <div><b>${escapeHtml(r.txnType.toUpperCase())}</b> — ${escapeHtml(r.detailMode)}</div>
+                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}</div>
+                <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
+              </div>
+              <div class="mini-note">Load / inv #: ${escapeHtml(r.loadNumber || r.internalWorkOrderNumber || r.vendorInvoiceNumber || '')}</div>
+              <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
+              <div class="mini-note">Unit: ${escapeHtml(r.unit || '')} | Date: ${escapeHtml(r.serviceDate || '')}</div>
+              <div class="mini-note">Lines (${lines.length}) total: $${total.toFixed(2)}</div>
+              <div class="mini-note">${lineSumm}</div>
+              ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              <div style="margin-top:8px;">
+                <button onclick="postWorkOrderToQbo('${r.id}')">Post to QuickBooks</button>
+              </div>
+            </div>
+          `;
+      });
+
+      const apHtml = apRows.map(
+        r => `
+            <div class="record-card">
+              <div class="record-head">
+                <div><b>${escapeHtml(String(r.txnType || '').toUpperCase())}</b> — ${escapeHtml(r.detailMode)}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
               <div class="mini-note">No.: ${escapeHtml(r.docNumber || '')}</div>
@@ -1421,8 +1568,11 @@
                 <button onclick="postApToQbo('${r.id}')">Post to QuickBooks</button>
               </div>
             </div>
-          `).join('')
-        : 'No maintenance expense transactions yet.';
+          `
+      );
+
+      const all = [...woHtml, ...apHtml].join('');
+      document.getElementById('apList').innerHTML = all || 'No maintenance expense transactions yet.';
     }
 
     async function postApToQbo(apId) {
@@ -1437,31 +1587,82 @@
     }
 
     async function saveApTransaction() {
-      await j('/api/erp/ap-transaction', {
+      const vendorId = document.getElementById('apVendorQboId').value;
+      if (!vendorId) {
+        alert('Choose a QuickBooks vendor (type to match the list, then save).');
+        return;
+      }
+      const unit = document.getElementById('apAssetUnit').value.trim();
+      if (!unit) {
+        alert('Unit / asset is required.');
+        return;
+      }
+      const loadInv = document.getElementById('apLoadInvoiceNumber').value.trim();
+      const lines = Array.from(document.querySelectorAll('#woLines .wo-line')).map(row => {
+        const mode = row.querySelector('.wo-mode').value;
+        const amt = Number(row.querySelector('.wo-amt').value) || 0;
+        return {
+          lineType: 'service',
+          serviceType: row.querySelector('.wo-svc').value.trim() || 'Line',
+          detailMode: mode,
+          qboAccountId: mode === 'category' ? row.querySelector('.wo-acct-id').value : '',
+          qboItemId: mode === 'item' ? row.querySelector('.wo-item-id').value : '',
+          qty: row.querySelector('.wo-qty').value,
+          amount: amt,
+          tirePositionText: row.querySelector('.wo-tire').value.trim()
+        };
+      }).filter(l => l.amount > 0);
+
+      if (!lines.length) {
+        alert('Add at least one line with an amount greater than zero.');
+        return;
+      }
+
+      for (const l of lines) {
+        if (l.detailMode === 'category' && !l.qboAccountId) {
+          alert('Each category line needs a resolved QuickBooks account (pick from list).');
+          return;
+        }
+        if (l.detailMode === 'item' && !l.qboItemId) {
+          alert('Each item line needs a resolved QuickBooks item.');
+          return;
+        }
+      }
+
+      await j('/api/work-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          unit,
+          serviceDate: document.getElementById('apTxnDate').value,
           txnType: document.getElementById('apTxnType').value,
-          detailMode: document.getElementById('apDetailMode').value,
-          qboVendorId: document.getElementById('apVendorQboId').value,
-          paymentMethodId: document.getElementById('apPaymentMethodId').value,
-          qboAccountId: document.getElementById('apAccountQboId').value,
-          qboItemId: document.getElementById('apItemQboId').value,
-          qty: document.getElementById('apQty').value,
-          amount: document.getElementById('apAmount').value,
-          txnDate: document.getElementById('apTxnDate').value,
           dueDate: document.getElementById('apDueDate').value,
-          docNumber: document.getElementById('apDocNumber').value,
-          description: document.getElementById('apDescription').value,
-          memo: document.getElementById('apMemo').value,
-          assetUnit: document.getElementById('apAssetUnit').value
+          qboVendorId: vendorId,
+          paymentMethodId: document.getElementById('apPaymentMethodId').value,
+          loadNumber: loadInv,
+          internalWorkOrderNumber: loadInv,
+          vendorInvoiceNumber: loadInv,
+          notes: document.getElementById('apMemo').value,
+          lines
         })
       });
 
-      ['apAmount','apDescription','apMemo','apDueDate','apDocNumber'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('apQty').value = 1;
+      resetWoForm();
       await loadAll();
       openSectionByName('accounting');
+    }
+
+    async function postWorkOrderToQbo(woId) {
+      try {
+        const r = await fetch(`/api/qbo/post-work-order/${woId}`, { method: 'POST' });
+        const result = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(result.error || r.statusText);
+        alert(`Posted to QuickBooks. ${result.workOrder?.qboEntityType || ''} ID: ${result.workOrder?.qboEntityId || ''}`);
+        await loadAll();
+      } catch (e) {
+        alert(`QuickBooks posting failed: ${e.message}`);
+        await loadAll();
+      }
     }
 
     function renderQboMaster() {
@@ -1561,6 +1762,7 @@
 
     loadAll();
     setInterval(loadAll, 120000);
+    if (document.getElementById('woLines') && !document.getElementById('woLines').children.length) addWoLine();
   </script>
 </body>
 </html>

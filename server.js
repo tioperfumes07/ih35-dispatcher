@@ -923,7 +923,7 @@ async function qboCreateWorkOrderTransaction(workOrder) {
       EntityRef: { type: 'Vendor', value: workOrder.qboVendorId },
       Line: lines,
       PrivateNote: sanitizeName(
-        `${workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} ${workOrder.unit || ''}`,
+        `Load/Inv:${workOrder.loadNumber || workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} Unit:${workOrder.unit || ''}`,
         'Work Order'
       )
     };
@@ -941,7 +941,7 @@ async function qboCreateWorkOrderTransaction(workOrder) {
     DocNumber: workOrder.vendorInvoiceNumber || workOrder.internalWorkOrderNumber || undefined,
     Line: lines,
     PrivateNote: sanitizeName(
-      `${workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} ${workOrder.unit || ''}`,
+      `Load/Inv:${workOrder.loadNumber || workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} Unit:${workOrder.unit || ''}`,
       'Work Order'
     )
   };
@@ -1073,13 +1073,17 @@ app.post('/api/work-orders', (req, res) => {
 
     const erp = readErp();
 
+    const loadRef = String(body.loadNumber || body.invoiceNumber || '').trim();
+    const internalNo = String(body.internalWorkOrderNumber || '').trim();
+    const vendorInv = String(body.vendorInvoiceNumber || '').trim();
     const workOrder = {
       id: uid('wo'),
       unit: body.unit,
+      loadNumber: loadRef || null,
       assetCategory: body.assetCategory || '',
       serviceDate: body.serviceDate || '',
-      internalWorkOrderNumber: body.internalWorkOrderNumber || '',
-      vendorInvoiceNumber: body.vendorInvoiceNumber || '',
+      internalWorkOrderNumber: loadRef || internalNo,
+      vendorInvoiceNumber: loadRef || vendorInv,
       vendorWorkOrderNumber: body.vendorWorkOrderNumber || '',
       vendor: body.vendor || '',
       qboVendorId: body.qboVendorId || '',

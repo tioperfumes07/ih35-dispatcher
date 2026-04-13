@@ -57,8 +57,11 @@
     }
     footer strong { color: #cbd5f5; }
   </style>
+  <link rel="stylesheet" href="/css/board-nav.css" />
 </head>
 <body>
+  <div id="boardNavMount"></div>
+  <script src="/js/board-nav.js" defer></script>
   <header>
     <h1>IH35 Transportation</h1>
     <p>Choose a workspace. Dispatch (loads &amp; TMS) is separate from fuel and route planning—same as Always Track splits operations, not one page doing everything.</p>
@@ -81,6 +84,12 @@
       <h2>Maintenance &amp; accounting</h2>
       <p>Unified dashboard, work orders, mileage, QuickBooks, imports, and fleet maintenance views.</p>
       <div class="arrow">Open maintenance →</div>
+    </a>
+    <a class="card" href="/safety.html">
+      <span class="card-tag" style="background: rgba(248,113,113,.2); color: #fca5a5;">Safety</span>
+      <h2>Safety board</h2>
+      <p>Inspections, incidents, and training (placeholder — same top bar as other boards).</p>
+      <div class="arrow">Open safety →</div>
     </a>
   </div>
   <footer>
