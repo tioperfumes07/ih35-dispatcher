@@ -227,7 +227,7 @@
             <th>Miles (Ld / Em)</th>
             <th>Rev $</th>
             <th>Docs</th>
-            <th>Trip / invoice PDF</th>
+            <th>Driver / Co / Inv / Trip</th>
             <th>Edit</th>
             <th>QBO invoice</th>
           </tr>
@@ -1061,6 +1061,38 @@
           ')">Docs' +
           (nDocs > 0 ? ' (' + nDocs + ')' : '') +
           '</button>';
+        const settleLinks = [];
+        if (l.qbo_driver_vendor_id) {
+          settleLinks.push(
+            '<a class="link" href="/api/pdf/driver-settlement/' +
+              encodeURIComponent(l.qbo_driver_vendor_id) +
+              '" target="_blank" rel="noopener">Driver</a>'
+          );
+        }
+        settleLinks.push(
+          '<a class="link" href="/api/pdf/company-settlement/' +
+            encodeURIComponent(l.load_number || '') +
+            '" target="_blank" rel="noopener">Company</a>'
+        );
+        if (l.qbo_invoice_id) {
+          settleLinks.push(
+            '<a class="link" href="https://qbo.intuit.com/app/invoice?txnId=' +
+              encodeURIComponent(l.qbo_invoice_id) +
+              '" target="_blank" rel="noopener">QB Inv</a>'
+          );
+        } else {
+          settleLinks.push(
+            '<a class="link" href="/api/pdf/trip-invoice/' +
+              encodeURIComponent(l.id) +
+              '" target="_blank" rel="noopener">Inv PDF</a>'
+          );
+        }
+        settleLinks.push(
+          '<a class="link" href="/api/pdf/tms-load/' +
+            encodeURIComponent(l.id) +
+            '" target="_blank" rel="noopener">Trip</a>'
+        );
+        const pdfCell = settleLinks.join(' · ');
         return '<tr>' +
           '<td><strong>' + escapeHtml(l.load_number) + '</strong></td>' +
           '<td class="muted">' + escapeHtml(inv) + '</td>' +
@@ -1076,11 +1108,9 @@
           '<td>' + escapeHtml(String(l.practical_loaded_miles ?? '0')) + ' / ' + escapeHtml(String(l.practical_empty_miles ?? '0')) + '</td>' +
           '<td class="muted">' + revCell + '</td>' +
           '<td>' + docsBtn + '</td>' +
-          '<td><a class="link" href="/api/pdf/tms-load/' +
-          encodeURIComponent(l.id) +
-          '" target="_blank" rel="noopener">Trip</a> · <a class="link" href="/api/pdf/trip-invoice/' +
-          encodeURIComponent(l.id) +
-          '" target="_blank" rel="noopener">Invoice</a></td>' +
+          '<td style="max-width:200px;line-height:1.45">' +
+          pdfCell +
+          '</td>' +
           '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="openEditLoad(' +
           JSON.stringify(l.id) +
           ')">Edit</button></td>' +
@@ -1098,7 +1128,7 @@
         !confirm(
           'Create one QuickBooks invoice for load ' +
             loadNumber +
-            '? Uses the linehaul item saved on the load (Book/Edit), else server default. Includes trip revenue plus any extra charge lines on the load. Doc # = load #. No extra prompts.'
+            '? Uses the linehaul item saved on the load (Book/Edit), else server default. Includes trip revenue plus any extra charge lines on the load. Doc # = load #. Load documents already uploaded for this load are attached to the QuickBooks invoice when possible.'
         )
       )
         return;
@@ -1110,7 +1140,16 @@
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || r.statusText);
-        showMsg('QuickBooks invoice created. ID: ' + (j.qboEntityId || ''));
+        let msg = 'QuickBooks invoice created. ID: ' + (j.qboEntityId || '');
+        const as = j.attachmentsSynced;
+        if (as && typeof as.uploaded === 'number') {
+          msg += ' · Attached ' + as.uploaded + ' load file(s) in QBO';
+          if (as.skipped) msg += ' (' + as.skipped + ' already linked)';
+          if (as.errors && as.errors.length)
+            msg += '. ' + as.errors.length + ' file(s) failed (check Maintenance or server log).';
+        }
+        showMsg(msg);
+        loadTab();
       } catch (e) {
         showMsg(e.message || String(e), true);
       }

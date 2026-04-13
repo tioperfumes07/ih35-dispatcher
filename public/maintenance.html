@@ -3227,16 +3227,29 @@
             `<strong>net $${Number(net).toFixed(2)}</strong>.`;
         }
         const tmsLoadIdForPdf = data.tms?.load?.id || null;
+        const Lset = data.tms?.load || null;
         let pdfBar =
-          '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">' +
+          '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">';
+        if (Lset && Lset.qbo_driver_vendor_id) {
+          pdfBar +=
+            '<a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/driver-settlement/' +
+            encodeURIComponent(Lset.qbo_driver_vendor_id) +
+            '" target="_blank" rel="noopener">Driver settlement PDF</a>';
+        }
+        pdfBar +=
           '<a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/company-settlement/' +
           encodeURIComponent(raw) +
           '" target="_blank" rel="noopener">Company settlement PDF</a>';
-        if (tmsLoadIdForPdf) {
+        if (Lset && Lset.qbo_invoice_id) {
+          pdfBar +=
+            '<a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="https://qbo.intuit.com/app/invoice?txnId=' +
+            encodeURIComponent(Lset.qbo_invoice_id) +
+            '" target="_blank" rel="noopener">QuickBooks invoice</a>';
+        } else if (tmsLoadIdForPdf) {
           pdfBar +=
             '<a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/trip-invoice/' +
             encodeURIComponent(tmsLoadIdForPdf) +
-            '" target="_blank" rel="noopener">Trip invoice PDF</a>';
+            '" target="_blank" rel="noopener">Trip invoice PDF (until QBO invoice exists)</a>';
         }
         pdfBar += '</div>';
         document.getElementById('settlementSummary').innerHTML = sumHtml + pdfBar;

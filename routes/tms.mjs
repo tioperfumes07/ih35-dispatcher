@@ -6,6 +6,7 @@ import { dbQuery, getPool } from '../lib/db.mjs';
 import { readQboCustomerLookup, readQboVendorLookup, ERP_DATA_DIR } from '../lib/erp-data.mjs';
 import { pcmilerPracticalMilesBetween } from '../lib/pcmiler.mjs';
 import { fetchSamsaraVehiclesNormalized } from '../lib/samsara-client.mjs';
+import { syncSingleLoadDocumentToQbo } from '../lib/qbo-attachments.mjs';
 
 const router = Router();
 
@@ -431,7 +432,13 @@ router.post('/loads/:id/documents', loadDocUpload.single('file'), async (req, re
        RETURNING id, doc_type, original_name, mime_type, byte_size, created_at`,
       [loadId, doc_type, original_name, relPath, mime_type, byte_size]
     );
-    res.json({ ok: true, data: ins.rows[0] });
+    const docRow = ins.rows[0];
+    setImmediate(() => {
+      syncSingleLoadDocumentToQbo(loadId, docRow.id).catch(err => {
+        console.error('[load-doc qbo attach]', err?.message || err);
+      });
+    });
+    res.json({ ok: true, data: docRow });
   } catch (e) {
     if (req.file?.path) {
       try {

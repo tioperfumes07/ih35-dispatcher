@@ -15,6 +15,7 @@ import { buildSettlementByLoad, buildSettlementIndex, normLoadKey } from './lib/
 import pdfRouter from './routes/pdf.mjs';
 import documentParseRouter from './routes/document-parse.mjs';
 import integrationsRouter from './routes/integrations.mjs';
+import { syncAllLoadDocumentsToQboInvoice } from './lib/qbo-attachments.mjs';
 
 dotenv.config();
 
@@ -2394,15 +2395,70 @@ app.post('/api/qbo/invoice-from-load', async (req, res) => {
       }))
     });
 
+    const invId = String(result.qboEntityId || '').trim();
+    if (invId && load.id) {
+      await dbQuery(`UPDATE loads SET qbo_invoice_id = $1 WHERE id = $2::uuid`, [invId, load.id]);
+    }
+    let attachmentsSynced = { uploaded: 0, skipped: 0, errors: [] };
+    if (invId && load.id) {
+      try {
+        attachmentsSynced = await syncAllLoadDocumentsToQboInvoice(load.id, invId);
+      } catch (e) {
+        attachmentsSynced = { uploaded: 0, skipped: 0, errors: [{ error: e.message || String(e) }] };
+        logError('qbo attach load docs', e);
+      }
+    }
+
     res.json({
       ok: true,
       ...result,
       loadNumber: load.load_number || loadNumber,
-      classApplied: !!classId
+      classApplied: !!classId,
+      attachmentsSynced
     });
   } catch (error) {
     logError('api/qbo/invoice-from-load', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+/** Attach any load_documents not yet synced to the load's QBO invoice (manual retry or automation). */
+app.post('/api/qbo/sync-load-documents', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const loadId = String(body.loadId || '').trim();
+    const loadNumber = String(body.loadNumber || '').trim();
+    let loadRow = null;
+    if (loadId) {
+      const { rows } = await dbQuery(
+        `SELECT id, load_number, qbo_invoice_id FROM loads WHERE id = $1::uuid`,
+        [loadId]
+      );
+      loadRow = rows[0] || null;
+    } else if (loadNumber) {
+      const ctx = await fetchLoadSettlementContextByNumber(loadNumber);
+      if (ctx?.load) {
+        loadRow = {
+          id: ctx.load.id,
+          load_number: ctx.load.load_number,
+          qbo_invoice_id: ctx.load.qbo_invoice_id
+        };
+      }
+    } else {
+      return res.status(400).json({ ok: false, error: 'loadId or loadNumber is required' });
+    }
+    if (!loadRow) return res.status(404).json({ ok: false, error: 'Load not found' });
+    if (!loadRow.qbo_invoice_id) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Load has no QuickBooks invoice id yet — use Create in QBO on the load first'
+      });
+    }
+    const attachmentsSynced = await syncAllLoadDocumentsToQboInvoice(loadRow.id, loadRow.qbo_invoice_id);
+    res.json({ ok: true, loadNumber: loadRow.load_number, ...attachmentsSynced });
+  } catch (error) {
+    logError('api/qbo/sync-load-documents', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
