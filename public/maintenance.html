@@ -128,7 +128,11 @@
     }
     .qb-panel{font-size:12px}
     .qb-l{display:block;font-size:10px;color:#6b7280;margin-bottom:2px;text-transform:uppercase;font-weight:600}
-    .qb-in{width:100%;padding:4px 6px;font-size:12px;border:1px solid #d8deea;border-radius:4px;box-sizing:border-box}
+    .qb-in{padding:6px 8px;font-size:12px;border:1px solid #d8deea;border-radius:6px;box-sizing:border-box;width:auto;max-width:100%;min-width:10ch}
+    .maint-field{width:auto;max-width:min(100%,44ch);min-width:12ch}
+    .maint-form-stack{display:grid;gap:10px;max-width:560px}
+    .maint-form-stack .search-row{grid-template-columns:1fr 1fr;max-width:520px}
+    .maint-inline-hint{font-size:11px;color:var(--muted);margin-top:4px}
     .qb-memo{min-height:48px;resize:vertical;padding:4px 6px;font-size:12px}
     .wo-line{border-bottom:1px solid #eef1f7;padding-bottom:8px;margin-bottom:8px}
     .wo-line:last-child{border-bottom:none}
@@ -139,8 +143,11 @@
     .vendor-row-maint{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
     .vendor-row-maint .qb-in{max-width:220px}
     .shop-action-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
-    .shop-board-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    @media (max-width:1000px){.shop-board-grid{grid-template-columns:1fr}}
+    .shop-board-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    @media (max-width:900px){.shop-board-grid{grid-template-columns:1fr}}
+    .shop-subtabs{margin-bottom:12px}
+    .shop-tab-panel{display:none}
+    .shop-tab-panel.active{display:block}
     .shop-col{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;min-height:120px}
     .shop-col-head{padding:10px 12px;font-weight:700;font-size:13px;border-bottom:1px solid #edf1f7;background:#fafcff}
     .shop-col-body{padding:8px 12px;max-height:240px;overflow:auto;font-size:12px}
@@ -148,7 +155,8 @@
     .shop-row:last-child{border-bottom:none}
     .maint-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9000;align-items:center;justify-content:center;padding:20px}
     .maint-modal-bg.on{display:flex}
-    .maint-modal{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:20px;box-shadow:var(--shadow)}
+    .maint-modal{background:#fff;border-radius:14px;max-width:480px;width:100%;padding:20px;box-shadow:var(--shadow)}
+    #maintModalFlowTitle{font-size:15px;font-weight:700;color:#1e3a5f;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid #edf1f7}
     .asset-cat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
     .asset-cat-tile{border:1px solid var(--line);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:center;font-weight:600;font-size:13px;background:#fafcff}
     .asset-cat-tile:hover{border-color:#93c5fd;background:#eff6ff}
@@ -178,6 +186,7 @@
 <body>
   <div id="maintCatModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintCatModal()">
     <div class="maint-modal" onclick="event.stopPropagation()">
+      <div id="maintModalFlowTitle" class="hidden"></div>
       <h3 style="margin:0 0 6px;font-size:18px">Vehicle type</h3>
       <p class="mini-note" style="margin:0 0 8px">Pick the category, then complete the service or purchase form. Matches Samsara / Maintenance asset groups.</p>
       <div class="asset-cat-grid">
@@ -195,8 +204,16 @@
   <datalist id="qboVendorOptions"></datalist>
   <datalist id="qboItemOptions"></datalist>
   <datalist id="qboAccountOptions"></datalist>
+  <datalist id="qboAccountExpenseOptions"></datalist>
   <datalist id="paymentMethodOptions"></datalist>
   <datalist id="qboBankAccountOptions"></datalist>
+  <datalist id="loadNumberOptions"></datalist>
+  <datalist id="recordTypeOptions"></datalist>
+  <datalist id="repairLocationOptions"></datalist>
+  <datalist id="accidentFaultOptions"></datalist>
+  <datalist id="linkedTxnTypeOptions"></datalist>
+  <datalist id="linkedDetailModeOptions"></datalist>
+  <datalist id="tireConditionOptions"></datalist>
 
   <div class="app" id="erpApp">
     <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show menu">»</button>
@@ -401,31 +418,58 @@
           </div>
           <div class="panel-body">
             <p class="mini-note" style="margin:0 0 10px">
-              Work orders bucket by <strong>repair location</strong>. <strong>Out of service</strong> lists units with a unit record whose service name contains “out of service”.
+              Use the tabs to switch queues. <strong>Road side service</strong> is separate from vendor external repair. <strong>Out of service</strong> lists units with a record whose service name contains “out of service”.
               <a href="#" onclick="openSectionByName('tracking');return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
               · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
             </p>
-            <div class="shop-board-grid">
-              <div class="shop-col">
-                <div class="shop-col-head shop-col-head-row">
-                  <span>Internal Shop</span>
-                  <button type="button" class="shop-col-add" title="New internal shop maintenance" onclick="event.stopPropagation();startMaintFlow('service-internal')">+</button>
+            <div class="subtabs shop-subtabs" id="shopBoardSubtabs">
+              <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
+              <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External service</button>
+              <button type="button" class="subtab" data-shop-tab="roadside" onclick="openShopBoardTab('roadside', this)">Road side service</button>
+              <button type="button" class="subtab" data-shop-tab="oos" onclick="openShopBoardTab('oos', this)">Out of service</button>
+            </div>
+            <div id="shopTabInternal" class="shop-tab-panel active">
+              <div class="shop-board-grid">
+                <div class="shop-col" style="grid-column:1/-1">
+                  <div class="shop-col-head shop-col-head-row">
+                    <span>Internal shop queue</span>
+                    <button type="button" class="shop-col-add" title="New internal shop maintenance" onclick="event.stopPropagation();startMaintFlow('service-internal')">+</button>
+                  </div>
+                  <div class="shop-col-body" id="shopInternalBody"></div>
                 </div>
-                <div class="shop-col-body" id="shopInternalBody"></div>
               </div>
-              <div class="shop-col">
-                <div class="shop-col-head shop-col-head-row">
-                  <span>External Service</span>
-                  <button type="button" class="shop-col-add" title="New external service" onclick="event.stopPropagation();startMaintFlow('service-external')">+</button>
+            </div>
+            <div id="shopTabExternal" class="shop-tab-panel">
+              <div class="shop-board-grid">
+                <div class="shop-col" style="grid-column:1/-1">
+                  <div class="shop-col-head shop-col-head-row">
+                    <span>External service queue</span>
+                    <button type="button" class="shop-col-add" title="New external service" onclick="event.stopPropagation();startMaintFlow('service-external')">+</button>
+                  </div>
+                  <div class="shop-col-body" id="shopExternalBody"></div>
                 </div>
-                <div class="shop-col-body" id="shopExternalBody"></div>
               </div>
-              <div class="shop-col">
-                <div class="shop-col-head shop-col-head-row">
-                  <span>Out of service</span>
-                  <button type="button" class="shop-col-add" title="Road service" onclick="event.stopPropagation();startMaintFlow('service-road')">+</button>
+            </div>
+            <div id="shopTabRoadside" class="shop-tab-panel">
+              <div class="shop-board-grid">
+                <div class="shop-col" style="grid-column:1/-1">
+                  <div class="shop-col-head shop-col-head-row">
+                    <span>Road side service queue</span>
+                    <button type="button" class="shop-col-add" title="New road side service" onclick="event.stopPropagation();startMaintFlow('service-road')">+</button>
+                  </div>
+                  <div class="shop-col-body" id="shopRoadsideBody"></div>
                 </div>
-                <div class="shop-col-body" id="shopOosBody"></div>
+              </div>
+            </div>
+            <div id="shopTabOos" class="shop-tab-panel">
+              <div class="shop-board-grid">
+                <div class="shop-col" style="grid-column:1/-1">
+                  <div class="shop-col-head shop-col-head-row">
+                    <span>Out of service units</span>
+                    <button type="button" class="shop-col-add" title="Log out-of-service on selected asset" onclick="event.stopPropagation();startMaintFlow('service-oos')">+</button>
+                  </div>
+                  <div class="shop-col-body" id="shopOosBody"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -476,42 +520,43 @@
                   <div class="unit-box"><div class="k">Due Soon</div><div class="v" id="unitDueSoonBox">0</div></div>
                 </div>
 
-                <div class="form-stack">
+                <div class="form-stack maint-form-stack">
                   <div class="search-row">
-                    <input id="mileageInput" type="number" placeholder="Manual current mileage override">
-                    <button onclick="saveMileage()">Save Mileage</button>
+                    <input id="mileageInput" class="qb-in maint-field" type="number" placeholder="Manual mileage override">
+                    <button type="button" onclick="saveMileage()">Save mileage</button>
                   </div>
 
-                  <select id="recordTypeInput" onchange="toggleRecordFields()">
-                    <option value="maintenance">Maintenance</option>
-                    <option value="tire">Tire</option>
-                    <option value="repair">Repair</option>
-                    <option value="accident">Accident</option>
-                    <option value="custom">Custom</option>
-                  </select>
+                  <div>
+                    <span class="qb-l">Record type</span>
+                    <input type="hidden" id="recordTypeValue" value="maintenance" />
+                    <input id="recordTypeSearch" class="qb-in maint-field" list="recordTypeOptions" value="Maintenance" autocomplete="off" placeholder="Type to filter…" oninput="resolveRecordTypeSearch()" onblur="resolveRecordTypeSearch()" />
+                  </div>
 
-                  <input id="serviceSearchInput" list="serviceOptions" placeholder="Type service name" oninput="resolveServiceSearch()">
+                  <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service name" oninput="resolveServiceSearch()">
                   <input id="serviceTypeInput" type="hidden">
-                  <input id="customServiceTypeInput" class="hidden" placeholder="Custom service type">
+                  <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type">
 
-                  <input id="serviceDateInput" type="date">
-                  <input id="serviceMileageInput" type="number" class="qb-in" placeholder="Service mileage" style="max-width:140px">
+                  <div class="search-row">
+                    <input id="serviceDateInput" class="qb-in maint-field" type="date">
+                    <input id="serviceMileageInput" class="qb-in maint-field" type="number" placeholder="Service mileage">
+                  </div>
                   <div>
                     <span class="qb-l">Load / inv # (settlement)</span>
-                    <input id="recordLoadNumberInput" class="qb-in" placeholder="Same as dispatch load #" style="max-width:180px">
+                    <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Dispatch load #" autocomplete="off" />
+                    <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
                   </div>
                   <div class="vendor-row-maint">
                     <div>
                       <span class="qb-l">Vendor (QuickBooks)</span>
-                      <input id="vendorInput" class="qb-in" list="qboVendorOptions" placeholder="Type vendor name">
+                      <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="Type vendor…">
                     </div>
                     <div>
                       <span class="qb-l">Cost</span>
-                      <input id="costInput" class="qb-in" type="number" step="0.01" placeholder="0.00" style="width:88px">
+                      <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00">
                     </div>
                     <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
                   </div>
-                  <textarea id="notesInput" class="qb-memo" placeholder="Notes"></textarea>
+                  <textarea id="notesInput" class="qb-memo" placeholder="Notes" style="max-width:560px"></textarea>
 
                   <div id="tireFields" class="hidden">
                     <div class="tire-layout-wrap">
@@ -567,12 +612,8 @@
                           <option>Trailer Axle 2 Right Outer</option>
                         </select>
                         <input id="tirePositionText" placeholder="Or write tire position manually">
-                        <select id="tireConditionInput">
-                          <option value="">Tire condition</option>
-                          <option value="new">New</option>
-                          <option value="used">Used</option>
-                          <option value="recap">Recap</option>
-                        </select>
+                        <input type="hidden" id="tireConditionValue" value="" />
+                        <input id="tireConditionSearch" class="qb-in maint-field" list="tireConditionOptions" placeholder="Tire condition" autocomplete="off" oninput="resolveTireConditionSearch()" onblur="resolveTireConditionSearch()" />
                         <input id="tireBrandInput" placeholder="Tire brand">
                         <input id="tireDotInput" placeholder="DOT / serial">
                         <div class="grid grid-3">
@@ -586,25 +627,21 @@
                   </div>
 
                   <div id="repairFields" class="hidden">
-                    <select id="repairLocationTypeInput">
-                      <option value="">Repair type</option>
-                      <option value="in-house">Internal Shop</option>
-                      <option value="external">External Service</option>
-                      <option value="over-the-road">Over the road</option>
-                      <option value="road-service">Road Service</option>
-                    </select>
+                    <span class="qb-l">Repair location</span>
+                    <input type="hidden" id="repairLocationTypeInput" value="" />
+                    <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Type: Internal shop, External…" autocomplete="off" oninput="resolveRepairLocationSearch()" onblur="resolveRepairLocationSearch()" />
                   </div>
 
                   <div id="accidentFields" class="hidden">
                     <div class="search-row">
-                      <select id="accidentAtFaultInput">
-                        <option value="">At fault?</option>
-                        <option value="at-fault">At fault</option>
-                        <option value="not-at-fault">Not at fault</option>
-                      </select>
-                      <input id="accidentReportNumberInput" placeholder="Accident report #">
+                      <div>
+                        <span class="qb-l">At fault</span>
+                        <input type="hidden" id="accidentAtFaultValue" value="" />
+                        <input id="accidentAtFaultSearch" class="qb-in maint-field" list="accidentFaultOptions" placeholder="At fault / Not at fault" autocomplete="off" oninput="resolveAccidentFaultSearch()" onblur="resolveAccidentFaultSearch()" />
+                      </div>
+                      <input id="accidentReportNumberInput" class="qb-in maint-field" placeholder="Accident report #">
                     </div>
-                    <input id="accidentLocationInput" placeholder="Accident location">
+                    <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
                   </div>
 
                   <div class="panel" style="box-shadow:none;">
@@ -615,38 +652,42 @@
                         Create linked Maintenance Expense Transaction when saving this record
                       </label>
 
+                      <p class="mini-note" style="margin:0 0 6px">Sync <strong>QuickBooks Master</strong> in the sidebar if vendor / item / account lists are empty.</p>
                       <div class="search-row">
-                        <select id="linkedTxnType">
-                          <option value="expense">Expense</option>
-                          <option value="bill">Bill</option>
-                        </select>
-                        <select id="linkedDetailMode" onchange="toggleLinkedDetailMode()">
-                          <option value="category">Category details</option>
-                          <option value="item">Item details</option>
-                        </select>
+                        <div>
+                          <span class="qb-l">Txn type</span>
+                          <input type="hidden" id="linkedTxnType" value="expense" />
+                          <input id="linkedTxnTypeSearch" class="qb-in maint-field" list="linkedTxnTypeOptions" value="Expense" autocomplete="off" oninput="resolveLinkedTxnTypeSearch()" onblur="resolveLinkedTxnTypeSearch()" />
+                        </div>
+                        <div>
+                          <span class="qb-l">Line detail</span>
+                          <input type="hidden" id="linkedDetailMode" value="category" />
+                          <input id="linkedDetailModeSearch" class="qb-in maint-field" list="linkedDetailModeOptions" value="Category details" autocomplete="off" oninput="resolveLinkedDetailModeSearch()" onblur="resolveLinkedDetailModeSearch()" />
+                        </div>
                       </div>
 
                       <div class="search-row">
-                        <input id="linkedDocNumber" placeholder="Expense No. / Bill No.">
-                        <input id="linkedVendorSearch" list="qboVendorOptions" placeholder="Type vendor name" oninput="resolveLinkedVendorSearch()">
+                        <input id="linkedDocNumber" class="qb-in maint-field" placeholder="Expense / bill #">
+                        <input id="linkedVendorSearch" class="qb-in maint-field" list="qboVendorOptions" placeholder="QBO vendor" oninput="resolveLinkedVendorSearch()" onblur="resolveLinkedVendorSearch()">
                       </div>
                       <input id="linkedVendorQboId" type="hidden">
 
                       <div class="search-row">
-                        <input id="linkedPaymentMethodSearch" list="paymentMethodOptions" placeholder="Type payment method" oninput="resolveLinkedPaymentMethodSearch()">
-                        <input id="linkedDueDate" type="date">
+                        <input id="linkedPaymentMethodSearch" class="qb-in maint-field" list="paymentMethodOptions" placeholder="Payment method" oninput="resolveLinkedPaymentMethodSearch()" onblur="resolveLinkedPaymentMethodSearch()">
+                        <input id="linkedDueDate" class="qb-in maint-field" type="date">
                       </div>
                       <input id="linkedPaymentMethodId" type="hidden">
 
                       <div id="linkedCategoryBlock">
-                        <input id="linkedAccountSearch" list="qboAccountOptions" placeholder="Type category / account" oninput="resolveLinkedAccountSearch()">
+                        <span class="qb-l">Expense category (QBO)</span>
+                        <input id="linkedAccountSearch" class="qb-in maint-field" list="qboAccountExpenseOptions" placeholder="Category / account" oninput="resolveLinkedAccountSearch()" onblur="resolveLinkedAccountSearch()">
                         <input id="linkedAccountQboId" type="hidden">
                       </div>
 
                       <div id="linkedItemBlock" class="hidden">
                         <div class="search-row">
-                          <input id="linkedItemSearch" list="qboItemOptions" placeholder="Type item / service" oninput="resolveLinkedItemSearch()">
-                          <input id="linkedQty" type="number" step="1" value="1" placeholder="Qty">
+                          <input id="linkedItemSearch" class="qb-in maint-field" list="qboItemOptions" placeholder="QBO item / service" oninput="resolveLinkedItemSearch()" onblur="resolveLinkedItemSearch()">
+                          <input id="linkedQty" class="qb-in maint-field" type="number" step="1" value="1" placeholder="Qty">
                         </div>
                         <input id="linkedItemQboId" type="hidden">
                       </div>
@@ -806,7 +847,7 @@
                 </div>
                 <div style="grid-column:span 2">
                   <span class="qb-l">Vendor (QuickBooks)</span>
-                  <input id="apVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor" oninput="resolveApVendorSearch()">
+                  <input id="apVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor" oninput="resolveApVendorSearch()" onblur="resolveApVendorSearch()">
                   <input id="apVendorQboId" type="hidden">
                 </div>
                 <div>
@@ -823,12 +864,12 @@
                 </div>
                 <div style="grid-column:span 2">
                   <span class="qb-l">Payment method</span>
-                  <input id="apPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Payment" oninput="resolveApPaymentMethodSearch()">
+                  <input id="apPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Payment" oninput="resolveApPaymentMethodSearch()" onblur="resolveApPaymentMethodSearch()">
                   <input id="apPaymentMethodId" type="hidden">
                 </div>
                 <div style="grid-column:span 2">
                   <span class="qb-l">Pay from bank account (QuickBooks)</span>
-                  <input id="apBankAccountSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card (for Purchase + bank feed match)" oninput="resolveApBankSearch()">
+                  <input id="apBankAccountSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card (for Purchase + bank feed match)" oninput="resolveApBankSearch()" onblur="resolveApBankSearch()">
                   <input id="apBankAccountQboId" type="hidden">
                 </div>
                 <div style="grid-column:span 2">
@@ -1002,12 +1043,12 @@
         </div>
         <div class="wo-block-cat">
           <span class="qb-l">Category</span>
-          <input class="qb-in wo-acct" list="qboAccountOptions" placeholder="Account" oninput="resolveWoLineAccount(this)">
+          <input class="qb-in wo-acct" list="qboAccountOptions" placeholder="Account" oninput="resolveWoLineAccount(this)" onblur="resolveWoLineAccount(this)">
           <input type="hidden" class="wo-acct-id">
         </div>
         <div class="wo-block-item hidden">
           <span class="qb-l">Item</span>
-          <input class="qb-in wo-item" list="qboItemOptions" placeholder="Item" oninput="resolveWoLineItem(this)">
+          <input class="qb-in wo-item" list="qboItemOptions" placeholder="Item" oninput="resolveWoLineItem(this)" onblur="resolveWoLineItem(this)">
           <input type="hidden" class="wo-item-id">
         </div>
         <div class="wo-block-item hidden">
@@ -1042,6 +1083,194 @@
     let activeAssetCategory = 'Trucks';
     let pendingMaintFlow = null;
     let selectedTrackingVehicle = '';
+    let tmsLoadsCache = [];
+
+    const RECORD_TYPE_DEFS = [
+      { code: 'maintenance', label: 'Maintenance' },
+      { code: 'tire', label: 'Tire' },
+      { code: 'repair', label: 'Repair' },
+      { code: 'accident', label: 'Accident' },
+      { code: 'custom', label: 'Custom' }
+    ];
+    const REPAIR_LOCATION_DEFS = [
+      { code: 'in-house', label: 'Internal Shop' },
+      { code: 'external', label: 'External Service' },
+      { code: 'over-the-road', label: 'Over the road' },
+      { code: 'road-service', label: 'Road service' }
+    ];
+
+    function findBestNameMatch(rows, typedRaw) {
+      const typed = String(typedRaw || '').trim().toLowerCase();
+      if (!typed || !Array.isArray(rows)) return null;
+      const norm = row =>
+        [row.name, row.companyName]
+          .map(x => String(x || '').trim().toLowerCase())
+          .filter(Boolean);
+      let hit = rows.find(row => norm(row).some(n => n === typed));
+      if (hit) return hit;
+      hit = rows.find(row => norm(row).some(n => n.startsWith(typed)));
+      if (hit) return hit;
+      hit = rows.find(row => norm(row).some(n => n.includes(typed)));
+      return hit || null;
+    }
+
+    function cacheAccountsForLinked() {
+      const exp = erp.qboCache?.accountsExpense;
+      return Array.isArray(exp) && exp.length ? exp : cacheAccounts();
+    }
+
+    function fillStaticMaintDatalists() {
+      const rt = document.getElementById('recordTypeOptions');
+      if (rt) {
+        rt.innerHTML = RECORD_TYPE_DEFS.map(
+          d => `<option value="${escapeHtml(d.label)}"></option>`
+        ).join('');
+      }
+      const rl = document.getElementById('repairLocationOptions');
+      if (rl) {
+        rl.innerHTML = REPAIR_LOCATION_DEFS.map(
+          d => `<option value="${escapeHtml(d.label)}"></option>`
+        ).join('');
+      }
+      const af = document.getElementById('accidentFaultOptions');
+      if (af) {
+        af.innerHTML =
+          '<option value="At fault"></option><option value="Not at fault"></option>';
+      }
+      const lt = document.getElementById('linkedTxnTypeOptions');
+      if (lt) lt.innerHTML = '<option value="Expense"></option><option value="Bill"></option>';
+      const dm = document.getElementById('linkedDetailModeOptions');
+      if (dm) {
+        dm.innerHTML =
+          '<option value="Category details"></option><option value="Item details"></option>';
+      }
+      const tc = document.getElementById('tireConditionOptions');
+      if (tc) tc.innerHTML = '<option value="New"></option><option value="Used"></option><option value="Recap"></option>';
+    }
+
+    function setRepairLocationCode(code) {
+      const hid = document.getElementById('repairLocationTypeInput');
+      const vis = document.getElementById('repairLocationSearch');
+      if (hid) hid.value = code || '';
+      if (vis) {
+        const def = REPAIR_LOCATION_DEFS.find(d => d.code === code);
+        vis.value = def ? def.label : '';
+      }
+    }
+
+    function openShopBoardTab(tab, btn) {
+      const suf =
+        tab === 'internal'
+          ? 'Internal'
+          : tab === 'external'
+            ? 'External'
+            : tab === 'roadside'
+              ? 'Roadside'
+              : 'Oos';
+      document.querySelectorAll('.shop-tab-panel').forEach(p => p.classList.remove('active'));
+      const p = document.getElementById('shopTab' + suf);
+      if (p) p.classList.add('active');
+      document.querySelectorAll('#shopBoardSubtabs .subtab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    async function loadTmsLoadsForMaint() {
+      tmsLoadsCache = [];
+      const dl = document.getElementById('loadNumberOptions');
+      try {
+        const open = await j('/api/tms/loads?tab=open');
+        const del = await j('/api/tms/loads?tab=delivered');
+        const merge = [...(open.data || []), ...(del.data || [])];
+        const seen = new Set();
+        for (const row of merge) {
+          const n = row.load_number;
+          if (n != null && String(n).trim() && !seen.has(String(n))) {
+            seen.add(String(n));
+            tmsLoadsCache.push(row);
+          }
+        }
+        if (dl) {
+          dl.innerHTML = tmsLoadsCache
+            .slice(0, 100)
+            .map(r => `<option value="${escapeHtml(String(r.load_number))}"></option>`)
+            .join('');
+        }
+      } catch {
+        if (dl) dl.innerHTML = '';
+      }
+    }
+
+    async function computeSuggestedLoadNumber(unit) {
+      const u = String(unit || '').trim().toUpperCase();
+      if (!u) return '';
+      try {
+        const open = await j('/api/tms/loads?tab=open');
+        const rows = open.data || [];
+        const match = rows.find(
+          l => String(l.truck_code || '').trim().toUpperCase() === u
+        );
+        if (match?.load_number) return String(match.load_number);
+        if (rows[0]?.load_number) return String(rows[0].load_number);
+        const del = await j('/api/tms/loads?tab=delivered');
+        const dr = del.data || [];
+        const m2 = dr.find(
+          l => String(l.truck_code || '').trim().toUpperCase() === u
+        );
+        if (m2?.load_number) return String(m2.load_number);
+        if (dr[0]?.load_number) return String(dr[0].load_number);
+      } catch (_) {}
+      return '';
+    }
+
+    async function applyLoadNumberSuggestion(fillIfEmpty) {
+      const inp = document.getElementById('recordLoadNumberInput');
+      const hint = document.getElementById('recordLoadNumberHint');
+      if (!inp || !selectedUnit) return;
+      const n = await computeSuggestedLoadNumber(selectedUnit);
+      if (!n) {
+        if (hint) hint.textContent = '';
+        return;
+      }
+      if (hint) {
+        hint.textContent = inp.value.trim()
+          ? ''
+          : 'Suggested load # for this truck: ' +
+            n +
+            ' (open TMS load for unit, else most recent).';
+      }
+      if (fillIfEmpty && !inp.value.trim()) inp.value = n;
+    }
+
+    function styleFieldToLongest(id, strings, cap = 50) {
+      const el = document.getElementById(id);
+      if (!el || !strings || !strings.length) return;
+      const longest = strings.reduce((m, s) => Math.max(m, String(s).length), 10);
+      const ch = Math.min(Math.max(longest + 2, 12), cap);
+      el.style.width = `min(100%, ${ch}ch)`;
+    }
+
+    function applyMaintenanceFieldWidths() {
+      styleFieldToLongest(
+        'linkedPaymentMethodSearch',
+        paymentMethods().map(p => p.name || p.id)
+      );
+      styleFieldToLongest('linkedItemSearch', cacheItems().map(i => i.name));
+      styleFieldToLongest('linkedAccountSearch', cacheAccountsForLinked().map(a => a.name));
+      styleFieldToLongest('vendorInput', cacheVendors().map(v => v.name || v.companyName));
+      styleFieldToLongest('linkedVendorSearch', cacheVendors().map(v => v.name || v.companyName));
+      styleFieldToLongest(
+        'recordLoadNumberInput',
+        tmsLoadsCache.length
+          ? tmsLoadsCache.map(r => String(r.load_number))
+          : ['Load12345']
+      );
+      ['recordTypeSearch', 'repairLocationSearch', 'linkedTxnTypeSearch', 'linkedDetailModeSearch'].forEach(
+        id => {
+          const el = document.getElementById(id);
+          if (el) el.style.width = 'min(100%, 28ch)';
+        }
+      );
+    }
     let trackingMap = null;
     let trackingMarkersLayer = null;
 
@@ -1315,6 +1544,7 @@
       if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
       if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
 
+      await loadTmsLoadsForMaint();
       fillDataLists();
       renderDashboardHome();
       renderDispatchBoard();
@@ -1337,6 +1567,8 @@
     }
 
     function fillDataLists() {
+      fillStaticMaintDatalists();
+
       document.getElementById('unitOptions').innerHTML =
         vehicles.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
 
@@ -1354,6 +1586,12 @@
 
       document.getElementById('qboAccountOptions').innerHTML =
         cacheAccounts().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+      const expAcc = document.getElementById('qboAccountExpenseOptions');
+      if (expAcc) {
+        expAcc.innerHTML = cacheAccountsForLinked()
+          .map(v => `<option value="${escapeHtml(v.name)}"></option>`)
+          .join('');
+      }
 
       document.getElementById('paymentMethodOptions').innerHTML =
         paymentMethods().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
@@ -1364,14 +1602,14 @@
           .map(b => `<option value="${escapeHtml(b.name)}"></option>`)
           .join('');
       }
+      applyMaintenanceFieldWidths();
     }
 
     function resolveApBankSearch() {
       const elIn = document.getElementById('apBankAccountSearch');
       const elId = document.getElementById('apBankAccountQboId');
       if (!elIn || !elId) return;
-      const name = elIn.value.trim().toLowerCase();
-      const match = cacheBankAccounts().find(b => String(b.name).toLowerCase() === name);
+      const match = findBestNameMatch(cacheBankAccounts(), elIn.value);
       elId.value = match ? match.qboId : '';
     }
 
@@ -1448,12 +1686,29 @@
 
     function startMaintFlow(flow) {
       pendingMaintFlow = flow;
+      const titleEl = document.getElementById('maintModalFlowTitle');
+      const titles = {
+        'service-internal': 'New · Internal shop',
+        'service-external': 'New · External service',
+        'service-road': 'New · Road side service',
+        'service-oos': 'New · Out of service',
+        purchase: 'Parts purchase — pick vehicle type'
+      };
+      if (titleEl) {
+        titleEl.textContent = titles[flow] || 'Maintenance';
+        titleEl.classList.remove('hidden');
+      }
       document.getElementById('maintCatModal').classList.add('on');
     }
 
     function closeMaintCatModal() {
       document.getElementById('maintCatModal').classList.remove('on');
       pendingMaintFlow = null;
+      const titleEl = document.getElementById('maintModalFlowTitle');
+      if (titleEl) {
+        titleEl.textContent = '';
+        titleEl.classList.add('hidden');
+      }
     }
 
     function completeMaintCategory(cat) {
@@ -1476,27 +1731,40 @@
       }
 
       openSectionByName('maintenance');
-      document.getElementById('recordTypeInput').value = 'repair';
-      toggleRecordFields();
-      const loc = document.getElementById('repairLocationTypeInput');
-      if (flow === 'service-internal') loc.value = 'in-house';
-      else if (flow === 'service-external') loc.value = 'external';
-      else if (flow === 'service-road') loc.value = 'road-service';
+      if (flow === 'service-oos') {
+        document.getElementById('recordTypeValue').value = 'maintenance';
+        document.getElementById('recordTypeSearch').value = 'Maintenance';
+        toggleRecordFields();
+        document.getElementById('serviceSearchInput').value = 'Out of service';
+        document.getElementById('serviceTypeInput').value = 'Out of service';
+        setRepairLocationCode('');
+      } else {
+        document.getElementById('recordTypeValue').value = 'repair';
+        document.getElementById('recordTypeSearch').value = 'Repair';
+        toggleRecordFields();
+        if (flow === 'service-internal') setRepairLocationCode('in-house');
+        else if (flow === 'service-external') setRepairLocationCode('external');
+        else if (flow === 'service-road') {
+          setRepairLocationCode('road-service');
+          applyLoadNumberSuggestion(true);
+        }
+      }
       setTimeout(() => {
         document.getElementById('serviceDateInput')?.focus();
-        document.querySelector('#section-maintenance .form-stack')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelector('#section-maintenance .maint-form-stack')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 80);
     }
 
     function renderShopQueues() {
       const wos = (erp.workOrders || []).slice().reverse();
       const internal = wos.filter(w => String(w.repairLocationType) === 'in-house');
-      const external = wos.filter(w => {
+      const external = wos.filter(w => String(w.repairLocationType) === 'external');
+      const roadside = wos.filter(w => {
         const t = String(w.repairLocationType);
-        return t === 'external' || t === 'over-the-road' || t === 'road-service';
+        return t === 'over-the-road' || t === 'road-service';
       });
 
-      const fmtWo = w => {
+      const fmtWo = (w, tagHtml) => {
         const lines = w.lines || [];
         const sum =
           lines
@@ -1504,37 +1772,46 @@
             .filter(Boolean)
             .slice(0, 2)
             .join(', ') || 'Work order';
-        const tag =
-          w.repairLocationType === 'road-service'
-            ? '<span class="mini-note">Road · </span>'
-            : w.repairLocationType === 'over-the-road'
-              ? '<span class="mini-note">OTR · </span>'
-              : '';
         const st = w.qboSyncStatus || 'not posted';
         return (
-          `<div class="shop-row">${tag}<b>${escapeHtml(w.unit || '—')}</b> — ${escapeHtml(sum)}<br>` +
+          `<div class="shop-row">${tagHtml || ''}<b>${escapeHtml(w.unit || '—')}</b> — ${escapeHtml(sum)}<br>` +
           `<span class="mini-note">${escapeHtml(st)} · ${escapeHtml((w.serviceDate || '').slice(0, 10) || '')}</span></div>`
         );
       };
 
       const elI = document.getElementById('shopInternalBody');
       const elE = document.getElementById('shopExternalBody');
+      const elR = document.getElementById('shopRoadsideBody');
       const elO = document.getElementById('shopOosBody');
-      if (!elI || !elE || !elO) return;
+      if (!elI || !elE || !elR || !elO) return;
 
       elI.innerHTML = internal.length
         ? internal
             .slice(0, 30)
-            .map(fmtWo)
+            .map(w => fmtWo(w, ''))
             .join('')
-        : '<div class="mini-note">No Internal Shop work orders yet.</div>';
+        : '<div class="mini-note">No internal shop work orders yet.</div>';
 
       elE.innerHTML = external.length
         ? external
             .slice(0, 30)
-            .map(fmtWo)
+            .map(w => fmtWo(w, ''))
             .join('')
-        : '<div class="mini-note">No External Service / road work orders yet.</div>';
+        : '<div class="mini-note">No external service work orders yet.</div>';
+
+      elR.innerHTML = roadside.length
+        ? roadside
+            .slice(0, 30)
+            .map(w =>
+              fmtWo(
+                w,
+                w.repairLocationType === 'road-service'
+                  ? '<span class="mini-note">Road · </span>'
+                  : '<span class="mini-note">OTR · </span>'
+              )
+            )
+            .join('')
+        : '<div class="mini-note">No road side / over-the-road work orders yet.</div>';
 
       const recs = (erp.records || []).filter(r => {
         const st = String(r.serviceType || '').toLowerCase();
@@ -1600,56 +1877,97 @@
       document.getElementById('serviceTypeInput').value = document.getElementById('serviceSearchInput').value.trim();
     }
 
+    function resolveRecordTypeSearch() {
+      const lab = document.getElementById('recordTypeSearch').value.trim();
+      const hit = RECORD_TYPE_DEFS.find(d => d.label.toLowerCase() === lab.toLowerCase());
+      if (hit) document.getElementById('recordTypeValue').value = hit.code;
+      toggleRecordFields();
+    }
+
+    function resolveRepairLocationSearch() {
+      const lab = document.getElementById('repairLocationSearch').value.trim();
+      const hit = REPAIR_LOCATION_DEFS.find(d => d.label.toLowerCase() === lab.toLowerCase());
+      document.getElementById('repairLocationTypeInput').value = hit ? hit.code : '';
+    }
+
+    function resolveAccidentFaultSearch() {
+      const lab = document.getElementById('accidentAtFaultSearch').value.trim().toLowerCase();
+      let v = '';
+      if (lab === 'at fault') v = 'at-fault';
+      else if (lab === 'not at fault') v = 'not-at-fault';
+      document.getElementById('accidentAtFaultValue').value = v;
+    }
+
+    function resolveLinkedTxnTypeSearch() {
+      const lab = document.getElementById('linkedTxnTypeSearch').value.trim().toLowerCase();
+      const hid = document.getElementById('linkedTxnType');
+      if (lab === 'bill') hid.value = 'bill';
+      else hid.value = 'expense';
+    }
+
+    function resolveLinkedDetailModeSearch() {
+      const lab = document.getElementById('linkedDetailModeSearch').value.trim().toLowerCase();
+      const isItem = lab.includes('item');
+      document.getElementById('linkedDetailMode').value = isItem ? 'item' : 'category';
+      toggleLinkedDetailMode();
+    }
+
+    function resolveTireConditionSearch() {
+      const lab = document.getElementById('tireConditionSearch').value.trim().toLowerCase();
+      const map = { new: 'new', used: 'used', recap: 'recap' };
+      document.getElementById('tireConditionValue').value = map[lab] || '';
+    }
+
     function resolveApVendorSearch() {
-      const name = document.getElementById('apVendorSearch').value.trim().toLowerCase();
-      const match = cacheVendors().find(v => String(v.name).toLowerCase() === name);
+      const raw = document.getElementById('apVendorSearch').value;
+      const match = findBestNameMatch(cacheVendors(), raw);
       document.getElementById('apVendorQboId').value = match ? match.qboId : '';
     }
 
     function resolveApItemSearch() {
-      const name = document.getElementById('apItemSearch').value.trim().toLowerCase();
-      const match = cacheItems().find(v => String(v.name).toLowerCase() === name);
+      const raw = document.getElementById('apItemSearch').value;
+      const match = findBestNameMatch(cacheItems(), raw);
       document.getElementById('apItemQboId').value = match ? match.qboId : '';
     }
 
     function resolveApAccountSearch() {
-      const name = document.getElementById('apAccountSearch').value.trim().toLowerCase();
-      const match = cacheAccounts().find(v => String(v.name).toLowerCase() === name);
+      const raw = document.getElementById('apAccountSearch').value;
+      const match = findBestNameMatch(cacheAccounts(), raw);
       document.getElementById('apAccountQboId').value = match ? match.qboId : '';
     }
 
     function resolveApPaymentMethodSearch() {
-      const name = document.getElementById('apPaymentMethodSearch').value.trim().toLowerCase();
-      const match = paymentMethods().find(v => String(v.name).toLowerCase() === name);
+      const raw = document.getElementById('apPaymentMethodSearch').value;
+      const match = findBestNameMatch(paymentMethods(), raw);
       document.getElementById('apPaymentMethodId').value = match ? match.id : '';
     }
 
     function resolveLinkedVendorSearch() {
-      const name = document.getElementById('linkedVendorSearch').value.trim().toLowerCase();
-      const match = cacheVendors().find(v => String(v.name).toLowerCase() === name);
+      const raw = document.getElementById('linkedVendorSearch').value;
+      const match = findBestNameMatch(cacheVendors(), raw);
       document.getElementById('linkedVendorQboId').value = match ? match.qboId : '';
     }
 
     function resolveLinkedItemSearch() {
-      const name = document.getElementById('linkedItemSearch').value.trim().toLowerCase();
-      const match = cacheItems().find(v => String(v.name).toLowerCase() === name);
+      const raw = document.getElementById('linkedItemSearch').value;
+      const match = findBestNameMatch(cacheItems(), raw);
       document.getElementById('linkedItemQboId').value = match ? match.qboId : '';
     }
 
     function resolveLinkedAccountSearch() {
-      const name = document.getElementById('linkedAccountSearch').value.trim().toLowerCase();
-      const match = cacheAccounts().find(v => String(v.name).toLowerCase() === name);
+      const raw = document.getElementById('linkedAccountSearch').value;
+      const match = findBestNameMatch(cacheAccountsForLinked(), raw);
       document.getElementById('linkedAccountQboId').value = match ? match.qboId : '';
     }
 
     function resolveLinkedPaymentMethodSearch() {
-      const name = document.getElementById('linkedPaymentMethodSearch').value.trim().toLowerCase();
-      const match = paymentMethods().find(v => String(v.name).toLowerCase() === name);
+      const raw = document.getElementById('linkedPaymentMethodSearch').value;
+      const match = findBestNameMatch(paymentMethods(), raw);
       document.getElementById('linkedPaymentMethodId').value = match ? match.id : '';
     }
 
     function toggleRecordFields() {
-      const type = document.getElementById('recordTypeInput').value;
+      const type = document.getElementById('recordTypeValue').value;
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
       document.getElementById('repairFields').classList.toggle('hidden', type !== 'repair');
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
@@ -1666,6 +1984,7 @@
       if (type === 'accident') {
         document.getElementById('serviceSearchInput').value = 'Accident Report';
         document.getElementById('serviceTypeInput').value = 'Accident Report';
+        applyLoadNumberSuggestion(true);
       }
     }
 
@@ -1707,15 +2026,13 @@
 
     function resolveWoLineAccount(input) {
       const row = input.closest('.wo-line');
-      const name = input.value.trim().toLowerCase();
-      const match = cacheAccounts().find(v => String(v.name).toLowerCase() === name);
+      const match = findBestNameMatch(cacheAccounts(), input.value);
       row.querySelector('.wo-acct-id').value = match ? match.qboId : '';
     }
 
     function resolveWoLineItem(input) {
       const row = input.closest('.wo-line');
-      const name = input.value.trim().toLowerCase();
-      const match = cacheItems().find(v => String(v.name).toLowerCase() === name);
+      const match = findBestNameMatch(cacheItems(), input.value);
       row.querySelector('.wo-item-id').value = match ? match.qboId : '';
     }
 
@@ -1803,6 +2120,7 @@
       setServiceOptions();
       toggleRecordFields();
       renderUnitHistory();
+      applyLoadNumberSuggestion(false);
     }
 
     function renderMaintenanceTable() {
@@ -1888,7 +2206,18 @@
     async function saveRecord() {
       if (!selectedUnit) return;
 
-      const recordType = document.getElementById('recordTypeInput').value;
+      resolveRecordTypeSearch();
+      resolveRepairLocationSearch();
+      resolveAccidentFaultSearch();
+      resolveTireConditionSearch();
+      resolveLinkedTxnTypeSearch();
+      resolveLinkedDetailModeSearch();
+      resolveLinkedVendorSearch();
+      resolveLinkedPaymentMethodSearch();
+      resolveLinkedAccountSearch();
+      resolveLinkedItemSearch();
+
+      const recordType = document.getElementById('recordTypeValue').value;
       const serviceType =
         recordType === 'custom'
           ? (document.getElementById('customServiceTypeInput').value || 'Custom Service')
@@ -1906,7 +2235,7 @@
           vendor: document.getElementById('vendorInput').value,
           cost: document.getElementById('costInput').value,
           notes: document.getElementById('notesInput').value,
-          tireCondition: document.getElementById('tireConditionInput').value,
+          tireCondition: document.getElementById('tireConditionValue').value,
           tirePosition: document.getElementById('tirePositionInput').value,
           tirePositionText: document.getElementById('tirePositionText').value,
           tireBrand: document.getElementById('tireBrandInput').value,
@@ -1914,7 +2243,7 @@
           installMileage: document.getElementById('installMileageInput').value,
           removeMileage: document.getElementById('removeMileageInput').value,
           expectedTireLifeMiles: document.getElementById('expectedTireLifeMilesInput').value,
-          accidentAtFault: document.getElementById('accidentAtFaultInput').value,
+          accidentAtFault: document.getElementById('accidentAtFaultValue').value,
           accidentLocation: document.getElementById('accidentLocationInput').value,
           accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
           repairLocationType: document.getElementById('repairLocationTypeInput').value,
@@ -1959,9 +2288,21 @@
         if (el) el.value = '';
       });
 
-      document.getElementById('tireConditionInput').value = '';
+      document.getElementById('tireConditionSearch').value = '';
+      document.getElementById('tireConditionValue').value = '';
+      document.getElementById('repairLocationSearch').value = '';
       document.getElementById('repairLocationTypeInput').value = '';
-      document.getElementById('accidentAtFaultInput').value = '';
+      document.getElementById('accidentAtFaultSearch').value = '';
+      document.getElementById('accidentAtFaultValue').value = '';
+      document.getElementById('recordTypeSearch').value = 'Maintenance';
+      document.getElementById('recordTypeValue').value = 'maintenance';
+      document.getElementById('linkedTxnTypeSearch').value = 'Expense';
+      document.getElementById('linkedTxnType').value = 'expense';
+      document.getElementById('linkedDetailModeSearch').value = 'Category details';
+      document.getElementById('linkedDetailMode').value = 'category';
+      toggleLinkedDetailMode();
+      const lnh = document.getElementById('recordLoadNumberHint');
+      if (lnh) lnh.textContent = '';
       document.getElementById('linkedVendorQboId').value = '';
       document.getElementById('linkedPaymentMethodId').value = '';
       document.getElementById('linkedAccountQboId').value = '';
