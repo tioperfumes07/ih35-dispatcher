@@ -94,6 +94,9 @@ function defaultErpData() {
       vendors: [],
       items: [],
       accounts: [],
+      accountsExpense: [],
+      accountsIncome: [],
+      customers: [],
       refreshedAt: ''
     }
   };
@@ -124,6 +127,9 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
   if (!Array.isArray(merged.qboCache.items)) merged.qboCache.items = [];
   if (!Array.isArray(merged.qboCache.accounts)) merged.qboCache.accounts = [];
+  if (!Array.isArray(merged.qboCache.accountsExpense)) merged.qboCache.accountsExpense = [];
+  if (!Array.isArray(merged.qboCache.accountsIncome)) merged.qboCache.accountsIncome = [];
+  if (!Array.isArray(merged.qboCache.customers)) merged.qboCache.customers = [];
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -651,11 +657,41 @@ async function qboQuery(sql) {
   return qboGet(`query?query=${encodeURIComponent(sql)}`);
 }
 
+function partitionQboAccounts(accounts) {
+  const expenseTypes = ['Expense', 'Cost of Goods Sold'];
+  const incomeTypes = ['Income', 'Other Income'];
+  return {
+    accountsExpense: accounts.filter(a => expenseTypes.includes(a.accountType)),
+    accountsIncome: accounts.filter(a => incomeTypes.includes(a.accountType))
+  };
+}
+
+/** Normalized QBO lists for maintenance, dispatch, fuel — single source after refresh. */
+function readQboCatalogPayload() {
+  const erp = readErp();
+  const c = erp.qboCache || {};
+  const accounts = c.accounts || [];
+  const parts =
+    Array.isArray(c.accountsExpense) && Array.isArray(c.accountsIncome)
+      ? { accountsExpense: c.accountsExpense, accountsIncome: c.accountsIncome }
+      : partitionQboAccounts(accounts);
+  return {
+    vendors: c.vendors || [],
+    items: c.items || [],
+    accounts,
+    accountsExpense: parts.accountsExpense,
+    accountsIncome: parts.accountsIncome,
+    customers: c.customers || [],
+    refreshedAt: c.refreshedAt || null
+  };
+}
+
 async function qboSyncMasterData() {
-  const [vendorsData, itemsData, accountsData] = await Promise.all([
+  const [vendorsData, itemsData, accountsData, customersData] = await Promise.all([
     qboQuery('select * from Vendor maxresults 1000'),
     qboQuery('select * from Item maxresults 1000'),
-    qboQuery('select * from Account maxresults 1000')
+    qboQuery('select * from Account maxresults 1000'),
+    qboQuery('select * from Customer maxresults 1000')
   ]);
 
   const vendors = (vendorsData?.QueryResponse?.Vendor || []).map(v => ({
@@ -675,9 +711,10 @@ async function qboSyncMasterData() {
     active: i.Active !== false
   }));
 
+  const accountTypesForCatalog = ['Expense', 'Cost of Goods Sold', 'Income', 'Other Income'];
   const accounts = (accountsData?.QueryResponse?.Account || [])
     .filter(a => a.Active !== false)
-    .filter(a => ['Expense', 'Cost of Goods Sold'].includes(a.AccountType))
+    .filter(a => accountTypesForCatalog.includes(a.AccountType))
     .map(a => ({
       qboId: a.Id,
       name: a.Name || '',
@@ -685,11 +722,25 @@ async function qboSyncMasterData() {
       accountSubType: a.AccountSubType || ''
     }));
 
+  const { accountsExpense, accountsIncome } = partitionQboAccounts(accounts);
+
+  const customers = (customersData?.QueryResponse?.Customer || []).map(c => ({
+    qboId: c.Id,
+    name: c.DisplayName || '',
+    companyName: c.CompanyName || '',
+    email: c.PrimaryEmailAddr?.Address || '',
+    phone: c.PrimaryPhone?.FreeFormNumber || '',
+    active: c.Active !== false
+  }));
+
   const erp = readErp();
   erp.qboCache = {
     vendors,
     items,
     accounts,
+    accountsExpense,
+    accountsIncome,
+    customers,
     refreshedAt: new Date().toISOString()
   };
   writeErp(erp);
@@ -1297,18 +1348,50 @@ app.get('/api/qbo/company', async (_req, res) => {
   }
 });
 
+app.get('/api/qbo/catalog', (req, res) => {
+  try {
+    const store = readQbo();
+    const payload = readQboCatalogPayload();
+    res.json({
+      ok: true,
+      source: 'quickbooks',
+      connected: !!(store.tokens?.accessToken && store.tokens?.realmId),
+      ...payload
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post('/api/qbo/catalog/refresh', async (_req, res) => {
+  try {
+    const store = readQbo();
+    if (!store.tokens?.accessToken) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks not connected' });
+    }
+    await qboSyncMasterData();
+    const payload = readQboCatalogPayload();
+    res.json({
+      ok: true,
+      source: 'quickbooks',
+      connected: true,
+      ...payload
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.get('/api/qbo/master', async (_req, res) => {
   try {
-    const cache = await qboSyncMasterData();
-    res.json({ ok: true, ...cache });
+    await qboSyncMasterData();
+    const payload = readQboCatalogPayload();
+    res.json({ ok: true, ...payload });
   } catch (error) {
-    const erp = readErp();
+    const payload = readQboCatalogPayload();
     res.status(500).json({
       error: error.message,
-      vendors: erp.qboCache?.vendors || [],
-      items: erp.qboCache?.items || [],
-      accounts: erp.qboCache?.accounts || [],
-      refreshedAt: erp.qboCache?.refreshedAt || ''
+      ...payload
     });
   }
 });

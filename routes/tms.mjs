@@ -10,6 +10,12 @@ function uuidOrNull(v) {
   return s;
 }
 
+function qboIdOrNull(v) {
+  if (v == null || v === '') return null;
+  const s = String(v).trim();
+  return s || null;
+}
+
 function dateOrNull(v) {
   if (v == null || v === '') return null;
   const s = String(v).trim();
@@ -159,7 +165,7 @@ router.post('/trailers', async (req, res) => {
 
 const loadSelect = `
   SELECT l.*,
-    c.name AS customer_name,
+    COALESCE(NULLIF(TRIM(l.qbo_customer_name), ''), c.name) AS customer_name,
     d.name AS driver_name,
     t.unit_code AS truck_code,
     tr.unit_code AS trailer_code,
@@ -203,7 +209,8 @@ router.get('/loads/:id', async (req, res) => {
     if (!rows.length) return res.status(404).json({ ok: false, error: 'Load not found' });
     const load = rows[0];
     const stops = await dbQuery(
-      `SELECT id, sequence_order, stop_type, location_name, address, practical_miles, shortest_miles, stop_at, window_text
+      `SELECT id, sequence_order, stop_type, location_name, address, practical_miles, shortest_miles, stop_at, window_text,
+              qbo_item_id, qbo_account_id
        FROM load_stops WHERE load_id = $1::uuid ORDER BY sequence_order`,
       [req.params.id]
     );
@@ -233,6 +240,8 @@ router.post('/loads', async (req, res) => {
   const plm = body.practical_loaded_miles != null ? Number(body.practical_loaded_miles) : 0;
   const pem = body.practical_empty_miles != null ? Number(body.practical_empty_miles) : 0;
   const notes = String(body.notes || '').trim() || null;
+  const qbo_customer_id = qboIdOrNull(body.qbo_customer_id);
+  const qbo_customer_name = String(body.qbo_customer_name || '').trim() || null;
   const stops = Array.isArray(body.stops) ? body.stops : [];
 
   const client = await pool.connect();
@@ -241,8 +250,9 @@ router.post('/loads', async (req, res) => {
     const ins = await client.query(
       `INSERT INTO loads (
         load_number, status, customer_id, driver_id, truck_id, trailer_id,
-        dispatcher_name, start_date, end_date, practical_loaded_miles, practical_empty_miles, notes
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        dispatcher_name, start_date, end_date, practical_loaded_miles, practical_empty_miles, notes,
+        qbo_customer_id, qbo_customer_name
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       RETURNING id`,
       [
         load_number,
@@ -256,7 +266,9 @@ router.post('/loads', async (req, res) => {
         end_date,
         plm,
         pem,
-        notes
+        notes,
+        qbo_customer_id,
+        qbo_customer_name
       ]
     );
     const loadId = ins.rows[0].id;
@@ -264,8 +276,8 @@ router.post('/loads', async (req, res) => {
     for (let i = 0; i < stops.length; i++) {
       const s = stops[i] || {};
       await client.query(
-        `INSERT INTO load_stops (load_id, sequence_order, stop_type, location_name, address, practical_miles, shortest_miles, stop_at, window_text)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $9)`,
+        `INSERT INTO load_stops (load_id, sequence_order, stop_type, location_name, address, practical_miles, shortest_miles, stop_at, window_text, qbo_item_id, qbo_account_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $9, $10, $11)`,
         [
           loadId,
           i,
@@ -275,7 +287,9 @@ router.post('/loads', async (req, res) => {
           s.practical_miles != null ? Number(s.practical_miles) : 0,
           s.shortest_miles != null ? Number(s.shortest_miles) : 0,
           s.stop_at || null,
-          String(s.window_text || '').trim() || null
+          String(s.window_text || '').trim() || null,
+          qboIdOrNull(s.qbo_item_id),
+          qboIdOrNull(s.qbo_account_id)
         ]
       );
     }
@@ -308,6 +322,8 @@ router.patch('/loads/:id', async (req, res) => {
     const map = [
       ['status', 'status'],
       ['customer_id', 'customer_id'],
+      ['qbo_customer_id', 'qbo_customer_id'],
+      ['qbo_customer_name', 'qbo_customer_name'],
       ['driver_id', 'driver_id'],
       ['truck_id', 'truck_id'],
       ['trailer_id', 'trailer_id'],
