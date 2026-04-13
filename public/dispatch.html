@@ -44,6 +44,11 @@
       background: #fff3cd; border: 1px solid #ffc107; color: #664d03;
     }
     .banner.err { background: #fdecea; border-color: #f5c6cb; color: #842029; }
+    .maint-banner { margin-top: 8px; font-size: 13px; line-height: 1.45; text-align: left; }
+    .maint-banner.maint-hide { display: none !important; }
+    .maint-banner.critical { background: #ffebee; border-color: #c62828; color: #4a1515; }
+    .maint-banner.high { background: #fff3e0; border-color: #ef6c00; color: #5d3800; }
+    .maint-banner.medium { background: #fffde7; border-color: #f9a825; color: #5c4a00; }
     table.data {
       width: 100%; border-collapse: collapse; background: var(--panel);
       border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
@@ -289,6 +294,7 @@
               <div class="ac-list" id="truck_class_ac"></div>
             </div>
             <p class="muted" style="margin:6px 0 0;font-size:11px">Primary list: <strong>Samsara fleet</strong> (same names as in your Samsara account). Fallback: QuickBooks <strong>classes</strong> starting with <strong>T1</strong>. Saving ensures a TMS <code>trucks</code> row for that unit code.</p>
+            <div id="truckMaintBanner" class="banner maint-banner maint-hide" role="status" aria-live="polite"></div>
           </div>
           <div class="row">
             <span class="lbl">Quick add truck</span>
@@ -434,6 +440,8 @@
     let truckClassAcBound = false;
     let trailerAcBound = false;
     let editingLoadId = null;
+    /** @type {Record<string, {level:string,summary:string,reasons:string[]}>} */
+    let maintenanceAlertsByUnit = {};
 
     function truckClassesT1() {
       return (qboCatalog.classes || []).filter(c => {
@@ -669,9 +677,14 @@
       const hid = document.getElementById('f_truck_id');
       if (!inp || !list || !hid) return;
       let t = null;
+      let maintTimer = null;
       inp.addEventListener('input', () => {
         clearTimeout(t);
+        clearTimeout(maintTimer);
         hid.value = '';
+        maintTimer = setTimeout(() => {
+          if (typeof updateTruckMaintBanner === 'function') updateTruckMaintBanner();
+        }, 280);
         const q = inp.value.trim().toLowerCase();
         if (q.length < 1) {
           hideTruckClassAc();
@@ -711,13 +724,21 @@
               ev.preventDefault();
               inp.value = m.label;
               hideTruckClassAc();
+              setTimeout(() => {
+                if (typeof updateTruckMaintBanner === 'function') updateTruckMaintBanner();
+              }, 50);
             });
             list.appendChild(div);
           });
           list.classList.add('on');
         }, 140);
       });
-      inp.addEventListener('blur', () => setTimeout(() => hideTruckClassAc(), 200));
+      inp.addEventListener('blur', () => {
+        setTimeout(() => hideTruckClassAc(), 200);
+        setTimeout(() => {
+          if (typeof updateTruckMaintBanner === 'function') updateTruckMaintBanner();
+        }, 320);
+      });
     }
 
     function hideTrailerAc() {
@@ -1058,6 +1079,53 @@
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    async function loadMaintenanceDispatchAlerts() {
+      try {
+        const r = await fetch('/api/maintenance/dispatch-alerts');
+        const j = await r.json().catch(() => ({}));
+        maintenanceAlertsByUnit = j && j.ok && j.byUnit ? j.byUnit : {};
+      } catch {
+        maintenanceAlertsByUnit = {};
+      }
+      if (typeof updateTruckMaintBanner === 'function') updateTruckMaintBanner();
+    }
+
+    function lookupMaintenanceAlert(unitRaw) {
+      const u = String(unitRaw || '').trim();
+      if (!u || !maintenanceAlertsByUnit) return null;
+      if (maintenanceAlertsByUnit[u]) return maintenanceAlertsByUnit[u];
+      const lower = u.toLowerCase();
+      for (const k of Object.keys(maintenanceAlertsByUnit)) {
+        if (String(k).toLowerCase() === lower) return maintenanceAlertsByUnit[k];
+      }
+      return null;
+    }
+
+    function updateTruckMaintBanner() {
+      const el = document.getElementById('truckMaintBanner');
+      const inp = document.getElementById('f_truck_search');
+      if (!el || !inp) return;
+      const a = lookupMaintenanceAlert(inp.value.trim());
+      if (!a || !a.level) {
+        el.classList.add('maint-hide');
+        el.innerHTML = '';
+        el.classList.remove('critical', 'high', 'medium');
+        return;
+      }
+      el.classList.remove('maint-hide', 'critical', 'high', 'medium');
+      el.classList.add(a.level === 'critical' ? 'critical' : a.level === 'high' ? 'high' : 'medium');
+      const reasons = (a.reasons || []).slice(0, 10);
+      el.innerHTML =
+        '<strong>' +
+        escapeHtml(a.summary || 'Maintenance notice') +
+        '</strong>' +
+        (reasons.length
+          ? '<ul style="margin:8px 0 0 18px;padding:0">' +
+            reasons.map(r => '<li>' + escapeHtml(r) + '</li>').join('') +
+            '</ul>'
+          : '');
+    }
+
     function hideDriverVendorAc() {
       const list = document.getElementById('driver_vendor_ac');
       if (!list) return;
@@ -1228,6 +1296,7 @@
     }
 
     function refreshDispatchBoard() {
+      loadMaintenanceDispatchAlerts();
       if (currentTab === 'fleet') loadFleetTab();
       else loadTab();
     }
@@ -1594,6 +1663,7 @@
       addStopRow();
       addStopRow();
       updateStopMilesSummary();
+      updateTruckMaintBanner();
       document.getElementById('modalBg').classList.add('on');
     }
 
@@ -1685,6 +1755,7 @@
         addStopRow();
       }
       updateStopMilesSummary();
+      updateTruckMaintBanner();
       document.getElementById('modalBg').classList.add('on');
     }
 
@@ -1706,6 +1777,7 @@
       document.getElementById('f_new_truck').value = '';
       document.getElementById('f_truck_search').value = unit_code;
       document.getElementById('f_truck_id').value = j.data.id;
+      updateTruckMaintBanner();
     }
 
     async function quickAddTrailer() {
@@ -1753,6 +1825,21 @@
           }
         }
       }
+      const truckUnitLabel = document.getElementById('f_truck_search').value.trim();
+      const maintAlert = lookupMaintenanceAlert(truckUnitLabel);
+      if (
+        maintAlert &&
+        truckUnitLabel &&
+        (maintAlert.level === 'critical' || maintAlert.level === 'high')
+      ) {
+        const msg = [
+          maintAlert.summary,
+          '',
+          ...(maintAlert.reasons || []).slice(0, 8)
+        ].join('\n');
+        if (!window.confirm(msg + '\n\nSave this load anyway?')) return;
+      }
+
       const common = {
         status: document.getElementById('f_status').value,
         customer_id: null,
@@ -1803,6 +1890,7 @@
       await loadQboCatalog();
       await refreshLookups();
       await loadSamsaraFleetForDatalist();
+      await loadMaintenanceDispatchAlerts();
       await loadTab();
     })();
   </script>

@@ -57,6 +57,16 @@
         { label: 'Settlement / P&L by load', href: '/maintenance.html#accounting-settlement' },
         { label: 'QBO master data', href: '/maintenance.html#accounting' }
       ]
+    },
+    {
+      id: 'reports',
+      label: 'Reports',
+      href: '/maintenance.html#reports',
+      links: [
+        { label: 'Reports board (TMS · maint · QBO)', href: '/maintenance.html#reports' },
+        { label: 'Accounting board', href: '/maintenance.html#accounting' },
+        { label: 'Operations hub', href: '/' }
+      ]
     }
   ];
 

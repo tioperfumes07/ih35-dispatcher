@@ -218,7 +218,7 @@
       <div class="sidebar-brand-row">
         <div>
           <div class="brand">IH35 ERP</div>
-          <div class="brand-sub">Dispatch · Fuel · Maintenance · Tracking · Accounting</div>
+          <div class="brand-sub">Dispatch · Fuel · Maintenance · Tracking · Accounting · Reports</div>
         </div>
         <button type="button" class="sidebar-collapse-btn" onclick="toggleErpSidebar(true)" title="Hide menu">«</button>
       </div>
@@ -231,6 +231,7 @@
       <button class="nav-btn" data-section="safety" onclick="openSection('safety', this)">Safety Board</button>
       <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
       <button class="nav-btn" data-section="accounting" onclick="openSection('accounting', this)">Accounting Board</button>
+      <button class="nav-btn" data-section="reports" onclick="openSection('reports', this)">Reports Board</button>
 
       <div class="nav-title">Actions</div>
       <button class="nav-btn" onclick="loadAll()">Refresh All</button>
@@ -260,6 +261,7 @@
           <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety Board</h3><p>Samsara HOS, drivers, assignments</p></div>
           <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Map + assets (Samsara)</p></div>
           <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Expenses, bills, QuickBooks</p></div>
+          <div class="hero-card" onclick="openSectionByName('reports')"><h3>Reports Board</h3><p>TMS, maintenance, QBO sync &amp; activity</p></div>
         </div>
 
         <div class="grid grid-4">
@@ -1057,6 +1059,59 @@
           </div>
         </div>
       </section>
+
+      <section id="section-reports" class="section">
+        <div class="subtabs">
+          <button type="button" class="subtab active" onclick="openReportsTab('rep-overview', this)">Overview</button>
+          <button type="button" class="subtab" onclick="openReportsTab('rep-tms', this)">TMS loads</button>
+          <button type="button" class="subtab" onclick="openReportsTab('rep-maint', this)">Maintenance by unit</button>
+          <button type="button" class="subtab" onclick="openReportsTab('rep-qbo', this)">QuickBooks activity</button>
+          <button type="button" class="subtab" onclick="openReportsTab('rep-sync', this)">ERP ↔ QBO sync</button>
+        </div>
+        <div id="rep-overview" class="reports-tab">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Executive overview</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button type="button" onclick="loadReportsData()">Refresh reports</button>
+                <button type="button" class="secondary" onclick="refreshQboMaster()">Sync QBO master + activity</button>
+              </div>
+            </div>
+            <div class="panel-body" id="repOverviewBody">
+              <p class="mini-note">Use Refresh reports after connecting QuickBooks (runs catalog + bills/purchases/invoices for the configured window).</p>
+            </div>
+          </div>
+        </div>
+        <div id="rep-tms" class="reports-tab hidden">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">TMS load pipeline</div></div>
+            <div class="panel-body" id="repTmsBody"></div>
+          </div>
+        </div>
+        <div id="rep-maint" class="reports-tab hidden">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Maintenance spend by unit (ERP records)</div>
+              <div>
+                <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/reports/export/maintenance-by-unit.csv">Download CSV</a>
+              </div>
+            </div>
+            <div class="panel-body" id="repMaintBody"></div>
+          </div>
+        </div>
+        <div id="rep-qbo" class="reports-tab hidden">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">QuickBooks — bills, purchases, credits, invoices</div></div>
+            <div class="panel-body" id="repQboBody"></div>
+          </div>
+        </div>
+        <div id="rep-sync" class="reports-tab hidden">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Local ERP vs QuickBooks posting</div></div>
+            <div class="panel-body" id="repSyncBody"></div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -1416,12 +1471,14 @@
         maintenance: 'Maintenance Board',
         safety: 'Safety Board',
         tracking: 'Vehicle Tracking Board',
-        accounting: 'Accounting Board'
+        accounting: 'Accounting Board',
+        reports: 'Reports Board'
       };
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
       }
+      if (name === 'reports') loadReportsData();
     }
 
     function openSectionByName(name) {
@@ -1438,7 +1495,7 @@
         openAccountingTab('acct-settlement', sub);
         return;
       }
-      const allowed = ['dashboard', 'dispatch', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting'];
+      const allowed = ['dashboard', 'dispatch', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports'];
       if (allowed.includes(section)) openSectionByName(section);
     }
 
@@ -1456,6 +1513,160 @@
       if (id === 'acct-settlement') {
         loadSettlementIndex();
         loadDriverPaySettlements();
+      }
+    }
+
+    let reportsSummaryCache = null;
+
+    function openReportsTab(id, btn) {
+      document.querySelectorAll('.reports-tab').forEach(el => el.classList.add('hidden'));
+      const panel = document.getElementById(id);
+      if (panel) panel.classList.remove('hidden');
+      document.querySelectorAll('#section-reports .subtab').forEach(el => el.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    function reportTxnTableHtml(rows, cols) {
+      if (!rows || !rows.length) return '<p class="mini-note">No rows.</p>';
+      const th = cols.map(c => `<th>${escapeHtml(c)}</th>`).join('');
+      const tr = rows
+        .map(
+          r =>
+            `<tr>${cols.map(c => `<td>${escapeHtml(String(r[c] ?? ''))}</td>`).join('')}</tr>`
+        )
+        .join('');
+      return `<div class="table-wrap" style="min-width:0"><table style="min-width:640px;font-size:11px"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`;
+    }
+
+    function renderReportsAll() {
+      const d = reportsSummaryCache;
+      if (!d || !d.ok) return;
+      const qc = d.qboCache || {};
+      const mc = qc.masterCounts || {};
+      const ta = qc.transactionActivity;
+      const ec = d.erpCounts || {};
+      const post = d.posting || {};
+
+      const ov = document.getElementById('repOverviewBody');
+      if (ov) {
+        ov.innerHTML = `
+          <p class="mini-note">Generated: ${escapeHtml(d.generatedAt || '')} · QBO cache refreshed: ${
+            qc.refreshedAt ? escapeHtml(new Date(qc.refreshedAt).toLocaleString()) : '—'
+          }</p>
+          <div class="grid grid-4" style="margin-top:12px">
+            <div class="metric"><div class="metric-label">ERP maintenance rows</div><div class="metric-value">${ec.maintenanceRecords ?? 0}</div></div>
+            <div class="metric"><div class="metric-label">Work orders</div><div class="metric-value">${ec.workOrders ?? 0}</div></div>
+            <div class="metric"><div class="metric-label">AP / expense txs</div><div class="metric-value">${ec.apTransactions ?? 0}</div></div>
+            <div class="metric"><div class="metric-label">QBO vendors</div><div class="metric-value">${mc.vendors ?? 0}</div></div>
+          </div>
+          <div class="grid grid-4" style="margin-top:10px">
+            <div class="metric"><div class="metric-label">QBO customers</div><div class="metric-value">${mc.customers ?? 0}</div></div>
+            <div class="metric"><div class="metric-label">QBO classes (units)</div><div class="metric-value">${mc.classes ?? 0}</div></div>
+            <div class="metric"><div class="metric-label">QBO employees</div><div class="metric-value">${mc.employees ?? 0}</div></div>
+            <div class="metric"><div class="metric-label">TMS loads</div><div class="metric-value">${d.tms && d.tms.ok ? d.tms.totalLoads : '—'}</div></div>
+          </div>
+        `;
+      }
+
+      const tms = d.tms || {};
+      const tb = document.getElementById('repTmsBody');
+      if (tb) {
+        if (!tms.configured) {
+          tb.innerHTML =
+            '<p class="mini-note">PostgreSQL / TMS not configured. Set DATABASE_URL and run <code>npm run db:migrate</code>.</p>';
+        } else if (!tms.ok) {
+          tb.innerHTML = '<p class="mini-note">TMS error: ' + escapeHtml(tms.error || '') + '</p>';
+        } else {
+          const rows = Object.entries(tms.byStatus || {})
+            .map(([status, c]) => `<tr><td>${escapeHtml(status)}</td><td>${c}</td></tr>`)
+            .join('');
+          tb.innerHTML = `
+            <p class="mini-note">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
+            <div class="table-wrap" style="min-width:0;max-width:560px">
+              <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>${
+                rows || '<tr><td colspan="2">No loads</td></tr>'
+              }</tbody></table>
+            </div>`;
+        }
+      }
+
+      const mb = d.maintenanceCostByUnit || [];
+      const mbEl = document.getElementById('repMaintBody');
+      if (mbEl) {
+        mbEl.innerHTML = mb.length
+          ? `<div class="table-wrap" style="min-width:0"><table style="min-width:400px;font-size:12px"><thead><tr><th>Unit</th><th>Records</th><th>Cost sum</th></tr></thead><tbody>${mb
+              .map(
+                r =>
+                  `<tr><td>${escapeHtml(r.unit)}</td><td>${r.recordCount}</td><td>$${Number(r.costSum || 0).toFixed(2)}</td></tr>`
+              )
+              .join('')}</tbody></table></div>`
+          : '<p class="mini-note">No maintenance records yet.</p>';
+      }
+
+      const qbEl = document.getElementById('repQboBody');
+      if (qbEl) {
+        if (!ta || !ta.startDate) {
+          qbEl.innerHTML =
+            '<p class="mini-note">No QBO transaction window loaded. Set <code>QBO_SYNC_TRANSACTION_DAYS</code> in server env (e.g. 90), connect QuickBooks, then use <strong>Sync QBO master + activity</strong> or Refresh QBO Master.</p>';
+        } else {
+          const tot = ta.totals || {};
+          qbEl.innerHTML = `
+            <p class="mini-note">Window: last ${ta.windowDays} days (TxnDate ≥ ${escapeHtml(
+            ta.startDate || ''
+          )}) · Up to 200 rows per type from QuickBooks.</p>
+            <div class="grid grid-4" style="margin-bottom:12px">
+              <div class="metric"><div class="metric-label">Bills Σ $</div><div class="metric-value">${Number(tot.bills || 0).toFixed(0)}</div></div>
+              <div class="metric"><div class="metric-label">Purchases Σ $</div><div class="metric-value">${Number(tot.purchases || 0).toFixed(0)}</div></div>
+              <div class="metric"><div class="metric-label">Vendor credits Σ $</div><div class="metric-value">${Number(tot.vendorCredits || 0).toFixed(0)}</div></div>
+              <div class="metric"><div class="metric-label">Invoices Σ $</div><div class="metric-value">${Number(tot.invoices || 0).toFixed(0)}</div></div>
+            </div>
+            <h4 style="margin:12px 0 6px;font-size:13px">Recent bills</h4>
+            ${reportTxnTableHtml((ta.bills || []).slice(0, 30), ['txnDate', 'docNumber', 'vendorName', 'totalAmt', 'balance'])}
+            <h4 style="margin:12px 0 6px;font-size:13px">Recent purchases</h4>
+            ${reportTxnTableHtml((ta.purchases || []).slice(0, 30), ['txnDate', 'docNumber', 'vendorName', 'totalAmt'])}
+            <h4 style="margin:12px 0 6px;font-size:13px">Recent vendor credits</h4>
+            ${reportTxnTableHtml((ta.vendorCredits || []).slice(0, 20), ['txnDate', 'docNumber', 'vendorName', 'totalAmt'])}
+            <h4 style="margin:12px 0 6px;font-size:13px">Recent invoices</h4>
+            ${reportTxnTableHtml((ta.invoices || []).slice(0, 30), ['txnDate', 'docNumber', 'customerName', 'totalAmt', 'balance'])}
+          `;
+        }
+      }
+
+      const syEl = document.getElementById('repSyncBody');
+      if (syEl) {
+        const blocks = [
+          { label: 'Maintenance records', p: post.maintenanceRecords },
+          { label: 'Work orders', p: post.workOrders },
+          { label: 'AP / expense transactions', p: post.apTransactions }
+        ];
+        syEl.innerHTML = `
+          <p class="mini-note">Counts of rows saved in this app that were posted to QuickBooks vs still local-only or error.</p>
+          <div class="table-wrap" style="min-width:0;max-width:720px">
+            <table style="font-size:12px">
+              <thead><tr><th>Source</th><th>Total</th><th>Posted</th><th>Local only</th><th>Error</th></tr></thead>
+              <tbody>
+                ${blocks
+                  .map(
+                    b =>
+                      `<tr><td>${escapeHtml(b.label)}</td><td>${b.p.total}</td><td>${b.p.posted}</td><td>${b.p.localOnly}</td><td>${b.p.error}</td></tr>`
+                  )
+                  .join('')}
+              </tbody>
+            </table>
+          </div>
+          <p class="mini-note" style="margin-top:12px">Post from Maintenance and Accounting tabs; master lists (vendors, customers, classes/units, items) refresh via QuickBooks sync.</p>
+        `;
+      }
+    }
+
+    async function loadReportsData() {
+      const ob = document.getElementById('repOverviewBody');
+      if (ob) ob.innerHTML = '<p class="mini-note">Loading…</p>';
+      try {
+        reportsSummaryCache = await j('/api/reports/summary');
+        renderReportsAll();
+      } catch (e) {
+        if (ob) ob.innerHTML = '<p class="mini-note" style="color:#b91c1c">Failed: ' + escapeHtml(e.message || String(e)) + '</p>';
       }
     }
 
@@ -1500,11 +1711,14 @@
           customers: data.customers || [],
           classes: data.classes || [],
           accountsBank: data.accountsBank || [],
+          employees: data.employees || [],
+          transactionActivity: data.transactionActivity || null,
           refreshedAt: data.refreshedAt || ''
         };
         fillDataLists();
         renderQboMaster();
         renderDashboardHome();
+        if (activeSection === 'reports') loadReportsData();
       } catch (e) {
         alert('QBO refresh failed: ' + e.message);
       }
@@ -1582,6 +1796,7 @@
       const nowText = 'Last updated: ' + new Date().toLocaleTimeString();
       document.getElementById('sidebarLastUpdated').textContent = nowText;
       applyNavHash();
+      if (activeSection === 'reports') loadReportsData();
     }
 
     function fillDataLists() {
@@ -1659,6 +1874,9 @@
 
       document.getElementById('dashboardQboSummary').innerHTML = `
         QuickBooks vendors: ${cacheVendors().length}<br>
+        QuickBooks customers: ${(erp.qboCache?.customers || []).length}<br>
+        QuickBooks classes (units): ${(erp.qboCache?.classes || []).length}<br>
+        QuickBooks employees: ${(erp.qboCache?.employees || []).length}<br>
         QuickBooks items: ${cacheItems().length}<br>
         QuickBooks accounts: ${cacheAccounts().length}<br>
         Saved maintenance expense transactions: ${(erp.apTransactions || []).length}<br>

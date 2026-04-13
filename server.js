@@ -565,6 +565,87 @@ function buildDashboardRows(vehicles, erpStore) {
   });
 }
 
+/** Per-unit maintenance urgency for dispatch (PM past due / due soon + out-of-service records). */
+function aggregateDispatchMaintenanceAlerts(dashboardRows, erp) {
+  const map = new Map();
+  for (const r of dashboardRows) {
+    const u = String(r.unit || '').trim();
+    if (!u) continue;
+    if (!map.has(u)) {
+      map.set(u, { unit: u, worst: 'current', pastDue: [], dueSoon: [] });
+    }
+    const e = map.get(u);
+    if (r.status === 'past due') {
+      e.worst = 'past due';
+      e.pastDue.push({
+        serviceType: r.serviceType,
+        nextDueMileage: r.nextDueMileage,
+        nextDueDate: r.nextDueDate
+      });
+    } else if (r.status === 'due soon') {
+      if (e.worst !== 'past due') e.worst = 'due soon';
+      e.dueSoon.push({
+        serviceType: r.serviceType,
+        nextDueMileage: r.nextDueMileage,
+        nextDueDate: r.nextDueDate
+      });
+    }
+  }
+
+  for (const rec of erp.records || []) {
+    const st = String(rec.serviceType || '').toLowerCase();
+    const oos = st.includes('out of service') || st.includes('out-of-service') || st === 'oos';
+    if (!oos) continue;
+    const u = String(rec.unit || '').trim();
+    if (!u) continue;
+    if (!map.has(u)) {
+      map.set(u, { unit: u, worst: 'current', pastDue: [], dueSoon: [], outOfService: true, oosNotes: [] });
+    }
+    const e = map.get(u);
+    e.outOfService = true;
+    if (!e.oosNotes) e.oosNotes = [];
+    const note = String(rec.notes || '').trim();
+    if (note) e.oosNotes.push(note.slice(0, 240));
+  }
+
+  const out = {};
+  for (const [, e] of map) {
+    const hasPmIssue = e.worst === 'past due' || e.worst === 'due soon';
+    if (!e.outOfService && !hasPmIssue) continue;
+
+    const level = e.outOfService ? 'critical' : e.worst === 'past due' ? 'high' : 'medium';
+    const reasons = [];
+    if (e.outOfService) {
+      reasons.push('Unit has an out-of-service maintenance record — verify clearance before dispatch.');
+      for (const n of (e.oosNotes || []).slice(0, 2)) reasons.push(`Note: ${n}`);
+    }
+    for (const p of (e.pastDue || []).slice(0, 10)) {
+      reasons.push(
+        `PM past due: ${p.serviceType}` +
+          (p.nextDueMileage != null ? ` (target ≤ ${p.nextDueMileage} mi)` : '') +
+          (p.nextDueDate ? ` · ${p.nextDueDate}` : '')
+      );
+    }
+    for (const d of (e.dueSoon || []).slice(0, 8)) {
+      reasons.push(`PM due soon: ${d.serviceType}${d.nextDueDate ? ` · ${d.nextDueDate}` : ''}`);
+    }
+
+    out[e.unit] = {
+      level,
+      worstStatus: e.outOfService ? 'out_of_service' : e.worst,
+      outOfService: !!e.outOfService,
+      reasons: reasons.slice(0, 16),
+      summary:
+        level === 'critical'
+          ? 'Out of service — do not dispatch without maintenance clearance.'
+          : level === 'high'
+            ? 'Preventive maintenance past due — confirm with shop before dispatch.'
+            : 'Preventive maintenance due soon — review before dispatch.'
+    };
+  }
+  return out;
+}
+
 function buildTireAlerts(erp) {
   const lines = (erp.workOrders || [])
     .flatMap(wo => (wo.lines || []).map(line => ({ ...line, unit: wo.unit, serviceDate: wo.serviceDate })))
@@ -708,6 +789,120 @@ function partitionQboAccounts(accounts) {
   };
 }
 
+function qboTxnWindowStartIso(days) {
+  const n = Math.min(366, Math.max(0, Number(days) || 0));
+  if (!n) return null;
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+function normalizeQboBill(b) {
+  return {
+    id: b.Id,
+    docNumber: b.DocNumber || '',
+    txnDate: b.TxnDate || '',
+    dueDate: b.DueDate || '',
+    totalAmt: safeNum(b.TotalAmt, 0) || 0,
+    balance: safeNum(b.Balance, 0) || 0,
+    vendorId: b.VendorRef?.value || '',
+    vendorName: b.VendorRef?.name || ''
+  };
+}
+
+function normalizeQboPurchase(p) {
+  return {
+    id: p.Id,
+    docNumber: p.DocNumber || '',
+    txnDate: p.TxnDate || '',
+    totalAmt: safeNum(p.TotalAmt, 0) || 0,
+    vendorId: p.EntityRef?.value || '',
+    vendorName: p.EntityRef?.name || '',
+    paymentType: p.PaymentType || ''
+  };
+}
+
+function normalizeQboVendorCredit(v) {
+  return {
+    id: v.Id,
+    docNumber: v.DocNumber || '',
+    txnDate: v.TxnDate || '',
+    totalAmt: safeNum(v.TotalAmt, 0) || 0,
+    vendorId: v.VendorRef?.value || '',
+    vendorName: v.VendorRef?.name || ''
+  };
+}
+
+function normalizeQboInvoice(inv) {
+  return {
+    id: inv.Id,
+    docNumber: inv.DocNumber || '',
+    txnDate: inv.TxnDate || '',
+    dueDate: inv.DueDate || '',
+    totalAmt: safeNum(inv.TotalAmt, 0) || 0,
+    balance: safeNum(inv.Balance, 0) || 0,
+    customerId: inv.CustomerRef?.value || '',
+    customerName: inv.CustomerRef?.name || ''
+  };
+}
+
+async function qboFetchTransactionActivity(startDate) {
+  if (!startDate) {
+    return { bills: [], purchases: [], vendorCredits: [], invoices: [] };
+  }
+  const esc = String(startDate).replace(/[^0-9-]/g, '');
+  const [billsData, purchasesData, vcData, invData] = await Promise.all([
+    qboQuery(`select * from Bill where TxnDate >= '${esc}' MAXRESULTS 200`).catch(err => {
+      logError('qboSync bills', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery(`select * from Purchase where TxnDate >= '${esc}' MAXRESULTS 200`).catch(err => {
+      logError('qboSync purchases', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery(`select * from VendorCredit where TxnDate >= '${esc}' MAXRESULTS 200`).catch(err => {
+      logError('qboSync vendor credits', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery(`select * from Invoice where TxnDate >= '${esc}' MAXRESULTS 200`).catch(err => {
+      logError('qboSync invoices', err);
+      return { QueryResponse: {} };
+    })
+  ]);
+  const bills = (billsData?.QueryResponse?.Bill || []).map(normalizeQboBill);
+  const purchases = (purchasesData?.QueryResponse?.Purchase || []).map(normalizeQboPurchase);
+  const vendorCredits = (vcData?.QueryResponse?.VendorCredit || []).map(normalizeQboVendorCredit);
+  const invoices = (invData?.QueryResponse?.Invoice || []).map(normalizeQboInvoice);
+  return { bills, purchases, vendorCredits, invoices };
+}
+
+function summarizePostingRows(rows) {
+  const list = rows || [];
+  let posted = 0;
+  let error = 0;
+  let localOnly = 0;
+  for (const r of list) {
+    const s = String(r.qboSyncStatus || '').toLowerCase();
+    const id = r.qboEntityId || r.qboPurchaseId;
+    if (s === 'error') error++;
+    else if (id || s === 'posted') posted++;
+    else localOnly++;
+  }
+  return { total: list.length, posted, error, localOnly };
+}
+
+function buildMaintenanceCostByUnit(erp) {
+  const map = new Map();
+  for (const r of erp.records || []) {
+    const u = String(r.unit || '—').trim() || '—';
+    const cur = map.get(u) || { unit: u, recordCount: 0, costSum: 0 };
+    cur.recordCount += 1;
+    cur.costSum += safeNum(r.cost, 0) || 0;
+    map.set(u, cur);
+  }
+  return [...map.values()].sort((a, b) => b.costSum - a.costSum);
+}
+
 /** Normalized QBO lists for maintenance, dispatch, fuel — single source after refresh. */
 function readQboCatalogPayload() {
   const erp = readErp();
@@ -726,29 +921,36 @@ function readQboCatalogPayload() {
     customers: c.customers || [],
     classes: c.classes || [],
     accountsBank: c.accountsBank || [],
+    employees: c.employees || [],
+    transactionActivity: c.transactionActivity || null,
     refreshedAt: c.refreshedAt || null
   };
 }
 
 async function qboSyncMasterData() {
-  const [vendorsData, itemsData, accountsData, customersData, bankData, cardData, classData] = await Promise.all([
-    qboQuery('select * from Vendor maxresults 1000'),
-    qboQuery('select * from Item maxresults 1000'),
-    qboQuery('select * from Account maxresults 1000'),
-    qboQuery('select * from Customer maxresults 1000'),
-    qboQuery("select * from Account where AccountType = 'Bank' maxresults 200").catch(err => {
-      logError('qboSync bank accounts', err);
-      return { QueryResponse: {} };
-    }),
-    qboQuery("select * from Account where AccountType = 'Credit Card' maxresults 200").catch(err => {
-      logError('qboSync credit card accounts', err);
-      return { QueryResponse: {} };
-    }),
-    qboQuery('select * from Class maxresults 500').catch(err => {
-      logError('qboSync classes', err);
-      return { QueryResponse: {} };
-    })
-  ]);
+  const [vendorsData, itemsData, accountsData, customersData, bankData, cardData, classData, employeeData] =
+    await Promise.all([
+      qboQuery('select * from Vendor maxresults 1000'),
+      qboQuery('select * from Item maxresults 1000'),
+      qboQuery('select * from Account maxresults 1000'),
+      qboQuery('select * from Customer maxresults 1000'),
+      qboQuery("select * from Account where AccountType = 'Bank' maxresults 200").catch(err => {
+        logError('qboSync bank accounts', err);
+        return { QueryResponse: {} };
+      }),
+      qboQuery("select * from Account where AccountType = 'Credit Card' maxresults 200").catch(err => {
+        logError('qboSync credit card accounts', err);
+        return { QueryResponse: {} };
+      }),
+      qboQuery('select * from Class maxresults 500').catch(err => {
+        logError('qboSync classes', err);
+        return { QueryResponse: {} };
+      }),
+      qboQuery('select * from Employee maxresults 500').catch(err => {
+        logError('qboSync employees', err);
+        return { QueryResponse: {} };
+      })
+    ]);
 
   const vendors = (vendorsData?.QueryResponse?.Vendor || []).map(v => ({
     qboId: v.Id,
@@ -811,6 +1013,44 @@ async function qboSyncMasterData() {
       fullyQualifiedName: c.FullyQualifiedName || c.Name || ''
     }));
 
+  const employees = (employeeData?.QueryResponse?.Employee || [])
+    .filter(e => e.Active !== false)
+    .map(e => ({
+      qboId: e.Id,
+      displayName: e.DisplayName || '',
+      givenName: e.GivenName || '',
+      familyName: e.FamilyName || ''
+    }));
+
+  const txnDays = Math.min(366, Math.max(0, Number(process.env.QBO_SYNC_TRANSACTION_DAYS ?? 90) || 0));
+  const startIso = qboTxnWindowStartIso(txnDays);
+  let transactionActivity = {
+    windowDays: txnDays,
+    startDate: startIso,
+    bills: [],
+    purchases: [],
+    vendorCredits: [],
+    invoices: [],
+    totals: { bills: 0, purchases: 0, vendorCredits: 0, invoices: 0 }
+  };
+  if (startIso) {
+    const act = await qboFetchTransactionActivity(startIso);
+    transactionActivity = {
+      windowDays: txnDays,
+      startDate: startIso,
+      bills: act.bills,
+      purchases: act.purchases,
+      vendorCredits: act.vendorCredits,
+      invoices: act.invoices,
+      totals: {
+        bills: act.bills.reduce((s, x) => s + (Number(x.totalAmt) || 0), 0),
+        purchases: act.purchases.reduce((s, x) => s + (Number(x.totalAmt) || 0), 0),
+        vendorCredits: act.vendorCredits.reduce((s, x) => s + (Number(x.totalAmt) || 0), 0),
+        invoices: act.invoices.reduce((s, x) => s + (Number(x.totalAmt) || 0), 0)
+      }
+    };
+  }
+
   const erp = readErp();
   erp.qboCache = {
     vendors,
@@ -821,6 +1061,8 @@ async function qboSyncMasterData() {
     customers,
     classes,
     accountsBank,
+    employees,
+    transactionActivity,
     refreshedAt: new Date().toISOString()
   };
   writeErp(erp);
@@ -1271,6 +1513,27 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
   } catch (error) {
     logError('api/maintenance/dashboard', error);
     res.status(500).json({ error: error.message, details: error.details || null });
+  }
+});
+
+/** Compact per-unit maintenance / repair urgency for TMS dispatch truck assignment. */
+app.get('/api/maintenance/dispatch-alerts', async (_req, res) => {
+  try {
+    const vehiclesRaw = await fetchVehiclesSafely();
+    const statsRows = await fetchVehicleStatsCurrentSafely();
+    const enrichedVehicles = mergeVehiclesWithStats(vehiclesRaw, statsRows).sort(byVehicleName);
+    const erp = readErp();
+    const dashboardRows = buildDashboardRows(enrichedVehicles, erp);
+    const byUnit = aggregateDispatchMaintenanceAlerts(dashboardRows, erp);
+    res.json({
+      ok: true,
+      byUnit,
+      generatedAt: new Date().toISOString(),
+      vehiclesConsidered: enrichedVehicles.length
+    });
+  } catch (error) {
+    logError('api/maintenance/dispatch-alerts', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
@@ -1824,6 +2087,86 @@ app.get('/api/settlement/index', (_req, res) => {
   } catch (error) {
     logError('api/settlement/index', error);
     res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/reports/summary', async (_req, res) => {
+  try {
+    const erp = readErp();
+    const c = erp.qboCache || {};
+    const posting = {
+      maintenanceRecords: summarizePostingRows(erp.records),
+      workOrders: summarizePostingRows(erp.workOrders),
+      apTransactions: summarizePostingRows(erp.apTransactions)
+    };
+    let tms = { ok: false, configured: false };
+    try {
+      const { rows } = await dbQuery(`SELECT status, COUNT(*)::int AS c FROM loads GROUP BY status`);
+      const { rows: revRows } = await dbQuery(
+        `SELECT COALESCE(SUM(revenue_amount), 0)::numeric AS rev FROM loads`
+      );
+      const total = rows.reduce((s, r) => s + r.c, 0);
+      tms = {
+        ok: true,
+        configured: true,
+        totalLoads: total,
+        byStatus: Object.fromEntries(rows.map(r => [r.status, r.c])),
+        revenueSum: safeNum(revRows[0]?.rev, 0) || 0
+      };
+    } catch (e) {
+      const msg = e?.message || String(e);
+      if (msg.includes('DATABASE_URL')) {
+        tms = { ok: false, configured: false, error: 'Database not configured' };
+      } else {
+        tms = { ok: false, configured: true, error: msg };
+      }
+    }
+    const ta = c.transactionActivity;
+    res.json({
+      ok: true,
+      generatedAt: new Date().toISOString(),
+      qboCache: {
+        refreshedAt: c.refreshedAt || null,
+        masterCounts: {
+          vendors: (c.vendors || []).length,
+          customers: (c.customers || []).length,
+          items: (c.items || []).length,
+          classes: (c.classes || []).length,
+          employees: (c.employees || []).length,
+          accounts: (c.accounts || []).length
+        },
+        transactionActivity: ta || null
+      },
+      erpCounts: {
+        maintenanceRecords: (erp.records || []).length,
+        workOrders: (erp.workOrders || []).length,
+        apTransactions: (erp.apTransactions || []).length
+      },
+      posting,
+      maintenanceCostByUnit: buildMaintenanceCostByUnit(erp).slice(0, 80),
+      tms
+    });
+  } catch (error) {
+    logError('api/reports/summary', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/reports/export/maintenance-by-unit.csv', (_req, res) => {
+  try {
+    const erp = readErp();
+    const rows = buildMaintenanceCostByUnit(erp);
+    const lines = [['unit', 'record_count', 'cost_sum'].join(',')].concat(
+      rows.map(r =>
+        [csvEscape(r.unit), String(r.recordCount), String(r.costSum.toFixed(2))].join(',')
+      )
+    );
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="maintenance-by-unit.csv"');
+    res.send(lines.join('\n'));
+  } catch (error) {
+    logError('api/reports/export/maintenance-by-unit', error);
+    res.status(500).send(error.message);
   }
 });
 

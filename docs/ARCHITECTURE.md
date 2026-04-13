@@ -100,7 +100,14 @@ flowchart TB
 - `GET /api/qbo/catalog`, `POST /api/qbo/catalog/refresh`, `GET /api/qbo/master`
 - Posting: `POST /api/qbo/post-record/:id`, `post-work-order`, `post-ap`, `invoice-from-load`
 
-Background **master-data sync** runs on an interval when QBO tokens exist (`QBO_AUTO_SYNC_MINUTES`, default 360).
+Background **master-data sync** runs on an interval when QBO tokens exist (`QBO_AUTO_SYNC_MINUTES`, default 360). Each sync also pulls **employees** and (unless `QBO_SYNC_TRANSACTION_DAYS=0`) recent **Bills, Purchases, VendorCredits, Invoices** for reporting.
+
+### Reports
+
+- `GET /api/reports/summary` — TMS counts, ERP maintenance aggregates, QBO cache stats, posting health, transaction window totals.
+- `GET /api/reports/export/maintenance-by-unit.csv` — CSV export of maintenance cost by unit.
+
+The ERP **Reports Board** (`maintenance.html`, section `reports`) renders these endpoints.
 
 ## Environment variables (conceptual groups)
 
