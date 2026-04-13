@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>IH35 TMS — Loads & Dispatch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f0f2f7;
+      --panel: #fff;
+      --line: #d8dce8;
+      --text: #1a1d26;
+      --muted: #5c6370;
+      --accent: #1d4ed8;
+      --open: #e8f5e9;
+      --delivered: #fce4ec;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+    .topbar {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+      padding: 12px 18px; background: #1a237e; color: #fff;
+    }
+    .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; }
+    .topbar a { color: #c5cae9; text-decoration: none; font-weight: 600; }
+    .topbar a:hover { color: #fff; }
+    .topbar button {
+      padding: 8px 14px; border: none; border-radius: 8px; cursor: pointer;
+      font-weight: 600; background: #ff9800; color: #1a1d26;
+    }
+    .topbar button.secondary { background: #3949ab; color: #fff; }
+    .tabs {
+      display: flex; gap: 4px; padding: 0 18px; background: #e8eaf6;
+      border-bottom: 1px solid var(--line); flex-wrap: wrap;
+    }
+    .tabs button {
+      padding: 10px 16px; border: none; background: transparent; cursor: pointer;
+      font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent;
+    }
+    .tabs button.active { color: #1a237e; border-bottom-color: #1a237e; background: #fff; }
+    .wrap { padding: 16px 18px; max-width: 1600px; margin: 0 auto; }
+    .banner {
+      padding: 10px 14px; border-radius: 8px; margin-bottom: 12px;
+      background: #fff3cd; border: 1px solid #ffc107; color: #664d03;
+    }
+    .banner.err { background: #fdecea; border-color: #f5c6cb; color: #842029; }
+    table.data {
+      width: 100%; border-collapse: collapse; background: var(--panel);
+      border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    table.data th, table.data td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eef0f5; vertical-align: top; }
+    table.data th { background: #f4f5fa; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    table.data tr:hover { background: #fafbff; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase;
+    }
+    .st-open { background: var(--open); color: #2e7d32; }
+    .st-delivered { background: var(--delivered); color: #c2185b; }
+    .st-default { background: #e3e7f0; color: #37474f; }
+    select.sm, input.sm { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); font-size: 13px; max-width: 140px; }
+    .modal-bg {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 5000;
+      align-items: flex-start; justify-content: center; padding: 24px; overflow: auto;
+    }
+    .modal-bg.on { display: flex; }
+    .modal {
+      background: #fff; border-radius: 12px; max-width: 920px; width: 100%;
+      box-shadow: 0 16px 48px rgba(0,0,0,.2); margin-bottom: 40px;
+    }
+    .modal h2 { margin: 0; padding: 16px 20px; border-bottom: 1px solid var(--line); font-size: 18px; }
+    .modal-body { padding: 16px 20px; max-height: calc(100vh - 180px); overflow: auto; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+    label.lbl { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
+    .row { margin-bottom: 12px; }
+    input.in, select.in { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+    .stops-head { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 8px; }
+    .stop-row {
+      display: grid; grid-template-columns: 100px 1fr 1fr 80px 80px 140px 100px 36px;
+      gap: 8px; align-items: end; margin-bottom: 8px; padding: 10px; background: #f8f9fc; border-radius: 8px;
+    }
+    @media (max-width: 900px) {
+      .stop-row { grid-template-columns: 1fr 1fr; }
+    }
+    .modal-actions { padding: 14px 20px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; }
+    .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: #ff9800; color: #1a1d26; }
+    .btn-ghost { background: #e0e0e0; color: #333; }
+    .link { color: var(--accent); cursor: pointer; font-weight: 600; font-size: 13px; }
+    .muted { color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>IH35 Transportation — TMS</h1>
+    <a href="/">← Live fleet / fuel board</a>
+    <a href="/maintenance.html">Maintenance</a>
+    <span style="flex:1"></span>
+    <button type="button" onclick="openBookModal()">Book new load</button>
+    <button type="button" class="secondary" onclick="loadTab()">Refresh</button>
+  </div>
+  <div class="tabs">
+    <button type="button" class="tab active" data-tab="open">Open loads</button>
+    <button type="button" class="tab" data-tab="delivered">Delivered</button>
+    <button type="button" class="tab" data-tab="all">All loads</button>
+  </div>
+  <div class="wrap">
+    <div id="msg"></div>
+    <table class="data">
+      <thead>
+        <tr>
+          <th>Load #</th>
+          <th>Status</th>
+          <th>Driver</th>
+          <th>Truck / Trailer</th>
+          <th>Dates</th>
+          <th>Customer</th>
+          <th>Origin → Destination</th>
+          <th>Miles (Ld / Em)</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <p class="muted" style="margin-top:12px">MVP: loads stored in PostgreSQL. Settlements, invoices, and location directory can follow the same patterns as Always Track.</p>
+  </div>
+
+  <div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeBookModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h2>Book new load</h2>
+      <div class="modal-body">
+        <div class="grid2">
+          <div class="row">
+            <label class="lbl">Load number *</label>
+            <input class="in" id="f_load_number" placeholder="e.g. 13138" />
+          </div>
+          <div class="row">
+            <label class="lbl">Status</label>
+            <select class="in" id="f_status"></select>
+          </div>
+          <div class="row">
+            <label class="lbl">Customer</label>
+            <select class="in" id="f_customer"></select>
+          </div>
+          <div class="row">
+            <span class="lbl">Quick add customer</span>
+            <div style="display:flex;gap:8px">
+              <input class="in" id="f_new_customer" placeholder="Customer name" style="flex:1" />
+              <button type="button" class="btn btn-ghost" onclick="quickAddCustomer()">Add</button>
+            </div>
+          </div>
+          <div class="row">
+            <label class="lbl">Driver</label>
+            <select class="in" id="f_driver"></select>
+          </div>
+          <div class="row">
+            <span class="lbl">Quick add driver</span>
+            <div style="display:flex;gap:8px">
+              <input class="in" id="f_new_driver" placeholder="Driver name" style="flex:1" />
+              <button type="button" class="btn btn-ghost" onclick="quickAddDriver()">Add</button>
+            </div>
+          </div>
+          <div class="row">
+            <label class="lbl">Truck</label>
+            <select class="in" id="f_truck"></select>
+          </div>
+          <div class="row">
+            <span class="lbl">Quick add truck</span>
+            <div style="display:flex;gap:8px">
+              <input class="in" id="f_new_truck" placeholder="Unit e.g. T172" style="flex:1" />
+              <button type="button" class="btn btn-ghost" onclick="quickAddTruck()">Add</button>
+            </div>
+          </div>
+          <div class="row">
+            <label class="lbl">Trailer</label>
+            <select class="in" id="f_trailer"></select>
+          </div>
+          <div class="row">
+            <span class="lbl">Quick add trailer</span>
+            <div style="display:flex;gap:8px">
+              <input class="in" id="f_new_trailer" placeholder="Unit e.g. 10219" style="flex:1" />
+              <button type="button" class="btn btn-ghost" onclick="quickAddTrailer()">Add</button>
+            </div>
+          </div>
+          <div class="row">
+            <label class="lbl">Dispatcher</label>
+            <input class="in" id="f_dispatcher" placeholder="Name" />
+          </div>
+          <div class="row">
+            <label class="lbl">Start / End date</label>
+            <div style="display:flex;gap:8px">
+              <input class="in" type="date" id="f_start" />
+              <input class="in" type="date" id="f_end" />
+            </div>
+          </div>
+          <div class="row">
+            <label class="lbl">Practical miles (loaded / empty)</label>
+            <div style="display:flex;gap:8px">
+              <input class="in" type="number" id="f_plm" step="0.1" placeholder="Loaded" />
+              <input class="in" type="number" id="f_pem" step="0.1" placeholder="Empty" />
+            </div>
+          </div>
+        </div>
+        <div class="stops-head">
+          <strong>Pickup &amp; delivery stops</strong>
+          <button type="button" class="btn btn-ghost" onclick="addStopRow()">+ Add stop</button>
+        </div>
+        <div id="stops"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeBookModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveLoad()">Save load</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentTab = 'open';
+    let metaStatuses = [];
+
+    function showMsg(text, isErr) {
+      const el = document.getElementById('msg');
+      if (!text) { el.innerHTML = ''; return; }
+      el.innerHTML = '<div class="banner' + (isErr ? ' err' : '') + '">' + text + '</div>';
+    }
+
+    async function api(path, opt) {
+      const r = await fetch('/api/tms' + path, {
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        ...opt,
+        body: opt?.body != null ? JSON.stringify(opt.body) : undefined
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || r.statusText || 'Request failed');
+      return j;
+    }
+
+    function statusClass(s) {
+      s = (s || '').toLowerCase();
+      if (s === 'delivered') return 'st-delivered';
+      if (s === 'open' || s === 'covered' || s === 'dispatched' || s === 'on_route' || s === 'loading' || s === 'unloading')
+        return 'st-open';
+      return 'st-default';
+    }
+
+    function renderRows(rows) {
+      const tb = document.getElementById('tbody');
+      if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="8" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
+        return;
+      }
+      tb.innerHTML = rows.map(l => {
+        const od = [l.origin_name, l.dest_name].filter(Boolean).join(' → ') || '—';
+        const addr = [l.origin_address, l.dest_address].filter(Boolean).join(' / ') || '';
+        const tt = [l.truck_code, l.trailer_code].filter(Boolean).join(' / ') || '—';
+        const dates = [l.start_date, l.end_date].filter(Boolean).join(' → ') || '—';
+        return '<tr>' +
+          '<td><strong>' + escapeHtml(l.load_number) + '</strong></td>' +
+          '<td><span class="badge ' + statusClass(l.status) + '">' + escapeHtml(l.status) + '</span> ' +
+          '<select class="sm" data-id="' + l.id + '" onchange="patchStatus(this)">' +
+          metaStatuses.map(s => '<option value="' + s + '"' + (s === l.status ? ' selected' : '') + '>' + s + '</option>').join('') +
+          '</select></td>' +
+          '<td>' + escapeHtml(l.driver_name || '—') + '</td>' +
+          '<td>' + escapeHtml(tt) + '</td>' +
+          '<td>' + escapeHtml(dates) + '</td>' +
+          '<td>' + escapeHtml(l.customer_name || '—') + '</td>' +
+          '<td><div>' + escapeHtml(od) + '</div><div class="muted">' + escapeHtml(addr) + '</div></td>' +
+          '<td>' + escapeHtml(String(l.practical_loaded_miles ?? '0')) + ' / ' + escapeHtml(String(l.practical_empty_miles ?? '0')) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function loadTab() {
+      showMsg('');
+      try {
+        const j = await api('/loads?tab=' + encodeURIComponent(currentTab));
+        renderRows(j.data || []);
+      } catch (e) {
+        showMsg(e.message || String(e), true);
+        document.getElementById('tbody').innerHTML = '';
+      }
+    }
+
+    async function patchStatus(sel) {
+      const id = sel.getAttribute('data-id');
+      const status = sel.value;
+      try {
+        await api('/loads/' + id, { method: 'PATCH', body: { status } });
+        showMsg('Status updated.');
+        setTimeout(() => showMsg(''), 2000);
+      } catch (e) {
+        showMsg(e.message, true);
+        loadTab();
+      }
+    }
+
+    async function loadMeta() {
+      try {
+        const j = await api('/meta');
+        metaStatuses = j.loadStatuses || [];
+        const sel = document.getElementById('f_status');
+        sel.innerHTML = metaStatuses.map(s => '<option value="' + s + '">' + s + '</option>').join('');
+      } catch (_) {
+        metaStatuses = ['open','delivered'];
+      }
+    }
+
+    function fillSelect(id, rows, valKey, labelFn) {
+      const el = document.getElementById(id);
+      el.innerHTML = '<option value="">— None —</option>' + (rows || []).map(r =>
+        '<option value="' + r[valKey] + '">' + escapeHtml(labelFn(r)) + '</option>').join('');
+    }
+
+    async function refreshLookups() {
+      try {
+        const [c, d, t, tr] = await Promise.all([
+          api('/customers'),
+          api('/drivers'),
+          api('/trucks'),
+          api('/trailers')
+        ]);
+        fillSelect('f_customer', c.data, 'id', r => r.name);
+        fillSelect('f_driver', d.data, 'id', r => r.name);
+        fillSelect('f_truck', t.data, 'id', r => r.unit_code);
+        fillSelect('f_trailer', tr.data, 'id', r => r.unit_code);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    document.querySelectorAll('.tab').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        currentTab = b.getAttribute('data-tab');
+        loadTab();
+      });
+    });
+
+    let stopCounter = 0;
+    function addStopRow() {
+      const id = 'stop_' + (++stopCounter);
+      const div = document.createElement('div');
+      div.className = 'stop-row';
+      div.dataset.rowId = id;
+      div.innerHTML =
+        '<div><label class="lbl">Type</label><select class="in stop-type"><option>pickup</option><option>delivery</option><option>empty</option></select></div>' +
+        '<div><label class="lbl">Location</label><input class="in stop-loc" placeholder="Search / name" /></div>' +
+        '<div><label class="lbl">Address</label><input class="in stop-addr" placeholder="Street, city, ST zip" /></div>' +
+        '<div><label class="lbl">Prac. mi.</label><input class="in stop-pm" type="number" step="0.1" value="0" /></div>' +
+        '<div><label class="lbl">Short. mi.</label><input class="in stop-sm" type="number" step="0.1" value="0" /></div>' +
+        '<div><label class="lbl">Date/time</label><input class="in stop-dt" type="datetime-local" /></div>' +
+        '<div><label class="lbl">Window</label><input class="in stop-win" placeholder="Optional" /></div>' +
+        '<div><button type="button" class="btn btn-ghost" onclick="this.closest(\'.stop-row\').remove()">×</button></div>';
+      document.getElementById('stops').appendChild(div);
+    }
+
+    function collectStops() {
+      return Array.from(document.querySelectorAll('.stop-row')).map(row => ({
+        stop_type: row.querySelector('.stop-type').value,
+        location_name: row.querySelector('.stop-loc').value.trim(),
+        address: row.querySelector('.stop-addr').value.trim(),
+        practical_miles: parseFloat(row.querySelector('.stop-pm').value) || 0,
+        shortest_miles: parseFloat(row.querySelector('.stop-sm').value) || 0,
+        stop_at: row.querySelector('.stop-dt').value ? new Date(row.querySelector('.stop-dt').value).toISOString() : null,
+        window_text: row.querySelector('.stop-win').value.trim() || null
+      }));
+    }
+
+    async function openBookModal() {
+      await loadMeta();
+      await refreshLookups();
+      document.getElementById('f_load_number').value = '';
+      document.getElementById('f_dispatcher').value = '';
+      document.getElementById('f_start').value = '';
+      document.getElementById('f_end').value = '';
+      document.getElementById('f_plm').value = '';
+      document.getElementById('f_pem').value = '';
+      document.getElementById('f_new_customer').value = '';
+      document.getElementById('f_new_driver').value = '';
+      document.getElementById('f_new_truck').value = '';
+      document.getElementById('f_new_trailer').value = '';
+      document.getElementById('stops').innerHTML = '';
+      addStopRow();
+      addStopRow();
+      document.getElementById('modalBg').classList.add('on');
+    }
+
+    function closeBookModal() {
+      document.getElementById('modalBg').classList.remove('on');
+    }
+
+    async function quickAddCustomer() {
+      const name = document.getElementById('f_new_customer').value.trim();
+      if (!name) return;
+      const j = await api('/customers', { method: 'POST', body: { name } });
+      document.getElementById('f_new_customer').value = '';
+      await refreshLookups();
+      document.getElementById('f_customer').value = j.data.id;
+    }
+
+    async function quickAddDriver() {
+      const name = document.getElementById('f_new_driver').value.trim();
+      if (!name) return;
+      const j = await api('/drivers', { method: 'POST', body: { name } });
+      document.getElementById('f_new_driver').value = '';
+      await refreshLookups();
+      document.getElementById('f_driver').value = j.data.id;
+    }
+
+    async function quickAddTruck() {
+      const unit_code = document.getElementById('f_new_truck').value.trim();
+      if (!unit_code) return;
+      const j = await api('/trucks', { method: 'POST', body: { unit_code } });
+      document.getElementById('f_new_truck').value = '';
+      await refreshLookups();
+      document.getElementById('f_truck').value = j.data.id;
+    }
+
+    async function quickAddTrailer() {
+      const unit_code = document.getElementById('f_new_trailer').value.trim();
+      if (!unit_code) return;
+      const j = await api('/trailers', { method: 'POST', body: { unit_code } });
+      document.getElementById('f_new_trailer').value = '';
+      await refreshLookups();
+      document.getElementById('f_trailer').value = j.data.id;
+    }
+
+    async function saveLoad() {
+      showMsg('');
+      const load_number = document.getElementById('f_load_number').value.trim();
+      if (!load_number) { showMsg('Load number is required.', true); return; }
+      const body = {
+        load_number,
+        status: document.getElementById('f_status').value,
+        customer_id: document.getElementById('f_customer').value || null,
+        driver_id: document.getElementById('f_driver').value || null,
+        truck_id: document.getElementById('f_truck').value || null,
+        trailer_id: document.getElementById('f_trailer').value || null,
+        dispatcher_name: document.getElementById('f_dispatcher').value.trim() || null,
+        start_date: document.getElementById('f_start').value || null,
+        end_date: document.getElementById('f_end').value || null,
+        practical_loaded_miles: parseFloat(document.getElementById('f_plm').value) || 0,
+        practical_empty_miles: parseFloat(document.getElementById('f_pem').value) || 0,
+        stops: collectStops()
+      };
+      try {
+        await api('/loads', { method: 'POST', body });
+        closeBookModal();
+        showMsg('Load saved.');
+        loadTab();
+      } catch (e) {
+        showMsg(e.message, true);
+      }
+    }
+
+    (async function init() {
+      await loadMeta();
+      await loadTab();
+    })();
+  </script>
+</body>
+</html>

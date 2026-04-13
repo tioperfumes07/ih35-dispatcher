@@ -9,6 +9,7 @@ import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
 import { dbQuery } from './lib/db.mjs';
+import tmsRouter from './routes/tms.mjs';
 
 dotenv.config();
 
@@ -937,6 +938,8 @@ app.get('/api/health/db', async (_req, res) => {
     res.status(500).json({ ok: false, configured: true, error: msg });
   }
 });
+
+app.use('/api/tms', tmsRouter);
 
 app.get('/api/board', async (_req, res) => {
   try {
