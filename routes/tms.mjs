@@ -328,6 +328,12 @@ export async function fetchLoadSettlementContextByNumber(loadNumberRaw) {
   }
 }
 
+function loadSearchPattern(raw) {
+  const t = String(raw || '').trim().slice(0, 80);
+  if (!t) return null;
+  return `%${t.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+}
+
 router.get('/loads', async (req, res) => {
   try {
     const tab = String(req.query.tab || 'open').toLowerCase();
@@ -341,6 +347,21 @@ router.get('/loads', async (req, res) => {
       where = `l.status = 'delivered' AND (l.qbo_invoice_id IS NULL OR TRIM(COALESCE(l.qbo_invoice_id, '')) = '')`;
     } else if (tab === 'unsettled') {
       where = `l.status = 'unsettled'`;
+    }
+    const qPat = loadSearchPattern(req.query.q);
+    if (qPat) {
+      params.push(qPat);
+      const i = params.length;
+      where = `(${where}) AND (
+        l.load_number ILIKE $${i} ESCAPE '\\'
+        OR COALESCE(l.qbo_customer_name, '') ILIKE $${i} ESCAPE '\\'
+        OR COALESCE(c.name, '') ILIKE $${i} ESCAPE '\\'
+        OR COALESCE(l.qbo_driver_vendor_name, '') ILIKE $${i} ESCAPE '\\'
+        OR COALESCE(d.name, '') ILIKE $${i} ESCAPE '\\'
+        OR COALESCE(t.unit_code, '') ILIKE $${i} ESCAPE '\\'
+        OR COALESCE(tr.unit_code, '') ILIKE $${i} ESCAPE '\\'
+        OR COALESCE(l.customer_wo_number, '') ILIKE $${i} ESCAPE '\\'
+      )`;
     }
     const { rows } = await dbQuery(
       `${loadSelect} WHERE ${where} ORDER BY l.created_at DESC`,
@@ -498,6 +519,10 @@ router.post('/loads', async (req, res) => {
   const revenue_amount = revenueOrNull(body.revenue_amount);
   const qbo_linehaul_item_id = qboIdOrNull(body.qbo_linehaul_item_id);
   const invoice_extra_lines = sanitizeInvoiceExtraLines(body.invoice_extra_lines);
+  const customer_wo_number =
+    body.customer_wo_number != null && String(body.customer_wo_number).trim()
+      ? String(body.customer_wo_number).trim().slice(0, 80)
+      : null;
   const stops = Array.isArray(body.stops) ? body.stops : [];
 
   const client = await pool.connect();
@@ -508,8 +533,8 @@ router.post('/loads', async (req, res) => {
         load_number, status, customer_id, driver_id, truck_id, trailer_id,
         dispatcher_name, start_date, end_date, practical_loaded_miles, practical_empty_miles, notes,
         qbo_customer_id, revenue_amount, qbo_driver_vendor_id, qbo_driver_vendor_name,
-        qbo_linehaul_item_id, invoice_extra_lines
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb)
+        qbo_linehaul_item_id, invoice_extra_lines, customer_wo_number
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb,$19)
       RETURNING id`,
       [
         load_number,
@@ -529,7 +554,8 @@ router.post('/loads', async (req, res) => {
         qbo_driver_vendor_id,
         qbo_driver_vendor_name,
         qbo_linehaul_item_id,
-        JSON.stringify(invoice_extra_lines)
+        JSON.stringify(invoice_extra_lines),
+        customer_wo_number
       ]
     );
     const loadId = ins.rows[0].id;
@@ -599,7 +625,8 @@ router.patch('/loads/:id', async (req, res) => {
     ['practical_empty_miles', 'practical_empty_miles'],
     ['notes', 'notes'],
     ['revenue_amount', 'revenue_amount'],
-    ['qbo_linehaul_item_id', 'qbo_linehaul_item_id']
+    ['qbo_linehaul_item_id', 'qbo_linehaul_item_id'],
+    ['customer_wo_number', 'customer_wo_number']
   ];
   for (const [key, col] of map) {
     if (b[key] !== undefined) {
@@ -611,6 +638,9 @@ router.patch('/loads/:id', async (req, res) => {
       else if (key === 'qbo_driver_vendor_name' || key === 'qbo_customer_name') {
         const s = b[key];
         v = s != null && String(s).trim() ? String(s).trim() : null;
+      } else if (key === 'customer_wo_number') {
+        const s = b[key];
+        v = s != null && String(s).trim() ? String(s).trim().slice(0, 80) : null;
       }
       vals.push(v);
     }

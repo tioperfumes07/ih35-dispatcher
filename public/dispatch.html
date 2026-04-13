@@ -214,14 +214,20 @@
   </div>
   <div class="wrap">
     <p class="muted" style="margin:0 0 12px;font-size:12px;line-height:1.5">
-      Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver/carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> = status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QBO</strong> to clear them from that list. Each leg is its own load #. Customer W/O# can be tied via work orders in Maintenance on this load/invoice #.
+      Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver/carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> = status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QBO</strong> to clear them from that list. Each leg is its own load #. Optional <strong>customer W/O #</strong> on the load is for the broker/customer reference (Maintenance WOs can still use the load/invoice # for shop work).
     </p>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <label for="boardSearch" class="muted" style="font-size:12px;font-weight:700;white-space:nowrap">Search</label>
+      <input class="in" id="boardSearch" type="search" placeholder="Load #, W/O#, customer, driver, truck, trailer…" autocomplete="off" style="max-width:440px;flex:1;min-width:200px" />
+      <button type="button" class="btn btn-ghost" onclick="clearBoardSearch()">Clear</button>
+    </div>
     <div id="msg"></div>
     <div id="viewLoads">
       <table class="data">
         <thead>
           <tr>
             <th>Load #</th>
+            <th title="Customer / broker work order or reference # (optional)">W/O #</th>
             <th title="Same as load # — used as QuickBooks DocNumber and for expense / settlement rollup">Inv #</th>
             <th>Status</th>
             <th>Driver</th>
@@ -293,6 +299,10 @@
               <div class="ac-list" id="customer_ac"></div>
             </div>
             <p class="muted" style="margin:6px 0 0;font-size:12px">Type to filter; pick from the list or datalist. Sync QBO catalog after customer changes in QuickBooks.</p>
+          </div>
+          <div class="row">
+            <label class="lbl">Customer W/O #</label>
+            <input class="in" id="f_customer_wo_number" placeholder="e.g. 62998 (broker / customer ref)" maxlength="80" />
           </div>
           <div class="row" style="grid-column:1/-1">
             <label class="lbl">Driver (QuickBooks vendor)</label>
@@ -1045,7 +1055,7 @@
     function renderRows(rows) {
       const tb = document.getElementById('tbody');
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="14" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="15" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
         return;
       }
       tb.innerHTML = rows.map(l => {
@@ -1101,6 +1111,7 @@
         const pdfCell = settleLinks.join(' · ');
         return '<tr>' +
           '<td><strong>' + escapeHtml(l.load_number) + '</strong></td>' +
+          '<td class="muted">' + escapeHtml(l.customer_wo_number || '—') + '</td>' +
           '<td class="muted">' + escapeHtml(inv) + '</td>' +
           '<td><span class="badge ' + statusClass(l.status) + '">' + escapeHtml(l.status) + '</span> ' +
           '<select class="sm" data-id="' + l.id + '" onchange="patchStatus(this)">' +
@@ -1388,11 +1399,25 @@
       else loadTab();
     }
 
+    let boardSearchTimer = null;
+    function clearBoardSearch() {
+      const el = document.getElementById('boardSearch');
+      if (el) el.value = '';
+      loadTab();
+    }
+    function scheduleBoardSearch() {
+      clearTimeout(boardSearchTimer);
+      boardSearchTimer = setTimeout(() => loadTab(), 400);
+    }
+
     async function loadTab() {
       showMsg('');
       setListView('loads');
       try {
-        const j = await api('/loads?tab=' + encodeURIComponent(currentTab));
+        const q = (document.getElementById('boardSearch')?.value || '').trim();
+        let path = '/loads?tab=' + encodeURIComponent(currentTab);
+        if (q) path += '&q=' + encodeURIComponent(q);
+        const j = await api(path);
         renderRows(j.data || []);
       } catch (e) {
         showMsg(e.message || String(e), true);
@@ -1729,6 +1754,7 @@
       ln.readOnly = false;
       document.getElementById('f_qbo_customer_id').value = '';
       document.getElementById('f_customer_search').value = '';
+      document.getElementById('f_customer_wo_number').value = '';
       document.getElementById('f_truck_id').value = '';
       document.getElementById('f_truck_search').value = '';
       document.getElementById('f_trailer_id').value = '';
@@ -1782,6 +1808,10 @@
         (L.qbo_customer_name && String(L.qbo_customer_name).trim()) ||
         (L.customer_name && String(L.customer_name).trim()) ||
         '';
+      document.getElementById('f_customer_wo_number').value =
+        L.customer_wo_number != null && String(L.customer_wo_number).trim()
+          ? String(L.customer_wo_number).trim()
+          : '';
       document.getElementById('f_driver_vendor').value =
         (L.qbo_driver_vendor_name && String(L.qbo_driver_vendor_name).trim()) ||
         (L.driver_name && String(L.driver_name).trim()) ||
@@ -1992,6 +2022,7 @@
         truck_id,
         trailer_id,
         dispatcher_name: document.getElementById('f_dispatcher').value.trim() || null,
+        customer_wo_number: document.getElementById('f_customer_wo_number').value.trim() || null,
         start_date: document.getElementById('f_start').value || null,
         end_date: document.getElementById('f_end').value || null,
         practical_loaded_miles: parseFloat(document.getElementById('f_plm').value) || 0,
@@ -2027,6 +2058,8 @@
       bindTruckClassAc();
       bindTrailerAc();
       bindLinehaulItemSearch();
+      const bs = document.getElementById('boardSearch');
+      if (bs) bs.addEventListener('input', scheduleBoardSearch);
       await loadMeta();
       await loadQboCatalog();
       await refreshLookups();

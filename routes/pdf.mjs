@@ -248,9 +248,10 @@ router.get('/api/pdf/trip-invoice/:id', async (req, res) => {
       doc.font('Helvetica-Bold').text('Terms', rightCol, ry);
       doc.font('Helvetica').text(TMS_INVOICE_TERMS, rightCol + 78, ry, { width: 160 });
       ry += 12;
-      if (woRef) {
+      const displayWo = String(L.customer_wo_number || '').trim() || woRef;
+      if (displayWo) {
         doc.font('Helvetica-Bold').text('W/O #', rightCol, ry);
-        doc.font('Helvetica').text(woRef, rightCol + 78, ry, { width: 160 });
+        doc.font('Helvetica').text(String(displayWo).slice(0, 40), rightCol + 78, ry, { width: 160 });
         ry += 12;
       }
 
