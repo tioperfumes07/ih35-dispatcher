@@ -1178,6 +1178,8 @@ app.get('/api/health', async (_req, res) => {
       hasSamsaraToken: !!SAMSARA_API_TOKEN,
       hasGeoapifyKey: !!GEOAPIFY_API_KEY,
       hasQboConfig: qboConfigured(),
+      hasDatabaseUrl: !!String(process.env.DATABASE_URL || '').trim(),
+      hasPcmilerKey: !!String(process.env.PCMILER_API_KEY || '').trim(),
       dataDir: DATA_DIR,
       serverTime: new Date().toISOString(),
       samsaraVehicles: vehicles.length,
