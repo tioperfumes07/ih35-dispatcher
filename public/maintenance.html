@@ -371,6 +371,16 @@
         </div>
         <div id="safe-assign" class="tracking-sub hidden">
           <p class="mini-note" style="margin:0 0 10px">Driver ↔ vehicle assignments from Samsara (current window).</p>
+          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+            <input id="safetyAssignSearch" class="in" style="max-width:260px" placeholder="Filter vehicle or driver…" oninput="renderSafetyAssignments()" />
+            <label class="mini-note" for="safetyAssignFilter" style="margin:0">Show</label>
+            <select id="safetyAssignFilter" class="in" style="max-width:200px" onchange="renderSafetyAssignments()" title="Active = open assignment or end time in the future">
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive / ended</option>
+            </select>
+            <span class="mini-note" id="safetyAssignMeta"></span>
+          </div>
           <div class="safety-table-wrap">
             <table>
               <thead><tr><th>Vehicle</th><th>Driver</th><th>Start</th><th>End</th></tr></thead>
@@ -2247,10 +2257,40 @@
       }
     }
 
+    function parseAssignIsoMs(s) {
+      if (s == null || s === '') return null;
+      const t = Date.parse(String(s));
+      return Number.isNaN(t) ? null : t;
+    }
+
+    function assignmentIsActiveNow(a, nowMs) {
+      const endMs = parseAssignIsoMs(a?.endTime || a?.endAt);
+      if (endMs == null) return true;
+      return endMs > nowMs;
+    }
+
+    function assignmentMatchesAssignFilter(a, mode, nowMs) {
+      const m = mode || 'all';
+      if (m === 'all') return true;
+      const active = assignmentIsActiveNow(a, nowMs);
+      if (m === 'active') return active;
+      if (m === 'inactive') return !active;
+      return true;
+    }
+
     function renderSafetyAssignments() {
       const tb = document.getElementById('safetyAssignBody');
       if (!tb) return;
-      const rows = board.assignments || [];
+      const all = board.assignments || [];
+      const q = (document.getElementById('safetyAssignSearch')?.value || '').trim().toLowerCase();
+      const mode = document.getElementById('safetyAssignFilter')?.value || 'all';
+      const nowMs = Date.now();
+      const rows = all.filter(a => assignmentMatchesAssignFilter(a, mode, nowMs)).filter(a => {
+        if (!q) return true;
+        const vname = String(a?.vehicle?.name || a?.vehicleName || '').toLowerCase();
+        const dname = String(a?.driver?.name || a?.driverName || '').toLowerCase();
+        return vname.includes(q) || dname.includes(q);
+      });
       tb.innerHTML =
         rows
           .map(a => {
@@ -2260,7 +2300,10 @@
             const en = a?.endTime || a?.endAt || '';
             return `<tr><td>${escapeHtml(vname)}</td><td>${escapeHtml(dname)}</td><td>${escapeHtml(String(st))}</td><td>${escapeHtml(String(en))}</td></tr>`;
           })
-          .join('') || '<tr><td colspan="4" class="mini-note">No assignments.</td></tr>';
+          .join('') ||
+        '<tr><td colspan="4" class="mini-note">No assignments match this filter.</td></tr>';
+      const meta = document.getElementById('safetyAssignMeta');
+      if (meta) meta.textContent = rows.length + ' shown' + (all.length ? ' · ' + all.length + ' loaded' : '');
     }
 
     function renderSafetyFleet() {
