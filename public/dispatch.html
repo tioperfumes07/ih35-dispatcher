@@ -227,7 +227,7 @@
             <th>Miles (Ld / Em)</th>
             <th>Rev $</th>
             <th>Docs</th>
-            <th>PDF</th>
+            <th>Trip / invoice PDF</th>
             <th>Edit</th>
             <th>QBO invoice</th>
           </tr>
@@ -357,10 +357,15 @@
           </div>
           <div class="row" style="grid-column:1/-1">
             <label class="lbl">Linehaul QuickBooks item</label>
-            <input type="hidden" id="f_qbo_linehaul_item_id" />
-            <input class="in" id="f_linehaul_item_search" list="qboInvoiceItemDatalist" placeholder="Type QBO service item name (autofill from list)…" autocomplete="off" />
-            <datalist id="qboInvoiceItemDatalist"></datalist>
-            <p class="muted" style="margin:6px 0 0;font-size:11px">Pickup and delivery are the same load — choose the item <strong>once</strong> here for the main invoice line. Sync QBO catalog if items are missing.</p>
+            <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
+              <div style="flex:1;min-width:200px">
+                <input type="hidden" id="f_qbo_linehaul_item_id" />
+                <input class="in" id="f_linehaul_item_search" list="qboInvoiceItemDatalist" placeholder="Type QBO service item name (autofill from list)…" autocomplete="off" />
+                <datalist id="qboInvoiceItemDatalist"></datalist>
+              </div>
+              <button type="button" class="btn btn-ghost" style="padding:10px 14px;white-space:nowrap;margin-top:0" onclick="refreshQboCatalog()" title="Pull latest items from QuickBooks">Sync QBO items</button>
+            </div>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Pickup and delivery are the same load — choose the item <strong>once</strong> here for the main invoice line. If the list is empty while QBO is connected, the app pulls items automatically once; use <strong>Sync QBO items</strong> to refresh.</p>
           </div>
           <div class="row" style="grid-column:1/-1">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">
@@ -879,12 +884,33 @@
       el.textContent = nC + ' customers · ' + nV + ' vendors · ' + nCl + ' classes · ' + nI + ' items · cache ' + t;
     }
 
+    async function maybeRefreshQboCatalogIfItemsEmpty() {
+      if (!qboCatalog.connected) return;
+      const n = (qboCatalog.items || []).length;
+      if (n > 0) return;
+      try {
+        const r = await fetch('/api/qbo/catalog/refresh', {
+          method: 'POST',
+          headers: { Accept: 'application/json' }
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j && Array.isArray(j.items) && j.items.length) {
+          qboCatalog = { ...qboCatalog, ...j };
+          updateQboCatalogStatusLine();
+          syncCustomerDatalist();
+          syncTruckClassDatalist();
+          syncQboInvoiceItemDatalist();
+        }
+      } catch (_) {}
+    }
+
     async function loadQboCatalog() {
       try {
         const r = await fetch('/api/qbo/catalog');
         const j = await r.json().catch(() => ({}));
         if (j.ok) {
           qboCatalog = j;
+          if (!Array.isArray(qboCatalog.items)) qboCatalog.items = [];
         } else {
           qboCatalog = {
             connected: false,
@@ -907,6 +933,7 @@
           accountsExpense: []
         };
       }
+      await maybeRefreshQboCatalogIfItemsEmpty();
       updateQboCatalogStatusLine();
       syncCustomerDatalist();
       syncTruckClassDatalist();
@@ -1051,7 +1078,9 @@
           '<td>' + docsBtn + '</td>' +
           '<td><a class="link" href="/api/pdf/tms-load/' +
           encodeURIComponent(l.id) +
-          '" target="_blank" rel="noopener">PDF / print</a></td>' +
+          '" target="_blank" rel="noopener">Trip</a> · <a class="link" href="/api/pdf/trip-invoice/' +
+          encodeURIComponent(l.id) +
+          '" target="_blank" rel="noopener">Invoice</a></td>' +
           '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="openEditLoad(' +
           JSON.stringify(l.id) +
           ')">Edit</button></td>' +

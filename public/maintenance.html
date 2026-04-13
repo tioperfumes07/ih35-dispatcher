@@ -98,6 +98,12 @@
     table{border-collapse:collapse;width:100%;min-width:1400px;font-size:13px}
     th,td{padding:9px 10px;border-bottom:1px solid #edf1f7;text-align:left;vertical-align:top}
     th{background:#fafcff;position:sticky;top:0;z-index:1;color:var(--muted);font-size:12px;text-transform:uppercase}
+    .st-settlement-wrap{border:1px solid #c7d2e0;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 0 rgba(15,23,42,.04)}
+    table.st-settlement{min-width:0;width:100%;font-size:12px}
+    table.st-settlement th{background:#1a237e;color:#fff;font-weight:700;font-size:11px;text-transform:none;letter-spacing:.02em;border-bottom:2px solid #0d1442;padding:10px 12px}
+    table.st-settlement td{padding:9px 12px;border-bottom:1px solid #e5e7eb;vertical-align:middle}
+    table.st-settlement tbody tr:nth-child(even) td{background:#f8fafc}
+    table.st-settlement tbody tr:hover td{background:#f1f5f9}
     .form-stack{display:grid;gap:10px}
     .mini-note{font-size:12px;color:var(--muted)}
     .card-list{display:grid;gap:10px}
@@ -970,8 +976,8 @@
               <datalist id="settlementLoadHints"></datalist>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
               <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid #d8deea;border-radius:8px;background:#fafcff"></div>
-              <div class="table-wrap" style="min-width:0">
-                <table style="min-width:720px;font-size:12px">
+              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+                <table class="st-settlement" style="min-width:720px">
                   <thead>
                     <tr>
                       <th>Source</th>
@@ -1003,8 +1009,8 @@
           <div class="panel-head"><div class="panel-title">Loads with recorded costs (index)</div></div>
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
-              <div class="table-wrap" style="margin-top:10px;min-width:0">
-                <table style="min-width:520px;font-size:12px">
+              <div class="table-wrap st-settlement-wrap" style="margin-top:10px;min-width:0">
+                <table class="st-settlement" style="min-width:520px">
                   <thead>
                     <tr>
                       <th>Load / doc #</th>
@@ -3115,7 +3121,7 @@
             <td>${x.apCount}</td>
             <td>${x.recordCount ?? 0}</td>
             <td>${Number(x.total).toFixed(2)}</td>
-            <td><button type="button" class="qb-btn-add" onclick="pickSettlementLoad(${JSON.stringify(x.label)})">View</button></td>
+            <td><button type="button" class="qb-btn-add" onclick="pickSettlementLoad(${JSON.stringify(x.label)})">View</button> <a class="qb-btn-add" style="text-decoration:none;display:inline-block;margin-left:4px" href="/api/pdf/company-settlement/${encodeURIComponent(x.label)}" target="_blank" rel="noopener">PDF</a></td>
           </tr>`
           )
           .join('');
@@ -3179,7 +3185,7 @@
                     `<tr><td>${escapeHtml(L.loadNumber)}</td><td>${escapeHtml(L.status || '')}</td><td>${Number(L.revenue).toFixed(2)}</td><td>${Number(L.expenseRollup).toFixed(2)}</td><td>${Number(L.companyNet).toFixed(2)}</td><td>${L.suggestedDriverPay != null ? Number(L.suggestedDriverPay).toFixed(2) : '—'}</td></tr>`
                 )
                 .join('');
-              return `<div style="margin-bottom:16px"><div style="font-weight:700;margin-bottom:6px">${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QBO ${escapeHtml(dr.qboVendorId)}</span></div><div class="table-wrap" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+              return `<div style="margin-bottom:18px"><div style="font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><span>${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QBO ${escapeHtml(dr.qboVendorId)}</span></span><a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/driver-settlement/${encodeURIComponent(dr.qboVendorId)}" target="_blank" rel="noopener">Driver settlement PDF</a></div><div class="table-wrap st-settlement-wrap" style="min-width:0"><table class="st-settlement" style="min-width:520px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
             })
             .join('');
       } catch (e) {
@@ -3220,11 +3226,24 @@
             ` <strong>Trip revenue $${Number(rev).toFixed(2)}</strong> → ` +
             `<strong>net $${Number(net).toFixed(2)}</strong>.`;
         }
-        document.getElementById('settlementSummary').innerHTML = sumHtml;
+        const tmsLoadIdForPdf = data.tms?.load?.id || null;
+        let pdfBar =
+          '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">' +
+          '<a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/company-settlement/' +
+          encodeURIComponent(raw) +
+          '" target="_blank" rel="noopener">Company settlement PDF</a>';
+        if (tmsLoadIdForPdf) {
+          pdfBar +=
+            '<a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/trip-invoice/' +
+            encodeURIComponent(tmsLoadIdForPdf) +
+            '" target="_blank" rel="noopener">Trip invoice PDF</a>';
+        }
+        pdfBar += '</div>';
+        document.getElementById('settlementSummary').innerHTML = sumHtml + pdfBar;
 
         const tmsEl = document.getElementById('settlementTmsBox');
         window.__lastSettlementMiles = data.tms?.settlementMiles || null;
-        window.__lastTmsLoadId = data.tms?.load?.id || null;
+        window.__lastTmsLoadId = tmsLoadIdForPdf;
         if (data.tms && data.tms.load) {
           const L = data.tms.load;
           tmsEl.classList.remove('hidden');
