@@ -379,12 +379,6 @@
               <a href="#" onclick="openSectionByName('tracking');return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
               · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
             </p>
-            <div class="shop-action-row">
-              <button type="button" onclick="startMaintFlow('service-internal')">Internal Shop</button>
-              <button type="button" onclick="startMaintFlow('service-external')">External Service</button>
-              <button type="button" onclick="startMaintFlow('service-road')">Road Service</button>
-              <button type="button" onclick="startMaintFlow('purchase')">Purchase</button>
-            </div>
             <div class="shop-board-grid">
               <div class="shop-col">
                 <div class="shop-col-head shop-col-head-row">
@@ -403,7 +397,7 @@
               <div class="shop-col">
                 <div class="shop-col-head shop-col-head-row">
                   <span>Out of service</span>
-                  <button type="button" class="shop-col-add" title="New maintenance (e.g. return to service)" onclick="event.stopPropagation();startMaintFlow('service-internal')">+</button>
+                  <button type="button" class="shop-col-add" title="Road service" onclick="event.stopPropagation();startMaintFlow('service-road')">+</button>
                 </div>
                 <div class="shop-col-body" id="shopOosBody"></div>
               </div>
@@ -414,14 +408,17 @@
         <div class="panel">
           <div class="panel-head">
             <div class="panel-title">Maintenance Board</div>
-            <div>
-              <button onclick="downloadUnitMaintenanceReport()">Maintenance Report by Unit</button>
-              <button onclick="downloadUnitExpenseReport()">Expense Report by Unit</button>
-              <button onclick="downloadAllMaintenanceCsv()">All Maintenance CSV</button>
-            </div>
           </div>
           <div class="panel-body">
             <div class="chips" id="assetCategoryChips"></div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #edf1f7">
+              <div class="panel-title" style="font-size:14px;margin-bottom:8px">Maintenance Reports</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <button type="button" onclick="downloadUnitMaintenanceReport()">Report by unit</button>
+                <button type="button" onclick="downloadUnitExpenseReport()">Expense by unit</button>
+                <button type="button" onclick="downloadAllMaintenanceCsv()">All maintenance CSV</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -429,7 +426,7 @@
           <div class="panel unit-list-panel">
             <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
               <div class="panel-title" id="assetCategoryTitle">Trucks</div>
-              <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()">Minimize list</button>
+              <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse truck list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
             </div>
             <div class="panel-body">
               <div class="search-row unit-list-scroll" style="margin-bottom:10px;">
@@ -868,10 +865,21 @@
                   </tbody>
                 </table>
               </div>
-            </div>
           </div>
-          <div class="panel" style="margin-top:12px">
-            <div class="panel-head"><div class="panel-title">Loads with recorded costs (index)</div></div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head"><div class="panel-title">Driver pay settlements</div></div>
+          <div class="panel-body">
+            <p class="mini-note" style="margin:0 0 8px">
+              Loads per <strong>QuickBooks driver vendor</strong>: trip revenue, rolled-up expenses (same as trip lookup), and company net.
+              Set <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) to show a suggested driver pay as a percent of linehaul revenue.
+            </p>
+            <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
+            <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Open and refresh.</div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head"><div class="panel-title">Loads with recorded costs (index)</div></div>
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
               <div class="table-wrap" style="margin-top:10px;min-width:0">
@@ -1032,7 +1040,10 @@
       if (!sp) return;
       sp.classList.toggle('unit-list-collapsed');
       const c = sp.classList.contains('unit-list-collapsed');
-      if (btn) btn.textContent = c ? 'Expand list' : 'Minimize list';
+      if (btn) {
+        btn.textContent = c ? '▲' : '▼';
+        btn.title = c ? 'Expand truck list' : 'Collapse truck list';
+      }
       try {
         localStorage.setItem('erpUnitListCollapsed', c ? '1' : '0');
       } catch (_) {}
@@ -1044,7 +1055,10 @@
           const sp = document.getElementById('maintenanceSplit');
           const btn = document.getElementById('unitListToggleBtn');
           sp?.classList.add('unit-list-collapsed');
-          if (btn) btn.textContent = 'Expand list';
+          if (btn) {
+            btn.textContent = '▲';
+            btn.title = 'Expand truck list';
+          }
         }
       } catch (_) {}
     }
@@ -1157,7 +1171,10 @@
       document.getElementById(id).classList.remove('hidden');
       document.querySelectorAll('#section-accounting .subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
-      if (id === 'acct-settlement') loadSettlementIndex();
+      if (id === 'acct-settlement') {
+        loadSettlementIndex();
+        loadDriverPaySettlements();
+      }
     }
 
     async function loadQboStatus() {
@@ -2355,6 +2372,66 @@
       }
     }
 
+    async function applySettlementMilesToTms() {
+      const sm = window.__lastSettlementMiles;
+      const loadId = window.__lastTmsLoadId;
+      if (!loadId || !sm || !sm.ok) {
+        alert('Run a settlement lookup with a TMS load that has at least two stops and addresses on first and last stop.');
+        return;
+      }
+      try {
+        const r = await fetch('/api/tms/loads/' + encodeURIComponent(loadId), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            practical_loaded_miles: sm.practicalLoadedMiles,
+            practical_empty_miles: sm.emptyMiles
+          })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.statusText);
+        alert('TMS load miles updated from settlement calculation.');
+        await runSettlementLookup();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function loadDriverPaySettlements() {
+      const box = document.getElementById('driverPaySettlementsBox');
+      if (!box) return;
+      box.innerHTML = 'Loading…';
+      try {
+        const r = await fetch('/api/settlements/driver-pay');
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || r.statusText);
+        const pct = d.driverPayPct;
+        const pctTxt =
+          pct != null && Number.isFinite(Number(pct))
+            ? ` Suggested driver pay = <b>${(Number(pct) * 100).toFixed(0)}%</b> of trip revenue per load.`
+            : ' Set DRIVER_SETTLEMENT_PAY_PCT on the server (0–1) to show suggested pay.';
+        if (!(d.drivers || []).length) {
+          box.innerHTML = 'No loads with a QBO driver vendor yet.' + pctTxt;
+          return;
+        }
+        box.innerHTML =
+          pctTxt +
+          (d.drivers || [])
+            .map(dr => {
+              const rows = (dr.loads || [])
+                .map(
+                  L =>
+                    `<tr><td>${escapeHtml(L.loadNumber)}</td><td>${escapeHtml(L.status || '')}</td><td>${Number(L.revenue).toFixed(2)}</td><td>${Number(L.expenseRollup).toFixed(2)}</td><td>${Number(L.companyNet).toFixed(2)}</td><td>${L.suggestedDriverPay != null ? Number(L.suggestedDriverPay).toFixed(2) : '—'}</td></tr>`
+                )
+                .join('');
+              return `<div style="margin-bottom:16px"><div style="font-weight:700;margin-bottom:6px">${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QBO ${escapeHtml(dr.qboVendorId)}</span></div><div class="table-wrap" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+            })
+            .join('');
+      } catch (e) {
+        box.innerHTML = 'Error: ' + escapeHtml(e.message || String(e));
+      }
+    }
+
     function downloadSettlementCsv() {
       const raw = document.getElementById('settlementLoadInput').value.trim();
       if (!raw) {
@@ -2391,6 +2468,8 @@
         document.getElementById('settlementSummary').innerHTML = sumHtml;
 
         const tmsEl = document.getElementById('settlementTmsBox');
+        window.__lastSettlementMiles = data.tms?.settlementMiles || null;
+        window.__lastTmsLoadId = data.tms?.load?.id || null;
         if (data.tms && data.tms.load) {
           const L = data.tms.load;
           tmsEl.classList.remove('hidden');
@@ -2399,14 +2478,24 @@
             L.revenue_amount != null && String(L.revenue_amount).trim() !== ''
               ? `Trip revenue: <b>$${Number(L.revenue_amount).toFixed(2)}</b> · `
               : '';
+          const sm = data.tms.settlementMiles;
+          let milesExtra = '';
+          if (sm && sm.ok) {
+            milesExtra = `<br><strong>Settlement miles (1st pickup → last delivery)</strong>: practical loaded <b>${escapeHtml(String(sm.practicalLoadedMiles))}</b> mi, empty (straight-line) <b>${escapeHtml(String(sm.emptyMiles))}</b> mi. <button type="button" class="qb-btn-add" onclick="applySettlementMilesToTms()">Apply to TMS load</button><br><span class="mini-note">${escapeHtml(sm.note || '')}</span>`;
+          } else if (sm && sm.reason) {
+            milesExtra = `<br><span class="mini-note">Settlement mileage not computed (${escapeHtml(sm.reason)}).</span>`;
+          }
           tmsEl.innerHTML =
             `<strong>TMS</strong> · status <b>${escapeHtml(L.status || '')}</b> · customer ${escapeHtml(L.customer_name || '—')}<br>` +
             revLine +
             `Miles (ld / em): ${escapeHtml(String(L.practical_loaded_miles ?? ''))} / ${escapeHtml(String(L.practical_empty_miles ?? ''))} · ${escapeHtml(od)}<br>` +
-            `<span class="mini-note">${escapeHtml(data.tms.note || '')}</span>`;
+            milesExtra +
+            `<br><span class="mini-note">${escapeHtml(data.tms.note || '')}</span>`;
         } else {
           tmsEl.classList.add('hidden');
           tmsEl.innerHTML = '';
+          window.__lastSettlementMiles = null;
+          window.__lastTmsLoadId = null;
         }
 
         const tb = document.getElementById('settlementLinesBody');

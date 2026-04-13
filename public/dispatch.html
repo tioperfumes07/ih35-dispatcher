@@ -163,9 +163,9 @@
       <div class="modal-body">
         <div class="grid2">
           <div class="row">
-            <label class="lbl">Load number * (same as invoice #)</label>
-            <input class="in" id="f_load_number" placeholder="e.g. 13138" />
-            <p class="muted" style="margin:6px 0 0;font-size:11px">Use this number on every bill, expense, and settlement for the trip so P&amp;L rolls up by load.</p>
+            <label class="lbl">Load # / invoice # (same number)</label>
+            <input class="in" id="f_load_number" placeholder="Suggested on new load" />
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Invoice <code>DocNumber</code> in QuickBooks uses this value. Next number is suggested from your loads (baseline <span id="nextLoadHint">13501</span> via server).</p>
           </div>
           <div class="row">
             <label class="lbl">Status</label>
@@ -173,8 +173,13 @@
           </div>
           <div class="row" style="grid-column:1/-1">
             <label class="lbl">Customer (QuickBooks)</label>
-            <select class="in" id="f_qbo_customer"></select>
-            <p class="muted" style="margin:6px 0 0;font-size:12px">Customers, service items, and expense categories are loaded from QuickBooks. Use <strong>Sync QBO catalog</strong> after you change them in QBO.</p>
+            <input type="hidden" id="f_qbo_customer_id" />
+            <div class="ac-wrap">
+              <input class="in" id="f_customer_search" list="qboCustomerDatalist" placeholder="Type to search customers…" autocomplete="off" />
+              <datalist id="qboCustomerDatalist"></datalist>
+              <div class="ac-list" id="customer_ac"></div>
+            </div>
+            <p class="muted" style="margin:6px 0 0;font-size:12px">Type to filter; pick from the list or datalist. Sync QBO catalog after customer changes in QuickBooks.</p>
           </div>
           <div class="row" style="grid-column:1/-1">
             <label class="lbl">Driver (QuickBooks vendor)</label>
@@ -186,9 +191,14 @@
             <p class="muted" style="margin:6px 0 0;font-size:12px">The driver/carrier is a <strong>vendor</strong> in QuickBooks. Add vendors in QBO, then use <strong>Sync QBO catalog</strong>.</p>
           </div>
           <div class="row">
-            <label class="lbl">Truck</label>
-            <select class="in" id="f_truck"></select>
-            <p class="muted" style="margin:6px 0 0;font-size:11px">QuickBooks <strong>Class</strong> on expenses should match this unit code (e.g. T172).</p>
+            <label class="lbl">Truck (QBO class name, T1…)</label>
+            <input type="hidden" id="f_truck_id" />
+            <div class="ac-wrap">
+              <input class="in" id="f_truck_search" list="truckClassDatalist" placeholder="Type unit e.g. T172…" autocomplete="off" />
+              <datalist id="truckClassDatalist"></datalist>
+              <div class="ac-list" id="truck_class_ac"></div>
+            </div>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Suggestions from QuickBooks <strong>classes</strong> whose names start with <strong>T1</strong>. Saving ensures a matching row in TMS trucks.</p>
           </div>
           <div class="row">
             <span class="lbl">Quick add truck</span>
@@ -199,7 +209,12 @@
           </div>
           <div class="row">
             <label class="lbl">Trailer</label>
-            <select class="in" id="f_trailer"></select>
+            <input type="hidden" id="f_trailer_id" />
+            <div class="ac-wrap">
+              <input class="in" id="f_trailer_search" list="trailerUnitDatalist" placeholder="Type trailer unit…" autocomplete="off" />
+              <datalist id="trailerUnitDatalist"></datalist>
+              <div class="ac-list" id="trailer_ac"></div>
+            </div>
           </div>
           <div class="row">
             <span class="lbl">Quick add trailer</span>
@@ -282,13 +297,18 @@
       connected: false,
       customers: [],
       vendors: [],
+      classes: [],
       items: [],
       accounts: [],
       accountsExpense: [],
       refreshedAt: null
     };
+    let trailersList = [];
     let currentDocsLoadId = null;
     let driverVendorAcBound = false;
+    let customerAcBound = false;
+    let truckClassAcBound = false;
+    let trailerAcBound = false;
     let editingLoadId = null;
 
     function qboItemOptionsHtml() {
@@ -332,24 +352,251 @@
       );
     }
 
-    function fillQboCustomerSelect() {
-      const el = document.getElementById('f_qbo_customer');
-      if (!el) return;
+    function truckClassesT1() {
+      return (qboCatalog.classes || []).filter(c => {
+        const n = String(c.name || '').trim();
+        return /^T1/i.test(n);
+      });
+    }
+
+    function syncCustomerDatalist() {
+      const dl = document.getElementById('qboCustomerDatalist');
+      if (!dl) return;
       const cust = (qboCatalog.customers || []).filter(c => c.active !== false);
-      el.innerHTML =
-        '<option value="">— None —</option>' +
-        cust
-          .map(c => {
-            const name = c.name || c.companyName || '';
-            return (
-              '<option value="' +
-              escapeHtml(c.qboId) +
-              '">' +
-              escapeHtml(name) +
-              '</option>'
-            );
-          })
-          .join('');
+      dl.innerHTML = cust
+        .map(c => {
+          const label = String(c.name || c.companyName || '').trim();
+          return label ? '<option value="' + escapeHtml(label) + '"></option>' : '';
+        })
+        .join('');
+    }
+
+    function syncTruckClassDatalist() {
+      const dl = document.getElementById('truckClassDatalist');
+      if (!dl) return;
+      dl.innerHTML = truckClassesT1()
+        .map(c => '<option value="' + escapeHtml(String(c.name || '')) + '"></option>')
+        .join('');
+    }
+
+    function syncTrailerDatalist() {
+      const dl = document.getElementById('trailerUnitDatalist');
+      if (!dl) return;
+      dl.innerHTML = (trailersList || [])
+        .map(t => '<option value="' + escapeHtml(String(t.unit_code || '')) + '"></option>')
+        .join('');
+    }
+
+    function hideCustomerAc() {
+      const list = document.getElementById('customer_ac');
+      if (!list) return;
+      list.classList.remove('on');
+      list.innerHTML = '';
+    }
+
+    function bindCustomerAc() {
+      if (customerAcBound) return;
+      customerAcBound = true;
+      const inp = document.getElementById('f_customer_search');
+      const list = document.getElementById('customer_ac');
+      const hid = document.getElementById('f_qbo_customer_id');
+      if (!inp || !list || !hid) return;
+      let t = null;
+      inp.addEventListener('input', () => {
+        clearTimeout(t);
+        hid.value = '';
+        const q = inp.value.trim().toLowerCase();
+        if (q.length < 1) {
+          hideCustomerAc();
+          return;
+        }
+        t = setTimeout(() => {
+          const cust = (qboCatalog.customers || []).filter(c => c.active !== false);
+          const matches = cust
+            .filter(c => {
+              const n = String(c.name || '').toLowerCase();
+              const co = String(c.companyName || '').toLowerCase();
+              return n.includes(q) || co.includes(q);
+            })
+            .slice(0, 15);
+          list.innerHTML = '';
+          if (!matches.length) {
+            hideCustomerAc();
+            return;
+          }
+          matches.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'ac-item';
+            const label = String(c.name || c.companyName || '').trim() || '(customer)';
+            div.textContent = label;
+            div.addEventListener('mousedown', ev => {
+              ev.preventDefault();
+              inp.value = label;
+              hid.value = String(c.qboId);
+              hideCustomerAc();
+            });
+            list.appendChild(div);
+          });
+          list.classList.add('on');
+        }, 160);
+      });
+      inp.addEventListener('blur', () => setTimeout(() => hideCustomerAc(), 200));
+    }
+
+    function hideTruckClassAc() {
+      const list = document.getElementById('truck_class_ac');
+      if (!list) return;
+      list.classList.remove('on');
+      list.innerHTML = '';
+    }
+
+    function bindTruckClassAc() {
+      if (truckClassAcBound) return;
+      truckClassAcBound = true;
+      const inp = document.getElementById('f_truck_search');
+      const list = document.getElementById('truck_class_ac');
+      const hid = document.getElementById('f_truck_id');
+      if (!inp || !list || !hid) return;
+      let t = null;
+      inp.addEventListener('input', () => {
+        clearTimeout(t);
+        hid.value = '';
+        const q = inp.value.trim().toLowerCase();
+        if (q.length < 1) {
+          hideTruckClassAc();
+          return;
+        }
+        t = setTimeout(() => {
+          const cls = truckClassesT1().filter(c => String(c.name || '').toLowerCase().includes(q)).slice(0, 20);
+          list.innerHTML = '';
+          if (!cls.length) {
+            hideTruckClassAc();
+            return;
+          }
+          cls.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'ac-item';
+            const label = String(c.name || '').trim();
+            div.textContent = label + (c.fullyQualifiedName && c.fullyQualifiedName !== label ? ' · ' + c.fullyQualifiedName : '');
+            div.addEventListener('mousedown', ev => {
+              ev.preventDefault();
+              inp.value = label;
+              hideTruckClassAc();
+            });
+            list.appendChild(div);
+          });
+          list.classList.add('on');
+        }, 140);
+      });
+      inp.addEventListener('blur', () => setTimeout(() => hideTruckClassAc(), 200));
+    }
+
+    function hideTrailerAc() {
+      const list = document.getElementById('trailer_ac');
+      if (!list) return;
+      list.classList.remove('on');
+      list.innerHTML = '';
+    }
+
+    function bindTrailerAc() {
+      if (trailerAcBound) return;
+      trailerAcBound = true;
+      const inp = document.getElementById('f_trailer_search');
+      const list = document.getElementById('trailer_ac');
+      const hid = document.getElementById('f_trailer_id');
+      if (!inp || !list || !hid) return;
+      let t = null;
+      inp.addEventListener('input', () => {
+        clearTimeout(t);
+        hid.value = '';
+        const q = inp.value.trim().toLowerCase();
+        if (q.length < 1) {
+          hideTrailerAc();
+          return;
+        }
+        t = setTimeout(() => {
+          const matches = (trailersList || [])
+            .filter(tr => String(tr.unit_code || '').toLowerCase().includes(q))
+            .slice(0, 20);
+          list.innerHTML = '';
+          if (!matches.length) {
+            hideTrailerAc();
+            return;
+          }
+          matches.forEach(tr => {
+            const div = document.createElement('div');
+            div.className = 'ac-item';
+            const label = String(tr.unit_code || '').trim();
+            div.textContent = label;
+            div.addEventListener('mousedown', ev => {
+              ev.preventDefault();
+              inp.value = label;
+              hid.value = String(tr.id);
+              hideTrailerAc();
+            });
+            list.appendChild(div);
+          });
+          list.classList.add('on');
+        }, 140);
+      });
+      inp.addEventListener('blur', () => setTimeout(() => hideTrailerAc(), 200));
+    }
+
+    function resolveQboCustomerForSave() {
+      const hid = document.getElementById('f_qbo_customer_id');
+      const inp = document.getElementById('f_customer_search');
+      const id = hid ? hid.value.trim() : '';
+      const typed = inp ? inp.value.trim() : '';
+      if (id) return { qbo_customer_id: id, qbo_customer_name: typed || null };
+      if (!typed) return { qbo_customer_id: null, qbo_customer_name: null };
+      const cust = (qboCatalog.customers || []).filter(c => c.active !== false);
+      const tl = typed.toLowerCase();
+      const exact = cust.find(c => {
+        const n = String(c.name || '').toLowerCase();
+        const co = String(c.companyName || '').toLowerCase();
+        return n === tl || co === tl;
+      });
+      if (exact) {
+        return {
+          qbo_customer_id: String(exact.qboId),
+          qbo_customer_name: String(exact.name || exact.companyName || typed).trim() || null
+        };
+      }
+      return { qbo_customer_id: null, qbo_customer_name: typed };
+    }
+
+    async function ensureTruckFromUnitCode(code) {
+      const u = String(code || '').trim();
+      if (!u) return null;
+      const listRes = await api('/trucks');
+      const rows = listRes.data || [];
+      let hit = rows.find(t => String(t.unit_code).toLowerCase() === u.toLowerCase());
+      if (hit) return hit.id;
+      const created = await api('/trucks', { method: 'POST', body: { unit_code: u } });
+      return created.data.id;
+    }
+
+    async function ensureTrailerFromUnitCode(code) {
+      const u = String(code || '').trim();
+      if (!u) return null;
+      const rows = trailersList || [];
+      let hit = rows.find(t => String(t.unit_code).toLowerCase() === u.toLowerCase());
+      if (hit) return hit.id;
+      const created = await api('/trailers', { method: 'POST', body: { unit_code: u } });
+      trailersList.push(created.data);
+      syncTrailerDatalist();
+      return created.data.id;
+    }
+
+    async function fetchSuggestedNextLoadNumber() {
+      try {
+        const r = await fetch('/api/tms/meta/next-load-number');
+        const j = await r.json().catch(() => ({}));
+        const hint = document.getElementById('nextLoadHint');
+        if (hint && j.baseline != null) hint.textContent = String(j.baseline);
+        if (j.ok && j.next) return String(j.next);
+      } catch (_) {}
+      return '';
     }
 
     function updateQboCatalogStatusLine() {
@@ -362,10 +609,11 @@
       const nC = (qboCatalog.customers || []).length;
       const nV = (qboCatalog.vendors || []).length;
       const nI = (qboCatalog.items || []).length;
+      const nCl = (qboCatalog.classes || []).length;
       const t = qboCatalog.refreshedAt
         ? new Date(qboCatalog.refreshedAt).toLocaleString()
         : '—';
-      el.textContent = nC + ' customers · ' + nV + ' vendors · ' + nI + ' items · cache ' + t;
+      el.textContent = nC + ' customers · ' + nV + ' vendors · ' + nCl + ' classes · ' + nI + ' items · cache ' + t;
     }
 
     async function loadQboCatalog() {
@@ -379,6 +627,7 @@
             connected: false,
             customers: [],
             vendors: [],
+            classes: [],
             items: [],
             accounts: [],
             accountsExpense: []
@@ -389,13 +638,15 @@
           connected: false,
           customers: [],
           vendors: [],
+          classes: [],
           items: [],
           accounts: [],
           accountsExpense: []
         };
       }
       updateQboCatalogStatusLine();
-      fillQboCustomerSelect();
+      syncCustomerDatalist();
+      syncTruckClassDatalist();
     }
 
     async function refreshQboCatalog() {
@@ -409,7 +660,8 @@
         if (!r.ok) throw new Error(j.error || r.statusText || 'Refresh failed');
         qboCatalog = { ...qboCatalog, ...j };
         updateQboCatalogStatusLine();
-        fillQboCustomerSelect();
+        syncCustomerDatalist();
+        syncTruckClassDatalist();
         document.querySelectorAll('.stop-item').forEach(sel => {
           sel.innerHTML = qboItemOptionsHtml();
         });
@@ -501,7 +753,14 @@
     async function createQboInvoiceForLoad(loadNumber) {
       showMsg('');
       if (!loadNumber) return;
-      if (!confirm('Create QuickBooks invoice for load ' + loadNumber + '? Requires QBO customer, trip revenue, and DEFAULT_QBO_INVOICE_ITEM_ID (or paste item id).')) return;
+      if (
+        !confirm(
+          'Create QuickBooks invoice for load ' +
+            loadNumber +
+            '? Uses Line haul item from QBO catalog (name contains "Line haul") or DEFAULT_QBO_LINEHAUL_ITEM_ID / DEFAULT_QBO_INVOICE_ITEM_ID. Doc # = load #.'
+        )
+      )
+        return;
       let qboItemId = '';
       try {
         qboItemId = prompt('QuickBooks Item ID for invoice line (leave blank to use server default):', '') || '';
@@ -737,9 +996,9 @@
 
     async function refreshLookups() {
       try {
-        const [t, tr] = await Promise.all([api('/trucks'), api('/trailers')]);
-        fillSelect('f_truck', t.data, 'id', r => r.unit_code);
-        fillSelect('f_trailer', tr.data, 'id', r => r.unit_code);
+        const tr = await api('/trailers');
+        trailersList = tr.data || [];
+        syncTrailerDatalist();
       } catch (e) {
         console.warn(e);
       }
@@ -919,8 +1178,15 @@
       await loadQboCatalog();
       await refreshLookups();
       const ln = document.getElementById('f_load_number');
-      ln.value = '';
+      const suggested = await fetchSuggestedNextLoadNumber();
+      ln.value = suggested || '';
       ln.readOnly = false;
+      document.getElementById('f_qbo_customer_id').value = '';
+      document.getElementById('f_customer_search').value = '';
+      document.getElementById('f_truck_id').value = '';
+      document.getElementById('f_truck_search').value = '';
+      document.getElementById('f_trailer_id').value = '';
+      document.getElementById('f_trailer_search').value = '';
       document.getElementById('f_dispatcher').value = '';
       document.getElementById('f_start').value = '';
       document.getElementById('f_end').value = '';
@@ -960,15 +1226,20 @@
       ln.value = L.load_number || '';
       ln.readOnly = true;
       document.getElementById('f_status').value = L.status || 'open';
-      const qSel = document.getElementById('f_qbo_customer');
-      if (qSel) qSel.value = L.qbo_customer_id || '';
+      document.getElementById('f_qbo_customer_id').value = L.qbo_customer_id || '';
+      document.getElementById('f_customer_search').value =
+        (L.qbo_customer_name && String(L.qbo_customer_name).trim()) ||
+        (L.customer_name && String(L.customer_name).trim()) ||
+        '';
       document.getElementById('f_driver_vendor').value =
         (L.qbo_driver_vendor_name && String(L.qbo_driver_vendor_name).trim()) ||
         (L.driver_name && String(L.driver_name).trim()) ||
         '';
       document.getElementById('f_qbo_driver_vendor_id').value = L.qbo_driver_vendor_id || '';
-      document.getElementById('f_truck').value = L.truck_id || '';
-      document.getElementById('f_trailer').value = L.trailer_id || '';
+      document.getElementById('f_truck_id').value = L.truck_id || '';
+      document.getElementById('f_truck_search').value = L.truck_code || '';
+      document.getElementById('f_trailer_id').value = L.trailer_id || '';
+      document.getElementById('f_trailer_search').value = L.trailer_code || '';
       document.getElementById('f_dispatcher').value = L.dispatcher_name || '';
       document.getElementById('f_start').value = L.start_date ? String(L.start_date).slice(0, 10) : '';
       document.getElementById('f_end').value = L.end_date ? String(L.end_date).slice(0, 10) : '';
@@ -1020,8 +1291,8 @@
       if (!unit_code) return;
       const j = await api('/trucks', { method: 'POST', body: { unit_code } });
       document.getElementById('f_new_truck').value = '';
-      await refreshLookups();
-      document.getElementById('f_truck').value = j.data.id;
+      document.getElementById('f_truck_search').value = unit_code;
+      document.getElementById('f_truck_id').value = j.data.id;
     }
 
     async function quickAddTrailer() {
@@ -1030,24 +1301,45 @@
       const j = await api('/trailers', { method: 'POST', body: { unit_code } });
       document.getElementById('f_new_trailer').value = '';
       await refreshLookups();
-      document.getElementById('f_trailer').value = j.data.id;
+      document.getElementById('f_trailer_search').value = unit_code;
+      document.getElementById('f_trailer_id').value = j.data.id;
     }
 
     async function saveLoad() {
       showMsg('');
       const load_number = document.getElementById('f_load_number').value.trim();
       if (!load_number) { showMsg('Load number is required.', true); return; }
-      const qSel = document.getElementById('f_qbo_customer');
-      let qbo_customer_id = null;
-      let qbo_customer_name = null;
-      if (qSel && qSel.value) {
-        qbo_customer_id = qSel.value;
-        const opt = qSel.options[qSel.selectedIndex];
-        const label = opt ? String(opt.textContent || '').trim() : '';
-        if (label && label !== '— None —') qbo_customer_name = label;
-      }
+      const qc = resolveQboCustomerForSave();
+      const qbo_customer_id = qc.qbo_customer_id;
+      const qbo_customer_name = qc.qbo_customer_name;
       const dv = resolveQboDriverVendorForSave();
       const stops = collectStops();
+      let truck_id = document.getElementById('f_truck_id').value.trim() || null;
+      if (!truck_id) {
+        const tu = document.getElementById('f_truck_search').value.trim();
+        if (tu) {
+          try {
+            truck_id = await ensureTruckFromUnitCode(tu);
+            document.getElementById('f_truck_id').value = truck_id || '';
+          } catch (e) {
+            showMsg(e.message || String(e), true);
+            return;
+          }
+        }
+      }
+      let trailer_id = document.getElementById('f_trailer_id').value.trim() || null;
+      if (!trailer_id) {
+        const tru = document.getElementById('f_trailer_search').value.trim();
+        if (tru) {
+          try {
+            trailer_id = await ensureTrailerFromUnitCode(tru);
+            document.getElementById('f_trailer_id').value = trailer_id || '';
+          } catch (e) {
+            showMsg(e.message || String(e), true);
+            return;
+          }
+        }
+      }
       const common = {
         status: document.getElementById('f_status').value,
         customer_id: null,
@@ -1056,8 +1348,8 @@
         driver_id: null,
         qbo_driver_vendor_id: dv.qbo_driver_vendor_id,
         qbo_driver_vendor_name: dv.qbo_driver_vendor_name,
-        truck_id: document.getElementById('f_truck').value || null,
-        trailer_id: document.getElementById('f_trailer').value || null,
+        truck_id,
+        trailer_id,
         dispatcher_name: document.getElementById('f_dispatcher').value.trim() || null,
         start_date: document.getElementById('f_start').value || null,
         end_date: document.getElementById('f_end').value || null,
@@ -1088,8 +1380,12 @@
 
     (async function init() {
       bindDriverVendorAc();
+      bindCustomerAc();
+      bindTruckClassAc();
+      bindTrailerAc();
       await loadMeta();
       await loadQboCatalog();
+      await refreshLookups();
       await loadTab();
     })();
   </script>

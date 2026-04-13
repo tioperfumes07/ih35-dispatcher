@@ -79,6 +79,27 @@ router.get('/meta', (_req, res) => {
   res.json({ ok: true, loadStatuses: LOAD_STATUSES });
 });
 
+router.get('/meta/next-load-number', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ ok: false, error: 'Database not configured' });
+  const start = Math.max(1, Number(process.env.DEFAULT_NEXT_LOAD_NUMBER || 13501) || 13501);
+  try {
+    const { rows } = await dbQuery(
+      `SELECT load_number FROM loads WHERE load_number ~ '^[0-9]+$'`
+    );
+    let maxNum = 0;
+    for (const r of rows) {
+      const n = parseInt(String(r.load_number), 10);
+      if (Number.isFinite(n)) maxNum = Math.max(maxNum, n);
+    }
+    const nextNum = Math.max(start, maxNum + 1);
+    res.json({ ok: true, next: String(nextNum), nextNumeric: nextNum, baseline: start });
+  } catch (e) {
+    if (dbUnavailable(res, e)) return;
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 router.get('/customers', async (_req, res) => {
   try {
     const { rows } = await dbQuery(
@@ -271,7 +292,13 @@ export async function fetchLoadSettlementContextByNumber(loadNumberRaw) {
        FROM load_documents WHERE load_id = $1::uuid ORDER BY created_at DESC`,
       [load.id]
     );
-    return { load, stops: stopsRes.rows, documents: docsRes.rows };
+    let settlementMiles = null;
+    try {
+      settlementMiles = await computeSettlementLegMilesFromStops(stopsRes.rows);
+    } catch {
+      settlementMiles = { ok: false, reason: 'compute_error' };
+    }
+    return { load, stops: stopsRes.rows, documents: docsRes.rows, settlementMiles };
   } catch {
     return null;
   }
@@ -664,6 +691,43 @@ async function osrmDrivingMiles(lat1, lon1, lat2, lon2) {
   const data = await r.json();
   if (data.code !== 'Ok' || !data.routes?.[0]) throw new Error('Driving route not found');
   return data.routes[0].distance * 0.000621371;
+}
+
+/**
+ * First pickup → final delivery: practical (OSRM) miles as loaded linehaul, straight-line miles as empty-paperwork proxy.
+ */
+export async function computeSettlementLegMilesFromStops(stopsRows) {
+  const ordered = [...(stopsRows || [])].sort((a, b) => (a.sequence_order ?? 0) - (b.sequence_order ?? 0));
+  if (ordered.length < 2) {
+    return { ok: false, reason: 'need_at_least_2_stops' };
+  }
+  const first = ordered[0];
+  const last = ordered[ordered.length - 1];
+  const addrA = String(first.address || '').trim() || String(first.location_name || '').trim();
+  const addrB = String(last.address || '').trim() || String(last.location_name || '').trim();
+  if (!addrA || !addrB) {
+    return { ok: false, reason: 'missing_address' };
+  }
+  const ga = await geocodeAddress(addrA);
+  const gb = await geocodeAddress(addrB);
+  if (!ga || !gb) return { ok: false, reason: 'geocode_failed' };
+  let practical;
+  try {
+    practical = await osrmDrivingMiles(ga.lat, ga.lon, gb.lat, gb.lon);
+  } catch {
+    practical = haversineMiles(ga.lat, ga.lon, gb.lat, gb.lon) * 1.25;
+  }
+  const straight = haversineMiles(ga.lat, ga.lon, gb.lat, gb.lon);
+  return {
+    ok: true,
+    pickupAddress: addrA,
+    deliveryAddress: addrB,
+    practicalLoadedMiles: Math.round(practical * 10) / 10,
+    emptyMiles: Math.round(straight * 10) / 10,
+    engine: GEOAPIFY_API_KEY ? 'geoapify+osrm' : 'nominatim+osrm',
+    note:
+      'Settlement: practical loaded = road route from first stop to last; empty = straight-line miles (same endpoints) for paperwork until PC*Miler empty/loaded split is wired.'
+  };
 }
 
 /** Ordered stop addresses → practical (OSRM) vs shortest (great-circle) miles per leg. PC*Miler can replace this later. */

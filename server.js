@@ -26,6 +26,7 @@ const QBO_CLIENT_SECRET = process.env.QBO_CLIENT_SECRET || '';
 const QBO_REDIRECT_URI = process.env.QBO_REDIRECT_URI || '';
 const DEFAULT_QBO_BANK_ACCOUNT_ID = String(process.env.DEFAULT_QBO_BANK_ACCOUNT_ID || '').trim();
 const DEFAULT_QBO_INVOICE_ITEM_ID = String(process.env.DEFAULT_QBO_INVOICE_ITEM_ID || '').trim();
+const DEFAULT_QBO_LINEHAUL_ITEM_ID = String(process.env.DEFAULT_QBO_LINEHAUL_ITEM_ID || '').trim();
 
 const INTUIT_AUTH_BASE = 'https://appcenter.intuit.com/connect/oauth2';
 const INTUIT_TOKEN_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
@@ -58,6 +59,8 @@ function safeNum(v, fallback = null) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
+
+const DRIVER_SETTLEMENT_PAY_PCT = safeNum(process.env.DRIVER_SETTLEMENT_PAY_PCT, null);
 
 function sanitizeName(value, fallback = 'Unnamed') {
   return String(value || fallback).trim().slice(0, 180);
@@ -929,6 +932,17 @@ function qboClassIdForUnit(unitRaw, erp) {
   return hit ? String(hit.qboId) : '';
 }
 
+/** Prefer explicit env, then QBO item whose name matches Line haul / Linehaul, then DEFAULT_QBO_INVOICE_ITEM_ID. */
+function resolveLinehaulItemId(erp) {
+  const explicit = DEFAULT_QBO_LINEHAUL_ITEM_ID;
+  if (explicit) return explicit;
+  const items = erp?.qboCache?.items || [];
+  const re = /line\s*haul|linehaul/i;
+  const hit = items.find(i => re.test(String(i.name || '')));
+  if (hit?.qboId) return String(hit.qboId);
+  return DEFAULT_QBO_INVOICE_ITEM_ID;
+}
+
 async function qboCreateApTransaction(ap) {
   const erp = readErp();
   const txnDate = ap.txnDate || new Date().toISOString().slice(0, 10);
@@ -1617,6 +1631,7 @@ app.get('/api/settlement/by-load/:loadNumber', async (req, res) => {
             load: tms.load,
             stops: tms.stops,
             documents: tms.documents || [],
+            settlementMiles: tms.settlementMiles || null,
             revenuePlanned: revenueAmount,
             note:
               revenueAmount != null && Number.isFinite(revenueAmount)
@@ -1627,6 +1642,66 @@ app.get('/api/settlement/by-load/:loadNumber', async (req, res) => {
     });
   } catch (error) {
     logError('api/settlement/by-load', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/** Loads grouped by QBO driver vendor with revenue, expense rollup, and optional suggested driver pay (% of revenue). */
+app.get('/api/settlements/driver-pay', async (_req, res) => {
+  try {
+    const erp = readErp();
+    const { rows } = await dbQuery(
+      `SELECT id, load_number, revenue_amount, status, qbo_driver_vendor_id, qbo_driver_vendor_name
+       FROM loads
+       WHERE qbo_driver_vendor_id IS NOT NULL AND btrim(qbo_driver_vendor_id) <> ''
+       ORDER BY qbo_driver_vendor_id, load_number`
+    );
+    const byVendor = new Map();
+    for (const r of rows) {
+      const vid = String(r.qbo_driver_vendor_id).trim();
+      let entry = byVendor.get(vid);
+      if (!entry) {
+        entry = {
+          qboVendorId: vid,
+          vendorName: String(r.qbo_driver_vendor_name || '').trim(),
+          loads: []
+        };
+        byVendor.set(vid, entry);
+      }
+      let expenseRollup = 0;
+      try {
+        const rep = buildSettlementByLoad(erp, r.load_number);
+        expenseRollup = safeNum(rep.grandTotal, 0);
+      } catch (_) {
+        expenseRollup = 0;
+      }
+      const rev = safeNum(r.revenue_amount, 0);
+      const companyNet = Math.round((rev - expenseRollup) * 100) / 100;
+      let suggestedDriverPay = null;
+      if (
+        DRIVER_SETTLEMENT_PAY_PCT != null &&
+        DRIVER_SETTLEMENT_PAY_PCT >= 0 &&
+        DRIVER_SETTLEMENT_PAY_PCT <= 1
+      ) {
+        suggestedDriverPay = Math.round(rev * DRIVER_SETTLEMENT_PAY_PCT * 100) / 100;
+      }
+      entry.loads.push({
+        loadId: r.id,
+        loadNumber: r.load_number,
+        status: r.status,
+        revenue: rev,
+        expenseRollup,
+        companyNet,
+        suggestedDriverPay
+      });
+    }
+    res.json({
+      ok: true,
+      drivers: [...byVendor.values()],
+      driverPayPct: DRIVER_SETTLEMENT_PAY_PCT
+    });
+  } catch (error) {
+    logError('api/settlements/driver-pay', error);
     res.status(500).json({ ok: false, error: error.message });
   }
 });
@@ -2087,15 +2162,15 @@ app.post('/api/qbo/invoice-from-load', async (req, res) => {
       return res.status(400).json({ error: 'Set trip revenue on the load in Dispatch before creating a QuickBooks invoice' });
     }
 
-    const itemId = String(body.qboItemId || DEFAULT_QBO_INVOICE_ITEM_ID || '').trim();
+    const erp = readErp();
+    const itemId = String(body.qboItemId || resolveLinehaulItemId(erp) || '').trim();
     if (!itemId) {
       return res.status(400).json({
         error:
-          'Provide qboItemId in the JSON body or set DEFAULT_QBO_INVOICE_ITEM_ID on the server (a Service item in QuickBooks)'
+          'Set a Line haul (or other) Service item in QuickBooks, sync catalog, or set DEFAULT_QBO_LINEHAUL_ITEM_ID / DEFAULT_QBO_INVOICE_ITEM_ID on the server'
       });
     }
 
-    const erp = readErp();
     const truckUnit = String(load.truck_code || '').trim();
     const classId = qboClassIdForUnit(truckUnit, erp);
 
