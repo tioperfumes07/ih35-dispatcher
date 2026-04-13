@@ -510,52 +510,103 @@ router.post('/loads', async (req, res) => {
 });
 
 router.patch('/loads/:id', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ ok: false, error: 'Database not configured' });
+
+  const id = req.params.id;
+  const b = req.body || {};
+  const fields = [];
+  const vals = [];
+  let n = 1;
+  const map = [
+    ['status', 'status'],
+    ['customer_id', 'customer_id'],
+    ['qbo_customer_id', 'qbo_customer_id'],
+    ['qbo_customer_name', 'qbo_customer_name'],
+    ['qbo_driver_vendor_id', 'qbo_driver_vendor_id'],
+    ['qbo_driver_vendor_name', 'qbo_driver_vendor_name'],
+    ['driver_id', 'driver_id'],
+    ['truck_id', 'truck_id'],
+    ['trailer_id', 'trailer_id'],
+    ['dispatcher_name', 'dispatcher_name'],
+    ['start_date', 'start_date'],
+    ['end_date', 'end_date'],
+    ['practical_loaded_miles', 'practical_loaded_miles'],
+    ['practical_empty_miles', 'practical_empty_miles'],
+    ['notes', 'notes'],
+    ['revenue_amount', 'revenue_amount']
+  ];
+  for (const [key, col] of map) {
+    if (b[key] !== undefined) {
+      fields.push(`${col} = $${n++}`);
+      let v = b[key];
+      if (key === 'revenue_amount') v = revenueOrNull(b[key]);
+      else if (key === 'qbo_customer_id' || key === 'qbo_driver_vendor_id') v = qboIdOrNull(b[key]);
+      else if (key === 'qbo_driver_vendor_name' || key === 'qbo_customer_name') {
+        const s = b[key];
+        v = s != null && String(s).trim() ? String(s).trim() : null;
+      }
+      vals.push(v);
+    }
+  }
+  const hasStops = Array.isArray(b.stops);
+  if (!fields.length && !hasStops) {
+    return res.status(400).json({ ok: false, error: 'No fields or stops to update' });
+  }
+
+  const client = await pool.connect();
   try {
-    const id = req.params.id;
-    const b = req.body || {};
-    const fields = [];
-    const vals = [];
-    let n = 1;
-    const map = [
-      ['status', 'status'],
-      ['customer_id', 'customer_id'],
-      ['qbo_customer_id', 'qbo_customer_id'],
-      ['qbo_driver_vendor_id', 'qbo_driver_vendor_id'],
-      ['qbo_driver_vendor_name', 'qbo_driver_vendor_name'],
-      ['driver_id', 'driver_id'],
-      ['truck_id', 'truck_id'],
-      ['trailer_id', 'trailer_id'],
-      ['dispatcher_name', 'dispatcher_name'],
-      ['start_date', 'start_date'],
-      ['end_date', 'end_date'],
-      ['practical_loaded_miles', 'practical_loaded_miles'],
-      ['practical_empty_miles', 'practical_empty_miles'],
-      ['notes', 'notes'],
-      ['revenue_amount', 'revenue_amount']
-    ];
-    for (const [key, col] of map) {
-      if (b[key] !== undefined) {
-        fields.push(`${col} = $${n++}`);
-        let v = b[key];
-        if (key === 'revenue_amount') v = revenueOrNull(b[key]);
-        else if (key === 'qbo_customer_id' || key === 'qbo_driver_vendor_id') v = qboIdOrNull(b[key]);
-        else if (key === 'qbo_driver_vendor_name') {
-          const s = b[key];
-          v = s != null && String(s).trim() ? String(s).trim() : null;
-        }
-        vals.push(v);
+    await client.query('BEGIN');
+    const ex = await client.query('SELECT id FROM loads WHERE id = $1::uuid', [id]);
+    if (!ex.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ ok: false, error: 'Load not found' });
+    }
+    if (fields.length) {
+      fields.push(`updated_at = now()`);
+      vals.push(id);
+      await client.query(`UPDATE loads SET ${fields.join(', ')} WHERE id = $${n}::uuid`, vals);
+    } else if (hasStops) {
+      await client.query('UPDATE loads SET updated_at = now() WHERE id = $1::uuid', [id]);
+    }
+    if (hasStops) {
+      await client.query('DELETE FROM load_stops WHERE load_id = $1::uuid', [id]);
+      for (let i = 0; i < b.stops.length; i++) {
+        const s = b.stops[i] || {};
+        await client.query(
+          `INSERT INTO load_stops (load_id, sequence_order, stop_type, location_name, address, practical_miles, shortest_miles, stop_at, window_text, qbo_item_id, qbo_account_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $9, $10, $11)`,
+          [
+            id,
+            i,
+            String(s.stop_type || 'pickup').trim(),
+            String(s.location_name || '').trim() || null,
+            String(s.address || '').trim() || null,
+            s.practical_miles != null ? Number(s.practical_miles) : 0,
+            s.shortest_miles != null ? Number(s.shortest_miles) : 0,
+            s.stop_at || null,
+            String(s.window_text || '').trim() || null,
+            qboIdOrNull(s.qbo_item_id),
+            qboIdOrNull(s.qbo_account_id)
+          ]
+        );
       }
     }
-    if (!fields.length) return res.status(400).json({ ok: false, error: 'No fields to update' });
-    fields.push(`updated_at = now()`);
-    vals.push(id);
-    await dbQuery(`UPDATE loads SET ${fields.join(', ')} WHERE id = $${n}::uuid`, vals);
+    await client.query('COMMIT');
     const { rows } = await dbQuery(`${loadSelect} WHERE l.id = $1::uuid`, [id]);
-    if (!rows.length) return res.status(404).json({ ok: false, error: 'Load not found' });
-    res.json({ ok: true, data: enrichLoadRow(rows[0]) });
+    const stopRows = await dbQuery(
+      `SELECT * FROM load_stops WHERE load_id = $1::uuid ORDER BY sequence_order`,
+      [id]
+    );
+    res.json({ ok: true, data: { ...enrichLoadRow(rows[0]), stops: stopRows.rows } });
   } catch (e) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (_) {}
     if (dbUnavailable(res, e)) return;
     res.status(500).json({ ok: false, error: e.message });
+  } finally {
+    client.release();
   }
 });
 

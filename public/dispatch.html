@@ -148,6 +148,7 @@
           <th>Miles (Ld / Em)</th>
           <th>Rev $</th>
           <th>Docs</th>
+          <th>Edit</th>
           <th>QBO invoice</th>
         </tr>
       </thead>
@@ -158,7 +159,7 @@
 
   <div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeBookModal()">
     <div class="modal" onclick="event.stopPropagation()">
-      <h2>Book new load</h2>
+      <h2 id="bookModalTitle">Book new load</h2>
       <div class="modal-body">
         <div class="grid2">
           <div class="row">
@@ -244,7 +245,7 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" onclick="closeBookModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="saveLoad()">Save load</button>
+        <button type="button" class="btn btn-primary" id="saveLoadBtn" onclick="saveLoad()">Save load</button>
       </div>
     </div>
   </div>
@@ -288,6 +289,7 @@
     };
     let currentDocsLoadId = null;
     let driverVendorAcBound = false;
+    let editingLoadId = null;
 
     function qboItemOptionsHtml() {
       const items = (qboCatalog.items || []).filter(i => i.active !== false);
@@ -449,7 +451,7 @@
     function renderRows(rows) {
       const tb = document.getElementById('tbody');
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="12" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="13" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
         return;
       }
       tb.innerHTML = rows.map(l => {
@@ -486,6 +488,9 @@
           '<td>' + escapeHtml(String(l.practical_loaded_miles ?? '0')) + ' / ' + escapeHtml(String(l.practical_empty_miles ?? '0')) + '</td>' +
           '<td class="muted">' + revCell + '</td>' +
           '<td>' + docsBtn + '</td>' +
+          '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="openEditLoad(' +
+          JSON.stringify(l.id) +
+          ')">Edit</button></td>' +
           '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="createQboInvoiceForLoad(' +
           JSON.stringify(l.load_number) +
           ')">Create in QBO</button></td>' +
@@ -886,11 +891,36 @@
       }));
     }
 
+    function isoToDatetimeLocal(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const pad = n => String(n).padStart(2, '0');
+      return (
+        d.getFullYear() +
+        '-' +
+        pad(d.getMonth() + 1) +
+        '-' +
+        pad(d.getDate()) +
+        'T' +
+        pad(d.getHours()) +
+        ':' +
+        pad(d.getMinutes())
+      );
+    }
+
     async function openBookModal() {
+      editingLoadId = null;
+      const titleEl = document.getElementById('bookModalTitle');
+      if (titleEl) titleEl.textContent = 'Book new load';
+      const saveBtn = document.getElementById('saveLoadBtn');
+      if (saveBtn) saveBtn.textContent = 'Save load';
       await loadMeta();
       await loadQboCatalog();
       await refreshLookups();
-      document.getElementById('f_load_number').value = '';
+      const ln = document.getElementById('f_load_number');
+      ln.value = '';
+      ln.readOnly = false;
       document.getElementById('f_dispatcher').value = '';
       document.getElementById('f_start').value = '';
       document.getElementById('f_end').value = '';
@@ -907,8 +937,82 @@
       document.getElementById('modalBg').classList.add('on');
     }
 
+    async function openEditLoad(id) {
+      showMsg('');
+      editingLoadId = id;
+      const titleEl = document.getElementById('bookModalTitle');
+      if (titleEl) titleEl.textContent = 'Edit load';
+      const saveBtn = document.getElementById('saveLoadBtn');
+      if (saveBtn) saveBtn.textContent = 'Save changes';
+      await loadMeta();
+      await loadQboCatalog();
+      await refreshLookups();
+      let j;
+      try {
+        j = await api('/loads/' + encodeURIComponent(id));
+      } catch (e) {
+        showMsg(e.message || String(e), true);
+        editingLoadId = null;
+        return;
+      }
+      const L = j.data || {};
+      const ln = document.getElementById('f_load_number');
+      ln.value = L.load_number || '';
+      ln.readOnly = true;
+      document.getElementById('f_status').value = L.status || 'open';
+      const qSel = document.getElementById('f_qbo_customer');
+      if (qSel) qSel.value = L.qbo_customer_id || '';
+      document.getElementById('f_driver_vendor').value =
+        (L.qbo_driver_vendor_name && String(L.qbo_driver_vendor_name).trim()) ||
+        (L.driver_name && String(L.driver_name).trim()) ||
+        '';
+      document.getElementById('f_qbo_driver_vendor_id').value = L.qbo_driver_vendor_id || '';
+      document.getElementById('f_truck').value = L.truck_id || '';
+      document.getElementById('f_trailer').value = L.trailer_id || '';
+      document.getElementById('f_dispatcher').value = L.dispatcher_name || '';
+      document.getElementById('f_start').value = L.start_date ? String(L.start_date).slice(0, 10) : '';
+      document.getElementById('f_end').value = L.end_date ? String(L.end_date).slice(0, 10) : '';
+      document.getElementById('f_plm').value =
+        L.practical_loaded_miles != null ? String(L.practical_loaded_miles) : '';
+      document.getElementById('f_pem').value =
+        L.practical_empty_miles != null ? String(L.practical_empty_miles) : '';
+      document.getElementById('f_revenue').value =
+        L.revenue_amount != null && L.revenue_amount !== '' ? String(L.revenue_amount) : '';
+      document.getElementById('stops').innerHTML = '';
+      const stops = L.stops || [];
+      if (stops.length) {
+        stops.forEach(s => {
+          addStopRow();
+          const rows = document.querySelectorAll('.stop-block');
+          const row = rows[rows.length - 1];
+          row.querySelector('.stop-type').value = s.stop_type || 'pickup';
+          row.querySelector('.stop-loc').value = s.location_name || '';
+          row.querySelector('.stop-addr').value = s.address || '';
+          row.querySelector('.stop-pm').value = s.practical_miles != null ? s.practical_miles : 0;
+          row.querySelector('.stop-sm').value = s.shortest_miles != null ? s.shortest_miles : 0;
+          row.querySelector('.stop-dt').value = isoToDatetimeLocal(s.stop_at);
+          row.querySelector('.stop-win').value = s.window_text || '';
+          const it = row.querySelector('.stop-item');
+          const ac = row.querySelector('.stop-acct');
+          if (it) it.value = s.qbo_item_id || '';
+          if (ac) ac.value = s.qbo_account_id || '';
+        });
+      } else {
+        addStopRow();
+        addStopRow();
+      }
+      document.getElementById('modalBg').classList.add('on');
+    }
+
     function closeBookModal() {
       document.getElementById('modalBg').classList.remove('on');
+      editingLoadId = null;
+      const ln = document.getElementById('f_load_number');
+      if (ln) ln.readOnly = false;
+      const titleEl = document.getElementById('bookModalTitle');
+      if (titleEl) titleEl.textContent = 'Book new load';
+      const saveBtn = document.getElementById('saveLoadBtn');
+      if (saveBtn) saveBtn.textContent = 'Save load';
     }
 
     async function quickAddTruck() {
@@ -943,8 +1047,8 @@
         if (label && label !== '— None —') qbo_customer_name = label;
       }
       const dv = resolveQboDriverVendorForSave();
-      const body = {
-        load_number,
+      const stops = collectStops();
+      const common = {
         status: document.getElementById('f_status').value,
         customer_id: null,
         qbo_customer_id,
@@ -965,12 +1069,17 @@
           const n = parseFloat(v);
           return Number.isFinite(n) ? n : null;
         })(),
-        stops: collectStops()
+        stops
       };
       try {
-        await api('/loads', { method: 'POST', body });
+        const wasEdit = !!editingLoadId;
+        if (wasEdit) {
+          await api('/loads/' + encodeURIComponent(editingLoadId), { method: 'PATCH', body: common });
+        } else {
+          await api('/loads', { method: 'POST', body: { ...common, load_number } });
+        }
         closeBookModal();
-        showMsg('Load saved.');
+        showMsg(wasEdit ? 'Load updated.' : 'Load saved.');
         loadTab();
       } catch (e) {
         showMsg(e.message, true);

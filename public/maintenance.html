@@ -24,8 +24,19 @@
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-    .app{min-height:100vh;display:grid;grid-template-columns:280px 1fr}
-    .sidebar{background:#0f172a;color:#fff;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+    .app{min-height:100vh;display:grid;grid-template-columns:280px 1fr;transition:grid-template-columns .22s ease;position:relative}
+    .app.sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)}
+    .sidebar{background:#0f172a;color:#fff;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto;min-width:0;transition:opacity .15s ease,padding .15s ease}
+    .app.sidebar-collapsed .sidebar{opacity:0;pointer-events:none;padding:0;overflow:hidden;width:0;min-width:0}
+    .sidebar-brand-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px}
+    .sidebar-collapse-btn{flex-shrink:0;width:36px;height:36px;border-radius:10px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;cursor:pointer;font-size:18px;font-weight:700;line-height:1}
+    .sidebar-collapse-btn:hover{background:#334155}
+    .sidebar-expand-fab{
+      display:none;position:fixed;left:10px;top:10px;z-index:2500;width:42px;height:42px;border-radius:12px;
+      border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);cursor:pointer;font-size:22px;font-weight:700;
+      align-items:center;justify-content:center;color:var(--blue)
+    }
+    .app.sidebar-collapsed .sidebar-expand-fab{display:flex}
     .brand{font-size:22px;font-weight:700;margin-bottom:18px}
     .brand-sub{font-size:12px;color:#cbd5e1;margin-bottom:18px}
     .nav-title{font-size:11px;letter-spacing:.08em;color:#94a3b8;text-transform:uppercase;margin:16px 0 8px}
@@ -146,6 +157,21 @@
     #erpTrackingMap{height:min(560px,calc(100vh - 220px));width:100%;border-radius:12px;border:1px solid #e8eef8}
     .safety-table-wrap{overflow:auto;max-height:min(640px,72vh);border:1px solid #edf1f7;border-radius:12px;background:#fff}
     .safety-table-wrap table{min-width:900px;font-size:12px}
+    .safety-active-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+    @media (max-width:900px){.safety-active-grid{grid-template-columns:1fr}}
+    .shop-col-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .shop-col-add{
+      flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;
+      font-size:20px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--blue);padding:0
+    }
+    .shop-col-add:hover{background:var(--blueSoft)}
+    #maintenanceSplit.unit-list-collapsed{grid-template-columns:52px minmax(0,1fr)!important}
+    #maintenanceSplit.unit-list-collapsed .unit-list-scroll{display:none!important}
+    #maintenanceSplit.unit-list-collapsed .unit-list-panel .search-row{display:none!important}
+    #maintenanceSplit.unit-list-collapsed .unit-list-panel .panel-head{flex-direction:column;align-items:center;padding:10px 6px;gap:10px}
+    #maintenanceSplit.unit-list-collapsed .unit-list-panel .panel-title{
+      writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;letter-spacing:.06em;white-space:nowrap;max-height:220px;margin:0
+    }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
@@ -172,10 +198,16 @@
   <datalist id="paymentMethodOptions"></datalist>
   <datalist id="qboBankAccountOptions"></datalist>
 
-  <div class="app">
+  <div class="app" id="erpApp">
+    <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show menu">»</button>
     <aside class="sidebar">
-      <div class="brand">IH35 ERP</div>
-      <div class="brand-sub">Dispatch · Fuel · Maintenance · Tracking · Accounting</div>
+      <div class="sidebar-brand-row">
+        <div>
+          <div class="brand">IH35 ERP</div>
+          <div class="brand-sub">Dispatch · Fuel · Maintenance · Tracking · Accounting</div>
+        </div>
+        <button type="button" class="sidebar-collapse-btn" onclick="toggleErpSidebar(true)" title="Hide menu">«</button>
+      </div>
 
       <div class="nav-title">Main</div>
       <button class="nav-btn active" data-section="dashboard" onclick="openSection('dashboard', this)">Dashboard</button>
@@ -262,6 +294,7 @@
       <section id="section-safety" class="section">
         <div class="subtabs" style="margin-bottom:12px">
           <button type="button" class="subtab active" onclick="openSafetyTab('safe-hos', this)">HOS clocks</button>
+          <button type="button" class="subtab" onclick="openSafetyTab('safe-active', this)">Active / in service</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-assign', this)">Assignments</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-fleet', this)">Fleet snapshot</button>
         </div>
@@ -287,6 +320,37 @@
               </thead>
               <tbody id="safetyHosBody"></tbody>
             </table>
+          </div>
+        </div>
+        <div id="safe-active" class="tracking-sub hidden">
+          <p class="mini-note" style="margin:0 0 10px">
+            <strong>Active</strong> = on duty (not off duty or sleeper). <strong>In service now</strong> = driving, on duty, or yard move (from Samsara HOS clocks).
+          </p>
+          <div class="safety-active-grid">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                <span class="panel-title" style="font-size:14px;margin:0">Active drivers</span>
+                <span class="mini-note" id="safetyActiveMeta"></span>
+              </div>
+              <div class="safety-table-wrap" style="max-height:min(520px,60vh)">
+                <table>
+                  <thead><tr><th>Driver</th><th>Duty</th><th>Vehicle</th></tr></thead>
+                  <tbody id="safetyActiveBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                <span class="panel-title" style="font-size:14px;margin:0">In service now</span>
+                <span class="mini-note" id="safetyInServiceMeta"></span>
+              </div>
+              <div class="safety-table-wrap" style="max-height:min(520px,60vh)">
+                <table>
+                  <thead><tr><th>Driver</th><th>Duty</th><th>Vehicle</th></tr></thead>
+                  <tbody id="safetyInServiceBody"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
         <div id="safe-assign" class="tracking-sub hidden">
@@ -316,22 +380,31 @@
               · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
             </p>
             <div class="shop-action-row">
-              <button type="button" onclick="startMaintFlow('service-internal')">New service</button>
-              <button type="button" onclick="startMaintFlow('service-external')">New external service</button>
-              <button type="button" onclick="startMaintFlow('service-road')">New road service</button>
-              <button type="button" onclick="startMaintFlow('purchase')">New purchase</button>
+              <button type="button" onclick="startMaintFlow('service-internal')">Internal Shop</button>
+              <button type="button" onclick="startMaintFlow('service-external')">External Service</button>
+              <button type="button" onclick="startMaintFlow('service-road')">Road Service</button>
+              <button type="button" onclick="startMaintFlow('purchase')">Purchase</button>
             </div>
             <div class="shop-board-grid">
               <div class="shop-col">
-                <div class="shop-col-head">Internal mechanic shop</div>
+                <div class="shop-col-head shop-col-head-row">
+                  <span>Internal Shop</span>
+                  <button type="button" class="shop-col-add" title="New internal shop maintenance" onclick="event.stopPropagation();startMaintFlow('service-internal')">+</button>
+                </div>
                 <div class="shop-col-body" id="shopInternalBody"></div>
               </div>
               <div class="shop-col">
-                <div class="shop-col-head">External</div>
+                <div class="shop-col-head shop-col-head-row">
+                  <span>External Service</span>
+                  <button type="button" class="shop-col-add" title="New external service" onclick="event.stopPropagation();startMaintFlow('service-external')">+</button>
+                </div>
                 <div class="shop-col-body" id="shopExternalBody"></div>
               </div>
               <div class="shop-col">
-                <div class="shop-col-head">Out of service</div>
+                <div class="shop-col-head shop-col-head-row">
+                  <span>Out of service</span>
+                  <button type="button" class="shop-col-add" title="New maintenance (e.g. return to service)" onclick="event.stopPropagation();startMaintFlow('service-internal')">+</button>
+                </div>
                 <div class="shop-col-body" id="shopOosBody"></div>
               </div>
             </div>
@@ -352,15 +425,18 @@
           </div>
         </div>
 
-        <div class="split" style="margin-top:12px;">
-          <div class="panel">
-            <div class="panel-head"><div class="panel-title" id="assetCategoryTitle">Trucks</div></div>
+        <div class="split" id="maintenanceSplit" style="margin-top:12px;">
+          <div class="panel unit-list-panel">
+            <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <div class="panel-title" id="assetCategoryTitle">Trucks</div>
+              <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()">Minimize list</button>
+            </div>
             <div class="panel-body">
-              <div class="search-row" style="margin-bottom:10px;">
+              <div class="search-row unit-list-scroll" style="margin-bottom:10px;">
                 <input id="maintenanceUnitSearch" list="unitOptions" placeholder="Type vehicle / unit" oninput="renderMaintenanceUnitList()">
                 <input id="maintenanceServiceFilter" list="serviceOptions" placeholder="Type service filter" oninput="renderMaintenanceTable()">
               </div>
-              <div class="list" id="maintenanceUnitList"></div>
+              <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
             </div>
           </div>
 
@@ -489,10 +565,10 @@
                   <div id="repairFields" class="hidden">
                     <select id="repairLocationTypeInput">
                       <option value="">Repair type</option>
-                      <option value="in-house">In-house mechanic shop</option>
-                      <option value="external">External mechanic shop</option>
+                      <option value="in-house">Internal Shop</option>
+                      <option value="external">External Service</option>
                       <option value="over-the-road">Over the road</option>
-                      <option value="road-service">Road service</option>
+                      <option value="road-service">Road Service</option>
                     </select>
                   </div>
 
@@ -926,6 +1002,53 @@
     let trackingMap = null;
     let trackingMarkersLayer = null;
 
+    function toggleErpSidebar(collapse) {
+      const app = document.getElementById('erpApp');
+      if (!app) return;
+      if (collapse) {
+        app.classList.add('sidebar-collapsed');
+        try {
+          localStorage.setItem('erpSidebarCollapsed', '1');
+        } catch (_) {}
+      } else {
+        app.classList.remove('sidebar-collapsed');
+        try {
+          localStorage.setItem('erpSidebarCollapsed', '0');
+        } catch (_) {}
+      }
+    }
+
+    function loadErpSidebarPreference() {
+      try {
+        if (localStorage.getItem('erpSidebarCollapsed') === '1') {
+          document.getElementById('erpApp')?.classList.add('sidebar-collapsed');
+        }
+      } catch (_) {}
+    }
+
+    function toggleMaintenanceUnitList() {
+      const sp = document.getElementById('maintenanceSplit');
+      const btn = document.getElementById('unitListToggleBtn');
+      if (!sp) return;
+      sp.classList.toggle('unit-list-collapsed');
+      const c = sp.classList.contains('unit-list-collapsed');
+      if (btn) btn.textContent = c ? 'Expand list' : 'Minimize list';
+      try {
+        localStorage.setItem('erpUnitListCollapsed', c ? '1' : '0');
+      } catch (_) {}
+    }
+
+    function loadUnitListPreference() {
+      try {
+        if (localStorage.getItem('erpUnitListCollapsed') === '1') {
+          const sp = document.getElementById('maintenanceSplit');
+          const btn = document.getElementById('unitListToggleBtn');
+          sp?.classList.add('unit-list-collapsed');
+          if (btn) btn.textContent = 'Expand list';
+        }
+      } catch (_) {}
+    }
+
     async function j(url, options = {}) {
       const r = await fetch(url, options);
       const text = await r.text();
@@ -1295,7 +1418,7 @@
         const sub = document.querySelector('.subtab[onclick*="acct-transactions"]');
         if (sub) openAccountingTab('acct-transactions', sub);
         const memo = document.getElementById('apMemo');
-        if (memo && !memo.value.trim()) memo.value = 'Internal shop parts / supplies';
+        if (memo && !memo.value.trim()) memo.value = 'Internal Shop parts / supplies';
         setTimeout(() => document.getElementById('apAssetUnit')?.focus(), 120);
         return;
       }
@@ -1352,14 +1475,14 @@
             .slice(0, 30)
             .map(fmtWo)
             .join('')
-        : '<div class="mini-note">No in-house work orders yet.</div>';
+        : '<div class="mini-note">No Internal Shop work orders yet.</div>';
 
       elE.innerHTML = external.length
         ? external
             .slice(0, 30)
             .map(fmtWo)
             .join('')
-        : '<div class="mini-note">No external / road work orders yet.</div>';
+        : '<div class="mini-note">No External Service / road work orders yet.</div>';
 
       const recs = (erp.records || []).filter(r => {
         const st = String(r.serviceType || '').toLowerCase();
@@ -1961,6 +2084,49 @@
       return { driver, dutyType, vehicle, dr, br, sr, cr, vioText };
     }
 
+    function dutyNorm(s) {
+      return String(s || '')
+        .replace(/[\s_-]/g, '')
+        .toLowerCase();
+    }
+
+    function isOffDutyOrSleeper(dutyType) {
+      const x = dutyNorm(dutyType);
+      return x === 'offduty' || x === 'sleeperberth' || x === 'sleeper';
+    }
+
+    function isInServiceDuty(dutyType) {
+      const x = dutyNorm(dutyType);
+      return (
+        x === 'driving' ||
+        x === 'onduty' ||
+        x === 'yardmove' ||
+        x === 'waitingtime'
+      );
+    }
+
+    function renderSafetyActivePanels() {
+      const tbA = document.getElementById('safetyActiveBody');
+      const tbI = document.getElementById('safetyInServiceBody');
+      if (!tbA || !tbI) return;
+      const raw = (board.hos || []).map(normalizeHosClock);
+      const active = raw.filter(r => r.dutyType && !isOffDutyOrSleeper(r.dutyType));
+      const inService = raw.filter(r => isInServiceDuty(r.dutyType));
+      const fmt = rows =>
+        rows
+          .map(
+            r =>
+              `<tr><td>${escapeHtml(r.driver)}</td><td>${escapeHtml(r.dutyType)}</td><td>${escapeHtml(r.vehicle)}</td></tr>`
+          )
+          .join('') || '<tr><td colspan="3" class="mini-note" style="padding:12px">None</td></tr>';
+      tbA.innerHTML = fmt(active);
+      tbI.innerHTML = fmt(inService);
+      const ma = document.getElementById('safetyActiveMeta');
+      const mi = document.getElementById('safetyInServiceMeta');
+      if (ma) ma.textContent = `${active.length} active`;
+      if (mi) mi.textContent = `${inService.length} in service`;
+    }
+
     function renderSafetyHos() {
       const inp = document.getElementById('safetySearch');
       const q = (inp?.value || '').trim().toLowerCase();
@@ -2017,6 +2183,7 @@
       renderSafetyHos();
       renderSafetyAssignments();
       renderSafetyFleet();
+      renderSafetyActivePanels();
     }
 
     function openSafetyTab(id, btn) {
@@ -2025,6 +2192,7 @@
       const target = document.getElementById(id);
       if (target) target.classList.remove('hidden');
       if (btn) btn.classList.add('active');
+      if (id === 'safe-active') renderSafetyActivePanels();
     }
 
     function renderTrackingAssetsTable() {
@@ -2470,6 +2638,8 @@
       downloadCsv(`maintenance_expense_transactions.csv`, rows);
     }
 
+    loadErpSidebarPreference();
+    loadUnitListPreference();
     loadAll();
     setInterval(loadAll, 120000);
     if (document.getElementById('woLines') && !document.getElementById('woLines').children.length) addWoLine();
