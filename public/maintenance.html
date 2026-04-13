@@ -208,11 +208,8 @@
   <datalist id="paymentMethodOptions"></datalist>
   <datalist id="qboBankAccountOptions"></datalist>
   <datalist id="loadNumberOptions"></datalist>
-  <datalist id="recordTypeOptions"></datalist>
   <datalist id="repairLocationOptions"></datalist>
   <datalist id="accidentFaultOptions"></datalist>
-  <datalist id="linkedTxnTypeOptions"></datalist>
-  <datalist id="linkedDetailModeOptions"></datalist>
   <datalist id="tireConditionOptions"></datalist>
 
   <div class="app" id="erpApp">
@@ -528,8 +525,13 @@
 
                   <div>
                     <span class="qb-l">Record type</span>
-                    <input type="hidden" id="recordTypeValue" value="maintenance" />
-                    <input id="recordTypeSearch" class="qb-in maint-field" list="recordTypeOptions" value="Maintenance" autocomplete="off" placeholder="Type to filter…" oninput="resolveRecordTypeSearch()" onblur="resolveRecordTypeSearch()" />
+                    <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()">
+                      <option value="maintenance">Maintenance</option>
+                      <option value="tire">Tire</option>
+                      <option value="repair">Repair</option>
+                      <option value="accident">Accident</option>
+                      <option value="custom">Custom</option>
+                    </select>
                   </div>
 
                   <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service name" oninput="resolveServiceSearch()">
@@ -656,13 +658,17 @@
                       <div class="search-row">
                         <div>
                           <span class="qb-l">Txn type</span>
-                          <input type="hidden" id="linkedTxnType" value="expense" />
-                          <input id="linkedTxnTypeSearch" class="qb-in maint-field" list="linkedTxnTypeOptions" value="Expense" autocomplete="off" oninput="resolveLinkedTxnTypeSearch()" onblur="resolveLinkedTxnTypeSearch()" />
+                          <select id="linkedTxnTypeSelect" class="qb-in maint-field">
+                            <option value="expense">Expense</option>
+                            <option value="bill">Bill</option>
+                          </select>
                         </div>
                         <div>
                           <span class="qb-l">Line detail</span>
-                          <input type="hidden" id="linkedDetailMode" value="category" />
-                          <input id="linkedDetailModeSearch" class="qb-in maint-field" list="linkedDetailModeOptions" value="Category details" autocomplete="off" oninput="resolveLinkedDetailModeSearch()" onblur="resolveLinkedDetailModeSearch()" />
+                          <select id="linkedDetailModeSelect" class="qb-in maint-field" onchange="toggleLinkedDetailMode()">
+                            <option value="category">Category details</option>
+                            <option value="item">Item details</option>
+                          </select>
                         </div>
                       </div>
 
@@ -677,6 +683,12 @@
                         <input id="linkedDueDate" class="qb-in maint-field" type="date">
                       </div>
                       <input id="linkedPaymentMethodId" type="hidden">
+
+                      <div>
+                        <span class="qb-l">Pay from account (QuickBooks)</span>
+                        <input id="linkedBankAccountSearch" class="qb-in maint-field" list="qboBankAccountOptions" placeholder="Checking / credit card (expense / purchase)" autocomplete="off" oninput="resolveLinkedBankSearch()" onblur="resolveLinkedBankSearch()">
+                        <input id="linkedBankAccountQboId" type="hidden">
+                      </div>
 
                       <div id="linkedCategoryBlock">
                         <span class="qb-l">Expense category (QBO)</span>
@@ -1085,13 +1097,6 @@
     let selectedTrackingVehicle = '';
     let tmsLoadsCache = [];
 
-    const RECORD_TYPE_DEFS = [
-      { code: 'maintenance', label: 'Maintenance' },
-      { code: 'tire', label: 'Tire' },
-      { code: 'repair', label: 'Repair' },
-      { code: 'accident', label: 'Accident' },
-      { code: 'custom', label: 'Custom' }
-    ];
     const REPAIR_LOCATION_DEFS = [
       { code: 'in-house', label: 'Internal Shop' },
       { code: 'external', label: 'External Service' },
@@ -1120,12 +1125,6 @@
     }
 
     function fillStaticMaintDatalists() {
-      const rt = document.getElementById('recordTypeOptions');
-      if (rt) {
-        rt.innerHTML = RECORD_TYPE_DEFS.map(
-          d => `<option value="${escapeHtml(d.label)}"></option>`
-        ).join('');
-      }
       const rl = document.getElementById('repairLocationOptions');
       if (rl) {
         rl.innerHTML = REPAIR_LOCATION_DEFS.map(
@@ -1136,13 +1135,6 @@
       if (af) {
         af.innerHTML =
           '<option value="At fault"></option><option value="Not at fault"></option>';
-      }
-      const lt = document.getElementById('linkedTxnTypeOptions');
-      if (lt) lt.innerHTML = '<option value="Expense"></option><option value="Bill"></option>';
-      const dm = document.getElementById('linkedDetailModeOptions');
-      if (dm) {
-        dm.innerHTML =
-          '<option value="Category details"></option><option value="Item details"></option>';
       }
       const tc = document.getElementById('tireConditionOptions');
       if (tc) tc.innerHTML = '<option value="New"></option><option value="Used"></option><option value="Recap"></option>';
@@ -1256,6 +1248,7 @@
       );
       styleFieldToLongest('linkedItemSearch', cacheItems().map(i => i.name));
       styleFieldToLongest('linkedAccountSearch', cacheAccountsForLinked().map(a => a.name));
+      styleFieldToLongest('linkedBankAccountSearch', cacheBankAccounts().map(b => b.name));
       styleFieldToLongest('vendorInput', cacheVendors().map(v => v.name || v.companyName));
       styleFieldToLongest('linkedVendorSearch', cacheVendors().map(v => v.name || v.companyName));
       styleFieldToLongest(
@@ -1264,7 +1257,7 @@
           ? tmsLoadsCache.map(r => String(r.load_number))
           : ['Load12345']
       );
-      ['recordTypeSearch', 'repairLocationSearch', 'linkedTxnTypeSearch', 'linkedDetailModeSearch'].forEach(
+      ['recordTypeSelect', 'repairLocationSearch', 'linkedTxnTypeSelect', 'linkedDetailModeSelect'].forEach(
         id => {
           const el = document.getElementById(id);
           if (el) el.style.width = 'min(100%, 28ch)';
@@ -1435,6 +1428,10 @@
       document.getElementById(id).classList.remove('hidden');
       document.querySelectorAll('#section-accounting .subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
+      if (id === 'acct-transactions') {
+        const wl = document.getElementById('woLines');
+        if (wl && !wl.children.length) addWoLine();
+      }
       if (id === 'acct-settlement') {
         loadSettlementIndex();
         loadDriverPaySettlements();
@@ -1732,15 +1729,13 @@
 
       openSectionByName('maintenance');
       if (flow === 'service-oos') {
-        document.getElementById('recordTypeValue').value = 'maintenance';
-        document.getElementById('recordTypeSearch').value = 'Maintenance';
+        document.getElementById('recordTypeSelect').value = 'maintenance';
         toggleRecordFields();
         document.getElementById('serviceSearchInput').value = 'Out of service';
         document.getElementById('serviceTypeInput').value = 'Out of service';
         setRepairLocationCode('');
       } else {
-        document.getElementById('recordTypeValue').value = 'repair';
-        document.getElementById('recordTypeSearch').value = 'Repair';
+        document.getElementById('recordTypeSelect').value = 'repair';
         toggleRecordFields();
         if (flow === 'service-internal') setRepairLocationCode('in-house');
         else if (flow === 'service-external') setRepairLocationCode('external');
@@ -1877,13 +1872,6 @@
       document.getElementById('serviceTypeInput').value = document.getElementById('serviceSearchInput').value.trim();
     }
 
-    function resolveRecordTypeSearch() {
-      const lab = document.getElementById('recordTypeSearch').value.trim();
-      const hit = RECORD_TYPE_DEFS.find(d => d.label.toLowerCase() === lab.toLowerCase());
-      if (hit) document.getElementById('recordTypeValue').value = hit.code;
-      toggleRecordFields();
-    }
-
     function resolveRepairLocationSearch() {
       const lab = document.getElementById('repairLocationSearch').value.trim();
       const hit = REPAIR_LOCATION_DEFS.find(d => d.label.toLowerCase() === lab.toLowerCase());
@@ -1896,20 +1884,6 @@
       if (lab === 'at fault') v = 'at-fault';
       else if (lab === 'not at fault') v = 'not-at-fault';
       document.getElementById('accidentAtFaultValue').value = v;
-    }
-
-    function resolveLinkedTxnTypeSearch() {
-      const lab = document.getElementById('linkedTxnTypeSearch').value.trim().toLowerCase();
-      const hid = document.getElementById('linkedTxnType');
-      if (lab === 'bill') hid.value = 'bill';
-      else hid.value = 'expense';
-    }
-
-    function resolveLinkedDetailModeSearch() {
-      const lab = document.getElementById('linkedDetailModeSearch').value.trim().toLowerCase();
-      const isItem = lab.includes('item');
-      document.getElementById('linkedDetailMode').value = isItem ? 'item' : 'category';
-      toggleLinkedDetailMode();
     }
 
     function resolveTireConditionSearch() {
@@ -1966,8 +1940,16 @@
       document.getElementById('linkedPaymentMethodId').value = match ? match.id : '';
     }
 
+    function resolveLinkedBankSearch() {
+      const elIn = document.getElementById('linkedBankAccountSearch');
+      const elId = document.getElementById('linkedBankAccountQboId');
+      if (!elIn || !elId) return;
+      const match = findBestNameMatch(cacheBankAccounts(), elIn.value);
+      elId.value = match ? match.qboId : '';
+    }
+
     function toggleRecordFields() {
-      const type = document.getElementById('recordTypeValue').value;
+      const type = document.getElementById('recordTypeSelect').value;
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
       document.getElementById('repairFields').classList.toggle('hidden', type !== 'repair');
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
@@ -2037,7 +2019,7 @@
     }
 
     function toggleLinkedDetailMode() {
-      const mode = document.getElementById('linkedDetailMode').value;
+      const mode = document.getElementById('linkedDetailModeSelect').value;
       document.getElementById('linkedCategoryBlock').classList.toggle('hidden', mode !== 'category');
       document.getElementById('linkedItemBlock').classList.toggle('hidden', mode !== 'item');
     }
@@ -2206,18 +2188,16 @@
     async function saveRecord() {
       if (!selectedUnit) return;
 
-      resolveRecordTypeSearch();
       resolveRepairLocationSearch();
       resolveAccidentFaultSearch();
       resolveTireConditionSearch();
-      resolveLinkedTxnTypeSearch();
-      resolveLinkedDetailModeSearch();
       resolveLinkedVendorSearch();
       resolveLinkedPaymentMethodSearch();
+      resolveLinkedBankSearch();
       resolveLinkedAccountSearch();
       resolveLinkedItemSearch();
 
-      const recordType = document.getElementById('recordTypeValue').value;
+      const recordType = document.getElementById('recordTypeSelect').value;
       const serviceType =
         recordType === 'custom'
           ? (document.getElementById('customServiceTypeInput').value || 'Custom Service')
@@ -2258,10 +2238,11 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              txnType: document.getElementById('linkedTxnType').value,
-              detailMode: document.getElementById('linkedDetailMode').value,
+              txnType: document.getElementById('linkedTxnTypeSelect').value,
+              detailMode: document.getElementById('linkedDetailModeSelect').value,
               qboVendorId: linkedVendorId,
               paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
+              qboBankAccountId: document.getElementById('linkedBankAccountQboId').value,
               qboAccountId: document.getElementById('linkedAccountQboId').value,
               qboItemId: document.getElementById('linkedItemQboId').value,
               qty: document.getElementById('linkedQty').value,
@@ -2282,7 +2263,7 @@
         'customServiceTypeInput','tireBrandInput','tireDotInput','installMileageInput',
         'removeMileageInput','expectedTireLifeMilesInput','accidentLocationInput',
         'accidentReportNumberInput','linkedDocNumber','linkedVendorSearch','linkedDueDate',
-        'linkedPaymentMethodSearch','linkedAccountSearch','linkedItemSearch','tirePositionText','recordLoadNumberInput'
+        'linkedPaymentMethodSearch','linkedBankAccountSearch','linkedAccountSearch','linkedItemSearch','tirePositionText','recordLoadNumberInput'
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
@@ -2294,17 +2275,15 @@
       document.getElementById('repairLocationTypeInput').value = '';
       document.getElementById('accidentAtFaultSearch').value = '';
       document.getElementById('accidentAtFaultValue').value = '';
-      document.getElementById('recordTypeSearch').value = 'Maintenance';
-      document.getElementById('recordTypeValue').value = 'maintenance';
-      document.getElementById('linkedTxnTypeSearch').value = 'Expense';
-      document.getElementById('linkedTxnType').value = 'expense';
-      document.getElementById('linkedDetailModeSearch').value = 'Category details';
-      document.getElementById('linkedDetailMode').value = 'category';
+      document.getElementById('recordTypeSelect').value = 'maintenance';
+      document.getElementById('linkedTxnTypeSelect').value = 'expense';
+      document.getElementById('linkedDetailModeSelect').value = 'category';
       toggleLinkedDetailMode();
       const lnh = document.getElementById('recordLoadNumberHint');
       if (lnh) lnh.textContent = '';
       document.getElementById('linkedVendorQboId').value = '';
       document.getElementById('linkedPaymentMethodId').value = '';
+      document.getElementById('linkedBankAccountQboId').value = '';
       document.getElementById('linkedAccountQboId').value = '';
       document.getElementById('linkedItemQboId').value = '';
       document.getElementById('linkedQty').value = 1;

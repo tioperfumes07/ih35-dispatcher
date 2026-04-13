@@ -729,13 +729,17 @@ function readQboCatalogPayload() {
 }
 
 async function qboSyncMasterData() {
-  const [vendorsData, itemsData, accountsData, customersData, bankData, classData] = await Promise.all([
+  const [vendorsData, itemsData, accountsData, customersData, bankData, cardData, classData] = await Promise.all([
     qboQuery('select * from Vendor maxresults 1000'),
     qboQuery('select * from Item maxresults 1000'),
     qboQuery('select * from Account maxresults 1000'),
     qboQuery('select * from Customer maxresults 1000'),
     qboQuery("select * from Account where AccountType = 'Bank' maxresults 200").catch(err => {
       logError('qboSync bank accounts', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery("select * from Account where AccountType = 'Credit Card' maxresults 200").catch(err => {
+      logError('qboSync credit card accounts', err);
       return { QueryResponse: {} };
     }),
     qboQuery('select * from Class maxresults 500').catch(err => {
@@ -783,13 +787,19 @@ async function qboSyncMasterData() {
     active: c.Active !== false
   }));
 
-  const accountsBank = (bankData?.QueryResponse?.Account || [])
-    .filter(a => a.Active !== false)
-    .map(a => ({
+  const paymentAccountRows = [...(bankData?.QueryResponse?.Account || []), ...(cardData?.QueryResponse?.Account || [])];
+  const accountsBankById = new Map();
+  for (const a of paymentAccountRows) {
+    if (a.Active === false || !a.Id) continue;
+    accountsBankById.set(String(a.Id), {
       qboId: a.Id,
       name: a.Name || '',
       accountType: a.AccountType || ''
-    }));
+    });
+  }
+  const accountsBank = [...accountsBankById.values()].sort((x, y) =>
+    String(x.name || '').localeCompare(String(y.name || ''))
+  );
 
   const classes = (classData?.QueryResponse?.Class || [])
     .filter(c => c.Active !== false)
