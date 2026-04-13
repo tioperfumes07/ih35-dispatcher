@@ -1616,6 +1616,7 @@ app.get('/api/settlement/by-load/:loadNumber', async (req, res) => {
         ? {
             load: tms.load,
             stops: tms.stops,
+            documents: tms.documents || [],
             revenuePlanned: revenueAmount,
             note:
               revenueAmount != null && Number.isFinite(revenueAmount)

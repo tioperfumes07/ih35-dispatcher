@@ -1,8 +1,33 @@
+import fs from 'fs';
+import path from 'path';
 import { Router } from 'express';
+import multer from 'multer';
 import { dbQuery, getPool } from '../lib/db.mjs';
-import { readQboCustomerLookup } from '../lib/erp-data.mjs';
+import { readQboCustomerLookup, readQboVendorLookup, ERP_DATA_DIR } from '../lib/erp-data.mjs';
 
 const router = Router();
+
+const LOAD_DOCS_REL = 'load_documents';
+const LOAD_DOC_TYPES = new Set(['rate_confirmation', 'delivery', 'other']);
+
+function loadDocumentsDiskRoot() {
+  return path.join(ERP_DATA_DIR, LOAD_DOCS_REL);
+}
+
+const loadDocUpload = multer({
+  storage: multer.diskStorage({
+    destination(req, _file, cb) {
+      const dir = path.join(loadDocumentsDiskRoot(), req.params.id);
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename(_req, file, cb) {
+      const base = path.basename(file.originalname || 'file').replace(/[^\w.\-]+/g, '_');
+      cb(null, `${Date.now()}_${base || 'upload'}`);
+    }
+  }),
+  limits: { fileSize: 45 * 1024 * 1024 }
+});
 
 function uuidOrNull(v) {
   if (v == null || v === '') return null;
@@ -173,9 +198,10 @@ router.post('/trailers', async (req, res) => {
 const loadSelect = `
   SELECT l.*,
     c.name AS customer_join_name,
-    d.name AS driver_name,
+    d.name AS driver_join_name,
     t.unit_code AS truck_code,
     tr.unit_code AS trailer_code,
+    (SELECT COUNT(*)::int FROM load_documents ld WHERE ld.load_id = l.id) AS document_count,
     (SELECT s.location_name FROM load_stops s WHERE s.load_id = l.id ORDER BY s.sequence_order ASC LIMIT 1) AS origin_name,
     (SELECT s.address FROM load_stops s WHERE s.load_id = l.id ORDER BY s.sequence_order ASC LIMIT 1) AS origin_address,
     (SELECT s.location_name FROM load_stops s WHERE s.load_id = l.id ORDER BY s.sequence_order DESC LIMIT 1) AS dest_name,
@@ -201,10 +227,26 @@ function enrichLoadRow(row) {
       ? String(row.qbo_customer_name).trim()
       : '';
   const customer_name = stored || qboName || row.customer_join_name || '';
-  const { customer_join_name, ...rest } = row;
+
+  const vendorMap = readQboVendorLookup();
+  const dvId = row.qbo_driver_vendor_id != null ? String(row.qbo_driver_vendor_id) : '';
+  const dvStored =
+    row.qbo_driver_vendor_name != null && String(row.qbo_driver_vendor_name).trim()
+      ? String(row.qbo_driver_vendor_name).trim()
+      : '';
+  const fromVendor = dvId ? vendorMap.get(dvId) : null;
+  const vendorLabel =
+    dvStored ||
+    (fromVendor && String(fromVendor.name || fromVendor.companyName || '').trim()) ||
+    '';
+  const driverJoin = row.driver_join_name != null ? String(row.driver_join_name).trim() : '';
+  const driver_name = vendorLabel || driverJoin || '';
+
+  const { customer_join_name, driver_join_name, ...rest } = row;
   return {
     ...rest,
     customer_name,
+    driver_name,
     invoice_number: rest.load_number || null
   };
 }
@@ -224,7 +266,12 @@ export async function fetchLoadSettlementContextByNumber(loadNumberRaw) {
        FROM load_stops WHERE load_id = $1::uuid ORDER BY sequence_order`,
       [load.id]
     );
-    return { load, stops: stopsRes.rows };
+    const docsRes = await dbQuery(
+      `SELECT id, doc_type, original_name, mime_type, byte_size, created_at
+       FROM load_documents WHERE load_id = $1::uuid ORDER BY created_at DESC`,
+      [load.id]
+    );
+    return { load, stops: stopsRes.rows, documents: docsRes.rows };
   } catch {
     return null;
   }
@@ -262,8 +309,85 @@ router.get('/loads/by-number/:loadNumber', async (req, res) => {
     }
     const ctx = await fetchLoadSettlementContextByNumber(raw);
     if (!ctx) return res.status(404).json({ ok: false, error: 'Load not found' });
-    res.json({ ok: true, data: { ...ctx.load, stops: ctx.stops } });
+    res.json({ ok: true, data: { ...ctx.load, stops: ctx.stops, documents: ctx.documents || [] } });
   } catch (e) {
+    if (dbUnavailable(res, e)) return;
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.get('/loads/:id/documents', async (req, res) => {
+  try {
+    const loadId = req.params.id;
+    const check = await dbQuery('SELECT id FROM loads WHERE id = $1::uuid', [loadId]);
+    if (!check.rows.length) return res.status(404).json({ ok: false, error: 'Load not found' });
+    const { rows } = await dbQuery(
+      `SELECT id, doc_type, original_name, mime_type, byte_size, created_at
+       FROM load_documents WHERE load_id = $1::uuid ORDER BY created_at DESC`,
+      [loadId]
+    );
+    res.json({ ok: true, data: rows });
+  } catch (e) {
+    if (dbUnavailable(res, e)) return;
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.get('/loads/:id/documents/:docId/download', async (req, res) => {
+  try {
+    const { id: loadId, docId } = req.params;
+    const { rows } = await dbQuery(
+      'SELECT stored_path, original_name, mime_type FROM load_documents WHERE id = $1::uuid AND load_id = $2::uuid',
+      [docId, loadId]
+    );
+    if (!rows.length) return res.status(404).json({ ok: false, error: 'Document not found' });
+    const abs = path.join(ERP_DATA_DIR, rows[0].stored_path);
+    if (!fs.existsSync(abs)) return res.status(404).json({ ok: false, error: 'File missing on server' });
+    const downloadName = rows[0].original_name || 'document';
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(downloadName)}"`);
+    if (rows[0].mime_type) res.setHeader('Content-Type', rows[0].mime_type);
+    res.sendFile(path.resolve(abs));
+  } catch (e) {
+    if (dbUnavailable(res, e)) return;
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.post('/loads/:id/documents', loadDocUpload.single('file'), async (req, res) => {
+  try {
+    const loadId = req.params.id;
+    if (!req.file) return res.status(400).json({ ok: false, error: 'file is required (multipart field name: file)' });
+    const check = await dbQuery('SELECT id FROM loads WHERE id = $1::uuid', [loadId]);
+    if (!check.rows.length) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (_) {}
+      return res.status(404).json({ ok: false, error: 'Load not found' });
+    }
+    const doc_type = String(req.body?.doc_type || 'other').trim() || 'other';
+    if (!LOAD_DOC_TYPES.has(doc_type)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (_) {}
+      return res.status(400).json({ ok: false, error: 'doc_type must be rate_confirmation, delivery, or other' });
+    }
+    const relPath = path.join(LOAD_DOCS_REL, loadId, path.basename(req.file.path));
+    const original_name = String(req.file.originalname || path.basename(req.file.path));
+    const mime_type = req.file.mimetype || null;
+    const byte_size = typeof req.file.size === 'number' ? req.file.size : null;
+    const ins = await dbQuery(
+      `INSERT INTO load_documents (load_id, doc_type, original_name, stored_path, mime_type, byte_size)
+       VALUES ($1::uuid, $2, $3, $4, $5, $6)
+       RETURNING id, doc_type, original_name, mime_type, byte_size, created_at`,
+      [loadId, doc_type, original_name, relPath, mime_type, byte_size]
+    );
+    res.json({ ok: true, data: ins.rows[0] });
+  } catch (e) {
+    if (req.file?.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (_) {}
+    }
     if (dbUnavailable(res, e)) return;
     res.status(500).json({ ok: false, error: e.message });
   }
@@ -307,6 +431,11 @@ router.post('/loads', async (req, res) => {
   const pem = body.practical_empty_miles != null ? Number(body.practical_empty_miles) : 0;
   const notes = String(body.notes || '').trim() || null;
   const qbo_customer_id = qboIdOrNull(body.qbo_customer_id);
+  const qbo_driver_vendor_id = qboIdOrNull(body.qbo_driver_vendor_id);
+  const qbo_driver_vendor_name =
+    body.qbo_driver_vendor_name != null && String(body.qbo_driver_vendor_name).trim()
+      ? String(body.qbo_driver_vendor_name).trim()
+      : null;
   const revenue_amount = revenueOrNull(body.revenue_amount);
   const stops = Array.isArray(body.stops) ? body.stops : [];
 
@@ -317,8 +446,8 @@ router.post('/loads', async (req, res) => {
       `INSERT INTO loads (
         load_number, status, customer_id, driver_id, truck_id, trailer_id,
         dispatcher_name, start_date, end_date, practical_loaded_miles, practical_empty_miles, notes,
-        qbo_customer_id, revenue_amount
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        qbo_customer_id, revenue_amount, qbo_driver_vendor_id, qbo_driver_vendor_name
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       RETURNING id`,
       [
         load_number,
@@ -334,7 +463,9 @@ router.post('/loads', async (req, res) => {
         pem,
         notes,
         qbo_customer_id,
-        revenue_amount
+        revenue_amount,
+        qbo_driver_vendor_id,
+        qbo_driver_vendor_name
       ]
     );
     const loadId = ins.rows[0].id;
@@ -389,6 +520,8 @@ router.patch('/loads/:id', async (req, res) => {
       ['status', 'status'],
       ['customer_id', 'customer_id'],
       ['qbo_customer_id', 'qbo_customer_id'],
+      ['qbo_driver_vendor_id', 'qbo_driver_vendor_id'],
+      ['qbo_driver_vendor_name', 'qbo_driver_vendor_name'],
       ['driver_id', 'driver_id'],
       ['truck_id', 'truck_id'],
       ['trailer_id', 'trailer_id'],
@@ -403,7 +536,14 @@ router.patch('/loads/:id', async (req, res) => {
     for (const [key, col] of map) {
       if (b[key] !== undefined) {
         fields.push(`${col} = $${n++}`);
-        vals.push(key === 'revenue_amount' ? revenueOrNull(b[key]) : b[key]);
+        let v = b[key];
+        if (key === 'revenue_amount') v = revenueOrNull(b[key]);
+        else if (key === 'qbo_customer_id' || key === 'qbo_driver_vendor_id') v = qboIdOrNull(b[key]);
+        else if (key === 'qbo_driver_vendor_name') {
+          const s = b[key];
+          v = s != null && String(s).trim() ? String(s).trim() : null;
+        }
+        vals.push(v);
       }
     }
     if (!fields.length) return res.status(400).json({ ok: false, error: 'No fields to update' });

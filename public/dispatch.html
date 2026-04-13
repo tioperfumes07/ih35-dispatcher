@@ -147,6 +147,7 @@
           <th>Origin → Destination</th>
           <th>Miles (Ld / Em)</th>
           <th>Rev $</th>
+          <th>Docs</th>
           <th>QBO invoice</th>
         </tr>
       </thead>
@@ -174,20 +175,19 @@
             <select class="in" id="f_qbo_customer"></select>
             <p class="muted" style="margin:6px 0 0;font-size:12px">Customers, service items, and expense categories are loaded from QuickBooks. Use <strong>Sync QBO catalog</strong> after you change them in QBO.</p>
           </div>
-          <div class="row">
-            <label class="lbl">Driver</label>
-            <select class="in" id="f_driver"></select>
-          </div>
-          <div class="row">
-            <span class="lbl">Quick add driver</span>
-            <div style="display:flex;gap:8px">
-              <input class="in" id="f_new_driver" placeholder="Driver name" style="flex:1" />
-              <button type="button" class="btn btn-ghost" onclick="quickAddDriver()">Add</button>
+          <div class="row" style="grid-column:1/-1">
+            <label class="lbl">Driver (QuickBooks vendor)</label>
+            <input type="hidden" id="f_qbo_driver_vendor_id" />
+            <div class="ac-wrap">
+              <input class="in" id="f_driver_vendor" placeholder="Type vendor name…" autocomplete="off" />
+              <div class="ac-list" id="driver_vendor_ac"></div>
             </div>
+            <p class="muted" style="margin:6px 0 0;font-size:12px">The driver/carrier is a <strong>vendor</strong> in QuickBooks. Add vendors in QBO, then use <strong>Sync QBO catalog</strong>.</p>
           </div>
           <div class="row">
             <label class="lbl">Truck</label>
             <select class="in" id="f_truck"></select>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">QuickBooks <strong>Class</strong> on expenses should match this unit code (e.g. T172).</p>
           </div>
           <div class="row">
             <span class="lbl">Quick add truck</span>
@@ -249,17 +249,45 @@
     </div>
   </div>
 
+  <div id="docsModalBg" class="modal-bg" onclick="if(event.target===this)closeDocsModal()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:640px">
+      <h2 id="docsModalTitle">Load documents</h2>
+      <div class="modal-body">
+        <p class="muted" style="margin-top:0">Rate confirmations, delivery paperwork, BOLs, etc. Files stay with the load # (same as invoice #) for settlement.</p>
+        <div style="margin-bottom:14px">
+          <label class="lbl">Upload</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <input type="file" id="doc_file" />
+            <select class="in sm" id="doc_type" style="max-width:200px">
+              <option value="rate_confirmation">Rate confirmation</option>
+              <option value="delivery">Delivery / POD</option>
+              <option value="other">Other</option>
+            </select>
+            <button type="button" class="btn btn-primary" onclick="uploadLoadDoc()">Upload</button>
+          </div>
+        </div>
+        <ul id="loadDocsList" style="list-style:none;padding:0;margin:0"></ul>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeDocsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let currentTab = 'open';
     let metaStatuses = [];
     let qboCatalog = {
       connected: false,
       customers: [],
+      vendors: [],
       items: [],
       accounts: [],
       accountsExpense: [],
       refreshedAt: null
     };
+    let currentDocsLoadId = null;
+    let driverVendorAcBound = false;
 
     function qboItemOptionsHtml() {
       const items = (qboCatalog.items || []).filter(i => i.active !== false);
@@ -330,11 +358,12 @@
         return;
       }
       const nC = (qboCatalog.customers || []).length;
+      const nV = (qboCatalog.vendors || []).length;
       const nI = (qboCatalog.items || []).length;
       const t = qboCatalog.refreshedAt
         ? new Date(qboCatalog.refreshedAt).toLocaleString()
         : '—';
-      el.textContent = nC + ' customers · ' + nI + ' items · cache ' + t;
+      el.textContent = nC + ' customers · ' + nV + ' vendors · ' + nI + ' items · cache ' + t;
     }
 
     async function loadQboCatalog() {
@@ -344,10 +373,24 @@
         if (j.ok) {
           qboCatalog = j;
         } else {
-          qboCatalog = { connected: false, customers: [], items: [], accounts: [], accountsExpense: [] };
+          qboCatalog = {
+            connected: false,
+            customers: [],
+            vendors: [],
+            items: [],
+            accounts: [],
+            accountsExpense: []
+          };
         }
       } catch {
-        qboCatalog = { connected: false, customers: [], items: [], accounts: [], accountsExpense: [] };
+        qboCatalog = {
+          connected: false,
+          customers: [],
+          vendors: [],
+          items: [],
+          accounts: [],
+          accountsExpense: []
+        };
       }
       updateQboCatalogStatusLine();
       fillQboCustomerSelect();
@@ -406,7 +449,7 @@
     function renderRows(rows) {
       const tb = document.getElementById('tbody');
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="11" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="12" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
         return;
       }
       tb.innerHTML = rows.map(l => {
@@ -419,6 +462,15 @@
         const revNum = revRaw != null && revRaw !== '' ? Number(revRaw) : NaN;
         const revCell =
           Number.isFinite(revNum) ? escapeHtml(revNum.toFixed(2)) : '<span class="muted">—</span>';
+        const nDocs = l.document_count != null ? Number(l.document_count) : 0;
+        const docsBtn =
+          '<button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="openLoadDocs(' +
+          JSON.stringify(l.id) +
+          ',' +
+          JSON.stringify(l.load_number || '') +
+          ')">Docs' +
+          (nDocs > 0 ? ' (' + nDocs + ')' : '') +
+          '</button>';
         return '<tr>' +
           '<td><strong>' + escapeHtml(l.load_number) + '</strong></td>' +
           '<td class="muted">' + escapeHtml(inv) + '</td>' +
@@ -433,6 +485,7 @@
           '<td><div>' + escapeHtml(od) + '</div><div class="muted">' + escapeHtml(addr) + '</div></td>' +
           '<td>' + escapeHtml(String(l.practical_loaded_miles ?? '0')) + ' / ' + escapeHtml(String(l.practical_empty_miles ?? '0')) + '</td>' +
           '<td class="muted">' + revCell + '</td>' +
+          '<td>' + docsBtn + '</td>' +
           '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="createQboInvoiceForLoad(' +
           JSON.stringify(l.load_number) +
           ')">Create in QBO</button></td>' +
@@ -465,6 +518,175 @@
     function escapeHtml(s) {
       if (s == null) return '';
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function hideDriverVendorAc() {
+      const list = document.getElementById('driver_vendor_ac');
+      if (!list) return;
+      list.classList.remove('on');
+      list.innerHTML = '';
+    }
+
+    function bindDriverVendorAc() {
+      if (driverVendorAcBound) return;
+      driverVendorAcBound = true;
+      const inp = document.getElementById('f_driver_vendor');
+      const list = document.getElementById('driver_vendor_ac');
+      const hid = document.getElementById('f_qbo_driver_vendor_id');
+      if (!inp || !list || !hid) return;
+      let t = null;
+      inp.addEventListener('input', () => {
+        clearTimeout(t);
+        hid.value = '';
+        const q = inp.value.trim().toLowerCase();
+        if (q.length < 1) {
+          hideDriverVendorAc();
+          return;
+        }
+        t = setTimeout(() => {
+          const vendors = (qboCatalog.vendors || []).filter(v => v.active !== false);
+          const matches = vendors
+            .filter(v => {
+              const n = String(v.name || '').toLowerCase();
+              const c = String(v.companyName || '').toLowerCase();
+              return n.includes(q) || c.includes(q);
+            })
+            .slice(0, 15);
+          list.innerHTML = '';
+          if (!matches.length) {
+            hideDriverVendorAc();
+            return;
+          }
+          matches.forEach(v => {
+            const div = document.createElement('div');
+            div.className = 'ac-item';
+            const label = String(v.name || v.companyName || '').trim() || '(vendor)';
+            div.textContent = label;
+            div.addEventListener('mousedown', ev => {
+              ev.preventDefault();
+              inp.value = label;
+              hid.value = String(v.qboId);
+              hideDriverVendorAc();
+            });
+            list.appendChild(div);
+          });
+          list.classList.add('on');
+        }, 160);
+      });
+      inp.addEventListener('blur', () => setTimeout(() => hideDriverVendorAc(), 200));
+    }
+
+    function resolveQboDriverVendorForSave() {
+      const hid = document.getElementById('f_qbo_driver_vendor_id');
+      const inp = document.getElementById('f_driver_vendor');
+      const id = hid ? hid.value.trim() : '';
+      const typed = inp ? inp.value.trim() : '';
+      if (id) return { qbo_driver_vendor_id: id, qbo_driver_vendor_name: typed || null };
+      if (!typed) return { qbo_driver_vendor_id: null, qbo_driver_vendor_name: null };
+      const vendors = (qboCatalog.vendors || []).filter(v => v.active !== false);
+      const tl = typed.toLowerCase();
+      const exact = vendors.find(v => {
+        const n = String(v.name || '').toLowerCase();
+        const c = String(v.companyName || '').toLowerCase();
+        return n === tl || c === tl;
+      });
+      if (exact) {
+        return {
+          qbo_driver_vendor_id: String(exact.qboId),
+          qbo_driver_vendor_name: String(exact.name || exact.companyName || typed).trim() || null
+        };
+      }
+      return { qbo_driver_vendor_id: null, qbo_driver_vendor_name: typed };
+    }
+
+    function openLoadDocs(loadId, loadNumber) {
+      currentDocsLoadId = loadId;
+      const title = document.getElementById('docsModalTitle');
+      if (title) title.textContent = 'Documents — load ' + (loadNumber || '');
+      const fe = document.getElementById('doc_file');
+      if (fe) fe.value = '';
+      document.getElementById('docsModalBg').classList.add('on');
+      refreshLoadDocsList();
+    }
+
+    function closeDocsModal() {
+      document.getElementById('docsModalBg').classList.remove('on');
+      currentDocsLoadId = null;
+    }
+
+    async function refreshLoadDocsList() {
+      const ul = document.getElementById('loadDocsList');
+      if (!currentDocsLoadId || !ul) return;
+      ul.innerHTML = '<li class="muted">Loading…</li>';
+      try {
+        const r = await fetch('/api/tms/loads/' + encodeURIComponent(currentDocsLoadId) + '/documents', {
+          headers: { Accept: 'application/json' }
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.statusText);
+        const rows = j.data || [];
+        if (!rows.length) {
+          ul.innerHTML = '<li class="muted">No files yet.</li>';
+          return;
+        }
+        ul.innerHTML = rows
+          .map(doc => {
+            const href =
+              '/api/tms/loads/' +
+              encodeURIComponent(currentDocsLoadId) +
+              '/documents/' +
+              encodeURIComponent(doc.id) +
+              '/download';
+            const when = doc.created_at ? new Date(doc.created_at).toLocaleString() : '';
+            const sz =
+              doc.byte_size != null && Number(doc.byte_size) > 0
+                ? ' · ' + Math.round(Number(doc.byte_size) / 1024) + ' KB'
+                : '';
+            return (
+              '<li style="padding:10px 0;border-bottom:1px solid #eef0f5">' +
+              '<div><strong>' +
+              escapeHtml(doc.doc_type || 'other') +
+              '</strong> · ' +
+              escapeHtml(doc.original_name || '') +
+              '</div>' +
+              '<div class="muted" style="margin-top:4px">' +
+              escapeHtml(when) +
+              escapeHtml(sz) +
+              ' · <a class="link" href="' +
+              href +
+              '" target="_blank" rel="noopener">Download</a></div></li>'
+            );
+          })
+          .join('');
+      } catch (e) {
+        ul.innerHTML = '<li class="muted">Error: ' + escapeHtml(e.message || String(e)) + '</li>';
+      }
+    }
+
+    async function uploadLoadDoc() {
+      if (!currentDocsLoadId) return;
+      const fileEl = document.getElementById('doc_file');
+      const typeEl = document.getElementById('doc_type');
+      if (!fileEl || !fileEl.files || !fileEl.files[0]) {
+        alert('Choose a file first.');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('file', fileEl.files[0]);
+      fd.append('doc_type', typeEl ? typeEl.value : 'other');
+      try {
+        const r = await fetch('/api/tms/loads/' + encodeURIComponent(currentDocsLoadId) + '/documents', {
+          method: 'POST',
+          body: fd
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.statusText);
+        fileEl.value = '';
+        await refreshLoadDocsList();
+        loadTab();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
     }
 
     async function loadTab() {
@@ -510,12 +732,7 @@
 
     async function refreshLookups() {
       try {
-        const [d, t, tr] = await Promise.all([
-          api('/drivers'),
-          api('/trucks'),
-          api('/trailers')
-        ]);
-        fillSelect('f_driver', d.data, 'id', r => r.name);
+        const [t, tr] = await Promise.all([api('/trucks'), api('/trailers')]);
         fillSelect('f_truck', t.data, 'id', r => r.unit_code);
         fillSelect('f_trailer', tr.data, 'id', r => r.unit_code);
       } catch (e) {
@@ -680,7 +897,8 @@
       document.getElementById('f_plm').value = '';
       document.getElementById('f_pem').value = '';
       document.getElementById('f_revenue').value = '';
-      document.getElementById('f_new_driver').value = '';
+      document.getElementById('f_driver_vendor').value = '';
+      document.getElementById('f_qbo_driver_vendor_id').value = '';
       document.getElementById('f_new_truck').value = '';
       document.getElementById('f_new_trailer').value = '';
       document.getElementById('stops').innerHTML = '';
@@ -691,15 +909,6 @@
 
     function closeBookModal() {
       document.getElementById('modalBg').classList.remove('on');
-    }
-
-    async function quickAddDriver() {
-      const name = document.getElementById('f_new_driver').value.trim();
-      if (!name) return;
-      const j = await api('/drivers', { method: 'POST', body: { name } });
-      document.getElementById('f_new_driver').value = '';
-      await refreshLookups();
-      document.getElementById('f_driver').value = j.data.id;
     }
 
     async function quickAddTruck() {
@@ -733,13 +942,16 @@
         const label = opt ? String(opt.textContent || '').trim() : '';
         if (label && label !== '— None —') qbo_customer_name = label;
       }
+      const dv = resolveQboDriverVendorForSave();
       const body = {
         load_number,
         status: document.getElementById('f_status').value,
         customer_id: null,
         qbo_customer_id,
         qbo_customer_name,
-        driver_id: document.getElementById('f_driver').value || null,
+        driver_id: null,
+        qbo_driver_vendor_id: dv.qbo_driver_vendor_id,
+        qbo_driver_vendor_name: dv.qbo_driver_vendor_name,
         truck_id: document.getElementById('f_truck').value || null,
         trailer_id: document.getElementById('f_trailer').value || null,
         dispatcher_name: document.getElementById('f_dispatcher').value.trim() || null,
@@ -766,6 +978,7 @@
     }
 
     (async function init() {
+      bindDriverVendorAc();
       await loadMeta();
       await loadQboCatalog();
       await loadTab();
