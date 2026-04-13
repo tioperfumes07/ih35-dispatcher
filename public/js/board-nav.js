@@ -39,9 +39,10 @@
     {
       id: 'track',
       label: 'Vehicle Tracking',
-      href: '/maintenance.html#tracking',
+      href: '/tracking.html',
       links: [
-        { label: 'Live fleet tracking', href: '/maintenance.html#tracking' },
+        { label: 'Live fleet map (Samsara)', href: '/tracking.html' },
+        { label: 'Tracking inside ERP', href: '/maintenance.html#tracking' },
         { label: 'Fuel board (map)', href: '/fuel.html' }
       ]
     },

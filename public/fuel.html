@@ -57,6 +57,7 @@
     .badge-red{background:#fef2f2;color:var(--red)}
     .badge-yellow{background:#fff7ed;color:var(--yellow)}
     .badge-green{background:#f0fdf4;color:var(--green)}
+    .roadmap-note{margin:0 12px 10px;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;font-size:12px;color:#1e3a5f;max-width:1100px}
     #map{width:100%;height:calc(100vh - 260px);min-height:520px}
     .route-inputs{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px}
     .dest-row{margin-bottom:8px}
@@ -112,6 +113,9 @@
     <label><input type="checkbox" id="urgentOnly" onchange="renderFleet()"> FUEL NOW only</label>
     <span id="lastUpdated" class="small">Not loaded</span>
   </div>
+  <p class="roadmap-note">
+    <strong>Roadmap:</strong> tie origin/destination from Dispatch (TMS) loads into this planner, combine uploaded Love’s price sheets and live tank levels from Samsara, and suggest cheapest legal fuel stops along the route (including state price spreads). PC*Miler practical/short miles will replace heuristic routing for driver-pay mileage when licensed.
+  </p>
 
   <div class="layout">
     <div class="panel">

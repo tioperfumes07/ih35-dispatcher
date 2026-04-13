@@ -127,12 +127,41 @@
     .qb-btn-add{font-size:12px;padding:5px 10px;border-radius:6px}
     .vendor-row-maint{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
     .vendor-row-maint .qb-in{max-width:220px}
+    .shop-action-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+    .shop-board-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    @media (max-width:1000px){.shop-board-grid{grid-template-columns:1fr}}
+    .shop-col{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;min-height:120px}
+    .shop-col-head{padding:10px 12px;font-weight:700;font-size:13px;border-bottom:1px solid #edf1f7;background:#fafcff}
+    .shop-col-body{padding:8px 12px;max-height:240px;overflow:auto;font-size:12px}
+    .shop-row{padding:8px 0;border-bottom:1px solid #f1f5f9;line-height:1.35}
+    .shop-row:last-child{border-bottom:none}
+    .maint-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9000;align-items:center;justify-content:center;padding:20px}
+    .maint-modal-bg.on{display:flex}
+    .maint-modal{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:20px;box-shadow:var(--shadow)}
+    .asset-cat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+    .asset-cat-tile{border:1px solid var(--line);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:center;font-weight:600;font-size:13px;background:#fafcff}
+    .asset-cat-tile:hover{border-color:#93c5fd;background:#eff6ff}
   </style>
   <link rel="stylesheet" href="/css/board-nav.css" />
 </head>
 <body>
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
+
+  <div id="maintCatModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintCatModal()">
+    <div class="maint-modal" onclick="event.stopPropagation()">
+      <h3 style="margin:0 0 6px;font-size:18px">Vehicle type</h3>
+      <p class="mini-note" style="margin:0 0 8px">Pick the category, then complete the service or purchase form. Matches Samsara / Maintenance asset groups.</p>
+      <div class="asset-cat-grid">
+        <div class="asset-cat-tile" onclick="completeMaintCategory('Trucks')">Truck</div>
+        <div class="asset-cat-tile" onclick="completeMaintCategory('Refrigerated Vans')">Refrigerated van</div>
+        <div class="asset-cat-tile" onclick="completeMaintCategory('Flatbeds')">Flatbed</div>
+        <div class="asset-cat-tile" onclick="completeMaintCategory('Dry Vans')">Dry van</div>
+        <div class="asset-cat-tile" onclick="completeMaintCategory('Company Vehicles')" style="grid-column:span 2">Company vehicle</div>
+      </div>
+      <button type="button" class="btn" onclick="closeMaintCatModal()">Cancel</button>
+    </div>
+  </div>
   <datalist id="unitOptions"></datalist>
   <datalist id="serviceOptions"></datalist>
   <datalist id="qboVendorOptions"></datalist>
@@ -230,6 +259,39 @@
       </section>
 
       <section id="section-maintenance" class="section">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Maintenance shop (in progress)</div>
+          </div>
+          <div class="panel-body">
+            <p class="mini-note" style="margin:0 0 10px">
+              Work orders bucket by <strong>repair location</strong>. <strong>Out of service</strong> lists units with a unit record whose service name contains “out of service”.
+              <a href="/tracking.html" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
+              · <a href="/safety.html" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
+            </p>
+            <div class="shop-action-row">
+              <button type="button" onclick="startMaintFlow('service-internal')">New service</button>
+              <button type="button" onclick="startMaintFlow('service-external')">New external service</button>
+              <button type="button" onclick="startMaintFlow('service-road')">New road service</button>
+              <button type="button" onclick="startMaintFlow('purchase')">New purchase</button>
+            </div>
+            <div class="shop-board-grid">
+              <div class="shop-col">
+                <div class="shop-col-head">Internal mechanic shop</div>
+                <div class="shop-col-body" id="shopInternalBody"></div>
+              </div>
+              <div class="shop-col">
+                <div class="shop-col-head">External</div>
+                <div class="shop-col-body" id="shopExternalBody"></div>
+              </div>
+              <div class="shop-col">
+                <div class="shop-col-head">Out of service</div>
+                <div class="shop-col-body" id="shopOosBody"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="panel">
           <div class="panel-head">
             <div class="panel-title">Maintenance Board</div>
@@ -579,6 +641,7 @@
                   <span class="qb-l">Unit / asset</span>
                   <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
                 </div>
+                <input type="hidden" id="woRepairLocationType" value="" />
               </div>
 
               <div style="margin:10px 0 6px;font-weight:700;font-size:12px">Parts &amp; services (add multiple lines)</div>
@@ -771,6 +834,7 @@
     let selectedUnit = '';
     let activeSection = 'dashboard';
     let activeAssetCategory = 'Trucks';
+    let pendingMaintFlow = null;
     let selectedTrackingVehicle = '';
 
     async function j(url, options = {}) {
@@ -989,6 +1053,7 @@
       renderMaintenanceTable();
       renderTrackingBoard();
       renderApTransactions();
+      renderShopQueues();
       renderQboMaster();
       await loadQboStatus();
 
@@ -1001,7 +1066,9 @@
       document.getElementById('unitOptions').innerHTML =
         vehicles.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
 
-      const serviceValues = Array.from(new Set(dashboard.map(x => x.serviceType))).sort();
+      const serviceValues = Array.from(
+        new Set([...dashboard.map(x => x.serviceType), 'Out of service'].filter(Boolean))
+      ).sort();
       document.getElementById('serviceOptions').innerHTML =
         serviceValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
 
@@ -1085,6 +1152,114 @@
 
       renderSelectedUnit();
       renderMaintenanceTable();
+    }
+
+    function startMaintFlow(flow) {
+      pendingMaintFlow = flow;
+      document.getElementById('maintCatModal').classList.add('on');
+    }
+
+    function closeMaintCatModal() {
+      document.getElementById('maintCatModal').classList.remove('on');
+      pendingMaintFlow = null;
+    }
+
+    function completeMaintCategory(cat) {
+      const flow = pendingMaintFlow;
+      document.getElementById('maintCatModal').classList.remove('on');
+      pendingMaintFlow = null;
+      if (!flow) return;
+
+      setAssetCategory(cat);
+
+      if (flow === 'purchase') {
+        document.getElementById('woRepairLocationType').value = 'in-house';
+        openSectionByName('accounting');
+        const sub = document.querySelector('.subtab[onclick*="acct-transactions"]');
+        if (sub) openAccountingTab('acct-transactions', sub);
+        const memo = document.getElementById('apMemo');
+        if (memo && !memo.value.trim()) memo.value = 'Internal shop parts / supplies';
+        setTimeout(() => document.getElementById('apAssetUnit')?.focus(), 120);
+        return;
+      }
+
+      openSectionByName('maintenance');
+      document.getElementById('recordTypeInput').value = 'repair';
+      toggleRecordFields();
+      const loc = document.getElementById('repairLocationTypeInput');
+      if (flow === 'service-internal') loc.value = 'in-house';
+      else if (flow === 'service-external') loc.value = 'external';
+      else if (flow === 'service-road') loc.value = 'road-service';
+      setTimeout(() => {
+        document.getElementById('serviceDateInput')?.focus();
+        document.querySelector('#section-maintenance .form-stack')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    }
+
+    function renderShopQueues() {
+      const wos = (erp.workOrders || []).slice().reverse();
+      const internal = wos.filter(w => String(w.repairLocationType) === 'in-house');
+      const external = wos.filter(w => {
+        const t = String(w.repairLocationType);
+        return t === 'external' || t === 'over-the-road' || t === 'road-service';
+      });
+
+      const fmtWo = w => {
+        const lines = w.lines || [];
+        const sum =
+          lines
+            .map(l => l.serviceType)
+            .filter(Boolean)
+            .slice(0, 2)
+            .join(', ') || 'Work order';
+        const tag =
+          w.repairLocationType === 'road-service'
+            ? '<span class="mini-note">Road · </span>'
+            : w.repairLocationType === 'over-the-road'
+              ? '<span class="mini-note">OTR · </span>'
+              : '';
+        const st = w.qboSyncStatus || 'not posted';
+        return (
+          `<div class="shop-row">${tag}<b>${escapeHtml(w.unit || '—')}</b> — ${escapeHtml(sum)}<br>` +
+          `<span class="mini-note">${escapeHtml(st)} · ${escapeHtml((w.serviceDate || '').slice(0, 10) || '')}</span></div>`
+        );
+      };
+
+      const elI = document.getElementById('shopInternalBody');
+      const elE = document.getElementById('shopExternalBody');
+      const elO = document.getElementById('shopOosBody');
+      if (!elI || !elE || !elO) return;
+
+      elI.innerHTML = internal.length
+        ? internal
+            .slice(0, 30)
+            .map(fmtWo)
+            .join('')
+        : '<div class="mini-note">No in-house work orders yet.</div>';
+
+      elE.innerHTML = external.length
+        ? external
+            .slice(0, 30)
+            .map(fmtWo)
+            .join('')
+        : '<div class="mini-note">No external / road work orders yet.</div>';
+
+      const recs = (erp.records || []).filter(r => {
+        const st = String(r.serviceType || '').toLowerCase();
+        return st.includes('out of service') || st.includes('out-of-service') || st === 'oos';
+      });
+      const byUnit = new Map();
+      for (const r of recs) {
+        if (r.unit && !byUnit.has(r.unit)) byUnit.set(r.unit, r);
+      }
+      elO.innerHTML = byUnit.size
+        ? [...byUnit.entries()]
+            .map(
+              ([u, r]) =>
+                `<div class="shop-row"><b>${escapeHtml(u)}</b><br><span class="mini-note">${escapeHtml(r.serviceType || '')} · ${escapeHtml(r.serviceDate || '')}</span></div>`
+            )
+            .join('')
+        : '<div class="mini-note">No out-of-service unit records. Save a unit record with service type containing “out of service”.</div>';
     }
 
     function renderMaintenanceUnitList() {
@@ -1229,6 +1404,7 @@
       document.getElementById('apLoadInvoiceNumber').value = '';
       document.getElementById('apMemo').value = '';
       document.getElementById('apDueDate').value = '';
+      document.getElementById('woRepairLocationType').value = '';
       document.getElementById('woLines').innerHTML = '';
       addWoLine();
     }
@@ -1617,6 +1793,8 @@
               <div class="mini-note">Load / inv #: ${escapeHtml(r.loadNumber || r.internalWorkOrderNumber || r.vendorInvoiceNumber || '')}</div>
               <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
               <div class="mini-note">Unit: ${escapeHtml(r.unit || '')} | Date: ${escapeHtml(r.serviceDate || '')}</div>
+              ${r.repairLocationType ? `<div class="mini-note">Repair location: ${escapeHtml(r.repairLocationType)}</div>` : ''}
+              ${r.assetCategory ? `<div class="mini-note">Asset category: ${escapeHtml(r.assetCategory)}</div>` : ''}
               <div class="mini-note">Lines (${lines.length}) total: $${total.toFixed(2)}</div>
               <div class="mini-note">${lineSumm}</div>
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
@@ -1856,6 +2034,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           unit,
+          assetCategory: activeAssetCategory,
+          repairLocationType: document.getElementById('woRepairLocationType').value || '',
           serviceDate: document.getElementById('apTxnDate').value,
           txnType: document.getElementById('apTxnType').value,
           dueDate: document.getElementById('apDueDate').value,
