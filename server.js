@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import { dbQuery } from './lib/db.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
 import tmsRouter, { fetchLoadSettlementContextByNumber } from './routes/tms.mjs';
+import pdfRouter from './routes/pdf.mjs';
 
 dotenv.config();
 
@@ -1205,6 +1206,7 @@ app.get('/api/health/db', async (_req, res) => {
 });
 
 app.use('/api/tms', tmsRouter);
+app.use(pdfRouter);
 
 app.get('/api/board', async (_req, res) => {
   try {
@@ -2530,6 +2532,19 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log(`Server running on ${PORT}`);
   });
+
+  const syncMin = Number(process.env.QBO_AUTO_SYNC_MINUTES ?? 360);
+  const QBO_SYNC_MS = Math.max(5, Number.isFinite(syncMin) ? syncMin : 360) * 60 * 1000;
+  setInterval(async () => {
+    try {
+      const store = readQbo();
+      if (!store.tokens?.access_token) return;
+      await qboSyncMasterData();
+      console.log('[qbo] catalog auto-sync OK', new Date().toISOString());
+    } catch (e) {
+      console.warn('[qbo] catalog auto-sync failed:', e?.message || e);
+    }
+  }, QBO_SYNC_MS);
 }
 
 startServer();

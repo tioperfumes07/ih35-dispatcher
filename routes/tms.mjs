@@ -4,6 +4,8 @@ import { Router } from 'express';
 import multer from 'multer';
 import { dbQuery, getPool } from '../lib/db.mjs';
 import { readQboCustomerLookup, readQboVendorLookup, ERP_DATA_DIR } from '../lib/erp-data.mjs';
+import { pcmilerPracticalMilesBetween } from '../lib/pcmiler.mjs';
+import { fetchSamsaraVehiclesNormalized } from '../lib/samsara-client.mjs';
 
 const router = Router();
 
@@ -88,6 +90,16 @@ function dbUnavailable(res, err) {
 
 router.get('/meta', (_req, res) => {
   res.json({ ok: true, loadStatuses: LOAD_STATUSES });
+});
+
+/** Vehicles registered in Samsara (for TMS truck assignment / fleet tab). */
+router.get('/fleet/samsara-vehicles', async (_req, res) => {
+  try {
+    const data = await fetchSamsaraVehiclesNormalized();
+    res.json({ ok: true, data, source: 'samsara' });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message || String(e) });
+  }
 });
 
 router.get('/meta/next-load-number', async (req, res) => {
@@ -716,6 +728,19 @@ async function osrmDrivingMiles(lat1, lon1, lat2, lon2) {
   return data.routes[0].distance * 0.000621371;
 }
 
+/** PC*Miler practical miles when licensed; else OSRM; else haversine factor. */
+async function practicalMilesEngine(lat1, lon1, lat2, lon2) {
+  const pc = await pcmilerPracticalMilesBetween(lat1, lon1, lat2, lon2);
+  if (pc != null) return { miles: pc, engine: 'pcmiler' };
+  try {
+    const m = await osrmDrivingMiles(lat1, lon1, lat2, lon2);
+    return { miles: m, engine: 'osrm' };
+  } catch {
+    const m = haversineMiles(lat1, lon1, lat2, lon2) * 1.25;
+    return { miles: m, engine: 'haversine' };
+  }
+}
+
 /**
  * First pickup → final delivery: practical (OSRM) miles as loaded linehaul, straight-line miles as empty-paperwork proxy.
  */
@@ -734,12 +759,8 @@ export async function computeSettlementLegMilesFromStops(stopsRows) {
   const ga = await geocodeAddress(addrA);
   const gb = await geocodeAddress(addrB);
   if (!ga || !gb) return { ok: false, reason: 'geocode_failed' };
-  let practical;
-  try {
-    practical = await osrmDrivingMiles(ga.lat, ga.lon, gb.lat, gb.lon);
-  } catch {
-    practical = haversineMiles(ga.lat, ga.lon, gb.lat, gb.lon) * 1.25;
-  }
+  const pr = await practicalMilesEngine(ga.lat, ga.lon, gb.lat, gb.lon);
+  const practical = pr.miles;
   const straight = haversineMiles(ga.lat, ga.lon, gb.lat, gb.lon);
   return {
     ok: true,
@@ -747,9 +768,11 @@ export async function computeSettlementLegMilesFromStops(stopsRows) {
     deliveryAddress: addrB,
     practicalLoadedMiles: Math.round(practical * 10) / 10,
     emptyMiles: Math.round(straight * 10) / 10,
-    engine: GEOAPIFY_API_KEY ? 'geoapify+osrm' : 'nominatim+osrm',
+    engine: `${GEOAPIFY_API_KEY ? 'geoapify' : 'nominatim'}+${pr.engine}`,
     note:
-      'Settlement: practical loaded = road route from first stop to last; empty = straight-line miles (same endpoints) for paperwork until PC*Miler empty/loaded split is wired.'
+      pr.engine === 'pcmiler'
+        ? 'Practical loaded miles: PC*Miler. Empty column is straight-line between same endpoints (optional to split loaded/empty in PC*Miler later).'
+        : 'Settlement: practical loaded = routing from first stop to last; empty = straight-line miles for paperwork. Set PCMILER_API_KEY for PC*Miler practical.'
   };
 }
 
@@ -786,12 +809,8 @@ router.post('/compute-leg-miles', async (req, res) => {
     for (let i = 0; i < points.length - 1; i++) {
       const a = points[i];
       const b = points[i + 1];
-      let practical;
-      try {
-        practical = await osrmDrivingMiles(a.lat, a.lon, b.lat, b.lon);
-      } catch {
-        practical = haversineMiles(a.lat, a.lon, b.lat, b.lon) * 1.25;
-      }
+      const pr = await practicalMilesEngine(a.lat, a.lon, b.lat, b.lon);
+      const practical = pr.miles;
       const shortest = haversineMiles(a.lat, a.lon, b.lat, b.lon);
       segments.push({
         fromAddress: a.address,
@@ -799,19 +818,22 @@ router.post('/compute-leg-miles', async (req, res) => {
         practicalMiles: Math.round(practical * 10) / 10,
         shortestMiles: Math.round(shortest * 10) / 10,
         fromLabel: a.label,
-        toLabel: b.label
+        toLabel: b.label,
+        practicalEngine: pr.engine
       });
       totalPractical += practical;
       totalShortest += shortest;
     }
+    const usedPc = segments.some(s => s.practicalEngine === 'pcmiler');
     res.json({
       ok: true,
       segments,
       totalPracticalMiles: Math.round(totalPractical * 10) / 10,
       totalShortestMiles: Math.round(totalShortest * 10) / 10,
-      engine: GEOAPIFY_API_KEY ? 'geoapify+osrm' : 'nominatim+osrm',
-      note:
-        'Practical = OSRM driving miles per leg. Shortest = straight-line miles (not PC*Miler shortest practical). Add Trimble PCMiler/Maps API for settlement-grade mileage pairs.'
+      engine: `${GEOAPIFY_API_KEY ? 'geoapify' : 'nominatim'}+${usedPc ? 'pcmiler' : 'osrm/haversine'}`,
+      note: usedPc
+        ? 'Practical miles use PC*Miler where PCMILER_API_KEY is set; shortest column remains great-circle per leg.'
+        : 'Practical uses OSRM (or haversine fallback). Set PCMILER_API_KEY for PC*Miler practical miles.'
     });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });

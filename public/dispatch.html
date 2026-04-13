@@ -177,6 +177,7 @@
     html.dispatch-embed .board-nav-wrap { display: none !important; }
     html.dispatch-embed .topbar { padding: 8px 12px; }
     html.dispatch-embed .topbar a:not(.keep-embed) { display: none; }
+    .hidden { display: none !important; }
   </style>
   <link rel="stylesheet" href="/css/board-nav.css" />
   <script>
@@ -194,7 +195,7 @@
     <a href="/maintenance.html#accounting-settlement">Settlement</a>
     <span style="flex:1"></span>
     <button type="button" onclick="openBookModal()">Book new load</button>
-    <button type="button" class="secondary" onclick="loadTab()">Refresh loads</button>
+    <button type="button" class="secondary" onclick="refreshDispatchBoard()">Refresh</button>
     <button type="button" class="secondary" onclick="refreshQboCatalog()">Sync QBO catalog</button>
     <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:320px"></span>
   </div>
@@ -202,30 +203,48 @@
     <button type="button" class="tab active" data-tab="open">Open loads</button>
     <button type="button" class="tab" data-tab="delivered">Delivered</button>
     <button type="button" class="tab" data-tab="all">All loads</button>
+    <button type="button" class="tab" data-tab="fleet">Fleet (Samsara)</button>
   </div>
   <div class="wrap">
     <div id="msg"></div>
-    <table class="data">
-      <thead>
-        <tr>
-          <th>Load #</th>
-          <th>Inv #</th>
-          <th>Status</th>
-          <th>Driver</th>
-          <th>Truck / Trailer</th>
-          <th>Dates</th>
-          <th>Customer</th>
-          <th>Origin → Destination</th>
-          <th>Miles (Ld / Em)</th>
-          <th>Rev $</th>
-          <th>Docs</th>
-          <th>Edit</th>
-          <th>QBO invoice</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-    <p class="muted" style="margin-top:12px">Stops: type a location and pick autocomplete (same idea as Always Track). <strong>Auto miles</strong> uses road routing for practical miles and straight-line for shortest; add PC*Miler/Trimble later for settlement-grade pairs.</p>
+    <div id="viewLoads">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Load #</th>
+            <th>Inv #</th>
+            <th>Status</th>
+            <th>Driver</th>
+            <th>Truck / Trailer</th>
+            <th>Dates</th>
+            <th>Customer</th>
+            <th>Origin → Destination</th>
+            <th>Miles (Ld / Em)</th>
+            <th>Rev $</th>
+            <th>Docs</th>
+            <th>PDF</th>
+            <th>Edit</th>
+            <th>QBO invoice</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="viewFleet" class="hidden">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Unit name (Samsara)</th>
+            <th>Samsara vehicle ID</th>
+            <th>VIN</th>
+            <th>License plate</th>
+          </tr>
+        </thead>
+        <tbody id="fleetBody"></tbody>
+      </table>
+      <p class="muted" style="margin-top:10px">These are the assets returned by the Samsara Fleet API. Use the same unit names when assigning a truck on a load; the app will match or create a TMS truck row.</p>
+    </div>
+    <p class="muted" style="margin-top:12px">Stops: type a location and pick autocomplete. <strong>Auto miles</strong>: practical miles use <strong>PC*Miler</strong> when <code>PCMILER_API_KEY</code> is set on the server; otherwise OSRM + straight-line “shortest.”</p>
   </div>
 
   <div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeBookModal()">
@@ -269,7 +288,7 @@
               <datalist id="truckClassDatalist"></datalist>
               <div class="ac-list" id="truck_class_ac"></div>
             </div>
-            <p class="muted" style="margin:6px 0 0;font-size:11px">Suggestions from QuickBooks <strong>classes</strong> whose names start with <strong>T1</strong>. Saving ensures a matching row in TMS trucks.</p>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Primary list: <strong>Samsara fleet</strong> (same names as in your Samsara account). Fallback: QuickBooks <strong>classes</strong> starting with <strong>T1</strong>. Saving ensures a TMS <code>trucks</code> row for that unit code.</p>
           </div>
           <div class="row">
             <span class="lbl">Quick add truck</span>
@@ -407,6 +426,8 @@
       refreshedAt: null
     };
     let trailersList = [];
+    /** @type {Array<{id:string,name:string,vin:string,licensePlate:string}>} */
+    let samsaraFleet = [];
     let currentDocsLoadId = null;
     let driverVendorAcBound = false;
     let customerAcBound = false;
@@ -436,9 +457,25 @@
     function syncTruckClassDatalist() {
       const dl = document.getElementById('truckClassDatalist');
       if (!dl) return;
-      dl.innerHTML = truckClassesT1()
-        .map(c => '<option value="' + escapeHtml(String(c.name || '')) + '"></option>')
-        .join('');
+      const seen = new Set();
+      const opts = [];
+      for (const v of samsaraFleet || []) {
+        const n = String(v.name || '').trim();
+        if (!n) continue;
+        const k = n.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        opts.push('<option value="' + escapeHtml(n) + '"></option>');
+      }
+      for (const c of truckClassesT1()) {
+        const n = String(c.name || '').trim();
+        if (!n) continue;
+        const k = n.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        opts.push('<option value="' + escapeHtml(n) + '"></option>');
+      }
+      dl.innerHTML = opts.join('');
     }
 
     function syncQboInvoiceItemDatalist() {
@@ -641,20 +678,38 @@
           return;
         }
         t = setTimeout(() => {
-          const cls = truckClassesT1().filter(c => String(c.name || '').toLowerCase().includes(q)).slice(0, 20);
+          const matches = [];
+          for (const v of samsaraFleet || []) {
+            const n = String(v.name || '').toLowerCase();
+            if (n.includes(q)) {
+              matches.push({
+                label: String(v.name || '').trim(),
+                sub: [v.vin, v.licensePlate].filter(Boolean).join(' · ')
+              });
+            }
+          }
+          for (const c of truckClassesT1()) {
+            const n = String(c.name || '').toLowerCase();
+            if (n.includes(q)) {
+              matches.push({
+                label: String(c.name || '').trim(),
+                sub: c.fullyQualifiedName && c.fullyQualifiedName !== c.name ? c.fullyQualifiedName : 'QBO class'
+              });
+            }
+          }
+          const slice = matches.slice(0, 20);
           list.innerHTML = '';
-          if (!cls.length) {
+          if (!slice.length) {
             hideTruckClassAc();
             return;
           }
-          cls.forEach(c => {
+          slice.forEach(m => {
             const div = document.createElement('div');
             div.className = 'ac-item';
-            const label = String(c.name || '').trim();
-            div.textContent = label + (c.fullyQualifiedName && c.fullyQualifiedName !== label ? ' · ' + c.fullyQualifiedName : '');
+            div.textContent = m.sub ? m.label + ' — ' + m.sub : m.label;
             div.addEventListener('mousedown', ev => {
               ev.preventDefault();
-              inp.value = label;
+              inp.value = m.label;
               hideTruckClassAc();
             });
             list.appendChild(div);
@@ -870,10 +925,60 @@
       return 'st-default';
     }
 
+    function setListView(which) {
+      const vl = document.getElementById('viewLoads');
+      const vf = document.getElementById('viewFleet');
+      if (!vl || !vf) return;
+      if (which === 'fleet') {
+        vl.classList.add('hidden');
+        vf.classList.remove('hidden');
+      } else {
+        vf.classList.add('hidden');
+        vl.classList.remove('hidden');
+      }
+    }
+
+    async function loadSamsaraFleetForDatalist() {
+      try {
+        const r = await fetch('/api/tms/fleet/samsara-vehicles');
+        const j = await r.json().catch(() => ({}));
+        samsaraFleet = j.ok ? (j.data || []) : [];
+      } catch {
+        samsaraFleet = [];
+      }
+      syncTruckClassDatalist();
+    }
+
+    async function loadFleetTab() {
+      showMsg('');
+      await loadSamsaraFleetForDatalist();
+      const tb = document.getElementById('fleetBody');
+      if (!tb) return;
+      if (!samsaraFleet.length) {
+        tb.innerHTML =
+          '<tr><td colspan="4" class="muted">No Samsara vehicles — set SAMSARA_API_TOKEN on the server and click Refresh loads (or re-open this tab).</td></tr>';
+        return;
+      }
+      tb.innerHTML = samsaraFleet
+        .map(
+          v =>
+            '<tr><td><strong>' +
+            escapeHtml(v.name) +
+            '</strong></td><td class="muted">' +
+            escapeHtml(v.id) +
+            '</td><td>' +
+            escapeHtml(v.vin || '—') +
+            '</td><td>' +
+            escapeHtml(v.licensePlate || '—') +
+            '</td></tr>'
+        )
+        .join('');
+    }
+
     function renderRows(rows) {
       const tb = document.getElementById('tbody');
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="13" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="14" class="muted">No loads in this view. Book a new load or change tab.</td></tr>';
         return;
       }
       tb.innerHTML = rows.map(l => {
@@ -910,6 +1015,9 @@
           '<td>' + escapeHtml(String(l.practical_loaded_miles ?? '0')) + ' / ' + escapeHtml(String(l.practical_empty_miles ?? '0')) + '</td>' +
           '<td class="muted">' + revCell + '</td>' +
           '<td>' + docsBtn + '</td>' +
+          '<td><a class="link" href="/api/pdf/tms-load/' +
+          encodeURIComponent(l.id) +
+          '" target="_blank" rel="noopener">PDF / print</a></td>' +
           '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="openEditLoad(' +
           JSON.stringify(l.id) +
           ')">Edit</button></td>' +
@@ -1119,8 +1227,14 @@
       }
     }
 
+    function refreshDispatchBoard() {
+      if (currentTab === 'fleet') loadFleetTab();
+      else loadTab();
+    }
+
     async function loadTab() {
       showMsg('');
+      setListView('loads');
       try {
         const j = await api('/loads?tab=' + encodeURIComponent(currentTab));
         renderRows(j.data || []);
@@ -1175,7 +1289,13 @@
         document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
         currentTab = b.getAttribute('data-tab');
-        loadTab();
+        if (currentTab === 'fleet') {
+          setListView('fleet');
+          loadFleetTab();
+        } else {
+          setListView('loads');
+          loadTab();
+        }
       });
     });
 
@@ -1682,6 +1802,7 @@
       await loadMeta();
       await loadQboCatalog();
       await refreshLookups();
+      await loadSamsaraFleetForDatalist();
       await loadTab();
     })();
   </script>

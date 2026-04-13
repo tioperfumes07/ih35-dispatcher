@@ -2179,7 +2179,8 @@
               ${r.qboPurchaseId ? `<div class="mini-note">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
               ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div class="mini-note">${escapeHtml(r.notes || '')}</div>
-              <div style="margin-top:8px;">
+              <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/maintenance-record/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="postRecordToQbo('${r.id}')">Send to QuickBooks</button>
               </div>
             </div>
@@ -2756,7 +2757,8 @@
               <div class="mini-note">${lineSumm}</div>
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
               ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
-              <div style="margin-top:8px;">
+              <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/work-order/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="postWorkOrderToQbo('${r.id}')">Post to QuickBooks</button>
               </div>
             </div>
@@ -2780,7 +2782,8 @@
               ${r.detailMode === 'category' ? `<div class="mini-note">Category: ${escapeHtml(accountName(r.qboAccountId))}</div>` : ''}
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
               ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
-              <div style="margin-top:8px;">
+              <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/ap-transaction/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="postApToQbo('${r.id}')">Post to QuickBooks</button>
               </div>
             </div>
