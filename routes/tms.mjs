@@ -348,4 +348,106 @@ router.delete('/loads/:id', async (req, res) => {
   }
 });
 
+const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY || '';
+
+async function geocodeAddress(address) {
+  const q = String(address || '').trim();
+  if (!q) return null;
+  if (GEOAPIFY_API_KEY) {
+    const url = new URL('https://api.geoapify.com/v1/geocode/search');
+    url.searchParams.set('text', q);
+    url.searchParams.set('limit', '1');
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
+    const r = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+    const data = await r.json();
+    const x = data.results?.[0];
+    if (!x) return null;
+    return { lat: Number(x.lat), lon: Number(x.lon), label: x.formatted || q };
+  }
+  const nomUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&limit=1`;
+  const r = await fetch(nomUrl, { headers: { 'User-Agent': 'IH35-TMS/1.0 (dispatch)' } });
+  const arr = await r.json();
+  const x = Array.isArray(arr) ? arr[0] : null;
+  if (!x) return null;
+  return { lat: Number(x.lat), lon: Number(x.lon), label: x.display_name || q };
+}
+
+function haversineMiles(lat1, lon1, lat2, lon2) {
+  const R = 3958.7613;
+  const toR = d => (d * Math.PI) / 180;
+  const dLat = toR(lat2 - lat1);
+  const dLon = toR(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toR(lat1)) * Math.cos(toR(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+async function osrmDrivingMiles(lat1, lon1, lat2, lon2) {
+  const path = `${lon1},${lat1};${lon2},${lat2}`;
+  const url = `https://router.project-osrm.org/route/v1/driving/${path}?overview=false`;
+  const r = await fetch(url, { headers: { Accept: 'application/json' } });
+  const data = await r.json();
+  if (data.code !== 'Ok' || !data.routes?.[0]) throw new Error('Driving route not found');
+  return data.routes[0].distance * 0.000621371;
+}
+
+/** Ordered stop addresses → practical (OSRM) vs shortest (great-circle) miles per leg. PC*Miler can replace this later. */
+router.post('/compute-leg-miles', async (req, res) => {
+  try {
+    const addresses = Array.isArray(req.body?.addresses) ? req.body.addresses : [];
+    const cleaned = addresses.map(a => String(a || '').trim()).filter(Boolean);
+    if (cleaned.length < 2) {
+      return res.status(400).json({ ok: false, error: 'Provide at least 2 addresses in stop order' });
+    }
+    const points = [];
+    for (const addr of cleaned) {
+      const g = await geocodeAddress(addr);
+      if (!g) {
+        return res.status(422).json({
+          ok: false,
+          error: `Could not geocode: ${addr.slice(0, 100)}`
+        });
+      }
+      points.push({ ...g, address: addr });
+    }
+    const segments = [];
+    let totalPractical = 0;
+    let totalShortest = 0;
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i];
+      const b = points[i + 1];
+      let practical;
+      try {
+        practical = await osrmDrivingMiles(a.lat, a.lon, b.lat, b.lon);
+      } catch {
+        practical = haversineMiles(a.lat, a.lon, b.lat, b.lon) * 1.25;
+      }
+      const shortest = haversineMiles(a.lat, a.lon, b.lat, b.lon);
+      segments.push({
+        fromAddress: a.address,
+        toAddress: b.address,
+        practicalMiles: Math.round(practical * 10) / 10,
+        shortestMiles: Math.round(shortest * 10) / 10,
+        fromLabel: a.label,
+        toLabel: b.label
+      });
+      totalPractical += practical;
+      totalShortest += shortest;
+    }
+    res.json({
+      ok: true,
+      segments,
+      totalPracticalMiles: Math.round(totalPractical * 10) / 10,
+      totalShortestMiles: Math.round(totalShortest * 10) / 10,
+      engine: GEOAPIFY_API_KEY ? 'geoapify+osrm' : 'nominatim+osrm',
+      note:
+        'Practical = OSRM driving miles per leg. Shortest = straight-line miles (not PC*Miler shortest practical). Add Trimble PCMiler/Maps API for settlement-grade mileage pairs.'
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 export default router;

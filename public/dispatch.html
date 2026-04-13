@@ -90,12 +90,23 @@
     .btn-ghost { background: #e0e0e0; color: #333; }
     .link { color: var(--accent); cursor: pointer; font-weight: 600; font-size: 13px; }
     .muted { color: var(--muted); font-size: 12px; }
+    .ac-wrap { position: relative; }
+    .ac-list {
+      display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 6000;
+      background: #fff; border: 1px solid var(--line); border-radius: 8px; max-height: 200px;
+      overflow: auto; box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    .ac-list.on { display: block; }
+    .ac-item { padding: 8px 10px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+    .ac-item:hover { background: #eef2ff; }
+    .stops-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   </style>
 </head>
 <body>
   <div class="topbar">
-    <h1>IH35 Transportation — TMS</h1>
-    <a href="/">← Live fleet / fuel board</a>
+    <h1>Dispatch — Loads &amp; TMS</h1>
+    <a href="/">Home</a>
+    <a href="/fuel.html">Fuel &amp; routes</a>
     <a href="/maintenance.html">Maintenance</a>
     <span style="flex:1"></span>
     <button type="button" onclick="openBookModal()">Book new load</button>
@@ -123,7 +134,7 @@
       </thead>
       <tbody id="tbody"></tbody>
     </table>
-    <p class="muted" style="margin-top:12px">MVP: loads stored in PostgreSQL. Settlements, invoices, and location directory can follow the same patterns as Always Track.</p>
+    <p class="muted" style="margin-top:12px">Stops: type a location and pick autocomplete (same idea as Always Track). <strong>Auto miles</strong> uses road routing for practical miles and straight-line for shortest; add PC*Miler/Trimble later for settlement-grade pairs.</p>
   </div>
 
   <div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeBookModal()">
@@ -204,8 +215,13 @@
         </div>
         <div class="stops-head">
           <strong>Pickup &amp; delivery stops</strong>
-          <button type="button" class="btn btn-ghost" onclick="addStopRow()">+ Add stop</button>
+          <div class="stops-actions">
+            <button type="button" class="btn btn-ghost" onclick="addStopRow()">+ Add stop</button>
+            <button type="button" class="btn btn-ghost" onclick="autoMilesFromStops()" title="Geocode each stop address, then fill practical/shortest miles per leg">Auto miles (legs)</button>
+            <button type="button" class="btn btn-ghost" onclick="applyStopMilesToHeader()" title="Sum stop practical/short into load header fields">Sum stops → header miles</button>
+          </div>
         </div>
+        <p class="muted" style="font-size:12px;margin:0 0 8px">Use <strong>Address</strong> (full street, city, ST) for best mileage. Location name can be shorthand if address is filled.</p>
         <div id="stops"></div>
       </div>
       <div class="modal-actions">
@@ -344,6 +360,55 @@
     });
 
     let stopCounter = 0;
+    let acTimer = null;
+    function hideAc(listEl) {
+      if (!listEl) return;
+      listEl.classList.remove('on');
+      listEl.innerHTML = '';
+    }
+    function bindAutocomplete(row) {
+      const loc = row.querySelector('.stop-loc');
+      const addr = row.querySelector('.stop-addr');
+      const list = row.querySelector('.ac-list');
+      if (!loc || !list) return;
+      loc.addEventListener('input', () => {
+        clearTimeout(acTimer);
+        const q = loc.value.trim();
+        if (q.length < 2) {
+          hideAc(list);
+          return;
+        }
+        acTimer = setTimeout(async () => {
+          try {
+            const r = await fetch('/api/autocomplete?q=' + encodeURIComponent(q));
+            const items = await r.json();
+            list.innerHTML = '';
+            if (!Array.isArray(items) || !items.length) {
+              hideAc(list);
+              return;
+            }
+            items.slice(0, 8).forEach(it => {
+              const div = document.createElement('div');
+              div.className = 'ac-item';
+              div.textContent = it.name || '';
+              div.addEventListener('mousedown', ev => {
+                ev.preventDefault();
+                const name = it.name || '';
+                loc.value = name;
+                if (!addr.value.trim()) addr.value = name;
+                hideAc(list);
+              });
+              list.appendChild(div);
+            });
+            list.classList.add('on');
+          } catch {
+            hideAc(list);
+          }
+        }, 220);
+      });
+      loc.addEventListener('blur', () => setTimeout(() => hideAc(list), 200));
+    }
+
     function addStopRow() {
       const id = 'stop_' + (++stopCounter);
       const div = document.createElement('div');
@@ -351,7 +416,7 @@
       div.dataset.rowId = id;
       div.innerHTML =
         '<div><label class="lbl">Type</label><select class="in stop-type"><option>pickup</option><option>delivery</option><option>empty</option></select></div>' +
-        '<div><label class="lbl">Location</label><input class="in stop-loc" placeholder="Search / name" /></div>' +
+        '<div><label class="lbl">Location</label><div class="ac-wrap"><input class="in stop-loc" placeholder="Type to search…" autocomplete="off" /><div class="ac-list"></div></div></div>' +
         '<div><label class="lbl">Address</label><input class="in stop-addr" placeholder="Street, city, ST zip" /></div>' +
         '<div><label class="lbl">Prac. mi.</label><input class="in stop-pm" type="number" step="0.1" value="0" /></div>' +
         '<div><label class="lbl">Short. mi.</label><input class="in stop-sm" type="number" step="0.1" value="0" /></div>' +
@@ -359,6 +424,56 @@
         '<div><label class="lbl">Window</label><input class="in stop-win" placeholder="Optional" /></div>' +
         '<div><button type="button" class="btn btn-ghost" onclick="this.closest(\'.stop-row\').remove()">×</button></div>';
       document.getElementById('stops').appendChild(div);
+      bindAutocomplete(div);
+    }
+
+    async function autoMilesFromStops() {
+      const rows = Array.from(document.querySelectorAll('.stop-row'));
+      const addresses = rows.map(r => {
+        const a = r.querySelector('.stop-addr').value.trim();
+        const l = r.querySelector('.stop-loc').value.trim();
+        return a || l;
+      }).filter(Boolean);
+      if (addresses.length < 2) {
+        alert('Enter at least two stops with address or location text.');
+        return;
+      }
+      try {
+        const r = await fetch('/api/tms/compute-leg-miles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ addresses })
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'Mileage request failed');
+        rows.forEach(row => {
+          row.querySelector('.stop-pm').value = '0';
+          row.querySelector('.stop-sm').value = '0';
+        });
+        j.segments.forEach((seg, i) => {
+          const row = rows[i + 1];
+          if (row) {
+            row.querySelector('.stop-pm').value = seg.practicalMiles;
+            row.querySelector('.stop-sm').value = seg.shortestMiles;
+          }
+        });
+        alert(
+          'Leg miles applied (row 2 = stop 1→2, etc.). Practical ≈ driving (OSRM). Shortest = straight-line miles — use PC*Miler/Trimble for Always Track–style shortest practical.'
+        );
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    function applyStopMilesToHeader() {
+      let pm = 0;
+      let sm = 0;
+      document.querySelectorAll('.stop-row').forEach(row => {
+        pm += parseFloat(row.querySelector('.stop-pm').value) || 0;
+        sm += parseFloat(row.querySelector('.stop-sm').value) || 0;
+      });
+      document.getElementById('f_plm').value = Math.round(pm * 10) / 10;
+      document.getElementById('f_pem').value = Math.round(sm * 10) / 10;
     }
 
     function collectStops() {
