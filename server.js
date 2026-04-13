@@ -12,6 +12,8 @@ import { dbQuery } from './lib/db.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
 import tmsRouter, { fetchLoadSettlementContextByNumber } from './routes/tms.mjs';
 import pdfRouter from './routes/pdf.mjs';
+import documentParseRouter from './routes/document-parse.mjs';
+import integrationsRouter from './routes/integrations.mjs';
 
 dotenv.config();
 
@@ -1451,6 +1453,8 @@ app.get('/api/health/db', async (_req, res) => {
 
 app.use('/api/tms', tmsRouter);
 app.use(pdfRouter);
+app.use('/api/documents', documentParseRouter);
+app.use('/api/integrations', integrationsRouter);
 
 app.get('/api/board', async (_req, res) => {
   try {

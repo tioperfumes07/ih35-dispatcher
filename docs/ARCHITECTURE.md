@@ -109,6 +109,16 @@ Background **master-data sync** runs on an interval when QBO tokens exist (`QBO_
 
 The ERP **Reports Board** (`maintenance.html`, section `reports`) renders these endpoints.
 
+### PDF autofill & external TMS
+
+- `POST /api/documents/parse-rate-confirmation` — multipart field `pdf`; returns heuristics for load #, revenue, miles, addresses, dates (text-based PDFs).
+- `POST /api/documents/parse-expense-invoice` — multipart field `pdf`; returns invoice #, date, amount, unit guess for maintenance/AP lines.
+- `GET /api/integrations/status` — Alvys / Always Track configuration flags (no secrets).
+- `GET /api/integrations/alvys/drivers` — proxies to Alvys `drivers/search` when `ALVYS_API_TOKEN` is set.
+- `GET /api/integrations/always-track/health` — optional ping when `ALWAYS_TRACK_*` is configured.
+
+**Always Track:** there is no documented public API in-repo; the env vars support a **custom REST URL** if your account provides one. **Alvys** uses the official integrations host and Bearer token from their docs.
+
 ## Environment variables (conceptual groups)
 
 - **Core**: `PORT`, `HOST`, `DATABASE_URL`, `DATABASE_SSL`

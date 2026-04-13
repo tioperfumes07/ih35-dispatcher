@@ -262,6 +262,19 @@
             <input class="in" id="f_load_number" placeholder="Suggested on new load" />
             <p class="muted" style="margin:6px 0 0;font-size:11px">Invoice <code>DocNumber</code> in QuickBooks uses this value. Next number is suggested from your loads (baseline <span id="nextLoadHint">13501</span> via server).</p>
           </div>
+          <div class="row" style="grid-column:1/-1">
+            <label class="lbl">Rate confirmation PDF (autofill)</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+              <input type="file" accept="application/pdf" id="rateConPdfInput" />
+              <button type="button" class="btn btn-ghost" onclick="applyRateConPdf()">Extract &amp; fill form</button>
+              <span id="rateConPdfStatus" class="muted" style="font-size:12px"></span>
+            </div>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">
+              Server reads text from the PDF (best on digital PDFs). Image scans need OCR outside this app. Data maps heuristically — always verify load #, rate, miles, and stops. External TMS:
+              <a href="/api/integrations/status" target="_blank" rel="noopener">integration status</a>
+              (Alvys / Always Track placeholders).
+            </p>
+          </div>
           <div class="row">
             <label class="lbl">Status</label>
             <select class="in" id="f_status"></select>
@@ -1788,6 +1801,63 @@
       await refreshLookups();
       document.getElementById('f_trailer_search').value = unit_code;
       document.getElementById('f_trailer_id').value = j.data.id;
+    }
+
+    async function applyRateConPdf() {
+      const input = document.getElementById('rateConPdfInput');
+      const statusEl = document.getElementById('rateConPdfStatus');
+      if (!input?.files?.[0]) {
+        if (statusEl) statusEl.textContent = 'Choose a PDF first.';
+        return;
+      }
+      if (statusEl) statusEl.textContent = 'Reading PDF…';
+      try {
+        const fd = new FormData();
+        fd.append('pdf', input.files[0]);
+        const r = await fetch('/api/documents/parse-rate-confirmation', { method: 'POST', body: fd });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.statusText || 'Parse failed');
+        const p = j.parsed || {};
+        if (p.loadNumber) document.getElementById('f_load_number').value = String(p.loadNumber);
+        if (p.revenue != null && p.revenue !== '') {
+          document.getElementById('f_revenue').value = String(p.revenue);
+        }
+        if (p.milesLoaded != null) document.getElementById('f_plm').value = String(p.milesLoaded);
+        if (p.milesEmpty != null) document.getElementById('f_pem').value = String(p.milesEmpty);
+        if (p.startDate) document.getElementById('f_start').value = p.startDate;
+        if (p.endDate) {
+          document.getElementById('f_end').value = p.endDate;
+        } else if (p.startDate) {
+          document.getElementById('f_end').value = p.startDate;
+        }
+        if (p.pickupAddress || p.deliveryAddress) {
+          document.getElementById('stops').innerHTML = '';
+          addStopRow();
+          addStopRow();
+          const blocks = document.querySelectorAll('.stop-block');
+          if (p.pickupAddress && blocks[0]) {
+            blocks[0].querySelector('.stop-type').value = 'pickup';
+            blocks[0].querySelector('.stop-addr').value = p.pickupAddress;
+          }
+          if (p.deliveryAddress && blocks[1]) {
+            blocks[1].querySelector('.stop-type').value = 'delivery';
+            blocks[1].querySelector('.stop-addr').value = p.deliveryAddress;
+          }
+          updateStopMilesSummary();
+        }
+        if (p.brokerOrCustomer) {
+          const cs = document.getElementById('f_customer_search');
+          if (cs && !cs.value.trim()) cs.value = p.brokerOrCustomer;
+        }
+        if (statusEl) {
+          statusEl.textContent =
+            'Applied heuristics (hints: ' + (p.hints && p.hints.length ? p.hints.join(', ') : 'none') + '). Review all fields.';
+        }
+        if (typeof updateTruckMaintBanner === 'function') updateTruckMaintBanner();
+      } catch (e) {
+        if (statusEl) statusEl.textContent = '';
+        showMsg(e.message || String(e), true);
+      }
     }
 
     async function saveLoad() {
