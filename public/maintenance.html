@@ -289,6 +289,10 @@
 
                   <input id="serviceDateInput" type="date">
                   <input id="serviceMileageInput" type="number" class="qb-in" placeholder="Service mileage" style="max-width:140px">
+                  <div>
+                    <span class="qb-l">Load / inv # (settlement)</span>
+                    <input id="recordLoadNumberInput" class="qb-in" placeholder="Same as dispatch load #" style="max-width:180px">
+                  </div>
                   <div class="vendor-row-maint">
                     <div>
                       <span class="qb-l">Vendor (QuickBooks)</span>
@@ -605,7 +609,7 @@
           <div class="panel qb-panel">
             <div class="panel-head"><div class="panel-title">Trip cost rollup (load # = invoice #)</div></div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 8px">Pulls <strong>saved</strong> work orders and single-line AP rows from this server whose document / load number matches. Revenue and driver settlement pay are not here yet—this is the expense side for a settlement stub.</p>
+              <p class="mini-note" style="margin:0 0 8px">Rolls up <strong>work orders</strong>, <strong>AP lines</strong>, and <strong>unit maintenance records</strong> that share this load/invoice #. If the load exists in TMS (Postgres), trip header and stops appear below. Export CSV for accounting.</p>
               <div class="wo-line-grid" style="margin-bottom:10px">
                 <div style="grid-column:span 2">
                   <span class="qb-l">Load / invoice #</span>
@@ -615,9 +619,14 @@
                   <span class="qb-l">&nbsp;</span>
                   <button type="button" class="qb-btn-add" onclick="runSettlementLookup()">Run lookup</button>
                 </div>
+                <div>
+                  <span class="qb-l">&nbsp;</span>
+                  <button type="button" class="qb-btn-add" onclick="downloadSettlementCsv()">Download CSV</button>
+                </div>
               </div>
               <datalist id="settlementLoadHints"></datalist>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
+              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid #d8deea;border-radius:8px;background:#fafcff"></div>
               <div class="table-wrap" style="min-width:0">
                 <table style="min-width:720px;font-size:12px">
                   <thead>
@@ -647,12 +656,13 @@
                       <th>Load / doc #</th>
                       <th>WOs</th>
                       <th>AP</th>
+                      <th>Rec</th>
                       <th>Total $</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody id="settlementIndexBody">
-                    <tr><td colspan="5" class="mini-note">Open this tab and refresh.</td></tr>
+                    <tr><td colspan="6" class="mini-note">Open this tab and refresh.</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1361,6 +1371,7 @@
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
               <div class="mini-note">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
+              ${r.loadNumber ? `<div class="mini-note">Load / inv #: ${escapeHtml(r.loadNumber)}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
               ${r.tirePosition || r.tirePositionText ? `<div class="mini-note">Tire position: ${escapeHtml(r.tirePosition || r.tirePositionText || '')}</div>` : ''}
               ${r.repairLocationType ? `<div class="mini-note">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
@@ -1378,8 +1389,10 @@
 
     async function postRecordToQbo(recordId) {
       try {
-        const result = await j(`/api/qbo/post-record/${recordId}`, { method: 'POST' });
-        alert(`Posted to QuickBooks. Purchase ID: ${result.record.qboPurchaseId || ''}`);
+        const r = await fetch(`/api/qbo/post-record/${recordId}`, { method: 'POST' });
+        const result = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(result.error || r.statusText);
+        alert(`Posted to QuickBooks. Purchase ID: ${result.record?.qboPurchaseId || ''}`);
         await loadAll();
       } catch (e) {
         alert(`QuickBooks posting failed: ${e.message}`);
@@ -1432,7 +1445,8 @@
           accidentAtFault: document.getElementById('accidentAtFaultInput').value,
           accidentLocation: document.getElementById('accidentLocationInput').value,
           accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
-          repairLocationType: document.getElementById('repairLocationTypeInput').value
+          repairLocationType: document.getElementById('repairLocationTypeInput').value,
+          loadNumber: document.getElementById('recordLoadNumberInput').value
         })
       });
 
@@ -1467,7 +1481,7 @@
         'customServiceTypeInput','tireBrandInput','tireDotInput','installMileageInput',
         'removeMileageInput','expectedTireLifeMilesInput','accidentLocationInput',
         'accidentReportNumberInput','linkedDocNumber','linkedVendorSearch','linkedDueDate',
-        'linkedPaymentMethodSearch','linkedAccountSearch','linkedItemSearch','tirePositionText'
+        'linkedPaymentMethodSearch','linkedAccountSearch','linkedItemSearch','tirePositionText','recordLoadNumberInput'
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
@@ -1668,7 +1682,7 @@
         const tb = document.getElementById('settlementIndexBody');
         if (!loads.length) {
           tb.innerHTML =
-            '<tr><td colspan="5" class="mini-note">No work orders or AP with a load/doc # yet.</td></tr>';
+            '<tr><td colspan="6" class="mini-note">No work orders, AP, or unit records with a load/doc # yet.</td></tr>';
           return;
         }
         tb.innerHTML = loads
@@ -1678,6 +1692,7 @@
             <td><b>${escapeHtml(x.label)}</b></td>
             <td>${x.workOrderCount}</td>
             <td>${x.apCount}</td>
+            <td>${x.recordCount ?? 0}</td>
             <td>${Number(x.total).toFixed(2)}</td>
             <td><button type="button" class="qb-btn-add" onclick="pickSettlementLoad(${JSON.stringify(x.label)})">View</button></td>
           </tr>`
@@ -1686,9 +1701,18 @@
       } catch (e) {
         const tb = document.getElementById('settlementIndexBody');
         if (tb) {
-          tb.innerHTML = `<tr><td colspan="5" class="mini-note" style="color:#b91c1c">${escapeHtml(e.message)}</td></tr>`;
+          tb.innerHTML = `<tr><td colspan="6" class="mini-note" style="color:#b91c1c">${escapeHtml(e.message)}</td></tr>`;
         }
       }
+    }
+
+    function downloadSettlementCsv() {
+      const raw = document.getElementById('settlementLoadInput').value.trim();
+      if (!raw) {
+        alert('Enter a load / invoice number first.');
+        return;
+      }
+      window.location.href = '/api/settlement/export?load=' + encodeURIComponent(raw);
     }
 
     async function runSettlementLookup() {
@@ -1702,23 +1726,50 @@
           '/api/settlement/by-load/' + encodeURIComponent(raw)
         );
         const lines = data.lineItems || [];
+        const nRec = data.counts.maintenanceRecords != null ? data.counts.maintenanceRecords : 0;
+        const totalRec = Number(data.totalMaintenanceRecords || 0);
         document.getElementById('settlementSummary').innerHTML =
-          `<b>${escapeHtml(data.loadNumber)}</b> — ${data.counts.workOrders} work order(s), ${data.counts.apTransactions} AP row(s), ` +
-          `<b>$${Number(data.grandTotal).toFixed(2)}</b> total (WO $${Number(data.totalWorkOrderLines).toFixed(2)} + AP $${Number(data.totalAp).toFixed(2)}).`;
+          `<b>${escapeHtml(data.loadNumber)}</b> — ${data.counts.workOrders} WO(s), ${data.counts.apTransactions} AP, ${nRec} unit record(s) → ` +
+          `<b>$${Number(data.grandTotal).toFixed(2)}</b> total ` +
+          `(WO $${Number(data.totalWorkOrderLines).toFixed(2)} + AP $${Number(data.totalAp).toFixed(2)} + records $${totalRec.toFixed(2)}).`;
+
+        const tmsEl = document.getElementById('settlementTmsBox');
+        if (data.tms && data.tms.load) {
+          const L = data.tms.load;
+          tmsEl.classList.remove('hidden');
+          const od = [L.origin_name, L.dest_name].filter(Boolean).join(' → ') || '—';
+          tmsEl.innerHTML =
+            `<strong>TMS</strong> · status <b>${escapeHtml(L.status || '')}</b> · customer ${escapeHtml(L.customer_name || '—')}<br>` +
+            `Miles (ld / em): ${escapeHtml(String(L.practical_loaded_miles ?? ''))} / ${escapeHtml(String(L.practical_empty_miles ?? ''))} · ${escapeHtml(od)}<br>` +
+            `<span class="mini-note">${escapeHtml(data.tms.note || '')}</span>`;
+        } else {
+          tmsEl.classList.add('hidden');
+          tmsEl.innerHTML = '';
+        }
 
         const tb = document.getElementById('settlementLinesBody');
         if (!lines.length) {
           tb.innerHTML =
-            '<tr><td colspan="5" class="mini-note">No matching saved expenses. Tag work orders and AP with this document #.</td></tr>';
+            '<tr><td colspan="5" class="mini-note">No matching rows. Use this load # on work orders, AP doc #, or unit maintenance records.</td></tr>';
           return;
         }
         tb.innerHTML = lines
           .map(li => {
-            const src = li.kind === 'work_order_line' ? 'WO line' : 'AP';
-            const desc =
-              li.kind === 'work_order_line'
-                ? `${escapeHtml(li.serviceType || '')}${li.tireRef ? ' · ' + escapeHtml(li.tireRef) : ''}`
-                : escapeHtml(li.description || '');
+            let src = '—';
+            if (li.kind === 'work_order_line') src = 'WO line';
+            else if (li.kind === 'ap_transaction') src = 'AP';
+            else if (li.kind === 'maintenance_record') src = 'Unit record';
+            let desc = '';
+            if (li.kind === 'work_order_line') {
+              desc = `${escapeHtml(li.serviceType || '')}${li.tireRef ? ' · ' + escapeHtml(li.tireRef) : ''}`;
+            } else if (li.kind === 'ap_transaction') {
+              desc = escapeHtml(li.description || '');
+            } else {
+              desc =
+                `${escapeHtml(li.serviceType || '')}` +
+                (li.description ? ' — ' + escapeHtml(li.description) : '') +
+                (li.vendor ? ' · ' + escapeHtml(li.vendor) : '');
+            }
             return `<tr>
             <td>${src}</td>
             <td>${desc}</td>

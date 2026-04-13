@@ -203,6 +203,27 @@ function enrichLoadRow(row) {
   };
 }
 
+/** TMS load + stops for settlement / P&amp;L (by public load_number). */
+export async function fetchLoadSettlementContextByNumber(loadNumberRaw) {
+  if (!getPool()) return null;
+  const ln = String(loadNumberRaw || '').trim();
+  if (!ln) return null;
+  try {
+    const { rows } = await dbQuery(`${loadSelect} WHERE l.load_number = $1 LIMIT 1`, [ln]);
+    if (!rows.length) return null;
+    const load = enrichLoadRow(rows[0]);
+    const stopsRes = await dbQuery(
+      `SELECT id, sequence_order, stop_type, location_name, address, practical_miles, shortest_miles, stop_at, window_text,
+              qbo_item_id, qbo_account_id
+       FROM load_stops WHERE load_id = $1::uuid ORDER BY sequence_order`,
+      [load.id]
+    );
+    return { load, stops: stopsRes.rows };
+  } catch {
+    return null;
+  }
+}
+
 router.get('/loads', async (req, res) => {
   try {
     const tab = String(req.query.tab || 'open').toLowerCase();
@@ -220,6 +241,22 @@ router.get('/loads', async (req, res) => {
       params
     );
     res.json({ ok: true, data: rows.map(enrichLoadRow), tab });
+  } catch (e) {
+    if (dbUnavailable(res, e)) return;
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.get('/loads/by-number/:loadNumber', async (req, res) => {
+  try {
+    const raw =
+      req.params.loadNumber != null ? decodeURIComponent(String(req.params.loadNumber)) : '';
+    if (!String(raw).trim()) {
+      return res.status(400).json({ ok: false, error: 'loadNumber is required' });
+    }
+    const ctx = await fetchLoadSettlementContextByNumber(raw);
+    if (!ctx) return res.status(404).json({ ok: false, error: 'Load not found' });
+    res.json({ ok: true, data: { ...ctx.load, stops: ctx.stops } });
   } catch (e) {
     if (dbUnavailable(res, e)) return;
     res.status(500).json({ ok: false, error: e.message });

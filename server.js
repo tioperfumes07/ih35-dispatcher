@@ -9,7 +9,7 @@ import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
 import { dbQuery } from './lib/db.mjs';
-import tmsRouter from './routes/tms.mjs';
+import tmsRouter, { fetchLoadSettlementContextByNumber } from './routes/tms.mjs';
 
 dotenv.config();
 
@@ -81,6 +81,7 @@ function defaultErpData() {
   return {
     currentMileage: {},
     legacyRecords: [],
+    records: [],
     workOrders: [],
     apTransactions: [],
     paymentMethods: [
@@ -120,6 +121,10 @@ function ensureErpFile() {
 
   if (!merged.currentMileage) merged.currentMileage = {};
   if (!Array.isArray(merged.legacyRecords)) merged.legacyRecords = [];
+  if (!Array.isArray(merged.records)) merged.records = [];
+  if (!merged.records.length && merged.legacyRecords.length) {
+    merged.records = [...merged.legacyRecords];
+  }
   if (!Array.isArray(merged.workOrders)) merged.workOrders = [];
   if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
   if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
@@ -1044,6 +1049,7 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
       dashboard,
       tireAlerts: buildTireAlerts(erp),
       workOrders: erp.workOrders || [],
+      records: erp.records || [],
       statsInfo: {
         vehiclesCount: trackedVehicles.length,
         statsRowsCount: statsRows.length
@@ -1061,6 +1067,150 @@ app.get('/api/erp/all', (_req, res) => {
 
 app.get('/api/maintenance/records', (_req, res) => {
   res.json(readErp());
+});
+
+app.post('/api/maintenance/mileage', (req, res) => {
+  try {
+    const body = req.body || {};
+    const unit = String(body.unit || '').trim();
+    if (!unit) return res.status(400).json({ error: 'unit is required' });
+    const m = safeNum(body.currentMileage, null);
+    const erp = readErp();
+    if (m != null && Number.isFinite(m) && m >= 0) erp.currentMileage[unit] = m;
+    writeErp(erp);
+    res.json({ ok: true, currentMileage: erp.currentMileage[unit] });
+  } catch (error) {
+    logError('api/maintenance/mileage', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/maintenance/record', (req, res) => {
+  try {
+    const body = req.body || {};
+    const unit = String(body.unit || '').trim();
+    if (!unit) return res.status(400).json({ error: 'unit is required' });
+    const serviceType = sanitizeName(body.serviceType || body.recordType || 'Service', 'Service');
+    const erp = readErp();
+    if (!Array.isArray(erp.records)) erp.records = [];
+    const record = {
+      id: uid('mr'),
+      unit,
+      recordType: String(body.recordType || 'maintenance').trim() || 'maintenance',
+      serviceType,
+      serviceDate: String(body.serviceDate || '').trim(),
+      serviceMileage: safeNum(body.serviceMileage, null),
+      vendor: String(body.vendor || '').trim(),
+      cost: safeNum(body.cost, 0) || 0,
+      notes: String(body.notes || '').trim(),
+      loadNumber: String(body.loadNumber || body.load_number || '').trim(),
+      tireCondition: String(body.tireCondition || '').trim(),
+      tirePosition: String(body.tirePosition || '').trim(),
+      tirePositionText: String(body.tirePositionText || '').trim(),
+      tireBrand: String(body.tireBrand || '').trim(),
+      tireDot: String(body.tireDot || '').trim(),
+      installMileage: safeNum(body.installMileage, null),
+      removeMileage: safeNum(body.removeMileage, null),
+      expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
+      accidentAtFault: String(body.accidentAtFault || '').trim(),
+      accidentLocation: String(body.accidentLocation || '').trim(),
+      accidentReportNumber: String(body.accidentReportNumber || '').trim(),
+      repairLocationType: String(body.repairLocationType || '').trim(),
+      qboSyncStatus: '',
+      qboPurchaseId: '',
+      qboError: '',
+      createdAt: new Date().toISOString()
+    };
+    erp.records.push(record);
+    const sm = safeNum(body.serviceMileage, null);
+    if (sm != null && sm > 0) {
+      erp.currentMileage[unit] = Math.max(safeNum(erp.currentMileage[unit], 0) || 0, sm);
+    }
+    writeErp(erp);
+    res.json({ ok: true, record });
+  } catch (error) {
+    logError('api/maintenance/record', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+async function qboPostMaintenanceRecord(recordId) {
+  const erp = readErp();
+  const idx = (erp.records || []).findIndex(x => String(x.id) === String(recordId));
+  if (idx === -1) throw new Error('Maintenance record not found');
+  const rec = erp.records[idx];
+  const cost = safeNum(rec.cost, 0) || 0;
+  if (!(cost > 0)) throw new Error('Record cost must be greater than zero');
+
+  let vendorId = rec.qboVendorId || '';
+  if (!vendorId && rec.vendor) {
+    const vn = String(rec.vendor).trim().toLowerCase();
+    const m = (erp.qboCache.vendors || []).find(v => String(v.name).toLowerCase() === vn);
+    vendorId = m?.qboId || '';
+  }
+  if (!vendorId) {
+    throw new Error('Match vendor name to a QuickBooks vendor (exact name) or refresh QBO master');
+  }
+
+  let accountId = rec.qboAccountId || '';
+  if (!accountId) {
+    const exp = (erp.qboCache.accountsExpense || [])[0];
+    const alt = (erp.qboCache.accounts || []).find(
+      a => a.accountType === 'Expense' || a.accountType === 'Cost of Goods Sold'
+    );
+    accountId = exp?.qboId || alt?.qboId || '';
+  }
+  if (!accountId) throw new Error('No expense account in QBO cache — refresh QuickBooks master');
+
+  const apLike = {
+    txnType: 'expense',
+    detailMode: 'category',
+    qboVendorId: vendorId,
+    paymentMethodId: rec.paymentMethodId || 'pm_other',
+    qboAccountId: accountId,
+    qboItemId: '',
+    qty: 1,
+    amount: cost,
+    txnDate: rec.serviceDate || new Date().toISOString().slice(0, 10),
+    dueDate: '',
+    docNumber: rec.loadNumber || undefined,
+    description: rec.serviceType || 'Maintenance',
+    memo: rec.notes || `${rec.unit || ''} ${rec.recordType || ''}`.trim(),
+    assetUnit: rec.unit || ''
+  };
+
+  const result = await qboCreateApTransaction(apLike);
+  erp.records[idx] = {
+    ...rec,
+    qboSyncStatus: 'posted',
+    qboPurchaseId: result.qboEntityId,
+    qboEntityType: result.qboEntityType,
+    qboError: '',
+    qboVendorId: vendorId,
+    qboAccountId: accountId
+  };
+  writeErp(erp);
+  return erp.records[idx];
+}
+
+app.post('/api/qbo/post-record/:id', async (req, res) => {
+  try {
+    const record = await qboPostMaintenanceRecord(req.params.id);
+    res.json({ ok: true, record });
+  } catch (error) {
+    const erp = readErp();
+    const idx = (erp.records || []).findIndex(x => String(x.id) === String(req.params.id));
+    if (idx !== -1) {
+      erp.records[idx] = {
+        ...erp.records[idx],
+        qboSyncStatus: 'error',
+        qboError: error.message
+      };
+      writeErp(erp);
+    }
+    logError('api/qbo/post-record', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 function normLoadKey(s) {
@@ -1093,6 +1243,22 @@ function collectApLoadKeys(ap) {
   return keys;
 }
 
+function collectRecordLoadKeys(rec) {
+  const keys = new Set();
+  const add = v => {
+    const k = normLoadKey(v);
+    if (k) keys.add(k);
+  };
+  add(rec.loadNumber);
+  add(rec.load_number);
+  add(rec.docNumber);
+  return keys;
+}
+
+function primaryRecordLoadLabel(rec) {
+  return String(rec.loadNumber || rec.load_number || rec.docNumber || '').trim();
+}
+
 function primaryWoLoadLabel(wo) {
   const raw = wo.loadNumber || wo.internalWorkOrderNumber || wo.vendorInvoiceNumber || '';
   return String(raw).trim();
@@ -1102,9 +1268,11 @@ function buildSettlementByLoad(erp, loadKeyRaw) {
   const target = normLoadKey(loadKeyRaw);
   const workOrders = [];
   const apTransactions = [];
+  const maintenanceRecords = [];
   const lineItems = [];
   let woTotal = 0;
   let apTotal = 0;
+  let recordTotal = 0;
 
   for (const wo of erp.workOrders || []) {
     if (!collectWoLoadKeys(wo).has(target)) continue;
@@ -1145,17 +1313,38 @@ function buildSettlementByLoad(erp, loadKeyRaw) {
     });
   }
 
+  for (const rec of erp.records || []) {
+    if (!collectRecordLoadKeys(rec).has(target)) continue;
+    maintenanceRecords.push(rec);
+    const amt = safeNum(rec.cost, 0) || 0;
+    if (amt > 0) recordTotal += amt;
+    lineItems.push({
+      kind: 'maintenance_record',
+      id: rec.id,
+      serviceType: rec.serviceType || rec.recordType || 'Record',
+      description: rec.notes || '',
+      amount: amt,
+      unit: rec.unit || '',
+      qboSyncStatus: rec.qboSyncStatus || '',
+      vendor: rec.vendor || ''
+    });
+  }
+
+  const grand = woTotal + apTotal + recordTotal;
   return {
     loadNumber: String(loadKeyRaw ?? '').trim(),
     workOrders,
     apTransactions,
+    maintenanceRecords,
     lineItems,
     totalWorkOrderLines: Math.round(woTotal * 100) / 100,
     totalAp: Math.round(apTotal * 100) / 100,
-    grandTotal: Math.round((woTotal + apTotal) * 100) / 100,
+    totalMaintenanceRecords: Math.round(recordTotal * 100) / 100,
+    grandTotal: Math.round(grand * 100) / 100,
     counts: {
       workOrders: workOrders.length,
       apTransactions: apTransactions.length,
+      maintenanceRecords: maintenanceRecords.length,
       lineItems: lineItems.length
     }
   };
@@ -1175,7 +1364,8 @@ function buildSettlementIndex(erp) {
         label: primaryWoLoadLabel(wo) || k,
         total: 0,
         workOrderCount: 0,
-        apCount: 0
+        apCount: 0,
+        recordCount: 0
       });
     }
     const e = map.get(k);
@@ -1193,7 +1383,8 @@ function buildSettlementIndex(erp) {
         label: String(ap.docNumber).trim() || k,
         total: 0,
         workOrderCount: 0,
-        apCount: 0
+        apCount: 0,
+        recordCount: 0
       });
     }
     const e = map.get(k);
@@ -1201,12 +1392,42 @@ function buildSettlementIndex(erp) {
     e.apCount += 1;
   }
 
+  for (const rec of erp.records || []) {
+    const k = normLoadKey(primaryRecordLoadLabel(rec));
+    if (!k) continue;
+    const amt = safeNum(rec.cost, 0) || 0;
+    if (!map.has(k)) {
+      map.set(k, {
+        loadKey: k,
+        label: primaryRecordLoadLabel(rec) || k,
+        total: 0,
+        workOrderCount: 0,
+        apCount: 0,
+        recordCount: 0
+      });
+    }
+    const e = map.get(k);
+    if (e.recordCount == null) e.recordCount = 0;
+    e.total += amt;
+    e.recordCount += 1;
+  }
+
+  for (const e of map.values()) {
+    if (e.recordCount == null) e.recordCount = 0;
+  }
+
   const loads = Array.from(map.values()).sort((a, b) => b.total - a.total);
   return loads;
 }
 
-/** Costs in ERP (work orders + AP) tied to a load / invoice # — settlement P&L stub. */
-app.get('/api/settlement/by-load/:loadNumber', (req, res) => {
+function csvEscape(v) {
+  const s = String(v ?? '');
+  if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+/** Costs in ERP + optional TMS load context (same load / invoice #). */
+app.get('/api/settlement/by-load/:loadNumber', async (req, res) => {
   try {
     const raw = req.params.loadNumber != null ? decodeURIComponent(String(req.params.loadNumber)) : '';
     if (!normLoadKey(raw)) {
@@ -1214,10 +1435,86 @@ app.get('/api/settlement/by-load/:loadNumber', (req, res) => {
     }
     const erp = readErp();
     const report = buildSettlementByLoad(erp, raw);
-    res.json({ ok: true, ...report });
+    let tms = null;
+    try {
+      tms = await fetchLoadSettlementContextByNumber(raw);
+    } catch (err) {
+      logError('settlement/tms-load', err);
+    }
+    res.json({
+      ok: true,
+      ...report,
+      tms: tms
+        ? {
+            load: tms.load,
+            stops: tms.stops,
+            revenuePlanned: null,
+            note: 'Revenue / rate con can be stored on loads later; this response is expense rollup + trip header.'
+          }
+        : null
+    });
   } catch (error) {
     logError('api/settlement/by-load', error);
     res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/settlement/export', async (req, res) => {
+  try {
+    const raw = String(req.query.load || '').trim();
+    if (!normLoadKey(raw)) {
+      return res.status(400).send('Query ?load= is required (load / invoice number).');
+    }
+    const erp = readErp();
+    const r = buildSettlementByLoad(erp, raw);
+    let tms = null;
+    try {
+      tms = await fetchLoadSettlementContextByNumber(raw);
+    } catch (err) {
+      logError('settlement/export-tms', err);
+    }
+
+    const lines = [];
+    lines.push(['Settlement export', csvEscape(r.loadNumber)].join(','));
+    lines.push(['Generated (UTC)', csvEscape(new Date().toISOString())].join(','));
+    if (tms?.load) {
+      lines.push(['TMS status', csvEscape(tms.load.status)].join(','));
+      lines.push(['Customer', csvEscape(tms.load.customer_name)].join(','));
+      lines.push(['Loaded miles', csvEscape(tms.load.practical_loaded_miles)].join(','));
+      lines.push(['Empty miles', csvEscape(tms.load.practical_empty_miles)].join(','));
+    }
+    lines.push('');
+    lines.push(['kind', 'unit', 'description', 'amount', 'qbo status'].map(csvEscape).join(','));
+    for (const row of r.lineItems || []) {
+      const desc =
+        row.kind === 'work_order_line'
+          ? row.serviceType
+          : row.kind === 'ap_transaction'
+            ? row.description
+            : `${row.serviceType} ${row.description || ''}`.trim();
+      lines.push(
+        [
+          csvEscape(row.kind),
+          csvEscape(row.unit),
+          csvEscape(desc),
+          csvEscape(row.amount),
+          csvEscape(row.qboSyncStatus)
+        ].join(',')
+      );
+    }
+    lines.push('');
+    lines.push(['total WO lines', csvEscape(r.totalWorkOrderLines)].join(','));
+    lines.push(['total AP', csvEscape(r.totalAp)].join(','));
+    lines.push(['total maintenance records', csvEscape(r.totalMaintenanceRecords)].join(','));
+    lines.push(['grand total expenses', csvEscape(r.grandTotal)].join(','));
+
+    const safeName = String(r.loadNumber).replace(/[^\w.-]+/g, '_') || 'load';
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="settlement-${safeName}.csv"`);
+    res.send(lines.join('\n'));
+  } catch (error) {
+    logError('api/settlement/export', error);
+    res.status(500).send(error.message);
   }
 });
 
@@ -1614,14 +1911,26 @@ app.post('/api/import/maintenance', upload.single('file'), (req, res) => {
       const qty = safeNum(firstValue(row, ['qty', 'quantity']), 1) || 1;
       const amount = safeNum(firstValue(row, ['cost', 'amount', 'expense']), 0);
       const rate = qty ? amount / qty : amount;
+      const loadTripNo =
+        firstValue(row, [
+          'load number',
+          'load no',
+          'load #',
+          'load/invoice',
+          'trip load',
+          'load'
+        ]) || '';
 
       const workOrder = {
         id: uid('imp_wo'),
         unit,
+        loadNumber: String(loadTripNo).trim() || null,
         assetCategory: '',
         serviceDate: firstValue(row, ['date', 'service date', 'last date']) || '',
-        internalWorkOrderNumber: firstValue(row, ['internal work order', 'work order', 'wo']) || '',
-        vendorInvoiceNumber: firstValue(row, ['vendor invoice', 'invoice number']) || '',
+        internalWorkOrderNumber:
+          String(loadTripNo).trim() || firstValue(row, ['internal work order', 'work order', 'wo']) || '',
+        vendorInvoiceNumber:
+          String(loadTripNo).trim() || firstValue(row, ['vendor invoice', 'invoice number']) || '',
         vendorWorkOrderNumber: firstValue(row, ['vendor work order']) || '',
         vendor: firstValue(row, ['vendor', 'shop', 'supplier']) || '',
         qboVendorId: '',
