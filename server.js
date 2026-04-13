@@ -32,11 +32,18 @@ const DATA_DIR = fs.existsSync(PERSIST_DIR) ? PERSIST_DIR : LOCAL_DATA_DIR;
 
 const ERP_FILE = path.join(DATA_DIR, 'maintenance.json');
 const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors({ origin: '*' }));
-app.use(express.json({ limit: '20mb' }));
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+function logError(label, error) {
+  console.error(`\n[${label}]`);
+  console.error(error?.stack || error?.message || error);
+}
 
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -48,7 +55,7 @@ function safeNum(v, fallback = null) {
 }
 
 function sanitizeName(value, fallback = 'Unnamed') {
-  return String(value || fallback).trim().slice(0, 150);
+  return String(value || fallback).trim().slice(0, 180);
 }
 
 function uid(prefix = 'id') {
@@ -95,8 +102,16 @@ function ensureErpFile() {
     fs.writeFileSync(ERP_FILE, JSON.stringify(defaultErpData(), null, 2));
     return;
   }
-  const existing = JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
+
+  let existing = {};
+  try {
+    existing = JSON.parse(fs.readFileSync(ERP_FILE, 'utf8'));
+  } catch {
+    existing = {};
+  }
+
   const merged = { ...defaultErpData(), ...existing };
+
   if (!merged.currentMileage) merged.currentMileage = {};
   if (!Array.isArray(merged.legacyRecords)) merged.legacyRecords = [];
   if (!Array.isArray(merged.workOrders)) merged.workOrders = [];
@@ -106,6 +121,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
   if (!Array.isArray(merged.qboCache.items)) merged.qboCache.items = [];
   if (!Array.isArray(merged.qboCache.accounts)) merged.qboCache.accounts = [];
+
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
 
@@ -151,7 +167,7 @@ async function fetchJson(url, options = {}) {
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new Error(`Non-JSON response from ${url}: ${raw.slice(0, 250)}`);
+    throw new Error(`Non-JSON response from ${url}: ${raw.slice(0, 300)}`);
   }
 
   if (!response.ok) {
@@ -160,7 +176,8 @@ async function fetchJson(url, options = {}) {
       data?.Fault?.Error?.[0]?.Detail ||
       data?.message ||
       data?.error ||
-      response.statusText;
+      response.statusText ||
+      'Request failed';
     const err = new Error(msg);
     err.status = response.status;
     err.details = data;
@@ -190,6 +207,7 @@ function isTrackedAsset(v) {
   const unitNum = parseUnitNumber(v.name);
   const inTruckRange = unitNum !== null && unitNum >= 120 && unitNum <= 177;
   const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
+
   return (
     inTruckRange ||
     text.includes('reefer') ||
@@ -212,6 +230,11 @@ function getStatValue(entry, keys = []) {
       if (v.value != null) return v.value;
       if (v.percent != null) return v.percent;
       if (v.latitude != null || v.longitude != null) return v;
+      if (Array.isArray(v) && v.length) {
+        const first = v[0];
+        if (first?.value != null) return first.value;
+        if (first?.percent != null) return first.percent;
+      }
     }
   }
   return null;
@@ -228,6 +251,27 @@ function vehicleIdOf(entry) {
   );
 }
 
+function getOdometerMilesFromStatsRow(row) {
+  const obdMeters = safeNum(
+    getStatValue(row, ['obdOdometerMeters', 'obdOdometer']),
+    null
+  );
+  const gpsMeters = safeNum(
+    getStatValue(row, ['gpsOdometerMeters', 'syntheticOdometerMeters', 'gpsOdometer']),
+    null
+  );
+  const meters = obdMeters ?? gpsMeters ?? null;
+  return meters != null ? Math.round(meters * 0.000621371) : null;
+}
+
+function getFuelPercentFromStatsRow(row) {
+  const pct = safeNum(
+    getStatValue(row, ['fuelPercent', 'fuelPercents', 'fuel']),
+    null
+  );
+  return pct != null ? Math.round(pct) : null;
+}
+
 function enrichVehicles(vehicles, liveStats = []) {
   const statsById = new Map();
   for (const row of liveStats) {
@@ -239,37 +283,25 @@ function enrichVehicles(vehicles, liveStats = []) {
     const id = String(v.id || v.vehicleId || v.ids?.samsaraId || '');
     const s = statsById.get(id) || {};
 
-    const obdMeters = safeNum(
-      getStatValue(s, ['obdOdometerMeters', 'obdOdometer']),
-      null
-    );
-    const gpsMeters = safeNum(
-      getStatValue(s, ['gpsOdometerMeters', 'syntheticOdometerMeters', 'gpsOdometer']),
-      null
-    );
-    const odometerMeters = obdMeters ?? gpsMeters ?? null;
-    const odometerMiles = odometerMeters != null ? Math.round(odometerMeters * 0.000621371) : null;
-
-    const fuelPercent = safeNum(
-      getStatValue(s, ['fuelPercent', 'fuelPercents', 'fuel']),
-      null
-    );
+    const odometerMiles = getOdometerMilesFromStatsRow(s);
+    const fuelPercent = getFuelPercentFromStatsRow(s);
 
     const gps = getStatValue(s, ['gps', 'location']) || {};
     const latitude = safeNum(gps?.latitude ?? gps?.lat, null);
     const longitude = safeNum(gps?.longitude ?? gps?.lng ?? gps?.lon, null);
 
     const engineState = getStatValue(s, ['engineState', 'engineStates']) || '';
+    const lastTripTime = s?.lastTripTime || s?.lastTrip || '';
 
     return {
       ...v,
       assetCategory: assetCategoryForVehicle(v),
-      odometerMeters,
       odometerMiles,
       fuelPercent,
       latitude,
       longitude,
-      engineState: String(engineState || '')
+      engineState: String(engineState || ''),
+      lastTripTime
     };
   });
 }
@@ -381,6 +413,7 @@ function flattenWorkOrderLines(workOrder) {
     rate: line.rate ?? '',
     amount: line.amount ?? '',
     notes: line.notes || '',
+    serviceMileage: line.serviceMileage ?? null,
     qboSyncStatus: workOrder.qboSyncStatus || '',
     qboEntityType: workOrder.qboEntityType || '',
     qboEntityId: workOrder.qboEntityId || ''
@@ -394,6 +427,7 @@ function buildDashboardRows(vehicles, erpStore) {
   return vehicles.flatMap(v => {
     const unit = v.name;
     const rules = defaultRulesForVehicle(v);
+
     const liveMiles = v.odometerMiles ?? null;
     const manualMiles = safeNum(currentMileage[unit], null);
     const effectiveMileage = liveMiles ?? manualMiles;
@@ -402,8 +436,8 @@ function buildDashboardRows(vehicles, erpStore) {
       const sameType = allLines
         .filter(r => r.unit === unit && r.serviceType === rule.serviceType)
         .sort((a, b) => {
-          const da = `${a.serviceDate || ''} ${a.amount || ''}`;
-          const db = `${b.serviceDate || ''} ${b.amount || ''}`;
+          const da = `${a.serviceDate || ''} ${a.serviceMileage || ''}`;
+          const db = `${b.serviceDate || ''} ${b.serviceMileage || ''}`;
           return da < db ? 1 : -1;
         });
 
@@ -426,6 +460,8 @@ function buildDashboardRows(vehicles, erpStore) {
         vin: v.vin || '',
         assetCategory: v.assetCategory || assetCategoryForVehicle(v),
         currentMileage: effectiveMileage,
+        liveMileage: liveMiles,
+        manualMileage: manualMiles,
         fuelPercent: v.fuelPercent ?? null,
         latitude: v.latitude,
         longitude: v.longitude,
@@ -831,7 +867,28 @@ async function qboCreateWorkOrderTransaction(workOrder) {
   };
 }
 
-/* Core endpoints */
+/* Root and health */
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    hasSamsaraToken: !!SAMSARA_API_TOKEN,
+    hasGeoapifyKey: !!GEOAPIFY_API_KEY,
+    hasQboConfig: qboConfigured(),
+    dataDir: DATA_DIR,
+    serverTime: new Date().toISOString()
+  });
+});
+
+app.get('/maintenance.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'maintenance.html'));
+});
+
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+/* Board */
 
 app.get('/api/board', async (_req, res) => {
   try {
@@ -864,9 +921,12 @@ app.get('/api/board', async (_req, res) => {
       refreshedAt: new Date().toISOString()
     });
   } catch (error) {
+    logError('api/board', error);
     res.status(500).json({ error: error.message, details: error.details || null });
   }
 });
+
+/* Maintenance data */
 
 app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
@@ -881,13 +941,14 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
     (vehiclesRes.data || []).filter(isTrackedAsset).forEach(v => {
       const key = String(v.name || '').trim().toUpperCase();
       if (!key) return;
-      if (!trackedMap.has(key)) trackedMap.set(key, v);
-      else {
-        const existing = trackedMap.get(key);
-        const oldTs = String(existing.updatedAtTime || '');
-        const newTs = String(v.updatedAtTime || '');
-        if (newTs > oldTs) trackedMap.set(key, v);
+      if (!trackedMap.has(key)) {
+        trackedMap.set(key, v);
+        return;
       }
+      const existing = trackedMap.get(key);
+      const oldTs = String(existing.updatedAtTime || '');
+      const newTs = String(v.updatedAtTime || '');
+      if (newTs > oldTs) trackedMap.set(key, v);
     });
 
     const tracked = enrichVehicles(Array.from(trackedMap.values()), liveRes.data || []).sort(byVehicleName);
@@ -900,88 +961,191 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
       workOrders: erp.workOrders || []
     });
   } catch (error) {
+    logError('api/maintenance/dashboard', error);
     res.status(500).json({ error: error.message, details: error.details || null });
   }
 });
 
-/* Geocoding */
+app.get('/api/erp/all', (_req, res) => {
+  res.json(readErp());
+});
 
-app.get('/api/geocode', async (req, res) => {
+app.get('/api/maintenance/records', (_req, res) => {
+  res.json(readErp());
+});
+
+/* Work orders */
+
+app.post('/api/work-orders', (req, res) => {
   try {
-    const q = (req.query.q || '').toString().trim();
-    if (!q) return res.json([]);
-
-    if (GEOAPIFY_API_KEY) {
-      const url = new URL('https://api.geoapify.com/v1/geocode/search');
-      url.searchParams.set('text', q);
-      url.searchParams.set('filter', 'countrycode:us');
-      url.searchParams.set('limit', '8');
-      url.searchParams.set('format', 'json');
-      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
-
-      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
-      return res.json((data.results || []).map(x => ({
-        lat: Number(x.lat),
-        lon: Number(x.lon),
-        name: x.formatted || q
-      })));
+    const body = req.body || {};
+    if (!body.unit) return res.status(400).json({ error: 'unit is required' });
+    if (!Array.isArray(body.lines) || !body.lines.length) {
+      return res.status(400).json({ error: 'At least one work order line is required' });
     }
 
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
-    const response = await fetch(url, { headers: { 'User-Agent': 'IH35-ERP', Accept: 'application/json' } });
-    const raw = await response.text();
-    const data = JSON.parse(raw);
-    res.json((Array.isArray(data) ? data : []).map(x => ({
-      lat: Number(x.lat),
-      lon: Number(x.lon),
-      name: x.display_name || q
-    })));
+    const erp = readErp();
+
+    const workOrder = {
+      id: uid('wo'),
+      unit: body.unit,
+      assetCategory: body.assetCategory || '',
+      serviceDate: body.serviceDate || '',
+      internalWorkOrderNumber: body.internalWorkOrderNumber || '',
+      vendorInvoiceNumber: body.vendorInvoiceNumber || '',
+      vendorWorkOrderNumber: body.vendorWorkOrderNumber || '',
+      vendor: body.vendor || '',
+      qboVendorId: body.qboVendorId || '',
+      repairLocationType: body.repairLocationType || '',
+      isInternalWorkOrder: !!body.isInternalWorkOrder,
+      paymentMethodId: body.paymentMethodId || '',
+      txnType: body.txnType || 'expense',
+      dueDate: body.dueDate || '',
+      notes: body.notes || '',
+      qboSyncStatus: '',
+      qboEntityType: '',
+      qboEntityId: '',
+      qboError: '',
+      createdAt: new Date().toISOString(),
+      lines: (body.lines || []).map(line => ({
+        id: uid('wol'),
+        lineType: line.lineType || 'service',
+        serviceType: line.serviceType || '',
+        detailMode: line.detailMode || 'category',
+        qboAccountId: line.qboAccountId || '',
+        qboItemId: line.qboItemId || '',
+        tirePosition: line.tirePosition || '',
+        tirePositionText: line.tirePositionText || '',
+        qty: safeNum(line.qty, 1) || 1,
+        rate: safeNum(line.rate, 0),
+        amount: safeNum(line.amount, 0),
+        vendorInvoiceNumber: line.vendorInvoiceNumber || '',
+        vendorWorkOrderNumber: line.vendorWorkOrderNumber || '',
+        notes: line.notes || '',
+        serviceMileage: safeNum(line.serviceMileage, null)
+      }))
+    };
+
+    erp.workOrders.push(workOrder);
+
+    const liveMaxMileage = Math.max(
+      0,
+      ...workOrder.lines.map(l => safeNum(l.serviceMileage, 0) || 0)
+    );
+    if (liveMaxMileage > 0) {
+      erp.currentMileage[workOrder.unit] = Math.max(safeNum(erp.currentMileage[workOrder.unit], 0) || 0, liveMaxMileage);
+    }
+
+    writeErp(erp);
+    res.json({ ok: true, workOrder });
   } catch (error) {
+    logError('api/work-orders POST', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-app.get('/api/autocomplete', async (req, res) => {
+app.post('/api/qbo/post-work-order/:id', async (req, res) => {
+  const erp = readErp();
+  const idx = (erp.workOrders || []).findIndex(x => String(x.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Work order not found' });
+
   try {
-    const q = (req.query.q || '').toString().trim();
-    if (!q || q.length < 2) return res.json([]);
+    const result = await qboCreateWorkOrderTransaction(erp.workOrders[idx]);
+    erp.workOrders[idx] = {
+      ...erp.workOrders[idx],
+      qboSyncStatus: 'posted',
+      qboEntityType: result.qboEntityType,
+      qboEntityId: result.qboEntityId,
+      qboError: '',
+      qboPostedAt: new Date().toISOString()
+    };
+    writeErp(erp);
+    res.json({ ok: true, workOrder: erp.workOrders[idx] });
+  } catch (error) {
+    erp.workOrders[idx] = {
+      ...erp.workOrders[idx],
+      qboSyncStatus: 'error',
+      qboError: error.message,
+      qboErrorAt: new Date().toISOString()
+    };
+    writeErp(erp);
+    res.status(500).json({ error: error.message });
+  }
+});
 
-    if (GEOAPIFY_API_KEY) {
-      const url = new URL('https://api.geoapify.com/v1/geocode/autocomplete');
-      url.searchParams.set('text', q);
-      url.searchParams.set('filter', 'countrycode:us');
-      url.searchParams.set('limit', '10');
-      url.searchParams.set('format', 'json');
-      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
+/* Legacy AP transactions */
 
-      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
-      return res.json((data.results || []).map(x => ({ name: x.formatted || x.address_line1 || q })));
+app.post('/api/erp/ap-transaction', (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!body.txnType || !body.detailMode || !body.qboVendorId) {
+      return res.status(400).json({ error: 'Missing required AP transaction fields' });
     }
 
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
-    const response = await fetch(url, { headers: { 'User-Agent': 'IH35-ERP', Accept: 'application/json' } });
-    const raw = await response.text();
-    const data = JSON.parse(raw);
-    res.json((Array.isArray(data) ? data : []).map(x => ({ name: x.display_name })));
-  } catch {
-    res.json([]);
-  }
-});
-
-app.get('/api/route', async (req, res) => {
-  try {
-    const coords = String(req.query.coords || '').trim();
-    if (!coords) return res.status(400).json({ error: 'Missing coords' });
-
-    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
-    const data = await fetchJson(url, { headers: { Accept: 'application/json' } });
-    res.json(data);
+    const erp = readErp();
+    erp.apTransactions.push({
+      id: uid('ap'),
+      txnType: body.txnType,
+      detailMode: body.detailMode,
+      qboVendorId: body.qboVendorId,
+      paymentMethodId: body.paymentMethodId || '',
+      qboAccountId: body.qboAccountId || '',
+      qboItemId: body.qboItemId || '',
+      qty: safeNum(body.qty, 1) || 1,
+      amount: safeNum(body.amount, 0),
+      txnDate: body.txnDate || '',
+      dueDate: body.dueDate || '',
+      docNumber: body.docNumber || '',
+      description: body.description || '',
+      memo: body.memo || '',
+      assetUnit: body.assetUnit || '',
+      qboSyncStatus: '',
+      qboEntityType: '',
+      qboEntityId: '',
+      qboError: '',
+      createdAt: new Date().toISOString()
+    });
+    writeErp(erp);
+    res.json({ ok: true });
   } catch (error) {
-    res.status(error.status || 500).json({ error: error.message });
+    logError('api/erp/ap-transaction POST', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-/* QuickBooks status + OAuth */
+app.post('/api/qbo/post-ap/:id', async (req, res) => {
+  const erp = readErp();
+  const idx = (erp.apTransactions || []).findIndex(x => String(x.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'AP transaction not found' });
+
+  try {
+    const result = await qboCreateApTransaction(erp.apTransactions[idx]);
+    erp.apTransactions[idx] = {
+      ...erp.apTransactions[idx],
+      qboSyncStatus: 'posted',
+      qboEntityType: result.qboEntityType,
+      qboEntityId: result.qboEntityId,
+      qboVendorId: result.qboVendorId,
+      qboItemId: result.qboItemId,
+      qboAccountId: result.qboAccountId,
+      qboError: '',
+      qboPostedAt: new Date().toISOString()
+    };
+    writeErp(erp);
+    res.json({ ok: true, ap: erp.apTransactions[idx] });
+  } catch (error) {
+    erp.apTransactions[idx] = {
+      ...erp.apTransactions[idx],
+      qboSyncStatus: 'error',
+      qboError: error.message,
+      qboErrorAt: new Date().toISOString()
+    };
+    writeErp(erp);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/* QuickBooks */
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
@@ -995,21 +1159,26 @@ app.get('/api/qbo/status', (_req, res) => {
 });
 
 app.get('/api/qbo/connect', (_req, res) => {
-  if (!qboConfigured()) return res.status(400).send('QuickBooks environment variables are missing.');
+  try {
+    if (!qboConfigured()) return res.status(400).send('QuickBooks environment variables are missing.');
 
-  const state = crypto.randomBytes(16).toString('hex');
-  const store = readQbo();
-  store.state = state;
-  writeQbo(store);
+    const state = crypto.randomBytes(16).toString('hex');
+    const store = readQbo();
+    store.state = state;
+    writeQbo(store);
 
-  const params = new URLSearchParams();
-  params.set('client_id', QBO_CLIENT_ID);
-  params.set('response_type', 'code');
-  params.set('scope', 'com.intuit.quickbooks.accounting');
-  params.set('redirect_uri', QBO_REDIRECT_URI);
-  params.set('state', state);
+    const params = new URLSearchParams();
+    params.set('client_id', QBO_CLIENT_ID);
+    params.set('response_type', 'code');
+    params.set('scope', 'com.intuit.quickbooks.accounting');
+    params.set('redirect_uri', QBO_REDIRECT_URI);
+    params.set('state', state);
 
-  return res.redirect(`${INTUIT_AUTH_BASE}?${params.toString()}`);
+    return res.redirect(`${INTUIT_AUTH_BASE}?${params.toString()}`);
+  } catch (error) {
+    logError('api/qbo/connect', error);
+    res.status(500).send(error.message);
+  }
 });
 
 app.get('/api/qbo/callback', async (req, res) => {
@@ -1079,8 +1248,9 @@ app.get('/api/qbo/callback', async (req, res) => {
         </body>
       </html>
     `);
-  } catch (err) {
-    return res.status(500).send(`QuickBooks callback failed: ${err.message}`);
+  } catch (error) {
+    logError('api/qbo/callback', error);
+    res.status(500).send(`QuickBooks callback failed: ${error.message}`);
   }
 });
 
@@ -1117,175 +1287,6 @@ app.post('/api/qbo/create-vendor', async (req, res) => {
     const cache = await qboSyncMasterData();
     res.json({ ok: true, created: result.created, vendor: result.vendor, cache });
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-
-/* ERP read */
-
-app.get('/api/erp/all', (_req, res) => {
-  res.json(readErp());
-});
-
-app.get('/api/maintenance/records', (_req, res) => {
-  res.json(readErp());
-});
-
-/* Work orders */
-
-app.post('/api/work-orders', (req, res) => {
-  const body = req.body || {};
-  if (!body.unit) return res.status(400).json({ error: 'unit is required' });
-  if (!Array.isArray(body.lines) || !body.lines.length) return res.status(400).json({ error: 'At least one work order line is required' });
-
-  const erp = readErp();
-  const workOrder = {
-    id: uid('wo'),
-    unit: body.unit,
-    assetCategory: body.assetCategory || '',
-    serviceDate: body.serviceDate || '',
-    internalWorkOrderNumber: body.internalWorkOrderNumber || '',
-    vendorInvoiceNumber: body.vendorInvoiceNumber || '',
-    vendorWorkOrderNumber: body.vendorWorkOrderNumber || '',
-    vendor: body.vendor || '',
-    qboVendorId: body.qboVendorId || '',
-    repairLocationType: body.repairLocationType || '',
-    isInternalWorkOrder: !!body.isInternalWorkOrder,
-    paymentMethodId: body.paymentMethodId || '',
-    txnType: body.txnType || 'expense',
-    dueDate: body.dueDate || '',
-    notes: body.notes || '',
-    qboSyncStatus: '',
-    qboEntityType: '',
-    qboEntityId: '',
-    qboError: '',
-    createdAt: new Date().toISOString(),
-    lines: (body.lines || []).map(line => ({
-      id: uid('wol'),
-      lineType: line.lineType || 'service',
-      serviceType: line.serviceType || '',
-      detailMode: line.detailMode || 'category',
-      qboAccountId: line.qboAccountId || '',
-      qboItemId: line.qboItemId || '',
-      tirePosition: line.tirePosition || '',
-      tirePositionText: line.tirePositionText || '',
-      qty: safeNum(line.qty, 1) || 1,
-      rate: safeNum(line.rate, 0),
-      amount: safeNum(line.amount, 0),
-      vendorInvoiceNumber: line.vendorInvoiceNumber || '',
-      vendorWorkOrderNumber: line.vendorWorkOrderNumber || '',
-      notes: line.notes || '',
-      serviceMileage: safeNum(line.serviceMileage, null)
-    }))
-  };
-
-  erp.workOrders.push(workOrder);
-
-  const liveMaxMileage = Math.max(
-    0,
-    ...workOrder.lines.map(l => safeNum(l.serviceMileage, 0) || 0)
-  );
-  if (liveMaxMileage > 0) {
-    erp.currentMileage[workOrder.unit] = Math.max(safeNum(erp.currentMileage[workOrder.unit], 0) || 0, liveMaxMileage);
-  }
-
-  writeErp(erp);
-  res.json({ ok: true, workOrder });
-});
-
-app.post('/api/qbo/post-work-order/:id', async (req, res) => {
-  const erp = readErp();
-  const idx = (erp.workOrders || []).findIndex(x => String(x.id) === String(req.params.id));
-  if (idx === -1) return res.status(404).json({ error: 'Work order not found' });
-
-  try {
-    const result = await qboCreateWorkOrderTransaction(erp.workOrders[idx]);
-    erp.workOrders[idx] = {
-      ...erp.workOrders[idx],
-      qboSyncStatus: 'posted',
-      qboEntityType: result.qboEntityType,
-      qboEntityId: result.qboEntityId,
-      qboError: '',
-      qboPostedAt: new Date().toISOString()
-    };
-    writeErp(erp);
-    res.json({ ok: true, workOrder: erp.workOrders[idx] });
-  } catch (error) {
-    erp.workOrders[idx] = {
-      ...erp.workOrders[idx],
-      qboSyncStatus: 'error',
-      qboError: error.message,
-      qboErrorAt: new Date().toISOString()
-    };
-    writeErp(erp);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/* Legacy AP transactions */
-
-app.post('/api/erp/ap-transaction', (req, res) => {
-  const body = req.body || {};
-  if (!body.txnType || !body.detailMode || !body.qboVendorId) {
-    return res.status(400).json({ error: 'Missing required AP transaction fields' });
-  }
-
-  const erp = readErp();
-  erp.apTransactions.push({
-    id: uid('ap'),
-    txnType: body.txnType,
-    detailMode: body.detailMode,
-    qboVendorId: body.qboVendorId,
-    paymentMethodId: body.paymentMethodId || '',
-    qboAccountId: body.qboAccountId || '',
-    qboItemId: body.qboItemId || '',
-    qty: safeNum(body.qty, 1) || 1,
-    amount: safeNum(body.amount, 0),
-    txnDate: body.txnDate || '',
-    dueDate: body.dueDate || '',
-    docNumber: body.docNumber || '',
-    description: body.description || '',
-    memo: body.memo || '',
-    assetUnit: body.assetUnit || '',
-    qboSyncStatus: '',
-    qboEntityType: '',
-    qboEntityId: '',
-    qboError: '',
-    createdAt: new Date().toISOString()
-  });
-  writeErp(erp);
-  res.json({ ok: true });
-});
-
-app.post('/api/qbo/post-ap/:id', async (req, res) => {
-  const erp = readErp();
-  const idx = (erp.apTransactions || []).findIndex(x => String(x.id) === String(req.params.id));
-  if (idx === -1) return res.status(404).json({ error: 'AP transaction not found' });
-
-  try {
-    const result = await qboCreateApTransaction(erp.apTransactions[idx]);
-    erp.apTransactions[idx] = {
-      ...erp.apTransactions[idx],
-      qboSyncStatus: 'posted',
-      qboEntityType: result.qboEntityType,
-      qboEntityId: result.qboEntityId,
-      qboVendorId: result.qboVendorId,
-      qboItemId: result.qboItemId,
-      qboAccountId: result.qboAccountId,
-      qboError: '',
-      qboPostedAt: new Date().toISOString()
-    };
-    writeErp(erp);
-    res.json({ ok: true, ap: erp.apTransactions[idx] });
-  } catch (error) {
-    erp.apTransactions[idx] = {
-      ...erp.apTransactions[idx],
-      qboSyncStatus: 'error',
-      qboError: error.message,
-      qboErrorAt: new Date().toISOString()
-    };
-    writeErp(erp);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1382,6 +1383,7 @@ app.post('/api/import/maintenance', upload.single('file'), (req, res) => {
     writeErp(erp);
     res.json({ ok: true, imported });
   } catch (error) {
+    logError('api/import/maintenance', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1438,29 +1440,105 @@ app.post('/api/import/ap', upload.single('file'), (req, res) => {
     writeErp(erp);
     res.json({ ok: true, imported });
   } catch (error) {
+    logError('api/import/ap', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-/* Health + files */
+/* Geocode */
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    ok: true,
-    hasSamsaraToken: !!SAMSARA_API_TOKEN,
-    hasGeoapifyKey: !!GEOAPIFY_API_KEY,
-    hasQboConfig: qboConfigured(),
-    dataDir: DATA_DIR,
-    serverTime: new Date().toISOString()
-  });
+app.get('/api/geocode', async (req, res) => {
+  try {
+    const q = (req.query.q || '').toString().trim();
+    if (!q) return res.json([]);
+
+    if (GEOAPIFY_API_KEY) {
+      const url = new URL('https://api.geoapify.com/v1/geocode/search');
+      url.searchParams.set('text', q);
+      url.searchParams.set('filter', 'countrycode:us');
+      url.searchParams.set('limit', '8');
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
+
+      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
+      return res.json((data.results || []).map(x => ({
+        lat: Number(x.lat),
+        lon: Number(x.lon),
+        name: x.formatted || q
+      })));
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'IH35-ERP', Accept: 'application/json' }
+    });
+    const raw = await response.text();
+    const data = JSON.parse(raw);
+    res.json((Array.isArray(data) ? data : []).map(x => ({
+      lat: Number(x.lat),
+      lon: Number(x.lon),
+      name: x.display_name || q
+    })));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.get('/maintenance.html', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'maintenance.html'));
+app.get('/api/autocomplete', async (req, res) => {
+  try {
+    const q = (req.query.q || '').toString().trim();
+    if (!q || q.length < 2) return res.json([]);
+
+    if (GEOAPIFY_API_KEY) {
+      const url = new URL('https://api.geoapify.com/v1/geocode/autocomplete');
+      url.searchParams.set('text', q);
+      url.searchParams.set('filter', 'countrycode:us');
+      url.searchParams.set('limit', '10');
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
+
+      const data = await fetchJson(url.toString(), { headers: { Accept: 'application/json' } });
+      return res.json((data.results || []).map(x => ({ name: x.formatted || x.address_line1 || q })));
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&countrycodes=us&limit=12`;
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'IH35-ERP', Accept: 'application/json' }
+    });
+    const raw = await response.text();
+    const data = JSON.parse(raw);
+    res.json((Array.isArray(data) ? data : []).map(x => ({ name: x.display_name })));
+  } catch {
+    res.json([]);
+  }
 });
 
-app.get('/', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/api/route', async (req, res) => {
+  try {
+    const coords = String(req.query.coords || '').trim();
+    if (!coords) return res.status(400).json({ error: 'Missing coords' });
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+    const data = await fetchJson(url, { headers: { Accept: 'application/json' } });
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
+/* Global safety */
+
+app.use((err, _req, res, _next) => {
+  logError('unhandled middleware error', err);
+  res.status(500).json({ error: err?.message || 'Internal server error' });
+});
+
+process.on('uncaughtException', err => {
+  logError('uncaughtException', err);
+});
+
+process.on('unhandledRejection', err => {
+  logError('unhandledRejection', err);
 });
 
 app.listen(PORT, () => {
