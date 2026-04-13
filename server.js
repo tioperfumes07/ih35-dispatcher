@@ -152,13 +152,6 @@ function writeQbo(data) {
   fs.writeFileSync(QBO_FILE, JSON.stringify(data, null, 2));
 }
 
-function samsaraHeaders() {
-  return {
-    Authorization: `Bearer ${SAMSARA_API_TOKEN}`,
-    Accept: 'application/json'
-  };
-}
-
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
   const raw = await response.text();
@@ -185,6 +178,13 @@ async function fetchJson(url, options = {}) {
   }
 
   return data;
+}
+
+function samsaraHeaders() {
+  return {
+    Authorization: `Bearer ${SAMSARA_API_TOKEN}`,
+    Accept: 'application/json'
+  };
 }
 
 function assetCategoryForVehicle(v) {
@@ -221,22 +221,34 @@ function isTrackedAsset(v) {
   );
 }
 
-function getStatValue(entry, keys = []) {
+function getStatObject(entry, keys = []) {
   for (const key of keys) {
     const v = entry?.[key];
-    if (v == null) continue;
-    if (typeof v === 'number' || typeof v === 'string') return v;
-    if (typeof v === 'object') {
-      if (v.value != null) return v.value;
-      if (v.percent != null) return v.percent;
-      if (v.latitude != null || v.longitude != null) return v;
-      if (Array.isArray(v) && v.length) {
-        const first = v[0];
-        if (first?.value != null) return first.value;
-        if (first?.percent != null) return first.percent;
-      }
-    }
+    if (v != null) return v;
   }
+  return null;
+}
+
+function getStatValue(entry, keys = []) {
+  const v = getStatObject(entry, keys);
+  if (v == null) return null;
+
+  if (typeof v === 'number' || typeof v === 'string') return v;
+
+  if (Array.isArray(v)) {
+    const first = v[0];
+    if (!first) return null;
+    if (first.value != null) return first.value;
+    if (first.percent != null) return first.percent;
+    return null;
+  }
+
+  if (typeof v === 'object') {
+    if (v.value != null) return v.value;
+    if (v.percent != null) return v.percent;
+    if (v.latitude != null || v.longitude != null) return v;
+  }
+
   return null;
 }
 
@@ -247,275 +259,219 @@ function vehicleIdOf(entry) {
     entry?.vehicle?.id ||
     entry?.vehicle?.ids?.samsaraId ||
     entry?.ids?.samsaraId ||
+    entry?.entityId ||
     ''
   );
 }
 
-function getOdometerMilesFromStatsRow(row) {
-  const obdMeters = safeNum(
-    getStatValue(row, ['obdOdometerMeters', 'obdOdometer']),
-    null
-  );
-  const gpsMeters = safeNum(
-    getStatValue(row, ['gpsOdometerMeters', 'syntheticOdometerMeters', 'gpsOdometer']),
-    null
-  );
+function readGpsObject(entry) {
+  const gps = getStatObject(entry, ['gps', 'location']);
+  if (!gps) return {};
+  if (Array.isArray(gps)) return gps[0] || {};
+  return gps;
+}
+
+function readOdometerMilesFromEntry(entry) {
+  const obdMeters = safeNum(getStatValue(entry, ['obdOdometerMeters', 'obdOdometer']), null);
+  const gpsMeters = safeNum(getStatValue(entry, ['gpsOdometerMeters', 'syntheticOdometerMeters', 'gpsOdometer']), null);
   const meters = obdMeters ?? gpsMeters ?? null;
   return meters != null ? Math.round(meters * 0.000621371) : null;
 }
 
-function getFuelPercentFromStatsRow(row) {
-  const pct = safeNum(
-    getStatValue(row, ['fuelPercent', 'fuelPercents', 'fuel']),
-    null
-  );
+function readFuelPercentFromEntry(entry) {
+  const pct = safeNum(getStatValue(entry, ['fuelPercent', 'fuelPercents', 'fuel']), null);
   return pct != null ? Math.round(pct) : null;
 }
 
-function enrichVehicles(vehicles, liveStats = []) {
-  const statsById = new Map();
-  for (const row of liveStats) {
-    const id = vehicleIdOf(row);
-    if (id) statsById.set(id, row);
-  }
+function normalizeFeedRows(rawRows = []) {
+  const out = [];
+  for (const row of rawRows) {
+    if (!row || typeof row !== 'object') continue;
 
-  return vehicles.map(v => {
-    const id = String(v.id || v.vehicleId || v.ids?.samsaraId || '');
-    const s = statsById.get(id) || {};
-
-    const odometerMiles = getOdometerMilesFromStatsRow(s);
-    const fuelPercent = getFuelPercentFromStatsRow(s);
-
-    const gps = getStatValue(s, ['gps', 'location']) || {};
-    const latitude = safeNum(gps?.latitude ?? gps?.lat, null);
-    const longitude = safeNum(gps?.longitude ?? gps?.lng ?? gps?.lon, null);
-
-    const engineState = getStatValue(s, ['engineState', 'engineStates']) || '';
-    const lastTripTime = s?.lastTripTime || s?.lastTrip || '';
-
-    return {
-      ...v,
-      assetCategory: assetCategoryForVehicle(v),
-      odometerMiles,
-      fuelPercent,
-      latitude,
-      longitude,
-      engineState: String(engineState || ''),
-      lastTripTime
-    };
-  });
-}
-
-function defaultRulesForVehicle(v) {
-  const category = assetCategoryForVehicle(v);
-
-  if (category === 'Refrigerated Vans') {
-    return [
-      { serviceType: 'Reefer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Reefer Oil Service', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Reefer Fuel Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Reefer Air Filter', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
-      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
-      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
-    ];
-  }
-
-  if (category === 'Flatbeds' || category === 'Dry Vans') {
-    return [
-      { serviceType: 'Trailer PM', category: 'maintenance', intervalMiles: null, intervalDays: 180 },
-      { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: null, intervalDays: 90 },
-      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
-      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-      { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
-      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
-    ];
-  }
-
-  if (category === 'Company Vehicles') {
-    return [
-      { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 5000, intervalDays: 180 },
-      { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 180 },
-      { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 30000, intervalDays: 180 },
-      { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
-    ];
-  }
-
-  return [
-    { serviceType: 'PM Service', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Oil Change', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Lubrication', category: 'maintenance', intervalMiles: 15000, intervalDays: 60 },
-    { serviceType: 'Air Dryer Cartridge', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Power Steering Service', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Differential Service', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
-    { serviceType: 'Coolant Filter', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'Air Filters', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Second Fuel Filter', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Valve Adjustment', category: 'maintenance', intervalMiles: 150000, intervalDays: 365 },
-    { serviceType: 'DPF Burn Check', category: 'maintenance', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'DPF Ash Clean', category: 'maintenance', intervalMiles: 250000, intervalDays: 365 },
-    { serviceType: 'Annual Inspection', category: 'maintenance', intervalMiles: null, intervalDays: 365 },
-    { serviceType: 'Brakes', category: 'maintenance', intervalMiles: 50000, intervalDays: 180 },
-    { serviceType: 'Tires', category: 'tire', intervalMiles: 25000, intervalDays: 90 },
-    { serviceType: 'Repair', category: 'repair', intervalMiles: null, intervalDays: null }
-  ];
-}
-
-function addDays(dateStr, days) {
-  if (!dateStr || !days) return null;
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return null;
-  d.setDate(d.getDate() + Number(days));
-  return d.toISOString().slice(0, 10);
-}
-
-function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
-  const today = new Date().toISOString().slice(0, 10);
-
-  let milesState = 'current';
-  if (nextDueMiles != null && currentMileage != null) {
-    const diff = nextDueMiles - currentMileage;
-    if (diff < 0) milesState = 'past due';
-    else if (diff <= 1000) milesState = 'due soon';
-  }
-
-  let dateState = 'current';
-  if (nextDueDate) {
-    if (nextDueDate < today) dateState = 'past due';
-    else {
-      const d1 = new Date(today);
-      const d2 = new Date(nextDueDate);
-      const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
-      if (diffDays <= 7) dateState = 'due soon';
+    if (Array.isArray(row.data)) {
+      for (const sub of row.data) out.push(sub);
+      continue;
     }
+
+    out.push(row);
   }
-
-  if (milesState === 'past due' || dateState === 'past due') return 'past due';
-  if (milesState === 'due soon' || dateState === 'due soon') return 'due soon';
-  return 'current';
+  return out;
 }
 
-function flattenWorkOrderLines(workOrder) {
-  return (workOrder.lines || []).map(line => ({
-    workOrderId: workOrder.id,
-    workOrderNumber: workOrder.internalWorkOrderNumber || '',
-    vendorInvoiceNumber: workOrder.vendorInvoiceNumber || '',
-    vendorWorkOrderNumber: workOrder.vendorWorkOrderNumber || '',
-    unit: workOrder.unit || '',
-    serviceDate: workOrder.serviceDate || '',
-    vendor: workOrder.vendor || '',
-    lineId: line.id,
-    lineType: line.lineType || '',
-    serviceType: line.serviceType || '',
-    tirePosition: line.tirePosition || line.tirePositionText || '',
-    qty: line.qty ?? '',
-    rate: line.rate ?? '',
-    amount: line.amount ?? '',
-    notes: line.notes || '',
-    serviceMileage: line.serviceMileage ?? null,
-    qboSyncStatus: workOrder.qboSyncStatus || '',
-    qboEntityType: workOrder.qboEntityType || '',
-    qboEntityId: workOrder.qboEntityId || ''
-  }));
-}
+/* ---------------------------
+   LIVE SAMSARA STATS FEED CACHE
+---------------------------- */
 
-function buildDashboardRows(vehicles, erpStore) {
-  const currentMileage = erpStore.currentMileage || {};
-  const allLines = (erpStore.workOrders || []).flatMap(flattenWorkOrderLines);
+const liveStatsCache = {
+  byVehicleId: new Map(),
+  cursor: '',
+  lastSyncAt: '',
+  isSyncing: false,
+  lastError: '',
+  nextAllowedPollAt: 0
+};
 
-  return vehicles.flatMap(v => {
-    const unit = v.name;
-    const rules = defaultRulesForVehicle(v);
+function updateVehicleCacheFromRows(rows = []) {
+  for (const row of rows) {
+    const vehicleId = vehicleIdOf(row);
+    if (!vehicleId) continue;
 
-    const liveMiles = v.odometerMiles ?? null;
-    const manualMiles = safeNum(currentMileage[unit], null);
-    const effectiveMileage = liveMiles ?? manualMiles;
+    const prev = liveStatsCache.byVehicleId.get(vehicleId) || {};
+    const gps = readGpsObject(row);
+    const merged = {
+      ...prev,
+      ...row,
+      vehicleId,
+      obdOdometerMeters:
+        safeNum(getStatValue(row, ['obdOdometerMeters', 'obdOdometer']), null) ??
+        prev.obdOdometerMeters ??
+        null,
+      gpsOdometerMeters:
+        safeNum(getStatValue(row, ['gpsOdometerMeters', 'syntheticOdometerMeters', 'gpsOdometer']), null) ??
+        prev.gpsOdometerMeters ??
+        null,
+      fuelPercent:
+        readFuelPercentFromEntry(row) ??
+        prev.fuelPercent ??
+        null,
+      gps: {
+        latitude: safeNum(gps?.latitude ?? gps?.lat, prev.gps?.latitude ?? null),
+        longitude: safeNum(gps?.longitude ?? gps?.lng ?? gps?.lon, prev.gps?.longitude ?? null)
+      },
+      engineState:
+        String(getStatValue(row, ['engineState', 'engineStates']) || prev.engineState || ''),
+      updatedAt:
+        row?.time ||
+        row?.updatedAtTime ||
+        row?.gps?.time ||
+        row?.obdOdometerMeters?.time ||
+        row?.gpsOdometerMeters?.time ||
+        prev.updatedAt ||
+        ''
+    };
 
-    return rules.map(rule => {
-      const sameType = allLines
-        .filter(r => r.unit === unit && r.serviceType === rule.serviceType)
-        .sort((a, b) => {
-          const da = `${a.serviceDate || ''} ${a.serviceMileage || ''}`;
-          const db = `${b.serviceDate || ''} ${b.serviceMileage || ''}`;
-          return da < db ? 1 : -1;
-        });
-
-      const last = sameType[0] || null;
-      const lastMiles = last ? safeNum(last.serviceMileage, null) : null;
-      const nextDueMiles =
-        last && rule.intervalMiles != null && lastMiles != null
-          ? lastMiles + Number(rule.intervalMiles)
-          : null;
-      const nextDueDate =
-        last && rule.intervalDays != null && last.serviceDate
-          ? addDays(last.serviceDate, rule.intervalDays)
-          : null;
-
-      return {
-        unit,
-        make: v.make || '',
-        model: v.model || '',
-        year: v.year || '',
-        vin: v.vin || '',
-        assetCategory: v.assetCategory || assetCategoryForVehicle(v),
-        currentMileage: effectiveMileage,
-        liveMileage: liveMiles,
-        manualMileage: manualMiles,
-        fuelPercent: v.fuelPercent ?? null,
-        latitude: v.latitude,
-        longitude: v.longitude,
-        engineState: v.engineState || '',
-        category: rule.category || 'maintenance',
-        serviceType: rule.serviceType,
-        intervalMiles: rule.intervalMiles,
-        intervalDays: rule.intervalDays,
-        lastServiceDate: last?.serviceDate || '',
-        nextDueMileage: nextDueMiles,
-        nextDueDate,
-        vendor: last?.vendor || '',
-        cost: last?.amount ?? '',
-        qboSyncStatus: last?.qboSyncStatus || '',
-        qboEntityId: last?.qboEntityId || '',
-        status: calcStatus(nextDueMiles, nextDueDate, effectiveMileage)
-      };
-    });
-  });
-}
-
-function buildTireAlerts(erp) {
-  const lines = (erp.workOrders || [])
-    .flatMap(wo => (wo.lines || []).map(line => ({ ...line, unit: wo.unit, serviceDate: wo.serviceDate })))
-    .filter(line => String(line.lineType || '').toLowerCase() === 'tire');
-
-  const byUnit = {};
-  for (const line of lines) {
-    if (!byUnit[line.unit]) byUnit[line.unit] = [];
-    byUnit[line.unit].push(line);
+    liveStatsCache.byVehicleId.set(vehicleId, merged);
   }
+}
 
-  const alerts = [];
-  Object.entries(byUnit).forEach(([unit, rows]) => {
-    rows.sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
-    if (rows.length >= 3) {
-      const lastThree = rows.slice(0, 3);
-      const first = new Date(lastThree[2].serviceDate);
-      const last = new Date(lastThree[0].serviceDate);
-      const diffDays = Math.ceil((last - first) / (1000 * 60 * 60 * 24));
-      if (diffDays <= 90) {
-        alerts.push({
-          unit,
-          type: 'Tire Frequency',
-          message: 'Too many tire line items created in a short period'
-        });
+async function fetchVehicleStatsFeedPage(afterCursor = '') {
+  const url = new URL('https://api.samsara.com/fleet/vehicles/stats/feed');
+  url.searchParams.set(
+    'types',
+    'obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps,engineStates'
+  );
+  if (afterCursor) url.searchParams.set('after', afterCursor);
+
+  return fetchJson(url.toString(), { headers: samsaraHeaders() });
+}
+
+async function syncVehicleStatsFeedOnce() {
+  if (!SAMSARA_API_TOKEN) return;
+  if (liveStatsCache.isSyncing) return;
+
+  const now = Date.now();
+  if (now < liveStatsCache.nextAllowedPollAt) return;
+
+  liveStatsCache.isSyncing = true;
+
+  try {
+    let after = liveStatsCache.cursor || '';
+    let loopGuard = 0;
+
+    while (loopGuard < 20) {
+      loopGuard += 1;
+
+      const payload = await fetchVehicleStatsFeedPage(after);
+
+      const rows = normalizeFeedRows(payload?.data || []);
+      updateVehicleCacheFromRows(rows);
+
+      const endCursor =
+        payload?.pagination?.endCursor ||
+        payload?.endCursor ||
+        after ||
+        '';
+
+      const hasNextPage =
+        payload?.pagination?.hasNextPage === true ||
+        payload?.hasNextPage === true;
+
+      if (endCursor) {
+        liveStatsCache.cursor = endCursor;
+        after = endCursor;
+      }
+
+      liveStatsCache.lastSyncAt = new Date().toISOString();
+      liveStatsCache.lastError = '';
+
+      if (!hasNextPage) {
+        liveStatsCache.nextAllowedPollAt = Date.now() + 5000;
+        break;
       }
     }
-  });
-
-  return alerts;
+  } catch (error) {
+    liveStatsCache.lastError = error.message || 'Stats feed sync failed';
+    logError('samsara stats feed', error);
+    liveStatsCache.nextAllowedPollAt = Date.now() + 15000;
+  } finally {
+    liveStatsCache.isSyncing = false;
+  }
 }
 
-/* QuickBooks */
+function startSamsaraFeedLoop() {
+  if (!SAMSARA_API_TOKEN) {
+    console.log('Samsara token missing; live mileage feed disabled.');
+    return;
+  }
+
+  syncVehicleStatsFeedOnce().catch(err => logError('initial stats feed sync', err));
+
+  setInterval(() => {
+    syncVehicleStatsFeedOnce().catch(err => logError('interval stats feed sync', err));
+  }, 10000);
+}
+
+function liveCacheForVehicle(vehicle) {
+  const vehicleId = String(vehicle.id || vehicle.vehicleId || vehicle.ids?.samsaraId || '');
+  return liveStatsCache.byVehicleId.get(vehicleId) || null;
+}
+
+function vehicleWithLiveStats(vehicle) {
+  const cached = liveCacheForVehicle(vehicle);
+
+  const liveOdometerMiles =
+    cached
+      ? (cached.obdOdometerMeters != null
+          ? Math.round(cached.obdOdometerMeters * 0.000621371)
+          : cached.gpsOdometerMeters != null
+            ? Math.round(cached.gpsOdometerMeters * 0.000621371)
+            : null)
+      : null;
+
+  const latitude =
+    cached?.gps?.latitude ??
+    vehicle.latitude ??
+    null;
+
+  const longitude =
+    cached?.gps?.longitude ??
+    vehicle.longitude ??
+    null;
+
+  return {
+    ...vehicle,
+    odometerMiles: liveOdometerMiles ?? vehicle.odometerMiles ?? null,
+    fuelPercent: cached?.fuelPercent ?? vehicle.fuelPercent ?? null,
+    engineState: cached?.engineState ?? vehicle.engineState ?? '',
+    latitude,
+    longitude,
+    liveStatsUpdatedAt: cached?.updatedAt || ''
+  };
+}
+
+/* ---------------------------
+   QUICKBOOKS HELPERS
+---------------------------- */
 
 function qboConfigured() {
   return !!(QBO_CLIENT_ID && QBO_CLIENT_SECRET && QBO_REDIRECT_URI);
@@ -867,7 +823,7 @@ async function qboCreateWorkOrderTransaction(workOrder) {
   };
 }
 
-/* Root and health */
+/* Main API */
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -876,19 +832,15 @@ app.get('/api/health', (_req, res) => {
     hasGeoapifyKey: !!GEOAPIFY_API_KEY,
     hasQboConfig: qboConfigured(),
     dataDir: DATA_DIR,
-    serverTime: new Date().toISOString()
+    serverTime: new Date().toISOString(),
+    statsFeed: {
+      lastSyncAt: liveStatsCache.lastSyncAt,
+      lastError: liveStatsCache.lastError,
+      cachedVehicles: liveStatsCache.byVehicleId.size,
+      cursorPresent: !!liveStatsCache.cursor
+    }
   });
 });
-
-app.get('/maintenance.html', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'maintenance.html'));
-});
-
-app.get('/', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-/* Board */
 
 app.get('/api/board', async (_req, res) => {
   try {
@@ -901,21 +853,27 @@ app.get('/api/board', async (_req, res) => {
     assignmentsUrl.searchParams.set('startTime', startTime);
     assignmentsUrl.searchParams.set('endTime', endTime);
 
-    const statsUrl = 'https://api.samsara.com/fleet/vehicles/stats?types=obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps,engineStates';
-
-    const [vehiclesRes, liveRes, hosRes, assignmentsRes] = await Promise.all([
+    const [vehiclesRes, hosRes, assignmentsRes] = await Promise.all([
       fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
-      fetchJson(statsUrl, { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
       fetchJson('https://api.samsara.com/fleet/hos/clocks', { headers: samsaraHeaders() }).catch(() => ({ data: [] })),
       fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
     ]);
 
-    const rawVehicles = (vehiclesRes.data || []).filter(isTrackedAsset);
-    const enrichedVehicles = enrichVehicles(rawVehicles, liveRes.data || []).sort(byVehicleName);
+    const rawVehicles = (vehiclesRes.data || []).filter(isTrackedAsset).sort(byVehicleName);
+    const enrichedVehicles = rawVehicles.map(vehicleWithLiveStats);
 
     res.json({
       vehicles: enrichedVehicles,
-      live: liveRes.data || [],
+      live: enrichedVehicles.map(v => ({
+        vehicleId: String(v.id || ''),
+        name: v.name,
+        odometerMiles: v.odometerMiles,
+        fuelPercent: v.fuelPercent,
+        latitude: v.latitude,
+        longitude: v.longitude,
+        engineState: v.engineState,
+        liveStatsUpdatedAt: v.liveStatsUpdatedAt
+      })),
       hos: hosRes.data || [],
       assignments: assignmentsRes.data || [],
       refreshedAt: new Date().toISOString()
@@ -926,39 +884,27 @@ app.get('/api/board', async (_req, res) => {
   }
 });
 
-/* Maintenance data */
-
 app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
-    const statsUrl = 'https://api.samsara.com/fleet/vehicles/stats?types=obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps,engineStates';
+    const vehiclesRes = await fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() });
+    const tracked = (vehiclesRes.data || [])
+      .filter(isTrackedAsset)
+      .sort(byVehicleName)
+      .map(vehicleWithLiveStats);
 
-    const [vehiclesRes, liveRes] = await Promise.all([
-      fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() }),
-      fetchJson(statsUrl, { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
-    ]);
-
-    const trackedMap = new Map();
-    (vehiclesRes.data || []).filter(isTrackedAsset).forEach(v => {
-      const key = String(v.name || '').trim().toUpperCase();
-      if (!key) return;
-      if (!trackedMap.has(key)) {
-        trackedMap.set(key, v);
-        return;
-      }
-      const existing = trackedMap.get(key);
-      const oldTs = String(existing.updatedAtTime || '');
-      const newTs = String(v.updatedAtTime || '');
-      if (newTs > oldTs) trackedMap.set(key, v);
-    });
-
-    const tracked = enrichVehicles(Array.from(trackedMap.values()), liveRes.data || []).sort(byVehicleName);
     const erp = readErp();
+    const dashboard = buildDashboardRows(tracked, erp);
 
     res.json({
       vehicles: tracked,
-      dashboard: buildDashboardRows(tracked, erp),
+      dashboard,
       tireAlerts: buildTireAlerts(erp),
-      workOrders: erp.workOrders || []
+      workOrders: erp.workOrders || [],
+      statsFeed: {
+        lastSyncAt: liveStatsCache.lastSyncAt,
+        lastError: liveStatsCache.lastError,
+        cachedVehicles: liveStatsCache.byVehicleId.size
+      }
     });
   } catch (error) {
     logError('api/maintenance/dashboard', error);
@@ -973,8 +919,6 @@ app.get('/api/erp/all', (_req, res) => {
 app.get('/api/maintenance/records', (_req, res) => {
   res.json(readErp());
 });
-
-/* Work orders */
 
 app.post('/api/work-orders', (req, res) => {
   try {
@@ -1073,8 +1017,6 @@ app.post('/api/qbo/post-work-order/:id', async (req, res) => {
   }
 });
 
-/* Legacy AP transactions */
-
 app.post('/api/erp/ap-transaction', (req, res) => {
   try {
     const body = req.body || {};
@@ -1144,8 +1086,6 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-/* QuickBooks */
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
@@ -1290,8 +1230,6 @@ app.post('/api/qbo/create-vendor', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-/* Imports */
 
 function lowerKeyMap(row) {
   const out = {};
@@ -1445,8 +1383,6 @@ app.post('/api/import/ap', upload.single('file'), (req, res) => {
   }
 });
 
-/* Geocode */
-
 app.get('/api/geocode', async (req, res) => {
   try {
     const q = (req.query.q || '').toString().trim();
@@ -1526,6 +1462,16 @@ app.get('/api/route', async (req, res) => {
   }
 });
 
+/* Static */
+
+app.get('/maintenance.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'maintenance.html'));
+});
+
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 /* Global safety */
 
 app.use((err, _req, res, _next) => {
@@ -1540,6 +1486,8 @@ process.on('uncaughtException', err => {
 process.on('unhandledRejection', err => {
   logError('unhandledRejection', err);
 });
+
+startSamsaraFeedLoop();
 
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
