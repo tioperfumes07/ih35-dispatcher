@@ -532,6 +532,7 @@
       <section id="section-accounting" class="section">
         <div class="subtabs">
           <button class="subtab active" onclick="openAccountingTab('acct-transactions', this)">Maintenance Expense Transactions</button>
+          <button class="subtab" onclick="openAccountingTab('acct-settlement', this)">Settlement / P&amp;L by load</button>
           <button class="subtab" onclick="openAccountingTab('acct-qbo', this)">QuickBooks Live Master</button>
         </div>
 
@@ -596,6 +597,65 @@
             </div>
             <div class="panel-body">
               <div id="apList" class="card-list">No transactions yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="acct-settlement" class="accounting-tab hidden">
+          <div class="panel qb-panel">
+            <div class="panel-head"><div class="panel-title">Trip cost rollup (load # = invoice #)</div></div>
+            <div class="panel-body form-stack">
+              <p class="mini-note" style="margin:0 0 8px">Pulls <strong>saved</strong> work orders and single-line AP rows from this server whose document / load number matches. Revenue and driver settlement pay are not here yet—this is the expense side for a settlement stub.</p>
+              <div class="wo-line-grid" style="margin-bottom:10px">
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Load / invoice #</span>
+                  <input id="settlementLoadInput" class="qb-in" placeholder="e.g. 13138" list="settlementLoadHints">
+                </div>
+                <div>
+                  <span class="qb-l">&nbsp;</span>
+                  <button type="button" class="qb-btn-add" onclick="runSettlementLookup()">Run lookup</button>
+                </div>
+              </div>
+              <datalist id="settlementLoadHints"></datalist>
+              <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
+              <div class="table-wrap" style="min-width:0">
+                <table style="min-width:720px;font-size:12px">
+                  <thead>
+                    <tr>
+                      <th>Source</th>
+                      <th>Description</th>
+                      <th>Unit</th>
+                      <th>Amount</th>
+                      <th>QB</th>
+                    </tr>
+                  </thead>
+                  <tbody id="settlementLinesBody">
+                    <tr><td colspan="5" class="mini-note">No rows.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:12px">
+            <div class="panel-head"><div class="panel-title">Loads with recorded costs (index)</div></div>
+            <div class="panel-body">
+              <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
+              <div class="table-wrap" style="margin-top:10px;min-width:0">
+                <table style="min-width:520px;font-size:12px">
+                  <thead>
+                    <tr>
+                      <th>Load / doc #</th>
+                      <th>WOs</th>
+                      <th>AP</th>
+                      <th>Total $</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="settlementIndexBody">
+                    <tr><td colspan="5" class="mini-note">Open this tab and refresh.</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -789,6 +849,12 @@
     function applyNavHash() {
       const section = (location.hash || '').replace(/^#/, '').split('?')[0];
       if (!section) return;
+      if (section === 'accounting-settlement') {
+        openSectionByName('accounting');
+        const sub = document.querySelector('.subtab[onclick*="acct-settlement"]');
+        openAccountingTab('acct-settlement', sub);
+        return;
+      }
       const allowed = ['dashboard', 'dispatch', 'fuel', 'maintenance', 'tracking', 'accounting'];
       if (allowed.includes(section)) openSectionByName(section);
     }
@@ -800,6 +866,7 @@
       document.getElementById(id).classList.remove('hidden');
       document.querySelectorAll('.subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
+      if (id === 'acct-settlement') loadSettlementIndex();
     }
 
     async function loadQboStatus() {
@@ -1573,6 +1640,97 @@
 
       const all = [...woHtml, ...apHtml].join('');
       document.getElementById('apList').innerHTML = all || 'No maintenance expense transactions yet.';
+    }
+
+    async function settlementFetchJson(url) {
+      const r = await fetch(url);
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || data.message || r.statusText || 'Request failed');
+      return data;
+    }
+
+    function pickSettlementLoad(label) {
+      document.getElementById('settlementLoadInput').value = label;
+      runSettlementLookup();
+    }
+
+    async function loadSettlementIndex() {
+      try {
+        const data = await settlementFetchJson('/api/settlement/index');
+        const loads = data.loads || [];
+        const hints = document.getElementById('settlementLoadHints');
+        if (hints) {
+          hints.innerHTML = loads
+            .slice(0, 100)
+            .map(x => `<option value="${escapeHtml(x.label)}"></option>`)
+            .join('');
+        }
+        const tb = document.getElementById('settlementIndexBody');
+        if (!loads.length) {
+          tb.innerHTML =
+            '<tr><td colspan="5" class="mini-note">No work orders or AP with a load/doc # yet.</td></tr>';
+          return;
+        }
+        tb.innerHTML = loads
+          .map(
+            x => `
+          <tr>
+            <td><b>${escapeHtml(x.label)}</b></td>
+            <td>${x.workOrderCount}</td>
+            <td>${x.apCount}</td>
+            <td>${Number(x.total).toFixed(2)}</td>
+            <td><button type="button" class="qb-btn-add" onclick="pickSettlementLoad(${JSON.stringify(x.label)})">View</button></td>
+          </tr>`
+          )
+          .join('');
+      } catch (e) {
+        const tb = document.getElementById('settlementIndexBody');
+        if (tb) {
+          tb.innerHTML = `<tr><td colspan="5" class="mini-note" style="color:#b91c1c">${escapeHtml(e.message)}</td></tr>`;
+        }
+      }
+    }
+
+    async function runSettlementLookup() {
+      const raw = document.getElementById('settlementLoadInput').value.trim();
+      if (!raw) {
+        alert('Enter a load / invoice number.');
+        return;
+      }
+      try {
+        const data = await settlementFetchJson(
+          '/api/settlement/by-load/' + encodeURIComponent(raw)
+        );
+        const lines = data.lineItems || [];
+        document.getElementById('settlementSummary').innerHTML =
+          `<b>${escapeHtml(data.loadNumber)}</b> — ${data.counts.workOrders} work order(s), ${data.counts.apTransactions} AP row(s), ` +
+          `<b>$${Number(data.grandTotal).toFixed(2)}</b> total (WO $${Number(data.totalWorkOrderLines).toFixed(2)} + AP $${Number(data.totalAp).toFixed(2)}).`;
+
+        const tb = document.getElementById('settlementLinesBody');
+        if (!lines.length) {
+          tb.innerHTML =
+            '<tr><td colspan="5" class="mini-note">No matching saved expenses. Tag work orders and AP with this document #.</td></tr>';
+          return;
+        }
+        tb.innerHTML = lines
+          .map(li => {
+            const src = li.kind === 'work_order_line' ? 'WO line' : 'AP';
+            const desc =
+              li.kind === 'work_order_line'
+                ? `${escapeHtml(li.serviceType || '')}${li.tireRef ? ' · ' + escapeHtml(li.tireRef) : ''}`
+                : escapeHtml(li.description || '');
+            return `<tr>
+            <td>${src}</td>
+            <td>${desc}</td>
+            <td>${escapeHtml(li.unit || '')}</td>
+            <td>${Number(li.amount).toFixed(2)}</td>
+            <td>${escapeHtml(li.qboSyncStatus || '—')}</td>
+          </tr>`;
+          })
+          .join('');
+      } catch (e) {
+        alert('Settlement lookup failed: ' + e.message);
+      }
     }
 
     async function postApToQbo(apId) {

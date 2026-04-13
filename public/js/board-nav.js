@@ -50,7 +50,8 @@
       label: 'Accounting',
       href: '/maintenance.html#accounting',
       links: [
-        { label: 'Expenses & QuickBooks', href: '/maintenance.html#accounting' },
+        { label: 'Expenses & work orders', href: '/maintenance.html#accounting' },
+        { label: 'Settlement / P&L by load', href: '/maintenance.html#accounting-settlement' },
         { label: 'QBO master data', href: '/maintenance.html#accounting' }
       ]
     }
