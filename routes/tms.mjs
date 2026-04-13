@@ -48,6 +48,17 @@ function revenueOrNull(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+function sanitizeInvoiceExtraLines(raw) {
+  const arr = Array.isArray(raw) ? raw : [];
+  return arr
+    .map(x => ({
+      qbo_item_id: qboIdOrNull(x?.qbo_item_id),
+      amount: x?.amount != null ? Number(x.amount) : 0,
+      description: String(x?.description || '').trim() || null
+    }))
+    .filter(x => x.qbo_item_id && Number.isFinite(x.amount) && x.amount > 0);
+}
+
 function dateOrNull(v) {
   if (v == null || v === '') return null;
   const s = String(v).trim();
@@ -464,6 +475,8 @@ router.post('/loads', async (req, res) => {
       ? String(body.qbo_driver_vendor_name).trim()
       : null;
   const revenue_amount = revenueOrNull(body.revenue_amount);
+  const qbo_linehaul_item_id = qboIdOrNull(body.qbo_linehaul_item_id);
+  const invoice_extra_lines = sanitizeInvoiceExtraLines(body.invoice_extra_lines);
   const stops = Array.isArray(body.stops) ? body.stops : [];
 
   const client = await pool.connect();
@@ -473,8 +486,9 @@ router.post('/loads', async (req, res) => {
       `INSERT INTO loads (
         load_number, status, customer_id, driver_id, truck_id, trailer_id,
         dispatcher_name, start_date, end_date, practical_loaded_miles, practical_empty_miles, notes,
-        qbo_customer_id, revenue_amount, qbo_driver_vendor_id, qbo_driver_vendor_name
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+        qbo_customer_id, revenue_amount, qbo_driver_vendor_id, qbo_driver_vendor_name,
+        qbo_linehaul_item_id, invoice_extra_lines
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb)
       RETURNING id`,
       [
         load_number,
@@ -492,7 +506,9 @@ router.post('/loads', async (req, res) => {
         qbo_customer_id,
         revenue_amount,
         qbo_driver_vendor_id,
-        qbo_driver_vendor_name
+        qbo_driver_vendor_name,
+        qbo_linehaul_item_id,
+        JSON.stringify(invoice_extra_lines)
       ]
     );
     const loadId = ins.rows[0].id;
@@ -561,14 +577,16 @@ router.patch('/loads/:id', async (req, res) => {
     ['practical_loaded_miles', 'practical_loaded_miles'],
     ['practical_empty_miles', 'practical_empty_miles'],
     ['notes', 'notes'],
-    ['revenue_amount', 'revenue_amount']
+    ['revenue_amount', 'revenue_amount'],
+    ['qbo_linehaul_item_id', 'qbo_linehaul_item_id']
   ];
   for (const [key, col] of map) {
     if (b[key] !== undefined) {
       fields.push(`${col} = $${n++}`);
       let v = b[key];
       if (key === 'revenue_amount') v = revenueOrNull(b[key]);
-      else if (key === 'qbo_customer_id' || key === 'qbo_driver_vendor_id') v = qboIdOrNull(b[key]);
+      else if (key === 'qbo_customer_id' || key === 'qbo_driver_vendor_id' || key === 'qbo_linehaul_item_id')
+        v = qboIdOrNull(b[key]);
       else if (key === 'qbo_driver_vendor_name' || key === 'qbo_customer_name') {
         const s = b[key];
         v = s != null && String(s).trim() ? String(s).trim() : null;
@@ -577,7 +595,8 @@ router.patch('/loads/:id', async (req, res) => {
     }
   }
   const hasStops = Array.isArray(b.stops);
-  if (!fields.length && !hasStops) {
+  const hasExtras = b.invoice_extra_lines !== undefined;
+  if (!fields.length && !hasStops && !hasExtras) {
     return res.status(400).json({ ok: false, error: 'No fields or stops to update' });
   }
 
@@ -588,6 +607,10 @@ router.patch('/loads/:id', async (req, res) => {
     if (!ex.rows.length) {
       await client.query('ROLLBACK');
       return res.status(404).json({ ok: false, error: 'Load not found' });
+    }
+    if (hasExtras) {
+      fields.push(`invoice_extra_lines = $${n++}::jsonb`);
+      vals.push(JSON.stringify(sanitizeInvoiceExtraLines(b.invoice_extra_lines)));
     }
     if (fields.length) {
       fields.push(`updated_at = now()`);
@@ -739,12 +762,20 @@ router.post('/compute-leg-miles', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Provide at least 2 addresses in stop order' });
     }
     const points = [];
-    for (const addr of cleaned) {
+    for (let i = 0; i < cleaned.length; i++) {
+      const addr = cleaned[i];
+      if (i > 0 && !GEOAPIFY_API_KEY) {
+        await new Promise(r => setTimeout(r, 1100));
+      }
       const g = await geocodeAddress(addr);
       if (!g) {
         return res.status(422).json({
           ok: false,
-          error: `Could not geocode: ${addr.slice(0, 100)}`
+          error: `Could not geocode: ${addr.slice(0, 100)}${
+            GEOAPIFY_API_KEY
+              ? ''
+              : '. OpenStreetMap Nominatim allows ~1 request/sec; set GEOAPIFY_API_KEY for faster geocoding.'
+          }`
         });
       }
       points.push({ ...g, address: addr });

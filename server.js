@@ -855,6 +855,22 @@ async function qboCreateCustomerFromApp(body) {
   return { created: true, customer: created?.Customer || null };
 }
 
+function buildQboSalesItemLine(itemQbo, amount, description, classId) {
+  const salesDetail = {
+    ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
+    Qty: 1,
+    UnitPrice: amount
+  };
+  if (classId) salesDetail.ClassRef = { value: classId };
+  return {
+    Amount: amount,
+    DetailType: 'SalesItemLineDetail',
+    Description: sanitizeName(description || itemQbo.Name || 'Line', 'Line'),
+    SalesItemLineDetail: salesDetail
+  };
+}
+
+/** One QBO invoice: optional linehaul line plus extra service lines (each { itemId, amount, description }). */
 async function qboCreateTripInvoice(opts) {
   const {
     customerId,
@@ -864,34 +880,45 @@ async function qboCreateTripInvoice(opts) {
     privateNote,
     itemId,
     classId,
-    lineDescription
+    lineDescription,
+    extraLines
   } = opts;
   if (!customerId) throw new Error('Customer is required');
-  if (!(amount > 0)) throw new Error('Amount must be positive');
-  if (!itemId) throw new Error('QuickBooks invoice line item id is required');
 
-  const itemQbo = await qboFindItemById(itemId);
-  if (!itemQbo) throw new Error('QuickBooks item not found for invoice');
+  const extras = Array.isArray(extraLines)
+    ? extraLines.filter(x => x && String(x.itemId || '').trim() && safeNum(x.amount, 0) > 0)
+    : [];
+  const mainAmt = safeNum(amount, 0);
+  const extraSum = extras.reduce((s, x) => s + safeNum(x.amount, 0), 0);
 
-  const salesDetail = {
-    ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
-    Qty: 1,
-    UnitPrice: amount
-  };
-  if (classId) salesDetail.ClassRef = { value: classId };
+  if (!(mainAmt > 0) && extras.length === 0) {
+    throw new Error('Invoice needs a positive linehaul amount and/or at least one extra charge line');
+  }
 
-  const line = {
-    Amount: amount,
-    DetailType: 'SalesItemLineDetail',
-    Description: sanitizeName(lineDescription || 'Trip / linehaul', 'Line'),
-    SalesItemLineDetail: salesDetail
-  };
+  const lines = [];
+
+  if (mainAmt > 0) {
+    if (!itemId) throw new Error('QuickBooks linehaul item id is required when trip revenue is set');
+    const itemQbo = await qboFindItemById(itemId);
+    if (!itemQbo) throw new Error('QuickBooks item not found for invoice');
+    lines.push(buildQboSalesItemLine(itemQbo, mainAmt, lineDescription || 'Trip / linehaul', classId));
+  }
+
+  for (const ex of extras) {
+    const iq = await qboFindItemById(String(ex.itemId).trim());
+    if (!iq) throw new Error('QuickBooks item not found for extra charge: ' + ex.itemId);
+    lines.push(
+      buildQboSalesItemLine(iq, safeNum(ex.amount, 0), ex.description || iq.Name, classId)
+    );
+  }
+
+  if (!lines.length) throw new Error('No invoice lines to post');
 
   const payload = {
     CustomerRef: { value: customerId },
     TxnDate: txnDate || new Date().toISOString().slice(0, 10),
     DocNumber: docNumber ? String(docNumber).slice(0, 21) : undefined,
-    Line: [line],
+    Line: lines,
     PrivateNote: sanitizeName(privateNote || '', 'Invoice')
   };
 
@@ -2158,16 +2185,35 @@ app.post('/api/qbo/invoice-from-load', async (req, res) => {
     }
 
     const revenue = safeNum(load.revenue_amount, null);
-    if (revenue == null || !(revenue > 0)) {
-      return res.status(400).json({ error: 'Set trip revenue on the load in Dispatch before creating a QuickBooks invoice' });
+    let extras = [];
+    try {
+      const raw = load.invoice_extra_lines;
+      if (Array.isArray(raw)) extras = raw;
+      else if (typeof raw === 'string' && raw.trim()) extras = JSON.parse(raw);
+    } catch {
+      extras = [];
+    }
+    extras = extras.filter(
+      x => x && String(x.qbo_item_id || '').trim() && safeNum(x.amount, 0) > 0
+    );
+    const hasMain = revenue != null && revenue > 0;
+
+    if (!hasMain && extras.length === 0) {
+      return res.status(400).json({
+        error:
+          'Set trip revenue (linehaul) and/or add extra invoice lines on the load in Dispatch before creating a QuickBooks invoice'
+      });
     }
 
     const erp = readErp();
-    const itemId = String(body.qboItemId || resolveLinehaulItemId(erp) || '').trim();
-    if (!itemId) {
+    const savedLinehaul = String(load.qbo_linehaul_item_id || '').trim();
+    const itemId = String(
+      body.qboItemId || savedLinehaul || resolveLinehaulItemId(erp) || ''
+    ).trim();
+    if (hasMain && !itemId) {
       return res.status(400).json({
         error:
-          'Set a Line haul (or other) Service item in QuickBooks, sync catalog, or set DEFAULT_QBO_LINEHAUL_ITEM_ID / DEFAULT_QBO_INVOICE_ITEM_ID on the server'
+          'Choose a linehaul QuickBooks item on the load (Book/Edit), sync catalog, or set DEFAULT_QBO_LINEHAUL_ITEM_ID on the server'
       });
     }
 
@@ -2176,13 +2222,18 @@ app.post('/api/qbo/invoice-from-load', async (req, res) => {
 
     const result = await qboCreateTripInvoice({
       customerId: custId,
-      amount: revenue,
+      amount: hasMain ? revenue : 0,
       txnDate: load.end_date || load.start_date || undefined,
       docNumber: load.load_number || loadNumber,
       privateNote: `TMS load ${load.load_number || loadNumber}`,
-      itemId,
+      itemId: hasMain ? itemId : '',
       classId,
-      lineDescription: `Linehaul / trip ${load.load_number || loadNumber}`
+      lineDescription: `Linehaul / trip ${load.load_number || loadNumber}`,
+      extraLines: extras.map(x => ({
+        itemId: String(x.qbo_item_id).trim(),
+        amount: safeNum(x.amount, 0),
+        description: String(x.description || '').trim() || undefined
+      }))
     });
 
     res.json({

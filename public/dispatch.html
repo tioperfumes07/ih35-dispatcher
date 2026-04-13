@@ -114,10 +114,21 @@
     }
     .stop-card-bottom {
       display: grid;
-      grid-template-columns: 90px 90px minmax(120px, 1fr) minmax(120px, 1fr);
+      grid-template-columns: 90px 90px;
       gap: 10px;
       align-items: end;
       margin-top: 10px;
+    }
+    .invoice-extra-lines { margin-top: 4px; }
+    .invoice-extra-row {
+      display: grid;
+      grid-template-columns: minmax(140px, 1.1fr) 110px minmax(120px, 1fr) auto;
+      gap: 8px;
+      align-items: end;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 720px) {
+      .invoice-extra-row { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 700px) {
       .stop-card-bottom { grid-template-columns: 1fr 1fr; }
@@ -302,9 +313,24 @@
             </div>
           </div>
           <div class="row" style="grid-column:1/-1">
-            <label class="lbl">Trip revenue ($)</label>
-            <input class="in" type="number" id="f_revenue" step="0.01" min="0" placeholder="Linehaul / total for settlement net" />
-            <p class="muted" style="margin:6px 0 0;font-size:11px">Used on Maintenance → Settlement: net = this revenue minus rolled-up expenses for the load #.</p>
+            <label class="lbl">Trip revenue ($) — linehaul on invoice</label>
+            <input class="in" type="number" id="f_revenue" step="0.01" min="0" placeholder="Primary linehaul amount" />
+            <p class="muted" style="margin:6px 0 0;font-size:11px">One load # = one customer invoice. Settlement net uses this plus any extra charge lines below, minus expenses for the load #.</p>
+          </div>
+          <div class="row" style="grid-column:1/-1">
+            <label class="lbl">Linehaul QuickBooks item</label>
+            <input type="hidden" id="f_qbo_linehaul_item_id" />
+            <input class="in" id="f_linehaul_item_search" list="qboInvoiceItemDatalist" placeholder="Type QBO service item name (autofill from list)…" autocomplete="off" />
+            <datalist id="qboInvoiceItemDatalist"></datalist>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Pickup and delivery are the same load — choose the item <strong>once</strong> here for the main invoice line. Sync QBO catalog if items are missing.</p>
+          </div>
+          <div class="row" style="grid-column:1/-1">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+              <label class="lbl" style="margin:0">Additional invoice charges</label>
+              <button type="button" class="btn btn-ghost" style="padding:6px 12px;font-size:13px" onclick="addInvoiceExtraRow()">+ Add QBO charge line</button>
+            </div>
+            <div id="invoiceExtraLines" class="invoice-extra-lines"></div>
+            <p class="muted" style="margin:8px 0 0;font-size:11px">Each row posts as another line on the same invoice (fuel surcharge, lumper, detention, etc.). Pick the item by name; amount in dollars.</p>
           </div>
         </div>
         <div class="stops-head">
@@ -388,47 +414,6 @@
     let trailerAcBound = false;
     let editingLoadId = null;
 
-    function qboItemOptionsHtml() {
-      const items = (qboCatalog.items || []).filter(i => i.active !== false);
-      return (
-        '<option value="">—</option>' +
-        items
-          .map(
-            i =>
-              '<option value="' +
-              escapeHtml(i.qboId) +
-              '">' +
-              escapeHtml(i.name) +
-              '</option>'
-          )
-          .join('')
-      );
-    }
-
-    function qboExpenseOptionsHtml() {
-      const raw =
-        qboCatalog.accountsExpense && qboCatalog.accountsExpense.length
-          ? qboCatalog.accountsExpense
-          : (qboCatalog.accounts || []).filter(
-              a =>
-                a.accountType === 'Expense' || a.accountType === 'Cost of Goods Sold'
-            );
-      const list = (raw || []).filter(a => a.active !== false);
-      return (
-        '<option value="">—</option>' +
-        list
-          .map(
-            a =>
-              '<option value="' +
-              escapeHtml(a.qboId) +
-              '">' +
-              escapeHtml(a.name) +
-              '</option>'
-          )
-          .join('')
-      );
-    }
-
     function truckClassesT1() {
       return (qboCatalog.classes || []).filter(c => {
         const n = String(c.name || '').trim();
@@ -454,6 +439,118 @@
       dl.innerHTML = truckClassesT1()
         .map(c => '<option value="' + escapeHtml(String(c.name || '')) + '"></option>')
         .join('');
+    }
+
+    function syncQboInvoiceItemDatalist() {
+      const dl = document.getElementById('qboInvoiceItemDatalist');
+      if (!dl) return;
+      const items = (qboCatalog.items || []).filter(i => i.active !== false);
+      dl.innerHTML = items
+        .map(i => {
+          const name = String(i.name || '').trim();
+          return name ? '<option value="' + escapeHtml(name) + '"></option>' : '';
+        })
+        .join('');
+    }
+
+    function qboItemNameById(id) {
+      if (id == null || id === '') return '';
+      const items = qboCatalog.items || [];
+      const hit = items.find(x => String(x.qboId) === String(id));
+      return hit ? String(hit.name || '').trim() : '';
+    }
+
+    let linehaulItemSearchBound = false;
+    function bindLinehaulItemSearch() {
+      if (linehaulItemSearchBound) return;
+      linehaulItemSearchBound = true;
+      const inp = document.getElementById('f_linehaul_item_search');
+      const hid = document.getElementById('f_qbo_linehaul_item_id');
+      if (!inp || !hid) return;
+      inp.addEventListener('input', () => {
+        hid.value = '';
+      });
+      inp.addEventListener('blur', () => {
+        const typed = inp.value.trim();
+        if (!typed) {
+          hid.value = '';
+          return;
+        }
+        const items = (qboCatalog.items || []).filter(i => i.active !== false);
+        const exact = items.find(i => String(i.name).trim() === typed);
+        if (exact) hid.value = String(exact.qboId);
+      });
+    }
+
+    function resolveLinehaulItemForSave() {
+      const hid = document.getElementById('f_qbo_linehaul_item_id');
+      const inp = document.getElementById('f_linehaul_item_search');
+      if (hid && hid.value.trim()) return hid.value.trim();
+      const typed = inp ? inp.value.trim() : '';
+      if (!typed) return null;
+      const items = (qboCatalog.items || []).filter(i => i.active !== false);
+      const exact = items.find(i => String(i.name).trim() === typed);
+      return exact ? String(exact.qboId) : null;
+    }
+
+    function syncInvExtraRowId(row) {
+      const nameInp = row.querySelector('.inv-extra-item-name');
+      const idHid = row.querySelector('.inv-extra-item-id');
+      if (!nameInp || !idHid) return;
+      const typed = nameInp.value.trim();
+      idHid.value = '';
+      if (!typed) return;
+      const items = (qboCatalog.items || []).filter(i => i.active !== false);
+      const exact = items.find(i => String(i.name).trim() === typed);
+      if (exact) idHid.value = String(exact.qboId);
+    }
+
+    function addInvoiceExtraRow(prefill) {
+      const host = document.getElementById('invoiceExtraLines');
+      if (!host) return;
+      const row = document.createElement('div');
+      row.className = 'invoice-extra-row';
+      row.innerHTML =
+        '<div><label class="lbl" style="font-size:10px">QBO item</label><input type="hidden" class="inv-extra-item-id" value="" /><input class="in inv-extra-item-name" list="qboInvoiceItemDatalist" placeholder="Item name…" autocomplete="off" /></div>' +
+        '<div><label class="lbl" style="font-size:10px">Amount ($)</label><input class="in inv-extra-amt" type="number" step="0.01" min="0" placeholder="0.00" /></div>' +
+        '<div><label class="lbl" style="font-size:10px">Description</label><input class="in inv-extra-desc" placeholder="Optional on invoice" /></div>' +
+        '<div><label class="lbl" style="font-size:10px">&nbsp;</label><button type="button" class="btn btn-ghost" style="padding:8px 12px" onclick="this.closest(\'.invoice-extra-row\').remove()" title="Remove line">×</button></div>';
+      host.appendChild(row);
+      const nameInp = row.querySelector('.inv-extra-item-name');
+      const idHid = row.querySelector('.inv-extra-item-id');
+      nameInp.addEventListener('input', () => {
+        idHid.value = '';
+      });
+      nameInp.addEventListener('blur', () => syncInvExtraRowId(row));
+      if (prefill) {
+        if (prefill.qbo_item_id) idHid.value = String(prefill.qbo_item_id);
+        nameInp.value =
+          prefill.name ||
+          qboItemNameById(prefill.qbo_item_id) ||
+          '';
+        if (prefill.amount != null && prefill.amount !== '')
+          row.querySelector('.inv-extra-amt').value = String(prefill.amount);
+        if (prefill.description) row.querySelector('.inv-extra-desc').value = prefill.description;
+      }
+    }
+
+    function clearInvoiceExtraLines() {
+      const host = document.getElementById('invoiceExtraLines');
+      if (host) host.innerHTML = '';
+    }
+
+    function collectInvoiceExtraLines() {
+      const host = document.getElementById('invoiceExtraLines');
+      if (!host) return [];
+      return Array.from(host.querySelectorAll('.invoice-extra-row'))
+        .map(row => {
+          syncInvExtraRowId(row);
+          const id = row.querySelector('.inv-extra-item-id').value.trim();
+          const amount = parseFloat(row.querySelector('.inv-extra-amt').value) || 0;
+          const description = row.querySelector('.inv-extra-desc').value.trim() || null;
+          return { qbo_item_id: id || null, amount, description };
+        })
+        .filter(x => x.qbo_item_id && x.amount > 0);
     }
 
     function syncTrailerDatalist() {
@@ -724,6 +821,7 @@
       updateQboCatalogStatusLine();
       syncCustomerDatalist();
       syncTruckClassDatalist();
+      syncQboInvoiceItemDatalist();
     }
 
     async function refreshQboCatalog() {
@@ -739,12 +837,7 @@
         updateQboCatalogStatusLine();
         syncCustomerDatalist();
         syncTruckClassDatalist();
-        document.querySelectorAll('.stop-item').forEach(sel => {
-          sel.innerHTML = qboItemOptionsHtml();
-        });
-        document.querySelectorAll('.stop-acct').forEach(sel => {
-          sel.innerHTML = qboExpenseOptionsHtml();
-        });
+        syncQboInvoiceItemDatalist();
         showMsg('QuickBooks catalog updated.');
         setTimeout(() => showMsg(''), 2500);
       } catch (e) {
@@ -832,21 +925,17 @@
       if (!loadNumber) return;
       if (
         !confirm(
-          'Create QuickBooks invoice for load ' +
+          'Create one QuickBooks invoice for load ' +
             loadNumber +
-            '? Uses Line haul item from QBO catalog (name contains "Line haul") or DEFAULT_QBO_LINEHAUL_ITEM_ID / DEFAULT_QBO_INVOICE_ITEM_ID. Doc # = load #.'
+            '? Uses the linehaul item saved on the load (Book/Edit), else server default. Includes trip revenue plus any extra charge lines on the load. Doc # = load #. No extra prompts.'
         )
       )
         return;
-      let qboItemId = '';
-      try {
-        qboItemId = prompt('QuickBooks Item ID for invoice line (leave blank to use server default):', '') || '';
-      } catch (_) {}
       try {
         const r = await fetch('/api/qbo/invoice-from-load', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ loadNumber, qboItemId: qboItemId.trim() || undefined })
+          body: JSON.stringify({ loadNumber })
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || r.statusText);
@@ -1230,12 +1319,8 @@
         '<div class="stop-card-bottom">' +
         '<div><label class="lbl">Prac. mi.</label><input class="in stop-pm" type="number" step="0.1" value="0" /></div>' +
         '<div><label class="lbl">Short. mi.</label><input class="in stop-sm" type="number" step="0.1" value="0" /></div>' +
-        '<div><label class="lbl">QBO item</label><select class="in stop-item"></select></div>' +
-        '<div><label class="lbl">QBO category</label><select class="in stop-acct"></select></div>' +
         '</div>';
       document.getElementById('stops').appendChild(wrap);
-      wrap.querySelector('.stop-item').innerHTML = qboItemOptionsHtml();
-      wrap.querySelector('.stop-acct').innerHTML = qboExpenseOptionsHtml();
       bindAutocomplete(wrap);
       wrap.querySelectorAll('.stop-pm, .stop-sm, .stop-type, .stop-win').forEach(el => {
         el.addEventListener('input', updateStopMilesSummary);
@@ -1246,11 +1331,14 @@
 
     async function autoMilesFromStops() {
       const rows = Array.from(document.querySelectorAll('.stop-block'));
-      const addresses = rows.map(r => {
-        const a = r.querySelector('.stop-addr').value.trim();
-        const l = r.querySelector('.stop-loc').value.trim();
-        return a || l;
-      }).filter(Boolean);
+      const addresses = rows
+        .map(r => {
+          const a = r.querySelector('.stop-addr').value.trim();
+          const l = r.querySelector('.stop-loc').value.trim();
+          const combined = [l, a].filter(Boolean).join(', ').trim();
+          return combined || a || l;
+        })
+        .filter(Boolean);
       if (addresses.length < 2) {
         alert('Enter at least two stops with address or location text.');
         return;
@@ -1279,7 +1367,13 @@
           'Leg miles applied (row 2 = stop 1→2, etc.). Practical ≈ driving (OSRM). Shortest = straight-line miles — use PC*Miler/Trimble for Always Track–style shortest practical.'
         );
       } catch (e) {
-        alert(e.message || String(e));
+        const msg = e.message || String(e);
+        alert(
+          msg +
+            (msg.includes('geocode') || msg.includes('Geocode')
+              ? '\n\nTip: use a full street address in the stop (or set GEOAPIFY_API_KEY on the server for faster geocoding).'
+              : '')
+        );
       }
     }
 
@@ -1318,8 +1412,8 @@
           const v = sel && sel.value != null ? String(sel.value).trim() : '';
           return v || null;
         })(),
-        qbo_item_id: row.querySelector('.stop-item').value || null,
-        qbo_account_id: row.querySelector('.stop-acct').value || null
+        qbo_item_id: null,
+        qbo_account_id: null
       }));
     }
 
@@ -1366,6 +1460,9 @@
       document.getElementById('f_plm').value = '';
       document.getElementById('f_pem').value = '';
       document.getElementById('f_revenue').value = '';
+      document.getElementById('f_qbo_linehaul_item_id').value = '';
+      document.getElementById('f_linehaul_item_search').value = '';
+      clearInvoiceExtraLines();
       document.getElementById('f_driver_vendor').value = '';
       document.getElementById('f_qbo_driver_vendor_id').value = '';
       document.getElementById('f_new_truck').value = '';
@@ -1423,6 +1520,28 @@
         L.practical_empty_miles != null ? String(L.practical_empty_miles) : '';
       document.getElementById('f_revenue').value =
         L.revenue_amount != null && L.revenue_amount !== '' ? String(L.revenue_amount) : '';
+      document.getElementById('f_qbo_linehaul_item_id').value = L.qbo_linehaul_item_id || '';
+      document.getElementById('f_linehaul_item_search').value = qboItemNameById(L.qbo_linehaul_item_id) || '';
+      clearInvoiceExtraLines();
+      let extras = L.invoice_extra_lines;
+      if (typeof extras === 'string' && extras.trim()) {
+        try {
+          extras = JSON.parse(extras);
+        } catch {
+          extras = [];
+        }
+      }
+      if (Array.isArray(extras)) {
+        extras.forEach(x => {
+          if (x && x.qbo_item_id) {
+            addInvoiceExtraRow({
+              qbo_item_id: x.qbo_item_id,
+              amount: x.amount,
+              description: x.description || ''
+            });
+          }
+        });
+      }
       document.getElementById('stops').innerHTML = '';
       const stops = L.stops || [];
       if (stops.length) {
@@ -1437,10 +1556,6 @@
           row.querySelector('.stop-sm').value = s.shortest_miles != null ? s.shortest_miles : 0;
           row.querySelector('.stop-dt').value = isoToDatetimeLocal(s.stop_at);
           setStopWindowSelectValue(row.querySelector('.stop-win'), s.window_text);
-          const it = row.querySelector('.stop-item');
-          const ac = row.querySelector('.stop-acct');
-          if (it) it.value = s.qbo_item_id || '';
-          if (ac) ac.value = s.qbo_account_id || '';
         });
       } else {
         addStopRow();
@@ -1536,6 +1651,8 @@
           const n = parseFloat(v);
           return Number.isFinite(n) ? n : null;
         })(),
+        qbo_linehaul_item_id: resolveLinehaulItemForSave(),
+        invoice_extra_lines: collectInvoiceExtraLines(),
         stops
       };
       try {
@@ -1558,6 +1675,7 @@
       bindCustomerAc();
       bindTruckClassAc();
       bindTrailerAc();
+      bindLinehaulItemSearch();
       await loadMeta();
       await loadQboCatalog();
       await refreshLookups();
