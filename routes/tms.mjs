@@ -333,13 +333,11 @@ router.get('/loads', async (req, res) => {
     const tab = String(req.query.tab || 'open').toLowerCase();
     let where = '1=1';
     const params = [];
-    // Open = in-flight dispatch (each trip is its own load # — e.g. northbound 1301, southbound 1302).
     if (tab === 'open') {
       where = `l.status NOT IN ('delivered', 'unsettled')`;
-    } else if (tab === 'delivered') {
-      where = `l.status = 'delivered'`;
-    } else if (tab === 'billing' || tab === 'needs_invoice') {
-      // Delivered but no QuickBooks invoice id yet — company/driver settlement PDFs + WO/AP still key off load # = invoice #.
+    } else if (tab === 'delivered' || tab === 'completed') {
+      where = `l.status IN ('delivered', 'unsettled')`;
+    } else if (tab === 'unbilled' || tab === 'billing' || tab === 'needs_invoice') {
       where = `l.status = 'delivered' AND (l.qbo_invoice_id IS NULL OR TRIM(COALESCE(l.qbo_invoice_id, '')) = '')`;
     } else if (tab === 'unsettled') {
       where = `l.status = 'unsettled'`;

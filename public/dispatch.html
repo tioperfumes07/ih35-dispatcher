@@ -206,17 +206,15 @@
     <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:320px"></span>
   </div>
   <div class="tabs">
-    <button type="button" class="tab active" data-tab="open">Open</button>
-    <button type="button" class="tab" data-tab="delivered">Delivered</button>
-    <button type="button" class="tab" data-tab="billing">Needs QBO invoice</button>
-    <button type="button" class="tab" data-tab="unsettled">Acct closed</button>
+    <button type="button" class="tab active" data-tab="open">Open loads</button>
+    <button type="button" class="tab" data-tab="delivered">Delivered / completed</button>
+    <button type="button" class="tab" data-tab="unbilled">Unbilled loads</button>
     <button type="button" class="tab" data-tab="all">All loads</button>
     <button type="button" class="tab" data-tab="fleet">Fleet</button>
   </div>
   <div class="wrap">
     <p class="muted" style="margin:0 0 12px;font-size:12px;line-height:1.5">
-      Each <strong>load</strong> is one dispatched trip (e.g. Laredo → Chicago as <strong>1301</strong>, a later southbound as <strong>1302</strong>).
-      <strong>Load # = customer invoice #</strong> so work orders, AP, and settlements roll up to the same number. Mark <strong>Delivered</strong> when empty; use <strong>Needs QBO invoice</strong> for the billing queue; move to <strong>Acct closed</strong> when accounting is done for that load.
+      Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver/carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> = status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QBO</strong> to clear them from that list. Each leg is its own load #. Customer W/O# can be tied via work orders in Maintenance on this load/invoice #.
     </p>
     <div id="msg"></div>
     <div id="viewLoads">
