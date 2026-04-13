@@ -1363,9 +1363,12 @@
           }
         });
         updateStopMilesSummary();
-        alert(
-          'Leg miles applied (row 2 = stop 1→2, etc.). Practical ≈ driving (OSRM). Shortest = straight-line miles — use PC*Miler/Trimble for Always Track–style shortest practical.'
+        applyStopMilesToHeader();
+        showMsg(
+          '<strong>Leg miles applied</strong> (row 2 = stop 1→2, …). Loaded / empty totals in the header were updated from stop types. Practical ≈ OSRM driving; shortest = straight-line per leg. For PC*Miler-style “shortest practical,” connect Trimble when licensed.',
+          false
         );
+        setTimeout(() => showMsg(''), 12000);
       } catch (e) {
         const msg = e.message || String(e);
         alert(

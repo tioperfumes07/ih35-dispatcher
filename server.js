@@ -9,6 +9,7 @@ import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
 import { dbQuery } from './lib/db.mjs';
+import { ensureTmsSchema } from './lib/tms-schema.mjs';
 import tmsRouter, { fetchLoadSettlementContextByNumber } from './routes/tms.mjs';
 
 dotenv.config();
@@ -1324,6 +1325,8 @@ app.post('/api/maintenance/record', (req, res) => {
       accidentLocation: String(body.accidentLocation || '').trim(),
       accidentReportNumber: String(body.accidentReportNumber || '').trim(),
       repairLocationType: String(body.repairLocationType || '').trim(),
+      vendorInvoiceNumber: String(body.vendorInvoiceNumber || '').trim(),
+      workOrderNumber: String(body.workOrderNumber || body.vendorWorkOrderNumber || '').trim(),
       qboSyncStatus: '',
       qboPurchaseId: '',
       qboError: '',
@@ -1839,8 +1842,8 @@ app.post('/api/work-orders', (req, res) => {
       loadNumber: loadRef || null,
       assetCategory: body.assetCategory || '',
       serviceDate: body.serviceDate || '',
-      internalWorkOrderNumber: loadRef || internalNo,
-      vendorInvoiceNumber: loadRef || vendorInv,
+      internalWorkOrderNumber: internalNo || null,
+      vendorInvoiceNumber: vendorInv || null,
       vendorWorkOrderNumber: body.vendorWorkOrderNumber || '',
       vendor: body.vendor || '',
       qboVendorId: body.qboVendorId || '',
@@ -2118,7 +2121,7 @@ app.get('/api/qbo/catalog', (req, res) => {
     res.json({
       ok: true,
       source: 'quickbooks',
-      connected: !!(store.tokens?.accessToken && store.tokens?.realmId),
+      connected: !!(store.tokens?.access_token && store.tokens?.realmId),
       ...payload
     });
   } catch (error) {
@@ -2129,7 +2132,7 @@ app.get('/api/qbo/catalog', (req, res) => {
 app.post('/api/qbo/catalog/refresh', async (_req, res) => {
   try {
     const store = readQbo();
-    if (!store.tokens?.accessToken) {
+    if (!store.tokens?.access_token) {
       return res.status(400).json({ ok: false, error: 'QuickBooks not connected' });
     }
     await qboSyncMasterData();
@@ -2522,6 +2525,11 @@ process.on('unhandledRejection', err => {
   logError('unhandledRejection', err);
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on ${PORT}`);
-});
+async function startServer() {
+  await ensureTmsSchema();
+  app.listen(PORT, () => {
+    console.log(`Server running on ${PORT}`);
+  });
+}
+
+startServer();

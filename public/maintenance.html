@@ -558,6 +558,16 @@
                     </div>
                     <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
                   </div>
+                  <div class="search-row">
+                    <div>
+                      <span class="qb-l">Vendor invoice #</span>
+                      <input id="recordVendorInvoiceInput" class="qb-in maint-field" placeholder="Supplier invoice" autocomplete="off">
+                    </div>
+                    <div>
+                      <span class="qb-l">Work order #</span>
+                      <input id="recordWorkOrderInput" class="qb-in maint-field" placeholder="Vendor WO / internal ref" autocomplete="off">
+                    </div>
+                  </div>
                   <textarea id="notesInput" class="qb-memo" placeholder="Notes" style="max-width:560px"></textarea>
 
                   <div id="tireFields" class="hidden">
@@ -863,8 +873,16 @@
                   <input id="apVendorQboId" type="hidden">
                 </div>
                 <div>
-                  <span class="qb-l">Load / inv #</span>
-                  <input id="apLoadInvoiceNumber" class="qb-in" placeholder="Same as load no.">
+                  <span class="qb-l">Load / inv # (settlement)</span>
+                  <input id="apLoadInvoiceNumber" class="qb-in" placeholder="Trip P&amp;L key (often load #)">
+                </div>
+                <div>
+                  <span class="qb-l">Vendor invoice #</span>
+                  <input id="apVendorInvoiceNumber" class="qb-in" placeholder="Supplier invoice no.">
+                </div>
+                <div>
+                  <span class="qb-l">Shop / internal WO #</span>
+                  <input id="apInternalWorkOrderNumber" class="qb-in" placeholder="Your work order ref">
                 </div>
                 <div>
                   <span class="qb-l">Txn date</span>
@@ -1995,6 +2013,10 @@
 
     function resetWoForm() {
       document.getElementById('apLoadInvoiceNumber').value = '';
+      const vin = document.getElementById('apVendorInvoiceNumber');
+      const iwo = document.getElementById('apInternalWorkOrderNumber');
+      if (vin) vin.value = '';
+      if (iwo) iwo.value = '';
       document.getElementById('apMemo').value = '';
       document.getElementById('apDueDate').value = '';
       document.getElementById('woRepairLocationType').value = '';
@@ -2144,6 +2166,7 @@
               </div>
               <div class="mini-note">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
               ${r.loadNumber ? `<div class="mini-note">Load / inv #: ${escapeHtml(r.loadNumber)}</div>` : ''}
+              ${r.vendorInvoiceNumber || r.workOrderNumber ? `<div class="mini-note">Vendor inv: ${escapeHtml(r.vendorInvoiceNumber || '')} · WO: ${escapeHtml(r.workOrderNumber || '')}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
               ${r.tirePosition || r.tirePositionText ? `<div class="mini-note">Tire position: ${escapeHtml(r.tirePosition || r.tirePositionText || '')}</div>` : ''}
               ${r.repairLocationType ? `<div class="mini-note">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
@@ -2227,7 +2250,9 @@
           accidentLocation: document.getElementById('accidentLocationInput').value,
           accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
           repairLocationType: document.getElementById('repairLocationTypeInput').value,
-          loadNumber: document.getElementById('recordLoadNumberInput').value
+          loadNumber: document.getElementById('recordLoadNumberInput').value,
+          vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput').value,
+          workOrderNumber: document.getElementById('recordWorkOrderInput').value
         })
       });
 
@@ -2263,7 +2288,8 @@
         'customServiceTypeInput','tireBrandInput','tireDotInput','installMileageInput',
         'removeMileageInput','expectedTireLifeMilesInput','accidentLocationInput',
         'accidentReportNumberInput','linkedDocNumber','linkedVendorSearch','linkedDueDate',
-        'linkedPaymentMethodSearch','linkedBankAccountSearch','linkedAccountSearch','linkedItemSearch','tirePositionText','recordLoadNumberInput'
+        'linkedPaymentMethodSearch','linkedBankAccountSearch','linkedAccountSearch','linkedItemSearch','tirePositionText','recordLoadNumberInput',
+        'recordVendorInvoiceInput','recordWorkOrderInput'
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
@@ -2715,7 +2741,8 @@
                 <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
-              <div class="mini-note">Load / inv #: ${escapeHtml(r.loadNumber || r.internalWorkOrderNumber || r.vendorInvoiceNumber || '')}</div>
+              <div class="mini-note">Load / inv # (settlement): ${escapeHtml(r.loadNumber || '—')}</div>
+              <div class="mini-note">Vendor invoice: ${escapeHtml(r.vendorInvoiceNumber || '—')} · WO: ${escapeHtml(r.internalWorkOrderNumber || '—')}</div>
               <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
               <div class="mini-note">Unit: ${escapeHtml(r.unit || '')} | Date: ${escapeHtml(r.serviceDate || '')}</div>
               ${r.repairLocationType ? `<div class="mini-note">Repair location: ${escapeHtml(r.repairLocationType)}</div>` : ''}
@@ -2995,6 +3022,8 @@
         return;
       }
       const loadInv = document.getElementById('apLoadInvoiceNumber').value.trim();
+      const vendorInv = document.getElementById('apVendorInvoiceNumber')?.value.trim() || '';
+      const internalWo = document.getElementById('apInternalWorkOrderNumber')?.value.trim() || '';
       const lines = Array.from(document.querySelectorAll('#woLines .wo-line')).map(row => {
         const mode = row.querySelector('.wo-mode').value;
         const amt = Number(row.querySelector('.wo-amt').value) || 0;
@@ -3040,8 +3069,8 @@
           paymentMethodId: document.getElementById('apPaymentMethodId').value,
           qboBankAccountId: document.getElementById('apBankAccountQboId').value,
           loadNumber: loadInv,
-          internalWorkOrderNumber: loadInv,
-          vendorInvoiceNumber: loadInv,
+          internalWorkOrderNumber: internalWo,
+          vendorInvoiceNumber: vendorInv,
           notes: document.getElementById('apMemo').value,
           lines
         })
@@ -3132,9 +3161,21 @@
 
     function downloadUnitMaintenanceReport() {
       if (!selectedUnit) return;
-      const rows = [['Unit','Service Type','Record Type','Date','Mileage','Vendor','Cost','Notes','QBO Sync']];
+      const rows = [['Unit','Service Type','Record Type','Date','Mileage','Vendor','Vendor inv','WO #','Cost','Notes','QBO Sync']];
       (erp.records || []).filter(r => r.unit === selectedUnit).forEach(r => {
-        rows.push([r.unit, r.serviceType, r.recordType, r.serviceDate, r.serviceMileage, r.vendor, r.cost, r.notes, r.qboSyncStatus]);
+        rows.push([
+          r.unit,
+          r.serviceType,
+          r.recordType,
+          r.serviceDate,
+          r.serviceMileage,
+          r.vendor,
+          r.vendorInvoiceNumber || '',
+          r.workOrderNumber || '',
+          r.cost,
+          r.notes,
+          r.qboSyncStatus
+        ]);
       });
       downloadCsv(`${selectedUnit}_maintenance_report.csv`, rows);
     }
