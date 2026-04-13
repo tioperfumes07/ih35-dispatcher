@@ -925,7 +925,10 @@
           <div class="panel" style="margin-top:12px;">
             <div class="panel-head">
               <div class="panel-title">Saved Maintenance Expense Transactions</div>
-              <div><button onclick="downloadExpenseTransactionsCsv()">Export Transactions CSV</button></div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button type="button" onclick="downloadWorkOrdersCsv()">Export work orders CSV</button>
+                <button type="button" onclick="downloadExpenseTransactionsCsv()">Export AP transactions CSV</button>
+              </div>
             </div>
             <div class="panel-body">
               <div id="apList" class="card-list">No transactions yet.</div>
@@ -1741,6 +1744,8 @@
         if (sub) openAccountingTab('acct-transactions', sub);
         const memo = document.getElementById('apMemo');
         if (memo && !memo.value.trim()) memo.value = 'Internal Shop parts / supplies';
+        const td = document.getElementById('apTxnDate');
+        if (td && !td.value) td.value = new Date().toISOString().slice(0, 10);
         setTimeout(() => document.getElementById('apAssetUnit')?.focus(), 120);
         return;
       }
@@ -3203,6 +3208,50 @@
         rows.push([r.txnType, r.docNumber, r.txnDate, r.dueDate, r.qboVendorId, r.amount, r.description, r.assetUnit, r.qboEntityType, r.qboEntityId, r.qboSyncStatus]);
       });
       downloadCsv(`maintenance_expense_transactions.csv`, rows);
+    }
+
+    function downloadWorkOrdersCsv() {
+      const rows = [
+        [
+          'WO ID',
+          'Txn type',
+          'Unit',
+          'Load / inv (settlement)',
+          'Vendor invoice #',
+          'Shop / internal WO #',
+          'Vendor QBO ID',
+          'Service date',
+          'Due date',
+          'Repair location',
+          'Line count',
+          'Total amount',
+          'QB status',
+          'QB type',
+          'QB ID'
+        ]
+      ];
+      (erp.workOrders || []).forEach(wo => {
+        const lines = wo.lines || [];
+        const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+        rows.push([
+          wo.id,
+          wo.txnType,
+          wo.unit,
+          wo.loadNumber || '',
+          wo.vendorInvoiceNumber || '',
+          wo.internalWorkOrderNumber || '',
+          wo.qboVendorId,
+          wo.serviceDate || '',
+          wo.dueDate || '',
+          wo.repairLocationType || '',
+          lines.length,
+          Math.round(total * 100) / 100,
+          wo.qboSyncStatus || '',
+          wo.qboEntityType || '',
+          wo.qboEntityId || ''
+        ]);
+      });
+      downloadCsv(`maintenance_work_orders.csv`, rows);
     }
 
     loadErpSidebarPreference();
