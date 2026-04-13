@@ -299,7 +299,7 @@
           <button type="button" class="subtab" onclick="openSafetyTab('safe-fleet', this)">Fleet snapshot</button>
         </div>
         <div id="safe-hos" class="tracking-sub">
-          <p class="mini-note" style="margin:0 0 10px">Samsara compliance data. Token needs <strong>Read ELD Compliance Settings (US)</strong>. Server loads all paginated HOS pages.</p>
+          <p class="mini-note" style="margin:0 0 10px">Samsara HOS clocks: <strong>on duty, driving, sleeper berth, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle is hidden. Off duty <strong>with</strong> a vehicle is shown. Token needs <strong>Read ELD Compliance Settings (US)</strong>.</p>
           <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
             <input id="safetySearch" class="in" style="max-width:280px" placeholder="Search driver or vehicle…" oninput="renderSafetyHos()" />
             <span class="mini-note" id="safetyHosMeta"></span>
@@ -2107,6 +2107,24 @@
         .toLowerCase();
     }
 
+    function hasAssignedVehicle(vehicle) {
+      const v = String(vehicle || '').trim();
+      return v.length > 0 && v !== '—';
+    }
+
+    /**
+     * HOS clocks tab: active / relevant drivers only.
+     * Exclude off duty with no vehicle (inactive). Include all other duty types (sleeper, on duty, driving, …).
+     * Include off duty when a vehicle is still assigned.
+     */
+    function includeInSafetyHosTable(row) {
+      const driver = String(row.driver || '').trim();
+      if (!driver || driver === '—') return false;
+      const x = dutyNorm(row.dutyType);
+      if (x === 'offduty') return hasAssignedVehicle(row.vehicle);
+      return true;
+    }
+
     function isOffDutyOrSleeper(dutyType) {
       const x = dutyNorm(dutyType);
       return x === 'offduty' || x === 'sleeperberth' || x === 'sleeper';
@@ -2147,10 +2165,14 @@
     function renderSafetyHos() {
       const inp = document.getElementById('safetySearch');
       const q = (inp?.value || '').trim().toLowerCase();
-      const rows = (board.hos || []).map(normalizeHosClock).filter(r => {
-        if (!q) return true;
-        return String(r.driver).toLowerCase().includes(q) || String(r.vehicle).toLowerCase().includes(q);
-      });
+      const total = (board.hos || []).length;
+      const rows = (board.hos || [])
+        .map(normalizeHosClock)
+        .filter(includeInSafetyHosTable)
+        .filter(r => {
+          if (!q) return true;
+          return String(r.driver).toLowerCase().includes(q) || String(r.vehicle).toLowerCase().includes(q);
+        });
       const tb = document.getElementById('safetyHosBody');
       if (tb) {
         tb.innerHTML =
@@ -2168,10 +2190,13 @@
         </tr>`
             )
             .join('') ||
-          '<tr><td colspan="8" class="mini-note" style="padding:16px">No HOS data.</td></tr>';
+          '<tr><td colspan="8" class="mini-note" style="padding:16px">No drivers in this view (or no HOS data). Active duties and off duty with a vehicle only.</td></tr>';
       }
       const meta = document.getElementById('safetyHosMeta');
-      if (meta) meta.textContent = `${(board.hos || []).length} driver(s)`;
+      if (meta) {
+        meta.textContent =
+          rows.length + ' shown' + (total ? ' · ' + total + ' from Samsara' : '');
+      }
     }
 
     function renderSafetyAssignments() {
