@@ -293,7 +293,7 @@
               <datalist id="truckClassDatalist"></datalist>
               <div class="ac-list" id="truck_class_ac"></div>
             </div>
-            <p class="muted" style="margin:6px 0 0;font-size:11px">Primary list: <strong>Samsara fleet</strong> (same names as in your Samsara account). Fallback: QuickBooks <strong>classes</strong> starting with <strong>T1</strong>. Saving ensures a TMS <code>trucks</code> row for that unit code.</p>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Primary list: <strong>Samsara fleet</strong> (same names as in your Samsara account). Fallback: QuickBooks <strong>classes</strong> starting with <strong>T1</strong>. Saving ensures a TMS <code>trucks</code> row for that unit code. If ERP maintenance flags PM due or out-of-service, you’ll see a notice here and be asked to confirm before saving.</p>
             <div id="truckMaintBanner" class="banner maint-banner maint-hide" role="status" aria-live="polite"></div>
           </div>
           <div class="row">
@@ -1827,11 +1827,8 @@
       }
       const truckUnitLabel = document.getElementById('f_truck_search').value.trim();
       const maintAlert = lookupMaintenanceAlert(truckUnitLabel);
-      if (
-        maintAlert &&
-        truckUnitLabel &&
-        (maintAlert.level === 'critical' || maintAlert.level === 'high')
-      ) {
+      const maintLevelsNeedConfirm = ['critical', 'high', 'medium'];
+      if (maintAlert && truckUnitLabel && maintLevelsNeedConfirm.includes(maintAlert.level)) {
         const msg = [
           maintAlert.summary,
           '',
