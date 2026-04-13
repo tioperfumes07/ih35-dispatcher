@@ -63,6 +63,7 @@
     }
     .st-open { background: var(--open); color: #2e7d32; }
     .st-delivered { background: var(--delivered); color: #c2185b; }
+    .st-unsettled { background: #e8eaf6; color: #3949ab; }
     .st-default { background: #e3e7f0; color: #37474f; }
     select.sm, input.sm { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); font-size: 13px; max-width: 140px; }
     .modal-bg {
@@ -205,19 +206,25 @@
     <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:320px"></span>
   </div>
   <div class="tabs">
-    <button type="button" class="tab active" data-tab="open">Open loads</button>
+    <button type="button" class="tab active" data-tab="open">Open</button>
     <button type="button" class="tab" data-tab="delivered">Delivered</button>
+    <button type="button" class="tab" data-tab="billing">Needs QBO invoice</button>
+    <button type="button" class="tab" data-tab="unsettled">Acct closed</button>
     <button type="button" class="tab" data-tab="all">All loads</button>
-    <button type="button" class="tab" data-tab="fleet">Fleet (Samsara)</button>
+    <button type="button" class="tab" data-tab="fleet">Fleet</button>
   </div>
   <div class="wrap">
+    <p class="muted" style="margin:0 0 12px;font-size:12px;line-height:1.5">
+      Each <strong>load</strong> is one dispatched trip (e.g. Laredo → Chicago as <strong>1301</strong>, a later southbound as <strong>1302</strong>).
+      <strong>Load # = customer invoice #</strong> so work orders, AP, and settlements roll up to the same number. Mark <strong>Delivered</strong> when empty; use <strong>Needs QBO invoice</strong> for the billing queue; move to <strong>Acct closed</strong> when accounting is done for that load.
+    </p>
     <div id="msg"></div>
     <div id="viewLoads">
       <table class="data">
         <thead>
           <tr>
             <th>Load #</th>
-            <th>Inv #</th>
+            <th title="Same as load # — used as QuickBooks DocNumber and for expense / settlement rollup">Inv #</th>
             <th>Status</th>
             <th>Driver</th>
             <th>Truck / Trailer</th>
@@ -353,7 +360,7 @@
           <div class="row" style="grid-column:1/-1">
             <label class="lbl">Trip revenue ($) — linehaul on invoice</label>
             <input class="in" type="number" id="f_revenue" step="0.01" min="0" placeholder="Primary linehaul amount" />
-            <p class="muted" style="margin:6px 0 0;font-size:11px">One load # = one customer invoice. Settlement net uses this plus any extra charge lines below, minus expenses for the load #.</p>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">This load number is the <strong>customer invoice number</strong> in QuickBooks (and on settlement). Each northbound / southbound trip gets its own load #. Settlement net uses linehaul plus extra lines below, minus expenses tagged with this load / inv #.</p>
           </div>
           <div class="row" style="grid-column:1/-1">
             <label class="lbl">Linehaul QuickBooks item</label>
@@ -981,6 +988,7 @@
     function statusClass(s) {
       s = (s || '').toLowerCase();
       if (s === 'delivered') return 'st-delivered';
+      if (s === 'unsettled') return 'st-unsettled';
       if (s === 'open' || s === 'covered' || s === 'dispatched' || s === 'on_route' || s === 'loading' || s === 'unloading')
         return 'st-open';
       return 'st-default';
