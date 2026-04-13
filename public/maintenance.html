@@ -302,6 +302,13 @@
           <p class="mini-note" style="margin:0 0 10px">Samsara HOS clocks: <strong>on duty, driving, sleeper berth, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle is hidden. Off duty <strong>with</strong> a vehicle is shown. Token needs <strong>Read ELD Compliance Settings (US)</strong>.</p>
           <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
             <input id="safetySearch" class="in" style="max-width:280px" placeholder="Search driver or vehicle…" oninput="renderSafetyHos()" />
+            <label class="mini-note" for="safetyHosDutyFilter" style="margin:0">Show</label>
+            <select id="safetyHosDutyFilter" class="in" style="max-width:240px" onchange="renderSafetyHos()" title="Filter by duty state">
+              <option value="relevant">Relevant (hide off-duty, no truck)</option>
+              <option value="active">Active duties only</option>
+              <option value="inactive">Off duty / sleeper</option>
+              <option value="all">All Samsara rows</option>
+            </select>
             <span class="mini-note" id="safetyHosMeta"></span>
           </div>
           <div class="safety-table-wrap">
@@ -326,6 +333,15 @@
           <p class="mini-note" style="margin:0 0 10px">
             <strong>Active</strong> = on duty (not off duty or sleeper). <strong>In service now</strong> = driving, on duty, or yard move (from Samsara HOS clocks).
           </p>
+          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+            <label class="mini-note" for="safetyActiveDutyFilter" style="margin:0">List filter</label>
+            <select id="safetyActiveDutyFilter" class="in" style="max-width:240px" onchange="renderSafetyActivePanels()" title="Same modes as HOS tab">
+              <option value="relevant">Relevant (hide off-duty, no truck)</option>
+              <option value="active">Active duties only</option>
+              <option value="inactive">Off duty / sleeper</option>
+              <option value="all">All Samsara rows</option>
+            </select>
+          </div>
           <div class="safety-active-grid">
             <div>
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
@@ -735,6 +751,15 @@
 
         <div id="tr-drivers" class="tracking-sub hidden">
           <p class="mini-note" style="margin:8px 0">Drivers from Samsara HOS clocks (same data as Safety → HOS).</p>
+          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+            <label class="mini-note" for="trackingDriversDutyFilter" style="margin:0">Duty filter</label>
+            <select id="trackingDriversDutyFilter" class="in" style="max-width:240px" onchange="renderTrackingDrivers()">
+              <option value="relevant">Relevant (hide off-duty, no truck)</option>
+              <option value="active">Active duties only</option>
+              <option value="inactive">Off duty / sleeper</option>
+              <option value="all">All Samsara rows</option>
+            </select>
+          </div>
           <div class="safety-table-wrap">
             <table>
               <thead><tr><th>Driver</th><th>Duty</th><th>Vehicle</th><th>Drive left</th></tr></thead>
@@ -2125,6 +2150,23 @@
       return true;
     }
 
+    function hasNamedHosDriver(row) {
+      const driver = String(row.driver || '').trim();
+      return driver.length > 0 && driver !== '—';
+    }
+
+    function applySafetyHosDutyMode(rows, mode) {
+      const m = mode || 'relevant';
+      const base = rows.filter(hasNamedHosDriver);
+      if (m === 'all') return base;
+      if (m === 'relevant') return base.filter(includeInSafetyHosTable);
+      if (m === 'active')
+        return base.filter(includeInSafetyHosTable).filter(r => !isOffDutyOrSleeper(r.dutyType));
+      if (m === 'inactive')
+        return base.filter(includeInSafetyHosTable).filter(r => isOffDutyOrSleeper(r.dutyType));
+      return base.filter(includeInSafetyHosTable);
+    }
+
     function isOffDutyOrSleeper(dutyType) {
       const x = dutyNorm(dutyType);
       return x === 'offduty' || x === 'sleeperberth' || x === 'sleeper';
@@ -2144,7 +2186,8 @@
       const tbA = document.getElementById('safetyActiveBody');
       const tbI = document.getElementById('safetyInServiceBody');
       if (!tbA || !tbI) return;
-      const raw = (board.hos || []).map(normalizeHosClock);
+      const mode = document.getElementById('safetyActiveDutyFilter')?.value || 'relevant';
+      const raw = applySafetyHosDutyMode((board.hos || []).map(normalizeHosClock), mode);
       const active = raw.filter(r => r.dutyType && !isOffDutyOrSleeper(r.dutyType));
       const inService = raw.filter(r => isInServiceDuty(r.dutyType));
       const fmt = rows =>
@@ -2166,13 +2209,19 @@
       const inp = document.getElementById('safetySearch');
       const q = (inp?.value || '').trim().toLowerCase();
       const total = (board.hos || []).length;
-      const rows = (board.hos || [])
-        .map(normalizeHosClock)
-        .filter(includeInSafetyHosTable)
-        .filter(r => {
-          if (!q) return true;
-          return String(r.driver).toLowerCase().includes(q) || String(r.vehicle).toLowerCase().includes(q);
-        });
+      const mode = document.getElementById('safetyHosDutyFilter')?.value || 'relevant';
+      const rows = applySafetyHosDutyMode((board.hos || []).map(normalizeHosClock), mode).filter(r => {
+        if (!q) return true;
+        return String(r.driver).toLowerCase().includes(q) || String(r.vehicle).toLowerCase().includes(q);
+      });
+      const emptyMsg =
+        mode === 'active'
+          ? 'No rows match “active duties” (or no HOS data).'
+          : mode === 'inactive'
+            ? 'No off-duty / sleeper rows in the relevant set (or no HOS data).'
+            : mode === 'all'
+              ? 'No HOS rows from Samsara.'
+              : 'No drivers in this view (or no HOS data). Try “All Samsara rows” or adjust the filter.';
       const tb = document.getElementById('safetyHosBody');
       if (tb) {
         tb.innerHTML =
@@ -2189,8 +2238,7 @@
           <td>${escapeHtml(r.vioText)}</td>
         </tr>`
             )
-            .join('') ||
-          '<tr><td colspan="8" class="mini-note" style="padding:16px">No drivers in this view (or no HOS data). Active duties and off duty with a vehicle only.</td></tr>';
+            .join('') || `<tr><td colspan="8" class="mini-note" style="padding:16px">${escapeHtml(emptyMsg)}</td></tr>`;
       }
       const meta = document.getElementById('safetyHosMeta');
       if (meta) {
@@ -2261,7 +2309,8 @@
     function renderTrackingDrivers() {
       const tb = document.getElementById('trackingDriversBody');
       if (!tb) return;
-      const rows = (board.hos || []).map(normalizeHosClock);
+      const mode = document.getElementById('trackingDriversDutyFilter')?.value || 'relevant';
+      const rows = applySafetyHosDutyMode((board.hos || []).map(normalizeHosClock), mode);
       tb.innerHTML =
         rows
           .map(
