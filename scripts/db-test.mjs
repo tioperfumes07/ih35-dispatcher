@@ -1,6 +1,7 @@
 import 'dotenv/config';
-import { pool, dbQuery } from '../lib/db.mjs';
+import { getPool, dbQuery } from '../lib/db.mjs';
 
+const pool = getPool();
 if (!pool) {
   console.error('DATABASE_URL is missing. Add it to .env (see .env.example).');
   process.exit(1);

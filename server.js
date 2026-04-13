@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -7,6 +8,7 @@ import crypto from 'crypto';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
+import { dbQuery } from './lib/db.mjs';
 
 dotenv.config();
 
@@ -919,6 +921,20 @@ app.get('/api/health', async (_req, res) => {
       ok: false,
       error: error.message
     });
+  }
+});
+
+app.get('/api/health/db', async (_req, res) => {
+  try {
+    const { rows } = await dbQuery('SELECT 1 AS ok, current_database() AS database');
+    res.json({ ok: true, database: rows[0].database });
+  } catch (error) {
+    const msg = error?.message || String(error);
+    if (msg.includes('DATABASE_URL is not set')) {
+      res.json({ ok: false, configured: false, error: msg });
+      return;
+    }
+    res.status(500).json({ ok: false, configured: true, error: msg });
   }
 });
 
