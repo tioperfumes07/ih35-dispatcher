@@ -326,8 +326,9 @@ async function fetchVehiclesSafely() {
 
 async function fetchVehicleStatsCurrentSafely() {
   try {
+    // Samsara limits this endpoint to 4 stat types per request.
     const url =
-      'https://api.samsara.com/fleet/vehicles/stats?types=obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps,engineStates';
+      'https://api.samsara.com/fleet/vehicles/stats?types=obdOdometerMeters,gpsOdometerMeters,fuelPercents,gps';
     const payload = await fetchJson(url, { headers: samsaraHeaders() });
     return getVehicleStatRows(payload);
   } catch (error) {

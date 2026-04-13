@@ -5,12 +5,15 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "db:test": "node scripts/db-test.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "pg": "^8.13.1",
     "multer": "^2.1.1",
     "xlsx": "^0.18.5"
   }
