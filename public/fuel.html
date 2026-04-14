@@ -211,7 +211,9 @@
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
         <input id="fuelImportFile" type="file" accept=".csv,.xlsx,.xls">
         <button type="button" onclick="previewFuelImport()">Preview Relay / fuel import</button>
-        <button type="button" onclick="undoLastFuelImport()">Undo last import</button>
+        <button id="undoLastFuelImportBtn" type="button" disabled onclick="undoLastFuelImport()">Undo last import</button>
+        <span id="fuelImportUndoMeta" class="small"></span>
+        <div id="fuelImportRecentMeta" class="small" style="margin-top:4px;max-width:900px"></div>
         <button onclick="exportFuelCsv()">Export fuel CSV</button>
           <button onclick="exportRelayExpensesCsv()">Export Relay expenses CSV</button>
           <button type="button" onclick="exportRelayQbSyncCsv()">Export Relay → QB Spreadsheet Sync CSV</button>
@@ -256,6 +258,54 @@
     let fuelPurchases = [];
     let pendingFuelImportPreview = null;
     let lastConfirmedFuelImportBatchId = '';
+
+    function updateUndoFuelImportUi() {
+      const btn = document.getElementById('undoLastFuelImportBtn');
+      const meta = document.getElementById('fuelImportUndoMeta');
+      if (btn) btn.disabled = !lastConfirmedFuelImportBatchId;
+      if (meta) {
+        meta.textContent = lastConfirmedFuelImportBatchId
+          ? `Last confirmed batch: ${lastConfirmedFuelImportBatchId}`
+          : '';
+      }
+    }
+
+    function renderRecentImportBatches(list) {
+      const el = document.getElementById('fuelImportRecentMeta');
+      if (!el) return;
+      if (!list || !list.length) {
+        el.textContent = '';
+        return;
+      }
+      el.innerHTML =
+        '<span style="font-weight:700">Recent file imports</span> — ' +
+        list
+          .map(b => {
+            const und = b.undoneAt ? ' <span style="color:#b45309">(undone)</span>' : '';
+            const t = (b.importConfirmedAt || '').slice(0, 19).replace('T', ' ');
+            return `<span>${escHtml(t)} · ${escHtml(String(b.savedFuel || 0))} fuel / ${escHtml(String(b.savedRelay || 0))} Relay${und}</span>`;
+          })
+          .join(' · ');
+    }
+
+    function applyFuelImportMeta(fp) {
+      const imp = fp?.import;
+      const b = imp?.lastBatch;
+      lastConfirmedFuelImportBatchId = b?.importBatchId ? String(b.importBatchId) : '';
+      updateUndoFuelImportUi();
+      renderRecentImportBatches(imp?.recentBatches);
+    }
+
+    async function refreshLastFuelImportBatch() {
+      try {
+        const fp = await j('/api/fuel/purchases');
+        applyFuelImportMeta(fp);
+      } catch {
+        lastConfirmedFuelImportBatchId = '';
+        updateUndoFuelImportUi();
+        renderRecentImportBatches(null);
+      }
+    }
 
     function escHtml(s) {
       return String(s ?? '')
@@ -363,14 +413,20 @@
       return hrs * avgSpeedMphForRoute(routeData);
     }
 
-    async function j(url) {
-      const r = await fetch(url);
+    async function j(url, init = {}) {
+      const r = await fetch(url, init);
       const text = await r.text();
+      let data;
       try {
-        return JSON.parse(text);
+        data = JSON.parse(text);
       } catch {
         throw new Error(`Bad response from ${url}: ${text.slice(0, 160)}`);
       }
+      if (!r.ok) {
+        const msg = data?.error || data?.message || r.statusText || 'Request failed';
+        throw new Error(msg);
+      }
+      return data;
     }
 
     async function geocodeOne(place) {
@@ -571,6 +627,7 @@
       try {
         const fp = await j('/api/fuel/purchases');
         fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
+        applyFuelImportMeta(fp);
       } catch {
         fuelPurchases = [];
       }
@@ -875,6 +932,7 @@
           body: JSON.stringify(payload)
         });
         fuelPurchases = Array.isArray(r?.purchases) ? r.purchases : fuelPurchases;
+        applyFuelImportMeta(r);
         document.getElementById('fuelGallons').value = '';
         document.getElementById('fuelPpg').value = '';
         document.getElementById('fuelTotal').value = '';
@@ -902,7 +960,26 @@
 
       const fuels = data.fuelPurchases || [];
       const relays = data.relayExpenses || [];
-      sum.innerHTML = `Parsed <strong>${fuels.length}</strong> fuel purchase line(s) and <strong>${relays.length}</strong> Relay expense line(s). Review QuickBooks categories, then confirm.`;
+      const parts = [
+        `Parsed <strong>${fuels.length}</strong> fuel purchase line(s) and <strong>${relays.length}</strong> Relay expense line(s). Review QuickBooks categories, then confirm.`
+      ];
+      const s = data.summary;
+      if (s?.relay) {
+        parts.push(
+          `Relay total <strong>$${Number(s.relay.relayTotalAmount || 0).toFixed(2)}</strong> across ${s.relay.relayLineCount} line(s).`
+        );
+      }
+      if (s?.fuel?.fuelLineCount) {
+        parts.push(
+          `Fuel ledger subtotal <strong>$${Number(s.fuel.fuelTotalCost || 0).toFixed(2)}</strong> (${s.fuel.fuelLineCount} line(s)).`
+        );
+      }
+      if (data.duplicates?.duplicateCount) {
+        parts.push(
+          `<span style="color:#b45309;font-weight:700">Warning: ${data.duplicates.duplicateCount} Relay line(s) match rows already saved (same date, doc #, unit, line type, and amount).</span>`
+        );
+      }
+      sum.innerHTML = parts.join('<br>');
 
       if (!relays.length) {
         relayW.innerHTML = '<p class="small">No Relay expense lines (check Truck #, work_date, volume/total columns).</p>';
@@ -1009,9 +1086,11 @@
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
         lastConfirmedFuelImportBatchId = String(data.importBatchId || '').trim();
+        updateUndoFuelImportUi();
         cancelFuelImportPreview();
         const fp = await j('/api/fuel/purchases');
         fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
+        applyFuelImportMeta(fp);
         renderFuelLedger();
         alert(
           `Saved ${data.savedFuel ?? 0} fuel line(s) and ${data.savedRelay ?? 0} Relay expense line(s).` +
@@ -1023,6 +1102,7 @@
     }
 
     async function undoLastFuelImport() {
+      if (!lastConfirmedFuelImportBatchId) await refreshLastFuelImportBatch();
       if (!lastConfirmedFuelImportBatchId) return alert('No confirmed import batch to undo yet.');
       if (!confirm('Undo the last confirmed import batch? This removes the exact rows that were just appended.')) return;
       try {
@@ -1034,8 +1114,10 @@
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
         lastConfirmedFuelImportBatchId = '';
+        updateUndoFuelImportUi();
         const fp = await j('/api/fuel/purchases');
         fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
+        applyFuelImportMeta(fp);
         renderFuelLedger();
         alert(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`);
       } catch (e) {
@@ -1278,6 +1360,7 @@
     wireAutocomplete(document.getElementById('originInput'), document.getElementById('originAuto'));
     addDestination('San Antonio, TX');
     initMap();
+    refreshLastFuelImportBatch();
   </script>
 </body>
 </html>

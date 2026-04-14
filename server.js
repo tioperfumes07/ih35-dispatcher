@@ -20,6 +20,7 @@ import pdfRouter from './routes/pdf.mjs';
 import documentParseRouter from './routes/document-parse.mjs';
 import integrationsRouter from './routes/integrations.mjs';
 import { syncAllLoadDocumentsToQboInvoice } from './lib/qbo-attachments.mjs';
+import { relayLineLabel, relayQuickBooksCategory, relaySpreadsheetCategory } from './lib/relay-qb-categories.mjs';
 
 dotenv.config();
 
@@ -102,6 +103,10 @@ function defaultErpData() {
     driverProfiles: [],
     fuelPurchases: [],
     relayExpenses: [],
+    /** Last confirmed Relay/fuel file import (for undo after refresh). */
+    lastFuelImportBatch: null,
+    /** Short audit trail of file imports (newest last). */
+    fuelImportBatches: [],
     paymentMethods: [
       { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
       { id: 'pm_check', name: 'Check', qboType: 'Check' },
@@ -150,6 +155,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.driverProfiles)) merged.driverProfiles = [];
   if (!Array.isArray(merged.fuelPurchases)) merged.fuelPurchases = [];
   if (!Array.isArray(merged.relayExpenses)) merged.relayExpenses = [];
+  if (!Array.isArray(merged.fuelImportBatches)) merged.fuelImportBatches = [];
   if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
   if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
   if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
@@ -270,47 +276,6 @@ function nextRelayDocNumber(base, counterByBase) {
   return n === 1 ? b : `${b}-${n - 1}`;
 }
 
-function relayLineLabel(kind) {
-  const k = String(kind || '').toLowerCase();
-  if (k === 'diesel') return 'Diesel';
-  if (k === 'def') return 'DEF';
-  if (k === 'reefer' || k === 'reefer_2') return 'Reefer';
-  if (k === 'def_forecourt') return 'DEF';
-  if (k === 'relay_fee') return 'Relay fee';
-  return String(kind || 'Fuel');
-}
-
-/** Relay export column grouping — matches spreadsheet volume_* / total_price_* headers. */
-function relaySpreadsheetCategory(kind) {
-  const k = String(kind || '').toLowerCase();
-  if (k === 'diesel') return 'Diesel — volume diesel / total_price diesel';
-  if (k === 'def') return 'DEF — volume def / total_price def';
-  if (k === 'reefer') return 'Reefer — volume reefer / total_price reefer';
-  if (k === 'reefer_2') return 'Reefer 2 — volume reefer_2 / total_price reefer_2';
-  if (k === 'def_forecourt') return 'DEF forecourt — volume def_forecourt / total_price def_forecourt';
-  if (k === 'relay_fee') return 'Fee — fee';
-  return 'Fuel';
-}
-
-/** QuickBooks Item/Category naming (copied from template Engine!F formula). */
-function relayQuickBooksCategory({ kind, productsText = '' }) {
-  const k = String(kind || '').toLowerCase();
-  const products = String(productsText || '');
-  const isCatScales = /cat\s*scales?/i.test(products);
-
-  if (isCatScales) {
-    if (k === 'relay_fee') return 'Bank Charges:BC-Relay Diesel Code Fee';
-    // Template routes slot 1 to scale expense when Cat Scales is detected.
-    return 'Scale Expense:OTR-Scale Expense';
-  }
-
-  if (k === 'def' || k === 'def_forecourt') return 'Fuel Expenses:Fuel-DEF-Diesel Exhaust Fluid';
-  if (k === 'diesel') return 'Fuel Expenses:Fuel-Truck Diesel';
-  if (k === 'reefer' || k === 'reefer_2') return 'Fuel Expenses:Fuel-Reefer-Diesel';
-  if (k === 'relay_fee') return 'Bank Charges:BC-Relay Diesel Code Fee';
-  return 'Fuel Expenses:Fuel-Truck Diesel';
-}
-
 /**
  * Parse Relay-style fuel workbook rows into staged fuel purchases and relay expense lines.
  * Does not read/write ERP.
@@ -427,6 +392,72 @@ function buildRelayFuelImportFromRows(rows) {
   }
 
   return { fuelPurchases, relayExpenses, imported, relayLines };
+}
+
+function relayLedgerFingerprint(r) {
+  const amt = Math.round((safeNum(r.amount, 0) || 0) * 100) / 100;
+  return [
+    sliceIsoDate(r.txnDate || ''),
+    String(r.docNumber || '').trim().toLowerCase(),
+    sanitizeName(r.unit, '').toLowerCase(),
+    String(r.expenseType || '').trim().toLowerCase(),
+    String(amt)
+  ].join('|');
+}
+
+function findRelayPreviewDuplicates(relayPreview, erp) {
+  const existing = new Set();
+  for (const x of erp.relayExpenses || []) {
+    existing.add(relayLedgerFingerprint(x));
+  }
+  const matches = [];
+  for (const r of relayPreview || []) {
+    if (existing.has(relayLedgerFingerprint(r))) matches.push(r);
+  }
+  return {
+    duplicateCount: matches.length,
+    sample: matches.slice(0, 5).map(r => ({
+      docNumber: r.docNumber,
+      txnDate: r.txnDate,
+      unit: r.unit,
+      expenseType: r.expenseType,
+      amount: r.amount,
+      qbCategory: r.qbCategory
+    }))
+  };
+}
+
+function summarizeRelayPreview(relayExpenses) {
+  const rows = relayExpenses || [];
+  let total = 0;
+  const byCat = {};
+  for (const r of rows) {
+    const amt = safeNum(r.amount, 0) || 0;
+    total += amt;
+    const c = String(r.qbCategory || '').trim() || '(uncategorized)';
+    if (!byCat[c]) byCat[c] = { count: 0, amount: 0 };
+    byCat[c].count += 1;
+    byCat[c].amount += amt;
+  }
+  for (const k of Object.keys(byCat)) {
+    byCat[k].amount = Math.round(byCat[k].amount * 100) / 100;
+  }
+  return { relayLineCount: rows.length, relayTotalAmount: Math.round(total * 100) / 100, byQbCategory: byCat };
+}
+
+function summarizeFuelPreview(fuelPurchases) {
+  const rows = fuelPurchases || [];
+  let total = 0;
+  for (const r of rows) total += safeNum(r.totalCost, 0) || 0;
+  return { fuelLineCount: rows.length, fuelTotalCost: Math.round(total * 100) / 100 };
+}
+
+function fuelImportMeta(erp) {
+  const batches = Array.isArray(erp.fuelImportBatches) ? erp.fuelImportBatches : [];
+  return {
+    lastBatch: erp.lastFuelImportBatch && typeof erp.lastFuelImportBatch === 'object' ? erp.lastFuelImportBatch : null,
+    recentBatches: batches.slice(-5).reverse()
+  };
 }
 
 async function fetchJson(url, options = {}) {
@@ -1922,7 +1953,7 @@ app.post('/api/safety/driver-profiles', (req, res) => {
 
 app.get('/api/fuel/purchases', (_req, res) => {
   const erp = readErp();
-  res.json({ ok: true, purchases: erp.fuelPurchases || [] });
+  res.json({ ok: true, purchases: erp.fuelPurchases || [], import: fuelImportMeta(erp) });
 });
 
 app.post('/api/fuel/purchases', (req, res) => {
@@ -1936,7 +1967,7 @@ app.post('/api/fuel/purchases', (req, res) => {
     const row = { id: uid('fuel'), ...p, createdAt: now };
     erp.fuelPurchases.push(row);
     writeErp(erp);
-    res.json({ ok: true, purchase: row, purchases: erp.fuelPurchases });
+    res.json({ ok: true, purchase: row, purchases: erp.fuelPurchases, import: fuelImportMeta(erp) });
   } catch (error) {
     logError('api/fuel/purchases POST', error);
     res.status(500).json({ ok: false, error: error.message });
@@ -2713,6 +2744,7 @@ app.get('/api/reports/export/relay-expenses.csv', (_req, res) => {
       'txn_date',
       'unit',
       'vendor',
+      'qb_category',
       'spreadsheet_category',
       'expense_type',
       'amount',
@@ -2733,6 +2765,7 @@ app.get('/api/reports/export/relay-expenses.csv', (_req, res) => {
           csvEscape(r.txnDate || ''),
           csvEscape(r.unit || ''),
           csvEscape(r.vendor || ''),
+          csvEscape(r.qbCategory || ''),
           csvEscape(r.spreadsheetCategory || r.expenseType || ''),
           csvEscape(r.expenseType || ''),
           String((safeNum(r.amount, 0) || 0).toFixed(2)),
@@ -3590,6 +3623,12 @@ app.post('/api/import/fuel', upload.single('file'), (req, res) => {
     const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
 
     const { fuelPurchases, relayExpenses, imported, relayLines } = buildRelayFuelImportFromRows(rows);
+    const erp = readErp();
+    const duplicates = findRelayPreviewDuplicates(relayExpenses, erp);
+    const summary = {
+      fuel: summarizeFuelPreview(fuelPurchases),
+      relay: summarizeRelayPreview(relayExpenses)
+    };
     res.json({
       ok: true,
       preview: true,
@@ -3597,6 +3636,8 @@ app.post('/api/import/fuel', upload.single('file'), (req, res) => {
       relayLines,
       fuelPurchases,
       relayExpenses,
+      summary,
+      duplicates,
       hint: 'Review the preview, then confirm to append to the ERP fuel ledger and Relay expense staging. Does not post to QuickBooks.'
     });
   } catch (error) {
@@ -3681,10 +3722,50 @@ app.post('/api/import/fuel/confirm', (req, res) => {
       savedRelay++;
     }
 
+    erp.lastFuelImportBatch = {
+      importBatchId,
+      importConfirmedAt,
+      savedFuel,
+      savedRelay,
+      alreadyInQbo
+    };
+    if (!Array.isArray(erp.fuelImportBatches)) erp.fuelImportBatches = [];
+    erp.fuelImportBatches.push({
+      importBatchId,
+      importConfirmedAt,
+      savedFuel,
+      savedRelay,
+      alreadyInQbo,
+      undoneAt: null
+    });
+    erp.fuelImportBatches = erp.fuelImportBatches.slice(-20);
     writeErp(erp);
     res.json({ ok: true, savedFuel, savedRelay, alreadyInQbo, importBatchId, importConfirmedAt });
   } catch (error) {
     logError('api/import/fuel/confirm', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/import/fuel/last-batch', (_req, res) => {
+  try {
+    const erp = readErp();
+    const b = erp.lastFuelImportBatch;
+    if (!b || typeof b !== 'object' || !String(b.importBatchId || '').trim()) {
+      return res.json({ ok: true, lastBatch: null });
+    }
+    res.json({
+      ok: true,
+      lastBatch: {
+        importBatchId: String(b.importBatchId || '').trim(),
+        importConfirmedAt: String(b.importConfirmedAt || '').trim(),
+        savedFuel: safeNum(b.savedFuel, 0) || 0,
+        savedRelay: safeNum(b.savedRelay, 0) || 0,
+        alreadyInQbo: !!b.alreadyInQbo
+      }
+    });
+  } catch (error) {
+    logError('api/import/fuel/last-batch', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -3705,6 +3786,17 @@ app.post('/api/import/fuel/undo', (req, res) => {
 
     const removedFuel = beforeFuel - erp.fuelPurchases.length;
     const removedRelay = beforeRelay - erp.relayExpenses.length;
+
+    if (String(erp.lastFuelImportBatch?.importBatchId || '') === batchId) {
+      erp.lastFuelImportBatch = null;
+    }
+
+    for (const b of erp.fuelImportBatches || []) {
+      if (String(b.importBatchId || '') === batchId && !b.undoneAt) {
+        b.undoneAt = new Date().toISOString();
+        break;
+      }
+    }
 
     writeErp(erp);
     res.json({ ok: true, importBatchId: batchId, removedFuel, removedRelay });
