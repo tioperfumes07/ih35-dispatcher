@@ -41,3 +41,4 @@ Operations hub for **dispatch / TMS**, **fuel & route planning**, **maintenance 
 2. Align TMS list views with your dispatch board mockups (columns, filters, statuses)
 3. Deeper QBO sync (e.g. bills/invoices reconciliation) as your chart of accounts requires
 4. Optional: migrate more ERP entities from JSON to Postgres for unified reporting
+5. Driver compliance UI + IFTA: Postgres columns in `011_fleet_driver_compliance.sql` (`drivers`, `trucks`, `trailers`); wire Samsara IDs, then miles-by-state + fuel import + quarterly export

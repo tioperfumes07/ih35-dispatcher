@@ -43,7 +43,7 @@
     .nav-btn{width:100%;display:block;text-align:left;background:transparent;color:#fff;border:1px solid transparent;padding:11px 12px;border-radius:10px;cursor:pointer;margin-bottom:6px;font-size:14px}
     .nav-btn:hover{background:rgba(255,255,255,.06)}
     .nav-btn.active{background:#1e293b;border-color:#334155}
-    .main{padding:18px;overflow:auto}
+    .main{padding:18px;overflow:auto;max-width:min(1560px,100%);width:100%;margin-inline:auto;min-width:0}
     .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
     .title{font-size:28px;font-weight:700;margin-right:auto}
     .btn,button,input,select,textarea{font:inherit}
@@ -94,8 +94,9 @@
     .unit-box{background:#fafcff;border:1px solid #e8eef8;border-radius:12px;padding:10px}
     .unit-box .k{font-size:11px;color:var(--muted);margin-bottom:4px}
     .unit-box .v{font-size:17px;font-weight:700}
-    .table-wrap{overflow:auto;border:1px solid #edf1f7;border-radius:12px;background:#fff}
-    table{border-collapse:collapse;width:100%;min-width:1400px;font-size:13px}
+    .table-wrap{overflow:auto;border:1px solid #edf1f7;border-radius:12px;background:#fff;-webkit-overflow-scrolling:touch}
+    table{border-collapse:collapse;width:100%;min-width:0;font-size:13px}
+    .table-wrap > table{min-width:min(1240px,max(100%,720px))}
     th,td{padding:9px 10px;border-bottom:1px solid #edf1f7;text-align:left;vertical-align:top}
     th{background:#fafcff;position:sticky;top:0;z-index:1;color:var(--muted);font-size:12px;text-transform:uppercase}
     .st-settlement-wrap{border:1px solid #c7d2e0;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 0 rgba(15,23,42,.04)}
@@ -136,8 +137,9 @@
     .qb-l{display:block;font-size:10px;color:#6b7280;margin-bottom:2px;text-transform:uppercase;font-weight:600}
     .qb-in{padding:6px 8px;font-size:12px;border:1px solid #d8deea;border-radius:6px;box-sizing:border-box;width:auto;max-width:100%;min-width:10ch}
     .maint-field{width:auto;max-width:min(100%,44ch);min-width:12ch}
-    .maint-form-stack{display:grid;gap:10px;max-width:560px}
-    .maint-form-stack .search-row{grid-template-columns:1fr 1fr;max-width:520px}
+    .maint-form-stack{display:grid;gap:10px;max-width:min(720px,100%)}
+    .maint-form-stack .search-row{grid-template-columns:repeat(2,minmax(0,1fr));max-width:100%}
+    .maint-cost-panel{max-width:min(720px,100%)}
     .maint-inline-hint{font-size:11px;color:var(--muted);margin-top:4px}
     .qb-memo{min-height:48px;resize:vertical;padding:4px 6px;font-size:12px}
     .wo-line{border-bottom:1px solid #eef1f7;padding-bottom:8px;margin-bottom:8px}
@@ -590,7 +592,7 @@
                     <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
                   </div>
 
-                  <div class="panel" style="box-shadow:none;margin-top:4px;max-width:640px">
+                  <div class="panel maint-cost-panel" style="box-shadow:none;margin-top:4px">
                     <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
                       <div class="panel-title" style="font-size:14px">Cost breakdown (same vendor invoice)</div>
                       <button type="button" class="qb-btn-add" onclick="addMaintCostLine()">+ Add line</button>
@@ -1131,6 +1133,7 @@
           <button type="button" class="subtab" onclick="openReportsTab('rep-maint', this)">Maintenance by unit</button>
           <button type="button" class="subtab" onclick="openReportsTab('rep-qbo', this)">QuickBooks activity</button>
           <button type="button" class="subtab" onclick="openReportsTab('rep-sync', this)">ERP ↔ QBO sync</button>
+          <button type="button" class="subtab" onclick="openReportsTab('rep-ifta', this)">IFTA &amp; compliance</button>
         </div>
         <div id="rep-overview" class="reports-tab">
           <div class="panel">
@@ -1173,6 +1176,23 @@
           <div class="panel">
             <div class="panel-head"><div class="panel-title">Local ERP vs QuickBooks posting</div></div>
             <div class="panel-body" id="repSyncBody"></div>
+          </div>
+        </div>
+        <div id="rep-ifta" class="reports-tab hidden">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">IFTA, fuel tax &amp; DOT compliance (roadmap)</div></div>
+            <div class="panel-body form-stack" style="max-width:min(820px,100%)">
+              <p class="mini-note" style="margin:0">
+                <strong>IFTA</strong> filings need jurisdiction mileage (taxable and total where applicable), fuel gallons by jurisdiction and fuel type, and auditable source data (often four years).
+                GPS/ELD (for example <strong>Samsara</strong> vehicle stats and trip history) plus fuel purchases coded in <strong>QuickBooks</strong> are the usual inputs; this hub already ties loads to revenue and rolls maintenance/AP into settlement views.
+              </p>
+              <p class="mini-note" style="margin:0">
+                <strong>Next implementation steps:</strong> (1) persist Samsara <code>vehicleId</code> on <code>trucks</code>/<code>trailers</code>; (2) nightly job: odometer or GPS miles by state (route polyline + boundary lookup); (3) import fuel transactions from QBO or fuel card CSV; (4) quarterly IFTA worksheet + CSV/PDF export; (5) driver profile table (CDL/med card/drug test dates) linked to <code>drivers.qbo_vendor_id</code>, separate from QBO PII.
+              </p>
+              <p class="mini-note" style="margin:0">
+                <strong>In this app today:</strong> Fuel planner (<a href="/fuel.html" target="_blank" rel="noopener">Fuel Board</a>), Samsara fleet/HOS, load-level settlement and driver-pay rollup (Accounting → Settlement), and QBO master sync. Run <code>npm run db:migrate</code> after pull for new fleet/driver columns (see migration <code>011_fleet_driver_compliance.sql</code>).
+              </p>
+            </div>
           </div>
         </div>
       </section>
