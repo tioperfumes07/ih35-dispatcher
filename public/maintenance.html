@@ -1323,6 +1323,7 @@
     let pendingMaintFlow = null;
     let selectedTrackingVehicle = '';
     let tmsLoadsCache = [];
+    let tmsEnabled = false;
     let serviceSearchPresetBound = false;
     let maintCostLinesDelegationBound = false;
     /** From GET /api/maintenance/service-types (Postgres catalog or server defaults). */
@@ -1650,7 +1651,7 @@
       const titleMap = {
         dashboard: 'Unified Dashboard',
         dispatch: 'TMS — Dispatch',
-        fuel: 'Fuel & route planning',
+        fuel: 'Diesel & route planning',
         maintenance: 'Maintenance Board',
         safety: 'Safety Board',
         tracking: 'Vehicle Tracking Board',
@@ -1694,6 +1695,12 @@
         if (wl && !wl.children.length) addWoLine();
       }
       if (id === 'acct-settlement') {
+        if (!tmsEnabled) {
+          alert('Trip settlement is paused (TMS database not configured). Focus: maintenance, safety, and diesel management.');
+          const first = document.querySelector('#section-accounting .subtab[onclick*="acct-transactions"]');
+          openAccountingTab('acct-transactions', first);
+          return;
+        }
         loadSettlementIndex();
         loadDriverPaySettlements();
       }
@@ -1707,6 +1714,47 @@
       if (panel) panel.classList.remove('hidden');
       document.querySelectorAll('#section-reports .subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
+    }
+
+    function setTmsUiEnabled(enabled) {
+      tmsEnabled = !!enabled;
+      // Left nav
+      const navDispatch = document.querySelector('.nav-btn[data-section="dispatch"]');
+      if (navDispatch) navDispatch.classList.toggle('hidden', !tmsEnabled);
+      // Dashboard hero card
+      const heroDispatch = document.querySelector('#section-dashboard .hero-card[onclick*="dispatch"]');
+      if (heroDispatch) heroDispatch.classList.toggle('hidden', !tmsEnabled);
+      // Dispatch section itself
+      const secDispatch = document.getElementById('section-dispatch');
+      if (secDispatch) secDispatch.classList.toggle('hidden', !tmsEnabled);
+      // Accounting settlement subtab + panel
+      const acctSettlementTab = document.querySelector('#section-accounting .subtab[onclick*="acct-settlement"]');
+      if (acctSettlementTab) acctSettlementTab.classList.toggle('hidden', !tmsEnabled);
+      const acctSettlementPanel = document.getElementById('acct-settlement');
+      if (acctSettlementPanel) acctSettlementPanel.classList.toggle('hidden', !tmsEnabled);
+      // Reports TMS tab + panel
+      const repTmsTab = document.querySelector('#section-reports .subtab[onclick*="rep-tms"]');
+      if (repTmsTab) repTmsTab.classList.toggle('hidden', !tmsEnabled);
+      const repTmsPanel = document.getElementById('rep-tms');
+      if (repTmsPanel) repTmsPanel.classList.toggle('hidden', !tmsEnabled);
+      // Friendly label in reports summary (static UI)
+      const reportsTitle = document.getElementById('pageTitle');
+      if (!tmsEnabled && activeSection === 'dispatch') {
+        openSectionByName('maintenance');
+      }
+      if (!tmsEnabled && (location.hash || '').replace(/^#/, '') === 'dispatch') {
+        location.hash = '#maintenance';
+      }
+    }
+
+    async function detectTmsEnabled() {
+      try {
+        const r = await j('/api/health/db');
+        // configured + ok => Postgres reachable (TMS tables exist when migrated)
+        return !!(r && r.ok);
+      } catch {
+        return false;
+      }
     }
 
     function reportTxnTableHtml(rows, cols) {
@@ -1944,12 +1992,14 @@
     }
 
     async function loadAll() {
-      const [dashRes, erpRes, boardRes, svcRes] = await Promise.all([
+      const [dashRes, erpRes, boardRes, svcRes, dbRes] = await Promise.all([
         j('/api/maintenance/dashboard'),
         j('/api/maintenance/records'),
         j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
-        j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] }))
+        j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
+        detectTmsEnabled()
       ]);
+      setTmsUiEnabled(!!dbRes);
 
       catalogServiceNames =
         svcRes && svcRes.ok && Array.isArray(svcRes.names) && svcRes.names.length
@@ -1965,10 +2015,15 @@
       if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
       if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
 
-      await loadTmsLoadsForMaint();
+      if (tmsEnabled) await loadTmsLoadsForMaint();
+      else {
+        tmsLoadsCache = [];
+        const dl = document.getElementById('loadNumberOptions');
+        if (dl) dl.innerHTML = '';
+      }
       fillDataLists();
       renderDashboardHome();
-      renderDispatchBoard();
+      if (tmsEnabled) renderDispatchBoard();
       renderMaintenanceCategoryChips();
       renderMaintenanceUnitList();
       renderSelectedUnit();
