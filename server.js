@@ -1239,13 +1239,88 @@ async function qboCreateApTransaction(ap) {
   const txnType = ap.txnType || 'expense';
   const amount = safeNum(ap.amount, 0);
 
-  if (!(amount > 0)) throw new Error('Amount must be greater than 0');
   if (!ap.qboVendorId) throw new Error('QuickBooks vendor is required');
+
+  const classId = qboClassIdForUnit(ap.assetUnit, erp);
+  const rawCostLines = Array.isArray(ap.costLines) ? ap.costLines : [];
+  const costLines = rawCostLines.filter(cl => cl && typeof cl === 'object');
+
+  if (costLines.length > 0) {
+    if (!(amount > 0)) throw new Error('Amount must be greater than 0');
+    const sumLines = costLines.reduce((s, l) => s + safeNum(l.amount, 0), 0);
+    if (Math.abs(sumLines - amount) > 0.05) {
+      throw new Error(
+        `Cost line amounts ($${sumLines.toFixed(2)}) must match transaction total ($${amount.toFixed(2)})`
+      );
+    }
+    const lineArray = await buildQboPurchaseBillLinesFromCostLines(costLines, {
+      classId,
+      fallbackAccountId: String(ap.qboAccountId || '').trim(),
+      fallbackItemId: String(ap.qboItemId || '').trim(),
+      fallbackDetailMode: detailMode === 'item' ? 'item' : 'category'
+    });
+    if (!lineArray.length) {
+      throw new Error('Add at least one cost line with amount greater than zero to post a multi-line purchase');
+    }
+    let qboItemId = '';
+    let qboAccountId = '';
+    for (const ln of lineArray) {
+      if (ln.DetailType === 'AccountBasedExpenseLineDetail' && !qboAccountId) {
+        qboAccountId = ln.AccountBasedExpenseLineDetail?.AccountRef?.value || '';
+      }
+      if (ln.DetailType === 'ItemBasedExpenseLineDetail' && !qboItemId) {
+        qboItemId = ln.ItemBasedExpenseLineDetail?.ItemRef?.value || '';
+      }
+    }
+    const privateNote = sanitizeName(
+      ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`,
+      txnType === 'expense' ? 'Expense' : 'Bill'
+    );
+    if (txnType === 'expense') {
+      const paymentMethod = findPaymentMethodLocal(erp, ap.paymentMethodId);
+      const paymentType = paymentMethod?.qboType || 'Other';
+      const payload = {
+        TxnDate: txnDate,
+        DocNumber: ap.docNumber || undefined,
+        PaymentType: paymentType,
+        EntityRef: { type: 'Vendor', value: ap.qboVendorId },
+        Line: lineArray,
+        PrivateNote: privateNote
+      };
+      const bankId = resolveQboBankAccountId(erp, ap.qboBankAccountId);
+      if (bankId) payload.AccountRef = { value: bankId };
+      const created = await qboPost('purchase', payload);
+      return {
+        qboEntityType: 'Purchase',
+        qboEntityId: created?.Purchase?.Id || '',
+        qboVendorId: ap.qboVendorId,
+        qboItemId,
+        qboAccountId
+      };
+    }
+    const billPayload = {
+      VendorRef: { value: ap.qboVendorId },
+      TxnDate: txnDate,
+      DueDate: ap.dueDate || '',
+      DocNumber: ap.docNumber || undefined,
+      Line: lineArray,
+      PrivateNote: privateNote
+    };
+    const createdBill = await qboPost('bill', billPayload);
+    return {
+      qboEntityType: 'Bill',
+      qboEntityId: createdBill?.Bill?.Id || '',
+      qboVendorId: ap.qboVendorId,
+      qboItemId,
+      qboAccountId
+    };
+  }
+
+  if (!(amount > 0)) throw new Error('Amount must be greater than 0');
 
   let line;
   let qboItemId = '';
   let qboAccountId = '';
-  const classId = qboClassIdForUnit(ap.assetUnit, erp);
 
   if (detailMode === 'category') {
     if (!ap.qboAccountId) throw new Error('QuickBooks category/account is required');
@@ -1676,8 +1751,79 @@ function sanitizeMaintenanceCostLines(raw) {
     const row = { description, amount };
     if (quantity != null && quantity > 0) row.quantity = quantity;
     if (unitPrice != null && unitPrice > 0) row.unitPrice = unitPrice;
+    const dm = String(x.detailMode || '').trim();
+    if (dm === 'item' || dm === 'category') row.detailMode = dm;
+    const qa = String(x.qboAccountId || '').trim().slice(0, 64);
+    const qi = String(x.qboItemId || '').trim().slice(0, 64);
+    if (qa) row.qboAccountId = qa;
+    if (qi) row.qboItemId = qi;
+
     if (description || amount > 0 || (quantity != null && quantity > 0) || (unitPrice != null && unitPrice > 0)) {
       out.push(row);
+    }
+  }
+  return out;
+}
+
+/**
+ * Build QBO Purchase/Bill Line[] from maintenance costLines (category or item per row).
+ */
+async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
+  const {
+    classId,
+    fallbackAccountId = '',
+    fallbackItemId = '',
+    fallbackDetailMode = 'category'
+  } = opts;
+  const out = [];
+  for (const cl of costLines) {
+    const amount = safeNum(cl.amount, 0);
+    if (!(amount > 0)) continue;
+    const mode =
+      String(cl.detailMode || fallbackDetailMode || 'category').trim() === 'item' ? 'item' : 'category';
+    const desc = sanitizeName(String(cl.description || '').trim() || 'Line', 'Line');
+    if (mode === 'item') {
+      const itemId = String(cl.qboItemId || fallbackItemId || '').trim();
+      if (!itemId) {
+        throw new Error(
+          `QuickBooks item required for item line "${desc}" — pick a per-line item or set a default item on the record`
+        );
+      }
+      const itemQbo = await qboFindItemById(itemId);
+      if (!itemQbo) throw new Error(`QuickBooks item not found for line: ${desc}`);
+      const qtyBase = safeNum(cl.quantity, safeNum(cl.qty, 1)) || 1;
+      const qty = qtyBase > 0 ? qtyBase : 1;
+      const itemDetail = {
+        ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
+        Qty: qty,
+        UnitPrice: Math.round((amount / qty) * 1000000) / 1000000
+      };
+      if (classId) itemDetail.ClassRef = { value: classId };
+      out.push({
+        Amount: amount,
+        DetailType: 'ItemBasedExpenseLineDetail',
+        Description: desc,
+        ItemBasedExpenseLineDetail: itemDetail
+      });
+    } else {
+      const acctId = String(cl.qboAccountId || fallbackAccountId || '').trim();
+      if (!acctId) {
+        throw new Error(
+          `QuickBooks expense account required for category line "${desc}" — pick per-line account or default category on the form`
+        );
+      }
+      const accountQbo = await qboFindAccountById(acctId);
+      if (!accountQbo) throw new Error(`QuickBooks account not found for line: ${desc}`);
+      const acctDetail = {
+        AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
+      };
+      if (classId) acctDetail.ClassRef = { value: classId };
+      out.push({
+        Amount: amount,
+        DetailType: 'AccountBasedExpenseLineDetail',
+        Description: desc,
+        AccountBasedExpenseLineDetail: acctDetail
+      });
     }
   }
   return out;
@@ -1727,6 +1873,12 @@ app.post('/api/maintenance/record', (req, res) => {
       repairLocationType: String(body.repairLocationType || '').trim(),
       vendorInvoiceNumber: String(body.vendorInvoiceNumber || '').trim(),
       workOrderNumber: String(body.workOrderNumber || body.vendorWorkOrderNumber || '').trim(),
+      qboVendorId: String(body.qboVendorId || '').trim().slice(0, 64),
+      qboAccountId: String(body.qboAccountId || '').trim().slice(0, 64),
+      qboItemId: String(body.qboItemId || '').trim().slice(0, 64),
+      detailMode: String(body.detailMode || '').trim() === 'item' ? 'item' : 'category',
+      paymentMethodId: String(body.paymentMethodId || '').trim().slice(0, 64) || 'pm_other',
+      qboBankAccountId: String(body.qboBankAccountId || '').trim().slice(0, 64),
       qboSyncStatus: '',
       qboPurchaseId: '',
       qboError: '',
@@ -1773,16 +1925,23 @@ async function qboPostMaintenanceRecord(recordId) {
     );
     accountId = exp?.qboId || alt?.qboId || '';
   }
-  if (!accountId) throw new Error('No expense account in QBO cache — refresh QuickBooks master');
+  const costLines = Array.isArray(rec.costLines) ? rec.costLines : [];
+  const useCostBreakdown = costLines.length > 0;
+  if (!useCostBreakdown && !accountId) {
+    throw new Error('No expense account in QBO cache — refresh QuickBooks master');
+  }
+
+  const detailMode = rec.detailMode === 'item' ? 'item' : 'category';
+  const itemFallback = String(rec.qboItemId || '').trim();
 
   const apLike = {
     txnType: 'expense',
-    detailMode: 'category',
+    detailMode,
     qboVendorId: vendorId,
     paymentMethodId: rec.paymentMethodId || 'pm_other',
     qboBankAccountId: rec.qboBankAccountId || '',
     qboAccountId: accountId,
-    qboItemId: '',
+    qboItemId: itemFallback,
     qty: 1,
     amount: cost,
     txnDate: rec.serviceDate || new Date().toISOString().slice(0, 10),
@@ -1792,6 +1951,7 @@ async function qboPostMaintenanceRecord(recordId) {
     memo: rec.notes || `${rec.unit || ''} ${rec.recordType || ''}`.trim(),
     assetUnit: rec.unit || ''
   };
+  if (useCostBreakdown) apLike.costLines = costLines;
 
   const result = await qboCreateApTransaction(apLike);
   erp.records[idx] = {
@@ -1801,7 +1961,8 @@ async function qboPostMaintenanceRecord(recordId) {
     qboEntityType: result.qboEntityType,
     qboError: '',
     qboVendorId: vendorId,
-    qboAccountId: accountId
+    qboAccountId: result.qboAccountId || accountId,
+    qboItemId: result.qboItemId || itemFallback
   };
   writeErp(erp);
   return erp.records[idx];

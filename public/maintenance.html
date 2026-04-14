@@ -598,6 +598,7 @@
                     <div class="panel-body form-stack">
                       <p class="mini-note" style="margin:0">
                         Each expense line: description, <strong>Qty</strong>, <strong>Unit $</strong> (optional). When both qty and unit are set, <strong>Line $</strong> = qty × unit and locks; otherwise type the line total directly. Invoice total above = sum of line amounts.
+                        When at least one cost line is saved, <strong>Send to QuickBooks</strong> posts a Purchase with one QBO line per row (expense account or item); defaults come from Link accounting when a row’s QBO fields are left blank.
                       </p>
                       <div id="maintCostLinesHost"></div>
                       <div class="mini-note" id="maintCostLinesSubtotal" style="margin-top:4px"></div>
@@ -1223,24 +1224,45 @@
   </template>
 
   <template id="maintCostLineTpl">
-    <div class="maint-cost-line" style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa">
-      <div style="flex:1;min-width:160px">
-        <span class="qb-l">Expense / item</span>
-        <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Tire, labor, rim…" autocomplete="off" />
+    <div class="maint-cost-line" style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;width:100%">
+        <div style="flex:1;min-width:160px">
+          <span class="qb-l">Expense / item</span>
+          <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Tire, labor, rim…" autocomplete="off" />
+        </div>
+        <div style="width:76px">
+          <span class="qb-l">Qty</span>
+          <input class="qb-in maint-field maint-line-qty" type="number" step="any" min="0" placeholder="1" />
+        </div>
+        <div style="width:104px">
+          <span class="qb-l">Unit $</span>
+          <input class="qb-in maint-field maint-line-unit" type="number" step="0.01" min="0" placeholder="0.00" />
+        </div>
+        <div style="width:104px">
+          <span class="qb-l">Line $</span>
+          <input class="qb-in maint-field maint-line-amt" type="number" step="0.01" min="0" placeholder="0.00" />
+        </div>
+        <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
       </div>
-      <div style="width:76px">
-        <span class="qb-l">Qty</span>
-        <input class="qb-in maint-field maint-line-qty" type="number" step="any" min="0" placeholder="1" />
+      <div class="maint-line-qbo-row" style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+        <div>
+          <span class="qb-l">QBO line</span>
+          <select class="qb-in maint-field maint-line-mode" onchange="toggleMaintCostLineMode(this)">
+            <option value="category">Expense account</option>
+            <option value="item">Item / service</option>
+          </select>
+        </div>
+        <div class="maint-line-cat-block" style="flex:1;min-width:180px">
+          <span class="qb-l">Expense account</span>
+          <input class="qb-in maint-field maint-line-acct-search" list="qboAccountExpenseOptions" placeholder="Category (per line or use default below)" autocomplete="off" oninput="resolveMaintLineAccount(this)" onblur="resolveMaintLineAccount(this)" />
+          <input type="hidden" class="maint-line-acct-id" />
+        </div>
+        <div class="maint-line-item-block hidden" style="flex:1;min-width:180px">
+          <span class="qb-l">QBO item</span>
+          <input class="qb-in maint-field maint-line-item-search" list="qboItemOptions" placeholder="Item" autocomplete="off" oninput="resolveMaintLineItem(this)" onblur="resolveMaintLineItem(this)" />
+          <input type="hidden" class="maint-line-item-id" />
+        </div>
       </div>
-      <div style="width:104px">
-        <span class="qb-l">Unit $</span>
-        <input class="qb-in maint-field maint-line-unit" type="number" step="0.01" min="0" placeholder="0.00" />
-      </div>
-      <div style="width:104px">
-        <span class="qb-l">Line $</span>
-        <input class="qb-in maint-field maint-line-amt" type="number" step="0.01" min="0" placeholder="0.00" />
-      </div>
-      <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
     </div>
   </template>
 
@@ -2346,6 +2368,40 @@
       elId.value = match ? match.qboId : '';
     }
 
+    function toggleMaintCostLineMode(sel) {
+      const row = sel && sel.closest && sel.closest('.maint-cost-line');
+      if (!row) return;
+      const mode = sel.value;
+      row.querySelectorAll('.maint-line-cat-block').forEach(el => el.classList.toggle('hidden', mode !== 'category'));
+      row.querySelectorAll('.maint-line-item-block').forEach(el => el.classList.toggle('hidden', mode !== 'item'));
+    }
+
+    function resolveMaintLineAccount(input) {
+      if (!input) return;
+      const row = input.closest('.maint-cost-line');
+      if (!row) return;
+      const match = findBestNameMatch(cacheAccountsForLinked(), input.value);
+      const hid = row.querySelector('.maint-line-acct-id');
+      if (hid) hid.value = match ? match.qboId : '';
+    }
+
+    function resolveMaintLineItem(input) {
+      if (!input) return;
+      const row = input.closest('.maint-cost-line');
+      if (!row) return;
+      const match = findBestNameMatch(cacheItems(), input.value);
+      const hid = row.querySelector('.maint-line-item-id');
+      if (hid) hid.value = match ? match.qboId : '';
+    }
+
+    function resolveMaintCostLineRefs() {
+      document.querySelectorAll('#maintCostLinesHost .maint-cost-line').forEach(row => {
+        const mode = row.querySelector('.maint-line-mode')?.value || 'category';
+        if (mode === 'item') resolveMaintLineItem(row.querySelector('.maint-line-item-search'));
+        else resolveMaintLineAccount(row.querySelector('.maint-line-acct-search'));
+      });
+    }
+
     function formatMaintCostLinePlain(ln) {
       const desc = String(ln.description || '—')
         .trim()
@@ -2417,6 +2473,12 @@
         const line = { description: d, amount: amt };
         if (quantity != null) line.quantity = quantity;
         if (unitPrice != null && unitPrice > 0) line.unitPrice = unitPrice;
+        const mode = (row.querySelector('.maint-line-mode')?.value || '').trim();
+        if (mode === 'item' || mode === 'category') line.detailMode = mode;
+        const acctId = (row.querySelector('.maint-line-acct-id')?.value || '').trim();
+        const itemId = (row.querySelector('.maint-line-item-id')?.value || '').trim();
+        if (acctId) line.qboAccountId = acctId;
+        if (itemId) line.qboItemId = itemId;
         if (d || amt > 0 || (quantity != null && quantity > 0) || (unitPrice != null && unitPrice > 0)) {
           out.push(line);
         }
@@ -2466,6 +2528,8 @@
       host.appendChild(tpl.content.cloneNode(true));
       const rows = host.querySelectorAll('.maint-cost-line');
       const last = rows[rows.length - 1];
+      const modeSel = last.querySelector('.maint-line-mode');
+      if (modeSel) toggleMaintCostLineMode(modeSel);
       recalcMaintLineRowInputs(last);
       recalcMaintCostTotalFromLines();
     }
@@ -2480,6 +2544,11 @@
         const q = row.querySelector('.maint-line-qty');
         const u = row.querySelector('.maint-line-unit');
         const a = row.querySelector('.maint-line-amt');
+        const mode = row.querySelector('.maint-line-mode');
+        const as = row.querySelector('.maint-line-acct-search');
+        const ai = row.querySelector('.maint-line-item-search');
+        const aid = row.querySelector('.maint-line-acct-id');
+        const iid = row.querySelector('.maint-line-item-id');
         if (d) d.value = '';
         if (q) q.value = '';
         if (u) u.value = '';
@@ -2487,6 +2556,14 @@
           a.value = '';
           a.readOnly = false;
         }
+        if (mode) {
+          mode.value = 'category';
+          toggleMaintCostLineMode(mode);
+        }
+        if (as) as.value = '';
+        if (ai) ai.value = '';
+        if (aid) aid.value = '';
+        if (iid) iid.value = '';
         recalcMaintCostTotalFromLines();
         return;
       }
@@ -3060,6 +3137,7 @@
       resolveLinkedBankSearch();
       resolveLinkedAccountSearch();
       resolveLinkedItemSearch();
+      resolveMaintCostLineRefs();
 
       const recordType = document.getElementById('recordTypeSelect').value;
       let serviceType = '';
@@ -3116,7 +3194,13 @@
           vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput').value,
           workOrderNumber: document.getElementById('recordWorkOrderInput').value,
           tireLineItems,
-          costLines: costLinesPayload
+          costLines: costLinesPayload,
+          qboVendorId: document.getElementById('linkedVendorQboId').value,
+          qboAccountId: document.getElementById('linkedAccountQboId').value,
+          qboItemId: document.getElementById('linkedItemQboId').value,
+          detailMode: document.getElementById('linkedDetailModeSelect').value,
+          paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
+          qboBankAccountId: document.getElementById('linkedBankAccountQboId').value
         })
       });
 
