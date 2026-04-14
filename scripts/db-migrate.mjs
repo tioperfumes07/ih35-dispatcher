@@ -44,6 +44,10 @@ try {
     }
     const sql = readFileSync(path.join(migrationsDir, name), 'utf8');
     await dbQuery(sql);
+    await dbQuery(
+      `INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING`,
+      [name]
+    );
     console.log('OK —', name);
     applied = await appliedFilenames();
   }

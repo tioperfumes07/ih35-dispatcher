@@ -1655,6 +1655,34 @@ function sanitizeMaintenanceTireLineItems(raw) {
   return out;
 }
 
+function sanitizeMaintenanceCostLines(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const x of raw) {
+    if (!x || typeof x !== 'object') continue;
+    const description = String(x.description || '').trim().slice(0, 180);
+    const qRaw = safeNum(x.quantity, null);
+    const quantity =
+      qRaw != null && Number.isFinite(qRaw) && qRaw >= 0 ? Math.round(qRaw * 100000) / 100000 : null;
+    const uRaw = safeNum(x.unitPrice, null);
+    const unitPrice =
+      uRaw != null && Number.isFinite(uRaw) && uRaw >= 0 ? Math.round(uRaw * 100) / 100 : null;
+    let amount = safeNum(x.amount, 0) || 0;
+    if (quantity != null && quantity > 0 && unitPrice != null) {
+      amount = Math.round(quantity * unitPrice * 100) / 100;
+    } else {
+      amount = Math.round(amount * 100) / 100;
+    }
+    const row = { description, amount };
+    if (quantity != null && quantity > 0) row.quantity = quantity;
+    if (unitPrice != null && unitPrice > 0) row.unitPrice = unitPrice;
+    if (description || amount > 0 || (quantity != null && quantity > 0) || (unitPrice != null && unitPrice > 0)) {
+      out.push(row);
+    }
+  }
+  return out;
+}
+
 app.post('/api/maintenance/record', (req, res) => {
   try {
     const body = req.body || {};
@@ -1669,6 +1697,11 @@ app.post('/api/maintenance/record', (req, res) => {
     const tireBrand = String(body.tireBrand || '').trim() || (firstTire?.tireBrand || '');
     const tireDot = String(body.tireDot || '').trim() || (firstTire?.tireDot || '');
     const tireCondition = String(body.tireCondition || '').trim() || (firstTire?.tireCondition || '');
+    const costLines = sanitizeMaintenanceCostLines(body.costLines);
+    const sumLines = costLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+    const costFromLines = Math.round(sumLines * 100) / 100;
+    const cost =
+      costLines.length && costFromLines > 0 ? costFromLines : safeNum(body.cost, 0) || 0;
     const record = {
       id: uid('mr'),
       unit,
@@ -1677,7 +1710,7 @@ app.post('/api/maintenance/record', (req, res) => {
       serviceDate: String(body.serviceDate || '').trim(),
       serviceMileage: safeNum(body.serviceMileage, null),
       vendor: String(body.vendor || '').trim(),
-      cost: safeNum(body.cost, 0) || 0,
+      cost,
       notes: String(body.notes || '').trim(),
       loadNumber: String(body.loadNumber || body.load_number || '').trim(),
       tireCondition,
@@ -1698,7 +1731,8 @@ app.post('/api/maintenance/record', (req, res) => {
       qboPurchaseId: '',
       qboError: '',
       createdAt: new Date().toISOString(),
-      ...(tireLineItems.length ? { tireLineItems } : {})
+      ...(tireLineItems.length ? { tireLineItems } : {}),
+      ...(costLines.length ? { costLines } : {})
     };
     erp.records.push(record);
     const sm = safeNum(body.serviceMileage, null);

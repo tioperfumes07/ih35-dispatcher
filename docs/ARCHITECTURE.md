@@ -67,7 +67,7 @@ flowchart TB
 ## Data ownership
 
 - **Postgres**: authoritative for **loads**, **load_stops**, **customers**, **drivers**, **trucks**, **trailers**, **load_documents** metadata, revenue/QBO refs on loads as migrated.
-- **JSON ERP**: authoritative for **maintenance/service history**, **work orders**, **AP transactions** not yet fully mirrored in PG; QBO posting updates rows with `qboEntityId` / errors.
+- **JSON ERP**: authoritative for **maintenance/service history**, **work orders**, **AP transactions** not yet fully mirrored in PG; QBO posting updates rows with `qboEntityId` / errors. Maintenance records may include **`costLines`** `{ description, amount, quantity?, unitPrice? }[]` for one-invoice splits; when `quantity` and `unitPrice` are set, **`amount`** is qty × unit while **`cost`** remains the invoice total (sum of lines).
 - **Fleet identity for dispatch UI**: **Samsara** vehicles (`GET /api/tms/fleet/samsara-vehicles`) drive the Fleet tab and truck datalist priority; local `trucks` table + QBO classes remain for accounting/class mapping.
 
 ## Single source of truth (practical model)

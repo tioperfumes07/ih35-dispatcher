@@ -543,29 +543,24 @@
                   </div>
 
                   <div>
-                    <span class="qb-l">Service / maintenance performed</span>
-                    <select
-                      id="serviceTypePresetSelect"
-                      class="qb-in maint-field"
-                      size="8"
-                      style="width:100%;max-width:560px;height:auto;min-height:160px"
-                      onchange="applyServiceTypePreset()"
-                    >
-                      <option value="">— Click a row to choose (saved in database when Postgres is on) —</option>
+                    <span class="qb-l">Service / maintenance (dropdown)</span>
+                    <select id="serviceTypePresetSelect" class="qb-in maint-field" onchange="applyServiceTypePreset()">
+                      <option value="">— Choose from list —</option>
                     </select>
+                    <span class="qb-l" style="margin-top:8px;display:block">Same field with autocomplete (type to filter)</span>
+                    <input
+                      id="serviceSearchInput"
+                      class="qb-in maint-field"
+                      list="serviceOptions"
+                      placeholder="Type to search catalog…"
+                      autocomplete="off"
+                      oninput="resolveServiceSearch()"
+                      onblur="resolveServiceSearch()"
+                    />
                     <div class="mini-note" style="margin-top:4px">
-                      List comes from <code>maintenance_service_catalog</code> (or defaults if no <code>DATABASE_URL</code>). You can also type a custom name below; datalist suggests matches.
+                      Dropdown and text field stay in sync. Catalog: Postgres <code>maintenance_service_catalog</code> when configured, else built-in defaults.
                     </div>
                   </div>
-
-                  <input
-                    id="serviceSearchInput"
-                    class="qb-in maint-field"
-                    list="serviceOptions"
-                    placeholder="Or type a custom service name"
-                    oninput="resolveServiceSearch()"
-                    onblur="resolveServiceSearch()"
-                  />
                   <div class="search-row" style="max-width:560px;margin-top:6px">
                     <input id="maintNewCatalogServiceName" class="qb-in maint-field" placeholder="New catalog name (needs Postgres)" autocomplete="off" />
                     <button type="button" onclick="addCatalogServiceType()">Add to catalog</button>
@@ -589,10 +584,24 @@
                       <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="Type vendor…">
                     </div>
                     <div>
-                      <span class="qb-l">Cost</span>
-                      <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00">
+                      <span class="qb-l">Total cost (invoice)</span>
+                      <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Auto-filled from cost lines when any line has an amount">
                     </div>
                     <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
+                  </div>
+
+                  <div class="panel" style="box-shadow:none;margin-top:4px;max-width:640px">
+                    <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                      <div class="panel-title" style="font-size:14px">Cost breakdown (same vendor invoice)</div>
+                      <button type="button" class="qb-btn-add" onclick="addMaintCostLine()">+ Add line</button>
+                    </div>
+                    <div class="panel-body form-stack">
+                      <p class="mini-note" style="margin:0">
+                        Each expense line: description, <strong>Qty</strong>, <strong>Unit $</strong> (optional). When both qty and unit are set, <strong>Line $</strong> = qty × unit and locks; otherwise type the line total directly. Invoice total above = sum of line amounts.
+                      </p>
+                      <div id="maintCostLinesHost"></div>
+                      <div class="mini-note" id="maintCostLinesSubtotal" style="margin-top:4px"></div>
+                    </div>
                   </div>
                   <div class="search-row">
                     <div>
@@ -1213,6 +1222,28 @@
     </div>
   </template>
 
+  <template id="maintCostLineTpl">
+    <div class="maint-cost-line" style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa">
+      <div style="flex:1;min-width:160px">
+        <span class="qb-l">Expense / item</span>
+        <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Tire, labor, rim…" autocomplete="off" />
+      </div>
+      <div style="width:76px">
+        <span class="qb-l">Qty</span>
+        <input class="qb-in maint-field maint-line-qty" type="number" step="any" min="0" placeholder="1" />
+      </div>
+      <div style="width:104px">
+        <span class="qb-l">Unit $</span>
+        <input class="qb-in maint-field maint-line-unit" type="number" step="0.01" min="0" placeholder="0.00" />
+      </div>
+      <div style="width:104px">
+        <span class="qb-l">Line $</span>
+        <input class="qb-in maint-field maint-line-amt" type="number" step="0.01" min="0" placeholder="0.00" />
+      </div>
+      <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
+    </div>
+  </template>
+
   <template id="tireExtraLineTpl">
     <div class="tire-extra-row" style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-top:8px;background:#fafafa">
       <div class="search-row" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
@@ -1251,6 +1282,7 @@
     let selectedTrackingVehicle = '';
     let tmsLoadsCache = [];
     let serviceSearchPresetBound = false;
+    let maintCostLinesDelegationBound = false;
     /** From GET /api/maintenance/service-types (Postgres catalog or server defaults). */
     let catalogServiceNames = [];
 
@@ -1931,6 +1963,7 @@
         serviceValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
       populateServiceTypePresetSelect();
       bindServiceSearchPreset();
+      bindMaintCostLinesDelegation();
 
       document.getElementById('qboVendorOptions').innerHTML =
         cacheVendors().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
@@ -2313,6 +2346,186 @@
       elId.value = match ? match.qboId : '';
     }
 
+    function formatMaintCostLinePlain(ln) {
+      const desc = String(ln.description || '—')
+        .trim()
+        .replace(/\n/g, ' ')
+        .slice(0, 200);
+      const amt = Number(ln.amount || 0).toFixed(2);
+      const q = ln.quantity;
+      const up = ln.unitPrice;
+      if (q != null && up != null && Number(q) > 0 && Number(up) >= 0) {
+        return `${desc}: ${q} × $${Number(up).toFixed(2)} = $${amt}`;
+      }
+      return `${desc}: $${amt}`;
+    }
+
+    function formatMaintCostLineHtml(ln) {
+      const desc = escapeHtml(String(ln.description || '—').trim());
+      const amt = Number(ln.amount || 0).toFixed(2);
+      const q = ln.quantity;
+      const up = ln.unitPrice;
+      if (q != null && up != null && Number(q) > 0 && Number(up) >= 0) {
+        return `${desc}: ${escapeHtml(String(q))} × $${Number(up).toFixed(2)} = $${amt}`;
+      }
+      return `${desc}: $${amt}`;
+    }
+
+    function maintLineComputedAmount(row) {
+      const qRaw = row.querySelector('.maint-line-qty')?.value;
+      const uRaw = row.querySelector('.maint-line-unit')?.value;
+      const aRaw = row.querySelector('.maint-line-amt')?.value;
+      const q = qRaw === '' || qRaw == null ? NaN : Number(qRaw);
+      const u = uRaw === '' || uRaw == null ? NaN : Number(uRaw);
+      const a = aRaw === '' || aRaw == null ? NaN : Number(aRaw);
+      if (Number.isFinite(q) && q > 0 && Number.isFinite(u) && u >= 0) {
+        return Math.round(q * u * 100) / 100;
+      }
+      if (Number.isFinite(a) && a >= 0) return Math.round(a * 100) / 100;
+      return 0;
+    }
+
+    function recalcMaintLineRowInputs(row) {
+      if (!row) return;
+      const qtyEl = row.querySelector('.maint-line-qty');
+      const unitEl = row.querySelector('.maint-line-unit');
+      const amtEl = row.querySelector('.maint-line-amt');
+      const q = qtyEl?.value === '' || qtyEl?.value == null ? NaN : Number(qtyEl.value);
+      const u = unitEl?.value === '' || unitEl?.value == null ? NaN : Number(unitEl.value);
+      if (Number.isFinite(q) && q > 0 && Number.isFinite(u) && u >= 0 && amtEl) {
+        const line = Math.round(q * u * 100) / 100;
+        amtEl.value = line.toFixed(2);
+        amtEl.readOnly = true;
+        amtEl.title = 'Qty × unit — clear qty or unit to edit line total manually';
+      } else if (amtEl) {
+        amtEl.readOnly = false;
+        amtEl.title = '';
+      }
+    }
+
+    function collectMaintCostLines() {
+      const out = [];
+      document.querySelectorAll('#maintCostLinesHost .maint-cost-line').forEach(row => {
+        const d = (row.querySelector('.maint-line-desc')?.value || '').trim();
+        const qRaw = row.querySelector('.maint-line-qty')?.value;
+        const uRaw = row.querySelector('.maint-line-unit')?.value;
+        const q = qRaw === '' || qRaw == null ? NaN : Number(qRaw);
+        const u = uRaw === '' || uRaw == null ? NaN : Number(uRaw);
+        const amt = maintLineComputedAmount(row);
+        const quantity = Number.isFinite(q) && q > 0 ? Math.round(q * 100000) / 100000 : null;
+        const unitPrice = Number.isFinite(u) && u >= 0 ? Math.round(u * 100) / 100 : null;
+        const line = { description: d, amount: amt };
+        if (quantity != null) line.quantity = quantity;
+        if (unitPrice != null && unitPrice > 0) line.unitPrice = unitPrice;
+        if (d || amt > 0 || (quantity != null && quantity > 0) || (unitPrice != null && unitPrice > 0)) {
+          out.push(line);
+        }
+      });
+      return out;
+    }
+
+    function recalcMaintCostTotalFromLines() {
+      const lines = collectMaintCostLines();
+      const sum = lines.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+      const rounded = Math.round(sum * 100) / 100;
+      const costEl = document.getElementById('costInput');
+      const sub = document.getElementById('maintCostLinesSubtotal');
+      const hasAmt = lines.some(l => l.amount > 0);
+      if (hasAmt) {
+        if (costEl) {
+          costEl.value = rounded.toFixed(2);
+          costEl.readOnly = true;
+        }
+        if (sub) {
+          sub.textContent =
+            'Line subtotal: $' +
+            rounded.toFixed(2) +
+            ' — total matches this sum. Clear qty/unit/line $ on all rows to enter one manual total above.';
+        }
+      } else {
+        if (costEl) costEl.readOnly = false;
+        if (sub) {
+          sub.textContent = lines.length
+            ? 'Enter amounts on lines to auto-fill total, or leave amounts blank and enter total above.'
+            : '';
+        }
+      }
+    }
+
+    function syncPrimaryServiceToFirstCostLine() {
+      const host = document.getElementById('maintCostLinesHost');
+      const first = host?.querySelector('.maint-cost-line .maint-line-desc');
+      const svc = document.getElementById('serviceSearchInput')?.value.trim();
+      if (first && svc && !first.value.trim()) first.value = svc;
+    }
+
+    function addMaintCostLine() {
+      const tpl = document.getElementById('maintCostLineTpl');
+      const host = document.getElementById('maintCostLinesHost');
+      if (!tpl || !host) return;
+      host.appendChild(tpl.content.cloneNode(true));
+      const rows = host.querySelectorAll('.maint-cost-line');
+      const last = rows[rows.length - 1];
+      recalcMaintLineRowInputs(last);
+      recalcMaintCostTotalFromLines();
+    }
+
+    function removeMaintCostLine(btn) {
+      const host = document.getElementById('maintCostLinesHost');
+      const row = btn.closest('.maint-cost-line');
+      if (!host || !row) return;
+      const rows = host.querySelectorAll('.maint-cost-line');
+      if (rows.length <= 1) {
+        const d = row.querySelector('.maint-line-desc');
+        const q = row.querySelector('.maint-line-qty');
+        const u = row.querySelector('.maint-line-unit');
+        const a = row.querySelector('.maint-line-amt');
+        if (d) d.value = '';
+        if (q) q.value = '';
+        if (u) u.value = '';
+        if (a) {
+          a.value = '';
+          a.readOnly = false;
+        }
+        recalcMaintCostTotalFromLines();
+        return;
+      }
+      row.remove();
+      recalcMaintCostTotalFromLines();
+    }
+
+    function resetMaintCostLines() {
+      const host = document.getElementById('maintCostLinesHost');
+      if (!host) return;
+      host.innerHTML = '';
+      addMaintCostLine();
+      const ce = document.getElementById('costInput');
+      if (ce) {
+        ce.value = '';
+        ce.readOnly = false;
+      }
+      const sub = document.getElementById('maintCostLinesSubtotal');
+      if (sub) sub.textContent = '';
+    }
+
+    function ensureMaintCostLinesBootstrapped() {
+      const host = document.getElementById('maintCostLinesHost');
+      if (!host || host.querySelector('.maint-cost-line')) return;
+      addMaintCostLine();
+    }
+
+    function bindMaintCostLinesDelegation() {
+      if (maintCostLinesDelegationBound) return;
+      const host = document.getElementById('maintCostLinesHost');
+      if (!host) return;
+      maintCostLinesDelegationBound = true;
+      host.addEventListener('input', e => {
+        const row = e.target && e.target.closest && e.target.closest('.maint-cost-line');
+        if (row) recalcMaintLineRowInputs(row);
+        recalcMaintCostTotalFromLines();
+      });
+    }
+
     function populateServiceTypePresetSelect() {
       const sel = document.getElementById('serviceTypePresetSelect');
       if (!sel) return;
@@ -2329,7 +2542,7 @@
       const sorted = [...set].filter(Boolean).sort((a, b) => a.localeCompare(b));
       const prev = sel.value;
       sel.innerHTML =
-        '<option value="">— Pick a preset or type below —</option>' +
+        '<option value="">— Choose from list —</option>' +
         sorted.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
       if (prev && sorted.includes(prev)) sel.value = prev;
     }
@@ -2341,6 +2554,7 @@
       if (!v) return;
       document.getElementById('serviceSearchInput').value = v;
       document.getElementById('serviceTypeInput').value = v;
+      syncPrimaryServiceToFirstCostLine();
     }
 
     async function addCatalogServiceType() {
@@ -2516,6 +2730,7 @@
           preset.value = cur && Array.from(preset.options).some(o => o.value === cur) ? cur : '';
         }
       }
+      if (type !== 'custom') syncPrimaryServiceToFirstCostLine();
     }
 
     function goToCreateQboVendor() {
@@ -2708,6 +2923,7 @@
 
       setServiceOptions();
       toggleRecordFields();
+      ensureMaintCostLinesBootstrapped();
       renderUnitHistory();
       applyLoadNumberSuggestion(false);
     }
@@ -2753,6 +2969,25 @@
               ${r.loadNumber ? `<div class="mini-note">Load / inv #: ${escapeHtml(r.loadNumber)}</div>` : ''}
               ${r.vendorInvoiceNumber || r.workOrderNumber ? `<div class="mini-note">Vendor inv: ${escapeHtml(r.vendorInvoiceNumber || '')} · WO: ${escapeHtml(r.workOrderNumber || '')}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
+              ${
+                Array.isArray(r.costLines) && r.costLines.length
+                  ? (() => {
+                      const sum = r.costLines.reduce(
+                        (s, ln) => s + (Number(ln.amount) || 0),
+                        0
+                      );
+                      return (
+                        '<div class="mini-note"><strong>Cost breakdown</strong> (sum $' +
+                        sum.toFixed(2) +
+                        '):<ul style="margin:4px 0 0 16px">' +
+                        r.costLines
+                          .map(ln => '<li>' + formatMaintCostLineHtml(ln) + '</li>')
+                          .join('') +
+                        '</ul></div>'
+                      );
+                    })()
+                  : ''
+              }
               ${
                 Array.isArray(r.tireLineItems) && r.tireLineItems.length
                   ? `<div class="mini-note"><strong>Tire lines</strong> (${r.tireLineItems.length}):<ul style="margin:4px 0 0 16px">` +
@@ -2827,15 +3062,29 @@
       resolveLinkedItemSearch();
 
       const recordType = document.getElementById('recordTypeSelect').value;
-      let serviceType =
-        recordType === 'custom'
-          ? (document.getElementById('customServiceTypeInput').value || 'Custom Service')
-          : document.getElementById('serviceTypeInput').value.trim();
-      if (recordType !== 'custom' && !serviceType) {
-        alert('Choose or type the service / maintenance performed.');
-        return;
+      let serviceType = '';
+      if (recordType === 'custom') {
+        const c = document.getElementById('customServiceTypeInput').value.trim();
+        if (!c) {
+          alert('Enter a custom service type name.');
+          return;
+        }
+        serviceType = c;
+      } else {
+        serviceType = document.getElementById('serviceTypeInput').value.trim();
+        if (!serviceType) {
+          const lines = collectMaintCostLines();
+          const withDesc = lines.find(l => l.description);
+          if (withDesc) serviceType = withDesc.description;
+        }
+        if (!serviceType) {
+          alert('Choose or type the service / maintenance performed (or enter a description on the first cost line).');
+          return;
+        }
       }
 
+      recalcMaintCostTotalFromLines();
+      const costLinesPayload = collectMaintCostLines();
       const tireLineItems = recordType === 'tire' ? collectTireLineItems() : [];
       const composedNotes = composeRecordNotesForSave();
 
@@ -2866,13 +3115,22 @@
           loadNumber: document.getElementById('recordLoadNumberInput').value,
           vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput').value,
           workOrderNumber: document.getElementById('recordWorkOrderInput').value,
-          tireLineItems
+          tireLineItems,
+          costLines: costLinesPayload
         })
       });
 
       if (document.getElementById('linkAccountingToggle').checked && Number(document.getElementById('costInput').value || 0) > 0) {
         const linkedVendorId = document.getElementById('linkedVendorQboId').value;
         if (linkedVendorId) {
+          const memoWithLines =
+            composedNotes +
+            (costLinesPayload.length
+              ? '\n\nCost breakdown:\n' +
+                costLinesPayload
+                  .map((ln, i) => `${i + 1}. ${formatMaintCostLinePlain(ln)}`)
+                  .join('\n')
+              : '');
           await j('/api/erp/ap-transaction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2890,7 +3148,7 @@
               dueDate: document.getElementById('linkedDueDate').value,
               docNumber: document.getElementById('linkedDocNumber').value,
               description: serviceType,
-              memo: composedNotes,
+              memo: memoWithLines,
               assetUnit: selectedUnit
             })
           });
@@ -2933,6 +3191,7 @@
       document.getElementById('tirePositionInput').value = '';
       clearTireDots();
       clearTireExtraLines();
+      resetMaintCostLines();
       const pst = document.getElementById('serviceTypePresetSelect');
       if (pst) pst.value = '';
 

@@ -816,6 +816,21 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
       doc.text(`Load / inv #: ${rec.loadNumber || '—'}`);
       doc.text(`Cost: ${rec.cost ?? ''}`);
       doc.moveDown();
+      const costLines = Array.isArray(rec.costLines) ? rec.costLines : [];
+      if (costLines.length) {
+        doc.fontSize(10).fillColor('#000000').text('Cost breakdown:');
+        costLines.forEach((ln, i) => {
+          const q = ln.quantity;
+          const up = ln.unitPrice;
+          const amt = Number(ln.amount || 0).toFixed(2);
+          const line =
+            q != null && up != null && Number(q) > 0 && Number(up) >= 0
+              ? `${i + 1}. ${ln.description || '—'}  ${q} × $${Number(up).toFixed(2)} = $${amt}`
+              : `${i + 1}. ${ln.description || '—'}  $${amt}`;
+          doc.fontSize(9).text(line);
+        });
+        doc.moveDown(0.5);
+      }
       const tires = Array.isArray(rec.tireLineItems) ? rec.tireLineItems : [];
       if (tires.length) {
         doc.fontSize(10).fillColor('#000000').text('Tire line items (one invoice):');
