@@ -228,12 +228,13 @@ function sanitizeFuelPurchase(raw) {
   const unit = sanitizeName(raw.unit || raw.assetUnit || raw.vehicle || raw.truck || '', '');
   if (!unit) return null;
   const txnDate = sliceIsoDate(raw.txnDate || raw.date || raw.purchaseDate || '');
-  const gallons = safeNum(raw.gallons ?? raw.qty ?? raw.quantity ?? raw.gal, null);
-  const price = safeNum(raw.pricePerGallon ?? raw.price ?? raw.ppg, null);
-  let total = safeNum(raw.totalCost ?? raw.amount ?? raw.cost ?? raw.total, null);
+  const numOrNull = v => (v == null || v === '' ? null : safeNum(v, null));
+  const gallons = numOrNull(raw.gallons ?? raw.qty ?? raw.quantity ?? raw.gal);
+  const price = numOrNull(raw.pricePerGallon ?? raw.price ?? raw.ppg);
+  let total = numOrNull(raw.totalCost ?? raw.amount ?? raw.cost ?? raw.total);
   const vendor = String(raw.vendor || raw.merchant || raw.station || '').trim().slice(0, 120);
   const locationText = String(raw.location || raw.cityState || '').trim().slice(0, 180);
-  const odometerMiles = safeNum(raw.odometerMiles ?? raw.odometer ?? raw.miles, null);
+  const odometerMiles = numOrNull(raw.odometerMiles ?? raw.odometer ?? raw.miles);
 
   if (gallons != null && gallons > 0 && price != null && price > 0 && (total == null || !(total > 0))) {
     total = Math.round(gallons * price * 100) / 100;
@@ -301,6 +302,7 @@ function buildRelayFuelImportFromRows(rows) {
   const relayDocCounters = new Map();
   let imported = 0;
   let relayLines = 0;
+  const numOrNull = v => (v == null || v === '' ? null : safeNum(v, null));
 
   for (const rawRow of rows) {
     const row = lowerKeyMap(rawRow);
@@ -323,7 +325,7 @@ function buildRelayFuelImportFromRows(rows) {
         .trim() ||
       firstValue(row, ['location', 'city', 'city/state', 'city state']) ||
       '';
-    const odom = safeNum(firstValue(row, ['odometer', 'odometer miles', 'mileage']), null);
+    const odom = numOrNull(firstValue(row, ['odometer', 'odometer miles', 'mileage']));
     const note = firstValue(row, ['note']) || '';
     const baseExpenseNo = parseRelayExpenseNoFromNote(note);
 
@@ -336,9 +338,9 @@ function buildRelayFuelImportFromRows(rows) {
     ];
 
     for (const pr of products) {
-      const gallons = safeNum(firstValue(row, [pr.volKey]), null);
-      const total = safeNum(firstValue(row, [pr.totalKey]), null);
-      const price = safeNum(firstValue(row, [pr.ppgKey]), null);
+      const gallons = numOrNull(firstValue(row, [pr.volKey]));
+      const total = numOrNull(firstValue(row, [pr.totalKey]));
+      const price = numOrNull(firstValue(row, [pr.ppgKey]));
       if (!(gallons != null && gallons > 0) && !(total != null && total > 0)) continue;
 
       const p = sanitizeFuelPurchase({
@@ -378,7 +380,7 @@ function buildRelayFuelImportFromRows(rows) {
       relayLines++;
     }
 
-    const relayFee = safeNum(firstValue(row, ['fee']), null);
+    const relayFee = numOrNull(firstValue(row, ['fee']));
     if (relayFee != null && relayFee > 0) {
       const docNumber = nextRelayDocNumber(baseExpenseNo || 'relay', relayDocCounters);
       relayExpenses.push({
@@ -2697,6 +2699,9 @@ app.get('/api/reports/export/relay-expenses.csv', (_req, res) => {
     ];
     const lines = [header.join(',')];
     for (const r of erp.relayExpenses || []) {
+      const gal = safeNum(r.gallons, null);
+      const ppg = safeNum(r.pricePerGallon, null);
+      const odo = safeNum(r.odometerMiles, null);
       lines.push(
         [
           csvEscape(r.docNumber || ''),
@@ -2706,9 +2711,9 @@ app.get('/api/reports/export/relay-expenses.csv', (_req, res) => {
           csvEscape(r.spreadsheetCategory || r.expenseType || ''),
           csvEscape(r.expenseType || ''),
           String((safeNum(r.amount, 0) || 0).toFixed(2)),
-          r.gallons != null ? String(Number(r.gallons).toFixed(3)) : '',
-          r.pricePerGallon != null ? String(Number(r.pricePerGallon).toFixed(3)) : '',
-          r.odometerMiles != null ? String(Number(r.odometerMiles).toFixed(0)) : '',
+          gal != null && Number.isFinite(gal) && gal > 0 ? String(gal.toFixed(3)) : '',
+          ppg != null && Number.isFinite(ppg) && ppg > 0 ? String(ppg.toFixed(3)) : '',
+          odo != null && Number.isFinite(odo) && odo > 0 ? String(odo.toFixed(0)) : '',
           csvEscape(r.location || ''),
           csvEscape(r.memo || '')
         ].join(',')
@@ -3529,6 +3534,11 @@ app.post('/api/import/fuel/confirm', (req, res) => {
       if (amount == null || !Number.isFinite(amount) || amount <= 0) continue;
       const unitRel = sanitizeName(row.unit, '');
       if (!unitRel) continue;
+      const gallons = row.gallons == null || row.gallons === '' ? null : safeNum(row.gallons, null);
+      const pricePerGallon =
+        row.pricePerGallon == null || row.pricePerGallon === '' ? null : safeNum(row.pricePerGallon, null);
+      const odometerMiles =
+        row.odometerMiles == null || row.odometerMiles === '' ? null : safeNum(row.odometerMiles, null);
       erp.relayExpenses.push({
         id: uid('rel'),
         docNumber: String(row.docNumber || '').trim().slice(0, 80),
@@ -3538,9 +3548,9 @@ app.post('/api/import/fuel/confirm', (req, res) => {
         expenseType: String(row.expenseType || '').trim().slice(0, 80),
         spreadsheetCategory: String(row.spreadsheetCategory || row.expenseType || '').trim().slice(0, 160),
         amount,
-        gallons: row.gallons != null ? safeNum(row.gallons, null) : null,
-        pricePerGallon: row.pricePerGallon != null ? safeNum(row.pricePerGallon, null) : null,
-        odometerMiles: row.odometerMiles != null ? safeNum(row.odometerMiles, null) : null,
+        gallons: gallons != null && Number.isFinite(gallons) && gallons > 0 ? gallons : null,
+        pricePerGallon: pricePerGallon != null && Number.isFinite(pricePerGallon) && pricePerGallon > 0 ? pricePerGallon : null,
+        odometerMiles: odometerMiles != null && Number.isFinite(odometerMiles) && odometerMiles > 0 ? odometerMiles : null,
         location: String(row.location || '').trim().slice(0, 180),
         memo: String(row.memo || '').trim().slice(0, 500),
         alreadyInQbo,
