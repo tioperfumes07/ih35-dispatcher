@@ -292,6 +292,25 @@ function relaySpreadsheetCategory(kind) {
   return 'Fuel';
 }
 
+/** QuickBooks Item/Category naming (copied from template Engine!F formula). */
+function relayQuickBooksCategory({ kind, productsText = '' }) {
+  const k = String(kind || '').toLowerCase();
+  const products = String(productsText || '');
+  const isCatScales = /cat\s*scales?/i.test(products);
+
+  if (isCatScales) {
+    if (k === 'relay_fee') return 'Bank Charges:BC-Relay Diesel Code Fee';
+    // Template routes slot 1 to scale expense when Cat Scales is detected.
+    return 'Scale Expense:OTR-Scale Expense';
+  }
+
+  if (k === 'def' || k === 'def_forecourt') return 'Fuel Expenses:Fuel-DEF-Diesel Exhaust Fluid';
+  if (k === 'diesel') return 'Fuel Expenses:Fuel-Truck Diesel';
+  if (k === 'reefer' || k === 'reefer_2') return 'Fuel Expenses:Fuel-Reefer-Diesel';
+  if (k === 'relay_fee') return 'Bank Charges:BC-Relay Diesel Code Fee';
+  return 'Fuel Expenses:Fuel-Truck Diesel';
+}
+
 /**
  * Parse Relay-style fuel workbook rows into staged fuel purchases and relay expense lines.
  * Does not read/write ERP.
@@ -328,6 +347,10 @@ function buildRelayFuelImportFromRows(rows) {
     const odom = numOrNull(firstValue(row, ['odometer', 'odometer miles', 'mileage']));
     const note = firstValue(row, ['note']) || '';
     const baseExpenseNo = parseRelayExpenseNoFromNote(note);
+    const productsText =
+      firstValue(row, ['products', 'sub-type', 'sub_type', 'type']) ||
+      firstValue(row, ['merchant_name', 'organization', 'site']) ||
+      '';
 
     const products = [
       { kind: 'diesel', volKey: 'volume diesel', totalKey: 'total_price diesel', ppgKey: 'discounted_price diesel' },
@@ -370,6 +393,7 @@ function buildRelayFuelImportFromRows(rows) {
         vendor: String(vendor || '').trim(),
         expenseType: relayLineLabel(pr.kind),
         spreadsheetCategory: relaySpreadsheetCategory(pr.kind),
+        qbCategory: relayQuickBooksCategory({ kind: pr.kind, productsText }),
         amount: safeNum(p.totalCost, 0) || 0,
         gallons: p.gallons ?? null,
         pricePerGallon: p.pricePerGallon ?? null,
@@ -390,6 +414,7 @@ function buildRelayFuelImportFromRows(rows) {
         vendor: String(vendor || '').trim(),
         expenseType: relayLineLabel('relay_fee'),
         spreadsheetCategory: relaySpreadsheetCategory('relay_fee'),
+        qbCategory: relayQuickBooksCategory({ kind: 'relay_fee', productsText }),
         amount: Math.round(relayFee * 100) / 100,
         gallons: null,
         pricePerGallon: null,
@@ -2775,7 +2800,7 @@ app.get('/api/reports/export/relay-qb-sync.csv', (_req, res) => {
       const location = String(r.location || '').trim();
       const taxType = '';
       const lineType = 'Category';
-      const itemCategory = String(r.spreadsheetCategory || r.expenseType || '').trim();
+      const itemCategory = String(r.qbCategory || '').trim() || String(r.spreadsheetCategory || r.expenseType || '').trim();
       const description = String(r.expenseType || '').trim() + (r.unit ? ` (${r.unit})` : '');
       const qty = '';
       const rate = '';
@@ -3638,6 +3663,7 @@ app.post('/api/import/fuel/confirm', (req, res) => {
         vendor: String(row.vendor || '').trim().slice(0, 120),
         expenseType: String(row.expenseType || '').trim().slice(0, 80),
         spreadsheetCategory: String(row.spreadsheetCategory || row.expenseType || '').trim().slice(0, 160),
+        qbCategory: String(row.qbCategory || '').trim().slice(0, 140),
         amount,
         gallons: gallons != null && Number.isFinite(gallons) && gallons > 0 ? gallons : null,
         pricePerGallon: pricePerGallon != null && Number.isFinite(pricePerGallon) && pricePerGallon > 0 ? pricePerGallon : null,

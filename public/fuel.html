@@ -900,16 +900,16 @@
 
       const fuels = data.fuelPurchases || [];
       const relays = data.relayExpenses || [];
-      sum.innerHTML = `Parsed <strong>${fuels.length}</strong> fuel purchase line(s) and <strong>${relays.length}</strong> Relay expense line(s). Review categories (spreadsheet columns), then confirm.`;
+      sum.innerHTML = `Parsed <strong>${fuels.length}</strong> fuel purchase line(s) and <strong>${relays.length}</strong> Relay expense line(s). Review QuickBooks categories, then confirm.`;
 
       if (!relays.length) {
         relayW.innerHTML = '<p class="small">No Relay expense lines (check Truck #, work_date, volume/total columns).</p>';
       } else {
         relayW.innerHTML =
-          '<div class="small" style="margin-bottom:6px;font-weight:700">Relay expenses (categorized like the spreadsheet)</div>' +
+          '<div class="small" style="margin-bottom:6px;font-weight:700">Relay expenses (QuickBooks category mapping)</div>' +
           '<table class="import-preview-table"><thead><tr>' +
           '<th><input type="checkbox" id="pickAllRelay" checked title="Toggle all" onclick="togglePickAllRelay(this)" /></th>' +
-          '<th>Doc #</th><th>Date</th><th>Unit</th><th>Spreadsheet category</th><th>Line type</th>' +
+          '<th>Doc #</th><th>Date</th><th>Unit</th><th>QB category</th><th>Line type</th>' +
           '<th class="num">$</th><th class="num">Gal</th><th>Memo</th></tr></thead><tbody>' +
           relays
             .map(
@@ -918,7 +918,7 @@
                 `<td>${escHtml(row.docNumber)}</td>` +
                 `<td>${escHtml(row.txnDate)}</td>` +
                 `<td>${escHtml(row.unit)}</td>` +
-                `<td>${escHtml(row.spreadsheetCategory || row.expenseType)}</td>` +
+                `<td>${escHtml(row.qbCategory || row.spreadsheetCategory || row.expenseType)}</td>` +
                 `<td>${escHtml(row.expenseType)}</td>` +
                 `<td class="num">${Number(row.amount || 0).toFixed(2)}</td>` +
                 `<td class="num">${row.gallons != null ? Number(row.gallons).toFixed(3) : '—'}</td>` +
