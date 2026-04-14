@@ -2101,6 +2101,19 @@ function sanitizeMaintenanceTireLineItems(raw) {
   return out;
 }
 
+function costLineDescriptionForQbo(cl) {
+  const base = String(cl.description || '').trim() || 'Line';
+  const pos = String(cl.partPosition || '').trim().slice(0, 120);
+  const pn = String(cl.partNumber || '').trim().slice(0, 80);
+  const cat = String(cl.partCategory || '').trim().slice(0, 64);
+  const bits = [];
+  if (pos) bits.push(`Pos: ${pos}`);
+  if (cat && cat !== 'none') bits.push(cat);
+  if (pn) bits.push(`PN: ${pn}`);
+  const suffix = bits.length ? ` (${bits.join(' · ')})` : '';
+  return sanitizeName((base + suffix).slice(0, 380), 'Line');
+}
+
 function sanitizeMaintenanceCostLines(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
@@ -2128,6 +2141,12 @@ function sanitizeMaintenanceCostLines(raw) {
     const qi = String(x.qboItemId || '').trim().slice(0, 64);
     if (qa) row.qboAccountId = qa;
     if (qi) row.qboItemId = qi;
+    const partCategory = String(x.partCategory || '').trim().slice(0, 64);
+    const partPosition = String(x.partPosition || '').trim().slice(0, 120);
+    const partNumber = String(x.partNumber || '').trim().slice(0, 80);
+    if (partCategory) row.partCategory = partCategory;
+    if (partPosition) row.partPosition = partPosition;
+    if (partNumber) row.partNumber = partNumber;
 
     if (description || amount > 0 || (quantity != null && quantity > 0) || (unitPrice != null && unitPrice > 0)) {
       out.push(row);
@@ -2152,7 +2171,7 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
     if (!(amount > 0)) continue;
     const mode =
       String(cl.detailMode || fallbackDetailMode || 'category').trim() === 'item' ? 'item' : 'category';
-    const desc = sanitizeName(String(cl.description || '').trim() || 'Line', 'Line');
+    const desc = costLineDescriptionForQbo(cl);
     if (mode === 'item') {
       const itemId = String(cl.qboItemId || fallbackItemId || '').trim();
       if (!itemId) {
@@ -2173,7 +2192,7 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
       out.push({
         Amount: amount,
         DetailType: 'ItemBasedExpenseLineDetail',
-        Description: desc,
+        Description: sanitizeName(desc, 'Line'),
         ItemBasedExpenseLineDetail: itemDetail
       });
     } else {

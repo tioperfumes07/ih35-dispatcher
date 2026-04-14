@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "about": "Starter reference for fleet maintenance. OEM parts catalogs, torque specs, and exact fitment are VIN- and build-specific — verify with the manufacturer, dealer parts lookup, or MOTOR/TruckSeries-style databases before ordering.",
+  "commonSpecFields": [
+    { "id": "make", "label": "Make / brand" },
+    { "id": "model", "label": "Model" },
+    { "id": "year", "label": "Model year" },
+    { "id": "vin", "label": "VIN" },
+    { "id": "engineModel", "label": "Engine" },
+    { "id": "gvwr", "label": "GVWR / class" },
+    { "id": "axleConfig", "label": "Axle configuration" },
+    { "id": "sleeper", "label": "Sleeper / day cab" }
+  ],
+  "multiPositionCategories": [
+    {
+      "id": "tire",
+      "label": "Tires",
+      "notes": "Use wheel-end map; dual positions match common tractor/trailer layouts."
+    },
+    {
+      "id": "battery",
+      "label": "Batteries",
+      "notes": "Class 8 tractors often use 2–4 batteries; locations vary by OEM (box, step, frame)."
+    },
+    {
+      "id": "air_suspension",
+      "label": "Air springs / air bags",
+      "notes": "Suspension and lift axle air springs — corner or axle-end positions."
+    },
+    {
+      "id": "brake",
+      "label": "Brakes",
+      "notes": "Foundation brakes by axle end — confirm drum vs disc per wheel."
+    },
+    {
+      "id": "filter",
+      "label": "Filters",
+      "notes": "Engine air, fuel stages, coolant, transmission, power steering, cabin."
+    },
+    {
+      "id": "lighting",
+      "label": "Lighting",
+      "notes": "Exterior lamps — replace in pairs when recommended."
+    },
+    {
+      "id": "other_multi",
+      "label": "Other multi-location",
+      "notes": "Describe location in the expense line or notes when no map applies."
+    }
+  ],
+  "externalCatalogHints": [
+    { "name": "OEM dealer parts", "detail": "VIN-based lookup for your make (e.g. Freightliner, Peterbilt, Volvo, Kenworth)." },
+    { "name": "Aftermarket", "detail": "Bendix air brake, Meritor driveline, common filter cross-references — match thread and pressure ratings." },
+    { "name": "Tire sizing", "detail": "Load index, speed rating, ply / load range must match fleet policy and axle ratings." }
+  ]
+}

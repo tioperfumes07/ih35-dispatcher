@@ -823,10 +823,12 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
           const q = ln.quantity;
           const up = ln.unitPrice;
           const amt = Number(ln.amount || 0).toFixed(2);
+          const partBits = [ln.partPosition, ln.partCategory, ln.partNumber].filter(Boolean);
+          const partSuf = partBits.length ? `  (${partBits.join(' · ')})` : '';
           const line =
             q != null && up != null && Number(q) > 0 && Number(up) >= 0
-              ? `${i + 1}. ${ln.description || '—'}  ${q} × $${Number(up).toFixed(2)} = $${amt}`
-              : `${i + 1}. ${ln.description || '—'}  $${amt}`;
+              ? `${i + 1}. ${ln.description || '—'}${partSuf}  ${q} × $${Number(up).toFixed(2)} = $${amt}`
+              : `${i + 1}. ${ln.description || '—'}${partSuf}  $${amt}`;
           doc.fontSize(9).text(line);
         });
         doc.moveDown(0.5);
