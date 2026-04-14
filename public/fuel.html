@@ -101,6 +101,17 @@
     html.fuel-embed .topbar a[href="/"],
     html.fuel-embed .topbar a[href="/dispatch.html"],
     html.fuel-embed .topbar a[href="/maintenance.html"]{display:none}
+    .import-preview-wrap{
+      margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fafbff;
+      display:none
+    }
+    .import-preview-wrap.visible{display:block}
+    .import-preview-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff}
+    .import-preview-table th,.import-preview-table td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left;vertical-align:top}
+    .import-preview-table th{background:#f3f4f6;font-weight:700;color:var(--muted)}
+    .import-preview-table .num{text-align:right;white-space:nowrap}
+    .import-preview-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+    .import-preview-note{font-size:12px;color:var(--muted);margin:8px 0 0}
   </style>
   <link rel="stylesheet" href="/css/board-nav.css" />
   <script>
@@ -199,10 +210,25 @@
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
         <input id="fuelImportFile" type="file" accept=".csv,.xlsx,.xls">
-        <button onclick="uploadFuelFile()">Import fuel CSV/Excel</button>
+        <button type="button" onclick="previewFuelImport()">Preview Relay / fuel import</button>
         <button onclick="exportFuelCsv()">Export fuel CSV</button>
           <button onclick="exportRelayExpensesCsv()">Export Relay expenses CSV</button>
         <span id="fuelLedgerMeta" class="small"></span>
+      </div>
+      <div id="fuelImportPreview" class="import-preview-wrap" aria-live="polite">
+        <div style="font-weight:700;margin-bottom:8px">Import preview</div>
+        <div id="fuelImportPreviewSummary" class="small"></div>
+        <label class="small" style="display:flex;gap:8px;align-items:center;margin:10px 0">
+          <input type="checkbox" id="fuelImportAlreadyQbo" checked />
+          <span>Relay expense lines are already in QuickBooks — save as ledger test / reconciliation only (no QBO API call).</span>
+        </label>
+        <div id="fuelImportRelayTableWrap" style="overflow:auto;max-height:320px;margin-top:8px"></div>
+        <div id="fuelImportFuelTableWrap" style="overflow:auto;max-height:220px;margin-top:12px"></div>
+        <div class="import-preview-actions">
+          <button type="button" onclick="confirmFuelImport()">Confirm import</button>
+          <button type="button" onclick="cancelFuelImportPreview()">Cancel</button>
+        </div>
+        <p class="import-preview-note">Confirm appends selected rows to the diesel ledger and Relay expense staging. Uncheck rows you do not want. QuickBooks is never contacted from this screen.</p>
       </div>
       <div id="fuelLedger" class="small">No fuel purchases yet.</div>
         <div class="section-title">Recommended Stops</div>
@@ -226,6 +252,15 @@
     let selectedUnit = null;
     let map, unitsLayer, stopsLayer, routeLayer, selectedLayer;
     let fuelPurchases = [];
+    let pendingFuelImportPreview = null;
+
+    function escHtml(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
 
     function initMap() {
       if (map) return;
@@ -847,7 +882,86 @@
       }
     }
 
-    async function uploadFuelFile() {
+    function cancelFuelImportPreview() {
+      pendingFuelImportPreview = null;
+      const wrap = document.getElementById('fuelImportPreview');
+      if (wrap) wrap.classList.remove('visible');
+      const input = document.getElementById('fuelImportFile');
+      if (input) input.value = '';
+    }
+
+    function renderFuelImportPreview(data) {
+      const wrap = document.getElementById('fuelImportPreview');
+      const sum = document.getElementById('fuelImportPreviewSummary');
+      const relayW = document.getElementById('fuelImportRelayTableWrap');
+      const fuelW = document.getElementById('fuelImportFuelTableWrap');
+      if (!wrap || !sum || !relayW || !fuelW) return;
+
+      const fuels = data.fuelPurchases || [];
+      const relays = data.relayExpenses || [];
+      sum.innerHTML = `Parsed <strong>${fuels.length}</strong> fuel purchase line(s) and <strong>${relays.length}</strong> Relay expense line(s). Review categories (spreadsheet columns), then confirm.`;
+
+      if (!relays.length) {
+        relayW.innerHTML = '<p class="small">No Relay expense lines (check Truck #, work_date, volume/total columns).</p>';
+      } else {
+        relayW.innerHTML =
+          '<div class="small" style="margin-bottom:6px;font-weight:700">Relay expenses (categorized like the spreadsheet)</div>' +
+          '<table class="import-preview-table"><thead><tr>' +
+          '<th><input type="checkbox" id="pickAllRelay" checked title="Toggle all" onclick="togglePickAllRelay(this)" /></th>' +
+          '<th>Doc #</th><th>Date</th><th>Unit</th><th>Spreadsheet category</th><th>Line type</th>' +
+          '<th class="num">$</th><th class="num">Gal</th><th>Memo</th></tr></thead><tbody>' +
+          relays
+            .map(
+              (row, i) =>
+                `<tr><td><input type="checkbox" class="pick-relay" data-i="${i}" checked /></td>` +
+                `<td>${escHtml(row.docNumber)}</td>` +
+                `<td>${escHtml(row.txnDate)}</td>` +
+                `<td>${escHtml(row.unit)}</td>` +
+                `<td>${escHtml(row.spreadsheetCategory || row.expenseType)}</td>` +
+                `<td>${escHtml(row.expenseType)}</td>` +
+                `<td class="num">${Number(row.amount || 0).toFixed(2)}</td>` +
+                `<td class="num">${row.gallons != null ? Number(row.gallons).toFixed(3) : '—'}</td>` +
+                `<td>${escHtml((row.memo || '').slice(0, 80))}${(row.memo || '').length > 80 ? '…' : ''}</td></tr>`
+            )
+            .join('') +
+          '</tbody></table>';
+      }
+
+      if (!fuels.length) {
+        fuelW.innerHTML = '<p class="small">No fuel purchase lines parsed.</p>';
+      } else {
+        fuelW.innerHTML =
+          '<div class="small" style="margin-bottom:6px;font-weight:700">Fuel ledger lines</div>' +
+          '<table class="import-preview-table"><thead><tr>' +
+          '<th><input type="checkbox" id="pickAllFuel" checked title="Toggle all" onclick="togglePickAllFuel(this)" /></th>' +
+          '<th>Date</th><th>Unit</th><th>Product</th><th class="num">Gal</th><th class="num">$/gal</th><th class="num">Total</th></tr></thead><tbody>' +
+          fuels
+            .map(
+              (row, i) =>
+                `<tr><td><input type="checkbox" class="pick-fuel" data-i="${i}" checked /></td>` +
+                `<td>${escHtml(row.txnDate)}</td>` +
+                `<td>${escHtml(row.unit)}</td>` +
+                `<td>${escHtml(row.productType)}</td>` +
+                `<td class="num">${row.gallons != null ? Number(row.gallons).toFixed(3) : '—'}</td>` +
+                `<td class="num">${row.pricePerGallon != null ? Number(row.pricePerGallon).toFixed(3) : '—'}</td>` +
+                `<td class="num">${row.totalCost != null ? Number(row.totalCost).toFixed(2) : '—'}</td></tr>`
+            )
+            .join('') +
+          '</tbody></table>';
+      }
+
+      wrap.classList.add('visible');
+    }
+
+    function togglePickAllFuel(master) {
+      document.querySelectorAll('.pick-fuel').forEach(cb => { cb.checked = master.checked; });
+    }
+
+    function togglePickAllRelay(master) {
+      document.querySelectorAll('.pick-relay').forEach(cb => { cb.checked = master.checked; });
+    }
+
+    async function previewFuelImport() {
       const input = document.getElementById('fuelImportFile');
       if (!input?.files?.[0]) return alert('Choose a fuel CSV or Excel file first.');
       const fd = new FormData();
@@ -856,13 +970,51 @@
         const r = await fetch('/api/import/fuel', { method: 'POST', body: fd });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
-        alert(`Fuel purchases imported: ${data.imported}`);
-        input.value = '';
+        pendingFuelImportPreview = data;
+        renderFuelImportPreview(data);
+      } catch (e) {
+        alert('Preview failed: ' + e.message);
+      }
+    }
+
+    async function confirmFuelImport() {
+      if (!pendingFuelImportPreview) return alert('Run preview on a file first.');
+      const fuels = pendingFuelImportPreview.fuelPurchases || [];
+      const relays = pendingFuelImportPreview.relayExpenses || [];
+      const fuelPick = new Set(
+        [...document.querySelectorAll('.pick-fuel:checked')].map(el => parseInt(el.getAttribute('data-i'), 10))
+      );
+      const relayPick = new Set(
+        [...document.querySelectorAll('.pick-relay:checked')].map(el => parseInt(el.getAttribute('data-i'), 10))
+      );
+      const fuelPayload = fuels.filter((_, i) => fuelPick.has(i));
+      const relayPayload = relays.filter((_, i) => relayPick.has(i));
+      if (!fuelPayload.length && !relayPayload.length) {
+        return alert('Select at least one row to import.');
+      }
+      const alreadyInQbo = !!document.getElementById('fuelImportAlreadyQbo')?.checked;
+      try {
+        const r = await fetch('/api/import/fuel/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fuelPurchases: fuelPayload,
+            relayExpenses: relayPayload,
+            alreadyInQbo
+          })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        cancelFuelImportPreview();
         const fp = await j('/api/fuel/purchases');
         fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
         renderFuelLedger();
+        alert(
+          `Saved ${data.savedFuel ?? 0} fuel line(s) and ${data.savedRelay ?? 0} Relay expense line(s).` +
+            (data.alreadyInQbo ? ' Marked as already in QuickBooks (test ledger).' : '')
+        );
       } catch (e) {
-        alert('Fuel import failed: ' + e.message);
+        alert('Confirm import failed: ' + e.message);
       }
     }
 
