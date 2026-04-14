@@ -48,6 +48,7 @@
     .tag-dispatch { background: rgba(34,197,94,.2); color: #4ade80; }
     .tag-fuel { background: rgba(245,158,11,.2); color: #fbbf24; }
     .tag-maint { background: rgba(167,139,250,.2); color: #c4b5fd; }
+    .tag-reports { background: rgba(59,130,246,.2); color: #93c5fd; }
     a.card h2 { margin: 0 0 10px; font-size: 20px; }
     a.card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
     .arrow { margin-top: 16px; font-weight: 700; color: var(--accent); font-size: 14px; }
@@ -64,14 +65,14 @@
   <script src="/js/board-nav.js" defer></script>
   <header>
     <h1>IH35 Transportation</h1>
-    <p>Choose a workspace. Dispatch (loads &amp; TMS) is separate from fuel and route planning—same as Always Track splits operations, not one page doing everything.</p>
+    <p>Choose a workspace. Maintenance, fuel, safety, and accounting share the ERP; loads and billing use the dedicated loads page (bookmarks to the old ERP dispatch tab redirect to maintenance).</p>
   </header>
   <div class="grid">
-    <a class="card" href="/maintenance.html#dispatch">
-      <span class="card-tag tag-dispatch">Dispatch</span>
-      <h2>Loads &amp; TMS</h2>
-      <p>Dispatch board inside the ERP sidebar layout. Full-screen dispatch is one click from the board menu.</p>
-      <div class="arrow">Open in ERP →</div>
+    <a class="card" href="/dispatch.html">
+      <span class="card-tag tag-dispatch">Loads &amp; TMS</span>
+      <h2>Loads &amp; dispatch</h2>
+      <p>Full-screen load board, stops, mileage, and QuickBooks hooks. Maintenance and fuel planning stay in the ERP.</p>
+      <div class="arrow">Open loads board →</div>
     </a>
     <a class="card" href="/maintenance.html#fuel">
       <span class="card-tag tag-fuel">Fuel &amp; routes</span>
@@ -98,14 +99,14 @@
       <div class="arrow">Open in ERP →</div>
     </a>
     <a class="card" href="/maintenance.html#reports">
-      <span class="card-tag tag-dispatch">Reports</span>
+      <span class="card-tag tag-reports">Reports</span>
       <h2>TMS &amp; ERP reports</h2>
       <p>Load pipeline, maintenance by unit, QuickBooks bills/invoices window, and ERP↔QBO posting health.</p>
       <div class="arrow">Open reports →</div>
     </a>
   </div>
   <footer>
-    <strong>Mileage (practical vs shortest):</strong> The dispatch “Auto miles” feature uses road routing (OSRM) for <strong>practical</strong> miles and a straight-line approximation for <strong>shortest</strong>. For settlement-grade practical/short pairs like Always Track + PC*Miler, plan to connect <strong>Trimble PCMiler / Maps</strong> (commercial API). Set <code>PCMILER_API_KEY</code> or vendor-specific env vars when you license it—we can swap the calculator behind the same button later.
+    <strong>Mileage (practical vs shortest):</strong> The loads board “Auto miles” feature uses road routing (OSRM) for <strong>practical</strong> miles and a straight-line approximation for <strong>shortest</strong>. For settlement-grade practical/short pairs like Always Track + PC*Miler, plan to connect <strong>Trimble PCMiler / Maps</strong> (commercial API). Set <code>PCMILER_API_KEY</code> or vendor-specific env vars when you license it—we can swap the calculator behind the same button later.
   </footer>
 </body>
 </html>

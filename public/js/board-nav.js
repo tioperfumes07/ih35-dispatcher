@@ -20,6 +20,16 @@
       ]
     },
     {
+      id: 'loads',
+      label: 'Loads & TMS',
+      href: '/dispatch.html',
+      links: [
+        { label: 'Loads board (full screen)', href: '/dispatch.html' },
+        { label: 'ERP — Maintenance', href: '/maintenance.html#maintenance' },
+        { label: 'Operations hub', href: '/' }
+      ]
+    },
+    {
       id: 'safety',
       label: 'Safety Board',
       href: '/maintenance.html#safety',

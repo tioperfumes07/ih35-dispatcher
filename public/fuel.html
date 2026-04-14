@@ -113,7 +113,7 @@
   <div class="topbar">
     <h1>Fuel &amp; route planning</h1>
     <a href="/" style="margin-right:8px;font-weight:700;color:#1d4ed8">Home</a>
-    <a href="/dispatch.html" style="margin-right:10px;font-weight:600;color:#15803d">Dispatch (TMS)</a>
+    <a href="/dispatch.html" style="margin-right:10px;font-weight:600;color:#15803d">Loads &amp; TMS</a>
     <a href="/maintenance.html" style="margin-right:10px;font-weight:600;color:#6b21a8">Maintenance</a>
     <button onclick="loadBoard()">Load Live Board</button>
     <button onclick="recommendForSelected()">Recommend Stops</button>
@@ -122,7 +122,7 @@
     <span id="lastUpdated" class="small">Not loaded</span>
   </div>
   <p class="roadmap-note">
-    <strong>Roadmap:</strong> tie origin/destination from Dispatch (TMS) loads into this planner, combine uploaded Love’s price sheets and live tank levels from Samsara, and suggest cheapest legal fuel stops along the route (including state price spreads). PC*Miler practical/short miles will replace heuristic routing for driver-pay mileage when licensed.
+    <strong>Roadmap:</strong> tie origin/destination from active TMS loads into this planner, combine uploaded Love’s price sheets and live tank levels from Samsara, and suggest cheapest legal fuel stops along the route (including state price spreads). PC*Miler practical/short miles will replace heuristic routing for driver-pay mileage when licensed.
   </p>
 
   <div class="layout">
@@ -734,7 +734,7 @@
           <div class="detail-card"><div class="label">Total Reach</div><div>${fmtMiles(row.totalReach)}</div></div>
           <div class="detail-card"><div class="label">Reach Before Reserve</div><div>${fmtMiles(row.reserveReach)}</div></div>
           <div class="detail-card"><div class="label">Avg speed assumption</div><div>${mph.toFixed(0)} mph</div></div>
-          <div class="detail-card detail-wide"><div class="label">Dispatcher Action</div><div><b>${decision.action}</b> — ${decision.reason}</div></div>
+          <div class="detail-card detail-wide"><div class="label">Planner action</div><div><b>${decision.action}</b> — ${decision.reason}</div></div>
           <div class="detail-card detail-wide"><div class="label">Approx ETA</div><div>${routeData ? fmtEta(routeData.etaHours) : 'N/A'}</div></div>
         </div>
       `;
@@ -1071,7 +1071,7 @@
 
         document.getElementById('recommendedStops').innerHTML = recs.length ? `
           <div class="stop-card">
-            <div><b>Dispatcher Action:</b> ${decision.action}</div>
+            <div><b>Planner action:</b> ${decision.action}</div>
             <div class="small">${decision.reason}</div>
             <div class="small">Visible Love's stops on map: ${visibleStops.length}</div>
             <div class="small">Avg speed assumption: ${mph.toFixed(0)} mph</div>
