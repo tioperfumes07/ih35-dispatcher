@@ -8,8 +8,12 @@ import crypto from 'crypto';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
-import { dbQuery } from './lib/db.mjs';
+import { dbQuery, getPool } from './lib/db.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
+import {
+  ensureMaintenanceServiceCatalog,
+  MAINTENANCE_SERVICE_CATALOG_SEEDS
+} from './lib/maintenance-service-catalog.mjs';
 import tmsRouter, { fetchLoadSettlementContextByNumber } from './routes/tms.mjs';
 import { buildSettlementByLoad, buildSettlementIndex, normLoadKey } from './lib/settlement-by-load.mjs';
 import pdfRouter from './routes/pdf.mjs';
@@ -1561,6 +1565,64 @@ app.get('/api/maintenance/records', (_req, res) => {
   res.json(readErp());
 });
 
+app.get('/api/maintenance/service-types', async (_req, res) => {
+  try {
+    if (!getPool()) {
+      return res.json({
+        ok: true,
+        source: 'defaults',
+        names: [...MAINTENANCE_SERVICE_CATALOG_SEEDS]
+      });
+    }
+    await ensureMaintenanceServiceCatalog();
+    const { rows } = await dbQuery(
+      `SELECT name FROM maintenance_service_catalog WHERE active = true ORDER BY sort_order ASC, name ASC`
+    );
+    const names = rows.map(r => String(r.name || '').trim()).filter(Boolean);
+    res.json({
+      ok: true,
+      source: names.length ? 'database' : 'defaults',
+      names: names.length ? names : [...MAINTENANCE_SERVICE_CATALOG_SEEDS]
+    });
+  } catch (error) {
+    logError('api/maintenance/service-types', error);
+    res.json({
+      ok: true,
+      source: 'defaults',
+      names: [...MAINTENANCE_SERVICE_CATALOG_SEEDS],
+      warn: error.message
+    });
+  }
+});
+
+app.post('/api/maintenance/service-types', async (req, res) => {
+  try {
+    if (!getPool()) {
+      return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set — cannot store catalog' });
+    }
+    await ensureMaintenanceServiceCatalog();
+    const name = String(req.body?.name || '')
+      .trim()
+      .slice(0, 120);
+    if (!name || name.length < 2) {
+      return res.status(400).json({ ok: false, error: 'name must be 2–120 characters' });
+    }
+    const { rows: mx } = await dbQuery(
+      `SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM maintenance_service_catalog`
+    );
+    const sortOrder = Number(mx[0]?.n) || 0;
+    await dbQuery(
+      `INSERT INTO maintenance_service_catalog (name, sort_order) VALUES ($1, $2)
+       ON CONFLICT (name) DO UPDATE SET active = true`,
+      [name, sortOrder]
+    );
+    res.json({ ok: true, name });
+  } catch (error) {
+    logError('api/maintenance/service-types POST', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.post('/api/maintenance/mileage', (req, res) => {
   try {
     const body = req.body || {};
@@ -1577,6 +1639,22 @@ app.post('/api/maintenance/mileage', (req, res) => {
   }
 });
 
+function sanitizeMaintenanceTireLineItems(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const x of raw) {
+    if (!x || typeof x !== 'object') continue;
+    const tirePosition = String(x.tirePosition || '').trim().slice(0, 120);
+    const tireBrand = String(x.tireBrand || '').trim().slice(0, 120);
+    const tireDot = String(x.tireDot || '').trim().slice(0, 80);
+    const tireCondition = String(x.tireCondition || '').trim().slice(0, 80);
+    if (tirePosition || tireBrand || tireDot || tireCondition) {
+      out.push({ tirePosition, tireBrand, tireDot, tireCondition });
+    }
+  }
+  return out;
+}
+
 app.post('/api/maintenance/record', (req, res) => {
   try {
     const body = req.body || {};
@@ -1585,6 +1663,12 @@ app.post('/api/maintenance/record', (req, res) => {
     const serviceType = sanitizeName(body.serviceType || body.recordType || 'Service', 'Service');
     const erp = readErp();
     if (!Array.isArray(erp.records)) erp.records = [];
+    const tireLineItems = sanitizeMaintenanceTireLineItems(body.tireLineItems);
+    const firstTire = tireLineItems[0];
+    const tirePosition = String(body.tirePosition || '').trim() || (firstTire?.tirePosition || '');
+    const tireBrand = String(body.tireBrand || '').trim() || (firstTire?.tireBrand || '');
+    const tireDot = String(body.tireDot || '').trim() || (firstTire?.tireDot || '');
+    const tireCondition = String(body.tireCondition || '').trim() || (firstTire?.tireCondition || '');
     const record = {
       id: uid('mr'),
       unit,
@@ -1596,11 +1680,11 @@ app.post('/api/maintenance/record', (req, res) => {
       cost: safeNum(body.cost, 0) || 0,
       notes: String(body.notes || '').trim(),
       loadNumber: String(body.loadNumber || body.load_number || '').trim(),
-      tireCondition: String(body.tireCondition || '').trim(),
-      tirePosition: String(body.tirePosition || '').trim(),
+      tireCondition,
+      tirePosition,
       tirePositionText: String(body.tirePositionText || '').trim(),
-      tireBrand: String(body.tireBrand || '').trim(),
-      tireDot: String(body.tireDot || '').trim(),
+      tireBrand,
+      tireDot,
       installMileage: safeNum(body.installMileage, null),
       removeMileage: safeNum(body.removeMileage, null),
       expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
@@ -1613,7 +1697,8 @@ app.post('/api/maintenance/record', (req, res) => {
       qboSyncStatus: '',
       qboPurchaseId: '',
       qboError: '',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      ...(tireLineItems.length ? { tireLineItems } : {})
     };
     erp.records.push(record);
     const sm = safeNum(body.serviceMileage, null);
@@ -2738,6 +2823,7 @@ process.on('unhandledRejection', err => {
 
 async function startServer() {
   await ensureTmsSchema();
+  await ensureMaintenanceServiceCatalog();
   app.listen(PORT, () => {
     console.log(`Server running on ${PORT}`);
   });

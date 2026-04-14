@@ -542,7 +542,35 @@
                     </select>
                   </div>
 
-                  <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service name" oninput="resolveServiceSearch()">
+                  <div>
+                    <span class="qb-l">Service / maintenance performed</span>
+                    <select
+                      id="serviceTypePresetSelect"
+                      class="qb-in maint-field"
+                      size="8"
+                      style="width:100%;max-width:560px;height:auto;min-height:160px"
+                      onchange="applyServiceTypePreset()"
+                    >
+                      <option value="">— Click a row to choose (saved in database when Postgres is on) —</option>
+                    </select>
+                    <div class="mini-note" style="margin-top:4px">
+                      List comes from <code>maintenance_service_catalog</code> (or defaults if no <code>DATABASE_URL</code>). You can also type a custom name below; datalist suggests matches.
+                    </div>
+                  </div>
+
+                  <input
+                    id="serviceSearchInput"
+                    class="qb-in maint-field"
+                    list="serviceOptions"
+                    placeholder="Or type a custom service name"
+                    oninput="resolveServiceSearch()"
+                    onblur="resolveServiceSearch()"
+                  />
+                  <div class="search-row" style="max-width:560px;margin-top:6px">
+                    <input id="maintNewCatalogServiceName" class="qb-in maint-field" placeholder="New catalog name (needs Postgres)" autocomplete="off" />
+                    <button type="button" onclick="addCatalogServiceType()">Add to catalog</button>
+                  </div>
+                  <div id="maintCatalogServiceHint" class="mini-note"></div>
                   <input id="serviceTypeInput" type="hidden">
                   <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type">
 
@@ -577,6 +605,11 @@
                     </div>
                   </div>
                   <textarea id="notesInput" class="qb-memo" placeholder="Notes" style="max-width:560px"></textarea>
+
+                  <div id="recordSameCostServicesWrap" class="form-stack">
+                    <span class="qb-l">Additional services on same invoice (optional)</span>
+                    <textarea id="recordSameCostServicesInput" class="qb-memo" placeholder="e.g. Mount & balance, alignment, extra filters — still one total cost above" style="max-width:560px" rows="2"></textarea>
+                  </div>
 
                   <div id="tireFields" class="hidden">
                     <div class="tire-layout-wrap">
@@ -641,6 +674,11 @@
                           <input id="removeMileageInput" type="number" placeholder="Remove mileage">
                           <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
                         </div>
+                        <p class="mini-note" style="margin:8px 0 0">
+                          <strong>First tire</strong> uses the fields above. Add more positions for the <strong>same vendor invoice / total cost</strong> below.
+                        </p>
+                        <div id="tireExtraLinesHost"></div>
+                        <button type="button" class="qb-btn-add" onclick="addTireExtraLine()">+ Add another tire (same total cost)</button>
                       </div>
                     </div>
                     <input id="tirePositionInput" type="hidden">
@@ -1175,6 +1213,30 @@
     </div>
   </template>
 
+  <template id="tireExtraLineTpl">
+    <div class="tire-extra-row" style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-top:8px;background:#fafafa">
+      <div class="search-row" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+        <div>
+          <span class="qb-l">Position</span>
+          <select class="qb-in maint-field tire-extra-pos" style="min-width:200px"></select>
+        </div>
+        <div>
+          <span class="qb-l">Condition</span>
+          <input class="qb-in maint-field tire-extra-cond" list="tireConditionOptions" placeholder="New / Used / Recap" autocomplete="off">
+        </div>
+        <div>
+          <span class="qb-l">Brand</span>
+          <input class="qb-in maint-field tire-extra-brand" placeholder="Brand">
+        </div>
+        <div>
+          <span class="qb-l">DOT</span>
+          <input class="qb-in maint-field tire-extra-dot" placeholder="DOT / serial">
+        </div>
+        <button type="button" class="qb-btn-del" onclick="removeTireExtraLine(this)" title="Remove this tire line">×</button>
+      </div>
+    </div>
+  </template>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     let vehicles = [];
@@ -1188,6 +1250,37 @@
     let pendingMaintFlow = null;
     let selectedTrackingVehicle = '';
     let tmsLoadsCache = [];
+    let serviceSearchPresetBound = false;
+    /** From GET /api/maintenance/service-types (Postgres catalog or server defaults). */
+    let catalogServiceNames = [];
+
+    /** Shown in datalist + preset dropdown so new orgs are not stuck with an empty service list before first PM row exists. */
+    const DEFAULT_MAINT_SERVICE_TYPES = [
+      'DOT inspection',
+      'Annual inspection',
+      'Oil change',
+      'PM / preventive maintenance',
+      'Brake service',
+      'Tire rotation',
+      'Tires',
+      'Wheel alignment',
+      'A/C service',
+      'Transmission service',
+      'Coolant flush',
+      'Differential service',
+      'Suspension / shocks',
+      'Lighting / electrical',
+      'Windshield / glass',
+      'Body / paint',
+      'Reefer unit service',
+      'Liftgate service',
+      'Trailer service',
+      'Repair',
+      'Road service',
+      'Tow',
+      'Registration / permits',
+      'Out of service'
+    ];
 
     const REPAIR_LOCATION_DEFS = [
       { code: 'in-house', label: 'Internal Shop' },
@@ -1777,11 +1870,17 @@
     }
 
     async function loadAll() {
-      const [dashRes, erpRes, boardRes] = await Promise.all([
+      const [dashRes, erpRes, boardRes, svcRes] = await Promise.all([
         j('/api/maintenance/dashboard'),
         j('/api/maintenance/records'),
-        j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] }))
+        j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
+        j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] }))
       ]);
+
+      catalogServiceNames =
+        svcRes && svcRes.ok && Array.isArray(svcRes.names) && svcRes.names.length
+          ? svcRes.names
+          : [...DEFAULT_MAINT_SERVICE_TYPES];
 
       vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
       dashboard = dashRes.dashboard || [];
@@ -1824,11 +1923,14 @@
       document.getElementById('unitOptions').innerHTML =
         vehicles.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
 
+      const baseSvc = catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES;
       const serviceValues = Array.from(
-        new Set([...dashboard.map(x => x.serviceType), 'Out of service'].filter(Boolean))
-      ).sort();
+        new Set([...baseSvc, ...dashboard.map(x => x.serviceType)].filter(Boolean))
+      ).sort((a, b) => a.localeCompare(b));
       document.getElementById('serviceOptions').innerHTML =
         serviceValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+      populateServiceTypePresetSelect();
+      bindServiceSearchPreset();
 
       document.getElementById('qboVendorOptions').innerHTML =
         cacheVendors().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
@@ -2125,11 +2227,14 @@
       if (services.length && !document.getElementById('serviceSearchInput').value) {
         document.getElementById('serviceSearchInput').value = services[0];
         document.getElementById('serviceTypeInput').value = services[0];
+        const preset = document.getElementById('serviceTypePresetSelect');
+        if (preset && Array.from(preset.options).some(o => o.value === services[0])) preset.value = services[0];
       }
     }
 
     function resolveServiceSearch() {
       document.getElementById('serviceTypeInput').value = document.getElementById('serviceSearchInput').value.trim();
+      syncServicePresetFromSearch();
     }
 
     function resolveRepairLocationSearch() {
@@ -2208,25 +2313,208 @@
       elId.value = match ? match.qboId : '';
     }
 
+    function populateServiceTypePresetSelect() {
+      const sel = document.getElementById('serviceTypePresetSelect');
+      if (!sel) return;
+      const fromDash = (dashboard || []).map(x => x.serviceType).filter(Boolean);
+      const base = catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES;
+      const set = new Set([
+        ...base,
+        ...fromDash,
+        'Tires',
+        'Repair',
+        'Accident Report',
+        'Custom Service'
+      ]);
+      const sorted = [...set].filter(Boolean).sort((a, b) => a.localeCompare(b));
+      const prev = sel.value;
+      sel.innerHTML =
+        '<option value="">— Pick a preset or type below —</option>' +
+        sorted.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+      if (prev && sorted.includes(prev)) sel.value = prev;
+    }
+
+    function applyServiceTypePreset() {
+      const sel = document.getElementById('serviceTypePresetSelect');
+      if (!sel) return;
+      const v = sel.value.trim();
+      if (!v) return;
+      document.getElementById('serviceSearchInput').value = v;
+      document.getElementById('serviceTypeInput').value = v;
+    }
+
+    async function addCatalogServiceType() {
+      const hint = document.getElementById('maintCatalogServiceHint');
+      const inp = document.getElementById('maintNewCatalogServiceName');
+      if (hint) hint.textContent = '';
+      const name = (inp?.value || '').trim();
+      if (!name) {
+        if (hint) hint.textContent = 'Enter a name first.';
+        return;
+      }
+      try {
+        const r = await fetch('/api/maintenance/service-types', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.statusText);
+        if (inp) inp.value = '';
+        if (hint) hint.textContent = 'Saved: ' + name + ' — refresh if list does not update.';
+        await loadAll();
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+        else alert(e.message || String(e));
+      }
+    }
+
+    function syncServicePresetFromSearch() {
+      const inp = document.getElementById('serviceSearchInput');
+      const sel = document.getElementById('serviceTypePresetSelect');
+      if (!inp || !sel) return;
+      const v = inp.value.trim();
+      if (!v) {
+        sel.value = '';
+        return;
+      }
+      const match = Array.from(sel.options).some(o => o.value === v);
+      sel.value = match ? v : '';
+    }
+
+    function bindServiceSearchPreset() {
+      if (serviceSearchPresetBound) return;
+      const inp = document.getElementById('serviceSearchInput');
+      if (!inp) return;
+      serviceSearchPresetBound = true;
+      inp.addEventListener('input', () => syncServicePresetFromSearch());
+    }
+
+    const TIRE_POSITION_CHOICES = [
+      'Steer Left',
+      'Steer Right',
+      'Drive Axle 1 Left Outer',
+      'Drive Axle 1 Left Inner',
+      'Drive Axle 1 Right Inner',
+      'Drive Axle 1 Right Outer',
+      'Drive Axle 2 Left Outer',
+      'Drive Axle 2 Left Inner',
+      'Drive Axle 2 Right Inner',
+      'Drive Axle 2 Right Outer',
+      'Trailer Axle 1 Left Outer',
+      'Trailer Axle 1 Left Inner',
+      'Trailer Axle 1 Right Inner',
+      'Trailer Axle 1 Right Outer',
+      'Trailer Axle 2 Left Outer',
+      'Trailer Axle 2 Left Inner',
+      'Trailer Axle 2 Right Inner',
+      'Trailer Axle 2 Right Outer'
+    ];
+
+    function clearTireExtraLines() {
+      const host = document.getElementById('tireExtraLinesHost');
+      if (host) host.innerHTML = '';
+    }
+
+    function addTireExtraLine() {
+      const tpl = document.getElementById('tireExtraLineTpl');
+      const host = document.getElementById('tireExtraLinesHost');
+      if (!tpl || !host) return;
+      const node = tpl.content.cloneNode(true);
+      const sel = node.querySelector('.tire-extra-pos');
+      if (sel) {
+        sel.innerHTML =
+          '<option value="">Position</option>' +
+          TIRE_POSITION_CHOICES.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+      }
+      host.appendChild(node);
+    }
+
+    function removeTireExtraLine(btn) {
+      btn.closest('.tire-extra-row')?.remove();
+    }
+
+    function collectTireLineItems() {
+      const pos = (
+        document.getElementById('tirePositionInput').value ||
+        document.getElementById('tirePositionText').value ||
+        ''
+      ).trim();
+      const brand = document.getElementById('tireBrandInput').value.trim();
+      const dot = document.getElementById('tireDotInput').value.trim();
+      const cond = (
+        document.getElementById('tireConditionValue').value ||
+        document.getElementById('tireConditionSearch').value ||
+        ''
+      ).trim();
+      const items = [];
+      if (pos || brand || dot || cond) {
+        items.push({ tirePosition: pos, tireBrand: brand, tireDot: dot, tireCondition: cond });
+      }
+      document.querySelectorAll('#tireExtraLinesHost .tire-extra-row').forEach(row => {
+        const p = (row.querySelector('.tire-extra-pos')?.value || '').trim();
+        const c = (row.querySelector('.tire-extra-cond')?.value || '').trim();
+        const b = (row.querySelector('.tire-extra-brand')?.value || '').trim();
+        const d = (row.querySelector('.tire-extra-dot')?.value || '').trim();
+        if (p || b || d || c) items.push({ tirePosition: p, tireBrand: b, tireDot: d, tireCondition: c });
+      });
+      return items;
+    }
+
+    function composeRecordNotesForSave() {
+      let n = (document.getElementById('notesInput').value || '').trim();
+      const same = (document.getElementById('recordSameCostServicesInput')?.value || '').trim();
+      if (same) {
+        n += (n ? '\n\n' : '') + 'Additional services (same invoice / visit):\n' + same;
+      }
+      const recordType = document.getElementById('recordTypeSelect').value;
+      if (recordType === 'tire') {
+        const items = collectTireLineItems();
+        if (items.length > 1) {
+          const block = items
+            .map(
+              (it, i) =>
+                `${i + 1}. ${[it.tirePosition, it.tireCondition, it.tireBrand, it.tireDot].filter(Boolean).join(' · ')}`
+            )
+            .join('\n');
+          n += (n ? '\n\n' : '') + 'Tire line items (' + items.length + ' positions, one total cost):\n' + block;
+        }
+      }
+      return n;
+    }
+
     function toggleRecordFields() {
       const type = document.getElementById('recordTypeSelect').value;
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
       document.getElementById('repairFields').classList.toggle('hidden', type !== 'repair');
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
       document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'custom');
+      const sameWrap = document.getElementById('recordSameCostServicesWrap');
+      if (sameWrap) sameWrap.classList.toggle('hidden', type === 'accident');
+      if (type !== 'tire') clearTireExtraLines();
 
+      const preset = document.getElementById('serviceTypePresetSelect');
       if (type === 'tire') {
         document.getElementById('serviceSearchInput').value = 'Tires';
         document.getElementById('serviceTypeInput').value = 'Tires';
+        if (preset) preset.value = 'Tires';
       }
       if (type === 'repair') {
         document.getElementById('serviceSearchInput').value = 'Repair';
         document.getElementById('serviceTypeInput').value = 'Repair';
+        if (preset) preset.value = 'Repair';
       }
       if (type === 'accident') {
         document.getElementById('serviceSearchInput').value = 'Accident Report';
         document.getElementById('serviceTypeInput').value = 'Accident Report';
+        if (preset) preset.value = 'Accident Report';
         applyLoadNumberSuggestion(true);
+      }
+      if (type === 'maintenance' || type === 'custom') {
+        if (preset) {
+          const cur = document.getElementById('serviceSearchInput').value.trim();
+          preset.value = cur && Array.from(preset.options).some(o => o.value === cur) ? cur : '';
+        }
       }
     }
 
@@ -2465,7 +2753,25 @@
               ${r.loadNumber ? `<div class="mini-note">Load / inv #: ${escapeHtml(r.loadNumber)}</div>` : ''}
               ${r.vendorInvoiceNumber || r.workOrderNumber ? `<div class="mini-note">Vendor inv: ${escapeHtml(r.vendorInvoiceNumber || '')} · WO: ${escapeHtml(r.workOrderNumber || '')}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
-              ${r.tirePosition || r.tirePositionText ? `<div class="mini-note">Tire position: ${escapeHtml(r.tirePosition || r.tirePositionText || '')}</div>` : ''}
+              ${
+                Array.isArray(r.tireLineItems) && r.tireLineItems.length
+                  ? `<div class="mini-note"><strong>Tire lines</strong> (${r.tireLineItems.length}):<ul style="margin:4px 0 0 16px">` +
+                    r.tireLineItems
+                      .map(
+                        t =>
+                          '<li>' +
+                          escapeHtml(
+                            [t.tirePosition, t.tireCondition, t.tireBrand, t.tireDot].filter(Boolean).join(' · ') ||
+                              '—'
+                          ) +
+                          '</li>'
+                      )
+                      .join('') +
+                    '</ul></div>'
+                  : r.tirePosition || r.tirePositionText
+                    ? `<div class="mini-note">Tire position: ${escapeHtml(r.tirePosition || r.tirePositionText || '')}</div>`
+                    : ''
+              }
               ${r.repairLocationType ? `<div class="mini-note">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
               ${r.accidentAtFault ? `<div class="mini-note">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
               ${r.qboPurchaseId ? `<div class="mini-note">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
@@ -2509,6 +2815,8 @@
     async function saveRecord() {
       if (!selectedUnit) return;
 
+      resolveServiceSearch();
+
       resolveRepairLocationSearch();
       resolveAccidentFaultSearch();
       resolveTireConditionSearch();
@@ -2519,10 +2827,17 @@
       resolveLinkedItemSearch();
 
       const recordType = document.getElementById('recordTypeSelect').value;
-      const serviceType =
+      let serviceType =
         recordType === 'custom'
           ? (document.getElementById('customServiceTypeInput').value || 'Custom Service')
-          : document.getElementById('serviceTypeInput').value;
+          : document.getElementById('serviceTypeInput').value.trim();
+      if (recordType !== 'custom' && !serviceType) {
+        alert('Choose or type the service / maintenance performed.');
+        return;
+      }
+
+      const tireLineItems = recordType === 'tire' ? collectTireLineItems() : [];
+      const composedNotes = composeRecordNotesForSave();
 
       await j('/api/maintenance/record', {
         method: 'POST',
@@ -2535,7 +2850,7 @@
           serviceMileage: document.getElementById('serviceMileageInput').value,
           vendor: document.getElementById('vendorInput').value,
           cost: document.getElementById('costInput').value,
-          notes: document.getElementById('notesInput').value,
+          notes: composedNotes,
           tireCondition: document.getElementById('tireConditionValue').value,
           tirePosition: document.getElementById('tirePositionInput').value,
           tirePositionText: document.getElementById('tirePositionText').value,
@@ -2550,7 +2865,8 @@
           repairLocationType: document.getElementById('repairLocationTypeInput').value,
           loadNumber: document.getElementById('recordLoadNumberInput').value,
           vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput').value,
-          workOrderNumber: document.getElementById('recordWorkOrderInput').value
+          workOrderNumber: document.getElementById('recordWorkOrderInput').value,
+          tireLineItems
         })
       });
 
@@ -2574,7 +2890,7 @@
               dueDate: document.getElementById('linkedDueDate').value,
               docNumber: document.getElementById('linkedDocNumber').value,
               description: serviceType,
-              memo: document.getElementById('notesInput').value,
+              memo: composedNotes,
               assetUnit: selectedUnit
             })
           });
@@ -2583,15 +2899,17 @@
 
       [
         'serviceDateInput','serviceMileageInput','vendorInput','costInput','notesInput',
-        'customServiceTypeInput','tireBrandInput','tireDotInput','installMileageInput',
+        'recordSameCostServicesInput','customServiceTypeInput','tireBrandInput','tireDotInput','installMileageInput',
         'removeMileageInput','expectedTireLifeMilesInput','accidentLocationInput',
         'accidentReportNumberInput','linkedDocNumber','linkedVendorSearch','linkedDueDate',
         'linkedPaymentMethodSearch','linkedBankAccountSearch','linkedAccountSearch','linkedItemSearch','tirePositionText','recordLoadNumberInput',
-        'recordVendorInvoiceInput','recordWorkOrderInput'
+        'recordVendorInvoiceInput','recordWorkOrderInput','maintNewCatalogServiceName'
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
+      const cHint = document.getElementById('maintCatalogServiceHint');
+      if (cHint) cHint.textContent = '';
 
       document.getElementById('tireConditionSearch').value = '';
       document.getElementById('tireConditionValue').value = '';
@@ -2614,6 +2932,9 @@
       document.getElementById('tirePositionSelect').value = '';
       document.getElementById('tirePositionInput').value = '';
       clearTireDots();
+      clearTireExtraLines();
+      const pst = document.getElementById('serviceTypePresetSelect');
+      if (pst) pst.value = '';
 
       await loadAll();
     }

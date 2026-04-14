@@ -816,7 +816,23 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
       doc.text(`Load / inv #: ${rec.loadNumber || '—'}`);
       doc.text(`Cost: ${rec.cost ?? ''}`);
       doc.moveDown();
-      doc.fontSize(10).text(rec.notes || '', { align: 'left' });
+      const tires = Array.isArray(rec.tireLineItems) ? rec.tireLineItems : [];
+      if (tires.length) {
+        doc.fontSize(10).fillColor('#000000').text('Tire line items (one invoice):');
+        tires.forEach((t, i) => {
+          const line = [
+            t.tirePosition,
+            t.tireCondition,
+            t.tireBrand,
+            t.tireDot
+          ]
+            .filter(Boolean)
+            .join('  ·  ');
+          doc.fontSize(9).text(`${i + 1}. ${line || '—'}`);
+        });
+        doc.moveDown(0.5);
+      }
+      doc.fontSize(10).fillColor('#000000').text(rec.notes || '', { align: 'left' });
       doc.moveDown();
       doc.fontSize(8).fillColor('#666666').text('IH35 Maintenance');
     });
