@@ -70,6 +70,27 @@ flowchart TB
 - **JSON ERP**: authoritative for **maintenance/service history**, **work orders**, **AP transactions** not yet fully mirrored in PG; QBO posting updates rows with `qboEntityId` / errors.
 - **Fleet identity for dispatch UI**: **Samsara** vehicles (`GET /api/tms/fleet/samsara-vehicles`) drive the Fleet tab and truck datalist priority; local `trucks` table + QBO classes remain for accounting/class mapping.
 
+## Single source of truth (practical model)
+
+QuickBooks Online is the **system of record for accounting master data and posted money** (customers, vendors, items, expense/income accounts, bank/CC accounts, classes, bills/purchases in the sync window). It is **not** a fleet telematics registry: truck identity, odometer, fuel, GPS, and driver assignments come from **Samsara** (and optionally merge with **Postgres** `trucks` / `trailers` for TMS-specific fields).
+
+| Concern | Canonical source | Sync / join |
+|--------|-------------------|-------------|
+| Physical units, live odometer/fuel, HOS, assignments | **Samsara** | `fetchTrackedFleetSnapshot()` in `server.js` — same merge for `/api/board`, `/api/maintenance/dashboard`, `/api/maintenance/dispatch-alerts` so dashboards and tabs agree on **which units exist** and **current mileage** for ERP rules. |
+| TMS load, revenue, invoice link | **Postgres** | Dispatch board + PDFs; QBO invoice id stored on load after create. |
+| Maintenance history, WO, manual mileage override, AP drafts in ERP file | **`data/maintenance.json`** | Written on save/import; QBO ids back-filled when posted. |
+| Vendor/item/account/class lists for pickers | **`erp.qboCache`** (from QBO) | `POST /api/qbo/catalog/refresh` + periodic auto-sync; all pages that show QBO pickers should refresh after connecting QBO. |
+| Posted maintenance/AP lines in QBO | **QuickBooks** | Source of truth after post; local row keeps `qboPurchaseId` / errors for reconciliation. |
+
+**Join key across systems:** use a stable **unit code** (e.g. Samsara `vehicle.name` such as `T145`) aligned with TMS **`trucks.unit_code`** / dispatch **truck assignment** and ERP keys in `currentMileage` / records. QBO **Class** names often mirror that code for invoice line classification — keep naming consistent in QBO and TMS.
+
+**Keeping UIs in sync (without one giant database yet):**
+
+1. After any mutation (save load, save maintenance record, post to QBO), **reload** the relevant API bundle the page already uses (`loadAll()` on maintenance, `loadTab()` on dispatch, etc.).
+2. Treat **`refreshedAt`** on `/api/board` and `/api/maintenance/dashboard` as the snapshot time for Samsara-backed fields; QBO catalog has its own timestamp in master sync responses.
+3. Prefer **one ERP read** per screen load where possible (`/api/maintenance/dashboard` already bundles vehicles + dashboard + records); avoid maintaining a second shadow copy of fleet data in `localStorage`.
+4. **Future consolidation:** move maintenance records + AP into Postgres with foreign keys to `trucks.id` and QBO ids as columns; keep QBO sync jobs writing through a single service layer. Until then, the split in the diagram above is intentional and workable if join keys stay strict.
+
 ## Key HTTP surfaces
 
 ### TMS (`/api/tms`)

@@ -1458,6 +1458,27 @@ app.use(pdfRouter);
 app.use('/api/documents', documentParseRouter);
 app.use('/api/integrations', integrationsRouter);
 
+/**
+ * One merge path for tracked fleet + live Samsara stats (odometer, fuel, GPS).
+ * Used by board, maintenance dashboard, and dispatch maintenance alerts so unit
+ * identity and mileage stay aligned across tabs and pages.
+ */
+async function fetchTrackedFleetSnapshot() {
+  const [vehiclesRaw, statsRows] = await Promise.all([
+    fetchVehiclesSafely(),
+    fetchVehicleStatsCurrentSafely()
+  ]);
+  const trackedVehicles = vehiclesRaw.filter(isTrackedAsset).sort(byVehicleName);
+  const enrichedVehicles = mergeVehiclesWithStats(trackedVehicles, statsRows);
+  return {
+    vehiclesRaw,
+    statsRows,
+    trackedVehicles,
+    enrichedVehicles,
+    refreshedAt: new Date().toISOString()
+  };
+}
+
 app.get('/api/board', async (_req, res) => {
   try {
     const now = new Date();
@@ -1469,22 +1490,18 @@ app.get('/api/board', async (_req, res) => {
     assignmentsUrl.searchParams.set('startTime', startTime);
     assignmentsUrl.searchParams.set('endTime', endTime);
 
-    const [vehiclesRaw, statsRows, hosAll, assignmentsRes] = await Promise.all([
-      fetchVehiclesSafely(),
-      fetchVehicleStatsCurrentSafely(),
+    const [{ enrichedVehicles, statsRows, refreshedAt }, hosAll, assignmentsRes] = await Promise.all([
+      fetchTrackedFleetSnapshot(),
       fetchAllSamsaraHosClocks(),
       fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
     ]);
-
-    const trackedVehicles = vehiclesRaw.filter(isTrackedAsset).sort(byVehicleName);
-    const enrichedVehicles = mergeVehiclesWithStats(trackedVehicles, statsRows);
 
     res.json({
       vehicles: enrichedVehicles,
       live: statsRows,
       hos: hosAll,
       assignments: assignmentsRes.data || [],
-      refreshedAt: new Date().toISOString()
+      refreshedAt
     });
   } catch (error) {
     logError('api/board', error);
@@ -1494,13 +1511,7 @@ app.get('/api/board', async (_req, res) => {
 
 app.get('/api/maintenance/dashboard', async (_req, res) => {
   try {
-    const [vehiclesRaw, statsRows] = await Promise.all([
-      fetchVehiclesSafely(),
-      fetchVehicleStatsCurrentSafely()
-    ]);
-
-    const trackedVehicles = vehiclesRaw.filter(isTrackedAsset).sort(byVehicleName);
-    const enrichedVehicles = mergeVehiclesWithStats(trackedVehicles, statsRows);
+    const { enrichedVehicles, statsRows, trackedVehicles, refreshedAt } = await fetchTrackedFleetSnapshot();
 
     const erp = readErp();
     const dashboard = buildDashboardRows(enrichedVehicles, erp);
@@ -1511,6 +1522,7 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
       tireAlerts: buildTireAlerts(erp),
       workOrders: erp.workOrders || [],
       records: erp.records || [],
+      refreshedAt,
       statsInfo: {
         vehiclesCount: trackedVehicles.length,
         statsRowsCount: statsRows.length
@@ -1525,9 +1537,7 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
 /** Compact per-unit maintenance / repair urgency for TMS dispatch truck assignment. */
 app.get('/api/maintenance/dispatch-alerts', async (_req, res) => {
   try {
-    const vehiclesRaw = await fetchVehiclesSafely();
-    const statsRows = await fetchVehicleStatsCurrentSafely();
-    const enrichedVehicles = mergeVehiclesWithStats(vehiclesRaw, statsRows).sort(byVehicleName);
+    const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
     const erp = readErp();
     const dashboardRows = buildDashboardRows(enrichedVehicles, erp);
     const byUnit = aggregateDispatchMaintenanceAlerts(dashboardRows, erp);

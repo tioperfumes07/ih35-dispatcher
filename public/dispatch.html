@@ -446,6 +446,9 @@
         <ul id="loadDocsList" style="list-style:none;padding:0;margin:0"></ul>
       </div>
       <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="docsSyncQboBtn" style="display:none" onclick="syncLoadDocsToQboFromBoard()">
+          Sync attachments to QuickBooks
+        </button>
         <button type="button" class="btn btn-ghost" onclick="closeDocsModal()">Close</button>
       </div>
     </div>
@@ -468,6 +471,8 @@
     /** @type {Array<{id:string,name:string,vin:string,licensePlate:string}>} */
     let samsaraFleet = [];
     let currentDocsLoadId = null;
+    let currentDocsLoadNumber = '';
+    let currentDocsQboInvoiceId = '';
     let driverVendorAcBound = false;
     let customerAcBound = false;
     let truckClassAcBound = false;
@@ -1074,6 +1079,8 @@
           JSON.stringify(l.id) +
           ',' +
           JSON.stringify(l.load_number || '') +
+          ',' +
+          JSON.stringify(l.qbo_invoice_id || '') +
           ')">Docs' +
           (nDocs > 0 ? ' (' + nDocs + ')' : '') +
           '</button>';
@@ -1109,6 +1116,19 @@
             '" target="_blank" rel="noopener">Trip</a>'
         );
         const pdfCell = settleLinks.join(' · ');
+        const qboCell =
+          '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">' +
+          '<button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="createQboInvoiceForLoad(' +
+          JSON.stringify(l.load_number) +
+          ')">Create in QBO</button>' +
+          (l.qbo_invoice_id
+            ? '<button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="syncLoadDocsToQboFromRow(' +
+              JSON.stringify(l.id) +
+              ',' +
+              JSON.stringify(l.load_number || '') +
+              ')">Sync QBO docs</button>'
+            : '') +
+          '</div>';
         return '<tr>' +
           '<td><strong>' + escapeHtml(l.load_number) + '</strong></td>' +
           '<td class="muted">' + escapeHtml(l.customer_wo_number || '—') + '</td>' +
@@ -1131,9 +1151,9 @@
           '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="openEditLoad(' +
           JSON.stringify(l.id) +
           ')">Edit</button></td>' +
-          '<td><button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="createQboInvoiceForLoad(' +
-          JSON.stringify(l.load_number) +
-          ')">Create in QBO</button></td>' +
+          '<td>' +
+          qboCell +
+          '</td>' +
           '</tr>';
       }).join('');
     }
@@ -1166,10 +1186,63 @@
             msg += '. ' + as.errors.length + ' file(s) failed (check Maintenance or server log).';
         }
         showMsg(msg);
+        const newInv = String(j.qboEntityId || '').trim();
+        if (
+          newInv &&
+          currentDocsLoadId &&
+          String(currentDocsLoadNumber || '') === String(loadNumber || '')
+        ) {
+          currentDocsQboInvoiceId = newInv;
+          const syncBtn = document.getElementById('docsSyncQboBtn');
+          if (syncBtn) syncBtn.style.display = 'inline-block';
+        }
         loadTab();
       } catch (e) {
         showMsg(e.message || String(e), true);
       }
+    }
+
+    async function syncLoadDocsToQbo(loadId, loadNumber) {
+      showMsg('');
+      const id = loadId != null && String(loadId).trim() ? String(loadId).trim() : '';
+      const num = loadNumber != null && String(loadNumber).trim() ? String(loadNumber).trim() : '';
+      if (!id && !num) {
+        showMsg('No load selected.', true);
+        return;
+      }
+      try {
+        const body = id ? { loadId: id } : { loadNumber: num };
+        const r = await fetch('/api/qbo/sync-load-documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.statusText);
+        let msg = 'QuickBooks attachments updated.';
+        if (typeof j.uploaded === 'number') {
+          msg = 'QBO: attached ' + j.uploaded + ' file(s)';
+          if (j.skipped) msg += ' (' + j.skipped + ' already linked)';
+          if (j.errors && j.errors.length) msg += ' · ' + j.errors.length + ' failed (see server log).';
+        }
+        showMsg(msg);
+        if (typeof refreshLoadDocsList === 'function') await refreshLoadDocsList();
+        loadTab();
+      } catch (e) {
+        showMsg(e.message || String(e), true);
+      }
+    }
+
+    async function syncLoadDocsToQboFromRow(loadId, loadNumber) {
+      await syncLoadDocsToQbo(loadId, loadNumber);
+    }
+
+    async function syncLoadDocsToQboFromBoard() {
+      if (!currentDocsLoadId) {
+        showMsg('No load in context.', true);
+        return;
+      }
+      await syncLoadDocsToQbo(currentDocsLoadId, currentDocsLoadNumber || null);
     }
 
     function escapeHtml(s) {
@@ -1303,12 +1376,16 @@
       return { qbo_driver_vendor_id: null, qbo_driver_vendor_name: typed };
     }
 
-    function openLoadDocs(loadId, loadNumber) {
+    function openLoadDocs(loadId, loadNumber, qboInvoiceId) {
       currentDocsLoadId = loadId;
+      currentDocsLoadNumber = loadNumber != null ? String(loadNumber) : '';
+      currentDocsQboInvoiceId = qboInvoiceId != null ? String(qboInvoiceId) : '';
       const title = document.getElementById('docsModalTitle');
       if (title) title.textContent = 'Documents — load ' + (loadNumber || '');
       const fe = document.getElementById('doc_file');
       if (fe) fe.value = '';
+      const syncBtn = document.getElementById('docsSyncQboBtn');
+      if (syncBtn) syncBtn.style.display = currentDocsQboInvoiceId ? 'inline-block' : 'none';
       document.getElementById('docsModalBg').classList.add('on');
       refreshLoadDocsList();
     }
@@ -1316,6 +1393,10 @@
     function closeDocsModal() {
       document.getElementById('docsModalBg').classList.remove('on');
       currentDocsLoadId = null;
+      currentDocsLoadNumber = '';
+      currentDocsQboInvoiceId = '';
+      const syncBtn = document.getElementById('docsSyncQboBtn');
+      if (syncBtn) syncBtn.style.display = 'none';
     }
 
     async function refreshLoadDocsList() {
@@ -1923,6 +2004,10 @@
         if (!r.ok) throw new Error(j.error || r.statusText || 'Parse failed');
         const p = j.parsed || {};
         if (p.loadNumber) document.getElementById('f_load_number').value = String(p.loadNumber);
+        const woEl = document.getElementById('f_customer_wo_number');
+        if (woEl && p.customerWoNumber && String(p.customerWoNumber).trim()) {
+          if (!woEl.value.trim()) woEl.value = String(p.customerWoNumber).trim();
+        }
         if (p.revenue != null && p.revenue !== '') {
           document.getElementById('f_revenue').value = String(p.revenue);
         }

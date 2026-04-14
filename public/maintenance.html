@@ -1809,8 +1809,11 @@
       renderQboMaster();
       await loadQboStatus();
 
-      const nowText = 'Last updated: ' + new Date().toLocaleTimeString();
-      document.getElementById('sidebarLastUpdated').textContent = nowText;
+      const fleetAt = dashRes.refreshedAt
+        ? new Date(dashRes.refreshedAt).toLocaleString()
+        : new Date().toLocaleString();
+      document.getElementById('sidebarLastUpdated').textContent =
+        'Fleet snapshot (Samsara): ' + fleetAt;
       applyNavHash();
       if (activeSection === 'reports') loadReportsData();
     }
