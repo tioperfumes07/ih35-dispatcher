@@ -234,7 +234,7 @@
       <div class="nav-title">Main</div>
       <button class="nav-btn active" data-section="dashboard" onclick="openSection('dashboard', this)">Dashboard</button>
       <button class="nav-btn" data-section="dispatch" onclick="openSection('dispatch', this)">Dispatch Board</button>
-      <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Fuel Board</button>
+      <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Diesel / Fuel Board</button>
       <button class="nav-btn" data-section="maintenance" onclick="openSection('maintenance', this)">Maintenance Board</button>
       <button class="nav-btn" data-section="safety" onclick="openSection('safety', this)">Safety Board</button>
       <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
@@ -263,13 +263,13 @@
 
       <section id="section-dashboard" class="section active">
         <div class="hero-grid">
-          <div class="hero-card" onclick="openSectionByName('dispatch')"><h3>Dispatch Board</h3><p>Assignments, HOS and route summary</p></div>
-          <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Fuel Board</h3><p>Dispatcher route page inside this app</p></div>
+          <div class="hero-card" onclick="openSectionByName('dispatch')"><h3>Dispatch Board</h3><p>(Paused) Requires TMS DB</p></div>
+          <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Diesel / Fuel Board</h3><p>Fuel planning + diesel management</p></div>
           <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Mileage, service planning, records and imports</p></div>
           <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety Board</h3><p>Samsara HOS, drivers, assignments</p></div>
           <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Map + assets (Samsara)</p></div>
           <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Expenses, bills, QuickBooks</p></div>
-          <div class="hero-card" onclick="openSectionByName('reports')"><h3>Reports Board</h3><p>TMS, maintenance, QBO sync &amp; activity</p></div>
+          <div class="hero-card" onclick="openSectionByName('reports')"><h3>Reports Board</h3><p>Maintenance, safety, QBO sync &amp; activity</p></div>
         </div>
 
         <div class="grid grid-4">
@@ -321,6 +321,7 @@
           <button type="button" class="subtab" onclick="openSafetyTab('safe-active', this)">Active / in service</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-assign', this)">Assignments</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-fleet', this)">Fleet snapshot</button>
+          <button type="button" class="subtab" onclick="openSafetyTab('safe-files', this)">Driver files</button>
         </div>
         <div id="safe-hos" class="tracking-sub">
           <p class="mini-note" style="margin:0 0 10px">Samsara HOS clocks: <strong>on duty, driving, sleeper berth, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle is hidden. Off duty <strong>with</strong> a vehicle is shown. Token needs <strong>Read ELD Compliance Settings (US)</strong>.</p>
@@ -415,6 +416,38 @@
         <div id="safe-fleet" class="tracking-sub hidden">
           <p class="mini-note" style="margin:0 0 10px">Tracked fleet counts (same filter as Maintenance / Fuel).</p>
           <div id="safetyFleetSummary" class="mini-note">—</div>
+        </div>
+        <div id="safe-files" class="tracking-sub hidden">
+          <p class="mini-note" style="margin:0 0 10px">
+            Driver compliance file basics (local to this app): CDL, med card, drug test, hire date, notes. This is intentionally separate from QuickBooks vendor PII.
+          </p>
+          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+            <input id="driverFilesSearch" class="in" style="max-width:280px" placeholder="Search driver…" oninput="renderDriverFiles()" />
+            <label class="mini-note" for="driverFilesUrgentOnly" style="margin:0">Show</label>
+            <select id="driverFilesUrgentOnly" class="in" style="max-width:220px" onchange="renderDriverFiles()">
+              <option value="all">All drivers</option>
+              <option value="dueSoon">Due soon / expired</option>
+              <option value="missing">Missing key dates</option>
+            </select>
+            <span class="mini-note" id="driverFilesMeta"></span>
+          </div>
+          <div class="safety-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>CDL #</th>
+                  <th>CDL exp</th>
+                  <th>Med exp</th>
+                  <th>Drug exp</th>
+                  <th>Hire</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="driverFilesBody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -1324,6 +1357,7 @@
     let selectedTrackingVehicle = '';
     let tmsLoadsCache = [];
     let tmsEnabled = false;
+    let driverProfiles = [];
     let serviceSearchPresetBound = false;
     let maintCostLinesDelegationBound = false;
     /** From GET /api/maintenance/service-types (Postgres catalog or server defaults). */
@@ -1992,12 +2026,13 @@
     }
 
     async function loadAll() {
-      const [dashRes, erpRes, boardRes, svcRes, dbRes] = await Promise.all([
+      const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes] = await Promise.all([
         j('/api/maintenance/dashboard'),
         j('/api/maintenance/records'),
         j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
         j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
-        detectTmsEnabled()
+        detectTmsEnabled(),
+        j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] }))
       ]);
       setTmsUiEnabled(!!dbRes);
 
@@ -2011,6 +2046,7 @@
       tireAlerts = dashRes.tireAlerts || [];
       erp = erpRes || {};
       board = boardRes || {};
+      driverProfiles = Array.isArray(drvRes?.drivers) ? drvRes.drivers : [];
 
       if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
       if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
@@ -3700,6 +3736,7 @@
       renderSafetyAssignments();
       renderSafetyFleet();
       renderSafetyActivePanels();
+      renderDriverFiles();
     }
 
     function openSafetyTab(id, btn) {
@@ -3709,6 +3746,114 @@
       if (target) target.classList.remove('hidden');
       if (btn) btn.classList.add('active');
       if (id === 'safe-active') renderSafetyActivePanels();
+      if (id === 'safe-files') renderDriverFiles();
+    }
+
+    function dateDaysFromNow(iso) {
+      if (!iso) return null;
+      const t = Date.parse(String(iso).slice(0, 10));
+      if (!Number.isFinite(t)) return null;
+      const days = Math.round((t - Date.now()) / (24 * 3600 * 1000));
+      return days;
+    }
+
+    function complianceBadge(iso) {
+      const d = dateDaysFromNow(iso);
+      if (d == null) return { cls: 'mini-note', label: iso || '—', urgent: false, missing: true };
+      if (d < 0) return { cls: 'status status-past', label: `${iso} (expired)`, urgent: true, missing: false };
+      if (d <= 30) return { cls: 'status status-soon', label: `${iso} (${d}d)`, urgent: true, missing: false };
+      return { cls: 'mini-note', label: iso, urgent: false, missing: false };
+    }
+
+    function driverNameFromHosRow(r) {
+      const d = normalizeHosClock(r);
+      return String(d.driver || '').trim();
+    }
+
+    function mergeDriversForFiles() {
+      const byKey = new Map();
+      // From Samsara HOS (current data)
+      (board.hos || []).forEach(r => {
+        const name = driverNameFromHosRow(r);
+        if (!name) return;
+        const k = name.toLowerCase();
+        if (!byKey.has(k)) byKey.set(k, { name });
+      });
+      // From saved profiles
+      (driverProfiles || []).forEach(p => {
+        const name = String(p?.name || '').trim();
+        if (!name) return;
+        const k = name.toLowerCase();
+        const cur = byKey.get(k) || { name };
+        byKey.set(k, { ...cur, ...p, name });
+      });
+      return [...byKey.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    }
+
+    async function saveDriverProfileFromRow(tr) {
+      const name = tr.querySelector('.df-name')?.textContent?.trim() || '';
+      const payload = {
+        name,
+        cdlNumber: tr.querySelector('.df-cdl')?.value || '',
+        cdlExpiry: tr.querySelector('.df-cdl-exp')?.value || '',
+        medCertExpiry: tr.querySelector('.df-med-exp')?.value || '',
+        drugTestExpiry: tr.querySelector('.df-drug-exp')?.value || '',
+        hireDate: tr.querySelector('.df-hire')?.value || '',
+        notes: tr.querySelector('.df-notes')?.value || ''
+      };
+      const btn = tr.querySelector('.df-save');
+      if (btn) btn.disabled = true;
+      try {
+        const r = await j('/api/safety/driver-profiles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        driverProfiles = Array.isArray(r?.drivers) ? r.drivers : driverProfiles;
+        renderDriverFiles();
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function renderDriverFiles() {
+      const tb = document.getElementById('driverFilesBody');
+      if (!tb) return;
+      const q = (document.getElementById('driverFilesSearch')?.value || '').trim().toLowerCase();
+      const mode = document.getElementById('driverFilesUrgentOnly')?.value || 'all';
+      const rows = mergeDriversForFiles().filter(d => !q || String(d.name || '').toLowerCase().includes(q));
+      const filtered = rows.filter(d => {
+        const cdl = complianceBadge(d.cdlExpiry);
+        const med = complianceBadge(d.medCertExpiry);
+        const drug = complianceBadge(d.drugTestExpiry);
+        const urgent = cdl.urgent || med.urgent || drug.urgent;
+        const missing = cdl.missing || med.missing;
+        if (mode === 'dueSoon') return urgent;
+        if (mode === 'missing') return missing;
+        return true;
+      });
+      const meta = document.getElementById('driverFilesMeta');
+      if (meta) meta.textContent = `${filtered.length} shown · ${rows.length} total`;
+
+      tb.innerHTML =
+        filtered
+          .map(d => {
+            const cdl = complianceBadge(d.cdlExpiry);
+            const med = complianceBadge(d.medCertExpiry);
+            const drug = complianceBadge(d.drugTestExpiry);
+            const hire = String(d.hireDate || '').slice(0, 10);
+            return `<tr>
+              <td class="df-name">${escapeHtml(d.name || '')}</td>
+              <td><input class="qb-in maint-field df-cdl" placeholder="CDL #" value="${escapeHtml(d.cdlNumber || '')}"></td>
+              <td><input class="qb-in df-cdl-exp" type="date" value="${escapeHtml(String(d.cdlExpiry || '').slice(0,10))}"><div class="${cdl.cls}">${escapeHtml(cdl.label)}</div></td>
+              <td><input class="qb-in df-med-exp" type="date" value="${escapeHtml(String(d.medCertExpiry || '').slice(0,10))}"><div class="${med.cls}">${escapeHtml(med.label)}</div></td>
+              <td><input class="qb-in df-drug-exp" type="date" value="${escapeHtml(String(d.drugTestExpiry || '').slice(0,10))}"><div class="${drug.cls}">${escapeHtml(drug.label)}</div></td>
+              <td><input class="qb-in df-hire" type="date" value="${escapeHtml(hire)}"></td>
+              <td><input class="qb-in maint-field df-notes" placeholder="Notes" value="${escapeHtml(String(d.notes || '').slice(0, 240))}"></td>
+              <td><button type="button" class="qb-btn-add df-save" onclick="saveDriverProfileFromRow(this.closest('tr'))">Save</button></td>
+            </tr>`;
+          })
+          .join('') || '<tr><td colspan="8" class="mini-note">No drivers found (load Samsara board, or add a driver by typing their name in Samsara / HOS).</td></tr>';
     }
 
     function renderTrackingAssetsTable() {
@@ -4263,55 +4408,30 @@
     }
 
     function downloadExpenseTransactionsCsv() {
+      // Prefer server export (handles large datasets and includes more fields).
+      try {
+        window.location.href = '/api/reports/export/ap-transactions.csv';
+        return;
+      } catch (_) {}
       const rows = [['Txn Type','Doc Number','Date','Due Date','Vendor QBO ID','Amount','Description','Unit','QBO Entity Type','QBO Entity ID','Status']];
       (erp.apTransactions || []).forEach(r => {
         rows.push([r.txnType, r.docNumber, r.txnDate, r.dueDate, r.qboVendorId, r.amount, r.description, r.assetUnit, r.qboEntityType, r.qboEntityId, r.qboSyncStatus]);
       });
-      downloadCsv(`maintenance_expense_transactions.csv`, rows);
+      downloadCsv(`ap-transactions.csv`, rows);
     }
 
     function downloadWorkOrdersCsv() {
-      const rows = [
-        [
-          'WO ID',
-          'Txn type',
-          'Unit',
-          'Load / inv (settlement)',
-          'Vendor invoice #',
-          'Shop / internal WO #',
-          'Vendor QBO ID',
-          'Service date',
-          'Due date',
-          'Repair location',
-          'Line count',
-          'Total amount',
-          'QB status',
-          'QB type',
-          'QB ID'
-        ]
-      ];
+      try {
+        window.location.href = '/api/reports/export/work-orders.csv';
+        return;
+      } catch (_) {}
+      const rows = [['WO ID','Txn type','Unit','Load / inv (settlement)','Vendor invoice #','Shop / internal WO #','Vendor QBO ID','Service date','Due date','Repair location','Line count','Total amount','QB status','QB type','QB ID']];
       (erp.workOrders || []).forEach(wo => {
         const lines = wo.lines || [];
         const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
-        rows.push([
-          wo.id,
-          wo.txnType,
-          wo.unit,
-          wo.loadNumber || '',
-          wo.vendorInvoiceNumber || '',
-          wo.internalWorkOrderNumber || '',
-          wo.qboVendorId,
-          wo.serviceDate || '',
-          wo.dueDate || '',
-          wo.repairLocationType || '',
-          lines.length,
-          Math.round(total * 100) / 100,
-          wo.qboSyncStatus || '',
-          wo.qboEntityType || '',
-          wo.qboEntityId || ''
-        ]);
+        rows.push([wo.id, wo.txnType, wo.unit, wo.loadNumber || '', wo.vendorInvoiceNumber || '', wo.internalWorkOrderNumber || '', wo.qboVendorId, wo.serviceDate || '', wo.dueDate || '', wo.repairLocationType || '', lines.length, Math.round(total * 100) / 100, wo.qboSyncStatus || '', wo.qboEntityType || '', wo.qboEntityId || '']);
       });
-      downloadCsv(`maintenance_work_orders.csv`, rows);
+      downloadCsv(`work-orders.csv`, rows);
     }
 
     loadErpSidebarPreference();

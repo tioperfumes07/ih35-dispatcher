@@ -99,6 +99,8 @@ function defaultErpData() {
     records: [],
     workOrders: [],
     apTransactions: [],
+    driverProfiles: [],
+    fuelPurchases: [],
     paymentMethods: [
       { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
       { id: 'pm_check', name: 'Check', qboType: 'Check' },
@@ -144,6 +146,8 @@ function ensureErpFile() {
   }
   if (!Array.isArray(merged.workOrders)) merged.workOrders = [];
   if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
+  if (!Array.isArray(merged.driverProfiles)) merged.driverProfiles = [];
+  if (!Array.isArray(merged.fuelPurchases)) merged.fuelPurchases = [];
   if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
   if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
   if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
@@ -183,6 +187,68 @@ function readQbo() {
 function writeQbo(data) {
   ensureQboFile();
   fs.writeFileSync(QBO_FILE, JSON.stringify(data, null, 2));
+}
+
+function sliceIsoDate(v) {
+  const s = String(v || '').trim();
+  if (!s) return '';
+  // allow YYYY-MM-DD or full ISO.
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : '';
+}
+
+function sanitizeDriverProfile(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const name = String(raw.name || '').trim().slice(0, 120);
+  if (!name) return null;
+  const samsaraDriverId = String(raw.samsaraDriverId || '').trim().slice(0, 64);
+  const cdlNumber = String(raw.cdlNumber || '').trim().slice(0, 64);
+  const cdlState = String(raw.cdlState || '').trim().slice(0, 16);
+  const cdlExpiry = sliceIsoDate(raw.cdlExpiry);
+  const medCertExpiry = sliceIsoDate(raw.medCertExpiry);
+  const drugTestExpiry = sliceIsoDate(raw.drugTestExpiry);
+  const hireDate = sliceIsoDate(raw.hireDate);
+  const notes = String(raw.notes || '').trim().slice(0, 5000);
+  const out = { name };
+  if (samsaraDriverId) out.samsaraDriverId = samsaraDriverId;
+  if (cdlNumber) out.cdlNumber = cdlNumber;
+  if (cdlState) out.cdlState = cdlState;
+  if (cdlExpiry) out.cdlExpiry = cdlExpiry;
+  if (medCertExpiry) out.medCertExpiry = medCertExpiry;
+  if (drugTestExpiry) out.drugTestExpiry = drugTestExpiry;
+  if (hireDate) out.hireDate = hireDate;
+  if (notes) out.notes = notes;
+  return out;
+}
+
+function sanitizeFuelPurchase(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const unit = sanitizeName(raw.unit || raw.assetUnit || raw.vehicle || raw.truck || '', '');
+  if (!unit) return null;
+  const txnDate = sliceIsoDate(raw.txnDate || raw.date || raw.purchaseDate || '');
+  const gallons = safeNum(raw.gallons ?? raw.qty ?? raw.quantity ?? raw.gal, null);
+  const price = safeNum(raw.pricePerGallon ?? raw.price ?? raw.ppg, null);
+  let total = safeNum(raw.totalCost ?? raw.amount ?? raw.cost ?? raw.total, null);
+  const vendor = String(raw.vendor || raw.merchant || raw.station || '').trim().slice(0, 120);
+  const locationText = String(raw.location || raw.cityState || '').trim().slice(0, 180);
+  const odometerMiles = safeNum(raw.odometerMiles ?? raw.odometer ?? raw.miles, null);
+
+  if (gallons != null && gallons > 0 && price != null && price > 0 && (total == null || !(total > 0))) {
+    total = Math.round(gallons * price * 100) / 100;
+  }
+  if (!(gallons != null && gallons > 0) && !(total != null && total > 0)) return null;
+
+  const out = {
+    unit,
+    txnDate: txnDate || '',
+    gallons: gallons != null ? Math.round(gallons * 1000) / 1000 : null,
+    pricePerGallon: price != null ? Math.round(price * 1000) / 1000 : null,
+    totalCost: total != null ? Math.round(total * 100) / 100 : null
+  };
+  if (vendor) out.vendor = vendor;
+  if (locationText) out.location = locationText;
+  if (odometerMiles != null && Number.isFinite(odometerMiles) && odometerMiles > 0) out.odometerMiles = Math.round(odometerMiles);
+  return out;
 }
 
 async function fetchJson(url, options = {}) {
@@ -1640,6 +1706,65 @@ app.get('/api/maintenance/records', (_req, res) => {
   res.json(readErp());
 });
 
+app.get('/api/safety/driver-profiles', (_req, res) => {
+  const erp = readErp();
+  res.json({ ok: true, drivers: erp.driverProfiles || [] });
+});
+
+app.post('/api/safety/driver-profiles', (req, res) => {
+  try {
+    const body = req.body || {};
+    const profile = sanitizeDriverProfile(body);
+    if (!profile) return res.status(400).json({ ok: false, error: 'driver name is required' });
+
+    const erp = readErp();
+    if (!Array.isArray(erp.driverProfiles)) erp.driverProfiles = [];
+    const key = String(profile.samsaraDriverId || '').trim();
+    const nameKey = profile.name.toLowerCase();
+    const idx = erp.driverProfiles.findIndex(d => {
+      if (!d || typeof d !== 'object') return false;
+      const did = String(d.samsaraDriverId || '').trim();
+      if (key && did && did === key) return true;
+      const dn = String(d.name || '').trim().toLowerCase();
+      return dn && dn === nameKey;
+    });
+    const now = new Date().toISOString();
+    if (idx >= 0) {
+      erp.driverProfiles[idx] = { ...erp.driverProfiles[idx], ...profile, updatedAt: now };
+    } else {
+      erp.driverProfiles.push({ id: uid('drv'), ...profile, createdAt: now, updatedAt: now });
+    }
+    writeErp(erp);
+    res.json({ ok: true, drivers: erp.driverProfiles });
+  } catch (error) {
+    logError('api/safety/driver-profiles POST', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/fuel/purchases', (_req, res) => {
+  const erp = readErp();
+  res.json({ ok: true, purchases: erp.fuelPurchases || [] });
+});
+
+app.post('/api/fuel/purchases', (req, res) => {
+  try {
+    const body = req.body || {};
+    const p = sanitizeFuelPurchase(body);
+    if (!p) return res.status(400).json({ ok: false, error: 'unit + gallons (or total) is required' });
+    const erp = readErp();
+    if (!Array.isArray(erp.fuelPurchases)) erp.fuelPurchases = [];
+    const now = new Date().toISOString();
+    const row = { id: uid('fuel'), ...p, createdAt: now };
+    erp.fuelPurchases.push(row);
+    writeErp(erp);
+    res.json({ ok: true, purchase: row, purchases: erp.fuelPurchases });
+  } catch (error) {
+    logError('api/fuel/purchases POST', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.get('/api/maintenance/service-types', async (_req, res) => {
   try {
     if (!getPool()) {
@@ -2255,6 +2380,149 @@ app.get('/api/reports/export/maintenance-by-unit.csv', (_req, res) => {
     res.send(lines.join('\n'));
   } catch (error) {
     logError('api/reports/export/maintenance-by-unit', error);
+    res.status(500).send(error.message);
+  }
+});
+
+app.get('/api/reports/export/work-orders.csv', (_req, res) => {
+  try {
+    const erp = readErp();
+    const header = [
+      'wo_id',
+      'txn_type',
+      'unit',
+      'asset_category',
+      'service_date',
+      'due_date',
+      'load_number',
+      'vendor_invoice_number',
+      'internal_work_order_number',
+      'vendor',
+      'qbo_vendor_id',
+      'payment_method_id',
+      'qbo_bank_account_id',
+      'repair_location_type',
+      'line_count',
+      'total_amount',
+      'lines_summary',
+      'qbo_status',
+      'qbo_entity_type',
+      'qbo_entity_id',
+      'qbo_posted_at',
+      'qbo_error',
+      'created_at'
+    ];
+    const lines = [header.join(',')];
+    for (const wo of erp.workOrders || []) {
+      const rows = Array.isArray(wo.lines) ? wo.lines : [];
+      const total = Math.round(rows.reduce((s, l) => s + (safeNum(l.amount, 0) || 0), 0) * 100) / 100;
+      const summary = rows
+        .map(l => {
+          const dm = String(l.detailMode || '').trim() || 'category';
+          const ref = dm === 'item' ? String(l.qboItemId || '').trim() : String(l.qboAccountId || '').trim();
+          const svc = String(l.serviceType || l.lineType || 'Line').trim();
+          const amt = safeNum(l.amount, 0) || 0;
+          return `${svc} $${amt.toFixed(2)} ${dm}${ref ? `(${ref})` : ''}`;
+        })
+        .join(' | ');
+      lines.push(
+        [
+          csvEscape(wo.id),
+          csvEscape(wo.txnType || ''),
+          csvEscape(wo.unit || ''),
+          csvEscape(wo.assetCategory || ''),
+          csvEscape(wo.serviceDate || ''),
+          csvEscape(wo.dueDate || ''),
+          csvEscape(wo.loadNumber || ''),
+          csvEscape(wo.vendorInvoiceNumber || ''),
+          csvEscape(wo.internalWorkOrderNumber || ''),
+          csvEscape(wo.vendor || ''),
+          csvEscape(wo.qboVendorId || ''),
+          csvEscape(wo.paymentMethodId || ''),
+          csvEscape(wo.qboBankAccountId || ''),
+          csvEscape(wo.repairLocationType || ''),
+          String(rows.length),
+          String(total.toFixed(2)),
+          csvEscape(summary),
+          csvEscape(wo.qboSyncStatus || ''),
+          csvEscape(wo.qboEntityType || ''),
+          csvEscape(wo.qboEntityId || ''),
+          csvEscape(wo.qboPostedAt || ''),
+          csvEscape(wo.qboError || ''),
+          csvEscape(wo.createdAt || '')
+        ].join(',')
+      );
+    }
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="work-orders.csv"');
+    res.send(lines.join('\n'));
+  } catch (error) {
+    logError('api/reports/export/work-orders', error);
+    res.status(500).send(error.message);
+  }
+});
+
+app.get('/api/reports/export/ap-transactions.csv', (_req, res) => {
+  try {
+    const erp = readErp();
+    const header = [
+      'ap_id',
+      'txn_type',
+      'detail_mode',
+      'txn_date',
+      'due_date',
+      'doc_number',
+      'vendor_qbo_id',
+      'payment_method_id',
+      'qbo_bank_account_id',
+      'qbo_account_id',
+      'qbo_item_id',
+      'qty',
+      'amount',
+      'description',
+      'memo',
+      'asset_unit',
+      'qbo_status',
+      'qbo_entity_type',
+      'qbo_entity_id',
+      'qbo_posted_at',
+      'qbo_error',
+      'created_at'
+    ];
+    const lines = [header.join(',')];
+    for (const ap of erp.apTransactions || []) {
+      lines.push(
+        [
+          csvEscape(ap.id),
+          csvEscape(ap.txnType || ''),
+          csvEscape(ap.detailMode || ''),
+          csvEscape(ap.txnDate || ''),
+          csvEscape(ap.dueDate || ''),
+          csvEscape(ap.docNumber || ''),
+          csvEscape(ap.qboVendorId || ''),
+          csvEscape(ap.paymentMethodId || ''),
+          csvEscape(ap.qboBankAccountId || ''),
+          csvEscape(ap.qboAccountId || ''),
+          csvEscape(ap.qboItemId || ''),
+          String(safeNum(ap.qty, 1) || 1),
+          String((safeNum(ap.amount, 0) || 0).toFixed(2)),
+          csvEscape(ap.description || ''),
+          csvEscape(ap.memo || ''),
+          csvEscape(ap.assetUnit || ''),
+          csvEscape(ap.qboSyncStatus || ''),
+          csvEscape(ap.qboEntityType || ''),
+          csvEscape(ap.qboEntityId || ''),
+          csvEscape(ap.qboPostedAt || ''),
+          csvEscape(ap.qboError || ''),
+          csvEscape(ap.createdAt || '')
+        ].join(',')
+      );
+    }
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="ap-transactions.csv"');
+    res.send(lines.join('\n'));
+  } catch (error) {
+    logError('api/reports/export/ap-transactions', error);
     res.status(500).send(error.message);
   }
 });
@@ -2992,6 +3260,54 @@ app.get('/api/route', async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
+app.post('/api/import/fuel', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+    const erp = readErp();
+    if (!Array.isArray(erp.fuelPurchases)) erp.fuelPurchases = [];
+    let imported = 0;
+
+    for (const rawRow of rows) {
+      const row = lowerKeyMap(rawRow);
+      const unit = sanitizeName(firstValue(row, ['unit', 'truck', 'vehicle', 'asset', 'unit number']), '');
+      if (!unit) continue;
+
+      const gallons = safeNum(firstValue(row, ['gallons', 'gal', 'qty', 'quantity', 'fuel gallons']), null);
+      const total = safeNum(firstValue(row, ['total', 'amount', 'cost', 'total cost', 'total amount']), null);
+      const price = safeNum(firstValue(row, ['price', 'ppg', 'price/gal', 'price per gallon']), null);
+      const odom = safeNum(firstValue(row, ['odometer', 'mileage', 'odometer miles']), null);
+      const txnDate = firstValue(row, ['date', 'txn date', 'purchase date', 'transaction date']) || '';
+      const vendor = firstValue(row, ['vendor', 'merchant', 'station']) || '';
+      const locationText = firstValue(row, ['location', 'city', 'city/state', 'city state']) || '';
+
+      const p = sanitizeFuelPurchase({
+        unit,
+        txnDate,
+        gallons,
+        totalCost: total,
+        pricePerGallon: price,
+        odometerMiles: odom,
+        vendor,
+        location: locationText
+      });
+      if (!p) continue;
+      erp.fuelPurchases.push({ id: uid('imp_fuel'), ...p, createdAt: new Date().toISOString() });
+      imported++;
+    }
+
+    writeErp(erp);
+    res.json({ ok: true, imported });
+  } catch (error) {
+    logError('api/import/fuel', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

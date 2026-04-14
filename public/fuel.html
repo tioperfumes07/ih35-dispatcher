@@ -170,6 +170,40 @@
       <h2>Selected Unit</h2>
       <div class="panel-body">
         <div id="selectedDetail">Select a unit from the fleet list.</div>
+      <div class="section-title">Diesel purchases (ledger)</div>
+      <div class="small" style="margin-bottom:8px">
+        Save fuel buys with odometer snapshot to compute MPG between purchases and flag anomalies.
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:10px">
+        <div>
+          <div class="small">Date</div>
+          <input id="fuelTxnDate" type="date">
+        </div>
+        <div>
+          <div class="small">Gallons</div>
+          <input id="fuelGallons" placeholder="0.0">
+        </div>
+        <div>
+          <div class="small">$/gal</div>
+          <input id="fuelPpg" placeholder="0.000">
+        </div>
+        <div>
+          <div class="small">Total $</div>
+          <input id="fuelTotal" placeholder="0.00">
+        </div>
+        <div style="flex:1;min-width:180px">
+          <div class="small">Vendor / station</div>
+          <input id="fuelVendor" placeholder="Love's / Pilot / TA…">
+        </div>
+        <button onclick="saveFuelPurchase()">Save purchase</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+        <input id="fuelImportFile" type="file" accept=".csv,.xlsx,.xls">
+        <button onclick="uploadFuelFile()">Import fuel CSV/Excel</button>
+        <button onclick="exportFuelCsv()">Export fuel CSV</button>
+        <span id="fuelLedgerMeta" class="small"></span>
+      </div>
+      <div id="fuelLedger" class="small">No fuel purchases yet.</div>
         <div class="section-title">Recommended Stops</div>
         <div id="recommendedStops">No recommendations yet.</div>
       </div>
@@ -184,11 +218,13 @@
     const SHIFT_TARGET_MILES = 750;
     const DEFAULT_PLANNING_MPG = 6.5;
     const PERSONAL_CONVEYANCE_MILES = 45;
+    const DEFAULT_AVG_SPEED_MPH = 55;
 
     let boardRows = [];
     let csvStops = [];
     let selectedUnit = null;
     let map, unitsLayer, stopsLayer, routeLayer, selectedLayer;
+    let fuelPurchases = [];
 
     function initMap() {
       if (map) return;
@@ -260,6 +296,32 @@
     function msToHours(ms) {
       const n = safeNum(ms);
       return Number.isFinite(n) ? n / 1000 / 3600 : null;
+    }
+
+    function minNonNull(...vals) {
+      const xs = vals.filter(v => v != null && Number.isFinite(v) && v >= 0);
+      if (!xs.length) return null;
+      return Math.min(...xs);
+    }
+
+    function avgSpeedMphForRoute(routeData) {
+      if (!routeData || !Number.isFinite(routeData.tripMiles) || !Number.isFinite(routeData.etaHours) || routeData.etaHours <= 0) {
+        return DEFAULT_AVG_SPEED_MPH;
+      }
+      const raw = routeData.tripMiles / routeData.etaHours;
+      // Keep it realistic for long-haul planning.
+      return Math.max(42, Math.min(65, raw));
+    }
+
+    function hosDriveHoursAvailable(row) {
+      // Hard cap by whichever clock runs out first.
+      return minNonNull(row.driveRemaining, row.shiftRemaining, row.cycleRemaining);
+    }
+
+    function hosDriveMilesAvailable(row, routeData = null) {
+      const hrs = hosDriveHoursAvailable(row);
+      if (hrs == null) return null;
+      return hrs * avgSpeedMphForRoute(routeData);
     }
 
     async function j(url) {
@@ -396,6 +458,7 @@
           const id = String(v.id);
           const unit = String(v.name);
           const liveRow = statsByVehicleId[id] || {};
+          const odometerMiles = safeNum(v.odometerMiles, null);
 
           const fuelPercent = safeNum(liveRow.fuelPercent, 50);
           const gallons = tank(unit) * (fuelPercent / 100);
@@ -436,6 +499,7 @@
             milesDrivenShift: hosRow.milesDrivenShift ?? null,
             actualMpg,
             planningMpg,
+            odometerMiles,
             totalReach,
             reserveReach,
             status,
@@ -465,6 +529,12 @@
       initMap();
       const payload = await j('/api/board');
       boardRows = buildBoardRows(payload);
+      try {
+        const fp = await j('/api/fuel/purchases');
+        fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
+      } catch {
+        fuelPurchases = [];
+      }
       if (!selectedUnit && boardRows.length) selectedUnit = boardRows[0].unit;
       if (selectedUnit && !boardRows.find(x => x.unit === selectedUnit) && boardRows.length) {
         selectedUnit = boardRows[0].unit;
@@ -472,6 +542,7 @@
       renderFleet();
       renderMap();
       renderSelectedDetail();
+      renderFuelLedger();
       document.getElementById('lastUpdated').textContent =
         'Last updated: ' + new Date(payload.refreshedAt || Date.now()).toLocaleTimeString();
     }
@@ -520,6 +591,7 @@
       renderFleet();
       renderMap();
       renderSelectedDetail();
+      renderFuelLedger();
     }
 
     function renderMap(routeCoords = [], recommended = [], visibleStops = []) {
@@ -602,6 +674,14 @@
         return { action: 'STOP NOW', reason: 'Drive remaining is under 2 hours' };
       }
 
+      if (row.shiftRemaining != null && row.shiftRemaining < 2) {
+        return { action: 'STOP SOON', reason: 'Shift remaining is under 2 hours' };
+      }
+
+      if (row.cycleRemaining != null && row.cycleRemaining < 3) {
+        return { action: 'PLAN RESET', reason: 'Cycle remaining is low (reset planning)' };
+      }
+
       if (row.timeUntilBreak != null && row.timeUntilBreak <= 1.5) {
         if (row.status.text === 'FUEL NOW' || row.status.text === 'FUEL FOR SHIFT') {
           return { action: 'FUEL AT BREAK', reason: 'Break is due soon and fuel is needed' };
@@ -628,6 +708,9 @@
       }
 
       const decision = decisionSummary(row);
+      const hosHrs = hosDriveHoursAvailable(row);
+      const mph = avgSpeedMphForRoute(routeData);
+      const hosMiles = hosDriveMilesAvailable(row, routeData);
 
       document.getElementById('selectedDetail').innerHTML = `
         <div class="detail-grid">
@@ -639,17 +722,174 @@
           <div class="detail-card"><div class="label">Time Until Break</div><div>${fmtHours(row.timeUntilBreak)}</div></div>
           <div class="detail-card"><div class="label">Drive Remaining</div><div>${fmtHours(row.driveRemaining)}</div></div>
           <div class="detail-card"><div class="label">Shift Remaining</div><div>${fmtHours(row.shiftRemaining)}</div></div>
-          <div class="detail-card"><div class="label">Cycle Remaining</div><div>${fmtHours(row.cycleRemaining)}</div></div>
+          <div class="detail-card"><div class="label">Cycle Remaining (before reset)</div><div>${fmtHours(row.cycleRemaining)}</div></div>
+          <div class="detail-card"><div class="label">Drivable before limits (min clock)</div><div>${fmtHours(hosHrs)}</div></div>
+          <div class="detail-card"><div class="label">Drivable miles (est.)</div><div>${fmtMiles(hosMiles)}</div></div>
           <div class="detail-card"><div class="label">Current Fuel</div><div>${fmtPct(row.fuelPercent)} (${fmtGallons(row.gallonsLeft)})</div></div>
+          <div class="detail-card"><div class="label">Odometer (Samsara)</div><div>${row.odometerMiles != null ? Number(row.odometerMiles).toLocaleString() + ' mi' : 'N/A'}</div></div>
           <div class="detail-card"><div class="label">Miles Driven in Current Shift</div><div>${fmtMiles(row.milesDrivenShift)}</div></div>
           <div class="detail-card"><div class="label">Actual MPG</div><div>${Number.isFinite(row.actualMpg) ? row.actualMpg.toFixed(1) : 'N/A'}</div></div>
           <div class="detail-card"><div class="label">Planning MPG</div><div>${row.planningMpg.toFixed(1)}</div></div>
           <div class="detail-card"><div class="label">Total Reach</div><div>${fmtMiles(row.totalReach)}</div></div>
           <div class="detail-card"><div class="label">Reach Before Reserve</div><div>${fmtMiles(row.reserveReach)}</div></div>
+          <div class="detail-card"><div class="label">Avg speed assumption</div><div>${mph.toFixed(0)} mph</div></div>
           <div class="detail-card detail-wide"><div class="label">Dispatcher Action</div><div><b>${decision.action}</b> — ${decision.reason}</div></div>
           <div class="detail-card detail-wide"><div class="label">Approx ETA</div><div>${routeData ? fmtEta(routeData.etaHours) : 'N/A'}</div></div>
         </div>
       `;
+    }
+
+    function parseNumInput(id) {
+      const v = document.getElementById(id)?.value;
+      const n = v === '' || v == null ? NaN : Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function fmtMoney(v) {
+      return Number.isFinite(v) ? `$${v.toFixed(2)}` : '—';
+    }
+
+    function unitPurchases(unit) {
+      return (fuelPurchases || [])
+        .filter(p => String(p.unit || '') === String(unit || ''))
+        .slice()
+        .sort((a, b) => String(a.txnDate || a.createdAt || '').localeCompare(String(b.txnDate || b.createdAt || '')));
+    }
+
+    function computeMpgBetween(prev, cur) {
+      const od1 = safeNum(prev?.odometerMiles, null);
+      const od2 = safeNum(cur?.odometerMiles, null);
+      const gal = safeNum(cur?.gallons, null);
+      if (!(od1 != null && od2 != null && od2 > od1 && gal != null && gal > 0)) return null;
+      return (od2 - od1) / gal;
+    }
+
+    function anomalyFlags(mpg) {
+      if (mpg == null) return '';
+      if (mpg < 4.5) return 'badge badge-red';
+      if (mpg < 5.5) return 'badge badge-yellow';
+      if (mpg > 9.5) return 'badge badge-yellow';
+      return 'badge badge-green';
+    }
+
+    function renderFuelLedger() {
+      const box = document.getElementById('fuelLedger');
+      const meta = document.getElementById('fuelLedgerMeta');
+      if (!box) return;
+      const unit = selectedUnit;
+      if (!unit) {
+        box.textContent = 'Select a unit to view its fuel ledger.';
+        return;
+      }
+      const rows = unitPurchases(unit);
+      if (meta) meta.textContent = `${rows.length} purchases for ${unit}`;
+      if (!rows.length) {
+        box.textContent = 'No fuel purchases saved for this unit yet.';
+        return;
+      }
+      const html = rows
+        .slice()
+        .reverse()
+        .slice(0, 25)
+        .map((p, idx, arr) => {
+          const actualIndex = rows.length - 1 - idx;
+          const prev = actualIndex > 0 ? rows[actualIndex - 1] : null;
+          const mpg = computeMpgBetween(prev, p);
+          const badge = anomalyFlags(mpg);
+          const total = safeNum(p.totalCost, null);
+          const gal = safeNum(p.gallons, null);
+          const ppg = safeNum(p.pricePerGallon, null);
+          const od = safeNum(p.odometerMiles, null);
+          return `
+            <div class="stop-card">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+                <div><b>${p.txnDate || (p.createdAt || '').slice(0,10) || '—'}</b> · ${p.vendor || '—'}</div>
+                <div class="${badge}">${mpg != null ? `MPG ${mpg.toFixed(1)}` : 'MPG —'}</div>
+              </div>
+              <div class="small">Gallons: ${gal != null ? gal.toFixed(3) : '—'} · $/gal: ${ppg != null ? ppg.toFixed(3) : '—'} · Total: ${fmtMoney(total)}</div>
+              <div class="small">Odometer: ${od != null ? od.toLocaleString() + ' mi' : '—'} · Location: ${p.location || '—'}</div>
+            </div>
+          `;
+        })
+        .join('');
+      box.innerHTML = html;
+    }
+
+    async function saveFuelPurchase() {
+      const unit = selectedUnit;
+      if (!unit) return alert('Select a unit first.');
+      const boardRow = boardRows.find(r => r.unit === unit);
+      const payload = {
+        unit,
+        txnDate: document.getElementById('fuelTxnDate')?.value || new Date().toISOString().slice(0, 10),
+        gallons: parseNumInput('fuelGallons'),
+        pricePerGallon: parseNumInput('fuelPpg'),
+        totalCost: parseNumInput('fuelTotal'),
+        vendor: document.getElementById('fuelVendor')?.value || '',
+        odometerMiles: boardRow?.odometerMiles ?? null,
+        location: boardRow?.currentLocation || ''
+      };
+      try {
+        const r = await j('/api/fuel/purchases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        fuelPurchases = Array.isArray(r?.purchases) ? r.purchases : fuelPurchases;
+        document.getElementById('fuelGallons').value = '';
+        document.getElementById('fuelPpg').value = '';
+        document.getElementById('fuelTotal').value = '';
+        document.getElementById('fuelVendor').value = '';
+        renderFuelLedger();
+      } catch (e) {
+        alert('Save fuel purchase failed: ' + (e.message || String(e)));
+      }
+    }
+
+    async function uploadFuelFile() {
+      const input = document.getElementById('fuelImportFile');
+      if (!input?.files?.[0]) return alert('Choose a fuel CSV or Excel file first.');
+      const fd = new FormData();
+      fd.append('file', input.files[0]);
+      try {
+        const r = await fetch('/api/import/fuel', { method: 'POST', body: fd });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        alert(`Fuel purchases imported: ${data.imported}`);
+        input.value = '';
+        const fp = await j('/api/fuel/purchases');
+        fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
+        renderFuelLedger();
+      } catch (e) {
+        alert('Fuel import failed: ' + e.message);
+      }
+    }
+
+    function downloadCsv(filename, rows) {
+      const csv = rows.map(r => r.map(x => {
+        const s = String(x ?? '');
+        return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      }).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportFuelCsv() {
+      const unit = selectedUnit;
+      const rows = [['id','unit','txn_date','gallons','price_per_gallon','total_cost','vendor','location','odometer_miles','created_at']];
+      (fuelPurchases || [])
+        .filter(p => !unit || String(p.unit || '') === String(unit))
+        .forEach(p => {
+          rows.push([p.id, p.unit, p.txnDate, p.gallons, p.pricePerGallon, p.totalCost, p.vendor, p.location, p.odometerMiles, p.createdAt]);
+        });
+      downloadCsv(unit ? `${unit}_fuel_purchases.csv` : 'fuel_purchases.csv', rows);
     }
 
     async function loadCsvStops() {
@@ -725,14 +965,16 @@
       return 2 * R * Math.asin(Math.sqrt(a));
     }
 
-    function practicalScopeMiles(row) {
-      const hosMiles = row.driveRemaining != null ? (row.driveRemaining * 55) : 375;
-      return Math.max(0, Math.min(row.reserveReach, hosMiles) + PERSONAL_CONVEYANCE_MILES);
+    function practicalScopeMiles(row, routeData = null) {
+      const hosMiles = hosDriveMilesAvailable(row, routeData);
+      const hosFallback = 375;
+      const cap = hosMiles != null ? hosMiles : hosFallback;
+      return Math.max(0, Math.min(row.reserveReach, cap) + PERSONAL_CONVEYANCE_MILES);
     }
 
     function scoreStopsForRow(row, routeCoords, tripMiles) {
       const currentGallons = row.gallonsLeft;
-      const scopeMiles = practicalScopeMiles(row);
+      const scopeMiles = practicalScopeMiles(row, { tripMiles, etaHours: tripMiles / DEFAULT_AVG_SPEED_MPH });
       const routeLite = routeCoords.length > 400 ? routeCoords.filter((_, i) => i % 25 === 0) : routeCoords;
 
       return csvStops.map(s => {
@@ -817,14 +1059,18 @@
         renderSelectedDetail(routeData);
 
         const decision = decisionSummary(row);
-        const scopeMiles = practicalScopeMiles(row);
+        const scopeMiles = practicalScopeMiles(row, routeData);
+        const hosHrs = hosDriveHoursAvailable(row);
+        const mph = avgSpeedMphForRoute(routeData);
 
         document.getElementById('recommendedStops').innerHTML = recs.length ? `
           <div class="stop-card">
             <div><b>Dispatcher Action:</b> ${decision.action}</div>
             <div class="small">${decision.reason}</div>
             <div class="small">Visible Love's stops on map: ${visibleStops.length}</div>
-            <div class="small">Practical scope: ${Math.round(scopeMiles)} miles (includes personal conveyance buffer)</div>
+            <div class="small">Avg speed assumption: ${mph.toFixed(0)} mph</div>
+            <div class="small">Drive hours available (min clock): ${fmtHours(hosHrs)}</div>
+            <div class="small">Practical scope: ${Math.round(scopeMiles)} miles (fuel reach + HOS cap + personal conveyance buffer)</div>
           </div>
           ${recs.map((s, i) => `
             <div class="stop-card">
