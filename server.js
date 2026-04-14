@@ -52,6 +52,38 @@ const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+/** When set, fuel ledger writes + Relay file import/undo require matching header or Bearer token. */
+const ERP_WRITE_SECRET = String(process.env.ERP_WRITE_SECRET || process.env.IH35_ERP_WRITE_SECRET || '').trim();
+
+function erpWriteTokenFromRequest(req) {
+  const a = req.headers['x-ih35-erp-secret'];
+  const b = req.headers['x-erp-write-secret'];
+  if (typeof a === 'string' && a.trim()) return a.trim();
+  if (typeof b === 'string' && b.trim()) return b.trim();
+  const auth = String(req.headers.authorization || '');
+  const m = auth.match(/^\s*Bearer\s+(.+)$/i);
+  return m ? String(m[1]).trim() : '';
+}
+
+function erpWriteAuthOk(req) {
+  if (!ERP_WRITE_SECRET) return true;
+  const t = erpWriteTokenFromRequest(req);
+  const x = Buffer.from(t, 'utf8');
+  const y = Buffer.from(ERP_WRITE_SECRET, 'utf8');
+  if (x.length !== y.length) return false;
+  try {
+    return crypto.timingSafeEqual(x, y);
+  } catch {
+    return false;
+  }
+}
+
+function requireErpWrite(req, res) {
+  if (erpWriteAuthOk(req)) return true;
+  res.status(401).json({ error: 'ERP write authentication required', authRequired: true });
+  return false;
+}
+
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
@@ -1911,6 +1943,10 @@ app.get('/api/erp/all', (_req, res) => {
   res.json(readErp());
 });
 
+app.get('/api/erp/auth-status', (_req, res) => {
+  res.json({ ok: true, writeSecretConfigured: !!ERP_WRITE_SECRET });
+});
+
 app.get('/api/maintenance/records', (_req, res) => {
   res.json(readErp());
 });
@@ -1958,6 +1994,7 @@ app.get('/api/fuel/purchases', (_req, res) => {
 
 app.post('/api/fuel/purchases', (req, res) => {
   try {
+    if (!requireErpWrite(req, res)) return;
     const body = req.body || {};
     const p = sanitizeFuelPurchase(body);
     if (!p) return res.status(400).json({ ok: false, error: 'unit + gallons (or total) is required' });
@@ -3616,6 +3653,7 @@ app.get('/api/route', async (req, res) => {
 /** Parse fuel/Relay file — returns preview rows only (no ERP write). Use POST /api/import/fuel/confirm to save. */
 app.post('/api/import/fuel', upload.single('file'), (req, res) => {
   try {
+    if (!requireErpWrite(req, res)) return;
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -3653,6 +3691,7 @@ app.post('/api/import/fuel', upload.single('file'), (req, res) => {
  */
 app.post('/api/import/fuel/confirm', (req, res) => {
   try {
+    if (!requireErpWrite(req, res)) return;
     const body = req.body || {};
     const fuelIn = Array.isArray(body.fuelPurchases) ? body.fuelPurchases : [];
     const relayIn = Array.isArray(body.relayExpenses) ? body.relayExpenses : [];
@@ -3773,6 +3812,7 @@ app.get('/api/import/fuel/last-batch', (_req, res) => {
 /** Undo a previously confirmed fuel import batch by importBatchId. */
 app.post('/api/import/fuel/undo', (req, res) => {
   try {
+    if (!requireErpWrite(req, res)) return;
     const body = req.body || {};
     const batchId = String(body.importBatchId || '').trim();
     if (!batchId) return res.status(400).json({ error: 'importBatchId is required' });

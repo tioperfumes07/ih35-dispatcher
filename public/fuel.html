@@ -135,6 +135,12 @@
   <p class="roadmap-note">
     <strong>Roadmap:</strong> tie origin/destination from active TMS loads into this planner, combine uploaded Love’s price sheets and live tank levels from Samsara, and suggest cheapest legal fuel stops along the route (including state price spreads). PC*Miler practical/short miles will replace heuristic routing for driver-pay mileage when licensed.
   </p>
+  <div id="erpWriteAuthBanner" class="roadmap-note" style="display:none;border-color:#fbbf24;background:#fffbeb;color:#92400e">
+    <strong>ERP write protection is on</strong> (server has <code>ERP_WRITE_SECRET</code>). Paste the same secret once — it is kept only in this browser (<code>localStorage</code>), not on the server.
+    <input id="erpWriteSecretInput" type="password" placeholder="Write secret" style="margin:6px 8px 0 0;max-width:240px;padding:6px 8px;border:1px solid #d9dde7;border-radius:8px" autocomplete="off" />
+    <button type="button" onclick="saveErpWriteSecret()">Save in browser</button>
+    <button type="button" onclick="clearErpWriteSecret()">Clear</button>
+  </div>
 
   <div class="layout">
     <div class="panel">
@@ -243,6 +249,39 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
+    const LS_ERP_KEY = 'ih35_erp_write_secret';
+
+    function erpWriteHeaders() {
+      const k = localStorage.getItem(LS_ERP_KEY) || '';
+      return k ? { 'X-IH35-ERP-Secret': k } : {};
+    }
+
+    async function refreshErpAuthStatus() {
+      try {
+        const r = await fetch('/api/erp/auth-status');
+        const s = await r.json().catch(() => ({}));
+        const box = document.getElementById('erpWriteAuthBanner');
+        if (box) box.style.display = s?.writeSecretConfigured ? 'block' : 'none';
+      } catch {
+        const box = document.getElementById('erpWriteAuthBanner');
+        if (box) box.style.display = 'none';
+      }
+    }
+
+    function saveErpWriteSecret() {
+      const el = document.getElementById('erpWriteSecretInput');
+      const v = (el?.value || '').trim();
+      if (!v) return alert('Paste the ERP_WRITE_SECRET value from your server environment.');
+      localStorage.setItem(LS_ERP_KEY, v);
+      if (el) el.value = '';
+      alert('Saved in this browser. Fuel saves and Relay import actions will send the secret automatically.');
+    }
+
+    function clearErpWriteSecret() {
+      localStorage.removeItem(LS_ERP_KEY);
+      alert('Cleared from this browser.');
+    }
+
     const HOME = { lat: 27.5306, lon: -99.4803, text: 'Laredo, TX' };
     const EXPENSIVE_STATES = new Set(['NY','NJ','CT','MA','CA','PA','WA','OR']);
     const RESERVE_GALLONS = 35;
@@ -414,7 +453,12 @@
     }
 
     async function j(url, init = {}) {
-      const r = await fetch(url, init);
+      const method = String(init.method || 'GET').toUpperCase();
+      const headers = { ...(init.headers || {}) };
+      if (method !== 'GET' && method !== 'HEAD') {
+        Object.assign(headers, erpWriteHeaders());
+      }
+      const r = await fetch(url, { ...init, headers });
       const text = await r.text();
       let data;
       try {
@@ -1047,7 +1091,7 @@
       const fd = new FormData();
       fd.append('file', input.files[0]);
       try {
-        const r = await fetch('/api/import/fuel', { method: 'POST', body: fd });
+        const r = await fetch('/api/import/fuel', { method: 'POST', body: fd, headers: erpWriteHeaders() });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
         pendingFuelImportPreview = data;
@@ -1076,7 +1120,7 @@
       try {
         const r = await fetch('/api/import/fuel/confirm', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
           body: JSON.stringify({
             fuelPurchases: fuelPayload,
             relayExpenses: relayPayload,
@@ -1108,7 +1152,7 @@
       try {
         const r = await fetch('/api/import/fuel/undo', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
           body: JSON.stringify({ importBatchId: lastConfirmedFuelImportBatchId })
         });
         const data = await r.json().catch(() => ({}));
@@ -1360,6 +1404,7 @@
     wireAutocomplete(document.getElementById('originInput'), document.getElementById('originAuto'));
     addDestination('San Antonio, TX');
     initMap();
+    refreshErpAuthStatus();
     refreshLastFuelImportBatch();
   </script>
 </body>
