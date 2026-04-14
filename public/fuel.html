@@ -211,6 +211,7 @@
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
         <input id="fuelImportFile" type="file" accept=".csv,.xlsx,.xls">
         <button type="button" onclick="previewFuelImport()">Preview Relay / fuel import</button>
+        <button type="button" onclick="undoLastFuelImport()">Undo last import</button>
         <button onclick="exportFuelCsv()">Export fuel CSV</button>
           <button onclick="exportRelayExpensesCsv()">Export Relay expenses CSV</button>
           <button type="button" onclick="exportRelayQbSyncCsv()">Export Relay → QB Spreadsheet Sync CSV</button>
@@ -254,6 +255,7 @@
     let map, unitsLayer, stopsLayer, routeLayer, selectedLayer;
     let fuelPurchases = [];
     let pendingFuelImportPreview = null;
+    let lastConfirmedFuelImportBatchId = '';
 
     function escHtml(s) {
       return String(s ?? '')
@@ -1006,6 +1008,7 @@
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
+        lastConfirmedFuelImportBatchId = String(data.importBatchId || '').trim();
         cancelFuelImportPreview();
         const fp = await j('/api/fuel/purchases');
         fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
@@ -1016,6 +1019,27 @@
         );
       } catch (e) {
         alert('Confirm import failed: ' + e.message);
+      }
+    }
+
+    async function undoLastFuelImport() {
+      if (!lastConfirmedFuelImportBatchId) return alert('No confirmed import batch to undo yet.');
+      if (!confirm('Undo the last confirmed import batch? This removes the exact rows that were just appended.')) return;
+      try {
+        const r = await fetch('/api/import/fuel/undo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ importBatchId: lastConfirmedFuelImportBatchId })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        lastConfirmedFuelImportBatchId = '';
+        const fp = await j('/api/fuel/purchases');
+        fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
+        renderFuelLedger();
+        alert(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`);
+      } catch (e) {
+        alert('Undo failed: ' + (e.message || String(e)));
       }
     }
 

@@ -3623,6 +3623,8 @@ app.post('/api/import/fuel/confirm', (req, res) => {
     }
 
     const alreadyInQbo = body.alreadyInQbo !== false;
+    const importBatchId = uid('fuelimp');
+    const importConfirmedAt = new Date().toISOString();
     const erp = readErp();
     if (!Array.isArray(erp.fuelPurchases)) erp.fuelPurchases = [];
     if (!Array.isArray(erp.relayExpenses)) erp.relayExpenses = [];
@@ -3640,6 +3642,8 @@ app.post('/api/import/fuel/confirm', (req, res) => {
         productType,
         relayNote: String(row.relayNote || '').trim().slice(0, 200),
         relayExpenseNo: String(row.relayExpenseNo || '').trim().slice(0, 40),
+        importBatchId,
+        importConfirmedAt,
         createdAt: new Date().toISOString()
       });
       savedFuel++;
@@ -3671,15 +3675,41 @@ app.post('/api/import/fuel/confirm', (req, res) => {
         location: String(row.location || '').trim().slice(0, 180),
         memo: String(row.memo || '').trim().slice(0, 500),
         alreadyInQbo,
-        importConfirmedAt: new Date().toISOString()
+        importBatchId,
+        importConfirmedAt
       });
       savedRelay++;
     }
 
     writeErp(erp);
-    res.json({ ok: true, savedFuel, savedRelay, alreadyInQbo });
+    res.json({ ok: true, savedFuel, savedRelay, alreadyInQbo, importBatchId, importConfirmedAt });
   } catch (error) {
     logError('api/import/fuel/confirm', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/** Undo a previously confirmed fuel import batch by importBatchId. */
+app.post('/api/import/fuel/undo', (req, res) => {
+  try {
+    const body = req.body || {};
+    const batchId = String(body.importBatchId || '').trim();
+    if (!batchId) return res.status(400).json({ error: 'importBatchId is required' });
+
+    const erp = readErp();
+    const beforeFuel = (erp.fuelPurchases || []).length;
+    const beforeRelay = (erp.relayExpenses || []).length;
+
+    erp.fuelPurchases = (erp.fuelPurchases || []).filter(r => String(r.importBatchId || '') !== batchId);
+    erp.relayExpenses = (erp.relayExpenses || []).filter(r => String(r.importBatchId || '') !== batchId);
+
+    const removedFuel = beforeFuel - erp.fuelPurchases.length;
+    const removedRelay = beforeRelay - erp.relayExpenses.length;
+
+    writeErp(erp);
+    res.json({ ok: true, importBatchId: batchId, removedFuel, removedRelay });
+  } catch (error) {
+    logError('api/import/fuel/undo', error);
     res.status(500).json({ error: error.message });
   }
 });
