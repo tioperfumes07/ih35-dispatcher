@@ -103,6 +103,11 @@ QuickBooks Online is the **system of record for accounting master data and poste
 - `GET /fleet/samsara-vehicles`
 - `POST /compute-leg-miles`
 
+### Maintenance catalog (Postgres)
+
+- `GET /api/maintenance/service-types` — `names[]` from table `maintenance_service_catalog` when `DATABASE_URL` is set (seeded on startup); otherwise built-in defaults.
+- `POST /api/maintenance/service-types` — JSON `{ "name": "…" }` appends or reactivates a row (requires database).
+
 ### PDFs (`/api/pdf`)
 
 - `GET /api/pdf/tms-load/:id`
