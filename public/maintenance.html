@@ -105,6 +105,7 @@
     table.st-settlement td{padding:9px 12px;border-bottom:1px solid #e5e7eb;vertical-align:middle}
     table.st-settlement tbody tr:nth-child(even) td{background:#f8fafc}
     table.st-settlement tbody tr:hover td{background:#f1f5f9}
+    table.st-settlement th.num, table.st-settlement td.num{text-align:right;white-space:nowrap}
     .form-stack{display:grid;gap:10px}
     .mini-note{font-size:12px;color:var(--muted)}
     .card-list{display:grid;gap:10px}
@@ -929,6 +930,7 @@
           <button class="subtab active" onclick="openAccountingTab('acct-transactions', this)">Maintenance Expense Transactions</button>
           <button class="subtab" onclick="openAccountingTab('acct-settlement', this)">Settlement / P&amp;L by load</button>
           <button class="subtab" onclick="openAccountingTab('acct-qbo', this)">QuickBooks Live Master</button>
+          <button class="subtab" onclick="openAccountingTab('acct-expense-history', this)">Expense history log</button>
         </div>
 
         <div id="acct-transactions" class="accounting-tab">
@@ -1139,6 +1141,80 @@
                 <div class="panel"><div class="panel-head"><div class="panel-title">Vendors</div></div><div class="panel-body" id="qboVendorList"></div></div>
                 <div class="panel"><div class="panel-head"><div class="panel-title">Items</div></div><div class="panel-body" id="qboItemList"></div></div>
                 <div class="panel"><div class="panel-head"><div class="panel-title">Accounts</div></div><div class="panel-body" id="qboAccountList"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="acct-expense-history" class="accounting-tab hidden">
+          <div class="panel qb-panel">
+            <div class="panel-head">
+              <div class="panel-title">Expense history log</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button type="button" onclick="renderExpenseHistory()">Apply filters</button>
+                <button type="button" onclick="downloadExpenseHistoryCsv()">Export filtered CSV</button>
+              </div>
+            </div>
+            <div class="panel-body form-stack">
+              <p class="mini-note" style="margin:0 0 10px">
+                Combined view of <strong>maintenance AP transactions</strong>, <strong>work order lines</strong>, and <strong>Relay fuel-import staging</strong>.
+                Filter by date (txn / service date) and source. QuickBooks columns reflect API posting status where applicable; Relay rows use the fuel import flags when expenses already exist in QBO.
+              </p>
+              <div class="wo-line-grid" style="margin-bottom:10px">
+                <div>
+                  <span class="qb-l">From date</span>
+                  <input id="expHistDateFrom" class="qb-in" type="date" onchange="renderExpenseHistory()">
+                </div>
+                <div>
+                  <span class="qb-l">To date</span>
+                  <input id="expHistDateTo" class="qb-in" type="date" onchange="renderExpenseHistory()">
+                </div>
+                <div>
+                  <span class="qb-l">Source</span>
+                  <select id="expHistSource" class="qb-in" onchange="renderExpenseHistory()">
+                    <option value="all">All</option>
+                    <option value="ap">Maintenance AP</option>
+                    <option value="wo">Work order lines</option>
+                    <option value="relay">Relay (fuel import)</option>
+                  </select>
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Search (doc, vendor, unit, memo)</span>
+                  <input id="expHistSearch" class="qb-in" placeholder="Type to filter…" oninput="expHistSearchDebounce()">
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+                <button type="button" class="qb-btn-add" onclick="setExpenseHistoryPreset(7)">Last 7 days</button>
+                <button type="button" class="qb-btn-add" onclick="setExpenseHistoryPreset(30)">Last 30 days</button>
+                <button type="button" class="qb-btn-add" onclick="setExpenseHistoryPreset(90)">Last 90 days</button>
+                <button type="button" class="qb-btn-add" onclick="clearExpenseHistoryDates()">All dates</button>
+              </div>
+              <div id="expHistSummary" class="mini-note" style="margin-bottom:8px">Open this tab and refresh data (sidebar) if counts look stale.</div>
+              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+                <table class="st-settlement" style="min-width:1180px">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Source</th>
+                      <th>Doc / ref #</th>
+                      <th>Type</th>
+                      <th>Vendor</th>
+                      <th>Unit</th>
+                      <th>Category (QB)</th>
+                      <th>Item / line</th>
+                      <th class="num">Qty</th>
+                      <th class="num">Amount</th>
+                      <th>QBO sync</th>
+                      <th>QBO ref</th>
+                      <th>Posted</th>
+                      <th>ERP id</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="expHistBody">
+                    <tr><td colspan="15" class="mini-note">Loading…</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1723,6 +1799,7 @@
         loadSettlementIndex();
         loadDriverPaySettlements();
       }
+      if (id === 'acct-expense-history') renderExpenseHistory();
     }
 
     let reportsSummaryCache = null;
@@ -2039,6 +2116,7 @@
       renderTrackingAssetsTable();
       renderTrackingDrivers();
       renderApTransactions();
+      renderExpenseHistory();
       renderShopQueues();
       renderQboMaster();
       await loadQboStatus();
@@ -3925,6 +4003,304 @@
 
       const all = [...woHtml, ...apHtml].join('');
       document.getElementById('apList').innerHTML = all || 'No maintenance expense transactions yet.';
+    }
+
+    function localIsoDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    let expHistSearchT = null;
+    function expHistSearchDebounce() {
+      clearTimeout(expHistSearchT);
+      expHistSearchT = setTimeout(() => renderExpenseHistory(), 200);
+    }
+
+    function setExpenseHistoryPreset(days) {
+      const end = new Date();
+      const start = new Date(end);
+      start.setDate(start.getDate() - (Number(days) || 7) + 1);
+      const fromEl = document.getElementById('expHistDateFrom');
+      const toEl = document.getElementById('expHistDateTo');
+      if (toEl) toEl.value = localIsoDate(end);
+      if (fromEl) fromEl.value = localIsoDate(start);
+      renderExpenseHistory();
+    }
+
+    function clearExpenseHistoryDates() {
+      const fromEl = document.getElementById('expHistDateFrom');
+      const toEl = document.getElementById('expHistDateTo');
+      if (fromEl) fromEl.value = '';
+      if (toEl) toEl.value = '';
+      renderExpenseHistory();
+    }
+
+    function expenseHistoryStatusClass(kind, qboSyncStatus, displayLabel) {
+      const raw = String(qboSyncStatus || '').trim().toLowerCase();
+      if (raw === 'posted' || raw === 'past due' || raw === 'due soon') return statusClass(qboSyncStatus || 'posted');
+      if (raw === 'error') return statusClass('error');
+      if (kind === 'relay') {
+        const d = String(displayLabel || '').toLowerCase();
+        if (d.includes('in qbo') || d.includes('posted')) return statusClass('posted');
+        return statusClass('current');
+      }
+      return statusClass(qboSyncStatus && qboSyncStatus !== 'not posted' ? qboSyncStatus : 'current');
+    }
+
+    function buildExpenseHistoryRows() {
+      const vendorName = id => cacheVendors().find(v => v.qboId === id)?.name || id || '';
+      const itemName = id => cacheItems().find(v => v.qboId === id)?.name || id || '';
+      const accountName = id => cacheAccounts().find(v => v.qboId === id)?.name || id || '';
+
+      const rows = [];
+
+      for (const r of erp.apTransactions || []) {
+        const dm = String(r.detailMode || 'category');
+        const cat =
+          dm === 'item' ? (itemName(r.qboItemId) || '(item)') : (accountName(r.qboAccountId) || '(category)');
+        const syncRaw = String(r.qboSyncStatus || '').trim() || 'not posted';
+        const qboRef = [r.qboEntityType, r.qboEntityId].filter(Boolean).join(' ');
+        const sortDate = String(r.txnDate || '').slice(0, 10) || (r.createdAt || '').slice(0, 10) || '';
+        rows.push({
+          kind: 'ap',
+          sortDate,
+          sortTs: Date.parse(r.createdAt || `${sortDate}T12:00:00`) || 0,
+          date: sortDate || '—',
+          source: 'Maintenance AP',
+          doc: r.docNumber || '—',
+          txnType: [r.txnType, dm].filter(Boolean).join(' · ') || '—',
+          vendor: vendorName(r.qboVendorId) || '—',
+          unit: r.assetUnit || '—',
+          category: cat,
+          itemLine: r.description || '—',
+          qty: r.qty != null && r.qty !== '' ? String(r.qty) : '1',
+          amount: Number(r.amount || 0),
+          qboSync: syncRaw,
+          qboSyncRaw: r.qboSyncStatus,
+          qboRef: qboRef || '—',
+          postedAt: r.qboPostedAt ? new Date(r.qboPostedAt).toLocaleString() : '—',
+          erpId: r.id || '—',
+          notes: [r.memo, r.dueDate && `Due ${r.dueDate}`].filter(Boolean).join(' · ').slice(0, 260),
+          qboError: r.qboError || ''
+        });
+      }
+
+      for (const wo of erp.workOrders || []) {
+        const lines = Array.isArray(wo.lines) ? wo.lines : [];
+        const vn = vendorName(wo.qboVendorId) || wo.vendor || '';
+        const syncRaw = String(wo.qboSyncStatus || '').trim() || 'not posted';
+        const qboRef = [wo.qboEntityType, wo.qboEntityId].filter(Boolean).join(' ');
+        const postedAt = wo.qboPostedAt ? new Date(wo.qboPostedAt).toLocaleString() : '—';
+        const docParts = [
+          wo.loadNumber && `Load ${wo.loadNumber}`,
+          wo.vendorInvoiceNumber && `Inv ${wo.vendorInvoiceNumber}`,
+          wo.internalWorkOrderNumber && `WO ${wo.internalWorkOrderNumber}`
+        ].filter(Boolean);
+        const docBase = docParts.length ? docParts.join(' · ') : wo.id || '—';
+        const sortDate = String(wo.serviceDate || '').slice(0, 10) || (wo.createdAt || '').slice(0, 10) || '';
+
+        const pushLine = (ln, idx) => {
+          const dm = String(ln.detailMode || 'category');
+          const cat =
+            dm === 'item' ? (itemName(ln.qboItemId) || '(item)') : (accountName(ln.qboAccountId) || '(category)');
+          const svc = [ln.serviceType, ln.lineType].filter(Boolean).join(' · ') || `Line ${idx + 1}`;
+          const itemDetail = [svc, ln.notes].filter(Boolean).join(' — ').slice(0, 220);
+          rows.push({
+            kind: 'wo',
+            sortDate,
+            sortTs: Date.parse(wo.createdAt || `${sortDate}T12:00:00`) || 0,
+            date: sortDate || '—',
+            source: 'Work order',
+            doc: docBase,
+            txnType: `${wo.txnType || 'expense'} (line ${idx + 1})`,
+            vendor: vn || '—',
+            unit: wo.unit || '—',
+            category: cat,
+            itemLine: itemDetail || '—',
+            qty: ln.qty != null && ln.qty !== '' ? String(ln.qty) : '1',
+            amount: Number(ln.amount || 0),
+            qboSync: syncRaw,
+            qboSyncRaw: wo.qboSyncStatus,
+            qboRef: qboRef || '—',
+            postedAt,
+            erpId: `${wo.id}#${ln.id != null ? ln.id : idx}`,
+            notes: [wo.notes, wo.repairLocationType && `Loc: ${wo.repairLocationType}`].filter(Boolean).join(' · ').slice(0, 260),
+            qboError: wo.qboError || ''
+          });
+        };
+
+        if (!lines.length) {
+          rows.push({
+            kind: 'wo',
+            sortDate,
+            sortTs: Date.parse(wo.createdAt || `${sortDate}T12:00:00`) || 0,
+            date: sortDate || '—',
+            source: 'Work order',
+            doc: docBase,
+            txnType: `${wo.txnType || 'expense'} (no lines)`,
+            vendor: vn || '—',
+            unit: wo.unit || '—',
+            category: '—',
+            itemLine: '—',
+            qty: '—',
+            amount: 0,
+            qboSync: syncRaw,
+            qboSyncRaw: wo.qboSyncStatus,
+            qboRef: qboRef || '—',
+            postedAt,
+            erpId: wo.id || '—',
+            notes: [wo.notes, wo.repairLocationType && `Loc: ${wo.repairLocationType}`].filter(Boolean).join(' · ').slice(0, 260),
+            qboError: wo.qboError || ''
+          });
+        } else lines.forEach((ln, idx) => pushLine(ln, idx));
+      }
+
+      for (const r of erp.relayExpenses || []) {
+        let qboSync = 'Not API-posted';
+        if (r.alreadyInQbo) qboSync = 'In QBO (import marked existing)';
+        if (r.qboSyncStatus) qboSync = String(r.qboSyncStatus);
+        const qboRef = [r.qboEntityType, r.qboEntityId].filter(Boolean).join(' ');
+        const sortDate = String(r.txnDate || '').slice(0, 10) || '';
+        rows.push({
+          kind: 'relay',
+          sortDate,
+          sortTs:
+            Date.parse(r.importConfirmedAt || r.createdAt || '') ||
+            (sortDate ? Date.parse(`${sortDate}T12:00:00`) : 0) ||
+            0,
+          date: sortDate || '—',
+          source: 'Relay import',
+          doc: r.docNumber || '—',
+          txnType: r.expenseType || 'Relay',
+          vendor: r.vendor || '—',
+          unit: r.unit || '—',
+          category: r.qbCategory || '—',
+          itemLine: r.spreadsheetCategory || '—',
+          qty: r.gallons != null && r.gallons !== '' ? String(r.gallons) : '—',
+          amount: Number(r.amount || 0),
+          qboSync,
+          qboSyncRaw: r.qboSyncStatus,
+          qboRef: qboRef || '—',
+          postedAt: r.qboPostedAt ? new Date(r.qboPostedAt).toLocaleString() : '—',
+          erpId: r.id || '—',
+          notes: [r.memo, r.location, r.importBatchId && `batch:${r.importBatchId}`].filter(Boolean).join(' · ').slice(0, 260),
+          qboError: ''
+        });
+      }
+
+      rows.sort((a, b) => {
+        const da = String(a.sortDate || '');
+        const db = String(b.sortDate || '');
+        if (da !== db) return db.localeCompare(da);
+        return (b.sortTs || 0) - (a.sortTs || 0);
+      });
+      return rows;
+    }
+
+    function filterExpenseHistoryRows(rows) {
+      const from = (document.getElementById('expHistDateFrom')?.value || '').trim();
+      const to = (document.getElementById('expHistDateTo')?.value || '').trim();
+      const src = document.getElementById('expHistSource')?.value || 'all';
+      const q = (document.getElementById('expHistSearch')?.value || '').trim().toLowerCase();
+      return rows.filter(r => {
+        if (src === 'ap' && r.kind !== 'ap') return false;
+        if (src === 'wo' && r.kind !== 'wo') return false;
+        if (src === 'relay' && r.kind !== 'relay') return false;
+        const d = String(r.sortDate || '');
+        if (from && (!d || d < from)) return false;
+        if (to && (!d || d > to)) return false;
+        if (q) {
+          const blob = [r.doc, r.vendor, r.unit, r.notes, r.category, r.itemLine, r.txnType, r.erpId, r.source, r.qboSync]
+            .join(' ')
+            .toLowerCase();
+          if (!blob.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderExpenseHistory() {
+      const tb = document.getElementById('expHistBody');
+      const sumEl = document.getElementById('expHistSummary');
+      if (!tb) return;
+      const all = buildExpenseHistoryRows();
+      const filtered = filterExpenseHistoryRows(all);
+      const tot = filtered.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      if (sumEl) {
+        sumEl.textContent = `Showing ${filtered.length} of ${all.length} row(s) · Filtered total $${tot.toFixed(2)}`;
+      }
+      if (!filtered.length) {
+        tb.innerHTML = '<tr><td colspan="15" class="mini-note">No rows match filters.</td></tr>';
+        return;
+      }
+      tb.innerHTML = filtered
+        .map(r => {
+          const stCls = expenseHistoryStatusClass(r.kind, r.qboSyncRaw || r.qboSync, r.qboSync);
+          const errTitle = r.qboError ? escapeHtml(r.qboError) : '';
+          const amt = Number.isFinite(r.amount) ? r.amount.toFixed(2) : String(r.amount ?? '');
+          return `<tr>
+            <td>${escapeHtml(r.date)}</td>
+            <td>${escapeHtml(r.source)}</td>
+            <td>${escapeHtml(r.doc)}</td>
+            <td>${escapeHtml(r.txnType)}</td>
+            <td>${escapeHtml(r.vendor)}</td>
+            <td>${escapeHtml(r.unit)}</td>
+            <td>${escapeHtml(r.category)}</td>
+            <td>${escapeHtml(r.itemLine)}</td>
+            <td class="num">${escapeHtml(r.qty)}</td>
+            <td class="num">${escapeHtml(amt)}</td>
+            <td><span class="${stCls}" title="${errTitle}">${escapeHtml(r.qboSync)}</span></td>
+            <td>${escapeHtml(r.qboRef)}</td>
+            <td>${escapeHtml(r.postedAt)}</td>
+            <td>${escapeHtml(r.erpId)}</td>
+            <td>${escapeHtml(r.notes)}</td>
+          </tr>`;
+        })
+        .join('');
+    }
+
+    function downloadExpenseHistoryCsv() {
+      const filtered = filterExpenseHistoryRows(buildExpenseHistoryRows());
+      const headers = [
+        'Date',
+        'Source',
+        'Doc / ref #',
+        'Type',
+        'Vendor',
+        'Unit',
+        'Category (QB)',
+        'Item / line',
+        'Qty',
+        'Amount',
+        'QBO sync',
+        'QBO ref',
+        'Posted',
+        'ERP id',
+        'Notes'
+      ];
+      const rows = [
+        headers,
+        ...filtered.map(r => [
+          r.date,
+          r.source,
+          r.doc,
+          r.txnType,
+          r.vendor,
+          r.unit,
+          r.category,
+          r.itemLine,
+          r.qty,
+          Number.isFinite(r.amount) ? r.amount : r.amount,
+          r.qboSync,
+          r.qboRef,
+          r.postedAt,
+          r.erpId,
+          r.notes
+        ])
+      ];
+      downloadCsv(`expense-history-${localIsoDate(new Date())}.csv`, rows);
     }
 
     async function settlementFetchJson(url) {
