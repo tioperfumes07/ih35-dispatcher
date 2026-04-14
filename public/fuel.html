@@ -201,6 +201,7 @@
         <input id="fuelImportFile" type="file" accept=".csv,.xlsx,.xls">
         <button onclick="uploadFuelFile()">Import fuel CSV/Excel</button>
         <button onclick="exportFuelCsv()">Export fuel CSV</button>
+          <button onclick="exportRelayExpensesCsv()">Export Relay expenses CSV</button>
         <span id="fuelLedgerMeta" class="small"></span>
       </div>
       <div id="fuelLedger" class="small">No fuel purchases yet.</div>
@@ -890,6 +891,11 @@
           rows.push([p.id, p.unit, p.txnDate, p.gallons, p.pricePerGallon, p.totalCost, p.vendor, p.location, p.odometerMiles, p.createdAt]);
         });
       downloadCsv(unit ? `${unit}_fuel_purchases.csv` : 'fuel_purchases.csv', rows);
+    }
+
+    function exportRelayExpensesCsv() {
+      // Server export includes doc numbering logic and split fee lines.
+      window.location.href = '/api/reports/export/relay-expenses.csv';
     }
 
     async function loadCsvStops() {

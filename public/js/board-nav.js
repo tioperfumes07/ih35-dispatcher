@@ -1,16 +1,6 @@
 (function () {
   const BOARDS = [
     {
-      id: 'tms',
-      label: 'TMS–Dispatch',
-      href: '/maintenance.html#dispatch',
-      links: [
-        { label: 'ERP — Dispatch tab', href: '/maintenance.html#dispatch' },
-        { label: 'Full-screen dispatch', href: '/dispatch.html' },
-        { label: 'Operations hub', href: '/' }
-      ]
-    },
-    {
       id: 'fuel',
       label: 'Fuel Route Planner',
       href: '/maintenance.html#fuel',

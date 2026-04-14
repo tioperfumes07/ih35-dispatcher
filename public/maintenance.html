@@ -226,14 +226,13 @@
       <div class="sidebar-brand-row">
         <div>
           <div class="brand">IH35 ERP</div>
-          <div class="brand-sub">Dispatch · Fuel · Maintenance · Tracking · Accounting · Reports</div>
+          <div class="brand-sub">Diesel · Maintenance · Safety · Tracking · Accounting · Reports</div>
         </div>
         <button type="button" class="sidebar-collapse-btn" onclick="toggleErpSidebar(true)" title="Hide menu">«</button>
       </div>
 
       <div class="nav-title">Main</div>
       <button class="nav-btn active" data-section="dashboard" onclick="openSection('dashboard', this)">Dashboard</button>
-      <button class="nav-btn" data-section="dispatch" onclick="openSection('dispatch', this)">Dispatch Board</button>
       <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Diesel / Fuel Board</button>
       <button class="nav-btn" data-section="maintenance" onclick="openSection('maintenance', this)">Maintenance Board</button>
       <button class="nav-btn" data-section="safety" onclick="openSection('safety', this)">Safety Board</button>
@@ -263,7 +262,6 @@
 
       <section id="section-dashboard" class="section active">
         <div class="hero-grid">
-          <div class="hero-card" onclick="openSectionByName('dispatch')"><h3>Dispatch Board</h3><p>(Paused) Requires TMS DB</p></div>
           <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Diesel / Fuel Board</h3><p>Fuel planning + diesel management</p></div>
           <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Mileage, service planning, records and imports</p></div>
           <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety Board</h3><p>Samsara HOS, drivers, assignments</p></div>
@@ -287,18 +285,6 @@
           <div class="panel">
             <div class="panel-head"><div class="panel-title">Sync Summary</div></div>
             <div class="panel-body"><div id="dashboardQboSummary" class="mini-note">No data yet.</div></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="section-dispatch" class="section">
-        <div class="panel">
-          <div class="panel-head">
-            <div class="panel-title">TMS — Dispatch</div>
-            <div class="mini-note">Full dispatch board embedded here. <a href="/dispatch.html" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:600">Open full screen</a></div>
-          </div>
-          <div class="panel-body" style="padding:0">
-            <iframe class="erp-iframe" src="/dispatch.html?embed=1" title="Dispatch TMS"></iframe>
           </div>
         </div>
       </section>
@@ -1684,7 +1670,6 @@
 
       const titleMap = {
         dashboard: 'Unified Dashboard',
-        dispatch: 'TMS — Dispatch',
         fuel: 'Diesel & route planning',
         maintenance: 'Maintenance Board',
         safety: 'Safety Board',
@@ -1713,7 +1698,7 @@
         openAccountingTab('acct-settlement', sub);
         return;
       }
-      const allowed = ['dashboard', 'dispatch', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports'];
+      const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports'];
       if (allowed.includes(section)) openSectionByName(section);
     }
 
@@ -1752,15 +1737,6 @@
 
     function setTmsUiEnabled(enabled) {
       tmsEnabled = !!enabled;
-      // Left nav
-      const navDispatch = document.querySelector('.nav-btn[data-section="dispatch"]');
-      if (navDispatch) navDispatch.classList.toggle('hidden', !tmsEnabled);
-      // Dashboard hero card
-      const heroDispatch = document.querySelector('#section-dashboard .hero-card[onclick*="dispatch"]');
-      if (heroDispatch) heroDispatch.classList.toggle('hidden', !tmsEnabled);
-      // Dispatch section itself
-      const secDispatch = document.getElementById('section-dispatch');
-      if (secDispatch) secDispatch.classList.toggle('hidden', !tmsEnabled);
       // Accounting settlement subtab + panel
       const acctSettlementTab = document.querySelector('#section-accounting .subtab[onclick*="acct-settlement"]');
       if (acctSettlementTab) acctSettlementTab.classList.toggle('hidden', !tmsEnabled);
@@ -1771,12 +1747,7 @@
       if (repTmsTab) repTmsTab.classList.toggle('hidden', !tmsEnabled);
       const repTmsPanel = document.getElementById('rep-tms');
       if (repTmsPanel) repTmsPanel.classList.toggle('hidden', !tmsEnabled);
-      // Friendly label in reports summary (static UI)
-      const reportsTitle = document.getElementById('pageTitle');
-      if (!tmsEnabled && activeSection === 'dispatch') {
-        openSectionByName('maintenance');
-      }
-      if (!tmsEnabled && (location.hash || '').replace(/^#/, '') === 'dispatch') {
+      if ((location.hash || '').replace(/^#/, '') === 'dispatch') {
         location.hash = '#maintenance';
       }
     }
@@ -2059,7 +2030,6 @@
       }
       fillDataLists();
       renderDashboardHome();
-      if (tmsEnabled) renderDispatchBoard();
       renderMaintenanceCategoryChips();
       renderMaintenanceUnitList();
       renderSelectedUnit();
@@ -2171,20 +2141,7 @@
       `;
     }
 
-    function renderDispatchBoard() {
-      const assigned = assignedVehicleNames();
-      const elV = document.getElementById('dispatchVehiclesCount');
-      if (!elV) return;
-      elV.textContent = (board.vehicles || []).length;
-      document.getElementById('dispatchAssignedCount').textContent = assigned.size;
-      document.getElementById('dispatchUnassignedCount').textContent = Math.max((board.vehicles || []).length - assigned.size, 0);
-      document.getElementById('dispatchHosCount').textContent = (board.hos || []).length;
-
-      document.getElementById('dispatchSummaryText').innerHTML =
-        `Vehicles loaded: ${(board.vehicles || []).length}<br>` +
-        `Assigned / working: ${assigned.size}<br>` +
-        `HOS rows available: ${(board.hos || []).length}`;
-    }
+    // Dispatch board removed (maintenance/safety/diesel focus).
 
     function renderMaintenanceCategoryChips() {
       const cats = ['Trucks','Refrigerated Vans','Flatbeds','Dry Vans','Company Vehicles'];

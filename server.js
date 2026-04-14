@@ -101,6 +101,7 @@ function defaultErpData() {
     apTransactions: [],
     driverProfiles: [],
     fuelPurchases: [],
+    relayExpenses: [],
     paymentMethods: [
       { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
       { id: 'pm_check', name: 'Check', qboType: 'Check' },
@@ -148,6 +149,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.apTransactions)) merged.apTransactions = [];
   if (!Array.isArray(merged.driverProfiles)) merged.driverProfiles = [];
   if (!Array.isArray(merged.fuelPurchases)) merged.fuelPurchases = [];
+  if (!Array.isArray(merged.relayExpenses)) merged.relayExpenses = [];
   if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
   if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
   if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
@@ -249,6 +251,32 @@ function sanitizeFuelPurchase(raw) {
   if (locationText) out.location = locationText;
   if (odometerMiles != null && Number.isFinite(odometerMiles) && odometerMiles > 0) out.odometerMiles = Math.round(odometerMiles);
   return out;
+}
+
+function parseRelayExpenseNoFromNote(note) {
+  const s = String(note || '').trim();
+  if (!s) return '';
+  // Examples: "LOAD 13087", "Load 13080", "13087"
+  const m = s.match(/(?:load|invoice|expense)?\s*#?\s*(\d{4,})/i);
+  return m ? String(m[1]) : '';
+}
+
+function nextRelayDocNumber(base, counterByBase) {
+  const b = String(base || '').trim();
+  if (!b) return '';
+  const n = (counterByBase.get(b) || 0) + 1;
+  counterByBase.set(b, n);
+  return n === 1 ? b : `${b}-${n - 1}`;
+}
+
+function relayLineLabel(kind) {
+  const k = String(kind || '').toLowerCase();
+  if (k === 'diesel') return 'Diesel';
+  if (k === 'def') return 'DEF';
+  if (k === 'reefer' || k === 'reefer_2') return 'Reefer';
+  if (k === 'def_forecourt') return 'DEF';
+  if (k === 'relay_fee') return 'Relay fee';
+  return String(kind || 'Fuel');
 }
 
 async function fetchJson(url, options = {}) {
@@ -2527,6 +2555,49 @@ app.get('/api/reports/export/ap-transactions.csv', (_req, res) => {
   }
 });
 
+app.get('/api/reports/export/relay-expenses.csv', (_req, res) => {
+  try {
+    const erp = readErp();
+    const header = [
+      'doc_number',
+      'txn_date',
+      'unit',
+      'vendor',
+      'expense_type',
+      'amount',
+      'gallons',
+      'price_per_gallon',
+      'odometer_miles',
+      'location',
+      'memo'
+    ];
+    const lines = [header.join(',')];
+    for (const r of erp.relayExpenses || []) {
+      lines.push(
+        [
+          csvEscape(r.docNumber || ''),
+          csvEscape(r.txnDate || ''),
+          csvEscape(r.unit || ''),
+          csvEscape(r.vendor || ''),
+          csvEscape(r.expenseType || ''),
+          String((safeNum(r.amount, 0) || 0).toFixed(2)),
+          r.gallons != null ? String(Number(r.gallons).toFixed(3)) : '',
+          r.pricePerGallon != null ? String(Number(r.pricePerGallon).toFixed(3)) : '',
+          r.odometerMiles != null ? String(Number(r.odometerMiles).toFixed(0)) : '',
+          csvEscape(r.location || ''),
+          csvEscape(r.memo || '')
+        ].join(',')
+      );
+    }
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="relay-expenses.csv"');
+    res.send(lines.join('\n'));
+  } catch (error) {
+    logError('api/reports/export/relay-expenses', error);
+    res.status(500).send(error.message);
+  }
+});
+
 app.post('/api/work-orders', (req, res) => {
   try {
     const body = req.body || {};
@@ -3273,38 +3344,114 @@ app.post('/api/import/fuel', upload.single('file'), (req, res) => {
 
     const erp = readErp();
     if (!Array.isArray(erp.fuelPurchases)) erp.fuelPurchases = [];
+    if (!Array.isArray(erp.relayExpenses)) erp.relayExpenses = [];
     let imported = 0;
+    let relayLines = 0;
+    const relayDocCounters = new Map();
 
     for (const rawRow of rows) {
       const row = lowerKeyMap(rawRow);
-      const unit = sanitizeName(firstValue(row, ['unit', 'truck', 'vehicle', 'asset', 'unit number']), '');
+      // Relay format uses "truck #", "work_date", and per-product volumes + totals.
+      const relayTruck = firstValue(row, ['truck #', 'truck#', 'truck', 'unit', 'vehicle', 'asset', 'unit number']);
+      const unit = sanitizeName(relayTruck, '');
       if (!unit) continue;
 
-      const gallons = safeNum(firstValue(row, ['gallons', 'gal', 'qty', 'quantity', 'fuel gallons']), null);
-      const total = safeNum(firstValue(row, ['total', 'amount', 'cost', 'total cost', 'total amount']), null);
-      const price = safeNum(firstValue(row, ['price', 'ppg', 'price/gal', 'price per gallon']), null);
-      const odom = safeNum(firstValue(row, ['odometer', 'mileage', 'odometer miles']), null);
-      const txnDate = firstValue(row, ['date', 'txn date', 'purchase date', 'transaction date']) || '';
-      const vendor = firstValue(row, ['vendor', 'merchant', 'station']) || '';
-      const locationText = firstValue(row, ['location', 'city', 'city/state', 'city state']) || '';
+      const txnDate = firstValue(row, ['work_date', 'date', 'txn date', 'purchase date', 'transaction date']) || '';
+      const vendor =
+        firstValue(row, ['merchant_name', 'location', 'site', 'organization', 'vendor', 'merchant', 'station']) || '';
+      const locationText =
+        [
+          firstValue(row, ['location_address']),
+          firstValue(row, ['location_city']),
+          firstValue(row, ['location_state']),
+          firstValue(row, ['location_zip'])
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+        firstValue(row, ['location', 'city', 'city/state', 'city state']) ||
+        '';
+      const odom = safeNum(firstValue(row, ['odometer', 'odometer miles', 'mileage']), null);
+      const note = firstValue(row, ['note']) || '';
+      const baseExpenseNo = parseRelayExpenseNoFromNote(note);
 
-      const p = sanitizeFuelPurchase({
-        unit,
-        txnDate,
-        gallons,
-        totalCost: total,
-        pricePerGallon: price,
-        odometerMiles: odom,
-        vendor,
-        location: locationText
-      });
-      if (!p) continue;
-      erp.fuelPurchases.push({ id: uid('imp_fuel'), ...p, createdAt: new Date().toISOString() });
-      imported++;
+      const products = [
+        { kind: 'diesel', volKey: 'volume diesel', totalKey: 'total_price diesel', ppgKey: 'discounted_price diesel' },
+        { kind: 'def', volKey: 'volume def', totalKey: 'total_price def', ppgKey: 'discounted_price def' },
+        { kind: 'reefer', volKey: 'volume reefer', totalKey: 'total_price reefer', ppgKey: 'discounted_price reefer' },
+        { kind: 'reefer_2', volKey: 'volume reefer_2', totalKey: 'total_price reefer_2', ppgKey: 'discounted_price reefer_2' },
+        { kind: 'def_forecourt', volKey: 'volume def_forecourt', totalKey: 'total_price def_forecourt', ppgKey: 'discounted_price def_forecourt' }
+      ];
+
+      for (const pr of products) {
+        const gallons = safeNum(firstValue(row, [pr.volKey]), null);
+        const total = safeNum(firstValue(row, [pr.totalKey]), null);
+        const price = safeNum(firstValue(row, [pr.ppgKey]), null);
+        if (!(gallons != null && gallons > 0) && !(total != null && total > 0)) continue;
+
+        const p = sanitizeFuelPurchase({
+          unit,
+          txnDate,
+          gallons,
+          totalCost: total,
+          pricePerGallon: price,
+          odometerMiles: odom,
+          vendor,
+          location: locationText
+        });
+        if (!p) continue;
+        erp.fuelPurchases.push({
+          id: uid('imp_fuel'),
+          ...p,
+          productType: pr.kind,
+          relayNote: String(note || '').trim().slice(0, 200),
+          relayExpenseNo: baseExpenseNo || '',
+          createdAt: new Date().toISOString()
+        });
+        imported++;
+
+        // Also stage a Relay expense line for QBO spreadsheet sync.
+        const docNumber = nextRelayDocNumber(baseExpenseNo || 'relay', relayDocCounters);
+        erp.relayExpenses.push({
+          id: uid('rel'),
+          docNumber,
+          txnDate: sliceIsoDate(txnDate),
+          unit,
+          vendor: String(vendor || '').trim(),
+          expenseType: relayLineLabel(pr.kind),
+          amount: safeNum(p.totalCost, 0) || 0,
+          gallons: p.gallons ?? null,
+          pricePerGallon: p.pricePerGallon ?? null,
+          odometerMiles: p.odometerMiles ?? null,
+          location: String(locationText || '').trim(),
+          memo: String(note || '').trim()
+        });
+        relayLines++;
+      }
+
+      const relayFee = safeNum(firstValue(row, ['fee']), null);
+      if (relayFee != null && relayFee > 0) {
+        const docNumber = nextRelayDocNumber(baseExpenseNo || 'relay', relayDocCounters);
+        erp.relayExpenses.push({
+          id: uid('rel'),
+          docNumber,
+          txnDate: sliceIsoDate(txnDate),
+          unit,
+          vendor: String(vendor || '').trim(),
+          expenseType: relayLineLabel('relay_fee'),
+          amount: Math.round(relayFee * 100) / 100,
+          gallons: null,
+          pricePerGallon: null,
+          odometerMiles: odom != null && Number.isFinite(odom) && odom > 0 ? Math.round(odom) : null,
+          location: String(locationText || '').trim(),
+          memo: String(note || '').trim()
+        });
+        relayLines++;
+      }
     }
 
     writeErp(erp);
-    res.json({ ok: true, imported });
+    res.json({ ok: true, imported, relayLines });
   } catch (error) {
     logError('api/import/fuel', error);
     res.status(500).json({ error: error.message });
