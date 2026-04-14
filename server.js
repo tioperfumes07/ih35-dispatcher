@@ -2728,6 +2728,97 @@ app.get('/api/reports/export/relay-expenses.csv', (_req, res) => {
   }
 });
 
+/**
+ * QuickBooks Spreadsheet Sync export (matches the "Quickbooks" tab headers in
+ * QB-Relay Expense Conversion Template).
+ *
+ * Note: This is a flat CSV for copy/paste into QB Spreadsheet Sync. It does NOT post to QBO.
+ */
+app.get('/api/reports/export/relay-qb-sync.csv', (_req, res) => {
+  try {
+    const erp = readErp();
+
+    const headerRaw = [
+      'Payment Type\r\nSelect from list',
+      'Payee\r\nSelect from list',
+      'Deposit to/\r\nPayment account\r\nSelect from list',
+      'Payment Date',
+      'Payment Method\r\nSelect from list',
+      'Reference',
+      'Location\r\nSelect from list',
+      'Tax Type\r\nSelect from list',
+      'Line Type',
+      'Item/Category\r\nSelect from list',
+      'Description',
+      'Qty\r\nUse for Items',
+      'Rate\r\nUse for Items',
+      'Amount\r\nUse for Category',
+      'Customer\r\nUse for Purchase',
+      'Class\r\nSelect from list',
+      'Tax Rate\r\nSelect from list',
+      'Memo',
+      'Engine Row'
+    ];
+
+    const header = headerRaw.map(h => String(h).replace(/\s*\r?\n\s*/g, ' ').trim());
+    const lines = [header.map(csvEscape).join(',')];
+    for (const r of erp.relayExpenses || []) {
+      const amount = safeNum(r.amount, null);
+      if (amount == null || !Number.isFinite(amount) || amount <= 0) continue;
+
+      const paymentType = 'Expense';
+      const payee = String(r.vendor || '').trim();
+      const paymentAccount = ''; // set in spreadsheet if needed
+      const paymentDate = sliceIsoDate(r.txnDate || '');
+      const paymentMethod = ''; // optional in template
+      const reference = String(r.docNumber || '').trim();
+      const location = String(r.location || '').trim();
+      const taxType = '';
+      const lineType = 'Category';
+      const itemCategory = String(r.spreadsheetCategory || r.expenseType || '').trim();
+      const description = String(r.expenseType || '').trim() + (r.unit ? ` (${r.unit})` : '');
+      const qty = '';
+      const rate = '';
+      const customer = '';
+      const klass = '';
+      const taxRate = '';
+      const memo = String(r.memo || '').trim();
+      const engineRow = '';
+
+      lines.push(
+        [
+          paymentType,
+          payee,
+          paymentAccount,
+          paymentDate,
+          paymentMethod,
+          reference,
+          location,
+          taxType,
+          lineType,
+          itemCategory,
+          description,
+          qty,
+          rate,
+          String(amount.toFixed(2)),
+          customer,
+          klass,
+          taxRate,
+          memo,
+          engineRow
+        ].map(csvEscape).join(',')
+      );
+    }
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=\"relay-qb-spreadsheet-sync.csv\"');
+    res.send(lines.join('\n'));
+  } catch (error) {
+    logError('api/reports/export/relay-qb-sync', error);
+    res.status(500).send(error.message);
+  }
+});
+
 app.post('/api/work-orders', (req, res) => {
   try {
     const body = req.body || {};

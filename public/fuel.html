@@ -213,6 +213,7 @@
         <button type="button" onclick="previewFuelImport()">Preview Relay / fuel import</button>
         <button onclick="exportFuelCsv()">Export fuel CSV</button>
           <button onclick="exportRelayExpensesCsv()">Export Relay expenses CSV</button>
+          <button type="button" onclick="exportRelayQbSyncCsv()">Export Relay → QB Spreadsheet Sync CSV</button>
         <span id="fuelLedgerMeta" class="small"></span>
       </div>
       <div id="fuelImportPreview" class="import-preview-wrap" aria-live="polite">
@@ -1048,6 +1049,11 @@
     function exportRelayExpensesCsv() {
       // Server export includes doc numbering logic and split fee lines.
       window.location.href = '/api/reports/export/relay-expenses.csv';
+    }
+
+    function exportRelayQbSyncCsv() {
+      // Matches the "Quickbooks" tab headers in your Relay→QB conversion template.
+      window.location.href = '/api/reports/export/relay-qb-sync.csv';
     }
 
     async function loadCsvStops() {
