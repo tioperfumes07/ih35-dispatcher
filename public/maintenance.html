@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>IH35 Unified Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="/manifest.json" />
   <style>
     :root{
       --bg:#f4f6fa;
@@ -225,6 +227,7 @@
   <datalist id="repairLocationOptions"></datalist>
   <datalist id="accidentFaultOptions"></datalist>
   <datalist id="tireConditionOptions"></datalist>
+  <datalist id="servicePresetOptions"></datalist>
 
   <div class="app" id="erpApp">
     <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show menu">»</button>
@@ -250,6 +253,7 @@
       <button class="nav-btn" onclick="loadAll()">Refresh All</button>
       <button class="nav-btn" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
       <button class="nav-btn" onclick="connectQuickBooks()">Connect QuickBooks</button>
+      <button class="nav-btn" type="button" onclick="location.href='/settings.html'">Settings &amp; users</button>
 
       <div class="nav-title">Status</div>
       <div id="sidebarQboStatus" class="mini-note">QuickBooks not checked</div>
@@ -257,6 +261,7 @@
     </aside>
 
     <main class="main">
+      <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
       <div class="topbar">
         <div class="title" id="pageTitle">Unified Dashboard</div>
         <a href="/" style="font-weight:700;color:#1d4ed8">Home</a>
@@ -570,11 +575,17 @@
                   </div>
 
                   <div>
-                    <span class="qb-l">Service / maintenance (dropdown)</span>
-                    <select id="serviceTypePresetSelect" class="qb-in maint-field" onchange="applyServiceTypePreset()">
-                      <option value="">— Choose from list —</option>
-                    </select>
-                    <span class="qb-l" style="margin-top:8px;display:block">Same field with autocomplete (type to filter)</span>
+                    <span class="qb-l">Service / maintenance (type or pick)</span>
+                    <input
+                      id="serviceTypePresetInput"
+                      class="qb-in maint-field"
+                      list="servicePresetOptions"
+                      placeholder="Pick a suggestion or type any service name…"
+                      autocomplete="off"
+                      oninput="syncServicePresetFromCombo()"
+                      onblur="syncServicePresetFromCombo()"
+                    />
+                    <span class="qb-l" style="margin-top:8px;display:block">Same catalog with search (type to filter)</span>
                     <input
                       id="serviceSearchInput"
                       class="qb-in maint-field"
@@ -585,7 +596,7 @@
                       onblur="resolveServiceSearch()"
                     />
                     <div class="mini-note" style="margin-top:4px">
-                      Dropdown and text field stay in sync. Catalog: Postgres <code>maintenance_service_catalog</code> when configured, else built-in defaults.
+                      Both fields accept <strong>any text</strong>; suggestions come from Postgres <code>maintenance_service_catalog</code> when configured, plus dashboard history and wear/tear presets.
                     </div>
                   </div>
                   <div class="search-row" style="max-width:560px;margin-top:6px">
@@ -835,6 +846,9 @@
                         <th>Next Due Date</th>
                         <th>Next Due Mileage</th>
                         <th>Vendor</th>
+                        <th>Inv #</th>
+                        <th>WO #</th>
+                        <th>Load #</th>
                         <th>Cost</th>
                         <th>QB Sync</th>
                       </tr>
@@ -1461,6 +1475,8 @@
     let serviceSearchPresetBound = false;
     let maintCostLinesDelegationBound = false;
     let maintPartMapDelegationBound = false;
+    /** Preset combobox options (for sync with typed service search). */
+    let __servicePresetList = [];
     /** From GET /api/maintenance/service-types (Postgres catalog or server defaults). */
     let catalogServiceNames = [];
 
@@ -1710,9 +1726,15 @@
       'Coolant flush',
       'Differential service',
       'Suspension / shocks',
+      'Air suspension / air bags',
+      'Radiator / cooling system',
       'Lighting / electrical',
       'Windshield / glass',
-      'Body / paint',
+      'Mirrors',
+      'Body / paint / aesthetic',
+      'Fuel system / DPF',
+      'Steering',
+      'Exhaust / aftertreatment',
       'Reefer unit service',
       'Liftgate service',
       'Trailer service',
@@ -1883,6 +1905,9 @@
           ? tmsLoadsCache.map(r => String(r.load_number))
           : ['Load12345']
       );
+      const svcWide = __servicePresetList.length ? __servicePresetList : DEFAULT_MAINT_SERVICE_TYPES;
+      styleFieldToLongest('serviceTypePresetInput', svcWide);
+      styleFieldToLongest('serviceSearchInput', svcWide);
       ['recordTypeSelect', 'repairLocationSearch', 'linkedTxnTypeSelect', 'linkedDetailModeSelect'].forEach(
         id => {
           const el = document.getElementById(id);
@@ -1946,10 +1971,38 @@
       } catch (_) {}
     }
 
+    function authFetchHeaders() {
+      const t = localStorage.getItem('ih35_token');
+      const h = { Accept: 'application/json' };
+      if (t) h.Authorization = `Bearer ${t}`;
+      return h;
+    }
+
     async function j(url, options = {}) {
-      const r = await fetch(url, options);
+      const opts = {
+        ...options,
+        headers: { ...authFetchHeaders(), ...(options.headers || {}) }
+      };
+      const r = await fetch(url, opts);
       const text = await r.text();
-      try { return JSON.parse(text); } catch { throw new Error(text.slice(0, 300)); }
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(text.slice(0, 300));
+      }
+      if (!r.ok) {
+        if (r.status === 401 && data && data.authRequired) {
+          const bar = document.getElementById('authBanner');
+          if (bar) {
+            bar.classList.remove('hidden');
+            bar.innerHTML =
+              '<span>Login required — </span><a href="/settings.html" style="color:#1d4ed8;font-weight:700">Open Settings</a> to sign in.';
+          }
+        }
+        throw new Error(data.error || data.message || text.slice(0, 200));
+      }
+      return data;
     }
 
     function escapeHtml(str) {
@@ -2344,60 +2397,73 @@
     }
 
     async function loadAll() {
-      const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes] = await Promise.all([
-        j('/api/maintenance/dashboard'),
-        j('/api/maintenance/records'),
-        j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
-        j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
-        detectTmsEnabled(),
-        j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] }))
-      ]);
-      setTmsUiEnabled(!!dbRes);
+      const bar = document.getElementById('authBanner');
+      try {
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes] = await Promise.all([
+          j('/api/maintenance/dashboard'),
+          j('/api/maintenance/records'),
+          j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
+          j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
+          detectTmsEnabled(),
+          j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] }))
+        ]);
+        if (bar) {
+          bar.classList.add('hidden');
+          bar.textContent = '';
+        }
+        setTmsUiEnabled(!!dbRes);
 
-      catalogServiceNames =
-        svcRes && svcRes.ok && Array.isArray(svcRes.names) && svcRes.names.length
-          ? svcRes.names
-          : [...DEFAULT_MAINT_SERVICE_TYPES];
+        catalogServiceNames =
+          svcRes && svcRes.ok && Array.isArray(svcRes.names) && svcRes.names.length
+            ? svcRes.names
+            : [...DEFAULT_MAINT_SERVICE_TYPES];
 
-      vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
-      dashboard = dashRes.dashboard || [];
-      tireAlerts = dashRes.tireAlerts || [];
-      erp = erpRes || {};
-      board = boardRes || {};
-      driverProfiles = Array.isArray(drvRes?.drivers) ? drvRes.drivers : [];
+        vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
+        dashboard = dashRes.dashboard || [];
+        tireAlerts = dashRes.tireAlerts || [];
+        erp = erpRes || {};
+        board = boardRes || {};
+        driverProfiles = Array.isArray(drvRes?.drivers) ? drvRes.drivers : [];
 
-      if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
-      if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
+        if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
+        if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
 
-      if (tmsEnabled) await loadTmsLoadsForMaint();
-      else {
-        tmsLoadsCache = [];
-        const dl = document.getElementById('loadNumberOptions');
-        if (dl) dl.innerHTML = '';
+        if (tmsEnabled) await loadTmsLoadsForMaint();
+        else {
+          tmsLoadsCache = [];
+          const dl = document.getElementById('loadNumberOptions');
+          if (dl) dl.innerHTML = '';
+        }
+        fillDataLists();
+        renderDashboardHome();
+        renderMaintenanceCategoryChips();
+        renderMaintenanceUnitList();
+        renderSelectedUnit();
+        renderMaintenanceTable();
+        renderTrackingBoard();
+        renderSafetyAll();
+        renderTrackingAssetsTable();
+        renderTrackingDrivers();
+        renderApTransactions();
+        renderExpenseHistory();
+        renderShopQueues();
+        renderQboMaster();
+        await loadQboStatus();
+
+        const fleetAt = dashRes.refreshedAt
+          ? new Date(dashRes.refreshedAt).toLocaleString()
+          : new Date().toLocaleString();
+        document.getElementById('sidebarLastUpdated').textContent =
+          'Fleet snapshot (Samsara): ' + fleetAt;
+        applyNavHash();
+        if (activeSection === 'reports') loadReportsData();
+      } catch (e) {
+        console.error(e);
+        if (bar) {
+          bar.classList.remove('hidden');
+          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:#1d4ed8;font-weight:700">Sign in</a>`;
+        }
       }
-      fillDataLists();
-      renderDashboardHome();
-      renderMaintenanceCategoryChips();
-      renderMaintenanceUnitList();
-      renderSelectedUnit();
-      renderMaintenanceTable();
-      renderTrackingBoard();
-      renderSafetyAll();
-      renderTrackingAssetsTable();
-      renderTrackingDrivers();
-      renderApTransactions();
-      renderExpenseHistory();
-      renderShopQueues();
-      renderQboMaster();
-      await loadQboStatus();
-
-      const fleetAt = dashRes.refreshedAt
-        ? new Date(dashRes.refreshedAt).toLocaleString()
-        : new Date().toLocaleString();
-      document.getElementById('sidebarLastUpdated').textContent =
-        'Fleet snapshot (Samsara): ' + fleetAt;
-      applyNavHash();
-      if (activeSection === 'reports') loadReportsData();
     }
 
     function fillDataLists() {
@@ -2412,7 +2478,7 @@
       ).sort((a, b) => a.localeCompare(b));
       document.getElementById('serviceOptions').innerHTML =
         serviceValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
-      populateServiceTypePresetSelect();
+      populateServicePresetCombo();
       bindServiceSearchPreset();
       bindMaintCostLinesDelegation();
 
@@ -2698,8 +2764,8 @@
       if (services.length && !document.getElementById('serviceSearchInput').value) {
         document.getElementById('serviceSearchInput').value = services[0];
         document.getElementById('serviceTypeInput').value = services[0];
-        const preset = document.getElementById('serviceTypePresetSelect');
-        if (preset && Array.from(preset.options).some(o => o.value === services[0])) preset.value = services[0];
+        const presetInp = document.getElementById('serviceTypePresetInput');
+        if (presetInp && __servicePresetList.includes(services[0])) presetInp.value = services[0];
       }
     }
 
@@ -3055,9 +3121,10 @@
       });
     }
 
-    function populateServiceTypePresetSelect() {
-      const sel = document.getElementById('serviceTypePresetSelect');
-      if (!sel) return;
+    function populateServicePresetCombo() {
+      const inp = document.getElementById('serviceTypePresetInput');
+      const dl = document.getElementById('servicePresetOptions');
+      if (!inp || !dl) return;
       const fromDash = (dashboard || []).map(x => x.serviceType).filter(Boolean);
       const base = catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES;
       const set = new Set([
@@ -3069,17 +3136,16 @@
         'Custom Service'
       ]);
       const sorted = [...set].filter(Boolean).sort((a, b) => a.localeCompare(b));
-      const prev = sel.value;
-      sel.innerHTML =
-        '<option value="">— Choose from list —</option>' +
-        sorted.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-      if (prev && sorted.includes(prev)) sel.value = prev;
+      __servicePresetList = sorted;
+      const prev = inp.value.trim();
+      dl.innerHTML = sorted.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+      if (prev && sorted.includes(prev)) inp.value = prev;
     }
 
-    function applyServiceTypePreset() {
-      const sel = document.getElementById('serviceTypePresetSelect');
-      if (!sel) return;
-      const v = sel.value.trim();
+    function syncServicePresetFromCombo() {
+      const inp = document.getElementById('serviceTypePresetInput');
+      if (!inp) return;
+      const v = inp.value.trim();
       if (!v) return;
       document.getElementById('serviceSearchInput').value = v;
       document.getElementById('serviceTypeInput').value = v;
@@ -3096,13 +3162,11 @@
         return;
       }
       try {
-        const r = await fetch('/api/maintenance/service-types', {
+        await j('/api/maintenance/service-types', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name })
         });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j.error || r.statusText);
         if (inp) inp.value = '';
         if (hint) hint.textContent = 'Saved: ' + name + ' — refresh if list does not update.';
         await loadAll();
@@ -3114,15 +3178,14 @@
 
     function syncServicePresetFromSearch() {
       const inp = document.getElementById('serviceSearchInput');
-      const sel = document.getElementById('serviceTypePresetSelect');
-      if (!inp || !sel) return;
+      const presetInp = document.getElementById('serviceTypePresetInput');
+      if (!inp || !presetInp) return;
       const v = inp.value.trim();
       if (!v) {
-        sel.value = '';
+        presetInp.value = '';
         return;
       }
-      const match = Array.from(sel.options).some(o => o.value === v);
-      sel.value = match ? v : '';
+      presetInp.value = __servicePresetList.includes(v) ? v : '';
     }
 
     function bindServiceSearchPreset() {
@@ -3236,27 +3299,27 @@
       if (sameWrap) sameWrap.classList.toggle('hidden', type === 'accident');
       if (type !== 'tire') clearTireExtraLines();
 
-      const preset = document.getElementById('serviceTypePresetSelect');
+      const presetInp = document.getElementById('serviceTypePresetInput');
       if (type === 'tire') {
         document.getElementById('serviceSearchInput').value = 'Tires';
         document.getElementById('serviceTypeInput').value = 'Tires';
-        if (preset) preset.value = 'Tires';
+        if (presetInp) presetInp.value = 'Tires';
       }
       if (type === 'repair') {
         document.getElementById('serviceSearchInput').value = 'Repair';
         document.getElementById('serviceTypeInput').value = 'Repair';
-        if (preset) preset.value = 'Repair';
+        if (presetInp) presetInp.value = 'Repair';
       }
       if (type === 'accident') {
         document.getElementById('serviceSearchInput').value = 'Accident Report';
         document.getElementById('serviceTypeInput').value = 'Accident Report';
-        if (preset) preset.value = 'Accident Report';
+        if (presetInp) presetInp.value = 'Accident Report';
         applyLoadNumberSuggestion(true);
       }
       if (type === 'maintenance' || type === 'custom') {
-        if (preset) {
+        if (presetInp) {
           const cur = document.getElementById('serviceSearchInput').value.trim();
-          preset.value = cur && Array.from(preset.options).some(o => o.value === cur) ? cur : '';
+          presetInp.value = cur && __servicePresetList.includes(cur) ? cur : '';
         }
       }
       if (type !== 'custom') syncPrimaryServiceToFirstCostLine();
@@ -3435,13 +3498,34 @@
       const past = rows.filter(x => x.status === 'past due').length;
       const soon = rows.filter(x => x.status === 'due soon').length;
 
+      const st = erp.assetStatusByUnit?.[v.name] || {};
+      const opStatus = st.status || 'in_service';
       document.getElementById('selectedUnitInfo').innerHTML = `
         <b>${escapeHtml(v.name)}</b><br>
-        <span class="mini-note">Brand / make / model / year:</span>
-        ${escapeHtml([v.make, v.model, v.year].filter(Boolean).join(' · ') || '—')}<br>
-        <span class="mini-note">VIN:</span> ${escapeHtml(v.vin || '—')}<br>
+        <span class="mini-note">Samsara / fleet identity (when API provides it):</span><br>
+        <span class="mini-note">Make / model / year:</span> ${escapeHtml([v.make, v.model, v.year].filter(Boolean).join(' · ') || '—')}<br>
+        <span class="mini-note">VIN:</span> ${escapeHtml(v.vin || '—')}
+        ${v.licensePlate ? ` · <span class="mini-note">Plate:</span> ${escapeHtml(v.licensePlate)}` : ''}<br>
+        ${v.engineSerialNumber ? `<span class="mini-note">Engine serial (ESN):</span> ${escapeHtml(v.engineSerialNumber)}<br>` : ''}
+        ${v.serial ? `<span class="mini-note">Asset serial:</span> ${escapeHtml(v.serial)}<br>` : ''}
         <span class="mini-note">Category:</span> ${escapeHtml(v.assetCategory || '—')}
-        ${v.notes ? `<br><span class="mini-note">Fleet notes:</span> ${escapeHtml(v.notes)}` : ''}
+        ${v.notes ? `<br><span class="mini-note">Fleet notes (Samsara):</span> ${escapeHtml(v.notes)}` : ''}
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #edf1f7">
+          <span class="qb-l">Operational status</span>
+          <div class="search-row" style="grid-template-columns:1fr 1fr;align-items:end">
+            <div>
+              <select id="assetStatusSelect" class="qb-in maint-field">
+                <option value="in_service" ${opStatus === 'in_service' ? 'selected' : ''}>In service</option>
+                <option value="out_of_service" ${opStatus === 'out_of_service' ? 'selected' : ''}>Out of service</option>
+                <option value="shop" ${opStatus === 'shop' ? 'selected' : ''}>In shop</option>
+                <option value="roadside" ${opStatus === 'roadside' ? 'selected' : ''}>Roadside / down</option>
+              </select>
+            </div>
+            <div><button type="button" onclick="saveAssetStatus()">Save status</button></div>
+          </div>
+          <input id="assetStatusNote" class="qb-in maint-field" placeholder="Optional note (reason, ETA, shop name)" value="${escapeHtml(st.note || '')}" style="margin-top:8px" />
+          ${st.updatedAt ? `<div class="mini-note" style="margin-top:4px">Updated ${escapeHtml(new Date(st.updatedAt).toLocaleString())}${st.updatedBy ? ` · ${escapeHtml(st.updatedBy)}` : ''}</div>` : ''}
+        </div>
         <div id="assetPartsRefHint" class="mini-note" style="margin-top:8px;line-height:1.45"></div>
       `;
       loadPartsReferenceHint();
@@ -3480,10 +3564,13 @@
           <td>${escapeHtml(r.nextDueDate || '')}</td>
           <td>${r.nextDueMileage ?? ''}</td>
           <td>${escapeHtml(r.vendor || '')}</td>
+          <td>${escapeHtml(r.vendorInvoiceNumber || '')}</td>
+          <td>${escapeHtml(r.workOrderNumber || '')}</td>
+          <td>${escapeHtml(r.loadNumber || '')}</td>
           <td>${r.cost ?? ''}</td>
           <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || '')}</span></td>
         </tr>
-      `).join('') || '<tr><td colspan="11">No rows found.</td></tr>';
+      `).join('') || '<tr><td colspan="14">No rows found.</td></tr>';
     }
 
     function renderUnitHistory() {
@@ -3564,6 +3651,24 @@
       } catch (e) {
         alert(`QuickBooks posting failed: ${e.message}`);
         await loadAll();
+      }
+    }
+
+    async function saveAssetStatus() {
+      if (!selectedUnit) return;
+      try {
+        await j('/api/maintenance/asset-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            unit: selectedUnit,
+            status: document.getElementById('assetStatusSelect').value,
+            note: document.getElementById('assetStatusNote').value
+          })
+        });
+        await loadAll();
+      } catch (e) {
+        alert(e.message || String(e));
       }
     }
 
@@ -3732,7 +3837,7 @@
       clearTireDots();
       clearTireExtraLines();
       resetMaintCostLines();
-      const pst = document.getElementById('serviceTypePresetSelect');
+      const pst = document.getElementById('serviceTypePresetInput');
       if (pst) pst.value = '';
 
       await loadAll();

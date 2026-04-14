@@ -20,6 +20,16 @@ import pdfRouter from './routes/pdf.mjs';
 import documentParseRouter from './routes/document-parse.mjs';
 import integrationsRouter from './routes/integrations.mjs';
 import { syncAllLoadDocumentsToQboInvoice } from './lib/qbo-attachments.mjs';
+import {
+  setAuthUsersFilePath,
+  readUsersStore,
+  writeUsersStore,
+  hashPassword,
+  verifyPassword,
+  signSessionToken,
+  verifySessionToken,
+  authRequired
+} from './lib/auth-users.mjs';
 import { relayLineLabel, relayQuickBooksCategory, relaySpreadsheetCategory } from './lib/relay-qb-categories.mjs';
 
 dotenv.config();
@@ -49,6 +59,7 @@ const DATA_DIR = fs.existsSync(PERSIST_DIR) ? PERSIST_DIR : LOCAL_DATA_DIR;
 
 const ERP_FILE = path.join(DATA_DIR, 'maintenance.json');
 const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
+setAuthUsersFilePath(path.join(DATA_DIR, 'app-users.json'));
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -88,6 +99,33 @@ app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use((req, res, next) => {
+  if (!req.originalUrl.startsWith('/api/')) return next();
+  const pathOnly = req.originalUrl.split('?')[0];
+  if (
+    pathOnly === '/api/health' ||
+    pathOnly.startsWith('/api/health/') ||
+    pathOnly === '/api/auth/login' ||
+    pathOnly === '/api/auth/status' ||
+    pathOnly === '/api/auth/bootstrap-first-user'
+  ) {
+    return next();
+  }
+  if (!authRequired()) return next();
+  const auth = String(req.headers.authorization || '');
+  const m = auth.match(/^\s*Bearer\s+(.+)$/i);
+  const token = m ? m[1].trim() : '';
+  const session = verifySessionToken(token);
+  if (!session || !session.sub) {
+    return res.status(401).json({ error: 'Login required', authRequired: true });
+  }
+  const st = readUsersStore();
+  const user = st.users.find(u => u.id === session.sub);
+  if (!user) return res.status(401).json({ error: 'Invalid session', authRequired: true });
+  req.authUser = { id: user.id, email: user.email, name: user.name, role: user.role || 'user' };
+  next();
+});
 
 function logError(label, error) {
   console.error(`\n[${label}]`);
@@ -156,7 +194,9 @@ function defaultErpData() {
       classes: [],
       accountsBank: [],
       refreshedAt: ''
-    }
+    },
+    /** Per unit name: { status, note?, updatedAt?, updatedBy? } — operational availability (OOS, shop, etc.). */
+    assetStatusByUnit: {}
   };
 }
 
@@ -198,6 +238,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.customers)) merged.qboCache.customers = [];
   if (!Array.isArray(merged.qboCache.classes)) merged.qboCache.classes = [];
   if (!Array.isArray(merged.qboCache.accountsBank)) merged.qboCache.accountsBank = [];
+  if (!merged.assetStatusByUnit || typeof merged.assetStatusByUnit !== 'object') merged.assetStatusByUnit = {};
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -629,6 +670,61 @@ function readFuelPercentFromStatsRow(row) {
   return pct != null ? Math.round(pct) : null;
 }
 
+/**
+ * Normalize common Samsara vehicle identity fields (VIN, plate, ESN) for maintenance UI.
+ * Field names follow Samsara Fleet API vehicle objects; availability varies by telematics hardware.
+ */
+function enrichSamsaraVehicle(v) {
+  if (!v || typeof v !== 'object') return v;
+  const ext = v.externalIds || {};
+  const vin = String(v.vin || ext.samsara?.vin || ext.vin || '').trim();
+  const licensePlate = String(v.licensePlate || v.license || '').trim();
+  const engineSerialNumber = String(
+    v.engineSerialNumber || v.engineSerial || v.esn || ext.samsara?.engineSerialNumber || ''
+  ).trim();
+  const serial = String(v.serial || ext.samsara?.serial || '').trim();
+  const out = { ...v };
+  if (vin) out.vin = vin;
+  if (licensePlate) out.licensePlate = licensePlate;
+  if (engineSerialNumber) out.engineSerialNumber = engineSerialNumber;
+  if (serial) out.serial = serial;
+  return out;
+}
+
+function lastServiceForUnitAndServiceType(erpStore, unit, serviceType, woLinesAll) {
+  const st = String(serviceType || '').trim();
+  const fromWo = woLinesAll
+    .filter(r => r.unit === unit && String(r.serviceType || '').trim() === st)
+    .map(r => ({
+      serviceDate: r.serviceDate,
+      serviceMileage: r.serviceMileage,
+      vendor: r.vendor,
+      amount: r.amount,
+      qboSyncStatus: r.qboSyncStatus,
+      qboEntityId: r.qboEntityId,
+      vendorInvoiceNumber: r.vendorInvoiceNumber,
+      workOrderNumber: r.workOrderNumber,
+      loadNumber: r.loadNumber,
+      _sort: `${r.serviceDate || ''} ${r.serviceMileage ?? ''}`
+    }));
+  const fromRec = (erpStore.records || [])
+    .filter(rec => rec.unit === unit && String(rec.serviceType || '').trim() === st)
+    .map(rec => ({
+      serviceDate: rec.serviceDate,
+      serviceMileage: rec.serviceMileage,
+      vendor: rec.vendor,
+      amount: rec.cost,
+      qboSyncStatus: rec.qboSyncStatus,
+      qboEntityId: rec.qboPurchaseId,
+      vendorInvoiceNumber: rec.vendorInvoiceNumber,
+      workOrderNumber: rec.workOrderNumber,
+      loadNumber: rec.loadNumber,
+      _sort: `${rec.serviceDate || ''} ${rec.serviceMileage ?? ''}`
+    }));
+  const merged = [...fromWo, ...fromRec].sort((a, b) => (a._sort < b._sort ? 1 : -1));
+  return merged[0] || null;
+}
+
 function mergeVehiclesWithStats(vehicles, statsRows = []) {
   const statsByVehicleId = new Map();
 
@@ -830,15 +926,7 @@ function buildDashboardRows(vehicles, erpStore) {
     const effectiveMileage = liveMiles ?? manualMiles;
 
     return rules.map(rule => {
-      const sameType = allLines
-        .filter(r => r.unit === unit && r.serviceType === rule.serviceType)
-        .sort((a, b) => {
-          const da = `${a.serviceDate || ''} ${a.serviceMileage || ''}`;
-          const db = `${b.serviceDate || ''} ${b.serviceMileage || ''}`;
-          return da < db ? 1 : -1;
-        });
-
-      const last = sameType[0] || null;
+      const last = lastServiceForUnitAndServiceType(erpStore, unit, rule.serviceType, allLines);
       const lastMiles = last ? safeNum(last.serviceMileage, null) : null;
       const nextDueMiles =
         last && rule.intervalMiles != null && lastMiles != null
@@ -872,6 +960,9 @@ function buildDashboardRows(vehicles, erpStore) {
         nextDueDate,
         vendor: last?.vendor || '',
         cost: last?.amount ?? '',
+        vendorInvoiceNumber: last?.vendorInvoiceNumber || '',
+        workOrderNumber: last?.workOrderNumber || '',
+        loadNumber: last?.loadNumber || '',
         qboSyncStatus: last?.qboSyncStatus || '',
         qboEntityId: last?.qboEntityId || '',
         status: calcStatus(nextDueMiles, nextDueDate, effectiveMileage)
@@ -1815,13 +1906,182 @@ app.get('/api/health', async (_req, res) => {
       dataDir: DATA_DIR,
       serverTime: new Date().toISOString(),
       samsaraVehicles: vehicles.length,
-      samsaraStatsRows: stats.length
+      samsaraStatsRows: stats.length,
+      authRequired: authRequired(),
+      userCount: readUsersStore().users.length
     });
   } catch (error) {
     res.json({
       ok: false,
       error: error.message
     });
+  }
+});
+
+app.get('/api/auth/status', (_req, res) => {
+  const st = readUsersStore();
+  res.json({
+    authRequired: authRequired(),
+    hasUsers: st.users.length > 0,
+    userCount: st.users.length
+  });
+});
+
+app.post('/api/auth/bootstrap-first-user', (req, res) => {
+  try {
+    const st = readUsersStore();
+    if (st.users.length) return res.status(400).json({ error: 'Users already exist. Use Settings or login.' });
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    const name = String(req.body?.name || 'Administrator').trim().slice(0, 120);
+    if (!email || !password || password.length < 8) {
+      return res.status(400).json({ error: 'Valid email and password (8+ chars) required' });
+    }
+    const user = {
+      id: uid('usr'),
+      email,
+      name,
+      role: 'admin',
+      passwordHash: hashPassword(password),
+      createdAt: new Date().toISOString()
+    };
+    st.users.push(user);
+    writeUsersStore(st);
+    const token = signSessionToken({ sub: user.id, email: user.email });
+    res.json({
+      ok: true,
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role }
+    });
+  } catch (error) {
+    logError('api/auth/bootstrap-first-user', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    const st = readUsersStore();
+    const user = st.users.find(u => String(u.email).toLowerCase() === email);
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const token = signSessionToken({ sub: user.id, email: user.email });
+    res.json({
+      ok: true,
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role || 'user' }
+    });
+  } catch (error) {
+    logError('api/auth/login', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/auth/me', (req, res) => {
+  if (!authRequired()) return res.json({ ok: true, user: null, authDisabled: true });
+  if (!req.authUser) return res.status(401).json({ error: 'Not logged in' });
+  res.json({ ok: true, user: req.authUser });
+});
+
+app.get('/api/users', (req, res) => {
+  if (!req.authUser || req.authUser.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' });
+  }
+  const st = readUsersStore();
+  res.json({
+    ok: true,
+    users: st.users.map(u => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role || 'user',
+      createdAt: u.createdAt
+    }))
+  });
+});
+
+app.post('/api/users', (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    const name = String(req.body?.name || '').trim().slice(0, 120) || email;
+    const role = String(req.body?.role || 'user').trim() === 'admin' ? 'admin' : 'user';
+    if (!email || !password || password.length < 8) {
+      return res.status(400).json({ error: 'Email and password (8+ chars) required' });
+    }
+    const st = readUsersStore();
+    if (st.users.some(u => String(u.email).toLowerCase() === email)) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+    const user = {
+      id: uid('usr'),
+      email,
+      name,
+      role,
+      passwordHash: hashPassword(password),
+      createdAt: new Date().toISOString()
+    };
+    st.users.push(user);
+    writeUsersStore(st);
+    res.json({
+      ok: true,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role }
+    });
+  } catch (error) {
+    logError('api/users POST', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:id', (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    const id = String(req.params.id || '');
+    const st = readUsersStore();
+    const admins = st.users.filter(u => u.role === 'admin');
+    const target = st.users.find(u => u.id === id);
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (target.role === 'admin' && admins.length <= 1) {
+      return res.status(400).json({ error: 'Cannot remove the last admin' });
+    }
+    st.users = st.users.filter(u => u.id !== id);
+    writeUsersStore(st);
+    res.json({ ok: true });
+  } catch (error) {
+    logError('api/users DELETE', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/maintenance/asset-status', (req, res) => {
+  try {
+    const unit = String(req.body?.unit || '').trim();
+    if (!unit) return res.status(400).json({ error: 'unit is required' });
+    const status = String(req.body?.status || 'in_service').trim();
+    const allowed = new Set(['in_service', 'out_of_service', 'shop', 'roadside']);
+    if (!allowed.has(status)) return res.status(400).json({ error: 'Invalid status' });
+    const note = String(req.body?.note || '').trim().slice(0, 500);
+    const erp = readErp();
+    if (!erp.assetStatusByUnit || typeof erp.assetStatusByUnit !== 'object') erp.assetStatusByUnit = {};
+    erp.assetStatusByUnit[unit] = {
+      status,
+      note,
+      updatedAt: new Date().toISOString(),
+      updatedBy: req.authUser?.email || ''
+    };
+    writeErp(erp);
+    res.json({ ok: true, assetStatusByUnit: erp.assetStatusByUnit });
+  } catch (error) {
+    logError('api/maintenance/asset-status', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -1855,7 +2115,7 @@ async function fetchTrackedFleetSnapshot() {
     fetchVehicleStatsCurrentSafely()
   ]);
   const trackedVehicles = vehiclesRaw.filter(isTrackedAsset).sort(byVehicleName);
-  const enrichedVehicles = mergeVehiclesWithStats(trackedVehicles, statsRows);
+  const enrichedVehicles = mergeVehiclesWithStats(trackedVehicles.map(enrichSamsaraVehicle), statsRows);
   return {
     vehiclesRaw,
     statsRows,
@@ -3869,6 +4129,10 @@ app.get('/maintenance.html', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'maintenance.html'));
 });
 
+app.get('/settings.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'settings.html'));
+});
+
 app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -3886,9 +4150,28 @@ process.on('unhandledRejection', err => {
   logError('unhandledRejection', err);
 });
 
+function bootstrapAdminFromEnv() {
+  const email = String(process.env.IH35_BOOTSTRAP_ADMIN_EMAIL || '').trim().toLowerCase();
+  const pass = String(process.env.IH35_BOOTSTRAP_ADMIN_PASSWORD || '').trim();
+  if (!email || !pass || pass.length < 8) return;
+  const st = readUsersStore();
+  if (st.users.length) return;
+  st.users.push({
+    id: uid('usr'),
+    email,
+    name: 'Administrator',
+    role: 'admin',
+    passwordHash: hashPassword(pass),
+    createdAt: new Date().toISOString()
+  });
+  writeUsersStore(st);
+  console.log('[auth] Bootstrap admin from IH35_BOOTSTRAP_ADMIN_* env:', email);
+}
+
 async function startServer() {
   await ensureTmsSchema();
   await ensureMaintenanceServiceCatalog();
+  bootstrapAdminFromEnv();
   app.listen(PORT, () => {
     console.log(`Server running on ${PORT}`);
   });

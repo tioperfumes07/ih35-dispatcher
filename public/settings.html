@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IH35 — Settings &amp; users</title>
+  <style>
+    :root { --line: #d8deea; --text: #17212f; --muted: #6b7280; --blue: #2563eb; }
+    body { font-family: Arial, Helvetica, sans-serif; margin: 0; background: #f4f6fa; color: var(--text); padding: 24px; }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(15,23,42,.06); }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; box-sizing: border-box; }
+    button { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 600; }
+    button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .mini { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #edf1f7; }
+    a { color: var(--blue); font-weight: 600; }
+    .hidden { display: none !important; }
+    .err { color: #b91c1c; font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p><a href="/maintenance.html">← Back to Maintenance / ERP</a></p>
+    <h1>Settings &amp; users</h1>
+    <p>Sign in when the server has user accounts. The first administrator can be created once (bootstrap), or set <code>IH35_BOOTSTRAP_ADMIN_EMAIL</code> and <code>IH35_BOOTSTRAP_ADMIN_PASSWORD</code> in the server environment.</p>
+
+    <div id="panelLogin" class="panel">
+      <h2 style="font-size:16px;margin:0 0 12px">Sign in</h2>
+      <label>Email</label>
+      <input id="loginEmail" type="email" autocomplete="username" />
+      <label>Password</label>
+      <input id="loginPass" type="password" autocomplete="current-password" />
+      <button type="button" class="primary" onclick="doLogin()">Sign in</button>
+      <div id="loginErr" class="err"></div>
+    </div>
+
+    <div id="panelBootstrap" class="panel hidden">
+      <h2 style="font-size:16px;margin:0 0 12px">Create first administrator</h2>
+      <p class="mini">One-time only, when no users exist yet.</p>
+      <label>Name</label>
+      <input id="bootName" placeholder="Your name" />
+      <label>Email</label>
+      <input id="bootEmail" type="email" />
+      <label>Password (8+ characters)</label>
+      <input id="bootPass" type="password" />
+      <button type="button" class="primary" onclick="doBootstrap()">Create admin</button>
+      <div id="bootErr" class="err"></div>
+    </div>
+
+    <div id="panelLoggedIn" class="panel hidden">
+      <p>Signed in as <strong id="meEmail"></strong> (<span id="meRole"></span>)</p>
+      <button type="button" onclick="doLogout()">Sign out</button>
+
+      <div id="adminUsers" class="hidden" style="margin-top:20px">
+        <h2 style="font-size:16px;margin:0 0 12px">Users</h2>
+        <table>
+          <thead><tr><th>Email</th><th>Name</th><th>Role</th><th></th></tr></thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+        <h3 style="font-size:14px;margin:16px 0 8px">Add user</h3>
+        <label>Email</label>
+        <input id="newUserEmail" type="email" />
+        <label>Name</label>
+        <input id="newUserName" />
+        <label>Password</label>
+        <input id="newUserPass" type="password" />
+        <label>Role</label>
+        <select id="newUserRole" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line)">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button type="button" class="primary" style="margin-top:12px" onclick="addUser()">Add user</button>
+        <div id="userErr" class="err"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function token() { return localStorage.getItem('ih35_token'); }
+    function setToken(t) { if (t) localStorage.setItem('ih35_token', t); else localStorage.removeItem('ih35_token'); }
+
+    async function api(path, opts = {}) {
+      const headers = { Accept: 'application/json', ...(opts.headers || {}) };
+      const t = token();
+      if (t) headers.Authorization = 'Bearer ' + t;
+      const r = await fetch(path, { ...opts, headers });
+      const text = await r.text();
+      let data;
+      try { data = JSON.parse(text); } catch { throw new Error(text.slice(0, 200)); }
+      if (!r.ok) throw new Error(data.error || r.statusText);
+      return data;
+    }
+
+    async function refresh() {
+      document.getElementById('loginErr').textContent = '';
+      document.getElementById('bootErr').textContent = '';
+      const st = await api('/api/auth/status');
+      const hasUsers = st.hasUsers;
+      document.getElementById('panelBootstrap').classList.toggle('hidden', hasUsers);
+      document.getElementById('panelLogin').classList.toggle('hidden', !hasUsers);
+      if (!hasUsers) {
+        document.getElementById('panelLoggedIn').classList.add('hidden');
+        return;
+      }
+      try {
+        const me = await api('/api/auth/me');
+        if (me.authDisabled) {
+          document.getElementById('panelLogin').classList.add('hidden');
+          document.getElementById('panelLoggedIn').classList.remove('hidden');
+          document.getElementById('meEmail').textContent = '(auth disabled — no users)';
+          document.getElementById('meRole').textContent = '—';
+          document.getElementById('adminUsers').classList.add('hidden');
+          return;
+        }
+        if (!me.user) {
+          document.getElementById('panelLoggedIn').classList.add('hidden');
+          document.getElementById('panelLogin').classList.remove('hidden');
+          return;
+        }
+        document.getElementById('panelLoggedIn').classList.remove('hidden');
+        document.getElementById('panelLogin').classList.add('hidden');
+        document.getElementById('meEmail').textContent = me.user.email;
+        document.getElementById('meRole').textContent = me.user.role;
+        if (me.user.role === 'admin') {
+          document.getElementById('adminUsers').classList.remove('hidden');
+          const u = await api('/api/users');
+          document.getElementById('usersBody').innerHTML = (u.users || []).map(x => `
+            <tr>
+              <td>${escapeHtml(x.email)}</td>
+              <td>${escapeHtml(x.name)}</td>
+              <td>${escapeHtml(x.role)}</td>
+              <td><button type="button" onclick="removeUser('${x.id}')">Remove</button></td>
+            </tr>
+          `).join('');
+        } else {
+          document.getElementById('adminUsers').classList.add('hidden');
+        }
+      } catch {
+        document.getElementById('panelLoggedIn').classList.add('hidden');
+        document.getElementById('panelLogin').classList.remove('hidden');
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function doLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPass').value;
+      document.getElementById('loginErr').textContent = '';
+      try {
+        const data = await api('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        setToken(data.token);
+        await refresh();
+      } catch (e) {
+        document.getElementById('loginErr').textContent = e.message || String(e);
+      }
+    }
+
+    async function doBootstrap() {
+      document.getElementById('bootErr').textContent = '';
+      try {
+        const data = await api('/api/auth/bootstrap-first-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('bootEmail').value.trim(),
+            password: document.getElementById('bootPass').value,
+            name: document.getElementById('bootName').value.trim()
+          })
+        });
+        setToken(data.token);
+        await refresh();
+      } catch (e) {
+        document.getElementById('bootErr').textContent = e.message || String(e);
+      }
+    }
+
+    function doLogout() {
+      setToken('');
+      location.reload();
+    }
+
+    async function addUser() {
+      document.getElementById('userErr').textContent = '';
+      try {
+        await api('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('newUserEmail').value.trim(),
+            password: document.getElementById('newUserPass').value,
+            name: document.getElementById('newUserName').value.trim(),
+            role: document.getElementById('newUserRole').value
+          })
+        });
+        document.getElementById('newUserEmail').value = '';
+        document.getElementById('newUserName').value = '';
+        document.getElementById('newUserPass').value = '';
+        await refresh();
+      } catch (e) {
+        document.getElementById('userErr').textContent = e.message || String(e);
+      }
+    }
+
+    async function removeUser(id) {
+      if (!confirm('Remove this user?')) return;
+      try {
+        await api('/api/users/' + encodeURIComponent(id), { method: 'DELETE' });
+        await refresh();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    refresh();
+  </script>
+</body>
+</html>
