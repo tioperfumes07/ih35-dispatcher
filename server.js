@@ -196,7 +196,9 @@ function defaultErpData() {
       refreshedAt: ''
     },
     /** Per unit name: { status, note?, updatedAt?, updatedBy? } — operational availability (OOS, shop, etc.). */
-    assetStatusByUnit: {}
+    assetStatusByUnit: {},
+    /** File import batches (maintenance WO / AP) for ERP-only undo — not QBO. */
+    erpImportBatches: []
   };
 }
 
@@ -239,6 +241,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.classes)) merged.qboCache.classes = [];
   if (!Array.isArray(merged.qboCache.accountsBank)) merged.qboCache.accountsBank = [];
   if (!merged.assetStatusByUnit || typeof merged.assetStatusByUnit !== 'object') merged.assetStatusByUnit = {};
+  if (!Array.isArray(merged.erpImportBatches)) merged.erpImportBatches = [];
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -1135,12 +1138,18 @@ async function qboRefreshIfNeeded() {
   return store.tokens;
 }
 
+function qboPathWithMinorVersion(pathname) {
+  if (String(pathname).includes('minorversion=')) return pathname;
+  return `${pathname}${pathname.includes('?') ? '&' : '?'}minorversion=65`;
+}
+
 async function qboGet(pathname) {
   const store = readQbo();
   if (!store.tokens?.realmId) throw new Error('QuickBooks realmId is missing');
   const tokens = await qboRefreshIfNeeded();
+  const path = qboPathWithMinorVersion(pathname);
 
-  const response = await fetch(`${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${pathname}`, {
+  const response = await fetch(`${QBO_API_BASE}/v3/company/${store.tokens.realmId}/${path}`, {
     headers: {
       Authorization: `Bearer ${tokens.access_token}`,
       Accept: 'application/json'
@@ -1153,6 +1162,54 @@ async function qboGet(pathname) {
     throw new Error(data?.Fault?.Error?.[0]?.Message || 'QuickBooks GET failed');
   }
   return data;
+}
+
+/**
+ * Delete a Purchase or Bill in QuickBooks (requires current SyncToken via read).
+ * entityPath: 'purchase' | 'bill'
+ */
+async function qboDeletePurchaseOrBill(entityPath, entityId) {
+  const id = String(entityId || '').trim();
+  if (!id) throw new Error('QuickBooks entity id is required');
+  const path = String(entityPath || '').toLowerCase();
+  if (path !== 'purchase' && path !== 'bill') throw new Error('Only Purchase or Bill can be deleted here');
+
+  const data = await qboGet(`${path}/${encodeURIComponent(id)}`);
+  const entity = path === 'purchase' ? data.Purchase : data.Bill;
+  if (!entity?.Id) throw new Error(`${path} not found in QuickBooks`);
+
+  const store = readQbo();
+  const tokens = await qboRefreshIfNeeded();
+  const realmId = store.tokens.realmId;
+  const url = `${QBO_API_BASE}/v3/company/${realmId}/${path}?operation=delete&minorversion=65`;
+  const payload = { Id: entity.Id, SyncToken: entity.SyncToken };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${tokens.access_token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+  const raw = await response.text();
+  const out = JSON.parse(raw);
+  if (!response.ok) {
+    throw new Error(out?.Fault?.Error?.[0]?.Message || out?.Fault?.Error?.[0]?.Detail || 'QuickBooks delete failed');
+  }
+  return out;
+}
+
+function requireErpWriteOrAdmin(req, res) {
+  if (erpWriteAuthOk(req)) return true;
+  if (req.authUser && req.authUser.role === 'admin') return true;
+  res.status(401).json({
+    error: 'ERP write authentication or admin login required',
+    authRequired: true,
+    hint: 'Set X-IH35-ERP-Secret or sign in as admin (Settings)'
+  });
+  return false;
 }
 
 async function qboPost(pathname, payload) {
@@ -3366,6 +3423,177 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
   }
 });
 
+function qboEntityPathFromType(qboEntityType) {
+  const t = String(qboEntityType || '').trim();
+  if (t === 'Purchase') return 'purchase';
+  if (t === 'Bill') return 'bill';
+  return '';
+}
+
+/**
+ * Deletes the Purchase/Bill in QuickBooks and clears local posting fields.
+ * kind: 'ap' | 'wo' | 'record'
+ */
+async function revertQboPostedTransaction(kind, erpId) {
+  const id = String(erpId || '').trim();
+  if (!id) throw new Error('id is required');
+  const k = String(kind || '').trim().toLowerCase();
+  if (!['ap', 'wo', 'record'].includes(k)) throw new Error('kind must be ap, wo, or record');
+
+  let erp = readErp();
+  let qboType = '';
+  let qboId = '';
+
+  if (k === 'ap') {
+    const ap = (erp.apTransactions || []).find(x => String(x.id) === id);
+    if (!ap) throw new Error('AP transaction not found');
+    qboType = ap.qboEntityType;
+    qboId = String(ap.qboEntityId || '').trim();
+  } else if (k === 'wo') {
+    const wo = (erp.workOrders || []).find(x => String(x.id) === id);
+    if (!wo) throw new Error('Work order not found');
+    qboType = wo.qboEntityType;
+    qboId = String(wo.qboEntityId || '').trim();
+  } else {
+    const rec = (erp.records || []).find(x => String(x.id) === id);
+    if (!rec) throw new Error('Maintenance record not found');
+    qboType = rec.qboEntityType;
+    qboId = String(rec.qboPurchaseId || rec.qboEntityId || '').trim();
+  }
+
+  if (!qboId || !qboType) {
+    throw new Error('Nothing posted to QuickBooks for this row');
+  }
+  const path = qboEntityPathFromType(qboType);
+  if (!path) throw new Error(`Unsupported QuickBooks entity type: ${qboType}`);
+
+  await qboDeletePurchaseOrBill(path, qboId);
+
+  erp = readErp();
+  const cleared = {
+    qboSyncStatus: '',
+    qboEntityType: '',
+    qboEntityId: '',
+    qboPostedAt: '',
+    qboError: '',
+    qboErrorAt: ''
+  };
+  if (k === 'ap') {
+    const idx = (erp.apTransactions || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) throw new Error('AP transaction not found after QuickBooks delete');
+    erp.apTransactions[idx] = { ...erp.apTransactions[idx], ...cleared };
+  } else if (k === 'wo') {
+    const idx = (erp.workOrders || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) throw new Error('Work order not found after QuickBooks delete');
+    erp.workOrders[idx] = { ...erp.workOrders[idx], ...cleared };
+  } else {
+    const idx = (erp.records || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) throw new Error('Record not found after QuickBooks delete');
+    erp.records[idx] = {
+      ...erp.records[idx],
+      ...cleared,
+      qboPurchaseId: ''
+    };
+  }
+  writeErp(erp);
+}
+
+app.post('/api/qbo/revert-posted', async (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const kind = String(req.body?.kind || '').trim().toLowerCase();
+    const id = String(req.body?.id || '').trim();
+    if (!kind || !id) return res.status(400).json({ error: 'kind and id are required' });
+    await revertQboPostedTransaction(kind, id);
+    res.json({ ok: true, kind, id });
+  } catch (error) {
+    logError('api/qbo/revert-posted', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/qbo/revert-posted-batch', async (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!items.length) return res.status(400).json({ error: 'items array is required' });
+    const results = [];
+    for (const it of items.slice(0, 100)) {
+      const kind = String(it?.kind || '').trim().toLowerCase();
+      const id = String(it?.id || '').trim();
+      if (!kind || !id) {
+        results.push({ kind, id, ok: false, error: 'kind and id required' });
+        continue;
+      }
+      try {
+        await revertQboPostedTransaction(kind, id);
+        results.push({ kind, id, ok: true });
+      } catch (e) {
+        results.push({ kind, id, ok: false, error: e.message });
+      }
+    }
+    res.json({ ok: true, results });
+  } catch (error) {
+    logError('api/qbo/revert-posted-batch', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/erp/import-batches', (_req, res) => {
+  try {
+    const erp = readErp();
+    res.json({
+      ok: true,
+      erpImportBatches: erp.erpImportBatches || [],
+      fuelImportBatches: erp.fuelImportBatches || []
+    });
+  } catch (error) {
+    logError('api/erp/import-batches', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/** Undo ERP-only rows from a maintenance or AP spreadsheet import (does not touch QuickBooks). */
+app.post('/api/import/erp-batch/undo', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const batchId = String(req.body?.importBatchId || '').trim();
+    const kind = String(req.body?.kind || '').trim().toLowerCase();
+    if (!batchId || !kind) {
+      return res.status(400).json({ error: 'importBatchId and kind are required' });
+    }
+    if (kind !== 'maintenance' && kind !== 'ap') {
+      return res.status(400).json({ error: 'kind must be maintenance or ap' });
+    }
+
+    const erp = readErp();
+    let removedWo = 0;
+    let removedAp = 0;
+    if (kind === 'maintenance') {
+      const before = (erp.workOrders || []).length;
+      erp.workOrders = (erp.workOrders || []).filter(w => String(w.importBatchId || '') !== batchId);
+      removedWo = before - erp.workOrders.length;
+    } else {
+      const before = (erp.apTransactions || []).length;
+      erp.apTransactions = (erp.apTransactions || []).filter(a => String(a.importBatchId || '') !== batchId);
+      removedAp = before - erp.apTransactions.length;
+    }
+
+    for (const b of erp.erpImportBatches || []) {
+      if (String(b.importBatchId || '') === batchId && !b.undoneAt) {
+        b.undoneAt = new Date().toISOString();
+        break;
+      }
+    }
+
+    writeErp(erp);
+    res.json({ ok: true, importBatchId: batchId, kind, removedWo, removedAp });
+  } catch (error) {
+    logError('api/import/erp-batch/undo', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
   res.json({
@@ -3710,6 +3938,7 @@ app.post('/api/import/maintenance', upload.single('file'), (req, res) => {
     const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
 
     const erp = readErp();
+    const importBatchId = uid('erp_imp');
     let imported = 0;
 
     for (const rawRow of rows) {
@@ -3755,6 +3984,7 @@ app.post('/api/import/maintenance', upload.single('file'), (req, res) => {
         qboEntityType: '',
         qboEntityId: '',
         qboError: '',
+        importBatchId,
         createdAt: new Date().toISOString(),
         lines: [
           {
@@ -3785,8 +4015,20 @@ app.post('/api/import/maintenance', upload.single('file'), (req, res) => {
       imported += 1;
     }
 
+    if (imported > 0) {
+      if (!Array.isArray(erp.erpImportBatches)) erp.erpImportBatches = [];
+      erp.erpImportBatches.push({
+        importBatchId,
+        kind: 'maintenance',
+        importConfirmedAt: new Date().toISOString(),
+        imported,
+        undoneAt: null
+      });
+      erp.erpImportBatches = erp.erpImportBatches.slice(-50);
+    }
+
     writeErp(erp);
-    res.json({ ok: true, imported });
+    res.json({ ok: true, imported, importBatchId: imported ? importBatchId : null });
   } catch (error) {
     logError('api/import/maintenance', error);
     res.status(500).json({ error: error.message });
@@ -3802,6 +4044,7 @@ app.post('/api/import/ap', upload.single('file'), (req, res) => {
     const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
 
     const erp = readErp();
+    const importBatchId = uid('erp_imp');
     let imported = 0;
 
     for (const rawRow of rows) {
@@ -3837,13 +4080,26 @@ app.post('/api/import/ap', upload.single('file'), (req, res) => {
         qboEntityType: '',
         qboEntityId: '',
         qboError: '',
+        importBatchId,
         createdAt: new Date().toISOString()
       });
       imported += 1;
     }
 
+    if (imported > 0) {
+      if (!Array.isArray(erp.erpImportBatches)) erp.erpImportBatches = [];
+      erp.erpImportBatches.push({
+        importBatchId,
+        kind: 'ap',
+        importConfirmedAt: new Date().toISOString(),
+        imported,
+        undoneAt: null
+      });
+      erp.erpImportBatches = erp.erpImportBatches.slice(-50);
+    }
+
     writeErp(erp);
-    res.json({ ok: true, imported });
+    res.json({ ok: true, imported, importBatchId: imported ? importBatchId : null });
   } catch (error) {
     logError('api/import/ap', error);
     res.status(500).json({ error: error.message });
@@ -4091,7 +4347,7 @@ app.get('/api/import/fuel/last-batch', (_req, res) => {
 /** Undo a previously confirmed fuel import batch by importBatchId. */
 app.post('/api/import/fuel/undo', (req, res) => {
   try {
-    if (!requireErpWrite(req, res)) return;
+    if (!requireErpWriteOrAdmin(req, res)) return;
     const body = req.body || {};
     const batchId = String(body.importBatchId || '').trim();
     if (!batchId) return res.status(400).json({ error: 'importBatchId is required' });

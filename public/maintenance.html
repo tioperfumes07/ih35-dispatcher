@@ -950,6 +950,7 @@
           <button class="subtab" onclick="openAccountingTab('acct-settlement', this)">Settlement / P&amp;L by load</button>
           <button class="subtab" onclick="openAccountingTab('acct-qbo', this)">QuickBooks Live Master</button>
           <button class="subtab" onclick="openAccountingTab('acct-expense-history', this)">Expense history log</button>
+          <button class="subtab" onclick="openAccountingTab('acct-qbo-rollback', this)">QBO rollback &amp; imports</button>
         </div>
 
         <div id="acct-transactions" class="accounting-tab">
@@ -1236,6 +1237,30 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="acct-qbo-rollback" class="accounting-tab hidden">
+          <div class="panel qb-panel">
+            <div class="panel-head">
+              <div class="panel-title">QuickBooks rollback &amp; import safety</div>
+              <div><button type="button" class="qb-btn-add" onclick="loadErpImportBatchesUi()">Refresh</button></div>
+            </div>
+            <div class="panel-body form-stack">
+              <p class="mini-note" style="margin:0 0 10px">
+                <strong>Revert in QBO</strong> deletes the Purchase or Bill in QuickBooks and clears posting flags here for that row.
+                <strong>Undo spreadsheet import</strong> removes rows created by a file import in this app only — it does not change QuickBooks (use Revert first if those rows were already posted).
+              </p>
+              <div id="erpRollbackPostedSection" class="mini-note" style="margin-bottom:12px">Open <strong>Refresh</strong> after loading data.</div>
+              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid #edf1f7;margin-top:4px">
+                <div class="panel-title" style="font-size:14px">ERP import batches (maintenance &amp; AP files)</div>
+              </div>
+              <div id="erpImportBatchesBody" class="mini-note" style="margin-top:8px">—</div>
+              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid #edf1f7;margin-top:16px">
+                <div class="panel-title" style="font-size:14px">Fuel / Relay import batches</div>
+              </div>
+              <div id="fuelImportBatchesBody" class="mini-note" style="margin-top:8px">—</div>
             </div>
           </div>
         </div>
@@ -2123,6 +2148,7 @@
         loadDriverPaySettlements();
       }
       if (id === 'acct-expense-history') renderExpenseHistory();
+      if (id === 'acct-qbo-rollback') loadErpImportBatchesUi();
     }
 
     let reportsSummaryCache = null;
@@ -3573,6 +3599,27 @@
       `).join('') || '<tr><td colspan="14">No rows found.</td></tr>';
     }
 
+    function qboPostedRowWo(wo) {
+      return (
+        String(wo.qboSyncStatus || '').toLowerCase() === 'posted' &&
+        String(wo.qboEntityId || '').trim() &&
+        String(wo.qboEntityType || '').trim()
+      );
+    }
+
+    function qboPostedRowAp(ap) {
+      return (
+        String(ap.qboSyncStatus || '').toLowerCase() === 'posted' &&
+        String(ap.qboEntityId || '').trim() &&
+        String(ap.qboEntityType || '').trim()
+      );
+    }
+
+    function qboPostedRowRecord(rec) {
+      const id = String(rec.qboPurchaseId || rec.qboEntityId || '').trim();
+      return String(rec.qboSyncStatus || '').toLowerCase() === 'posted' && id && String(rec.qboEntityType || '').trim();
+    }
+
     function renderUnitHistory() {
       const records = (erp.records || [])
         .filter(r => r.unit === selectedUnit)
@@ -3635,6 +3682,11 @@
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/maintenance-record/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="postRecordToQbo('${r.id}')">Send to QuickBooks</button>
+                ${
+                  qboPostedRowRecord(r)
+                    ? `<button type="button" onclick="revertQboPostedClient('record', ${JSON.stringify(r.id)})">Revert in QuickBooks</button>`
+                    : ''
+                }
               </div>
             </div>
           `).join('')
@@ -3651,6 +3703,215 @@
       } catch (e) {
         alert(`QuickBooks posting failed: ${e.message}`);
         await loadAll();
+      }
+    }
+
+    async function revertQboPostedClient(kind, id) {
+      if (!confirm('Delete this Purchase/Bill in QuickBooks and clear posting in this app?')) return;
+      try {
+        await j('/api/qbo/revert-posted', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind, id })
+        });
+        await loadAll();
+        const rb = document.getElementById('acct-qbo-rollback');
+        if (rb && !rb.classList.contains('hidden')) loadErpImportBatchesUi();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function revertQboPostedBatchClient() {
+      const boxes = document.querySelectorAll('.erp-revert-cb:checked');
+      const items = Array.from(boxes).map(cb => ({ kind: cb.dataset.kind, id: cb.dataset.id }));
+      if (!items.length) {
+        alert('Select at least one posted row.');
+        return;
+      }
+      if (!confirm(`Delete ${items.length} transaction(s) in QuickBooks and clear posting here?`)) return;
+      try {
+        const out = await j('/api/qbo/revert-posted-batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items })
+        });
+        const bad = (out.results || []).filter(x => !x.ok);
+        if (bad.length) {
+          alert(
+            'Some reverts failed:\n' +
+              bad.slice(0, 8).map(b => `${b.kind} ${b.id}: ${b.error || ''}`).join('\n')
+          );
+        }
+        await loadAll();
+        loadErpImportBatchesUi();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function undoErpImportBatch(kind, importBatchId) {
+      if (!confirm('Remove all rows from this import from the app? This does not delete anything in QuickBooks.')) return;
+      try {
+        const out = await j('/api/import/erp-batch/undo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind, importBatchId })
+        });
+        const msg =
+          kind === 'maintenance'
+            ? `Removed ${out.removedWo || 0} work order(s).`
+            : `Removed ${out.removedAp || 0} AP transaction row(s).`;
+        alert(msg);
+        await loadAll();
+        loadErpImportBatchesUi();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function undoFuelImportBatchFromMaint(importBatchId) {
+      if (!confirm('Remove fuel and relay rows from this import batch? (Same as Fuel Board undo.)')) return;
+      try {
+        const out = await j('/api/import/fuel/undo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ importBatchId })
+        });
+        alert(`Removed ${out.removedFuel || 0} fuel + ${out.removedRelay || 0} relay row(s).`);
+        await loadAll();
+        loadErpImportBatchesUi();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function loadErpImportBatchesUi() {
+      const postedEl = document.getElementById('erpRollbackPostedSection');
+      const erpBody = document.getElementById('erpImportBatchesBody');
+      const fuelBody = document.getElementById('fuelImportBatchesBody');
+      if (!postedEl || !erpBody || !fuelBody) return;
+
+      let batchPayload = { erpImportBatches: [], fuelImportBatches: [] };
+      let batchLoadErr = '';
+      try {
+        batchPayload = await j('/api/erp/import-batches');
+      } catch (e) {
+        batchLoadErr = e.message || String(e);
+      }
+
+      const posted = [];
+      (erp.workOrders || []).forEach(wo => {
+        if (qboPostedRowWo(wo)) {
+          posted.push({
+            kind: 'wo',
+            id: wo.id,
+            label: `WO · ${wo.unit || ''} · load ${wo.loadNumber || '—'} · ${wo.qboEntityType} ${wo.qboEntityId}`
+          });
+        }
+      });
+      (erp.apTransactions || []).forEach(ap => {
+        if (qboPostedRowAp(ap)) {
+          posted.push({
+            kind: 'ap',
+            id: ap.id,
+            label: `AP · ${ap.docNumber || ap.description || ap.id} · ${ap.qboEntityType} ${ap.qboEntityId}`
+          });
+        }
+      });
+      (erp.records || []).forEach(rec => {
+        if (qboPostedRowRecord(rec)) {
+          posted.push({
+            kind: 'record',
+            id: rec.id,
+            label: `Unit record · ${rec.unit || ''} · ${rec.serviceType || ''} · ${rec.qboEntityType || 'Purchase'} ${rec.qboPurchaseId || rec.qboEntityId}`
+          });
+        }
+      });
+
+      if (!posted.length) {
+        postedEl.innerHTML =
+          '<strong>Posted to QuickBooks</strong> — none found in ERP snapshot. Use the list below after posting, or refresh sidebar data.';
+      } else {
+        const maxShow = 80;
+        const rows = posted.slice(0, maxShow)
+          .map(
+            p =>
+              `<label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;cursor:pointer">
+                <input type="checkbox" class="erp-revert-cb" data-kind="${escapeHtml(p.kind)}" data-id="${escapeHtml(p.id)}" />
+                <span>${escapeHtml(p.label)}</span>
+              </label>`
+          )
+          .join('');
+        const more =
+          posted.length > maxShow
+            ? `<p class="mini-note" style="margin:8px 0 0">Showing first ${maxShow} of ${posted.length}. Use per-card Revert on Maintenance / Accounting lists for the rest.</p>`
+            : '';
+        postedEl.innerHTML =
+          `<div style="margin-bottom:8px"><strong>Posted to QuickBooks — bulk revert</strong></div>
+          <p class="mini-note" style="margin:0 0 8px">Requires admin login or ERP write secret (same as posting).</p>
+          <div style="max-height:240px;overflow:auto;border:1px solid #edf1f7;border-radius:10px;padding:8px;background:#fafcff">${rows}</div>
+          ${more}
+          <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="revertQboPostedBatchClient()">Revert selected in QuickBooks</button>`;
+      }
+
+      const erpBatches = (batchPayload.erpImportBatches || []).slice().reverse();
+      if (batchLoadErr) {
+        erpBody.innerHTML = `<span class="mini-note">Could not load batches: ${escapeHtml(batchLoadErr)}</span>`;
+      } else if (!erpBatches.length) {
+        erpBody.innerHTML = '<span class="mini-note">No maintenance/AP import batches recorded yet.</span>';
+      } else {
+        erpBody.innerHTML = `<div class="table-wrap" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
+          <th>When</th><th>Kind</th><th>Batch id</th><th>Rows</th><th>Status</th><th></th>
+        </tr></thead><tbody>` +
+          erpBatches
+            .map(b => {
+              const undone = !!b.undoneAt;
+              return `<tr>
+              <td>${escapeHtml(b.importConfirmedAt || '')}</td>
+              <td>${escapeHtml(b.kind || '')}</td>
+              <td style="word-break:break-all">${escapeHtml(b.importBatchId || '')}</td>
+              <td>${escapeHtml(String(b.imported ?? ''))}</td>
+              <td>${undone ? 'Undone' : 'Active'}</td>
+              <td>${
+                undone
+                  ? '—'
+                  : `<button type="button" class="qb-btn-add" onclick="undoErpImportBatch(${JSON.stringify(String(b.kind || ''))}, ${JSON.stringify(String(b.importBatchId || ''))})">Undo import</button>`
+              }</td>
+            </tr>`;
+            })
+            .join('') +
+          '</tbody></table></div>';
+      }
+
+      const fuelBatches = (batchPayload.fuelImportBatches || []).slice().reverse();
+      if (batchLoadErr) {
+        fuelBody.innerHTML = '';
+      } else if (!fuelBatches.length) {
+        fuelBody.innerHTML =
+          '<span class="mini-note">No fuel batches recorded. Confirm a fuel import on the <a href="/fuel.html">Fuel Board</a> first.</span>';
+      } else {
+        fuelBody.innerHTML = `<div class="table-wrap" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
+          <th>When</th><th>Batch id</th><th>Fuel</th><th>Relay</th><th>Status</th><th></th>
+        </tr></thead><tbody>` +
+          fuelBatches
+            .map(b => {
+              const undone = !!b.undoneAt;
+              return `<tr>
+              <td>${escapeHtml(b.importConfirmedAt || '')}</td>
+              <td style="word-break:break-all">${escapeHtml(b.importBatchId || '')}</td>
+              <td>${escapeHtml(String(b.savedFuel ?? ''))}</td>
+              <td>${escapeHtml(String(b.savedRelay ?? ''))}</td>
+              <td>${undone ? 'Undone' : 'Active'}</td>
+              <td>${
+                undone
+                  ? '—'
+                  : `<button type="button" class="qb-btn-add" onclick="undoFuelImportBatchFromMaint(${JSON.stringify(String(b.importBatchId || ''))})">Undo import</button>`
+              }</td>
+            </tr>`;
+            })
+            .join('') +
+          '</tbody></table></div>';
       }
     }
 
@@ -3854,7 +4115,10 @@
         const r = await fetch('/api/import/maintenance', { method: 'POST', body: fd });
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Import failed');
-        alert(`Maintenance records imported: ${data.imported}`);
+        alert(
+          `Maintenance work orders imported: ${data.imported}` +
+            (data.importBatchId ? `\nImport batch id (undo in Accounting → QBO rollback): ${data.importBatchId}` : '')
+        );
         input.value = '';
         await loadAll();
       } catch (e) {
@@ -3873,7 +4137,10 @@
         const r = await fetch('/api/import/ap', { method: 'POST', body: fd });
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Import failed');
-        alert(`Expense transactions imported: ${data.imported}`);
+        alert(
+          `Expense transactions imported: ${data.imported}` +
+            (data.importBatchId ? `\nImport batch id (undo in Accounting → QBO rollback): ${data.importBatchId}` : '')
+        );
         input.value = '';
         await loadAll();
       } catch (e) {
@@ -4382,10 +4649,16 @@
               <div class="mini-note">Lines (${lines.length}) total: $${total.toFixed(2)}</div>
               <div class="mini-note">${lineSumm}</div>
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
+              ${r.importBatchId ? `<div class="mini-note">Import batch: ${escapeHtml(r.importBatchId)}</div>` : ''}
               ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/work-order/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="postWorkOrderToQbo('${r.id}')">Post to QuickBooks</button>
+                ${
+                  qboPostedRowWo(r)
+                    ? `<button type="button" onclick="revertQboPostedClient('wo', ${JSON.stringify(r.id)})">Revert in QuickBooks</button>`
+                    : ''
+                }
               </div>
             </div>
           `;
@@ -4407,10 +4680,16 @@
               ${r.detailMode === 'item' ? `<div class="mini-note">Item: ${escapeHtml(itemName(r.qboItemId))}</div>` : ''}
               ${r.detailMode === 'category' ? `<div class="mini-note">Category: ${escapeHtml(accountName(r.qboAccountId))}</div>` : ''}
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
+              ${r.importBatchId ? `<div class="mini-note">Import batch: ${escapeHtml(r.importBatchId)}</div>` : ''}
               ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/ap-transaction/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="postApToQbo('${r.id}')">Post to QuickBooks</button>
+                ${
+                  qboPostedRowAp(r)
+                    ? `<button type="button" onclick="revertQboPostedClient('ap', ${JSON.stringify(r.id)})">Revert in QuickBooks</button>`
+                    : ''
+                }
               </div>
             </div>
           `
