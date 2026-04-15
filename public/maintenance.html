@@ -796,6 +796,7 @@
                     <select id="maintSaveAction" class="qb-in maint-field" style="max-width:220px">
                       <option value="save">Save</option>
                       <option value="save_close">Save &amp; close</option>
+                      <option value="save_to_ap">Save &amp; open Accounting draft</option>
                       <option value="save_post">Save &amp; post to QuickBooks</option>
                     </select>
                     <button type="button" onclick="saveRecordWithAction()">Run</button>
@@ -7400,14 +7401,106 @@
       const act = String(document.getElementById('maintSaveAction')?.value || 'save');
       const post = act === 'save_post';
       const close = act === 'save_close';
+      const toAp = act === 'save_to_ap';
       try {
-        if (hint) hint.textContent = post ? 'Saving + posting…' : 'Saving…';
+        if (hint) hint.textContent = post ? 'Saving + posting…' : toAp ? 'Saving + opening Accounting draft…' : 'Saving…';
         await saveRecord(post, close);
+        if (toAp) {
+          openAccountingDraftFromMaintenanceForm();
+        }
         if (hint) hint.textContent = post ? 'Saved and posted.' : 'Saved.';
       } catch (e) {
         if (hint) hint.textContent = e.message || String(e);
         else alert(e.message || String(e));
       }
+    }
+
+    function qboNameById(rows, id) {
+      const key = String(id || '').trim();
+      if (!key) return '';
+      return rows.find(r => String(r.qboId) === key)?.name || '';
+    }
+
+    function openAccountingDraftFromMaintenanceForm() {
+      // Build draft AP (Accounting → Maintenance Expense Transactions) from current maintenance form.
+      const vendorText = (document.getElementById('vendorInput')?.value || '').trim();
+      const vendorQboId = (document.getElementById('linkedVendorQboId')?.value || '').trim();
+      const unit = (selectedUnit || '').trim();
+      const txnDate = (document.getElementById('serviceDateInput')?.value || '').trim();
+      const due = (document.getElementById('linkedDueDate')?.value || '').trim();
+      const txnType = (document.getElementById('linkedTxnTypeSelect')?.value || 'expense').trim();
+      const memo = (document.getElementById('notesInput')?.value || '').trim();
+      const vendorInv = (document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
+      const woNo = (document.getElementById('recordWorkOrderInput')?.value || '').trim();
+      const loadNo = (document.getElementById('recordLoadNumberInput')?.value || '').trim();
+
+      const lines = collectMaintCostLines();
+      const usable = Array.isArray(lines) ? lines.filter(l => (Number(l.amount) || 0) > 0 || String(l.description || '').trim()) : [];
+      if (!usable.length) {
+        alert('No cost breakdown lines to transfer. Add at least one cost line amount or description.');
+        return;
+      }
+
+      openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+      const tabBtn = document.querySelector('#section-accounting .subtab[onclick*="acct-transactions"]');
+      if (tabBtn) openAccountingTab('acct-transactions', tabBtn);
+
+      // Header fields
+      document.getElementById('apTxnType').value = txnType === 'bill' ? 'bill' : 'expense';
+      syncApDocTitle();
+
+      const vName = vendorText || qboNameById(cacheVendors(), vendorQboId);
+      document.getElementById('apVendorSearch').value = vName || '';
+      document.getElementById('apVendorQboId').value = vendorQboId || '';
+      document.getElementById('apAssetUnit').value = unit || '';
+      document.getElementById('apTxnDate').value = txnDate || '';
+      document.getElementById('apDueDate').value = due || '';
+      document.getElementById('apVendorInvoiceNumber').value = vendorInv || '';
+      document.getElementById('apInternalWorkOrderNumber').value = woNo || '';
+      document.getElementById('apLoadInvoiceNumber').value = loadNo || '';
+      document.getElementById('apMemo').value = memo || '';
+
+      // Clear and create lines
+      const host = document.getElementById('woLines');
+      if (host) host.innerHTML = '';
+      for (const ln of usable.slice(0, 30)) {
+        addWoLine();
+        const row = host.querySelectorAll('.wo-line')[host.querySelectorAll('.wo-line').length - 1];
+        if (!row) continue;
+        const svc = row.querySelector('.wo-svc');
+        const modeSel = row.querySelector('.wo-mode');
+        const qtyEl = row.querySelector('.wo-qty');
+        const amtEl = row.querySelector('.wo-amt');
+        const tireEl = row.querySelector('.wo-tire');
+        const acctSearch = row.querySelector('.wo-acct');
+        const acctId = row.querySelector('.wo-acct-id');
+        const itemSearch = row.querySelector('.wo-item');
+        const itemId = row.querySelector('.wo-item-id');
+
+        if (svc) svc.value = String(ln.description || '').trim() || 'Line';
+        if (qtyEl) qtyEl.value = ln.qty != null && ln.qty !== '' ? String(ln.qty) : '1';
+        if (amtEl) amtEl.value = (Number(ln.amount) || 0) > 0 ? String(Number(ln.amount)) : '';
+        if (tireEl) tireEl.value = String(ln.partRef || ln.tirePositionText || '').trim();
+
+        const dm = String(ln.detailMode || 'category');
+        if (modeSel) {
+          modeSel.value = dm === 'item' ? 'item' : 'category';
+          toggleWoLineBlocks(modeSel);
+        }
+        if (dm === 'item') {
+          const qid = String(ln.qboItemId || '').trim();
+          if (itemId) itemId.value = qid;
+          if (itemSearch) itemSearch.value = qboNameById(cacheItems(), qid) || '';
+        } else {
+          const qid = String(ln.qboAccountId || '').trim();
+          if (acctId) acctId.value = qid;
+          if (acctSearch) acctSearch.value = qboNameById(cacheAccountsForLinked(), qid) || '';
+        }
+      }
+      refreshApDocTotal();
+      requestAnimationFrame(() => {
+        document.getElementById('apVendorSearch')?.focus?.();
+      });
     }
 
     async function uploadMaintenanceFile() {
