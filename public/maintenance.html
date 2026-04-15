@@ -3838,18 +3838,54 @@
                   .join('<br>')
               : '—';
           const tot = Number(e.totalAmt || 0).toFixed(2);
+          const reversed = !!e.reversedAt;
+          const revTag = reversed ? `<span class="status status-error" title="${escapeHtml(String(e.reversedAt || ''))}">reversed</span>` : '';
+          const btn =
+            reversed
+              ? ''
+              : `<button type="button" class="qb-btn-add" onclick="revertBillPaymentFromLog(${JSON.stringify(
+                  String(e.id || '')
+                )}, ${JSON.stringify(String(e.qboBillPaymentId || ''))})">Void in QBO</button>`;
           return `<tr>
             <td>${escapeHtml(String(e.txnDate || '').slice(0, 10) || '—')}</td>
             <td>${escapeHtml(String(e.vendorName || e.vendorQboId || '—'))}</td>
             <td>${escapeHtml(String(e.bankAccountName || '—'))}</td>
-            <td>${escapeHtml(String(e.payType || '—'))}</td>
-            <td>${escapeHtml(String(e.qboBillPaymentId || '—'))}</td>
+            <td>${escapeHtml(String(e.payType || '—'))} ${revTag}</td>
+            <td>${escapeHtml(String(e.qboBillPaymentId || '—'))}<div class="mini-note">${escapeHtml(String(e.id || ''))}</div></td>
             <td class="num">${escapeHtml(tot)}</td>
             <td class="mini-note" style="max-width:320px">${bills}</td>
-            <td class="mini-note">${escapeHtml(String(e.recordedBy || '—'))}</td>
+            <td class="mini-note">${escapeHtml(String(e.recordedBy || '—'))}<div style="margin-top:6px">${btn}</div></td>
           </tr>`;
         })
         .join('');
+    }
+
+    async function revertBillPaymentFromLog(erpLogId, qboBillPaymentId) {
+      const id = String(erpLogId || '').trim();
+      const qboId = String(qboBillPaymentId || '').trim();
+      if (!id) return alert('Missing ERP log id.');
+      if (!qboId) return alert('Missing QuickBooks bill payment id.');
+      if (
+        !confirm(
+          `Delete/void this Bill Payment in QuickBooks?\n\nQBO BillPayment Id: ${qboId}\nERP log: ${id}\n\nThis will reopen the bill balances in QBO.`
+        )
+      )
+        return;
+      const st = document.getElementById('bpLogStatus');
+      try {
+        if (st) st.textContent = 'Voiding bill payment in QuickBooks…';
+        await j('/api/qbo/revert-bill-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({ erpLogId: id })
+        });
+        await loadAll();
+        await loadAccountingBillPaymentLog();
+        if (st) st.textContent = 'Bill payment reversed.';
+      } catch (e) {
+        if (st) st.textContent = e.message || String(e);
+        else alert(e.message || String(e));
+      }
     }
 
     async function loadAccountingBillPaymentLog() {

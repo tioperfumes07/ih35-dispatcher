@@ -1342,6 +1342,43 @@ async function qboDeletePurchaseOrBill(entityPath, entityId) {
   return out;
 }
 
+/**
+ * Delete a BillPayment in QuickBooks (requires current SyncToken via read).
+ * Notes:
+ * - This is destructive in QBO and should be restricted.
+ * - QBO returns a "Deleted" entity payload when successful.
+ */
+async function qboDeleteBillPayment(billPaymentId) {
+  const id = String(billPaymentId || '').trim();
+  if (!id) throw new Error('QuickBooks bill payment id is required');
+
+  const data = await qboGet(`billpayment/${encodeURIComponent(id)}`);
+  const entity = data?.BillPayment;
+  if (!entity?.Id) throw new Error('BillPayment not found in QuickBooks');
+
+  const store = readQbo();
+  const tokens = await qboRefreshIfNeeded();
+  const realmId = store.tokens.realmId;
+  const url = `${QBO_API_BASE}/v3/company/${realmId}/billpayment?operation=delete&minorversion=65`;
+  const payload = { Id: entity.Id, SyncToken: entity.SyncToken };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${tokens.access_token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+  const raw = await response.text();
+  const out = JSON.parse(raw);
+  if (!response.ok) {
+    throw new Error(out?.Fault?.Error?.[0]?.Message || out?.Fault?.Error?.[0]?.Detail || 'QuickBooks delete failed');
+  }
+  return out;
+}
+
 function requireErpWriteOrAdmin(req, res) {
   if (erpWriteAuthOk(req)) return true;
   if (req.authUser && req.authUser.role === 'admin') return true;
@@ -1662,7 +1699,9 @@ function buildBillPaymentLogCsv(entries) {
     'balanceAfter',
     'checkNum',
     'privateNote',
-    'recordedBy'
+    'recordedBy',
+    'reversedAt',
+    'reversedBy'
   ];
   const lines = [headers.map(csvEscape).join(',')];
   for (const e of entries) {
@@ -1687,7 +1726,9 @@ function buildBillPaymentLogCsv(entries) {
           csvEscape(ln?.balanceAfter ?? ''),
           csvEscape(e.checkNum),
           csvEscape(e.privateNote),
-          csvEscape(e.recordedBy)
+          csvEscape(e.recordedBy),
+          csvEscape(e.reversedAt || ''),
+          csvEscape(e.reversedBy || '')
         ].join(',')
       );
     }
@@ -5510,6 +5551,66 @@ app.post('/api/qbo/revert-posted-batch', async (req, res) => {
   } catch (error) {
     logError('api/qbo/revert-posted-batch', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Delete a Bill Payment in QuickBooks AND mark the ERP log entry as reversed.
+ * body: { erpLogId } OR { qboBillPaymentId }
+ */
+app.post('/api/qbo/revert-bill-payment', async (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    const erp = readErp();
+    const erpLogId = String(req.body?.erpLogId || '').trim();
+    const qboBillPaymentIdInput = String(req.body?.qboBillPaymentId || '').trim();
+
+    let idx = -1;
+    if (erpLogId) {
+      idx = (erp.qboBillPaymentLog || []).findIndex(x => String(x?.id || '') === erpLogId);
+      if (idx === -1) return res.status(404).json({ ok: false, error: 'ERP bill payment log entry not found' });
+    } else if (qboBillPaymentIdInput) {
+      idx = (erp.qboBillPaymentLog || []).findIndex(x => String(x?.qboBillPaymentId || '') === qboBillPaymentIdInput);
+      if (idx === -1) return res.status(404).json({ ok: false, error: 'No ERP log entry for this QBO bill payment id' });
+    } else {
+      return res.status(400).json({ ok: false, error: 'erpLogId or qboBillPaymentId is required' });
+    }
+
+    const entry = (erp.qboBillPaymentLog || [])[idx];
+    if (!entry?.qboBillPaymentId) return res.status(400).json({ ok: false, error: 'ERP log entry missing qboBillPaymentId' });
+    if (entry.reversedAt) {
+      return res.json({ ok: true, alreadyReversed: true, erpLogId: entry.id, qboBillPaymentId: entry.qboBillPaymentId });
+    }
+
+    const deleted = await qboDeleteBillPayment(entry.qboBillPaymentId);
+
+    const by =
+      req.authUser?.email ||
+      req.authUser?.name ||
+      (erpWriteAuthOk(req) ? 'erp_write_secret' : 'unknown');
+    erp.qboBillPaymentLog[idx] = {
+      ...entry,
+      reversedAt: new Date().toISOString(),
+      reversedBy: by,
+      qboDeleteResult: {
+        time: new Date().toISOString(),
+        deletedId: deleted?.BillPayment?.Id || entry.qboBillPaymentId
+      }
+    };
+    writeErp(erp);
+    res.json({
+      ok: true,
+      erpLogId: erp.qboBillPaymentLog[idx].id,
+      qboBillPaymentId: entry.qboBillPaymentId,
+      reversedAt: erp.qboBillPaymentLog[idx].reversedAt
+    });
+  } catch (error) {
+    logError('api/qbo/revert-bill-payment', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
