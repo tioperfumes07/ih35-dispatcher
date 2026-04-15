@@ -977,7 +977,7 @@
                     <span class="mini-note maint-save-toolbar__hint" id="maintSaveHint"></span>
                     <div class="maint-save-toolbar__actions">
                       <div class="qb-split qb-split--primary">
-                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Save &amp; record in QuickBooks</button>
+                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Save and record</button>
                         <button type="button" class="qb-split__caret" aria-label="More save options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
                         <ul class="qb-split__menu" role="menu" hidden>
                           <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save')">Save</button></li>
@@ -1564,9 +1564,50 @@
                   </label>
                 </div>
               </div>
+              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fafcff">
+                <div class="qb-l" style="margin-bottom:6px">Relay / Love’s fuel file (CSV or Excel)</div>
+                <p class="mini-note" style="margin:0 0 10px">
+                  Upload Relay “All Transactions” exports here (same place you post expenses). Requires <strong>ERP write secret</strong> in Settings. After import, rows appear in the table below — use <strong>Post</strong> for each line to create QuickBooks Purchases.
+                </p>
+                <details class="mini-note" style="margin:0 0 10px">
+                  <summary style="cursor:pointer;font-weight:600;color:#1e40af">How this file maps to QuickBooks</summary>
+                  <div style="margin-top:8px;line-height:1.55;max-width:96ch">
+                    <p style="margin:0 0 8px">
+                      <strong>Fuel ledger lines</strong> (diesel / DEF / reefer from <code>volume_*</code> and <code>total_price_*</code>) store unit, gallons, $/gal, total, vendor text, and <code>work_date</code> as the transaction date. Each <strong>Post</strong> builds a QuickBooks <strong>Purchase (Expense)</strong>: <strong>Vendor</strong> = matched QBO vendor, <strong>Line</strong> = item + qty + rate (or category if checked), <strong>Class</strong> = truck (Truck #), <strong>Bank</strong> and <strong>expense account</strong> from the fields above.
+                    </p>
+                    <p style="margin:0 0 8px">
+                      <strong>Relay staging lines</strong> (parallel list in the preview) use category labels aligned to your spreadsheet template — e.g. Diesel → <code>Fuel Expenses:Fuel-Truck Diesel</code>, DEF → <code>Fuel Expenses:Fuel-DEF-Diesel Exhaust Fluid</code>, Reefer → <code>Fuel Expenses:Fuel-Reefer-Diesel</code>, Relay card fee → <code>Bank Charges:BC-Relay Diesel Code Fee</code>. Those rows are for export / reconciliation; they are not sent to the QuickBooks API from this app unless you use a separate sync process.
+                    </p>
+                    <p class="mini-note" style="margin:0">Sample Relay CSV uses <code>work_date</code> like <code>4/15/26</code> — dates are normalized to ISO on import.</p>
+                  </div>
+                </details>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
+                  <input type="file" id="acctFuelRelayImportFile" accept=".csv,.xlsx,.xls" />
+                  <button type="button" class="qb-btn-add" onclick="acctPreviewRelayFuelImport()">Preview import</button>
+                  <button type="button" onclick="acctUndoLastRelayFuelImport()">Undo last import</button>
+                  <span id="acctFuelRelayImportUndoMeta" class="mini-note"></span>
+                </div>
+                <div id="acctFuelRelayImportPreview" class="acct-fuel-import-preview" hidden>
+                  <div style="font-weight:700;margin-bottom:8px;font-size:13px">Import preview</div>
+                  <div id="acctFuelRelayImportSummary" class="mini-note"></div>
+                  <label class="mini-note" style="display:flex;gap:8px;align-items:center;margin:10px 0">
+                    <input type="checkbox" id="acctFuelRelayImportAlreadyQbo" checked />
+                    <span>Relay expense lines already in QuickBooks — save staging only (reconciliation).</span>
+                  </label>
+                  <div class="acct-fuel-import-scroll-split">
+                    <div id="acctFuelRelayImportRelayWrap" class="acct-fuel-import-scroll"></div>
+                    <div id="acctFuelRelayImportFuelWrap" class="acct-fuel-import-scroll"></div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                    <button type="button" class="qb-btn-primary" onclick="acctConfirmRelayFuelImport()">Confirm import</button>
+                    <button type="button" onclick="acctCancelRelayFuelImportPreview()">Cancel</button>
+                  </div>
+                  <p class="mini-note" style="margin:8px 0 0">Confirm appends to ERP only. Use the grid below to post each fuel line to QuickBooks.</p>
+                </div>
+              </div>
               <div id="fuelExpStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
-              <div class="table-wrap st-settlement-wrap" style="min-width:0">
-                <table class="st-settlement" style="min-width:1480px">
+              <div class="table-wrap st-settlement-wrap fuel-exp-table-wrap" style="min-width:0;width:100%;max-width:100%">
+                <table class="st-settlement fuel-exp-table" style="min-width:1480px;width:max-content;max-width:none">
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -3433,6 +3474,12 @@
         openSectionByName('accounting');
         const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-settlement"]');
         openAccountingTab('acct-settlement', sub);
+        return;
+      }
+      if (section === 'accounting-fuel') {
+        openSectionByName('accounting');
+        const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-fuel-expense"]');
+        openAccountingTab('acct-fuel-expense', sub);
         return;
       }
       if (section === 'uploads') {
@@ -5507,12 +5554,233 @@
         const data = await j('/api/fuel/purchases');
         const rows = Array.isArray(data.purchases) ? data.purchases : [];
         window.__fuelPurchasesRows = rows;
+        acctApplyRelayFuelImportMetaFromPayload(data);
         if (st) st.textContent = `${rows.length} fuel purchase row(s) loaded.`;
         renderFuelExpenseRows();
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
         if (tb) tb.innerHTML = '<tr><td colspan="15" class="mini-note">Failed to load.</td></tr>';
       }
+    }
+
+    let acctPendingRelayFuelImportPreview = null;
+    let acctLastConfirmedRelayFuelImportBatchId = '';
+
+    function acctApplyRelayFuelImportMetaFromPayload(fp) {
+      const imp = fp?.import;
+      const b = imp?.lastBatch;
+      acctLastConfirmedRelayFuelImportBatchId = b?.importBatchId ? String(b.importBatchId) : '';
+      const btn = document.getElementById('acctFuelRelayImportUndoMeta');
+      if (btn) {
+        btn.textContent = acctLastConfirmedRelayFuelImportBatchId
+          ? `Last batch: ${acctLastConfirmedRelayFuelImportBatchId}`
+          : '';
+      }
+    }
+
+    function acctCancelRelayFuelImportPreview() {
+      acctPendingRelayFuelImportPreview = null;
+      const wrap = document.getElementById('acctFuelRelayImportPreview');
+      if (wrap) wrap.hidden = true;
+      const input = document.getElementById('acctFuelRelayImportFile');
+      if (input) input.value = '';
+    }
+
+    function acctRenderRelayFuelImportPreview(data) {
+      const wrap = document.getElementById('acctFuelRelayImportPreview');
+      const sum = document.getElementById('acctFuelRelayImportSummary');
+      const relayW = document.getElementById('acctFuelRelayImportRelayWrap');
+      const fuelW = document.getElementById('acctFuelRelayImportFuelWrap');
+      if (!wrap || !sum || !relayW || !fuelW) return;
+
+      const fuels = data.fuelPurchases || [];
+      const relays = data.relayExpenses || [];
+      const parts = [
+        `Parsed <strong>${fuels.length}</strong> fuel line(s) and <strong>${relays.length}</strong> Relay staging line(s).`
+      ];
+      const s = data.summary;
+      if (s?.relay) {
+        parts.push(
+          `Relay total <strong>$${Number(s.relay.relayTotalAmount || 0).toFixed(2)}</strong> across ${s.relay.relayLineCount} line(s).`
+        );
+      }
+      if (s?.fuel?.fuelLineCount) {
+        parts.push(
+          `Fuel subtotal <strong>$${Number(s.fuel.fuelTotalCost || 0).toFixed(2)}</strong> (${s.fuel.fuelLineCount} line(s)).`
+        );
+      }
+      if (data.duplicates?.duplicateCount) {
+        parts.push(
+          `<span style="color:#b45309;font-weight:700">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
+        );
+      }
+      sum.innerHTML = parts.join('<br>');
+
+      if (!relays.length) {
+        relayW.innerHTML = '<p class="mini-note">No Relay expense lines (check Truck #, work_date, volume/total columns).</p>';
+      } else {
+        relayW.innerHTML =
+          '<div class="mini-note" style="margin-bottom:6px;font-weight:700">Relay → QB category (staging)</div>' +
+          '<table class="acct-fuel-import-table"><thead><tr>' +
+          '<th><input type="checkbox" id="acctPickAllRelay" checked title="Toggle all" onclick="acctTogglePickAllRelay(this)" /></th>' +
+          '<th>Doc #</th><th>Date</th><th>Unit</th><th>QB category</th><th>Line type</th>' +
+          '<th class="num">$</th><th class="num">Gal</th><th>Memo</th></tr></thead><tbody>' +
+          relays
+            .map(
+              (row, i) =>
+                `<tr><td><input type="checkbox" class="acct-pick-relay" data-i="${i}" checked /></td>` +
+                `<td>${escapeHtml(String(row.docNumber || ''))}</td>` +
+                `<td>${escapeHtml(String(row.txnDate || ''))}</td>` +
+                `<td>${escapeHtml(String(row.unit || ''))}</td>` +
+                `<td>${escapeHtml(String(row.qbCategory || row.spreadsheetCategory || row.expenseType || ''))}</td>` +
+                `<td>${escapeHtml(String(row.expenseType || ''))}</td>` +
+                `<td class="num">${Number(row.amount || 0).toFixed(2)}</td>` +
+                `<td class="num">${row.gallons != null ? Number(row.gallons).toFixed(3) : '—'}</td>` +
+                `<td>${escapeHtml(String(row.memo || '').slice(0, 80))}${(row.memo || '').length > 80 ? '…' : ''}</td></tr>`
+            )
+            .join('') +
+          '</tbody></table>';
+      }
+
+      if (!fuels.length) {
+        fuelW.innerHTML = '<p class="mini-note">No fuel purchase lines parsed.</p>';
+      } else {
+        fuelW.innerHTML =
+          '<div class="mini-note" style="margin-bottom:6px;font-weight:700">Fuel ledger lines</div>' +
+          '<table class="acct-fuel-import-table"><thead><tr>' +
+          '<th><input type="checkbox" id="acctPickAllFuel" checked title="Toggle all" onclick="acctTogglePickAllFuel(this)" /></th>' +
+          '<th>Date</th><th>Unit</th><th>Product</th><th class="num">Gal</th><th class="num">$/gal</th><th class="num">Total</th></tr></thead><tbody>' +
+          fuels
+            .map(
+              (row, i) =>
+                `<tr><td><input type="checkbox" class="acct-pick-fuel" data-i="${i}" checked /></td>` +
+                `<td>${escapeHtml(String(row.txnDate || ''))}</td>` +
+                `<td>${escapeHtml(String(row.unit || ''))}</td>` +
+                `<td>${escapeHtml(String(row.productType || ''))}</td>` +
+                `<td class="num">${row.gallons != null ? Number(row.gallons).toFixed(3) : '—'}</td>` +
+                `<td class="num">${row.pricePerGallon != null ? Number(row.pricePerGallon).toFixed(4) : '—'}</td>` +
+                `<td class="num">${row.totalCost != null ? Number(row.totalCost).toFixed(2) : '—'}</td></tr>`
+            )
+            .join('') +
+          '</tbody></table>';
+      }
+
+      wrap.hidden = false;
+    }
+
+    function acctTogglePickAllFuel(master) {
+      document.querySelectorAll('.acct-pick-fuel').forEach(cb => {
+        cb.checked = master.checked;
+      });
+    }
+
+    function acctTogglePickAllRelay(master) {
+      document.querySelectorAll('.acct-pick-relay').forEach(cb => {
+        cb.checked = master.checked;
+      });
+    }
+
+    async function acctPreviewRelayFuelImport() {
+      const input = document.getElementById('acctFuelRelayImportFile');
+      if (!input?.files?.[0]) return alert('Choose a Relay CSV or Excel file first.');
+      const fd = new FormData();
+      fd.append('file', input.files[0]);
+      try {
+        const r = await fetch('/api/import/fuel', { method: 'POST', body: fd, headers: erpWriteHeaders() });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        acctPendingRelayFuelImportPreview = data;
+        acctRenderRelayFuelImportPreview(data);
+      } catch (e) {
+        alert('Preview failed: ' + (e.message || String(e)));
+      }
+    }
+
+    async function acctConfirmRelayFuelImport() {
+      if (!acctPendingRelayFuelImportPreview) return alert('Run preview on a file first.');
+      const fuels = acctPendingRelayFuelImportPreview.fuelPurchases || [];
+      const relays = acctPendingRelayFuelImportPreview.relayExpenses || [];
+      const fuelPick = new Set(
+        [...document.querySelectorAll('.acct-pick-fuel:checked')].map(el => parseInt(el.getAttribute('data-i'), 10))
+      );
+      const relayPick = new Set(
+        [...document.querySelectorAll('.acct-pick-relay:checked')].map(el => parseInt(el.getAttribute('data-i'), 10))
+      );
+      const fuelPayload = fuels.filter((_, i) => fuelPick.has(i));
+      const relayPayload = relays.filter((_, i) => relayPick.has(i));
+      if (!fuelPayload.length && !relayPayload.length) {
+        return alert('Select at least one row to import.');
+      }
+      const alreadyInQbo = !!document.getElementById('acctFuelRelayImportAlreadyQbo')?.checked;
+      try {
+        const r = await fetch('/api/import/fuel/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({
+            fuelPurchases: fuelPayload,
+            relayExpenses: relayPayload,
+            alreadyInQbo
+          })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        acctLastConfirmedRelayFuelImportBatchId = String(data.importBatchId || '').trim();
+        acctApplyRelayFuelImportMetaFromPayload({ import: { lastBatch: { importBatchId: acctLastConfirmedRelayFuelImportBatchId } } });
+        acctCancelRelayFuelImportPreview();
+        await loadFuelExpenseTab();
+        alert(
+          `Saved ${data.savedFuel ?? 0} fuel line(s) and ${data.savedRelay ?? 0} Relay line(s).` +
+            (data.alreadyInQbo ? ' Marked as already in QuickBooks (staging).' : '')
+        );
+      } catch (e) {
+        alert('Confirm import failed: ' + (e.message || String(e)));
+      }
+    }
+
+    async function acctUndoLastRelayFuelImport() {
+      if (!acctLastConfirmedRelayFuelImportBatchId) {
+        try {
+          const fp = await j('/api/fuel/purchases');
+          acctApplyRelayFuelImportMetaFromPayload(fp);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (!acctLastConfirmedRelayFuelImportBatchId) return alert('No confirmed import batch to undo yet.');
+      if (!confirm('Undo the last confirmed Relay/fuel import batch?')) return;
+      try {
+        const r = await fetch('/api/import/fuel/undo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({ importBatchId: acctLastConfirmedRelayFuelImportBatchId })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        acctLastConfirmedRelayFuelImportBatchId = '';
+        acctApplyRelayFuelImportMetaFromPayload({});
+        await loadFuelExpenseTab();
+        alert(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`);
+      } catch (e) {
+        alert('Undo failed: ' + (e.message || String(e)));
+      }
+    }
+
+    function fuelExpenseSortDateKey(r) {
+      const t = String(r?.txnDate || '').trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
+      if (t.length >= 10) return t.slice(0, 10);
+      const c = String(r?.createdAt || '').trim();
+      return c.length >= 10 ? c.slice(0, 10) : '';
+    }
+
+    function fuelExpenseDisplayDateHtml(r) {
+      const t = String(r?.txnDate || '').trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(t)) return escapeHtml(t.slice(0, 10));
+      if (t.length >= 10) return escapeHtml(t.slice(0, 10));
+      if (t) return escapeHtml(t);
+      const c = String(r?.createdAt || '').trim();
+      if (c.length >= 10) return escapeHtml(c.slice(0, 10));
+      return '—';
     }
 
     function renderFuelExpenseRows() {
@@ -5531,14 +5799,14 @@
       };
       const filtered = rows
         .filter(r => {
-          const d = String(r.txnDate || '').slice(0, 10);
+          const d = fuelExpenseSortDateKey(r);
           if ((from || to) && !inRange(d)) return false;
           if (!q) return true;
           const hay = `${r.unit || ''} ${r.vendor || ''} ${r.location || ''} ${r.productType || ''} ${r.relayExpenseNo || ''} ${r.fuelPostedDriverMemo || ''}`.toLowerCase();
           return hay.includes(q);
         })
         .slice()
-        .sort((a, b) => String(b.txnDate || '').localeCompare(String(a.txnDate || '')));
+        .sort((a, b) => String(fuelExpenseSortDateKey(b)).localeCompare(String(fuelExpenseSortDateKey(a))));
 
       if (!filtered.length) {
         tb.innerHTML = '<tr><td colspan="15" class="mini-note">No rows for current filters.</td></tr>';
@@ -5559,7 +5827,7 @@
           const rid = String(r.id || '');
           const idEsc = escapeHtml(rid);
           const idJs = JSON.stringify(rid);
-          const d = escapeHtml(String(r.txnDate || '').slice(0, 10));
+          const dateCell = fuelExpenseDisplayDateHtml(r);
           const unit = escapeHtml(String(r.unit || ''));
           const vendorImp = escapeHtml(String(r.vendor || ''));
           const prod = escapeHtml(String(r.productType || 'diesel'));
@@ -5622,7 +5890,7 @@
 
           if (status === 'posted') {
             return `<tr data-fuel-id="${idEsc}">
-            <td>${d || '—'}</td>
+            <td>${dateCell}</td>
             <td>${unit || '—'}</td>
             <td class="mini-note">${escapeHtml(postedClsDisp ? qboNameByQboId(cacheQboClasses(), postedClsDisp) : '—')}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheVendors(), r.fuelPostedVendorId))}</td>
@@ -5644,7 +5912,7 @@
           }
 
           return `<tr data-fuel-id="${idEsc}">
-            <td>${d || '—'}</td>
+            <td>${dateCell}</td>
             <td>${unit || '—'}</td>
             <td><select class="fuel-class-sel qb-in" style="min-width:120px">${fuelClassSelectHtml(clsVal)}</select></td>
             <td>

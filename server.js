@@ -347,9 +347,22 @@ function writeQbo(data) {
 function sliceIsoDate(v) {
   const s = String(v || '').trim();
   if (!s) return '';
-  // allow YYYY-MM-DD or full ISO.
+  // YYYY-MM-DD or full ISO.
   const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
-  return m ? m[1] : '';
+  if (m) return m[1];
+  // Relay / US exports: M/D/YY or M/D/YYYY (e.g. 4/15/26)
+  const us = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s|$)/);
+  if (us) {
+    const mo = parseInt(us[1], 10);
+    const da = parseInt(us[2], 10);
+    let yr = parseInt(us[3], 10);
+    if (yr < 100) yr += yr >= 70 ? 1900 : 2000;
+    const dt = new Date(Date.UTC(yr, mo - 1, da));
+    if (Number.isNaN(dt.getTime())) return '';
+    if (dt.getUTCFullYear() !== yr || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== da) return '';
+    return dt.toISOString().slice(0, 10);
+  }
+  return '';
 }
 
 function sanitizeDriverProfile(raw) {

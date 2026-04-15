@@ -23,7 +23,15 @@
     button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
     button:hover{background:#f3f4f6}
     input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
-    .layout{display:grid;grid-template-columns:460px 1fr 420px;gap:12px;padding:12px}
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(260px,1fr) minmax(0,2.2fr) minmax(260px,1fr);
+      gap:12px;
+      padding:12px;
+      width:100%;
+      max-width:100%;
+      box-sizing:border-box;
+    }
     .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
     .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--line);background:#fff}
     .panel-body{padding:12px}
@@ -43,7 +51,7 @@
       top:0;
       z-index:2;
     }
-    #fleetAssigned,#fleetUnassigned{max-height:calc(100vh - 190px);overflow:auto}
+    #fleetAssigned,#fleetUnassigned{max-height:clamp(220px,calc(100vh - 220px),560px);overflow:auto}
     .fleet-item{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
     .fleet-item:hover{background:#f9fafb}
     .fleet-item.active{background:#eff6ff}
@@ -54,7 +62,7 @@
     .badge-yellow{background:#fff7ed;color:var(--yellow)}
     .badge-green{background:#f0fdf4;color:var(--green)}
     .roadmap-note{margin:0 12px 10px;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;font-size:12px;color:#1e3a5f;max-width:1100px}
-    #map{width:100%;height:calc(100vh - 260px);min-height:520px}
+    #map{width:100%;height:clamp(320px,calc(100vh - 200px),min(92vh,980px));min-height:320px}
     .route-inputs{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px}
     .dest-row{margin-bottom:8px}
     .auto-wrap{position:relative}
@@ -89,25 +97,14 @@
     .small{font-size:12px;color:var(--muted)}
     @media (max-width:1450px){
       .layout{grid-template-columns:1fr}
-      #map{height:460px;min-height:460px}
-      #fleetAssigned,#fleetUnassigned{max-height:340px}
+      #map{height:clamp(300px,55vh,620px);min-height:300px}
+      #fleetAssigned,#fleetUnassigned{max-height:min(420px,45vh)}
     }
     html.fuel-embed #boardNavMount,
     html.fuel-embed .board-nav-wrap{display:none !important}
     html.fuel-embed .topbar a[href="/"],
     html.fuel-embed .topbar a[href="/dispatch.html"],
     html.fuel-embed .topbar a[href="/maintenance.html"]{display:none}
-    .import-preview-wrap{
-      margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fafbff;
-      display:none
-    }
-    .import-preview-wrap.visible{display:block}
-    .import-preview-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff}
-    .import-preview-table th,.import-preview-table td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left;vertical-align:top}
-    .import-preview-table th{background:#f3f4f6;font-weight:700;color:var(--muted)}
-    .import-preview-table .num{text-align:right;white-space:nowrap}
-    .import-preview-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
-    .import-preview-note{font-size:12px;color:var(--muted);margin:8px 0 0}
   </style>
   <link rel="stylesheet" href="/css/board-nav.css" />
   <script>
@@ -211,31 +208,14 @@
         <button onclick="saveFuelPurchase()">Save purchase</button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
-        <input id="fuelImportFile" type="file" accept=".csv,.xlsx,.xls">
-        <button type="button" onclick="previewFuelImport()">Preview Relay / fuel import</button>
-        <button id="undoLastFuelImportBtn" type="button" disabled onclick="undoLastFuelImport()">Undo last import</button>
-        <span id="fuelImportUndoMeta" class="small"></span>
-        <div id="fuelImportRecentMeta" class="small" style="margin-top:4px;max-width:900px"></div>
         <button onclick="exportFuelCsv()">Export fuel CSV</button>
           <button onclick="exportRelayExpensesCsv()">Export Relay expenses CSV</button>
           <button type="button" onclick="exportRelayQbSyncCsv()">Export Relay → QB Spreadsheet Sync CSV</button>
         <span id="fuelLedgerMeta" class="small"></span>
       </div>
-      <div id="fuelImportPreview" class="import-preview-wrap" aria-live="polite">
-        <div style="font-weight:700;margin-bottom:8px">Import preview</div>
-        <div id="fuelImportPreviewSummary" class="small"></div>
-        <label class="small" style="display:flex;gap:8px;align-items:center;margin:10px 0">
-          <input type="checkbox" id="fuelImportAlreadyQbo" checked />
-          <span>Relay expense lines are already in QuickBooks — save as ledger test / reconciliation only (no QBO API call).</span>
-        </label>
-        <div id="fuelImportRelayTableWrap" style="overflow:auto;max-height:320px;margin-top:8px"></div>
-        <div id="fuelImportFuelTableWrap" style="overflow:auto;max-height:220px;margin-top:12px"></div>
-        <div class="import-preview-actions">
-          <button type="button" onclick="confirmFuelImport()">Confirm import</button>
-          <button type="button" onclick="cancelFuelImportPreview()">Cancel</button>
-        </div>
-        <p class="import-preview-note">Confirm appends selected rows to the diesel ledger and Relay expense staging. Uncheck rows you do not want. QuickBooks is never contacted from this screen.</p>
-      </div>
+      <p class="small" style="margin:0 0 10px;padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;line-height:1.45">
+        <strong>Relay / Love’s CSV imports</strong> moved to <a href="/maintenance.html#accounting-fuel" style="font-weight:700;color:#1d4ed8">Maintenance → Accounting → Fuel expenses</a> so imports sit next to QuickBooks posting and are not mixed with route planning.
+      </p>
       <div id="fuelLedger" class="small">No fuel purchases yet.</div>
         <div class="section-title">Recommended Stops</div>
         <div id="recommendedStops">No recommendations yet.</div>
@@ -291,55 +271,10 @@
     let selectedUnit = null;
     let map, unitsLayer, stopsLayer, routeLayer, selectedLayer;
     let fuelPurchases = [];
-    let pendingFuelImportPreview = null;
-    let lastConfirmedFuelImportBatchId = '';
-
-    function updateUndoFuelImportUi() {
-      const btn = document.getElementById('undoLastFuelImportBtn');
-      const meta = document.getElementById('fuelImportUndoMeta');
-      if (btn) btn.disabled = !lastConfirmedFuelImportBatchId;
-      if (meta) {
-        meta.textContent = lastConfirmedFuelImportBatchId
-          ? `Last confirmed batch: ${lastConfirmedFuelImportBatchId}`
-          : '';
-      }
-    }
-
-    function renderRecentImportBatches(list) {
-      const el = document.getElementById('fuelImportRecentMeta');
-      if (!el) return;
-      if (!list || !list.length) {
-        el.textContent = '';
-        return;
-      }
-      el.innerHTML =
-        '<span style="font-weight:700">Recent file imports</span> — ' +
-        list
-          .map(b => {
-            const und = b.undoneAt ? ' <span style="color:#b45309">(undone)</span>' : '';
-            const t = (b.importConfirmedAt || '').slice(0, 19).replace('T', ' ');
-            return `<span>${escHtml(t)} · ${escHtml(String(b.savedFuel || 0))} fuel / ${escHtml(String(b.savedRelay || 0))} Relay${und}</span>`;
-          })
-          .join(' · ');
-    }
 
     function applyFuelImportMeta(fp) {
-      const imp = fp?.import;
-      const b = imp?.lastBatch;
-      lastConfirmedFuelImportBatchId = b?.importBatchId ? String(b.importBatchId) : '';
-      updateUndoFuelImportUi();
-      renderRecentImportBatches(imp?.recentBatches);
-    }
-
-    async function refreshLastFuelImportBatch() {
-      try {
-        const fp = await j('/api/fuel/purchases');
-        applyFuelImportMeta(fp);
-      } catch {
-        lastConfirmedFuelImportBatchId = '';
-        updateUndoFuelImportUi();
-        renderRecentImportBatches(null);
-      }
+      void fp;
+      /* Relay CSV preview, confirm, and undo: Maintenance → Accounting → Fuel expenses (#accounting-fuel). */
     }
 
     function escHtml(s) {
@@ -992,187 +927,6 @@
       }
     }
 
-    function cancelFuelImportPreview() {
-      pendingFuelImportPreview = null;
-      const wrap = document.getElementById('fuelImportPreview');
-      if (wrap) wrap.classList.remove('visible');
-      const input = document.getElementById('fuelImportFile');
-      if (input) input.value = '';
-    }
-
-    function renderFuelImportPreview(data) {
-      const wrap = document.getElementById('fuelImportPreview');
-      const sum = document.getElementById('fuelImportPreviewSummary');
-      const relayW = document.getElementById('fuelImportRelayTableWrap');
-      const fuelW = document.getElementById('fuelImportFuelTableWrap');
-      if (!wrap || !sum || !relayW || !fuelW) return;
-
-      const fuels = data.fuelPurchases || [];
-      const relays = data.relayExpenses || [];
-      const parts = [
-        `Parsed <strong>${fuels.length}</strong> fuel purchase line(s) and <strong>${relays.length}</strong> Relay expense line(s). Review QuickBooks categories, then confirm.`
-      ];
-      const s = data.summary;
-      if (s?.relay) {
-        parts.push(
-          `Relay total <strong>$${Number(s.relay.relayTotalAmount || 0).toFixed(2)}</strong> across ${s.relay.relayLineCount} line(s).`
-        );
-      }
-      if (s?.fuel?.fuelLineCount) {
-        parts.push(
-          `Fuel ledger subtotal <strong>$${Number(s.fuel.fuelTotalCost || 0).toFixed(2)}</strong> (${s.fuel.fuelLineCount} line(s)).`
-        );
-      }
-      if (data.duplicates?.duplicateCount) {
-        parts.push(
-          `<span style="color:#b45309;font-weight:700">Warning: ${data.duplicates.duplicateCount} Relay line(s) match rows already saved (same date, doc #, unit, line type, and amount).</span>`
-        );
-      }
-      sum.innerHTML = parts.join('<br>');
-
-      if (!relays.length) {
-        relayW.innerHTML = '<p class="small">No Relay expense lines (check Truck #, work_date, volume/total columns).</p>';
-      } else {
-        relayW.innerHTML =
-          '<div class="small" style="margin-bottom:6px;font-weight:700">Relay expenses (QuickBooks category mapping)</div>' +
-          '<table class="import-preview-table"><thead><tr>' +
-          '<th><input type="checkbox" id="pickAllRelay" checked title="Toggle all" onclick="togglePickAllRelay(this)" /></th>' +
-          '<th>Doc #</th><th>Date</th><th>Unit</th><th>QB category</th><th>Line type</th>' +
-          '<th class="num">$</th><th class="num">Gal</th><th>Memo</th></tr></thead><tbody>' +
-          relays
-            .map(
-              (row, i) =>
-                `<tr><td><input type="checkbox" class="pick-relay" data-i="${i}" checked /></td>` +
-                `<td>${escHtml(row.docNumber)}</td>` +
-                `<td>${escHtml(row.txnDate)}</td>` +
-                `<td>${escHtml(row.unit)}</td>` +
-                `<td>${escHtml(row.qbCategory || row.spreadsheetCategory || row.expenseType)}</td>` +
-                `<td>${escHtml(row.expenseType)}</td>` +
-                `<td class="num">${Number(row.amount || 0).toFixed(2)}</td>` +
-                `<td class="num">${row.gallons != null ? Number(row.gallons).toFixed(3) : '—'}</td>` +
-                `<td>${escHtml((row.memo || '').slice(0, 80))}${(row.memo || '').length > 80 ? '…' : ''}</td></tr>`
-            )
-            .join('') +
-          '</tbody></table>';
-      }
-
-      if (!fuels.length) {
-        fuelW.innerHTML = '<p class="small">No fuel purchase lines parsed.</p>';
-      } else {
-        fuelW.innerHTML =
-          '<div class="small" style="margin-bottom:6px;font-weight:700">Fuel ledger lines</div>' +
-          '<table class="import-preview-table"><thead><tr>' +
-          '<th><input type="checkbox" id="pickAllFuel" checked title="Toggle all" onclick="togglePickAllFuel(this)" /></th>' +
-          '<th>Date</th><th>Unit</th><th>Product</th><th class="num">Gal</th><th class="num">$/gal</th><th class="num">Total</th></tr></thead><tbody>' +
-          fuels
-            .map(
-              (row, i) =>
-                `<tr><td><input type="checkbox" class="pick-fuel" data-i="${i}" checked /></td>` +
-                `<td>${escHtml(row.txnDate)}</td>` +
-                `<td>${escHtml(row.unit)}</td>` +
-                `<td>${escHtml(row.productType)}</td>` +
-                `<td class="num">${row.gallons != null ? Number(row.gallons).toFixed(3) : '—'}</td>` +
-                `<td class="num">${row.pricePerGallon != null ? Number(row.pricePerGallon).toFixed(3) : '—'}</td>` +
-                `<td class="num">${row.totalCost != null ? Number(row.totalCost).toFixed(2) : '—'}</td></tr>`
-            )
-            .join('') +
-          '</tbody></table>';
-      }
-
-      wrap.classList.add('visible');
-    }
-
-    function togglePickAllFuel(master) {
-      document.querySelectorAll('.pick-fuel').forEach(cb => { cb.checked = master.checked; });
-    }
-
-    function togglePickAllRelay(master) {
-      document.querySelectorAll('.pick-relay').forEach(cb => { cb.checked = master.checked; });
-    }
-
-    async function previewFuelImport() {
-      const input = document.getElementById('fuelImportFile');
-      if (!input?.files?.[0]) return alert('Choose a fuel CSV or Excel file first.');
-      const fd = new FormData();
-      fd.append('file', input.files[0]);
-      try {
-        const r = await fetch('/api/import/fuel', { method: 'POST', body: fd, headers: erpWriteHeaders() });
-        const data = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(data.error || r.statusText);
-        pendingFuelImportPreview = data;
-        renderFuelImportPreview(data);
-      } catch (e) {
-        alert('Preview failed: ' + e.message);
-      }
-    }
-
-    async function confirmFuelImport() {
-      if (!pendingFuelImportPreview) return alert('Run preview on a file first.');
-      const fuels = pendingFuelImportPreview.fuelPurchases || [];
-      const relays = pendingFuelImportPreview.relayExpenses || [];
-      const fuelPick = new Set(
-        [...document.querySelectorAll('.pick-fuel:checked')].map(el => parseInt(el.getAttribute('data-i'), 10))
-      );
-      const relayPick = new Set(
-        [...document.querySelectorAll('.pick-relay:checked')].map(el => parseInt(el.getAttribute('data-i'), 10))
-      );
-      const fuelPayload = fuels.filter((_, i) => fuelPick.has(i));
-      const relayPayload = relays.filter((_, i) => relayPick.has(i));
-      if (!fuelPayload.length && !relayPayload.length) {
-        return alert('Select at least one row to import.');
-      }
-      const alreadyInQbo = !!document.getElementById('fuelImportAlreadyQbo')?.checked;
-      try {
-        const r = await fetch('/api/import/fuel/confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
-          body: JSON.stringify({
-            fuelPurchases: fuelPayload,
-            relayExpenses: relayPayload,
-            alreadyInQbo
-          })
-        });
-        const data = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(data.error || r.statusText);
-        lastConfirmedFuelImportBatchId = String(data.importBatchId || '').trim();
-        updateUndoFuelImportUi();
-        cancelFuelImportPreview();
-        const fp = await j('/api/fuel/purchases');
-        fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
-        applyFuelImportMeta(fp);
-        renderFuelLedger();
-        alert(
-          `Saved ${data.savedFuel ?? 0} fuel line(s) and ${data.savedRelay ?? 0} Relay expense line(s).` +
-            (data.alreadyInQbo ? ' Marked as already in QuickBooks (test ledger).' : '')
-        );
-      } catch (e) {
-        alert('Confirm import failed: ' + e.message);
-      }
-    }
-
-    async function undoLastFuelImport() {
-      if (!lastConfirmedFuelImportBatchId) await refreshLastFuelImportBatch();
-      if (!lastConfirmedFuelImportBatchId) return alert('No confirmed import batch to undo yet.');
-      if (!confirm('Undo the last confirmed import batch? This removes the exact rows that were just appended.')) return;
-      try {
-        const r = await fetch('/api/import/fuel/undo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
-          body: JSON.stringify({ importBatchId: lastConfirmedFuelImportBatchId })
-        });
-        const data = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(data.error || r.statusText);
-        lastConfirmedFuelImportBatchId = '';
-        updateUndoFuelImportUi();
-        const fp = await j('/api/fuel/purchases');
-        fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
-        applyFuelImportMeta(fp);
-        renderFuelLedger();
-        alert(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`);
-      } catch (e) {
-        alert('Undo failed: ' + (e.message || String(e)));
-      }
-    }
 
     function downloadCsv(filename, rows) {
       const csv = rows.map(r => r.map(x => {
@@ -1410,7 +1164,6 @@
     addDestination('San Antonio, TX');
     initMap();
     refreshErpAuthStatus();
-    refreshLastFuelImportBatch();
     loadBoard();
     setInterval(loadBoard, FUEL_AUTO_REFRESH_MS);
   </script>
