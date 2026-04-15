@@ -1289,6 +1289,13 @@
                 </div>
               </div>
             </div>
+            <div
+              id="apTxnQboBanner"
+              class="mini-note"
+              style="margin:0;padding:10px 14px;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.55;font-size:13px;color:#334155"
+            >
+              Rows in the list below are stored in this app first. Use <strong>Record to QuickBooks</strong> to create the Purchase or Bill in your company file. After posting, use <strong>Verify in QuickBooks</strong> to confirm the transaction still exists online.
+            </div>
             <div class="panel-body form-stack qb-doc-body">
               <div class="wo-line-grid">
                 <div>
@@ -1605,13 +1612,20 @@
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <button type="button" class="qb-btn-add" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
                 <button type="button" class="qb-btn-primary" onclick="postFilteredFuelExpensesToQuickBooks()">
-                  Post filtered to QuickBooks
+                  Record filtered to QuickBooks
                 </button>
               </div>
             </div>
+            <div
+              id="fuelExpenseQboBanner"
+              class="mini-note"
+              style="margin:0 0 12px;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.55;font-size:13px;color:#334155"
+            >
+              Fuel lines are <strong>not</strong> in QuickBooks until you choose <strong>Record to QuickBooks</strong> on each row (or Record filtered). After posting, use <strong>Verify in QuickBooks</strong> on a posted row to confirm the Purchase still exists in your company file.
+            </div>
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 10px">
-                Post each row as its own QuickBooks <strong>Purchase (Expense)</strong>. Default is an <strong>expense category</strong> line (Diesel / DEF / Reefer mapped to your chart of accounts) with <strong>Class</strong> = truck/unit. Uncheck “category” to post as a QBO <strong>fuel item</strong> (qty × $/unit).
+                Record each row as its own QuickBooks <strong>Purchase (Expense)</strong>. Default is an <strong>expense category</strong> line (Diesel / DEF / Reefer mapped to your chart of accounts) with <strong>Class</strong> = truck/unit. Uncheck “category” to post as a QBO <strong>fuel item</strong> (qty × $/unit).
                 Pick the <strong>vendor</strong> (fuel merchant), optional <strong>driver</strong> (name + driver-pay QBO vendor), and optional <strong>customer</strong> on the line when you bill or track by driver entity.
                 Row edits (class, vendor, item, qty, driver, etc.) <strong>save to ERP</strong> automatically after a short pause when the <strong>ERP write secret</strong> is set in Settings (same as posting).
               </p>
@@ -1653,7 +1667,7 @@
               <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fafcff">
                 <div class="qb-l" style="margin-bottom:6px">Relay / Love’s fuel file (CSV or Excel)</div>
                 <p class="mini-note" style="margin:0 0 10px">
-                  Upload Relay “All Transactions” exports here (same place you post expenses). Requires <strong>ERP write secret</strong> in Settings. After import, rows appear in the table below — use <strong>Post</strong> for each line to create QuickBooks Purchases.
+                  Upload Relay “All Transactions” exports here (same place you record expenses). Requires <strong>ERP write secret</strong> in Settings. After import, rows appear in the table below — use <strong>Record to QuickBooks</strong> for each line to create QuickBooks Purchases.
                 </p>
                 <details class="mini-note" style="margin:0 0 10px">
                   <summary style="cursor:pointer;font-weight:600;color:#1e40af">How this file maps to QuickBooks</summary>

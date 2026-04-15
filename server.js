@@ -6063,6 +6063,19 @@ function qboEntityPathFromType(qboEntityType) {
   return '';
 }
 
+/** Read Purchase or Bill by Id; returns null if missing or unsupported (does not throw on 404). */
+async function qboFetchPurchaseOrBill(entityPath, entityId) {
+  const id = String(entityId || '').trim();
+  const path = String(entityPath || '').trim().toLowerCase();
+  if (!id || (path !== 'purchase' && path !== 'bill')) return null;
+  try {
+    const data = await qboGet(`${path}/${encodeURIComponent(id)}`);
+    return path === 'purchase' ? data?.Purchase || null : data?.Bill || null;
+  } catch (_e) {
+    return null;
+  }
+}
+
 /**
  * Deletes the Purchase/Bill in QuickBooks and clears local posting fields.
  * kind: 'ap' | 'wo' | 'record' | 'fuel'
@@ -6165,6 +6178,105 @@ app.post('/api/qbo/revert-posted', async (req, res) => {
     res.json({ ok: true, kind, id });
   } catch (error) {
     logError('api/qbo/revert-posted', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Confirms a Purchase/Bill still exists in QuickBooks for a row this app marked posted.
+ * body: { kind: 'fuel'|'ap'|'wo'|'record', id: erp row id }
+ */
+app.post('/api/qbo/verify-posted', async (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ error: 'QuickBooks is not connected' });
+    }
+    const kind = String(req.body?.kind || '').trim().toLowerCase();
+    const erpId = String(req.body?.id || '').trim();
+    if (!kind || !erpId) return res.status(400).json({ error: 'kind and id are required' });
+    if (!['fuel', 'ap', 'wo', 'record'].includes(kind)) {
+      return res.status(400).json({ error: 'kind must be fuel, ap, wo, or record' });
+    }
+
+    const erp = readErp();
+    let qboType = '';
+    let qboId = '';
+    let rowSync = '';
+    if (kind === 'ap') {
+      const ap = (erp.apTransactions || []).find(x => String(x.id) === erpId);
+      if (!ap) return res.status(404).json({ error: 'AP transaction not found' });
+      rowSync = String(ap.qboSyncStatus || '');
+      qboType = String(ap.qboEntityType || '').trim();
+      qboId = String(ap.qboEntityId || '').trim();
+    } else if (kind === 'wo') {
+      const wo = (erp.workOrders || []).find(x => String(x.id) === erpId);
+      if (!wo) return res.status(404).json({ error: 'Work order not found' });
+      rowSync = String(wo.qboSyncStatus || '');
+      qboType = String(wo.qboEntityType || '').trim();
+      qboId = String(wo.qboEntityId || '').trim();
+    } else if (kind === 'fuel') {
+      const fp = (erp.fuelPurchases || []).find(x => String(x.id) === erpId);
+      if (!fp) return res.status(404).json({ error: 'Fuel purchase not found' });
+      rowSync = String(fp.qboSyncStatus || '');
+      qboType = String(fp.qboEntityType || '').trim();
+      qboId = String(fp.qboEntityId || '').trim();
+    } else {
+      const rec = (erp.records || []).find(x => String(x.id) === erpId);
+      if (!rec) return res.status(404).json({ error: 'Maintenance record not found' });
+      rowSync = String(rec.qboSyncStatus || '');
+      qboType = String(rec.qboEntityType || '').trim();
+      qboId = String(rec.qboPurchaseId || rec.qboEntityId || '').trim();
+    }
+
+    const erpMarkedPosted = rowSync.toLowerCase() === 'posted';
+
+    if (!qboId || !qboType) {
+      return res.json({
+        ok: true,
+        kind,
+        erpId,
+        erpMarkedPosted,
+        existsInQuickBooks: null,
+        message: 'This row has no QuickBooks entity id stored — not recorded via this app yet.'
+      });
+    }
+
+    const path = qboEntityPathFromType(qboType);
+    if (!path) {
+      return res.json({
+        ok: true,
+        kind,
+        erpId,
+        erpMarkedPosted,
+        existsInQuickBooks: null,
+        qboEntityType: qboType,
+        qboEntityId: qboId,
+        message: `Stored entity type "${qboType}" is not verified here (only Purchase and Bill).`
+      });
+    }
+
+    const entity = await qboFetchPurchaseOrBill(path, qboId);
+    const exists = !!entity;
+    logQboEvent('VERIFY_POSTED', { kind, erpId, qboEntityType: qboType, qboEntityId: qboId, exists });
+
+    res.json({
+      ok: true,
+      kind,
+      erpId,
+      erpMarkedPosted,
+      existsInQuickBooks: exists,
+      qboEntityType: qboType,
+      qboEntityId: qboId,
+      qboTxnDate: entity?.TxnDate || '',
+      qboDocNumber: entity?.DocNumber || '',
+      message: exists
+        ? `Found in QuickBooks: ${qboType} ${qboId}${entity?.DocNumber ? ` · Doc # ${entity.DocNumber}` : ''}.`
+        : `Not found in QuickBooks for ${qboType} id ${qboId}. It may have been deleted in QBO while this app still shows posted — use Revert or refresh posting.`
+    });
+  } catch (error) {
+    logError('api/qbo/verify-posted', error);
     res.status(500).json({ error: error.message });
   }
 });
