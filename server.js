@@ -249,7 +249,9 @@ function defaultErpData() {
     bankStatementImports: [],
     bankMatchLinks: [],
     /** Shop floor queue: internal / external / roadside repair tracking. */
-    maintenanceShopQueue: []
+    maintenanceShopQueue: [],
+    /** Bill payments posted to QuickBooks from this app (audit + expense history). */
+    qboBillPaymentLog: []
   };
 }
 
@@ -301,6 +303,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.bankStatementImports)) merged.bankStatementImports = [];
   if (!Array.isArray(merged.bankMatchLinks)) merged.bankMatchLinks = [];
   if (!Array.isArray(merged.maintenanceShopQueue)) merged.maintenanceShopQueue = [];
+  if (!Array.isArray(merged.qboBillPaymentLog)) merged.qboBillPaymentLog = [];
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -1500,6 +1503,7 @@ async function qboCreateBillPaymentFromApp(body) {
 
   const billIdsSeen = new Set();
   const linePayloads = [];
+  const lineLog = [];
   let sum = 0;
 
   for (const ln of rawLines) {
@@ -1518,6 +1522,15 @@ async function qboCreateBillPaymentFromApp(body) {
     const balance = qboMoneyRound(bill.Balance);
     if (!(balance > 0)) throw new Error(`Bill ${billId} has no open balance`);
     if (amount - balance > 0.01) throw new Error(`Bill ${billId}: pay amount exceeds balance (${balance})`);
+
+    const billDocNumber = String(bill.DocNumber || '').trim();
+    lineLog.push({
+      billQboId: billId,
+      billDocNumber,
+      amountPaid: amount,
+      balanceBefore: balance,
+      balanceAfter: qboMoneyRound(balance - amount)
+    });
 
     linePayloads.push({
       Amount: amount,
@@ -1559,8 +1572,53 @@ async function qboCreateBillPaymentFromApp(body) {
     docNumber: bp?.DocNumber || '',
     totalAmt: sum,
     vendorQboId,
-    billPayment: bp || null
+    txnDate,
+    payType,
+    bankAccountQboId,
+    checkNum: payType === 'Check' ? checkNum : '',
+    privateNote,
+    lineLog
   };
+}
+
+const QBO_BILL_PAYMENT_LOG_MAX = 2500;
+
+function appendQboBillPaymentLogEntry(erp, req, result, body) {
+  const vendors = erp.qboCache?.vendors || [];
+  const banks = erp.qboCache?.accountsBank || [];
+  const bankId = String(body?.bankAccountQboId || result.bankAccountQboId || '').trim();
+  const vendorName =
+    vendors.find(v => String(v.qboId) === String(result.vendorQboId))?.name || String(result.vendorQboId || '');
+  const bankName = banks.find(b => String(b.qboId) === bankId)?.name || bankId;
+  const recordedBy =
+    req.authUser?.email ||
+    req.authUser?.name ||
+    (erpWriteAuthOk(req) ? 'erp_write_secret' : 'unknown');
+
+  const entry = {
+    id: uid('bpp'),
+    createdAt: new Date().toISOString(),
+    txnDate: result.txnDate,
+    vendorQboId: result.vendorQboId,
+    vendorName,
+    bankAccountQboId: bankId,
+    bankAccountName: bankName,
+    payType: result.payType,
+    checkNum: result.checkNum || '',
+    privateNote: result.privateNote || '',
+    qboBillPaymentId: result.billPaymentId,
+    qboBillPaymentDocNumber: result.docNumber || '',
+    totalAmt: result.totalAmt,
+    lines: Array.isArray(result.lineLog) ? result.lineLog : [],
+    recordedBy
+  };
+
+  if (!Array.isArray(erp.qboBillPaymentLog)) erp.qboBillPaymentLog = [];
+  erp.qboBillPaymentLog.push(entry);
+  if (erp.qboBillPaymentLog.length > QBO_BILL_PAYMENT_LOG_MAX) {
+    erp.qboBillPaymentLog = erp.qboBillPaymentLog.slice(-QBO_BILL_PAYMENT_LOG_MAX);
+  }
+  return entry.id;
 }
 
 function buildErpExpenseCandidates(erp) {
@@ -5192,7 +5250,18 @@ app.post('/api/qbo/bill-payment', async (req, res) => {
       return res.status(400).json({ error: 'QuickBooks is not connected' });
     }
     const result = await qboCreateBillPaymentFromApp(req.body || {});
-    res.json({ ok: true, ...result });
+    const erp = readErp();
+    const erpLogId = appendQboBillPaymentLogEntry(erp, req, result, req.body || {});
+    writeErp(erp);
+    res.json({
+      ok: true,
+      billPaymentId: result.billPaymentId,
+      docNumber: result.docNumber,
+      totalAmt: result.totalAmt,
+      vendorQboId: result.vendorQboId,
+      lineLog: result.lineLog,
+      erpLogId
+    });
   } catch (error) {
     logError('api/qbo/bill-payment', error);
     res.status(500).json({ error: error.message });

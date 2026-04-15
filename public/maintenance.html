@@ -1181,10 +1181,12 @@
               </div>
               <p class="mini-note" style="margin:0 0 8px">
                 Leave vendor blank to load up to <strong>150</strong> open bills (all vendors). You can only pay one vendor per payment — select rows that share the same vendor.
+                <strong>Partial pay:</strong> lower the pay amount; <strong>Remaining</strong> and <strong>Status</strong> update as you type (capped at open balance on blur).
               </p>
               <div id="bpOpenBillsStatus" class="mini-note" style="margin-bottom:8px">Load after QuickBooks is connected (sidebar refresh).</div>
+              <div id="bpSelectionTotal" class="mini-note" style="margin-bottom:6px;font-weight:600">Draft payment total: $0.00</div>
               <div class="table-wrap st-settlement-wrap" style="min-width:0">
-                <table class="st-settlement" style="min-width:920px">
+                <table class="st-settlement" style="min-width:1040px">
                   <thead>
                     <tr>
                       <th>Pay</th>
@@ -1192,12 +1194,14 @@
                       <th>Doc #</th>
                       <th>Txn date</th>
                       <th>Due</th>
-                      <th class="num">Balance</th>
+                      <th class="num">Open balance</th>
                       <th class="num">Pay amount</th>
+                      <th class="num">Remaining</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody id="bpOpenBillsBody">
-                    <tr><td colspan="7" class="mini-note">Load open bills to see rows.</td></tr>
+                    <tr><td colspan="9" class="mini-note">Load open bills to see rows.</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1342,7 +1346,7 @@
             </div>
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 10px">
-                Combined view of <strong>maintenance AP transactions</strong>, <strong>work order lines</strong>, <strong>unit maintenance records</strong> (cost lines), and <strong>Relay fuel-import staging</strong>.
+                Combined view of <strong>maintenance AP transactions</strong>, <strong>work order lines</strong>, <strong>unit maintenance records</strong> (cost lines), <strong>Relay fuel-import staging</strong>, and <strong>QuickBooks bill payments</strong> recorded from this app.
                 Filter by date (txn / service date) and source. QuickBooks columns reflect API posting status where applicable; Relay rows use the fuel import flags when expenses already exist in QBO.
               </p>
               <div class="wo-line-grid" style="margin-bottom:10px">
@@ -1362,6 +1366,7 @@
                     <option value="wo">Work order lines</option>
                     <option value="relay">Relay (fuel import)</option>
                     <option value="mr">Unit maintenance (records)</option>
+                    <option value="bpp">Bill payments (QBO)</option>
                   </select>
                 </div>
                 <div style="grid-column:span 2">
@@ -3497,15 +3502,93 @@
       const tr = chk.closest('tr');
       if (!tr) return;
       const inp = tr.querySelector('.bp-pay-amt');
-      const bal = Number(tr.dataset.balance || '0') || 0;
+      const open = Number(tr.dataset.openBalance || tr.dataset.balance || '0') || 0;
       if (!inp) return;
       if (chk.checked) {
         inp.disabled = false;
-        inp.value = (Math.round(bal * 100) / 100).toFixed(2);
+        inp.value = (Math.round(open * 100) / 100).toFixed(2);
+        bpUpdateRowRemainder(tr, true);
       } else {
         inp.value = '';
         inp.disabled = true;
+        const cell = tr.querySelector('.bp-remain-cell');
+        const st = tr.querySelector('.bp-pay-status');
+        if (cell) cell.textContent = '—';
+        if (st) st.textContent = '—';
       }
+      bpRefreshSelectionTotal();
+    }
+
+    function bpFillMax(btn) {
+      const tr = btn && btn.closest ? btn.closest('tr') : null;
+      if (!tr) return;
+      const chk = tr.querySelector('.bp-pay-chk');
+      const open = Number(tr.dataset.openBalance || 0) || 0;
+      const inp = tr.querySelector('.bp-pay-amt');
+      if (chk) chk.checked = true;
+      if (inp) {
+        inp.disabled = false;
+        inp.value = (Math.round(open * 100) / 100).toFixed(2);
+      }
+      bpUpdateRowRemainder(tr, true);
+      bpRefreshSelectionTotal();
+    }
+
+    function bpUpdateRowRemainder(tr, clamp) {
+      const open = Number(tr.dataset.openBalance || tr.dataset.balance || 0) || 0;
+      const inp = tr.querySelector('.bp-pay-amt');
+      const cell = tr.querySelector('.bp-remain-cell');
+      const st = tr.querySelector('.bp-pay-status');
+      const chk = tr.querySelector('.bp-pay-chk');
+      if (!inp || !cell) return;
+      let pay = Number(String(inp.value || '').trim());
+      if (!Number.isFinite(pay)) pay = 0;
+      if (clamp || document.activeElement !== inp) {
+        pay = Math.max(0, Math.min(open, Math.round(pay * 100) / 100));
+        if (chk && chk.checked) inp.value = pay > 0 ? pay.toFixed(2) : '';
+      } else {
+        pay = Math.max(0, Math.min(open, Math.round(pay * 100) / 100));
+      }
+      const rem = Math.max(0, Math.round((open - pay) * 100) / 100);
+      if (chk && chk.checked) {
+        cell.textContent = rem.toFixed(2);
+        if (st) {
+          if (!(pay > 0.0001)) st.textContent = 'Enter amount';
+          else if (rem <= 0.01) st.textContent = 'Pays in full';
+          else st.textContent = 'Partial';
+        }
+      } else {
+        cell.textContent = '—';
+        if (st) st.textContent = '—';
+      }
+    }
+
+    function bpOnPayAmtInput(inp) {
+      const tr = inp.closest('tr');
+      if (tr) bpUpdateRowRemainder(tr, false);
+      bpRefreshSelectionTotal();
+    }
+
+    function bpOnPayAmtBlur(inp) {
+      const tr = inp.closest('tr');
+      if (tr) bpUpdateRowRemainder(tr, true);
+      bpRefreshSelectionTotal();
+    }
+
+    function bpRefreshSelectionTotal() {
+      const el = document.getElementById('bpSelectionTotal');
+      if (!el) return;
+      let t = 0;
+      document.querySelectorAll('#bpOpenBillsBody tr[data-bill-id]').forEach(tr => {
+        const chk = tr.querySelector('.bp-pay-chk');
+        if (!chk || !chk.checked) return;
+        const open = Number(tr.dataset.openBalance || 0) || 0;
+        let pay = Number(String(tr.querySelector('.bp-pay-amt')?.value || '').trim());
+        if (!Number.isFinite(pay)) pay = 0;
+        pay = Math.max(0, Math.min(open, Math.round(pay * 100) / 100));
+        t += pay;
+      });
+      el.textContent = `Draft payment total: $${(Math.round(t * 100) / 100).toFixed(2)}`;
     }
 
     async function loadAccountingOpenBills() {
@@ -3526,7 +3609,8 @@
         }
         if (!body) return;
         if (!bills.length) {
-          body.innerHTML = '<tr><td colspan="7" class="mini-note">No rows.</td></tr>';
+          body.innerHTML = '<tr><td colspan="9" class="mini-note">No rows.</td></tr>';
+          bpRefreshSelectionTotal();
           return;
         }
         body.innerHTML = bills
@@ -3535,20 +3619,28 @@
             const vid = escapeHtml(String(b.vendorId || ''));
             const vname = escapeHtml(String(b.vendorName || ''));
             const bal = Number(b.balance) || 0;
-            return `<tr data-bill-id="${bid}" data-vendor-id="${vid}" data-balance="${bal}">
+            const balFixed = (Math.round(bal * 100) / 100).toFixed(2);
+            return `<tr data-bill-id="${bid}" data-vendor-id="${vid}" data-open-balance="${bal}" data-balance="${bal}">
               <td><input type="checkbox" class="bp-pay-chk" onchange="bpRowTogglePay(this)" /></td>
               <td>${vname}</td>
               <td>${escapeHtml(String(b.docNumber || ''))}</td>
               <td>${escapeHtml(String(b.txnDate || ''))}</td>
               <td>${escapeHtml(String(b.dueDate || ''))}</td>
-              <td class="num">${bal.toFixed(2)}</td>
-              <td class="num"><input type="number" class="qb-in bp-pay-amt" style="max-width:110px" step="0.01" min="0" disabled placeholder="0" /></td>
+              <td class="num">${balFixed}</td>
+              <td class="num" style="white-space:nowrap">
+                <input type="number" class="qb-in bp-pay-amt" style="max-width:100px" step="0.01" min="0" disabled placeholder="0" oninput="bpOnPayAmtInput(this)" onblur="bpOnPayAmtBlur(this)" />
+                <button type="button" class="qb-btn-add" style="margin-left:4px;padding:2px 6px;font-size:10px" title="Pay full open balance" onclick="bpFillMax(this)">Max</button>
+              </td>
+              <td class="num bp-remain-cell">—</td>
+              <td class="bp-pay-status mini-note">—</td>
             </tr>`;
           })
           .join('');
+        bpRefreshSelectionTotal();
       } catch (e) {
         if (statusEl) statusEl.textContent = e.message || String(e);
-        if (body) body.innerHTML = '<tr><td colspan="7" class="mini-note">Load failed.</td></tr>';
+        if (body) body.innerHTML = '<tr><td colspan="9" class="mini-note">Load failed.</td></tr>';
+        bpRefreshSelectionTotal();
       }
     }
 
@@ -3571,12 +3663,20 @@
       for (const tr of rows) {
         const chk = tr.querySelector('.bp-pay-chk');
         if (!chk || !chk.checked) continue;
+        bpUpdateRowRemainder(tr, true);
         const billId = tr.getAttribute('data-bill-id');
         const vendorId = tr.getAttribute('data-vendor-id');
+        const open = Number(tr.dataset.openBalance || 0) || 0;
         const raw = String(tr.querySelector('.bp-pay-amt')?.value || '').trim();
-        const amt = Number(raw);
+        let amt = Number(raw);
+        if (!Number.isFinite(amt)) amt = 0;
+        amt = Math.max(0, Math.min(open, Math.round(amt * 100) / 100));
         if (!(amt > 0)) {
           alert('Enter a pay amount greater than zero for each selected bill.');
+          return;
+        }
+        if (amt - open > 0.01) {
+          alert(`Pay amount cannot exceed open balance for bill ${billId}.`);
           return;
         }
         lines.push({ billId, amount: amt });
