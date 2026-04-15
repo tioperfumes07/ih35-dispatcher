@@ -525,15 +525,18 @@ function buildRelayFuelImportFromRows(rows) {
         location: locationText
       });
       if (!p) continue;
+      const docNumber = nextRelayDocNumber(baseExpenseNo || 'relay', relayDocCounters);
+      const qbCategory = relayQuickBooksCategory({ kind: pr.kind, productsText });
       fuelPurchases.push({
         ...p,
         productType: pr.kind,
         relayNote: String(note || '').trim().slice(0, 200),
-        relayExpenseNo: baseExpenseNo || ''
+        relayExpenseNo: baseExpenseNo || '',
+        qbCategory,
+        relayDocNumber: docNumber
       });
       imported++;
 
-      const docNumber = nextRelayDocNumber(baseExpenseNo || 'relay', relayDocCounters);
       relayExpenses.push({
         docNumber,
         txnDate: sliceIsoDate(txnDate),
@@ -541,7 +544,7 @@ function buildRelayFuelImportFromRows(rows) {
         vendor: String(vendor || '').trim(),
         expenseType: relayLineLabel(pr.kind),
         spreadsheetCategory: relaySpreadsheetCategory(pr.kind),
-        qbCategory: relayQuickBooksCategory({ kind: pr.kind, productsText }),
+        qbCategory,
         amount: safeNum(p.totalCost, 0) || 0,
         gallons: p.gallons ?? null,
         pricePerGallon: p.pricePerGallon ?? null,
@@ -2035,6 +2038,7 @@ async function qboSyncMasterData() {
     .map(a => ({
       qboId: a.Id,
       name: a.Name || '',
+      fullyQualifiedName: a.FullyQualifiedName || a.Name || '',
       accountType: a.AccountType || '',
       accountSubType: a.AccountSubType || ''
     }));
@@ -5767,6 +5771,102 @@ function bestFuelItemId(erp) {
   return hit?.qboId ? String(hit.qboId) : '';
 }
 
+function normAcctKey(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Match QBO expense account to Relay-style category path (e.g. Fuel Expenses:Fuel-Truck Diesel). */
+function matchQboExpenseAccountIdFromCategoryPath(erp, qbCategoryPath) {
+  const raw = String(qbCategoryPath || '').trim();
+  if (!raw) return '';
+  const rows = erp?.qboCache?.accountsExpense || [];
+  if (!rows.length) return '';
+  const c = normAcctKey(raw);
+  const leaf = raw.split(':').map(x => x.trim()).filter(Boolean).pop() || '';
+  const leafN = normAcctKey(leaf);
+  let hit = rows.find(
+    a => normAcctKey(a.fullyQualifiedName) === c || normAcctKey(a.name) === c
+  );
+  if (hit?.qboId) return String(hit.qboId);
+  if (leafN.length >= 2) {
+    hit = rows.find(a => normAcctKey(a.name) === leafN || normAcctKey(a.fullyQualifiedName || a.name) === leafN);
+    if (hit?.qboId) return String(hit.qboId);
+    hit = rows.find(
+      a =>
+        normAcctKey(a.fullyQualifiedName || '').endsWith(leafN) ||
+        normAcctKey(a.fullyQualifiedName || '').includes(':' + leafN)
+    );
+    if (hit?.qboId) return String(hit.qboId);
+  }
+  const tail = c.includes(':') ? c.split(':').pop().trim() : c;
+  hit = rows.find(a => normAcctKey(a.name).includes(tail) || tail.includes(normAcctKey(a.name)));
+  return hit?.qboId ? String(hit.qboId) : '';
+}
+
+function bestFuelExpenseAccountIdByProduct(erp, productType) {
+  const k = String(productType || '').toLowerCase();
+  const rows = erp?.qboCache?.accountsExpense || [];
+  const pick = re => rows.find(a => re.test(String(a.name || '').toLowerCase()));
+  if (k.includes('def')) return pick(n => /def|exhaust|fluid|urea/i.test(n))?.qboId || '';
+  if (k.includes('reefer')) return pick(n => /reefer|reef/i.test(n))?.qboId || '';
+  if (k.includes('relay') || k.includes('fee')) return pick(n => /bank|fee|relay/i.test(n))?.qboId || '';
+  return pick(n => /diesel|truck.*fuel|fuel.*diesel|^fuel$/i.test(n))?.qboId || '';
+}
+
+function inferredFuelQbCategory(fp) {
+  const existing = String(fp?.qbCategory || '').trim();
+  if (existing) return existing;
+  const pt = String(fp?.productType || 'diesel').trim();
+  return relayQuickBooksCategory({ kind: pt, productsText: '' });
+}
+
+function resolveFuelPurchaseExpenseAccountId(erp, fp, bodyAccountId) {
+  const explicit = String(bodyAccountId || '')
+    .trim()
+    .replace(/[^\d]/g, '');
+  if (explicit) return explicit;
+  const fromRelay = matchQboExpenseAccountIdFromCategoryPath(erp, inferredFuelQbCategory(fp));
+  if (fromRelay) return fromRelay;
+  const byProd = bestFuelExpenseAccountIdByProduct(erp, fp?.productType);
+  if (byProd) return byProd;
+  return bestFuelExpenseAccountId(erp);
+}
+
+function sanitizeQboDocNumber(raw, maxLen = 21) {
+  let s = String(raw || '')
+    .replace(/[^\w.-]/g, '')
+    .trim();
+  if (!s) return '';
+  if (s.length > maxLen) s = s.slice(0, maxLen);
+  return s;
+}
+
+function buildFuelPurchaseDocNumber(fp) {
+  const fpObj = fp && typeof fp === 'object' ? fp : {};
+  const fromRelay = String(fpObj.relayDocNumber || '').trim() || String(fpObj.relayExpenseNo || '').trim();
+  if (fromRelay) return sanitizeQboDocNumber(fromRelay.replace(/\s+/g, ''));
+  const ext = String(fpObj.relayNote || '')
+    .match(/\btxn_[A-Za-z0-9]+\b/);
+  if (ext) return sanitizeQboDocNumber(ext[0].replace(/_/g, '').slice(0, 18));
+  const unit = String(fpObj.unit || 'U').replace(/[^A-Za-z0-9_-]/g, '');
+  const d = sliceIsoDate(fpObj.txnDate || '') || 'nodate';
+  const id = String(fpObj.id || 'x').replace(/[^A-Za-z0-9]/g, '');
+  const tail = id.slice(-6) || 'new';
+  return sanitizeQboDocNumber(`F-${d}-${unit}-${tail}`);
+}
+
+function buildFuelPurchaseLineDescription(fp) {
+  const unit = String(fp?.unit || '').trim();
+  const prod = relayLineLabel(String(fp?.productType || 'diesel'));
+  const loc = String(fp?.location || '').trim();
+  const vendor = String(fp?.vendor || '').trim();
+  const bits = [prod + ' purchase', unit && `unit ${unit}`, loc && loc.slice(0, 40), vendor && vendor.slice(0, 40)].filter(Boolean);
+  return sanitizeName(bits.join(' · '), 'Fuel expense');
+}
+
 app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
@@ -5782,7 +5882,7 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     const fp = erp.fuelPurchases[idx];
 
     const body = req.body && typeof req.body === 'object' ? req.body : {};
-    const detailMode = String(body.detailMode || 'item').toLowerCase() === 'category' ? 'category' : 'item';
+    const detailMode = String(body.detailMode || 'category').toLowerCase() === 'item' ? 'item' : 'category';
 
     let amount = safeNum(fp.totalCost, 0) || 0;
     if (body.amount != null && String(body.amount).trim() !== '') {
@@ -5810,8 +5910,17 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     }
 
     const qboBankAccountId = String(body.qboBankAccountId || '').trim();
-    const qboAccountId = String(body.qboAccountId || '').trim() || bestFuelExpenseAccountId(erp);
-    if (!qboAccountId) return res.status(400).json({ error: 'No expense account in QBO cache — refresh QuickBooks master' });
+    const qboAccountId = resolveFuelPurchaseExpenseAccountId(
+      erp,
+      fp,
+      String(body.qboAccountId || '').trim().replace(/[^\d]/g, '')
+    );
+    if (!qboAccountId) {
+      return res.status(400).json({
+        error:
+          'No matching QuickBooks expense account — refresh QBO master, pick a category on the fuel tab, or ensure accounts exist for paths like Fuel Expenses:Fuel-Truck Diesel.'
+      });
+    }
 
     const qboClassId = String(body.qboClassId || '')
       .trim()
@@ -5845,10 +5954,14 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       gallons != null && Number.isFinite(gallons) ? `${gallons} gal` : '',
       product ? product : '',
       loc ? loc : '',
+      inferredFuelQbCategory(fp) ? `QB path: ${inferredFuelQbCategory(fp)}` : '',
       driverMemo ? `Driver: ${driverMemo}` : '',
       driverVendorId ? `Driver vendor QBO ${driverVendorId}` : ''
     ].filter(Boolean);
     const memo = memoParts.join(' · ');
+
+    const docNumber = sanitizeQboDocNumber(buildFuelPurchaseDocNumber(fp));
+    const lineDescription = buildFuelPurchaseLineDescription(fp);
 
     const ap = {
       txnType: 'expense',
@@ -5862,8 +5975,8 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       amount,
       txnDate,
       dueDate: '',
-      docNumber: fp.relayExpenseNo || '',
-      description: 'Fuel',
+      docNumber,
+      description: lineDescription,
       memo,
       assetUnit: unit,
       qboClassId,
@@ -5893,7 +6006,10 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       fuelPostedQty: detailMode === 'item' ? qty : null,
       fuelPostedAmount: amount,
       fuelPostedClassId: effectiveClassId,
-      fuelPostedItemId: qboItemId || null,
+      fuelPostedItemId: detailMode === 'item' ? qboItemId || null : null,
+      fuelPostedAccountId: detailMode === 'category' ? qboAccountId || null : qboAccountId || null,
+      fuelPostedDocNumber: docNumber || null,
+      fuelPostedQbCategory: inferredFuelQbCategory(fp) || null,
       fuelPostedVendorId: vendorId,
       fuelPostedDriverVendorId: driverVendorId || null,
       fuelPostedDriverMemo: driverMemo || null,

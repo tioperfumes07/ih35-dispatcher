@@ -2491,6 +2491,19 @@ body.erp-maintenance .catalog-admin-table td {
     display: block !important;
   }
 
+  /* Shop queue / integrity board moved under Vehicle Tracking — still printable */
+  body.erp-maintenance #section-tracking.section {
+    display: block !important;
+  }
+
+  body.erp-maintenance #section-tracking .tracking-sub {
+    display: none !important;
+  }
+
+  body.erp-maintenance #section-tracking #tr-maint-shop.tracking-sub {
+    display: block !important;
+  }
+
   body.erp-maintenance {
     background: #fff !important;
   }

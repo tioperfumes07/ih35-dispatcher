@@ -188,9 +188,9 @@
       <section id="section-dashboard" class="section">
         <div class="hero-grid">
           <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Diesel / Fuel Board</h3><p>Fuel planning + diesel management</p></div>
-          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Mileage, service planning, records and imports</p></div>
+          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Work orders, fleet table, and service records</p></div>
           <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety Board</h3><p>Samsara HOS, drivers, assignments</p></div>
-          <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Map + assets (Samsara)</p></div>
+          <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Map, assets, <strong>Shop &amp; maintenance</strong> tab (queues + alerts), Samsara live data</p></div>
           <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Expenses, bills, QuickBooks</p></div>
           <div class="hero-card" onclick="openSectionByName('reports')"><h3>Reports Board</h3><p>Maintenance, safety, QBO sync &amp; activity</p></div>
         </div>
@@ -713,10 +713,10 @@
                     <input id="tirePositionInput" type="hidden">
                   </div>
 
-                  <div id="repairFields" class="hidden">
-                    <span class="qb-l">Repair location</span>
+                  <div id="repairFields">
+                    <span class="qb-l">Shop or purchase context (required for work orders)</span>
                     <input type="hidden" id="repairLocationTypeInput" value="" />
-                    <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Type: Internal shop, External…" autocomplete="off" oninput="resolveRepairLocationSearch()" onblur="resolveRepairLocationSearch()" />
+                    <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Internal shop, External shop, Roadside, Parts purchase…" autocomplete="off" oninput="resolveRepairLocationSearch()" onblur="resolveRepairLocationSearch()" />
                   </div>
 
                   <div id="accidentFields" class="hidden">
@@ -866,7 +866,7 @@
             <div id="maintExpenseStrip" class="maint-expense-strip" style="margin-bottom:14px"></div>
             <p class="mini-note" style="margin:0 0 10px">
               Use the tabs to switch shop type. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
-              <a href="#" onclick="openSectionByName('tracking');return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
+              <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
               · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
             </p>
             <div class="subtabs shop-subtabs" id="shopBoardSubtabs">
@@ -1078,7 +1078,6 @@
             </div>
             <div id="securityAlertsBody" class="mini-note">Loading alerts…</div>
           </div>
-        </div>
         </div>
 
         </div>
@@ -1558,8 +1557,8 @@
                   <input id="fuelExpBankQboId" type="hidden" />
                 </div>
                 <div style="grid-column:span 2">
-                  <span class="qb-l">Fuel expense category (QuickBooks)</span>
-                  <input id="fuelExpAccountSearch" class="qb-in" list="qboAccountExpenseOptions" placeholder="Fuel expense account" oninput="resolveFuelExpAccount()" onblur="resolveFuelExpAccount()" />
+                  <span class="qb-l">Fuel expense category override (optional)</span>
+                  <input id="fuelExpAccountSearch" class="qb-in" list="qboAccountExpenseOptions" placeholder="Leave blank to use Relay path → QBO account per row" oninput="resolveFuelExpAccount()" onblur="resolveFuelExpAccount()" />
                   <input id="fuelExpAccountQboId" type="hidden" />
                 </div>
                 <div style="grid-column:span 2">
@@ -1569,8 +1568,8 @@
                 </div>
                 <div style="grid-column:span 2;display:flex;align-items:center;gap:10px;padding-top:4px">
                   <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:0">
-                    <input type="checkbox" id="fuelExpUseCategory" />
-                    Post as <strong>category</strong> line (no item / no qty) — uses category account only
+                    <input type="checkbox" id="fuelExpUseCategory" checked />
+                    Post as <strong>expense category</strong> (one Purchase per row; maps Diesel/DEF/Reefer to your chart of accounts). Uncheck for QBO <strong>item</strong> + gallons × rate.
                   </label>
                 </div>
               </div>
@@ -1583,7 +1582,7 @@
                   <summary style="cursor:pointer;font-weight:600;color:#1e40af">How this file maps to QuickBooks</summary>
                   <div style="margin-top:8px;line-height:1.55;max-width:96ch">
                     <p style="margin:0 0 8px">
-                      <strong>Fuel ledger lines</strong> (diesel / DEF / reefer from <code>volume_*</code> and <code>total_price_*</code>) store unit, gallons, $/gal, total, vendor text, and <code>work_date</code> as the transaction date. Each <strong>Post</strong> builds a QuickBooks <strong>Purchase (Expense)</strong>: <strong>Vendor</strong> = matched QBO vendor, <strong>Line</strong> = item + qty + rate (or category if checked), <strong>Class</strong> = truck (Truck #), <strong>Bank</strong> and <strong>expense account</strong> from the fields above.
+                      <strong>Fuel ledger lines</strong> (diesel / DEF / reefer from <code>volume_*</code> and <code>total_price_*</code>) store unit, gallons, $/gal, total, vendor text, <code>work_date</code>, and a suggested <strong>QB expense path</strong> (same as Relay template). Each <strong>Post</strong> creates <strong>its own</strong> QuickBooks <strong>Purchase</strong> with <strong>DocNumber</strong> (Relay doc / load ref / auto id), <strong>Vendor</strong>, <strong>Class</strong> = truck, pay-from <strong>Bank</strong>, and by default an <strong>AccountBasedExpenseLineDetail</strong> to the expense account that best matches the path (override with the category field above if needed).
                     </p>
                     <p style="margin:0 0 8px">
                       <strong>Relay staging lines</strong> (parallel list in the preview) use category labels aligned to your spreadsheet template — e.g. Diesel → <code>Fuel Expenses:Fuel-Truck Diesel</code>, DEF → <code>Fuel Expenses:Fuel-DEF-Diesel Exhaust Fluid</code>, Reefer → <code>Fuel Expenses:Fuel-Reefer-Diesel</code>, Relay card fee → <code>Bank Charges:BC-Relay Diesel Code Fee</code>. Those rows are for export / reconciliation; they are not sent to the QuickBooks API from this app unless you use a separate sync process.
@@ -1612,19 +1611,22 @@
                     <button type="button" class="qb-btn-primary" onclick="acctConfirmRelayFuelImport()">Confirm import</button>
                     <button type="button" onclick="acctCancelRelayFuelImportPreview()">Cancel</button>
                   </div>
-                  <p class="mini-note" style="margin:8px 0 0">Confirm appends to ERP only. Use the grid below to post each fuel line to QuickBooks.</p>
+                  <p class="mini-note" style="margin:8px 0 0">
+                    Confirm appends to ERP only. In the grid below, each <strong>Post</strong> creates <strong>one separate QuickBooks Purchase</strong> (expense) for that row — nothing is batched. With <strong>Category line</strong> checked (default), QuickBooks uses your <strong>expense account</strong> mapped from the Relay-style path (Diesel / DEF / Reefer / fee), not the generic fuel item.
+                  </p>
                 </div>
               </div>
               <div id="fuelExpStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
               <div class="table-wrap st-settlement-wrap fuel-exp-table-wrap" style="min-width:0;width:100%;max-width:100%">
-                <table class="st-settlement fuel-exp-table" style="min-width:1480px;width:max-content;max-width:none">
+                <table class="st-settlement fuel-exp-table" style="min-width:1560px;width:max-content;max-width:none">
                   <thead>
                     <tr>
                       <th>Date</th>
+                      <th>Expense #</th>
                       <th>Unit</th>
                       <th>QB class (unit)</th>
                       <th>QB vendor</th>
-                      <th>QB item</th>
+                      <th>QB item / account</th>
                       <th class="num">Qty (gal)</th>
                       <th class="num">$/unit</th>
                       <th class="num">Line $</th>
@@ -1638,7 +1640,7 @@
                     </tr>
                   </thead>
                   <tbody id="fuelExpBody">
-                    <tr><td colspan="15" class="mini-note">—</td></tr>
+                    <tr><td colspan="16" class="mini-note">—</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1875,7 +1877,7 @@
                     </tr>
                   </thead>
                   <tbody id="expHistBody">
-                    <tr><td colspan="15" class="mini-note">Loading…</td></tr>
+                    <tr><td colspan="16" class="mini-note">Loading…</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -2724,13 +2726,22 @@
     }
 
     function openMaintMainTab(tab, btn) {
-      const map = { overview: 'maintMainTabOverview', record: 'maintMainTabRecord', fleet: 'maintMainTabFleet' };
+      if (tab === 'overview') {
+        openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]'));
+        openTrackingTab('tr-maint-shop', document.querySelector('#section-tracking .subtab[onclick*="tr-maint-shop"]'));
+        return;
+      }
+      const map = { record: 'maintMainTabRecord', fleet: 'maintMainTabFleet' };
       document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
-      const id = map[tab];
-      const panel = id ? document.getElementById(id) : null;
+      const id = map[tab] || map.record;
+      const panel = document.getElementById(id);
       if (panel) panel.classList.add('active');
       document.querySelectorAll('#maintMainSubtabs .subtab').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
+      else {
+        const b = document.querySelector(`#maintMainSubtabs [data-maint-main="${tab === 'fleet' ? 'fleet' : 'record'}"]`);
+        if (b) b.classList.add('active');
+      }
     }
 
     function maintPrintWorkOrderView() {
@@ -2831,23 +2842,21 @@
       }
       ban.classList.remove('hidden');
       if (unitLine) unitLine.textContent = selectedUnit;
-      const rt = document.getElementById('recordTypeSelect')?.value || '';
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
-      const needsRepairLoc = rt === 'repair' || rt === 'accident';
 
-      if (needsRepairLoc && repairLoc === 'in-house') {
+      if (repairLoc === 'in-house') {
         vWrap.classList.add('hidden');
         woWrap.classList.remove('hidden');
         if (woLab) woLab.textContent = 'Shop WO # (internal)';
         if (vLab) vLab.textContent = 'Vendor invoice #';
         if (woInp) woInp.placeholder = 'Assigned on save if empty';
         ensureInternalShopWorkOrderPreview();
-      } else if (needsRepairLoc && (repairLoc === 'external' || repairLoc === 'road-service')) {
+      } else if (repairLoc === 'external' || repairLoc === 'road-service' || repairLoc === 'parts-purchase') {
         vWrap.classList.remove('hidden');
         woWrap.classList.remove('hidden');
-        if (woLab) woLab.textContent = 'Vendor WO #';
+        if (woLab) woLab.textContent = repairLoc === 'parts-purchase' ? 'PO / ref #' : 'Vendor WO #';
         if (vLab) vLab.textContent = 'Vendor invoice #';
-        if (woInp) woInp.placeholder = 'Vendor work order';
+        if (woInp) woInp.placeholder = repairLoc === 'parts-purchase' ? 'Order or ref' : 'Vendor work order';
         if (vInp) vInp.placeholder = 'Supplier invoice';
       } else {
         vWrap.classList.remove('hidden');
@@ -3455,8 +3464,8 @@
       };
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
       if (name === 'maintenance') {
-        const ovBtn = document.querySelector('#maintMainSubtabs [data-maint-main="overview"]');
-        openMaintMainTab('overview', ovBtn);
+        const recBtn = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
+        openMaintMainTab('record', recBtn);
       }
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
@@ -3501,6 +3510,12 @@
         openSectionByName('reports');
         const sub = document.querySelector('#section-reports .subtab[onclick*="rep-team"]');
         openReportsTab('rep-team', sub);
+        return;
+      }
+      if (section === 'tracking-shop') {
+        openSectionByName('tracking');
+        const b = document.querySelector('#section-tracking .subtab[onclick*="tr-maint-shop"]');
+        openTrackingTab('tr-maint-shop', b);
         return;
       }
       const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog', 'uploads'];
@@ -5569,7 +5584,7 @@
         renderFuelExpenseRows();
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
-        if (tb) tb.innerHTML = '<tr><td colspan="15" class="mini-note">Failed to load.</td></tr>';
+        if (tb) tb.innerHTML = '<tr><td colspan="16" class="mini-note">Failed to load.</td></tr>';
       }
     }
 
@@ -5819,7 +5834,7 @@
         .sort((a, b) => String(fuelExpenseSortDateKey(b)).localeCompare(String(fuelExpenseSortDateKey(a))));
 
       if (!filtered.length) {
-        tb.innerHTML = '<tr><td colspan="15" class="mini-note">No rows for current filters.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="16" class="mini-note">No rows for current filters.</td></tr>';
         return;
       }
       const fuelClassSelectHtml = selectedVal => {
@@ -6942,29 +6957,62 @@
       serviceMileageUserTouched = true;
     }
 
-    function updateServiceMileageHint(v) {
+    /** Best odometer for service mileage: dashboard vehicle, live board snapshot, ERP saved mileage, then last service record. */
+    function resolvedServiceMileageRecommendation(unitName) {
+      const u = String(unitName || '').trim();
+      if (!u) return { miles: null, source: '' };
+      const v1 = vehicles.find(x => x.name === u);
+      if (v1?.odometerMiles != null && Number.isFinite(Number(v1.odometerMiles)) && Number(v1.odometerMiles) > 0) {
+        return { miles: Number(v1.odometerMiles), source: 'Samsara (maintenance snapshot)' };
+      }
+      const v2 = (board.vehicles || []).find(x => x.name === u);
+      if (v2?.odometerMiles != null && Number.isFinite(Number(v2.odometerMiles)) && Number(v2.odometerMiles) > 0) {
+        return { miles: Number(v2.odometerMiles), source: 'Samsara (live board)' };
+      }
+      const cm = erp?.currentMileage?.[u];
+      const cmn = cm != null && String(cm).trim() !== '' ? Number(cm) : NaN;
+      if (Number.isFinite(cmn) && cmn > 0) {
+        return { miles: Math.round(cmn), source: 'Saved fleet mileage (ERP)' };
+      }
+      const recs = (erp.records || []).filter(
+        r => String(r.unit || '').trim() === u && r.serviceMileage != null && String(r.serviceMileage).trim() !== ''
+      );
+      let best = null;
+      for (const r of recs) {
+        const n = Number(r.serviceMileage);
+        if (!Number.isFinite(n) || n <= 0) continue;
+        const d = String(r.serviceDate || '').slice(0, 10);
+        const key = `${d}\t${n}`;
+        if (!best || key > best.key) best = { key, miles: Math.round(n) };
+      }
+      if (best) return { miles: best.miles, source: 'Last logged service mileage' };
+      return { miles: null, source: '' };
+    }
+
+    function updateServiceMileageHint(v, rec) {
       const el = document.getElementById('serviceMileageHint');
       if (!el) return;
       const mi = v && v.odometerMiles != null ? Number(v.odometerMiles) : null;
+      const src = rec && rec.source ? String(rec.source) : 'Samsara';
       if (mi != null && Number.isFinite(mi)) {
-        el.innerHTML = `Samsara odometer: <strong>${Math.round(mi).toLocaleString()} mi</strong> — prefilled for this service. Edit if the work was not at the current reading. When saving, you will confirm if mileage matches Samsara.`;
+        el.innerHTML = `${escapeHtml(src)}: <strong>${Math.round(mi).toLocaleString()} mi</strong> — recommended for this service. Edit if the work was not at this odometer. When saving, you may be asked to confirm if it matches the live fleet reading.`;
       } else {
         el.textContent =
-          'No Samsara odometer for this unit — enter service mileage manually.';
+          'No odometer from Samsara or saved mileage for this unit — enter service mileage manually (or refresh fleet data).';
       }
     }
 
     function fillServiceMileageFromSamsara() {
-      const v = vehicles.find(x => x.name === selectedUnit);
-      const mi = v && v.odometerMiles != null ? Number(v.odometerMiles) : null;
+      const rec = resolvedServiceMileageRecommendation(selectedUnit);
+      const mi = rec.miles;
       if (mi == null || !Number.isFinite(mi)) {
-        alert('No Samsara odometer for this unit yet. Refresh data or check the asset in Samsara.');
+        alert('No Samsara odometer (or saved fallback) for this unit yet. Use Refresh now or check the asset in Samsara Cloud.');
         return;
       }
       const el = document.getElementById('serviceMileageInput');
       if (el) el.value = String(Math.round(mi));
       serviceMileageUserTouched = false;
-      updateServiceMileageHint(v);
+      updateServiceMileageHint({ odometerMiles: mi }, rec);
     }
 
     function setServiceOptions() {
@@ -8033,7 +8081,7 @@
     function toggleRecordFields() {
       const type = document.getElementById('recordTypeSelect').value;
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
-      document.getElementById('repairFields').classList.toggle('hidden', type !== 'repair' && type !== 'accident');
+      document.getElementById('repairFields').classList.remove('hidden');
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
       document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'custom');
       const sameWrap = document.getElementById('recordSameCostServicesWrap');
@@ -8460,8 +8508,15 @@
       `;
       loadPartsReferenceHint();
 
+      const odoRec = resolvedServiceMileageRecommendation(v.name);
+      const displayMi =
+        odoRec.miles != null && Number.isFinite(odoRec.miles)
+          ? odoRec.miles
+          : v.odometerMiles != null && Number.isFinite(Number(v.odometerMiles))
+            ? Number(v.odometerMiles)
+            : null;
       document.getElementById('unitMileageBox').textContent =
-        v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : 'N/A';
+        displayMi != null ? Math.round(displayMi).toLocaleString() : 'N/A';
       const latestFuel = latestFuelPurchaseForUnit(v.name);
       const fuelEl = document.getElementById('unitFuelBox');
       if (fuelEl) {
@@ -8496,13 +8551,13 @@
 
       const smInp = document.getElementById('serviceMileageInput');
       if (smInp && !serviceMileageUserTouched) {
-        if (v.odometerMiles != null && Number.isFinite(Number(v.odometerMiles))) {
-          smInp.value = String(Math.round(Number(v.odometerMiles)));
+        if (displayMi != null && Number.isFinite(displayMi)) {
+          smInp.value = String(Math.round(displayMi));
         } else {
           smInp.value = '';
         }
       }
-      updateServiceMileageHint(v);
+      updateServiceMileageHint({ odometerMiles: displayMi }, odoRec);
 
       setServiceOptions();
       toggleRecordFields();
@@ -8963,11 +9018,18 @@
 
       // Required fields by repair location.
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
+      if (!repairLoc) {
+        alert(
+          'Select shop or purchase context: Internal shop, External shop, Roadside service, Parts purchase, or Over the road (datalist under Shop or purchase context).'
+        );
+        document.getElementById('repairLocationSearch')?.focus();
+        return;
+      }
       const vendorInvNo = String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
       let woNo = String(document.getElementById('recordWorkOrderInput')?.value || '').trim();
-      if (repairLoc === 'external' || repairLoc === 'road-service') {
+      if (repairLoc === 'external' || repairLoc === 'road-service' || repairLoc === 'parts-purchase') {
         if (!vendorInvNo && !woNo) {
-          alert('External shop / roadside service requires a vendor invoice # or work order #.');
+          alert('External shop, roadside service, and parts purchases require a vendor invoice # or a reference / WO #.');
           document.getElementById('recordVendorInvoiceInput')?.focus();
           return;
         }
@@ -9018,9 +9080,9 @@
       const tireLineItems = recordType === 'tire' ? collectTireLineItems() : [];
       const composedNotes = composeRecordNotesForSave();
 
-      const veh = vehicles.find(x => x.name === selectedUnit);
+      const samsaraRec = resolvedServiceMileageRecommendation(selectedUnit);
       const samsaraMi =
-        veh && veh.odometerMiles != null ? Number(veh.odometerMiles) : null;
+        samsaraRec.miles != null && Number.isFinite(samsaraRec.miles) ? samsaraRec.miles : null;
       const smEl = document.getElementById('serviceMileageInput');
       let smRaw = smEl ? String(smEl.value).trim() : '';
       let smNum = smRaw === '' ? NaN : Number(smRaw);
@@ -9041,9 +9103,10 @@
         Math.abs(smNum - samsaraMi) < 0.51;
       if (matchesSamsara) {
         const rounded = Math.round(smNum);
+        const srcHint = samsaraRec.source ? ` (${samsaraRec.source})` : '';
         if (
           !confirm(
-            `Save this service using odometer ${rounded.toLocaleString()} mi (current Samsara reading)?\n\nClick Cancel to edit the mileage field if this service was not performed at that odometer.`
+            `Save this service using odometer ${rounded.toLocaleString()} mi${srcHint}?\n\nClick Cancel to edit the mileage field if this service was not performed at that odometer.`
           )
         ) {
           smEl?.focus();
@@ -9458,6 +9521,10 @@
       if (target) target.classList.remove('hidden');
       if (btn) btn.classList.add('active');
       if (id === 'tr-map') requestAnimationFrame(() => initErpTrackingMap());
+      if (id === 'tr-maint-shop') {
+        renderMaintExpenseStrip();
+        renderShopQueues();
+      }
       if (id === 'tr-assets') renderTrackingAssetsTable();
       if (id === 'tr-drivers') renderTrackingDrivers();
       if (id === 'tr-idle') loadIdleSnapshot();
