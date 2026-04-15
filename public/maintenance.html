@@ -2872,6 +2872,106 @@
       }
     }
 
+    let __lastQboDesktopNotifyKey = '';
+
+    function requestQboDesktopNotifyPermission() {
+      if (typeof Notification === 'undefined') return;
+      Notification.requestPermission().then(p => {
+        if (p === 'granted') {
+          alert('Desktop notifications enabled. You will be notified when QuickBooks posting is in error.');
+        }
+      });
+    }
+
+    function dismissQboSyncAlertBar() {
+      const el = document.getElementById('qboSyncAlertBar');
+      if (el) {
+        el.classList.add('hidden');
+        el.innerHTML = '';
+      }
+    }
+
+    function maybeNotifyQboSyncDesktop(payload) {
+      const high = payload?.counts?.high || 0;
+      if (!high || typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      const highs = (payload.alerts || []).filter(a => a.severity === 'high');
+      const key = highs.map(a => `${a.kind}:${a.id}`).sort().join('|');
+      if (!key || key === __lastQboDesktopNotifyKey) return;
+      __lastQboDesktopNotifyKey = key;
+      const body = highs
+        .slice(0, 4)
+        .map(a => a.title)
+        .join('\n');
+      try {
+        new Notification('QuickBooks needs attention', { body, tag: 'ih35-qbo-sync-high' });
+      } catch (_) {}
+    }
+
+    function renderQboSyncAlerts(payload) {
+      const bar = document.getElementById('qboSyncAlertBar');
+      const side = document.getElementById('sidebarQboAlertBrief');
+      if (!bar) return;
+      const alerts = (payload && payload.alerts) || [];
+      const c = payload?.counts || {};
+      maybeNotifyQboSyncDesktop(payload);
+
+      if (!alerts.length) {
+        bar.classList.add('hidden');
+        bar.innerHTML = '';
+        if (side) side.textContent = '';
+        return;
+      }
+
+      const high = c.high || 0;
+      const med = c.medium || 0;
+      const low = c.low || 0;
+      bar.classList.remove('hidden');
+      bar.classList.toggle('qbo-sync-warn', high === 0 && (med > 0 || low > 0));
+      const notifDefault =
+        typeof Notification !== 'undefined' && Notification.permission === 'default'
+          ? `<button type="button" class="btn" style="margin-left:8px;font-size:12px;padding:6px 10px" onclick="requestQboDesktopNotifyPermission()">Desktop alerts…</button>`
+          : '';
+
+      if (side) {
+        side.style.color = high ? '#b91c1c' : '#b45309';
+        side.innerHTML =
+          `<strong>${alerts.length}</strong> QuickBooks sync notice(s)` +
+          (high ? ` · <strong>${high}</strong> error(s)` : '') +
+          (med ? ` · ${med} pending` : '');
+      }
+
+      const acctBtn = `<button type="button" class="qb-btn-add" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-transactions', document.querySelector('#section-accounting .subtab[onclick*=\\'acct-transactions\\']'));">Open Accounting</button>`;
+
+      bar.innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-start;justify-content:space-between">
+          <div style="flex:1;min-width:0">
+            <strong>QuickBooks sync</strong> — ${alerts.length} issue(s) in the last ${escapeHtml(
+              String(payload?.lookbackDays ?? '')
+            )} days.
+            <span class="mini-note" style="margin-left:6px">Refreshes with <strong>Refresh now</strong> (${Math.round(
+              AUTO_REFRESH_MS / 1000
+            )}s auto).</span>
+            <ul style="margin:8px 0 0;padding-left:1.2rem;max-height:160px;overflow:auto;line-height:1.45">
+              ${alerts
+                .slice(0, 18)
+                .map(a => {
+                  const sev =
+                    a.severity === 'high' ? 'Error' : a.severity === 'medium' ? 'Pending' : 'Info';
+                  const det = a.detail ? ` — ${escapeHtml(a.detail)}` : '';
+                  return `<li><strong>${escapeHtml(sev)}</strong>: ${escapeHtml(a.title || a.code || '')}${det}</li>`;
+                })
+                .join('')}
+            </ul>
+            ${alerts.length > 18 ? `<p class="mini-note" style="margin:6px 0 0">…and ${alerts.length - 18} more (see Accounting).</p>` : ''}
+          </div>
+          <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            ${acctBtn}
+            <button type="button" class="btn" onclick="dismissQboSyncAlertBar()">Dismiss banner</button>
+            ${notifDefault}
+          </div>
+        </div>`;
+    }
+
     function connectQuickBooks() {
       window.location.href = '/api/qbo/connect';
     }
@@ -2953,7 +3053,7 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30] = await Promise.all([
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes] = await Promise.all([
           j('/api/maintenance/dashboard'),
           j('/api/maintenance/records'),
           j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
@@ -2962,7 +3062,13 @@
           j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] })),
           j('/api/maintenance/shop-queue').catch(() => ({ ok: false, queue: [] })),
           j('/api/maintenance/expense-summary?days=7').catch(() => null),
-          j('/api/maintenance/expense-summary?days=30').catch(() => null)
+          j('/api/maintenance/expense-summary?days=30').catch(() => null),
+          j('/api/qbo/sync-alerts').catch(() => ({
+            ok: false,
+            alerts: [],
+            counts: {},
+            lookbackDays: 120
+          }))
         ]);
         if (bar) {
           bar.classList.add('hidden');
