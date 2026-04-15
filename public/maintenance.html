@@ -1673,7 +1673,7 @@
                   <summary style="cursor:pointer;font-weight:600;color:#1e40af">How this file maps to QuickBooks</summary>
                   <div style="margin-top:8px;line-height:1.55;max-width:96ch">
                     <p style="margin:0 0 8px">
-                      <strong>Fuel ledger lines</strong> (diesel / DEF / reefer from <code>volume_*</code> and <code>total_price_*</code>) store unit, gallons, $/gal, total, vendor text, <code>work_date</code>, and a suggested <strong>QB expense path</strong> (same as Relay template). Each <strong>Post</strong> creates <strong>its own</strong> QuickBooks <strong>Purchase</strong> with <strong>DocNumber</strong> (Relay doc / load ref / auto id), <strong>Vendor</strong>, <strong>Class</strong> = truck, pay-from <strong>Bank</strong>, and by default an <strong>AccountBasedExpenseLineDetail</strong> to the expense account that best matches the path (override with the category field above if needed).
+                      <strong>Fuel ledger lines</strong> (diesel / DEF / reefer from <code>volume_*</code> and <code>total_price_*</code>) store unit, gallons, $/gal, total, vendor text, <code>work_date</code>, and a suggested <strong>QB expense path</strong> (same as Relay template). Each <strong>Record to QuickBooks</strong> creates <strong>its own</strong> QuickBooks <strong>Purchase</strong> with <strong>DocNumber</strong> (Relay doc / load ref / auto id), <strong>Vendor</strong>, <strong>Class</strong> = truck, pay-from <strong>Bank</strong>, and by default an <strong>AccountBasedExpenseLineDetail</strong> to the expense account that best matches the path (override with the category field above if needed).
                     </p>
                     <p style="margin:0 0 8px">
                       <strong>Relay staging lines</strong> (parallel list in the preview) use category labels aligned to your spreadsheet template — e.g. Diesel → <code>Fuel Expenses:Fuel-Truck Diesel</code>, DEF → <code>Fuel Expenses:Fuel-DEF-Diesel Exhaust Fluid</code>, Reefer → <code>Fuel Expenses:Fuel-Reefer-Diesel</code>, Relay card fee → <code>Bank Charges:BC-Relay Diesel Code Fee</code>. Those rows are for export / reconciliation; they are not sent to the QuickBooks API from this app unless you use a separate sync process.
@@ -1703,7 +1703,7 @@
                     <button type="button" onclick="acctCancelRelayFuelImportPreview()">Cancel</button>
                   </div>
                   <p class="mini-note" style="margin:8px 0 0">
-                    Confirm appends to ERP only. In the grid below, each <strong>Post</strong> creates <strong>one separate QuickBooks Purchase</strong> (expense) for that row — nothing is batched. With <strong>Category line</strong> checked (default), QuickBooks uses your <strong>expense account</strong> mapped from the Relay-style path (Diesel / DEF / Reefer / fee), not the generic fuel item.
+                    Confirm appends to ERP only. In the grid below, each <strong>Record to QuickBooks</strong> creates <strong>one separate QuickBooks Purchase</strong> (expense) for that row — nothing is batched. With <strong>Category line</strong> checked (default), QuickBooks uses your <strong>expense account</strong> mapped from the Relay-style path (Diesel / DEF / Reefer / fee), not the generic fuel item.
                   </p>
                 </div>
               </div>
@@ -1945,9 +1945,16 @@
                 <button type="button" class="qb-btn-add" onclick="setExpenseHistoryPreset(90)">Last 90 days</button>
                 <button type="button" class="qb-btn-add" onclick="clearExpenseHistoryDates()">All dates</button>
               </div>
+              <div
+                id="expHistQboBanner"
+                class="mini-note"
+                style="margin:0 0 10px;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.55;font-size:13px;color:#334155"
+              >
+                For posted maintenance AP, work orders, and unit records, use <strong>Check QBO</strong> on a row to call QuickBooks and confirm the Purchase/Bill still exists. Bill payments and Relay staging are not checked here.
+              </div>
               <div id="expHistSummary" class="mini-note" style="margin-bottom:8px">Open this tab and refresh data (sidebar) if counts look stale.</div>
               <div class="table-wrap st-settlement-wrap" style="min-width:0">
-                <table class="st-settlement" style="min-width:1180px">
+                <table class="st-settlement" style="min-width:1240px">
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -1965,10 +1972,11 @@
                       <th>Posted</th>
                       <th>ERP id</th>
                       <th>Notes</th>
+                      <th>Check QBO</th>
                     </tr>
                   </thead>
                   <tbody id="expHistBody">
-                    <tr><td colspan="16" class="mini-note">Loading…</td></tr>
+                    <tr><td colspan="17" class="mini-note">Loading…</td></tr>
                   </tbody>
                 </table>
               </div>
