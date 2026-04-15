@@ -1742,6 +1742,29 @@ function buildErpExpenseCandidates(erp) {
   return out;
 }
 
+function attachErpBillPaymentMetaToQboBillPayments(qboBillPayments, erp) {
+  const log = Array.isArray(erp?.qboBillPaymentLog) ? erp.qboBillPaymentLog : [];
+  if (!log.length) return qboBillPayments || [];
+  const byQboId = new Map();
+  for (const e of log) {
+    const id = String(e?.qboBillPaymentId || '').trim();
+    if (!id) continue;
+    // Keep newest if duplicates exist.
+    const prev = byQboId.get(id);
+    if (!prev || String(e?.createdAt || '') > String(prev?.createdAt || '')) byQboId.set(id, e);
+  }
+  return (qboBillPayments || []).map(bp => {
+    const hit = byQboId.get(String(bp?.id || '').trim());
+    if (!hit) return bp;
+    return {
+      ...bp,
+      erpLogId: hit.id || '',
+      erpRecordedBy: hit.recordedBy || '',
+      erpCreatedAt: hit.createdAt || ''
+    };
+  });
+}
+
 async function qboFetchBankingWindow(days) {
   const esc = qboTxnWindowStartIso(days);
   if (!esc) {
@@ -5545,6 +5568,7 @@ app.get('/api/banking/snapshot', async (req, res) => {
     } catch (e) {
       logError('api/banking/snapshot qbo', e);
     }
+    qbo.billPayments = attachErpBillPaymentMetaToQboBillPayments(qbo.billPayments, erp);
     res.json({
       ok: true,
       days,
@@ -5609,6 +5633,7 @@ app.post('/api/banking/suggest', async (req, res) => {
     } catch (e) {
       logError('api/banking/suggest qbo', e);
     }
+    qbo.billPayments = attachErpBillPaymentMetaToQboBillPayments(qbo.billPayments, erp);
     const erpCandidates = buildErpExpenseCandidates(erp);
     const suggestions = [];
     for (const row of imp.rows || []) {

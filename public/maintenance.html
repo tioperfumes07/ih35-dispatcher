@@ -5939,8 +5939,24 @@
 
       document.getElementById('unitMileageBox').textContent =
         v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : 'N/A';
-      document.getElementById('unitFuelBox').textContent =
-        v.fuelPercent != null ? `${Math.round(v.fuelPercent)}%` : 'N/A';
+      const latestFuel = latestFuelPurchaseForUnit(v.name);
+      const fuelEl = document.getElementById('unitFuelBox');
+      if (fuelEl) {
+        if (v.fuelPercent != null) {
+          fuelEl.textContent = `${Math.round(v.fuelPercent)}%`;
+          fuelEl.title = 'Live fuel level from Samsara (when available).';
+        } else if (latestFuel) {
+          const gal = latestFuel.gallons != null ? Number(latestFuel.gallons) : null;
+          const galText = gal != null && Number.isFinite(gal) ? `${gal.toFixed(1)} gal` : 'Fuel';
+          const when = latestFuel.txnDate || '';
+          fuelEl.textContent = `${galText}${when ? ` · ${when}` : ''}`;
+          fuelEl.title =
+            'No live fuel sensor reading. Showing the most recent imported fuel purchase for this unit (gallons + txn date).';
+        } else {
+          fuelEl.textContent = 'N/A';
+          fuelEl.title = 'No live fuel sensor reading and no fuel purchases imported for this unit yet.';
+        }
+      }
       document.getElementById('unitPastDueBox').textContent = past;
       document.getElementById('unitDueSoonBox').textContent = soon;
       document.getElementById('mileageInput').value = erp.currentMileage?.[selectedUnit] ?? '';
@@ -5963,6 +5979,25 @@
       applyLoadNumberSuggestion(false);
     }
 
+    function latestFuelPurchaseForUnit(unitName) {
+      const u = String(unitName || '').trim();
+      if (!u) return null;
+      const arr = Array.isArray(erp.fuelPurchases) ? erp.fuelPurchases : [];
+      let best = null;
+      let bestKey = '';
+      for (const p of arr) {
+        if (!p) continue;
+        if (String(p.unit || '').trim() !== u) continue;
+        const k = String(p.txnDate || p.createdAt || '').slice(0, 19);
+        if (!k) continue;
+        if (!best || k > bestKey) {
+          best = p;
+          bestKey = k;
+        }
+      }
+      return best;
+    }
+
     function renderMaintenanceTable() {
       const selectedServiceFilter = document.getElementById('maintenanceServiceFilter').value.trim().toLowerCase();
       const listNames = new Set((vehiclesByCategory()[activeAssetCategory] || []).map(v => v.name));
@@ -5977,7 +6012,7 @@
           <td>${escapeHtml(r.serviceType)}</td>
           <td><span class="${statusClass(r.status)}">${escapeHtml(r.status)}</span></td>
           <td>${r.currentMileage != null ? Number(r.currentMileage).toLocaleString() : ''}</td>
-          <td>${r.fuelPercent != null ? `${Math.round(r.fuelPercent)}%` : ''}</td>
+          <td title="${escapeHtml(fuelTitleForMaintRow(r))}">${escapeHtml(fuelCellForMaintRow(r))}</td>
           <td>${escapeHtml(r.lastServiceDate || '')}</td>
           <td>${escapeHtml(r.nextDueDate || '')}</td>
           <td>${r.nextDueMileage ?? ''}</td>
@@ -5989,6 +6024,22 @@
           <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || '')}</span></td>
         </tr>
       `).join('') || '<tr><td colspan="14">No rows found.</td></tr>';
+    }
+
+    function fuelCellForMaintRow(r) {
+      if (r?.fuelPercent != null) return `${Math.round(r.fuelPercent)}%`;
+      const p = latestFuelPurchaseForUnit(r?.unit);
+      if (p && p.gallons != null && Number.isFinite(Number(p.gallons))) return `Last ${Number(p.gallons).toFixed(0)}g`;
+      return '';
+    }
+
+    function fuelTitleForMaintRow(r) {
+      if (r?.fuelPercent != null) return 'Live fuel level from Samsara (when available).';
+      const p = latestFuelPurchaseForUnit(r?.unit);
+      if (!p) return 'No live fuel sensor reading and no fuel purchases imported for this unit yet.';
+      const gal = p.gallons != null && Number.isFinite(Number(p.gallons)) ? `${Number(p.gallons).toFixed(1)} gal` : '—';
+      const when = p.txnDate || '—';
+      return `No live fuel sensor reading. Latest imported fuel purchase: ${gal} on ${when}.`;
     }
 
     function qboPostedRowWo(wo) {
