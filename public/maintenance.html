@@ -6754,7 +6754,7 @@
             <td class="mini-note">${postedItemAcct}</td>
             <td class="num">${escapeHtml(String(r.fuelPostedQty != null ? r.fuelPostedQty : gal != null ? gal : '—'))}</td>
             <td class="num">—</td>
-            <td class="num">${escapeHtml(String(r.fuelPostedAmount != null ? Number(r.fuelPostedAmount).toFixed(2) : tot.toFixed(2))}</td>
+            <td class="num">${escapeHtml(String(r.fuelPostedAmount != null ? Number(r.fuelPostedAmount).toFixed(2) : tot.toFixed(2)))}</td>
             <td class="mini-note">${escapeHtml(String(r.fuelPostedDriverMemo || '—'))}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheVendors(), r.fuelPostedDriverVendorId))}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheQboCustomers(), r.fuelPostedCustomerId))}</td>
