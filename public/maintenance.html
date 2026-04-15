@@ -108,6 +108,9 @@
       <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
       <button class="nav-btn" data-section="accounting" onclick="openSection('accounting', this)">Accounting Board</button>
       <button class="nav-btn" data-section="reports" onclick="openSection('reports', this)">Reports Board</button>
+      <div style="margin:10px 0 4px">
+        <input class="qb-in" style="width:100%" placeholder="Search (top bar)" onclick="document.getElementById('globalSearchInput')?.focus?.()" />
+      </div>
 
       <div class="nav-title">Catalogs</div>
       <div class="nav-dropdown">
@@ -167,6 +170,12 @@
       <div class="topbar">
         <div class="title" id="pageTitle">Maintenance &amp; shop</div>
         <a href="/" class="topbar-home-link">Home</a>
+        <div style="flex:1;min-width:220px;max-width:520px">
+          <div style="position:relative">
+            <input id="globalSearchInput" class="qb-in" placeholder="Search ERP (units, vendors, loads, bills, work orders…)" autocomplete="off" oninput="globalSearchRender()" onkeydown="globalSearchKeydown(event)" />
+            <div id="globalSearchMenu" class="qb-picker-menu hidden" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"></div>
+          </div>
+        </div>
         <span class="mini-note topbar-hint">Left nav: modules · top bar: refresh &amp; QBO</span>
         <span class="print-hide-actions">
         <button type="button" title="Fetch latest data now (also auto-refreshes)" onclick="loadAll()">Refresh now</button>
@@ -2622,6 +2631,211 @@
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;');
     }
+
+    // --- Global search (top bar) ---
+    let __globalSearchActiveIx = -1;
+    function globalSearchCollect(qRaw) {
+      const q = String(qRaw || '').trim().toLowerCase();
+      if (!q) return [];
+      const out = [];
+      const push = (kind, label, meta, run) => {
+        out.push({ kind, label: String(label || ''), meta: String(meta || ''), run });
+      };
+      const inc = s => String(s || '').toLowerCase().includes(q);
+
+      // Maintenance units (Samsara vehicles list when loaded)
+      try {
+        const veh = (window.__vehiclesCache || []).length ? window.__vehiclesCache : erp.vehicles || [];
+        (veh || []).forEach(v => {
+          const name = v?.name || '';
+          if (name && inc(name)) {
+            push('Unit', name, 'Maintenance', () => {
+              openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+              document.getElementById('maintenanceUnitSearch').value = name;
+              renderMaintenanceUnitList();
+              renderMaintenanceTable();
+            });
+          }
+        });
+      } catch (_) {}
+
+      // Vendors (QBO cache)
+      (cacheVendors() || []).forEach(v => {
+        const nm = v?.name || v?.companyName || '';
+        if (nm && inc(nm)) {
+          push('Vendor', nm, 'Accounting', () => {
+            openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+            const t = document.querySelector('#section-accounting .subtab[onclick*="acct-transactions"]');
+            if (t) openAccountingTab('acct-transactions', t);
+            document.getElementById('apVendorSearch').value = nm;
+            resolveApVendorSearch();
+          });
+        }
+      });
+
+      // Work orders
+      (erp.workOrders || []).forEach(w => {
+        const label = `${w.unit || '—'} · WO ${w.workOrderNumber || w.id || ''}`.trim();
+        const hay = `${w.unit || ''} ${w.workOrderNumber || ''} ${w.vendor || ''} ${w.notes || ''}`.toLowerCase();
+        if (hay.includes(q)) {
+          push('Work order', label, 'Maintenance', () => {
+            openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+            if (w.unit) {
+              document.getElementById('maintenanceUnitSearch').value = w.unit;
+              renderMaintenanceUnitList();
+            }
+            document.getElementById('maintenanceSplit')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+          });
+        }
+      });
+
+      // Maintenance records
+      (erp.records || []).forEach(r => {
+        const label = `${r.unit || '—'} · ${(r.serviceDate || '').slice(0, 10)} · ${r.serviceType || r.recordType || 'Record'}`;
+        const hay = `${r.unit || ''} ${r.serviceType || ''} ${r.recordType || ''} ${r.vendor || ''} ${r.notes || ''} ${r.loadNumber || ''}`.toLowerCase();
+        if (hay.includes(q)) {
+          push('Record', label, 'Maintenance', () => {
+            openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+            if (r.unit) {
+              document.getElementById('maintenanceUnitSearch').value = r.unit;
+              renderMaintenanceUnitList();
+              renderMaintenanceTable();
+            }
+            document.getElementById('maintenanceServiceFilter').value = r.serviceType || r.recordType || '';
+            renderMaintenanceTable();
+          });
+        }
+      });
+
+      // Bill payments log (this app)
+      (erp.qboBillPaymentLog || []).forEach(e => {
+        const label = `${(e.txnDate || '').slice(0, 10)} · ${e.vendorName || e.vendorQboId || 'Vendor'} · $${Number(e.totalAmt || 0).toFixed(2)}`;
+        const hay = `${e.vendorName || ''} ${e.vendorQboId || ''} ${e.billPaymentId || ''} ${e.privateNote || ''} ${e.payType || ''}`.toLowerCase();
+        if (hay.includes(q)) {
+          push('Bill payment', label, 'Accounting', () => {
+            openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+            const t = document.querySelector('#section-accounting .subtab[onclick*="acct-bill-pay"]');
+            if (t) openAccountingTab('acct-bill-pay', t);
+            document.getElementById('bpLogBody')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+          });
+        }
+      });
+
+      // Shop queue
+      (shopQueueCache || []).forEach(sq => {
+        const label = `${sq.unit || '—'} · ${sq.title || 'Job'} · ${statusLabelShort(sq.status)}`;
+        const hay = `${sq.unit || ''} ${sq.title || ''} ${sq.vendorHint || ''} ${sq.delayReasonNote || ''} ${sq.delayReasonCode || ''}`.toLowerCase();
+        if (hay.includes(q)) {
+          push('Shop queue', label, 'Maintenance', () => {
+            openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+            const tab = String(sq.shopType || 'internal');
+            const btn = document.querySelector(`#shopBoardSubtabs .subtab[data-shop-tab="${tab}"]`);
+            if (btn) openShopBoardTab(tab, btn);
+            const cap = tab[0].toUpperCase() + tab.slice(1);
+            const searchId = `shop${cap}Search`;
+            const sEl = document.getElementById(searchId);
+            if (sEl) {
+              sEl.value = sq.unit || '';
+              renderShopQueues();
+              sEl.focus();
+            }
+          });
+        }
+      });
+
+      return out.slice(0, 30);
+    }
+
+    function statusLabelShort(s) {
+      const v = String(s || '');
+      if (v === 'queued') return 'Awaiting service';
+      if (v === 'in_progress') return 'In progress';
+      return 'Completed';
+    }
+
+    function globalSearchClose() {
+      const m = document.getElementById('globalSearchMenu');
+      if (m) m.classList.add('hidden');
+      __globalSearchActiveIx = -1;
+    }
+
+    function globalSearchRender() {
+      const inp = document.getElementById('globalSearchInput');
+      const m = document.getElementById('globalSearchMenu');
+      if (!inp || !m) return;
+      const q = inp.value;
+      const rows = globalSearchCollect(q);
+      if (!q) {
+        m.innerHTML = '';
+        m.classList.add('hidden');
+        __globalSearchActiveIx = -1;
+        window.__globalSearchRows = [];
+        return;
+      }
+      if (!rows.length) {
+        m.innerHTML = `<div class="qb-picker-item"><div class="qb-picker-label">No matches</div><div class="qb-picker-meta">Try a different term</div></div>`;
+        m.classList.remove('hidden');
+        __globalSearchActiveIx = -1;
+        window.__globalSearchRows = [];
+        return;
+      }
+      __globalSearchActiveIx = Math.min(__globalSearchActiveIx, rows.length - 1);
+      m.innerHTML = rows
+        .map((r, i) => {
+          const active = i === __globalSearchActiveIx ? ' qb-picker-item-active' : '';
+          return `<div class="qb-picker-item${active}" data-gs-ix="${i}" onclick="globalSearchPick(${i})">
+            <div class="qb-picker-label">${escapeHtml(r.label)}</div>
+            <div class="qb-picker-meta">${escapeHtml(r.kind)} · ${escapeHtml(r.meta)}</div>
+          </div>`;
+        })
+        .join('');
+      m.classList.remove('hidden');
+      window.__globalSearchRows = rows;
+    }
+
+    function globalSearchPick(ix) {
+      const rows = window.__globalSearchRows || [];
+      const r = rows[ix];
+      if (!r) return;
+      try {
+        globalSearchClose();
+        document.getElementById('globalSearchInput')?.blur?.();
+        r.run && r.run();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    function globalSearchKeydown(e) {
+      const m = document.getElementById('globalSearchMenu');
+      const rows = window.__globalSearchRows || [];
+      if (e.key === 'Escape') {
+        globalSearchClose();
+        return;
+      }
+      if (!m || m.classList.contains('hidden')) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        __globalSearchActiveIx = Math.min((__globalSearchActiveIx < 0 ? -1 : __globalSearchActiveIx) + 1, rows.length - 1);
+        globalSearchRender();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        __globalSearchActiveIx = Math.max(__globalSearchActiveIx - 1, 0);
+        globalSearchRender();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const ix = __globalSearchActiveIx >= 0 ? __globalSearchActiveIx : 0;
+        globalSearchPick(ix);
+      }
+    }
+
+    document.addEventListener('click', e => {
+      const inp = document.getElementById('globalSearchInput');
+      const m = document.getElementById('globalSearchMenu');
+      if (!inp || !m) return;
+      if (e.target === inp || m.contains(e.target)) return;
+      globalSearchClose();
+    });
 
     function statusClass(s) {
       if (s === 'past due') return 'status status-past';
