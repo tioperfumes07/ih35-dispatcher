@@ -2950,7 +2950,7 @@
         <div style="display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-start;justify-content:space-between">
           <div style="flex:1;min-width:0">
             <strong>QuickBooks sync</strong> — ${alerts.length} issue(s) in the last ${escapeHtml(
-              String(payload?.lookbackDays ?? '')
+              String(payload?.lookbackDays != null ? payload.lookbackDays : 120)
             )} day window.
             <span class="mini-note" style="margin-left:6px">Refreshes with <strong>Refresh now</strong> (${Math.round(
               AUTO_REFRESH_MS / 1000
@@ -3138,6 +3138,7 @@
         if (activeSection === 'reports') loadReportsData();
       } catch (e) {
         console.error(e);
+        renderQboSyncAlerts({ alerts: [], counts: {} });
         if (bar) {
           bar.classList.remove('hidden');
           bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:#1d4ed8;font-weight:700">Sign in</a>`;
