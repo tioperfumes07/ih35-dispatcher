@@ -2975,11 +2975,9 @@ function buildUnitCategoryMap(erp) {
 
 const EXPENSE_SUMMARY_CATS = ['Trucks', 'Refrigerated Vans', 'Flatbeds', 'Dry Vans', 'Company Vehicles', 'Other'];
 
-function expenseSummaryByCategory(erp, days) {
-  const n = Math.min(366, Math.max(1, Number(days) || 30));
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - n);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+function expenseSummaryByCategoryWindow(erp, startIso, endIso) {
+  const start = String(startIso || '').slice(0, 10);
+  const end = String(endIso || '').slice(0, 10);
   const sums = Object.fromEntries(EXPENSE_SUMMARY_CATS.map(c => [c, 0]));
   const ucat = buildUnitCategoryMap(erp);
 
@@ -2991,7 +2989,7 @@ function expenseSummaryByCategory(erp, days) {
 
   for (const wo of erp.workOrders || []) {
     const d = String(wo.serviceDate || '').slice(0, 10);
-    if (!d || d < cutoffStr) continue;
+    if (!d || d < start || (end && d > end)) continue;
     const cat = catForUnit(wo.unit, wo.assetCategory);
     for (const line of wo.lines || []) {
       sums[cat] += safeNum(line.amount, 0) || 0;
@@ -2999,13 +2997,13 @@ function expenseSummaryByCategory(erp, days) {
   }
   for (const ap of erp.apTransactions || []) {
     const d = String(ap.txnDate || '').slice(0, 10);
-    if (!d || d < cutoffStr) continue;
+    if (!d || d < start || (end && d > end)) continue;
     const cat = catForUnit(ap.assetUnit, ap.assetCategory);
     sums[cat] += safeNum(ap.amount, 0) || 0;
   }
   for (const rec of erp.records || []) {
     const d = String(rec.serviceDate || '').slice(0, 10);
-    if (!d || d < cutoffStr) continue;
+    if (!d || d < start || (end && d > end)) continue;
     const cat = catForUnit(rec.unit, rec.assetCategory);
     sums[cat] += safeNum(rec.cost, 0) || 0;
   }
@@ -3014,7 +3012,17 @@ function expenseSummaryByCategory(erp, days) {
     sums[k] = Math.round(sums[k] * 100) / 100;
   }
   const total = Math.round(EXPENSE_SUMMARY_CATS.reduce((s, k) => s + sums[k], 0) * 100) / 100;
-  return { days: n, cutoff: cutoffStr, byCategory: sums, total };
+  return { startDate: start, endDate: end || '', byCategory: sums, total };
+}
+
+function expenseSummaryByCategory(erp, days) {
+  const n = Math.min(366, Math.max(1, Number(days) || 30));
+  const end = new Date().toISOString().slice(0, 10);
+  const start = new Date();
+  start.setDate(start.getDate() - n);
+  const startIso = start.toISOString().slice(0, 10);
+  const out = expenseSummaryByCategoryWindow(erp, startIso, end);
+  return { days: n, cutoff: startIso, ...out };
 }
 
 function shopQueueEntryOverdue(entry, nowMs = Date.now()) {
@@ -3461,7 +3469,27 @@ app.get('/api/maintenance/expense-summary', (req, res) => {
   try {
     const days = Number(req.query.days);
     const erp = readErp();
-    res.json({ ok: true, ...expenseSummaryByCategory(erp, days) });
+    const base = expenseSummaryByCategory(erp, days);
+    const compare = String(req.query.compare || '').trim();
+    if (compare === '1' || compare.toLowerCase() === 'true') {
+      const n = base.days || 30;
+      const endCur = new Date().toISOString().slice(0, 10);
+      const startCur = base.cutoff || base.startDate || '';
+      const startPrevDate = new Date();
+      startPrevDate.setDate(startPrevDate.getDate() - n * 2);
+      const startPrev = startPrevDate.toISOString().slice(0, 10);
+      const endPrev = startCur;
+      const prev = expenseSummaryByCategoryWindow(erp, startPrev, endPrev);
+      const delta = {
+        total: Math.round((Number(base.total || 0) - Number(prev.total || 0)) * 100) / 100,
+        pct:
+          prev.total && Number(prev.total) !== 0
+            ? Math.round(((Number(base.total || 0) - Number(prev.total || 0)) / Number(prev.total)) * 1000) / 10
+            : null
+      };
+      return res.json({ ok: true, ...base, previous: prev, delta });
+    }
+    res.json({ ok: true, ...base });
   } catch (error) {
     logError('api/maintenance/expense-summary', error);
     res.status(500).json({ error: error.message });
@@ -4577,7 +4605,8 @@ app.post('/api/maintenance/record', async (req, res) => {
 
     let qbo = null;
     const qboStore = readQbo();
-    if (cost > 0 && qboStore.tokens?.realmId) {
+    const postToQbo = body.postToQbo === true || String(body.postToQbo || '').toLowerCase() === 'true';
+    if (cost > 0 && qboStore.tokens?.realmId && postToQbo) {
       try {
         const posted = await qboPostMaintenanceRecord(record.id);
         qbo = { ok: true, posted: true, record: posted };
@@ -4597,10 +4626,10 @@ app.post('/api/maintenance/record', async (req, res) => {
         }
         qbo = { ok: false, posted: false, error: err.message };
       }
-    } else if (cost > 0) {
+    } else if (cost > 0 && postToQbo) {
       qbo = { ok: false, skipped: true, reason: 'quickbooks_not_connected' };
     } else {
-      qbo = { ok: true, skipped: true, reason: 'no_cost' };
+      qbo = { ok: true, skipped: true, reason: postToQbo ? 'no_cost' : 'not_requested' };
     }
 
     res.json({ ok: true, record, qbo });

@@ -370,20 +370,20 @@
           <div class="panel-body">
             <div id="maintExpenseStrip" class="maint-expense-strip" style="margin-bottom:14px"></div>
             <p class="mini-note" style="margin:0 0 10px">
-              Use the tabs to switch shop type. <strong>Road side</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
+              Use the tabs to switch shop type. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
               <a href="#" onclick="openSectionByName('tracking');return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
               · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
             </p>
             <div class="subtabs shop-subtabs" id="shopBoardSubtabs">
               <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
-              <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External service</button>
-              <button type="button" class="subtab" data-shop-tab="roadside" onclick="openShopBoardTab('roadside', this)">Road side service</button>
+              <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External shop</button>
+              <button type="button" class="subtab" data-shop-tab="roadside" onclick="openShopBoardTab('roadside', this)">Roadside service</button>
               <button type="button" class="subtab" data-shop-tab="oos" onclick="openShopBoardTab('oos', this)">Out of service</button>
             </div>
             <div id="shopTabInternal" class="shop-tab-panel active">
               <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
                 <div class="shop-col">
-                  <div class="shop-col-head shop-col-head-row"><span>In queue</span><button type="button" class="shop-col-add" title="Add to internal queue" onclick="event.stopPropagation();openShopQueueModal('internal')">+</button></div>
+                  <div class="shop-col-head shop-col-head-row"><span>Awaiting service</span><button type="button" class="shop-col-add" title="Add to internal queue" onclick="event.stopPropagation();openShopQueueModal('internal')">+</button></div>
                   <div class="shop-col-body" id="shopInternalQueued"></div>
                 </div>
                 <div class="shop-col">
@@ -403,7 +403,7 @@
             <div id="shopTabExternal" class="shop-tab-panel">
               <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
                 <div class="shop-col">
-                  <div class="shop-col-head shop-col-head-row"><span>In queue</span><button type="button" class="shop-col-add" title="Add to external queue" onclick="event.stopPropagation();openShopQueueModal('external')">+</button></div>
+                  <div class="shop-col-head shop-col-head-row"><span>Awaiting service</span><button type="button" class="shop-col-add" title="Add to external queue" onclick="event.stopPropagation();openShopQueueModal('external')">+</button></div>
                   <div class="shop-col-body" id="shopExternalQueued"></div>
                 </div>
                 <div class="shop-col">
@@ -423,7 +423,7 @@
             <div id="shopTabRoadside" class="shop-tab-panel">
               <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
                 <div class="shop-col">
-                  <div class="shop-col-head shop-col-head-row"><span>In queue</span><button type="button" class="shop-col-add" title="Add to roadside queue" onclick="event.stopPropagation();openShopQueueModal('roadside')">+</button></div>
+                  <div class="shop-col-head shop-col-head-row"><span>Awaiting service</span><button type="button" class="shop-col-add" title="Add to roadside queue" onclick="event.stopPropagation();openShopQueueModal('roadside')">+</button></div>
                   <div class="shop-col-body" id="shopRoadsideQueued"></div>
                 </div>
                 <div class="shop-col">
@@ -792,7 +792,15 @@
                     </div>
                   </div>
 
-                  <button onclick="saveRecord()">Save Record</button>
+                  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                    <select id="maintSaveAction" class="qb-in maint-field" style="max-width:220px">
+                      <option value="save">Save</option>
+                      <option value="save_close">Save &amp; close</option>
+                      <option value="save_post">Save &amp; post to QuickBooks</option>
+                    </select>
+                    <button type="button" onclick="saveRecordWithAction()">Run</button>
+                    <span class="mini-note" id="maintSaveHint" style="margin:0"></span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2236,10 +2244,11 @@
     ];
 
     const REPAIR_LOCATION_DEFS = [
-      { code: 'in-house', label: 'Internal Shop' },
-      { code: 'external', label: 'External Service' },
-      { code: 'over-the-road', label: 'Over the road' },
-      { code: 'road-service', label: 'Road service' }
+      { code: 'in-house', label: 'Internal shop' },
+      { code: 'external', label: 'External shop' },
+      { code: 'road-service', label: 'Roadside service' },
+      { code: 'parts-purchase', label: 'Parts purchase' },
+      { code: 'over-the-road', label: 'Over the road' }
     ];
 
     function findBestNameMatch(rows, typedRaw) {
@@ -3609,8 +3618,8 @@
           detectTmsEnabled(),
           j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] })),
           j('/api/maintenance/shop-queue').catch(() => ({ ok: false, queue: [] })),
-          j('/api/maintenance/expense-summary?days=7').catch(() => null),
-          j('/api/maintenance/expense-summary?days=30').catch(() => null),
+          j('/api/maintenance/expense-summary?days=7&compare=1').catch(() => null),
+          j('/api/maintenance/expense-summary?days=30&compare=1').catch(() => null),
           j('/api/qbo/sync-alerts').catch(() => ({
             ok: false,
             alerts: [],
@@ -3658,8 +3667,9 @@
         sessionUser = meJson.user || null;
         startAuthHeartbeat();
 
-        if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
-        if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
+        // Do not auto-select a unit/asset; user chooses what to view.
+        if (selectedUnit && !vehicles.find(v => v.name === selectedUnit)) selectedUnit = '';
+        if (selectedTrackingVehicle && !vehicles.find(v => v.name === selectedTrackingVehicle)) selectedTrackingVehicle = '';
 
         if (tmsEnabled) await loadTmsLoadsForMaint();
         else {
@@ -3966,7 +3976,6 @@
 
       // QBO-ish: if you hover into the field, show suggestions.
       input.addEventListener('mouseenter', () => {
-        if (document.activeElement !== input) return;
         if (__qbPickerActive && __qbPickerActive.input === input && __qbPickerMenu && !__qbPickerMenu.classList.contains('hidden')) return;
         qbPickerOpen(input, opts);
       });
@@ -4715,13 +4724,11 @@
       activeAssetCategory = cat;
       renderMaintenanceCategoryChips();
       renderMaintenanceUnitList();
-
-      const first = (vehiclesByCategory()[activeAssetCategory] || [])[0];
-      const currentStillExists = (vehiclesByCategory()[activeAssetCategory] || []).find(v => v.name === selectedUnit);
-      const prevUnit = selectedUnit;
-      if (!currentStillExists && first) selectedUnit = first.name;
-      if (selectedUnit !== prevUnit) serviceMileageUserTouched = false;
-
+      // Do not auto-select a unit; user chooses the asset they want to view.
+      if (selectedUnit && !(vehiclesByCategory()[activeAssetCategory] || []).find(v => v.name === selectedUnit)) {
+        selectedUnit = '';
+        serviceMileageUserTouched = false;
+      }
       renderSelectedUnit();
       renderMaintenanceTable();
     }
@@ -4731,8 +4738,8 @@
       const titleEl = document.getElementById('maintModalFlowTitle');
       const titles = {
         'service-internal': 'New · Internal shop',
-        'service-external': 'New · External service',
-        'service-road': 'New · Road side service',
+        'service-external': 'New · External shop',
+        'service-road': 'New · Roadside service',
         'service-oos': 'New · Out of service',
         purchase: 'Parts purchase — pick vehicle type'
       };
@@ -4806,6 +4813,17 @@
       );
     }
 
+    function maintDeltaBadge(deltaObj) {
+      const pct = deltaObj && deltaObj.pct != null ? Number(deltaObj.pct) : null;
+      const abs = deltaObj && deltaObj.total != null ? Number(deltaObj.total) : null;
+      if (pct == null || !Number.isFinite(pct) || abs == null || !Number.isFinite(abs)) return '<span class="mini-note">—</span>';
+      const up = pct > 0.01;
+      const dn = pct < -0.01;
+      const cls = up ? 'status status-past' : dn ? 'status status-posted' : 'status status-current';
+      const sign = up ? '+' : '';
+      return `<span class="${cls}" title="Change vs previous window">${sign}${pct.toFixed(1)}%</span>`;
+    }
+
     function renderMaintExpenseStrip() {
       const el = document.getElementById('maintExpenseStrip');
       if (!el) return;
@@ -4821,9 +4839,12 @@
         c === 'Refrigerated Vans' ? 'Reefers' : c === 'Company Vehicles' ? 'Co. vehicles' : c;
       let firstExpBlock = true;
       const block = (label, sums, total) => {
-        const head = `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:${
+        const head = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:${
           firstExpBlock ? '0' : '10px'
-        }">${escapeHtml(label)}</div>`;
+        }">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${escapeHtml(label)}</div>
+          <div class="mini-note">${maintDeltaBadge((label.includes('7') ? s7.delta : s30.delta) || null)}</div>
+        </div>`;
         firstExpBlock = false;
         const pills = cats
           .map(c => {
@@ -4835,7 +4856,7 @@
           .join('');
         const tot = `<div class="maint-exp-pill total"><div class="k">Total</div><div class="v">${maintMoney(
           total
-        )}</div></div>`;
+        )}</div><div class="mini-note" style="margin-top:4px">vs prev: ${maintMoney((label.includes('7') ? s7.delta?.total : s30.delta?.total) || 0)}</div></div>`;
         return head + pills + tot;
       };
       el.innerHTML =
@@ -4873,7 +4894,7 @@
         : '';
       const status = String(entry.status || '');
       const statusLabel =
-        status === 'queued' ? 'In queue' : status === 'in_progress' ? 'In progress' : 'Finished';
+        status === 'queued' ? 'Awaiting service' : status === 'in_progress' ? 'In progress' : 'Completed';
       return `
         <div class="shop-queue-card ${overdue ? 'overdue' : ''}">
           <div class="shop-queue-row">
@@ -7172,6 +7193,24 @@
       resolveLinkedAccountSearch();
       resolveLinkedItemSearch();
       resolveMaintCostLineRefs();
+
+      // Required fields by repair location.
+      const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
+      const vendorInvNo = String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
+      let woNo = String(document.getElementById('recordWorkOrderInput')?.value || '').trim();
+      if (repairLoc === 'external' || repairLoc === 'road-service') {
+        if (!vendorInvNo && !woNo) {
+          alert('External shop / roadside service requires a vendor invoice # or work order #.');
+          document.getElementById('recordVendorInvoiceInput')?.focus();
+          return;
+        }
+      }
+      if (repairLoc === 'in-house' && !woNo) {
+        // Internal shop: auto-generate a work order number when missing.
+        const d = (document.getElementById('serviceDateInput')?.value || '').replace(/[^0-9]/g, '') || new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        woNo = `INT-${String(selectedUnit).replace(/[^A-Z0-9_-]/gi, '')}-${d}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+        document.getElementById('recordWorkOrderInput').value = woNo;
+      }
 
       const recordType = document.getElementById('recordTypeSelect').value;
       let serviceType = '';
