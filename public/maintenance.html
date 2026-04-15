@@ -643,6 +643,7 @@
             </div>
             <div class="panel-body">
               <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
+              <div id="retiredAssetsWrap" class="mini-note" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #e5e9f0"></div>
             </div>
           </div>
 
@@ -4480,6 +4481,7 @@
         renderDashboardHome();
         renderMaintenanceCategoryChips();
         renderMaintenanceUnitList();
+        renderRetiredAssetsPanel();
         renderSelectedUnit();
         renderMaintenanceTable();
         renderTrackingBoard();
@@ -5533,6 +5535,7 @@
               : `<button type="button" class="qb-btn-primary" onclick="postFuelExpense(${idJs})">Post</button>`;
           const draft = (window.__fuelExpenseDraft && window.__fuelExpenseDraft[rid]) || {};
           const autoCls = qboClassIdForFuelUnitName(r.unit);
+          const postedClsDisp = String(r.fuelPostedClassId || '').trim() || autoCls || '';
           const clsVal = draft.qboClassId != null && draft.qboClassId !== '' ? draft.qboClassId : autoCls || '';
           const galStr = gal != null && Number.isFinite(gal) ? gal.toFixed(3) : '1';
           const unitStr =
@@ -5570,9 +5573,7 @@
             return `<tr data-fuel-id="${idEsc}">
             <td>${d || '—'}</td>
             <td>${unit || '—'}</td>
-            <td class="mini-note">${escapeHtml(
-              String(r.fuelPostedClassId || '') ? qboNameByQboId(cacheQboClasses(), r.fuelPostedClassId) : autoCls ? qboNameByQboId(cacheQboClasses(), autoCls) : '—'
-            )}</td>
+            <td class="mini-note">${escapeHtml(postedClsDisp ? qboNameByQboId(cacheQboClasses(), postedClsDisp) : '—')}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheVendors(), r.fuelPostedVendorId))}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheItems(), r.fuelPostedItemId))}</td>
             <td class="num">${escapeHtml(String(r.fuelPostedQty != null ? r.fuelPostedQty : gal != null ? gal : '—'))}</td>
@@ -6508,6 +6509,69 @@
               )
               .join('')
           : '<div class="mini-note">No out-of-service unit records. Save a unit record with service type containing “out of service”.</div>';
+      }
+    }
+
+    function listRetiredUnitNames() {
+      const m = erp.assetActiveByUnit;
+      if (!m || typeof m !== 'object') return [];
+      return Object.keys(m).filter(u => m[u] === false);
+    }
+
+    function renderRetiredAssetsPanel() {
+      const el = document.getElementById('retiredAssetsWrap');
+      if (!el) return;
+      const retired = listRetiredUnitNames().sort((a, b) => String(a).localeCompare(String(b)));
+      if (!retired.length) {
+        el.innerHTML = '';
+        el.style.display = 'none';
+        return;
+      }
+      el.style.display = 'block';
+      el.innerHTML = `<div style="margin-bottom:6px"><strong>Retired units</strong> — not shown above</div>${retired
+        .map(
+          u =>
+            `<div style="display:flex;justify-content:space-between;gap:6px;align-items:center;margin:4px 0"><span>${escapeHtml(
+              u
+            )}</span><button type="button" class="btn" onclick="reactivateRetiredAsset(${JSON.stringify(u)})">Reactivate</button></div>`
+        )
+        .join('')}`;
+    }
+
+    async function reactivateRetiredAsset(unit) {
+      try {
+        await j('/api/maintenance/asset-active', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({ unit, active: true })
+        });
+        await loadAll();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function saveAssetFleetActive() {
+      if (!selectedUnit) return;
+      const sel = document.getElementById('assetFleetActiveSelect');
+      const retired = sel && sel.value === 'retired';
+      if (
+        retired &&
+        !confirm(
+          `Mark ${selectedUnit} as retired? It will disappear from fleet lists until you reactivate it under “Retired units” below.`
+        )
+      ) {
+        return;
+      }
+      try {
+        await j('/api/maintenance/asset-active', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({ unit: selectedUnit, active: !retired })
+        });
+        await loadAll();
+      } catch (e) {
+        alert(e.message || String(e));
       }
     }
 
@@ -8051,6 +8115,17 @@
           </div>
           <input id="assetStatusNote" class="qb-in maint-field" placeholder="Optional note (reason, ETA, shop name)" value="${escapeHtml(st.note || '')}" style="margin-top:8px" />
           ${st.updatedAt ? `<div class="mini-note" style="margin-top:4px">Updated ${escapeHtml(new Date(st.updatedAt).toLocaleString())}${st.updatedBy ? ` · ${escapeHtml(st.updatedBy)}` : ''}</div>` : ''}
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #edf1f7">
+          <span class="qb-l">Fleet roster</span>
+          <p class="mini-note" style="margin:4px 0 8px">Retired units are hidden from this list, the live board, fuel unit pickers, and dispatch maintenance alerts. History and imports for that unit name are unchanged.</p>
+          <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px">
+            <select id="assetFleetActiveSelect" class="qb-in maint-field">
+              <option value="active" ${erp.assetActiveByUnit?.[v.name] === false ? '' : 'selected'}>Active — show in lists</option>
+              <option value="retired" ${erp.assetActiveByUnit?.[v.name] === false ? 'selected' : ''}>Retired — hide from lists</option>
+            </select>
+            <button type="button" onclick="saveAssetFleetActive()">Save roster</button>
+          </div>
         </div>
         <div id="assetPartsRefHint" class="mini-note" style="margin-top:8px;line-height:1.45"></div>
       `;

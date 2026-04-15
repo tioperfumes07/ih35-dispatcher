@@ -243,6 +243,11 @@ function defaultErpData() {
     ],
     /** Per unit name: { status, note?, updatedAt?, updatedBy? } — operational availability (OOS, shop, etc.). */
     assetStatusByUnit: {},
+    /**
+     * Per unit Samsara display name: false = retired / disposed — omitted from fleet lists, board, and dispatch alerts.
+     * Key absent or true = active (default).
+     */
+    assetActiveByUnit: {},
     /** File import batches (maintenance WO / AP) for ERP-only undo — not QBO. */
     erpImportBatches: [],
     /** Bank CSV imports + user links to QBO/ERP rows (reconciliation aid). */
@@ -298,6 +303,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.employees)) merged.qboCache.employees = [];
   if (!Array.isArray(merged.qboCache.terms)) merged.qboCache.terms = [];
   if (!merged.assetStatusByUnit || typeof merged.assetStatusByUnit !== 'object') merged.assetStatusByUnit = {};
+  if (!merged.assetActiveByUnit || typeof merged.assetActiveByUnit !== 'object') merged.assetActiveByUnit = {};
   if (!Array.isArray(merged.operationalStatusCatalog) || !merged.operationalStatusCatalog.length) {
     merged.operationalStatusCatalog = defaultErpData().operationalStatusCatalog;
   }
@@ -773,6 +779,15 @@ function isTrackedAsset(v) {
     text.includes('pickup') ||
     text.includes('company vehicle')
   );
+}
+
+/** Retired (assetActiveByUnit[name] === false) units are hidden from board, maintenance lists, and dispatch tooling. */
+function isFleetAssetActiveForLists(erp, unitName) {
+  const u = String(unitName || '').trim();
+  if (!u) return true;
+  const m = erp?.assetActiveByUnit;
+  if (!m || typeof m !== 'object') return true;
+  return m[u] !== false;
 }
 
 function vehicleIdOf(entry) {
@@ -3072,6 +3087,28 @@ app.post('/api/maintenance/asset-status', (req, res) => {
   }
 });
 
+app.post('/api/maintenance/asset-active', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const unit = String(req.body?.unit || '').trim();
+    if (!unit) return res.status(400).json({ error: 'unit is required' });
+    const raw = req.body?.active;
+    const active = !(raw === false || raw === 0 || String(raw).toLowerCase() === 'false');
+    const erp = readErp();
+    if (!erp.assetActiveByUnit || typeof erp.assetActiveByUnit !== 'object') erp.assetActiveByUnit = {};
+    if (active) {
+      delete erp.assetActiveByUnit[unit];
+    } else {
+      erp.assetActiveByUnit[unit] = false;
+    }
+    writeErp(erp);
+    res.json({ ok: true, assetActiveByUnit: erp.assetActiveByUnit });
+  } catch (error) {
+    logError('api/maintenance/asset-active', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 function buildUnitCategoryMap(erp) {
   const m = new Map();
   for (const wo of erp.workOrders || []) {
@@ -3628,7 +3665,7 @@ app.get('/api/maintenance/security-alerts', async (req, res) => {
     const vehicleByName = {};
     for (const v of vehiclesRaw || []) {
       const n = String(v?.name || '').trim();
-      if (n) vehicleByName[n] = v;
+      if (n && isFleetAssetActiveForLists(erp, n)) vehicleByName[n] = v;
     }
     const data = computeMaintenanceSecurityAlerts(erp, assignmentsRes.data || [], vehicleByName, days);
     res.json(data);
@@ -3658,7 +3695,7 @@ app.get('/api/analytics/fleet-inconsistencies', async (_req, res) => {
     const vehicleByName = {};
     for (const v of vehiclesRaw || []) {
       const n = String(v?.name || '').trim();
-      if (n) vehicleByName[n] = v;
+      if (n && isFleetAssetActiveForLists(erp, n)) vehicleByName[n] = v;
     }
     const security = computeMaintenanceSecurityAlerts(
       erp,
@@ -4140,12 +4177,14 @@ app.post('/api/maintenance/qbo-vendor-from-samsara-driver', async (req, res) => 
  * identity and mileage stay aligned across tabs and pages.
  */
 async function fetchTrackedFleetSnapshot() {
+  const erp = readErp();
   const [vehiclesRaw, statsRows] = await Promise.all([
     fetchVehiclesSafely(),
     fetchVehicleStatsCurrentSafely()
   ]);
   const trackedVehicles = vehiclesRaw.filter(isTrackedAsset).sort(byVehicleName);
-  const enrichedVehicles = mergeVehiclesWithStats(trackedVehicles.map(enrichSamsaraVehicle), statsRows);
+  const enrichedAll = mergeVehiclesWithStats(trackedVehicles.map(enrichSamsaraVehicle), statsRows);
+  const enrichedVehicles = enrichedAll.filter(v => isFleetAssetActiveForLists(erp, v.name));
   return {
     vehiclesRaw,
     statsRows,
