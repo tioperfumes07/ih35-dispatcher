@@ -3178,6 +3178,7 @@
           refreshedAt: data.refreshedAt || ''
         };
         fillDataLists();
+        bootQbPickers();
         renderQboMaster();
         renderDashboardHome();
         if (activeSection === 'reports') loadReportsData();
@@ -3292,6 +3293,7 @@
           if (dl) dl.innerHTML = '';
         }
         fillDataLists();
+        bootQbPickers();
         renderDashboardHome();
         renderMaintenanceCategoryChips();
         renderMaintenanceUnitList();
@@ -3391,6 +3393,248 @@
         termSel.value = cur;
       }
       applyMaintenanceFieldWidths();
+    }
+
+    // ---- QuickBooks-style pickers (dropdown with + Add new) ----
+    let __qbPickerBooted = false;
+    let __qbPickerMenu = null;
+    let __qbPickerActive = null; // { input, rows, onPick, onAddNew, activeIdx, query }
+
+    function qbPickerEnsureMenu() {
+      if (__qbPickerMenu) return __qbPickerMenu;
+      const el = document.createElement('div');
+      el.className = 'qb-picker-menu hidden';
+      document.body.appendChild(el);
+      __qbPickerMenu = el;
+
+      document.addEventListener('mousedown', e => {
+        if (!__qbPickerActive) return;
+        const inp = __qbPickerActive.input;
+        if (inp && (inp === e.target || inp.contains(e.target))) return;
+        if (__qbPickerMenu && (__qbPickerMenu === e.target || __qbPickerMenu.contains(e.target))) return;
+        qbPickerClose();
+      });
+      window.addEventListener('scroll', () => {
+        if (__qbPickerActive) qbPickerPosition();
+      }, true);
+      window.addEventListener('resize', () => {
+        if (__qbPickerActive) qbPickerPosition();
+      });
+      return el;
+    }
+
+    function qbPickerClose() {
+      __qbPickerActive = null;
+      if (__qbPickerMenu) {
+        __qbPickerMenu.classList.add('hidden');
+        __qbPickerMenu.innerHTML = '';
+      }
+    }
+
+    function qbPickerPosition() {
+      if (!__qbPickerActive || !__qbPickerMenu) return;
+      const r = __qbPickerActive.input.getBoundingClientRect();
+      const left = Math.max(10, r.left + window.scrollX);
+      const top = r.bottom + window.scrollY + 6;
+      __qbPickerMenu.style.left = left + 'px';
+      __qbPickerMenu.style.top = top + 'px';
+      __qbPickerMenu.style.minWidth = Math.max(260, Math.round(r.width)) + 'px';
+    }
+
+    function qbPickerRender() {
+      if (!__qbPickerActive) return;
+      const menu = qbPickerEnsureMenu();
+      const q = String(__qbPickerActive.query || '').toLowerCase().trim();
+      const rows = (__qbPickerActive.rows || [])
+        .filter(r => {
+          if (!q) return true;
+          const blob = `${r.label || ''} ${r.meta || ''}`.toLowerCase();
+          return blob.includes(q);
+        })
+        .slice(0, 40);
+
+      const addNewLabel = __qbPickerActive.onAddNew ? '+ Add new' : '';
+      const items = [];
+      if (addNewLabel) {
+        items.push({
+          kind: 'add_new',
+          label: addNewLabel,
+          meta: ''
+        });
+      }
+      rows.forEach(r => items.push({ kind: 'row', ...r }));
+
+      if (!items.length) {
+        menu.innerHTML = '<div class="mini-note" style="padding:8px 10px">No matches.</div>';
+        menu.classList.remove('hidden');
+        qbPickerPosition();
+        return;
+      }
+
+      __qbPickerActive.activeIdx = Math.min(
+        Math.max(0, __qbPickerActive.activeIdx ?? 0),
+        items.length - 1
+      );
+
+      menu.innerHTML = items
+        .map((it, idx) => {
+          const active = idx === __qbPickerActive.activeIdx ? 'is-active' : '';
+          const addCls = it.kind === 'add_new' ? 'qb-picker-addnew' : '';
+          const metaHtml = it.meta ? `<span class="qb-picker-item__meta">${escapeHtml(it.meta)}</span>` : '';
+          return `<button type="button" class="qb-picker-item ${active}" data-idx="${idx}">
+            <span class="qb-picker-item__label ${addCls}">${escapeHtml(it.label || '')}</span>
+            ${metaHtml}
+          </button>`;
+        })
+        .join('');
+
+      menu.querySelectorAll('.qb-picker-item').forEach(btn => {
+        btn.onclick = () => {
+          const idx = Number(btn.getAttribute('data-idx'));
+          qbPickerChoose(idx, items);
+        };
+      });
+
+      menu.classList.remove('hidden');
+      qbPickerPosition();
+    }
+
+    function qbPickerChoose(idx, items) {
+      if (!__qbPickerActive) return;
+      const it = items[idx];
+      if (!it) return;
+      if (it.kind === 'add_new' && __qbPickerActive.onAddNew) {
+        const cur = String(__qbPickerActive.input.value || '').trim();
+        qbPickerClose();
+        __qbPickerActive?.onAddNew?.(cur);
+        return;
+      }
+      if (it.kind === 'row') {
+        __qbPickerActive.onPick?.(it);
+        qbPickerClose();
+      }
+    }
+
+    function qbPickerAttach(inputId, opts) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.dataset.qbPickerAttached === '1') return;
+      input.dataset.qbPickerAttached = '1';
+
+      input.addEventListener('focus', () => {
+        __qbPickerActive = {
+          input,
+          rows: typeof opts.rows === 'function' ? opts.rows() : (opts.rows || []),
+          onPick: opts.onPick,
+          onAddNew: opts.onAddNew || null,
+          activeIdx: 0,
+          query: input.value || ''
+        };
+        qbPickerRender();
+      });
+
+      input.addEventListener('input', () => {
+        if (!__qbPickerActive || __qbPickerActive.input !== input) return;
+        __qbPickerActive.query = input.value || '';
+        __qbPickerActive.rows = typeof opts.rows === 'function' ? opts.rows() : (opts.rows || []);
+        __qbPickerActive.activeIdx = 0;
+        qbPickerRender();
+      });
+
+      input.addEventListener('keydown', e => {
+        if (!__qbPickerActive || __qbPickerActive.input !== input) return;
+        const menu = qbPickerEnsureMenu();
+        if (menu.classList.contains('hidden')) return;
+        const k = e.key;
+        if (k === 'Escape') {
+          qbPickerClose();
+          return;
+        }
+        if (k === 'ArrowDown' || k === 'ArrowUp') {
+          e.preventDefault();
+          const dir = k === 'ArrowDown' ? 1 : -1;
+          __qbPickerActive.activeIdx = Math.max(0, (__qbPickerActive.activeIdx ?? 0) + dir);
+          qbPickerRender();
+          return;
+        }
+        if (k === 'Enter' || k === 'Tab') {
+          // QBO-ish: Enter picks, Tab picks and moves on.
+          const buttons = Array.from(menu.querySelectorAll('.qb-picker-item'));
+          if (!buttons.length) return;
+          const idx = Math.min(Math.max(0, __qbPickerActive.activeIdx ?? 0), buttons.length - 1);
+          // Build current items list from DOM text (render creates it deterministically)
+          // Re-render first to ensure item array matches activeIdx.
+          qbPickerRender();
+          const btn = menu.querySelector(`.qb-picker-item[data-idx="${idx}"]`);
+          if (btn) btn.click();
+          if (k === 'Enter') e.preventDefault();
+        }
+      });
+    }
+
+    function bootQbPickers() {
+      if (__qbPickerBooted) return;
+      __qbPickerBooted = true;
+
+      const vendorRows = () => cacheVendors().map(v => ({ label: v.name || v.qboId, meta: String(v.qboId || '') }));
+      const serviceRows = () =>
+        (catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES).map(n => ({
+          label: String(n || ''),
+          meta: 'Service'
+        }));
+
+      const pickVendorInto = (inputId, hiddenId, resolveFn) => {
+        qbPickerAttach(inputId, {
+          rows: vendorRows,
+          onPick: it => {
+            const el = document.getElementById(inputId);
+            if (el) el.value = it.label || '';
+            if (typeof resolveFn === 'function') resolveFn();
+            const hid = document.getElementById(hiddenId);
+            if (hid && !hid.value) {
+              // last resort: match by name
+              const m = findBestNameMatch(cacheVendors(), it.label || '');
+              hid.value = m ? m.qboId : '';
+            }
+          },
+          onAddNew: typed => {
+            try {
+              goToCreateQboVendor();
+              const v = document.getElementById('qboNewVendorDisplayName');
+              if (v && typed) v.value = typed;
+              v?.focus?.();
+            } catch (_) {}
+          }
+        });
+      };
+
+      // Vendor pickers used across “catalogs” and “autofill” flows.
+      pickVendorInto('apVendorSearch', 'apVendorQboId', resolveApVendorSearch);
+      pickVendorInto('vendorInput', 'linkedVendorQboId', syncLinkedVendorFromMainVendor);
+      pickVendorInto('bpVendorSearch', 'bpVendorQboId', resolveBpVendorSearch);
+      pickVendorInto('bpLogVendorSearch', 'bpLogVendorQboId', resolveBpLogVendorSearch);
+      pickVendorInto('linkedVendorSearch', 'linkedVendorQboId', resolveLinkedVendorSearch);
+
+      // Service catalog picker (maintenance record).
+      qbPickerAttach('serviceSearchInput', {
+        rows: serviceRows,
+        onPick: it => {
+          const el = document.getElementById('serviceSearchInput');
+          if (el) el.value = it.label || '';
+          resolveServiceSearch();
+        },
+        onAddNew: typed => {
+          try {
+            openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]'));
+          } catch (_) {}
+          try {
+            openCatalogSubpanel('service');
+          } catch (_) {}
+          const inp = document.getElementById('catalogSectionNewServiceName');
+          if (inp && typed) inp.value = typed;
+          inp?.focus?.();
+        }
+      });
     }
 
     async function loadServiceCatalogAdminOnly() {
