@@ -7,6 +7,8 @@
   "driverProfiles": [],
   "fuelPurchases": [],
   "relayExpenses": [],
+  "lastFuelImportBatch": null,
+  "fuelImportBatches": [],
   "paymentMethods": [
     {
       "id": "pm_cash",
@@ -43,6 +45,31 @@
     "customers": [],
     "classes": [],
     "accountsBank": [],
-    "refreshedAt": ""
-  }
+    "refreshedAt": "",
+    "employees": [],
+    "terms": []
+  },
+  "operationalStatusCatalog": [
+    {
+      "value": "in_service",
+      "label": "In service"
+    },
+    {
+      "value": "out_of_service",
+      "label": "Out of service"
+    },
+    {
+      "value": "shop",
+      "label": "In shop"
+    },
+    {
+      "value": "roadside",
+      "label": "Roadside / down"
+    }
+  ],
+  "assetStatusByUnit": {},
+  "erpImportBatches": [],
+  "bankStatementImports": [],
+  "bankMatchLinks": [],
+  "maintenanceShopQueue": []
 }

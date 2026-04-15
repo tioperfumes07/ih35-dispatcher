@@ -4,82 +4,104 @@
   <meta charset="UTF-8" />
   <title>IH35 TMS — Loads & Dispatch</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/css/app-theme.css" />
+  <link rel="stylesheet" href="/css/board-nav.css" />
   <style>
     :root {
-      --bg: #f0f2f7;
-      --panel: #fff;
-      --line: #d8dce8;
-      --text: #1a1d26;
-      --muted: #5c6370;
-      --accent: #1d4ed8;
-      --open: #e8f5e9;
-      --delivered: #fce4ec;
+      --dispatch-open: var(--green-soft);
+      --dispatch-open-fg: var(--green);
+      --dispatch-delivered: #fce7f3;
+      --dispatch-delivered-fg: #9d174d;
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
-    .topbar {
-      display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
-      padding: 12px 18px; background: #1a237e; color: #fff;
+    * {
+      box-sizing: border-box;
     }
-    .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; }
-    .topbar a { color: #c5cae9; text-decoration: none; font-weight: 600; }
-    .topbar a:hover { color: #fff; }
-    .topbar button {
-      padding: 8px 14px; border: none; border-radius: 8px; cursor: pointer;
-      font-weight: 600; background: #ff9800; color: #1a1d26;
+    body.dispatch-page {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.5;
     }
-    .topbar button.secondary { background: #3949ab; color: #fff; }
-    .tabs {
-      display: flex; gap: 4px; padding: 0 18px; background: #e8eaf6;
-      border-bottom: 1px solid var(--line); flex-wrap: wrap;
+    .maint-banner {
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: left;
     }
-    .tabs button {
-      padding: 10px 16px; border: none; background: transparent; cursor: pointer;
-      font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent;
+    .maint-banner.maint-hide {
+      display: none !important;
     }
-    .tabs button.active { color: #1a237e; border-bottom-color: #1a237e; background: #fff; }
-    .wrap { padding: 16px 18px; max-width: 1600px; margin: 0 auto; }
-    .banner {
-      padding: 10px 14px; border-radius: 8px; margin-bottom: 12px;
-      background: #fff3cd; border: 1px solid #ffc107; color: #664d03;
+    .maint-banner.critical {
+      background: #ffebee;
+      border: 1px solid #c62828;
+      color: #4a1515;
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
     }
-    .banner.err { background: #fdecea; border-color: #f5c6cb; color: #842029; }
-    .maint-banner { margin-top: 8px; font-size: 13px; line-height: 1.45; text-align: left; }
-    .maint-banner.maint-hide { display: none !important; }
-    .maint-banner.critical { background: #ffebee; border-color: #c62828; color: #4a1515; }
-    .maint-banner.high { background: #fff3e0; border-color: #ef6c00; color: #5d3800; }
-    .maint-banner.medium { background: #fffde7; border-color: #f9a825; color: #5c4a00; }
-    table.data {
-      width: 100%; border-collapse: collapse; background: var(--panel);
-      border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    .maint-banner.high {
+      background: #fff3e0;
+      border: 1px solid #ef6c00;
+      color: #5d3800;
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
     }
-    table.data th, table.data td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eef0f5; vertical-align: top; }
-    table.data th { background: #f4f5fa; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-    table.data tr:hover { background: #fafbff; }
-    .badge {
-      display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
-      text-transform: uppercase;
+    .maint-banner.medium {
+      background: #fffde7;
+      border: 1px solid #f9a825;
+      color: #5c4a00;
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
     }
-    .st-open { background: var(--open); color: #2e7d32; }
-    .st-delivered { background: var(--delivered); color: #c2185b; }
-    .st-unsettled { background: #e8eaf6; color: #3949ab; }
-    .st-default { background: #e3e7f0; color: #37474f; }
-    select.sm, input.sm { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); font-size: 13px; max-width: 140px; }
+    .st-open {
+      background: var(--dispatch-open);
+      color: var(--dispatch-open-fg);
+    }
+    .st-delivered {
+      background: var(--dispatch-delivered);
+      color: var(--dispatch-delivered-fg);
+    }
+    .st-unsettled {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .st-default {
+      background: #f1f5f9;
+      color: var(--text-secondary);
+    }
+    select.sm,
+    input.sm {
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      font-size: 13px;
+      max-width: 140px;
+    }
     .modal-bg {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 5000;
       align-items: flex-start; justify-content: center; padding: 24px; overflow: auto;
     }
     .modal-bg.on { display: flex; }
     .modal {
-      background: #fff; border-radius: 12px; max-width: 920px; width: 100%;
-      box-shadow: 0 16px 48px rgba(0,0,0,.2); margin-bottom: 40px;
+      background: var(--panel);
+      border-radius: var(--radius);
+      max-width: 920px;
+      width: 100%;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      margin-bottom: 40px;
     }
     .modal.book-modal-wide {
       max-width: min(1180px, 98vw);
       width: 100%;
     }
-    .modal h2 { margin: 0; padding: 16px 20px; border-bottom: 1px solid var(--line); font-size: 18px; }
+    .modal h2 {
+      margin: 0;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+    }
     .modal-body { padding: 16px 20px; max-height: calc(100vh - 180px); overflow: auto; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
@@ -89,9 +111,9 @@
     .stops-head { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 8px; }
     .stop-block {
       margin-bottom: 12px;
-      background: #f8f9fc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
       padding: 12px 14px;
     }
     .stop-card-top {
@@ -163,10 +185,42 @@
     }
     .stop-miles-summary th { background: #f1f5f9; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--muted); }
     .stop-miles-summary td:first-child { text-align: left; font-weight: 600; }
-    .modal-actions { padding: 14px 20px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; }
-    .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
-    .btn-primary { background: #ff9800; color: #1a1d26; }
-    .btn-ghost { background: #e0e0e0; color: #333; }
+    .modal-actions {
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .btn {
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn:hover {
+      background: #f8fafc;
+      border-color: var(--line-strong);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+    .btn-ghost {
+      background: #f1f5f9;
+      color: var(--text);
+      border-color: var(--line);
+    }
     .link { color: var(--accent); cursor: pointer; font-weight: 600; font-size: 13px; }
     .muted { color: var(--muted); font-size: 12px; }
     .ac-wrap { position: relative; }
@@ -177,7 +231,9 @@
     }
     .ac-list.on { display: block; }
     .ac-item { padding: 8px 10px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
-    .ac-item:hover { background: #eef2ff; }
+    .ac-item:hover {
+      background: var(--accent-soft);
+    }
     .stops-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     html.dispatch-embed #boardNavMount,
     html.dispatch-embed .board-nav-wrap { display: none !important; }
@@ -185,12 +241,11 @@
     html.dispatch-embed .topbar a:not(.keep-embed) { display: none; }
     .hidden { display: none !important; }
   </style>
-  <link rel="stylesheet" href="/css/board-nav.css" />
   <script>
     if (/[?&]embed=1(?:&|$)/.test(location.search)) document.documentElement.classList.add('dispatch-embed');
   </script>
 </head>
-<body>
+<body class="dispatch-page">
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <div class="topbar">

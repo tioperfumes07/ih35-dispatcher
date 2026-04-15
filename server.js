@@ -19,6 +19,7 @@ import { buildSettlementByLoad, buildSettlementIndex, normLoadKey } from './lib/
 import pdfRouter from './routes/pdf.mjs';
 import documentParseRouter from './routes/document-parse.mjs';
 import integrationsRouter from './routes/integrations.mjs';
+import { fetchSamsaraDriversNormalized, fetchSamsaraDriverById } from './lib/samsara-client.mjs';
 import { syncAllLoadDocumentsToQboInvoice } from './lib/qbo-attachments.mjs';
 import {
   setAuthUsersFilePath,
@@ -3522,6 +3523,125 @@ app.post('/api/integrations/samsara/driver/:id', async (req, res) => {
     logError('api/integrations/samsara/driver', error);
     const st = error.status && error.status >= 400 && error.status < 600 ? error.status : 500;
     res.status(st).json({ error: error.message, details: error.details || null });
+  }
+});
+
+function escapeQboQueryLikeFragment(str) {
+  return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+/** Search QBO vendors (live query when connected + q length ≥ 2; otherwise ERP cache). */
+app.get('/api/qbo/vendors/search', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    const store = readQbo();
+    const connected = !!store.tokens?.access_token;
+    const vendors = readQboCatalogPayload().vendors;
+    if (!q) {
+      return res.json({ ok: true, source: 'cache', vendors: vendors.slice(0, 200) });
+    }
+    const qLow = q.toLowerCase();
+    const fromCache = vendors.filter(
+      v =>
+        String(v.name || '').toLowerCase().includes(qLow) ||
+        String(v.companyName || '').toLowerCase().includes(qLow) ||
+        String(v.qboId || '').includes(q)
+    );
+    if (!connected || q.length < 2) {
+      return res.json({ ok: true, source: 'cache', vendors: fromCache.slice(0, 120) });
+    }
+    const esc = escapeQboQueryLikeFragment(q);
+    const data = await qboQuery(
+      `select * from Vendor where DisplayName LIKE '%${esc}%' OR CompanyName LIKE '%${esc}%' maxresults 80`
+    );
+    const live = (data?.QueryResponse?.Vendor || []).map(v => ({
+      qboId: v.Id,
+      name: v.DisplayName || '',
+      companyName: v.CompanyName || '',
+      phone: v.PrimaryPhone?.FreeFormNumber || '',
+      email: v.PrimaryEmailAddr?.Address || '',
+      active: v.Active !== false
+    }));
+    res.json({ ok: true, source: 'quickbooks', vendors: live });
+  } catch (error) {
+    logError('api/qbo/vendors/search', error);
+    const vendors = readQboCatalogPayload().vendors;
+    const qLow = String(req.query.q || '').trim().toLowerCase();
+    const fallback = vendors.filter(
+      v =>
+        String(v.name || '').toLowerCase().includes(qLow) ||
+        String(v.companyName || '').toLowerCase().includes(qLow)
+    );
+    res.json({ ok: true, source: 'cache_fallback', error: error.message, vendors: fallback.slice(0, 120) });
+  }
+});
+
+/** Read-only: list Samsara drivers for linking (uses SAMSARA_API_TOKEN). */
+app.get('/api/integrations/samsara/drivers', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    const limit = Math.min(400, Math.max(10, Number(req.query.limit) || 200));
+    const drivers = await fetchSamsaraDriversNormalized({ q, limit });
+    res.json({ ok: true, drivers, count: drivers.length });
+  } catch (error) {
+    logError('api/integrations/samsara/drivers', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * Create (or match) a QuickBooks vendor from a Samsara driver profile, refresh QBO cache,
+ * and optionally attach ids to a TMS driver row.
+ */
+app.post('/api/maintenance/qbo-vendor-from-samsara-driver', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    const samsaraDriverId = String(req.body?.samsaraDriverId || '').trim();
+    const tmsDriverId = String(req.body?.tmsDriverId || '').trim();
+    if (!samsaraDriverId) return res.status(400).json({ ok: false, error: 'samsaraDriverId is required' });
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    const sd = await fetchSamsaraDriverById(samsaraDriverId);
+    const emailGuess =
+      sd.username && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sd.username) ? sd.username : '';
+    const result = await qboCreateVendorFromApp({
+      name: sd.name,
+      companyName: sd.name,
+      phone: sd.phone,
+      email: emailGuess
+    });
+    const v = result.vendor;
+    const qboId = String(v?.Id || '').trim();
+    if (!qboId) throw new Error('QuickBooks did not return a vendor id');
+    await qboSyncMasterData();
+    let linked = null;
+    if (tmsDriverId && getPool()) {
+      const { rows } = await dbQuery(
+        `UPDATE drivers SET qbo_vendor_id = $1, samsara_driver_id = $2,
+         name = CASE WHEN NULLIF(TRIM($3), '') IS NOT NULL THEN TRIM($3) ELSE name END,
+         phone = CASE WHEN NULLIF(TRIM($4), '') IS NOT NULL THEN TRIM($4) ELSE phone END
+         WHERE id = $5::uuid
+         RETURNING id, name, email, phone, qbo_vendor_id, samsara_driver_id, created_at`,
+        [qboId, samsaraDriverId, sd.name, sd.phone || null, tmsDriverId]
+      );
+      linked = rows[0] || null;
+    }
+    appendSecurityAudit({
+      action: 'qbo_vendor_from_samsara_driver',
+      userId: req.authUser?.id,
+      email: req.authUser?.email,
+      ip: clientIp(req),
+      samsaraDriverId,
+      qboVendorId: qboId,
+      tmsDriverId: tmsDriverId || '',
+      created: !!result.created
+    });
+    res.json({ ok: true, created: !!result.created, qboVendorId: qboId, samsara: sd, linked });
+  } catch (error) {
+    logError('api/maintenance/qbo-vendor-from-samsara-driver', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 

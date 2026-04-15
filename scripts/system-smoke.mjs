@@ -3,6 +3,8 @@
  * Non-destructive HTTP checks against a running server (default http://127.0.0.1:3400).
  * Run: `npm start` in another terminal, then `npm run smoke`.
  * Set SMOKE_BASE=http://host:port to target another environment.
+ * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
+ * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
  */
 import process from 'process';
 
@@ -76,6 +78,11 @@ for (const [method, path] of CRITICAL) {
     if (!pass) criticalFailures++;
     console.log(`${pass ? '✓' : '✗'} ${row.status} ${method} ${path} ${row.hint}`.trim());
     if (!pass) console.log('   ', row.jsonSnippet);
+    if (!pass && path === '/api/qbo/sync-alerts' && row.status === 404) {
+      console.log(
+        '    Hint: 404 on this path usually means the listener on this port is not this tree’s server (restart `npm start`, or set SMOKE_BASE to the server you intend).'
+      );
+    }
   } catch (e) {
     criticalFailures++;
     console.log(`✗ FAIL ${method} ${path}: ${e.message || e}`);

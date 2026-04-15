@@ -157,9 +157,56 @@ router.post('/customers', async (req, res) => {
 router.get('/drivers', async (_req, res) => {
   try {
     const { rows } = await dbQuery(
-      'SELECT id, name, email, phone, qbo_vendor_id, created_at FROM drivers ORDER BY name'
+      'SELECT id, name, email, phone, qbo_vendor_id, samsara_driver_id, created_at FROM drivers ORDER BY name'
     );
     res.json({ ok: true, data: rows });
+  } catch (e) {
+    if (dbUnavailable(res, e)) return;
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.patch('/drivers/:id', async (req, res) => {
+  try {
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'id is required' });
+    const b = req.body || {};
+    const sets = [];
+    const vals = [];
+    let i = 1;
+    const add = (col, val) => {
+      sets.push(`${col} = $${i++}`);
+      vals.push(val);
+    };
+    if (typeof b.name === 'string') {
+      const n = b.name.trim();
+      if (!n) return res.status(400).json({ ok: false, error: 'name cannot be empty' });
+      add('name', n);
+    }
+    if (typeof b.email === 'string') add('email', b.email.trim() || null);
+    if (typeof b.phone === 'string') add('phone', b.phone.trim() || null);
+    if (b.qbo_vendor_id !== undefined) {
+      const v =
+        b.qbo_vendor_id == null || String(b.qbo_vendor_id).trim() === ''
+          ? null
+          : String(b.qbo_vendor_id).trim();
+      add('qbo_vendor_id', v);
+    }
+    if (b.samsara_driver_id !== undefined) {
+      const v =
+        b.samsara_driver_id == null || String(b.samsara_driver_id).trim() === ''
+          ? null
+          : String(b.samsara_driver_id).trim();
+      add('samsara_driver_id', v);
+    }
+    if (!sets.length) return res.status(400).json({ ok: false, error: 'No updatable fields' });
+    vals.push(id);
+    const { rows } = await dbQuery(
+      `UPDATE drivers SET ${sets.join(', ')} WHERE id = $${i}::uuid RETURNING id, name, email, phone, qbo_vendor_id, samsara_driver_id, created_at`,
+      vals
+    );
+    if (!rows.length) return res.status(404).json({ ok: false, error: 'Driver not found' });
+    res.json({ ok: true, data: rows[0] });
   } catch (e) {
     if (dbUnavailable(res, e)) return;
     res.status(500).json({ ok: false, error: e.message });
@@ -172,7 +219,7 @@ router.post('/drivers', async (req, res) => {
     if (!name) return res.status(400).json({ ok: false, error: 'name is required' });
     const { rows } = await dbQuery(
       `INSERT INTO drivers (name, email, phone) VALUES ($1, $2, $3)
-       RETURNING id, name, email, phone, qbo_vendor_id, created_at`,
+       RETURNING id, name, email, phone, qbo_vendor_id, samsara_driver_id, created_at`,
       [name, String(req.body?.email || '').trim() || null, String(req.body?.phone || '').trim() || null]
     );
     res.json({ ok: true, data: rows[0] });

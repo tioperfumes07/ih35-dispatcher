@@ -28,8 +28,8 @@
     .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--line);background:#fff}
     .panel-body{padding:12px}
     .fleet-summary{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);background:#fafafa}
-    .fleet-columns{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #eef1f5}
-    .fleet-col{min-height:200px;border-right:1px solid #eef1f5}
+    .fleet-columns{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line)}
+    .fleet-col{min-height:200px;border-right:1px solid var(--line)}
     .fleet-col:last-child{border-right:none}
     .fleet-section-title{
       padding:10px 12px;
@@ -37,14 +37,14 @@
       font-weight:700;
       color:var(--muted);
       text-transform:uppercase;
-      border-bottom:1px solid #eef1f5;
+      border-bottom:1px solid var(--line);
       background:#fafafa;
       position:sticky;
       top:0;
       z-index:2;
     }
     #fleetAssigned,#fleetUnassigned{max-height:calc(100vh - 190px);overflow:auto}
-    .fleet-item{padding:10px 12px;border-bottom:1px solid #eef1f5;cursor:pointer}
+    .fleet-item{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
     .fleet-item:hover{background:#f9fafb}
     .fleet-item.active{background:#eff6ff}
     .fleet-title{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:700;margin-bottom:4px}
@@ -114,7 +114,7 @@
     if (/[?&]embed=1(?:&|$)/.test(location.search)) document.documentElement.classList.add('fuel-embed');
   </script>
 </head>
-<body>
+<body class="fuel-board">
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <div class="topbar">
