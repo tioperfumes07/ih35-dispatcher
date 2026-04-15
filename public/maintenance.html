@@ -3322,6 +3322,14 @@
       return Array.isArray(erp.qboCache?.customers) ? erp.qboCache.customers : [];
     }
 
+    /** Resolve a QBO master row name by numeric qboId (for read-only posted cells). */
+    function qboNameByQboId(rows, qboId) {
+      const id = String(qboId || '').trim();
+      if (!id) return '—';
+      const hit = (rows || []).find(x => String(x?.qboId || '') === id);
+      return hit ? String(hit.name || hit.displayName || id) : id;
+    }
+
     function operationalCatalogRows() {
       const rows = Array.isArray(erp.operationalStatusCatalog) && erp.operationalStatusCatalog.length
         ? erp.operationalStatusCatalog
@@ -5509,15 +5517,19 @@
           const tot = Number(r.totalCost || 0) || 0;
           const loc = escapeHtml(String(r.location || ''));
           const status = String(r.qboSyncStatus || '');
+          const errTail =
+            status === 'error' && r.qboError
+              ? ': ' + escapeHtml(String(r.qboError).slice(0, 140))
+              : '';
           const stLabel =
             status === 'posted'
               ? `Posted (${escapeHtml(String(r.qboEntityType || ''))})`
               : status === 'error'
-                ? 'Error'
+                ? `Error${errTail}`
                 : 'Not posted';
           const btn =
             status === 'posted'
-              ? '<span class="mini-note">—</span>'
+              ? `<button type="button" onclick="revertQboPostedClient('fuel', ${idJs})">Revert in QuickBooks</button>`
               : `<button type="button" class="qb-btn-primary" onclick="postFuelExpense(${idJs})">Post</button>`;
           const draft = (window.__fuelExpenseDraft && window.__fuelExpenseDraft[rid]) || {};
           const autoCls = qboClassIdForFuelUnitName(r.unit);
@@ -5558,15 +5570,17 @@
             return `<tr data-fuel-id="${idEsc}">
             <td>${d || '—'}</td>
             <td>${unit || '—'}</td>
-            <td class="mini-note">${escapeHtml(String(r.fuelPostedClassId || autoCls || '—'))}</td>
-            <td class="mini-note">${escapeHtml(String(r.fuelPostedVendorId || '—'))}</td>
-            <td class="mini-note">${escapeHtml(String(r.fuelPostedItemId || '—'))}</td>
+            <td class="mini-note">${escapeHtml(
+              String(r.fuelPostedClassId || '') ? qboNameByQboId(cacheQboClasses(), r.fuelPostedClassId) : autoCls ? qboNameByQboId(cacheQboClasses(), autoCls) : '—'
+            )}</td>
+            <td class="mini-note">${escapeHtml(qboNameByQboId(cacheVendors(), r.fuelPostedVendorId))}</td>
+            <td class="mini-note">${escapeHtml(qboNameByQboId(cacheItems(), r.fuelPostedItemId))}</td>
             <td class="num">${escapeHtml(String(r.fuelPostedQty != null ? r.fuelPostedQty : gal != null ? gal : '—'))}</td>
             <td class="num">—</td>
             <td class="num">${escapeHtml(String(r.fuelPostedAmount != null ? Number(r.fuelPostedAmount).toFixed(2) : tot.toFixed(2)))}</td>
             <td class="mini-note">${escapeHtml(String(r.fuelPostedDriverMemo || '—'))}</td>
-            <td class="mini-note">${escapeHtml(String(r.fuelPostedDriverVendorId || '—'))}</td>
-            <td class="mini-note">${escapeHtml(String(r.fuelPostedCustomerId || '—'))}</td>
+            <td class="mini-note">${escapeHtml(qboNameByQboId(cacheVendors(), r.fuelPostedDriverVendorId))}</td>
+            <td class="mini-note">${escapeHtml(qboNameByQboId(cacheQboCustomers(), r.fuelPostedCustomerId))}</td>
             <td>${prod}</td>
             <td>${loc || '—'}</td>
             <td class="mini-note">${stLabel}</td>
@@ -5681,8 +5695,16 @@
         renderFuelExpenseRows();
         if (st) st.textContent = 'Posted.';
       } catch (e) {
-        if (st) st.textContent = e.message || String(e);
-        else alert(e.message || String(e));
+        const msg = e.message || String(e);
+        try {
+          await loadFuelExpenseTab();
+        } catch (_) {
+          /* ignore */
+        }
+        const tr2 = document.querySelector('#fuelExpBody tr[data-fuel-id="' + fid + '"]');
+        const st2 = tr2 ? tr2.querySelector('.fuel-post-status') : null;
+        if (st2) st2.textContent = msg;
+        else alert(msg);
       }
     }
 

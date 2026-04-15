@@ -5662,6 +5662,7 @@ function bestFuelItemId(erp) {
 }
 
 app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
+  const id = String(req.params.id || '').trim();
   try {
     if (!requireErpWriteOrAdmin(req, res)) return;
     const store = readQbo();
@@ -5669,7 +5670,6 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       return res.status(400).json({ error: 'QuickBooks is not connected' });
     }
 
-    const id = String(req.params.id || '').trim();
     const erp = readErp();
     const idx = (erp.fuelPurchases || []).findIndex(x => String(x.id) === id);
     if (idx === -1) return res.status(404).json({ error: 'Fuel purchase not found' });
@@ -5775,6 +5775,7 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     }
 
     const result = await qboCreateApTransaction(ap);
+    const effectiveClassId = (qboClassId || qboClassIdForUnit(unit, erp) || '').trim() || null;
     erp.fuelPurchases[idx] = {
       ...fp,
       qboSyncStatus: 'posted',
@@ -5782,9 +5783,10 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       qboEntityId: result.qboEntityId,
       qboPostedAt: new Date().toISOString(),
       qboError: '',
+      qboErrorAt: '',
       fuelPostedQty: detailMode === 'item' ? qty : null,
       fuelPostedAmount: amount,
-      fuelPostedClassId: qboClassId || null,
+      fuelPostedClassId: effectiveClassId,
       fuelPostedItemId: qboItemId || null,
       fuelPostedVendorId: vendorId,
       fuelPostedDriverVendorId: driverVendorId || null,
@@ -5795,6 +5797,21 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     res.json({ ok: true, fuelPurchase: erp.fuelPurchases[idx] });
   } catch (error) {
     logError('api/qbo/post-fuel-purchase', error);
+    try {
+      const erpErr = readErp();
+      const ixe = (erpErr.fuelPurchases || []).findIndex(x => String(x.id) === id);
+      if (ixe >= 0) {
+        erpErr.fuelPurchases[ixe] = {
+          ...erpErr.fuelPurchases[ixe],
+          qboSyncStatus: 'error',
+          qboError: error.message,
+          qboErrorAt: new Date().toISOString()
+        };
+        writeErp(erpErr);
+      }
+    } catch (_) {
+      /* ignore secondary persist errors */
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -5808,13 +5825,13 @@ function qboEntityPathFromType(qboEntityType) {
 
 /**
  * Deletes the Purchase/Bill in QuickBooks and clears local posting fields.
- * kind: 'ap' | 'wo' | 'record'
+ * kind: 'ap' | 'wo' | 'record' | 'fuel'
  */
 async function revertQboPostedTransaction(kind, erpId) {
   const id = String(erpId || '').trim();
   if (!id) throw new Error('id is required');
   const k = String(kind || '').trim().toLowerCase();
-  if (!['ap', 'wo', 'record'].includes(k)) throw new Error('kind must be ap, wo, or record');
+  if (!['ap', 'wo', 'record', 'fuel'].includes(k)) throw new Error('kind must be ap, wo, record, or fuel');
 
   let erp = readErp();
   let qboType = '';
@@ -5830,6 +5847,11 @@ async function revertQboPostedTransaction(kind, erpId) {
     if (!wo) throw new Error('Work order not found');
     qboType = wo.qboEntityType;
     qboId = String(wo.qboEntityId || '').trim();
+  } else if (k === 'fuel') {
+    const fp = (erp.fuelPurchases || []).find(x => String(x.id) === id);
+    if (!fp) throw new Error('Fuel purchase not found');
+    qboType = fp.qboEntityType;
+    qboId = String(fp.qboEntityId || '').trim();
   } else {
     const rec = (erp.records || []).find(x => String(x.id) === id);
     if (!rec) throw new Error('Maintenance record not found');
@@ -5862,6 +5884,21 @@ async function revertQboPostedTransaction(kind, erpId) {
     const idx = (erp.workOrders || []).findIndex(x => String(x.id) === id);
     if (idx === -1) throw new Error('Work order not found after QuickBooks delete');
     erp.workOrders[idx] = { ...erp.workOrders[idx], ...cleared };
+  } else if (k === 'fuel') {
+    const idx = (erp.fuelPurchases || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) throw new Error('Fuel purchase not found after QuickBooks delete');
+    erp.fuelPurchases[idx] = {
+      ...erp.fuelPurchases[idx],
+      ...cleared,
+      fuelPostedQty: null,
+      fuelPostedAmount: null,
+      fuelPostedClassId: null,
+      fuelPostedItemId: null,
+      fuelPostedVendorId: null,
+      fuelPostedDriverVendorId: null,
+      fuelPostedDriverMemo: null,
+      fuelPostedCustomerId: null
+    };
   } else {
     const idx = (erp.records || []).findIndex(x => String(x.id) === id);
     if (idx === -1) throw new Error('Record not found after QuickBooks delete');
