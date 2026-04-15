@@ -30,6 +30,11 @@ import {
   verifySessionToken,
   authRequired
 } from './lib/auth-users.mjs';
+import {
+  appendSecurityAudit,
+  clientIp,
+  setSecurityAuditFilePath
+} from './lib/security-audit.mjs';
 import { relayLineLabel, relayQuickBooksCategory, relaySpreadsheetCategory } from './lib/relay-qb-categories.mjs';
 import { parseBankCsvText, suggestForBankRow } from './lib/bank-match.mjs';
 
@@ -63,11 +68,17 @@ const DATA_DIR = fs.existsSync(PERSIST_DIR) ? PERSIST_DIR : LOCAL_DATA_DIR;
 const ERP_FILE = path.join(DATA_DIR, 'maintenance.json');
 const QBO_FILE = path.join(DATA_DIR, 'qbo_tokens.json');
 setAuthUsersFilePath(path.join(DATA_DIR, 'app-users.json'));
+setSecurityAuditFilePath(path.join(DATA_DIR, 'security-audit.log'));
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 /** When set, fuel ledger writes + Relay file import/undo require matching header or Bearer token. */
 const ERP_WRITE_SECRET = String(process.env.ERP_WRITE_SECRET || process.env.IH35_ERP_WRITE_SECRET || '').trim();
+
+const TEAM_ACTIVITY_WARN_DAYS = Math.min(90, Math.max(1, Number(process.env.TEAM_ACTIVITY_WARN_DAYS) || 7));
+const TEAM_ACTIVITY_CRITICAL_DAYS = Math.min(120, Math.max(TEAM_ACTIVITY_WARN_DAYS, Number(process.env.TEAM_ACTIVITY_CRITICAL_DAYS) || 14));
+
+const __lastSeenThrottle = new Map();
 
 function erpWriteTokenFromRequest(req) {
   const a = req.headers['x-ih35-erp-secret'];
@@ -127,6 +138,28 @@ app.use((req, res, next) => {
   const user = st.users.find(u => u.id === session.sub);
   if (!user) return res.status(401).json({ error: 'Invalid session', authRequired: true });
   req.authUser = { id: user.id, email: user.email, name: user.name, role: user.role || 'user' };
+  next();
+});
+
+app.use((req, res, next) => {
+  if (!req.originalUrl.startsWith('/api/')) return next();
+  if (!req.authUser?.id) return next();
+  const uid = req.authUser.id;
+  const now = Date.now();
+  const prev = __lastSeenThrottle.get(uid) || 0;
+  if (now - prev < 120000) return next();
+  __lastSeenThrottle.set(uid, now);
+  setImmediate(() => {
+    try {
+      const st = readUsersStore();
+      const u = st.users.find(x => x.id === uid);
+      if (!u) return;
+      u.lastSeenAt = new Date().toISOString();
+      writeUsersStore(st);
+    } catch (err) {
+      logError('api/lastSeen', err);
+    }
+  });
   next();
 });
 
@@ -2247,8 +2280,25 @@ app.post('/api/auth/login', (req, res) => {
     const st = readUsersStore();
     const user = st.users.find(u => String(u.email).toLowerCase() === email);
     if (!user || !verifyPassword(password, user.passwordHash)) {
+      appendSecurityAudit({
+        action: 'login_failed',
+        email: email || '(empty)',
+        ip: clientIp(req),
+        path: '/api/auth/login'
+      });
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    const now = new Date().toISOString();
+    user.lastLoginAt = now;
+    user.lastSeenAt = now;
+    writeUsersStore(st);
+    appendSecurityAudit({
+      action: 'login_ok',
+      userId: user.id,
+      email: user.email,
+      ip: clientIp(req),
+      path: '/api/auth/login'
+    });
     const token = signSessionToken({ sub: user.id, email: user.email });
     res.json({
       ok: true,
@@ -2264,7 +2314,33 @@ app.post('/api/auth/login', (req, res) => {
 app.get('/api/auth/me', (req, res) => {
   if (!authRequired()) return res.json({ ok: true, user: null, authDisabled: true });
   if (!req.authUser) return res.status(401).json({ error: 'Not logged in' });
-  res.json({ ok: true, user: req.authUser });
+  const st = readUsersStore();
+  const row = st.users.find(u => u.id === req.authUser.id);
+  res.json({
+    ok: true,
+    user: {
+      ...req.authUser,
+      lastLoginAt: row?.lastLoginAt || null,
+      lastSeenAt: row?.lastSeenAt || null
+    }
+  });
+});
+
+app.post('/api/auth/heartbeat', (req, res) => {
+  try {
+    if (!authRequired()) return res.json({ ok: true, skipped: true });
+    if (!req.authUser) return res.status(401).json({ error: 'Not logged in' });
+    const st = readUsersStore();
+    const u = st.users.find(x => x.id === req.authUser.id);
+    if (u) {
+      u.lastSeenAt = new Date().toISOString();
+      writeUsersStore(st);
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    logError('api/auth/heartbeat', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/users', (req, res) => {
@@ -2279,9 +2355,169 @@ app.get('/api/users', (req, res) => {
       email: u.email,
       name: u.name,
       role: u.role || 'user',
-      createdAt: u.createdAt
+      createdAt: u.createdAt,
+      lastLoginAt: u.lastLoginAt || null,
+      lastSeenAt: u.lastSeenAt || null
     }))
   });
+});
+
+function daysSinceIso(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+app.get('/api/security/posture', (req, res) => {
+  try {
+    if (!authRequired()) {
+      return res.json({ ok: true, authDisabled: true, checks: [], theftControls: [] });
+    }
+    if (!req.authUser) return res.status(401).json({ error: 'Not logged in' });
+    const store = readQbo();
+    const qboConnected = !!store.tokens?.access_token;
+    res.json({
+      ok: true,
+      checks: [
+        {
+          id: 'auth_enforced',
+          ok: authRequired(),
+          label: 'User authentication required',
+          hint: 'Set IH35_REQUIRE_AUTH=1 after onboarding users.'
+        },
+        {
+          id: 'erp_write_secret',
+          ok: !!ERP_WRITE_SECRET,
+          label: 'ERP write secret configured',
+          hint: 'Set ERP_WRITE_SECRET for fuel imports, Samsara writes, and bulk reversions.'
+        },
+        {
+          id: 'auth_secret_strong',
+          ok: String(process.env.IH35_AUTH_SECRET || '').trim().length >= 24,
+          label: 'Strong session signing secret (24+ chars)',
+          hint: 'Replace default IH35_AUTH_SECRET in production.'
+        },
+        {
+          id: 'samsara_token',
+          ok: !!String(process.env.SAMSARA_API_TOKEN || '').trim(),
+          label: 'Samsara API token configured',
+          hint: 'Fleet boards and mileage depend on SAMSARA_API_TOKEN.'
+        },
+        {
+          id: 'qbo_connected',
+          ok: qboConnected,
+          label: 'QuickBooks OAuth connected',
+          hint: 'Connect QBO so expenses and master data stay authoritative.'
+        },
+        {
+          id: 'postgres',
+          ok: !!String(process.env.DATABASE_URL || '').trim(),
+          label: 'PostgreSQL (TMS) configured',
+          hint: 'DATABASE_URL enables loads, drivers, and extended catalogs.'
+        }
+      ],
+      theftControls: [
+        {
+          title: 'Segregation of duties',
+          detail:
+            'Separate who can create vendors, import fuel, post to QuickBooks, and approve payouts. Use admin vs user roles here and permission sets inside QBO and Samsara.'
+        },
+        {
+          title: 'Vendor and ACH fraud',
+          detail:
+            'Verify new vendor names against real shops before first payment. Review QuickBooks sync alerts and this server’s security-audit.log after roster changes.'
+        },
+        {
+          title: 'Credential and device control',
+          detail:
+            'Do not share ERP browser write keys. Rotate Samsara and QBO tokens when staff leave; require HTTPS on public hosts and restrict office IP ranges at the reverse proxy when possible.'
+        }
+      ]
+    });
+  } catch (error) {
+    logError('api/security/posture', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/security/team-activity', (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ ok: false, error: 'Admin only' });
+    }
+    const st = readUsersStore();
+    const rows = st.users.map(u => {
+      const activityIso = u.lastSeenAt || u.lastLoginAt || u.createdAt || null;
+      const daysLogin = daysSinceIso(u.lastLoginAt);
+      const daysSeen = daysSinceIso(activityIso);
+      let alert = 'ok';
+      if (daysSeen == null || daysSeen >= TEAM_ACTIVITY_CRITICAL_DAYS) alert = 'critical';
+      else if (daysSeen >= TEAM_ACTIVITY_WARN_DAYS) alert = 'warn';
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role || 'user',
+        lastLoginAt: u.lastLoginAt || null,
+        lastSeenAt: u.lastSeenAt || null,
+        daysSinceLogin: daysLogin,
+        daysSinceActivity: daysSeen,
+        alert
+      };
+    });
+    res.json({
+      ok: true,
+      warnDays: TEAM_ACTIVITY_WARN_DAYS,
+      criticalDays: TEAM_ACTIVITY_CRITICAL_DAYS,
+      disclaimer:
+        'Tracks IH35 ERP sign-in and session activity (API + optional heartbeat) only. QuickBooks and Samsara staff logins are audited inside Intuit and Samsara — use their admin tools for those systems.',
+      external: [
+        {
+          system: 'QuickBooks Online',
+          link: 'https://qbo.intuit.com/app/auditlog',
+          note: 'Intuit audit log (requires QBO admin rights).'
+        },
+        {
+          system: 'Samsara',
+          link: 'https://help.samsara.com/hc/en-us/articles/360021827951',
+          note: 'Use Samsara Cloud admin / support for org-level access reviews.'
+        }
+      ],
+      rows
+    });
+  } catch (error) {
+    logError('api/security/team-activity', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/security/audit-recent', (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ ok: false, error: 'Admin only' });
+    }
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 40));
+    const fp = path.join(DATA_DIR, 'security-audit.log');
+    if (!fs.existsSync(fp)) return res.json({ ok: true, events: [] });
+    const raw = fs.readFileSync(fp, 'utf8');
+    const lines = raw
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .slice(-limit);
+    const events = lines.map(l => {
+      try {
+        return JSON.parse(l);
+      } catch {
+        return { parseError: true, raw: l.slice(0, 240) };
+      }
+    });
+    res.json({ ok: true, events });
+  } catch (error) {
+    logError('api/security/audit-recent', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
 });
 
 app.post('/api/users', (req, res) => {
@@ -3244,6 +3480,14 @@ app.post('/api/integrations/samsara/vehicle/:id', async (req, res) => {
       });
     }
     const data = await samsaraApiPatch(`/fleet/vehicles/${encodeURIComponent(id)}`, patch);
+    appendSecurityAudit({
+      action: 'samsara_vehicle_patch',
+      userId: req.authUser?.id,
+      email: req.authUser?.email,
+      ip: clientIp(req),
+      samsaraVehicleId: id,
+      fields: Object.keys(patch)
+    });
     res.json({ ok: true, data });
   } catch (error) {
     logError('api/integrations/samsara/vehicle', error);
@@ -3265,6 +3509,14 @@ app.post('/api/integrations/samsara/driver/:id', async (req, res) => {
       });
     }
     const data = await samsaraApiPatch(`/fleet/drivers/${encodeURIComponent(id)}`, patch);
+    appendSecurityAudit({
+      action: 'samsara_driver_patch',
+      userId: req.authUser?.id,
+      email: req.authUser?.email,
+      ip: clientIp(req),
+      samsaraDriverId: id,
+      fields: Object.keys(patch)
+    });
     res.json({ ok: true, data });
   } catch (error) {
     logError('api/integrations/samsara/driver', error);

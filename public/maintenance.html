@@ -1634,6 +1634,7 @@
           <button type="button" class="subtab" onclick="openReportsTab('rep-maint', this)">Maintenance by unit</button>
           <button type="button" class="subtab" onclick="openReportsTab('rep-qbo', this)">QuickBooks activity</button>
           <button type="button" class="subtab" onclick="openReportsTab('rep-sync', this)">ERP ↔ QBO sync</button>
+          <button type="button" class="subtab" onclick="openReportsTab('rep-team', this)">Team &amp; security</button>
           <button type="button" class="subtab" onclick="openReportsTab('rep-ifta', this)">IFTA &amp; compliance</button>
         </div>
         <div id="rep-overview" class="reports-tab">
@@ -1677,6 +1678,17 @@
           <div class="panel">
             <div class="panel-head"><div class="panel-title">Local ERP vs QuickBooks posting</div></div>
             <div class="panel-body" id="repSyncBody"></div>
+          </div>
+        </div>
+        <div id="rep-team" class="reports-tab hidden">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Team activity &amp; security posture</div>
+              <button type="button" onclick="loadTeamSecurityPanel()">Refresh panel</button>
+            </div>
+            <div class="panel-body form-stack" id="repTeamBody" style="max-width:min(960px,100%)">
+              <p class="mini-note" style="margin:0">Loading…</p>
+            </div>
           </div>
         </div>
         <div id="rep-ifta" class="reports-tab hidden">
@@ -1979,6 +1991,8 @@
     let driverProfiles = [];
     let shopQueueCache = [];
     let expenseSummaryCache = { d7: null, d30: null };
+    let sessionUser = null;
+    let __heartbeatTimer = null;
     let pendingShopPatch = null;
     let defaultNavBootstrapped = false;
     let serviceMileageUserTouched = false;
@@ -2642,6 +2656,12 @@
         openUploadSubpanel('fuel');
         return;
       }
+      if (section === 'reports-team') {
+        openSectionByName('reports');
+        const sub = document.querySelector('#section-reports .subtab[onclick*="rep-team"]');
+        openReportsTab('rep-team', sub);
+        return;
+      }
       const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog', 'uploads'];
       if (allowed.includes(section)) openSectionByName(section);
     }
@@ -2685,6 +2705,7 @@
       if (panel) panel.classList.remove('hidden');
       document.querySelectorAll('#section-reports .subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
+      if (id === 'rep-team') loadTeamSecurityPanel();
     }
 
     function setTmsUiEnabled(enabled) {
@@ -2856,6 +2877,160 @@
       } catch (e) {
         if (ob) ob.innerHTML = '<p class="mini-note" style="color:#b91c1c">Failed: ' + escapeHtml(e.message || String(e)) + '</p>';
       }
+    }
+
+    function startAuthHeartbeat() {
+      if (!localStorage.getItem('ih35_token')) return;
+      if (__heartbeatTimer) clearInterval(__heartbeatTimer);
+      __heartbeatTimer = setInterval(async () => {
+        try {
+          await fetch('/api/auth/heartbeat', {
+            method: 'POST',
+            headers: { ...authFetchHeaders(), 'Content-Type': 'application/json' },
+            body: '{}'
+          });
+        } catch (_) {}
+      }, 3 * 60 * 1000);
+    }
+
+    async function loadTeamSecurityPanel() {
+      const host = document.getElementById('repTeamBody');
+      if (!host) return;
+      host.innerHTML = '<p class="mini-note">Loading…</p>';
+      let posture;
+      try {
+        posture = await j('/api/security/posture');
+      } catch (e) {
+        host.innerHTML = `<p class="mini-note" style="color:#b91c1c">${escapeHtml(e.message || String(e))}</p>`;
+        return;
+      }
+      if (posture.authDisabled) {
+        host.innerHTML =
+          '<p class="mini-note">User accounts are not enforced yet. After you create users, set <code>IH35_REQUIRE_AUTH=1</code> so sign-in, heartbeats, and this panel reflect real staff activity.</p>';
+        return;
+      }
+      const checks = (posture.checks || [])
+        .map(
+          c =>
+            `<li style="margin:5px 0"><span style="font-weight:700;color:${c.ok ? 'var(--green)' : 'var(--red)'}">${
+              c.ok ? 'OK' : 'Fix'
+            }</span> — ${escapeHtml(c.label)} <span class="mini-note">${escapeHtml(c.hint || '')}</span></li>`
+        )
+        .join('');
+      const theft = (posture.theftControls || [])
+        .map(
+          t =>
+            `<div class="sec-alert-info" style="margin-top:10px"><strong>${escapeHtml(t.title)}</strong><div class="mini-note" style="margin-top:6px;line-height:1.5">${escapeHtml(
+              t.detail
+            )}</div></div>`
+        )
+        .join('');
+      const cmms = `
+        <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--line)">
+          <div class="panel-head"><div class="panel-title">CMMS benchmark (industry reference)</div></div>
+          <div class="panel-body mini-note" style="line-height:1.55">
+            Leading fleet maintenance products stress <strong>preventive schedules</strong> (mileage, time, OEM), <strong>digital work orders</strong> with parts and labor,
+            <strong>inspections / DVIR</strong>, <strong>parts inventory</strong>, <strong>telematics</strong>, and <strong>mobile workflows</strong>.
+            This ERP already combines maintenance history, shop queue, Samsara mileage, QBO expenses, settlement, and integrity alerts — extend toward full CMMS parity with PM templates and parts stock when you are ready.
+          </div>
+        </div>`;
+      const isAdmin = sessionUser && sessionUser.role === 'admin';
+      let teamBlock = '';
+      let auditBlock = '';
+      if (isAdmin) {
+        try {
+          const team = await j('/api/security/team-activity');
+          const ext = (team.external || [])
+            .map(
+              x =>
+                `<li style="margin:4px 0"><a href="${escapeHtml(x.link)}" target="_blank" rel="noopener">${escapeHtml(
+                  x.system
+                )}</a> — ${escapeHtml(x.note || '')}</li>`
+            )
+            .join('');
+          teamBlock = `
+            <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--line)">
+              <div class="panel-head"><div class="panel-title">ERP user activity</div></div>
+              <div class="panel-body mini-note" style="margin-bottom:10px;line-height:1.5">${escapeHtml(team.disclaimer || '')}</div>
+              <p class="mini-note" style="margin:0 0 6px">Vendor audit portals:</p>
+              <ul style="margin:0;padding-left:1.2rem;line-height:1.45">${ext}</ul>
+              <div class="table-wrap" style="min-width:0;margin-top:12px">
+                <table class="catalog-admin-table" style="font-size:12px">
+                  <thead><tr><th>User</th><th>Role</th><th>Last login</th><th>Last activity</th><th>Days idle</th><th>Status</th></tr></thead>
+                  <tbody>
+                    ${(team.rows || [])
+                      .map(r => {
+                        const lc = r.lastLoginAt ? escapeHtml(new Date(r.lastLoginAt).toLocaleString()) : '—';
+                        const ls = r.lastSeenAt ? escapeHtml(new Date(r.lastSeenAt).toLocaleString()) : '—';
+                        const idle =
+                          r.daysSinceActivity != null && Number.isFinite(r.daysSinceActivity)
+                            ? String(r.daysSinceActivity)
+                            : '—';
+                        const cl =
+                          r.alert === 'critical' ? '#b91c1c' : r.alert === 'warn' ? '#b45309' : 'var(--muted)';
+                        return `<tr>
+                          <td>${escapeHtml(r.name || '')}<div class="mini-note">${escapeHtml(r.email || '')}</div></td>
+                          <td>${escapeHtml(r.role || '')}</td>
+                          <td>${lc}</td>
+                          <td>${ls}</td>
+                          <td>${escapeHtml(idle)}</td>
+                          <td style="color:${cl};font-weight:600">${escapeHtml(r.alert || '')}</td>
+                        </tr>`;
+                      })
+                      .join('')}
+                  </tbody>
+                </table>
+              </div>
+              <p class="mini-note" style="margin-top:10px">Idle = days since last API activity (throttled server-side) or login. Warn ≥ <strong>${escapeHtml(
+                String(team.warnDays ?? '')
+              )}</strong> days · critical ≥ <strong>${escapeHtml(String(team.criticalDays ?? ''))}</strong> days. Override with <code>TEAM_ACTIVITY_WARN_DAYS</code> / <code>TEAM_ACTIVITY_CRITICAL_DAYS</code>.</p>
+            </div>`;
+        } catch (e) {
+          teamBlock = `<p class="mini-note" style="color:#b91c1c;margin-top:12px">Team roster: ${escapeHtml(e.message || String(e))}</p>`;
+        }
+        try {
+          const aud = await j('/api/security/audit-recent?limit=30');
+          const rows = (aud.events || [])
+            .slice()
+            .reverse()
+            .map(ev => {
+              const when = escapeHtml(ev.at || '');
+              const summary = escapeHtml(
+                [ev.action, ev.email, ev.ip, ev.samsaraVehicleId, ev.samsaraDriverId].filter(Boolean).join(' · ')
+              );
+              return `<tr><td style="white-space:nowrap;font-size:11px;vertical-align:top">${when}</td><td style="font-size:11px">${summary}</td></tr>`;
+            })
+            .join('');
+          auditBlock = `
+            <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--line)">
+              <div class="panel-head"><div class="panel-title">Security audit log (recent)</div></div>
+              <div class="panel-body">
+                <p class="mini-note" style="margin:0 0 8px">Server file <code>data/security-audit.log</code> (git-ignored <code>*.log</code>). Entries include logins and sensitive write actions.</p>
+                <div class="table-wrap" style="min-width:0;max-height:240px;overflow:auto">
+                  <table class="catalog-admin-table" style="font-size:11px"><thead><tr><th>When</th><th>Summary</th></tr></thead><tbody>${
+                    rows || '<tr><td colspan="2" class="mini-note">No entries yet.</td></tr>'
+                  }</tbody></table>
+                </div>
+              </div>
+            </div>`;
+        } catch (e) {
+          auditBlock = `<p class="mini-note" style="color:#b91c1c;margin-top:12px">Audit log: ${escapeHtml(e.message || String(e))}</p>`;
+        }
+      } else {
+        teamBlock = `<p class="mini-note" style="margin-top:12px;line-height:1.5">Signed in as <strong>${escapeHtml(
+          sessionUser?.email || 'user'
+        )}</strong>. Team roster, vendor audit links, and the audit tail require an <strong>administrator</strong> account.</p>`;
+      }
+      host.innerHTML = `
+        <p class="mini-note" style="margin:0 0 8px;line-height:1.5">Use this board for <strong>fraud resistance</strong> (who can change money data) and <strong>staff engagement</strong> with this ERP. QuickBooks and Samsara each maintain their own login history for accounting and ELD staff.</p>
+        <div class="panel" style="box-shadow:none;border:1px solid var(--line)">
+          <div class="panel-head"><div class="panel-title">Configuration posture</div></div>
+          <div class="panel-body"><ul style="margin:0;padding-left:1.2rem">${checks}</ul></div>
+        </div>
+        <div style="margin-top:12px"><strong>Theft &amp; abuse controls</strong>${theft}</div>
+        ${teamBlock}
+        ${auditBlock}
+        ${cmms}`;
     }
 
     async function loadQboStatus() {
@@ -3169,6 +3344,21 @@
           d7: ex7 && ex7.ok ? ex7 : null,
           d30: ex30 && ex30.ok ? ex30 : null
         };
+
+        let meJson = { user: null, authDisabled: true };
+        try {
+          const mr = await fetch('/api/auth/me', { headers: authFetchHeaders() });
+          const mt = await mr.text();
+          try {
+            meJson = JSON.parse(mt);
+          } catch {
+            meJson = { user: null };
+          }
+        } catch {
+          meJson = { user: null };
+        }
+        sessionUser = meJson.user || null;
+        startAuthHeartbeat();
 
         if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
         if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
