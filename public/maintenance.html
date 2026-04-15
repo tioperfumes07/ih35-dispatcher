@@ -3622,10 +3622,25 @@
           const idx = Number(btn.getAttribute('data-idx'));
           qbPickerChoose(idx, items);
         };
+        btn.onmousemove = () => {
+          const idx = Number(btn.getAttribute('data-idx'));
+          if (!Number.isFinite(idx)) return;
+          if (!__qbPickerActive) return;
+          if (__qbPickerActive.activeIdx === idx) return;
+          __qbPickerActive.activeIdx = idx;
+          // just update highlight without full rebuild
+          menu.querySelectorAll('.qb-picker-item').forEach(b => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+        };
       });
 
       menu.classList.remove('hidden');
       qbPickerPosition();
+      // Keep active row visible while arrowing.
+      const activeBtn = menu.querySelector('.qb-picker-item.is-active');
+      if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
+        activeBtn.scrollIntoView({ block: 'nearest' });
+      }
     }
 
     function qbPickerChoose(idx, items) {
@@ -3644,22 +3659,25 @@
       }
     }
 
-    function qbPickerAttach(inputId, opts) {
-      const input = document.getElementById(inputId);
+    function qbPickerOpen(input, opts) {
+      __qbPickerActive = {
+        input,
+        rows: typeof opts.rows === 'function' ? opts.rows() : (opts.rows || []),
+        onPick: opts.onPick,
+        onAddNew: opts.onAddNew || null,
+        activeIdx: 0,
+        query: input.value || ''
+      };
+      qbPickerRender();
+    }
+
+    function qbPickerAttachEl(input, opts) {
       if (!input) return;
       if (input.dataset.qbPickerAttached === '1') return;
       input.dataset.qbPickerAttached = '1';
 
       input.addEventListener('focus', () => {
-        __qbPickerActive = {
-          input,
-          rows: typeof opts.rows === 'function' ? opts.rows() : (opts.rows || []),
-          onPick: opts.onPick,
-          onAddNew: opts.onAddNew || null,
-          activeIdx: 0,
-          query: input.value || ''
-        };
-        qbPickerRender();
+        qbPickerOpen(input, opts);
       });
 
       input.addEventListener('input', () => {
@@ -3700,6 +3718,11 @@
           if (k === 'Enter') e.preventDefault();
         }
       });
+    }
+
+    function qbPickerAttach(inputId, opts) {
+      const input = document.getElementById(inputId);
+      qbPickerAttachEl(input, opts);
     }
 
     function qbPickerApplySelectionToInput(input, label) {
@@ -3810,9 +3833,9 @@
         if (input.dataset.qbPickerAttached === '1') return;
         const opts = qbPickerOptsForInput(input);
         if (!opts) return;
-        qbPickerAttach(input.id, opts);
-        // Immediately open menu on first focus (after attach)
-        input.dispatchEvent(new Event('focus'));
+        qbPickerAttachEl(input, opts);
+        // Open immediately without re-dispatching focus (avoids recursion).
+        qbPickerOpen(input, opts);
       });
 
       // Attach to any already-rendered list inputs on load.
@@ -3820,8 +3843,7 @@
         if (inp.dataset.qbPickerAttached === '1') return;
         const opts = qbPickerOptsForInput(inp);
         if (!opts) return;
-        if (!inp.id) return; // qbPickerAttach expects an id
-        qbPickerAttach(inp.id, opts);
+        qbPickerAttachEl(inp, opts);
       });
     }
 
