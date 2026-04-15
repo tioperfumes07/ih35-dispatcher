@@ -3399,6 +3399,10 @@
         if (sf) sf.textContent = `Samsara board: ${nVeh} vehicles · refreshed ${brAt}`;
         applyNavHash();
         if (activeSection === 'reports') loadReportsData();
+        const repTeamPanel = document.getElementById('rep-team');
+        if (activeSection === 'reports' && repTeamPanel && !repTeamPanel.classList.contains('hidden')) {
+          loadTeamSecurityPanel();
+        }
       } catch (e) {
         console.error(e);
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
