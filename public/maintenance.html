@@ -5943,8 +5943,18 @@
       const fuelEl = document.getElementById('unitFuelBox');
       if (fuelEl) {
         if (v.fuelPercent != null) {
-          fuelEl.textContent = `${Math.round(v.fuelPercent)}%`;
-          fuelEl.title = 'Live fuel level from Samsara (when available).';
+          const pct = `${Math.round(v.fuelPercent)}%`;
+          if (latestFuel) {
+            const gal = latestFuel.gallons != null ? Number(latestFuel.gallons) : null;
+            const galText = gal != null && Number.isFinite(gal) ? `${gal.toFixed(1)} gal` : 'Fuel';
+            const when = latestFuel.txnDate || '';
+            fuelEl.textContent = `${pct} · ${galText}${when ? ` · ${when}` : ''}`;
+            fuelEl.title =
+              'Showing both: live fuel level from Samsara (when available) and the most recent imported fuel purchase for this unit.';
+          } else {
+            fuelEl.textContent = pct;
+            fuelEl.title = 'Live fuel level from Samsara (when available).';
+          }
         } else if (latestFuel) {
           const gal = latestFuel.gallons != null ? Number(latestFuel.gallons) : null;
           const galText = gal != null && Number.isFinite(gal) ? `${gal.toFixed(1)} gal` : 'Fuel';
@@ -6027,18 +6037,24 @@
     }
 
     function fuelCellForMaintRow(r) {
-      if (r?.fuelPercent != null) return `${Math.round(r.fuelPercent)}%`;
+      const pct = r?.fuelPercent != null ? `${Math.round(r.fuelPercent)}%` : '';
       const p = latestFuelPurchaseForUnit(r?.unit);
-      if (p && p.gallons != null && Number.isFinite(Number(p.gallons))) return `Last ${Number(p.gallons).toFixed(0)}g`;
-      return '';
+      const last =
+        p && p.gallons != null && Number.isFinite(Number(p.gallons)) ? `Last ${Number(p.gallons).toFixed(0)}g` : '';
+      if (pct && last) return `${pct} · ${last}`;
+      return pct || last || '';
     }
 
     function fuelTitleForMaintRow(r) {
-      if (r?.fuelPercent != null) return 'Live fuel level from Samsara (when available).';
       const p = latestFuelPurchaseForUnit(r?.unit);
-      if (!p) return 'No live fuel sensor reading and no fuel purchases imported for this unit yet.';
+      const hasPct = r?.fuelPercent != null;
+      if (!p && hasPct) return 'Live fuel level from Samsara (when available). No imported fuel purchases found for this unit yet.';
+      if (!p && !hasPct) return 'No live fuel sensor reading and no fuel purchases imported for this unit yet.';
       const gal = p.gallons != null && Number.isFinite(Number(p.gallons)) ? `${Number(p.gallons).toFixed(1)} gal` : '—';
       const when = p.txnDate || '—';
+      if (hasPct) {
+        return `Live fuel level from Samsara (when available). Latest imported fuel purchase: ${gal} on ${when}.`;
+      }
       return `No live fuel sensor reading. Latest imported fuel purchase: ${gal} on ${when}.`;
     }
 
