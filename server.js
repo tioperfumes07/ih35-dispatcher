@@ -31,6 +31,7 @@ import {
   authRequired
 } from './lib/auth-users.mjs';
 import { relayLineLabel, relayQuickBooksCategory, relaySpreadsheetCategory } from './lib/relay-qb-categories.mjs';
+import { parseBankCsvText, suggestForBankRow } from './lib/bank-match.mjs';
 
 dotenv.config();
 
@@ -198,7 +199,10 @@ function defaultErpData() {
     /** Per unit name: { status, note?, updatedAt?, updatedBy? } — operational availability (OOS, shop, etc.). */
     assetStatusByUnit: {},
     /** File import batches (maintenance WO / AP) for ERP-only undo — not QBO. */
-    erpImportBatches: []
+    erpImportBatches: [],
+    /** Bank CSV imports + user links to QBO/ERP rows (reconciliation aid). */
+    bankStatementImports: [],
+    bankMatchLinks: []
   };
 }
 
@@ -242,6 +246,8 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.accountsBank)) merged.qboCache.accountsBank = [];
   if (!merged.assetStatusByUnit || typeof merged.assetStatusByUnit !== 'object') merged.assetStatusByUnit = {};
   if (!Array.isArray(merged.erpImportBatches)) merged.erpImportBatches = [];
+  if (!Array.isArray(merged.bankStatementImports)) merged.bankStatementImports = [];
+  if (!Array.isArray(merged.bankMatchLinks)) merged.bankMatchLinks = [];
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -1306,6 +1312,99 @@ function normalizeQboInvoice(inv) {
     balance: safeNum(inv.Balance, 0) || 0,
     customerId: inv.CustomerRef?.value || '',
     customerName: inv.CustomerRef?.name || ''
+  };
+}
+
+function normalizeQboBillPayment(bp) {
+  const lineAmt = Array.isArray(bp?.Line)
+    ? bp.Line.reduce((s, ln) => s + (safeNum(ln?.Amount, 0) || 0), 0)
+    : 0;
+  const total = safeNum(bp?.TotalAmt, 0) || lineAmt || 0;
+  return {
+    id: bp.Id,
+    docNumber: bp.DocNumber || '',
+    txnDate: bp.TxnDate || '',
+    totalAmt: total,
+    vendorId: bp.VendorRef?.value || '',
+    vendorName: bp.VendorRef?.name || ''
+  };
+}
+
+function buildErpExpenseCandidates(erp) {
+  const vendors = erp.qboCache?.vendors || [];
+  const vName = id => vendors.find(v => String(v.qboId) === String(id))?.name || '';
+  const out = [];
+  for (const wo of erp.workOrders || []) {
+    const lines = wo.lines || [];
+    const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+    if (!(total > 0)) continue;
+    out.push({
+      kind: 'erp_wo',
+      ref: wo.id,
+      label: `WO ${wo.unit || ''} · ${wo.internalWorkOrderNumber || wo.vendorInvoiceNumber || wo.id}`,
+      amount: total,
+      date: wo.serviceDate || '',
+      vendorText: vName(wo.qboVendorId) || wo.vendor || '',
+      memo: wo.notes || ''
+    });
+  }
+  for (const ap of erp.apTransactions || []) {
+    const a = Number(ap.amount) || 0;
+    if (!(a > 0)) continue;
+    out.push({
+      kind: 'erp_ap',
+      ref: ap.id,
+      label: `AP ${ap.docNumber || ap.description || ap.id}`,
+      amount: a,
+      date: ap.txnDate || '',
+      vendorText: vName(ap.qboVendorId) || '',
+      memo: `${ap.memo || ''} ${ap.description || ''}`.trim()
+    });
+  }
+  for (const rec of erp.records || []) {
+    const c = Number(rec.cost) || 0;
+    if (!(c > 0)) continue;
+    out.push({
+      kind: 'erp_record',
+      ref: rec.id,
+      label: `Maint ${rec.unit || ''} · ${rec.serviceType || ''}`,
+      amount: c,
+      date: rec.serviceDate || '',
+      vendorText: rec.vendor || '',
+      memo: rec.notes || ''
+    });
+  }
+  return out;
+}
+
+async function qboFetchBankingWindow(days) {
+  const esc = qboTxnWindowStartIso(days);
+  if (!esc) {
+    return { bills: [], purchases: [], billPayments: [], vendorCredits: [] };
+  }
+  const [billsData, purchasesData, bpData, vcData] = await Promise.all([
+    qboQuery(`select * from Bill where TxnDate >= '${esc}' MAXRESULTS 300`).catch(err => {
+      logError('qbo banking bills', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery(`select * from Purchase where TxnDate >= '${esc}' MAXRESULTS 300`).catch(err => {
+      logError('qbo banking purchases', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery(`select * from BillPayment where TxnDate >= '${esc}' MAXRESULTS 300`).catch(err => {
+      logError('qbo banking bill payments', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery(`select * from VendorCredit where TxnDate >= '${esc}' MAXRESULTS 200`).catch(err => {
+      logError('qbo banking vendor credits', err);
+      return { QueryResponse: {} };
+    })
+  ]);
+  return {
+    bills: (billsData?.QueryResponse?.Bill || []).map(normalizeQboBill),
+    purchases: (purchasesData?.QueryResponse?.Purchase || []).map(normalizeQboPurchase),
+    billPayments: (bpData?.QueryResponse?.BillPayment || []).map(normalizeQboBillPayment),
+    vendorCredits: (vcData?.QueryResponse?.VendorCredit || []).map(normalizeQboVendorCredit)
   };
 }
 
@@ -3553,6 +3652,136 @@ app.get('/api/erp/import-batches', (_req, res) => {
   }
 });
 
+/** QBO bills/purchases/bill payments + local ERP expense rows for bank matching. */
+app.get('/api/banking/snapshot', async (req, res) => {
+  try {
+    const days = Math.min(366, Math.max(7, Number(req.query.days) || 60));
+    const erp = readErp();
+    let qbo = { bills: [], purchases: [], billPayments: [], vendorCredits: [] };
+    try {
+      qbo = await qboFetchBankingWindow(days);
+    } catch (e) {
+      logError('api/banking/snapshot qbo', e);
+    }
+    res.json({
+      ok: true,
+      days,
+      windowStart: qboTxnWindowStartIso(days),
+      qbo,
+      erpCandidates: buildErpExpenseCandidates(erp),
+      bankImports: erp.bankStatementImports || [],
+      matchLinks: erp.bankMatchLinks || []
+    });
+  } catch (error) {
+    logError('api/banking/snapshot', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/** Paste bank CSV (Date, Amount, Description). Creates an import batch for matching. */
+app.post('/api/banking/import-csv', (req, res) => {
+  try {
+    const text = String(req.body?.csvText || '');
+    if (!text.trim()) return res.status(400).json({ error: 'csvText required' });
+    const parsed = parseBankCsvText(text);
+    if (!parsed.rows.length) {
+      return res.status(400).json({ error: 'No rows parsed — include Date and Amount columns (header row optional).' });
+    }
+    const erp = readErp();
+    const importBatchId = uid('bankcsv');
+    const rows = parsed.rows.map((r, i) => ({
+      id: uid('brow'),
+      rowIndex: i,
+      date: r.date,
+      amount: r.amount,
+      memo: r.memo || ''
+    }));
+    if (!Array.isArray(erp.bankStatementImports)) erp.bankStatementImports = [];
+    erp.bankStatementImports.push({
+      importBatchId,
+      importedAt: new Date().toISOString(),
+      rowCount: rows.length,
+      rows
+    });
+    erp.bankStatementImports = erp.bankStatementImports.slice(-30);
+    writeErp(erp);
+    res.json({ ok: true, importBatchId, rowCount: rows.length, preview: rows.slice(0, 20) });
+  } catch (error) {
+    logError('api/banking/import-csv', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/** Suggest QBO / ERP matches for each row in a bank CSV import. */
+app.post('/api/banking/suggest', async (req, res) => {
+  try {
+    const importBatchId = String(req.body?.importBatchId || '').trim();
+    const days = Math.min(366, Math.max(7, Number(req.body?.days) || 90));
+    if (!importBatchId) return res.status(400).json({ error: 'importBatchId required' });
+    const erp = readErp();
+    const imp = (erp.bankStatementImports || []).find(x => x.importBatchId === importBatchId);
+    if (!imp) return res.status(404).json({ error: 'Import batch not found' });
+    let qbo = { bills: [], purchases: [], billPayments: [], vendorCredits: [] };
+    try {
+      qbo = await qboFetchBankingWindow(days);
+    } catch (e) {
+      logError('api/banking/suggest qbo', e);
+    }
+    const erpCandidates = buildErpExpenseCandidates(erp);
+    const suggestions = [];
+    for (const row of imp.rows || []) {
+      const bankRow = { date: row.date, amount: row.amount, memo: row.memo || '' };
+      const sug = suggestForBankRow(
+        bankRow,
+        qbo.purchases,
+        qbo.bills,
+        qbo.billPayments,
+        erpCandidates
+      );
+      suggestions.push({ bankRowId: row.id, date: row.date, amount: row.amount, memo: row.memo, suggestions: sug });
+    }
+    res.json({ ok: true, importBatchId, suggestions });
+  } catch (error) {
+    logError('api/banking/suggest', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/** Record a manual match between a bank CSV row and QBO / ERP (audit trail only — does not post to QBO). */
+app.post('/api/banking/link', (req, res) => {
+  try {
+    const body = req.body || {};
+    const bankRowId = String(body.bankRowId || '').trim();
+    const importBatchId = String(body.importBatchId || '').trim();
+    const matchType = String(body.matchType || '').trim();
+    const ref = String(body.ref || '').trim();
+    if (!bankRowId || !importBatchId || !matchType || !ref) {
+      return res.status(400).json({ error: 'bankRowId, importBatchId, matchType, and ref are required' });
+    }
+    const erp = readErp();
+    if (!Array.isArray(erp.bankMatchLinks)) erp.bankMatchLinks = [];
+    erp.bankMatchLinks = erp.bankMatchLinks.filter(
+      l => !(l.bankRowId === bankRowId && l.importBatchId === importBatchId)
+    );
+    erp.bankMatchLinks.push({
+      id: uid('bml'),
+      importBatchId,
+      bankRowId,
+      matchType,
+      ref,
+      qboEntityType: String(body.qboEntityType || '').trim(),
+      qboEntityId: String(body.qboEntityId || '').trim(),
+      createdAt: new Date().toISOString()
+    });
+    erp.bankMatchLinks = erp.bankMatchLinks.slice(-2000);
+    writeErp(erp);
+    res.json({ ok: true });
+  } catch (error) {
+    logError('api/banking/link', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 /** Undo ERP-only rows from a maintenance or AP spreadsheet import (does not touch QuickBooks). */
 app.post('/api/import/erp-batch/undo', (req, res) => {
   try {
@@ -4383,6 +4612,10 @@ app.post('/api/import/fuel/undo', (req, res) => {
 
 app.get('/maintenance.html', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'maintenance.html'));
+});
+
+app.get('/banking.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'banking.html'));
 });
 
 app.get('/settings.html', (_req, res) => {

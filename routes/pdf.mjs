@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import PDFDocument from 'pdfkit';
 import { dbQuery, getPool } from '../lib/db.mjs';
-import { readMaintenanceJson } from '../lib/read-erp.mjs';
+import { readFullErpJson, readMaintenanceJson } from '../lib/read-erp.mjs';
 import { buildSettlementByLoad } from '../lib/settlement-by-load.mjs';
 import { fetchLoadSettlementContextByNumber } from './tms.mjs';
 
@@ -53,6 +53,33 @@ function itemNameFromErp(erp, qboId) {
   const items = erp?.qboCache?.items || [];
   const hit = items.find(i => String(i.qboId) === String(qboId));
   return hit ? String(hit.name || '').trim() || 'Service' : 'Service';
+}
+
+function vendorNameFromErp(erp, qboId) {
+  const v = erp?.qboCache?.vendors || [];
+  const hit = v.find(x => String(x.qboId) === String(qboId));
+  return hit ? String(hit.name || '').trim() : '';
+}
+
+function accountNameFromErp(erp, qboId) {
+  const a = [...(erp?.qboCache?.accounts || []), ...(erp?.qboCache?.accountsExpense || [])];
+  const hit = a.find(x => String(x.qboId) === String(qboId));
+  return hit ? String(hit.name || '').trim() : '';
+}
+
+function paymentMethodLabel(erp, pmId) {
+  const p = (erp?.paymentMethods || []).find(x => String(x.id) === String(pmId));
+  return p ? String(p.name || '').trim() : '';
+}
+
+function bankAccountLabel(erp, qboBankId) {
+  const b = (erp?.qboCache?.accountsBank || []).find(x => String(x.qboId) === String(qboBankId));
+  return b ? String(b.name || '').trim() : '';
+}
+
+function money(n) {
+  const x = Number(n);
+  return Number.isFinite(x) ? `$${x.toFixed(2)}` : '—';
 }
 
 function firstWoRefForLoad(erp, loadNumber) {
@@ -799,59 +826,67 @@ router.get('/api/pdf/driver-settlement/:vendorId', async (req, res) => {
 
 router.get('/api/pdf/maintenance-record/:id', (req, res) => {
   try {
-    const erp = readMaintenanceJson();
+    const erp = readFullErpJson();
     const rec = (erp.records || []).find(r => String(r.id) === String(req.params.id));
     if (!rec) return res.status(404).send('Record not found');
     const fn = `maintenance-${String(rec.unit || 'unit').replace(/[^\w.-]+/g, '_')}-${String(rec.id).slice(-6)}.pdf`;
+    const vendorQ = vendorNameFromErp(erp, rec.qboVendorId);
     sendPdf(res, fn, doc => {
-      drawHeaderBand(doc, 'MAINTENANCE');
+      drawHeaderBand(doc, 'MAINTENANCE RECORD');
       doc.font('Helvetica').fontSize(11);
       doc.text(`Unit: ${rec.unit || ''}`);
-      doc.text(`Record type: ${rec.recordType || ''}`);
+      doc.text(`Record type: ${rec.recordType || 'maintenance'}`);
+      doc.text(`Repair / location type: ${rec.repairLocationType || '—'}`);
       doc.text(`Service: ${rec.serviceType || ''}`);
-      doc.text(`Date: ${rec.serviceDate || ''}   Mileage: ${rec.serviceMileage ?? ''}`);
-      doc.text(`Vendor: ${rec.vendor || ''}`);
+      doc.text(`Date: ${rec.serviceDate || ''}   Mileage: ${rec.serviceMileage ?? '—'}`);
+      doc.text(`Vendor (name): ${rec.vendor || '—'}`);
+      if (vendorQ) doc.text(`QuickBooks vendor (matched): ${vendorQ}`);
       doc.text(`Vendor invoice #: ${rec.vendorInvoiceNumber || '—'}`);
       doc.text(`Work order #: ${rec.workOrderNumber || '—'}`);
       doc.text(`Load / inv #: ${rec.loadNumber || '—'}`);
-      doc.text(`Cost: ${rec.cost ?? ''}`);
+      doc.text(`Detail mode: ${rec.detailMode || 'category'}   Payment: ${paymentMethodLabel(erp, rec.paymentMethodId)}`);
+      if (rec.qboBankAccountId) doc.text(`Pay-from bank (QBO): ${bankAccountLabel(erp, rec.qboBankAccountId) || rec.qboBankAccountId}`);
+      doc.text(`Total cost: ${money(rec.cost)}`);
+      doc.moveDown(0.3);
+      doc.fontSize(9).fillColor('#444444').text(`QBO: ${rec.qboSyncStatus || '—'}  ${rec.qboEntityType || ''} ${rec.qboPurchaseId || ''}`.trim());
+      doc.fontSize(10).fillColor('#000000');
       doc.moveDown();
       const costLines = Array.isArray(rec.costLines) ? rec.costLines : [];
       if (costLines.length) {
-        doc.fontSize(10).fillColor('#000000').text('Cost breakdown:');
+        doc.font('Helvetica-Bold').fontSize(10).text('Cost breakdown (parts & services)');
+        doc.font('Helvetica').fontSize(9);
         costLines.forEach((ln, i) => {
           const q = ln.quantity;
           const up = ln.unitPrice;
           const amt = Number(ln.amount || 0).toFixed(2);
           const partBits = [ln.partPosition, ln.partCategory, ln.partNumber].filter(Boolean);
           const partSuf = partBits.length ? `  (${partBits.join(' · ')})` : '';
+          const acct = ln.qboAccountId ? accountNameFromErp(erp, ln.qboAccountId) : '';
+          const item = ln.qboItemId ? itemNameFromErp(erp, ln.qboItemId) : '';
+          const meta = [acct && `Acct: ${acct}`, item && `Item: ${item}`].filter(Boolean).join(' · ');
           const line =
             q != null && up != null && Number(q) > 0 && Number(up) >= 0
-              ? `${i + 1}. ${ln.description || '—'}${partSuf}  ${q} × $${Number(up).toFixed(2)} = $${amt}`
-              : `${i + 1}. ${ln.description || '—'}${partSuf}  $${amt}`;
-          doc.fontSize(9).text(line);
+              ? `${i + 1}. ${ln.description || '—'}${partSuf}  ${q} × $${Number(up).toFixed(2)} = $${amt}${meta ? `  ${meta}` : ''}`
+              : `${i + 1}. ${ln.description || '—'}${partSuf}  $${amt}${meta ? `  ${meta}` : ''}`;
+          doc.text(line);
         });
         doc.moveDown(0.5);
       }
       const tires = Array.isArray(rec.tireLineItems) ? rec.tireLineItems : [];
       if (tires.length) {
-        doc.fontSize(10).fillColor('#000000').text('Tire line items (one invoice):');
+        doc.font('Helvetica-Bold').fontSize(10).text('Tire line items');
+        doc.font('Helvetica').fontSize(9);
         tires.forEach((t, i) => {
-          const line = [
-            t.tirePosition,
-            t.tireCondition,
-            t.tireBrand,
-            t.tireDot
-          ]
-            .filter(Boolean)
-            .join('  ·  ');
-          doc.fontSize(9).text(`${i + 1}. ${line || '—'}`);
+          const line = [t.tirePosition, t.tireCondition, t.tireBrand, t.tireDot].filter(Boolean).join('  ·  ');
+          doc.text(`${i + 1}. ${line || '—'}`);
         });
         doc.moveDown(0.5);
       }
-      doc.fontSize(10).fillColor('#000000').text(rec.notes || '', { align: 'left' });
+      doc.font('Helvetica').fontSize(10).fillColor('#000000').text('Notes', { underline: true });
+      doc.text(rec.notes || '—', { align: 'left' });
       doc.moveDown();
-      doc.fontSize(8).fillColor('#666666').text('IH35 Maintenance');
+      doc.fontSize(8).fillColor('#666666').text(`ERP id: ${rec.id} · Generated ${sliceDate(new Date().toISOString())}`);
+      pdfFooterLine(doc);
     });
   } catch (e) {
     res.status(500).send(e.message || 'PDF failed');
@@ -860,22 +895,43 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
 
 router.get('/api/pdf/ap-transaction/:id', (req, res) => {
   try {
-    const erp = readMaintenanceJson();
+    const erp = readFullErpJson();
     const ap = (erp.apTransactions || []).find(a => String(a.id) === String(req.params.id));
     if (!ap) return res.status(404).send('Transaction not found');
     const fn = `expense-${String(ap.docNumber || ap.id).replace(/[^\w.-]+/g, '_')}.pdf`;
+    const vName = vendorNameFromErp(erp, ap.qboVendorId);
     sendPdf(res, fn, doc => {
-      drawHeaderBand(doc, 'EXPENSE');
+      drawHeaderBand(doc, ap.txnType === 'bill' ? 'BILL (AP)' : 'EXPENSE (AP)');
       doc.font('Helvetica').fontSize(11);
-      doc.text(`Type: ${ap.txnType || ''}`);
+      doc.text(`Transaction type: ${ap.txnType || ''}   Line mode: ${ap.detailMode || ''}`);
+      doc.text(`Vendor: ${vName || ap.qboVendorId || '—'}`);
       doc.text(`Doc #: ${ap.docNumber || '—'}`);
       doc.text(`Date: ${ap.txnDate || ''}   Due: ${ap.dueDate || '—'}`);
-      doc.text(`Amount: $${Number(ap.amount || 0).toFixed(2)}`);
-      doc.text(`Description: ${ap.description || ''}`);
-      doc.text(`Unit: ${ap.assetUnit || ''}`);
-      doc.text(`QBO sync: ${ap.qboSyncStatus || '—'}  ${ap.qboEntityType || ''} ${ap.qboEntityId || ''}`);
+      doc.text(`Unit / class: ${ap.assetUnit || '—'}`);
+      doc.text(`Payment method: ${paymentMethodLabel(erp, ap.paymentMethodId)}`);
+      if (ap.qboBankAccountId) doc.text(`Pay-from bank (QBO): ${bankAccountLabel(erp, ap.qboBankAccountId) || ap.qboBankAccountId}`);
+      doc.moveDown(0.3);
+      doc.font('Helvetica-Bold').text(`Amount: ${money(ap.amount)}`);
+      doc.font('Helvetica');
+      if (ap.detailMode === 'item') {
+        doc.text(`QuickBooks item: ${itemNameFromErp(erp, ap.qboItemId)}`);
+      } else {
+        doc.text(`Expense account: ${accountNameFromErp(erp, ap.qboAccountId)}`);
+      }
+      doc.text(`Qty: ${ap.qty ?? '—'}`);
       doc.moveDown();
-      doc.fontSize(8).fillColor('#666666').text('Post to QuickBooks from Maintenance if not yet posted.');
+      doc.text('Description', { underline: true });
+      doc.text(ap.description || '—');
+      doc.moveDown(0.3);
+      doc.text('Memo', { underline: true });
+      doc.text(ap.memo || '—');
+      doc.moveDown();
+      doc.fontSize(9).fillColor('#444444').text(
+        `QBO: ${ap.qboSyncStatus || '—'}  ${ap.qboEntityType || ''} ${ap.qboEntityId || ''}`.trim()
+      );
+      if (ap.importBatchId) doc.text(`Import batch: ${ap.importBatchId}`);
+      doc.fontSize(8).fillColor('#666666').text(`ERP id: ${ap.id} · Post or revert from Accounting in Maintenance.`);
+      pdfFooterLine(doc);
     });
   } catch (e) {
     res.status(500).send(e.message || 'PDF failed');
@@ -884,30 +940,65 @@ router.get('/api/pdf/ap-transaction/:id', (req, res) => {
 
 router.get('/api/pdf/work-order/:id', (req, res) => {
   try {
-    const erp = readMaintenanceJson();
+    const erp = readFullErpJson();
     const wo = (erp.workOrders || []).find(w => String(w.id) === String(req.params.id));
     if (!wo) return res.status(404).send('Work order not found');
     const lines = wo.lines || [];
     const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
     const fn = `work-order-${String(wo.unit || 'unit').replace(/[^\w.-]+/g, '_')}-${String(wo.id).slice(-6)}.pdf`;
+    const vName = vendorNameFromErp(erp, wo.qboVendorId);
+    const repairKind = wo.isInternalWorkOrder ? 'Internal (shop)' : 'External / vendor';
     sendPdf(res, fn, doc => {
       drawHeaderBand(doc, 'WORK ORDER');
       doc.font('Helvetica').fontSize(11);
-      doc.text(`Unit: ${wo.unit || ''}`);
-      doc.text(`Txn type: ${wo.txnType || ''}   Date: ${wo.serviceDate || ''}`);
-      doc.text(`Load / inv (settlement): ${wo.loadNumber || '—'}`);
+      doc.text(`Unit / asset: ${wo.unit || ''}`);
+      doc.text(`Category: ${wo.assetCategory || '—'}   ·   ${repairKind}`);
+      doc.text(`Repair / location type: ${wo.repairLocationType || '—'}`);
+      doc.text(`Txn type: ${wo.txnType || 'expense'}   Service date: ${wo.serviceDate || '—'}`);
+      doc.text(`Vendor (QBO): ${vName || wo.vendor || '—'}`);
       doc.text(`Vendor invoice #: ${wo.vendorInvoiceNumber || '—'}`);
       doc.text(`Shop / internal WO #: ${wo.internalWorkOrderNumber || '—'}`);
-      doc.moveDown();
-      doc.font('Helvetica-Bold').fontSize(10).text('Lines');
-      doc.font('Helvetica').fontSize(10);
+      doc.text(`Vendor WO #: ${wo.vendorWorkOrderNumber || '—'}`);
+      doc.text(`Load / inv (settlement): ${wo.loadNumber || '—'}`);
+      doc.text(`Due: ${wo.dueDate || '—'}`);
+      doc.text(`Payment: ${paymentMethodLabel(erp, wo.paymentMethodId)}`);
+      if (wo.qboBankAccountId) doc.text(`Pay-from bank (QBO): ${bankAccountLabel(erp, wo.qboBankAccountId) || wo.qboBankAccountId}`);
+      doc.moveDown(0.5);
+      doc.font('Helvetica-Bold').fontSize(10).text('Lines (parts & services)');
+      doc.font('Helvetica').fontSize(9);
       lines.forEach((ln, i) => {
-        doc.text(`${i + 1}. ${ln.serviceType || ''}  $${Number(ln.amount || 0).toFixed(2)}  (${ln.detailMode || ''})`);
+        const amt = money(ln.amount);
+        const mode = ln.detailMode === 'item' ? 'Item' : 'Category';
+        const acct = ln.detailMode === 'category' ? accountNameFromErp(erp, ln.qboAccountId) : '';
+        const item = ln.detailMode === 'item' ? itemNameFromErp(erp, ln.qboItemId) : '';
+        const tire = [ln.tirePosition, ln.tirePositionText].filter(Boolean).join(' ');
+        const lineBits = [
+          `${i + 1}. ${ln.serviceType || ln.lineType || 'Line'}`,
+          `Type: ${ln.lineType || '—'}`,
+          mode,
+          acct && `Acct: ${acct}`,
+          item && `Item: ${item}`,
+          `Qty ${ln.qty ?? 1} × rate ${ln.rate != null ? money(ln.rate) : '—'}`,
+          amt,
+          tire && `Tire: ${tire}`
+        ].filter(Boolean);
+        doc.text(lineBits.join(' · '));
+        if (ln.notes) doc.fontSize(8).fillColor('#555555').text(`   Notes: ${ln.notes}`);
+        doc.fontSize(9).fillColor('#000000');
       });
       doc.moveDown(0.5);
-      doc.font('Helvetica-Bold').fontSize(11).text(`Total: $${total.toFixed(2)}`);
+      doc.font('Helvetica-Bold').fontSize(12).text(`Total: ${money(total)}`);
+      doc.font('Helvetica').fontSize(10);
       doc.moveDown();
-      doc.fontSize(8).fillColor('#666666').text(wo.notes || '');
+      doc.text('Work order notes', { underline: true });
+      doc.text(wo.notes || '—');
+      doc.moveDown();
+      doc.fontSize(9).fillColor('#444444').text(
+        `QBO: ${wo.qboSyncStatus || '—'}  ${wo.qboEntityType || ''} ${wo.qboEntityId || ''}`.trim()
+      );
+      if (wo.importBatchId) doc.text(`Import batch: ${wo.importBatchId}`);
+      doc.fontSize(8).fillColor('#666666').text(`ERP id: ${wo.id}`);
+      pdfFooterLine(doc);
     });
   } catch (e) {
     res.status(500).send(e.message || 'PDF failed');
