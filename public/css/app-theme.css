@@ -320,6 +320,7 @@ main,
   background: #fff;
   box-shadow: var(--shadow-md);
   padding: 6px;
+  transform-origin: top left;
 }
 .qb-picker-item {
   display: flex;
@@ -356,6 +357,55 @@ main,
 .qb-picker-addnew {
   color: var(--accent);
   font-weight: 700;
+}
+
+/* Right-side “Add new” drawer (QBO-like) */
+.erp-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(520px, calc(100vw - 44px));
+  height: 100vh;
+  background: #fff;
+  border-left: 1px solid var(--line);
+  box-shadow: -8px 0 28px rgba(15, 23, 42, 0.12);
+  z-index: 3000;
+  transform: translateX(100%);
+  transition: transform 0.18s ease;
+  display: flex;
+  flex-direction: column;
+}
+.erp-drawer.is-open { transform: translateX(0); }
+.erp-drawer__head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.erp-drawer__title { font-weight: 750; letter-spacing: -0.01em; }
+.erp-drawer__body { padding: 12px 14px 18px; overflow: auto; }
+.erp-drawer__close {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.erp-drawer__close:hover { filter: brightness(0.97); }
+.erp-drawer__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 2990;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+.erp-drawer__backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
 }
 button.linkish {
   border: none;

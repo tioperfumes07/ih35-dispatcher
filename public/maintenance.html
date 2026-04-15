@@ -152,6 +152,15 @@
       <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Not loaded</div>
     </aside>
 
+    <div id="erpDrawerBackdrop" class="erp-drawer__backdrop" onclick="closeErpDrawer()"></div>
+    <aside id="erpDrawer" class="erp-drawer" aria-hidden="true">
+      <div class="erp-drawer__head">
+        <div class="erp-drawer__title" id="erpDrawerTitle">Add new</div>
+        <button type="button" class="erp-drawer__close" onclick="closeErpDrawer()">Close</button>
+      </div>
+      <div class="erp-drawer__body" id="erpDrawerBody"></div>
+    </aside>
+
     <main class="main">
       <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
       <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
@@ -3333,6 +3342,262 @@
       }
     }
 
+    // ---- Right-side drawer for “+ Add new” (QBO-like) ----
+    let __drawerReturnFocusEl = null;
+
+    function openErpDrawer(title, html, focusSelector) {
+      const d = document.getElementById('erpDrawer');
+      const b = document.getElementById('erpDrawerBackdrop');
+      const t = document.getElementById('erpDrawerTitle');
+      const body = document.getElementById('erpDrawerBody');
+      if (!d || !b || !t || !body) return;
+      __drawerReturnFocusEl = document.activeElement;
+      t.textContent = title || 'Add new';
+      body.innerHTML = html || '';
+      d.classList.add('is-open');
+      b.classList.add('is-open');
+      d.setAttribute('aria-hidden', 'false');
+      setTimeout(() => {
+        const el = focusSelector ? body.querySelector(focusSelector) : null;
+        el?.focus?.();
+      }, 0);
+    }
+
+    function closeErpDrawer() {
+      const d = document.getElementById('erpDrawer');
+      const b = document.getElementById('erpDrawerBackdrop');
+      if (d) d.classList.remove('is-open');
+      if (b) b.classList.remove('is-open');
+      if (d) d.setAttribute('aria-hidden', 'true');
+      try { __drawerReturnFocusEl?.focus?.(); } catch (_) {}
+      __drawerReturnFocusEl = null;
+    }
+
+    function openAddNewDrawer(kind, typed) {
+      const t = String(typed || '').trim();
+      if (kind === 'vendor') {
+        openErpDrawer(
+          'Add new vendor (QuickBooks)',
+          `
+          <div class="form-stack">
+            <div class="mini-note">Creates (or matches) a vendor in QuickBooks and refreshes master lists.</div>
+            <div class="search-row">
+              <input id="drVendorName" class="qb-in" placeholder="Display name" value="${escapeHtml(t)}" />
+              <input id="drVendorCompany" class="qb-in" placeholder="Company name" value="${escapeHtml(t)}" />
+            </div>
+            <div class="search-row">
+              <input id="drVendorPhone" class="qb-in" placeholder="Phone" />
+              <input id="drVendorEmail" class="qb-in" placeholder="Email" />
+            </div>
+            <input id="drVendorAddr" class="qb-in" placeholder="Address" />
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button type="button" class="qb-btn-primary" onclick="drawerCreateVendor()">Create vendor</button>
+              <button type="button" onclick="closeErpDrawer()">Cancel</button>
+              <span id="drVendorHint" class="mini-note"></span>
+            </div>
+          </div>`,
+          '#drVendorName'
+        );
+        return;
+      }
+      if (kind === 'item') {
+        openErpDrawer(
+          'Add new product/service (QuickBooks)',
+          `
+          <div class="form-stack">
+            <div class="mini-note">Creates a QBO Item. Income account is required.</div>
+            <div class="search-row">
+              <input id="drItemName" class="qb-in" placeholder="Item name" value="${escapeHtml(t)}" />
+              <select id="drItemType" class="qb-in">
+                <option value="Service">Service</option>
+                <option value="NonInventory">Non-inventory</option>
+              </select>
+            </div>
+            <div class="search-row">
+              <select id="drItemIncome" class="qb-in"><option value="">Income account (required)</option></select>
+              <select id="drItemExpense" class="qb-in"><option value="">Expense account (optional)</option></select>
+            </div>
+            <input id="drItemDesc" class="qb-in" placeholder="Description (optional)" />
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button type="button" class="qb-btn-primary" onclick="drawerCreateItem()">Create item</button>
+              <button type="button" onclick="closeErpDrawer()">Cancel</button>
+              <span id="drItemHint" class="mini-note"></span>
+            </div>
+          </div>`,
+          '#drItemName'
+        );
+        // populate selects
+        const body = document.getElementById('erpDrawerBody');
+        const inc = body?.querySelector('#drItemIncome');
+        const exp = body?.querySelector('#drItemExpense');
+        if (inc) {
+          inc.innerHTML =
+            '<option value="">Income account (required)</option>' +
+            cacheIncomeAccounts().map(a => `<option value="${escapeHtml(String(a.qboId))}">${escapeHtml(a.name || a.qboId)}</option>`).join('');
+        }
+        if (exp) {
+          exp.innerHTML =
+            '<option value="">Expense account (optional)</option>' +
+            cacheExpenseAccounts().map(a => `<option value="${escapeHtml(String(a.qboId))}">${escapeHtml(a.name || a.qboId)}</option>`).join('');
+        }
+        return;
+      }
+      if (kind === 'account') {
+        openErpDrawer(
+          'Add new account/category (QuickBooks)',
+          `
+          <div class="form-stack">
+            <div class="mini-note">Creates a QBO Account (Expense/Income/Bank/CreditCard).</div>
+            <div class="search-row">
+              <input id="drAcctName" class="qb-in" placeholder="Account name" value="${escapeHtml(t)}" />
+              <select id="drAcctType" class="qb-in">
+                <option value="Expense">Expense</option>
+                <option value="Cost of Goods Sold">Cost of Goods Sold</option>
+                <option value="Income">Income</option>
+                <option value="Other Income">Other Income</option>
+                <option value="Bank">Bank</option>
+                <option value="CreditCard">CreditCard</option>
+              </select>
+            </div>
+            <input id="drAcctSub" class="qb-in" placeholder="Account sub-type (optional)" />
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button type="button" class="qb-btn-primary" onclick="drawerCreateAccount()">Create account</button>
+              <button type="button" onclick="closeErpDrawer()">Cancel</button>
+              <span id="drAcctHint" class="mini-note"></span>
+            </div>
+          </div>`,
+          '#drAcctName'
+        );
+        return;
+      }
+      if (kind === 'service') {
+        openErpDrawer(
+          'Add new service type (database catalog)',
+          `
+          <div class="form-stack">
+            <div class="mini-note">Adds to the Postgres maintenance service catalog (requires DATABASE_URL).</div>
+            <input id="drSvcName" class="qb-in" placeholder="Service name" value="${escapeHtml(t)}" />
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button type="button" class="qb-btn-primary" onclick="drawerCreateServiceCatalog()">Add service</button>
+              <button type="button" onclick="closeErpDrawer()">Cancel</button>
+              <span id="drSvcHint" class="mini-note"></span>
+            </div>
+          </div>`,
+          '#drSvcName'
+        );
+      }
+    }
+
+    async function drawerCreateVendor() {
+      const hint = document.getElementById('drVendorHint');
+      const name = document.getElementById('drVendorName')?.value?.trim();
+      if (!name) {
+        if (hint) hint.textContent = 'Display name is required.';
+        return;
+      }
+      if (hint) hint.textContent = 'Posting to QuickBooks…';
+      try {
+        const data = await j('/api/qbo/create-vendor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            companyName: document.getElementById('drVendorCompany')?.value?.trim() || name,
+            phone: document.getElementById('drVendorPhone')?.value?.trim() || undefined,
+            email: document.getElementById('drVendorEmail')?.value?.trim() || undefined,
+            address: document.getElementById('drVendorAddr')?.value?.trim() || undefined
+          })
+        });
+        erp.qboCache = data.cache || erp.qboCache;
+        fillDataLists();
+        renderQboMaster();
+        if (hint) hint.textContent = data.created ? 'Created vendor.' : 'Vendor existed — refreshed cache.';
+        closeErpDrawer();
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+      }
+    }
+
+    async function drawerCreateItem() {
+      const hint = document.getElementById('drItemHint');
+      const name = document.getElementById('drItemName')?.value?.trim();
+      const incomeAccountId = document.getElementById('drItemIncome')?.value || '';
+      if (!name) {
+        if (hint) hint.textContent = 'Item name is required.';
+        return;
+      }
+      if (!incomeAccountId) {
+        if (hint) hint.textContent = 'Pick an income account.';
+        return;
+      }
+      if (hint) hint.textContent = 'Posting to QuickBooks…';
+      try {
+        const data = await j('/api/qbo/create-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({
+            name,
+            type: document.getElementById('drItemType')?.value || 'Service',
+            incomeAccountId,
+            expenseAccountId: document.getElementById('drItemExpense')?.value || '',
+            description: document.getElementById('drItemDesc')?.value?.trim() || ''
+          })
+        });
+        erp.qboCache = data.cache || erp.qboCache;
+        fillDataLists();
+        renderQboMaster();
+        if (hint) hint.textContent = data.created ? 'Created item.' : 'Item existed — refreshed cache.';
+        closeErpDrawer();
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+      }
+    }
+
+    async function drawerCreateAccount() {
+      const hint = document.getElementById('drAcctHint');
+      const name = document.getElementById('drAcctName')?.value?.trim();
+      if (!name) {
+        if (hint) hint.textContent = 'Account name is required.';
+        return;
+      }
+      if (hint) hint.textContent = 'Posting to QuickBooks…';
+      try {
+        const data = await j('/api/qbo/create-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({
+            name,
+            accountType: document.getElementById('drAcctType')?.value || 'Expense',
+            accountSubType: document.getElementById('drAcctSub')?.value?.trim() || ''
+          })
+        });
+        erp.qboCache = data.cache || erp.qboCache;
+        fillDataLists();
+        renderQboMaster();
+        if (hint) hint.textContent = data.created ? 'Created account.' : 'Account existed — refreshed cache.';
+        closeErpDrawer();
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+      }
+    }
+
+    async function drawerCreateServiceCatalog() {
+      const hint = document.getElementById('drSvcHint');
+      const name = document.getElementById('drSvcName')?.value?.trim();
+      if (!name) {
+        if (hint) hint.textContent = 'Service name is required.';
+        return;
+      }
+      if (hint) hint.textContent = 'Saving…';
+      try {
+        await addCatalogServiceFromCatalogsSection(name);
+        if (hint) hint.textContent = 'Added.';
+        closeErpDrawer();
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+      }
+    }
+
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
@@ -3563,11 +3828,20 @@
     function qbPickerPosition() {
       if (!__qbPickerActive || !__qbPickerMenu) return;
       const r = __qbPickerActive.input.getBoundingClientRect();
-      const left = Math.max(10, r.left + window.scrollX);
-      const top = r.bottom + window.scrollY + 6;
+      const minW = Math.max(260, Math.round(r.width));
+      const maxW = Math.min(620, Math.max(minW, Math.round(r.width * 1.35)));
+      const left = Math.max(10, Math.min(window.scrollX + r.left, window.scrollX + window.innerWidth - maxW - 10));
+      const belowTop = window.scrollY + r.bottom + 6;
+      const aboveTop = window.scrollY + r.top - 6;
+      const menuH = Math.min(260, __qbPickerMenu.scrollHeight || 260);
+      const spaceBelow = window.innerHeight - r.bottom;
+      const shouldFlip = spaceBelow < Math.min(220, menuH) && r.top > 180;
+      const top = shouldFlip ? Math.max(10 + window.scrollY, aboveTop - menuH) : belowTop;
+
       __qbPickerMenu.style.left = left + 'px';
       __qbPickerMenu.style.top = top + 'px';
-      __qbPickerMenu.style.minWidth = Math.max(260, Math.round(r.width)) + 'px';
+      __qbPickerMenu.style.minWidth = minW + 'px';
+      __qbPickerMenu.style.maxWidth = maxW + 'px';
     }
 
     function qbPickerRender() {
@@ -3599,11 +3873,21 @@
         qbPickerPosition();
         return;
       }
+      // Keep a stable “active item” as filter changes.
+      const prevKey = __qbPickerActive.activeKey || '';
+      if (prevKey) {
+        const idx = items.findIndex(it => (it.kind === 'row' ? `row:${it.label}|${it.meta}` : 'add_new') === prevKey);
+        if (idx >= 0) __qbPickerActive.activeIdx = idx;
+      }
 
       __qbPickerActive.activeIdx = Math.min(
         Math.max(0, __qbPickerActive.activeIdx ?? 0),
         items.length - 1
       );
+      __qbPickerActive.activeKey =
+        items[__qbPickerActive.activeIdx]?.kind === 'row'
+          ? `row:${items[__qbPickerActive.activeIdx].label}|${items[__qbPickerActive.activeIdx].meta}`
+          : 'add_new';
 
       menu.innerHTML = items
         .map((it, idx) => {
@@ -3680,6 +3964,13 @@
         qbPickerOpen(input, opts);
       });
 
+      // QBO-ish: if you hover into the field, show suggestions.
+      input.addEventListener('mouseenter', () => {
+        if (document.activeElement !== input) return;
+        if (__qbPickerActive && __qbPickerActive.input === input && __qbPickerMenu && !__qbPickerMenu.classList.contains('hidden')) return;
+        qbPickerOpen(input, opts);
+      });
+
       input.addEventListener('input', () => {
         if (!__qbPickerActive || __qbPickerActive.input !== input) return;
         __qbPickerActive.query = input.value || '';
@@ -3709,9 +4000,12 @@
           // QBO-ish: Enter picks, Tab picks and moves on.
           const buttons = Array.from(menu.querySelectorAll('.qb-picker-item'));
           if (!buttons.length) return;
-          const idx = Math.min(Math.max(0, __qbPickerActive.activeIdx ?? 0), buttons.length - 1);
-          // Build current items list from DOM text (render creates it deterministically)
-          // Re-render first to ensure item array matches activeIdx.
+          // If user typed and never arrowed, default to first real match (skip + Add new)
+          let idx = Math.min(Math.max(0, __qbPickerActive.activeIdx ?? 0), buttons.length - 1);
+          const typed = String(input.value || '').trim();
+          if (k === 'Enter' && typed && (__qbPickerActive.activeKey || '') === 'add_new') {
+            idx = Math.min(1, buttons.length - 1);
+          }
           qbPickerRender();
           const btn = menu.querySelector(`.qb-picker-item[data-idx="${idx}"]`);
           if (btn) btn.click();
@@ -3736,38 +4030,7 @@
 
     function qbPickerAddNewRoute(kind, typed) {
       const t = String(typed || '').trim();
-      if (kind === 'vendor') {
-        goToCreateQboVendor();
-        const v = document.getElementById('qboNewVendorDisplayName');
-        if (v && t) v.value = t;
-        v?.focus?.();
-        return;
-      }
-      if (kind === 'item') {
-        openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
-        const tab = document.querySelector('#section-accounting .subtab[onclick*="acct-qbo"]');
-        if (tab) openAccountingTab('acct-qbo', tab);
-        const el = document.getElementById('newItemName');
-        if (el && t) el.value = t;
-        el?.focus?.();
-        return;
-      }
-      if (kind === 'account') {
-        openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
-        const tab = document.querySelector('#section-accounting .subtab[onclick*="acct-qbo"]');
-        if (tab) openAccountingTab('acct-qbo', tab);
-        const el = document.getElementById('newAccountName');
-        if (el && t) el.value = t;
-        el?.focus?.();
-        return;
-      }
-      if (kind === 'service') {
-        openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]'));
-        try { openCatalogSubpanel('service'); } catch (_) {}
-        const el = document.getElementById('catalogSectionNewServiceName');
-        if (el && t) el.value = t;
-        el?.focus?.();
-      }
+      openAddNewDrawer(kind, t);
     }
 
     function qbPickerOptsForInput(input) {
@@ -5642,10 +5905,10 @@
       }
     }
 
-    async function addCatalogServiceFromCatalogsSection() {
+    async function addCatalogServiceFromCatalogsSection(nameOverride) {
       const hint = document.getElementById('catalogSectionServiceHint');
       const inp = document.getElementById('catalogSectionNewServiceName');
-      const name = (inp?.value || '').trim();
+      const name = (String(nameOverride ?? '') || inp?.value || '').trim();
       if (!name) {
         if (hint) hint.textContent = 'Enter a service name.';
         return;
