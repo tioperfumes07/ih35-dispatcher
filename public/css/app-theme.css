@@ -1,0 +1,129 @@
+/**
+ * IH35 — shared visual language: calm, precise, trustworthy.
+ * Load before page-specific <style> blocks so local rules can override.
+ */
+
+:root {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Cool neutrals + single accent — avoids “loud” SaaS blue */
+  --bg: #f3f5f8;
+  --bg-elevated: #ffffff;
+  --panel: #ffffff;
+  --line: #e2e6ee;
+  --line-strong: #cdd4e0;
+  --text: #1a2332;
+  --text-secondary: #4b5567;
+  --muted: #64708b;
+
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+  --accent-soft: #eff6ff;
+  --accent-border: #bfdbfe;
+
+  --green: #047857;
+  --green-soft: #ecfdf5;
+  --yellow: #a16207;
+  --yellow-soft: #fffbeb;
+  --red: #b91c1c;
+  --red-soft: #fef2f2;
+
+  --sidebar-bg: #0f172a;
+  --sidebar-border: #1e293b;
+  --sidebar-text: #f1f5f9;
+  --sidebar-muted: #94a3b8;
+
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 16px;
+
+  /* Legacy aliases (maintenance inline styles) */
+  --blue: var(--accent);
+  --blueSoft: var(--accent-soft);
+  --greenSoft: var(--green-soft);
+  --yellowSoft: var(--yellow-soft);
+  --redSoft: var(--red-soft);
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 20px rgba(15, 23, 42, 0.06);
+  --shadow: 0 8px 28px rgba(15, 23, 42, 0.07);
+
+  /* Top operations bar */
+  --nav-bg: #0f172a;
+  --nav-line: #1e293b;
+  --nav-text: #e2e8f0;
+  --nav-hover: #1e293b;
+  --nav-dd-bg: #ffffff;
+  --nav-dd-text: #0f172a;
+}
+
+html {
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Hub / marketing landing (index.html) */
+.hub-page {
+  min-height: 100vh;
+  background: radial-gradient(1200px 600px at 10% -10%, #1e3a5f 0%, transparent 55%), #0c1220;
+  color: #f1f5ff;
+}
+
+.hub-page header h1 {
+  letter-spacing: -0.03em;
+}
+
+.hub-page .grid a.card {
+  background: rgba(26, 33, 66, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hub-page .grid a.card:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+}
+
+/* Banking tool (banking.html) */
+.banking-page .wrap {
+  font-family: var(--font-sans);
+}
+
+.banking-page .panel {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--line);
+}
+
+.banking-page button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.banking-page button.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}

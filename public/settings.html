@@ -4,21 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>IH35 — Settings &amp; users</title>
+  <link rel="stylesheet" href="/css/app-theme.css" />
   <style>
-    :root { --line: #d8deea; --text: #17212f; --muted: #6b7280; --blue: #2563eb; }
-    body { font-family: Arial, Helvetica, sans-serif; margin: 0; background: #f4f6fa; color: var(--text); padding: 24px; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 24px 18px 40px; }
     .wrap { max-width: 640px; margin: 0 auto; }
-    h1 { font-size: 22px; margin: 0 0 8px; }
-    p { color: var(--muted); font-size: 14px; line-height: 1.5; }
-    .panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(15,23,42,.06); }
+    h1 { font-size: 1.35rem; margin: 0 0 8px; letter-spacing: -0.02em; font-weight: 700; }
+    p { color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
     label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; box-sizing: border-box; }
-    button { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 600; }
-    button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); margin-bottom: 12px; box-sizing: border-box; font-family: var(--font-sans); }
+    input:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(59,130,246,.12); outline: none; }
+    button { padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 600; font-family: var(--font-sans); }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     .mini { font-size: 12px; color: var(--muted); margin-top: 8px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #edf1f7; }
-    a { color: var(--blue); font-weight: 600; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
+    a { color: var(--accent); font-weight: 600; text-decoration: none; }
+    a:hover { text-decoration: underline; }
     .hidden { display: none !important; }
     .err { color: #b91c1c; font-size: 13px; margin-top: 8px; }
   </style>

@@ -6,29 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/app-theme.css" />
   <style>
-    :root{
-      --bg:#f4f6fa;
-      --panel:#ffffff;
-      --line:#d8deea;
-      --text:#17212f;
-      --muted:#6b7280;
-      --blue:#2563eb;
-      --blueSoft:#eff6ff;
-      --green:#15803d;
-      --greenSoft:#f0fdf4;
-      --yellow:#b45309;
-      --yellowSoft:#fff7ed;
-      --red:#b91c1c;
-      --redSoft:#fef2f2;
-      --shadow:0 8px 24px rgba(15,23,42,.06);
-      --radius:14px;
-    }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-    .app{min-height:100vh;display:grid;grid-template-columns:280px 1fr;transition:grid-template-columns .22s ease;position:relative}
+    .app{min-height:100vh;display:grid;grid-template-columns:260px 1fr;transition:grid-template-columns .22s ease;position:relative}
     .app.sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)}
-    .sidebar{background:#0f172a;color:#fff;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto;min-width:0;transition:opacity .15s ease,padding .15s ease}
+    .sidebar{background:var(--sidebar-bg);color:var(--sidebar-text);padding:16px 14px;position:sticky;top:0;height:100vh;overflow:auto;min-width:0;transition:opacity .15s ease,padding .15s ease;border-right:1px solid var(--sidebar-border)}
     .app.sidebar-collapsed .sidebar{opacity:0;pointer-events:none;padding:0;overflow:hidden;width:0;min-width:0}
     .sidebar-brand-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px}
     .sidebar-collapse-btn{flex-shrink:0;width:36px;height:36px;border-radius:10px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;cursor:pointer;font-size:18px;font-weight:700;line-height:1}
@@ -39,35 +22,39 @@
       align-items:center;justify-content:center;color:var(--blue)
     }
     .app.sidebar-collapsed .sidebar-expand-fab{display:flex}
-    .brand{font-size:22px;font-weight:700;margin-bottom:18px}
-    .brand-sub{font-size:12px;color:#cbd5e1;margin-bottom:18px}
-    .nav-title{font-size:11px;letter-spacing:.08em;color:#94a3b8;text-transform:uppercase;margin:16px 0 8px}
-    .nav-btn{width:100%;display:block;text-align:left;background:transparent;color:#fff;border:1px solid transparent;padding:11px 12px;border-radius:10px;cursor:pointer;margin-bottom:6px;font-size:14px}
-    .nav-btn:hover{background:rgba(255,255,255,.06)}
-    .nav-btn.active{background:#1e293b;border-color:#334155}
-    .main{padding:18px;overflow:auto;max-width:min(1560px,100%);width:100%;margin-inline:auto;min-width:0}
-    .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-    .title{font-size:28px;font-weight:700;margin-right:auto}
+    .brand{font-size:1.15rem;font-weight:700;margin-bottom:12px;letter-spacing:-0.02em}
+    .brand-sub{font-size:11px;color:var(--sidebar-muted);margin-bottom:16px;line-height:1.45}
+    .nav-title{font-size:10px;letter-spacing:.1em;color:var(--sidebar-muted);text-transform:uppercase;margin:14px 0 6px;font-weight:600}
+    .nav-btn{width:100%;display:block;text-align:left;background:transparent;color:#fff;border:1px solid transparent;padding:9px 11px;border-radius:var(--radius-sm);cursor:pointer;margin-bottom:4px;font-size:13px;transition:background .15s ease,border-color .15s ease}
+    .nav-btn:hover{background:rgba(255,255,255,.07)}
+    .nav-btn.active{background:rgba(30,41,59,.95);border-color:#334155}
+    .main{padding:16px 20px 28px;overflow:auto;max-width:min(1520px,100%);width:100%;margin-inline:auto;min-width:0}
+    .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+    .topbar-home-link{font-weight:600;color:var(--accent);text-decoration:none;font-size:14px}
+    .topbar-home-link:hover{text-decoration:underline}
+    .topbar-hint{margin-left:2px;opacity:.92}
+    .title{font-size:1.45rem;font-weight:700;margin-right:auto;letter-spacing:-0.025em;color:var(--text)}
     .btn,button,input,select,textarea{font:inherit}
-    .btn,button{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:10px;cursor:pointer;color:var(--text)}
-    .btn:hover,button:hover{background:#f8fafc}
-    input,select,textarea{width:100%;border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:10px;color:var(--text)}
+    .btn,button{border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text);box-shadow:var(--shadow-sm);transition:background .15s,border-color .15s,box-shadow .15s}
+    .btn:hover,button:hover{background:#f8fafc;border-color:var(--line-strong)}
+    input,select,textarea{width:100%;border:1px solid var(--line);background:var(--panel);padding:9px 11px;border-radius:var(--radius-sm);color:var(--text);transition:border-color .15s,box-shadow .15s}
+    input:focus,select:focus,textarea:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.12);outline:none}
     textarea{min-height:84px;resize:vertical}
     .hidden{display:none !important}
     .hero-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
-    .hero-card,.panel,.metric,.record-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .hero-card{padding:14px;cursor:pointer}
-    .hero-card:hover{border-color:#bfd3ff;background:#fbfdff}
-    .hero-card h3{margin:0 0 4px;font-size:15px}
-    .hero-card p{margin:0;font-size:12px;color:var(--muted)}
+    .hero-card,.panel,.metric,.record-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+    .hero-card{padding:12px 14px;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
+    .hero-card:hover{border-color:var(--accent-border);background:var(--accent-soft);box-shadow:var(--shadow);transform:translateY(-1px)}
+    .hero-card h3{margin:0 0 4px;font-size:14px;font-weight:600;letter-spacing:-0.02em}
+    .hero-card p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
     .section{display:none}
     .section.active{display:block}
     .grid{display:grid;gap:12px}
     .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
     .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
     .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    .panel-head{padding:14px 16px;border-bottom:1px solid #edf1f7;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .panel-title{font-size:16px;font-weight:700}
+    .panel-head{padding:11px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(180deg,#fafbfc 0%,#fff 100%)}
+    .panel-title{font-size:15px;font-weight:600;letter-spacing:-0.02em}
     .panel-body{padding:14px 16px}
     .metric{padding:12px}
     .metric-label{font-size:12px;color:var(--muted);margin-bottom:4px}
@@ -103,7 +90,7 @@
     th{background:#fafcff;position:sticky;top:0;z-index:1;color:var(--muted);font-size:12px;text-transform:uppercase}
     .st-settlement-wrap{border:1px solid #c7d2e0;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 0 rgba(15,23,42,.04)}
     table.st-settlement{min-width:0;width:100%;font-size:12px}
-    table.st-settlement th{background:#1a237e;color:#fff;font-weight:700;font-size:11px;text-transform:none;letter-spacing:.02em;border-bottom:2px solid #0d1442;padding:10px 12px}
+    table.st-settlement th{background:linear-gradient(180deg,#1e3a5f 0%,#172554 100%);color:#fff;font-weight:600;font-size:11px;text-transform:none;letter-spacing:.03em;border-bottom:2px solid #0f172a;padding:10px 12px}
     table.st-settlement td{padding:9px 12px;border-bottom:1px solid #e5e7eb;vertical-align:middle}
     table.st-settlement tbody tr:nth-child(even) td{background:#f8fafc}
     table.st-settlement tbody tr:hover td{background:#f1f5f9}
@@ -111,11 +98,14 @@
     .form-stack{display:grid;gap:10px}
     .mini-note{font-size:12px;color:var(--muted)}
     .card-list{display:grid;gap:10px}
-    .record-card{padding:12px}
+    .record-card{padding:12px;transition:box-shadow .15s ease,border-color .15s ease}
+    .record-card:hover{box-shadow:var(--shadow);border-color:var(--line-strong)}
     .record-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-    .subtabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-    .subtab{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
-    .subtab.active{background:var(--blueSoft);border-color:#bcd0ff;color:#1d4ed8;font-weight:700}
+    .subtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
+    .subtab{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 13px;cursor:pointer;font-size:13px;transition:background .15s,border-color .15s,color .15s}
+    a.subtab{text-decoration:none;color:inherit}
+    .subtab:hover{border-color:var(--accent-border);background:var(--accent-soft)}
+    .subtab.active{background:var(--accent-soft);border-color:var(--accent-border);color:var(--accent);font-weight:600}
     .tire-layout-wrap{display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start}
     .tire-svg{width:100%;height:auto;border:1px solid #e8eef8;border-radius:12px;background:#fafcff;padding:10px}
     .tire-dot{fill:#cbd5e1;stroke:#475569;stroke-width:1.5;cursor:pointer}
@@ -264,8 +254,8 @@
       <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
       <div class="topbar">
         <div class="title" id="pageTitle">Unified Dashboard</div>
-        <a href="/" style="font-weight:700;color:#1d4ed8">Home</a>
-        <span class="mini-note" style="margin-left:4px">Use the left nav for modules · no duplicate top tabs</span>
+        <a href="/" class="topbar-home-link">Home</a>
+        <span class="mini-note topbar-hint">Left nav: modules · single top bar for actions</span>
         <button onclick="loadAll()">Refresh</button>
         <button onclick="testQuickBooks()">Test QuickBooks</button>
         <button onclick="refreshQboMaster()">Refresh QBO Master</button>

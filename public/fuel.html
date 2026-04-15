@@ -5,19 +5,15 @@
   <title>IH35 — Fuel &amp; route planning</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="/css/app-theme.css" />
   <style>
     :root{
-      --bg:#f6f7fb;
-      --panel:#ffffff;
-      --line:#d9dde7;
-      --text:#1f2937;
-      --muted:#6b7280;
       --red:#dc2626;
       --yellow:#d97706;
       --green:#16a34a;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--text)}
     .topbar{
       padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);
       display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000

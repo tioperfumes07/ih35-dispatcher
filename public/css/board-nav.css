@@ -1,13 +1,14 @@
-/* Persistent operations bar — Always Track–style cross-board navigation */
+/* Persistent operations bar — aligns with app-theme tokens */
 .board-nav-wrap {
   position: sticky;
   top: 0;
   z-index: 9000;
-  background: #0f172a;
-  color: #e2e8f0;
-  border-bottom: 1px solid #1e293b;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 12px;
+  background: var(--nav-bg, #0f172a);
+  color: var(--nav-text, #e2e8f0);
+  border-bottom: 1px solid var(--nav-line, #1e293b);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+  letter-spacing: 0.01em;
 }
 .board-nav-inner {
   display: flex;
@@ -16,30 +17,31 @@
   gap: 0;
   max-width: min(1560px, 100%);
   margin: 0 auto;
-  padding: 0 8px;
+  padding: 0 12px;
 }
 .board-nav-item {
   position: relative;
-  border-right: 1px solid #1e293b;
+  border-right: 1px solid var(--nav-line, #1e293b);
 }
 .board-nav-item:first-child {
-  border-left: 1px solid #1e293b;
+  border-left: 1px solid var(--nav-line, #1e293b);
 }
 .board-nav-trigger {
   display: block;
-  padding: 10px 14px;
+  padding: 11px 16px;
   background: transparent;
   border: none;
-  color: #e2e8f0;
+  color: inherit;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .board-nav-trigger:hover,
 .board-nav-item.open .board-nav-trigger {
-  background: #1e293b;
+  background: var(--nav-hover, #1e293b);
   color: #fff;
 }
 .board-nav-dd {
@@ -47,34 +49,47 @@
   position: absolute;
   left: 0;
   top: 100%;
-  min-width: 220px;
-  background: #fff;
-  color: #0f172a;
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  min-width: 232px;
+  background: var(--nav-dd-bg, #fff);
+  color: var(--nav-dd-text, #0f172a);
+  border: 1px solid var(--line, #e2e6ee);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
   z-index: 9100;
+  overflow: hidden;
 }
 .board-nav-item.open .board-nav-dd {
   display: block;
 }
 .board-nav-dd a {
   display: block;
-  padding: 8px 12px;
-  color: #0f172a;
+  padding: 10px 14px;
+  color: inherit;
   text-decoration: none;
   font-weight: 500;
+  font-size: 13px;
   border-bottom: 1px solid #f1f5f9;
+  transition: background 0.12s ease;
 }
 .board-nav-dd a:hover {
-  background: #eff6ff;
+  background: var(--accent-soft, #eff6ff);
+  color: var(--accent, #1d4ed8);
 }
 .board-nav-dd a:last-child {
   border-bottom: none;
 }
 .board-nav-hint {
   margin-left: auto;
-  padding: 10px 12px;
-  color: #94a3b8;
+  padding: 11px 12px;
+  color: var(--sidebar-muted, #94a3b8);
   font-size: 11px;
   align-self: center;
+  max-width: 280px;
+  line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+  .board-nav-hint {
+    display: none;
+  }
 }
