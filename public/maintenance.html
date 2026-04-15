@@ -1534,7 +1534,7 @@
             </div>
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 10px">
-                Post each import as a QuickBooks <strong>Purchase (Expense)</strong>. Default is an <strong>item line</strong> (qty × $/unit = line total) with <strong>Class</strong> = truck/unit for P&amp;L by vehicle.
+                Post each row as its own QuickBooks <strong>Purchase (Expense)</strong>. Default is an <strong>expense category</strong> line (Diesel / DEF / Reefer mapped to your chart of accounts) with <strong>Class</strong> = truck/unit. Uncheck “category” to post as a QBO <strong>fuel item</strong> (qty × $/unit).
                 Pick the <strong>vendor</strong> (fuel merchant), optional <strong>driver</strong> (name + driver-pay QBO vendor), and optional <strong>customer</strong> on the line when you bill or track by driver entity.
                 Row edits (class, vendor, item, qty, driver, etc.) <strong>save to ERP</strong> automatically after a short pause when the <strong>ERP write secret</strong> is set in Settings (same as posting).
               </p>
@@ -5827,7 +5827,7 @@
           const d = fuelExpenseSortDateKey(r);
           if ((from || to) && !inRange(d)) return false;
           if (!q) return true;
-          const hay = `${r.unit || ''} ${r.vendor || ''} ${r.location || ''} ${r.productType || ''} ${r.relayExpenseNo || ''} ${r.fuelPostedDriverMemo || ''}`.toLowerCase();
+          const hay = `${r.unit || ''} ${r.vendor || ''} ${r.location || ''} ${r.productType || ''} ${r.relayExpenseNo || ''} ${r.relayDocNumber || ''} ${r.fuelPostedDocNumber || ''} ${r.qbCategory || ''} ${r.fuelPostedDriverMemo || ''}`.toLowerCase();
           return hay.includes(q);
         })
         .slice()
@@ -5912,14 +5912,25 @@
           const custS = escapeHtml(custRaw);
           const custId = draft.custId || '';
           const dvId = draft.driverVendId || '';
+          const expNoRaw = String(r.fuelPostedDocNumber || r.relayDocNumber || r.relayExpenseNo || '').trim();
+          const expNoCell = expNoRaw ? escapeHtml(expNoRaw) : '—';
+          const postedPath = String(r.fuelPostedQbCategory || r.qbCategory || '').trim();
+          const postedItemAcct =
+            r.fuelPostedItemId && String(r.fuelPostedItemId).trim()
+              ? escapeHtml(qboNameByQboId(cacheItems(), r.fuelPostedItemId))
+              : escapeHtml(qboNameByQboId(cacheAccounts(), r.fuelPostedAccountId)) +
+                (postedPath
+                  ? `<div class="mini-note" style="margin-top:2px;line-height:1.35">${escapeHtml(postedPath)}</div>`
+                  : '');
 
           if (status === 'posted') {
             return `<tr data-fuel-id="${idEsc}">
             <td>${dateCell}</td>
+            <td class="mini-note">${expNoCell}</td>
             <td>${unit || '—'}</td>
             <td class="mini-note">${escapeHtml(postedClsDisp ? qboNameByQboId(cacheQboClasses(), postedClsDisp) : '—')}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheVendors(), r.fuelPostedVendorId))}</td>
-            <td class="mini-note">${escapeHtml(qboNameByQboId(cacheItems(), r.fuelPostedItemId))}</td>
+            <td class="mini-note">${postedItemAcct}</td>
             <td class="num">${escapeHtml(String(r.fuelPostedQty != null ? r.fuelPostedQty : gal != null ? gal : '—'))}</td>
             <td class="num">—</td>
             <td class="num">${escapeHtml(String(r.fuelPostedAmount != null ? Number(r.fuelPostedAmount).toFixed(2) : tot.toFixed(2)))}</td>
@@ -5938,6 +5949,7 @@
 
           return `<tr data-fuel-id="${idEsc}">
             <td>${dateCell}</td>
+            <td class="mini-note">${expNoCell}</td>
             <td>${unit || '—'}</td>
             <td><select class="fuel-class-sel qb-in" style="min-width:120px">${fuelClassSelectHtml(clsVal)}</select></td>
             <td>
@@ -5981,10 +5993,6 @@
       const st = tr ? tr.querySelector('.fuel-post-status') : null;
       const bankId = String(document.getElementById('fuelExpBankQboId')?.value || '').trim();
       const acctId = String(document.getElementById('fuelExpAccountQboId')?.value || '').trim();
-      if (!acctId) {
-        alert('Choose the fuel expense category (QuickBooks).');
-        return;
-      }
       if (!tr) {
         alert('Could not find fuel row.');
         return;
@@ -10408,7 +10416,7 @@
         sumEl.textContent = `Showing ${filtered.length} of ${all.length} row(s) · Filtered total $${tot.toFixed(2)}`;
       }
       if (!filtered.length) {
-        tb.innerHTML = '<tr><td colspan="15" class="mini-note">No rows match filters.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="16" class="mini-note">No rows match filters.</td></tr>';
         return;
       }
       tb.innerHTML = filtered
