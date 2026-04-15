@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/css/app-theme.css" />
+  <link rel="stylesheet" href="/css/board-nav.css" />
   <style>
     *{box-sizing:border-box}
     .app{min-height:100vh;display:grid;grid-template-columns:260px 1fr;transition:grid-template-columns .22s ease;position:relative}
@@ -186,10 +187,33 @@
     #maintenanceSplit.unit-list-collapsed .unit-list-panel .panel-title{
       writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;letter-spacing:.06em;white-space:nowrap;max-height:220px;margin:0
     }
+    .maint-expense-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px}
+    .maint-exp-pill{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px}
+    .maint-exp-pill .k{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+    .maint-exp-pill .v{font-weight:700;font-size:14px;margin-top:2px;color:var(--text)}
+    .maint-exp-pill.total{grid-column:span 2;background:var(--accent-soft);border-color:var(--accent-border)}
+    .shop-queue-card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--panel);font-size:12px}
+    .shop-queue-card.overdue{border-color:#fb923c;background:#fffbeb}
+    .shop-queue-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:space-between}
+    .shop-wo-fallback{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+    .shop-q-print-only{display:none}
+    @media (max-width:960px){
+      #section-maintenance .shop-kanban{grid-template-columns:1fr!important}
+    }
+    @media print{
+      .sidebar,.sidebar-expand-fab,.print-hide-actions,.board-nav-wrap{display:none!important}
+      .app{grid-template-columns:1fr!important}
+      .main{padding:8px!important}
+      .section{display:none!important}
+      #section-maintenance.section{display:block!important}
+      body{background:#fff!important}
+      .shop-q-print-only{display:block!important}
+    }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
+  <div id="boardNavMount"></div>
   <div id="maintCatModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintCatModal()">
     <div class="maint-modal" onclick="event.stopPropagation()">
       <div id="maintModalFlowTitle" class="hidden"></div>
@@ -203,6 +227,51 @@
         <div class="asset-cat-tile" onclick="completeMaintCategory('Company Vehicles')" style="grid-column:span 2">Company vehicle</div>
       </div>
       <button type="button" class="btn" onclick="closeMaintCatModal()">Cancel</button>
+    </div>
+  </div>
+  <div id="shopQueueAddModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopQueueModal()">
+    <div class="maint-modal" onclick="event.stopPropagation()" style="max-width:520px">
+      <h3 style="margin:0 0 8px;font-size:17px">Add to shop queue</h3>
+      <p class="mini-note" style="margin:0 0 12px">Track vehicles through internal, external, or roadside repair. Status and bottlenecks are saved in the ERP.</p>
+      <input type="hidden" id="sqShopType" value="internal" />
+      <label class="qb-l">Unit</label>
+      <input id="sqUnit" class="qb-in maint-field" list="unitOptions" placeholder="T1234" style="width:100%;max-width:100%;margin-bottom:10px" />
+      <label class="qb-l">Fleet type</label>
+      <select id="sqAssetCat" class="qb-in" style="width:100%;margin-bottom:10px">
+        <option>Trucks</option>
+        <option>Refrigerated Vans</option>
+        <option>Flatbeds</option>
+        <option>Dry Vans</option>
+        <option>Company Vehicles</option>
+      </select>
+      <label class="qb-l">Job title</label>
+      <input id="sqTitle" class="qb-in" placeholder="Brakes, PM, tire, engine…" style="width:100%;margin-bottom:10px" />
+      <label class="qb-l">Estimated hours (for delay alerts)</label>
+      <input id="sqEstH" type="number" min="0" step="0.5" class="qb-in" placeholder="8" style="width:120px;margin-bottom:10px" />
+      <label class="qb-l">Vendor / shop hint (external / roadside)</label>
+      <input id="sqVendor" class="qb-in" placeholder="Optional" style="width:100%;margin-bottom:14px" />
+      <button type="button" class="btn" onclick="submitShopQueueAdd()">Add to queue</button>
+      <button type="button" class="btn" onclick="closeShopQueueModal()" style="margin-left:8px">Cancel</button>
+    </div>
+  </div>
+  <div id="shopDelayModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopDelayModal()">
+    <div class="maint-modal" onclick="event.stopPropagation()" style="max-width:480px">
+      <h3 style="margin:0 0 8px;font-size:17px">Past estimated time — bottleneck</h3>
+      <p class="mini-note" style="margin:0 0 12px">Pick a reason so we can see delays (parts, queue, payment, etc.).</p>
+      <label class="qb-l">Reason</label>
+      <select id="sqDelayCode" class="qb-in" style="width:100%;margin-bottom:10px">
+        <option value="missing_parts">Missing parts</option>
+        <option value="long_queue">Long shop queue</option>
+        <option value="payment">Payment / approval</option>
+        <option value="vendor_delay">Vendor / external delay</option>
+        <option value="other">Other</option>
+      </select>
+      <label class="qb-l">Note</label>
+      <textarea id="sqDelayNote" class="qb-memo" style="width:100%;min-height:72px" placeholder="Optional detail"></textarea>
+      <div style="margin-top:14px">
+        <button type="button" class="btn" onclick="submitShopDelay()">Save &amp; continue</button>
+        <button type="button" class="btn" onclick="closeShopDelayModal()" style="margin-left:8px">Cancel</button>
+      </div>
     </div>
   </div>
   <datalist id="unitOptions"></datalist>
@@ -231,9 +300,9 @@
       </div>
 
       <div class="nav-title">Main</div>
-      <button class="nav-btn active" data-section="dashboard" onclick="openSection('dashboard', this)">Dashboard</button>
+      <button class="nav-btn active" data-section="maintenance" onclick="openSection('maintenance', this)">Maintenance Board</button>
+      <button class="nav-btn" data-section="dashboard" onclick="openSection('dashboard', this)">Overview</button>
       <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Diesel / Fuel Board</button>
-      <button class="nav-btn" data-section="maintenance" onclick="openSection('maintenance', this)">Maintenance Board</button>
       <button class="nav-btn" data-section="safety" onclick="openSection('safety', this)">Safety Board</button>
       <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
       <button class="nav-btn" data-section="accounting" onclick="openSection('accounting', this)">Accounting Board</button>
@@ -253,15 +322,17 @@
     <main class="main">
       <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
       <div class="topbar">
-        <div class="title" id="pageTitle">Unified Dashboard</div>
+        <div class="title" id="pageTitle">Maintenance &amp; shop</div>
         <a href="/" class="topbar-home-link">Home</a>
-        <span class="mini-note topbar-hint">Left nav: modules · single top bar for actions</span>
+        <span class="mini-note topbar-hint">Left nav: modules · top bar: refresh &amp; QBO</span>
+        <span class="print-hide-actions">
         <button onclick="loadAll()">Refresh</button>
         <button onclick="testQuickBooks()">Test QuickBooks</button>
         <button onclick="refreshQboMaster()">Refresh QBO Master</button>
+        </span>
       </div>
 
-      <section id="section-dashboard" class="section active">
+      <section id="section-dashboard" class="section">
         <div class="hero-grid">
           <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Diesel / Fuel Board</h3><p>Fuel planning + diesel management</p></div>
           <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Mileage, service planning, records and imports</p></div>
@@ -438,14 +509,25 @@
         </div>
       </section>
 
-      <section id="section-maintenance" class="section">
-        <div class="panel">
-          <div class="panel-head">
-            <div class="panel-title">Maintenance shop (in progress)</div>
+      <section id="section-maintenance" class="section active">
+        <div class="panel shop-print-area">
+          <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div>
+              <div class="panel-title">Maintenance &amp; shop</div>
+              <div class="mini-note" style="margin-top:4px;max-width:52ch">
+                Live shop queue (internal, external, roadside): status, time vs estimate, and delay reasons. Below: expense rollups by fleet type.
+              </div>
+            </div>
+            <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
+              <button type="button" onclick="window.print()">Print</button>
+              <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:13px">PDF</a>
+              <button type="button" onclick="loadAll()">Refresh data</button>
+            </div>
           </div>
           <div class="panel-body">
+            <div id="maintExpenseStrip" class="maint-expense-strip" style="margin-bottom:14px"></div>
             <p class="mini-note" style="margin:0 0 10px">
-              Use the tabs to switch queues. <strong>Road side service</strong> is separate from vendor external repair. <strong>Out of service</strong> lists units with a record whose service name contains “out of service”.
+              Use the tabs to switch shop type. <strong>Road side</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
               <a href="#" onclick="openSectionByName('tracking');return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
               · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
             </p>
@@ -456,36 +538,63 @@
               <button type="button" class="subtab" data-shop-tab="oos" onclick="openShopBoardTab('oos', this)">Out of service</button>
             </div>
             <div id="shopTabInternal" class="shop-tab-panel active">
-              <div class="shop-board-grid">
-                <div class="shop-col" style="grid-column:1/-1">
-                  <div class="shop-col-head shop-col-head-row">
-                    <span>Internal shop queue</span>
-                    <button type="button" class="shop-col-add" title="New internal shop maintenance" onclick="event.stopPropagation();startMaintFlow('service-internal')">+</button>
-                  </div>
-                  <div class="shop-col-body" id="shopInternalBody"></div>
+              <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
+                <div class="shop-col">
+                  <div class="shop-col-head shop-col-head-row"><span>In queue</span><button type="button" class="shop-col-add" title="Add to internal queue" onclick="event.stopPropagation();openShopQueueModal('internal')">+</button></div>
+                  <div class="shop-col-body" id="shopInternalQueued"></div>
                 </div>
+                <div class="shop-col">
+                  <div class="shop-col-head">Repair / maintenance in progress</div>
+                  <div class="shop-col-body" id="shopInternalProgress"></div>
+                </div>
+                <div class="shop-col">
+                  <div class="shop-col-head">Finished (recent)</div>
+                  <div class="shop-col-body" id="shopInternalFinished"></div>
+                </div>
+              </div>
+              <div class="shop-wo-fallback print-hide-actions">
+                <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (same shop type, for reference)</div>
+                <div id="shopInternalWoFallback"></div>
               </div>
             </div>
             <div id="shopTabExternal" class="shop-tab-panel">
-              <div class="shop-board-grid">
-                <div class="shop-col" style="grid-column:1/-1">
-                  <div class="shop-col-head shop-col-head-row">
-                    <span>External service queue</span>
-                    <button type="button" class="shop-col-add" title="New external service" onclick="event.stopPropagation();startMaintFlow('service-external')">+</button>
-                  </div>
-                  <div class="shop-col-body" id="shopExternalBody"></div>
+              <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
+                <div class="shop-col">
+                  <div class="shop-col-head shop-col-head-row"><span>In queue</span><button type="button" class="shop-col-add" title="Add to external queue" onclick="event.stopPropagation();openShopQueueModal('external')">+</button></div>
+                  <div class="shop-col-body" id="shopExternalQueued"></div>
                 </div>
+                <div class="shop-col">
+                  <div class="shop-col-head">Repair / maintenance in progress</div>
+                  <div class="shop-col-body" id="shopExternalProgress"></div>
+                </div>
+                <div class="shop-col">
+                  <div class="shop-col-head">Finished (recent)</div>
+                  <div class="shop-col-body" id="shopExternalFinished"></div>
+                </div>
+              </div>
+              <div class="shop-wo-fallback print-hide-actions">
+                <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (external)</div>
+                <div id="shopExternalWoFallback"></div>
               </div>
             </div>
             <div id="shopTabRoadside" class="shop-tab-panel">
-              <div class="shop-board-grid">
-                <div class="shop-col" style="grid-column:1/-1">
-                  <div class="shop-col-head shop-col-head-row">
-                    <span>Road side service queue</span>
-                    <button type="button" class="shop-col-add" title="New road side service" onclick="event.stopPropagation();startMaintFlow('service-road')">+</button>
-                  </div>
-                  <div class="shop-col-body" id="shopRoadsideBody"></div>
+              <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
+                <div class="shop-col">
+                  <div class="shop-col-head shop-col-head-row"><span>In queue</span><button type="button" class="shop-col-add" title="Add to roadside queue" onclick="event.stopPropagation();openShopQueueModal('roadside')">+</button></div>
+                  <div class="shop-col-body" id="shopRoadsideQueued"></div>
                 </div>
+                <div class="shop-col">
+                  <div class="shop-col-head">Repair / maintenance in progress</div>
+                  <div class="shop-col-body" id="shopRoadsideProgress"></div>
+                </div>
+                <div class="shop-col">
+                  <div class="shop-col-head">Finished (recent)</div>
+                  <div class="shop-col-body" id="shopRoadsideFinished"></div>
+                </div>
+              </div>
+              <div class="shop-wo-fallback print-hide-actions">
+                <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (road / OTR)</div>
+                <div id="shopRoadsideWoFallback"></div>
               </div>
             </div>
             <div id="shopTabOos" class="shop-tab-panel">
@@ -1474,6 +1583,7 @@
   </template>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/js/board-nav.js"></script>
   <script>
     let vehicles = [];
     let dashboard = [];
@@ -1481,13 +1591,17 @@
     let board = {};
     let tireAlerts = [];
     let selectedUnit = '';
-    let activeSection = 'dashboard';
+    let activeSection = 'maintenance';
     let activeAssetCategory = 'Trucks';
     let pendingMaintFlow = null;
     let selectedTrackingVehicle = '';
     let tmsLoadsCache = [];
     let tmsEnabled = false;
     let driverProfiles = [];
+    let shopQueueCache = [];
+    let expenseSummaryCache = { d7: null, d30: null };
+    let pendingShopPatch = null;
+    let defaultNavBootstrapped = false;
     let serviceSearchPresetBound = false;
     let maintCostLinesDelegationBound = false;
     let maintPartMapDelegationBound = false;
@@ -2084,9 +2198,9 @@
       if (btn) btn.classList.add('active');
 
       const titleMap = {
-        dashboard: 'Unified Dashboard',
+        dashboard: 'Overview',
         fuel: 'Diesel & route planning',
-        maintenance: 'Maintenance Board',
+        maintenance: 'Maintenance & shop',
         safety: 'Safety Board',
         tracking: 'Vehicle Tracking Board',
         accounting: 'Accounting Board',
@@ -2106,7 +2220,14 @@
 
     function applyNavHash() {
       const section = (location.hash || '').replace(/^#/, '').split('?')[0];
-      if (!section) return;
+      if (!section) {
+        if (!defaultNavBootstrapped) {
+          defaultNavBootstrapped = true;
+          openSectionByName('maintenance');
+        }
+        return;
+      }
+      defaultNavBootstrapped = true;
       if (section === 'accounting-settlement') {
         openSectionByName('accounting');
         const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-settlement"]');
@@ -2416,13 +2537,16 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes] = await Promise.all([
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30] = await Promise.all([
           j('/api/maintenance/dashboard'),
           j('/api/maintenance/records'),
           j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
           j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
           detectTmsEnabled(),
-          j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] }))
+          j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] })),
+          j('/api/maintenance/shop-queue').catch(() => ({ ok: false, queue: [] })),
+          j('/api/maintenance/expense-summary?days=7').catch(() => null),
+          j('/api/maintenance/expense-summary?days=30').catch(() => null)
         ]);
         if (bar) {
           bar.classList.add('hidden');
@@ -2441,6 +2565,11 @@
         erp = erpRes || {};
         board = boardRes || {};
         driverProfiles = Array.isArray(drvRes?.drivers) ? drvRes.drivers : [];
+        shopQueueCache = sqRes && sqRes.ok && Array.isArray(sqRes.queue) ? sqRes.queue : [];
+        expenseSummaryCache = {
+          d7: ex7 && ex7.ok ? ex7 : null,
+          d30: ex30 && ex30.ok ? ex30 : null
+        };
 
         if (!selectedUnit && vehicles.length) selectedUnit = vehicles[0].name;
         if (!selectedTrackingVehicle && vehicles.length) selectedTrackingVehicle = vehicles[0].name;
@@ -2463,6 +2592,7 @@
         renderTrackingDrivers();
         renderApTransactions();
         renderExpenseHistory();
+        renderMaintExpenseStrip();
         renderShopQueues();
         renderQboMaster();
         await loadQboStatus();
@@ -2666,11 +2796,238 @@
       }, 80);
     }
 
+    function maintMoney(n) {
+      const x = Number(n);
+      if (!Number.isFinite(x)) return '—';
+      return (
+        '$' +
+        x.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      );
+    }
+
+    function renderMaintExpenseStrip() {
+      const el = document.getElementById('maintExpenseStrip');
+      if (!el) return;
+      const s7 = expenseSummaryCache.d7;
+      const s30 = expenseSummaryCache.d30;
+      if (!s7 || !s30) {
+        el.innerHTML =
+          '<div class="mini-note maint-exp-pill" style="grid-column:1/-1">Expense rollups load after refresh…</div>';
+        return;
+      }
+      const cats = ['Trucks', 'Refrigerated Vans', 'Flatbeds', 'Dry Vans', 'Company Vehicles', 'Other'];
+      const short = c =>
+        c === 'Refrigerated Vans' ? 'Reefers' : c === 'Company Vehicles' ? 'Co. vehicles' : c;
+      let firstExpBlock = true;
+      const block = (label, sums, total) => {
+        const head = `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:${
+          firstExpBlock ? '0' : '10px'
+        }">${escapeHtml(label)}</div>`;
+        firstExpBlock = false;
+        const pills = cats
+          .map(c => {
+            const v = sums[c] != null ? sums[c] : 0;
+            return `<div class="maint-exp-pill"><div class="k">${escapeHtml(short(c))}</div><div class="v">${maintMoney(
+              v
+            )}</div></div>`;
+          })
+          .join('');
+        const tot = `<div class="maint-exp-pill total"><div class="k">Total</div><div class="v">${maintMoney(
+          total
+        )}</div></div>`;
+        return head + pills + tot;
+      };
+      el.innerHTML =
+        block('Maintenance expenses · last 7 days', s7.byCategory || {}, s7.total) +
+        block('Maintenance expenses · last 30 days', s30.byCategory || {}, s30.total);
+    }
+
+    function fmtShopDuration(entry) {
+      const st = String(entry.status || '');
+      const start =
+        st === 'queued'
+          ? entry.queuedAt
+          : st === 'in_progress'
+            ? entry.startedAt || entry.queuedAt
+            : entry.startedAt || entry.queuedAt;
+      const end = st === 'finished' ? entry.finishedAt : '';
+      if (!start) return '—';
+      const t0 = new Date(start).getTime();
+      const t1 = end ? new Date(end).getTime() : Date.now();
+      const h = (t1 - t0) / 3600000;
+      if (h < 96) return `${h.toFixed(1)} h`;
+      return `${(h / 24).toFixed(1)} d`;
+    }
+
+    function renderShopQueueCard(entry) {
+      const overdue = !!entry.overdue;
+      const est =
+        entry.estimatedHours != null && entry.estimatedHours !== ''
+          ? Number(entry.estimatedHours)
+          : null;
+      const delayTxt = entry.delayReasonCode
+        ? `${escapeHtml(entry.delayReasonCode)}${
+            entry.delayReasonNote ? ': ' + escapeHtml(entry.delayReasonNote) : ''
+          }`
+        : '';
+      const status = String(entry.status || '');
+      const statusLabel =
+        status === 'queued' ? 'In queue' : status === 'in_progress' ? 'In progress' : 'Finished';
+      return `
+        <div class="shop-queue-card ${overdue ? 'overdue' : ''}">
+          <div class="shop-queue-row">
+            <div style="min-width:0;flex:1">
+              <strong>${escapeHtml(entry.unit || '—')}</strong>
+              <span class="mini-note"> · ${escapeHtml(entry.assetCategory || '')}</span>
+              <div class="shop-q-print-only mini-note" style="margin-top:4px">Status: ${statusLabel}</div>
+              <div style="margin-top:4px">${escapeHtml(entry.title || 'Job')}</div>
+              ${
+                entry.vendorHint
+                  ? `<div class="mini-note">${escapeHtml(entry.vendorHint)}</div>`
+                  : ''
+              }
+              <div class="mini-note" style="margin-top:6px">
+                Est: ${est != null && Number.isFinite(est) ? est + ' h' : '—'}
+                · Shop time: ${fmtShopDuration(entry)}
+                ${overdue ? ' · <strong>Past estimate</strong>' : ''}
+              </div>
+              ${
+                delayTxt
+                  ? `<div class="mini-note" style="color:#b45309;margin-top:4px">Bottleneck: ${delayTxt}</div>`
+                  : ''
+              }
+            </div>
+            <div class="print-hide-actions" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0">
+              <label class="mini-note" style="margin:0">Status</label>
+              <select class="qb-in" style="font-size:12px;max-width:200px" data-shop-id="${escapeHtml(entry.id)}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
+                <option value="queued" ${status === 'queued' ? 'selected' : ''}>In queue</option>
+                <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>In progress</option>
+                <option value="finished" ${status === 'finished' ? 'selected' : ''}>Finished</option>
+              </select>
+              <button type="button" class="mini-note" style="background:none;border:none;color:#64748b;cursor:pointer;text-decoration:underline;padding:0" data-shop-id="${escapeHtml(entry.id)}" onclick="removeShopQueueEntry(this.getAttribute('data-shop-id'))">Remove</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function patchShopQueueEntry(id, body) {
+      const opts = {
+        method: 'PATCH',
+        headers: { ...authFetchHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      };
+      const r = await fetch('/api/maintenance/shop-queue/' + encodeURIComponent(id), opts);
+      let data = {};
+      try {
+        data = await r.json();
+      } catch (_) {}
+      if (!r.ok) {
+        if (r.status === 400 && data.requiresDelayReason) {
+          pendingShopPatch = { id, body };
+          document.getElementById('shopDelayModal').classList.add('on');
+          return false;
+        }
+        alert(data.error || 'Update failed');
+        return false;
+      }
+      if (data.entry) {
+        const ix = shopQueueCache.findIndex(x => String(x.id) === String(id));
+        if (ix >= 0) shopQueueCache[ix] = data.entry;
+      }
+      renderShopQueues();
+      return true;
+    }
+
+    async function onShopQueueStatusSelect(el) {
+      const id = el.getAttribute('data-shop-id');
+      const v = el.value;
+      const cur = shopQueueCache.find(x => String(x.id) === String(id));
+      if (!cur || cur.status === v) return;
+      const prev = cur.status;
+      const ok = await patchShopQueueEntry(id, { status: v });
+      if (!ok) el.value = prev || 'queued';
+    }
+
+    async function removeShopQueueEntry(id) {
+      if (!confirm('Remove this shop queue row?')) return;
+      try {
+        await j('/api/maintenance/shop-queue/' + encodeURIComponent(id), { method: 'DELETE' });
+        shopQueueCache = shopQueueCache.filter(x => String(x.id) !== String(id));
+        renderShopQueues();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    function openShopQueueModal(shopType) {
+      document.getElementById('sqShopType').value = shopType;
+      document.getElementById('sqUnit').value = '';
+      document.getElementById('sqTitle').value = '';
+      document.getElementById('sqEstH').value = '';
+      document.getElementById('sqVendor').value = '';
+      document.getElementById('shopQueueAddModal').classList.add('on');
+      setTimeout(() => document.getElementById('sqUnit')?.focus(), 50);
+    }
+
+    function closeShopQueueModal() {
+      document.getElementById('shopQueueAddModal').classList.remove('on');
+    }
+
+    function closeShopDelayModal() {
+      document.getElementById('shopDelayModal').classList.remove('on');
+      pendingShopPatch = null;
+      renderShopQueues();
+    }
+
+    async function submitShopDelay() {
+      const code = document.getElementById('sqDelayCode').value;
+      const note = document.getElementById('sqDelayNote').value.trim();
+      const p = pendingShopPatch;
+      if (!p) return;
+      pendingShopPatch = null;
+      document.getElementById('shopDelayModal').classList.remove('on');
+      document.getElementById('sqDelayNote').value = '';
+      await patchShopQueueEntry(p.id, { ...p.body, delayReasonCode: code, delayReasonNote: note });
+    }
+
+    async function submitShopQueueAdd() {
+      const unit = document.getElementById('sqUnit').value.trim();
+      const shopType = document.getElementById('sqShopType').value;
+      const assetCategory = document.getElementById('sqAssetCat').value;
+      const title = document.getElementById('sqTitle').value.trim() || 'Repair / service';
+      const estimatedHoursRaw = document.getElementById('sqEstH').value.trim();
+      const vendorHint = document.getElementById('sqVendor').value.trim();
+      if (!unit) {
+        alert('Unit is required');
+        return;
+      }
+      try {
+        await j('/api/maintenance/shop-queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            unit,
+            shopType,
+            assetCategory,
+            title,
+            estimatedHours: estimatedHoursRaw === '' ? null : Number(estimatedHoursRaw),
+            vendorHint
+          })
+        });
+        closeShopQueueModal();
+        const sqRes = await j('/api/maintenance/shop-queue').catch(() => ({ ok: false, queue: [] }));
+        shopQueueCache = sqRes && sqRes.ok && Array.isArray(sqRes.queue) ? sqRes.queue : [];
+        renderShopQueues();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
     function renderShopQueues() {
       const wos = (erp.workOrders || []).slice().reverse();
-      const internal = wos.filter(w => String(w.repairLocationType) === 'in-house');
-      const external = wos.filter(w => String(w.repairLocationType) === 'external');
-      const roadside = wos.filter(w => {
+      const internalWo = wos.filter(w => String(w.repairLocationType) === 'in-house');
+      const externalWo = wos.filter(w => String(w.repairLocationType) === 'external');
+      const roadsideWo = wos.filter(w => {
         const t = String(w.repairLocationType);
         return t === 'over-the-road' || t === 'road-service';
       });
@@ -2690,39 +3047,84 @@
         );
       };
 
-      const elI = document.getElementById('shopInternalBody');
-      const elE = document.getElementById('shopExternalBody');
-      const elR = document.getElementById('shopRoadsideBody');
+      const q = shopQueueCache || [];
+      const byType = (t, st) =>
+        q.filter(e => String(e.shopType) === t && String(e.status || '') === st);
+
+      const sortQueued = rows =>
+        rows.slice().sort((a, b) => String(a.queuedAt || '').localeCompare(String(b.queuedAt || '')));
+      const sortProg = rows =>
+        rows.slice().sort((a, b) => String(a.startedAt || '').localeCompare(String(b.startedAt || '')));
+      const sortFin = rows =>
+        rows
+          .slice()
+          .sort((a, b) => String(b.finishedAt || '').localeCompare(String(a.finishedAt || '')))
+          .slice(0, 12);
+
+      const fillCol = (el, rows) => {
+        if (!el) return;
+        el.innerHTML = rows.length
+          ? rows.map(e => renderShopQueueCard(e)).join('')
+          : '<div class="mini-note">None.</div>';
+      };
+
+      fillCol(document.getElementById('shopInternalQueued'), sortQueued(byType('internal', 'queued')));
+      fillCol(
+        document.getElementById('shopInternalProgress'),
+        sortProg(byType('internal', 'in_progress'))
+      );
+      fillCol(document.getElementById('shopInternalFinished'), sortFin(byType('internal', 'finished')));
+
+      fillCol(document.getElementById('shopExternalQueued'), sortQueued(byType('external', 'queued')));
+      fillCol(
+        document.getElementById('shopExternalProgress'),
+        sortProg(byType('external', 'in_progress'))
+      );
+      fillCol(document.getElementById('shopExternalFinished'), sortFin(byType('external', 'finished')));
+
+      fillCol(document.getElementById('shopRoadsideQueued'), sortQueued(byType('roadside', 'queued')));
+      fillCol(
+        document.getElementById('shopRoadsideProgress'),
+        sortProg(byType('roadside', 'in_progress'))
+      );
+      fillCol(document.getElementById('shopRoadsideFinished'), sortFin(byType('roadside', 'finished')));
+
+      const elIWo = document.getElementById('shopInternalWoFallback');
+      const elEWo = document.getElementById('shopExternalWoFallback');
+      const elRWo = document.getElementById('shopRoadsideWoFallback');
       const elO = document.getElementById('shopOosBody');
-      if (!elI || !elE || !elR || !elO) return;
 
-      elI.innerHTML = internal.length
-        ? internal
-            .slice(0, 30)
-            .map(w => fmtWo(w, ''))
-            .join('')
-        : '<div class="mini-note">No internal shop work orders yet.</div>';
-
-      elE.innerHTML = external.length
-        ? external
-            .slice(0, 30)
-            .map(w => fmtWo(w, ''))
-            .join('')
-        : '<div class="mini-note">No external service work orders yet.</div>';
-
-      elR.innerHTML = roadside.length
-        ? roadside
-            .slice(0, 30)
-            .map(w =>
-              fmtWo(
-                w,
-                w.repairLocationType === 'road-service'
-                  ? '<span class="mini-note">Road · </span>'
-                  : '<span class="mini-note">OTR · </span>'
+      if (elIWo) {
+        elIWo.innerHTML = internalWo.length
+          ? internalWo
+              .slice(0, 8)
+              .map(w => fmtWo(w, ''))
+              .join('')
+          : '<div class="mini-note">No internal shop work orders yet.</div>';
+      }
+      if (elEWo) {
+        elEWo.innerHTML = externalWo.length
+          ? externalWo
+              .slice(0, 8)
+              .map(w => fmtWo(w, ''))
+              .join('')
+          : '<div class="mini-note">No external service work orders yet.</div>';
+      }
+      if (elRWo) {
+        elRWo.innerHTML = roadsideWo.length
+          ? roadsideWo
+              .slice(0, 8)
+              .map(w =>
+                fmtWo(
+                  w,
+                  w.repairLocationType === 'road-service'
+                    ? '<span class="mini-note">Road · </span>'
+                    : '<span class="mini-note">OTR · </span>'
+                )
               )
-            )
-            .join('')
-        : '<div class="mini-note">No road side / over-the-road work orders yet.</div>';
+              .join('')
+          : '<div class="mini-note">No road side / over-the-road work orders yet.</div>';
+      }
 
       const recs = (erp.records || []).filter(r => {
         const st = String(r.serviceType || '').toLowerCase();
@@ -2732,14 +3134,18 @@
       for (const r of recs) {
         if (r.unit && !byUnit.has(r.unit)) byUnit.set(r.unit, r);
       }
-      elO.innerHTML = byUnit.size
-        ? [...byUnit.entries()]
-            .map(
-              ([u, r]) =>
-                `<div class="shop-row"><b>${escapeHtml(u)}</b><br><span class="mini-note">${escapeHtml(r.serviceType || '')} · ${escapeHtml(r.serviceDate || '')}</span></div>`
-            )
-            .join('')
-        : '<div class="mini-note">No out-of-service unit records. Save a unit record with service type containing “out of service”.</div>';
+      if (elO) {
+        elO.innerHTML = byUnit.size
+          ? [...byUnit.entries()]
+              .map(
+                ([u, r]) =>
+                  `<div class="shop-row"><b>${escapeHtml(u)}</b><br><span class="mini-note">${escapeHtml(
+                    r.serviceType || ''
+                  )} · ${escapeHtml(r.serviceDate || '')}</span></div>`
+              )
+              .join('')
+          : '<div class="mini-note">No out-of-service unit records. Save a unit record with service type containing “out of service”.</div>';
+      }
     }
 
     function renderMaintenanceUnitList() {
@@ -4003,6 +4409,7 @@
           accidentLocation: document.getElementById('accidentLocationInput').value,
           accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
           repairLocationType: document.getElementById('repairLocationTypeInput').value,
+          assetCategory: activeAssetCategory,
           loadNumber: document.getElementById('recordLoadNumberInput').value,
           vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput').value,
           workOrderNumber: document.getElementById('recordWorkOrderInput').value,
@@ -4046,7 +4453,8 @@
               docNumber: document.getElementById('linkedDocNumber').value,
               description: serviceType,
               memo: memoWithLines,
-              assetUnit: selectedUnit
+              assetUnit: selectedUnit,
+              assetCategory: activeAssetCategory
             })
           });
         }

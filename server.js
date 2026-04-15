@@ -202,7 +202,9 @@ function defaultErpData() {
     erpImportBatches: [],
     /** Bank CSV imports + user links to QBO/ERP rows (reconciliation aid). */
     bankStatementImports: [],
-    bankMatchLinks: []
+    bankMatchLinks: [],
+    /** Shop floor queue: internal / external / roadside repair tracking. */
+    maintenanceShopQueue: []
   };
 }
 
@@ -248,6 +250,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.erpImportBatches)) merged.erpImportBatches = [];
   if (!Array.isArray(merged.bankStatementImports)) merged.bankStatementImports = [];
   if (!Array.isArray(merged.bankMatchLinks)) merged.bankMatchLinks = [];
+  if (!Array.isArray(merged.maintenanceShopQueue)) merged.maintenanceShopQueue = [];
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -2241,6 +2244,205 @@ app.post('/api/maintenance/asset-status', (req, res) => {
   }
 });
 
+function buildUnitCategoryMap(erp) {
+  const m = new Map();
+  for (const wo of erp.workOrders || []) {
+    const u = String(wo.unit || '').trim();
+    if (u && wo.assetCategory) m.set(u, wo.assetCategory);
+  }
+  return m;
+}
+
+const EXPENSE_SUMMARY_CATS = ['Trucks', 'Refrigerated Vans', 'Flatbeds', 'Dry Vans', 'Company Vehicles', 'Other'];
+
+function expenseSummaryByCategory(erp, days) {
+  const n = Math.min(366, Math.max(1, Number(days) || 30));
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - n);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const sums = Object.fromEntries(EXPENSE_SUMMARY_CATS.map(c => [c, 0]));
+  const ucat = buildUnitCategoryMap(erp);
+
+  function catForUnit(u, explicit) {
+    if (explicit && sums[explicit] != null) return explicit;
+    const x = String(u || '').trim();
+    return ucat.get(x) || 'Other';
+  }
+
+  for (const wo of erp.workOrders || []) {
+    const d = String(wo.serviceDate || '').slice(0, 10);
+    if (!d || d < cutoffStr) continue;
+    const cat = catForUnit(wo.unit, wo.assetCategory);
+    for (const line of wo.lines || []) {
+      sums[cat] += safeNum(line.amount, 0) || 0;
+    }
+  }
+  for (const ap of erp.apTransactions || []) {
+    const d = String(ap.txnDate || '').slice(0, 10);
+    if (!d || d < cutoffStr) continue;
+    const cat = catForUnit(ap.assetUnit, ap.assetCategory);
+    sums[cat] += safeNum(ap.amount, 0) || 0;
+  }
+  for (const rec of erp.records || []) {
+    const d = String(rec.serviceDate || '').slice(0, 10);
+    if (!d || d < cutoffStr) continue;
+    const cat = catForUnit(rec.unit, rec.assetCategory);
+    sums[cat] += safeNum(rec.cost, 0) || 0;
+  }
+
+  for (const k of EXPENSE_SUMMARY_CATS) {
+    sums[k] = Math.round(sums[k] * 100) / 100;
+  }
+  const total = Math.round(EXPENSE_SUMMARY_CATS.reduce((s, k) => s + sums[k], 0) * 100) / 100;
+  return { days: n, cutoff: cutoffStr, byCategory: sums, total };
+}
+
+function shopQueueEntryOverdue(entry, nowMs = Date.now()) {
+  const estH = safeNum(entry.estimatedHours, null);
+  if (estH == null || !(estH > 0)) return false;
+  const ms = estH * 3600000;
+  const st = String(entry.status || '');
+  if (st === 'queued' && entry.queuedAt) {
+    return nowMs - new Date(entry.queuedAt).getTime() > ms;
+  }
+  if (st === 'in_progress' && entry.startedAt) {
+    return nowMs - new Date(entry.startedAt).getTime() > ms;
+  }
+  return false;
+}
+
+app.get('/api/maintenance/expense-summary', (req, res) => {
+  try {
+    const days = Number(req.query.days);
+    const erp = readErp();
+    res.json({ ok: true, ...expenseSummaryByCategory(erp, days) });
+  } catch (error) {
+    logError('api/maintenance/expense-summary', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/maintenance/shop-queue', (_req, res) => {
+  try {
+    const erp = readErp();
+    const rows = (erp.maintenanceShopQueue || []).map(e => ({
+      ...e,
+      overdue: shopQueueEntryOverdue(e)
+    }));
+    res.json({ ok: true, queue: rows });
+  } catch (error) {
+    logError('api/maintenance/shop-queue GET', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/maintenance/shop-queue', (req, res) => {
+  try {
+    const body = req.body || {};
+    const unit = String(body.unit || '').trim();
+    const shopType = String(body.shopType || '').trim();
+    const title = String(body.title || 'Repair / service').trim().slice(0, 200);
+    if (!unit) return res.status(400).json({ error: 'unit is required' });
+    if (!['internal', 'external', 'roadside'].includes(shopType)) {
+      return res.status(400).json({ error: 'shopType must be internal, external, or roadside' });
+    }
+    const assetCategory = String(body.assetCategory || 'Trucks').trim().slice(0, 80);
+    const erp = readErp();
+    if (!Array.isArray(erp.maintenanceShopQueue)) erp.maintenanceShopQueue = [];
+    const row = {
+      id: uid('sq'),
+      unit,
+      assetCategory,
+      shopType,
+      status: 'queued',
+      title,
+      workOrderId: String(body.workOrderId || '').trim(),
+      estimatedHours: safeNum(body.estimatedHours, null),
+      vendorHint: String(body.vendorHint || '').trim().slice(0, 120),
+      queuedAt: new Date().toISOString(),
+      startedAt: '',
+      finishedAt: '',
+      delayReasonCode: '',
+      delayReasonNote: '',
+      createdAt: new Date().toISOString()
+    };
+    erp.maintenanceShopQueue.push(row);
+    writeErp(erp);
+    res.json({ ok: true, entry: row });
+  } catch (error) {
+    logError('api/maintenance/shop-queue POST', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/maintenance/shop-queue/:id', (req, res) => {
+  try {
+    const id = String(req.params.id || '').trim();
+    const body = req.body || {};
+    const erp = readErp();
+    const arr = erp.maintenanceShopQueue || [];
+    const idx = arr.findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ error: 'Queue entry not found' });
+
+    const next = { ...arr[idx] };
+    const newStatus = body.status != null ? String(body.status).trim() : next.status;
+    if (!['queued', 'in_progress', 'finished'].includes(newStatus)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    next.status = newStatus;
+
+    if (newStatus === 'in_progress' && !next.startedAt) {
+      next.startedAt = new Date().toISOString();
+    }
+    if (newStatus === 'finished') {
+      next.finishedAt = new Date().toISOString();
+    }
+    if (newStatus === 'queued') {
+      next.startedAt = '';
+      next.finishedAt = '';
+    }
+
+    if (body.delayReasonCode != null) next.delayReasonCode = String(body.delayReasonCode).trim().slice(0, 64);
+    if (body.delayReasonNote != null) next.delayReasonNote = String(body.delayReasonNote).trim().slice(0, 500);
+    if (body.estimatedHours != null) next.estimatedHours = safeNum(body.estimatedHours, null);
+    if (body.title != null) next.title = String(body.title).trim().slice(0, 200);
+
+    const overdue = shopQueueEntryOverdue(next);
+    const hasDelay = String(next.delayReasonCode || '').trim();
+    if (overdue && !hasDelay) {
+      return res.status(400).json({
+        error: 'Past estimated time — select a delay reason (bottleneck)',
+        requiresDelayReason: true,
+        overdue
+      });
+    }
+
+    next.updatedAt = new Date().toISOString();
+    arr[idx] = next;
+    erp.maintenanceShopQueue = arr;
+    writeErp(erp);
+    res.json({ ok: true, entry: { ...next, overdue: shopQueueEntryOverdue(next) } });
+  } catch (error) {
+    logError('api/maintenance/shop-queue PATCH', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/maintenance/shop-queue/:id', (req, res) => {
+  try {
+    const id = String(req.params.id || '').trim();
+    const erp = readErp();
+    const before = (erp.maintenanceShopQueue || []).length;
+    erp.maintenanceShopQueue = (erp.maintenanceShopQueue || []).filter(x => String(x.id) !== id);
+    if (erp.maintenanceShopQueue.length === before) return res.status(404).json({ error: 'Not found' });
+    writeErp(erp);
+    res.json({ ok: true });
+  } catch (error) {
+    logError('api/maintenance/shop-queue DELETE', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/health/db', async (_req, res) => {
   try {
     const { rows } = await dbQuery('SELECT 1 AS ok, current_database() AS database');
@@ -2677,6 +2879,7 @@ app.post('/api/maintenance/record', (req, res) => {
       accidentLocation: String(body.accidentLocation || '').trim(),
       accidentReportNumber: String(body.accidentReportNumber || '').trim(),
       repairLocationType: String(body.repairLocationType || '').trim(),
+      assetCategory: String(body.assetCategory || '').trim().slice(0, 80),
       vendorInvoiceNumber: String(body.vendorInvoiceNumber || '').trim(),
       workOrderNumber: String(body.workOrderNumber || body.vendorWorkOrderNumber || '').trim(),
       qboVendorId: String(body.qboVendorId || '').trim().slice(0, 64),
@@ -3476,6 +3679,7 @@ app.post('/api/erp/ap-transaction', (req, res) => {
       description: body.description || '',
       memo: body.memo || '',
       assetUnit: body.assetUnit || '',
+      assetCategory: String(body.assetCategory || '').trim().slice(0, 80),
       qboSyncStatus: '',
       qboEntityType: '',
       qboEntityId: '',

@@ -1005,4 +1005,46 @@ router.get('/api/pdf/work-order/:id', (req, res) => {
   }
 });
 
+router.get('/api/pdf/shop-queue', (req, res) => {
+  try {
+    const erp = readFullErpJson();
+    const active = (erp.maintenanceShopQueue || []).filter(e => String(e.status || '') !== 'finished');
+    const fn = `shop-queue-${sliceDate(new Date().toISOString())}.pdf`;
+    sendPdf(res, fn, doc => {
+      drawHeaderBand(doc, 'SHOP QUEUE');
+      doc.font('Helvetica').fontSize(10);
+      doc.text(`Open jobs (not finished) · ${sliceDate(new Date().toISOString())}`);
+      doc.moveDown(0.8);
+      const byType = { internal: [], external: [], roadside: [] };
+      for (const e of active) {
+        if (byType[e.shopType]) byType[e.shopType].push(e);
+      }
+      const heads = [
+        ['internal', 'Internal shop'],
+        ['external', 'External service'],
+        ['roadside', 'Road side / OTR']
+      ];
+      for (const [key, title] of heads) {
+        doc.font('Helvetica-Bold').fontSize(11).text(title);
+        doc.font('Helvetica').fontSize(9);
+        const rows = byType[key] || [];
+        if (!rows.length) doc.fillColor('#666666').text('  (no open jobs)');
+        else {
+          doc.fillColor('#000000');
+          rows.forEach(e => {
+            const delay = e.delayReasonCode ? ` · delay: ${e.delayReasonCode}` : '';
+            doc.text(
+              `  ${e.unit || '—'} · ${e.title || 'Job'} · ${e.status || ''} · est ${e.estimatedHours != null ? e.estimatedHours + ' h' : '—'}${delay}`
+            );
+          });
+        }
+        doc.moveDown(0.6);
+      }
+      pdfFooterLine(doc);
+    });
+  } catch (e) {
+    res.status(500).send(e.message || 'PDF failed');
+  }
+});
+
 export default router;
