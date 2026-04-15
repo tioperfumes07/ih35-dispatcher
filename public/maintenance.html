@@ -1673,7 +1673,7 @@
                     <div style="flex:1;min-width:200px">
                       <h2 class="qb-doc-h2">Manual fuel / DEF expense</h2>
                       <p class="mini-note" style="margin:6px 0 0;max-width:96ch">
-                        Same layout as <strong>Maintenance expense transactions</strong>: one vendor and header (payment method, pay-from bank, expense #), then one or more <strong>product lines</strong> (diesel, reefer, DEF). Each line becomes its own fuel row and its own QuickBooks Purchase when you post.
+                        Same layout as <strong>Maintenance expense transactions</strong>: one vendor and header (payment method, pay-from bank, expense #), then one or more <strong>product lines</strong> (diesel, reefer, DEF). Use <strong>Confirm &amp; record to QuickBooks</strong> to save each line and create its Purchase in one step, or <strong>Save to fuel ledger</strong> and post from the grid below.
                       </p>
                     </div>
                     <div class="qb-doc-total-block">
@@ -6276,7 +6276,17 @@
       syncFuelManualClassFromUnit();
     }
 
-    async function saveManualFuelPurchase() {
+    async function saveManualFuelPurchase(opts) {
+      const postToQbo = !!(opts && opts.postToQbo);
+      if (postToQbo) {
+        if (
+          !confirm(
+            'Save each line to the fuel ledger and record each as its own QuickBooks Purchase (expense)?\n\nThis sends one QBO transaction per line using the vendors, accounts, and pay-from bank shown on the row after save.'
+          )
+        ) {
+          return;
+        }
+      }
       resolveFuelManualVendor();
       resolveFuelManualPaymentMethod();
       resolveFuelManualBank();
@@ -6334,8 +6344,8 @@
 
       const nLines = lines.length;
       try {
-        if (hint) hint.textContent = 'Saving…';
-        let saved = 0;
+        if (hint) hint.textContent = postToQbo ? 'Saving…' : 'Saving…';
+        const savedIds = [];
         for (let i = 0; i < lines.length; i++) {
           const ln = lines[i];
           const docForLine = fuelManualDocNumberForLine(baseDocRaw, i, nLines);
@@ -6386,13 +6396,50 @@
           } catch (_) {
             /* draft optional */
           }
-          saved++;
+          if (purchase && purchase.id != null) savedIds.push(String(purchase.id));
         }
-        if (hint) {
+        if (postToQbo && savedIds.length) {
+          if (hint) hint.textContent = 'Saved. Posting to QuickBooks…';
+          await loadFuelExpenseTab();
+          const tf = document.getElementById('fuelExpFrom');
+          const tt = document.getElementById('fuelExpTo');
+          const prevFrom = tf ? String(tf.value || '') : '';
+          const prevTo = tt ? String(tt.value || '') : '';
+          const dKey = String(txnDate || '').slice(0, 10);
+          if (tf && dKey) tf.value = dKey;
+          if (tt && dKey) tt.value = dKey;
+          renderFuelExpenseRows();
+          const fails = [];
+          let ok = 0;
+          for (let i = 0; i < savedIds.length; i++) {
+            const fid = savedIds[i];
+            const pr = await postFuelExpenseToQbo(fid);
+            if (pr.ok) ok++;
+            else fails.push({ fid, err: pr.validationError || pr.error || 'Unknown error' });
+            await new Promise(res => setTimeout(res, 350));
+          }
+          if (tf) tf.value = prevFrom;
+          if (tt) tt.value = prevTo;
+          await loadFuelExpenseTab();
+          renderFuelExpenseRows();
+          if (hint) {
+            hint.textContent =
+              fails.length === 0
+                ? `Posted ${ok} fuel line(s) to QuickBooks. Filter the grid by unit/date to verify.`
+                : `Posted ${ok}; ${fails.length} failed — fix row data and use Record to QuickBooks, or check the banner.`;
+          }
+          if (fails.length) {
+            alert(
+              'Some lines did not post to QuickBooks:\n\n' +
+                fails.map(f => `${f.fid}: ${f.err}`).join('\n')
+            );
+          }
+        } else if (hint) {
+          const saved = savedIds.length;
           hint.textContent =
             saved === 1
-              ? 'Saved — 1 row added. Use Record to QuickBooks when ready.'
-              : `Saved — ${saved} rows added. Use Record to QuickBooks when ready.`;
+              ? 'Saved — 1 row added. Use Confirm & record next time, or Record to QuickBooks on the row.'
+              : `Saved — ${saved} rows added. Use Confirm & record next time, or Record to QuickBooks on each row.`;
         }
         resetManualFuelForm(true);
         await loadFuelExpenseTab();
