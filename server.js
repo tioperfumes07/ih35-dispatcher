@@ -2123,6 +2123,57 @@ async function qboCreateCustomerFromApp(body) {
   return { created: true, customer: created?.Customer || null };
 }
 
+async function qboCreateItemFromApp(body) {
+  const name = sanitizeName(body.name || body.itemName || 'Service');
+  const type = String(body.type || 'Service').trim() || 'Service';
+  const incomeAccountId = String(body.incomeAccountId || '').trim();
+  const expenseAccountId = String(body.expenseAccountId || '').trim();
+  const desc = String(body.description || '').trim().slice(0, 4000);
+
+  const existing = await qboQuery(
+    `select * from Item where Name = '${String(name).replace(/'/g, "\\'")}' maxresults 1`
+  );
+  const existingItem = existing?.QueryResponse?.Item?.[0];
+  if (existingItem) return { created: false, item: existingItem };
+
+  if (!incomeAccountId) throw new Error('incomeAccountId is required');
+  // For Service items, ExpenseAccountRef is optional (purchase side may be disabled in QBO UI),
+  // but if provided we attach it.
+  const payload = {
+    Name: name,
+    Type: type,
+    Active: true,
+    IncomeAccountRef: { value: incomeAccountId },
+    Description: desc || undefined
+  };
+  if (expenseAccountId) payload.ExpenseAccountRef = { value: expenseAccountId };
+
+  const created = await qboPost('item', payload);
+  return { created: true, item: created?.Item || null };
+}
+
+async function qboCreateAccountFromApp(body) {
+  const name = sanitizeName(body.name || body.accountName || 'Account');
+  const accountType = sanitizeName(body.accountType || 'Expense', 'Expense');
+  const accountSubType = sanitizeName(body.accountSubType || '', '');
+
+  const existing = await qboQuery(
+    `select * from Account where Name = '${String(name).replace(/'/g, "\\'")}' maxresults 1`
+  );
+  const existingAcct = existing?.QueryResponse?.Account?.[0];
+  if (existingAcct) return { created: false, account: existingAcct };
+
+  const payload = {
+    Name: name,
+    AccountType: accountType,
+    Active: true
+  };
+  if (accountSubType) payload.AccountSubType = accountSubType;
+
+  const created = await qboPost('account', payload);
+  return { created: true, account: created?.Account || null };
+}
+
 function buildQboSalesItemLine(itemQbo, amount, description, classId) {
   const salesDetail = {
     ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
@@ -6188,6 +6239,28 @@ app.post('/api/qbo/create-customer', async (req, res) => {
     const result = await qboCreateCustomerFromApp(req.body || {});
     const cache = await qboSyncMasterData();
     res.json({ ok: true, created: result.created, customer: result.customer, cache });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/qbo/create-item', async (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const result = await qboCreateItemFromApp(req.body || {});
+    const cache = await qboSyncMasterData();
+    res.json({ ok: true, created: result.created, item: result.item, cache });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/qbo/create-account', async (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const result = await qboCreateAccountFromApp(req.body || {});
+    const cache = await qboSyncMasterData();
+    res.json({ ok: true, created: result.created, account: result.account, cache });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1381,6 +1381,46 @@
                 <p class="mini-note" style="margin-top:10px">New <strong>vendors</strong> can be created here and sync immediately. New <strong>accounts (categories)</strong> and <strong>items</strong> are usually created in QuickBooks Online, then use <strong>Refresh QuickBooks Master</strong> so this app picks them up. Employees are managed in QBO payroll; refresh the master list after changes.</p>
               </div>
 
+              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid #edf1f7">
+                <div class="mini-note">Create Product / Service (QuickBooks)</div>
+                <div class="search-row">
+                  <input id="newItemName" class="qb-in" placeholder="Item name (service)" autocomplete="off">
+                  <select id="newItemType" class="qb-in">
+                    <option value="Service">Service</option>
+                    <option value="NonInventory">Non-inventory</option>
+                  </select>
+                </div>
+                <div class="search-row">
+                  <select id="newItemIncomeAccountId" class="qb-in" title="Required by QBO">
+                    <option value="">Income account (required)</option>
+                  </select>
+                  <select id="newItemExpenseAccountId" class="qb-in" title="Optional purchase-side expense account">
+                    <option value="">Expense account (optional)</option>
+                  </select>
+                </div>
+                <input id="newItemDescription" class="qb-in" placeholder="Description (optional)" autocomplete="off">
+                <button type="button" onclick="createQboItem()">Create Item in QuickBooks</button>
+                <p id="newItemHint" class="mini-note" style="margin:0"></p>
+              </div>
+
+              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid #edf1f7">
+                <div class="mini-note">Create Account / Category (QuickBooks)</div>
+                <div class="search-row">
+                  <input id="newAccountName" class="qb-in" placeholder="Account name" autocomplete="off">
+                  <select id="newAccountType" class="qb-in">
+                    <option value="Expense">Expense</option>
+                    <option value="Cost of Goods Sold">Cost of Goods Sold</option>
+                    <option value="Income">Income</option>
+                    <option value="Other Income">Other Income</option>
+                    <option value="Bank">Bank</option>
+                    <option value="CreditCard">CreditCard</option>
+                  </select>
+                </div>
+                <input id="newAccountSubType" class="qb-in" placeholder="Account sub-type (optional)" autocomplete="off">
+                <button type="button" onclick="createQboAccount()">Create Account in QuickBooks</button>
+                <p id="newAccountHint" class="mini-note" style="margin:0"></p>
+              </div>
+
               <div class="grid grid-3" style="margin-top:14px;">
                 <div class="metric"><div class="metric-label">QuickBooks Vendors</div><div class="metric-value" id="qboVendorCount">0</div></div>
                 <div class="metric"><div class="metric-label">QuickBooks Items</div><div class="metric-value" id="qboItemCount">0</div></div>
@@ -2497,6 +2537,8 @@
     function cacheItems() { return erp.qboCache?.items || []; }
     function cacheAccounts() { return erp.qboCache?.accounts || []; }
     function cacheBankAccounts() { return erp.qboCache?.accountsBank || []; }
+    function cacheIncomeAccounts() { return erp.qboCache?.accountsIncome || []; }
+    function cacheExpenseAccounts() { return erp.qboCache?.accountsExpense || []; }
     function paymentMethods() { return erp.paymentMethods || []; }
 
     function assetCategoryForVehicle(v) {
@@ -3223,6 +3265,74 @@
       }
     }
 
+    async function createQboItem() {
+      const hint = document.getElementById('newItemHint');
+      const name = document.getElementById('newItemName')?.value?.trim();
+      const type = document.getElementById('newItemType')?.value || 'Service';
+      const incomeAccountId = document.getElementById('newItemIncomeAccountId')?.value || '';
+      const expenseAccountId = document.getElementById('newItemExpenseAccountId')?.value || '';
+      const description = document.getElementById('newItemDescription')?.value?.trim() || '';
+      if (!name) {
+        if (hint) hint.textContent = 'Item name is required.';
+        return;
+      }
+      if (!incomeAccountId) {
+        if (hint) hint.textContent = 'Pick an income account.';
+        return;
+      }
+      if (hint) hint.textContent = 'Posting item to QuickBooks…';
+      try {
+        const r = await fetch('/api/qbo/create-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authFetchHeaders(), ...erpWriteHeaders() },
+          body: JSON.stringify({ name, type, incomeAccountId, expenseAccountId, description })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        erp.qboCache = data.cache || erp.qboCache;
+        fillDataLists();
+        renderQboMaster();
+        if (hint) hint.textContent = (data.created ? 'Created item in QBO.' : 'Item already existed — refreshed cache.') + ' Id: ' + (data.item?.Id || '');
+        document.getElementById('newItemName').value = '';
+        document.getElementById('newItemDescription').value = '';
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+      }
+    }
+
+    async function createQboAccount() {
+      const hint = document.getElementById('newAccountHint');
+      const name = document.getElementById('newAccountName')?.value?.trim();
+      const accountType = document.getElementById('newAccountType')?.value || 'Expense';
+      const accountSubType = document.getElementById('newAccountSubType')?.value?.trim() || '';
+      if (!name) {
+        if (hint) hint.textContent = 'Account name is required.';
+        return;
+      }
+      if (hint) hint.textContent = 'Posting account to QuickBooks…';
+      try {
+        const r = await fetch('/api/qbo/create-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authFetchHeaders(), ...erpWriteHeaders() },
+          body: JSON.stringify({ name, accountType, accountSubType })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        erp.qboCache = data.cache || erp.qboCache;
+        fillDataLists();
+        renderQboMaster();
+        if (hint)
+          hint.textContent =
+            (data.created ? 'Created account in QBO.' : 'Account already existed — refreshed cache.') +
+            ' Id: ' +
+            (data.account?.Id || '');
+        document.getElementById('newAccountName').value = '';
+        document.getElementById('newAccountSubType').value = '';
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+      }
+    }
+
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
@@ -3392,6 +3502,25 @@
             .join('');
         termSel.value = cur;
       }
+      // QBO “create item” form account pickers
+      const incSel = document.getElementById('newItemIncomeAccountId');
+      if (incSel) {
+        const cur = incSel.value;
+        const opts = cacheIncomeAccounts();
+        incSel.innerHTML =
+          '<option value="">Income account (required)</option>' +
+          opts.map(a => `<option value="${escapeHtml(String(a.qboId))}">${escapeHtml(a.name || a.qboId)}</option>`).join('');
+        incSel.value = cur;
+      }
+      const expSel = document.getElementById('newItemExpenseAccountId');
+      if (expSel) {
+        const cur = expSel.value;
+        const opts = cacheExpenseAccounts();
+        expSel.innerHTML =
+          '<option value="">Expense account (optional)</option>' +
+          opts.map(a => `<option value="${escapeHtml(String(a.qboId))}">${escapeHtml(a.name || a.qboId)}</option>`).join('');
+        expSel.value = cur;
+      }
       applyMaintenanceFieldWidths();
     }
 
@@ -3553,7 +3682,8 @@
         if (k === 'ArrowDown' || k === 'ArrowUp') {
           e.preventDefault();
           const dir = k === 'ArrowDown' ? 1 : -1;
-          __qbPickerActive.activeIdx = Math.max(0, (__qbPickerActive.activeIdx ?? 0) + dir);
+          const maxIdx = Math.max(0, menu.querySelectorAll('.qb-picker-item').length - 1);
+          __qbPickerActive.activeIdx = Math.min(maxIdx, Math.max(0, (__qbPickerActive.activeIdx ?? 0) + dir));
           qbPickerRender();
           return;
         }
@@ -3572,68 +3702,126 @@
       });
     }
 
+    function qbPickerApplySelectionToInput(input, label) {
+      if (!input) return;
+      input.value = label || '';
+      // Let existing resolve* handlers populate hidden ids.
+      try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (_) {}
+      try { input.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) {}
+      try { input.dispatchEvent(new Event('blur', { bubbles: true })); } catch (_) {}
+    }
+
+    function qbPickerAddNewRoute(kind, typed) {
+      const t = String(typed || '').trim();
+      if (kind === 'vendor') {
+        goToCreateQboVendor();
+        const v = document.getElementById('qboNewVendorDisplayName');
+        if (v && t) v.value = t;
+        v?.focus?.();
+        return;
+      }
+      if (kind === 'item') {
+        openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+        const tab = document.querySelector('#section-accounting .subtab[onclick*="acct-qbo"]');
+        if (tab) openAccountingTab('acct-qbo', tab);
+        const el = document.getElementById('newItemName');
+        if (el && t) el.value = t;
+        el?.focus?.();
+        return;
+      }
+      if (kind === 'account') {
+        openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+        const tab = document.querySelector('#section-accounting .subtab[onclick*="acct-qbo"]');
+        if (tab) openAccountingTab('acct-qbo', tab);
+        const el = document.getElementById('newAccountName');
+        if (el && t) el.value = t;
+        el?.focus?.();
+        return;
+      }
+      if (kind === 'service') {
+        openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]'));
+        try { openCatalogSubpanel('service'); } catch (_) {}
+        const el = document.getElementById('catalogSectionNewServiceName');
+        if (el && t) el.value = t;
+        el?.focus?.();
+      }
+    }
+
+    function qbPickerOptsForInput(input) {
+      const listId = (input.getAttribute('list') || '').trim();
+      if (!listId) return null;
+
+      if (listId === 'qboVendorOptions') {
+        return {
+          rows: () => cacheVendors().map(v => ({ label: v.name || v.qboId, meta: String(v.qboId || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onAddNew: typed => qbPickerAddNewRoute('vendor', typed)
+        };
+      }
+      if (listId === 'qboItemOptions') {
+        return {
+          rows: () => cacheItems().map(i => ({ label: i.name || i.qboId, meta: String(i.qboId || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onAddNew: typed => qbPickerAddNewRoute('item', typed)
+        };
+      }
+      if (listId === 'qboAccountOptions' || listId === 'qboAccountExpenseOptions') {
+        return {
+          rows: () => cacheAccountsForLinked().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onAddNew: typed => qbPickerAddNewRoute('account', typed)
+        };
+      }
+      if (listId === 'qboBankAccountOptions') {
+        return {
+          rows: () => cacheBankAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onAddNew: typed => qbPickerAddNewRoute('account', typed) // create Bank/CreditCard account via same form
+        };
+      }
+      if (listId === 'serviceOptions' || listId === 'servicePresetOptions') {
+        return {
+          rows: () =>
+            (catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES).map(n => ({
+              label: String(n || ''),
+              meta: 'Service'
+            })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onAddNew: typed => qbPickerAddNewRoute('service', typed)
+        };
+      }
+      if (listId === 'paymentMethodOptions') {
+        return {
+          rows: () => paymentMethods().map(p => ({ label: p.name || p.id, meta: String(p.qboType || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label)
+        };
+      }
+      return null;
+    }
+
     function bootQbPickers() {
       if (__qbPickerBooted) return;
       __qbPickerBooted = true;
 
-      const vendorRows = () => cacheVendors().map(v => ({ label: v.name || v.qboId, meta: String(v.qboId || '') }));
-      const serviceRows = () =>
-        (catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES).map(n => ({
-          label: String(n || ''),
-          meta: 'Service'
-        }));
+      document.addEventListener('focusin', e => {
+        const input = e.target;
+        if (!input || input.tagName !== 'INPUT') return;
+        if (!input.getAttribute('list')) return;
+        if (input.dataset.qbPickerAttached === '1') return;
+        const opts = qbPickerOptsForInput(input);
+        if (!opts) return;
+        qbPickerAttach(input.id, opts);
+        // Immediately open menu on first focus (after attach)
+        input.dispatchEvent(new Event('focus'));
+      });
 
-      const pickVendorInto = (inputId, hiddenId, resolveFn) => {
-        qbPickerAttach(inputId, {
-          rows: vendorRows,
-          onPick: it => {
-            const el = document.getElementById(inputId);
-            if (el) el.value = it.label || '';
-            if (typeof resolveFn === 'function') resolveFn();
-            const hid = document.getElementById(hiddenId);
-            if (hid && !hid.value) {
-              // last resort: match by name
-              const m = findBestNameMatch(cacheVendors(), it.label || '');
-              hid.value = m ? m.qboId : '';
-            }
-          },
-          onAddNew: typed => {
-            try {
-              goToCreateQboVendor();
-              const v = document.getElementById('qboNewVendorDisplayName');
-              if (v && typed) v.value = typed;
-              v?.focus?.();
-            } catch (_) {}
-          }
-        });
-      };
-
-      // Vendor pickers used across “catalogs” and “autofill” flows.
-      pickVendorInto('apVendorSearch', 'apVendorQboId', resolveApVendorSearch);
-      pickVendorInto('vendorInput', 'linkedVendorQboId', syncLinkedVendorFromMainVendor);
-      pickVendorInto('bpVendorSearch', 'bpVendorQboId', resolveBpVendorSearch);
-      pickVendorInto('bpLogVendorSearch', 'bpLogVendorQboId', resolveBpLogVendorSearch);
-      pickVendorInto('linkedVendorSearch', 'linkedVendorQboId', resolveLinkedVendorSearch);
-
-      // Service catalog picker (maintenance record).
-      qbPickerAttach('serviceSearchInput', {
-        rows: serviceRows,
-        onPick: it => {
-          const el = document.getElementById('serviceSearchInput');
-          if (el) el.value = it.label || '';
-          resolveServiceSearch();
-        },
-        onAddNew: typed => {
-          try {
-            openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]'));
-          } catch (_) {}
-          try {
-            openCatalogSubpanel('service');
-          } catch (_) {}
-          const inp = document.getElementById('catalogSectionNewServiceName');
-          if (inp && typed) inp.value = typed;
-          inp?.focus?.();
-        }
+      // Attach to any already-rendered list inputs on load.
+      document.querySelectorAll('input[list]').forEach(inp => {
+        if (inp.dataset.qbPickerAttached === '1') return;
+        const opts = qbPickerOptsForInput(inp);
+        if (!opts) return;
+        if (!inp.id) return; // qbPickerAttach expects an id
+        qbPickerAttach(inp.id, opts);
       });
     }
 
