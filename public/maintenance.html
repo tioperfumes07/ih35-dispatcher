@@ -3762,6 +3762,7 @@
         QuickBooks items: ${cacheItems().length}<br>
         QuickBooks accounts: ${cacheAccounts().length}<br>
         Saved maintenance expense transactions: ${(erp.apTransactions || []).length}<br>
+        Bill payments logged (QBO): ${(erp.qboBillPaymentLog || []).length}<br>
         Tire alerts: ${tireAlerts.length}
       `;
     }
@@ -7073,6 +7074,75 @@
         });
       }
 
+      for (const p of erp.qboBillPaymentLog || []) {
+        const vendor = p.vendorName || vendorName(p.vendorQboId) || '—';
+        const payRef = p.qboBillPaymentId ? `BillPayment ${p.qboBillPaymentId}` : '—';
+        const postedAt = p.createdAt ? new Date(p.createdAt).toLocaleString() : '—';
+        const sortDate = String(p.txnDate || '').slice(0, 10) || (p.createdAt || '').slice(0, 10) || '';
+        const lineArr = Array.isArray(p.lines) ? p.lines : [];
+        if (!lineArr.length) {
+          rows.push({
+            kind: 'bpp',
+            sortDate,
+            sortTs: Date.parse(p.createdAt || `${sortDate}T12:00:00`) || 0,
+            date: sortDate || '—',
+            source: 'Bill payment (QBO)',
+            doc: p.qboBillPaymentDocNumber || p.qboBillPaymentId || '—',
+            txnType: `${p.payType || 'Check'} (header)`,
+            vendor,
+            unit: '—',
+            category: p.bankAccountName || '—',
+            itemLine: payRef,
+            qty: '—',
+            amount: Number(p.totalAmt || 0),
+            qboSync: 'posted',
+            qboSyncRaw: 'posted',
+            qboRef: payRef,
+            postedAt,
+            erpId: p.id || '—',
+            notes: [p.privateNote, p.checkNum && `Check #${p.checkNum}`, p.recordedBy && `By ${p.recordedBy}`]
+              .filter(Boolean)
+              .join(' · ')
+              .slice(0, 280),
+            qboError: ''
+          });
+          continue;
+        }
+        for (const ln of lineArr) {
+          const partial = Number(ln.balanceAfter || 0) > 0.01;
+          rows.push({
+            kind: 'bpp',
+            sortDate,
+            sortTs: Date.parse(p.createdAt || `${sortDate}T12:00:00`) || 0,
+            date: sortDate || '—',
+            source: 'Bill payment (QBO)',
+            doc: ln.billDocNumber || ln.billQboId || '—',
+            txnType: `${p.payType || 'Check'}${partial ? ' · partial' : ' · full'}`,
+            vendor,
+            unit: '—',
+            category: p.bankAccountName || '—',
+            itemLine: `${payRef}${p.qboBillPaymentDocNumber ? ` · PM doc ${p.qboBillPaymentDocNumber}` : ''}`,
+            qty: '—',
+            amount: Number(ln.amountPaid || 0),
+            qboSync: 'posted',
+            qboSyncRaw: 'posted',
+            qboRef: [payRef, ln.billQboId && `Bill ${ln.billQboId}`].filter(Boolean).join(' · '),
+            postedAt,
+            erpId: p.id || '—',
+            notes: [
+              p.privateNote,
+              `Remaining on bill: ${Number(ln.balanceAfter || 0).toFixed(2)}`,
+              p.checkNum && `Check #${p.checkNum}`,
+              p.recordedBy && `By ${p.recordedBy}`
+            ]
+              .filter(Boolean)
+              .join(' · ')
+              .slice(0, 280),
+            qboError: ''
+          });
+        }
+      }
+
       for (const wo of erp.workOrders || []) {
         const lines = Array.isArray(wo.lines) ? wo.lines : [];
         const vn = vendorName(wo.qboVendorId) || wo.vendor || '';
@@ -7277,7 +7347,7 @@
         if (from && (!d || d < from)) return false;
         if (to && (!d || d > to)) return false;
         if (q) {
-          const blob = [r.doc, r.vendor, r.unit, r.notes, r.category, r.itemLine, r.txnType, r.erpId, r.source, r.qboSync]
+          const blob = [r.doc, r.vendor, r.unit, r.notes, r.category, r.itemLine, r.txnType, r.erpId, r.source, r.qboSync, r.qboRef]
             .join(' ')
             .toLowerCase();
           if (!blob.includes(q)) return false;
