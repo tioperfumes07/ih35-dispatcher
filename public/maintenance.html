@@ -516,7 +516,7 @@
                   <div class="vendor-row-maint">
                     <div>
                       <span class="qb-l">Vendor (QuickBooks)</span>
-                      <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="Type vendor…" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off">
+                      <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="Type vendor…" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off">
                     </div>
                     <div>
                       <span class="qb-l">Total cost (invoice)</span>
@@ -541,7 +541,7 @@
                     <div class="panel-body form-stack">
                       <p class="mini-note" style="margin:0">
                         <strong>Each row is one repair or service item</strong> on the same vendor invoice (labor, parts, fees). Add lines with <strong>+ Add line</strong> (top or bottom). Each expense line: description from the <strong>maintenance catalog</strong>, <strong>Qty</strong>, <strong>Unit $</strong> (optional). When both qty and unit are set, <strong>Line $</strong> = qty × unit and locks; otherwise type the line total directly. Invoice total above = sum of line amounts.
-                        Optional <strong>multi-position parts</strong> (tires, batteries, air bags, etc.): pick a category, choose position from the list or the mini map, add part # — including for <strong>accident</strong> visits. When at least one cost line is saved, <strong>Save and record</strong> posts a Purchase with one QBO line per row; defaults come from Link accounting when a row’s QBO fields are left blank.
+                        Optional <strong>multi-position parts</strong> (tires, batteries, air bags, etc.): pick a category, choose position from the list or the mini map, add part # — including for <strong>accident</strong> visits. <strong>Link accounting</strong> below mirrors the first line’s QBO mode/account/item (and fills blank per-line QBO fields on post); you can still start from Link accounting and the first line picks it up when its QBO fields are empty.
                       </p>
                       <div class="maint-cost-lines-head" aria-hidden="true">
                         <span>Expense / item</span><span>Qty</span><span>Unit $</span><span>Line $</span><span></span>
@@ -553,10 +553,10 @@
                       </div>
                       <div class="mini-note" id="maintCostLinesSubtotal" style="margin-top:4px"></div>
 
-                      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);max-width:560px">
+                      <div class="maint-print-hide-qbo-link" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);max-width:560px">
                         <div class="panel-title" style="font-size:13px;margin-bottom:6px">Link accounting (QuickBooks)</div>
                         <p class="mini-note" style="margin:0 0 8px">
-                          These fields control how <strong>Save &amp; post to QuickBooks</strong> will create the QBO transaction. This is no longer “auto on save”.
+                          These fields set the <strong>QuickBooks header defaults</strong> for <strong>Save &amp; post</strong>. They stay in sync with the <strong>first cost line</strong> that has a QBO account or item (and with the main vendor + supplier invoice # when those link fields are still empty) so you are not retyping the same vendor, doc #, line mode, category, item, and qty.
                         </p>
                         <div class="search-row">
                           <div>
@@ -602,7 +602,7 @@
                         <div id="linkedItemBlock" class="hidden">
                           <div class="search-row">
                             <input id="linkedItemSearch" class="qb-in maint-field" list="qboItemOptions" placeholder="QBO item / service" oninput="resolveLinkedItemSearch()" onblur="resolveLinkedItemSearch()" />
-                            <input id="linkedQty" class="qb-in maint-field" type="number" step="1" value="1" placeholder="Qty" />
+                            <input id="linkedQty" class="qb-in maint-field" type="number" step="1" value="1" placeholder="Qty" oninput="syncFirstCostLineFromLinkAccounting()" />
                           </div>
                           <input id="linkedItemQboId" type="hidden" />
                         </div>
@@ -769,7 +769,7 @@
                       <div class="maint-wo-banner__refs">
                         <div id="maintWoVendorInvWrap" class="maint-wo-field">
                           <span class="qb-l" id="maintWoVendorInvLabel">Vendor invoice #</span>
-                          <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-wo-input" placeholder="Supplier invoice" autocomplete="off">
+                          <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-wo-input" placeholder="Supplier invoice" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()">
                         </div>
                         <div id="maintWoWoWrap" class="maint-wo-field">
                           <span class="qb-l" id="maintWoWoLabel">Work order #</span>
@@ -2596,6 +2596,9 @@
     let __editingMaintRecordId = null;
     const AUTO_REFRESH_MS = 60000;
     let maintCostLinesDelegationBound = false;
+    let __maintLinkSyncing = false;
+    let __hydratingMaintenanceRecord = false;
+    let __syncMaintLinkAcctRaf = null;
     let maintPartMapDelegationBound = false;
     /** Service catalog option names (width hints + legacy helpers). */
     let __servicePresetList = [];
@@ -3001,7 +3004,31 @@
       }
     }
 
+    function bindMaintPrintWorkOrderOnlyListeners() {
+      if (window.__maintPrintWoOnlyListeners) return;
+      window.__maintPrintWoOnlyListeners = true;
+      window.addEventListener('beforeprint', () => {
+        if (!document.body.classList.contains('erp-maintenance')) return;
+        const sec = document.getElementById('section-maintenance');
+        if (!sec || !sec.classList.contains('active')) return;
+        const rec = document.getElementById('maintMainTabRecord');
+        if (!rec || !rec.classList.contains('active')) return;
+        document.body.classList.add('print-wo-only');
+      });
+      window.addEventListener('afterprint', () => {
+        document.body.classList.remove('print-wo-only');
+      });
+    }
+
+    function maintPreparePrintWorkOrderOnly() {
+      bindMaintPrintWorkOrderOnlyListeners();
+      document.body.classList.add('print-wo-only');
+      const recBtn = document.querySelector('#maintMainSubtabs .subtab[data-maint-main="record"]');
+      openMaintMainTab('record', recBtn);
+    }
+
     function maintPrintWorkOrderView() {
+      maintPreparePrintWorkOrderOnly();
       const el = document.getElementById('maintWoBanner');
       if (el) {
         try {
@@ -8045,12 +8072,14 @@
       const raw = document.getElementById('linkedItemSearch').value;
       const match = findBestNameMatch(cacheItems(), raw);
       document.getElementById('linkedItemQboId').value = match ? match.qboId : '';
+      if (!__hydratingMaintenanceRecord) syncFirstCostLineFromLinkAccounting();
     }
 
     function resolveLinkedAccountSearch() {
       const raw = document.getElementById('linkedAccountSearch').value;
       const match = findBestNameMatch(cacheAccountsForLinked(), raw);
       document.getElementById('linkedAccountQboId').value = match ? match.qboId : '';
+      if (!__hydratingMaintenanceRecord) syncFirstCostLineFromLinkAccounting();
     }
 
     function resolveLinkedPaymentMethodSearch() {
@@ -8302,6 +8331,7 @@
 
       updateMaintCostTotalMatchUi(rounded, hasAmt);
       updateMaintInvoiceCostCoordination(lines, rounded, hasAmt);
+      scheduleSyncMaintLinkAccountingFromCostLines();
     }
 
     function updateMaintInvoiceCostCoordination(lines, rounded, hasAmt) {
@@ -8466,6 +8496,136 @@
         linkedSearch.value = match.name || match.companyName || raw;
         if (linkedId) linkedId.value = match.qboId;
       }
+    }
+
+    function scheduleSyncMaintLinkAccountingFromCostLines() {
+      if (__hydratingMaintenanceRecord) return;
+      if (__syncMaintLinkAcctRaf) cancelAnimationFrame(__syncMaintLinkAcctRaf);
+      __syncMaintLinkAcctRaf = requestAnimationFrame(() => {
+        __syncMaintLinkAcctRaf = null;
+        syncMaintLinkAccountingFromCostLines();
+      });
+    }
+
+    /** Copy first cost line QBO fields (+ header hints) into Link accounting so defaults are not retyped. */
+    function syncMaintLinkAccountingFromCostLines() {
+      if (__hydratingMaintenanceRecord || __maintLinkSyncing) return;
+      __maintLinkSyncing = true;
+      try {
+        syncLinkedVendorFromMainVendor();
+        const invNo = String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
+        const docEl = document.getElementById('linkedDocNumber');
+        if (docEl && invNo && !String(docEl.value || '').trim()) docEl.value = invNo;
+
+        const host = document.getElementById('maintCostLinesHost');
+        const rows = host ? host.querySelectorAll('.maint-cost-line') : [];
+        let src = null;
+        for (const row of rows) {
+          const acct = (row.querySelector('.maint-line-acct-id')?.value || '').trim();
+          const item = (row.querySelector('.maint-line-item-id')?.value || '').trim();
+          if (acct || item) {
+            src = row;
+            break;
+          }
+        }
+        if (!src) return;
+
+        const mode = (src.querySelector('.maint-line-mode')?.value || 'category').trim();
+        const ldm = document.getElementById('linkedDetailModeSelect');
+        if (ldm && (mode === 'item' || mode === 'category')) {
+          ldm.value = mode === 'item' ? 'item' : 'category';
+          toggleLinkedDetailMode();
+        }
+
+        if (mode === 'item') {
+          const iid = (src.querySelector('.maint-line-item-id')?.value || '').trim();
+          const is = String(src.querySelector('.maint-line-item-search')?.value || '').trim();
+          const qtyRaw = String(src.querySelector('.maint-line-qty')?.value || '').trim();
+          const li = document.getElementById('linkedItemSearch');
+          const lid = document.getElementById('linkedItemQboId');
+          const lq = document.getElementById('linkedQty');
+          if (lid) lid.value = iid;
+          if (li) li.value = is || (iid ? maintItemLabelByQboId(iid) : '');
+          if (lq && qtyRaw) lq.value = qtyRaw;
+          const laid = document.getElementById('linkedAccountQboId');
+          const la = document.getElementById('linkedAccountSearch');
+          if (laid) laid.value = '';
+          if (la) la.value = '';
+        } else {
+          const aid = (src.querySelector('.maint-line-acct-id')?.value || '').trim();
+          const asr = String(src.querySelector('.maint-line-acct-search')?.value || '').trim();
+          const la = document.getElementById('linkedAccountSearch');
+          const laid = document.getElementById('linkedAccountQboId');
+          if (laid) laid.value = aid;
+          if (la) la.value = asr || (aid ? maintAccountLabelByQboId(aid) : '');
+          const lid = document.getElementById('linkedItemQboId');
+          const li = document.getElementById('linkedItemSearch');
+          if (lid) lid.value = '';
+          if (li) li.value = '';
+        }
+      } finally {
+        __maintLinkSyncing = false;
+      }
+    }
+
+    /** When the first cost line has no QBO account/item yet, copy Link accounting into that row. */
+    function syncFirstCostLineFromLinkAccounting() {
+      if (__hydratingMaintenanceRecord || __maintLinkSyncing) return;
+      const host = document.getElementById('maintCostLinesHost');
+      const first = host?.querySelector('.maint-cost-line');
+      if (!first) return;
+      const lineAcct = (first.querySelector('.maint-line-acct-id')?.value || '').trim();
+      const lineItem = (first.querySelector('.maint-line-item-id')?.value || '').trim();
+      const ldm = document.getElementById('linkedDetailModeSelect')?.value || 'category';
+      const lItem = String(document.getElementById('linkedItemQboId')?.value || '').trim();
+      if (ldm === 'item' && lineItem && lItem && lineItem === lItem) {
+        const lq = String(document.getElementById('linkedQty')?.value || '').trim();
+        const qty = first.querySelector('.maint-line-qty');
+        if (qty && lq) qty.value = lq || '1';
+        recalcMaintLineRowInputs(first);
+        recalcMaintCostTotalFromLines();
+        return;
+      }
+      if (lineAcct || lineItem) return;
+
+      __maintLinkSyncing = true;
+      try {
+        const modeSel = first.querySelector('.maint-line-mode');
+        if (modeSel) {
+          modeSel.value = ldm === 'item' ? 'item' : 'category';
+          toggleMaintCostLineMode(modeSel);
+        }
+        if (ldm === 'item') {
+          const lid = String(document.getElementById('linkedItemQboId')?.value || '').trim();
+          const lit = String(document.getElementById('linkedItemSearch')?.value || '').trim();
+          const lq = String(document.getElementById('linkedQty')?.value || '').trim();
+          const iid = first.querySelector('.maint-line-item-id');
+          const is = first.querySelector('.maint-line-item-search');
+          const qty = first.querySelector('.maint-line-qty');
+          if (iid) iid.value = lid;
+          if (is) is.value = lit || (lid ? maintItemLabelByQboId(lid) : '');
+          if (qty && lq) qty.value = lq || '1';
+          const aid = first.querySelector('.maint-line-acct-id');
+          const ase = first.querySelector('.maint-line-acct-search');
+          if (aid) aid.value = '';
+          if (ase) ase.value = '';
+        } else {
+          const aid = String(document.getElementById('linkedAccountQboId')?.value || '').trim();
+          const asr = String(document.getElementById('linkedAccountSearch')?.value || '').trim();
+          const hid = first.querySelector('.maint-line-acct-id');
+          const inp = first.querySelector('.maint-line-acct-search');
+          if (hid) hid.value = aid;
+          if (inp) inp.value = asr || (aid ? maintAccountLabelByQboId(aid) : '');
+          const iid = first.querySelector('.maint-line-item-id');
+          const is = first.querySelector('.maint-line-item-search');
+          if (iid) iid.value = '';
+          if (is) is.value = '';
+        }
+        recalcMaintLineRowInputs(first);
+      } finally {
+        __maintLinkSyncing = false;
+      }
+      recalcMaintCostTotalFromLines();
     }
 
     function openCatalogSubpanel(which, btn) {
@@ -9317,6 +9477,7 @@
       const mode = document.getElementById('linkedDetailModeSelect').value;
       document.getElementById('linkedCategoryBlock').classList.toggle('hidden', mode !== 'category');
       document.getElementById('linkedItemBlock').classList.toggle('hidden', mode !== 'item');
+      if (!__hydratingMaintenanceRecord) syncFirstCostLineFromLinkAccounting();
     }
 
     const tirePositionMap = {
@@ -10241,15 +10402,17 @@
 
     function hydrateMaintenanceRecordForm(r) {
       if (!r) return;
-      const targetUnit = String(r.unit || '').trim();
-      if (!targetUnit) {
-        alert('This record has no unit; cannot load into the form.');
-        return;
-      }
-      if (targetUnit !== selectedUnit) {
-        if (!confirm(`This record is for unit ${targetUnit}. Switch the selected asset to load it?`)) return;
-        selectUnit(targetUnit, { preserveEditMode: true });
-      }
+      __hydratingMaintenanceRecord = true;
+      try {
+        const targetUnit = String(r.unit || '').trim();
+        if (!targetUnit) {
+          alert('This record has no unit; cannot load into the form.');
+          return;
+        }
+        if (targetUnit !== selectedUnit) {
+          if (!confirm(`This record is for unit ${targetUnit}. Switch the selected asset to load it?`)) return;
+          selectUnit(targetUnit, { preserveEditMode: true });
+        }
       __editingMaintRecordId = String(r.id || '').trim() || null;
       updateMaintEditRecordHint();
 
@@ -10396,6 +10559,9 @@
       const veh = vehicles.find(x => x.name === selectedUnit);
       updateServiceMileageHint(veh, resolvedServiceMileageRecommendation(selectedUnit));
       openMaintMainTab('record', document.querySelector('#maintMainSubtabs [data-maint-main="record"]'));
+      } finally {
+        __hydratingMaintenanceRecord = false;
+      }
     }
 
     async function loadMaintRecordIntoForm(recordId) {
@@ -10665,6 +10831,7 @@
           openAccountingDraftFromMaintenanceForm();
         }
         if (toPrint) {
+          maintPreparePrintWorkOrderOnly();
           setTimeout(() => window.print(), 50);
         }
         if (hint) {
@@ -12388,6 +12555,7 @@
 
     loadErpSidebarPreference();
     loadUnitListPreference();
+    bindMaintPrintWorkOrderOnlyListeners();
     renderRepairLocationChips();
     const __mph = document.getElementById('maintPlannedServicesHost');
     if (__mph && !__mph.querySelector('.maint-planned-row')) resetMaintPlannedServiceRows();

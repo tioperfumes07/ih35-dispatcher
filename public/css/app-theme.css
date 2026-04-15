@@ -2698,6 +2698,62 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
   body.erp-maintenance .shop-q-print-only {
     display: block !important;
   }
+
+  /* Work order only: set on body via maintPreparePrintWorkOrderOnly() before print */
+  body.erp-maintenance.print-wo-only #section-tracking.section {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only .topbar,
+  body.erp-maintenance.print-wo-only #authBanner,
+  body.erp-maintenance.print-wo-only #qboSyncAlertBar {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only .maint-top-toolbar,
+  body.erp-maintenance.print-wo-only #maintMainSubtabs,
+  body.erp-maintenance.print-wo-only .maint-workorder-category-strip,
+  body.erp-maintenance.print-wo-only #maintenanceSplit > .unit-list-panel,
+  body.erp-maintenance.print-wo-only #maintMainTabFleet,
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .split .grid > .panel:not(.maint-section-card),
+  body.erp-maintenance.print-wo-only .maint-print-hide-qbo-link {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintMainTabRecord.maint-main-tab-panel {
+    display: block !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintMainTabFleet.maint-main-tab-panel {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintenanceSplit {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .search-row:has(#maintNewCatalogServiceName),
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .search-row:has(#maintInvoicePdfInput),
+  body.erp-maintenance.print-wo-only #maintMainTabRecord #maintCatalogServiceHint {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintMainTabRecord button {
+    display: none !important;
+  }
+
+  /* Asset panel: keep identity lines, drop roster / status / parts-reference tooling */
+  body.erp-maintenance.print-wo-only #maintMainTabRecord #selectedUnitInfo > div {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .split .grid > .panel.maint-section-card > .panel-head {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .unit-summary {
+    display: none !important;
+  }
 }
 
 /* Accounting → Fuel expenses: Relay import preview uses viewport height so tables are readable */
