@@ -868,7 +868,7 @@
 
         <div id="tr-maint-shop" class="tracking-sub hidden">
           <p class="mini-note" style="margin:0 0 12px;max-width:78ch">
-            Shop queue, expense rollups, exports, and integrity / fuel / parts alerts — use <strong>Maintenance → Create work order</strong> to log service; <strong>Fleet table</strong> for the full maintenance grid. Bookmark <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, or <code>#maintenance-fleet</code> to open this board on the right sub-tab.
+            Shop queue, expense rollups, exports, and integrity / fuel / parts alerts. Log service under <strong>Maintenance → Create work order</strong>; full grid under <strong>Maintenance → Fleet table</strong>. Deep links: <code>#tracking-shop</code> or <code>#maintenance-shop</code> (this tab), <code>#maintenance-parts</code> (opens here + parts queue), <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>.
           </p>
           <div class="panel shop-print-area maint-section-card">
             <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
@@ -1451,7 +1451,7 @@
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
                 <div style="min-width:220px;flex:1">
                   <span class="qb-l">Search live bills (QuickBooks)</span>
-                  <input id="bpQbLiveSearch" class="qb-in" placeholder="Vendor name, doc #, bill id…" />
+                  <input id="bpQbLiveSearch" class="qb-in" placeholder="Vendor name, doc #, bill id…" onkeydown="if(event.key==='Enter'){event.preventDefault();loadAccountingOpenBills();}" />
                 </div>
                 <div>
                   <span class="qb-l">&nbsp;</span>
@@ -1630,79 +1630,93 @@
             >
               Fuel lines are <strong>not</strong> in QuickBooks until you choose <strong>Record to QuickBooks</strong> on each row (or Record filtered). After posting, use <strong>Verify in QuickBooks</strong> on a posted row to confirm the Purchase still exists in your company file.
             </div>
-            <div class="panel-body form-stack">
+            <div class="panel-body form-stack fuel-expense-stack">
               <p class="mini-note" style="margin:0 0 10px">
                 Record each row as its own QuickBooks <strong>Purchase (Expense)</strong>. Default is an <strong>expense category</strong> line (Diesel / DEF / Reefer mapped to your chart of accounts) with <strong>Class</strong> = truck/unit. Uncheck “category” to post as a QBO <strong>fuel item</strong> (qty × $/unit).
                 Pick the <strong>vendor</strong> (fuel merchant), optional <strong>driver</strong> (name + driver-pay QBO vendor), and optional <strong>customer</strong> on the line when you bill or track by driver entity.
-                Row edits (class, vendor, item, qty, driver, etc.) <strong>save to ERP</strong> automatically after a short pause when the <strong>ERP write secret</strong> is set in Settings (same as posting).
+                Row edits (class, vendor, item, qty, driver, payment method, pay-from account, expense #, etc.) <strong>save to ERP</strong> automatically after a short pause when the <strong>ERP write secret</strong> is set in Settings (same as posting).
               </p>
-              <div class="panel maint-section-card" style="margin:0 0 14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fafcff">
-                <div class="panel-title" style="font-size:15px;margin-bottom:8px">Manual fuel / DEF (card, cash, other — not from Relay)</div>
-                <p class="mini-note" style="margin:0 0 10px;max-width:96ch">
-                  Creates a <strong>fuel purchase row</strong> in this app (same list as imports). Then use <strong>Record to QuickBooks</strong> on that row with the pay-from bank/card above. Product type drives default <strong>expense account</strong> mapping (diesel vs reefer vs DEF). Note payment method (Comdata, company card, cash, etc.) in the memo.
-                </p>
-                <div class="wo-line-grid" style="margin-bottom:0">
-                  <div>
-                    <span class="qb-l">Date</span>
-                    <input id="fuelManualDate" class="qb-in" type="date" />
+              <div class="panel qb-panel qb-doc-shell" style="margin:0 0 14px">
+                <div class="qb-doc-head">
+                  <div class="qb-doc-title-row">
+                    <div style="flex:1;min-width:200px">
+                      <h2 class="qb-doc-h2">Manual fuel / DEF expense</h2>
+                      <p class="mini-note" style="margin:6px 0 0;max-width:96ch">
+                        Same layout as <strong>Maintenance expense transactions</strong>: one vendor and header (payment method, pay-from bank, expense #), then one or more <strong>product lines</strong> (diesel, reefer, DEF). Each line becomes its own fuel row and its own QuickBooks Purchase when you post.
+                      </p>
+                    </div>
+                    <div class="qb-doc-total-block">
+                      <span class="qb-l">Lines total</span>
+                      <div class="qb-doc-total-amt" id="fuelManualHeaderTotal">$0.00</div>
+                    </div>
                   </div>
-                  <div style="grid-column:span 2">
-                    <span class="qb-l">Truck / unit</span>
-                    <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit #" autocomplete="off" />
+                </div>
+                <div class="panel-body form-stack qb-doc-body">
+                  <div class="wo-line-grid">
+                    <div style="grid-column:span 2">
+                      <span class="qb-l">Vendor (QuickBooks)</span>
+                      <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
+                      <input type="hidden" id="fuelManualVendorQboId" />
+                    </div>
+                    <div>
+                      <span class="qb-l">Expense # (QBO DocNumber)</span>
+                      <input id="fuelManualExpenseDoc" class="qb-in" maxlength="24" placeholder="e.g. 4821-0415" autocomplete="off" />
+                    </div>
+                    <div>
+                      <span class="qb-l">Txn date</span>
+                      <input id="fuelManualDate" class="qb-in" type="date" />
+                    </div>
+                    <div style="grid-column:span 2">
+                      <span class="qb-l">Truck / unit</span>
+                      <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit #" autocomplete="off" />
+                    </div>
+                    <div style="grid-column:span 2">
+                      <span class="qb-l">QuickBooks class (optional)</span>
+                      <select id="fuelManualClassSel" class="qb-in">
+                        <option value="">— Match unit name —</option>
+                      </select>
+                    </div>
+                    <div style="grid-column:span 2">
+                      <span class="qb-l">Payment method</span>
+                      <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
+                      <input type="hidden" id="fuelManualPaymentMethodId" />
+                    </div>
+                    <div style="grid-column:span 2">
+                      <span class="qb-l">Pay from bank account (QuickBooks)</span>
+                      <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
+                      <input type="hidden" id="fuelManualBankQboId" />
+                    </div>
+                    <div style="grid-column:span 2">
+                      <span class="qb-l">Location / site (optional)</span>
+                      <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
+                    </div>
                   </div>
-                  <div>
-                    <span class="qb-l">Product</span>
-                    <select id="fuelManualProductType" class="qb-in">
-                      <option value="diesel">On-highway diesel</option>
-                      <option value="reefer">Reefer diesel</option>
-                      <option value="def">DEF (diesel exhaust fluid)</option>
-                    </select>
+                  <div style="margin:4px 0 0;font-weight:700;font-size:12px;color:#334155">Fuel product lines</div>
+                  <div class="qb-lines-wrap">
+                    <div class="qb-lines-header fuel-manual-lines-head" aria-hidden="true">
+                      <span>#</span><span>Product</span><span>QBO item (optional)</span><span>Gal</span><span>$/gal</span><span class="num">Line $</span><span>Lock $</span><span></span>
+                    </div>
+                    <div id="fuelManualLines"></div>
+                    <div class="qb-lines-actions">
+                      <button type="button" class="qb-btn-add" onclick="addFuelManualLine()">+ Add line</button>
+                      <span class="mini-note" style="margin:0">Multiple lines share the header; each line is saved as its own row. If you enter an expense #, extra lines use <code>-L2</code>, <code>-L3</code>… so QuickBooks DocNumbers stay unique.</span>
+                    </div>
                   </div>
-                  <div style="grid-column:span 2">
-                    <span class="qb-l">QuickBooks class (optional)</span>
-                    <select id="fuelManualClassSel" class="qb-in">
-                      <option value="">— Match unit name —</option>
-                    </select>
+                  <div class="qb-doc-memo-row fuel-manual-memo-row">
+                    <div>
+                      <span class="qb-l">Memo (QuickBooks private note)</span>
+                      <textarea id="fuelManualMemo" class="qb-memo" rows="2" placeholder="e.g. Pilot 35 · card last 4"></textarea>
+                    </div>
+                    <div class="mini-note" style="align-self:end">Payment method and pay-from account are saved on each row for posting.</div>
                   </div>
-                  <div style="grid-column:span 2">
-                    <span class="qb-l">Vendor (QuickBooks)</span>
-                    <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
-                    <input type="hidden" id="fuelManualVendorQboId" />
-                  </div>
-                  <div style="grid-column:span 2">
-                    <span class="qb-l">QBO item / service (optional)</span>
-                    <input id="fuelManualItemSearch" class="qb-in" list="qboItemOptions" placeholder="Fuel item for item-based posting" autocomplete="off" oninput="resolveFuelManualItem()" onblur="resolveFuelManualItem()" />
-                    <input type="hidden" id="fuelManualItemQboId" />
-                  </div>
-                  <div>
-                    <span class="qb-l">Gallons</span>
-                    <input id="fuelManualGallons" class="qb-in" type="number" step="0.001" min="0" placeholder="0" />
-                  </div>
-                  <div>
-                    <span class="qb-l">Price / gal</span>
-                    <input id="fuelManualPpg" class="qb-in" type="number" step="0.0001" min="0" placeholder="0.0000" />
-                  </div>
-                  <div>
-                    <span class="qb-l">Total $</span>
-                    <input id="fuelManualTotal" class="qb-in" type="number" step="0.01" min="0" placeholder="0.00" />
-                  </div>
-                  <div style="grid-column:span 2;display:flex;align-items:center;gap:10px;padding-top:4px">
-                    <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:0">
-                      <input type="checkbox" id="fuelManualTotalLock" />
-                      <span>Lock total (edit dollars; gallons × price ignored)</span>
-                    </label>
-                  </div>
-                  <div style="grid-column:span 2">
-                    <span class="qb-l">Location / site (optional)</span>
-                    <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
-                  </div>
-                  <div style="grid-column:span 2">
-                    <span class="qb-l">Memo (payment method, card last-4, etc.)</span>
-                    <input id="fuelManualMemo" class="qb-in" placeholder="e.g. Comdata · Visa 4821 · cash" autocomplete="off" />
-                  </div>
-                  <div style="grid-column:span 2;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                    <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase()">Save manual row</button>
-                    <span id="fuelManualSaveHint" class="mini-note" style="margin:0"></span>
+                  <div class="qb-doc-actions">
+                    <div class="qb-actions-left">
+                      <button type="button" onclick="resetManualFuelForm(false)">Clear</button>
+                    </div>
+                    <div class="qb-actions-right" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                      <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase()">Save row(s)</button>
+                      <span id="fuelManualSaveHint" class="mini-note" style="margin:0"></span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1786,11 +1800,13 @@
               </div>
               <div id="fuelExpStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
               <div class="table-wrap st-settlement-wrap fuel-exp-table-wrap" style="min-width:0;width:100%;max-width:100%">
-                <table class="st-settlement fuel-exp-table" style="min-width:1560px;width:max-content;max-width:none">
+                <table class="st-settlement fuel-exp-table" style="min-width:1720px;width:max-content;max-width:none">
                   <thead>
                     <tr>
                       <th>Date</th>
                       <th>Expense #</th>
+                      <th>Payment method</th>
+                      <th>Pay from</th>
                       <th>Unit</th>
                       <th>QB class (unit)</th>
                       <th>QB vendor</th>
@@ -1808,7 +1824,7 @@
                     </tr>
                   </thead>
                   <tbody id="fuelExpBody">
-                    <tr><td colspan="16" class="mini-note">—</td></tr>
+                    <tr><td colspan="18" class="mini-note">—</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3752,7 +3768,7 @@
         openReportsTab('rep-team', sub);
         return;
       }
-      if (section === 'tracking-shop') {
+      if (section === 'tracking-shop' || section === 'maintenance-shop') {
         openSectionByName('tracking');
         const tb = document.querySelector('#section-tracking .subtab[onclick*="tr-maint-shop"]');
         openTrackingTab('tr-maint-shop', tb);
@@ -5733,6 +5749,14 @@
         if (!t || !t.classList) return;
         if (t.classList.contains('fuel-qty') || t.classList.contains('fuel-unit') || t.classList.contains('fuel-line')) {
           fuelExpenseRecalcLine(t);
+          return;
+        }
+        const trIn = t.closest('tr[data-fuel-id]');
+        if (
+          trIn &&
+          (t.classList.contains('fuel-exp-doc') || t.classList.contains('fuel-pm') || t.classList.contains('fuel-bank'))
+        ) {
+          fuelExpenseSaveDraft(trIn);
         }
       });
       tb.addEventListener('change', e => {
@@ -5811,7 +5835,12 @@
         driverVendSearch: tr.querySelector('.fuel-driver-vend')?.value || '',
         driverVendId: tr.querySelector('.fuel-driver-vend-id')?.value || '',
         custSearch: tr.querySelector('.fuel-cust')?.value || '',
-        custId: tr.querySelector('.fuel-cust-id')?.value || ''
+        custId: tr.querySelector('.fuel-cust-id')?.value || '',
+        expenseDocNumber: tr.querySelector('.fuel-exp-doc')?.value || '',
+        paymentMethodSearch: tr.querySelector('.fuel-pm')?.value || '',
+        paymentMethodId: tr.querySelector('.fuel-pm-id')?.value || '',
+        bankSearch: tr.querySelector('.fuel-bank')?.value || '',
+        qboBankAccountId: tr.querySelector('.fuel-bank-id')?.value || ''
       };
       schedulePersistFuelExpenseDraft(id);
     }
@@ -5852,6 +5881,26 @@
       fuelExpenseSaveDraft(tr);
     }
 
+    function blurFuelRowPaymentMethod(inp) {
+      if (!inp || !inp.closest) return;
+      const tr = inp.closest('tr[data-fuel-id]');
+      if (!tr) return;
+      const hid = tr.querySelector('.fuel-pm-id');
+      const m = findBestNameMatch(paymentMethods(), inp.value);
+      if (hid) hid.value = m ? String(m.id) : '';
+      fuelExpenseSaveDraft(tr);
+    }
+
+    function blurFuelRowBank(inp) {
+      if (!inp || !inp.closest) return;
+      const tr = inp.closest('tr[data-fuel-id]');
+      if (!tr) return;
+      const hid = tr.querySelector('.fuel-bank-id');
+      const m = findBestNameMatch(cacheBankAccounts(), inp.value);
+      if (hid) hid.value = m ? m.qboId : '';
+      fuelExpenseSaveDraft(tr);
+    }
+
     function fuelExpensePopulateManualClassSelect() {
       const sel = document.getElementById('fuelManualClassSel');
       if (!sel) return;
@@ -5865,15 +5914,115 @@
       if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
     }
 
-    function recalcFuelManualTotals() {
-      const gal = Number(document.getElementById('fuelManualGallons')?.value);
-      const ppg = Number(document.getElementById('fuelManualPpg')?.value);
-      const totEl = document.getElementById('fuelManualTotal');
-      const lock = document.getElementById('fuelManualTotalLock')?.checked;
-      if (!totEl || lock) return;
-      if (Number.isFinite(gal) && gal > 0 && Number.isFinite(ppg) && ppg >= 0) {
-        totEl.value = (Math.round(gal * ppg * 100) / 100).toFixed(2);
+    function fuelManualDocNumberForLine(baseRaw, lineIndex, totalLines) {
+      let base = String(baseRaw || '')
+        .replace(/[^\w.-]/g, '')
+        .trim()
+        .slice(0, 21);
+      if (!base) return '';
+      if (totalLines <= 1) return base;
+      const suf = `-L${lineIndex + 1}`;
+      const maxBase = Math.max(1, 21 - suf.length);
+      return (base.slice(0, maxBase) + suf).slice(0, 21);
+    }
+
+    function fuelManualLineRowHtml() {
+      return `<div class="fuel-manual-line-row">
+      <span class="mini-note fuel-manual-line-n" style="padding-top:6px">1</span>
+      <select class="fuel-manual-prod qb-in">
+        <option value="diesel">On-highway diesel</option>
+        <option value="reefer">Reefer diesel</option>
+        <option value="def">DEF</option>
+      </select>
+      <div>
+        <input class="fuel-manual-item qb-in" list="qboItemOptions" placeholder="QBO item (optional)" autocomplete="off" onblur="fuelManualBlurLineItem(this)" />
+        <input type="hidden" class="fuel-manual-item-id" />
+      </div>
+      <input type="number" class="fuel-manual-gal qb-in" step="0.001" min="0" placeholder="0" />
+      <input type="number" class="fuel-manual-ppg qb-in" step="0.0001" min="0" placeholder="0" />
+      <input type="number" class="fuel-manual-total qb-in" step="0.01" min="0" placeholder="0.00" />
+      <label class="mini-note" style="display:flex;align-items:center;gap:6px;margin:0;padding-top:4px">
+        <input type="checkbox" class="fuel-manual-lock" />
+        <span>Lock $</span>
+      </label>
+      <button type="button" class="btn" onclick="removeFuelManualLine(this)" title="Remove line">×</button>
+    </div>`;
+    }
+
+    function renumberFuelManualLines() {
+      const host = document.getElementById('fuelManualLines');
+      if (!host) return;
+      const rows = host.querySelectorAll('.fuel-manual-line-row');
+      rows.forEach((row, i) => {
+        const lab = row.querySelector('.fuel-manual-line-n');
+        if (lab) lab.textContent = String(i + 1);
+      });
+    }
+
+    function recalcFuelManualSingleLine(row, sourceEl) {
+      if (!row) return;
+      const galEl = row.querySelector('.fuel-manual-gal');
+      const ppgEl = row.querySelector('.fuel-manual-ppg');
+      const totEl = row.querySelector('.fuel-manual-total');
+      const lockEl = row.querySelector('.fuel-manual-lock');
+      if (!galEl || !ppgEl || !totEl || !lockEl) return;
+      const gal = Number(galEl.value);
+      const ppg = Number(ppgEl.value);
+      const lock = !!lockEl.checked;
+      if (!lock && (sourceEl === galEl || sourceEl === ppgEl || sourceEl === lockEl)) {
+        if (Number.isFinite(gal) && gal > 0 && Number.isFinite(ppg) && ppg >= 0) {
+          totEl.value = (Math.round(gal * ppg * 100) / 100).toFixed(2);
+        }
       }
+      if (!lock && sourceEl === totEl) {
+        const tot = Number(totEl.value);
+        if (Number.isFinite(gal) && gal > 0 && Number.isFinite(tot) && tot >= 0) {
+          ppgEl.value = String(Math.round((tot / gal) * 10000) / 10000);
+        }
+      }
+      fuelManualUpdateHeaderTotal();
+    }
+
+    function fuelManualUpdateHeaderTotal() {
+      const host = document.getElementById('fuelManualLines');
+      const out = document.getElementById('fuelManualHeaderTotal');
+      if (!host || !out) return;
+      let sum = 0;
+      host.querySelectorAll('.fuel-manual-total').forEach(el => {
+        const v = Number(el.value);
+        if (Number.isFinite(v) && v > 0) sum += v;
+      });
+      out.textContent = '$' + sum.toFixed(2);
+    }
+
+    function addFuelManualLine() {
+      const host = document.getElementById('fuelManualLines');
+      if (!host) return;
+      host.insertAdjacentHTML('beforeend', fuelManualLineRowHtml());
+      renumberFuelManualLines();
+      fuelManualUpdateHeaderTotal();
+    }
+
+    function removeFuelManualLine(btn) {
+      const host = document.getElementById('fuelManualLines');
+      const row = btn && btn.closest ? btn.closest('.fuel-manual-line-row') : null;
+      if (!host || !row) return;
+      const rows = host.querySelectorAll('.fuel-manual-line-row');
+      if (rows.length <= 1) {
+        alert('Keep at least one product line.');
+        return;
+      }
+      row.remove();
+      renumberFuelManualLines();
+      fuelManualUpdateHeaderTotal();
+    }
+
+    function fuelManualBlurLineItem(inp) {
+      const row = inp.closest('.fuel-manual-line-row');
+      if (!row) return;
+      const hid = row.querySelector('.fuel-manual-item-id');
+      const m = findBestNameMatch(cacheItems(), inp.value);
+      if (hid) hid.value = m ? m.qboId : '';
     }
 
     function resolveFuelManualVendor() {
@@ -5883,42 +6032,103 @@
       if (hid) hid.value = m ? m.qboId : '';
     }
 
-    function resolveFuelManualItem() {
-      const raw = document.getElementById('fuelManualItemSearch')?.value || '';
-      const m = findBestNameMatch(cacheItems(), raw);
-      const hid = document.getElementById('fuelManualItemQboId');
-      if (hid) hid.value = m ? m.qboId : '';
+    function resolveFuelManualPaymentMethod() {
+      const raw = document.getElementById('fuelManualPaymentMethodSearch')?.value || '';
+      const m = findBestNameMatch(paymentMethods(), raw);
+      const hid = document.getElementById('fuelManualPaymentMethodId');
+      if (hid) hid.value = m ? String(m.id) : '';
+    }
+
+    function resolveFuelManualBank() {
+      const elIn = document.getElementById('fuelManualBankSearch');
+      const elId = document.getElementById('fuelManualBankQboId');
+      if (!elIn || !elId) return;
+      const match = findBestNameMatch(cacheBankAccounts(), elIn.value);
+      elId.value = match ? match.qboId : '';
+    }
+
+    function resetManualFuelForm(preserveUnit) {
+      [
+        'fuelManualLocation',
+        'fuelManualMemo',
+        'fuelManualVendorSearch',
+        'fuelManualVendorQboId',
+        'fuelManualExpenseDoc',
+        'fuelManualPaymentMethodSearch',
+        'fuelManualPaymentMethodId',
+        'fuelManualBankSearch',
+        'fuelManualBankQboId'
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      if (!preserveUnit) {
+        const u = document.getElementById('fuelManualUnit');
+        if (u) u.value = '';
+      }
+      const d = document.getElementById('fuelManualDate');
+      if (d) d.value = new Date().toISOString().slice(0, 10);
+      const host = document.getElementById('fuelManualLines');
+      if (host) {
+        host.innerHTML = '';
+        addFuelManualLine();
+      }
+      fuelManualUpdateHeaderTotal();
     }
 
     let __fuelManualFormBound = false;
     function bindFuelManualFormOnce() {
       fuelExpensePopulateManualClassSelect();
+      const host = document.getElementById('fuelManualLines');
+      if (host && !host.dataset.fuelManBound) {
+        host.dataset.fuelManBound = '1';
+        host.addEventListener('input', e => {
+          const t = e.target;
+          if (!t || !t.classList) return;
+          if (
+            t.classList.contains('fuel-manual-gal') ||
+            t.classList.contains('fuel-manual-ppg') ||
+            t.classList.contains('fuel-manual-total')
+          ) {
+            const row = t.closest('.fuel-manual-line-row');
+            if (row) recalcFuelManualSingleLine(row, t);
+          }
+        });
+        host.addEventListener('change', e => {
+          const t = e.target;
+          if (t && t.classList && t.classList.contains('fuel-manual-lock')) {
+            const row = t.closest('.fuel-manual-line-row');
+            if (row) recalcFuelManualSingleLine(row, t);
+          }
+        });
+      }
       if (__fuelManualFormBound) return;
       __fuelManualFormBound = true;
-      const gal = document.getElementById('fuelManualGallons');
-      const ppg = document.getElementById('fuelManualPpg');
-      const tot = document.getElementById('fuelManualTotal');
-      const lock = document.getElementById('fuelManualTotalLock');
-      const recalc = () => recalcFuelManualTotals();
-      [gal, ppg].forEach(el => el && el.addEventListener('input', recalc));
-      lock && lock.addEventListener('change', recalc);
       const d = document.getElementById('fuelManualDate');
       if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+      if (host && !host.querySelector('.fuel-manual-line-row')) addFuelManualLine();
+      else fuelManualUpdateHeaderTotal();
     }
 
     async function saveManualFuelPurchase() {
       resolveFuelManualVendor();
-      resolveFuelManualItem();
+      resolveFuelManualPaymentMethod();
+      resolveFuelManualBank();
       const hint = document.getElementById('fuelManualSaveHint');
       const unit = String(document.getElementById('fuelManualUnit')?.value || '').trim();
       const txnDate = String(document.getElementById('fuelManualDate')?.value || '').trim();
-      const gal = Number(document.getElementById('fuelManualGallons')?.value);
-      const ppg = Number(document.getElementById('fuelManualPpg')?.value);
-      const total = Number(document.getElementById('fuelManualTotal')?.value);
-      const productType = String(document.getElementById('fuelManualProductType')?.value || 'diesel');
       const memo = String(document.getElementById('fuelManualMemo')?.value || '').trim();
       const loc = String(document.getElementById('fuelManualLocation')?.value || '').trim();
       const vendorText = String(document.getElementById('fuelManualVendorSearch')?.value || '').trim();
+      const baseDocRaw = String(document.getElementById('fuelManualExpenseDoc')?.value || '').trim();
+      const cls = String(document.getElementById('fuelManualClassSel')?.value || '').trim();
+      const vId = String(document.getElementById('fuelManualVendorQboId')?.value || '').trim();
+      const pmId = String(document.getElementById('fuelManualPaymentMethodId')?.value || '').trim();
+      const pmSearch = String(document.getElementById('fuelManualPaymentMethodSearch')?.value || '').trim();
+      const bankId = String(document.getElementById('fuelManualBankQboId')?.value || '').trim();
+      const bankSearch = String(document.getElementById('fuelManualBankSearch')?.value || '').trim();
+      const host = document.getElementById('fuelManualLines');
+      const lineRows = host ? Array.from(host.querySelectorAll('.fuel-manual-line-row')) : [];
       if (!unit) {
         alert('Enter truck / unit.');
         return;
@@ -5927,54 +6137,98 @@
         alert('Pick a date.');
         return;
       }
-      if (!(Number.isFinite(gal) && gal > 0) && !(Number.isFinite(total) && total > 0)) {
-        alert('Enter gallons and price (or enter a positive total with “Lock total”).');
+      if (!lineRows.length) {
+        alert('Add at least one fuel line.');
         return;
       }
-      const payload = {
-        unit,
-        txnDate,
-        productType,
-        manual: true,
-        memo,
-        location: loc
-      };
-      if (vendorText) payload.vendor = vendorText;
-      if (Number.isFinite(gal) && gal > 0) payload.gallons = gal;
-      if (Number.isFinite(ppg) && ppg >= 0) payload.pricePerGallon = ppg;
-      if (Number.isFinite(total) && total > 0) payload.totalCost = total;
+      const gBankIn = document.getElementById('fuelExpBankSearch');
+      const gBankId = document.getElementById('fuelExpBankQboId');
+      if (gBankIn && bankSearch) gBankIn.value = bankSearch;
+      if (gBankId && bankId) gBankId.value = bankId;
+
+      const lines = [];
+      for (const row of lineRows) {
+        const productType = String(row.querySelector('.fuel-manual-prod')?.value || 'diesel');
+        const gal = Number(row.querySelector('.fuel-manual-gal')?.value);
+        const ppg = Number(row.querySelector('.fuel-manual-ppg')?.value);
+        const total = Number(row.querySelector('.fuel-manual-total')?.value);
+        const lock = !!row.querySelector('.fuel-manual-lock')?.checked;
+        const itemSearch = String(row.querySelector('.fuel-manual-item')?.value || '').trim();
+        const itemId = String(row.querySelector('.fuel-manual-item-id')?.value || '').trim();
+        if (!(Number.isFinite(gal) && gal > 0) && !(Number.isFinite(total) && total > 0)) {
+          alert('Each line needs gallons and price, or a positive line total with Lock $.');
+          return;
+        }
+        if (lock && !(Number.isFinite(total) && total > 0)) {
+          alert('Locked lines need a positive line total.');
+          return;
+        }
+        lines.push({ productType, gal, ppg, total, itemSearch, itemId });
+      }
+
+      const nLines = lines.length;
       try {
         if (hint) hint.textContent = 'Saving…';
-        const r = await j('/api/fuel/purchases', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
-          body: JSON.stringify(payload)
-        });
-        const purchase = r.purchase;
-        const cls = String(document.getElementById('fuelManualClassSel')?.value || '').trim();
-        const vId = String(document.getElementById('fuelManualVendorQboId')?.value || '').trim();
-        const iId = String(document.getElementById('fuelManualItemQboId')?.value || '').trim();
-        const galStr = Number.isFinite(gal) && gal > 0 ? String(gal) : '';
-        const draftBody = {
-          qboClassId: cls.replace(/\D/g, '').slice(0, 24),
-          vendorSearch: vendorText,
-          vendorId: vId.replace(/\D/g, '').slice(0, 24),
-          itemSearch: String(document.getElementById('fuelManualItemSearch')?.value || '').trim(),
-          itemId: iId.replace(/\D/g, '').slice(0, 24),
-          qty: galStr,
-          unit: Number.isFinite(ppg) && ppg >= 0 ? String(ppg) : '',
-          line: Number.isFinite(total) && total > 0 ? String(total) : ''
-        };
-        try {
-          await j('/api/fuel/purchases/' + encodeURIComponent(purchase.id) + '/expense-draft', {
+        let saved = 0;
+        for (let i = 0; i < lines.length; i++) {
+          const ln = lines[i];
+          const docForLine = fuelManualDocNumberForLine(baseDocRaw, i, nLines);
+          const gal = ln.gal;
+          const ppg = ln.ppg;
+          const total = ln.total;
+          const payload = {
+            unit,
+            txnDate,
+            productType: ln.productType,
+            manual: true,
+            memo,
+            location: loc
+          };
+          if (vendorText) payload.vendor = vendorText;
+          if (docForLine) payload.expenseDocNumber = docForLine;
+          if (Number.isFinite(gal) && gal > 0) payload.gallons = gal;
+          if (Number.isFinite(ppg) && ppg >= 0) payload.pricePerGallon = ppg;
+          if (Number.isFinite(total) && total > 0) payload.totalCost = total;
+          const r = await j('/api/fuel/purchases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
-            body: JSON.stringify(draftBody)
+            body: JSON.stringify(payload)
           });
-        } catch (_) {
-          /* draft optional */
+          const purchase = r.purchase;
+          const galStr = Number.isFinite(gal) && gal > 0 ? String(gal) : '';
+          const draftBody = {
+            qboClassId: cls.replace(/\D/g, '').slice(0, 24),
+            vendorSearch: vendorText,
+            vendorId: vId.replace(/\D/g, '').slice(0, 24),
+            itemSearch: ln.itemSearch,
+            itemId: ln.itemId.replace(/\D/g, '').slice(0, 24),
+            qty: galStr,
+            unit: Number.isFinite(ppg) && ppg >= 0 ? String(ppg) : '',
+            line: Number.isFinite(total) && total > 0 ? String(total) : '',
+            paymentMethodId: pmId.replace(/[^\w.-]/g, '').slice(0, 48),
+            paymentMethodSearch: pmSearch.slice(0, 120),
+            qboBankAccountId: bankId.replace(/\D/g, '').slice(0, 24),
+            bankSearch: bankSearch.slice(0, 160)
+          };
+          if (docForLine) draftBody.expenseDocNumber = docForLine;
+          try {
+            await j('/api/fuel/purchases/' + encodeURIComponent(purchase.id) + '/expense-draft', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+              body: JSON.stringify(draftBody)
+            });
+          } catch (_) {
+            /* draft optional */
+          }
+          saved++;
         }
-        if (hint) hint.textContent = 'Saved — row added. Use Record to QuickBooks when ready.';
+        if (hint) {
+          hint.textContent =
+            saved === 1
+              ? 'Saved — 1 row added. Use Record to QuickBooks when ready.'
+              : `Saved — ${saved} rows added. Use Record to QuickBooks when ready.`;
+        }
+        resetManualFuelForm(true);
         await loadFuelExpenseTab();
       } catch (e) {
         if (hint) hint.textContent = '';
@@ -5994,10 +6248,11 @@
         acctApplyRelayFuelImportMetaFromPayload(data);
         if (st) st.textContent = `${rows.length} fuel purchase row(s) loaded.`;
         renderFuelExpenseRows();
+        initFuelExpenseTableDelegation();
         bindFuelManualFormOnce();
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
-        if (tb) tb.innerHTML = '<tr><td colspan="16" class="mini-note">Failed to load.</td></tr>';
+        if (tb) tb.innerHTML = '<tr><td colspan="18" class="mini-note">Failed to load.</td></tr>';
       }
     }
 
@@ -6239,7 +6494,7 @@
           const d = fuelExpenseSortDateKey(r);
           if ((from || to) && !inRange(d)) return false;
           if (!q) return true;
-          const hay = `${r.unit || ''} ${r.vendor || ''} ${r.location || ''} ${r.productType || ''} ${r.relayExpenseNo || ''} ${r.relayDocNumber || ''} ${r.fuelPostedDocNumber || ''} ${r.qbCategory || ''} ${r.fuelPostedDriverMemo || ''}`.toLowerCase();
+          const hay = `${r.unit || ''} ${r.vendor || ''} ${r.location || ''} ${r.productType || ''} ${r.relayExpenseNo || ''} ${r.relayDocNumber || ''} ${r.fuelPostedDocNumber || ''} ${r.expenseDocNumber || ''} ${r.qbCategory || ''} ${r.fuelPostedDriverMemo || ''}`.toLowerCase();
           return hay.includes(q);
         })
         .slice()
@@ -6252,7 +6507,7 @@
       const filtered = filterFuelPurchasesForExpenseTab();
 
       if (!filtered.length) {
-        tb.innerHTML = '<tr><td colspan="16" class="mini-note">No rows for current filters.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="18" class="mini-note">No rows for current filters.</td></tr>';
         return;
       }
       const fuelClassSelectHtml = selectedVal => {
@@ -6331,8 +6586,31 @@
           const custS = escapeHtml(custRaw);
           const custId = draft.custId || '';
           const dvId = draft.driverVendId || '';
-          const expNoRaw = String(r.fuelPostedDocNumber || r.relayDocNumber || r.relayExpenseNo || '').trim();
-          const expNoCell = expNoRaw ? escapeHtml(expNoRaw) : '—';
+          const expNoPosted = String(r.fuelPostedDocNumber || r.relayDocNumber || r.relayExpenseNo || '').trim();
+          const expNoDraftVal = String(
+            r.expenseDocNumber || draft.expenseDocNumber || r.relayDocNumber || r.relayExpenseNo || ''
+          ).trim();
+          const expNoCellPosted = expNoPosted ? escapeHtml(expNoPosted) : '—';
+          const expNoCellUnposted = `<input type="text" class="fuel-exp-doc qb-in" style="max-width:120px" maxlength="24" value="${escapeHtml(expNoDraftVal)}" />`;
+          const pmSearchRaw =
+            draft.paymentMethodSearch !== undefined && draft.paymentMethodSearch !== ''
+              ? String(draft.paymentMethodSearch)
+              : (() => {
+                  const pid = String(draft.paymentMethodId || '').trim();
+                  if (!pid) return '';
+                  const hit = paymentMethods().find(p => String(p.id) === pid);
+                  return hit ? String(hit.name || '') : '';
+                })();
+          const pmSearch = escapeHtml(pmSearchRaw);
+          const pmIdVal = escapeHtml(String(draft.paymentMethodId || '').trim());
+          const bankSearchRaw =
+            draft.bankSearch !== undefined && draft.bankSearch !== ''
+              ? String(draft.bankSearch)
+              : String(draft.qboBankAccountId || '').trim()
+                ? qboNameByQboId(cacheBankAccounts(), draft.qboBankAccountId)
+                : '';
+          const bankSearch = escapeHtml(bankSearchRaw);
+          const bankIdVal = escapeHtml(String(draft.qboBankAccountId || '').trim());
           const postedPath = String(r.fuelPostedQbCategory || r.qbCategory || '').trim();
           const postedItemAcct =
             r.fuelPostedItemId && String(r.fuelPostedItemId).trim()
@@ -6345,14 +6623,16 @@
           if (status === 'posted') {
             return `<tr data-fuel-id="${idEsc}">
             <td>${dateCell}</td>
-            <td class="mini-note">${expNoCell}</td>
+            <td class="mini-note">${expNoCellPosted}</td>
+            <td class="mini-note">—</td>
+            <td class="mini-note">—</td>
             <td>${unit || '—'}</td>
             <td class="mini-note">${escapeHtml(postedClsDisp ? qboNameByQboId(cacheQboClasses(), postedClsDisp) : '—')}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheVendors(), r.fuelPostedVendorId))}</td>
             <td class="mini-note">${postedItemAcct}</td>
             <td class="num">${escapeHtml(String(r.fuelPostedQty != null ? r.fuelPostedQty : gal != null ? gal : '—'))}</td>
             <td class="num">—</td>
-            <td class="num">${escapeHtml(String(r.fuelPostedAmount != null ? Number(r.fuelPostedAmount).toFixed(2) : tot.toFixed(2)))}</td>
+            <td class="num">${escapeHtml(String(r.fuelPostedAmount != null ? Number(r.fuelPostedAmount).toFixed(2) : tot.toFixed(2))}</td>
             <td class="mini-note">${escapeHtml(String(r.fuelPostedDriverMemo || '—'))}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheVendors(), r.fuelPostedDriverVendorId))}</td>
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheQboCustomers(), r.fuelPostedCustomerId))}</td>
@@ -6368,7 +6648,15 @@
 
           return `<tr data-fuel-id="${idEsc}">
             <td>${dateCell}</td>
-            <td class="mini-note">${expNoCell}</td>
+            <td class="mini-note">${expNoCellUnposted}</td>
+            <td>
+              <input class="fuel-pm qb-in" style="min-width:108px" list="paymentMethodOptions" value="${pmSearch}" placeholder="Payment" onblur="blurFuelRowPaymentMethod(this)" />
+              <input type="hidden" class="fuel-pm-id" value="${pmIdVal}" />
+            </td>
+            <td>
+              <input class="fuel-bank qb-in" style="min-width:120px" list="qboBankAccountOptions" value="${bankSearch}" placeholder="Bank / card" onblur="blurFuelRowBank(this)" />
+              <input type="hidden" class="fuel-bank-id" value="${bankIdVal}" />
+            </td>
             <td>${unit || '—'}</td>
             <td><select class="fuel-class-sel qb-in" style="min-width:120px">${fuelClassSelectHtml(clsVal)}</select></td>
             <td>
@@ -6414,7 +6702,6 @@
       const fid = String(fuelId).replace(/"/g, '');
       const tr = document.querySelector('#fuelExpBody tr[data-fuel-id="' + fid + '"]');
       const st = tr ? tr.querySelector('.fuel-post-status') : null;
-      const bankId = String(document.getElementById('fuelExpBankQboId')?.value || '').trim();
       const acctId = String(document.getElementById('fuelExpAccountQboId')?.value || '').trim();
       if (!tr) {
         return { ok: false, validationError: 'Could not find fuel row in the table (refresh and try again).' };
@@ -6423,6 +6710,19 @@
       blurFuelRowItem(tr.querySelector('.fuel-item'));
       blurFuelRowDriverVend(tr.querySelector('.fuel-driver-vend'));
       blurFuelRowCust(tr.querySelector('.fuel-cust'));
+      blurFuelRowPaymentMethod(tr.querySelector('.fuel-pm'));
+      blurFuelRowBank(tr.querySelector('.fuel-bank'));
+      const rowsSnap = Array.isArray(window.__fuelPurchasesRows) ? window.__fuelPurchasesRows : [];
+      const fpRow = rowsSnap.find(x => String(x.id) === String(fid)) || {};
+      const erpDraft =
+        fpRow.fuelExpenseDraft && typeof fpRow.fuelExpenseDraft === 'object' ? fpRow.fuelExpenseDraft : {};
+      const winDraft = (window.__fuelExpenseDraft && window.__fuelExpenseDraft[fid]) || {};
+      const rowDraft = { ...erpDraft, ...winDraft };
+      const bankId = String(
+        rowDraft.qboBankAccountId || document.getElementById('fuelExpBankQboId')?.value || ''
+      ).trim();
+      const paymentMethodId = String(rowDraft.paymentMethodId || '').trim() || 'pm_other';
+      const docNumber = String(tr.querySelector('.fuel-exp-doc')?.value || rowDraft.expenseDocNumber || fpRow.expenseDocNumber || '').trim();
       const useCat = !!document.getElementById('fuelExpUseCategory')?.checked;
       const detailMode = useCat ? 'category' : 'item';
       const qboClassId = String(tr.querySelector('.fuel-class-sel')?.value || '').trim();
@@ -6456,7 +6756,9 @@
             amount: lineAmt,
             driverMemo,
             driverVendorQboId,
-            qboCustomerId
+            qboCustomerId,
+            paymentMethodId,
+            docNumber: docNumber || undefined
           })
         });
         const row = data.fuelPurchase;

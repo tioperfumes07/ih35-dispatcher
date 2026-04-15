@@ -438,6 +438,11 @@ function sanitizeFuelPurchase(raw) {
   const memo = String(raw.memo || raw.notes || raw.paymentNote || '').trim().slice(0, 500);
   if (memo) out.memo = memo;
   if (raw.manual === true || String(raw.entrySource || '').toLowerCase() === 'manual') out.entrySource = 'manual';
+  let expNo = String(raw.expenseDocNumber || raw.manualExpenseNumber || '')
+    .replace(/[^\w.-]/g, '')
+    .trim();
+  if (expNo.length > 21) expNo = expNo.slice(0, 21);
+  if (expNo) out.expenseDocNumber = expNo;
   return out;
 }
 
@@ -446,6 +451,13 @@ function sanitizeFuelExpenseDraft(raw) {
   if (!raw || typeof raw !== 'object') return {};
   const str = (k, max) => String(raw[k] ?? '').trim().slice(0, max);
   const digits = (k, max) => str(k, max).replace(/[^\d]/g, '').slice(0, max);
+  const pmId = str('paymentMethodId', 48)
+    .replace(/[^\w.-]/g, '')
+    .slice(0, 48);
+  let expDraft = String(raw.expenseDocNumber || raw.expenseNumber || '')
+    .replace(/[^\w.-]/g, '')
+    .trim();
+  if (expDraft.length > 21) expDraft = expDraft.slice(0, 21);
   const out = {
     qboClassId: digits('qboClassId', 24),
     vendorSearch: str('vendorSearch', 120),
@@ -459,8 +471,13 @@ function sanitizeFuelExpenseDraft(raw) {
     driverVendSearch: str('driverVendSearch', 120),
     driverVendId: digits('driverVendId', 24),
     custSearch: str('custSearch', 120),
-    custId: digits('custId', 24)
+    custId: digits('custId', 24),
+    paymentMethodSearch: str('paymentMethodSearch', 120),
+    paymentMethodId: pmId,
+    bankSearch: str('bankSearch', 160),
+    qboBankAccountId: digits('qboBankAccountId', 24)
   };
+  if (expDraft) out.expenseDocNumber = expDraft;
   return Object.values(out).some(v => v !== '') ? out : {};
 }
 
@@ -6033,6 +6050,11 @@ function sanitizeQboDocNumber(raw, maxLen = 21) {
 
 function buildFuelPurchaseDocNumber(fp) {
   const fpObj = fp && typeof fp === 'object' ? fp : {};
+  const draft = fpObj.fuelExpenseDraft && typeof fpObj.fuelExpenseDraft === 'object' ? fpObj.fuelExpenseDraft : {};
+  const manualBase = sanitizeQboDocNumber(
+    String(fpObj.expenseDocNumber || draft.expenseDocNumber || '').trim()
+  );
+  if (manualBase) return manualBase;
   const fromRelay = String(fpObj.relayDocNumber || '').trim() || String(fpObj.relayExpenseNo || '').trim();
   if (fromRelay) return sanitizeQboDocNumber(fromRelay.replace(/\s+/g, ''));
   const ext = String(fpObj.relayNote || '')
@@ -6067,6 +6089,7 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     const idx = (erp.fuelPurchases || []).findIndex(x => String(x.id) === id);
     if (idx === -1) return res.status(404).json({ error: 'Fuel purchase not found' });
     const fp = erp.fuelPurchases[idx];
+    const draft = fp.fuelExpenseDraft && typeof fp.fuelExpenseDraft === 'object' ? fp.fuelExpenseDraft : {};
 
     const body = req.body && typeof req.body === 'object' ? req.body : {};
     const detailMode = String(body.detailMode || 'category').toLowerCase() === 'item' ? 'item' : 'category';
@@ -6096,7 +6119,11 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       });
     }
 
-    const qboBankAccountId = String(body.qboBankAccountId || '').trim();
+    const qboBankAccountId = String(
+      body.qboBankAccountId || draft.qboBankAccountId || ''
+    )
+      .trim()
+      .replace(/[^\d]/g, '');
     const qboAccountId = resolveFuelPurchaseExpenseAccountId(
       erp,
       fp,
@@ -6147,14 +6174,25 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     ].filter(Boolean);
     const memo = memoParts.join(' · ');
 
-    const docNumber = sanitizeQboDocNumber(buildFuelPurchaseDocNumber(fp));
+    const bodyDoc = sanitizeQboDocNumber(String(body.docNumber || body.expenseDocNumber || '').trim());
+    const docNumber =
+      bodyDoc ||
+      sanitizeQboDocNumber(
+        String(draft.expenseDocNumber || fp.expenseDocNumber || '').trim()
+      ) ||
+      sanitizeQboDocNumber(buildFuelPurchaseDocNumber(fp));
     const lineDescription = buildFuelPurchaseLineDescription(fp);
+
+    const paymentMethodIdRaw = String(body.paymentMethodId || draft.paymentMethodId || '')
+      .trim()
+      .replace(/[^\w.-]/g, '');
+    const paymentMethodId = paymentMethodIdRaw || 'pm_other';
 
     const ap = {
       txnType: 'expense',
       detailMode,
       qboVendorId: vendorId,
-      paymentMethodId: 'pm_other',
+      paymentMethodId,
       qboBankAccountId,
       qboAccountId,
       qboItemId,

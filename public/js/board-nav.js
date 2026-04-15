@@ -44,6 +44,7 @@
       href: '/maintenance.html#tracking',
       links: [
         { label: 'ERP — Tracking (map)', href: '/maintenance.html#tracking' },
+        { label: 'Shop & maintenance (queues, rollups)', href: '/maintenance.html#tracking-shop' },
         { label: 'Standalone map page', href: '/tracking.html' },
         { label: 'Fuel board', href: '/maintenance.html#fuel' }
       ]

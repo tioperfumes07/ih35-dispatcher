@@ -2764,3 +2764,30 @@ body.erp-maintenance .fuel-exp-table-wrap {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+body.erp-maintenance .fuel-expense-stack {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+body.erp-maintenance .fuel-manual-lines-head {
+  grid-template-columns: 28px 120px 1fr 72px 80px 96px 88px 36px;
+}
+
+body.erp-maintenance .fuel-manual-line-row {
+  display: grid;
+  grid-template-columns: 28px 120px 1fr 72px 80px 96px 88px 36px;
+  gap: 6px;
+  padding: 8px 10px;
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+}
+
+body.erp-maintenance .fuel-manual-line-row:last-of-type {
+  border-bottom: none;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-shell {
+  min-width: 0;
+  max-width: 100%;
+}
