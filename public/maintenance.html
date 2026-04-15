@@ -268,6 +268,8 @@
     .sec-alert-high{border-left:4px solid #dc2626;background:#fef2f2;padding:10px 12px;margin-bottom:8px;border-radius:10px;border:1px solid #fecaca}
     .sec-alert-warn{border-left:4px solid #d97706;background:#fffbeb;padding:10px 12px;margin-bottom:8px;border-radius:10px;border:1px solid #fde68a}
     .sec-alert-info{border-left:4px solid #2563eb;background:#eff6ff;padding:10px 12px;margin-bottom:8px;border-radius:10px;border:1px solid #bfdbfe}
+    .qbo-sync-alert-bar{margin-bottom:12px;padding:12px 14px;border-radius:10px;width:100%;max-width:100%;box-sizing:border-box;border:1px solid #fecaca;background:linear-gradient(180deg,#fef2f2 0%,#fff7ed 100%)}
+    .qbo-sync-alert-bar.qbo-sync-warn{border-color:#f59e0b;background:linear-gradient(180deg,#fffbeb 0%,#fff 100%)}
     #section-maintenance .panel-head:not(.maint-panel-head-center){border-bottom:2px solid var(--line)}
     #section-maintenance .unit-box,.maint-form-stack .panel.maint-cost-panel{border:1px solid var(--line-strong);box-shadow:var(--shadow-sm)}
     .catalog-admin-table{width:100%;border-collapse:collapse;font-size:12px}
@@ -387,7 +389,9 @@
         <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
           <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types (database)</button>
           <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; parts reference</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
           <div class="nav-dd-sep"></div>
           <button type="button" class="nav-dd-item" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Assets (tracking)</button>
           <button type="button" class="nav-dd-item" onclick="openSection('safety', document.querySelector('.nav-btn[data-section=safety]')); openSafetyTab('safe-files', document.querySelector('#section-safety .subtab[onclick*=\'safe-files\']'));">Drivers &amp; files (safety)</button>
@@ -417,12 +421,14 @@
 
       <div class="nav-title">Status</div>
       <div id="sidebarQboStatus" class="mini-note">QuickBooks not checked</div>
+      <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
       <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: not loaded</div>
       <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Not loaded</div>
     </aside>
 
     <main class="main">
       <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
+      <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" role="status" aria-live="polite"></div>
       <div class="topbar">
         <div class="title" id="pageTitle">Maintenance &amp; shop</div>
         <a href="/" class="topbar-home-link">Home</a>
@@ -994,16 +1000,10 @@
                   </div>
 
                   <div class="panel" style="box-shadow:none;">
-                    <div class="panel-head"><div class="panel-title">QuickBooks expense (optional)</div></div>
+                    <div class="panel-head"><div class="panel-title">QuickBooks expense (auto on save)</div></div>
                     <div class="panel-body form-stack">
-                      <label class="mini-note">
-                        <input id="linkAccountingToggle" type="checkbox" checked>
-                        Create a <strong>single-line</strong> Purchase / Expense in QuickBooks when saving (amount = invoice total above)
-                      </label>
-
                       <p class="mini-note" style="margin:0 0 6px">
-                        This does <strong>not</strong> replace the cost breakdown: each row above can still carry its own QBO account/item for your records. The linked transaction posts <strong>one</strong> QBO line for the <strong>full invoice total</strong> using the defaults below (memo includes the printed cost breakdown). Multi-line QBO posting from every row uses the work-order / expense flows under <strong>Accounting</strong>.
-                        Vendor is auto-matched from <strong>Vendor (QuickBooks)</strong> when possible — you normally do not need to retype it here.
+                        When <strong>QuickBooks is connected</strong> and this record has a <strong>positive total</strong>, saving posts a <strong>Purchase (expense)</strong> or <strong>Bill</strong> to QBO using the same vendor and the <strong>cost breakdown lines</strong> when line amounts are filled (otherwise one line from the defaults below). Doc # defaults to vendor invoice # or load #. No duplicate local AP row is created.
                       </p>
                       <p class="mini-note" style="margin:0 0 6px">Sync <strong>QuickBooks Master</strong> in the sidebar if vendor / item / account lists are empty.</p>
                       <div class="search-row">
@@ -1710,7 +1710,9 @@
             <div class="subtabs" style="margin-bottom:14px">
               <button type="button" class="subtab active" data-cat-sub="service" onclick="openCatalogSubpanel('service', this)">Service types (DB)</button>
               <button type="button" class="subtab" data-cat-sub="qbo" onclick="openCatalogSubpanel('qbo', this)">QuickBooks items &amp; accounts</button>
-              <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; parts</button>
+              <button type="button" class="subtab" data-cat-sub="vendors" onclick="openCatalogSubpanel('vendors', this)">Vendors &amp; drivers</button>
+              <button type="button" class="subtab" data-cat-sub="operational" onclick="openCatalogSubpanel('operational', this)">Operational status</button>
+              <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; Samsara</button>
             </div>
             <div id="catalog-panel-service" class="catalog-subpanel active">
               <p class="mini-note" style="margin:0 0 10px">
@@ -1725,12 +1727,40 @@
               <button type="button" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
               <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); const t=document.querySelector('#section-accounting .subtab[onclick*=acct-qbo]'); if(t) openAccountingTab('acct-qbo', t);">Open Accounting → QuickBooks Live Master</button>
             </div>
+            <div id="catalog-panel-vendors" class="catalog-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">
+                <strong>QuickBooks vendors</strong> (shops, fuel, etc.) and <strong>TMS drivers</strong> linked as QBO vendors for pay — one list for expense routing. Sync QBO master after adding vendors in QuickBooks.
+              </p>
+              <div id="vendorCatalogBody" class="mini-note">Open this tab to load.</div>
+            </div>
+            <div id="catalog-panel-operational" class="catalog-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">
+                Codes used on each unit’s <strong>Operational status</strong> picker (maintenance board). Defaults ship with the ERP file; add custom rows for your vocabulary (yard hold, wash bay, etc.).
+              </p>
+              <div id="operationalCatalogBody" class="mini-note">Open this tab to load.</div>
+              <div class="search-row" style="margin-top:12px;max-width:520px">
+                <input id="newOpStatusValue" class="qb-in maint-field" placeholder="Code (e.g. yard_hold)" autocomplete="off">
+                <input id="newOpStatusLabel" class="qb-in maint-field" placeholder="Label (e.g. Yard hold)" autocomplete="off">
+              </div>
+              <button type="button" style="margin-top:8px" onclick="addOperationalCatalogRow()">Add status</button>
+            </div>
             <div id="catalog-panel-fleet" class="catalog-subpanel">
               <p class="mini-note" style="margin:0 0 10px">
-                <strong>Assets</strong> and live GPS come from <strong>Samsara</strong>. Rename vehicles or manage equipment in Samsara Cloud (API write scopes are not enabled in this app yet). <strong>Parts</strong> on maintenance rows use free text plus optional part #; a dedicated parts SKU catalog can be added later.
+                <strong>Assets</strong> and live GPS come from <strong>Samsara</strong>. With a write-scoped token and admin (or ERP write secret), you can push vehicle/driver name updates from here; otherwise use Samsara Cloud.
               </p>
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
+              <div style="margin-top:14px;padding-top:12px;border-top:1px solid #edf1f7;max-width:560px" class="form-stack">
+                <span class="qb-l">Rename vehicle in Samsara</span>
+                <p class="mini-note" style="margin:0">Use the vehicle’s Samsara id (from API / board JSON). Requires <code>SAMSARA_WRITE_API_TOKEN</code> or a read token upgraded with write scopes.</p>
+                <input id="samsaraVehicleIdInput" class="qb-in maint-field" placeholder="Samsara vehicle id">
+                <input id="samsaraVehicleNameInput" class="qb-in maint-field" placeholder="New display name">
+                <button type="button" onclick="pushSamsaraVehicleName()">POST update to Samsara</button>
+                <span class="qb-l" style="margin-top:12px">Rename driver in Samsara</span>
+                <input id="samsaraDriverIdInput" class="qb-in maint-field" placeholder="Samsara driver id">
+                <input id="samsaraDriverNameInput" class="qb-in maint-field" placeholder="New driver name">
+                <button type="button" onclick="pushSamsaraDriverName()">POST update to Samsara</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1777,8 +1807,8 @@
                 <strong>QuickBooks</strong> master data (vendors, items, accounts) refreshes with <em>Refresh QuickBooks Master</em>; posting pushes bills/expenses to QBO. <strong>Samsara</strong> fleet/HOS in this app is read-only unless your API token includes write scopes (see below).
               </p>
               <ul class="mini-note" style="margin:0;padding-left:1.2rem;line-height:1.5">
-                <li>To <strong>edit vehicles or drivers from this app</strong> and have changes sync to Samsara, create a Samsara API token (or OAuth app) with write scopes such as <strong>Write Vehicles</strong> and <strong>Write Drivers</strong>, then implement PATCH calls (e.g. <a href="https://developers.samsara.com/reference/updatevehicle" target="_blank" rel="noopener">Update vehicle</a>). Tokens must be re-issued after adding scopes.</li>
-                <li>Until then, use <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> for fleet and driver edits; this ERP will pick them up on the next refresh.</li>
+                <li>To <strong>edit vehicles or drivers from this app</strong>, set <code>SAMSARA_WRITE_API_TOKEN</code> (or a single token with write scopes), then use <strong>Catalogs → Fleet &amp; Samsara</strong> (POST <code>/api/integrations/samsara/vehicle/:id</code> and <code>…/driver/:id</code>) with admin login or the same ERP write secret as fuel imports. Samsara docs: <a href="https://developers.samsara.com/reference/updatevehicle" target="_blank" rel="noopener">Update vehicle</a>, <a href="https://developers.samsara.com/reference/updatedriver" target="_blank" rel="noopener">Update driver</a>.</li>
+                <li>Tokens must be re-issued after adding scopes; read-only tokens return 403 from Samsara.</li>
               </ul>
               <button type="button" style="margin-top:10px" onclick="loadQboStatus(); testQuickBooks();">Re-check QuickBooks</button>
               <button type="button" style="margin-left:8px" onclick="loadAll()">Refresh fleet / Samsara snapshot</button>
@@ -2454,11 +2484,18 @@
       } catch (_) {}
     }
 
+    const LS_ERP_KEY = 'ih35_erp_write_secret';
+
     function authFetchHeaders() {
       const t = localStorage.getItem('ih35_token');
       const h = { Accept: 'application/json' };
       if (t) h.Authorization = `Bearer ${t}`;
       return h;
+    }
+
+    function erpWriteHeaders() {
+      const k = localStorage.getItem(LS_ERP_KEY) || '';
+      return k ? { 'X-IH35-ERP-Secret': k } : {};
     }
 
     async function j(url, options = {}) {
@@ -2517,6 +2554,18 @@
     }
 
     function cacheVendors() { return erp.qboCache?.vendors || []; }
+
+    function operationalCatalogRows() {
+      const rows = Array.isArray(erp.operationalStatusCatalog) && erp.operationalStatusCatalog.length
+        ? erp.operationalStatusCatalog
+        : [
+            { value: 'in_service', label: 'In service' },
+            { value: 'out_of_service', label: 'Out of service' },
+            { value: 'shop', label: 'In shop' },
+            { value: 'roadside', label: 'Roadside / down' }
+          ];
+      return rows;
+    }
     function cacheItems() { return erp.qboCache?.items || []; }
     function cacheAccounts() { return erp.qboCache?.accounts || []; }
     function cacheBankAccounts() { return erp.qboCache?.accountsBank || []; }
@@ -4230,6 +4279,131 @@
         if (b) b.classList.add('active');
       }
       if (which === 'service') loadServiceCatalogAdminOnly();
+      if (which === 'vendors') loadVendorCatalogPanel();
+      if (which === 'operational') loadOperationalCatalogPanel();
+    }
+
+    async function loadVendorCatalogPanel() {
+      const el = document.getElementById('vendorCatalogBody');
+      if (!el) return;
+      el.textContent = 'Loading…';
+      try {
+        const data = await j('/api/maintenance/vendor-catalog');
+        const qv = data.qbVendors || [];
+        const dv = data.driverPayees || [];
+        el.innerHTML = `
+          <p class="mini-note" style="margin:0 0 8px">${escapeHtml(data.note || '')}</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-width:0">
+            <div><div style="font-weight:700;margin-bottom:6px">QuickBooks vendors (${qv.length})</div>
+              <div style="max-height:240px;overflow:auto;font-size:12px;border:1px solid #edf1f7;border-radius:8px;padding:6px;min-width:0">
+                ${qv
+                  .slice(0, 400)
+                  .map(
+                    v =>
+                      `<div>${escapeHtml(v.name || v.companyName || '')} <span class="mini-note">${escapeHtml(
+                        String(v.qboId || '')
+                      )}</span></div>`
+                  )
+                  .join('') || '<span class="mini-note">None in cache — refresh QBO master.</span>'}
+              </div>
+            </div>
+            <div><div style="font-weight:700;margin-bottom:6px">TMS drivers (${dv.length})</div>
+              <div style="max-height:240px;overflow:auto;font-size:12px;border:1px solid #edf1f7;border-radius:8px;padding:6px;min-width:0">
+                ${dv
+                  .slice(0, 400)
+                  .map(d => {
+                    const q = d.qboVendorId
+                      ? '<span class="mini-note">QBO ' + escapeHtml(String(d.qboVendorId)) + '</span>'
+                      : '<span class="mini-note">(no QBO vendor id)</span>';
+                    const s = d.samsaraDriverId
+                      ? ' <span class="mini-note">Sam ' + escapeHtml(String(d.samsaraDriverId)) + '</span>'
+                      : '';
+                    return `<div>${escapeHtml(d.name || '')} ${q}${s}</div>`;
+                  })
+                  .join('') || '<span class="mini-note">No Postgres drivers or DATABASE_URL not set.</span>'}
+              </div>
+            </div>
+          </div>`;
+      } catch (e) {
+        el.innerHTML = '<span style="color:#b91c1c">' + escapeHtml(e.message || String(e)) + '</span>';
+      }
+    }
+
+    async function loadOperationalCatalogPanel() {
+      const el = document.getElementById('operationalCatalogBody');
+      if (!el) return;
+      try {
+        const data = await j('/api/maintenance/operational-status-catalog');
+        const rows = data.rows || [];
+        el.innerHTML =
+          '<ul style="margin:0;padding-left:1.2rem;line-height:1.5">' +
+          rows
+            .map(r => {
+              const val = typeof r === 'object' ? r.value : r;
+              const lab = typeof r === 'object' ? r.label || r.value : r;
+              return `<li><code>${escapeHtml(String(val))}</code> — ${escapeHtml(String(lab))}</li>`;
+            })
+            .join('') +
+          '</ul>';
+      } catch (e) {
+        el.innerHTML = '<span style="color:#b91c1c">' + escapeHtml(e.message || String(e)) + '</span>';
+      }
+    }
+
+    async function addOperationalCatalogRow() {
+      const v = document.getElementById('newOpStatusValue');
+      const l = document.getElementById('newOpStatusLabel');
+      try {
+        await j('/api/maintenance/operational-status-catalog', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: v?.value || '', label: l?.value || '' })
+        });
+        if (v) v.value = '';
+        if (l) l.value = '';
+        await loadAll();
+        await loadOperationalCatalogPanel();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function pushSamsaraVehicleName() {
+      const id = document.getElementById('samsaraVehicleIdInput')?.value?.trim();
+      const name = document.getElementById('samsaraVehicleNameInput')?.value?.trim();
+      if (!id || !name) return alert('Vehicle id and new name are required.');
+      try {
+        const r = await fetch('/api/integrations/samsara/vehicle/' + encodeURIComponent(id), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authFetchHeaders(), ...erpWriteHeaders() },
+          body: JSON.stringify({ name })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        alert('Samsara vehicle updated.');
+        await loadAll();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function pushSamsaraDriverName() {
+      const id = document.getElementById('samsaraDriverIdInput')?.value?.trim();
+      const name = document.getElementById('samsaraDriverNameInput')?.value?.trim();
+      if (!id || !name) return alert('Driver id and new name are required.');
+      try {
+        const r = await fetch('/api/integrations/samsara/driver/' + encodeURIComponent(id), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authFetchHeaders(), ...erpWriteHeaders() },
+          body: JSON.stringify({ name })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        alert('Samsara driver updated.');
+        await loadAll();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
     }
 
     function openUploadSubpanel(which, btn) {
@@ -4791,6 +4965,16 @@
 
       const st = erp.assetStatusByUnit?.[v.name] || {};
       const opStatus = st.status || 'in_service';
+      const opOpts = operationalCatalogRows()
+        .map(r => {
+          const val = typeof r === 'object' ? String(r.value || '').trim() : String(r || '').trim();
+          const lab = typeof r === 'object' ? String(r.label || r.value || '').trim() : val;
+          if (!val) return '';
+          return `<option value="${escapeHtml(val)}" ${opStatus === val ? 'selected' : ''}>${escapeHtml(
+            lab || val
+          )}</option>`;
+        })
+        .join('');
       document.getElementById('selectedUnitInfo').innerHTML = `
         <b>${escapeHtml(v.name)}</b><br>
         <span class="mini-note">Samsara / fleet identity (when API provides it):</span><br>
@@ -4806,10 +4990,7 @@
           <div class="search-row" style="grid-template-columns:1fr 1fr;align-items:end">
             <div>
               <select id="assetStatusSelect" class="qb-in maint-field">
-                <option value="in_service" ${opStatus === 'in_service' ? 'selected' : ''}>In service</option>
-                <option value="out_of_service" ${opStatus === 'out_of_service' ? 'selected' : ''}>Out of service</option>
-                <option value="shop" ${opStatus === 'shop' ? 'selected' : ''}>In shop</option>
-                <option value="roadside" ${opStatus === 'roadside' ? 'selected' : ''}>Roadside / down</option>
+                ${opOpts}
               </select>
             </div>
             <div><button type="button" onclick="saveAssetStatus()">Save status</button></div>
@@ -5310,7 +5491,7 @@
       }
       const serviceMileageFinal = String(smNum);
 
-      await j('/api/maintenance/record', {
+      const saveOut = await j('/api/maintenance/record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -5345,43 +5526,20 @@
           qboItemId: document.getElementById('linkedItemQboId').value,
           detailMode: document.getElementById('linkedDetailModeSelect').value,
           paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
-          qboBankAccountId: document.getElementById('linkedBankAccountQboId').value
+          qboBankAccountId: document.getElementById('linkedBankAccountQboId').value,
+          qboTxnType: document.getElementById('linkedTxnTypeSelect').value,
+          qboDueDate: document.getElementById('linkedDueDate').value,
+          qboDocNumber: document.getElementById('linkedDocNumber').value
         })
       });
 
-      if (document.getElementById('linkAccountingToggle').checked && Number(document.getElementById('costInput').value || 0) > 0) {
-        const linkedVendorId = document.getElementById('linkedVendorQboId').value;
-        if (linkedVendorId) {
-          const memoWithLines =
-            composedNotes +
-            (costLinesPayload.length
-              ? '\n\nCost breakdown:\n' +
-                costLinesPayload
-                  .map((ln, i) => `${i + 1}. ${formatMaintCostLinePlain(ln)}`)
-                  .join('\n')
-              : '');
-          await j('/api/erp/ap-transaction', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              txnType: document.getElementById('linkedTxnTypeSelect').value,
-              detailMode: document.getElementById('linkedDetailModeSelect').value,
-              qboVendorId: linkedVendorId,
-              paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
-              qboBankAccountId: document.getElementById('linkedBankAccountQboId').value,
-              qboAccountId: document.getElementById('linkedAccountQboId').value,
-              qboItemId: document.getElementById('linkedItemQboId').value,
-              qty: document.getElementById('linkedQty').value,
-              amount: document.getElementById('costInput').value,
-              txnDate: document.getElementById('serviceDateInput').value,
-              dueDate: document.getElementById('linkedDueDate').value,
-              docNumber: document.getElementById('linkedDocNumber').value,
-              description: serviceType,
-              memo: memoWithLines,
-              assetUnit: selectedUnit,
-              assetCategory: activeAssetCategory
-            })
-          });
+      const qbo = saveOut && saveOut.qbo;
+      if (qbo && !qbo.ok && !qbo.skipped) {
+        alert('Record saved, but QuickBooks posting failed:\n' + (qbo.error || 'Unknown error'));
+      } else if (qbo && qbo.skipped && qbo.reason === 'quickbooks_not_connected') {
+        const cst = Number(document.getElementById('costInput').value || 0);
+        if (cst > 0) {
+          alert('Record saved locally. Connect QuickBooks in Settings to post this expense automatically.');
         }
       }
 

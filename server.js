@@ -42,6 +42,8 @@ const app = express();
 const PORT = process.env.PORT || 3400;
 
 const SAMSARA_API_TOKEN = process.env.SAMSARA_API_TOKEN || '';
+/** Prefer a dedicated token with Write Vehicles / Write Drivers scopes; falls back to SAMSARA_API_TOKEN. */
+const SAMSARA_WRITE_API_TOKEN = String(process.env.SAMSARA_WRITE_API_TOKEN || '').trim();
 const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY || '';
 const QBO_CLIENT_ID = process.env.QBO_CLIENT_ID || '';
 const QBO_CLIENT_SECRET = process.env.QBO_CLIENT_SECRET || '';
@@ -198,6 +200,13 @@ function defaultErpData() {
       terms: [],
       refreshedAt: ''
     },
+    /** UI labels for operational status (asset picker); used by /api/maintenance/asset-status validation. */
+    operationalStatusCatalog: [
+      { value: 'in_service', label: 'In service' },
+      { value: 'out_of_service', label: 'Out of service' },
+      { value: 'shop', label: 'In shop' },
+      { value: 'roadside', label: 'Roadside / down' }
+    ],
     /** Per unit name: { status, note?, updatedAt?, updatedBy? } — operational availability (OOS, shop, etc.). */
     assetStatusByUnit: {},
     /** File import batches (maintenance WO / AP) for ERP-only undo — not QBO. */
@@ -251,6 +260,9 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.employees)) merged.qboCache.employees = [];
   if (!Array.isArray(merged.qboCache.terms)) merged.qboCache.terms = [];
   if (!merged.assetStatusByUnit || typeof merged.assetStatusByUnit !== 'object') merged.assetStatusByUnit = {};
+  if (!Array.isArray(merged.operationalStatusCatalog) || !merged.operationalStatusCatalog.length) {
+    merged.operationalStatusCatalog = defaultErpData().operationalStatusCatalog;
+  }
   if (!Array.isArray(merged.erpImportBatches)) merged.erpImportBatches = [];
   if (!Array.isArray(merged.bankStatementImports)) merged.bankStatementImports = [];
   if (!Array.isArray(merged.bankMatchLinks)) merged.bankMatchLinks = [];
@@ -582,6 +594,85 @@ function samsaraHeaders() {
     Authorization: `Bearer ${SAMSARA_API_TOKEN}`,
     Accept: 'application/json'
   };
+}
+
+function samsaraWriteBearerToken() {
+  return String(SAMSARA_WRITE_API_TOKEN || SAMSARA_API_TOKEN || '').trim();
+}
+
+async function samsaraApiPatch(pathRel, body) {
+  const token = samsaraWriteBearerToken();
+  if (!token) {
+    const err = new Error(
+      'Set SAMSARA_WRITE_API_TOKEN (write scopes) or SAMSARA_API_TOKEN to call Samsara update APIs'
+    );
+    err.status = 400;
+    throw err;
+  }
+  const url = `https://api.samsara.com${pathRel.startsWith('/') ? pathRel : `/${pathRel}`}`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body && typeof body === 'object' ? body : {})
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = new Error(data?.message || `Samsara API error (${response.status})`);
+    err.status = response.status;
+    err.details = data;
+    throw err;
+  }
+  return data;
+}
+
+function pickSamsaraVehicleUpdateBody(body) {
+  const b = body && typeof body === 'object' ? body : {};
+  const out = {};
+  const str = (v, max) => {
+    const s = String(v ?? '').trim();
+    return s ? s.slice(0, max) : '';
+  };
+  const name = str(b.name, 128);
+  if (name) out.name = name;
+  const notes = str(b.notes, 255);
+  if (notes) out.notes = notes;
+  const vin = str(b.vin, 17);
+  if (vin) out.vin = vin;
+  const plate = str(b.licensePlate, 12);
+  if (plate) out.licensePlate = plate;
+  if (b.staticAssignedDriverId != null) {
+    const sid = String(b.staticAssignedDriverId).trim().slice(0, 32);
+    if (sid) out.staticAssignedDriverId = sid;
+  }
+  return out;
+}
+
+function pickSamsaraDriverUpdateBody(body) {
+  const b = body && typeof body === 'object' ? body : {};
+  const out = {};
+  const take = (key, max) => {
+    if (b[key] == null) return;
+    const s = String(b[key]).trim();
+    if (!s) return;
+    out[key] = s.slice(0, max);
+  };
+  take('name', 255);
+  take('username', 189);
+  take('phone', 255);
+  take('licenseNumber', 64);
+  take('licenseState', 8);
+  take('timezone', 80);
+  take('driverActivationStatus', 32);
+  take('staticAssignedVehicleId', 32);
+  if (b.notes != null) {
+    const n = String(b.notes).trim().slice(0, 4096);
+    if (n) out.notes = n;
+  }
+  return out;
 }
 
 /** Paginate Samsara HOS clocks (max 512 per page, up to ~10k drivers). */
@@ -2088,6 +2179,7 @@ app.get('/api/health', async (_req, res) => {
     res.json({
       ok: true,
       hasSamsaraToken: !!SAMSARA_API_TOKEN,
+      hasSamsaraWriteToken: !!(SAMSARA_WRITE_API_TOKEN || SAMSARA_API_TOKEN),
       hasGeoapifyKey: !!GEOAPIFY_API_KEY,
       hasQboConfig: qboConfigured(),
       hasDatabaseUrl: !!String(process.env.DATABASE_URL || '').trim(),
@@ -2250,15 +2342,28 @@ app.delete('/api/users/:id', (req, res) => {
   }
 });
 
+function operationalStatusAllowedValues(erp) {
+  const rows = Array.isArray(erp?.operationalStatusCatalog) ? erp.operationalStatusCatalog : [];
+  const codes = rows
+    .map(r => {
+      if (r && typeof r === 'object') return String(r.value || '').trim();
+      return String(r || '').trim();
+    })
+    .filter(Boolean);
+  const fallback = ['in_service', 'out_of_service', 'shop', 'roadside'];
+  return new Set(codes.length ? codes : fallback);
+}
+
 app.post('/api/maintenance/asset-status', (req, res) => {
   try {
     const unit = String(req.body?.unit || '').trim();
     if (!unit) return res.status(400).json({ error: 'unit is required' });
     const status = String(req.body?.status || 'in_service').trim();
-    const allowed = new Set(['in_service', 'out_of_service', 'shop', 'roadside']);
+    const erp0 = readErp();
+    const allowed = operationalStatusAllowedValues(erp0);
     if (!allowed.has(status)) return res.status(400).json({ error: 'Invalid status' });
     const note = String(req.body?.note || '').trim().slice(0, 500);
-    const erp = readErp();
+    const erp = erp0;
     if (!erp.assetStatusByUnit || typeof erp.assetStatusByUnit !== 'object') erp.assetStatusByUnit = {};
     erp.assetStatusByUnit[unit] = {
       status,
@@ -3126,6 +3231,48 @@ app.use(pdfRouter);
 app.use('/api/documents', documentParseRouter);
 app.use('/api/integrations', integrationsRouter);
 
+app.post('/api/integrations/samsara/vehicle/:id', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'vehicle id is required' });
+    const patch = pickSamsaraVehicleUpdateBody(req.body || {});
+    if (!Object.keys(patch).length) {
+      return res.status(400).json({
+        error:
+          'Provide at least one field to update: name, notes, vin, licensePlate, staticAssignedDriverId (Samsara ids as strings)'
+      });
+    }
+    const data = await samsaraApiPatch(`/fleet/vehicles/${encodeURIComponent(id)}`, patch);
+    res.json({ ok: true, data });
+  } catch (error) {
+    logError('api/integrations/samsara/vehicle', error);
+    const st = error.status && error.status >= 400 && error.status < 600 ? error.status : 500;
+    res.status(st).json({ error: error.message, details: error.details || null });
+  }
+});
+
+app.post('/api/integrations/samsara/driver/:id', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'driver id is required' });
+    const patch = pickSamsaraDriverUpdateBody(req.body || {});
+    if (!Object.keys(patch).length) {
+      return res.status(400).json({
+        error:
+          'Provide at least one field to update: name, notes, username, phone, licenseNumber, licenseState, timezone, driverActivationStatus, staticAssignedVehicleId'
+      });
+    }
+    const data = await samsaraApiPatch(`/fleet/drivers/${encodeURIComponent(id)}`, patch);
+    res.json({ ok: true, data });
+  } catch (error) {
+    logError('api/integrations/samsara/driver', error);
+    const st = error.status && error.status >= 400 && error.status < 600 ? error.status : 500;
+    res.status(st).json({ error: error.message, details: error.details || null });
+  }
+});
+
 /**
  * One merge path for tracked fleet + live Samsara stats (odometer, fuel, GPS).
  * Used by board, maintenance dashboard, and dispatch maintenance alerts so unit
@@ -3351,6 +3498,97 @@ app.post('/api/maintenance/service-types', async (req, res) => {
   }
 });
 
+app.get('/api/maintenance/operational-status-catalog', (_req, res) => {
+  try {
+    const erp = readErp();
+    const rows = Array.isArray(erp.operationalStatusCatalog) ? erp.operationalStatusCatalog : [];
+    res.json({ ok: true, rows });
+  } catch (error) {
+    logError('api/maintenance/operational-status-catalog GET', error);
+    res.status(500).json({ ok: false, error: error.message, rows: [] });
+  }
+});
+
+app.post('/api/maintenance/operational-status-catalog', (req, res) => {
+  try {
+    const rawLabel = String(req.body?.label || '').trim().slice(0, 80);
+    let value = String(req.body?.value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 64);
+    if (!value && rawLabel) {
+      value = rawLabel
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 64);
+    }
+    if (!value || !rawLabel) {
+      return res.status(400).json({ ok: false, error: 'value and label are required (value may be derived from label)' });
+    }
+    const erp = readErp();
+    if (!Array.isArray(erp.operationalStatusCatalog)) erp.operationalStatusCatalog = [];
+    const taken = new Set(
+      erp.operationalStatusCatalog.map(r =>
+        typeof r === 'object' ? String(r.value || '').trim() : String(r || '').trim()
+      )
+    );
+    if (taken.has(value)) {
+      return res.status(400).json({ ok: false, error: 'That status code already exists' });
+    }
+    erp.operationalStatusCatalog.push({ value, label: rawLabel });
+    writeErp(erp);
+    res.json({ ok: true, rows: erp.operationalStatusCatalog });
+  } catch (error) {
+    logError('api/maintenance/operational-status-catalog POST', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/maintenance/vendor-catalog', async (_req, res) => {
+  try {
+    const erp = readErp();
+    const qbVendors = (erp.qboCache?.vendors || []).map(v => ({
+      source: 'quickbooks',
+      qboId: v.qboId,
+      name: v.name || v.companyName || '',
+      companyName: v.companyName || ''
+    }));
+    let driverPayees = [];
+    try {
+      if (getPool()) {
+        const { rows } = await dbQuery(
+          `SELECT id, name, email, phone, qbo_vendor_id AS "qboVendorId", samsara_driver_id AS "samsaraDriverId"
+           FROM drivers ORDER BY name`
+        );
+        driverPayees = (rows || []).map(r => ({
+          source: 'tms_driver',
+          tmsDriverId: r.id,
+          name: r.name || '',
+          email: r.email || '',
+          phone: r.phone || '',
+          qboVendorId: r.qboVendorId || '',
+          samsaraDriverId: r.samsaraDriverId || ''
+        }));
+      }
+    } catch (err) {
+      logError('api/maintenance/vendor-catalog drivers', err);
+    }
+    res.json({
+      ok: true,
+      note:
+        'QuickBooks vendors are payees for bills/expenses; TMS drivers often use the same QBO vendor for settlements.',
+      qbVendors,
+      driverPayees
+    });
+  } catch (error) {
+    logError('api/maintenance/vendor-catalog', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.get('/api/maintenance/service-catalog-admin', async (_req, res) => {
   try {
     if (!getPool()) {
@@ -3547,7 +3785,7 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
   return out;
 }
 
-app.post('/api/maintenance/record', (req, res) => {
+app.post('/api/maintenance/record', async (req, res) => {
   try {
     const body = req.body || {};
     const unit = String(body.unit || '').trim();
@@ -3566,6 +3804,7 @@ app.post('/api/maintenance/record', (req, res) => {
     const costFromLines = Math.round(sumLines * 100) / 100;
     const cost =
       costLines.length && costFromLines > 0 ? costFromLines : safeNum(body.cost, 0) || 0;
+    const qboTxnType = String(body.qboTxnType || '').trim().toLowerCase() === 'bill' ? 'bill' : 'expense';
     const record = {
       id: uid('mr'),
       unit,
@@ -3598,8 +3837,12 @@ app.post('/api/maintenance/record', (req, res) => {
       detailMode: String(body.detailMode || '').trim() === 'item' ? 'item' : 'category',
       paymentMethodId: String(body.paymentMethodId || '').trim().slice(0, 64) || 'pm_other',
       qboBankAccountId: String(body.qboBankAccountId || '').trim().slice(0, 64),
+      qboTxnType,
+      qboDueDate: String(body.qboDueDate || '').trim().slice(0, 32),
+      qboDocNumber: String(body.qboDocNumber || '').trim().slice(0, 64),
       qboSyncStatus: '',
       qboPurchaseId: '',
+      qboEntityType: '',
       qboError: '',
       createdAt: new Date().toISOString(),
       ...(tireLineItems.length ? { tireLineItems } : {}),
@@ -3611,7 +3854,36 @@ app.post('/api/maintenance/record', (req, res) => {
       erp.currentMileage[unit] = Math.max(safeNum(erp.currentMileage[unit], 0) || 0, sm);
     }
     writeErp(erp);
-    res.json({ ok: true, record });
+
+    let qbo = null;
+    const qboStore = readQbo();
+    if (cost > 0 && qboStore.tokens?.realmId) {
+      try {
+        const posted = await qboPostMaintenanceRecord(record.id);
+        qbo = { ok: true, posted: true, record: posted };
+      } catch (err) {
+        logError('api/maintenance/record qbo', err);
+        const erp2 = readErp();
+        const idx2 = (erp2.records || []).findIndex(x => String(x.id) === String(record.id));
+        if (idx2 !== -1) {
+          erp2.records[idx2] = {
+            ...erp2.records[idx2],
+            qboSyncStatus: 'error',
+            qboError: err.message
+          };
+          writeErp(erp2);
+          record.qboSyncStatus = 'error';
+          record.qboError = err.message;
+        }
+        qbo = { ok: false, posted: false, error: err.message };
+      }
+    } else if (cost > 0) {
+      qbo = { ok: false, skipped: true, reason: 'quickbooks_not_connected' };
+    } else {
+      qbo = { ok: true, skipped: true, reason: 'no_cost' };
+    }
+
+    res.json({ ok: true, record, qbo });
   } catch (error) {
     logError('api/maintenance/record', error);
     res.status(500).json({ error: error.message });
@@ -3652,9 +3924,15 @@ async function qboPostMaintenanceRecord(recordId) {
 
   const detailMode = rec.detailMode === 'item' ? 'item' : 'category';
   const itemFallback = String(rec.qboItemId || '').trim();
+  const txnType = rec.qboTxnType === 'bill' ? 'bill' : 'expense';
+  const docNum =
+    String(rec.qboDocNumber || '').trim() ||
+    String(rec.vendorInvoiceNumber || '').trim() ||
+    String(rec.loadNumber || '').trim() ||
+    '';
 
   const apLike = {
-    txnType: 'expense',
+    txnType,
     detailMode,
     qboVendorId: vendorId,
     paymentMethodId: rec.paymentMethodId || 'pm_other',
@@ -3664,8 +3942,8 @@ async function qboPostMaintenanceRecord(recordId) {
     qty: 1,
     amount: cost,
     txnDate: rec.serviceDate || new Date().toISOString().slice(0, 10),
-    dueDate: '',
-    docNumber: rec.loadNumber || undefined,
+    dueDate: String(rec.qboDueDate || '').trim(),
+    docNumber: docNum || undefined,
     description: rec.serviceType || 'Maintenance',
     memo: rec.notes || `${rec.unit || ''} ${rec.recordType || ''}`.trim(),
     assetUnit: rec.unit || ''
@@ -4755,6 +5033,175 @@ app.get('/api/qbo/status', (_req, res) => {
     connectedAt: store.tokens?.connected_at || '',
     companyName: store.tokens?.companyName || ''
   });
+});
+
+const QBO_SYNC_ALERT_LOOKBACK_DAYS = Math.min(366, Math.max(30, Number(process.env.QBO_SYNC_ALERT_LOOKBACK_DAYS) || 120));
+
+function qboAlertRowWithinLookback(serviceDate, createdAt) {
+  const raw = String(serviceDate || '').trim() || String(createdAt || '').trim();
+  if (!raw) return true;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return true;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - QBO_SYNC_ALERT_LOOKBACK_DAYS);
+  return d >= cutoff;
+}
+
+function qboAlertPostedRecord(rec) {
+  const id = String(rec.qboPurchaseId || rec.qboEntityId || '').trim();
+  return String(rec.qboSyncStatus || '').toLowerCase() === 'posted' && id && String(rec.qboEntityType || '').trim();
+}
+
+function qboAlertPostedAp(ap) {
+  return (
+    String(ap.qboSyncStatus || '').toLowerCase() === 'posted' &&
+    String(ap.qboEntityId || '').trim() &&
+    String(ap.qboEntityType || '').trim()
+  );
+}
+
+function qboAlertPostedWo(wo) {
+  return (
+    String(wo.qboSyncStatus || '').toLowerCase() === 'posted' &&
+    String(wo.qboEntityId || '').trim() &&
+    String(wo.qboEntityType || '').trim()
+  );
+}
+
+function qboAlertWorkOrderLineTotal(wo) {
+  const lines = Array.isArray(wo.lines) ? wo.lines : [];
+  let t = 0;
+  for (const ln of lines) {
+    const a = safeNum(ln.amount, 0) || 0;
+    if (a > 0) t += a;
+  }
+  return Math.round(t * 100) / 100;
+}
+
+/**
+ * Surfaces QuickBooks sync gaps: connection off, post errors, and (when QBO is connected) rows with money still not posted.
+ */
+app.get('/api/qbo/sync-alerts', (_req, res) => {
+  try {
+    const store = readQbo();
+    const connected = !!store.tokens?.access_token;
+    const configured = qboConfigured();
+    const erp = readErp();
+    const alerts = [];
+
+    if (configured && !connected) {
+      alerts.push({
+        severity: 'high',
+        code: 'qbo_not_connected',
+        title: 'QuickBooks is not connected',
+        detail:
+          'Expenses and bills will not sync until you sign in to QuickBooks (OAuth). Open Settings or use Test QuickBooks.',
+        kind: 'system',
+        id: ''
+      });
+    }
+
+    for (const rec of erp.records || []) {
+      const cost = safeNum(rec.cost, 0) || 0;
+      if (!(cost > 0)) continue;
+      if (!qboAlertRowWithinLookback(rec.serviceDate, rec.createdAt)) continue;
+      const posted = qboAlertPostedRecord(rec);
+      const st = String(rec.qboSyncStatus || '').toLowerCase();
+      if (st === 'error') {
+        alerts.push({
+          severity: 'high',
+          code: 'record_post_error',
+          title: `Maintenance record (${rec.unit || 'unit'} · ${rec.serviceType || 'service'}) failed in QuickBooks`,
+          detail: String(rec.qboError || 'Unknown error').slice(0, 420),
+          kind: 'record',
+          id: String(rec.id || '')
+        });
+        continue;
+      }
+      if (posted) continue;
+      if (connected) {
+        alerts.push({
+          severity: 'medium',
+          code: 'record_not_posted',
+          title: `Maintenance (${rec.unit || ''}) — $${cost.toFixed(2)} not posted to QuickBooks`,
+          detail: 'Use Accounting → maintenance list or Send to QuickBooks on the record.',
+          kind: 'record',
+          id: String(rec.id || '')
+        });
+      }
+    }
+
+    for (const ap of erp.apTransactions || []) {
+      const amt = safeNum(ap.amount, 0) || 0;
+      if (!(amt > 0)) continue;
+      if (!qboAlertRowWithinLookback(ap.txnDate, ap.createdAt)) continue;
+      if (qboAlertPostedAp(ap)) continue;
+      const st = String(ap.qboSyncStatus || '').toLowerCase();
+      if (st === 'error') {
+        alerts.push({
+          severity: 'high',
+          code: 'ap_post_error',
+          title: `AP / expense row failed in QuickBooks (${ap.description || ap.docNumber || ap.id})`,
+          detail: String(ap.qboError || 'Unknown error').slice(0, 420),
+          kind: 'ap',
+          id: String(ap.id || '')
+        });
+      } else if (connected) {
+        alerts.push({
+          severity: 'medium',
+          code: 'ap_not_posted',
+          title: `AP / expense — $${amt.toFixed(2)} not posted (${ap.description || ap.docNumber || 'no description'})`,
+          detail: 'Open Accounting → Maintenance expense transactions and post to QuickBooks.',
+          kind: 'ap',
+          id: String(ap.id || '')
+        });
+      }
+    }
+
+    for (const wo of erp.workOrders || []) {
+      const total = qboAlertWorkOrderLineTotal(wo);
+      if (!(total > 0)) continue;
+      if (!qboAlertRowWithinLookback(wo.serviceDate, wo.createdAt)) continue;
+      if (qboAlertPostedWo(wo)) continue;
+      const st = String(wo.qboSyncStatus || '').toLowerCase();
+      if (st === 'error') {
+        alerts.push({
+          severity: 'high',
+          code: 'wo_post_error',
+          title: `Work order failed in QuickBooks (${wo.unit || ''} · load ${wo.loadNumber || '—'})`,
+          detail: String(wo.qboError || 'Unknown error').slice(0, 420),
+          kind: 'work_order',
+          id: String(wo.id || '')
+        });
+      } else if (connected) {
+        alerts.push({
+          severity: 'medium',
+          code: 'wo_not_posted',
+          title: `Work order — $${total.toFixed(2)} not posted (${wo.unit || ''} · load ${wo.loadNumber || '—'})`,
+          detail: 'Open Accounting and use Post to QuickBooks for this work order.',
+          kind: 'work_order',
+          id: String(wo.id || '')
+        });
+      }
+    }
+
+    const high = alerts.filter(a => a.severity === 'high').length;
+    const medium = alerts.filter(a => a.severity === 'medium').length;
+    const low = alerts.filter(a => a.severity === 'low').length;
+
+    res.json({
+      ok: true,
+      connected,
+      configured,
+      lookbackDays: QBO_SYNC_ALERT_LOOKBACK_DAYS,
+      generatedAt: new Date().toISOString(),
+      counts: { high, medium, low, total: alerts.length },
+      alerts: alerts.slice(0, 150)
+    });
+  } catch (error) {
+    logError('api/qbo/sync-alerts', error);
+    res.status(500).json({ ok: false, error: error.message, alerts: [], counts: {} });
+  }
 });
 
 app.get('/api/qbo/connect', (_req, res) => {
