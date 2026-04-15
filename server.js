@@ -169,6 +169,12 @@ function logError(label, error) {
   console.error(error?.stack || error?.message || error);
 }
 
+/** Structured console line for grep-friendly QBO audit (deletes, posts, reverts). */
+function logQboEvent(message, meta) {
+  const extra = meta && typeof meta === 'object' && Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+  console.log(`[QBO] ${message}${extra}`);
+}
+
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -1396,6 +1402,7 @@ async function qboDeletePurchaseOrBill(entityPath, entityId) {
   if (!response.ok) {
     throw new Error(out?.Fault?.Error?.[0]?.Message || out?.Fault?.Error?.[0]?.Detail || 'QuickBooks delete failed');
   }
+  logQboEvent('DELETE_OK', { entity: path, qboId: id });
   return out;
 }
 
@@ -1433,6 +1440,7 @@ async function qboDeleteBillPayment(billPaymentId) {
   if (!response.ok) {
     throw new Error(out?.Fault?.Error?.[0]?.Message || out?.Fault?.Error?.[0]?.Detail || 'QuickBooks delete failed');
   }
+  logQboEvent('BILL_PAYMENT_DELETE_OK', { qboBillPaymentId: id });
   return out;
 }
 
@@ -6018,6 +6026,14 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     delete erp.fuelPurchases[idx].fuelExpenseDraft;
     delete erp.fuelPurchases[idx].fuelExpenseDraftUpdatedAt;
     writeErp(erp);
+    logQboEvent('FUEL_PURCHASE_POST_OK', {
+      erpFuelId: id,
+      qboEntityType: result.qboEntityType,
+      qboEntityId: result.qboEntityId,
+      docNumber: docNumber || '',
+      detailMode,
+      amount
+    });
     res.json({ ok: true, fuelPurchase: erp.fuelPurchases[idx] });
   } catch (error) {
     logError('api/qbo/post-fuel-purchase', error);
@@ -6090,6 +6106,7 @@ async function revertQboPostedTransaction(kind, erpId) {
   if (!path) throw new Error(`Unsupported QuickBooks entity type: ${qboType}`);
 
   await qboDeletePurchaseOrBill(path, qboId);
+  logQboEvent('REVERT_OK', { kind: k, erpId: id, qboEntityType: qboType, qboEntityId: qboId, qboPath: path });
 
   erp = readErp();
   const cleared = {
@@ -6118,6 +6135,9 @@ async function revertQboPostedTransaction(kind, erpId) {
       fuelPostedAmount: null,
       fuelPostedClassId: null,
       fuelPostedItemId: null,
+      fuelPostedAccountId: null,
+      fuelPostedDocNumber: null,
+      fuelPostedQbCategory: null,
       fuelPostedVendorId: null,
       fuelPostedDriverVendorId: null,
       fuelPostedDriverMemo: null,
