@@ -396,7 +396,7 @@
         </div>
         <div id="maintMainTabOverview" class="maint-main-tab-panel active">
           <p class="mini-note" style="margin:0 0 12px;max-width:78ch">
-            Shop queue, expense rollups, exports, and integrity / fuel / parts alerts. Use <strong>Work order</strong> to log service; <strong>Fleet table</strong> for the full maintenance grid.
+            Shop queue, expense rollups, exports, and integrity / fuel / parts alerts. Use <strong>Work order</strong> to log service; <strong>Fleet table</strong> for the full maintenance grid. Bookmark <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, or <code>#maintenance-fleet</code> to open this board on the right sub-tab.
           </p>
           <div class="panel shop-print-area maint-section-card">
             <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
@@ -1141,9 +1141,17 @@
             <div class="panel-head"><div class="panel-title">Shop &amp; maintenance</div></div>
             <div class="panel-body">
               <p class="mini-note" style="margin:0 0 12px;max-width:74ch">
-                Shop queue, expense rollups, CSV exports, and integrity / fuel / parts alerts are on <strong>Maintenance → Fleet overview</strong> (default when you open Maintenance).
+                Shop queue, expense rollups, CSV exports, and integrity / fuel / parts alerts are on <strong>Maintenance → Fleet overview</strong> (default when you open Maintenance). Deep links:
+                <a href="#maintenance-parts" style="color:#1d4ed8;font-weight:600">#maintenance-parts</a>
+                ·
+                <a href="#maintenance-workorder" style="color:#1d4ed8;font-weight:600">#maintenance-workorder</a>
+                ·
+                <a href="#maintenance-fleet" style="color:#1d4ed8;font-weight:600">#maintenance-fleet</a>
               </p>
-              <button type="button" class="qb-btn-primary" onclick='openSectionByName("maintenance"); openMaintMainTab("overview", document.querySelector("#maintMainSubtabs [data-maint-main=overview]"));'>Open Fleet overview</button>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button type="button" class="qb-btn-primary" onclick='openSectionByName("maintenance"); openMaintMainTab("overview", document.querySelector("#maintMainSubtabs [data-maint-main=overview]"));'>Open Fleet overview</button>
+                <a class="btn" href="#maintenance-parts" style="text-decoration:none;display:inline-block;line-height:1.25">Parts queue</a>
+              </div>
             </div>
           </div>
         </div>
@@ -3588,6 +3596,26 @@
         openSectionByName('maintenance');
         const b = document.querySelector('#maintMainSubtabs [data-maint-main="overview"]');
         openMaintMainTab('overview', b);
+        return;
+      }
+      if (section === 'maintenance-parts') {
+        openSectionByName('maintenance');
+        const ob = document.querySelector('#maintMainSubtabs [data-maint-main="overview"]');
+        openMaintMainTab('overview', ob);
+        const shopBtn = document.querySelector('#shopBoardSubtabs .subtab[data-shop-tab="parts"]');
+        if (shopBtn) openShopBoardTab('parts', shopBtn);
+        return;
+      }
+      if (section === 'maintenance-workorder') {
+        openSectionByName('maintenance');
+        const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
+        openMaintMainTab('record', rb);
+        return;
+      }
+      if (section === 'maintenance-fleet') {
+        openSectionByName('maintenance');
+        const fb = document.querySelector('#maintMainSubtabs [data-maint-main="fleet"]');
+        openMaintMainTab('fleet', fb);
         return;
       }
       const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog', 'uploads'];
