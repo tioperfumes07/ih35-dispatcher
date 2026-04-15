@@ -2893,7 +2893,11 @@
 
     function maybeNotifyQboSyncDesktop(payload) {
       const high = payload?.counts?.high || 0;
-      if (!high || typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      if (!high) {
+        __lastQboDesktopNotifyKey = '';
+        return;
+      }
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
       const highs = (payload.alerts || []).filter(a => a.severity === 'high');
       const key = highs.map(a => `${a.kind}:${a.id}`).sort().join('|');
       if (!key || key === __lastQboDesktopNotifyKey) return;
@@ -2940,14 +2944,14 @@
           (med ? ` · ${med} pending` : '');
       }
 
-      const acctBtn = `<button type="button" class="qb-btn-add" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-transactions', document.querySelector('#section-accounting .subtab[onclick*=\\'acct-transactions\\']'));">Open Accounting</button>`;
+      const acctBtn = `<button type="button" class="qb-btn-add" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); const _sub=document.querySelector('#section-accounting .subtab[onclick*=\\"acct-transactions\\"]'); if(_sub)openAccountingTab('acct-transactions', _sub);">Open Accounting</button>`;
 
       bar.innerHTML = `
         <div style="display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-start;justify-content:space-between">
           <div style="flex:1;min-width:0">
             <strong>QuickBooks sync</strong> — ${alerts.length} issue(s) in the last ${escapeHtml(
               String(payload?.lookbackDays ?? '')
-            )} days.
+            )} day window.
             <span class="mini-note" style="margin-left:6px">Refreshes with <strong>Refresh now</strong> (${Math.round(
               AUTO_REFRESH_MS / 1000
             )}s auto).</span>
@@ -3119,6 +3123,7 @@
         renderQboMaster();
         await loadSecurityCatalogUi();
         await loadQboStatus();
+        renderQboSyncAlerts(qboSyncRes);
 
         const fleetAt = dashRes.refreshedAt
           ? new Date(dashRes.refreshedAt).toLocaleString()
