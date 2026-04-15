@@ -194,6 +194,8 @@ function defaultErpData() {
       customers: [],
       classes: [],
       accountsBank: [],
+      employees: [],
+      terms: [],
       refreshedAt: ''
     },
     /** Per unit name: { status, note?, updatedAt?, updatedBy? } — operational availability (OOS, shop, etc.). */
@@ -246,6 +248,8 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.customers)) merged.qboCache.customers = [];
   if (!Array.isArray(merged.qboCache.classes)) merged.qboCache.classes = [];
   if (!Array.isArray(merged.qboCache.accountsBank)) merged.qboCache.accountsBank = [];
+  if (!Array.isArray(merged.qboCache.employees)) merged.qboCache.employees = [];
+  if (!Array.isArray(merged.qboCache.terms)) merged.qboCache.terms = [];
   if (!merged.assetStatusByUnit || typeof merged.assetStatusByUnit !== 'object') merged.assetStatusByUnit = {};
   if (!Array.isArray(merged.erpImportBatches)) merged.erpImportBatches = [];
   if (!Array.isArray(merged.bankStatementImports)) merged.bankStatementImports = [];
@@ -1487,35 +1491,49 @@ function readQboCatalogPayload() {
     classes: c.classes || [],
     accountsBank: c.accountsBank || [],
     employees: c.employees || [],
+    terms: c.terms || [],
     transactionActivity: c.transactionActivity || null,
     refreshedAt: c.refreshedAt || null
   };
 }
 
 async function qboSyncMasterData() {
-  const [vendorsData, itemsData, accountsData, customersData, bankData, cardData, classData, employeeData] =
-    await Promise.all([
-      qboQuery('select * from Vendor maxresults 1000'),
-      qboQuery('select * from Item maxresults 1000'),
-      qboQuery('select * from Account maxresults 1000'),
-      qboQuery('select * from Customer maxresults 1000'),
-      qboQuery("select * from Account where AccountType = 'Bank' maxresults 200").catch(err => {
-        logError('qboSync bank accounts', err);
-        return { QueryResponse: {} };
-      }),
-      qboQuery("select * from Account where AccountType = 'Credit Card' maxresults 200").catch(err => {
-        logError('qboSync credit card accounts', err);
-        return { QueryResponse: {} };
-      }),
-      qboQuery('select * from Class maxresults 500').catch(err => {
-        logError('qboSync classes', err);
-        return { QueryResponse: {} };
-      }),
-      qboQuery('select * from Employee maxresults 500').catch(err => {
-        logError('qboSync employees', err);
-        return { QueryResponse: {} };
-      })
-    ]);
+  const [
+    vendorsData,
+    itemsData,
+    accountsData,
+    customersData,
+    bankData,
+    cardData,
+    classData,
+    employeeData,
+    termsData
+  ] = await Promise.all([
+    qboQuery('select * from Vendor maxresults 1000'),
+    qboQuery('select * from Item maxresults 1000'),
+    qboQuery('select * from Account maxresults 1000'),
+    qboQuery('select * from Customer maxresults 1000'),
+    qboQuery("select * from Account where AccountType = 'Bank' maxresults 200").catch(err => {
+      logError('qboSync bank accounts', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery("select * from Account where AccountType = 'Credit Card' maxresults 200").catch(err => {
+      logError('qboSync credit card accounts', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery('select * from Class maxresults 500').catch(err => {
+      logError('qboSync classes', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery('select * from Employee maxresults 500').catch(err => {
+      logError('qboSync employees', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery('select * from Term maxresults 200').catch(err => {
+      logError('qboSync terms', err);
+      return { QueryResponse: {} };
+    })
+  ]);
 
   const vendors = (vendorsData?.QueryResponse?.Vendor || []).map(v => ({
     qboId: v.Id,
@@ -1587,6 +1605,14 @@ async function qboSyncMasterData() {
       familyName: e.FamilyName || ''
     }));
 
+  const terms = (termsData?.QueryResponse?.Term || [])
+    .filter(t => t.Active !== false)
+    .map(t => ({
+      qboId: t.Id,
+      name: t.Name || ''
+    }))
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+
   const txnDays = Math.min(366, Math.max(0, Number(process.env.QBO_SYNC_TRANSACTION_DAYS ?? 90) || 0));
   const startIso = qboTxnWindowStartIso(txnDays);
   let transactionActivity = {
@@ -1627,6 +1653,7 @@ async function qboSyncMasterData() {
     classes,
     accountsBank,
     employees,
+    terms,
     transactionActivity,
     refreshedAt: new Date().toISOString()
   };
@@ -1863,6 +1890,7 @@ async function qboCreateApTransaction(ap) {
       Line: lineArray,
       PrivateNote: privateNote
     };
+    applyQboBillTermRef(billPayload, ap.qboTermId);
     const createdBill = await qboPost('bill', billPayload);
     return {
       qboEntityType: 'Bill',
@@ -1945,6 +1973,7 @@ async function qboCreateApTransaction(ap) {
     Line: [line],
     PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Bill')
   };
+  applyQboBillTermRef(payload, ap.qboTermId);
   const created = await qboPost('bill', payload);
   return {
     qboEntityType: 'Bill',
@@ -2042,6 +2071,7 @@ async function qboCreateWorkOrderTransaction(workOrder) {
       'Work Order'
     )
   };
+  applyQboBillTermRef(payload, workOrder.qboTermId);
   const created = await qboPost('bill', payload);
   return {
     qboEntityType: 'Bill',
@@ -2311,6 +2341,193 @@ function shopQueueEntryOverdue(entry, nowMs = Date.now()) {
   return false;
 }
 
+function securityCutoffDate(days) {
+  const n = Math.min(90, Math.max(7, Number(days) || 30));
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return { days: n, cutoffStr: d.toISOString().slice(0, 10) };
+}
+
+/**
+ * Parts / repair frequency, tire interval checks, and fuel purchase vs miles heuristic.
+ * Operational status (assetStatusByUnit) is surfaced when present but rules are mileage- and spend-based.
+ */
+function computeMaintenanceSecurityAlerts(erp, boardAssignments, vehicleByName) {
+  const { days, cutoffStr } = securityCutoffDate(
+    Number(process.env.SECURITY_ALERT_WINDOW_DAYS || 30)
+  );
+  const fuelRatio = Number(process.env.SECURITY_FUEL_PURCHASE_RATIO || 1.22);
+  const defaultMpg = Number(process.env.SECURITY_DEFAULT_MPG || 6.5);
+  const maxRepairs7 = Number(process.env.SECURITY_MAX_REPAIRS_7D || 6);
+  const tireMinMi = Number(process.env.SECURITY_TIRE_MIN_INTERVAL_MI || 38000);
+  const highCost = Number(process.env.SECURITY_HIGH_COST_SINGLE || 7500);
+  const cutoff7 = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const records = (erp.records || []).filter(
+    r => String(r.serviceDate || '').slice(0, 10) >= cutoffStr
+  );
+  const fuelPurchases = (erp.fuelPurchases || []).filter(p => {
+    const d = String(p.txnDate || '').slice(0, 10);
+    return d && d >= cutoffStr && String(p.unit || '').trim();
+  });
+  const units = new Set([
+    ...records.map(r => r.unit),
+    ...fuelPurchases.map(p => p.unit)
+  ]);
+  units.delete(undefined);
+  units.delete('');
+
+  const driversByUnit = {};
+  for (const a of boardAssignments || []) {
+    const un =
+      a?.vehicle?.name ||
+      a?.vehicleName ||
+      (a?.vehicle && a.vehicle.name) ||
+      '';
+    if (!un) continue;
+    const dr = a?.driverName || a?.driver?.name || a?.assignedDriverName || '';
+    if (dr && !driversByUnit[un]) driversByUnit[un] = dr;
+  }
+
+  const alerts = [];
+  const fuelDetails = [];
+
+  for (const unit of units) {
+    const urec = records.filter(r => r.unit === unit);
+    const ufuel = fuelPurchases.filter(p => p.unit === unit).sort((a, b) => {
+      const da = String(a.txnDate || '').slice(0, 10);
+      const db = String(b.txnDate || '').slice(0, 10);
+      return da.localeCompare(db);
+    });
+    const opSt = erp.assetStatusByUnit?.[unit]?.status || '';
+
+    const recent7 = urec.filter(r => String(r.serviceDate || '').slice(0, 10) >= cutoff7);
+    if (recent7.length >= maxRepairs7) {
+      alerts.push({
+        severity: 'warn',
+        type: 'repair_frequency',
+        unit,
+        message: `Many maintenance records in 7 days (${recent7.length}) — review for duplicate billing or parts theft.`,
+        count7d: recent7.length,
+        operationalStatus: opSt || null
+      });
+    }
+
+    for (const r of urec) {
+      const c = safeNum(r.cost, 0) || 0;
+      if (c >= highCost) {
+        alerts.push({
+          severity: 'info',
+          type: 'high_cost',
+          unit,
+          message: `Single service cost $${c.toFixed(2)} (${r.serviceType || r.recordType || 'record'}) — verify invoice.`,
+          cost: c,
+          serviceDate: r.serviceDate || '',
+          operationalStatus: opSt || null
+        });
+      }
+    }
+
+    const tireRecs = urec
+      .filter(
+        r =>
+          String(r.recordType || '').toLowerCase() === 'tire' ||
+          /tire|tyre/i.test(String(r.serviceType || ''))
+      )
+      .sort(
+        (a, b) =>
+          safeNum(b.serviceMileage, 0) - safeNum(a.serviceMileage, 0)
+      );
+    for (let i = 0; i < tireRecs.length - 1; i++) {
+      const newer = tireRecs[i];
+      const older = tireRecs[i + 1];
+      const hi = safeNum(newer.serviceMileage, null);
+      const lo = safeNum(older.serviceMileage, null);
+      if (hi != null && lo != null && hi - lo < tireMinMi && hi - lo >= 0) {
+        alerts.push({
+          severity: 'warn',
+          type: 'tire_interval',
+          unit,
+          message: `Tire work only ~${Math.round(hi - lo).toLocaleString()} mi after prior tire record — confirm not premature parts.`,
+          milesBetween: Math.round(hi - lo),
+          operationalStatus: opSt || null
+        });
+        break;
+      }
+    }
+
+    const galSum = ufuel.reduce((s, p) => s + safeNum(p.gallons, 0), 0);
+    const withOd = ufuel.filter(
+      p => p.odometerMiles != null && Number(p.odometerMiles) > 0
+    );
+    let milesDriven = null;
+    if (withOd.length >= 2) {
+      const ods = withOd.map(p => Number(p.odometerMiles));
+      milesDriven = Math.max(0, Math.max(...ods) - Math.min(...ods));
+    }
+    const veh = vehicleByName[unit];
+    const mpg =
+      veh && veh.mpg != null && Number.isFinite(Number(veh.mpg))
+        ? Number(veh.mpg)
+        : defaultMpg;
+    if (milesDriven != null && milesDriven > 80 && galSum > 0 && mpg > 0) {
+      const expectedGal = milesDriven / mpg;
+      if (galSum > expectedGal * fuelRatio) {
+        const row = {
+          severity: 'high',
+          type: 'fuel_volume_mismatch',
+          unit,
+          message: `Diesel purchases (${galSum.toFixed(
+            0
+          )} gal) exceed expected ~${expectedGal.toFixed(
+            0
+          )} gal for ~${Math.round(milesDriven)} mi at ${mpg} MPG (ratio ×${fuelRatio}).`,
+          milesDriven: Math.round(milesDriven),
+          gallonsPurchased: Math.round(galSum * 10) / 10,
+          expectedGallons: Math.round(expectedGal * 10) / 10,
+          mpgUsed: mpg,
+          driverHint: driversByUnit[unit] || null,
+          purchases: ufuel.map(p => ({
+            txnDate: p.txnDate,
+            gallons: p.gallons,
+            vendor: p.vendor,
+            odometerMiles: p.odometerMiles,
+            totalCost: p.totalCost
+          }))
+        };
+        alerts.push(row);
+        fuelDetails.push(row);
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    windowDays: days,
+    cutoff: cutoffStr,
+    parameters: {
+      fuelPurchaseRatio: fuelRatio,
+      defaultMpg,
+      maxRepairs7d: maxRepairs7,
+      tireMinIntervalMiles: tireMinMi,
+      highCostSingle: highCost
+    },
+    alerts,
+    fuelTheftCandidates: fuelDetails,
+    driversByUnit
+  };
+}
+
+function applyQboBillTermRef(payload, termId) {
+  const id = String(termId || '').trim();
+  if (!id) return;
+  payload.SalesTermRef = { value: id };
+}
+
 app.get('/api/maintenance/expense-summary', (req, res) => {
   try {
     const days = Number(req.query.days);
@@ -2319,6 +2536,28 @@ app.get('/api/maintenance/expense-summary', (req, res) => {
   } catch (error) {
     logError('api/maintenance/expense-summary', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/maintenance/security-alerts', async (_req, res) => {
+  try {
+    const erp = readErp();
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
+    assignmentsUrl.searchParams.set('filterBy', 'vehicles');
+    assignmentsUrl.searchParams.set('startTime', startTime);
+    assignmentsUrl.searchParams.set('endTime', endTime);
+    const assignmentsRes = await fetchJson(assignmentsUrl.toString(), {
+      headers: samsaraHeaders()
+    }).catch(() => ({ data: [] }));
+    const vehicleByName = {};
+    const data = computeMaintenanceSecurityAlerts(erp, assignmentsRes.data || [], vehicleByName);
+    res.json(data);
+  } catch (error) {
+    logError('api/maintenance/security-alerts', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
@@ -2683,6 +2922,52 @@ app.post('/api/maintenance/service-types', async (req, res) => {
     res.json({ ok: true, name });
   } catch (error) {
     logError('api/maintenance/service-types POST', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/maintenance/service-catalog-admin', async (_req, res) => {
+  try {
+    if (!getPool()) {
+      return res.json({
+        ok: false,
+        rows: [],
+        error: 'DATABASE_URL is not set — catalog is read-only defaults in this environment'
+      });
+    }
+    await ensureMaintenanceServiceCatalog();
+    const { rows } = await dbQuery(
+      `SELECT id, name, active, sort_order, created_at
+       FROM maintenance_service_catalog
+       ORDER BY sort_order ASC, name ASC`
+    );
+    res.json({ ok: true, rows });
+  } catch (error) {
+    logError('api/maintenance/service-catalog-admin GET', error);
+    res.status(500).json({ ok: false, error: error.message, rows: [] });
+  }
+});
+
+app.patch('/api/maintenance/service-catalog-admin', async (req, res) => {
+  try {
+    if (!getPool()) {
+      return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+    }
+    await ensureMaintenanceServiceCatalog();
+    const body = req.body || {};
+    const id = String(body.id || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'id is required' });
+    if (body.active === undefined) {
+      return res.status(400).json({ ok: false, error: 'active (boolean) is required' });
+    }
+    const active = !!body.active;
+    await dbQuery(`UPDATE maintenance_service_catalog SET active = $1 WHERE id = $2::uuid`, [
+      active,
+      id
+    ]);
+    res.json({ ok: true, id, active });
+  } catch (error) {
+    logError('api/maintenance/service-catalog-admin PATCH', error);
     res.status(500).json({ ok: false, error: error.message });
   }
 });
@@ -3582,6 +3867,7 @@ app.post('/api/work-orders', (req, res) => {
       qboBankAccountId: String(body.qboBankAccountId || '').trim(),
       txnType: body.txnType || 'expense',
       dueDate: body.dueDate || '',
+      qboTermId: String(body.qboTermId || '').trim(),
       notes: body.notes || '',
       qboSyncStatus: '',
       qboEntityType: '',
@@ -3680,6 +3966,7 @@ app.post('/api/erp/ap-transaction', (req, res) => {
       memo: body.memo || '',
       assetUnit: body.assetUnit || '',
       assetCategory: String(body.assetCategory || '').trim().slice(0, 80),
+      qboTermId: String(body.qboTermId || '').trim(),
       qboSyncStatus: '',
       qboEntityType: '',
       qboEntityId: '',

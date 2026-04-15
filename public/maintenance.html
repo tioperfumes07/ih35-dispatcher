@@ -200,6 +200,20 @@
     @media (max-width:960px){
       #section-maintenance .shop-kanban{grid-template-columns:1fr!important}
     }
+    .maint-section-card{border:1px solid var(--line-strong);box-shadow:var(--shadow-md);border-radius:var(--radius-lg)}
+    .maint-panel-head-center{flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(180deg,#eef2f9 0%,#fff 100%);border-bottom:2px solid var(--line-strong);padding:14px 16px}
+    .maint-panel-head-center .panel-title{font-size:16px;letter-spacing:.02em;width:100%}
+    .maint-cost-coordination{margin-top:10px;padding:12px 14px;border:1px solid var(--accent-border);border-radius:var(--radius-sm);background:linear-gradient(180deg,#eff6ff 0%,#f8fafc 100%);font-size:13px;line-height:1.5}
+    .maint-cost-coordination .coord-row{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:center}
+    .maint-cost-coordination .coord-total{font-size:18px;font-weight:800;color:#0f172a}
+    .sec-alert-high{border-left:4px solid #dc2626;background:#fef2f2;padding:10px 12px;margin-bottom:8px;border-radius:10px;border:1px solid #fecaca}
+    .sec-alert-warn{border-left:4px solid #d97706;background:#fffbeb;padding:10px 12px;margin-bottom:8px;border-radius:10px;border:1px solid #fde68a}
+    .sec-alert-info{border-left:4px solid #2563eb;background:#eff6ff;padding:10px 12px;margin-bottom:8px;border-radius:10px;border:1px solid #bfdbfe}
+    #section-maintenance .panel-head:not(.maint-panel-head-center){border-bottom:2px solid var(--line)}
+    #section-maintenance .unit-box,.maint-form-stack .panel.maint-cost-panel{border:1px solid var(--line-strong);box-shadow:var(--shadow-sm)}
+    .catalog-admin-table{width:100%;border-collapse:collapse;font-size:12px}
+    .catalog-admin-table th{text-align:center;padding:8px;border:1px solid var(--line);background:#f1f5f9}
+    .catalog-admin-table td{padding:8px;border:1px solid var(--line);vertical-align:middle}
     @media print{
       .sidebar,.sidebar-expand-fab,.print-hide-actions,.board-nav-wrap{display:none!important}
       .app{grid-template-columns:1fr!important}
@@ -510,9 +524,9 @@
       </section>
 
       <section id="section-maintenance" class="section active">
-        <div class="panel shop-print-area">
-          <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap">
-            <div>
+        <div class="panel shop-print-area maint-section-card">
+          <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
+            <div style="flex:1;min-width:200px">
               <div class="panel-title">Maintenance &amp; shop</div>
               <div class="mini-note" style="margin-top:4px;max-width:52ch">
                 Live shop queue (internal, external, roadside): status, time vs estimate, and delay reasons. Below: expense rollups by fleet type.
@@ -611,8 +625,8 @@
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-head">
+        <div class="panel maint-section-card">
+          <div class="panel-head maint-panel-head-center">
             <div class="panel-title">Maintenance Board</div>
           </div>
           <div class="panel-body">
@@ -625,6 +639,30 @@
                 <button type="button" onclick="downloadAllMaintenanceCsv()">All maintenance CSV</button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="panel maint-section-card">
+          <div class="panel-head maint-panel-head-center">
+            <div class="panel-title">Integrity · fuel · parts alerts</div>
+            <div class="mini-note" style="margin:6px 0 0;max-width:56ch">
+              Flags unusual repair frequency, high single invoices, short tire intervals, and diesel gallons vs miles (expected MPG). Operational status (in shop / OOS) is shown when relevant — use it with dates for context, not as the only signal.
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="securityAlertsBody" class="mini-note">Loading alerts…</div>
+          </div>
+        </div>
+
+        <div class="panel maint-section-card">
+          <div class="panel-head maint-panel-head-center">
+            <div class="panel-title">Service catalog (database)</div>
+            <div class="mini-note" style="margin:6px 0 0;max-width:52ch">
+              When <code>DATABASE_URL</code> is set, names come from Postgres. Deactivate old rows or add new names — picker lists refresh after save.
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="serviceCatalogAdminBody" class="mini-note">Loading catalog…</div>
           </div>
         </div>
 
@@ -644,8 +682,10 @@
           </div>
 
           <div class="grid">
-            <div class="panel">
-              <div class="panel-head"><div class="panel-title">Selected Asset</div></div>
+            <div class="panel maint-section-card">
+              <div class="panel-head maint-panel-head-center">
+                <div class="panel-title">Selected Asset</div>
+              </div>
               <div class="panel-body">
                 <div id="selectedUnitInfo" class="mini-note">Select an asset.</div>
 
@@ -737,10 +777,11 @@
                     </div>
                     <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
                   </div>
+                  <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
 
                   <div class="panel maint-cost-panel" style="box-shadow:none;margin-top:4px">
                     <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                      <div class="panel-title" style="font-size:14px">Cost breakdown (same vendor invoice)</div>
+                      <div class="panel-title" style="font-size:14px;text-align:center;width:100%">Cost breakdown (same vendor invoice)</div>
                       <button type="button" class="qb-btn-add" onclick="addMaintCostLine()">+ Add line</button>
                     </div>
                     <div class="panel-body form-stack">
@@ -1101,6 +1142,12 @@
                 <div>
                   <span class="qb-l">Due</span>
                   <input id="apDueDate" class="qb-in" type="date">
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Payment terms (QuickBooks — bills)</span>
+                  <select id="apQboTermId" class="qb-in">
+                    <option value="">— None —</option>
+                  </select>
                 </div>
                 <div style="grid-column:span 2">
                   <span class="qb-l">Payment method</span>
@@ -2608,6 +2655,7 @@
         renderMaintExpenseStrip();
         renderShopQueues();
         renderQboMaster();
+        await loadSecurityCatalogUi();
         await loadQboStatus();
 
         const fleetAt = dashRes.refreshedAt
@@ -2666,7 +2714,146 @@
           .map(b => `<option value="${escapeHtml(b.name)}"></option>`)
           .join('');
       }
+      const termSel = document.getElementById('apQboTermId');
+      if (termSel) {
+        const cur = termSel.value;
+        const terms = erp.qboCache?.terms || [];
+        termSel.innerHTML =
+          '<option value="">— None —</option>' +
+          terms
+            .map(
+              t =>
+                `<option value="${escapeHtml(String(t.qboId))}">${escapeHtml(t.name || 'Term')}</option>`
+            )
+            .join('');
+        termSel.value = cur;
+      }
       applyMaintenanceFieldWidths();
+    }
+
+    async function loadSecurityCatalogUi() {
+      try {
+        const sec = await j('/api/maintenance/security-alerts');
+        renderSecurityAlerts(sec);
+      } catch (e) {
+        const el = document.getElementById('securityAlertsBody');
+        if (el) el.innerHTML = '<span style="color:#b91c1c">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
+      }
+      try {
+        const cat = await j('/api/maintenance/service-catalog-admin');
+        renderServiceCatalogAdmin(cat);
+      } catch (e) {
+        const el = document.getElementById('serviceCatalogAdminBody');
+        if (el) {
+          el.innerHTML =
+            '<span style="color:#b91c1c">Catalog admin needs DATABASE_URL: ' +
+            escapeHtml(e.message || String(e)) +
+            '</span>';
+        }
+      }
+    }
+
+    function renderSecurityAlerts(sec) {
+      const el = document.getElementById('securityAlertsBody');
+      if (!el) return;
+      if (!sec || !sec.ok) {
+        el.innerHTML = '<span style="color:#b91c1c">No alert data.</span>';
+        return;
+      }
+      const p = sec.parameters || {};
+      const head = `<p class="mini-note" style="margin:0 0 10px">Window: last <strong>${sec.windowDays}</strong> days (since ${escapeHtml(
+        sec.cutoff || ''
+      )}). Ratio fuel: <strong>${p.fuelPurchaseRatio}</strong> · default MPG: <strong>${p.defaultMpg}</strong> · max repairs / 7d: <strong>${p.maxRepairs7d}</strong> · tire min interval: <strong>${p.tireMinIntervalMiles} mi</strong> · high cost: <strong>$${p.highCostSingle}</strong></p>`;
+      const rows = (sec.alerts || []).length
+        ? (sec.alerts || [])
+            .map(a => {
+              const cls =
+                a.severity === 'high'
+                  ? 'sec-alert-high'
+                  : a.severity === 'warn'
+                    ? 'sec-alert-warn'
+                    : 'sec-alert-info';
+              const driver = a.driverHint ? ` · Driver (Samsara window): ${escapeHtml(a.driverHint)}` : '';
+              const op = a.operationalStatus ? ` · Op status: ${escapeHtml(a.operationalStatus)}` : '';
+              let extra = '';
+              if (a.type === 'fuel_volume_mismatch' && Array.isArray(a.purchases)) {
+                extra =
+                  '<div style="margin-top:8px;font-size:11px;overflow:auto"><table class="catalog-admin-table"><thead><tr><th>Date</th><th>Gal</th><th>Vendor</th><th>Odometer</th></tr></thead><tbody>' +
+                  a.purchases
+                    .map(
+                      pr =>
+                        `<tr><td>${escapeHtml(String(pr.txnDate || ''))}</td><td>${escapeHtml(
+                          String(pr.gallons ?? '')
+                        )}</td><td>${escapeHtml(String(pr.vendor || ''))}</td><td>${escapeHtml(
+                          String(pr.odometerMiles ?? '')
+                        )}</td></tr>`
+                    )
+                    .join('') +
+                  '</tbody></table></div>';
+              }
+              return `<div class="${cls}"><strong>${escapeHtml(a.type || '')}</strong> — ${escapeHtml(
+                a.unit || ''
+              )}${driver}${op}<div style="margin-top:6px">${escapeHtml(a.message || '')}</div>${extra}</div>`;
+            })
+            .join('')
+        : '<p class="mini-note" style="margin:0">No integrity alerts for current filters.</p>';
+      el.innerHTML = head + rows;
+    }
+
+    function renderServiceCatalogAdmin(cat) {
+      const el = document.getElementById('serviceCatalogAdminBody');
+      if (!el) return;
+      if (!cat || !cat.ok) {
+        el.innerHTML =
+          '<p class="mini-note">' +
+          escapeHtml(cat?.error || 'Catalog requires PostgreSQL and maintenance_service_catalog.') +
+          '</p>';
+        return;
+      }
+      const rows = cat.rows || [];
+      if (!rows.length) {
+        el.innerHTML = '<p class="mini-note">No catalog rows.</p>';
+        return;
+      }
+      el.innerHTML = `
+        <div style="overflow:auto">
+          <table class="catalog-admin-table">
+            <thead><tr><th>Name</th><th>Active</th><th>Sort</th><th></th></tr></thead>
+            <tbody>
+              ${rows
+                .map(
+                  r => `
+                <tr>
+                  <td>${escapeHtml(r.name || '')}</td>
+                  <td style="text-align:center">${r.active ? 'Yes' : 'No'}</td>
+                  <td style="text-align:center">${r.sort_order ?? ''}</td>
+                  <td style="text-align:center">
+                    <button type="button" class="btn" style="font-size:11px;padding:4px 8px" data-cat-id="${escapeHtml(
+                      String(r.id)
+                    )}" data-next-active="${r.active ? 'false' : 'true'}" onclick="toggleCatalogActiveFromBtn(this)">${r.active ? 'Deactivate' : 'Activate'}</button>
+                  </td>
+                </tr>`
+                )
+                .join('')}
+            </tbody>
+          </table>
+        </div>
+        <p class="mini-note" style="margin-top:10px">Add new names from the maintenance form (“Add to catalog”) or POST <code>/api/maintenance/service-types</code>.</p>`;
+    }
+
+    async function toggleCatalogActiveFromBtn(btn) {
+      const id = btn.getAttribute('data-cat-id');
+      const active = btn.getAttribute('data-next-active') === 'true';
+      try {
+        await j('/api/maintenance/service-catalog-admin', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, active })
+        });
+        await loadAll();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
     }
 
     function resolveApBankSearch() {
@@ -3473,7 +3660,9 @@
           sub.textContent =
             'Line subtotal: $' +
             rounded.toFixed(2) +
-            ' — total matches this sum. Clear qty/unit/line $ on all rows to enter one manual total above.';
+            ' — invoice total matches this sum for unit ' +
+            (selectedUnit || '—') +
+            '. Clear qty/unit/line $ on all rows to enter one manual total above.';
         }
       } else {
         if (costEl) costEl.readOnly = false;
@@ -3483,6 +3672,34 @@
             : '';
         }
       }
+      updateMaintInvoiceCostCoordination(lines, rounded, hasAmt);
+    }
+
+    function updateMaintInvoiceCostCoordination(lines, rounded, hasAmt) {
+      const wrap = document.getElementById('maintInvoiceCostSummary');
+      if (!wrap) return;
+      const unit = selectedUnit || '—';
+      const n = lines.length;
+      if (!n && !hasAmt) {
+        wrap.style.display = 'none';
+        wrap.innerHTML = '';
+        return;
+      }
+      wrap.style.display = 'block';
+      const costEl = document.getElementById('costInput');
+      const locked = costEl && costEl.readOnly;
+      wrap.innerHTML = `
+        <div class="coord-row">
+          <div><strong>Unit</strong> ${escapeHtml(unit)} · <strong>Cost lines</strong> ${n}</div>
+          <div class="coord-total">Invoice total: $${rounded.toFixed(2)}</div>
+        </div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">
+          ${
+            locked
+              ? 'Total is coordinated with the line breakdown below. Editing qty / unit price / line $ updates this total.'
+              : 'Add line $ amounts to lock the invoice total, or type one amount in Total cost when there are no line amounts.'
+          }
+        </div>`;
     }
 
     function syncPrimaryServiceToFirstCostLine() {
@@ -3879,6 +4096,8 @@
       if (iwo) iwo.value = '';
       document.getElementById('apMemo').value = '';
       document.getElementById('apDueDate').value = '';
+      const termEl = document.getElementById('apQboTermId');
+      if (termEl) termEl.value = '';
       document.getElementById('woRepairLocationType').value = '';
       const abs = document.getElementById('apBankAccountSearch');
       const abid = document.getElementById('apBankAccountQboId');
@@ -4019,6 +4238,7 @@
       setServiceOptions();
       toggleRecordFields();
       ensureMaintCostLinesBootstrapped();
+      recalcMaintCostTotalFromLines();
       renderUnitHistory();
       applyLoadNumberSuggestion(false);
     }
@@ -5869,6 +6089,7 @@
           serviceDate: document.getElementById('apTxnDate').value,
           txnType: document.getElementById('apTxnType').value,
           dueDate: document.getElementById('apDueDate').value,
+          qboTermId: document.getElementById('apQboTermId')?.value || '',
           qboVendorId: vendorId,
           paymentMethodId: document.getElementById('apPaymentMethodId').value,
           qboBankAccountId: document.getElementById('apBankAccountQboId').value,
