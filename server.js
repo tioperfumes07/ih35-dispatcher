@@ -1621,6 +1621,80 @@ function appendQboBillPaymentLogEntry(erp, req, result, body) {
   return entry.id;
 }
 
+function billPaymentLogTxnSortKey(e) {
+  return sliceIsoDate(e?.txnDate) || sliceIsoDate(e?.createdAt) || '';
+}
+
+function filterBillPaymentLogEntries(log, query) {
+  const fromD = sliceIsoDate(query?.from);
+  const toD = sliceIsoDate(query?.to);
+  const vendorId = String(query?.vendorId || '').trim();
+  const lim = Math.min(500, Math.max(1, Number(query?.limit) || 150));
+  const arr = Array.isArray(log) ? [...log] : [];
+  arr.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  return arr
+    .filter(e => {
+      const d = billPaymentLogTxnSortKey(e);
+      if (fromD && (!d || d < fromD)) return false;
+      if (toD && (!d || d > toD)) return false;
+      if (vendorId && String(e.vendorQboId || '') !== vendorId) return false;
+      return true;
+    })
+    .slice(0, lim);
+}
+
+function buildBillPaymentLogCsv(entries) {
+  const headers = [
+    'erpLogId',
+    'createdAt',
+    'txnDate',
+    'vendorName',
+    'vendorQboId',
+    'bankAccountName',
+    'payType',
+    'qboBillPaymentId',
+    'qboBillPaymentDocNumber',
+    'paymentTotal',
+    'billQboId',
+    'billDocNumber',
+    'amountPaid',
+    'balanceBefore',
+    'balanceAfter',
+    'checkNum',
+    'privateNote',
+    'recordedBy'
+  ];
+  const lines = [headers.map(csvEscape).join(',')];
+  for (const e of entries) {
+    const lineArr = Array.isArray(e.lines) && e.lines.length ? e.lines : [null];
+    for (const ln of lineArr) {
+      lines.push(
+        [
+          csvEscape(e.id),
+          csvEscape(e.createdAt),
+          csvEscape(e.txnDate),
+          csvEscape(e.vendorName),
+          csvEscape(e.vendorQboId),
+          csvEscape(e.bankAccountName),
+          csvEscape(e.payType),
+          csvEscape(e.qboBillPaymentId),
+          csvEscape(e.qboBillPaymentDocNumber),
+          csvEscape(e.totalAmt),
+          csvEscape(ln?.billQboId ?? ''),
+          csvEscape(ln?.billDocNumber ?? ''),
+          csvEscape(ln?.amountPaid ?? ''),
+          csvEscape(ln?.balanceBefore ?? ''),
+          csvEscape(ln?.balanceAfter ?? ''),
+          csvEscape(e.checkNum),
+          csvEscape(e.privateNote),
+          csvEscape(e.recordedBy)
+        ].join(',')
+      );
+    }
+  }
+  return lines.join('\n');
+}
+
 function buildErpExpenseCandidates(erp) {
   const vendors = erp.qboCache?.vendors || [];
   const vName = id => vendors.find(v => String(v.qboId) === String(id))?.name || '';
@@ -5427,6 +5501,36 @@ app.get('/api/erp/import-batches', (_req, res) => {
   } catch (error) {
     logError('api/erp/import-batches', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Bill payments recorded in ERP (from this app). Query: from, to (YYYY-MM-DD on txnDate/createdAt),
+ * vendorId (QBO vendor id), limit (1–500), format=json|csv
+ */
+app.get('/api/erp/bill-payment-log', (req, res) => {
+  try {
+    const erp = readErp();
+    const log = erp.qboBillPaymentLog || [];
+    const q = {
+      from: req.query.from,
+      to: req.query.to,
+      vendorId: req.query.vendorId,
+      limit: req.query.limit
+    };
+    const entries = filterBillPaymentLogEntries(log, q);
+    const format = String(req.query.format || 'json').toLowerCase();
+    if (format === 'csv') {
+      const body = buildBillPaymentLogCsv(entries);
+      const day = sliceIsoDate(new Date().toISOString()) || 'export';
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="bill-payment-log-${day}.csv"`);
+      return res.send(body);
+    }
+    res.json({ ok: true, entries, count: entries.length, totalInErp: log.length });
+  } catch (error) {
+    logError('api/erp/bill-payment-log', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
