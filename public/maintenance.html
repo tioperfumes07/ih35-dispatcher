@@ -362,6 +362,12 @@
       </section>
 
       <section id="section-maintenance" class="section active">
+        <div class="subtabs maint-main-subtabs" id="maintMainSubtabs">
+          <button type="button" class="subtab active" data-maint-main="overview" onclick="openMaintMainTab('overview', this)">Overview</button>
+          <button type="button" class="subtab" data-maint-main="record" onclick="openMaintMainTab('record', this)">Work order</button>
+          <button type="button" class="subtab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this)">Fleet table</button>
+        </div>
+        <div id="maintMainTabOverview" class="maint-main-tab-panel active">
         <div class="panel shop-print-area maint-section-card">
           <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
             <div style="flex:1;min-width:200px">
@@ -594,7 +600,9 @@
             <div id="securityAlertsBody" class="mini-note">Loading alerts…</div>
           </div>
         </div>
+        </div>
 
+        <div id="maintMainTabRecord" class="maint-main-tab-panel">
         <div class="split" id="maintenanceSplit" style="margin-top:12px;">
           <div class="panel unit-list-panel">
             <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -625,7 +633,27 @@
                   <div class="unit-box"><div class="k">Due Soon</div><div class="v" id="unitDueSoonBox">0</div></div>
                 </div>
 
+                <div id="maintWoBanner" class="maint-wo-banner hidden" aria-live="polite">
+                  <div class="maint-wo-banner__left">
+                    <div class="maint-wo-banner__eyebrow">Fleet maintenance work order</div>
+                    <div id="maintWoBannerUnit" class="maint-wo-banner__unit"></div>
+                  </div>
+                  <div class="maint-wo-banner__refs">
+                    <div id="maintWoVendorInvWrap" class="maint-wo-field">
+                      <span class="qb-l" id="maintWoVendorInvLabel">Vendor invoice #</span>
+                      <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-wo-input" placeholder="Supplier invoice" autocomplete="off">
+                    </div>
+                    <div id="maintWoWoWrap" class="maint-wo-field">
+                      <span class="qb-l" id="maintWoWoLabel">Work order #</span>
+                      <input id="recordWorkOrderInput" class="qb-in maint-field maint-wo-input" placeholder="Vendor WO / internal ref" autocomplete="off">
+                    </div>
+                  </div>
+                </div>
+
                 <div class="form-stack maint-form-stack">
+                  <div class="maint-subcard">
+                    <div class="maint-subcard__head">Vehicle &amp; mileage</div>
+                    <div class="maint-subcard__body">
                   <div class="search-row">
                     <input id="mileageInput" class="qb-in maint-field" type="number" placeholder="Manual mileage override">
                     <button type="button" onclick="saveMileage()">Save mileage</button>
@@ -641,7 +669,12 @@
                       <option value="custom">Custom</option>
                     </select>
                   </div>
+                    </div>
+                  </div>
 
+                  <div class="maint-subcard">
+                    <div class="maint-subcard__head">Service &amp; scheduling</div>
+                    <div class="maint-subcard__body">
                   <div>
                     <span class="qb-l">Service / maintenance (type or pick)</span>
                     <input
@@ -695,6 +728,12 @@
                     <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / invoice #" autocomplete="off" />
                     <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
                   </div>
+                    </div>
+                  </div>
+
+                  <div class="maint-subcard">
+                    <div class="maint-subcard__head">Vendor &amp; invoice total</div>
+                    <div class="maint-subcard__body">
                   <div class="vendor-row-maint">
                     <div>
                       <span class="qb-l">Vendor (QuickBooks)</span>
@@ -712,8 +751,10 @@
                   </label>
                   <div id="maintCostTotalMatch" class="mini-note" style="margin:0 0 6px;max-width:56ch"></div>
                   <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
+                    </div>
+                  </div>
 
-                  <div class="panel maint-cost-panel" style="box-shadow:none;margin-top:4px">
+                  <div class="panel maint-cost-panel maint-subcard maint-cost-panel-card" style="box-shadow:none;margin-top:4px">
                     <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
                       <div class="panel-title" style="font-size:14px;text-align:center;width:100%">Cost breakdown (same vendor invoice)</div>
                       <button type="button" class="qb-btn-add" onclick="addMaintCostLine()">+ Add line</button>
@@ -782,16 +823,9 @@
                       </div>
                     </div>
                   </div>
-                  <div class="search-row">
-                    <div>
-                      <span class="qb-l">Vendor invoice #</span>
-                      <input id="recordVendorInvoiceInput" class="qb-in maint-field" placeholder="Supplier invoice" autocomplete="off">
-                    </div>
-                    <div>
-                      <span class="qb-l">Work order #</span>
-                      <input id="recordWorkOrderInput" class="qb-in maint-field" placeholder="Vendor WO / internal ref" autocomplete="off">
-                    </div>
-                  </div>
+                  <div class="maint-subcard">
+                    <div class="maint-subcard__head">Attachments &amp; notes</div>
+                    <div class="maint-subcard__body">
                   <div class="search-row" style="max-width:560px;margin-top:8px;align-items:flex-end">
                     <div style="flex:1;min-width:200px">
                       <span class="qb-l">Vendor invoice PDF (optional)</span>
@@ -804,6 +838,8 @@
                   </div>
                   <div id="maintInvoicePdfStatus" class="mini-note" style="max-width:560px"></div>
                   <textarea id="notesInput" class="qb-memo" placeholder="Notes" style="max-width:560px"></textarea>
+                    </div>
+                  </div>
 
                   <div id="recordSameCostServicesWrap" class="form-stack">
                     <span class="qb-l">Additional services on same invoice (optional)</span>
@@ -901,16 +937,25 @@
                     <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
                   </div>
 
-                  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                    <select id="maintSaveAction" class="qb-in maint-field" style="max-width:220px">
+                  <div class="maint-save-toolbar">
+                    <select id="maintSaveAction" class="maint-save-action-hidden" aria-hidden="true" tabindex="-1">
                       <option value="save">Save</option>
                       <option value="save_close">Save &amp; close</option>
                       <option value="save_to_ap">Save &amp; open Accounting draft</option>
                       <option value="save_print">Save &amp; print</option>
                       <option value="save_post">Save &amp; post to QuickBooks</option>
                     </select>
-                    <button type="button" onclick="saveRecordWithAction()">Run</button>
-                    <span class="mini-note" id="maintSaveHint" style="margin:0"></span>
+                    <div class="maint-save-toolbar__btns">
+                      <button type="button" class="btn" onclick="saveRecordWithAction('save')">Save</button>
+                      <button type="button" class="btn" onclick="saveRecordWithAction('save_close')">Save &amp; close</button>
+                      <button type="button" class="btn" onclick="saveRecordWithAction('save_to_ap')">Accounting draft</button>
+                      <button type="button" class="btn qb-btn-primary" onclick="saveRecordWithAction('save_post')">Save &amp; record in QuickBooks</button>
+                      <button type="button" class="btn" title="Saves the record, then opens the browser print dialog" onclick="saveRecordWithAction('save_print')">Save + print</button>
+                      <button type="button" class="btn" title="Prints the current page now without saving" onclick="maintPrintWorkOrderView()">Print form</button>
+                      <button type="button" class="btn" title="PDF snapshot of this form (draft, not posted)" onclick="maintDraftWorkOrderPdf()">Draft WO PDF</button>
+                      <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" title="Open PDF of the live shop queue (separate from this work order)" style="display:inline-block;text-decoration:none;line-height:1.25">Shop queue PDF</a>
+                    </div>
+                    <span class="mini-note" id="maintSaveHint" style="margin:0;flex:1;min-width:140px"></span>
                   </div>
                 </div>
               </div>
@@ -928,7 +973,12 @@
               </div>
             </div>
 
-            <div class="panel">
+          </div>
+        </div>
+        </div>
+
+        <div id="maintMainTabFleet" class="maint-main-tab-panel">
+            <div class="panel maint-section-card">
               <div class="panel-head"><div class="panel-title">Maintenance Table</div></div>
               <div class="panel-body">
                 <div class="table-wrap">
@@ -957,13 +1007,12 @@
               </div>
             </div>
 
-            <div class="panel">
+            <div class="panel maint-section-card">
               <div class="panel-head"><div class="panel-title">Unit History</div></div>
               <div class="panel-body">
                 <div id="unitHistory" class="card-list">No records yet.</div>
               </div>
             </div>
-          </div>
         </div>
       </section>
 
@@ -2544,6 +2593,7 @@
         const def = REPAIR_LOCATION_DEFS.find(d => d.code === code);
         vis.value = def ? def.label : '';
       }
+      syncMaintWorkOrderHeader();
     }
 
     function openShopBoardTab(tab, btn) {
@@ -2560,6 +2610,142 @@
       if (p) p.classList.add('active');
       document.querySelectorAll('#shopBoardSubtabs .subtab').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
+    }
+
+    function openMaintMainTab(tab, btn) {
+      const map = { overview: 'maintMainTabOverview', record: 'maintMainTabRecord', fleet: 'maintMainTabFleet' };
+      document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
+      const id = map[tab];
+      const panel = id ? document.getElementById(id) : null;
+      if (panel) panel.classList.add('active');
+      document.querySelectorAll('#maintMainSubtabs .subtab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    function maintPrintWorkOrderView() {
+      const el = document.getElementById('maintWoBanner');
+      if (el && !el.classList.contains('hidden')) {
+        try {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (_) {}
+      }
+      setTimeout(() => window.print(), 120);
+    }
+
+    async function maintDraftWorkOrderPdf() {
+      if (!selectedUnit) {
+        alert('Select an asset first.');
+        return;
+      }
+      const hint = document.getElementById('maintSaveHint');
+      try {
+        if (hint) hint.textContent = 'Building draft PDF…';
+        resolveServiceSearch();
+        resolveRepairLocationSearch();
+        const repairLab = (document.getElementById('repairLocationSearch')?.value || '').trim();
+        const lines = collectMaintCostLines();
+        const body = {
+          unit: selectedUnit,
+          recordType: document.getElementById('recordTypeSelect')?.value || '',
+          repairLocationType: document.getElementById('repairLocationTypeInput')?.value || '',
+          repairLocationLabel: repairLab,
+          serviceType:
+            document.getElementById('recordTypeSelect')?.value === 'custom'
+              ? (document.getElementById('customServiceTypeInput')?.value || '').trim()
+              : (document.getElementById('serviceTypeInput')?.value || '').trim(),
+          serviceDate: document.getElementById('serviceDateInput')?.value || '',
+          serviceMileage: document.getElementById('serviceMileageInput')?.value || '',
+          vendor: document.getElementById('vendorInput')?.value || '',
+          cost: document.getElementById('costInput')?.value || '',
+          vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput')?.value || '',
+          workOrderNumber: document.getElementById('recordWorkOrderInput')?.value || '',
+          loadNumber: document.getElementById('recordLoadNumberInput')?.value || '',
+          notes: document.getElementById('notesInput')?.value || '',
+          costLines: lines.map(l => ({
+            description: l.description,
+            amount: l.amount,
+            quantity: l.quantity,
+            unitPrice: l.unitPrice
+          }))
+        };
+        const r = await fetch('/api/pdf/fleet-maintenance-draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!r.ok) {
+          const t = await r.text();
+          throw new Error(t || r.statusText);
+        }
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener');
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        if (hint) hint.textContent = 'Draft PDF opened.';
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+        else alert(e.message || String(e));
+      }
+    }
+
+    function ensureInternalShopWorkOrderPreview() {
+      if (!selectedUnit) return;
+      const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
+      const woEl = document.getElementById('recordWorkOrderInput');
+      if (!woEl || repairLoc !== 'in-house') return;
+      const woNo = String(woEl.value || '').trim();
+      if (woNo) return;
+      const d =
+        (document.getElementById('serviceDateInput')?.value || '').replace(/[^0-9]/g, '') ||
+        new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      woEl.value = `INT-${String(selectedUnit).replace(/[^A-Z0-9_-]/gi, '')}-${d}-${Math.random()
+        .toString(36)
+        .slice(2, 6)
+        .toUpperCase()}`;
+    }
+
+    function syncMaintWorkOrderHeader() {
+      const ban = document.getElementById('maintWoBanner');
+      const unitLine = document.getElementById('maintWoBannerUnit');
+      const vWrap = document.getElementById('maintWoVendorInvWrap');
+      const woWrap = document.getElementById('maintWoWoWrap');
+      const vLab = document.getElementById('maintWoVendorInvLabel');
+      const woLab = document.getElementById('maintWoWoLabel');
+      const vInp = document.getElementById('recordVendorInvoiceInput');
+      const woInp = document.getElementById('recordWorkOrderInput');
+      if (!ban || !vWrap || !woWrap) return;
+      if (!selectedUnit) {
+        ban.classList.add('hidden');
+        return;
+      }
+      ban.classList.remove('hidden');
+      if (unitLine) unitLine.textContent = selectedUnit;
+      const rt = document.getElementById('recordTypeSelect')?.value || '';
+      const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
+      const isRepair = rt === 'repair';
+
+      if (isRepair && repairLoc === 'in-house') {
+        vWrap.classList.add('hidden');
+        woWrap.classList.remove('hidden');
+        if (woLab) woLab.textContent = 'Shop WO # (internal)';
+        if (vLab) vLab.textContent = 'Vendor invoice #';
+        if (woInp) woInp.placeholder = 'Assigned on save if empty';
+        ensureInternalShopWorkOrderPreview();
+      } else if (isRepair && (repairLoc === 'external' || repairLoc === 'road-service')) {
+        vWrap.classList.remove('hidden');
+        woWrap.classList.remove('hidden');
+        if (woLab) woLab.textContent = 'Vendor WO #';
+        if (vLab) vLab.textContent = 'Vendor invoice #';
+        if (woInp) woInp.placeholder = 'Vendor work order';
+        if (vInp) vInp.placeholder = 'Supplier invoice';
+      } else {
+        vWrap.classList.remove('hidden');
+        woWrap.classList.remove('hidden');
+        if (woLab) woLab.textContent = 'Reference / WO #';
+        if (vLab) vLab.textContent = 'Vendor invoice #';
+        if (woInp) woInp.placeholder = 'Vendor WO / internal ref';
+        if (vInp) vInp.placeholder = 'Supplier invoice (optional)';
+      }
     }
 
     async function loadTmsLoadsForMaint() {
@@ -3143,6 +3329,10 @@
         uploads: 'Uploads'
       };
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
+      if (name === 'maintenance') {
+        const ovBtn = document.querySelector('#maintMainSubtabs [data-maint-main="overview"]');
+        openMaintMainTab('overview', ovBtn);
+      }
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
       }
@@ -4391,7 +4581,7 @@
       const left = Math.max(10, Math.min(window.scrollX + r.left, window.scrollX + window.innerWidth - maxW - 10));
       const belowTop = window.scrollY + r.bottom + 6;
       const aboveTop = window.scrollY + r.top - 6;
-      const menuH = Math.min(260, __qbPickerMenu.scrollHeight || 260);
+      const menuH = Math.min(200, __qbPickerMenu.scrollHeight || 200);
       const spaceBelow = window.innerHeight - r.bottom;
       const shouldFlip = spaceBelow < Math.min(220, menuH) && r.top > 180;
       const top = shouldFlip ? Math.max(10 + window.scrollY, aboveTop - menuH) : belowTop;
@@ -4518,15 +4708,11 @@
       if (input.dataset.qbPickerAttached === '1') return;
       input.dataset.qbPickerAttached = '1';
 
-      input.addEventListener('focus', () => {
-        qbPickerOpen(input, opts);
-      });
-
-      // QBO-ish: if you hover into the field, show suggestions.
-      input.addEventListener('mouseenter', () => {
-        if (__qbPickerActive && __qbPickerActive.input === input && __qbPickerMenu && !__qbPickerMenu.classList.contains('hidden')) return;
-        qbPickerOpen(input, opts);
-      });
+      const lid = (input.getAttribute('list') || '').trim();
+      if (lid) {
+        input.dataset.qbPickerListId = lid;
+        input.removeAttribute('list');
+      }
 
       input.addEventListener('input', () => {
         if (!__qbPickerActive || __qbPickerActive.input !== input) return;
@@ -4591,7 +4777,7 @@
     }
 
     function qbPickerOptsForInput(input) {
-      const listId = (input.getAttribute('list') || '').trim();
+      const listId = (input.getAttribute('list') || input.dataset.qbPickerListId || '').trim();
       if (!listId) return null;
 
       if (listId === 'qboVendorOptions') {
@@ -4617,7 +4803,17 @@
       }
       if (listId === 'qboBankAccountOptions') {
         return {
-          rows: () => cacheBankAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
+          rows: () =>
+            cacheBankAccounts().map(a => {
+              const label = a.name || a.qboId;
+              const type = String(a.accountType || '').trim();
+              const id = String(a.qboId || '').trim();
+              let meta = type;
+              if (type && label && type.toLowerCase() === String(label).toLowerCase()) {
+                meta = id.length > 10 ? `…${id.slice(-8)}` : id;
+              }
+              return { label, meta };
+            }),
           onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('account', typed) // create Bank/CreditCard account via same form
         };
@@ -4649,12 +4845,13 @@
       document.addEventListener('focusin', e => {
         const input = e.target;
         if (!input || input.tagName !== 'INPUT') return;
-        if (!input.getAttribute('list')) return;
-        if (input.dataset.qbPickerAttached === '1') return;
+        const listId = (input.getAttribute('list') || input.dataset.qbPickerListId || '').trim();
+        if (!listId) return;
         const opts = qbPickerOptsForInput(input);
         if (!opts) return;
-        qbPickerAttachEl(input, opts);
-        // Open immediately without re-dispatching focus (avoids recursion).
+        if (input.dataset.qbPickerAttached !== '1') {
+          qbPickerAttachEl(input, opts);
+        }
         qbPickerOpen(input, opts);
       });
 
@@ -5545,6 +5742,8 @@
         }
       }
       setTimeout(() => {
+        const recBtn = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
+        openMaintMainTab('record', recBtn);
         document.getElementById('serviceDateInput')?.focus();
         document.querySelector('#section-maintenance .maint-form-stack')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 80);
@@ -6043,6 +6242,7 @@
       const lab = document.getElementById('repairLocationSearch').value.trim();
       const hit = REPAIR_LOCATION_DEFS.find(d => d.label.toLowerCase() === lab.toLowerCase());
       document.getElementById('repairLocationTypeInput').value = hit ? hit.code : '';
+      syncMaintWorkOrderHeader();
     }
 
     function resolveAccidentFaultSearch() {
@@ -7119,6 +7319,7 @@
         }
       }
       if (type !== 'custom') syncPrimaryServiceToFirstCostLine();
+      syncMaintWorkOrderHeader();
     }
 
     function goToCreateQboVendor() {
@@ -7455,6 +7656,8 @@
       const v = vehicles.find(x => x.name === selectedUnit);
       if (!v) {
         document.getElementById('selectedUnitInfo').textContent = 'Select an asset.';
+        const ban = document.getElementById('maintWoBanner');
+        if (ban) ban.classList.add('hidden');
         return;
       }
 
@@ -7551,6 +7754,7 @@
       recalcMaintCostTotalFromLines();
       renderUnitHistory();
       applyLoadNumberSuggestion(false);
+      syncMaintWorkOrderHeader();
     }
 
     function latestFuelPurchaseForUnit(unitName) {
@@ -8181,13 +8385,15 @@
       await loadAll();
     }
 
-    async function saveRecordWithAction() {
+    async function saveRecordWithAction(actionOverride) {
       if (!selectedUnit) {
         alert('Select an asset first.');
         return;
       }
       const hint = document.getElementById('maintSaveHint');
-      const act = String(document.getElementById('maintSaveAction')?.value || 'save');
+      const sel = document.getElementById('maintSaveAction');
+      if (actionOverride && sel) sel.value = String(actionOverride);
+      const act = String(actionOverride || sel?.value || 'save');
       const post = act === 'save_post';
       const close = act === 'save_close';
       const toAp = act === 'save_to_ap';
@@ -8199,7 +8405,7 @@
             : toAp
               ? 'Saving + opening Accounting draft…'
               : toPrint
-                ? 'Saving + preparing print…'
+                ? 'Saving, then opening print…'
                 : 'Saving…';
         }
         await saveRecord(post, close);
@@ -8207,10 +8413,13 @@
           openAccountingDraftFromMaintenanceForm();
         }
         if (toPrint) {
-          // Print the current page view (shop + record + tables).
           setTimeout(() => window.print(), 50);
         }
-        if (hint) hint.textContent = post ? 'Saved and posted.' : 'Saved.';
+        if (hint) {
+          if (post) hint.textContent = 'Saved and posted to QuickBooks.';
+          else if (toPrint) hint.textContent = 'Saved — print dialog opened.';
+          else hint.textContent = 'Saved.';
+        }
       } catch (e) {
         if (hint) hint.textContent = e.message || String(e);
         else alert(e.message || String(e));

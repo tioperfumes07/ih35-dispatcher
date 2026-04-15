@@ -1005,6 +1005,83 @@ router.get('/api/pdf/work-order/:id', (req, res) => {
   }
 });
 
+/** Unsaved fleet maintenance work order — snapshot from the Work order form (for shop/vendor packets). */
+router.post('/api/pdf/fleet-maintenance-draft', (req, res) => {
+  try {
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const unit = String(b.unit || '').trim();
+    if (!unit) return res.status(400).send('unit required');
+
+    const safe = (v, max = 800) =>
+      String(v ?? '')
+        .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')
+        .slice(0, max);
+
+    const recordType = safe(b.recordType, 40);
+    const repairLoc = safe(b.repairLocationType, 40);
+    const repairLabel = safe(b.repairLocationLabel, 120);
+    const serviceType = safe(b.serviceType, 200);
+    const serviceDate = safe(b.serviceDate, 24);
+    const serviceMileage = safe(b.serviceMileage, 32);
+    const vendor = safe(b.vendor, 200);
+    const cost = b.cost != null && String(b.cost).trim() !== '' ? money(safeNum(b.cost, 0)) : '—';
+    const vendorInv = safe(b.vendorInvoiceNumber, 80);
+    const wo = safe(b.workOrderNumber, 80);
+    const loadNo = safe(b.loadNumber, 80);
+    const notes = safe(b.notes, 2400);
+    const costLines = Array.isArray(b.costLines) ? b.costLines.slice(0, 45) : [];
+
+    const fn = `fleet-wo-draft-${unit.replace(/[^\w.-]+/g, '_')}-${Date.now()}.pdf`;
+    sendPdf(res, fn, doc => {
+      drawHeaderBand(doc, 'WO DRAFT');
+      doc.font('Helvetica-Bold').fontSize(11).fillColor('#b45309');
+      doc.text(
+        'Draft — not saved in ERP. After save, use Fleet table → PDF / print on the row, or Save & record in QuickBooks.',
+        48,
+        doc.y,
+        {
+          width: doc.page.width - 96
+        }
+      );
+      doc.fillColor('#000000').moveDown(0.8);
+      doc.font('Helvetica').fontSize(10.5);
+      doc.text(`Unit / asset: ${unit}`);
+      doc.text(`Record type: ${recordType || '—'}`);
+      if (repairLoc || repairLabel) {
+        doc.text(`Repair / location: ${repairLabel || repairLoc || '—'}${repairLoc && repairLabel ? ` (${repairLoc})` : ''}`);
+      }
+      doc.text(`Service: ${serviceType || '—'}`);
+      doc.text(`Service date: ${serviceDate || '—'}   Odometer: ${serviceMileage || '—'}`);
+      doc.text(`Vendor (as entered): ${vendor || '—'}`);
+      doc.text(`Invoice total: ${cost}`);
+      doc.text(`Vendor invoice #: ${vendorInv || '—'}`);
+      doc.text(`Work order / ref #: ${wo || '—'}`);
+      doc.text(`Load / inv #: ${loadNo || '—'}`);
+      doc.moveDown(0.5);
+      if (costLines.length) {
+        doc.font('Helvetica-Bold').fontSize(10).text('Cost lines (draft)');
+        doc.font('Helvetica').fontSize(9);
+        costLines.forEach((ln, i) => {
+          const desc = safe(ln.description, 200) || '—';
+          const amt = ln.amount != null && String(ln.amount).trim() !== '' ? money(safeNum(ln.amount, 0)) : '—';
+          const q = ln.quantity != null ? String(ln.quantity) : '';
+          const up = ln.unitPrice != null ? money(safeNum(ln.unitPrice, 0)) : '';
+          const mid = q && up ? `${q} × ${up} → ` : '';
+          doc.text(`${i + 1}. ${mid}${amt} — ${desc}`);
+        });
+        doc.moveDown(0.5);
+      }
+      doc.font('Helvetica-Bold').fontSize(10).text('Notes');
+      doc.font('Helvetica').fontSize(9).fillColor('#333333').text(notes || '—', { align: 'left' });
+      doc.fillColor('#000000').moveDown();
+      doc.fontSize(8).fillColor('#666666').text(`Generated ${sliceDate(new Date().toISOString())} · ${TMS_COMPANY_NAME}`);
+      pdfFooterLine(doc);
+    });
+  } catch (e) {
+    res.status(500).send(e.message || 'PDF failed');
+  }
+});
+
 router.get('/api/pdf/shop-queue', (req, res) => {
   try {
     const erp = readFullErpJson();
