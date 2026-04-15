@@ -390,11 +390,464 @@
           </div>
         </div>
         <div class="subtabs maint-main-subtabs" id="maintMainSubtabs">
-          <button type="button" class="subtab active" data-maint-main="overview" onclick="openMaintMainTab('overview', this)">Overview</button>
-          <button type="button" class="subtab" data-maint-main="record" onclick="openMaintMainTab('record', this)">Work order</button>
+          <button type="button" class="subtab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Work order</button>
           <button type="button" class="subtab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this)">Fleet table</button>
         </div>
-        <div id="maintMainTabOverview" class="maint-main-tab-panel active">
+        <div id="maintMainTabRecord" class="maint-main-tab-panel active">
+        <div class="maint-workorder-category-strip maint-section-card">
+          <div class="panel-body" style="padding:12px 14px">
+            <span class="qb-l" style="display:block;margin-bottom:8px">Unit category (fleet type)</span>
+            <div class="chips" id="assetCategoryChips"></div>
+          </div>
+        </div>
+        <div class="split" id="maintenanceSplit" style="margin-top:12px;">
+          <div class="panel unit-list-panel">
+            <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <div class="panel-title" id="assetCategoryTitle">Trucks</div>
+              <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse truck list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
+            </div>
+            <div class="panel-body">
+              <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
+              <div id="retiredAssetsWrap" class="mini-note" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #e5e9f0"></div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="panel maint-section-card">
+              <div class="panel-head maint-panel-head-center">
+                <div class="panel-title">Selected Asset</div>
+              </div>
+              <div class="panel-body">
+                <div id="selectedUnitInfo" class="mini-note">Select an asset.</div>
+
+                <div class="unit-summary">
+                  <div class="unit-box"><div class="k">Actual Mileage</div><div class="v" id="unitMileageBox">N/A</div></div>
+                  <div class="unit-box"><div class="k">Fuel</div><div class="v" id="unitFuelBox">N/A</div></div>
+                  <div class="unit-box"><div class="k">Past Due</div><div class="v" id="unitPastDueBox">0</div></div>
+                  <div class="unit-box"><div class="k">Due Soon</div><div class="v" id="unitDueSoonBox">0</div></div>
+                </div>
+
+                <div id="maintWoBanner" class="maint-wo-banner hidden" aria-live="polite">
+                  <div class="maint-wo-banner__left">
+                    <div class="maint-wo-banner__eyebrow">Fleet maintenance work order</div>
+                    <div id="maintWoBannerUnit" class="maint-wo-banner__unit"></div>
+                  </div>
+                  <div class="maint-wo-banner__refs">
+                    <div id="maintWoVendorInvWrap" class="maint-wo-field">
+                      <span class="qb-l" id="maintWoVendorInvLabel">Vendor invoice #</span>
+                      <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-wo-input" placeholder="Supplier invoice" autocomplete="off">
+                    </div>
+                    <div id="maintWoWoWrap" class="maint-wo-field">
+                      <span class="qb-l" id="maintWoWoLabel">Work order #</span>
+                      <input id="recordWorkOrderInput" class="qb-in maint-field maint-wo-input" placeholder="Vendor WO / internal ref" autocomplete="off">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-stack maint-form-stack">
+                  <div class="maint-subcard">
+                    <div class="maint-subcard__head">Vehicle &amp; mileage</div>
+                    <div class="maint-subcard__body">
+                  <div class="search-row">
+                    <input id="mileageInput" class="qb-in maint-field" type="number" placeholder="Manual mileage override">
+                    <button type="button" onclick="saveMileage()">Save mileage</button>
+                  </div>
+
+                  <div>
+                    <span class="qb-l">Record type</span>
+                    <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()">
+                      <option value="maintenance">Maintenance</option>
+                      <option value="tire">Tire</option>
+                      <option value="repair">Repair</option>
+                      <option value="accident">Accident</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+                    </div>
+                  </div>
+
+                  <div class="maint-subcard">
+                    <div class="maint-subcard__head">Service &amp; scheduling</div>
+                    <div class="maint-subcard__body">
+                  <div>
+                    <span class="qb-l">Service / maintenance (type or pick)</span>
+                    <input
+                      id="serviceTypePresetInput"
+                      class="qb-in maint-field"
+                      list="servicePresetOptions"
+                      placeholder="Pick a suggestion or type any service name…"
+                      autocomplete="off"
+                      oninput="syncServicePresetFromCombo()"
+                      onblur="syncServicePresetFromCombo()"
+                    />
+                    <span class="qb-l" style="margin-top:8px;display:block">Same catalog with search (type to filter)</span>
+                    <input
+                      id="serviceSearchInput"
+                      class="qb-in maint-field"
+                      list="serviceOptions"
+                      placeholder="Type to search catalog…"
+                      autocomplete="off"
+                      oninput="resolveServiceSearch()"
+                      onblur="resolveServiceSearch()"
+                    />
+                    <div class="mini-note" style="margin-top:4px">
+                      Both fields accept <strong>any text</strong>; suggestions come from Postgres <code>maintenance_service_catalog</code> when configured, plus dashboard history and wear/tear presets.
+                    </div>
+                  </div>
+                  <div class="search-row" style="max-width:560px;margin-top:6px">
+                    <input id="maintNewCatalogServiceName" class="qb-in maint-field" placeholder="New catalog name (needs Postgres)" autocomplete="off" />
+                    <button type="button" onclick="addCatalogServiceType()">Add to catalog</button>
+                  </div>
+                  <div id="maintCatalogServiceHint" class="mini-note"></div>
+                  <input id="serviceTypeInput" type="hidden">
+                  <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type">
+
+                  <div class="search-row" style="align-items:flex-start;flex-wrap:wrap">
+                    <input id="serviceDateInput" class="qb-in maint-field" type="date">
+                    <div style="flex:1;min-width:200px;max-width:340px">
+                      <input
+                        id="serviceMileageInput"
+                        class="qb-in maint-field"
+                        type="number"
+                        step="1"
+                        placeholder="Service mileage (Samsara odometer)"
+                        oninput="markServiceMileageTouched()"
+                      />
+                      <div id="serviceMileageHint" class="mini-note" style="margin-top:4px;line-height:1.4"></div>
+                    </div>
+                    <button type="button" class="btn" onclick="fillServiceMileageFromSamsara()" title="Fill with latest Samsara odometer for this unit">Use Samsara</button>
+                  </div>
+                  <div>
+                    <span class="qb-l">Load / inv # (settlement)</span>
+                    <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / invoice #" autocomplete="off" />
+                    <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
+                  </div>
+                    </div>
+                  </div>
+
+                  <div class="maint-subcard">
+                    <div class="maint-subcard__head">Vendor &amp; invoice total</div>
+                    <div class="maint-subcard__body">
+                  <div class="vendor-row-maint">
+                    <div>
+                      <span class="qb-l">Vendor (QuickBooks)</span>
+                      <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="Type vendor…" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off">
+                    </div>
+                    <div>
+                      <span class="qb-l">Total cost (invoice)</span>
+                      <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Must match the sum of cost lines when lines have amounts (or lock manual total below)">
+                    </div>
+                    <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
+                  </div>
+                  <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 6px;max-width:560px">
+                    <input type="checkbox" id="costTotalLock" />
+                    Lock invoice total — do not auto-fill from cost lines (you enter the total manually; it must still match line sum to save)
+                  </label>
+                  <div id="maintCostTotalMatch" class="mini-note" style="margin:0 0 6px;max-width:56ch"></div>
+                  <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
+                    </div>
+                  </div>
+
+                  <div class="panel maint-cost-panel maint-subcard maint-cost-panel-card" style="box-shadow:none;margin-top:4px">
+                    <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                      <div class="panel-title" style="font-size:14px;text-align:center;width:100%">Cost breakdown (same vendor invoice)</div>
+                      <button type="button" class="qb-btn-add" onclick="addMaintCostLine()">+ Add line</button>
+                    </div>
+                    <div class="panel-body form-stack">
+                      <p class="mini-note" style="margin:0">
+                        <strong>Each row is one repair or service item</strong> on the same vendor invoice (labor, parts, fees). Add lines with <strong>+ Add line</strong>. Each expense line: description, <strong>Qty</strong>, <strong>Unit $</strong> (optional). When both qty and unit are set, <strong>Line $</strong> = qty × unit and locks; otherwise type the line total directly. Invoice total above = sum of line amounts.
+                        Line descriptions use the same catalog suggestions as <strong>Service / maintenance</strong> (Postgres catalog when configured, plus history). Optional <strong>multi-position parts</strong> (tires, batteries, air bags, etc.): pick a category, choose position from the list or the mini map, add part # — including for <strong>accident</strong> visits when you stay on record type Accident. When at least one cost line is saved, <strong>Save and record</strong> posts a Purchase with one QBO line per row; defaults come from Link accounting when a row’s QBO fields are left blank.
+                      </p>
+                      <div id="maintCostLinesHost"></div>
+                      <div class="mini-note" id="maintCostLinesSubtotal" style="margin-top:4px"></div>
+
+                      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);max-width:560px">
+                        <div class="panel-title" style="font-size:13px;margin-bottom:6px">Link accounting (QuickBooks)</div>
+                        <p class="mini-note" style="margin:0 0 8px">
+                          These fields control how <strong>Save &amp; post to QuickBooks</strong> will create the QBO transaction. This is no longer “auto on save”.
+                        </p>
+                        <div class="search-row">
+                          <div>
+                            <span class="qb-l">Txn type</span>
+                            <select id="linkedTxnTypeSelect" class="qb-in maint-field">
+                              <option value="expense">Expense</option>
+                              <option value="bill">Bill</option>
+                            </select>
+                          </div>
+                          <div>
+                            <span class="qb-l">Line detail</span>
+                            <select id="linkedDetailModeSelect" class="qb-in maint-field" onchange="toggleLinkedDetailMode()">
+                              <option value="category">Category details</option>
+                              <option value="item">Item details</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div class="search-row">
+                          <input id="linkedDocNumber" class="qb-in maint-field" placeholder="Expense / bill #" />
+                          <input id="linkedVendorSearch" class="qb-in maint-field" list="qboVendorOptions" placeholder="QBO vendor" oninput="resolveLinkedVendorSearch()" onblur="resolveLinkedVendorSearch()" />
+                        </div>
+                        <input id="linkedVendorQboId" type="hidden" />
+
+                        <div class="search-row">
+                          <input id="linkedPaymentMethodSearch" class="qb-in maint-field" list="paymentMethodOptions" placeholder="Payment method" oninput="resolveLinkedPaymentMethodSearch()" onblur="resolveLinkedPaymentMethodSearch()" />
+                          <input id="linkedDueDate" class="qb-in maint-field" type="date" />
+                        </div>
+                        <input id="linkedPaymentMethodId" type="hidden" />
+
+                        <div>
+                          <span class="qb-l">Pay from account (QuickBooks)</span>
+                          <input id="linkedBankAccountSearch" class="qb-in maint-field" list="qboBankAccountOptions" placeholder="Checking / credit card (expense / purchase)" autocomplete="off" oninput="resolveLinkedBankSearch()" onblur="resolveLinkedBankSearch()" />
+                          <input id="linkedBankAccountQboId" type="hidden" />
+                        </div>
+
+                        <div id="linkedCategoryBlock">
+                          <span class="qb-l">Expense category (QBO)</span>
+                          <input id="linkedAccountSearch" class="qb-in maint-field" list="qboAccountExpenseOptions" placeholder="Category / account" oninput="resolveLinkedAccountSearch()" onblur="resolveLinkedAccountSearch()" />
+                          <input id="linkedAccountQboId" type="hidden" />
+                        </div>
+
+                        <div id="linkedItemBlock" class="hidden">
+                          <div class="search-row">
+                            <input id="linkedItemSearch" class="qb-in maint-field" list="qboItemOptions" placeholder="QBO item / service" oninput="resolveLinkedItemSearch()" onblur="resolveLinkedItemSearch()" />
+                            <input id="linkedQty" class="qb-in maint-field" type="number" step="1" value="1" placeholder="Qty" />
+                          </div>
+                          <input id="linkedItemQboId" type="hidden" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="maint-subcard">
+                    <div class="maint-subcard__head">Attachments &amp; notes</div>
+                    <div class="maint-subcard__body">
+                  <div class="search-row" style="max-width:560px;margin-top:8px;align-items:flex-end">
+                    <div style="flex:1;min-width:200px">
+                      <span class="qb-l">Vendor invoice PDF (optional)</span>
+                      <input id="maintInvoicePdfInput" type="file" accept="application/pdf" />
+                    </div>
+                    <div>
+                      <span class="qb-l">&nbsp;</span>
+                      <button type="button" class="qb-btn-add" onclick="parseMaintRecordInvoicePdf()">Extract &amp; fill lines</button>
+                    </div>
+                  </div>
+                  <div id="maintInvoicePdfStatus" class="mini-note" style="max-width:560px"></div>
+                  <textarea id="notesInput" class="qb-memo" placeholder="Notes" style="max-width:560px"></textarea>
+                    </div>
+                  </div>
+
+                  <div id="recordSameCostServicesWrap" class="form-stack">
+                    <span class="qb-l">Additional services on same invoice (optional)</span>
+                    <textarea id="recordSameCostServicesInput" class="qb-memo" placeholder="e.g. Mount & balance, alignment, extra filters — still one total cost above" style="max-width:560px" rows="2"></textarea>
+                  </div>
+
+                  <div id="tireFields" class="hidden">
+                    <div class="tire-layout-wrap">
+                      <div>
+                        <svg class="tire-svg" viewBox="0 0 240 420">
+                          <rect x="85" y="20" width="70" height="380" rx="18" fill="#e2e8f0" stroke="#64748b" />
+                          <text x="120" y="45" text-anchor="middle" font-size="12" fill="#334155">Truck / Trailer 2D</text>
+
+                          <circle id="tp-steer-l" class="tire-dot" cx="55" cy="95" r="13" onclick="setTirePosition('Steer Left')"></circle>
+                          <circle id="tp-steer-r" class="tire-dot" cx="185" cy="95" r="13" onclick="setTirePosition('Steer Right')"></circle>
+
+                          <circle id="tp-drive1-l-o" class="tire-dot" cx="45" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Left Outer')"></circle>
+                          <circle id="tp-drive1-l-i" class="tire-dot" cx="65" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Left Inner')"></circle>
+                          <circle id="tp-drive1-r-i" class="tire-dot" cx="175" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Right Inner')"></circle>
+                          <circle id="tp-drive1-r-o" class="tire-dot" cx="195" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Right Outer')"></circle>
+
+                          <circle id="tp-drive2-l-o" class="tire-dot" cx="45" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Left Outer')"></circle>
+                          <circle id="tp-drive2-l-i" class="tire-dot" cx="65" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Left Inner')"></circle>
+                          <circle id="tp-drive2-r-i" class="tire-dot" cx="175" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Right Inner')"></circle>
+                          <circle id="tp-drive2-r-o" class="tire-dot" cx="195" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Right Outer')"></circle>
+
+                          <circle id="tp-trailer1-l-o" class="tire-dot" cx="45" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Left Outer')"></circle>
+                          <circle id="tp-trailer1-l-i" class="tire-dot" cx="65" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Left Inner')"></circle>
+                          <circle id="tp-trailer1-r-i" class="tire-dot" cx="175" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Right Inner')"></circle>
+                          <circle id="tp-trailer1-r-o" class="tire-dot" cx="195" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Right Outer')"></circle>
+
+                          <circle id="tp-trailer2-l-o" class="tire-dot" cx="45" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Left Outer')"></circle>
+                          <circle id="tp-trailer2-l-i" class="tire-dot" cx="65" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Left Inner')"></circle>
+                          <circle id="tp-trailer2-r-i" class="tire-dot" cx="175" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Right Inner')"></circle>
+                          <circle id="tp-trailer2-r-o" class="tire-dot" cx="195" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Right Outer')"></circle>
+                        </svg>
+                      </div>
+                      <div class="form-stack">
+                        <select id="tirePositionSelect" onchange="syncTirePositionFromSelect()">
+                          <option value="">Choose tire position</option>
+                          <option>Steer Left</option>
+                          <option>Steer Right</option>
+                          <option>Drive Axle 1 Left Outer</option>
+                          <option>Drive Axle 1 Left Inner</option>
+                          <option>Drive Axle 1 Right Inner</option>
+                          <option>Drive Axle 1 Right Outer</option>
+                          <option>Drive Axle 2 Left Outer</option>
+                          <option>Drive Axle 2 Left Inner</option>
+                          <option>Drive Axle 2 Right Inner</option>
+                          <option>Drive Axle 2 Right Outer</option>
+                          <option>Trailer Axle 1 Left Outer</option>
+                          <option>Trailer Axle 1 Left Inner</option>
+                          <option>Trailer Axle 1 Right Inner</option>
+                          <option>Trailer Axle 1 Right Outer</option>
+                          <option>Trailer Axle 2 Left Outer</option>
+                          <option>Trailer Axle 2 Left Inner</option>
+                          <option>Trailer Axle 2 Right Inner</option>
+                          <option>Trailer Axle 2 Right Outer</option>
+                        </select>
+                        <input id="tirePositionText" placeholder="Or write tire position manually">
+                        <input type="hidden" id="tireConditionValue" value="" />
+                        <input id="tireConditionSearch" class="qb-in maint-field" list="tireConditionOptions" placeholder="Tire condition" autocomplete="off" oninput="resolveTireConditionSearch()" onblur="resolveTireConditionSearch()" />
+                        <input id="tireBrandInput" placeholder="Tire brand">
+                        <input id="tireDotInput" placeholder="DOT / serial">
+                        <div class="grid grid-3">
+                          <input id="installMileageInput" type="number" placeholder="Install mileage">
+                          <input id="removeMileageInput" type="number" placeholder="Remove mileage">
+                          <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
+                        </div>
+                        <p class="mini-note" style="margin:8px 0 0">
+                          <strong>First tire</strong> uses the fields above. Add more positions for the <strong>same vendor invoice / total cost</strong> below.
+                        </p>
+                        <div id="tireExtraLinesHost"></div>
+                        <button type="button" class="qb-btn-add" onclick="addTireExtraLine()">+ Add another tire (same total cost)</button>
+                      </div>
+                    </div>
+                    <input id="tirePositionInput" type="hidden">
+                  </div>
+
+                  <div id="repairFields" class="hidden">
+                    <span class="qb-l">Repair location</span>
+                    <input type="hidden" id="repairLocationTypeInput" value="" />
+                    <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Type: Internal shop, External…" autocomplete="off" oninput="resolveRepairLocationSearch()" onblur="resolveRepairLocationSearch()" />
+                  </div>
+
+                  <div id="accidentFields" class="hidden">
+                    <div class="search-row">
+                      <div>
+                        <span class="qb-l">At fault</span>
+                        <input type="hidden" id="accidentAtFaultValue" value="" />
+                        <input id="accidentAtFaultSearch" class="qb-in maint-field" list="accidentFaultOptions" placeholder="At fault / Not at fault" autocomplete="off" oninput="resolveAccidentFaultSearch()" onblur="resolveAccidentFaultSearch()" />
+                      </div>
+                      <input id="accidentReportNumberInput" class="qb-in maint-field" placeholder="Accident report #">
+                    </div>
+                    <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
+                    <p class="mini-note" style="margin:8px 0 0;max-width:72ch;line-height:1.45">
+                      This visit is still saved as an <strong>accident</strong> record. Add each part, tire, fluid, and labor line under <strong>Cost breakdown</strong> below — each row uses the same <strong>maintenance / repair service catalog</strong> (datalist), optional <strong>multi-position part</strong> (tires, batteries, brakes, etc.), and per-line QuickBooks account or item. The “Service / maintenance” fields above stay the summary label for the visit (default <em>Accident Report</em>); line descriptions are what you want on the invoice (e.g. radiator, steer tires, body labor).
+                    </p>
+                    <p class="mini-note" style="margin:4px 0 0">
+                      <button type="button" class="qb-btn-add" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Catalogs → Service types</button>
+                      <button type="button" class="qb-btn-add" style="margin-left:8px" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
+                    </p>
+                  </div>
+
+                  <div class="maint-save-toolbar maint-save-toolbar--qb">
+                    <select id="maintSaveAction" class="maint-save-action-hidden" aria-hidden="true" tabindex="-1">
+                      <option value="save">Save</option>
+                      <option value="save_close">Save &amp; close</option>
+                      <option value="save_to_ap">Save &amp; open Accounting draft</option>
+                      <option value="save_print">Save &amp; print</option>
+                      <option value="save_post">Save &amp; post to QuickBooks</option>
+                    </select>
+                    <span class="mini-note maint-save-toolbar__hint" id="maintSaveHint"></span>
+                    <div class="maint-save-toolbar__actions">
+                      <div class="qb-split qb-split--primary">
+                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Save and record</button>
+                        <button type="button" class="qb-split__caret" aria-label="More save options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
+                        <ul class="qb-split__menu" role="menu" hidden>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save')">Save</button></li>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_close')">Save &amp; close</button></li>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_to_ap')">Accounting draft</button></li>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_print')">Save + print</button></li>
+                        </ul>
+                      </div>
+                      <div class="qb-split qb-split--neutral">
+                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); maintPrintWorkOrderView()">Print form</button>
+                        <button type="button" class="qb-split__caret" aria-label="More print and PDF options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
+                        <ul class="qb-split__menu" role="menu" hidden>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_print')">Save + print</button></li>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); maintDraftWorkOrderPdf()">Draft WO PDF</button></li>
+                          <li role="none">
+                            <a class="qb-split__menu-item qb-split__menu-item--link" role="menuitem" href="/api/pdf/shop-queue" target="_blank" rel="noopener" onclick="maintCloseSplitMenus()">Shop queue PDF</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">File uploads</div>
+              </div>
+              <div class="panel-body form-stack">
+                <p class="mini-note" style="margin:0">
+                  Spreadsheet imports live under <strong>Uploads</strong> in the sidebar (hover <strong>Uploads ▾</strong>) so there is a single hub — maintenance history, AP expenses, fuel/Relay, and connection notes.
+                </p>
+                <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to Uploads</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        </div>
+
+        <div id="maintMainTabFleet" class="maint-main-tab-panel">
+            <div class="panel maint-section-card">
+              <div class="panel-head"><div class="panel-title">Maintenance Table</div></div>
+              <div class="panel-body">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Unit</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Actual Mileage</th>
+                        <th>Fuel</th>
+                        <th>Last Date</th>
+                        <th>Next Due Date</th>
+                        <th>Next Due Mileage</th>
+                        <th>Vendor</th>
+                        <th>Inv #</th>
+                        <th>WO #</th>
+                        <th>Load #</th>
+                        <th>Cost</th>
+                        <th>QB Sync</th>
+                      </tr>
+                    </thead>
+                    <tbody id="maintenanceTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel maint-section-card">
+              <div class="panel-head"><div class="panel-title">Unit History</div></div>
+              <div class="panel-body">
+                <div id="unitHistory" class="card-list">No records yet.</div>
+              </div>
+            </div>
+        </div>
+      </section>
+
+      <section id="section-tracking" class="section">
+        <div class="grid grid-4">
+          <div class="metric"><div class="metric-label">Trucks</div><div class="metric-value" id="trackTruckCount">0</div></div>
+          <div class="metric"><div class="metric-label">Refrigerated Vans</div><div class="metric-value" id="trackReeferCount">0</div></div>
+          <div class="metric"><div class="metric-label">Flatbeds</div><div class="metric-value" id="trackFlatbedCount">0</div></div>
+          <div class="metric"><div class="metric-label">Other / Company Vehicles</div><div class="metric-value" id="trackOtherCount">0</div></div>
+        </div>
+
+        <div class="subtabs" style="margin-top:12px">
+          <button type="button" class="subtab" onclick="openTrackingTab('tr-maint-shop', this)">Shop &amp; maintenance</button>
+          <button type="button" class="subtab active" onclick="openTrackingTab('tr-map', this)">Map</button>
+          <button type="button" class="subtab" onclick="openTrackingTab('tr-assets', this)">Assets</button>
+          <button type="button" class="subtab" onclick="openTrackingTab('tr-drivers', this)">Drivers</button>
+          <button type="button" class="subtab" onclick="openTrackingTab('tr-idle', this)">Yard &amp; idle (T120–T178)</button>
+        </div>
+
+        <div id="tr-maint-shop" class="tracking-sub hidden">
+          <p class="mini-note" style="margin:8px 0 10px;max-width:72ch">Shop queue, expense strip, and integrity alerts for the fleet. Same data as before; moved here from the Maintenance sidebar so <strong>Work order</strong> is the primary maintenance tab.</p>
         <div class="panel shop-print-area maint-section-card">
           <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
             <div style="flex:1;min-width:200px">
@@ -628,449 +1081,6 @@
         </div>
         </div>
 
-        <div id="maintMainTabRecord" class="maint-main-tab-panel">
-        <div class="maint-workorder-category-strip maint-section-card">
-          <div class="panel-body" style="padding:12px 14px">
-            <span class="qb-l" style="display:block;margin-bottom:8px">Unit category (fleet type)</span>
-            <div class="chips" id="assetCategoryChips"></div>
-          </div>
-        </div>
-        <div class="split" id="maintenanceSplit" style="margin-top:12px;">
-          <div class="panel unit-list-panel">
-            <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-              <div class="panel-title" id="assetCategoryTitle">Trucks</div>
-              <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse truck list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
-            </div>
-            <div class="panel-body">
-              <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
-              <div id="retiredAssetsWrap" class="mini-note" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #e5e9f0"></div>
-            </div>
-          </div>
-
-          <div class="grid">
-            <div class="panel maint-section-card">
-              <div class="panel-head maint-panel-head-center">
-                <div class="panel-title">Selected Asset</div>
-              </div>
-              <div class="panel-body">
-                <div id="selectedUnitInfo" class="mini-note">Select an asset.</div>
-
-                <div class="unit-summary">
-                  <div class="unit-box"><div class="k">Actual Mileage</div><div class="v" id="unitMileageBox">N/A</div></div>
-                  <div class="unit-box"><div class="k">Fuel</div><div class="v" id="unitFuelBox">N/A</div></div>
-                  <div class="unit-box"><div class="k">Past Due</div><div class="v" id="unitPastDueBox">0</div></div>
-                  <div class="unit-box"><div class="k">Due Soon</div><div class="v" id="unitDueSoonBox">0</div></div>
-                </div>
-
-                <div id="maintWoBanner" class="maint-wo-banner hidden" aria-live="polite">
-                  <div class="maint-wo-banner__left">
-                    <div class="maint-wo-banner__eyebrow">Fleet maintenance work order</div>
-                    <div id="maintWoBannerUnit" class="maint-wo-banner__unit"></div>
-                  </div>
-                  <div class="maint-wo-banner__refs">
-                    <div id="maintWoVendorInvWrap" class="maint-wo-field">
-                      <span class="qb-l" id="maintWoVendorInvLabel">Vendor invoice #</span>
-                      <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-wo-input" placeholder="Supplier invoice" autocomplete="off">
-                    </div>
-                    <div id="maintWoWoWrap" class="maint-wo-field">
-                      <span class="qb-l" id="maintWoWoLabel">Work order #</span>
-                      <input id="recordWorkOrderInput" class="qb-in maint-field maint-wo-input" placeholder="Vendor WO / internal ref" autocomplete="off">
-                    </div>
-                  </div>
-                </div>
-
-                <div class="form-stack maint-form-stack">
-                  <div class="maint-subcard">
-                    <div class="maint-subcard__head">Vehicle &amp; mileage</div>
-                    <div class="maint-subcard__body">
-                  <div class="search-row">
-                    <input id="mileageInput" class="qb-in maint-field" type="number" placeholder="Manual mileage override">
-                    <button type="button" onclick="saveMileage()">Save mileage</button>
-                  </div>
-
-                  <div>
-                    <span class="qb-l">Record type</span>
-                    <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()">
-                      <option value="maintenance">Maintenance</option>
-                      <option value="tire">Tire</option>
-                      <option value="repair">Repair</option>
-                      <option value="accident">Accident</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                  </div>
-                    </div>
-                  </div>
-
-                  <div class="maint-subcard">
-                    <div class="maint-subcard__head">Service &amp; scheduling</div>
-                    <div class="maint-subcard__body">
-                  <div>
-                    <span class="qb-l">Service / maintenance (type or pick)</span>
-                    <input
-                      id="serviceTypePresetInput"
-                      class="qb-in maint-field"
-                      list="servicePresetOptions"
-                      placeholder="Pick a suggestion or type any service name…"
-                      autocomplete="off"
-                      oninput="syncServicePresetFromCombo()"
-                      onblur="syncServicePresetFromCombo()"
-                    />
-                    <span class="qb-l" style="margin-top:8px;display:block">Same catalog with search (type to filter)</span>
-                    <input
-                      id="serviceSearchInput"
-                      class="qb-in maint-field"
-                      list="serviceOptions"
-                      placeholder="Type to search catalog…"
-                      autocomplete="off"
-                      oninput="resolveServiceSearch()"
-                      onblur="resolveServiceSearch()"
-                    />
-                    <div class="mini-note" style="margin-top:4px">
-                      Both fields accept <strong>any text</strong>; suggestions come from Postgres <code>maintenance_service_catalog</code> when configured, plus dashboard history and wear/tear presets.
-                    </div>
-                  </div>
-                  <div class="search-row" style="max-width:560px;margin-top:6px">
-                    <input id="maintNewCatalogServiceName" class="qb-in maint-field" placeholder="New catalog name (needs Postgres)" autocomplete="off" />
-                    <button type="button" onclick="addCatalogServiceType()">Add to catalog</button>
-                  </div>
-                  <div id="maintCatalogServiceHint" class="mini-note"></div>
-                  <input id="serviceTypeInput" type="hidden">
-                  <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type">
-
-                  <div class="search-row" style="align-items:flex-start;flex-wrap:wrap">
-                    <input id="serviceDateInput" class="qb-in maint-field" type="date">
-                    <div style="flex:1;min-width:200px;max-width:340px">
-                      <input
-                        id="serviceMileageInput"
-                        class="qb-in maint-field"
-                        type="number"
-                        step="1"
-                        placeholder="Service mileage (Samsara odometer)"
-                        oninput="markServiceMileageTouched()"
-                      />
-                      <div id="serviceMileageHint" class="mini-note" style="margin-top:4px;line-height:1.4"></div>
-                    </div>
-                    <button type="button" class="btn" onclick="fillServiceMileageFromSamsara()" title="Fill with latest Samsara odometer for this unit">Use Samsara</button>
-                  </div>
-                  <div>
-                    <span class="qb-l">Load / inv # (settlement)</span>
-                    <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / invoice #" autocomplete="off" />
-                    <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
-                  </div>
-                    </div>
-                  </div>
-
-                  <div class="maint-subcard">
-                    <div class="maint-subcard__head">Vendor &amp; invoice total</div>
-                    <div class="maint-subcard__body">
-                  <div class="vendor-row-maint">
-                    <div>
-                      <span class="qb-l">Vendor (QuickBooks)</span>
-                      <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="Type vendor…" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off">
-                    </div>
-                    <div>
-                      <span class="qb-l">Total cost (invoice)</span>
-                      <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Must match the sum of cost lines when lines have amounts (or lock manual total below)">
-                    </div>
-                    <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
-                  </div>
-                  <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 6px;max-width:560px">
-                    <input type="checkbox" id="costTotalLock" />
-                    Lock invoice total — do not auto-fill from cost lines (you enter the total manually; it must still match line sum to save)
-                  </label>
-                  <div id="maintCostTotalMatch" class="mini-note" style="margin:0 0 6px;max-width:56ch"></div>
-                  <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
-                    </div>
-                  </div>
-
-                  <div class="panel maint-cost-panel maint-subcard maint-cost-panel-card" style="box-shadow:none;margin-top:4px">
-                    <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                      <div class="panel-title" style="font-size:14px;text-align:center;width:100%">Cost breakdown (same vendor invoice)</div>
-                      <button type="button" class="qb-btn-add" onclick="addMaintCostLine()">+ Add line</button>
-                    </div>
-                    <div class="panel-body form-stack">
-                      <p class="mini-note" style="margin:0">
-                        <strong>Each row is one repair or service item</strong> on the same vendor invoice (labor, parts, fees). Add lines with <strong>+ Add line</strong>. Each expense line: description, <strong>Qty</strong>, <strong>Unit $</strong> (optional). When both qty and unit are set, <strong>Line $</strong> = qty × unit and locks; otherwise type the line total directly. Invoice total above = sum of line amounts.
-                        Optional <strong>multi-position parts</strong> (tires, batteries, air bags, etc.): pick a category, choose position from the list or the mini map, add part #. When at least one cost line is saved, <strong>Send to QuickBooks</strong> posts a Purchase with one QBO line per row; defaults come from Link accounting when a row’s QBO fields are left blank.
-                      </p>
-                      <div id="maintCostLinesHost"></div>
-                      <div class="mini-note" id="maintCostLinesSubtotal" style="margin-top:4px"></div>
-
-                      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);max-width:560px">
-                        <div class="panel-title" style="font-size:13px;margin-bottom:6px">Link accounting (QuickBooks)</div>
-                        <p class="mini-note" style="margin:0 0 8px">
-                          These fields control how <strong>Save &amp; post to QuickBooks</strong> will create the QBO transaction. This is no longer “auto on save”.
-                        </p>
-                        <div class="search-row">
-                          <div>
-                            <span class="qb-l">Txn type</span>
-                            <select id="linkedTxnTypeSelect" class="qb-in maint-field">
-                              <option value="expense">Expense</option>
-                              <option value="bill">Bill</option>
-                            </select>
-                          </div>
-                          <div>
-                            <span class="qb-l">Line detail</span>
-                            <select id="linkedDetailModeSelect" class="qb-in maint-field" onchange="toggleLinkedDetailMode()">
-                              <option value="category">Category details</option>
-                              <option value="item">Item details</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div class="search-row">
-                          <input id="linkedDocNumber" class="qb-in maint-field" placeholder="Expense / bill #" />
-                          <input id="linkedVendorSearch" class="qb-in maint-field" list="qboVendorOptions" placeholder="QBO vendor" oninput="resolveLinkedVendorSearch()" onblur="resolveLinkedVendorSearch()" />
-                        </div>
-                        <input id="linkedVendorQboId" type="hidden" />
-
-                        <div class="search-row">
-                          <input id="linkedPaymentMethodSearch" class="qb-in maint-field" list="paymentMethodOptions" placeholder="Payment method" oninput="resolveLinkedPaymentMethodSearch()" onblur="resolveLinkedPaymentMethodSearch()" />
-                          <input id="linkedDueDate" class="qb-in maint-field" type="date" />
-                        </div>
-                        <input id="linkedPaymentMethodId" type="hidden" />
-
-                        <div>
-                          <span class="qb-l">Pay from account (QuickBooks)</span>
-                          <input id="linkedBankAccountSearch" class="qb-in maint-field" list="qboBankAccountOptions" placeholder="Checking / credit card (expense / purchase)" autocomplete="off" oninput="resolveLinkedBankSearch()" onblur="resolveLinkedBankSearch()" />
-                          <input id="linkedBankAccountQboId" type="hidden" />
-                        </div>
-
-                        <div id="linkedCategoryBlock">
-                          <span class="qb-l">Expense category (QBO)</span>
-                          <input id="linkedAccountSearch" class="qb-in maint-field" list="qboAccountExpenseOptions" placeholder="Category / account" oninput="resolveLinkedAccountSearch()" onblur="resolveLinkedAccountSearch()" />
-                          <input id="linkedAccountQboId" type="hidden" />
-                        </div>
-
-                        <div id="linkedItemBlock" class="hidden">
-                          <div class="search-row">
-                            <input id="linkedItemSearch" class="qb-in maint-field" list="qboItemOptions" placeholder="QBO item / service" oninput="resolveLinkedItemSearch()" onblur="resolveLinkedItemSearch()" />
-                            <input id="linkedQty" class="qb-in maint-field" type="number" step="1" value="1" placeholder="Qty" />
-                          </div>
-                          <input id="linkedItemQboId" type="hidden" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="maint-subcard">
-                    <div class="maint-subcard__head">Attachments &amp; notes</div>
-                    <div class="maint-subcard__body">
-                  <div class="search-row" style="max-width:560px;margin-top:8px;align-items:flex-end">
-                    <div style="flex:1;min-width:200px">
-                      <span class="qb-l">Vendor invoice PDF (optional)</span>
-                      <input id="maintInvoicePdfInput" type="file" accept="application/pdf" />
-                    </div>
-                    <div>
-                      <span class="qb-l">&nbsp;</span>
-                      <button type="button" class="qb-btn-add" onclick="parseMaintRecordInvoicePdf()">Extract &amp; fill lines</button>
-                    </div>
-                  </div>
-                  <div id="maintInvoicePdfStatus" class="mini-note" style="max-width:560px"></div>
-                  <textarea id="notesInput" class="qb-memo" placeholder="Notes" style="max-width:560px"></textarea>
-                    </div>
-                  </div>
-
-                  <div id="recordSameCostServicesWrap" class="form-stack">
-                    <span class="qb-l">Additional services on same invoice (optional)</span>
-                    <textarea id="recordSameCostServicesInput" class="qb-memo" placeholder="e.g. Mount & balance, alignment, extra filters — still one total cost above" style="max-width:560px" rows="2"></textarea>
-                  </div>
-
-                  <div id="tireFields" class="hidden">
-                    <div class="tire-layout-wrap">
-                      <div>
-                        <svg class="tire-svg" viewBox="0 0 240 420">
-                          <rect x="85" y="20" width="70" height="380" rx="18" fill="#e2e8f0" stroke="#64748b" />
-                          <text x="120" y="45" text-anchor="middle" font-size="12" fill="#334155">Truck / Trailer 2D</text>
-
-                          <circle id="tp-steer-l" class="tire-dot" cx="55" cy="95" r="13" onclick="setTirePosition('Steer Left')"></circle>
-                          <circle id="tp-steer-r" class="tire-dot" cx="185" cy="95" r="13" onclick="setTirePosition('Steer Right')"></circle>
-
-                          <circle id="tp-drive1-l-o" class="tire-dot" cx="45" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Left Outer')"></circle>
-                          <circle id="tp-drive1-l-i" class="tire-dot" cx="65" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Left Inner')"></circle>
-                          <circle id="tp-drive1-r-i" class="tire-dot" cx="175" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Right Inner')"></circle>
-                          <circle id="tp-drive1-r-o" class="tire-dot" cx="195" cy="200" r="11" onclick="setTirePosition('Drive Axle 1 Right Outer')"></circle>
-
-                          <circle id="tp-drive2-l-o" class="tire-dot" cx="45" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Left Outer')"></circle>
-                          <circle id="tp-drive2-l-i" class="tire-dot" cx="65" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Left Inner')"></circle>
-                          <circle id="tp-drive2-r-i" class="tire-dot" cx="175" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Right Inner')"></circle>
-                          <circle id="tp-drive2-r-o" class="tire-dot" cx="195" cy="245" r="11" onclick="setTirePosition('Drive Axle 2 Right Outer')"></circle>
-
-                          <circle id="tp-trailer1-l-o" class="tire-dot" cx="45" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Left Outer')"></circle>
-                          <circle id="tp-trailer1-l-i" class="tire-dot" cx="65" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Left Inner')"></circle>
-                          <circle id="tp-trailer1-r-i" class="tire-dot" cx="175" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Right Inner')"></circle>
-                          <circle id="tp-trailer1-r-o" class="tire-dot" cx="195" cy="330" r="11" onclick="setTirePosition('Trailer Axle 1 Right Outer')"></circle>
-
-                          <circle id="tp-trailer2-l-o" class="tire-dot" cx="45" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Left Outer')"></circle>
-                          <circle id="tp-trailer2-l-i" class="tire-dot" cx="65" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Left Inner')"></circle>
-                          <circle id="tp-trailer2-r-i" class="tire-dot" cx="175" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Right Inner')"></circle>
-                          <circle id="tp-trailer2-r-o" class="tire-dot" cx="195" cy="370" r="11" onclick="setTirePosition('Trailer Axle 2 Right Outer')"></circle>
-                        </svg>
-                      </div>
-                      <div class="form-stack">
-                        <select id="tirePositionSelect" onchange="syncTirePositionFromSelect()">
-                          <option value="">Choose tire position</option>
-                          <option>Steer Left</option>
-                          <option>Steer Right</option>
-                          <option>Drive Axle 1 Left Outer</option>
-                          <option>Drive Axle 1 Left Inner</option>
-                          <option>Drive Axle 1 Right Inner</option>
-                          <option>Drive Axle 1 Right Outer</option>
-                          <option>Drive Axle 2 Left Outer</option>
-                          <option>Drive Axle 2 Left Inner</option>
-                          <option>Drive Axle 2 Right Inner</option>
-                          <option>Drive Axle 2 Right Outer</option>
-                          <option>Trailer Axle 1 Left Outer</option>
-                          <option>Trailer Axle 1 Left Inner</option>
-                          <option>Trailer Axle 1 Right Inner</option>
-                          <option>Trailer Axle 1 Right Outer</option>
-                          <option>Trailer Axle 2 Left Outer</option>
-                          <option>Trailer Axle 2 Left Inner</option>
-                          <option>Trailer Axle 2 Right Inner</option>
-                          <option>Trailer Axle 2 Right Outer</option>
-                        </select>
-                        <input id="tirePositionText" placeholder="Or write tire position manually">
-                        <input type="hidden" id="tireConditionValue" value="" />
-                        <input id="tireConditionSearch" class="qb-in maint-field" list="tireConditionOptions" placeholder="Tire condition" autocomplete="off" oninput="resolveTireConditionSearch()" onblur="resolveTireConditionSearch()" />
-                        <input id="tireBrandInput" placeholder="Tire brand">
-                        <input id="tireDotInput" placeholder="DOT / serial">
-                        <div class="grid grid-3">
-                          <input id="installMileageInput" type="number" placeholder="Install mileage">
-                          <input id="removeMileageInput" type="number" placeholder="Remove mileage">
-                          <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
-                        </div>
-                        <p class="mini-note" style="margin:8px 0 0">
-                          <strong>First tire</strong> uses the fields above. Add more positions for the <strong>same vendor invoice / total cost</strong> below.
-                        </p>
-                        <div id="tireExtraLinesHost"></div>
-                        <button type="button" class="qb-btn-add" onclick="addTireExtraLine()">+ Add another tire (same total cost)</button>
-                      </div>
-                    </div>
-                    <input id="tirePositionInput" type="hidden">
-                  </div>
-
-                  <div id="repairFields" class="hidden">
-                    <span class="qb-l">Repair location</span>
-                    <input type="hidden" id="repairLocationTypeInput" value="" />
-                    <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Type: Internal shop, External…" autocomplete="off" oninput="resolveRepairLocationSearch()" onblur="resolveRepairLocationSearch()" />
-                  </div>
-
-                  <div id="accidentFields" class="hidden">
-                    <div class="search-row">
-                      <div>
-                        <span class="qb-l">At fault</span>
-                        <input type="hidden" id="accidentAtFaultValue" value="" />
-                        <input id="accidentAtFaultSearch" class="qb-in maint-field" list="accidentFaultOptions" placeholder="At fault / Not at fault" autocomplete="off" oninput="resolveAccidentFaultSearch()" onblur="resolveAccidentFaultSearch()" />
-                      </div>
-                      <input id="accidentReportNumberInput" class="qb-in maint-field" placeholder="Accident report #">
-                    </div>
-                    <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
-                  </div>
-
-                  <div class="maint-save-toolbar maint-save-toolbar--qb">
-                    <select id="maintSaveAction" class="maint-save-action-hidden" aria-hidden="true" tabindex="-1">
-                      <option value="save">Save</option>
-                      <option value="save_close">Save &amp; close</option>
-                      <option value="save_to_ap">Save &amp; open Accounting draft</option>
-                      <option value="save_print">Save &amp; print</option>
-                      <option value="save_post">Save &amp; post to QuickBooks</option>
-                    </select>
-                    <span class="mini-note maint-save-toolbar__hint" id="maintSaveHint"></span>
-                    <div class="maint-save-toolbar__actions">
-                      <div class="qb-split qb-split--primary">
-                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Save and record</button>
-                        <button type="button" class="qb-split__caret" aria-label="More save options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
-                        <ul class="qb-split__menu" role="menu" hidden>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save')">Save</button></li>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_close')">Save &amp; close</button></li>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_to_ap')">Accounting draft</button></li>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_print')">Save + print</button></li>
-                        </ul>
-                      </div>
-                      <div class="qb-split qb-split--neutral">
-                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); maintPrintWorkOrderView()">Print form</button>
-                        <button type="button" class="qb-split__caret" aria-label="More print and PDF options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
-                        <ul class="qb-split__menu" role="menu" hidden>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_print')">Save + print</button></li>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); maintDraftWorkOrderPdf()">Draft WO PDF</button></li>
-                          <li role="none">
-                            <a class="qb-split__menu-item qb-split__menu-item--link" role="menuitem" href="/api/pdf/shop-queue" target="_blank" rel="noopener" onclick="maintCloseSplitMenus()">Shop queue PDF</a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-head">
-                <div class="panel-title">File uploads</div>
-              </div>
-              <div class="panel-body form-stack">
-                <p class="mini-note" style="margin:0">
-                  Spreadsheet imports live under <strong>Uploads</strong> in the sidebar (hover <strong>Uploads ▾</strong>) so there is a single hub — maintenance history, AP expenses, fuel/Relay, and connection notes.
-                </p>
-                <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to Uploads</button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-        </div>
-
-        <div id="maintMainTabFleet" class="maint-main-tab-panel">
-            <div class="panel maint-section-card">
-              <div class="panel-head"><div class="panel-title">Maintenance Table</div></div>
-              <div class="panel-body">
-                <div class="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Unit</th>
-                        <th>Service</th>
-                        <th>Status</th>
-                        <th>Actual Mileage</th>
-                        <th>Fuel</th>
-                        <th>Last Date</th>
-                        <th>Next Due Date</th>
-                        <th>Next Due Mileage</th>
-                        <th>Vendor</th>
-                        <th>Inv #</th>
-                        <th>WO #</th>
-                        <th>Load #</th>
-                        <th>Cost</th>
-                        <th>QB Sync</th>
-                      </tr>
-                    </thead>
-                    <tbody id="maintenanceTableBody"></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            <div class="panel maint-section-card">
-              <div class="panel-head"><div class="panel-title">Unit History</div></div>
-              <div class="panel-body">
-                <div id="unitHistory" class="card-list">No records yet.</div>
-              </div>
-            </div>
-        </div>
-      </section>
-
-      <section id="section-tracking" class="section">
-        <div class="grid grid-4">
-          <div class="metric"><div class="metric-label">Trucks</div><div class="metric-value" id="trackTruckCount">0</div></div>
-          <div class="metric"><div class="metric-label">Refrigerated Vans</div><div class="metric-value" id="trackReeferCount">0</div></div>
-          <div class="metric"><div class="metric-label">Flatbeds</div><div class="metric-value" id="trackFlatbedCount">0</div></div>
-          <div class="metric"><div class="metric-label">Other / Company Vehicles</div><div class="metric-value" id="trackOtherCount">0</div></div>
-        </div>
-
-        <div class="subtabs" style="margin-top:12px">
-          <button type="button" class="subtab active" onclick="openTrackingTab('tr-map', this)">Map</button>
-          <button type="button" class="subtab" onclick="openTrackingTab('tr-assets', this)">Assets</button>
-          <button type="button" class="subtab" onclick="openTrackingTab('tr-drivers', this)">Drivers</button>
-          <button type="button" class="subtab" onclick="openTrackingTab('tr-idle', this)">Yard &amp; idle (T120–T178)</button>
         </div>
 
         <div id="tr-map" class="tracking-sub">
@@ -2164,9 +2174,9 @@
             </div>
             <div id="upload-panel-fuel" class="upload-subpanel active">
               <p class="mini-note" style="margin:0 0 10px">
-                Love’s, Relay, and other fuel spreadsheets are <strong>previewed and confirmed</strong> on the Fuel board (multi-step: preview → confirm → undo). Comdata-style exports often match the same Relay parser when columns align.
+                Love’s and Relay “All Transactions” exports are <strong>previewed and confirmed</strong> under <strong>Accounting → Fuel expenses</strong> (next to posting), not on the route-planning Fuel board. Comdata-style exports often match the same Relay parser when columns align.
               </p>
-              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/fuel.html#fuel-import-section">Open Fuel board → import</a>
+              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/maintenance.html#accounting-fuel">Open Accounting → Fuel expenses → import</a>
             </div>
             <div id="upload-panel-maint" class="upload-subpanel">
               <p class="mini-note" style="margin:0 0 10px">Prior maintenance history (CSV / Excel) posts into this app’s maintenance records.</p>
@@ -2182,7 +2192,7 @@
               <p class="mini-note" style="margin:0 0 10px">
                 If your Comdata export matches the same columns as Relay / fuel card templates, use <strong>Loves / Relay / fuel</strong> above. Otherwise export to CSV and ask your admin to map columns to the fuel import format.
               </p>
-              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/fuel.html#fuel-import-section">Try Fuel board import</a>
+              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/maintenance.html#accounting-fuel">Open Accounting → Fuel expenses → import</a>
             </div>
             <div id="upload-panel-sync" class="upload-subpanel">
               <p class="mini-note" style="margin:0 0 10px">
@@ -2823,16 +2833,16 @@
       if (unitLine) unitLine.textContent = selectedUnit;
       const rt = document.getElementById('recordTypeSelect')?.value || '';
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
-      const isRepair = rt === 'repair';
+      const needsRepairLoc = rt === 'repair' || rt === 'accident';
 
-      if (isRepair && repairLoc === 'in-house') {
+      if (needsRepairLoc && repairLoc === 'in-house') {
         vWrap.classList.add('hidden');
         woWrap.classList.remove('hidden');
         if (woLab) woLab.textContent = 'Shop WO # (internal)';
         if (vLab) vLab.textContent = 'Vendor invoice #';
         if (woInp) woInp.placeholder = 'Assigned on save if empty';
         ensureInternalShopWorkOrderPreview();
-      } else if (isRepair && (repairLoc === 'external' || repairLoc === 'road-service')) {
+      } else if (needsRepairLoc && (repairLoc === 'external' || repairLoc === 'road-service')) {
         vWrap.classList.remove('hidden');
         woWrap.classList.remove('hidden');
         if (woLab) woLab.textContent = 'Vendor WO #';
@@ -8023,7 +8033,7 @@
     function toggleRecordFields() {
       const type = document.getElementById('recordTypeSelect').value;
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
-      document.getElementById('repairFields').classList.toggle('hidden', type !== 'repair');
+      document.getElementById('repairFields').classList.toggle('hidden', type !== 'repair' && type !== 'accident');
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
       document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'custom');
       const sameWrap = document.getElementById('recordSameCostServicesWrap');
@@ -8053,7 +8063,7 @@
           presetInp.value = cur && __servicePresetList.includes(cur) ? cur : '';
         }
       }
-      if (type !== 'custom') syncPrimaryServiceToFirstCostLine();
+      if (type !== 'custom' && type !== 'accident') syncPrimaryServiceToFirstCostLine();
       syncMaintWorkOrderHeader();
     }
 
