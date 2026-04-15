@@ -725,6 +725,61 @@
                       </p>
                       <div id="maintCostLinesHost"></div>
                       <div class="mini-note" id="maintCostLinesSubtotal" style="margin-top:4px"></div>
+
+                      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);max-width:560px">
+                        <div class="panel-title" style="font-size:13px;margin-bottom:6px">Link accounting (QuickBooks)</div>
+                        <p class="mini-note" style="margin:0 0 8px">
+                          These fields control how <strong>Save &amp; post to QuickBooks</strong> will create the QBO transaction. This is no longer “auto on save”.
+                        </p>
+                        <div class="search-row">
+                          <div>
+                            <span class="qb-l">Txn type</span>
+                            <select id="linkedTxnTypeSelect" class="qb-in maint-field">
+                              <option value="expense">Expense</option>
+                              <option value="bill">Bill</option>
+                            </select>
+                          </div>
+                          <div>
+                            <span class="qb-l">Line detail</span>
+                            <select id="linkedDetailModeSelect" class="qb-in maint-field" onchange="toggleLinkedDetailMode()">
+                              <option value="category">Category details</option>
+                              <option value="item">Item details</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div class="search-row">
+                          <input id="linkedDocNumber" class="qb-in maint-field" placeholder="Expense / bill #" />
+                          <input id="linkedVendorSearch" class="qb-in maint-field" list="qboVendorOptions" placeholder="QBO vendor" oninput="resolveLinkedVendorSearch()" onblur="resolveLinkedVendorSearch()" />
+                        </div>
+                        <input id="linkedVendorQboId" type="hidden" />
+
+                        <div class="search-row">
+                          <input id="linkedPaymentMethodSearch" class="qb-in maint-field" list="paymentMethodOptions" placeholder="Payment method" oninput="resolveLinkedPaymentMethodSearch()" onblur="resolveLinkedPaymentMethodSearch()" />
+                          <input id="linkedDueDate" class="qb-in maint-field" type="date" />
+                        </div>
+                        <input id="linkedPaymentMethodId" type="hidden" />
+
+                        <div>
+                          <span class="qb-l">Pay from account (QuickBooks)</span>
+                          <input id="linkedBankAccountSearch" class="qb-in maint-field" list="qboBankAccountOptions" placeholder="Checking / credit card (expense / purchase)" autocomplete="off" oninput="resolveLinkedBankSearch()" onblur="resolveLinkedBankSearch()" />
+                          <input id="linkedBankAccountQboId" type="hidden" />
+                        </div>
+
+                        <div id="linkedCategoryBlock">
+                          <span class="qb-l">Expense category (QBO)</span>
+                          <input id="linkedAccountSearch" class="qb-in maint-field" list="qboAccountExpenseOptions" placeholder="Category / account" oninput="resolveLinkedAccountSearch()" onblur="resolveLinkedAccountSearch()" />
+                          <input id="linkedAccountQboId" type="hidden" />
+                        </div>
+
+                        <div id="linkedItemBlock" class="hidden">
+                          <div class="search-row">
+                            <input id="linkedItemSearch" class="qb-in maint-field" list="qboItemOptions" placeholder="QBO item / service" oninput="resolveLinkedItemSearch()" onblur="resolveLinkedItemSearch()" />
+                            <input id="linkedQty" class="qb-in maint-field" type="number" step="1" value="1" placeholder="Qty" />
+                          </div>
+                          <input id="linkedItemQboId" type="hidden" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="search-row">
@@ -846,69 +901,12 @@
                     <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
                   </div>
 
-                  <div class="panel" style="box-shadow:none;">
-                    <div class="panel-head"><div class="panel-title">QuickBooks expense (auto on save)</div></div>
-                    <div class="panel-body form-stack">
-                      <p class="mini-note" style="margin:0 0 6px">
-                        When <strong>QuickBooks is connected</strong> and this record has a <strong>positive total</strong>, saving posts a <strong>Purchase (expense)</strong> or <strong>Bill</strong> to QBO using the same vendor and the <strong>cost breakdown lines</strong> when line amounts are filled (otherwise one line from the defaults below). Doc # defaults to vendor invoice # or load #. No duplicate local AP row is created.
-                      </p>
-                      <p class="mini-note" style="margin:0 0 6px">Sync <strong>QuickBooks Master</strong> in the sidebar if vendor / item / account lists are empty.</p>
-                      <div class="search-row">
-                        <div>
-                          <span class="qb-l">Txn type</span>
-                          <select id="linkedTxnTypeSelect" class="qb-in maint-field">
-                            <option value="expense">Expense</option>
-                            <option value="bill">Bill</option>
-                          </select>
-                        </div>
-                        <div>
-                          <span class="qb-l">Line detail</span>
-                          <select id="linkedDetailModeSelect" class="qb-in maint-field" onchange="toggleLinkedDetailMode()">
-                            <option value="category">Category details</option>
-                            <option value="item">Item details</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div class="search-row">
-                        <input id="linkedDocNumber" class="qb-in maint-field" placeholder="Expense / bill #">
-                        <input id="linkedVendorSearch" class="qb-in maint-field" list="qboVendorOptions" placeholder="QBO vendor" oninput="resolveLinkedVendorSearch()" onblur="resolveLinkedVendorSearch()">
-                      </div>
-                      <input id="linkedVendorQboId" type="hidden">
-
-                      <div class="search-row">
-                        <input id="linkedPaymentMethodSearch" class="qb-in maint-field" list="paymentMethodOptions" placeholder="Payment method" oninput="resolveLinkedPaymentMethodSearch()" onblur="resolveLinkedPaymentMethodSearch()">
-                        <input id="linkedDueDate" class="qb-in maint-field" type="date">
-                      </div>
-                      <input id="linkedPaymentMethodId" type="hidden">
-
-                      <div>
-                        <span class="qb-l">Pay from account (QuickBooks)</span>
-                        <input id="linkedBankAccountSearch" class="qb-in maint-field" list="qboBankAccountOptions" placeholder="Checking / credit card (expense / purchase)" autocomplete="off" oninput="resolveLinkedBankSearch()" onblur="resolveLinkedBankSearch()">
-                        <input id="linkedBankAccountQboId" type="hidden">
-                      </div>
-
-                      <div id="linkedCategoryBlock">
-                        <span class="qb-l">Expense category (QBO)</span>
-                        <input id="linkedAccountSearch" class="qb-in maint-field" list="qboAccountExpenseOptions" placeholder="Category / account" oninput="resolveLinkedAccountSearch()" onblur="resolveLinkedAccountSearch()">
-                        <input id="linkedAccountQboId" type="hidden">
-                      </div>
-
-                      <div id="linkedItemBlock" class="hidden">
-                        <div class="search-row">
-                          <input id="linkedItemSearch" class="qb-in maint-field" list="qboItemOptions" placeholder="QBO item / service" oninput="resolveLinkedItemSearch()" onblur="resolveLinkedItemSearch()">
-                          <input id="linkedQty" class="qb-in maint-field" type="number" step="1" value="1" placeholder="Qty">
-                        </div>
-                        <input id="linkedItemQboId" type="hidden">
-                      </div>
-                    </div>
-                  </div>
-
                   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
                     <select id="maintSaveAction" class="qb-in maint-field" style="max-width:220px">
                       <option value="save">Save</option>
                       <option value="save_close">Save &amp; close</option>
                       <option value="save_to_ap">Save &amp; open Accounting draft</option>
+                      <option value="save_print">Save &amp; print</option>
                       <option value="save_post">Save &amp; post to QuickBooks</option>
                     </select>
                     <button type="button" onclick="saveRecordWithAction()">Run</button>
@@ -7778,11 +7776,24 @@
       const post = act === 'save_post';
       const close = act === 'save_close';
       const toAp = act === 'save_to_ap';
+      const toPrint = act === 'save_print';
       try {
-        if (hint) hint.textContent = post ? 'Saving + posting…' : toAp ? 'Saving + opening Accounting draft…' : 'Saving…';
+        if (hint) {
+          hint.textContent = post
+            ? 'Saving + posting…'
+            : toAp
+              ? 'Saving + opening Accounting draft…'
+              : toPrint
+                ? 'Saving + preparing print…'
+                : 'Saving…';
+        }
         await saveRecord(post, close);
         if (toAp) {
           openAccountingDraftFromMaintenanceForm();
+        }
+        if (toPrint) {
+          // Print the current page view (shop + record + tables).
+          setTimeout(() => window.print(), 50);
         }
         if (hint) hint.textContent = post ? 'Saved and posted.' : 'Saved.';
       } catch (e) {
