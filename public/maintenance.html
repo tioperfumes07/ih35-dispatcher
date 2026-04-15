@@ -5902,10 +5902,6 @@
       const recalc = () => recalcFuelManualTotals();
       [gal, ppg].forEach(el => el && el.addEventListener('input', recalc));
       lock && lock.addEventListener('change', recalc);
-      tot &&
-        tot.addEventListener('input', () => {
-          if (lock && lock.checked) return;
-        });
       const d = document.getElementById('fuelManualDate');
       if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
     }
@@ -5998,6 +5994,7 @@
         acctApplyRelayFuelImportMetaFromPayload(data);
         if (st) st.textContent = `${rows.length} fuel purchase row(s) loaded.`;
         renderFuelExpenseRows();
+        bindFuelManualFormOnce();
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
         if (tb) tb.innerHTML = '<tr><td colspan="16" class="mini-note">Failed to load.</td></tr>';
