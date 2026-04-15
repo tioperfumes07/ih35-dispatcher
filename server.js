@@ -3285,9 +3285,13 @@ function daysSinceDateStr(isoDate) {
  * Parts / repair frequency, tire interval checks, and fuel purchase vs miles heuristic.
  * Operational status (assetStatusByUnit) is surfaced when present but rules are mileage- and spend-based.
  */
-function computeMaintenanceSecurityAlerts(erp, boardAssignments, vehicleByName) {
+function computeMaintenanceSecurityAlerts(erp, boardAssignments, vehicleByName, windowDaysOverride) {
+  const daysWanted =
+    windowDaysOverride != null && windowDaysOverride !== '' ? Number(windowDaysOverride) : null;
   const { days, cutoffStr } = securityCutoffDate(
-    Number(process.env.SECURITY_ALERT_WINDOW_DAYS || 30)
+    Number.isFinite(daysWanted) && daysWanted > 0
+      ? daysWanted
+      : Number(process.env.SECURITY_ALERT_WINDOW_DAYS || 30)
   );
   const fuelRatio = Number(process.env.SECURITY_FUEL_PURCHASE_RATIO || 1.22);
   const defaultMpg = Number(process.env.SECURITY_DEFAULT_MPG || 6.5);
@@ -3496,9 +3500,10 @@ app.get('/api/maintenance/expense-summary', (req, res) => {
   }
 });
 
-app.get('/api/maintenance/security-alerts', async (_req, res) => {
+app.get('/api/maintenance/security-alerts', async (req, res) => {
   try {
     const erp = readErp();
+    const days = req.query?.days != null ? Number(req.query.days) : null;
     const now = new Date();
     const startTime = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
     const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
@@ -3517,7 +3522,7 @@ app.get('/api/maintenance/security-alerts', async (_req, res) => {
       const n = String(v?.name || '').trim();
       if (n) vehicleByName[n] = v;
     }
-    const data = computeMaintenanceSecurityAlerts(erp, assignmentsRes.data || [], vehicleByName);
+    const data = computeMaintenanceSecurityAlerts(erp, assignmentsRes.data || [], vehicleByName, days);
     res.json(data);
   } catch (error) {
     logError('api/maintenance/security-alerts', error);

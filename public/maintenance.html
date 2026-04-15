@@ -381,19 +381,47 @@
               <button type="button" class="subtab" data-shop-tab="oos" onclick="openShopBoardTab('oos', this)">Out of service</button>
             </div>
             <div id="shopTabInternal" class="shop-tab-panel active">
-              <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
-                <div class="shop-col">
-                  <div class="shop-col-head shop-col-head-row"><span>Awaiting service</span><button type="button" class="shop-col-add" title="Add to internal queue" onclick="event.stopPropagation();openShopQueueModal('internal')">+</button></div>
-                  <div class="shop-col-body" id="shopInternalQueued"></div>
+              <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                <div style="min-width:220px;flex:1">
+                  <div class="mini-note" style="margin:0 0 4px">Search</div>
+                  <input id="shopInternalSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
                 </div>
-                <div class="shop-col">
-                  <div class="shop-col-head">Repair / maintenance in progress</div>
-                  <div class="shop-col-body" id="shopInternalProgress"></div>
+                <div style="min-width:160px">
+                  <div class="mini-note" style="margin:0 0 4px">From</div>
+                  <input id="shopInternalFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
                 </div>
-                <div class="shop-col">
-                  <div class="shop-col-head">Finished (recent)</div>
-                  <div class="shop-col-body" id="shopInternalFinished"></div>
+                <div style="min-width:160px">
+                  <div class="mini-note" style="margin:0 0 4px">To</div>
+                  <input id="shopInternalTo" class="qb-in" type="date" onchange="renderShopQueues()" />
                 </div>
+                <div style="min-width:200px">
+                  <div class="mini-note" style="margin:0 0 4px">Status</div>
+                  <select id="shopInternalStatus" class="qb-in" onchange="renderShopQueues()">
+                    <option value="all">All</option>
+                    <option value="queued">Awaiting service</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="finished">Completed</option>
+                  </select>
+                </div>
+                <button type="button" class="btn" title="Add to internal queue" onclick="openShopQueueModal('internal')">+ Add</button>
+              </div>
+              <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <table class="catalog-admin-table" style="min-width:980px">
+                  <thead>
+                    <tr>
+                      <th>Unit</th>
+                      <th>Job</th>
+                      <th>Vendor</th>
+                      <th style="text-align:center">Est (h)</th>
+                      <th>Queued</th>
+                      <th>Started</th>
+                      <th>Finished</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="shopInternalTableBody"></tbody>
+                </table>
               </div>
               <div class="shop-wo-fallback print-hide-actions">
                 <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (same shop type, for reference)</div>
@@ -401,19 +429,47 @@
               </div>
             </div>
             <div id="shopTabExternal" class="shop-tab-panel">
-              <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
-                <div class="shop-col">
-                  <div class="shop-col-head shop-col-head-row"><span>Awaiting service</span><button type="button" class="shop-col-add" title="Add to external queue" onclick="event.stopPropagation();openShopQueueModal('external')">+</button></div>
-                  <div class="shop-col-body" id="shopExternalQueued"></div>
+              <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                <div style="min-width:220px;flex:1">
+                  <div class="mini-note" style="margin:0 0 4px">Search</div>
+                  <input id="shopExternalSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
                 </div>
-                <div class="shop-col">
-                  <div class="shop-col-head">Repair / maintenance in progress</div>
-                  <div class="shop-col-body" id="shopExternalProgress"></div>
+                <div style="min-width:160px">
+                  <div class="mini-note" style="margin:0 0 4px">From</div>
+                  <input id="shopExternalFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
                 </div>
-                <div class="shop-col">
-                  <div class="shop-col-head">Finished (recent)</div>
-                  <div class="shop-col-body" id="shopExternalFinished"></div>
+                <div style="min-width:160px">
+                  <div class="mini-note" style="margin:0 0 4px">To</div>
+                  <input id="shopExternalTo" class="qb-in" type="date" onchange="renderShopQueues()" />
                 </div>
+                <div style="min-width:200px">
+                  <div class="mini-note" style="margin:0 0 4px">Status</div>
+                  <select id="shopExternalStatus" class="qb-in" onchange="renderShopQueues()">
+                    <option value="all">All</option>
+                    <option value="queued">Awaiting service</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="finished">Completed</option>
+                  </select>
+                </div>
+                <button type="button" class="btn" title="Add to external queue" onclick="openShopQueueModal('external')">+ Add</button>
+              </div>
+              <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <table class="catalog-admin-table" style="min-width:980px">
+                  <thead>
+                    <tr>
+                      <th>Unit</th>
+                      <th>Job</th>
+                      <th>Vendor</th>
+                      <th style="text-align:center">Est (h)</th>
+                      <th>Queued</th>
+                      <th>Started</th>
+                      <th>Finished</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="shopExternalTableBody"></tbody>
+                </table>
               </div>
               <div class="shop-wo-fallback print-hide-actions">
                 <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (external)</div>
@@ -421,19 +477,47 @@
               </div>
             </div>
             <div id="shopTabRoadside" class="shop-tab-panel">
-              <div class="shop-kanban" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
-                <div class="shop-col">
-                  <div class="shop-col-head shop-col-head-row"><span>Awaiting service</span><button type="button" class="shop-col-add" title="Add to roadside queue" onclick="event.stopPropagation();openShopQueueModal('roadside')">+</button></div>
-                  <div class="shop-col-body" id="shopRoadsideQueued"></div>
+              <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                <div style="min-width:220px;flex:1">
+                  <div class="mini-note" style="margin:0 0 4px">Search</div>
+                  <input id="shopRoadsideSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
                 </div>
-                <div class="shop-col">
-                  <div class="shop-col-head">Repair / maintenance in progress</div>
-                  <div class="shop-col-body" id="shopRoadsideProgress"></div>
+                <div style="min-width:160px">
+                  <div class="mini-note" style="margin:0 0 4px">From</div>
+                  <input id="shopRoadsideFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
                 </div>
-                <div class="shop-col">
-                  <div class="shop-col-head">Finished (recent)</div>
-                  <div class="shop-col-body" id="shopRoadsideFinished"></div>
+                <div style="min-width:160px">
+                  <div class="mini-note" style="margin:0 0 4px">To</div>
+                  <input id="shopRoadsideTo" class="qb-in" type="date" onchange="renderShopQueues()" />
                 </div>
+                <div style="min-width:200px">
+                  <div class="mini-note" style="margin:0 0 4px">Status</div>
+                  <select id="shopRoadsideStatus" class="qb-in" onchange="renderShopQueues()">
+                    <option value="all">All</option>
+                    <option value="queued">Awaiting service</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="finished">Completed</option>
+                  </select>
+                </div>
+                <button type="button" class="btn" title="Add to roadside queue" onclick="openShopQueueModal('roadside')">+ Add</button>
+              </div>
+              <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <table class="catalog-admin-table" style="min-width:980px">
+                  <thead>
+                    <tr>
+                      <th>Unit</th>
+                      <th>Job</th>
+                      <th>Vendor</th>
+                      <th style="text-align:center">Est (h)</th>
+                      <th>Queued</th>
+                      <th>Started</th>
+                      <th>Finished</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="shopRoadsideTableBody"></tbody>
+                </table>
               </div>
               <div class="shop-wo-fallback print-hide-actions">
                 <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (road / OTR)</div>
@@ -479,6 +563,25 @@
             </div>
           </div>
           <div class="panel-body">
+            <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:0 0 10px">
+              <div style="min-width:220px;flex:1">
+                <div class="mini-note" style="margin:0 0 4px">Search</div>
+                <input id="integritySearch" class="qb-in" placeholder="Unit, type, message, driver…" oninput="renderSecurityAlerts(window.__lastSecurityAlerts||null)" />
+              </div>
+              <div style="min-width:180px">
+                <div class="mini-note" style="margin:0 0 4px">Window (days)</div>
+                <input id="integrityDays" class="qb-in" type="number" min="1" step="1" placeholder="30" onchange="loadSecurityCatalogUi()" />
+              </div>
+              <div style="min-width:200px">
+                <div class="mini-note" style="margin:0 0 4px">Severity</div>
+                <select id="integritySeverity" class="qb-in" onchange="renderSecurityAlerts(window.__lastSecurityAlerts||null)">
+                  <option value="all">All</option>
+                  <option value="high">High</option>
+                  <option value="warn">Warn</option>
+                  <option value="info">Info</option>
+                </select>
+              </div>
+            </div>
             <div id="securityAlertsBody" class="mini-note">Loading alerts…</div>
           </div>
         </div>
@@ -4137,7 +4240,11 @@
 
     async function loadSecurityCatalogUi() {
       try {
-        const sec = await j('/api/maintenance/security-alerts');
+        const days = document.getElementById('integrityDays')?.value;
+        const u = new URL('/api/maintenance/security-alerts', window.location.origin);
+        if (days != null && String(days).trim() !== '') u.searchParams.set('days', String(days).trim());
+        const sec = await j(u.pathname + u.search);
+        window.__lastSecurityAlerts = sec;
         renderSecurityAlerts(sec);
       } catch (e) {
         const el = document.getElementById('securityAlertsBody');
@@ -4153,6 +4260,10 @@
         el.innerHTML = '<span style="color:#b91c1c">No alert data.</span>';
         return;
       }
+      // Store for client-side filtering.
+      window.__lastSecurityAlerts = sec;
+      const q = String(document.getElementById('integritySearch')?.value || '').trim().toLowerCase();
+      const sev = String(document.getElementById('integritySeverity')?.value || 'all').trim();
       const p = sec.parameters || {};
       const head = `<p class="mini-note" style="margin:0 0 10px">Window: last <strong>${sec.windowDays}</strong> days (since ${escapeHtml(
         sec.cutoff || ''
@@ -4161,8 +4272,15 @@
           ? ` · driver-risk window: <strong>${p.driverRiskWindowDays}</strong>d (min events <strong>${p.driverRiskMinEvents}</strong>) · accidents: <strong>${p.driverAccidentWindowDays}</strong>d / max <strong>${p.driverRiskMaxAccidents}</strong>`
           : ''
       }</p>`;
-      const rows = (sec.alerts || []).length
-        ? (sec.alerts || [])
+      const list = (sec.alerts || []).filter(a => {
+        if (sev !== 'all' && String(a.severity || '') !== sev) return false;
+        if (!q) return true;
+        const hay =
+          `${a.type || ''} ${a.unit || ''} ${a.message || ''} ${a.driverHint || ''} ${a.operationalStatus || ''}`.toLowerCase();
+        return hay.includes(q);
+      });
+      const rows = list.length
+        ? list
             .map(a => {
               const cls =
                 a.severity === 'high'
@@ -5071,46 +5189,90 @@
       };
 
       const q = shopQueueCache || [];
-      const byType = (t, st) =>
-        q.filter(e => String(e.shopType) === t && String(e.status || '') === st);
+      const norm = s => String(s || '').trim().toLowerCase();
+      const inRange = (iso, from, to) => {
+        const d = String(iso || '').slice(0, 10);
+        if (!d) return false;
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+        return true;
+      };
+      const pickDate = e => e.finishedAt || e.startedAt || e.queuedAt || '';
+      const cap = s => s[0].toUpperCase() + s.slice(1);
+      const fmtIso = iso => {
+        const d = String(iso || '').slice(0, 10);
+        return d || '—';
+      };
+      const statusLabel = s =>
+        s === 'queued' ? 'Awaiting service' : s === 'in_progress' ? 'In progress' : 'Completed';
 
-      const sortQueued = rows =>
-        rows.slice().sort((a, b) => String(a.queuedAt || '').localeCompare(String(b.queuedAt || '')));
-      const sortProg = rows =>
-        rows.slice().sort((a, b) => String(a.startedAt || '').localeCompare(String(b.startedAt || '')));
-      const sortFin = rows =>
-        rows
+      const renderTable = shopType => {
+        const bodyId = `shop${cap(shopType)}TableBody`;
+        const host = document.getElementById(bodyId);
+        if (!host) return;
+        const qEl = document.getElementById(`shop${cap(shopType)}Search`);
+        const fEl = document.getElementById(`shop${cap(shopType)}From`);
+        const tEl = document.getElementById(`shop${cap(shopType)}To`);
+        const sEl = document.getElementById(`shop${cap(shopType)}Status`);
+        const query = norm(qEl?.value || '');
+        const from = String(fEl?.value || '').trim();
+        const to = String(tEl?.value || '').trim();
+        const st = String(sEl?.value || 'all').trim();
+
+        const rows = q
+          .filter(e => String(e.shopType) === shopType)
+          .filter(e => (st === 'all' ? true : String(e.status || '') === st))
+          .filter(e => {
+            if (!from && !to) return true;
+            return inRange(pickDate(e), from, to);
+          })
+          .filter(e => {
+            if (!query) return true;
+            const hay = norm(`${e.unit || ''} ${e.title || ''} ${e.vendorHint || ''} ${e.assetCategory || ''}`);
+            return hay.includes(query);
+          })
           .slice()
-          .sort((a, b) => String(b.finishedAt || '').localeCompare(String(a.finishedAt || '')))
-          .slice(0, 12);
+          .sort((a, b) => String(pickDate(b)).localeCompare(String(pickDate(a))));
 
-      const fillCol = (el, rows) => {
-        if (!el) return;
-        el.innerHTML = rows.length
-          ? rows.map(e => renderShopQueueCard(e)).join('')
-          : '<div class="mini-note">None.</div>';
+        if (!rows.length) {
+          host.innerHTML = `<tr><td colspan="9" class="mini-note" style="padding:10px">No rows for current filters.</td></tr>`;
+          return;
+        }
+
+        host.innerHTML = rows
+          .map(e => {
+            const overdue = !!e.overdue;
+            const id = escapeHtml(String(e.id || ''));
+            const status = String(e.status || 'queued');
+            const est = e.estimatedHours != null && e.estimatedHours !== '' ? Number(e.estimatedHours) : null;
+            const vendor = String(e.vendorHint || '').trim();
+            return `
+              <tr>
+                <td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(e.assetCategory || '')}</div></td>
+                <td>${escapeHtml(e.title || '')}${overdue ? '<div class="mini-note" style="color:#b45309;margin-top:4px"><strong>Past estimate</strong></div>' : ''}</td>
+                <td>${vendor ? escapeHtml(vendor) : '—'}</td>
+                <td style="text-align:center">${est != null && Number.isFinite(est) ? escapeHtml(String(est)) : '—'}</td>
+                <td>${escapeHtml(fmtIso(e.queuedAt))}</td>
+                <td>${escapeHtml(fmtIso(e.startedAt))}</td>
+                <td>${escapeHtml(fmtIso(e.finishedAt))}</td>
+                <td>
+                  <select class="qb-in" style="font-size:12px;max-width:200px;${overdue ? 'border-color:#f59e0b' : ''}" data-shop-id="${id}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
+                    <option value="queued" ${status === 'queued' ? 'selected' : ''}>${statusLabel('queued')}</option>
+                    <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>${statusLabel('in_progress')}</option>
+                    <option value="finished" ${status === 'finished' ? 'selected' : ''}>${statusLabel('finished')}</option>
+                  </select>
+                </td>
+                <td style="text-align:right">
+                  <button type="button" class="btn" style="font-size:11px;padding:4px 8px" onclick="removeShopQueueEntry('${id}')">Remove</button>
+                </td>
+              </tr>`;
+          })
+          .join('');
       };
 
-      fillCol(document.getElementById('shopInternalQueued'), sortQueued(byType('internal', 'queued')));
-      fillCol(
-        document.getElementById('shopInternalProgress'),
-        sortProg(byType('internal', 'in_progress'))
-      );
-      fillCol(document.getElementById('shopInternalFinished'), sortFin(byType('internal', 'finished')));
-
-      fillCol(document.getElementById('shopExternalQueued'), sortQueued(byType('external', 'queued')));
-      fillCol(
-        document.getElementById('shopExternalProgress'),
-        sortProg(byType('external', 'in_progress'))
-      );
-      fillCol(document.getElementById('shopExternalFinished'), sortFin(byType('external', 'finished')));
-
-      fillCol(document.getElementById('shopRoadsideQueued'), sortQueued(byType('roadside', 'queued')));
-      fillCol(
-        document.getElementById('shopRoadsideProgress'),
-        sortProg(byType('roadside', 'in_progress'))
-      );
-      fillCol(document.getElementById('shopRoadsideFinished'), sortFin(byType('roadside', 'finished')));
+      renderTable('internal');
+      renderTable('external');
+      renderTable('roadside');
 
       const elIWo = document.getElementById('shopInternalWoFallback');
       const elEWo = document.getElementById('shopExternalWoFallback');

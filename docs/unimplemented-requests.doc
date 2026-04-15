@@ -1,0 +1,72 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Calibri;}}
+\fs24
+\b IH35 ERP — Requests Not Yet Implemented (and Why)\b0\par
+\par
+This document lists requests you made that are not implemented yet (or only partially implemented), plus the most direct reason.\par
+\par
+\b 1) ERP-wide UI / Navigation (QuickBooks-like)\b0\par
+\pard\li360
+\b Sidebar redesign to navigate like QuickBooks (hover lists, deeper IA)\b0\par
+Not implemented yet because it requires a top-level navigation/IA refactor across many sections, otherwise we risk breaking existing workflows and creating duplicated entry points.\par
+\par
+\b Maintenance sidebar sub-items (Internal Mechanic, External Mechanic, Roadside Service, Parts Purchases)\b0\par
+Not implemented yet because it depends on the navigation refactor and requires defining each flow (what auto-fills, what is mandatory, and what is created) plus data-model alignment for parts purchases.\par
+\par
+\b Reports section in the sidebar with all report types\b0\par
+Not implemented yet because the report inventory and a consistent report UX (filters, date range, search, export) are not yet centralized into a report center.\par
+\pard\li0
+\par
+\b 2) Search\b0\par
+\pard\li360
+\b Global search bar in main navigation\b0\par
+Not implemented yet because we must define which entities are searchable (loads, vendors, assets, bills, work orders, maintenance records, bill payments, etc.), add a query/index endpoint, and implement ranking + deep links.\par
+\par
+\b Per-section search in each section\b0\par
+Not implemented yet because search/filter behavior is currently ad-hoc per panel; it needs a standardized pattern and wiring across multiple sections.\par
+\pard\li0
+\par
+\b 3) Maintenance — Shop queue + Integrity “data grid” modernization\b0\par
+\pard\li360
+\b Upgrade Awaiting service / In progress / Completed + Integrity boxes into a professional data grid with date + search controls\b0\par
+Partially implemented previously (labels updated); the full grid/table behavior requires new table UI, filter controls, and wiring those controls to the underlying data and endpoints.\par
+\pard\li0
+\par
+\b 4) Reporting controls everywhere\b0\par
+\pard\li360
+\b “In all areas where there is data showing, a report type should allow us to change dates.”\b0\par
+Not implemented yet because only some endpoints support true date windows; making this consistent requires standard date-range state, query params, and UI controls across many panels and reports.\par
+\pard\li0
+\par
+\b 5) Maintenance — Overview tab practicality\b0\par
+\pard\li360
+\b Re-evaluate practicality of the Maintenance Overview tab\b0\par
+Not implemented yet because it is an information-architecture decision (what becomes the default landing, what becomes a dashboard vs operational board) and must be redesigned with the rest of the navigation changes.\par
+\pard\li0
+\par
+\b 6) “Adequate forms” for lists\b0\par
+\pard\li360
+\b Assets, vendors, every type of list should have an adequate form\b0\par
+Not implemented yet because this requires dedicated CRUD screens/drawers per entity, validation rules, persistence, and consistent UX patterns across multiple modules.\par
+\pard\li0
+\par
+\b 7) Partially implemented: Bill-pay partial-payment UX polish\b0\par
+\pard\li360
+\b Partial bill-pay UX polish\b0\par
+Partially implemented: there is open-bill selection, per-line pay amounts, remaining balance, Max fill, totals, and local logging. Still missing deeper polish such as bulk pay-full, stronger validation messaging, and faster keyboard-first batch entry.\par
+\pard\li0
+\par
+\b 8) Environment/runtime issues (may still affect your instance)\b0\par
+\pard\li360
+\b “QuickBooks not connected” even though connected\b0\par
+May persist due to token/realm state vs UI cache; needs runtime verification in your running instance to confirm the exact failing path.\par
+\par
+\b “column qbo\_linehaul\_item\_id does not exist” when creating a load\b0\par
+May persist if the Postgres database migrations were not applied (or the app is pointed at a different database). This is typically a migration/state issue.\par
+\par
+\b Miles not calculating\b0\par
+Miles calculation exists (OSRM fallback, optional PC*Miler). If geocoding/routing keys are missing or requests fail at runtime, the UI will not fill miles; this needs runtime verification on your data.\par
+\pard\li0
+\par
+End of document.\par
+}
