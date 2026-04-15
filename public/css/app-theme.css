@@ -1487,10 +1487,10 @@ body.erp-maintenance .qb-btn-add {
 }
 
 body.erp-maintenance .qb-doc-shell {
-  border: 1px solid var(--line);
+  border: 1px solid var(--app-frame-border);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: #fff;
+  background: linear-gradient(180deg, var(--app-section-surface) 0%, #fff 28%);
   box-shadow: var(--shadow-sm);
 }
 
@@ -2530,6 +2530,89 @@ body.erp-maintenance .catalog-admin-table td {
 @media (max-width: 720px) {
   body.erp-maintenance .maint-cost-lines-head {
     display: none;
+  }
+}
+
+/* Accounting, Catalogs, Reports — subtabs and filters reflow on small screens */
+body.erp-maintenance #section-accounting > .subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+body.erp-maintenance #section-accounting > .subtabs > button.subtab,
+body.erp-maintenance #section-accounting > .subtabs > a.subtab {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+
+body.erp-maintenance #section-catalog .panel-body > .subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+body.erp-maintenance #section-catalog .panel-body > .subtabs > .subtab {
+  flex: 1 1 auto;
+  min-width: min(100%, 148px);
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+
+body.erp-maintenance #section-reports > .subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+body.erp-maintenance #section-reports > .subtabs > .subtab,
+body.erp-maintenance #section-reports > .subtabs > .nav-dropdown {
+  flex: 1 1 auto;
+  min-width: min(100%, 168px);
+}
+
+body.erp-maintenance #section-reports > .subtabs .nav-dropdown-trigger {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+body.erp-maintenance #section-reports .nav-dropdown-menu {
+  max-width: min(100vw - 32px, 320px);
+}
+
+@media (max-width: 768px) {
+  body.erp-maintenance .rep-maint-detail-filters.wo-line-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  body.erp-maintenance .rep-maint-detail-filters.wo-line-grid > div {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body.erp-maintenance #section-accounting > .subtabs > button.subtab,
+  body.erp-maintenance #section-accounting > .subtabs > a.subtab {
+    flex: 1 1 calc(50% - 6px);
   }
 }
 

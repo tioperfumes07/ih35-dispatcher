@@ -764,7 +764,7 @@
                       <button type="button" class="qb-btn-add" onclick="addMaintPlannedServiceRow()">+ Add line</button>
                     </div>
                     <p class="mini-note" style="margin:4px 0 6px;max-width:62ch">
-                      Use this for accident estimates, PM packages, or vendor quotes <strong>before</strong> you fill dollar amounts in <strong>Cost breakdown</strong> below. Each line is stored on the saved record notes.
+                      Use this for accident estimates, PM packages, or vendor quotes <strong>before</strong> you fill dollar amounts in <strong>Cost breakdown</strong> below. Each line is saved as structured <strong>planned work</strong> on the ERP record (and summarized on the QuickBooks memo when you post).
                     </p>
                     <div id="maintPlannedServicesHost"></div>
                   </div>
@@ -2092,7 +2092,7 @@
               <p class="mini-note" style="margin:0 0 10px">
                 Shows each maintenance record with its full cost breakdown. When lines include position-based parts (tires, batteries, etc.), the report includes the position + part reference.
               </p>
-              <div class="wo-line-grid" style="margin-bottom:10px">
+              <div id="repMaintDetailFilters" class="wo-line-grid rep-maint-detail-filters" style="margin-bottom:10px">
                 <div style="grid-column:span 2">
                   <span class="qb-l">Unit</span>
                   <input id="repMaintUnit" class="qb-in" list="unitOptions" placeholder="All units" oninput="renderMaintDetailedReport()" />
@@ -2118,7 +2118,7 @@
                 </div>
                 <div style="grid-column:span 3">
                   <span class="qb-l">Search</span>
-                  <input id="repMaintSearch" class="qb-in" placeholder="Service, vendor, invoice, WO, notes…" oninput="renderMaintDetailedReport()" />
+                  <input id="repMaintSearch" class="qb-in" placeholder="Service, vendor, invoice, WO, notes, planned work…" oninput="renderMaintDetailedReport()" />
                 </div>
               </div>
               <div id="repMaintDetailStatus" class="mini-note" style="margin-bottom:8px">Open this report to load.</div>
@@ -2949,6 +2949,7 @@
           workOrderNumber: document.getElementById('recordWorkOrderInput')?.value || '',
           loadNumber: document.getElementById('recordLoadNumberInput')?.value || '',
           notes: document.getElementById('notesInput')?.value || '',
+          plannedWork: collectMaintPlannedServiceLines().map(description => ({ description })),
           costLines: lines.map(l => ({
             description: l.description,
             amount: l.amount,
@@ -3478,7 +3479,8 @@
           const rt = String(r.recordType || '').trim();
           if (typ !== 'all' && rt !== typ) return false;
           if (!q) return true;
-          const hay = `${r.serviceType || ''} ${r.vendor || ''} ${r.vendorInvoiceNumber || ''} ${r.workOrderNumber || ''} ${r.notes || ''} ${r.loadNumber || ''}`.toLowerCase();
+          const pwHay = plannedWorkDescriptionsFromRecord(r).join(' ');
+          const hay = `${r.serviceType || ''} ${r.vendor || ''} ${r.vendorInvoiceNumber || ''} ${r.workOrderNumber || ''} ${r.notes || ''} ${r.loadNumber || ''} ${pwHay}`.toLowerCase();
           return hay.includes(q);
         })
         .slice()
@@ -3522,6 +3524,7 @@
           const linesBlock = lines.length
             ? `<div style="display:grid;gap:8px;margin-top:10px">${lines.map(lineHtml).join('')}</div>`
             : `<div class="mini-note" style="margin-top:8px">No cost breakdown lines saved on this record.</div>`;
+          const plannedBlock = formatPlannedWorkHtmlCard(r);
           return `<div style="border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px;margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
               <div style="min-width:260px;flex:1">
@@ -3534,6 +3537,7 @@
                 <div style="font-weight:900;font-size:18px">${escapeHtml(cost)}</div>
               </div>
             </div>
+            ${plannedBlock}
             ${linesBlock}
           </div>`;
         })
@@ -7506,6 +7510,30 @@
       return `${desc}${suf}: $${amt}`;
     }
 
+    function plannedWorkDescriptionsFromRecord(r) {
+      const pw = Array.isArray(r?.plannedWork) ? r.plannedWork : [];
+      const out = [];
+      for (const x of pw) {
+        const d =
+          typeof x === 'string'
+            ? String(x).trim()
+            : String(x?.description || x?.text || '')
+                .trim();
+        if (d) out.push(d);
+      }
+      return out;
+    }
+
+    function formatPlannedWorkHtmlCard(r) {
+      const lines = plannedWorkDescriptionsFromRecord(r);
+      if (!lines.length) return '';
+      return (
+        '<div class="mini-note"><strong>Planned work</strong><ul style="margin:4px 0 0 16px">' +
+        lines.map(t => `<li>${escapeHtml(t)}</li>`).join('') +
+        '</ul></div>'
+      );
+    }
+
     function maintLineComputedAmount(row) {
       const qRaw = row.querySelector('.maint-line-qty')?.value;
       const uRaw = row.querySelector('.maint-line-unit')?.value;
@@ -8333,13 +8361,6 @@
 
     function composeRecordNotesForSave() {
       let n = (document.getElementById('notesInput').value || '').trim();
-      const planned = collectMaintPlannedServiceLines();
-      if (planned.length) {
-        n +=
-          (n ? '\n\n' : '') +
-          'Services / repairs planned for this visit:\n' +
-          planned.map((t, i) => `${i + 1}. ${t}`).join('\n');
-      }
       const same = (document.getElementById('recordSameCostServicesInput')?.value || '').trim();
       if (same) {
         n += (n ? '\n\n' : '') + 'Additional services (same invoice / visit):\n' + same;
@@ -9097,6 +9118,7 @@
               ${r.accidentAtFault ? `<div class="mini-note">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
               ${r.qboPurchaseId ? `<div class="mini-note">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
               ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${formatPlannedWorkHtmlCard(r)}
               <div class="mini-note">${escapeHtml(r.notes || '')}</div>
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/maintenance-record/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
@@ -9518,6 +9540,7 @@
           vendor: document.getElementById('vendorInput').value,
           cost: document.getElementById('costInput').value,
           notes: composedNotes,
+          plannedWork: collectMaintPlannedServiceLines().map(description => ({ description })),
           tireCondition: document.getElementById('tireConditionValue').value,
           tirePosition: document.getElementById('tirePositionInput').value,
           tirePositionText: document.getElementById('tirePositionText').value,

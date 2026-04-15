@@ -882,6 +882,23 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
         });
         doc.moveDown(0.5);
       }
+      const planned = Array.isArray(rec.plannedWork) ? rec.plannedWork : [];
+      const plannedLines = planned
+        .map(x =>
+          typeof x === 'string'
+            ? String(x).trim()
+            : String(x?.description || '')
+                .trim()
+        )
+        .filter(Boolean);
+      if (plannedLines.length) {
+        doc.font('Helvetica-Bold').fontSize(10).text('Planned work (pre-cost scope)');
+        doc.font('Helvetica').fontSize(9);
+        plannedLines.forEach((line, i) => {
+          doc.text(`${i + 1}. ${line}`);
+        });
+        doc.moveDown(0.5);
+      }
       doc.font('Helvetica').fontSize(10).fillColor('#000000').text('Notes', { underline: true });
       doc.text(rec.notes || '—', { align: 'left' });
       doc.moveDown();
@@ -1030,6 +1047,15 @@ router.post('/api/pdf/fleet-maintenance-draft', (req, res) => {
     const loadNo = safe(b.loadNumber, 80);
     const notes = safe(b.notes, 2400);
     const costLines = Array.isArray(b.costLines) ? b.costLines.slice(0, 45) : [];
+    const plannedRaw = Array.isArray(b.plannedWork) ? b.plannedWork : [];
+    const plannedLines = plannedRaw
+      .map(x =>
+        typeof x === 'string'
+          ? safe(x, 240).trim()
+          : safe(x?.description || x?.text || '', 240).trim()
+      )
+      .filter(Boolean)
+      .slice(0, 40);
 
     const fn = `fleet-wo-draft-${unit.replace(/[^\w.-]+/g, '_')}-${Date.now()}.pdf`;
     sendPdf(res, fn, doc => {
@@ -1070,6 +1096,14 @@ router.post('/api/pdf/fleet-maintenance-draft', (req, res) => {
           doc.text(`${i + 1}. ${mid}${amt} — ${desc}`);
         });
         doc.moveDown(0.5);
+      }
+      if (plannedLines.length) {
+        doc.font('Helvetica-Bold').fontSize(10).text('Planned work (draft)');
+        doc.font('Helvetica').fontSize(9).fillColor('#333333');
+        plannedLines.forEach((line, i) => {
+          doc.text(`${i + 1}. ${line}`);
+        });
+        doc.fillColor('#000000').moveDown(0.5);
       }
       doc.font('Helvetica-Bold').fontSize(10).text('Notes');
       doc.font('Helvetica').fontSize(9).fillColor('#333333').text(notes || '—', { align: 'left' });

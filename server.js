@@ -4630,6 +4630,34 @@ app.post('/api/maintenance/mileage', (req, res) => {
   }
 });
 
+/** Planned services / repairs for a visit (structured; not duplicated into freeform notes). */
+function sanitizeMaintenancePlannedWork(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const x of raw) {
+    if (x == null) continue;
+    let desc = '';
+    if (typeof x === 'string') desc = x;
+    else if (typeof x === 'object') desc = String(x.description || x.text || '').trim();
+    desc = desc
+      .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')
+      .trim()
+      .slice(0, 240);
+    if (desc) out.push({ description: desc });
+    if (out.length >= 40) break;
+  }
+  return out;
+}
+
+function plannedWorkSummaryForMemo(plannedWork) {
+  if (!Array.isArray(plannedWork) || !plannedWork.length) return '';
+  const parts = plannedWork.map(p => String(p?.description || '').trim()).filter(Boolean);
+  if (!parts.length) return '';
+  const head = parts.slice(0, 8).join('; ');
+  const tail = parts.length > 8 ? ` (+${parts.length - 8} more)` : '';
+  return `Planned work: ${head}${tail}`.slice(0, 900);
+}
+
 function sanitizeMaintenanceTireLineItems(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
@@ -4779,6 +4807,7 @@ app.post('/api/maintenance/record', async (req, res) => {
     const tireDot = String(body.tireDot || '').trim() || (firstTire?.tireDot || '');
     const tireCondition = String(body.tireCondition || '').trim() || (firstTire?.tireCondition || '');
     const costLines = sanitizeMaintenanceCostLines(body.costLines);
+    const plannedWork = sanitizeMaintenancePlannedWork(body.plannedWork);
     const sumLines = costLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
     const costFromLines = Math.round(sumLines * 100) / 100;
     const cost =
@@ -4825,7 +4854,8 @@ app.post('/api/maintenance/record', async (req, res) => {
       qboError: '',
       createdAt: new Date().toISOString(),
       ...(tireLineItems.length ? { tireLineItems } : {}),
-      ...(costLines.length ? { costLines } : {})
+      ...(costLines.length ? { costLines } : {}),
+      ...(plannedWork.length ? { plannedWork } : {})
     };
     erp.records.push(record);
     const sm = safeNum(body.serviceMileage, null);
@@ -4925,7 +4955,11 @@ async function qboPostMaintenanceRecord(recordId) {
     dueDate: String(rec.qboDueDate || '').trim(),
     docNumber: docNum || undefined,
     description: rec.serviceType || 'Maintenance',
-    memo: rec.notes || `${rec.unit || ''} ${rec.recordType || ''}`.trim(),
+    memo:
+      [rec.notes, plannedWorkSummaryForMemo(rec.plannedWork)]
+        .filter(Boolean)
+        .join('\n\n')
+        .trim() || `${rec.unit || ''} ${rec.recordType || ''}`.trim(),
     assetUnit: rec.unit || ''
   };
   if (useCostBreakdown) apLike.costLines = costLines;
