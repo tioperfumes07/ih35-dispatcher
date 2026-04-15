@@ -3923,8 +3923,8 @@ app.post('/api/maintenance/shop-queue', (req, res) => {
     const shopType = String(body.shopType || '').trim();
     const title = String(body.title || 'Repair / service').trim().slice(0, 200);
     if (!unit) return res.status(400).json({ error: 'unit is required' });
-    if (!['internal', 'external', 'roadside'].includes(shopType)) {
-      return res.status(400).json({ error: 'shopType must be internal, external, or roadside' });
+    if (!['internal', 'external', 'roadside', 'parts'].includes(shopType)) {
+      return res.status(400).json({ error: 'shopType must be internal, external, roadside, or parts' });
     }
     const assetCategory = String(body.assetCategory || 'Trucks').trim().slice(0, 80);
     const erp = readErp();
