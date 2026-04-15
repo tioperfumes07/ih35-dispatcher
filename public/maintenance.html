@@ -6868,8 +6868,14 @@
             .slice(0, 2)
             .join(', ') || 'Work order';
         const st = w.qboSyncStatus || 'not posted';
+        const poRef = String(w.vendorWorkOrderNumber || w.internalWorkOrderNumber || '').trim();
+        const partsRefLine =
+          String(w.repairLocationType) === 'parts-purchase' && poRef
+            ? `<span class="mini-note">PO / ref: ${escapeHtml(poRef)}</span><br>`
+            : '';
         return (
           `<div class="shop-row">${tagHtml || ''}<b>${escapeHtml(w.unit || '—')}</b> — ${escapeHtml(sum)}<br>` +
+          partsRefLine +
           `<span class="mini-note">${escapeHtml(st)} · ${escapeHtml((w.serviceDate || '').slice(0, 10) || '')}</span></div>`
         );
       };
