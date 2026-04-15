@@ -2547,6 +2547,7 @@
       if (id === 'acct-bill-pay') {
         const d = document.getElementById('bpTxnDate');
         if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+        bpRefreshSelectionTotal();
       }
     }
 
@@ -3717,7 +3718,9 @@
         });
         const pid = data.billPaymentId || '';
         const doc = data.docNumber ? ` Doc #: ${data.docNumber}` : '';
-        if (resEl) resEl.textContent = `Bill payment created in QuickBooks. Id: ${pid}${doc}`;
+        const logRef = data.erpLogId ? ` · ERP log: ${data.erpLogId}` : '';
+        if (resEl) resEl.textContent = `Bill payment created in QuickBooks. Id: ${pid}${doc}${logRef}`;
+        await loadAll();
         await loadAccountingOpenBills();
       } catch (e) {
         if (resEl) resEl.textContent = e.message || String(e);
@@ -7021,6 +7024,7 @@
 
     function expenseHistoryStatusClass(kind, qboSyncStatus, displayLabel) {
       const raw = String(qboSyncStatus || '').trim().toLowerCase();
+      if (kind === 'bpp') return statusClass('posted');
       if (raw === 'posted' || raw === 'past due' || raw === 'due soon') return statusClass(qboSyncStatus || 'posted');
       if (raw === 'error') return statusClass('error');
       if (kind === 'relay') {
@@ -7268,6 +7272,7 @@
         if (src === 'wo' && r.kind !== 'wo') return false;
         if (src === 'relay' && r.kind !== 'relay') return false;
         if (src === 'mr' && r.kind !== 'mr') return false;
+        if (src === 'bpp' && r.kind !== 'bpp') return false;
         const d = String(r.sortDate || '');
         if (from && (!d || d < from)) return false;
         if (to && (!d || d > to)) return false;
