@@ -72,6 +72,15 @@ body {
   line-height: 1.5;
 }
 
+/* Prevent flex/grid children from forcing horizontal overflow (dashboards auto-fit width). */
+main,
+.section,
+.panel,
+.panel-body,
+.form-stack {
+  min-width: 0;
+}
+
 ::selection {
   background: var(--accent-soft);
   color: var(--text);

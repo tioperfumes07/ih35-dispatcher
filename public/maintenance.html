@@ -200,6 +200,25 @@
     .cost-total-bad{border-color:#f87171!important;box-shadow:0 0 0 2px rgba(248,113,113,.2)!important}
     .catalog-subpanel{display:none}
     .catalog-subpanel.active{display:block}
+    .upload-subpanel{display:none}
+    .upload-subpanel.active{display:block}
+    #section-accounting .accounting-tab{width:100%;min-width:0;max-width:100%}
+    #section-accounting .qb-doc-shell{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+    #section-accounting .qb-doc-body{min-width:0;max-width:100%}
+    #section-accounting #acct-transactions .qb-doc-body > .wo-line-grid:first-of-type{
+      display:grid!important;
+      grid-template-columns:repeat(auto-fill,minmax(min(100%,12rem),1fr))!important;
+      width:100%;
+    }
+    #section-accounting #acct-transactions .qb-doc-body > .wo-line-grid:first-of-type > div[style*="grid-column"]{grid-column:1/-1!important}
+    #section-accounting #woLines .wo-line-grid{
+      grid-template-columns:repeat(auto-fill,minmax(min(100%,10rem),1fr))!important;
+    }
+    @media (min-width:1200px){
+      #section-accounting #woLines .wo-line-grid{
+        grid-template-columns:36px 1.3fr 88px 1.1fr 1.1fr 48px 72px 90px 28px!important;
+      }
+    }
     .maint-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9000;align-items:center;justify-content:center;padding:20px}
     .maint-modal-bg.on{display:flex}
     .maint-modal{background:#fff;border-radius:14px;max-width:480px;width:100%;padding:20px;box-shadow:var(--shadow)}
@@ -376,6 +395,20 @@
         </div>
       </div>
 
+      <div class="nav-title">Data</div>
+      <div class="nav-dropdown">
+        <button type="button" class="nav-btn nav-dropdown-trigger" data-section="uploads" onclick="openSection('uploads', this); openUploadSubpanel('fuel');">Uploads ▾</button>
+        <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
+          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('fuel');">Loves / Relay / fuel CSV</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Maintenance history (CSV / Excel)</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('ap');">Maintenance expense AP (CSV / Excel)</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('comdata');">Comdata / card exports</button>
+          <button type="button" class="nav-dd-item" onclick="window.location.href='/banking.html'">Bank CSV (bank matching)</button>
+          <div class="nav-dd-sep"></div>
+          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('sync');">Connections &amp; Samsara writes</button>
+        </div>
+      </div>
+
       <div class="nav-title">Actions</div>
       <button class="nav-btn" type="button" title="Fetch latest fleet, ERP, and shop queue now" onclick="loadAll()">Refresh now</button>
       <button class="nav-btn" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
@@ -384,6 +417,7 @@
 
       <div class="nav-title">Status</div>
       <div id="sidebarQboStatus" class="mini-note">QuickBooks not checked</div>
+      <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: not loaded</div>
       <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Not loaded</div>
     </aside>
 
@@ -850,6 +884,17 @@
                       <input id="recordWorkOrderInput" class="qb-in maint-field" placeholder="Vendor WO / internal ref" autocomplete="off">
                     </div>
                   </div>
+                  <div class="search-row" style="max-width:560px;margin-top:8px;align-items:flex-end">
+                    <div style="flex:1;min-width:200px">
+                      <span class="qb-l">Vendor invoice PDF (optional)</span>
+                      <input id="maintInvoicePdfInput" type="file" accept="application/pdf" />
+                    </div>
+                    <div>
+                      <span class="qb-l">&nbsp;</span>
+                      <button type="button" class="qb-btn-add" onclick="parseMaintRecordInvoicePdf()">Extract &amp; fill lines</button>
+                    </div>
+                  </div>
+                  <div id="maintInvoicePdfStatus" class="mini-note" style="max-width:560px"></div>
                   <textarea id="notesInput" class="qb-memo" placeholder="Notes" style="max-width:560px"></textarea>
 
                   <div id="recordSameCostServicesWrap" class="form-stack">
@@ -1019,16 +1064,13 @@
 
             <div class="panel">
               <div class="panel-head">
-                <div class="panel-title">Imports</div>
+                <div class="panel-title">File uploads</div>
               </div>
               <div class="panel-body form-stack">
-                <div class="mini-note">Upload CSV or Excel for prior maintenance history.</div>
-                <input id="maintenanceImportFile" type="file" accept=".csv,.xlsx,.xls">
-                <button onclick="uploadMaintenanceFile()">Upload Maintenance File</button>
-
-                <div class="mini-note" style="margin-top:8px;">Upload CSV or Excel for maintenance expense transactions.</div>
-                <input id="apImportFile" type="file" accept=".csv,.xlsx,.xls">
-                <button onclick="uploadApFile()">Upload Expense File</button>
+                <p class="mini-note" style="margin:0">
+                  Spreadsheet imports live under <strong>Uploads</strong> in the sidebar (hover <strong>Uploads ▾</strong>) so there is a single hub — maintenance history, AP expenses, fuel/Relay, and connection notes.
+                </p>
+                <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to Uploads</button>
               </div>
             </div>
 
@@ -1689,6 +1731,57 @@
               </p>
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-uploads" class="section">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Uploads</div>
+            <div class="mini-note" style="margin:0">One place for spreadsheet imports. Use the sidebar <strong>Uploads ▾</strong> menu for quick access.</div>
+          </div>
+          <div class="panel-body">
+            <div class="subtabs" style="margin-bottom:14px">
+              <button type="button" class="subtab active" data-up-sub="fuel" onclick="openUploadSubpanel('fuel', this)">Loves / Relay / fuel</button>
+              <button type="button" class="subtab" data-up-sub="maint" onclick="openUploadSubpanel('maint', this)">Maintenance data</button>
+              <button type="button" class="subtab" data-up-sub="ap" onclick="openUploadSubpanel('ap', this)">Expense AP rows</button>
+              <button type="button" class="subtab" data-up-sub="comdata" onclick="openUploadSubpanel('comdata', this)">Comdata / cards</button>
+              <button type="button" class="subtab" data-up-sub="sync" onclick="openUploadSubpanel('sync', this)">Connections</button>
+            </div>
+            <div id="upload-panel-fuel" class="upload-subpanel active">
+              <p class="mini-note" style="margin:0 0 10px">
+                Love’s, Relay, and other fuel spreadsheets are <strong>previewed and confirmed</strong> on the Fuel board (multi-step: preview → confirm → undo). Comdata-style exports often match the same Relay parser when columns align.
+              </p>
+              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/fuel.html#fuel-import-section">Open Fuel board → import</a>
+            </div>
+            <div id="upload-panel-maint" class="upload-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">Prior maintenance history (CSV / Excel) posts into this app’s maintenance records.</p>
+              <input id="maintenanceImportFile" type="file" accept=".csv,.xlsx,.xls">
+              <button type="button" onclick="uploadMaintenanceFile()">Upload maintenance file</button>
+            </div>
+            <div id="upload-panel-ap" class="upload-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">Bulk maintenance <strong>expense transactions</strong> (AP-style rows) for QuickBooks workflow.</p>
+              <input id="apImportFile" type="file" accept=".csv,.xlsx,.xls">
+              <button type="button" onclick="uploadApFile()">Upload expense file</button>
+            </div>
+            <div id="upload-panel-comdata" class="upload-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">
+                If your Comdata export matches the same columns as Relay / fuel card templates, use <strong>Loves / Relay / fuel</strong> above. Otherwise export to CSV and ask your admin to map columns to the fuel import format.
+              </p>
+              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/fuel.html#fuel-import-section">Try Fuel board import</a>
+            </div>
+            <div id="upload-panel-sync" class="upload-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">
+                <strong>QuickBooks</strong> master data (vendors, items, accounts) refreshes with <em>Refresh QuickBooks Master</em>; posting pushes bills/expenses to QBO. <strong>Samsara</strong> fleet/HOS in this app is read-only unless your API token includes write scopes (see below).
+              </p>
+              <ul class="mini-note" style="margin:0;padding-left:1.2rem;line-height:1.5">
+                <li>To <strong>edit vehicles or drivers from this app</strong> and have changes sync to Samsara, create a Samsara API token (or OAuth app) with write scopes such as <strong>Write Vehicles</strong> and <strong>Write Drivers</strong>, then implement PATCH calls (e.g. <a href="https://developers.samsara.com/reference/updatevehicle" target="_blank" rel="noopener">Update vehicle</a>). Tokens must be re-issued after adding scopes.</li>
+                <li>Until then, use <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> for fleet and driver edits; this ERP will pick them up on the next refresh.</li>
+              </ul>
+              <button type="button" style="margin-top:10px" onclick="loadQboStatus(); testQuickBooks();">Re-check QuickBooks</button>
+              <button type="button" style="margin-left:8px" onclick="loadAll()">Refresh fleet / Samsara snapshot</button>
             </div>
           </div>
         </div>
@@ -2465,7 +2558,8 @@
         tracking: 'Vehicle Tracking Board',
         accounting: 'Accounting Board',
         reports: 'Reports Board',
-        catalog: 'Catalogs'
+        catalog: 'Catalogs',
+        uploads: 'Uploads'
       };
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
       if (name === 'tracking') {
@@ -2496,7 +2590,12 @@
         openAccountingTab('acct-settlement', sub);
         return;
       }
-      const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog'];
+      if (section === 'uploads') {
+        openSectionByName('uploads');
+        openUploadSubpanel('fuel');
+        return;
+      }
+      const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog', 'uploads'];
       if (allowed.includes(section)) openSectionByName(section);
     }
 
@@ -2512,6 +2611,10 @@
         if (wl && !wl.children.length) addWoLine();
         syncApDocTitle();
         refreshApDocTotal();
+        requestAnimationFrame(() => {
+          document.getElementById('section-accounting')?.scrollTo(0, 0);
+          window.dispatchEvent(new Event('resize'));
+        });
       }
       if (id === 'acct-settlement') {
         if (!tmsEnabled) {
@@ -2867,6 +2970,10 @@
           : new Date().toLocaleString();
         document.getElementById('sidebarLastUpdated').textContent =
           'Fleet snapshot (Samsara): ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
+        const nVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
+        const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
+        const sf = document.getElementById('sidebarFleetStatus');
+        if (sf) sf.textContent = `Samsara board: ${nVeh} vehicles · refreshed ${brAt}`;
         applyNavHash();
         if (activeSection === 'reports') loadReportsData();
       } catch (e) {
@@ -4125,6 +4232,18 @@
       if (which === 'service') loadServiceCatalogAdminOnly();
     }
 
+    function openUploadSubpanel(which, btn) {
+      document.querySelectorAll('#section-uploads .upload-subpanel').forEach(el => el.classList.remove('active'));
+      const p = document.getElementById('upload-panel-' + which);
+      if (p) p.classList.add('active');
+      document.querySelectorAll('#section-uploads .subtabs .subtab').forEach(el => el.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      else {
+        const b = document.querySelector(`#section-uploads .subtab[data-up-sub="${which}"]`);
+        if (b) b.classList.add('active');
+      }
+    }
+
     function populateServicePresetCombo() {
       const inp = document.getElementById('serviceTypePresetInput');
       const dl = document.getElementById('servicePresetOptions');
@@ -4431,6 +4550,88 @@
       refreshApDocTotal();
     }
 
+    async function fetchParsedExpenseInvoicePdf(file) {
+      const fd = new FormData();
+      fd.append('pdf', file);
+      const r = await fetch('/api/documents/parse-expense-invoice', { method: 'POST', body: fd });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || r.statusText || 'Parse failed');
+      return j.parsed || {};
+    }
+
+    function applyParsedExpenseInvoicePdf(p, target) {
+      if (target === 'maint') {
+        if (p.invoiceNumber) {
+          const el = document.getElementById('recordVendorInvoiceInput');
+          if (el) el.value = p.invoiceNumber;
+        }
+        if (p.txnDate) {
+          const el = document.getElementById('serviceDateInput');
+          if (el) el.value = p.txnDate;
+        }
+        if (p.unitGuess) {
+          const hint = document.getElementById('recordLoadNumberHint');
+          if (selectedUnit && String(p.unitGuess).toUpperCase() === String(selectedUnit).toUpperCase()) {
+            /* already on unit */
+          } else if (hint) {
+            hint.textContent = 'PDF suggested unit: ' + p.unitGuess + ' (you are on ' + (selectedUnit || '—') + ')';
+          }
+        }
+        if (p.vendorGuess) {
+          const memo = document.getElementById('notesInput');
+          if (memo) {
+            const line = 'Vendor (from PDF header): ' + p.vendorGuess;
+            memo.value = memo.value.trim() ? memo.value.trim() + '\n' + line : line;
+          }
+        }
+        const host = document.getElementById('maintCostLinesHost');
+        if (p.amount != null && host) {
+          ensureMaintCostLinesBootstrapped();
+          const first = host.querySelector('.maint-cost-line');
+          if (first) {
+            const desc = first.querySelector('.maint-line-desc');
+            const amt = first.querySelector('.maint-line-amt');
+            if (desc) desc.value = 'Repair / parts (from PDF)';
+            if (amt) amt.value = String(p.amount);
+            recalcMaintLineRowInputs(first);
+          }
+          recalcMaintCostTotalFromLines();
+        }
+        return;
+      }
+      if (p.invoiceNumber) {
+        const el = document.getElementById('apVendorInvoiceNumber');
+        if (el) el.value = p.invoiceNumber;
+      }
+      if (p.txnDate) {
+        const el = document.getElementById('apTxnDate');
+        if (el) el.value = p.txnDate;
+      }
+      if (p.unitGuess) {
+        const el = document.getElementById('apAssetUnit');
+        if (el) el.value = p.unitGuess;
+      }
+      if (p.vendorGuess) {
+        const memo = document.getElementById('apMemo');
+        if (memo) {
+          const line = 'Vendor (from PDF header): ' + p.vendorGuess;
+          memo.value = memo.value.trim() ? memo.value.trim() + '\n' + line : line;
+        }
+      }
+      const host = document.getElementById('woLines');
+      if (p.amount != null && host) {
+        if (!host.querySelector('.wo-line')) addWoLine();
+        const first = host.querySelector('.wo-line');
+        if (first) {
+          const svc = first.querySelector('.wo-svc');
+          const amt = first.querySelector('.wo-amt');
+          if (svc) svc.value = 'Repair / parts (from PDF)';
+          if (amt) amt.value = String(p.amount);
+        }
+        refreshApDocTotal();
+      }
+    }
+
     async function parseApInvoicePdf() {
       const input = document.getElementById('apInvoicePdfInput');
       const st = document.getElementById('apInvoicePdfStatus');
@@ -4440,46 +4641,34 @@
       }
       if (st) st.textContent = 'Reading PDF…';
       try {
-        const fd = new FormData();
-        fd.append('pdf', input.files[0]);
-        const r = await fetch('/api/documents/parse-expense-invoice', { method: 'POST', body: fd });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j.error || r.statusText || 'Parse failed');
-        const p = j.parsed || {};
-        if (p.invoiceNumber) {
-          const el = document.getElementById('apVendorInvoiceNumber');
-          if (el) el.value = p.invoiceNumber;
-        }
-        if (p.txnDate) {
-          const el = document.getElementById('apTxnDate');
-          if (el) el.value = p.txnDate;
-        }
-        if (p.unitGuess) {
-          const el = document.getElementById('apAssetUnit');
-          if (el) el.value = p.unitGuess;
-        }
-        if (p.vendorGuess) {
-          const memo = document.getElementById('apMemo');
-          if (memo) {
-            const line = 'Vendor (from PDF header): ' + p.vendorGuess;
-            memo.value = memo.value.trim() ? memo.value.trim() + '\n' + line : line;
-          }
-        }
-        const host = document.getElementById('woLines');
-        if (p.amount != null && host) {
-          if (!host.querySelector('.wo-line')) addWoLine();
-          const first = host.querySelector('.wo-line');
-          if (first) {
-            const svc = first.querySelector('.wo-svc');
-            const amt = first.querySelector('.wo-amt');
-            if (svc) svc.value = 'Repair / parts (from PDF)';
-            if (amt) amt.value = String(p.amount);
-          }
-          refreshApDocTotal();
-        }
+        const p = await fetchParsedExpenseInvoicePdf(input.files[0]);
+        applyParsedExpenseInvoicePdf(p, 'ap');
         if (st) {
           st.textContent =
             'Applied (hints: ' + (p.hints && p.hints.length ? p.hints.join(', ') : 'none') + '). Match vendor to QBO and choose category/item.';
+        }
+      } catch (e) {
+        if (st) st.textContent = '';
+        alert(e.message || String(e));
+      }
+    }
+
+    async function parseMaintRecordInvoicePdf() {
+      const input = document.getElementById('maintInvoicePdfInput');
+      const st = document.getElementById('maintInvoicePdfStatus');
+      if (!input?.files?.[0]) {
+        if (st) st.textContent = 'Choose a PDF first.';
+        return;
+      }
+      if (st) st.textContent = 'Reading PDF…';
+      try {
+        const p = await fetchParsedExpenseInvoicePdf(input.files[0]);
+        applyParsedExpenseInvoicePdf(p, 'maint');
+        if (st) {
+          st.textContent =
+            'Applied to service date, vendor inv #, first cost line (hints: ' +
+            (p.hints && p.hints.length ? p.hints.join(', ') : 'none') +
+            '). Match vendor to QBO above.';
         }
       } catch (e) {
         if (st) st.textContent = '';
@@ -5207,6 +5396,10 @@
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
+      const pdfIn = document.getElementById('maintInvoicePdfInput');
+      if (pdfIn) pdfIn.value = '';
+      const pdfSt = document.getElementById('maintInvoicePdfStatus');
+      if (pdfSt) pdfSt.textContent = '';
       const cHint = document.getElementById('maintCatalogServiceHint');
       if (cHint) cHint.textContent = '';
 
