@@ -2136,21 +2136,154 @@ body.erp-maintenance .maint-cost-panel-card {
 }
 
 body.erp-maintenance .maint-save-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 12px;
-  margin-top: 16px;
-  padding: 12px 14px;
+  margin-top: 12px;
+  padding: 6px 10px;
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: 8px;
   background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
 }
-body.erp-maintenance .maint-save-toolbar__btns {
+body.erp-maintenance .maint-save-toolbar--qb {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+body.erp-maintenance .maint-save-toolbar__hint {
+  margin: 0;
+  flex: 1 1 160px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #64748b;
+  text-align: left;
+}
+body.erp-maintenance .maint-save-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+@media (max-width: 720px) {
+  body.erp-maintenance .maint-save-toolbar--qb {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  body.erp-maintenance .maint-save-toolbar__hint {
+    flex: 1 1 auto;
+  }
+  body.erp-maintenance .maint-save-toolbar__actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 4px;
+  overflow: visible;
+  font-size: 11px;
+  line-height: 1.2;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary {
+  border: 1px solid #15803d;
+  background: #fff;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral {
+  border: 1px solid #94a3b8;
+  background: #fff;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split__main {
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  white-space: nowrap;
+  border-radius: 3px 0 0 3px;
+  letter-spacing: 0.01em;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main {
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main:hover {
+  filter: brightness(1.05);
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral .qb-split__main {
+  background: linear-gradient(180deg, #fff 0%, #f1f5f9 100%);
+  color: #334155;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral .qb-split__main:hover {
+  background: #e2e8f0;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split__caret {
+  margin: 0;
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  padding: 0 6px;
+  min-width: 22px;
+  border-radius: 0 3px 3px 0;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__caret {
+  background: linear-gradient(180deg, #15803d 0%, #166534 100%);
+  color: #fff;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__caret:hover {
+  filter: brightness(1.08);
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral .qb-split__caret {
+  border-left-color: #cbd5e1;
+  background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+  color: #475569;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral .qb-split__caret:hover {
+  background: #cbd5e1;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu {
+  position: absolute;
+  top: calc(100% + 3px);
+  right: 0;
+  z-index: 80;
+  min-width: 188px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #0f172a;
+  cursor: pointer;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item:hover {
+  background: #f1f5f9;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item--link {
+  text-decoration: none;
+  font-weight: 500;
+  box-sizing: border-box;
 }
 body.erp-maintenance .maint-save-action-hidden {
   position: absolute;

@@ -966,7 +966,7 @@
                     <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
                   </div>
 
-                  <div class="maint-save-toolbar">
+                  <div class="maint-save-toolbar maint-save-toolbar--qb">
                     <select id="maintSaveAction" class="maint-save-action-hidden" aria-hidden="true" tabindex="-1">
                       <option value="save">Save</option>
                       <option value="save_close">Save &amp; close</option>
@@ -974,17 +974,30 @@
                       <option value="save_print">Save &amp; print</option>
                       <option value="save_post">Save &amp; post to QuickBooks</option>
                     </select>
-                    <div class="maint-save-toolbar__btns">
-                      <button type="button" class="btn" onclick="saveRecordWithAction('save')">Save</button>
-                      <button type="button" class="btn" onclick="saveRecordWithAction('save_close')">Save &amp; close</button>
-                      <button type="button" class="btn" onclick="saveRecordWithAction('save_to_ap')">Accounting draft</button>
-                      <button type="button" class="btn qb-btn-primary" onclick="saveRecordWithAction('save_post')">Save &amp; record in QuickBooks</button>
-                      <button type="button" class="btn" title="Saves the record, then opens the browser print dialog" onclick="saveRecordWithAction('save_print')">Save + print</button>
-                      <button type="button" class="btn" title="Prints the current page now without saving" onclick="maintPrintWorkOrderView()">Print form</button>
-                      <button type="button" class="btn" title="PDF snapshot of this form (draft, not posted)" onclick="maintDraftWorkOrderPdf()">Draft WO PDF</button>
-                      <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" title="Open PDF of the live shop queue (separate from this work order)" style="display:inline-block;text-decoration:none;line-height:1.25">Shop queue PDF</a>
+                    <span class="mini-note maint-save-toolbar__hint" id="maintSaveHint"></span>
+                    <div class="maint-save-toolbar__actions">
+                      <div class="qb-split qb-split--primary">
+                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Save &amp; record in QuickBooks</button>
+                        <button type="button" class="qb-split__caret" aria-label="More save options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
+                        <ul class="qb-split__menu" role="menu" hidden>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save')">Save</button></li>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_close')">Save &amp; close</button></li>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_to_ap')">Accounting draft</button></li>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_print')">Save + print</button></li>
+                        </ul>
+                      </div>
+                      <div class="qb-split qb-split--neutral">
+                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); maintPrintWorkOrderView()">Print form</button>
+                        <button type="button" class="qb-split__caret" aria-label="More print and PDF options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
+                        <ul class="qb-split__menu" role="menu" hidden>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_print')">Save + print</button></li>
+                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); maintDraftWorkOrderPdf()">Draft WO PDF</button></li>
+                          <li role="none">
+                            <a class="qb-split__menu-item qb-split__menu-item--link" role="menuitem" href="/api/pdf/shop-queue" target="_blank" rel="noopener" onclick="maintCloseSplitMenus()">Shop queue PDF</a>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
-                    <span class="mini-note" id="maintSaveHint" style="margin:0;flex:1;min-width:140px"></span>
                   </div>
                 </div>
               </div>
@@ -1514,6 +1527,7 @@
               <p class="mini-note" style="margin:0 0 10px">
                 Post each import as a QuickBooks <strong>Purchase (Expense)</strong>. Default is an <strong>item line</strong> (qty × $/unit = line total) with <strong>Class</strong> = truck/unit for P&amp;L by vehicle.
                 Pick the <strong>vendor</strong> (fuel merchant), optional <strong>driver</strong> (name + driver-pay QBO vendor), and optional <strong>customer</strong> on the line when you bill or track by driver entity.
+                Row edits (class, vendor, item, qty, driver, etc.) <strong>save to ERP</strong> automatically after a short pause when the <strong>ERP write secret</strong> is set in Settings (same as posting).
               </p>
               <div class="wo-line-grid" style="margin-bottom:10px">
                 <div>
@@ -5394,6 +5408,39 @@
       fuelExpenseSaveDraft(tr);
     }
 
+    const __fuelDraftPersistTimers = {};
+
+    async function persistFuelExpenseDraftNow(id) {
+      const d = window.__fuelExpenseDraft && window.__fuelExpenseDraft[id];
+      if (!d) return;
+      try {
+        const data = await j('/api/fuel/purchases/' + encodeURIComponent(id) + '/expense-draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify(d)
+        });
+        const row = data.purchase;
+        const rows = Array.isArray(window.__fuelPurchasesRows) ? window.__fuelPurchasesRows : [];
+        const ix = rows.findIndex(x => String(x.id) === String(id));
+        if (ix >= 0 && row) rows[ix] = row;
+        window.__fuelPurchasesRows = rows;
+        if (Array.isArray(erp.fuelPurchases)) {
+          const jx = erp.fuelPurchases.findIndex(x => String(x.id) === String(id));
+          if (jx >= 0 && row) erp.fuelPurchases[jx] = row;
+        }
+        delete window.__fuelExpenseDraft[id];
+      } catch (e) {
+        console.warn('Fuel expense draft persist failed', id, e.message || e);
+      }
+    }
+
+    function schedulePersistFuelExpenseDraft(id) {
+      clearTimeout(__fuelDraftPersistTimers[id]);
+      __fuelDraftPersistTimers[id] = setTimeout(() => {
+        void persistFuelExpenseDraftNow(id);
+      }, 550);
+    }
+
     function fuelExpenseSaveDraft(tr) {
       const id = tr.getAttribute('data-fuel-id');
       if (!id) return;
@@ -5413,6 +5460,7 @@
         custSearch: tr.querySelector('.fuel-cust')?.value || '',
         custId: tr.querySelector('.fuel-cust-id')?.value || ''
       };
+      schedulePersistFuelExpenseDraft(id);
     }
 
     function blurFuelRowVendor(inp) {
@@ -5533,7 +5581,10 @@
             status === 'posted'
               ? `<button type="button" onclick="revertQboPostedClient('fuel', ${idJs})">Revert in QuickBooks</button>`
               : `<button type="button" class="qb-btn-primary" onclick="postFuelExpense(${idJs})">Post</button>`;
-          const draft = (window.__fuelExpenseDraft && window.__fuelExpenseDraft[rid]) || {};
+          const erpDraft =
+            r.fuelExpenseDraft && typeof r.fuelExpenseDraft === 'object' ? r.fuelExpenseDraft : {};
+          const winDraft = (window.__fuelExpenseDraft && window.__fuelExpenseDraft[rid]) || {};
+          const draft = { ...erpDraft, ...winDraft };
           const autoCls = qboClassIdForFuelUnitName(r.unit);
           const postedClsDisp = String(r.fuelPostedClassId || '').trim() || autoCls || '';
           const clsVal = draft.qboClassId != null && draft.qboClassId !== '' ? draft.qboClassId : autoCls || '';
@@ -8274,6 +8325,14 @@
       return String(rec.qboSyncStatus || '').toLowerCase() === 'posted' && id && String(rec.qboEntityType || '').trim();
     }
 
+    function qboPostedRowFuel(fp) {
+      return (
+        String(fp.qboSyncStatus || '').toLowerCase() === 'posted' &&
+        String(fp.qboEntityId || '').trim() &&
+        String(fp.qboEntityType || '').trim()
+      );
+    }
+
     function renderUnitHistory() {
       const records = (erp.records || [])
         .filter(r => r.unit === selectedUnit)
@@ -8365,7 +8424,7 @@
       try {
         await j('/api/qbo/revert-posted', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
           body: JSON.stringify({ kind, id })
         });
         await loadAll();
@@ -8387,7 +8446,7 @@
       try {
         const out = await j('/api/qbo/revert-posted-batch', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
           body: JSON.stringify({ items })
         });
         const bad = (out.results || []).filter(x => !x.ok);
@@ -8482,6 +8541,15 @@
           });
         }
       });
+      (erp.fuelPurchases || []).forEach(fp => {
+        if (qboPostedRowFuel(fp)) {
+          posted.push({
+            kind: 'fuel',
+            id: fp.id,
+            label: `Fuel · ${fp.unit || ''} · ${String(fp.txnDate || '').slice(0, 10)} · ${fp.qboEntityType} ${fp.qboEntityId}`
+          });
+        }
+      });
 
       if (!posted.length) {
         postedEl.innerHTML =
@@ -8503,7 +8571,7 @@
             : '';
         postedEl.innerHTML =
           `<div style="margin-bottom:8px"><strong>Posted to QuickBooks — bulk revert</strong></div>
-          <p class="mini-note" style="margin:0 0 8px">Requires admin login or ERP write secret (same as posting).</p>
+          <p class="mini-note" style="margin:0 0 8px">Includes fuel expense posts. Requires admin login or ERP write secret (same as posting).</p>
           <div style="max-height:240px;overflow:auto;border:1px solid #edf1f7;border-radius:10px;padding:8px;background:#fafcff">${rows}</div>
           ${more}
           <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="revertQboPostedBatchClient()">Revert selected in QuickBooks</button>`;
@@ -8812,7 +8880,39 @@
       await loadAll();
     }
 
+    function maintCloseSplitMenus() {
+      document.querySelectorAll('.maint-save-toolbar--qb .qb-split__menu').forEach(m => {
+        m.hidden = true;
+      });
+      document.querySelectorAll('.maint-save-toolbar--qb .qb-split__caret').forEach(c => {
+        c.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    function maintToggleSplitMenu(ev, caretBtn) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const wrap = caretBtn.closest('.qb-split');
+      const menu = wrap && wrap.querySelector('.qb-split__menu');
+      if (!menu) return;
+      const wasOpen = !menu.hidden;
+      maintCloseSplitMenus();
+      if (!wasOpen) {
+        menu.hidden = false;
+        caretBtn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    if (!window.__maintSaveSplitMenuOutsideBound) {
+      window.__maintSaveSplitMenuOutsideBound = true;
+      document.addEventListener('mousedown', e => {
+        if (e.target.closest && e.target.closest('.maint-save-toolbar--qb .qb-split')) return;
+        maintCloseSplitMenus();
+      });
+    }
+
     async function saveRecordWithAction(actionOverride) {
+      maintCloseSplitMenus();
       if (!selectedUnit) {
         alert('Select an asset first.');
         return;

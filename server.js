@@ -407,6 +407,29 @@ function sanitizeFuelPurchase(raw) {
   return out;
 }
 
+/** Accounting → fuel expense tab: persisted QBO line draft per fuel purchase row. */
+function sanitizeFuelExpenseDraft(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  const str = (k, max) => String(raw[k] ?? '').trim().slice(0, max);
+  const digits = (k, max) => str(k, max).replace(/[^\d]/g, '').slice(0, max);
+  const out = {
+    qboClassId: digits('qboClassId', 24),
+    vendorSearch: str('vendorSearch', 120),
+    vendorId: digits('vendorId', 24),
+    itemSearch: str('itemSearch', 120),
+    itemId: digits('itemId', 24),
+    qty: str('qty', 32),
+    unit: str('unit', 32),
+    line: str('line', 32),
+    driver: str('driver', 120),
+    driverVendSearch: str('driverVendSearch', 120),
+    driverVendId: digits('driverVendId', 24),
+    custSearch: str('custSearch', 120),
+    custId: digits('custId', 24)
+  };
+  return Object.values(out).some(v => v !== '') ? out : {};
+}
+
 function parseRelayExpenseNoFromNote(note) {
   const s = String(note || '').trim();
   if (!s) return '';
@@ -4340,6 +4363,37 @@ app.post('/api/fuel/purchases', (req, res) => {
   }
 });
 
+app.post('/api/fuel/purchases/:id/expense-draft', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'id is required' });
+    const erp = readErp();
+    const idx = (erp.fuelPurchases || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ ok: false, error: 'Fuel purchase not found' });
+    const fp = erp.fuelPurchases[idx];
+    if (String(fp.qboSyncStatus || '').toLowerCase() === 'posted') {
+      return res.status(400).json({ ok: false, error: 'Posted fuel rows cannot store an expense draft' });
+    }
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const draft = sanitizeFuelExpenseDraft(body);
+    const next = { ...fp };
+    if (!Object.keys(draft).length) {
+      delete next.fuelExpenseDraft;
+      delete next.fuelExpenseDraftUpdatedAt;
+    } else {
+      next.fuelExpenseDraft = draft;
+      next.fuelExpenseDraftUpdatedAt = new Date().toISOString();
+    }
+    erp.fuelPurchases[idx] = next;
+    writeErp(erp);
+    res.json({ ok: true, purchase: erp.fuelPurchases[idx] });
+  } catch (error) {
+    logError('api/fuel/purchases/:id/expense-draft', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.get('/api/maintenance/service-types', async (_req, res) => {
   try {
     if (!getPool()) {
@@ -5832,6 +5886,8 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       fuelPostedDriverMemo: driverMemo || null,
       fuelPostedCustomerId: qboCustomerId || null
     };
+    delete erp.fuelPurchases[idx].fuelExpenseDraft;
+    delete erp.fuelPurchases[idx].fuelExpenseDraftUpdatedAt;
     writeErp(erp);
     res.json({ ok: true, fuelPurchase: erp.fuelPurchases[idx] });
   } catch (error) {
