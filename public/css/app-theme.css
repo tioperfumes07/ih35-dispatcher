@@ -1941,10 +1941,6 @@ body.erp-maintenance #maintenanceSplit.unit-list-collapsed .unit-list-scroll {
   display: none !important;
 }
 
-body.erp-maintenance #maintenanceSplit.unit-list-collapsed .unit-list-panel .search-row {
-  display: none !important;
-}
-
 body.erp-maintenance #maintenanceSplit.unit-list-collapsed .unit-list-panel .panel-head {
   flex-direction: column;
   align-items: center;
@@ -2043,6 +2039,29 @@ body.erp-maintenance .maint-main-tab-panel.active {
 
 body.erp-maintenance .maint-main-subtabs {
   margin-bottom: 2px;
+}
+
+body.erp-maintenance .maint-top-toolbar {
+  margin-bottom: 10px;
+}
+body.erp-maintenance .maint-top-toolbar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: flex-end;
+  padding: 12px 16px;
+}
+body.erp-maintenance .maint-top-toolbar__field .qb-l {
+  display: block;
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+body.erp-maintenance .maint-top-toolbar__grow {
+  flex: 1;
+  min-width: min(100%, 240px);
+}
+body.erp-maintenance .maint-workorder-category-strip {
+  margin-bottom: 0;
 }
 
 body.erp-maintenance .maint-wo-banner {

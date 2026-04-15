@@ -362,6 +362,32 @@
       </section>
 
       <section id="section-maintenance" class="section active">
+        <div class="maint-top-toolbar maint-section-card">
+          <div class="maint-top-toolbar__inner">
+            <div class="maint-top-toolbar__field maint-top-toolbar__grow">
+              <span class="qb-l">Find unit</span>
+              <input
+                id="maintenanceUnitSearch"
+                class="qb-in"
+                list="unitOptions"
+                placeholder="Type vehicle / unit"
+                oninput="renderMaintenanceUnitList()"
+                autocomplete="off"
+              />
+            </div>
+            <div class="maint-top-toolbar__field maint-top-toolbar__grow">
+              <span class="qb-l">Filter maintenance table by service</span>
+              <input
+                id="maintenanceServiceFilter"
+                class="qb-in"
+                list="serviceOptions"
+                placeholder="Type service (filters Fleet table)"
+                oninput="renderMaintenanceTable()"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </div>
         <div class="subtabs maint-main-subtabs" id="maintMainSubtabs">
           <button type="button" class="subtab active" data-maint-main="overview" onclick="openMaintMainTab('overview', this)">Overview</button>
           <button type="button" class="subtab" data-maint-main="record" onclick="openMaintMainTab('record', this)">Work order</button>
@@ -555,17 +581,16 @@
 
         <div class="panel maint-section-card">
           <div class="panel-head maint-panel-head-center">
-            <div class="panel-title">Maintenance Board</div>
+            <div class="panel-title">Maintenance reports</div>
+            <div class="mini-note" style="margin-top:6px;max-width:52ch">
+              Exports and rollups. Choose truck / van / flatbed category under <strong>Work order</strong> when logging service.
+            </div>
           </div>
           <div class="panel-body">
-            <div class="chips" id="assetCategoryChips"></div>
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #edf1f7">
-              <div class="panel-title" style="font-size:14px;margin-bottom:8px">Maintenance Reports</div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px">
-                <button type="button" onclick="downloadUnitMaintenanceReport()">Report by unit</button>
-                <button type="button" onclick="downloadUnitExpenseReport()">Expense by unit</button>
-                <button type="button" onclick="downloadAllMaintenanceCsv()">All maintenance CSV</button>
-              </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <button type="button" onclick="downloadUnitMaintenanceReport()">Report by unit</button>
+              <button type="button" onclick="downloadUnitExpenseReport()">Expense by unit</button>
+              <button type="button" onclick="downloadAllMaintenanceCsv()">All maintenance CSV</button>
             </div>
           </div>
         </div>
@@ -603,6 +628,12 @@
         </div>
 
         <div id="maintMainTabRecord" class="maint-main-tab-panel">
+        <div class="maint-workorder-category-strip maint-section-card">
+          <div class="panel-body" style="padding:12px 14px">
+            <span class="qb-l" style="display:block;margin-bottom:8px">Unit category (fleet type)</span>
+            <div class="chips" id="assetCategoryChips"></div>
+          </div>
+        </div>
         <div class="split" id="maintenanceSplit" style="margin-top:12px;">
           <div class="panel unit-list-panel">
             <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -610,10 +641,6 @@
               <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse truck list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
             </div>
             <div class="panel-body">
-              <div class="search-row unit-list-scroll" style="margin-bottom:10px;">
-                <input id="maintenanceUnitSearch" list="unitOptions" placeholder="Type vehicle / unit" oninput="renderMaintenanceUnitList()">
-                <input id="maintenanceServiceFilter" list="serviceOptions" placeholder="Type service filter" oninput="renderMaintenanceTable()">
-              </div>
               <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
             </div>
           </div>
@@ -5656,11 +5683,18 @@
     // Dispatch board removed (maintenance/safety/diesel focus).
 
     function renderMaintenanceCategoryChips() {
-      const cats = ['Trucks','Refrigerated Vans','Flatbeds','Dry Vans','Company Vehicles'];
-      document.getElementById('assetCategoryChips').innerHTML = cats.map(c => `
-        <button class="chip ${activeAssetCategory === c ? 'active' : ''}" onclick="setAssetCategory('${c}')">${escapeHtml(c)}</button>
-      `).join('');
-      document.getElementById('assetCategoryTitle').textContent = activeAssetCategory;
+      const host = document.getElementById('assetCategoryChips');
+      const title = document.getElementById('assetCategoryTitle');
+      if (!host) return;
+      const cats = ['Trucks', 'Refrigerated Vans', 'Flatbeds', 'Dry Vans', 'Company Vehicles'];
+      host.innerHTML = cats
+        .map(
+          c => `
+        <button type="button" class="chip ${activeAssetCategory === c ? 'active' : ''}" onclick="setAssetCategory('${c.replace(/'/g, "\\'")}')">${escapeHtml(c)}</button>
+      `
+        )
+        .join('');
+      if (title) title.textContent = activeAssetCategory;
     }
 
     function setAssetCategory(cat) {
