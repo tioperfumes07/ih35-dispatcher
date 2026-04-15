@@ -1457,12 +1457,21 @@
                   <span class="qb-l">&nbsp;</span>
                   <button type="button" class="qb-btn-add" onclick="loadAccountingOpenBills()">Load from QuickBooks</button>
                 </div>
+                <div style="min-width:140px">
+                  <span class="qb-l">Bill Id only</span>
+                  <input id="bpBillIdQuick" class="qb-in" placeholder="QBO bill id" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();bpLoadOpenBillByQuickId();}" />
+                </div>
+                <div>
+                  <span class="qb-l">&nbsp;</span>
+                  <button type="button" class="qb-btn-add" onclick="bpLoadOpenBillByQuickId()">Load bill by Id</button>
+                </div>
               </div>
             </div>
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 10px">
                 Pay open <strong>Bills</strong> in QuickBooks (vendors and driver payees set up as vendors). This creates a <strong>Bill Payment</strong> from the bank or card account you pick — the same transaction bank matching recognizes.
                 <strong>Load from QuickBooks</strong> runs a live query for bills with balance due (not a cached list). Use the search box to narrow by vendor, document number, or id after loading.
+                Use <strong>Bill Id only</strong> + <strong>Load bill by Id</strong> to fetch one open bill directly by its QuickBooks id (no vendor filter).
                 Post unpaid work as a <strong>Bill</strong> on <strong>Maintenance Expense Transactions</strong> first; one-off card expenses use <strong>Purchase</strong> and are paid differently in QBO.
               </p>
               <div class="wo-line-grid" style="margin-bottom:10px">
@@ -1503,7 +1512,7 @@
               <div class="search-row" style="align-items:end;max-width:820px">
                 <div style="flex:1;min-width:240px">
                   <span class="qb-l">Search open bills</span>
-                  <input id="bpOpenBillsSearch" class="qb-in" placeholder="Vendor, doc #, date, amount…" oninput="bpApplyOpenBillsFilter()" />
+                  <input id="bpOpenBillsSearch" class="qb-in" placeholder="Vendor, doc #, QBO bill id, date…" oninput="bpApplyOpenBillsFilter()" />
                 </div>
                 <div style="min-width:180px">
                   <span class="qb-l">Min open $</span>
@@ -1513,12 +1522,13 @@
               <div id="bpOpenBillsStatus" class="mini-note" style="margin-bottom:8px">Load after QuickBooks is connected (sidebar refresh).</div>
               <div id="bpSelectionTotal" class="mini-note" style="margin-bottom:6px;font-weight:600">Draft payment total: $0.00</div>
               <div class="table-wrap st-settlement-wrap" style="min-width:0">
-                <table class="st-settlement" style="min-width:1040px">
+                <table class="st-settlement" style="min-width:1120px">
                   <thead>
                     <tr>
                       <th>Pay</th>
                       <th>Vendor</th>
                       <th>Doc #</th>
+                      <th class="mini-note">QBO Bill Id</th>
                       <th>Txn date</th>
                       <th>Due</th>
                       <th class="num">Open balance</th>
@@ -1528,7 +1538,7 @@
                     </tr>
                   </thead>
                   <tbody id="bpOpenBillsBody">
-                    <tr><td colspan="9" class="mini-note">Load open bills to see rows.</td></tr>
+                    <tr><td colspan="10" class="mini-note">Load open bills to see rows.</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3752,9 +3762,26 @@
         return;
       }
       if (section === 'accounting-fuel') {
+        const rawHash = (location.hash || '').replace(/^#/, '');
+        const qIdx = rawHash.indexOf('?');
+        if (qIdx >= 0) {
+          try {
+            const params = new URLSearchParams(rawHash.slice(qIdx + 1));
+            const pu = String(params.get('unit') || '').trim();
+            if (pu) window.__pendingFuelManualUnit = pu.slice(0, 80);
+          } catch (_) {
+            /* ignore malformed hash query */
+          }
+        }
         openSectionByName('accounting');
         const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-fuel-expense"]');
         openAccountingTab('acct-fuel-expense', sub);
+        return;
+      }
+      if (section === 'accounting-bill-pay') {
+        openSectionByName('accounting');
+        const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-bill-pay"]');
+        openAccountingTab('acct-bill-pay', sub);
         return;
       }
       if (section === 'uploads') {
@@ -5600,6 +5627,93 @@
       el.textContent = `Draft payment total: $${(Math.round(t * 100) / 100).toFixed(2)}`;
     }
 
+    function bpHtmlForOpenBillRows(bills) {
+      if (!Array.isArray(bills) || !bills.length) {
+        return '<tr><td colspan="10" class="mini-note">No rows.</td></tr>';
+      }
+      return bills
+        .map(b => {
+          const bid = escapeHtml(String(b.id || ''));
+          const vid = escapeHtml(String(b.vendorId || ''));
+          const vname = escapeHtml(String(b.vendorName || ''));
+          const bal = Number(b.balance) || 0;
+          const balFixed = (Math.round(bal * 100) / 100).toFixed(2);
+          return `<tr data-bill-id="${bid}" data-vendor-id="${vid}" data-open-balance="${bal}" data-balance="${bal}">
+              <td><input type="checkbox" class="bp-pay-chk" onchange="bpRowTogglePay(this)" /></td>
+              <td>${vname}</td>
+              <td>${escapeHtml(String(b.docNumber || ''))}</td>
+              <td class="mini-note">${bid}</td>
+              <td>${escapeHtml(String(b.txnDate || ''))}</td>
+              <td>${escapeHtml(String(b.dueDate || ''))}</td>
+              <td class="num">${balFixed}</td>
+              <td class="num" style="white-space:nowrap">
+                <input type="number" class="qb-in bp-pay-amt" style="max-width:100px" step="0.01" min="0" disabled placeholder="0" oninput="bpOnPayAmtInput(this)" onblur="bpOnPayAmtBlur(this)" />
+                <button type="button" class="qb-btn-add" style="margin-left:4px;padding:2px 6px;font-size:10px" title="Pay full open balance" onclick="bpFillMax(this)">Max</button>
+              </td>
+              <td class="num bp-remain-cell">—</td>
+              <td class="bp-pay-status mini-note">—</td>
+            </tr>`;
+        })
+        .join('');
+    }
+
+    function bpMountOpenBillsInTable(bills) {
+      const body = document.getElementById('bpOpenBillsBody');
+      if (!body) return;
+      body.innerHTML = bpHtmlForOpenBillRows(bills);
+      bpRefreshSelectionTotal();
+    }
+
+    async function bpLoadOpenBillByQuickId() {
+      const raw = String(document.getElementById('bpBillIdQuick')?.value || '').trim();
+      const billId = raw.replace(/\D/g, '');
+      const statusEl = document.getElementById('bpOpenBillsStatus');
+      const body = document.getElementById('bpOpenBillsBody');
+      if (!billId) {
+        alert('Enter a numeric QuickBooks bill id (digits only).');
+        return;
+      }
+      if (statusEl) statusEl.textContent = 'Loading bill from QuickBooks…';
+      try {
+        const data = await j('/api/qbo/open-bills?billId=' + encodeURIComponent(billId));
+        const bills = data.bills || [];
+        window.__bpOpenBills = bills;
+        const s = document.getElementById('bpOpenBillsSearch');
+        const m = document.getElementById('bpOpenBillsMin');
+        const live = document.getElementById('bpQbLiveSearch');
+        if (s) s.value = '';
+        if (m) m.value = '';
+        if (live) live.value = '';
+        const notice = String(data.notice || '').trim();
+        let msg = '';
+        if (bills.length === 1) {
+          const b = bills[0];
+          const vname = String(b.vendorName || '').trim();
+          const vid = String(b.vendorId || '').trim();
+          const vIn = document.getElementById('bpVendorSearch');
+          const vHid = document.getElementById('bpVendorQboId');
+          if (vIn) vIn.value = vname;
+          if (vHid) vHid.value = vid;
+          msg = `Loaded bill ${billId} (${vname || 'vendor'}). Open balance $${(Number(b.balance) || 0).toFixed(2)}.`;
+        } else if (!bills.length) {
+          msg = notice || `No open bill returned for id ${billId}.`;
+        } else {
+          msg = `Loaded ${bills.length} bill row(s).`;
+        }
+        if (statusEl) statusEl.textContent = msg;
+        bpMountOpenBillsInTable(bills);
+        if (bills.length === 1 && body) {
+          const tr = body.querySelector('tr[data-bill-id]');
+          const maxBtn = tr && tr.querySelector('button[title="Pay full open balance"]');
+          if (maxBtn) bpFillMax(maxBtn);
+        }
+      } catch (e) {
+        if (statusEl) statusEl.textContent = e.message || String(e);
+        if (body) body.innerHTML = '<tr><td colspan="10" class="mini-note">Load failed.</td></tr>';
+        bpRefreshSelectionTotal();
+      }
+    }
+
     async function loadAccountingOpenBills() {
       const statusEl = document.getElementById('bpOpenBillsStatus');
       const body = document.getElementById('bpOpenBillsBody');
@@ -5629,38 +5743,10 @@
             : 'No open bills for this filter.';
         }
         if (!body) return;
-        if (!bills.length) {
-          body.innerHTML = '<tr><td colspan="9" class="mini-note">No rows.</td></tr>';
-          bpRefreshSelectionTotal();
-          return;
-        }
-        body.innerHTML = bills
-          .map(b => {
-            const bid = escapeHtml(String(b.id || ''));
-            const vid = escapeHtml(String(b.vendorId || ''));
-            const vname = escapeHtml(String(b.vendorName || ''));
-            const bal = Number(b.balance) || 0;
-            const balFixed = (Math.round(bal * 100) / 100).toFixed(2);
-            return `<tr data-bill-id="${bid}" data-vendor-id="${vid}" data-open-balance="${bal}" data-balance="${bal}">
-              <td><input type="checkbox" class="bp-pay-chk" onchange="bpRowTogglePay(this)" /></td>
-              <td>${vname}</td>
-              <td>${escapeHtml(String(b.docNumber || ''))}</td>
-              <td>${escapeHtml(String(b.txnDate || ''))}</td>
-              <td>${escapeHtml(String(b.dueDate || ''))}</td>
-              <td class="num">${balFixed}</td>
-              <td class="num" style="white-space:nowrap">
-                <input type="number" class="qb-in bp-pay-amt" style="max-width:100px" step="0.01" min="0" disabled placeholder="0" oninput="bpOnPayAmtInput(this)" onblur="bpOnPayAmtBlur(this)" />
-                <button type="button" class="qb-btn-add" style="margin-left:4px;padding:2px 6px;font-size:10px" title="Pay full open balance" onclick="bpFillMax(this)">Max</button>
-              </td>
-              <td class="num bp-remain-cell">—</td>
-              <td class="bp-pay-status mini-note">—</td>
-            </tr>`;
-          })
-          .join('');
-        bpRefreshSelectionTotal();
+        bpMountOpenBillsInTable(bills);
       } catch (e) {
         if (statusEl) statusEl.textContent = e.message || String(e);
-        if (body) body.innerHTML = '<tr><td colspan="9" class="mini-note">Load failed.</td></tr>';
+        if (body) body.innerHTML = '<tr><td colspan="10" class="mini-note">Load failed.</td></tr>';
         bpRefreshSelectionTotal();
       }
     }
@@ -5673,11 +5759,12 @@
       let shown = 0;
       for (const tr of rows) {
         const open = Number(tr.dataset.openBalance || 0) || 0;
+        const qboBillId = String(tr.getAttribute('data-bill-id') || '');
         const vendor = String(tr.children?.[1]?.textContent || '');
         const doc = String(tr.children?.[2]?.textContent || '');
-        const txn = String(tr.children?.[3]?.textContent || '');
-        const due = String(tr.children?.[4]?.textContent || '');
-        const hay = `${vendor} ${doc} ${txn} ${due} ${open}`.toLowerCase();
+        const txn = String(tr.children?.[4]?.textContent || '');
+        const due = String(tr.children?.[5]?.textContent || '');
+        const hay = `${vendor} ${doc} ${qboBillId} ${txn} ${due} ${open}`.toLowerCase();
         const okQ = !q || hay.includes(q);
         const okMin = min == null || (Number.isFinite(min) && open >= min);
         const ok = okQ && okMin;
@@ -5901,6 +5988,25 @@
       fuelExpenseSaveDraft(tr);
     }
 
+    /** When truck/unit matches a QBO class name, select it (no need to open the class dropdown). */
+    function syncFuelManualClassFromUnit() {
+      const sel = document.getElementById('fuelManualClassSel');
+      const uEl = document.getElementById('fuelManualUnit');
+      if (!sel || !uEl) return;
+      const unit = String(uEl.value || '').trim();
+      if (!unit) {
+        sel.value = '';
+        return;
+      }
+      const cid = qboClassIdForFuelUnitName(unit);
+      if (!cid) {
+        sel.value = '';
+        return;
+      }
+      const has = [...sel.options].some(o => String(o.value) === cid);
+      sel.value = has ? cid : '';
+    }
+
     function fuelExpensePopulateManualClassSelect() {
       const sel = document.getElementById('fuelManualClassSel');
       if (!sel) return;
@@ -5911,7 +6017,9 @@
         opts.push(`<option value="${escapeHtml(id)}">${escapeHtml(String(c.name || id))}</option>`);
       }
       sel.innerHTML = opts.join('');
-      if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+      const u = String(document.getElementById('fuelManualUnit')?.value || '').trim();
+      if (u) syncFuelManualClassFromUnit();
+      else if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
     }
 
     function fuelManualDocNumberForLine(baseRaw, lineIndex, totalLines) {
@@ -6074,6 +6182,7 @@
         addFuelManualLine();
       }
       fuelManualUpdateHeaderTotal();
+      syncFuelManualClassFromUnit();
     }
 
     let __fuelManualFormBound = false;
@@ -6104,10 +6213,16 @@
       }
       if (__fuelManualFormBound) return;
       __fuelManualFormBound = true;
+      const uEl = document.getElementById('fuelManualUnit');
+      if (uEl && !uEl.dataset.fuelClassSync) {
+        uEl.dataset.fuelClassSync = '1';
+        ['input', 'change', 'blur'].forEach(ev => uEl.addEventListener(ev, () => syncFuelManualClassFromUnit()));
+      }
       const d = document.getElementById('fuelManualDate');
       if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
       if (host && !host.querySelector('.fuel-manual-line-row')) addFuelManualLine();
       else fuelManualUpdateHeaderTotal();
+      syncFuelManualClassFromUnit();
     }
 
     async function saveManualFuelPurchase() {
@@ -6250,6 +6365,13 @@
         renderFuelExpenseRows();
         initFuelExpenseTableDelegation();
         bindFuelManualFormOnce();
+        const pend = window.__pendingFuelManualUnit;
+        if (pend) {
+          const uEl = document.getElementById('fuelManualUnit');
+          if (uEl) uEl.value = String(pend).trim().slice(0, 80);
+          delete window.__pendingFuelManualUnit;
+          syncFuelManualClassFromUnit();
+        }
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
         if (tb) tb.innerHTML = '<tr><td colspan="18" class="mini-note">Failed to load.</td></tr>';

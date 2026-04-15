@@ -1627,6 +1627,28 @@ async function qboFetchOpenBillsFromQbo(vendorQboId, opts = {}) {
   return list.sort((a, b) => String(a.dueDate || a.txnDate).localeCompare(String(b.dueDate || b.txnDate)));
 }
 
+/** Direct read of one Bill by QBO Id; returns normalized row only if Balance is greater than zero. */
+async function qboFetchOpenBillByIdFromQbo(billIdRaw) {
+  const id = String(billIdRaw || '').replace(/\D/g, '');
+  if (!id) {
+    return { bills: [], error: 'Enter a numeric QuickBooks bill id.' };
+  }
+  const data = await qboGet(`bill/${encodeURIComponent(id)}`);
+  const bill = data?.Bill;
+  if (!bill?.Id) {
+    return { bills: [], error: `Bill ${id} was not found in QuickBooks.` };
+  }
+  const normalized = normalizeQboBill(bill);
+  const bal = qboMoneyRound(normalized.balance);
+  if (!(bal > 0)) {
+    return {
+      bills: [],
+      notice: `Bill ${id} was found but has no open balance (already paid or zero due).`
+    };
+  }
+  return { bills: [normalized] };
+}
+
 /**
  * Create a QBO BillPayment (pay vendor bills from a bank or credit-card account).
  * body: vendorQboId, bankAccountQboId, payType ('Check' | 'CreditCard'), txnDate?, privateNote?, checkNum?, lines: [{ billId, amount }]
@@ -5868,6 +5890,20 @@ app.get('/api/qbo/open-bills', async (req, res) => {
     const store = readQbo();
     if (!store.tokens?.access_token) {
       return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    const billIdQuery = String(req.query.billId || '').replace(/\D/g, '');
+    if (billIdQuery) {
+      const single = await qboFetchOpenBillByIdFromQbo(billIdQuery);
+      if (single.error) {
+        return res.status(400).json({ ok: false, error: single.error });
+      }
+      return res.json({
+        ok: true,
+        bills: single.bills,
+        notice: single.notice || '',
+        live: true,
+        billId: billIdQuery
+      });
     }
     const vendorId = String(req.query.vendorId || '').trim();
     const search = String(req.query.search || req.query.q || '').trim();
