@@ -2301,7 +2301,10 @@ async function qboCreateApTransaction(ap) {
 
   if (!ap.qboVendorId) throw new Error('QuickBooks vendor is required');
 
-  const classId = qboClassIdForUnit(ap.assetUnit, erp);
+  const classId =
+    String(ap.qboClassId || '')
+      .trim()
+      .replace(/[^\d]/g, '') || qboClassIdForUnit(ap.assetUnit, erp);
   const rawCostLines = Array.isArray(ap.costLines) ? ap.costLines : [];
   const costLines = rawCostLines.filter(cl => cl && typeof cl === 'object');
 
@@ -2391,6 +2394,8 @@ async function qboCreateApTransaction(ap) {
       AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
     };
     if (classId) acctDetail.ClassRef = { value: classId };
+    const custA = String(ap.qboCustomerId || '').trim().replace(/[^\d]/g, '');
+    if (custA) acctDetail.CustomerRef = { value: custA };
     line = {
       Amount: amount,
       DetailType: 'AccountBasedExpenseLineDetail',
@@ -2409,6 +2414,8 @@ async function qboCreateApTransaction(ap) {
       UnitPrice: amount / qty
     };
     if (classId) itemDetail.ClassRef = { value: classId };
+    const cust = String(ap.qboCustomerId || '').trim().replace(/[^\d]/g, '');
+    if (cust) itemDetail.CustomerRef = { value: cust };
     line = {
       Amount: amount,
       DetailType: 'ItemBasedExpenseLineDetail',
@@ -5648,6 +5655,12 @@ function bestFuelExpenseAccountId(erp) {
   );
 }
 
+function bestFuelItemId(erp) {
+  const items = erp?.qboCache?.items || [];
+  const hit = items.find(i => /diesel|fuel|def|reefer/i.test(String(i.name || '')));
+  return hit?.qboId ? String(hit.qboId) : '';
+}
+
 app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
   try {
     if (!requireErpWriteOrAdmin(req, res)) return;
@@ -5662,21 +5675,58 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     if (idx === -1) return res.status(404).json({ error: 'Fuel purchase not found' });
     const fp = erp.fuelPurchases[idx];
 
-    const amount = safeNum(fp.totalCost, 0) || 0;
-    if (!(amount > 0)) return res.status(400).json({ error: 'Fuel totalCost must be greater than zero' });
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const detailMode = String(body.detailMode || 'item').toLowerCase() === 'category' ? 'category' : 'item';
+
+    let amount = safeNum(fp.totalCost, 0) || 0;
+    if (body.amount != null && String(body.amount).trim() !== '') {
+      const a = safeNum(body.amount, 0);
+      if (a > 0) amount = Math.round(a * 100) / 100;
+    }
+    if (!(amount > 0)) return res.status(400).json({ error: 'Fuel amount must be greater than zero' });
+
+    let qty =
+      fp.gallons != null && Number.isFinite(Number(fp.gallons)) && Number(fp.gallons) > 0 ? Number(fp.gallons) : 1;
+    if (body.qty != null && String(body.qty).trim() !== '') {
+      const q = safeNum(body.qty, 0);
+      if (q > 0) qty = Math.round(q * 100000) / 100000;
+    }
 
     const vendorId =
-      String(req.body?.qboVendorId || '').trim() ||
+      String(body.qboVendorId || '')
+        .trim()
+        .replace(/[^\d]/g, '') ||
       bestQboVendorIdByName(erp, fp.vendor || '');
     if (!vendorId) {
       return res.status(400).json({
-        error: 'Match fuel vendor to a QuickBooks vendor (refresh QBO master or override vendor).'
+        error: 'Match fuel vendor to a QuickBooks vendor (refresh QBO master or pick vendor on the row).'
       });
     }
 
-    const qboBankAccountId = String(req.body?.qboBankAccountId || '').trim();
-    const qboAccountId = String(req.body?.qboAccountId || '').trim() || bestFuelExpenseAccountId(erp);
+    const qboBankAccountId = String(body.qboBankAccountId || '').trim();
+    const qboAccountId = String(body.qboAccountId || '').trim() || bestFuelExpenseAccountId(erp);
     if (!qboAccountId) return res.status(400).json({ error: 'No expense account in QBO cache — refresh QuickBooks master' });
+
+    const qboClassId = String(body.qboClassId || '')
+      .trim()
+      .replace(/[^\d]/g, '');
+    const qboItemId =
+      String(body.qboItemId || '')
+        .trim()
+        .replace(/[^\d]/g, '') || (detailMode === 'item' ? bestFuelItemId(erp) : '');
+    if (detailMode === 'item' && !qboItemId) {
+      return res.status(400).json({
+        error: 'Choose a QuickBooks item for the fuel line (item + qty + price), or switch to category mode.'
+      });
+    }
+
+    const qboCustomerId = String(body.qboCustomerId || '')
+      .trim()
+      .replace(/[^\d]/g, '');
+    const driverVendorId = String(body.driverVendorQboId || '')
+      .trim()
+      .replace(/[^\d]/g, '');
+    const driverMemo = String(body.driverMemo || '').trim().slice(0, 120);
 
     const unit = String(fp.unit || '').trim();
     const txnDate = sliceIsoDate(fp.txnDate || '') || new Date().toISOString().slice(0, 10);
@@ -5688,27 +5738,41 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       unit ? `Unit ${unit}` : '',
       gallons != null && Number.isFinite(gallons) ? `${gallons} gal` : '',
       product ? product : '',
-      loc ? loc : ''
+      loc ? loc : '',
+      driverMemo ? `Driver: ${driverMemo}` : '',
+      driverVendorId ? `Driver vendor QBO ${driverVendorId}` : ''
     ].filter(Boolean);
     const memo = memoParts.join(' · ');
 
     const ap = {
       txnType: 'expense',
-      detailMode: 'category',
+      detailMode,
       qboVendorId: vendorId,
       paymentMethodId: 'pm_other',
       qboBankAccountId,
       qboAccountId,
-      qboItemId: '',
-      qty: 1,
+      qboItemId,
+      qty: detailMode === 'item' ? qty : 1,
       amount,
       txnDate,
       dueDate: '',
       docNumber: fp.relayExpenseNo || '',
       description: 'Fuel',
       memo,
-      assetUnit: unit
+      assetUnit: unit,
+      qboClassId,
+      qboCustomerId: qboCustomerId || undefined
     };
+
+    if (detailMode === 'item') {
+      const unitPrice = qty > 0 ? amount / qty : amount;
+      if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+        return res.status(400).json({ error: 'Invalid quantity or amount for item line' });
+      }
+      if (Math.abs(qty * unitPrice - amount) > 0.06) {
+        return res.status(400).json({ error: 'Line total must equal quantity × unit price (within $0.06).' });
+      }
+    }
 
     const result = await qboCreateApTransaction(ap);
     erp.fuelPurchases[idx] = {
@@ -5717,7 +5781,15 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       qboEntityType: result.qboEntityType,
       qboEntityId: result.qboEntityId,
       qboPostedAt: new Date().toISOString(),
-      qboError: ''
+      qboError: '',
+      fuelPostedQty: detailMode === 'item' ? qty : null,
+      fuelPostedAmount: amount,
+      fuelPostedClassId: qboClassId || null,
+      fuelPostedItemId: qboItemId || null,
+      fuelPostedVendorId: vendorId,
+      fuelPostedDriverVendorId: driverVendorId || null,
+      fuelPostedDriverMemo: driverMemo || null,
+      fuelPostedCustomerId: qboCustomerId || null
     };
     writeErp(erp);
     res.json({ ok: true, fuelPurchase: erp.fuelPurchases[idx] });
