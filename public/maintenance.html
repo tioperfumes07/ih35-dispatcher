@@ -1022,6 +1022,7 @@
                       <option value="save_post">Save &amp; post to QuickBooks</option>
                     </select>
                     <span class="mini-note maint-save-toolbar__hint" id="maintSaveHint"></span>
+                    <span class="mini-note" id="maintEditRecordHint" style="flex:1;min-width:10rem;color:#64748b"></span>
                     <div class="maint-save-toolbar__actions">
                       <div class="qb-split qb-split--primary">
                         <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Save and record</button>
@@ -1127,7 +1128,10 @@
             </div>
 
             <div class="panel maint-section-card">
-              <div class="panel-head"><div class="panel-title">Unit History</div></div>
+              <div class="panel-head">
+                <div class="panel-title">Unit History</div>
+                <button type="button" class="qb-btn-add" onclick="clearMaintenanceFormNewEntry()">New work order</button>
+              </div>
               <div class="panel-body">
                 <div id="unitHistory" class="card-list">No records yet.</div>
               </div>
@@ -2504,6 +2508,8 @@
     let pendingShopPatch = null;
     let defaultNavBootstrapped = false;
     let serviceMileageUserTouched = false;
+    /** When set, Save updates this ERP maintenance record via PATCH instead of POST. */
+    let __editingMaintRecordId = null;
     const AUTO_REFRESH_MS = 60000;
     let maintCostLinesDelegationBound = false;
     let maintPartMapDelegationBound = false;
@@ -7276,7 +7282,8 @@
         }).join('') || '<div class="list-row">No assets found.</div>';
     }
 
-    function selectUnit(unit) {
+    function selectUnit(unit, opts = {}) {
+      if (!opts.preserveEditMode) clearMaintenanceEditMode();
       selectedUnit = unit;
       serviceMileageUserTouched = false;
       renderMaintenanceUnitList();
@@ -9121,6 +9128,7 @@
               ${formatPlannedWorkHtmlCard(r)}
               <div class="mini-note">${escapeHtml(r.notes || '')}</div>
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button type="button" class="qb-btn-add" onclick="void loadMaintRecordIntoForm(${JSON.stringify(r.id)})">Load into form</button>
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/maintenance-record/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="recordMaintenanceRecordToQboWithConfirm('${r.id}')">Record to QuickBooks</button>
                 ${
@@ -9414,6 +9422,375 @@
       await loadAll();
     }
 
+    function clearMaintenanceEditMode() {
+      __editingMaintRecordId = null;
+      const h = document.getElementById('maintEditRecordHint');
+      if (h) h.textContent = '';
+    }
+
+    function updateMaintEditRecordHint() {
+      const h = document.getElementById('maintEditRecordHint');
+      if (!h) return;
+      h.textContent = __editingMaintRecordId
+        ? `Editing saved record ${__editingMaintRecordId} — Save updates this entry.`
+        : '';
+    }
+
+    function resetMaintenanceWorkOrderFormFields() {
+      [
+        'serviceDateInput',
+        'serviceMileageInput',
+        'serviceSearchInput',
+        'vendorInput',
+        'costInput',
+        'notesInput',
+        'recordSameCostServicesInput',
+        'customServiceTypeInput',
+        'tireBrandInput',
+        'tireDotInput',
+        'installMileageInput',
+        'removeMileageInput',
+        'expectedTireLifeMilesInput',
+        'accidentLocationInput',
+        'accidentReportNumberInput',
+        'linkedDocNumber',
+        'linkedVendorSearch',
+        'linkedDueDate',
+        'linkedPaymentMethodSearch',
+        'linkedBankAccountSearch',
+        'linkedAccountSearch',
+        'linkedItemSearch',
+        'tirePositionText',
+        'recordLoadNumberInput',
+        'recordVendorInvoiceInput',
+        'recordWorkOrderInput',
+        'maintNewCatalogServiceName'
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const pdfIn = document.getElementById('maintInvoicePdfInput');
+      if (pdfIn) pdfIn.value = '';
+      const pdfSt = document.getElementById('maintInvoicePdfStatus');
+      if (pdfSt) pdfSt.textContent = '';
+      const cHint = document.getElementById('maintCatalogServiceHint');
+      if (cHint) cHint.textContent = '';
+
+      document.getElementById('tireConditionSearch').value = '';
+      document.getElementById('tireConditionValue').value = '';
+      document.getElementById('repairLocationSearch').value = '';
+      document.getElementById('repairLocationTypeInput').value = '';
+      document.getElementById('accidentAtFaultSearch').value = '';
+      document.getElementById('accidentAtFaultValue').value = '';
+      document.getElementById('recordTypeSelect').value = 'maintenance';
+      document.getElementById('linkedTxnTypeSelect').value = 'expense';
+      document.getElementById('linkedDetailModeSelect').value = 'category';
+      toggleLinkedDetailMode();
+      const lnh = document.getElementById('recordLoadNumberHint');
+      if (lnh) lnh.textContent = '';
+      document.getElementById('linkedVendorQboId').value = '';
+      document.getElementById('linkedPaymentMethodId').value = '';
+      document.getElementById('linkedBankAccountQboId').value = '';
+      document.getElementById('linkedAccountQboId').value = '';
+      document.getElementById('linkedItemQboId').value = '';
+      document.getElementById('linkedQty').value = 1;
+      document.getElementById('tirePositionSelect').value = '';
+      document.getElementById('tirePositionInput').value = '';
+      clearTireDots();
+      clearTireExtraLines();
+      resetMaintCostLines();
+      const sti = document.getElementById('serviceTypeInput');
+      if (sti) sti.value = '';
+      resetMaintPlannedServiceRows();
+      renderRepairLocationChips();
+    }
+
+    function clearMaintenanceFormNewEntry() {
+      clearMaintenanceEditMode();
+      resetMaintenanceWorkOrderFormFields();
+      serviceMileageUserTouched = false;
+      openMaintMainTab('record', document.querySelector('#maintMainSubtabs [data-maint-main="record"]'));
+    }
+
+    function maintAccountLabelByQboId(qboId) {
+      const q = String(qboId || '').trim();
+      if (!q) return '';
+      const a = cacheAccountsForLinked().find(x => String(x.qboId) === q);
+      return a ? String(a.name || '') : '';
+    }
+
+    function maintItemLabelByQboId(qboId) {
+      const q = String(qboId || '').trim();
+      if (!q) return '';
+      const a = cacheItems().find(x => String(x.qboId) === q);
+      return a ? String(a.name || '') : '';
+    }
+
+    function maintBankLabelByQboId(qboId) {
+      const q = String(qboId || '').trim();
+      if (!q) return '';
+      const a = cacheBankAccounts().find(x => String(x.qboId) === q);
+      return a ? String(a.name || '') : '';
+    }
+
+    function applyMaintCostLineFromPayload(row, ln) {
+      if (!row || !ln) return;
+      const d = row.querySelector('.maint-line-desc');
+      if (d) d.value = String(ln.description || '').trim();
+      const qtyEl = row.querySelector('.maint-line-qty');
+      const unitEl = row.querySelector('.maint-line-unit');
+      const amtEl = row.querySelector('.maint-line-amt');
+      const qv = ln.quantity;
+      const uv = ln.unitPrice;
+      if (qtyEl) {
+        if (qv != null && Number.isFinite(Number(qv)) && Number(qv) > 0) qtyEl.value = String(qv);
+        else qtyEl.value = '1';
+      }
+      if (unitEl) {
+        if (uv != null && Number.isFinite(Number(uv)) && Number(uv) >= 0) unitEl.value = String(uv);
+        else unitEl.value = '';
+      }
+      if (amtEl) {
+        const aNum = Number(ln.amount);
+        if (Number.isFinite(aNum) && aNum >= 0) amtEl.value = aNum.toFixed(2);
+        else amtEl.value = '';
+      }
+      const modeSel = row.querySelector('.maint-line-mode');
+      const dm = String(ln.detailMode || '').trim() === 'item' ? 'item' : 'category';
+      if (modeSel) {
+        modeSel.value = dm;
+        toggleMaintCostLineMode(modeSel);
+      }
+      const aid = String(ln.qboAccountId || '').trim();
+      const iid = String(ln.qboItemId || '').trim();
+      const as = row.querySelector('.maint-line-acct-search');
+      const ai = row.querySelector('.maint-line-item-search');
+      const hidA = row.querySelector('.maint-line-acct-id');
+      const hidI = row.querySelector('.maint-line-item-id');
+      if (hidA) hidA.value = aid;
+      if (as) as.value = aid ? maintAccountLabelByQboId(aid) : '';
+      if (hidI) hidI.value = iid;
+      if (ai) ai.value = iid ? maintItemLabelByQboId(iid) : '';
+
+      const pcat = row.querySelector('.maint-line-part-cat');
+      const pv = String(ln.partCategory || '').trim();
+      if (pcat && pv && [...pcat.options].some(o => o.value === pv)) {
+        pcat.value = pv;
+        onMaintLinePartCategoryChange(pcat);
+      }
+      const posSel = row.querySelector('.maint-line-pos-select');
+      const posFree = row.querySelector('.maint-line-pos-free');
+      const pp = String(ln.partPosition || '').trim();
+      if (pp) {
+        if (posSel && [...posSel.options].some(o => o.value === pp)) {
+          posSel.value = pp;
+          syncMaintLinePartMapFromSelect(posSel);
+        } else if (posFree) {
+          posFree.value = pp;
+        }
+      }
+      const partNo = row.querySelector('.maint-line-part-no');
+      if (partNo) partNo.value = String(ln.partNumber || '').trim();
+      recalcMaintLineRowInputs(row);
+    }
+
+    function fillMaintCostLinesFromRecord(lines) {
+      resetMaintCostLines();
+      const host = document.getElementById('maintCostLinesHost');
+      if (!host) return;
+      const arr = Array.isArray(lines) ? lines : [];
+      if (!arr.length) {
+        recalcMaintCostTotalFromLines();
+        return;
+      }
+      arr.forEach((ln, i) => {
+        if (i > 0) addMaintCostLine();
+        const row = host.querySelectorAll('.maint-cost-line')[i];
+        applyMaintCostLineFromPayload(row, ln);
+      });
+      bindMaintCostPartDelegation();
+      recalcMaintCostTotalFromLines();
+    }
+
+    function hydrateMaintenanceRecordForm(r) {
+      if (!r) return;
+      const targetUnit = String(r.unit || '').trim();
+      if (!targetUnit) {
+        alert('This record has no unit; cannot load into the form.');
+        return;
+      }
+      if (targetUnit !== selectedUnit) {
+        if (!confirm(`This record is for unit ${targetUnit}. Switch the selected asset to load it?`)) return;
+        selectUnit(targetUnit, { preserveEditMode: true });
+      }
+      __editingMaintRecordId = String(r.id || '').trim() || null;
+      updateMaintEditRecordHint();
+
+      const rt = String(r.recordType || 'maintenance').trim() || 'maintenance';
+      document.getElementById('recordTypeSelect').value = rt;
+      toggleRecordFields();
+      const st = String(r.serviceType || '').trim();
+      if (rt === 'custom') {
+        const cst = document.getElementById('customServiceTypeInput');
+        if (cst) cst.value = st;
+      }
+      if (st) {
+        document.getElementById('serviceSearchInput').value = st;
+        document.getElementById('serviceTypeInput').value = st;
+      }
+
+      const sd = document.getElementById('serviceDateInput');
+      if (sd) sd.value = String(r.serviceDate || '').trim();
+      const sm = document.getElementById('serviceMileageInput');
+      if (sm) sm.value = r.serviceMileage != null && String(r.serviceMileage).trim() !== '' ? String(r.serviceMileage) : '';
+      serviceMileageUserTouched = true;
+
+      document.getElementById('vendorInput').value = String(r.vendor || '');
+      document.getElementById('costInput').value =
+        r.cost != null && String(r.cost).trim() !== '' ? String(r.cost) : '';
+      document.getElementById('notesInput').value = String(r.notes || '');
+      const sameEl = document.getElementById('recordSameCostServicesInput');
+      if (sameEl) sameEl.value = '';
+
+      document.getElementById('tireConditionValue').value = String(r.tireCondition || '');
+      document.getElementById('tireConditionSearch').value = String(r.tireCondition || '');
+      document.getElementById('tirePositionInput').value = String(r.tirePosition || '');
+      document.getElementById('tirePositionText').value = String(r.tirePositionText || '');
+      document.getElementById('tireBrandInput').value = String(r.tireBrand || '');
+      document.getElementById('tireDotInput').value = String(r.tireDot || '');
+      document.getElementById('installMileageInput').value =
+        r.installMileage != null ? String(r.installMileage) : '';
+      document.getElementById('removeMileageInput').value =
+        r.removeMileage != null ? String(r.removeMileage) : '';
+      document.getElementById('expectedTireLifeMilesInput').value =
+        r.expectedTireLifeMiles != null ? String(r.expectedTireLifeMiles) : '';
+
+      document.getElementById('accidentAtFaultValue').value = String(r.accidentAtFault || '');
+      document.getElementById('accidentAtFaultSearch').value = String(r.accidentAtFault || '');
+      document.getElementById('accidentLocationInput').value = String(r.accidentLocation || '');
+      document.getElementById('accidentReportNumberInput').value = String(r.accidentReportNumber || '');
+
+      const rl = String(r.repairLocationType || '').trim();
+      if (rl) setRepairLocationCode(rl);
+      else setRepairLocationCode('');
+
+      if (r.assetCategory) {
+        const cat = String(r.assetCategory).trim();
+        if (cat) {
+          activeAssetCategory = cat;
+          renderMaintenanceCategoryChips();
+        }
+      }
+
+      document.getElementById('recordLoadNumberInput').value = String(r.loadNumber || '');
+      document.getElementById('recordVendorInvoiceInput').value = String(r.vendorInvoiceNumber || '');
+      document.getElementById('recordWorkOrderInput').value = String(r.workOrderNumber || '');
+
+      const qvId = String(r.qboVendorId || '').trim();
+      document.getElementById('linkedVendorQboId').value = qvId;
+      const lv = document.getElementById('linkedVendorSearch');
+      const vById = qvId ? cacheVendors().find(v => String(v.qboId) === qvId) : null;
+      if (lv) {
+        lv.value = vById
+          ? String(vById.name || vById.companyName || '').trim()
+          : String(r.vendor || '').trim();
+      }
+
+      document.getElementById('linkedAccountQboId').value = String(r.qboAccountId || '');
+      const la = document.getElementById('linkedAccountSearch');
+      if (la) la.value = maintAccountLabelByQboId(r.qboAccountId);
+
+      document.getElementById('linkedItemQboId').value = String(r.qboItemId || '');
+      const li = document.getElementById('linkedItemSearch');
+      if (li) li.value = maintItemLabelByQboId(r.qboItemId);
+
+      const ldm = document.getElementById('linkedDetailModeSelect');
+      if (ldm) {
+        ldm.value = String(r.detailMode || '').trim() === 'item' ? 'item' : 'category';
+        toggleLinkedDetailMode();
+      }
+      document.getElementById('linkedPaymentMethodId').value = String(r.paymentMethodId || '').trim() || 'pm_other';
+      const pm = paymentMethods().find(p => p.id === String(r.paymentMethodId || '').trim());
+      const pms = document.getElementById('linkedPaymentMethodSearch');
+      if (pms) pms.value = pm ? String(pm.name || '') : '';
+
+      document.getElementById('linkedBankAccountQboId').value = String(r.qboBankAccountId || '');
+      const lb = document.getElementById('linkedBankAccountSearch');
+      if (lb) lb.value = maintBankLabelByQboId(r.qboBankAccountId);
+
+      const ltx = document.getElementById('linkedTxnTypeSelect');
+      if (ltx) ltx.value = String(r.qboTxnType || '').trim() === 'bill' ? 'bill' : 'expense';
+      document.getElementById('linkedDueDate').value = String(r.qboDueDate || '');
+      document.getElementById('linkedDocNumber').value = String(r.qboDocNumber || '');
+
+      clearTireExtraLines();
+      const tItems = Array.isArray(r.tireLineItems) ? r.tireLineItems : [];
+      if (tItems.length) {
+        const first = tItems[0];
+        document.getElementById('tirePositionInput').value = String(first.tirePosition || '');
+        document.getElementById('tireBrandInput').value = String(first.tireBrand || '');
+        document.getElementById('tireDotInput').value = String(first.tireDot || '');
+        document.getElementById('tireConditionValue').value = String(first.tireCondition || '');
+        document.getElementById('tireConditionSearch').value = String(first.tireCondition || '');
+        for (let k = 1; k < tItems.length; k++) {
+          addTireExtraLine();
+          const rows = document.querySelectorAll('#tireExtraLinesHost .tire-extra-row');
+          const row = rows[rows.length - 1];
+          const ti = tItems[k];
+          const p = row.querySelector('.tire-extra-pos');
+          const c = row.querySelector('.tire-extra-cond');
+          const b = row.querySelector('.tire-extra-brand');
+          const d = row.querySelector('.tire-extra-dot');
+          if (p) p.value = String(ti.tirePosition || '');
+          if (c) c.value = String(ti.tireCondition || '');
+          if (b) b.value = String(ti.tireBrand || '');
+          if (d) d.value = String(ti.tireDot || '');
+        }
+      }
+
+      fillMaintCostLinesFromRecord(r.costLines);
+
+      resetMaintPlannedServiceRows();
+      const pHost = document.getElementById('maintPlannedServicesHost');
+      const pdescs = plannedWorkDescriptionsFromRecord(r);
+      if (pHost) {
+        pdescs.forEach((text, i) => {
+          if (i > 0) addMaintPlannedServiceRow();
+          const rows = pHost.querySelectorAll('.maint-planned-row');
+          const inp = rows[i]?.querySelector('.maint-planned-desc');
+          if (inp) inp.value = text;
+        });
+        if (!pdescs.length) maybeMaintPlannedPlaceholder();
+      }
+
+      syncMaintWorkOrderHeader();
+      renderRepairLocationChips();
+      applyMaintenanceFieldWidths();
+      const veh = vehicles.find(x => x.name === selectedUnit);
+      updateServiceMileageHint(veh, resolvedServiceMileageRecommendation(selectedUnit));
+      openMaintMainTab('record', document.querySelector('#maintMainSubtabs [data-maint-main="record"]'));
+    }
+
+    async function loadMaintRecordIntoForm(recordId) {
+      const id = String(recordId || '').trim();
+      if (!id) return;
+      let r = (erp.records || []).find(x => String(x.id) === id);
+      if (!r) {
+        try {
+          const out = await j('/api/maintenance/record/' + encodeURIComponent(id));
+          r = out.record;
+        } catch (e) {
+          alert(e.message || String(e));
+          return;
+        }
+      }
+      if (!r) {
+        alert('Record not found.');
+        return;
+      }
+      hydrateMaintenanceRecordForm(r);
+    }
+
     async function saveRecord(postToQbo = false, closeAfter = false) {
       if (!selectedUnit) return;
 
@@ -9528,49 +9905,57 @@
       }
       const serviceMileageFinal = String(smNum);
 
-      const saveOut = await j('/api/maintenance/record', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unit: selectedUnit,
-          recordType,
-          serviceType,
-          serviceDate: document.getElementById('serviceDateInput').value,
-          serviceMileage: serviceMileageFinal,
-          vendor: document.getElementById('vendorInput').value,
-          cost: document.getElementById('costInput').value,
-          notes: composedNotes,
-          plannedWork: collectMaintPlannedServiceLines().map(description => ({ description })),
-          tireCondition: document.getElementById('tireConditionValue').value,
-          tirePosition: document.getElementById('tirePositionInput').value,
-          tirePositionText: document.getElementById('tirePositionText').value,
-          tireBrand: document.getElementById('tireBrandInput').value,
-          tireDot: document.getElementById('tireDotInput').value,
-          installMileage: document.getElementById('installMileageInput').value,
-          removeMileage: document.getElementById('removeMileageInput').value,
-          expectedTireLifeMiles: document.getElementById('expectedTireLifeMilesInput').value,
-          accidentAtFault: document.getElementById('accidentAtFaultValue').value,
-          accidentLocation: document.getElementById('accidentLocationInput').value,
-          accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
-          repairLocationType: document.getElementById('repairLocationTypeInput').value,
-          assetCategory: activeAssetCategory,
-          loadNumber: document.getElementById('recordLoadNumberInput').value,
-          vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput').value,
-          workOrderNumber: document.getElementById('recordWorkOrderInput').value,
-          tireLineItems,
-          costLines: costLinesPayload,
-          qboVendorId: document.getElementById('linkedVendorQboId').value,
-          postToQbo: !!postToQbo,
-          qboAccountId: document.getElementById('linkedAccountQboId').value,
-          qboItemId: document.getElementById('linkedItemQboId').value,
-          detailMode: document.getElementById('linkedDetailModeSelect').value,
-          paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
-          qboBankAccountId: document.getElementById('linkedBankAccountQboId').value,
-          qboTxnType: document.getElementById('linkedTxnTypeSelect').value,
-          qboDueDate: document.getElementById('linkedDueDate').value,
-          qboDocNumber: document.getElementById('linkedDocNumber').value
-        })
-      });
+      const recordBody = {
+        unit: selectedUnit,
+        recordType,
+        serviceType,
+        serviceDate: document.getElementById('serviceDateInput').value,
+        serviceMileage: serviceMileageFinal,
+        vendor: document.getElementById('vendorInput').value,
+        cost: document.getElementById('costInput').value,
+        notes: composedNotes,
+        plannedWork: collectMaintPlannedServiceLines().map(description => ({ description })),
+        tireCondition: document.getElementById('tireConditionValue').value,
+        tirePosition: document.getElementById('tirePositionInput').value,
+        tirePositionText: document.getElementById('tirePositionText').value,
+        tireBrand: document.getElementById('tireBrandInput').value,
+        tireDot: document.getElementById('tireDotInput').value,
+        installMileage: document.getElementById('installMileageInput').value,
+        removeMileage: document.getElementById('removeMileageInput').value,
+        expectedTireLifeMiles: document.getElementById('expectedTireLifeMilesInput').value,
+        accidentAtFault: document.getElementById('accidentAtFaultValue').value,
+        accidentLocation: document.getElementById('accidentLocationInput').value,
+        accidentReportNumber: document.getElementById('accidentReportNumberInput').value,
+        repairLocationType: document.getElementById('repairLocationTypeInput').value,
+        assetCategory: activeAssetCategory,
+        loadNumber: document.getElementById('recordLoadNumberInput').value,
+        vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput').value,
+        workOrderNumber: document.getElementById('recordWorkOrderInput').value,
+        tireLineItems,
+        costLines: costLinesPayload,
+        qboVendorId: document.getElementById('linkedVendorQboId').value,
+        postToQbo: !!postToQbo,
+        qboAccountId: document.getElementById('linkedAccountQboId').value,
+        qboItemId: document.getElementById('linkedItemQboId').value,
+        detailMode: document.getElementById('linkedDetailModeSelect').value,
+        paymentMethodId: document.getElementById('linkedPaymentMethodId').value,
+        qboBankAccountId: document.getElementById('linkedBankAccountQboId').value,
+        qboTxnType: document.getElementById('linkedTxnTypeSelect').value,
+        qboDueDate: document.getElementById('linkedDueDate').value,
+        qboDocNumber: document.getElementById('linkedDocNumber').value
+      };
+
+      const saveOut = __editingMaintRecordId
+        ? await j('/api/maintenance/record/' + encodeURIComponent(__editingMaintRecordId), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(recordBody)
+          })
+        : await j('/api/maintenance/record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(recordBody)
+          });
 
       const qbo = saveOut && saveOut.qbo;
       if (postToQbo && qbo && !qbo.ok && !qbo.skipped) {
@@ -9587,52 +9972,8 @@
         return;
       }
 
-      [
-        'serviceDateInput','serviceMileageInput','serviceSearchInput','vendorInput','costInput','notesInput',
-        'recordSameCostServicesInput','customServiceTypeInput','tireBrandInput','tireDotInput','installMileageInput',
-        'removeMileageInput','expectedTireLifeMilesInput','accidentLocationInput',
-        'accidentReportNumberInput','linkedDocNumber','linkedVendorSearch','linkedDueDate',
-        'linkedPaymentMethodSearch','linkedBankAccountSearch','linkedAccountSearch','linkedItemSearch','tirePositionText','recordLoadNumberInput',
-        'recordVendorInvoiceInput','recordWorkOrderInput','maintNewCatalogServiceName'
-      ].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-      const pdfIn = document.getElementById('maintInvoicePdfInput');
-      if (pdfIn) pdfIn.value = '';
-      const pdfSt = document.getElementById('maintInvoicePdfStatus');
-      if (pdfSt) pdfSt.textContent = '';
-      const cHint = document.getElementById('maintCatalogServiceHint');
-      if (cHint) cHint.textContent = '';
-
-      document.getElementById('tireConditionSearch').value = '';
-      document.getElementById('tireConditionValue').value = '';
-      document.getElementById('repairLocationSearch').value = '';
-      document.getElementById('repairLocationTypeInput').value = '';
-      document.getElementById('accidentAtFaultSearch').value = '';
-      document.getElementById('accidentAtFaultValue').value = '';
-      document.getElementById('recordTypeSelect').value = 'maintenance';
-      document.getElementById('linkedTxnTypeSelect').value = 'expense';
-      document.getElementById('linkedDetailModeSelect').value = 'category';
-      toggleLinkedDetailMode();
-      const lnh = document.getElementById('recordLoadNumberHint');
-      if (lnh) lnh.textContent = '';
-      document.getElementById('linkedVendorQboId').value = '';
-      document.getElementById('linkedPaymentMethodId').value = '';
-      document.getElementById('linkedBankAccountQboId').value = '';
-      document.getElementById('linkedAccountQboId').value = '';
-      document.getElementById('linkedItemQboId').value = '';
-      document.getElementById('linkedQty').value = 1;
-      document.getElementById('tirePositionSelect').value = '';
-      document.getElementById('tirePositionInput').value = '';
-      clearTireDots();
-      clearTireExtraLines();
-      resetMaintCostLines();
-      const sti = document.getElementById('serviceTypeInput');
-      if (sti) sti.value = '';
-      resetMaintPlannedServiceRows();
-      renderRepairLocationChips();
-
+      resetMaintenanceWorkOrderFormFields();
+      clearMaintenanceEditMode();
       serviceMileageUserTouched = false;
       await loadAll();
     }

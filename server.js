@@ -4792,70 +4792,80 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
   return out;
 }
 
+/** Shared field normalization for POST / PATCH maintenance ERP records. */
+function deriveMaintenanceRecordFields(body) {
+  const unit = String(body.unit || '').trim();
+  const serviceType = sanitizeName(body.serviceType || body.recordType || 'Service', 'Service');
+  const tireLineItems = sanitizeMaintenanceTireLineItems(body.tireLineItems);
+  const firstTire = tireLineItems[0];
+  const tirePosition = String(body.tirePosition || '').trim() || (firstTire?.tirePosition || '');
+  const tireBrand = String(body.tireBrand || '').trim() || (firstTire?.tireBrand || '');
+  const tireDot = String(body.tireDot || '').trim() || (firstTire?.tireDot || '');
+  const tireCondition = String(body.tireCondition || '').trim() || (firstTire?.tireCondition || '');
+  const costLines = sanitizeMaintenanceCostLines(body.costLines);
+  const plannedWork = sanitizeMaintenancePlannedWork(body.plannedWork);
+  const sumLines = costLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+  const costFromLines = Math.round(sumLines * 100) / 100;
+  const cost =
+    costLines.length && costFromLines > 0 ? costFromLines : safeNum(body.cost, 0) || 0;
+  const qboTxnType = String(body.qboTxnType || '').trim().toLowerCase() === 'bill' ? 'bill' : 'expense';
+  const recordCore = {
+    unit,
+    recordType: String(body.recordType || 'maintenance').trim() || 'maintenance',
+    serviceType,
+    serviceDate: String(body.serviceDate || '').trim(),
+    serviceMileage: safeNum(body.serviceMileage, null),
+    vendor: String(body.vendor || '').trim(),
+    cost,
+    notes: String(body.notes || '').trim(),
+    loadNumber: String(body.loadNumber || body.load_number || '').trim(),
+    tireCondition,
+    tirePosition,
+    tirePositionText: String(body.tirePositionText || '').trim(),
+    tireBrand,
+    tireDot,
+    installMileage: safeNum(body.installMileage, null),
+    removeMileage: safeNum(body.removeMileage, null),
+    expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
+    accidentAtFault: String(body.accidentAtFault || '').trim(),
+    accidentLocation: String(body.accidentLocation || '').trim(),
+    accidentReportNumber: String(body.accidentReportNumber || '').trim(),
+    repairLocationType: String(body.repairLocationType || '').trim(),
+    assetCategory: String(body.assetCategory || '').trim().slice(0, 80),
+    vendorInvoiceNumber: String(body.vendorInvoiceNumber || '').trim(),
+    workOrderNumber: String(body.workOrderNumber || body.vendorWorkOrderNumber || '').trim(),
+    qboVendorId: String(body.qboVendorId || '').trim().slice(0, 64),
+    qboAccountId: String(body.qboAccountId || '').trim().slice(0, 64),
+    qboItemId: String(body.qboItemId || '').trim().slice(0, 64),
+    detailMode: String(body.detailMode || '').trim() === 'item' ? 'item' : 'category',
+    paymentMethodId: String(body.paymentMethodId || '').trim().slice(0, 64) || 'pm_other',
+    qboBankAccountId: String(body.qboBankAccountId || '').trim().slice(0, 64),
+    qboTxnType,
+    qboDueDate: String(body.qboDueDate || '').trim().slice(0, 32),
+    qboDocNumber: String(body.qboDocNumber || '').trim().slice(0, 64)
+  };
+  if (tireLineItems.length) recordCore.tireLineItems = tireLineItems;
+  if (costLines.length) recordCore.costLines = costLines;
+  if (plannedWork.length) recordCore.plannedWork = plannedWork;
+  return { recordCore, cost, plannedWork, costLines, tireLineItems };
+}
+
 app.post('/api/maintenance/record', async (req, res) => {
   try {
     const body = req.body || {};
-    const unit = String(body.unit || '').trim();
+    const { recordCore, cost } = deriveMaintenanceRecordFields(body);
+    const unit = recordCore.unit;
     if (!unit) return res.status(400).json({ error: 'unit is required' });
-    const serviceType = sanitizeName(body.serviceType || body.recordType || 'Service', 'Service');
     const erp = readErp();
     if (!Array.isArray(erp.records)) erp.records = [];
-    const tireLineItems = sanitizeMaintenanceTireLineItems(body.tireLineItems);
-    const firstTire = tireLineItems[0];
-    const tirePosition = String(body.tirePosition || '').trim() || (firstTire?.tirePosition || '');
-    const tireBrand = String(body.tireBrand || '').trim() || (firstTire?.tireBrand || '');
-    const tireDot = String(body.tireDot || '').trim() || (firstTire?.tireDot || '');
-    const tireCondition = String(body.tireCondition || '').trim() || (firstTire?.tireCondition || '');
-    const costLines = sanitizeMaintenanceCostLines(body.costLines);
-    const plannedWork = sanitizeMaintenancePlannedWork(body.plannedWork);
-    const sumLines = costLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
-    const costFromLines = Math.round(sumLines * 100) / 100;
-    const cost =
-      costLines.length && costFromLines > 0 ? costFromLines : safeNum(body.cost, 0) || 0;
-    const qboTxnType = String(body.qboTxnType || '').trim().toLowerCase() === 'bill' ? 'bill' : 'expense';
     const record = {
       id: uid('mr'),
-      unit,
-      recordType: String(body.recordType || 'maintenance').trim() || 'maintenance',
-      serviceType,
-      serviceDate: String(body.serviceDate || '').trim(),
-      serviceMileage: safeNum(body.serviceMileage, null),
-      vendor: String(body.vendor || '').trim(),
-      cost,
-      notes: String(body.notes || '').trim(),
-      loadNumber: String(body.loadNumber || body.load_number || '').trim(),
-      tireCondition,
-      tirePosition,
-      tirePositionText: String(body.tirePositionText || '').trim(),
-      tireBrand,
-      tireDot,
-      installMileage: safeNum(body.installMileage, null),
-      removeMileage: safeNum(body.removeMileage, null),
-      expectedTireLifeMiles: safeNum(body.expectedTireLifeMiles, null),
-      accidentAtFault: String(body.accidentAtFault || '').trim(),
-      accidentLocation: String(body.accidentLocation || '').trim(),
-      accidentReportNumber: String(body.accidentReportNumber || '').trim(),
-      repairLocationType: String(body.repairLocationType || '').trim(),
-      assetCategory: String(body.assetCategory || '').trim().slice(0, 80),
-      vendorInvoiceNumber: String(body.vendorInvoiceNumber || '').trim(),
-      workOrderNumber: String(body.workOrderNumber || body.vendorWorkOrderNumber || '').trim(),
-      qboVendorId: String(body.qboVendorId || '').trim().slice(0, 64),
-      qboAccountId: String(body.qboAccountId || '').trim().slice(0, 64),
-      qboItemId: String(body.qboItemId || '').trim().slice(0, 64),
-      detailMode: String(body.detailMode || '').trim() === 'item' ? 'item' : 'category',
-      paymentMethodId: String(body.paymentMethodId || '').trim().slice(0, 64) || 'pm_other',
-      qboBankAccountId: String(body.qboBankAccountId || '').trim().slice(0, 64),
-      qboTxnType,
-      qboDueDate: String(body.qboDueDate || '').trim().slice(0, 32),
-      qboDocNumber: String(body.qboDocNumber || '').trim().slice(0, 64),
+      ...recordCore,
       qboSyncStatus: '',
       qboPurchaseId: '',
       qboEntityType: '',
       qboError: '',
-      createdAt: new Date().toISOString(),
-      ...(tireLineItems.length ? { tireLineItems } : {}),
-      ...(costLines.length ? { costLines } : {}),
-      ...(plannedWork.length ? { plannedWork } : {})
+      createdAt: new Date().toISOString()
     };
     erp.records.push(record);
     const sm = safeNum(body.serviceMileage, null);
@@ -4896,6 +4906,113 @@ app.post('/api/maintenance/record', async (req, res) => {
     res.json({ ok: true, record, qbo });
   } catch (error) {
     logError('api/maintenance/record', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/maintenance/record/:id', async (req, res) => {
+  try {
+    const erp = readErp();
+    const id = String(req.params.id || '').trim();
+    const rec = (erp.records || []).find(x => String(x.id) === id);
+    if (!rec) return res.status(404).json({ error: 'Maintenance record not found' });
+    res.json({ ok: true, record: rec });
+  } catch (error) {
+    logError('api/maintenance/record/:id GET', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/maintenance/record/:id', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const id = String(req.params.id || '').trim();
+    const erp = readErp();
+    if (!Array.isArray(erp.records)) erp.records = [];
+    const idx = erp.records.findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ error: 'Maintenance record not found' });
+    const prev = erp.records[idx];
+
+    const { recordCore, cost, plannedWork, costLines, tireLineItems } = deriveMaintenanceRecordFields(body);
+    const unit = recordCore.unit;
+    if (!unit) return res.status(400).json({ error: 'unit is required' });
+    if (String(prev.unit || '').trim() !== unit) {
+      return res.status(400).json({ error: 'unit must match the existing record' });
+    }
+
+    const alreadyPosted =
+      String(prev.qboSyncStatus || '').toLowerCase() === 'posted' &&
+      String(prev.qboPurchaseId || prev.qboEntityId || '').trim();
+
+    const record = {
+      ...prev,
+      ...recordCore,
+      id: prev.id,
+      createdAt: prev.createdAt
+    };
+    if (alreadyPosted) {
+      record.qboPurchaseId = prev.qboPurchaseId;
+      record.qboEntityType = prev.qboEntityType;
+      record.qboEntityId = prev.qboEntityId;
+      record.qboSyncStatus = prev.qboSyncStatus;
+      record.qboError = prev.qboError;
+    } else {
+      record.qboPurchaseId = prev.qboPurchaseId || '';
+      record.qboEntityType = prev.qboEntityType || '';
+      record.qboEntityId = prev.qboEntityId || '';
+      record.qboSyncStatus = prev.qboSyncStatus || '';
+      record.qboError = prev.qboError || '';
+    }
+
+    if (plannedWork.length) record.plannedWork = plannedWork;
+    else delete record.plannedWork;
+    if (costLines.length) record.costLines = costLines;
+    else delete record.costLines;
+    if (tireLineItems.length) record.tireLineItems = tireLineItems;
+    else delete record.tireLineItems;
+
+    erp.records[idx] = record;
+    const sm = safeNum(body.serviceMileage, null);
+    if (sm != null && sm > 0) {
+      erp.currentMileage[unit] = Math.max(safeNum(erp.currentMileage[unit], 0) || 0, sm);
+    }
+    writeErp(erp);
+
+    let qbo = null;
+    const qboStore = readQbo();
+    const postToQbo = body.postToQbo === true || String(body.postToQbo || '').toLowerCase() === 'true';
+    if (!alreadyPosted && cost > 0 && qboStore.tokens?.realmId && postToQbo) {
+      try {
+        const posted = await qboPostMaintenanceRecord(record.id);
+        qbo = { ok: true, posted: true, record: posted };
+      } catch (err) {
+        logError('api/maintenance/record/:id PATCH qbo', err);
+        const erp2 = readErp();
+        const idx2 = (erp2.records || []).findIndex(x => String(x.id) === String(record.id));
+        if (idx2 !== -1) {
+          erp2.records[idx2] = {
+            ...erp2.records[idx2],
+            qboSyncStatus: 'error',
+            qboError: err.message
+          };
+          writeErp(erp2);
+          record.qboSyncStatus = 'error';
+          record.qboError = err.message;
+        }
+        qbo = { ok: false, posted: false, error: err.message };
+      }
+    } else if (!alreadyPosted && cost > 0 && postToQbo) {
+      qbo = { ok: false, skipped: true, reason: 'quickbooks_not_connected' };
+    } else {
+      let reason = 'not_requested';
+      if (postToQbo && alreadyPosted) reason = 'already_posted';
+      else if (postToQbo && !(cost > 0)) reason = 'no_cost';
+      qbo = { ok: true, skipped: true, reason };
+    }
+
+    res.json({ ok: true, record, qbo });
+  } catch (error) {
+    logError('api/maintenance/record/:id PATCH', error);
     res.status(500).json({ error: error.message });
   }
 });
