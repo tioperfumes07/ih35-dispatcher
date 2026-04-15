@@ -5095,7 +5095,7 @@ app.get('/api/qbo/sync-alerts', (_req, res) => {
         code: 'qbo_not_connected',
         title: 'QuickBooks is not connected',
         detail:
-          'Expenses and bills will not sync until you sign in to QuickBooks (OAuth). Open Settings or use Test QuickBooks.',
+          'Automatic posting to QuickBooks is paused until OAuth is completed. Use Connect QuickBooks from Settings or the top bar.',
         kind: 'system',
         id: ''
       });
@@ -5124,7 +5124,7 @@ app.get('/api/qbo/sync-alerts', (_req, res) => {
           severity: 'medium',
           code: 'record_not_posted',
           title: `Maintenance (${rec.unit || ''}) — $${cost.toFixed(2)} not posted to QuickBooks`,
-          detail: 'Use Accounting → maintenance list or Send to QuickBooks on the record.',
+          detail: 'Open Accounting or post from the unit history card.',
           kind: 'record',
           id: String(rec.id || '')
         });
@@ -5151,7 +5151,7 @@ app.get('/api/qbo/sync-alerts', (_req, res) => {
           severity: 'medium',
           code: 'ap_not_posted',
           title: `AP / expense — $${amt.toFixed(2)} not posted (${ap.description || ap.docNumber || 'no description'})`,
-          detail: 'Open Accounting → Maintenance expense transactions and post to QuickBooks.',
+          detail: 'Post from Accounting → Maintenance expense transactions.',
           kind: 'ap',
           id: String(ap.id || '')
         });
@@ -5178,12 +5178,19 @@ app.get('/api/qbo/sync-alerts', (_req, res) => {
           severity: 'medium',
           code: 'wo_not_posted',
           title: `Work order — $${total.toFixed(2)} not posted (${wo.unit || ''} · load ${wo.loadNumber || '—'})`,
-          detail: 'Open Accounting and use Post to QuickBooks for this work order.',
+          detail: 'Post the work order from Accounting.',
           kind: 'work_order',
           id: String(wo.id || '')
         });
       }
     }
+
+    const sevRank = { high: 0, medium: 1, low: 2 };
+    alerts.sort(
+      (a, b) =>
+        (sevRank[a.severity] ?? 9) - (sevRank[b.severity] ?? 9) ||
+        String(a.title || '').localeCompare(String(b.title || ''))
+    );
 
     const high = alerts.filter(a => a.severity === 'high').length;
     const medium = alerts.filter(a => a.severity === 'medium').length;
