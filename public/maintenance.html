@@ -102,7 +102,7 @@
 
       <div class="nav-title">Main</div>
       <button class="nav-btn active" data-section="maintenance" onclick="openSection('maintenance', this)">Maintenance Board</button>
-      <button class="nav-btn" data-section="dashboard" onclick="openSection('dashboard', this)">Overview</button>
+      <button class="nav-btn" data-section="dashboard" onclick="openSection('dashboard', this)">Overview (KPIs)</button>
       <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Diesel / Fuel Board</button>
       <button class="nav-btn" data-section="safety" onclick="openSection('safety', this)">Safety Board</button>
       <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
@@ -362,6 +362,27 @@
       </section>
 
       <section id="section-maintenance" class="section active">
+        <div class="maint-kpi-strip maint-section-card" aria-label="Fleet and maintenance snapshot">
+          <div class="panel-body" style="padding:12px 14px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="panel-title" style="margin:0;font-size:15px">Fleet &amp; maintenance snapshot</div>
+                <div class="mini-note" style="margin:4px 0 0;max-width:72ch">
+                  Same numbers as <strong>Overview (KPIs)</strong> in the sidebar — shown here so the work order board stays in context.
+                </div>
+              </div>
+              <button type="button" class="btn" onclick="openSectionByName('dashboard')">Open full Overview</button>
+            </div>
+            <div class="grid grid-4">
+              <div class="metric"><div class="metric-label">Tracked assets</div><div class="metric-value" id="maintDashTrackedAssets">0</div></div>
+              <div class="metric"><div class="metric-label">Assigned / working</div><div class="metric-value" id="maintDashAssignedAssets">0</div></div>
+              <div class="metric"><div class="metric-label">Maintenance past due</div><div class="metric-value" id="maintDashPastDue">0</div></div>
+              <div class="metric"><div class="metric-label">QBO vendor count</div><div class="metric-value" id="maintDashQboVendors">0</div></div>
+            </div>
+            <div id="maintDashSummaryLine" class="mini-note" style="margin-top:10px;line-height:1.45"></div>
+            <div id="maintDashSyncLine" class="mini-note" style="margin-top:6px;line-height:1.45;color:var(--muted)"></div>
+          </div>
+        </div>
         <div class="maint-top-toolbar maint-section-card">
           <div class="maint-top-toolbar__inner">
             <div class="maint-top-toolbar__field maint-top-toolbar__grow">
@@ -1638,7 +1659,7 @@
               class="mini-note"
               style="margin:0 0 12px;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.55;font-size:13px;color:#334155"
             >
-              Fuel lines are <strong>not</strong> in QuickBooks until you choose <strong>Record to QuickBooks</strong> on each row (or Record filtered). After posting, use <strong>Verify in QuickBooks</strong> on a posted row to confirm the Purchase still exists in your company file.
+              Fuel lines are <strong>not</strong> in QuickBooks until you post them. Use <strong>Confirm &amp; record to QuickBooks</strong> on manual entry to save the ledger row(s) and create each QuickBooks Purchase in one step, or <strong>Save to fuel ledger</strong> then <strong>Record to QuickBooks</strong> on a row. After posting, use <strong>Verify in QuickBooks</strong> on a posted row to confirm the Purchase still exists in your company file.
             </div>
             <div class="panel-body form-stack fuel-expense-stack">
               <p class="mini-note" style="margin:0 0 10px">
@@ -1724,7 +1745,10 @@
                       <button type="button" onclick="resetManualFuelForm(false)">Clear</button>
                     </div>
                     <div class="qb-actions-right" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                      <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase()">Save row(s)</button>
+                      <button type="button" class="btn" onclick="saveManualFuelPurchase()">Save to fuel ledger</button>
+                      <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase({ postToQbo: true })">
+                        Confirm &amp; record to QuickBooks
+                      </button>
                       <span id="fuelManualSaveHint" class="mini-note" style="margin:0"></span>
                     </div>
                   </div>
@@ -7281,12 +7305,45 @@
     function renderDashboardHome() {
       const assigned = assignedVehicleNames();
       const past = dashboard.filter(x => x.status === 'past due').length;
+      const nVendors = cacheVendors().length;
       document.getElementById('dashTrackedAssets').textContent = vehicles.length;
       document.getElementById('dashAssignedAssets').textContent = assigned.size;
       document.getElementById('dashPastDue').textContent = past;
-      document.getElementById('dashQboVendors').textContent = cacheVendors().length;
+      document.getElementById('dashQboVendors').textContent = nVendors;
+
+      const mTa = document.getElementById('maintDashTrackedAssets');
+      const mAs = document.getElementById('maintDashAssignedAssets');
+      const mPd = document.getElementById('maintDashPastDue');
+      const mQv = document.getElementById('maintDashQboVendors');
+      if (mTa) mTa.textContent = String(vehicles.length);
+      if (mAs) mAs.textContent = String(assigned.size);
+      if (mPd) mPd.textContent = String(past);
+      if (mQv) mQv.textContent = String(nVendors);
 
       const byCat = vehiclesByCategory();
+      const maintSum = document.getElementById('maintDashSummaryLine');
+      if (maintSum) {
+        maintSum.textContent = [
+          `Trucks ${byCat['Trucks'].length}`,
+          `Refrigerated vans ${byCat['Refrigerated Vans'].length}`,
+          `Flatbeds ${byCat['Flatbeds'].length}`,
+          `Dry vans ${byCat['Dry Vans'].length}`,
+          `Company vehicles ${byCat['Company Vehicles'].length}`
+        ].join(' · ');
+      }
+      const maintSync = document.getElementById('maintDashSyncLine');
+      if (maintSync) {
+        maintSync.textContent = [
+          `QBO customers: ${(erp.qboCache?.customers || []).length}`,
+          `classes: ${(erp.qboCache?.classes || []).length}`,
+          `employees: ${(erp.qboCache?.employees || []).length}`,
+          `items: ${cacheItems().length}`,
+          `accounts: ${cacheAccounts().length}`,
+          `saved maint. expense txs: ${(erp.apTransactions || []).length}`,
+          `tire alerts: ${tireAlerts.length}`
+        ].join(' · ');
+      }
+
       document.getElementById('dashboardSummaryCards').innerHTML = `
         <div class="record-card"><b>Trucks:</b> ${byCat['Trucks'].length}</div>
         <div class="record-card"><b>Refrigerated Vans:</b> ${byCat['Refrigerated Vans'].length}</div>
