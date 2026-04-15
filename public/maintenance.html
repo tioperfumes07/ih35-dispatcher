@@ -143,10 +143,32 @@
     .qb-memo{min-height:48px;resize:vertical;padding:4px 6px;font-size:12px}
     .wo-line{border-bottom:1px solid #eef1f7;padding-bottom:8px;margin-bottom:8px}
     .wo-line:last-child{border-bottom:none}
-    .wo-line-grid{display:grid;grid-template-columns:1.3fr 88px 1.1fr 1.1fr 48px 72px 90px 28px;gap:6px;align-items:end}
+    .wo-line-grid{display:grid;grid-template-columns:36px 1.3fr 88px 1.1fr 1.1fr 48px 72px 90px 28px;gap:6px;align-items:end}
     @media (max-width:1200px){.wo-line-grid{grid-template-columns:1fr 1fr}}
     .qb-btn-del{padding:2px 6px;font-size:13px;border:1px solid #d8deea;border-radius:4px;background:#fff;cursor:pointer}
     .qb-btn-add{font-size:12px;padding:5px 10px;border-radius:6px}
+    .qb-doc-shell{border:1px solid #d8deea;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+    .qb-doc-head{padding:14px 16px 10px;border-bottom:1px solid #e8edf5;background:linear-gradient(180deg,#fafbfc 0%,#fff 100%)}
+    .qb-doc-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+    .qb-doc-h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-0.03em;color:#0f172a}
+    .qb-doc-total-block{text-align:right}
+    .qb-doc-total-amt{font-size:26px;font-weight:800;color:#0f172a;line-height:1.1}
+    .qb-doc-body{padding:14px 16px 16px}
+    .qb-logistics-bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:12px 0 8px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa}
+    .qb-lines-wrap{border:1px solid #e5e7eb;border-radius:8px;background:#fff;margin-top:10px}
+    .qb-lines-header{display:grid;grid-template-columns:36px 1.3fr 88px 1.1fr 1.1fr 48px 72px 90px 28px;gap:6px;padding:8px 10px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;border-bottom:1px solid #eef1f7;background:#fafcff}
+    .qb-lines-header .num{text-align:right}
+    @media (max-width:1200px){.qb-lines-header{display:none}}
+    .qb-lines-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border-top:1px solid #eef1f7;background:#fafcff}
+    .qb-doc-memo-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    @media (max-width:900px){.qb-doc-memo-row{grid-template-columns:1fr}}
+    .qb-attach-box{border:1px dashed #cbd5e1;border-radius:8px;padding:12px;background:#fafafa;min-height:96px}
+    .qb-doc-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid #e8edf5}
+    .qb-doc-actions .qb-actions-left{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .qb-doc-actions .qb-actions-right{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .qb-btn-primary{background:#2ca01c;border-color:#238918;color:#fff;font-weight:600}
+    .qb-btn-primary:hover{background:#238918}
+    .wo-line-num{font-size:12px;color:#64748b;padding-bottom:6px;text-align:center}
     .vendor-row-maint{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
     .vendor-row-maint .qb-in{max-width:220px}
     .shop-action-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
@@ -160,6 +182,24 @@
     .shop-col-body{padding:8px 12px;max-height:240px;overflow:auto;font-size:12px}
     .shop-row{padding:8px 0;border-bottom:1px solid #f1f5f9;line-height:1.35}
     .shop-row:last-child{border-bottom:none}
+    .nav-dropdown{position:relative;width:100%}
+    .nav-dropdown-trigger{width:100%;text-align:left}
+    .nav-dropdown-menu{
+      display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;padding:6px 0;
+      background:var(--sidebar-bg);border:1px solid #334155;border-radius:10px;z-index:100;
+      box-shadow:0 8px 24px rgba(0,0,0,.25);max-height:min(70vh,420px);overflow:auto
+    }
+    .nav-dropdown:hover .nav-dropdown-menu{display:block}
+    .nav-dd-item{
+      display:block;width:100%;text-align:left;padding:9px 14px;background:transparent;border:0;
+      color:#e2e8f0;font-size:13px;cursor:pointer;font:inherit
+    }
+    .nav-dd-item:hover{background:rgba(255,255,255,.08)}
+    .nav-dd-sep{height:1px;background:#334155;margin:6px 0}
+    .cost-total-ok{border-color:#86efac!important;box-shadow:0 0 0 2px rgba(34,197,94,.15)!important}
+    .cost-total-bad{border-color:#f87171!important;box-shadow:0 0 0 2px rgba(248,113,113,.2)!important}
+    .catalog-subpanel{display:none}
+    .catalog-subpanel.active{display:block}
     .maint-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9000;align-items:center;justify-content:center;padding:20px}
     .maint-modal-bg.on{display:flex}
     .maint-modal{background:#fff;border-radius:14px;max-width:480px;width:100%;padding:20px;box-shadow:var(--shadow)}
@@ -321,6 +361,20 @@
       <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle Tracking Board</button>
       <button class="nav-btn" data-section="accounting" onclick="openSection('accounting', this)">Accounting Board</button>
       <button class="nav-btn" data-section="reports" onclick="openSection('reports', this)">Reports Board</button>
+
+      <div class="nav-title">Catalogs</div>
+      <div class="nav-dropdown">
+        <button type="button" class="nav-btn nav-dropdown-trigger" data-section="catalog" onclick="openSection('catalog', this); openCatalogSubpanel('service');">Catalogs ▾</button>
+        <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
+          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types (database)</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; parts reference</button>
+          <div class="nav-dd-sep"></div>
+          <button type="button" class="nav-dd-item" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Assets (tracking)</button>
+          <button type="button" class="nav-dd-item" onclick="openSection('safety', document.querySelector('.nav-btn[data-section=safety]')); openSafetyTab('safe-files', document.querySelector('#section-safety .subtab[onclick*=\'safe-files\']'));">Drivers &amp; files (safety)</button>
+          <button type="button" class="nav-dd-item" onclick="window.open('https://cloud.samsara.com','_blank','noopener');">Samsara Cloud (external)</button>
+        </div>
+      </div>
 
       <div class="nav-title">Actions</div>
       <button class="nav-btn" type="button" title="Fetch latest fleet, ERP, and shop queue now" onclick="loadAll()">Refresh now</button>
@@ -654,18 +708,6 @@
           </div>
         </div>
 
-        <div class="panel maint-section-card">
-          <div class="panel-head maint-panel-head-center">
-            <div class="panel-title">Service catalog (database)</div>
-            <div class="mini-note" style="margin:6px 0 0;max-width:52ch">
-              When <code>DATABASE_URL</code> is set, names come from Postgres. Deactivate old rows or add new names — picker lists refresh after save.
-            </div>
-          </div>
-          <div class="panel-body">
-            <div id="serviceCatalogAdminBody" class="mini-note">Loading catalog…</div>
-          </div>
-        </div>
-
         <div class="split" id="maintenanceSplit" style="margin-top:12px;">
           <div class="panel unit-list-panel">
             <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -769,14 +811,19 @@
                   <div class="vendor-row-maint">
                     <div>
                       <span class="qb-l">Vendor (QuickBooks)</span>
-                      <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="Type vendor…">
+                      <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="Type vendor…" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off">
                     </div>
                     <div>
                       <span class="qb-l">Total cost (invoice)</span>
-                      <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Auto-filled from cost lines when any line has an amount">
+                      <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Must match the sum of cost lines when lines have amounts (or lock manual total below)">
                     </div>
                     <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
                   </div>
+                  <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 6px;max-width:560px">
+                    <input type="checkbox" id="costTotalLock" />
+                    Lock invoice total — do not auto-fill from cost lines (you enter the total manually; it must still match line sum to save)
+                  </label>
+                  <div id="maintCostTotalMatch" class="mini-note" style="margin:0 0 6px;max-width:56ch"></div>
                   <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
 
                   <div class="panel maint-cost-panel" style="box-shadow:none;margin-top:4px">
@@ -902,13 +949,17 @@
                   </div>
 
                   <div class="panel" style="box-shadow:none;">
-                    <div class="panel-head"><div class="panel-title">Link to Maintenance Expense Transaction</div></div>
+                    <div class="panel-head"><div class="panel-title">QuickBooks expense (optional)</div></div>
                     <div class="panel-body form-stack">
                       <label class="mini-note">
                         <input id="linkAccountingToggle" type="checkbox" checked>
-                        Create linked Maintenance Expense Transaction when saving this record
+                        Create a <strong>single-line</strong> Purchase / Expense in QuickBooks when saving (amount = invoice total above)
                       </label>
 
+                      <p class="mini-note" style="margin:0 0 6px">
+                        This does <strong>not</strong> replace the cost breakdown: each row above can still carry its own QBO account/item for your records. The linked transaction posts <strong>one</strong> QBO line for the <strong>full invoice total</strong> using the defaults below (memo includes the printed cost breakdown). Multi-line QBO posting from every row uses the work-order / expense flows under <strong>Accounting</strong>.
+                        Vendor is auto-matched from <strong>Vendor (QuickBooks)</strong> when possible — you normally do not need to retype it here.
+                      </p>
                       <p class="mini-note" style="margin:0 0 6px">Sync <strong>QuickBooks Master</strong> in the sidebar if vendor / item / account lists are empty.</p>
                       <div class="search-row">
                         <div>
@@ -1032,6 +1083,7 @@
           <button type="button" class="subtab active" onclick="openTrackingTab('tr-map', this)">Map</button>
           <button type="button" class="subtab" onclick="openTrackingTab('tr-assets', this)">Assets</button>
           <button type="button" class="subtab" onclick="openTrackingTab('tr-drivers', this)">Drivers</button>
+          <button type="button" class="subtab" onclick="openTrackingTab('tr-idle', this)">Yard &amp; idle (T120–T178)</button>
         </div>
 
         <div id="tr-map" class="tracking-sub">
@@ -1057,6 +1109,11 @@
           <div class="panel" style="margin-top:8px">
             <div class="panel-head"><div class="panel-title">All tracked assets</div></div>
             <div class="panel-body">
+              <p class="mini-note" style="margin:0 0 10px">
+                Vehicle names, VIN, and GPS come from <strong>Samsara</strong>. Editing or adding assets in Samsara is done in
+                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> (this app uses read-only fleet APIs).
+                Local TMS trucks/trailers in Postgres (when <code>DATABASE_URL</code> is set) are managed from the dispatch / TMS screens; use the same unit codes (e.g. T160) for consistency.
+              </p>
               <input id="trackingAssetFilter" class="in" placeholder="Filter unit…" style="max-width:260px;margin-bottom:10px" oninput="renderTrackingAssetsTable()">
               <div class="table-wrap">
                 <table>
@@ -1071,7 +1128,11 @@
         </div>
 
         <div id="tr-drivers" class="tracking-sub hidden">
-          <p class="mini-note" style="margin:8px 0">Drivers from Samsara HOS clocks (same data as Safety → HOS).</p>
+          <p class="mini-note" style="margin:8px 0">
+            Drivers from Samsara HOS clocks (same as Safety → HOS). To add or rename drivers, use
+            <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> — this dashboard is read-only for ELD data.
+            Local driver records for settlements live in Postgres / TMS when configured.
+          </p>
           <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
             <label class="mini-note" for="trackingDriversDutyFilter" style="margin:0">Duty filter</label>
             <select id="trackingDriversDutyFilter" class="in" style="max-width:240px" onchange="renderTrackingDrivers()">
@@ -1086,6 +1147,43 @@
               <thead><tr><th>Driver</th><th>Duty</th><th>Vehicle</th><th>Drive left</th></tr></thead>
               <tbody id="trackingDriversBody"></tbody>
             </table>
+          </div>
+        </div>
+
+        <div id="tr-idle" class="tracking-sub hidden">
+          <div class="panel" style="margin-top:8px">
+            <div class="panel-head">
+              <div class="panel-title">Yard &amp; idle (T120–T178)</div>
+              <button type="button" onclick="loadIdleSnapshot()">Refresh</button>
+            </div>
+            <div class="panel-body">
+              <p class="mini-note" style="margin:0 0 10px">
+                Geofence for the truck yard (defaults: Mines Rd, Laredo — override <code>YARD_LAT</code>, <code>YARD_LON</code>,
+                <code>YARD_RADIUS_M</code> in server env). Shows live GPS, yard vs away, Samsara HOS duty, and (when TMS DB is configured) days since the last <strong>completed</strong> load and a rough revenue-at-risk estimate (<code>IDLE_EST_DAILY_REVENUE</code>).
+              </p>
+              <div id="idleSnapshotMeta" class="mini-note" style="margin-bottom:10px"></div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Unit</th>
+                      <th>Idle band</th>
+                      <th>In yard</th>
+                      <th>Dist m</th>
+                      <th>Engine</th>
+                      <th>Driver</th>
+                      <th>HOS</th>
+                      <th>TMS</th>
+                      <th>Days since done</th>
+                      <th>Est $ risk</th>
+                    </tr>
+                  </thead>
+                  <tbody id="idleSnapshotBody">
+                    <tr><td colspan="10" class="mini-note">Open this tab and refresh.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1106,14 +1204,24 @@
         </div>
 
         <div id="acct-transactions" class="accounting-tab">
-          <div class="panel qb-panel">
-            <div class="panel-head"><div class="panel-title">New maintenance expense (QuickBooks-style, multi-line)</div></div>
-            <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 8px">Use the same <strong>load / invoice #</strong> on every line for this trip so fuel, tolls, driver pay, and parts roll into one P&amp;L. Posting to QuickBooks sends one expense or bill with multiple lines.</p>
+          <div class="panel qb-panel qb-doc-shell">
+            <div class="qb-doc-head">
+              <div class="qb-doc-title-row">
+                <div style="flex:1;min-width:200px">
+                  <h2 class="qb-doc-h2" id="apDocTitle">Expense</h2>
+                  <p class="mini-note" style="margin:6px 0 0">QuickBooks-style header: one vendor, multiple lines. Use the same <strong>load / invoice #</strong> for trip P&amp;L. Post from the saved list below.</p>
+                </div>
+                <div class="qb-doc-total-block">
+                  <span class="qb-l" id="apDocTotalLabel">Amount</span>
+                  <div class="qb-doc-total-amt" id="apDocTotalDisplay">$0.00</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-body form-stack qb-doc-body">
               <div class="wo-line-grid">
                 <div>
                   <span class="qb-l">Type</span>
-                  <select id="apTxnType" class="qb-in">
+                  <select id="apTxnType" class="qb-in" onchange="syncApDocTitle()">
                     <option value="expense">Expense</option>
                     <option value="bill">Bill</option>
                   </select>
@@ -1166,6 +1274,37 @@
                 <input type="hidden" id="woRepairLocationType" value="" />
               </div>
 
+              <div class="qb-logistics-bar">
+                <div>
+                  <span class="qb-l">Settlement no.</span>
+                  <input id="apSettlementNo" class="qb-in" placeholder="Optional" autocomplete="off">
+                </div>
+                <div>
+                  <span class="qb-l">Pick up date</span>
+                  <input id="apPickupDate" class="qb-in" type="date">
+                </div>
+                <div>
+                  <span class="qb-l">Delivery date</span>
+                  <input id="apDeliveryDate" class="qb-in" type="date">
+                </div>
+                <div>
+                  <span class="qb-l">Empty mi</span>
+                  <input id="apEmptyMiles" class="qb-in" type="number" step="1" placeholder="0">
+                </div>
+                <div>
+                  <span class="qb-l">Loaded mi</span>
+                  <input id="apLoadedMiles" class="qb-in" type="number" step="1" placeholder="0">
+                </div>
+                <div>
+                  <span class="qb-l">1 — Origin</span>
+                  <input id="apOrigin" class="qb-in" placeholder="City, ST" autocomplete="off">
+                </div>
+                <div>
+                  <span class="qb-l">2 — Destination</span>
+                  <input id="apDestination" class="qb-in" placeholder="City, ST" autocomplete="off">
+                </div>
+              </div>
+
               <div class="row" style="grid-column:1/-1;margin-top:8px">
                 <span class="qb-l">Repair / vendor invoice PDF</span>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
@@ -1176,16 +1315,40 @@
                 <p class="mini-note" style="margin:6px 0 0">Fills invoice #, date, unit, total into the first expense line when possible. Digital PDFs only (not scanned images without OCR).</p>
               </div>
 
-              <div style="margin:10px 0 6px;font-weight:700;font-size:12px">Parts &amp; services (add multiple lines)</div>
-              <div id="woLines"></div>
-              <button type="button" class="qb-btn-add" onclick="addWoLine()">+ Add part / service line</button>
-
-              <div style="margin-top:10px">
-                <span class="qb-l">Memo (header)</span>
-                <textarea id="apMemo" class="qb-memo" placeholder="Optional memo for QuickBooks"></textarea>
+              <div style="margin:4px 0 0;font-weight:700;font-size:12px;color:#334155">Category &amp; item lines</div>
+              <div class="qb-lines-wrap">
+                <div class="qb-lines-header" aria-hidden="true">
+                  <span>#</span><span>Part / service</span><span>Type</span><span>Category</span><span>Item</span><span>Qty</span><span class="num">Amount</span><span>Tire / ref</span><span>&nbsp;</span>
+                </div>
+                <div id="woLines" style="padding:8px 10px 4px"></div>
+                <div class="qb-lines-actions">
+                  <button type="button" class="qb-btn-add" onclick="addWoLine()">+ Add lines</button>
+                  <button type="button" class="qb-btn-add" onclick="clearWoLines()">Clear all lines</button>
+                  <span class="mini-note" style="margin:0">Total lines: <strong id="woLineCount">0</strong></span>
+                </div>
               </div>
 
-              <button type="button" onclick="saveApTransaction()" style="margin-top:10px">Save expense (local) — then Post to QuickBooks from list below</button>
+              <div class="qb-doc-memo-row">
+                <div>
+                  <span class="qb-l">Memo</span>
+                  <textarea id="apMemo" class="qb-memo" placeholder="Notes for QuickBooks (header)"></textarea>
+                </div>
+                <div class="qb-attach-box">
+                  <span class="qb-l">Attachments</span>
+                  <p class="mini-note" style="margin:0">Use <strong>Repair / vendor invoice PDF</strong> above to extract lines. Full attachment sync to QBO can follow your existing posting flow.</p>
+                </div>
+              </div>
+
+              <div class="qb-doc-actions">
+                <div class="qb-actions-left">
+                  <button type="button" onclick="resetWoFormPartial()">Clear</button>
+                  <span class="mini-note" style="margin:0">Cancel = navigate away from Accounting tab.</span>
+                </div>
+                <div class="qb-actions-right">
+                  <button type="button" onclick="saveApTransaction()">Save</button>
+                  <button type="button" class="qb-btn-primary" onclick="saveApTransaction()">Save and close</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1494,12 +1657,49 @@
           </div>
         </div>
       </section>
+
+      <section id="section-catalog" class="section">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Catalogs</div>
+            <div class="mini-note" style="margin:0">Use the sidebar <strong>Catalogs ▾</strong> menu, or pick a catalog below.</div>
+          </div>
+          <div class="panel-body">
+            <div class="subtabs" style="margin-bottom:14px">
+              <button type="button" class="subtab active" data-cat-sub="service" onclick="openCatalogSubpanel('service', this)">Service types (DB)</button>
+              <button type="button" class="subtab" data-cat-sub="qbo" onclick="openCatalogSubpanel('qbo', this)">QuickBooks items &amp; accounts</button>
+              <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; parts</button>
+            </div>
+            <div id="catalog-panel-service" class="catalog-subpanel active">
+              <p class="mini-note" style="margin:0 0 10px">
+                When <code>DATABASE_URL</code> is set, service-type names come from Postgres <code>maintenance_service_catalog</code>. Lists on the maintenance form refresh after changes.
+              </p>
+              <div id="serviceCatalogAdminBody" class="mini-note">Loading catalog…</div>
+            </div>
+            <div id="catalog-panel-qbo" class="catalog-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">
+                Vendors, items, and expense accounts are mastered in <strong>QuickBooks Online</strong>. Refresh the live cache here, then pick them on bills and maintenance expense lines.
+              </p>
+              <button type="button" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
+              <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); const t=document.querySelector('#section-accounting .subtab[onclick*=acct-qbo]'); if(t) openAccountingTab('acct-qbo', t);">Open Accounting → QuickBooks Live Master</button>
+            </div>
+            <div id="catalog-panel-fleet" class="catalog-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">
+                <strong>Assets</strong> and live GPS come from <strong>Samsara</strong>. Rename vehicles or manage equipment in Samsara Cloud (API write scopes are not enabled in this app yet). <strong>Parts</strong> on maintenance rows use free text plus optional part #; a dedicated parts SKU catalog can be added later.
+              </p>
+              <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
+              <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
   <template id="woLineTemplate">
     <div class="wo-line">
       <div class="wo-line-grid">
+        <div class="wo-line-num"><span class="qb-l">#</span><span class="wo-idx">1</span></div>
         <div>
           <span class="qb-l">Part / service</span>
           <input class="qb-in wo-svc" placeholder="Description">
@@ -1535,7 +1735,7 @@
         </div>
         <div>
           <span class="qb-l">&nbsp;</span>
-          <button type="button" class="qb-btn-del" onclick="this.closest('.wo-line').remove()" title="Remove line">×</button>
+          <button type="button" class="qb-btn-del" onclick="removeWoLine(this)" title="Remove line">×</button>
         </div>
       </div>
     </div>
@@ -1550,7 +1750,7 @@
         </div>
         <div style="width:76px">
           <span class="qb-l">Qty</span>
-          <input class="qb-in maint-field maint-line-qty" type="number" step="any" min="0" placeholder="1" />
+          <input class="qb-in maint-field maint-line-qty" type="number" step="any" min="0" placeholder="1" value="1" />
         </div>
         <div style="width:104px">
           <span class="qb-l">Unit $</span>
@@ -2264,13 +2464,15 @@
         safety: 'Safety Board',
         tracking: 'Vehicle Tracking Board',
         accounting: 'Accounting Board',
-        reports: 'Reports Board'
+        reports: 'Reports Board',
+        catalog: 'Catalogs'
       };
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
       }
       if (name === 'reports') loadReportsData();
+      if (name === 'catalog') loadServiceCatalogAdminOnly();
     }
 
     function openSectionByName(name) {
@@ -2294,7 +2496,7 @@
         openAccountingTab('acct-settlement', sub);
         return;
       }
-      const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports'];
+      const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog'];
       if (allowed.includes(section)) openSectionByName(section);
     }
 
@@ -2308,6 +2510,8 @@
       if (id === 'acct-transactions') {
         const wl = document.getElementById('woLines');
         if (wl && !wl.children.length) addWoLine();
+        syncApDocTitle();
+        refreshApDocTotal();
       }
       if (id === 'acct-settlement') {
         if (!tmsEnabled) {
@@ -2689,6 +2893,7 @@
       populateServicePresetCombo();
       bindServiceSearchPreset();
       bindMaintCostLinesDelegation();
+      bindCostTotalCoordination();
 
       document.getElementById('qboVendorOptions').innerHTML =
         cacheVendors().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
@@ -2731,14 +2936,7 @@
       applyMaintenanceFieldWidths();
     }
 
-    async function loadSecurityCatalogUi() {
-      try {
-        const sec = await j('/api/maintenance/security-alerts');
-        renderSecurityAlerts(sec);
-      } catch (e) {
-        const el = document.getElementById('securityAlertsBody');
-        if (el) el.innerHTML = '<span style="color:#b91c1c">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
-      }
+    async function loadServiceCatalogAdminOnly() {
       try {
         const cat = await j('/api/maintenance/service-catalog-admin');
         renderServiceCatalogAdmin(cat);
@@ -2753,6 +2951,17 @@
       }
     }
 
+    async function loadSecurityCatalogUi() {
+      try {
+        const sec = await j('/api/maintenance/security-alerts');
+        renderSecurityAlerts(sec);
+      } catch (e) {
+        const el = document.getElementById('securityAlertsBody');
+        if (el) el.innerHTML = '<span style="color:#b91c1c">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
+      }
+      await loadServiceCatalogAdminOnly();
+    }
+
     function renderSecurityAlerts(sec) {
       const el = document.getElementById('securityAlertsBody');
       if (!el) return;
@@ -2763,7 +2972,11 @@
       const p = sec.parameters || {};
       const head = `<p class="mini-note" style="margin:0 0 10px">Window: last <strong>${sec.windowDays}</strong> days (since ${escapeHtml(
         sec.cutoff || ''
-      )}). Ratio fuel: <strong>${p.fuelPurchaseRatio}</strong> · default MPG: <strong>${p.defaultMpg}</strong> · max repairs / 7d: <strong>${p.maxRepairs7d}</strong> · tire min interval: <strong>${p.tireMinIntervalMiles} mi</strong> · high cost: <strong>$${p.highCostSingle}</strong></p>`;
+      )}). Ratio fuel: <strong>${p.fuelPurchaseRatio}</strong> · default MPG: <strong>${p.defaultMpg}</strong> · max repairs / 7d: <strong>${p.maxRepairs7d}</strong> · tire min interval: <strong>${p.tireMinIntervalMiles} mi</strong> · high cost: <strong>$${p.highCostSingle}</strong>${
+        p.driverRiskWindowDays != null
+          ? ` · driver-risk window: <strong>${p.driverRiskWindowDays}</strong>d (min events <strong>${p.driverRiskMinEvents}</strong>) · accidents: <strong>${p.driverAccidentWindowDays}</strong>d / max <strong>${p.driverRiskMaxAccidents}</strong>`
+          : ''
+      }</p>`;
       const rows = (sec.alerts || []).length
         ? (sec.alerts || [])
             .map(a => {
@@ -2797,7 +3010,24 @@
             })
             .join('')
         : '<p class="mini-note" style="margin:0">No integrity alerts for current filters.</p>';
-      el.innerHTML = head + rows;
+      const dr = (sec.driverRiskAlerts || []).length
+        ? `<div style="margin:12px 0 6px;font-weight:700;font-size:13px;color:#0f172a">Driver / damage expense signals</div>` +
+          (sec.driverRiskAlerts || [])
+            .map(a => {
+              const cls =
+                a.severity === 'high'
+                  ? 'sec-alert-high'
+                  : a.severity === 'warn'
+                    ? 'sec-alert-warn'
+                    : 'sec-alert-info';
+              const driver = a.driverHint ? ` · Driver (Samsara window): ${escapeHtml(a.driverHint)}` : '';
+              return `<div class="${cls}"><strong>${escapeHtml(a.type || '')}</strong> — ${escapeHtml(
+                a.unit || ''
+              )}${driver}<div style="margin-top:6px">${escapeHtml(a.message || '')}</div></div>`;
+            })
+            .join('')
+        : '<p class="mini-note" style="margin:8px 0 0">No driver-risk pattern alerts for current text rules.</p>';
+      el.innerHTML = head + rows + dr;
     }
 
     function renderServiceCatalogAdmin(cat) {
@@ -3644,34 +3874,77 @@
       return out;
     }
 
-    function recalcMaintCostTotalFromLines() {
+    function sumMaintCostLineAmounts() {
       const lines = collectMaintCostLines();
       const sum = lines.reduce((s, x) => s + (Number(x.amount) || 0), 0);
-      const rounded = Math.round(sum * 100) / 100;
+      return Math.round(sum * 100) / 100;
+    }
+
+    function updateMaintCostTotalMatchUi(lineSum, hasLineMoney) {
+      const matchEl = document.getElementById('maintCostTotalMatch');
+      const costEl = document.getElementById('costInput');
+      if (!matchEl || !costEl) return;
+      const inv = Number(costEl.value);
+      const invOk = Number.isFinite(inv);
+      if (!hasLineMoney) {
+        matchEl.textContent = '';
+        costEl.classList.remove('cost-total-ok', 'cost-total-bad');
+        return;
+      }
+      if (!invOk) {
+        matchEl.textContent = 'Line sum: $' + lineSum.toFixed(2) + ' — enter invoice total to match.';
+        costEl.classList.remove('cost-total-ok', 'cost-total-bad');
+        return;
+      }
+      const diff = Math.abs(lineSum - inv);
+      if (diff < 0.02) {
+        matchEl.innerHTML =
+          '<span style="color:#15803d;font-weight:600">✓</span> Invoice total matches line sum: $' + lineSum.toFixed(2);
+        costEl.classList.add('cost-total-ok');
+        costEl.classList.remove('cost-total-bad');
+      } else {
+        matchEl.innerHTML =
+          '<span style="color:#b91c1c;font-weight:600">✗</span> Invoice total $' +
+          inv.toFixed(2) +
+          ' ≠ line sum $' +
+          lineSum.toFixed(2) +
+          ' (diff $' +
+          diff.toFixed(2) +
+          ') — adjust lines or total before save.';
+        costEl.classList.add('cost-total-bad');
+        costEl.classList.remove('cost-total-ok');
+      }
+    }
+
+    function recalcMaintCostTotalFromLines() {
+      const lines = collectMaintCostLines();
+      const rounded = sumMaintCostLineAmounts();
       const costEl = document.getElementById('costInput');
       const sub = document.getElementById('maintCostLinesSubtotal');
+      const lock = document.getElementById('costTotalLock')?.checked;
       const hasAmt = lines.some(l => l.amount > 0);
-      if (hasAmt) {
-        if (costEl) {
-          costEl.value = rounded.toFixed(2);
-          costEl.readOnly = true;
-        }
-        if (sub) {
+
+      if (hasAmt && costEl && !lock) {
+        costEl.value = rounded.toFixed(2);
+      }
+      if (costEl) costEl.readOnly = false;
+
+      if (sub) {
+        if (hasAmt) {
           sub.textContent =
-            'Line subtotal: $' +
+            'Line sum: $' +
             rounded.toFixed(2) +
-            ' — invoice total matches this sum for unit ' +
+            ' (unit ' +
             (selectedUnit || '—') +
-            '. Clear qty/unit/line $ on all rows to enter one manual total above.';
-        }
-      } else {
-        if (costEl) costEl.readOnly = false;
-        if (sub) {
+            '). Invoice total must equal this when lines carry amounts — or check “Lock invoice total” to type a manual total that still must match on save.';
+        } else {
           sub.textContent = lines.length
-            ? 'Enter amounts on lines to auto-fill total, or leave amounts blank and enter total above.'
+            ? 'Enter qty × unit $ or line $ on rows, or leave line amounts blank and enter one invoice total above.'
             : '';
         }
       }
+
+      updateMaintCostTotalMatchUi(rounded, hasAmt);
       updateMaintInvoiceCostCoordination(lines, rounded, hasAmt);
     }
 
@@ -3686,19 +3959,13 @@
         return;
       }
       wrap.style.display = 'block';
-      const costEl = document.getElementById('costInput');
-      const locked = costEl && costEl.readOnly;
       wrap.innerHTML = `
         <div class="coord-row">
           <div><strong>Unit</strong> ${escapeHtml(unit)} · <strong>Cost lines</strong> ${n}</div>
-          <div class="coord-total">Invoice total: $${rounded.toFixed(2)}</div>
+          <div class="coord-total">Line sum: $${rounded.toFixed(2)}</div>
         </div>
         <div style="margin-top:6px;font-size:12px;color:var(--muted)">
-          ${
-            locked
-              ? 'Total is coordinated with the line breakdown below. Editing qty / unit price / line $ updates this total.'
-              : 'Add line $ amounts to lock the invoice total, or type one amount in Total cost when there are no line amounts.'
-          }
+          Qty × unit $ updates line $ automatically. Invoice total must equal this sum when you save with line amounts (unless all line $ are cleared and you use a single total only).
         </div>`;
     }
 
@@ -3740,7 +4007,7 @@
         const aid = row.querySelector('.maint-line-acct-id');
         const iid = row.querySelector('.maint-line-item-id');
         if (d) d.value = '';
-        if (q) q.value = '';
+        if (q) q.value = '1';
         if (u) u.value = '';
         if (a) {
           a.value = '';
@@ -3779,7 +4046,12 @@
       if (ce) {
         ce.value = '';
         ce.readOnly = false;
+        ce.classList.remove('cost-total-ok', 'cost-total-bad');
       }
+      const lk = document.getElementById('costTotalLock');
+      if (lk) lk.checked = false;
+      const mm = document.getElementById('maintCostTotalMatch');
+      if (mm) mm.textContent = '';
       const sub = document.getElementById('maintCostLinesSubtotal');
       if (sub) sub.textContent = '';
     }
@@ -3799,11 +4071,58 @@
       const host = document.getElementById('maintCostLinesHost');
       if (!host) return;
       maintCostLinesDelegationBound = true;
-      host.addEventListener('input', e => {
+      const onLineChange = e => {
         const row = e.target && e.target.closest && e.target.closest('.maint-cost-line');
         if (row) recalcMaintLineRowInputs(row);
         recalcMaintCostTotalFromLines();
+      };
+      host.addEventListener('input', onLineChange);
+      host.addEventListener('change', onLineChange);
+    }
+
+    let costTotalCoordinationBound = false;
+    function bindCostTotalCoordination() {
+      if (costTotalCoordinationBound) return;
+      const costEl = document.getElementById('costInput');
+      const lockEl = document.getElementById('costTotalLock');
+      if (!costEl) return;
+      costTotalCoordinationBound = true;
+      costEl.addEventListener('input', () => {
+        const lines = collectMaintCostLines();
+        const rounded = sumMaintCostLineAmounts();
+        const hasAmt = lines.some(l => l.amount > 0);
+        updateMaintCostTotalMatchUi(rounded, hasAmt);
       });
+      if (lockEl) {
+        lockEl.addEventListener('change', () => recalcMaintCostTotalFromLines());
+      }
+    }
+
+    function syncLinkedVendorFromMainVendor() {
+      const mainEl = document.getElementById('vendorInput');
+      const linkedSearch = document.getElementById('linkedVendorSearch');
+      const linkedId = document.getElementById('linkedVendorQboId');
+      if (!mainEl || !linkedSearch) return;
+      const raw = mainEl.value.trim();
+      if (!raw) return;
+      const match = findBestNameMatch(cacheVendors(), raw);
+      if (match) {
+        linkedSearch.value = match.name || match.companyName || raw;
+        if (linkedId) linkedId.value = match.qboId;
+      }
+    }
+
+    function openCatalogSubpanel(which, btn) {
+      document.querySelectorAll('#section-catalog .catalog-subpanel').forEach(el => el.classList.remove('active'));
+      const p = document.getElementById('catalog-panel-' + which);
+      if (p) p.classList.add('active');
+      document.querySelectorAll('#section-catalog .subtabs .subtab').forEach(el => el.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      else {
+        const b = document.querySelector(`#section-catalog .subtab[data-cat-sub="${which}"]`);
+        if (b) b.classList.add('active');
+      }
+      if (which === 'service') loadServiceCatalogAdminOnly();
     }
 
     function populateServicePresetCombo() {
@@ -4024,6 +4343,83 @@
       const mode = sel.value;
       row.querySelectorAll('.wo-block-cat').forEach(el => el.classList.toggle('hidden', mode !== 'category'));
       row.querySelectorAll('.wo-block-item').forEach(el => el.classList.toggle('hidden', mode !== 'item'));
+      refreshApDocTotal();
+    }
+
+    function syncApDocTitle() {
+      const sel = document.getElementById('apTxnType');
+      const h = document.getElementById('apDocTitle');
+      const lab = document.getElementById('apDocTotalLabel');
+      if (!sel || !h) return;
+      const isBill = sel.value === 'bill';
+      h.textContent = isBill ? 'Bill' : 'Expense';
+      if (lab) lab.textContent = isBill ? 'Balance due' : 'Amount';
+    }
+
+    function refreshApDocTotal() {
+      const host = document.getElementById('woLines');
+      const out = document.getElementById('apDocTotalDisplay');
+      const cnt = document.getElementById('woLineCount');
+      if (!host || !out) return;
+      let sum = 0;
+      host.querySelectorAll('.wo-amt').forEach(inp => {
+        sum += Number(inp.value) || 0;
+      });
+      out.textContent =
+        '$' +
+        sum.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      if (cnt) cnt.textContent = String(host.querySelectorAll('.wo-line').length);
+    }
+
+    function refreshWoLineIndices() {
+      const host = document.getElementById('woLines');
+      if (!host) return;
+      host.querySelectorAll('.wo-line').forEach((row, i) => {
+        const ix = row.querySelector('.wo-idx');
+        if (ix) ix.textContent = String(i + 1);
+      });
+    }
+
+    function clearWoLines() {
+      const host = document.getElementById('woLines');
+      if (!host) return;
+      host.innerHTML = '';
+      addWoLine();
+    }
+
+    function resetWoFormPartial() {
+      clearWoLines();
+      document.getElementById('apMemo').value = '';
+      const sn = document.getElementById('apSettlementNo');
+      const pu = document.getElementById('apPickupDate');
+      const de = document.getElementById('apDeliveryDate');
+      const em = document.getElementById('apEmptyMiles');
+      const lm = document.getElementById('apLoadedMiles');
+      const o = document.getElementById('apOrigin');
+      const d = document.getElementById('apDestination');
+      if (sn) sn.value = '';
+      if (pu) pu.value = '';
+      if (de) de.value = '';
+      if (em) em.value = '';
+      if (lm) lm.value = '';
+      if (o) o.value = '';
+      if (d) d.value = '';
+      refreshApDocTotal();
+    }
+
+    function removeWoLine(btn) {
+      const row = btn?.closest?.('.wo-line');
+      const host = document.getElementById('woLines');
+      if (!row || !host) return;
+      row.remove();
+      if (!host.querySelector('.wo-line')) addWoLine();
+      else {
+        refreshWoLineIndices();
+        refreshApDocTotal();
+      }
     }
 
     function addWoLine() {
@@ -4031,6 +4427,8 @@
       const host = document.getElementById('woLines');
       if (!tpl || !host) return;
       host.appendChild(tpl.content.cloneNode(true));
+      refreshWoLineIndices();
+      refreshApDocTotal();
     }
 
     async function parseApInvoicePdf() {
@@ -4077,6 +4475,7 @@
             if (svc) svc.value = 'Repair / parts (from PDF)';
             if (amt) amt.value = String(p.amount);
           }
+          refreshApDocTotal();
         }
         if (st) {
           st.textContent =
@@ -4103,8 +4502,24 @@
       const abid = document.getElementById('apBankAccountQboId');
       if (abs) abs.value = '';
       if (abid) abid.value = '';
+      const sn = document.getElementById('apSettlementNo');
+      const pu = document.getElementById('apPickupDate');
+      const de = document.getElementById('apDeliveryDate');
+      const em = document.getElementById('apEmptyMiles');
+      const lm = document.getElementById('apLoadedMiles');
+      const o = document.getElementById('apOrigin');
+      const d = document.getElementById('apDestination');
+      if (sn) sn.value = '';
+      if (pu) pu.value = '';
+      if (de) de.value = '';
+      if (em) em.value = '';
+      if (lm) lm.value = '';
+      if (o) o.value = '';
+      if (d) d.value = '';
       document.getElementById('woLines').innerHTML = '';
       addWoLine();
+      syncApDocTitle();
+      refreshApDocTotal();
     }
 
     function resolveWoLineAccount(input) {
@@ -4657,6 +5072,18 @@
 
       recalcMaintCostTotalFromLines();
       const costLinesPayload = collectMaintCostLines();
+      const lineSum = costLinesPayload.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+      const invTotal = Number(document.getElementById('costInput')?.value || 0);
+      const hasLineMoney = costLinesPayload.some(l => Number(l.amount) > 0);
+      if (hasLineMoney && Math.abs(lineSum - invTotal) > 0.02) {
+        alert(
+          `Invoice total ($${invTotal.toFixed(2)}) must equal the sum of cost lines ($${lineSum.toFixed(
+            2
+          )}). Adjust qty × unit $, line amounts, or the invoice total (uncheck “Lock invoice total” to auto-fill from lines).`
+        );
+        return;
+      }
+      syncLinkedVendorFromMainVendor();
       const tireLineItems = recordType === 'tire' ? collectTireLineItems() : [];
       const composedNotes = composeRecordNotesForSave();
 
@@ -4954,6 +5381,57 @@
       if (id === 'tr-map') requestAnimationFrame(() => initErpTrackingMap());
       if (id === 'tr-assets') renderTrackingAssetsTable();
       if (id === 'tr-drivers') renderTrackingDrivers();
+      if (id === 'tr-idle') loadIdleSnapshot();
+    }
+
+    async function loadIdleSnapshot() {
+      const meta = document.getElementById('idleSnapshotMeta');
+      const tb = document.getElementById('idleSnapshotBody');
+      if (meta) meta.textContent = 'Loading…';
+      try {
+        const data = await j('/api/tracking/idle-snapshot');
+        if (!data || !data.ok) throw new Error(data?.error || 'Idle snapshot failed');
+        const y = data.yard || {};
+        if (meta) {
+          meta.innerHTML = `${escapeHtml(y.label || '')} · center ${y.latitude}, ${y.longitude} · radius ${y.radiusM} m · Samsara ${escapeHtml(
+            data.samsaraRefreshedAt || ''
+          )}`;
+        }
+        const notes = (data.notes || []).map(n => `<div class="mini-note" style="color:#b45309">${escapeHtml(n)}</div>`).join('');
+        if (meta && notes) meta.innerHTML += notes;
+        const rows = data.vehicles || [];
+        if (tb) {
+          tb.innerHTML =
+            rows
+              .map(v => {
+                const trip = v.tmsActiveLoad;
+                const tms =
+                  trip && trip.load_number
+                    ? `${escapeHtml(String(trip.load_number))} (${escapeHtml(String(trip.status || ''))})`
+                    : '—';
+                return `<tr>
+                  <td>${escapeHtml(v.unit || '')}</td>
+                  <td>${escapeHtml(v.idleBand || '')}</td>
+                  <td>${v.inYard ? 'Yes' : 'No'}</td>
+                  <td>${v.distanceToYardM != null ? escapeHtml(String(v.distanceToYardM)) : '—'}</td>
+                  <td>${escapeHtml(String(v.engineState || ''))}</td>
+                  <td>${escapeHtml(String(v.driverName || '—'))}</td>
+                  <td>${escapeHtml(String(v.hosDutyType || '—'))}</td>
+                  <td>${tms}</td>
+                  <td>${v.daysSinceLastCompletedLoad != null ? escapeHtml(String(v.daysSinceLastCompletedLoad)) : '—'}</td>
+                  <td>${v.estimatedRevenueAtRisk != null ? Number(v.estimatedRevenueAtRisk).toFixed(0) : '—'}</td>
+                </tr>`;
+              })
+              .join('') ||
+            '<tr><td colspan="10" class="mini-note">No T120–T178 units in Samsara snapshot.</td></tr>';
+        }
+      } catch (e) {
+        if (meta) meta.textContent = 'Error: ' + (e.message || String(e));
+        if (tb) {
+          tb.innerHTML =
+            '<tr><td colspan="10" class="mini-note" style="color:#b91c1c">Could not load idle snapshot. Check Samsara token and server logs.</td></tr>';
+        }
+      }
     }
 
     function fmtDurationMs(ms) {
@@ -6097,6 +6575,13 @@
           internalWorkOrderNumber: internalWo,
           vendorInvoiceNumber: vendorInv,
           notes: document.getElementById('apMemo').value,
+          settlementNo: document.getElementById('apSettlementNo')?.value?.trim() || '',
+          pickupDate: document.getElementById('apPickupDate')?.value || '',
+          deliveryDate: document.getElementById('apDeliveryDate')?.value || '',
+          emptyMiles: document.getElementById('apEmptyMiles')?.value ?? '',
+          loadedMiles: document.getElementById('apLoadedMiles')?.value ?? '',
+          origin: document.getElementById('apOrigin')?.value?.trim() || '',
+          destination: document.getElementById('apDestination')?.value?.trim() || '',
           lines
         })
       });
@@ -6104,6 +6589,8 @@
       resetWoForm();
       await loadAll();
       openSectionByName('accounting');
+      const apList = document.getElementById('apList');
+      if (apList) apList.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     async function postWorkOrderToQbo(woId) {
@@ -6249,11 +6736,20 @@
       downloadCsv(`work-orders.csv`, rows);
     }
 
+    const woLinesHostInit = document.getElementById('woLines');
+    if (woLinesHostInit) {
+      woLinesHostInit.addEventListener('input', e => {
+        if (e.target && e.target.classList && e.target.classList.contains('wo-amt')) refreshApDocTotal();
+      });
+    }
+
     loadErpSidebarPreference();
     loadUnitListPreference();
     loadAll();
     setInterval(loadAll, AUTO_REFRESH_MS);
     if (document.getElementById('woLines') && !document.getElementById('woLines').children.length) addWoLine();
+    syncApDocTitle();
+    refreshApDocTotal();
   </script>
 </body>
 </html>

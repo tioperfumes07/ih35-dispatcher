@@ -628,7 +628,7 @@ function assetCategoryForVehicle(v) {
 
 function isTrackedAsset(v) {
   const unitNum = parseUnitNumber(v.name);
-  const inTruckRange = unitNum !== null && unitNum >= 120 && unitNum <= 177;
+  const inTruckRange = unitNum !== null && unitNum >= 120 && unitNum <= 178;
   const text = `${v.name || ''} ${v.make || ''} ${v.model || ''} ${v.notes || ''}`.toLowerCase();
 
   return (
@@ -2348,6 +2348,241 @@ function securityCutoffDate(days) {
   return { days: n, cutoffStr: d.toISOString().slice(0, 10) };
 }
 
+function driverRiskWindowCutoff() {
+  const n = Math.min(90, Math.max(14, Number(process.env.DRIVER_RISK_WINDOW_DAYS || 30)));
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return { days: n, cutoffStr: d.toISOString().slice(0, 10) };
+}
+
+function driverAccidentWindowCutoff() {
+  const n = Math.min(365, Math.max(30, Number(process.env.DRIVER_RISK_ACCIDENT_WINDOW_DAYS || 90)));
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return { days: n, cutoffStr: d.toISOString().slice(0, 10) };
+}
+
+function isRoutineMaintenanceText(blob) {
+  const t = String(blob || '').toLowerCase();
+  return /\b(pm\b|preventive|oil change|lubrication|lube\b|dot\s*inspect|annual inspect|filter\s*service|alignment|rotation)\b/i.test(
+    t
+  );
+}
+
+/** Non-PM damage / abuse signals for driver-focused alerts (keywords, not full NLP). */
+function isRiskExpenseBlob(blob) {
+  const t = String(blob || '').toLowerCase();
+  if (!t.trim()) return false;
+  if (isRoutineMaintenanceText(t)) return false;
+  return (
+    /\b(accident|collision|damage|air\s*bag|airbag|tow\b|roadside|body shop|glass|windshield|bumper|hood|fender|claim)\b/i.test(
+      t
+    ) ||
+    (/\b(tire|tyre)\b/i.test(t) &&
+      /\b(replace|replacement|road\s*hazard|blowout|recap|new\s+tire)\b/i.test(t)) ||
+    /\b(def|aftertreatment|derate|scr|dpf)\b/i.test(t)
+  );
+}
+
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = x => (x * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+function dutyNormServer(s) {
+  return String(s || '')
+    .replace(/[\s_-]/g, '')
+    .toLowerCase();
+}
+
+function isInServiceDutyServer(dutyType) {
+  const x = dutyNormServer(dutyType);
+  return (
+    x === 'driving' || x === 'onduty' || x === 'yardmove' || x === 'waitingtime'
+  );
+}
+
+function parseAssignEndMs(s) {
+  if (s == null || s === '') return null;
+  const t = Date.parse(String(s));
+  return Number.isNaN(t) ? null : t;
+}
+
+function assignmentIsActiveNowServer(a, nowMs = Date.now()) {
+  const endMs = parseAssignEndMs(a?.endTime || a?.endAt);
+  if (endMs == null) return true;
+  return endMs > nowMs;
+}
+
+function driverFromAssignments(assignments, unitName, nowMs = Date.now()) {
+  const un = String(unitName || '').trim();
+  if (!un) return null;
+  for (const a of assignments || []) {
+    const vn = String(a?.vehicle?.name || a?.vehicleName || '').trim();
+    if (vn !== un) continue;
+    if (assignmentIsActiveNowServer(a, nowMs)) {
+      const dr = String(a?.driver?.name || a?.driverName || '').trim();
+      return dr || null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Driver-facing expense pattern alerts: repeated non-PM damage/repair language and accident records.
+ */
+function computeDriverRiskAlerts(erp, driversByUnit) {
+  const drWin = driverRiskWindowCutoff();
+  const accWin = driverAccidentWindowCutoff();
+  const minEvents = Math.max(2, Number(process.env.DRIVER_RISK_MIN_EVENTS || 4));
+  const maxAcc = Math.max(1, Number(process.env.DRIVER_RISK_MAX_ACCIDENTS || 2));
+
+  const riskCountByUnit = {};
+  const accidentCountByUnit = {};
+
+  for (const r of erp.records || []) {
+    const d = String(r.serviceDate || '').slice(0, 10);
+    if (!d) continue;
+    const blob = [r.serviceType, r.recordType, r.notes].filter(Boolean).join(' ');
+    const unit = String(r.unit || '').trim();
+    if (String(r.recordType || '').toLowerCase() === 'accident' && d >= accWin.cutoffStr) {
+      accidentCountByUnit[unit] = (accidentCountByUnit[unit] || 0) + 1;
+    }
+    if (d < drWin.cutoffStr || !unit) continue;
+    if (String(r.recordType || '').toLowerCase() === 'accident') continue;
+    if (isRiskExpenseBlob(blob)) {
+      riskCountByUnit[unit] = (riskCountByUnit[unit] || 0) + 1;
+    }
+  }
+
+  for (const wo of erp.workOrders || []) {
+    const d = String(wo.serviceDate || '').slice(0, 10);
+    if (!d || d < drWin.cutoffStr) continue;
+    const unit = String(wo.unit || '').trim();
+    if (!unit) continue;
+    for (const line of wo.lines || []) {
+      const blob = [line.serviceType, line.notes].filter(Boolean).join(' ');
+      if (isRiskExpenseBlob(blob)) {
+        riskCountByUnit[unit] = (riskCountByUnit[unit] || 0) + 1;
+      }
+    }
+  }
+
+  for (const ap of erp.apTransactions || []) {
+    const d = String(ap.txnDate || '').slice(0, 10);
+    if (!d || d < drWin.cutoffStr) continue;
+    const unit = String(ap.assetUnit || '').trim();
+    if (!unit) continue;
+    const blob = [ap.description, ap.memo].filter(Boolean).join(' ');
+    if (isRiskExpenseBlob(blob)) {
+      riskCountByUnit[unit] = (riskCountByUnit[unit] || 0) + 1;
+    }
+  }
+
+  const alerts = [];
+  for (const [unit, n] of Object.entries(riskCountByUnit)) {
+    if (n >= minEvents) {
+      alerts.push({
+        severity: 'warn',
+        type: 'driver_damage_repair_pattern',
+        unit,
+        driverHint: driversByUnit[unit] || null,
+        message: `Non-routine damage / repair signals (${n} events in ${drWin.days}d) — review driver assignment, habits, and vendor invoices.`,
+        eventCount: n,
+        windowDays: drWin.days
+      });
+    }
+  }
+  for (const [unit, n] of Object.entries(accidentCountByUnit)) {
+    if (n >= maxAcc) {
+      alerts.push({
+        severity: 'high',
+        type: 'driver_repeat_accidents',
+        unit,
+        driverHint: driversByUnit[unit] || null,
+        message: `${n} accident records in ${accWin.days}d — safety review recommended.`,
+        accidentCount: n,
+        windowDays: accWin.days
+      });
+    }
+  }
+
+  return {
+    alerts,
+    parameters: {
+      driverRiskWindowDays: drWin.days,
+      driverRiskMinEvents: minEvents,
+      driverAccidentWindowDays: accWin.days,
+      driverRiskMaxAccidents: maxAcc
+    }
+  };
+}
+
+const TMS_ACTIVE_LOAD_STATUSES = [
+  'open',
+  'covered',
+  'dispatched',
+  'on_route',
+  'loading',
+  'unloading'
+];
+const TMS_COMPLETED_STATUSES = ['delivered', 'unsettled'];
+
+async function fetchTmsTruckIdleByUnit() {
+  if (!getPool()) return {};
+  try {
+    const { rows } = await dbQuery(
+      `SELECT
+        t.unit_code,
+        (
+          SELECT jsonb_build_object(
+            'load_number', l.load_number,
+            'status', l.status,
+            'end_date', l.end_date,
+            'start_date', l.start_date
+          )
+          FROM loads l
+          WHERE l.truck_id = t.id AND l.status = ANY($1::text[])
+          ORDER BY l.updated_at DESC NULLS LAST
+          LIMIT 1
+        ) AS active_load,
+        (
+          SELECT MAX(l.end_date)::text
+          FROM loads l
+          WHERE l.truck_id = t.id AND l.status = ANY($2::text[])
+        ) AS last_completed_end
+      FROM trucks t`,
+      [TMS_ACTIVE_LOAD_STATUSES, TMS_COMPLETED_STATUSES]
+    );
+    const map = {};
+    for (const r of rows) {
+      const code = String(r.unit_code || '').trim();
+      if (!code) continue;
+      map[code] = {
+        activeLoad: r.active_load || null,
+        lastCompletedEnd: r.last_completed_end || null
+      };
+    }
+    return map;
+  } catch (err) {
+    logError('fetchTmsTruckIdleByUnit', err);
+    return {};
+  }
+}
+
+function daysSinceDateStr(isoDate) {
+  if (!isoDate) return null;
+  const d = new Date(String(isoDate).slice(0, 10));
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
 /**
  * Parts / repair frequency, tire interval checks, and fuel purchase vs miles heuristic.
  * Operational status (assetStatusByUnit) is surfaced when present but rules are mileage- and spend-based.
@@ -2505,6 +2740,8 @@ function computeMaintenanceSecurityAlerts(erp, boardAssignments, vehicleByName) 
     }
   }
 
+  const driverRisk = computeDriverRiskAlerts(erp, driversByUnit);
+
   return {
     ok: true,
     windowDays: days,
@@ -2514,9 +2751,11 @@ function computeMaintenanceSecurityAlerts(erp, boardAssignments, vehicleByName) 
       defaultMpg,
       maxRepairs7d: maxRepairs7,
       tireMinIntervalMiles: tireMinMi,
-      highCostSingle: highCost
+      highCostSingle: highCost,
+      ...driverRisk.parameters
     },
     alerts,
+    driverRiskAlerts: driverRisk.alerts,
     fuelTheftCandidates: fuelDetails,
     driversByUnit
   };
@@ -2549,14 +2788,200 @@ app.get('/api/maintenance/security-alerts', async (_req, res) => {
     assignmentsUrl.searchParams.set('filterBy', 'vehicles');
     assignmentsUrl.searchParams.set('startTime', startTime);
     assignmentsUrl.searchParams.set('endTime', endTime);
-    const assignmentsRes = await fetchJson(assignmentsUrl.toString(), {
-      headers: samsaraHeaders()
-    }).catch(() => ({ data: [] }));
+    const [assignmentsRes, vehiclesRaw] = await Promise.all([
+      fetchJson(assignmentsUrl.toString(), {
+        headers: samsaraHeaders()
+      }).catch(() => ({ data: [] })),
+      fetchVehiclesSafely()
+    ]);
     const vehicleByName = {};
+    for (const v of vehiclesRaw || []) {
+      const n = String(v?.name || '').trim();
+      if (n) vehicleByName[n] = v;
+    }
     const data = computeMaintenanceSecurityAlerts(erp, assignmentsRes.data || [], vehicleByName);
     res.json(data);
   } catch (error) {
     logError('api/maintenance/security-alerts', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/** Stable JSON for external tools (Cursor extensions, scripts): security + driver-risk + expense rollup. */
+app.get('/api/analytics/fleet-inconsistencies', async (_req, res) => {
+  try {
+    const erp = readErp();
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
+    assignmentsUrl.searchParams.set('filterBy', 'vehicles');
+    assignmentsUrl.searchParams.set('startTime', startTime);
+    assignmentsUrl.searchParams.set('endTime', endTime);
+    const [assignmentsRes, vehiclesRaw] = await Promise.all([
+      fetchJson(assignmentsUrl.toString(), {
+        headers: samsaraHeaders()
+      }).catch(() => ({ data: [] })),
+      fetchVehiclesSafely()
+    ]);
+    const vehicleByName = {};
+    for (const v of vehiclesRaw || []) {
+      const n = String(v?.name || '').trim();
+      if (n) vehicleByName[n] = v;
+    }
+    const security = computeMaintenanceSecurityAlerts(
+      erp,
+      assignmentsRes.data || [],
+      vehicleByName
+    );
+    const expenseSummary30 = expenseSummaryByCategory(erp, 30);
+    res.json({
+      ok: true,
+      apiVersion: '1',
+      generatedAt: new Date().toISOString(),
+      security,
+      expenseSummary30
+    });
+  } catch (error) {
+    logError('api/analytics/fleet-inconsistencies', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * Yard geofence + TMS idle hints for T120–T178. Requires Samsara; TMS columns optional (DATABASE_URL).
+ */
+app.get('/api/tracking/idle-snapshot', async (_req, res) => {
+  try {
+    const yardLat = Number(process.env.YARD_LAT || 27.65138);
+    const yardLon = Number(process.env.YARD_LON || -99.62903);
+    const yardRadiusM = Math.max(50, Number(process.env.YARD_RADIUS_M || 2000));
+    const dailyRev = Math.max(0, Number(process.env.IDLE_EST_DAILY_REVENUE || 800));
+    const yardLabel =
+      String(process.env.YARD_LABEL || '').trim() ||
+      '21918 Mines Rd, Laredo, TX (geofence — set YARD_LAT/YARD_LON)';
+
+    const [fleetSnap, hosAll, assignmentsRes, tmsByUnit] = await Promise.all([
+      fetchTrackedFleetSnapshot(),
+      fetchAllSamsaraHosClocks(),
+      (async () => {
+        const now = new Date();
+        const startTime = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+        const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+        const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
+        assignmentsUrl.searchParams.set('filterBy', 'vehicles');
+        assignmentsUrl.searchParams.set('startTime', startTime);
+        assignmentsUrl.searchParams.set('endTime', endTime);
+        return fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({
+          data: []
+        }));
+      })(),
+      fetchTmsTruckIdleByUnit()
+    ]);
+    const { enrichedVehicles, refreshedAt } = fleetSnap;
+
+    const assignments = assignmentsRes.data || [];
+    const nowMs = Date.now();
+
+    const hosByVehicleName = {};
+    for (const c of hosAll || []) {
+      const vn = String(c?.currentVehicle?.name || '').trim();
+      if (vn) hosByVehicleName[vn] = c;
+    }
+
+    const notes = [];
+    if (!getPool()) {
+      notes.push(
+        'TMS database not configured — trip / idle columns from loads are omitted (set DATABASE_URL).'
+      );
+    }
+
+    const vehicles = [];
+    for (const v of enrichedVehicles) {
+      const un = String(v.name || '').trim();
+      const n = parseUnitNumber(un);
+      if (n == null || n < 120 || n > 178) continue;
+
+      const lat = v.latitude != null ? Number(v.latitude) : null;
+      const lon = v.longitude != null ? Number(v.longitude) : null;
+      let distanceM = null;
+      let inYard = false;
+      if (lat != null && lon != null && Number.isFinite(lat) && Number.isFinite(lon)) {
+        distanceM = haversineMeters(lat, lon, yardLat, yardLon);
+        inYard = distanceM <= yardRadiusM;
+      }
+
+      const clock = hosByVehicleName[un];
+      const dutyType = clock?.currentDutyStatus?.hosStatusType || '';
+      const driverHos = String(clock?.driver?.name || '').trim();
+      const driverAssign = driverFromAssignments(assignments, un, nowMs);
+      const driverName = driverAssign || driverHos || null;
+
+      const tms = tmsByUnit[un] || {};
+      const activeLoad = tms.activeLoad || null;
+      const lastEnd = tms.lastCompletedEnd || null;
+      const daysSince = daysSinceDateStr(lastEnd);
+
+      const hasActiveTrip = !!(
+        activeLoad &&
+        activeLoad.status &&
+        TMS_ACTIVE_LOAD_STATUSES.includes(String(activeLoad.status))
+      );
+      const workingHos = isInServiceDutyServer(dutyType);
+      const workingTripLikely = hasActiveTrip || workingHos;
+
+      let idleBand = 'unknown';
+      if (workingTripLikely) idleBand = 'working';
+      else if (inYard) idleBand = 'yard_idle';
+      else if (lat != null && lon != null) idleBand = 'away_idle';
+      else idleBand = 'no_gps';
+
+      let estimatedRevenueAtRisk = null;
+      if (!workingTripLikely && daysSince != null && daysSince > 0 && dailyRev > 0) {
+        estimatedRevenueAtRisk = Math.round(daysSince * dailyRev * 100) / 100;
+      }
+
+      vehicles.push({
+        unit: un,
+        vehicleId: String(v.id || v.vehicleId || v.ids?.samsaraId || ''),
+        latitude: lat,
+        longitude: lon,
+        engineState: v.engineState || '',
+        liveStatsUpdatedAt: v.liveStatsUpdatedAt || '',
+        inYard,
+        distanceToYardM:
+          distanceM != null ? Math.round(distanceM) : null,
+        yardLabel,
+        driverName,
+        hosDutyType: dutyType || null,
+        tmsActiveLoad: activeLoad,
+        lastCompletedLoadEnd: lastEnd,
+        daysSinceLastCompletedLoad: daysSince,
+        workingTripLikely,
+        idleBand,
+        estimatedRevenueAtRisk
+      });
+    }
+
+    vehicles.sort(byVehicleName);
+
+    res.json({
+      ok: true,
+      generatedAt: new Date().toISOString(),
+      samsaraRefreshedAt: refreshedAt,
+      yard: {
+        label: yardLabel,
+        addressNote: 'Default center is approximate for Mines Rd, Laredo — override YARD_LAT / YARD_LON.',
+        latitude: yardLat,
+        longitude: yardLon,
+        radiusM: yardRadiusM
+      },
+      parameters: { idleEstDailyRevenue: dailyRev },
+      notes,
+      vehicles
+    });
+  } catch (error) {
+    logError('api/tracking/idle-snapshot', error);
     res.status(500).json({ ok: false, error: error.message });
   }
 });
@@ -3869,6 +4294,13 @@ app.post('/api/work-orders', (req, res) => {
       dueDate: body.dueDate || '',
       qboTermId: String(body.qboTermId || '').trim(),
       notes: body.notes || '',
+      settlementNo: String(body.settlementNo || '').trim() || null,
+      pickupDate: String(body.pickupDate || '').trim() || null,
+      deliveryDate: String(body.deliveryDate || '').trim() || null,
+      emptyMiles: body.emptyMiles != null && String(body.emptyMiles).trim() !== '' ? String(body.emptyMiles).trim() : null,
+      loadedMiles: body.loadedMiles != null && String(body.loadedMiles).trim() !== '' ? String(body.loadedMiles).trim() : null,
+      origin: String(body.origin || '').trim() || null,
+      destination: String(body.destination || '').trim() || null,
       qboSyncStatus: '',
       qboEntityType: '',
       qboEntityId: '',
