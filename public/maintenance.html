@@ -7179,7 +7179,7 @@
       await loadAll();
     }
 
-    async function saveRecord() {
+    async function saveRecord(postToQbo = false, closeAfter = false) {
       if (!selectedUnit) return;
 
       resolveServiceSearch();
@@ -7316,6 +7316,7 @@
           tireLineItems,
           costLines: costLinesPayload,
           qboVendorId: document.getElementById('linkedVendorQboId').value,
+          postToQbo: !!postToQbo,
           qboAccountId: document.getElementById('linkedAccountQboId').value,
           qboItemId: document.getElementById('linkedItemQboId').value,
           detailMode: document.getElementById('linkedDetailModeSelect').value,
@@ -7328,13 +7329,18 @@
       });
 
       const qbo = saveOut && saveOut.qbo;
-      if (qbo && !qbo.ok && !qbo.skipped) {
+      if (postToQbo && qbo && !qbo.ok && !qbo.skipped) {
         alert('Record saved, but QuickBooks posting failed:\n' + (qbo.error || 'Unknown error'));
-      } else if (qbo && qbo.skipped && qbo.reason === 'quickbooks_not_connected') {
+      } else if (postToQbo && qbo && qbo.skipped && qbo.reason === 'quickbooks_not_connected') {
         const cst = Number(document.getElementById('costInput').value || 0);
         if (cst > 0) {
           alert('Record saved locally. Connect QuickBooks in Settings to post this expense automatically.');
         }
+      }
+
+      if (!closeAfter) {
+        await loadAll();
+        return;
       }
 
       [
@@ -7383,6 +7389,25 @@
 
       serviceMileageUserTouched = false;
       await loadAll();
+    }
+
+    async function saveRecordWithAction() {
+      if (!selectedUnit) {
+        alert('Select an asset first.');
+        return;
+      }
+      const hint = document.getElementById('maintSaveHint');
+      const act = String(document.getElementById('maintSaveAction')?.value || 'save');
+      const post = act === 'save_post';
+      const close = act === 'save_close';
+      try {
+        if (hint) hint.textContent = post ? 'Saving + posting…' : 'Saving…';
+        await saveRecord(post, close);
+        if (hint) hint.textContent = post ? 'Saved and posted.' : 'Saved.';
+      } catch (e) {
+        if (hint) hint.textContent = e.message || String(e);
+        else alert(e.message || String(e));
+      }
     }
 
     async function uploadMaintenanceFile() {
