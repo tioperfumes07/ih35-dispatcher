@@ -122,11 +122,11 @@
     <a href="/" style="margin-right:8px;font-weight:700;color:#1d4ed8">Home</a>
     <a href="/dispatch.html" style="margin-right:10px;font-weight:600;color:#15803d">Loads &amp; TMS</a>
     <a href="/maintenance.html" style="margin-right:10px;font-weight:600;color:#6b21a8">Maintenance</a>
-    <button onclick="loadBoard()">Load Live Board</button>
+    <button type="button" onclick="loadBoard()" title="Fetch latest Samsara fleet data now">Refresh now</button>
     <button onclick="recommendForSelected()">Recommend Stops</button>
     <input id="unitSearch" placeholder="Search unit e.g. T148" oninput="renderFleet()" />
     <label><input type="checkbox" id="urgentOnly" onchange="renderFleet()"> FUEL NOW only</label>
-    <span id="lastUpdated" class="small">Not loaded</span>
+    <span id="lastUpdated" class="small">Loading… · auto-refresh every 60s</span>
   </div>
   <p class="roadmap-note">
     <strong>Roadmap:</strong> tie origin/destination from active TMS loads into this planner, combine uploaded Love’s price sheets and live tank levels from Samsara, and suggest cheapest legal fuel stops along the route (including state price spreads). PC*Miler practical/short miles will replace heuristic routing for driver-pay mileage when licensed.
@@ -660,27 +660,36 @@
       return Array.from(deduped.values()).map(x => x.row).sort((a, b) => a.unitNum - b.unitNum);
     }
 
+    const FUEL_AUTO_REFRESH_MS = 60000;
+
     async function loadBoard() {
-      initMap();
-      const payload = await j('/api/board');
-      boardRows = buildBoardRows(payload);
       try {
-        const fp = await j('/api/fuel/purchases');
-        fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
-        applyFuelImportMeta(fp);
-      } catch {
-        fuelPurchases = [];
+        initMap();
+        const payload = await j('/api/board');
+        boardRows = buildBoardRows(payload);
+        try {
+          const fp = await j('/api/fuel/purchases');
+          fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
+          applyFuelImportMeta(fp);
+        } catch {
+          fuelPurchases = [];
+        }
+        if (!selectedUnit && boardRows.length) selectedUnit = boardRows[0].unit;
+        if (selectedUnit && !boardRows.find(x => x.unit === selectedUnit) && boardRows.length) {
+          selectedUnit = boardRows[0].unit;
+        }
+        renderFleet();
+        renderMap();
+        renderSelectedDetail();
+        renderFuelLedger();
+        const t = new Date(payload.refreshedAt || Date.now()).toLocaleTimeString();
+        document.getElementById('lastUpdated').textContent =
+          'Last updated: ' + t + ' · Auto every ' + FUEL_AUTO_REFRESH_MS / 1000 + 's';
+      } catch (e) {
+        const el = document.getElementById('lastUpdated');
+        if (el) el.textContent = 'Update failed: ' + (e && e.message ? e.message : String(e));
+        console.error(e);
       }
-      if (!selectedUnit && boardRows.length) selectedUnit = boardRows[0].unit;
-      if (selectedUnit && !boardRows.find(x => x.unit === selectedUnit) && boardRows.length) {
-        selectedUnit = boardRows[0].unit;
-      }
-      renderFleet();
-      renderMap();
-      renderSelectedDetail();
-      renderFuelLedger();
-      document.getElementById('lastUpdated').textContent =
-        'Last updated: ' + new Date(payload.refreshedAt || Date.now()).toLocaleTimeString();
     }
 
     function renderFleetColumn(rows) {
@@ -1402,6 +1411,8 @@
     initMap();
     refreshErpAuthStatus();
     refreshLastFuelImportBatch();
+    loadBoard();
+    setInterval(loadBoard, FUEL_AUTO_REFRESH_MS);
   </script>
 </body>
 </html>

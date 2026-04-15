@@ -201,7 +201,7 @@
     <a href="/maintenance.html#accounting-settlement">Settlement</a>
     <span style="flex:1"></span>
     <button type="button" onclick="openBookModal()">Book new load</button>
-    <button type="button" class="secondary" onclick="refreshDispatchBoard()">Refresh</button>
+    <button type="button" class="secondary" onclick="refreshDispatchBoard()" title="Reload loads / fleet now">Refresh now</button>
     <button type="button" class="secondary" onclick="refreshQboCatalog()">Sync QBO catalog</button>
     <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:320px"></span>
   </div>
@@ -2152,6 +2152,9 @@
       await loadMaintenanceDispatchAlerts();
       await loadTab();
     })();
+
+    const DISPATCH_AUTO_REFRESH_MS = 60000;
+    setInterval(refreshDispatchBoard, DISPATCH_AUTO_REFRESH_MS);
   </script>
 </body>
 </html>

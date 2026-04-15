@@ -309,7 +309,7 @@
       <button class="nav-btn" data-section="reports" onclick="openSection('reports', this)">Reports Board</button>
 
       <div class="nav-title">Actions</div>
-      <button class="nav-btn" onclick="loadAll()">Refresh All</button>
+      <button class="nav-btn" type="button" title="Fetch latest fleet, ERP, and shop queue now" onclick="loadAll()">Refresh now</button>
       <button class="nav-btn" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
       <button class="nav-btn" onclick="connectQuickBooks()">Connect QuickBooks</button>
       <button class="nav-btn" type="button" onclick="location.href='/settings.html'">Settings &amp; users</button>
@@ -326,7 +326,7 @@
         <a href="/" class="topbar-home-link">Home</a>
         <span class="mini-note topbar-hint">Left nav: modules · top bar: refresh &amp; QBO</span>
         <span class="print-hide-actions">
-        <button onclick="loadAll()">Refresh</button>
+        <button type="button" title="Fetch latest data now (also auto-refreshes)" onclick="loadAll()">Refresh now</button>
         <button onclick="testQuickBooks()">Test QuickBooks</button>
         <button onclick="refreshQboMaster()">Refresh QBO Master</button>
         </span>
@@ -521,7 +521,7 @@
             <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
               <button type="button" onclick="window.print()">Print</button>
               <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:13px">PDF</a>
-              <button type="button" onclick="loadAll()">Refresh data</button>
+              <button type="button" title="Fetch latest fleet &amp; shop data now" onclick="loadAll()">Refresh now</button>
             </div>
           </div>
           <div class="panel-body">
@@ -706,9 +706,20 @@
                   <input id="serviceTypeInput" type="hidden">
                   <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type">
 
-                  <div class="search-row">
+                  <div class="search-row" style="align-items:flex-start;flex-wrap:wrap">
                     <input id="serviceDateInput" class="qb-in maint-field" type="date">
-                    <input id="serviceMileageInput" class="qb-in maint-field" type="number" placeholder="Service mileage">
+                    <div style="flex:1;min-width:200px;max-width:340px">
+                      <input
+                        id="serviceMileageInput"
+                        class="qb-in maint-field"
+                        type="number"
+                        step="1"
+                        placeholder="Service mileage (Samsara odometer)"
+                        oninput="markServiceMileageTouched()"
+                      />
+                      <div id="serviceMileageHint" class="mini-note" style="margin-top:4px;line-height:1.4"></div>
+                    </div>
+                    <button type="button" class="btn" onclick="fillServiceMileageFromSamsara()" title="Fill with latest Samsara odometer for this unit">Use Samsara</button>
                   </div>
                   <div>
                     <span class="qb-l">Load / inv # (settlement)</span>
@@ -1602,6 +1613,8 @@
     let expenseSummaryCache = { d7: null, d30: null };
     let pendingShopPatch = null;
     let defaultNavBootstrapped = false;
+    let serviceMileageUserTouched = false;
+    const AUTO_REFRESH_MS = 60000;
     let serviceSearchPresetBound = false;
     let maintCostLinesDelegationBound = false;
     let maintPartMapDelegationBound = false;
@@ -2601,7 +2614,7 @@
           ? new Date(dashRes.refreshedAt).toLocaleString()
           : new Date().toLocaleString();
         document.getElementById('sidebarLastUpdated').textContent =
-          'Fleet snapshot (Samsara): ' + fleetAt;
+          'Fleet snapshot (Samsara): ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
         applyNavHash();
         if (activeSection === 'reports') loadReportsData();
       } catch (e) {
@@ -2719,7 +2732,9 @@
 
       const first = (vehiclesByCategory()[activeAssetCategory] || [])[0];
       const currentStillExists = (vehiclesByCategory()[activeAssetCategory] || []).find(v => v.name === selectedUnit);
+      const prevUnit = selectedUnit;
       if (!currentStillExists && first) selectedUnit = first.name;
+      if (selectedUnit !== prevUnit) serviceMileageUserTouched = false;
 
       renderSelectedUnit();
       renderMaintenanceTable();
@@ -3175,10 +3190,40 @@
 
     function selectUnit(unit) {
       selectedUnit = unit;
+      serviceMileageUserTouched = false;
       renderMaintenanceUnitList();
       renderSelectedUnit();
       renderMaintenanceTable();
       document.getElementById('apAssetUnit').value = unit;
+    }
+
+    function markServiceMileageTouched() {
+      serviceMileageUserTouched = true;
+    }
+
+    function updateServiceMileageHint(v) {
+      const el = document.getElementById('serviceMileageHint');
+      if (!el) return;
+      const mi = v && v.odometerMiles != null ? Number(v.odometerMiles) : null;
+      if (mi != null && Number.isFinite(mi)) {
+        el.innerHTML = `Samsara odometer: <strong>${Math.round(mi).toLocaleString()} mi</strong> — prefilled for this service. Edit if the work was not at the current reading. When saving, you will confirm if mileage matches Samsara.`;
+      } else {
+        el.textContent =
+          'No Samsara odometer for this unit — enter service mileage manually.';
+      }
+    }
+
+    function fillServiceMileageFromSamsara() {
+      const v = vehicles.find(x => x.name === selectedUnit);
+      const mi = v && v.odometerMiles != null ? Number(v.odometerMiles) : null;
+      if (mi == null || !Number.isFinite(mi)) {
+        alert('No Samsara odometer for this unit yet. Refresh data or check the asset in Samsara.');
+        return;
+      }
+      const el = document.getElementById('serviceMileageInput');
+      if (el) el.value = String(Math.round(mi));
+      serviceMileageUserTouched = false;
+      updateServiceMileageHint(v);
     }
 
     function setServiceOptions() {
@@ -3961,6 +4006,16 @@
       document.getElementById('unitDueSoonBox').textContent = soon;
       document.getElementById('mileageInput').value = erp.currentMileage?.[selectedUnit] ?? '';
 
+      const smInp = document.getElementById('serviceMileageInput');
+      if (smInp && !serviceMileageUserTouched) {
+        if (v.odometerMiles != null && Number.isFinite(Number(v.odometerMiles))) {
+          smInp.value = String(Math.round(Number(v.odometerMiles)));
+        } else {
+          smInp.value = '';
+        }
+      }
+      updateServiceMileageHint(v);
+
       setServiceOptions();
       toggleRecordFields();
       ensureMaintCostLinesBootstrapped();
@@ -4385,6 +4440,40 @@
       const tireLineItems = recordType === 'tire' ? collectTireLineItems() : [];
       const composedNotes = composeRecordNotesForSave();
 
+      const veh = vehicles.find(x => x.name === selectedUnit);
+      const samsaraMi =
+        veh && veh.odometerMiles != null ? Number(veh.odometerMiles) : null;
+      const smEl = document.getElementById('serviceMileageInput');
+      let smRaw = smEl ? String(smEl.value).trim() : '';
+      let smNum = smRaw === '' ? NaN : Number(smRaw);
+      if (samsaraMi != null && Number.isFinite(samsaraMi) && (!Number.isFinite(smNum) || smRaw === '')) {
+        smNum = samsaraMi;
+        if (smEl) smEl.value = String(Math.round(samsaraMi));
+      }
+      if (!Number.isFinite(smNum) || smNum <= 0) {
+        alert(
+          'Enter a valid service mileage (positive number). The field defaults to the Samsara odometer when available — use “Use Samsara” or refresh fleet data.'
+        );
+        smEl?.focus();
+        return;
+      }
+      const matchesSamsara =
+        samsaraMi != null &&
+        Number.isFinite(samsaraMi) &&
+        Math.abs(smNum - samsaraMi) < 0.51;
+      if (matchesSamsara) {
+        const rounded = Math.round(smNum);
+        if (
+          !confirm(
+            `Save this service using odometer ${rounded.toLocaleString()} mi (current Samsara reading)?\n\nClick Cancel to edit the mileage field if this service was not performed at that odometer.`
+          )
+        ) {
+          smEl?.focus();
+          return;
+        }
+      }
+      const serviceMileageFinal = String(smNum);
+
       await j('/api/maintenance/record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4393,7 +4482,7 @@
           recordType,
           serviceType,
           serviceDate: document.getElementById('serviceDateInput').value,
-          serviceMileage: document.getElementById('serviceMileageInput').value,
+          serviceMileage: serviceMileageFinal,
           vendor: document.getElementById('vendorInput').value,
           cost: document.getElementById('costInput').value,
           notes: composedNotes,
@@ -4500,6 +4589,7 @@
       const pst = document.getElementById('serviceTypePresetInput');
       if (pst) pst.value = '';
 
+      serviceMileageUserTouched = false;
       await loadAll();
     }
 
@@ -5941,7 +6031,7 @@
     loadErpSidebarPreference();
     loadUnitListPreference();
     loadAll();
-    setInterval(loadAll, 120000);
+    setInterval(loadAll, AUTO_REFRESH_MS);
     if (document.getElementById('woLines') && !document.getElementById('woLines').children.length) addWoLine();
   </script>
 </body>
