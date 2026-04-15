@@ -1093,6 +1093,7 @@
         <div class="subtabs">
           <button class="subtab active" onclick="openAccountingTab('acct-transactions', this)">Maintenance Expense Transactions</button>
           <button class="subtab" onclick="openAccountingTab('acct-bill-pay', this)">Pay bills (QBO)</button>
+          <button class="subtab" onclick="openAccountingTab('acct-fuel-expense', this)">Fuel expenses</button>
           <button class="subtab" onclick="openAccountingTab('acct-settlement', this)">Settlement / P&amp;L by load</button>
           <button class="subtab" onclick="openAccountingTab('acct-qbo', this)">QuickBooks Live Master</button>
           <button class="subtab" onclick="openAccountingTab('acct-expense-history', this)">Expense history log</button>
@@ -1373,6 +1374,10 @@
                   <input id="bpLogTo" class="qb-in" type="date" />
                 </div>
                 <div style="grid-column:span 2">
+                  <span class="qb-l">Search</span>
+                  <input id="bpLogSearch" class="qb-in" placeholder="Vendor, payment id, memo, recorded by…" oninput="bpApplyBillPaymentLogFilter()" />
+                </div>
+                <div style="grid-column:span 2">
                   <span class="qb-l">Vendor (optional)</span>
                   <input id="bpLogVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="All vendors" oninput="resolveBpLogVendorSearch()" onblur="resolveBpLogVendorSearch()">
                   <input id="bpLogVendorQboId" type="hidden" />
@@ -1412,6 +1417,68 @@
                   </thead>
                   <tbody id="bpLogBody">
                     <tr><td colspan="8" class="mini-note">—</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="acct-fuel-expense" class="accounting-tab hidden">
+          <div class="panel qb-panel">
+            <div class="panel-head">
+              <div class="panel-title">Fuel expenses (dispatcher fast entry)</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button type="button" class="qb-btn-add" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
+              </div>
+            </div>
+            <div class="panel-body form-stack">
+              <p class="mini-note" style="margin:0 0 10px">
+                This tab is optimized for dispatch: each imported fuel transaction can be posted as a <strong>QuickBooks Expense (Purchase)</strong> with one click.
+                Posted rows are marked so they won’t be duplicated.
+              </p>
+              <div class="wo-line-grid" style="margin-bottom:10px">
+                <div>
+                  <span class="qb-l">From</span>
+                  <input id="fuelExpFrom" class="qb-in" type="date" onchange="renderFuelExpenseRows()" />
+                </div>
+                <div>
+                  <span class="qb-l">To</span>
+                  <input id="fuelExpTo" class="qb-in" type="date" onchange="renderFuelExpenseRows()" />
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Search</span>
+                  <input id="fuelExpSearch" class="qb-in" placeholder="Unit, vendor, location, product…" oninput="renderFuelExpenseRows()" />
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Pay from account (QuickBooks)</span>
+                  <input id="fuelExpBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / card" oninput="resolveFuelExpBank()" onblur="resolveFuelExpBank()" />
+                  <input id="fuelExpBankQboId" type="hidden" />
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Fuel expense category (QuickBooks)</span>
+                  <input id="fuelExpAccountSearch" class="qb-in" list="qboAccountExpenseOptions" placeholder="Fuel expense account" oninput="resolveFuelExpAccount()" onblur="resolveFuelExpAccount()" />
+                  <input id="fuelExpAccountQboId" type="hidden" />
+                </div>
+              </div>
+              <div id="fuelExpStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
+              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+                <table class="st-settlement" style="min-width:1120px">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Unit</th>
+                      <th>Vendor</th>
+                      <th>Product</th>
+                      <th class="num">Gallons</th>
+                      <th class="num">Total</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="fuelExpBody">
+                    <tr><td colspan="9" class="mini-note">—</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1682,14 +1749,33 @@
       </section>
 
       <section id="section-reports" class="section">
-        <div class="subtabs">
+        <div class="subtabs" style="gap:8px;flex-wrap:wrap;align-items:center">
           <button type="button" class="subtab active" onclick="openReportsTab('rep-overview', this)">Overview</button>
-          <button type="button" class="subtab" onclick="openReportsTab('rep-tms', this)">TMS loads</button>
-          <button type="button" class="subtab" onclick="openReportsTab('rep-maint', this)">Maintenance by unit</button>
-          <button type="button" class="subtab" onclick="openReportsTab('rep-qbo', this)">QuickBooks activity</button>
-          <button type="button" class="subtab" onclick="openReportsTab('rep-sync', this)">ERP ↔ QBO sync</button>
-          <button type="button" class="subtab" onclick="openReportsTab('rep-team', this)">Team &amp; security</button>
-          <button type="button" class="subtab" onclick="openReportsTab('rep-ifta', this)">IFTA &amp; compliance</button>
+
+          <div class="nav-dropdown" style="display:inline-block">
+            <button type="button" class="subtab nav-dropdown-trigger" onclick="event.stopPropagation()">Maintenance ▾</button>
+            <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-maint', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">Spend by unit</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-maint-detail', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">Detailed maintenance (parts/positions)</button>
+            </div>
+          </div>
+
+          <div class="nav-dropdown" style="display:inline-block">
+            <button type="button" class="subtab nav-dropdown-trigger" onclick="event.stopPropagation()">Accounting ▾</button>
+            <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-qbo', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">QuickBooks activity</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-sync', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">ERP ↔ QBO sync</button>
+            </div>
+          </div>
+
+          <div class="nav-dropdown" style="display:inline-block">
+            <button type="button" class="subtab nav-dropdown-trigger" onclick="event.stopPropagation()">Operations ▾</button>
+            <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-tms', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">TMS loads</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-team', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">Team &amp; security</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-ifta', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">IFTA &amp; compliance</button>
+            </div>
+          </div>
         </div>
         <div id="rep-overview" class="reports-tab">
           <div class="panel">
@@ -1720,6 +1806,48 @@
               </div>
             </div>
             <div class="panel-body" id="repMaintBody"></div>
+          </div>
+        </div>
+
+        <div id="rep-maint-detail" class="reports-tab hidden">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Maintenance detailed report (records + cost breakdown)</div></div>
+            <div class="panel-body form-stack">
+              <p class="mini-note" style="margin:0 0 10px">
+                Shows each maintenance record with its full cost breakdown. When lines include position-based parts (tires, batteries, etc.), the report includes the position + part reference.
+              </p>
+              <div class="wo-line-grid" style="margin-bottom:10px">
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Unit</span>
+                  <input id="repMaintUnit" class="qb-in" list="unitOptions" placeholder="All units" oninput="renderMaintDetailedReport()" />
+                </div>
+                <div>
+                  <span class="qb-l">From</span>
+                  <input id="repMaintFrom" class="qb-in" type="date" onchange="renderMaintDetailedReport()" />
+                </div>
+                <div>
+                  <span class="qb-l">To</span>
+                  <input id="repMaintTo" class="qb-in" type="date" onchange="renderMaintDetailedReport()" />
+                </div>
+                <div>
+                  <span class="qb-l">Record type</span>
+                  <select id="repMaintType" class="qb-in" onchange="renderMaintDetailedReport()">
+                    <option value="all">All</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="repair">Repair</option>
+                    <option value="tire">Tire</option>
+                    <option value="accident">Accident</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+                <div style="grid-column:span 3">
+                  <span class="qb-l">Search</span>
+                  <input id="repMaintSearch" class="qb-in" placeholder="Service, vendor, invoice, WO, notes…" oninput="renderMaintDetailedReport()" />
+                </div>
+              </div>
+              <div id="repMaintDetailStatus" class="mini-note" style="margin-bottom:8px">Open this report to load.</div>
+              <div id="repMaintDetailBody" class="mini-note">—</div>
+            </div>
           </div>
         </div>
         <div id="rep-qbo" class="reports-tab hidden">
@@ -2845,6 +2973,96 @@
       globalSearchClose();
     });
 
+    // --- Reports: Maintenance detailed ---
+    function renderMaintDetailedReport() {
+      const out = document.getElementById('repMaintDetailBody');
+      const st = document.getElementById('repMaintDetailStatus');
+      if (!out || !st) return;
+      const unit = String(document.getElementById('repMaintUnit')?.value || '').trim();
+      const from = String(document.getElementById('repMaintFrom')?.value || '').trim();
+      const to = String(document.getElementById('repMaintTo')?.value || '').trim();
+      const typ = String(document.getElementById('repMaintType')?.value || 'all').trim();
+      const q = String(document.getElementById('repMaintSearch')?.value || '').trim().toLowerCase();
+
+      const inRange = d => {
+        const x = String(d || '').slice(0, 10);
+        if (!x) return false;
+        if (from && x < from) return false;
+        if (to && x > to) return false;
+        return true;
+      };
+
+      const recs = (erp.records || [])
+        .filter(r => {
+          const u = String(r.unit || '').trim();
+          if (unit && u !== unit) return false;
+          const d = String(r.serviceDate || '').slice(0, 10);
+          if ((from || to) && !inRange(d)) return false;
+          const rt = String(r.recordType || '').trim();
+          if (typ !== 'all' && rt !== typ) return false;
+          if (!q) return true;
+          const hay = `${r.serviceType || ''} ${r.vendor || ''} ${r.vendorInvoiceNumber || ''} ${r.workOrderNumber || ''} ${r.notes || ''} ${r.loadNumber || ''}`.toLowerCase();
+          return hay.includes(q);
+        })
+        .slice()
+        .sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
+
+      st.textContent = `${recs.length} record(s) shown.`;
+      if (!recs.length) {
+        out.innerHTML = '<p class="mini-note" style="margin:0">No records for current filters.</p>';
+        return;
+      }
+
+      const fmtMoney = n =>
+        '$' +
+        (Number(n || 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const lineHtml = l => {
+        const amt = fmtMoney(l.amount || 0);
+        const desc = escapeHtml(String(l.description || 'Line'));
+        const pos = escapeHtml(String(l.tirePositionText || l.position || ''));
+        const part = escapeHtml(String(l.partRef || ''));
+        const extra = [pos ? `Pos: ${pos}` : '', part ? `Part: ${part}` : ''].filter(Boolean).join(' · ');
+        const extraHtml = extra ? `<div class="mini-note" style="margin-top:4px">${extra}</div>` : '';
+        return `<div style="padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fbfdff">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+            <div style="min-width:0;flex:1"><strong>${desc}</strong>${extraHtml}</div>
+            <div style="white-space:nowrap;font-weight:800">${escapeHtml(amt)}</div>
+          </div>
+        </div>`;
+      };
+
+      out.innerHTML = recs
+        .map(r => {
+          const d = escapeHtml(String(r.serviceDate || '').slice(0, 10));
+          const u = escapeHtml(String(r.unit || '—'));
+          const svc = escapeHtml(String(r.serviceType || r.recordType || 'Record'));
+          const vendor = escapeHtml(String(r.vendor || ''));
+          const inv = escapeHtml(String(r.vendorInvoiceNumber || ''));
+          const wo = escapeHtml(String(r.workOrderNumber || ''));
+          const cost = fmtMoney(r.cost || 0);
+          const lines = Array.isArray(r.costLines) ? r.costLines : [];
+          const linesBlock = lines.length
+            ? `<div style="display:grid;gap:8px;margin-top:10px">${lines.map(lineHtml).join('')}</div>`
+            : `<div class="mini-note" style="margin-top:8px">No cost breakdown lines saved on this record.</div>`;
+          return `<div style="border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+              <div style="min-width:260px;flex:1">
+                <div style="font-weight:900">${u} · ${d}</div>
+                <div style="margin-top:4px">${svc}</div>
+                <div class="mini-note" style="margin-top:4px">${vendor}${inv ? ` · Inv # ${inv}` : ''}${wo ? ` · WO # ${wo}` : ''}</div>
+              </div>
+              <div style="text-align:right;min-width:140px">
+                <div class="mini-note">Total</div>
+                <div style="font-weight:900;font-size:18px">${escapeHtml(cost)}</div>
+              </div>
+            </div>
+            ${linesBlock}
+          </div>`;
+        })
+        .join('');
+    }
+
     function statusClass(s) {
       if (s === 'past due') return 'status status-past';
       if (s === 'due soon') return 'status status-soon';
@@ -3003,6 +3221,9 @@
         bpRefreshSelectionTotal();
         loadAccountingBillPaymentLog();
       }
+      if (id === 'acct-fuel-expense') {
+        loadFuelExpenseTab();
+      }
     }
 
     let reportsSummaryCache = null;
@@ -3014,6 +3235,7 @@
       document.querySelectorAll('#section-reports .subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
       if (id === 'rep-team') loadTeamSecurityPanel();
+      if (id === 'rep-maint-detail') renderMaintDetailedReport();
     }
 
     function setTmsUiEnabled(enabled) {
@@ -4814,6 +5036,136 @@
       bpRefreshSelectionTotal();
     }
 
+    function resolveFuelExpBank() {
+      const elIn = document.getElementById('fuelExpBankSearch');
+      const elId = document.getElementById('fuelExpBankQboId');
+      if (!elIn || !elId) return;
+      const match = findBestNameMatch(cacheBankAccounts(), elIn.value);
+      elId.value = match ? match.qboId : '';
+    }
+
+    function resolveFuelExpAccount() {
+      const elIn = document.getElementById('fuelExpAccountSearch');
+      const elId = document.getElementById('fuelExpAccountQboId');
+      if (!elIn || !elId) return;
+      const match = findBestNameMatch(cacheAccountsForLinked(), elIn.value);
+      elId.value = match ? match.qboId : '';
+    }
+
+    async function loadFuelExpenseTab() {
+      const st = document.getElementById('fuelExpStatus');
+      const tb = document.getElementById('fuelExpBody');
+      if (st) st.textContent = 'Loading…';
+      try {
+        const data = await j('/api/fuel/purchases');
+        const rows = Array.isArray(data.purchases) ? data.purchases : [];
+        window.__fuelPurchasesRows = rows;
+        if (st) st.textContent = `${rows.length} fuel purchase row(s) loaded.`;
+        renderFuelExpenseRows();
+      } catch (e) {
+        if (st) st.textContent = e.message || String(e);
+        if (tb) tb.innerHTML = '<tr><td colspan="9" class="mini-note">Failed to load.</td></tr>';
+      }
+    }
+
+    function renderFuelExpenseRows() {
+      const tb = document.getElementById('fuelExpBody');
+      if (!tb) return;
+      const rows = Array.isArray(window.__fuelPurchasesRows) ? window.__fuelPurchasesRows : [];
+      const q = String(document.getElementById('fuelExpSearch')?.value || '').trim().toLowerCase();
+      const from = String(document.getElementById('fuelExpFrom')?.value || '').trim();
+      const to = String(document.getElementById('fuelExpTo')?.value || '').trim();
+      const inRange = d => {
+        const x = String(d || '').slice(0, 10);
+        if (!x) return false;
+        if (from && x < from) return false;
+        if (to && x > to) return false;
+        return true;
+      };
+      const filtered = rows
+        .filter(r => {
+          const d = String(r.txnDate || '').slice(0, 10);
+          if ((from || to) && !inRange(d)) return false;
+          if (!q) return true;
+          const hay = `${r.unit || ''} ${r.vendor || ''} ${r.location || ''} ${r.productType || ''} ${r.relayExpenseNo || ''}`.toLowerCase();
+          return hay.includes(q);
+        })
+        .slice()
+        .sort((a, b) => String(b.txnDate || '').localeCompare(String(a.txnDate || '')));
+
+      if (!filtered.length) {
+        tb.innerHTML = '<tr><td colspan="9" class="mini-note">No rows for current filters.</td></tr>';
+        return;
+      }
+      tb.innerHTML = filtered
+        .map(r => {
+          const id = escapeHtml(String(r.id || ''));
+          const d = escapeHtml(String(r.txnDate || '').slice(0, 10));
+          const unit = escapeHtml(String(r.unit || ''));
+          const vendor = escapeHtml(String(r.vendor || ''));
+          const prod = escapeHtml(String(r.productType || 'diesel'));
+          const gal = r.gallons != null ? Number(r.gallons) : null;
+          const tot = Number(r.totalCost || 0) || 0;
+          const loc = escapeHtml(String(r.location || ''));
+          const status = String(r.qboSyncStatus || '');
+          const stLabel =
+            status === 'posted'
+              ? `Posted (${escapeHtml(String(r.qboEntityType || ''))})`
+              : status === 'error'
+                ? 'Error'
+                : 'Not posted';
+          const btn =
+            status === 'posted'
+              ? '<span class="mini-note">—</span>'
+              : `<button type="button" class="qb-btn-primary" onclick="postFuelExpense('${id}')">Post</button>`;
+          return `<tr>
+            <td>${d || '—'}</td>
+            <td>${unit || '—'}</td>
+            <td>${vendor || '—'}</td>
+            <td>${prod}</td>
+            <td class="num">${gal != null && Number.isFinite(gal) ? escapeHtml(gal.toFixed(2)) : '—'}</td>
+            <td class="num">${escapeHtml(tot.toFixed(2))}</td>
+            <td>${loc || '—'}</td>
+            <td class="mini-note">${stLabel}</td>
+            <td style="text-align:right;white-space:nowrap">
+              ${btn}
+              <span id="fuelPostStatus_${id}" class="mini-note" style="margin-left:8px"></span>
+            </td>
+          </tr>`;
+        })
+        .join('');
+    }
+
+    async function postFuelExpense(fuelId) {
+      resolveFuelExpBank();
+      resolveFuelExpAccount();
+      const st = document.getElementById('fuelPostStatus_' + fuelId);
+      const bankId = String(document.getElementById('fuelExpBankQboId')?.value || '').trim();
+      const acctId = String(document.getElementById('fuelExpAccountQboId')?.value || '').trim();
+      if (!acctId) {
+        alert('Choose the fuel expense category (QuickBooks).');
+        return;
+      }
+      if (st) st.textContent = 'Posting…';
+      try {
+        const data = await j('/api/qbo/post-fuel-purchase/' + encodeURIComponent(fuelId), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({ qboBankAccountId: bankId, qboAccountId: acctId })
+        });
+        const row = data.fuelPurchase;
+        const rows = Array.isArray(window.__fuelPurchasesRows) ? window.__fuelPurchasesRows : [];
+        const ix = rows.findIndex(x => String(x.id) === String(fuelId));
+        if (ix >= 0 && row) rows[ix] = row;
+        window.__fuelPurchasesRows = rows;
+        renderFuelExpenseRows();
+        if (st) st.textContent = 'Posted.';
+      } catch (e) {
+        if (st) st.textContent = e.message || String(e);
+        else alert(e.message || String(e));
+      }
+    }
+
     async function submitAccountingBillPayment() {
       const resEl = document.getElementById('bpPaymentResult');
       resolveBpVendorSearch();
@@ -4921,6 +5273,7 @@
     function renderBpBillPaymentLogTable(entries) {
       const tb = document.getElementById('bpLogBody');
       if (!tb) return;
+      window.__bpBillPaymentLogRows = Array.isArray(entries) ? entries : [];
       if (!entries || !entries.length) {
         tb.innerHTML = '<tr><td colspan="8" class="mini-note">No rows.</td></tr>';
         return;
@@ -4959,6 +5312,22 @@
           </tr>`;
         })
         .join('');
+    }
+
+    function bpApplyBillPaymentLogFilter() {
+      const q = String(document.getElementById('bpLogSearch')?.value || '').trim().toLowerCase();
+      const rows = Array.isArray(window.__bpBillPaymentLogRows) ? window.__bpBillPaymentLogRows : [];
+      if (!q) {
+        renderBpBillPaymentLogTable(rows);
+        return;
+      }
+      const filtered = rows.filter(e => {
+        const hay = `${e.vendorName || ''} ${e.vendorQboId || ''} ${e.billPaymentId || ''} ${e.docNumber || ''} ${e.privateNote || ''} ${e.recordedBy || ''} ${e.bankAccountName || ''} ${e.payType || ''}`.toLowerCase();
+        return hay.includes(q);
+      });
+      renderBpBillPaymentLogTable(filtered);
+      const st = document.getElementById('bpLogStatus');
+      if (st) st.textContent = `${filtered.length} shown (filtered) · ${rows.length} loaded.`;
     }
 
     async function revertBillPaymentFromLog(erpLogId, qboBillPaymentId) {
@@ -5006,6 +5375,8 @@
       try {
         const data = await j('/api/erp/bill-payment-log?' + qs.toString());
         const entries = data.entries || [];
+        const s = document.getElementById('bpLogSearch');
+        if (s) s.value = '';
         renderBpBillPaymentLogTable(entries);
         const extra = data.totalInErp != null ? ` · ${data.totalInErp} stored in ERP` : '';
         if (st) st.textContent = `${entries.length} payment(s)${extra}.`;

@@ -60,25 +60,63 @@
       <button type="button" onclick="doLogout()">Sign out</button>
 
       <div id="adminUsers" class="hidden" style="margin-top:20px">
-        <h2 style="font-size:16px;margin:0 0 12px">Users</h2>
-        <table>
-          <thead><tr><th>Email</th><th>Name</th><th>Role</th><th></th></tr></thead>
-          <tbody id="usersBody"></tbody>
-        </table>
-        <h3 style="font-size:14px;margin:16px 0 8px">Add user</h3>
-        <label>Email</label>
-        <input id="newUserEmail" type="email" />
-        <label>Name</label>
-        <input id="newUserName" />
-        <label>Password</label>
-        <input id="newUserPass" type="password" />
-        <label>Role</label>
-        <select id="newUserRole" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line)">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-        <button type="button" class="primary" style="margin-top:12px" onclick="addUser()">Add user</button>
-        <div id="userErr" class="err"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <button type="button" id="adminTabUsers" class="primary" onclick="openAdminTab('users')">Users</button>
+          <button type="button" id="adminTabEmployees" onclick="openAdminTab('employees')">Employees</button>
+        </div>
+
+        <div id="adminTabPanelUsers">
+          <h2 style="font-size:16px;margin:0 0 12px">Users</h2>
+          <table>
+            <thead><tr><th>Email</th><th>Name</th><th>Role</th><th></th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+          <h3 style="font-size:14px;margin:16px 0 8px">Add user</h3>
+          <label>Email</label>
+          <input id="newUserEmail" type="email" />
+          <label>Name</label>
+          <input id="newUserName" />
+          <label>Password</label>
+          <input id="newUserPass" type="password" />
+          <label>Role</label>
+          <select id="newUserRole" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line)">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="button" class="primary" style="margin-top:12px" onclick="addUser()">Add user</button>
+          <div id="userErr" class="err"></div>
+        </div>
+
+        <div id="adminTabPanelEmployees" class="hidden">
+          <h2 style="font-size:16px;margin:0 0 12px">Employees</h2>
+          <p class="mini" style="margin-top:0">Internal directory for staff contact + status (separate from QBO vendors).</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <input id="empSearch" placeholder="Search employee…" oninput="renderEmployeesTable()" />
+            <button type="button" onclick="loadEmployees()">Refresh</button>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Title</th><th>Status</th><th></th></tr></thead>
+            <tbody id="empBody"></tbody>
+          </table>
+          <h3 style="font-size:14px;margin:16px 0 8px">Add employee</h3>
+          <label>Name</label>
+          <input id="newEmpName" />
+          <label>Email</label>
+          <input id="newEmpEmail" type="email" />
+          <label>Phone</label>
+          <input id="newEmpPhone" placeholder="Optional" />
+          <label>Title</label>
+          <input id="newEmpTitle" placeholder="Dispatcher, Mechanic, Accountant…" />
+          <label>Department</label>
+          <input id="newEmpDept" placeholder="Operations, Maintenance, Accounting…" />
+          <label>Status</label>
+          <select id="newEmpStatus" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line)">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <button type="button" class="primary" style="margin-top:12px" onclick="addEmployee()">Add employee</button>
+          <div id="empErr" class="err"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -139,12 +177,105 @@
               <td><button type="button" onclick="removeUser('${x.id}')">Remove</button></td>
             </tr>
           `).join('');
+          openAdminTab('users');
+          await loadEmployees();
         } else {
           document.getElementById('adminUsers').classList.add('hidden');
         }
       } catch {
         document.getElementById('panelLoggedIn').classList.add('hidden');
         document.getElementById('panelLogin').classList.remove('hidden');
+      }
+    }
+
+    function openAdminTab(tab) {
+      const t = String(tab || 'users');
+      document.getElementById('adminTabPanelUsers').classList.toggle('hidden', t !== 'users');
+      document.getElementById('adminTabPanelEmployees').classList.toggle('hidden', t !== 'employees');
+      const bU = document.getElementById('adminTabUsers');
+      const bE = document.getElementById('adminTabEmployees');
+      if (bU) bU.classList.toggle('primary', t === 'users');
+      if (bE) bE.classList.toggle('primary', t === 'employees');
+    }
+
+    let __employees = [];
+    async function loadEmployees() {
+      document.getElementById('empErr').textContent = '';
+      try {
+        const data = await api('/api/erp/employees');
+        __employees = data.employees || [];
+        renderEmployeesTable();
+      } catch (e) {
+        document.getElementById('empErr').textContent = e.message || String(e);
+      }
+    }
+
+    function renderEmployeesTable() {
+      const tb = document.getElementById('empBody');
+      if (!tb) return;
+      const q = String(document.getElementById('empSearch')?.value || '').trim().toLowerCase();
+      const rows = (__employees || []).filter(e => {
+        if (!q) return true;
+        const hay = `${e.name || ''} ${e.email || ''} ${e.phone || ''} ${e.title || ''} ${e.department || ''}`.toLowerCase();
+        return hay.includes(q);
+      });
+      tb.innerHTML = rows.length ? rows.map(e => `
+        <tr>
+          <td>${escapeHtml(e.name)}</td>
+          <td>${escapeHtml(e.email || '')}</td>
+          <td>${escapeHtml(e.phone || '')}</td>
+          <td>${escapeHtml(e.title || '')}</td>
+          <td>
+            <select onchange="setEmployeeStatus('${e.id}', this.value)" style="padding:6px;border-radius:10px;border:1px solid var(--line)">
+              <option value="active" ${e.status === 'active' ? 'selected' : ''}>Active</option>
+              <option value="inactive" ${e.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+            </select>
+          </td>
+          <td><button type="button" onclick="removeEmployee('${e.id}')">Remove</button></td>
+        </tr>
+      `).join('') : '<tr><td colspan="6" class="mini">No employees.</td></tr>';
+    }
+
+    async function addEmployee() {
+      document.getElementById('empErr').textContent = '';
+      try {
+        const body = {
+          name: document.getElementById('newEmpName').value.trim(),
+          email: document.getElementById('newEmpEmail').value.trim(),
+          phone: document.getElementById('newEmpPhone').value.trim(),
+          title: document.getElementById('newEmpTitle').value.trim(),
+          department: document.getElementById('newEmpDept').value.trim(),
+          status: document.getElementById('newEmpStatus').value
+        };
+        await api('/api/erp/employees', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        document.getElementById('newEmpName').value = '';
+        document.getElementById('newEmpEmail').value = '';
+        document.getElementById('newEmpPhone').value = '';
+        document.getElementById('newEmpTitle').value = '';
+        document.getElementById('newEmpDept').value = '';
+        document.getElementById('newEmpStatus').value = 'active';
+        await loadEmployees();
+      } catch (e) {
+        document.getElementById('empErr').textContent = e.message || String(e);
+      }
+    }
+
+    async function setEmployeeStatus(id, status) {
+      try {
+        await api('/api/erp/employees/' + encodeURIComponent(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+        await loadEmployees();
+      } catch (e) {
+        document.getElementById('empErr').textContent = e.message || String(e);
+      }
+    }
+
+    async function removeEmployee(id) {
+      if (!confirm('Remove this employee?')) return;
+      try {
+        await api('/api/erp/employees/' + encodeURIComponent(id), { method: 'DELETE' });
+        await loadEmployees();
+      } catch (e) {
+        document.getElementById('empErr').textContent = e.message || String(e);
       }
     }
 

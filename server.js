@@ -250,6 +250,8 @@ function defaultErpData() {
     bankMatchLinks: [],
     /** Shop floor queue: internal / external / roadside repair tracking. */
     maintenanceShopQueue: [],
+    /** Internal employee directory for ERP permissions + contact info. */
+    employees: [],
     /** Bill payments posted to QuickBooks from this app (audit + expense history). */
     qboBillPaymentLog: []
   };
@@ -303,6 +305,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.bankStatementImports)) merged.bankStatementImports = [];
   if (!Array.isArray(merged.bankMatchLinks)) merged.bankMatchLinks = [];
   if (!Array.isArray(merged.maintenanceShopQueue)) merged.maintenanceShopQueue = [];
+  if (!Array.isArray(merged.employees)) merged.employees = [];
   if (!Array.isArray(merged.qboBillPaymentLog)) merged.qboBillPaymentLog = [];
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
@@ -2927,6 +2930,104 @@ app.delete('/api/users/:id', (req, res) => {
   }
 });
 
+// --- Employee directory (ERP) ---
+app.get('/api/erp/employees', (req, res) => {
+  if (!req.authUser || req.authUser.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' });
+  }
+  const erp = readErp();
+  res.json({ ok: true, employees: erp.employees || [] });
+});
+
+app.post('/api/erp/employees', (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    const body = req.body || {};
+    const name = String(body.name || '').trim().slice(0, 120);
+    if (!name) return res.status(400).json({ error: 'name is required' });
+    const email = String(body.email || '').trim().slice(0, 160);
+    const phone = String(body.phone || '').trim().slice(0, 40);
+    const title = String(body.title || '').trim().slice(0, 120);
+    const department = String(body.department || '').trim().slice(0, 120);
+    const status = String(body.status || 'active').trim();
+    if (!['active', 'inactive'].includes(status)) return res.status(400).json({ error: 'status must be active or inactive' });
+    const now = new Date().toISOString();
+    const erp = readErp();
+    if (!Array.isArray(erp.employees)) erp.employees = [];
+    const row = {
+      id: uid('emp'),
+      name,
+      email,
+      phone,
+      title,
+      department,
+      status,
+      createdAt: now,
+      updatedAt: now
+    };
+    erp.employees.push(row);
+    writeErp(erp);
+    res.json({ ok: true, employee: row });
+  } catch (error) {
+    logError('api/erp/employees POST', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/erp/employees/:id', (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    const id = String(req.params.id || '').trim();
+    const body = req.body || {};
+    const erp = readErp();
+    const arr = Array.isArray(erp.employees) ? erp.employees : [];
+    const idx = arr.findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ error: 'Employee not found' });
+    const cur = arr[idx];
+    const next = { ...cur };
+    if (body.name != null) next.name = String(body.name || '').trim().slice(0, 120) || next.name;
+    if (body.email != null) next.email = String(body.email || '').trim().slice(0, 160);
+    if (body.phone != null) next.phone = String(body.phone || '').trim().slice(0, 40);
+    if (body.title != null) next.title = String(body.title || '').trim().slice(0, 120);
+    if (body.department != null) next.department = String(body.department || '').trim().slice(0, 120);
+    if (body.status != null) {
+      const st = String(body.status || '').trim();
+      if (!['active', 'inactive'].includes(st)) return res.status(400).json({ error: 'status must be active or inactive' });
+      next.status = st;
+    }
+    next.updatedAt = new Date().toISOString();
+    arr[idx] = next;
+    erp.employees = arr;
+    writeErp(erp);
+    res.json({ ok: true, employee: next });
+  } catch (error) {
+    logError('api/erp/employees PATCH', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/erp/employees/:id', (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    const id = String(req.params.id || '').trim();
+    const erp = readErp();
+    const before = (erp.employees || []).length;
+    erp.employees = (erp.employees || []).filter(x => String(x.id) !== id);
+    if (erp.employees.length === before) return res.status(404).json({ error: 'Employee not found' });
+    writeErp(erp);
+    res.json({ ok: true });
+  } catch (error) {
+    logError('api/erp/employees DELETE', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 function operationalStatusAllowedValues(erp) {
   const rows = Array.isArray(erp?.operationalStatusCatalog) ? erp.operationalStatusCatalog : [];
   const codes = rows
@@ -5519,6 +5620,109 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
       qboErrorAt: new Date().toISOString()
     };
     writeErp(erp);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+function bestQboVendorIdByName(erp, name) {
+  const n = String(name || '').trim().toLowerCase();
+  if (!n) return '';
+  const rows = erp?.qboCache?.vendors || [];
+  const exact = rows.find(v => String(v?.name || '').trim().toLowerCase() === n);
+  if (exact?.qboId) return String(exact.qboId);
+  // Fallback: contains match (avoid over-matching very short names)
+  if (n.length < 4) return '';
+  const contains = rows.find(v => String(v?.name || '').trim().toLowerCase().includes(n));
+  return contains?.qboId ? String(contains.qboId) : '';
+}
+
+function bestFuelExpenseAccountId(erp) {
+  const rows = erp?.qboCache?.accountsExpense || [];
+  const pick = (pred) => rows.find(a => pred(String(a?.name || '').toLowerCase()));
+  return (
+    pick(n => n.includes('fuel'))?.qboId ||
+    pick(n => n.includes('diesel'))?.qboId ||
+    pick(n => n.includes('gas'))?.qboId ||
+    rows[0]?.qboId ||
+    ''
+  );
+}
+
+app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ error: 'QuickBooks is not connected' });
+    }
+
+    const id = String(req.params.id || '').trim();
+    const erp = readErp();
+    const idx = (erp.fuelPurchases || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ error: 'Fuel purchase not found' });
+    const fp = erp.fuelPurchases[idx];
+
+    const amount = safeNum(fp.totalCost, 0) || 0;
+    if (!(amount > 0)) return res.status(400).json({ error: 'Fuel totalCost must be greater than zero' });
+
+    const vendorId =
+      String(req.body?.qboVendorId || '').trim() ||
+      bestQboVendorIdByName(erp, fp.vendor || '');
+    if (!vendorId) {
+      return res.status(400).json({
+        error: 'Match fuel vendor to a QuickBooks vendor (refresh QBO master or override vendor).'
+      });
+    }
+
+    const qboBankAccountId = String(req.body?.qboBankAccountId || '').trim();
+    const qboAccountId = String(req.body?.qboAccountId || '').trim() || bestFuelExpenseAccountId(erp);
+    if (!qboAccountId) return res.status(400).json({ error: 'No expense account in QBO cache — refresh QuickBooks master' });
+
+    const unit = String(fp.unit || '').trim();
+    const txnDate = sliceIsoDate(fp.txnDate || '') || new Date().toISOString().slice(0, 10);
+    const gallons = fp.gallons != null ? Number(fp.gallons) : null;
+    const product = String(fp.productType || 'diesel').trim();
+    const loc = String(fp.location || '').trim();
+
+    const memoParts = [
+      unit ? `Unit ${unit}` : '',
+      gallons != null && Number.isFinite(gallons) ? `${gallons} gal` : '',
+      product ? product : '',
+      loc ? loc : ''
+    ].filter(Boolean);
+    const memo = memoParts.join(' · ');
+
+    const ap = {
+      txnType: 'expense',
+      detailMode: 'category',
+      qboVendorId: vendorId,
+      paymentMethodId: 'pm_other',
+      qboBankAccountId,
+      qboAccountId,
+      qboItemId: '',
+      qty: 1,
+      amount,
+      txnDate,
+      dueDate: '',
+      docNumber: fp.relayExpenseNo || '',
+      description: 'Fuel',
+      memo,
+      assetUnit: unit
+    };
+
+    const result = await qboCreateApTransaction(ap);
+    erp.fuelPurchases[idx] = {
+      ...fp,
+      qboSyncStatus: 'posted',
+      qboEntityType: result.qboEntityType,
+      qboEntityId: result.qboEntityId,
+      qboPostedAt: new Date().toISOString(),
+      qboError: ''
+    };
+    writeErp(erp);
+    res.json({ ok: true, fuelPurchase: erp.fuelPurchases[idx] });
+  } catch (error) {
+    logError('api/qbo/post-fuel-purchase', error);
     res.status(500).json({ error: error.message });
   }
 });

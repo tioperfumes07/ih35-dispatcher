@@ -1,0 +1,113 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Calibri;}}
+\fs24
+\b IH35 ERP — Recommended Report Catalog\b0\par
+\par
+Goal: mirror the most useful reporting patterns from \b QuickBooks Online (QBO)\b0\ and \b Samsara\b0\ while staying practical for fleet operations (dispatch, shop, accounting).\par
+\par
+\b Standard filters for every report\b0\par
+\pard\li360
+\b Date range\b0: from/to (default presets: last 7 / 30 / 90 / YTD)\par
+\b Unit filters\b0: Trucks / Trailers / Company vehicles; single unit; multi-select\par
+\b Vendor filters\b0: single vendor; vendor group (fuel vs repair shops)\par
+\b Source filters\b0: Maintenance records vs Work orders vs AP vs Fuel imports vs Bill payments\par
+\b Export\b0: CSV (and PDF for printable ops)\par
+\pard\li0
+\par
+\b A) Maintenance / Shop reports\b0\par
+\pard\li360
+\b 1. Maintenance detailed (records + cost breakdown)\b0\par
+Each maintenance record with full cost lines; show part positions (tires/batteries/etc.) with position + part reference.\par
+Filters: date range, unit, record type (maintenance/repair/tire/accident), vendor.\par
+\par
+\b 2. Maintenance spend by unit\b0\par
+Total spend per unit, with counts, avg cost, and last service date.\par
+Analog: QBO “Expenses by Vendor” pattern but by asset.\par
+\par
+\b 3. Repairs only (count + cost)\b0\par
+Only recordType=repair; totals by unit, vendor, service type.\par
+\par
+\b 4. Tires / position-based parts report\b0\par
+All tire/battery/etc lines with position, install/remove mileage (when available), cost, vendor, and unit.\par
+\par
+\b 5. Internal shop vs External shop vs Roadside\b0\par
+Totals and detailed lists by repair location; highlight overdue jobs and bottlenecks.\par
+\par
+\b 6. Shop queue throughput\b0\par
+Awaiting/In progress/Completed counts; average cycle time; overdue list with reason codes.\par
+\pard\li0
+\par
+\b B) Fuel / Diesel reports\b0\par
+\pard\li360
+\b 1. Fuel purchases (detailed)\b0\par
+Each purchase: date, unit, vendor, location, gallons, total, price/gal, odometer.\par
+\par
+\b 2. Fuel spend by unit\b0\par
+Total gallons + total spend + avg price/gal by unit; optional MPG estimates if miles exist.\par
+\par
+\b 3. Fuel spend by vendor/location\b0\par
+Identify high-cost stations, fraud patterns, and pricing outliers.\par
+\par
+\b 4. Fuel anomalies\b0\par
+Mismatch: gallons vs expected miles, sudden spikes, missing odometer, repeated same-day fills.\par
+Analog: Samsara fuel/usage exception style + internal heuristics.\par
+\pard\li0
+\par
+\b C) Safety / Driver compliance reports\b0\par
+\pard\li360
+\b 1. Driver files compliance\b0\par
+Expiring/missing: CDL, med card, drug test, hire date; “due soon” rollups.\par
+\par
+\b 2. Incident / accident cost rollup\b0\par
+Accident records and related expenses; totals by driver/unit/time window.\par
+\pard\li0
+\par
+\b D) Tracking / Fleet utilization reports\b0\par
+\pard\li360
+\b 1. Idle / revenue at risk snapshot (time-window)\b0\par
+Units likely idle, last completed load age, distance-to-yard, and estimated revenue at risk.\par
+\par
+\b 2. Operational status timeline\b0\par
+In shop/OOS vs active, by unit, over date range.\par
+\pard\li0
+\par
+\b E) Accounting / QBO-aligned reports\b0\par
+\pard\li360
+\b 1. Unpaid bills (AP aging)\b0\par
+Open bills by vendor with aging buckets.\par
+Analog: QBO “Unpaid Bills” + “Vendor Balance Summary/Detail”.\par
+\par
+\b 2. Bill payment list (this app)\b0\par
+All BillPayments created by the ERP with audit trail and reversal status.\par
+Analog: QBO “Bill Payment List”.\par
+\par
+\b 3. Purchases/expenses list (posted by ERP)\b0\par
+Purchases (expenses) and Bills created by the ERP; filter by vendor/category/unit/date.\par
+\par
+\b 4. Expense by category (7/30/90 + compare)\b0\par
+Totals by expense category with % deltas vs prior period.\par
+Analog: QBO “Profit and Loss” drill patterns (expense lines).\par
+\par
+\b 5. Audit / change log (ERP)\b0\par
+Who created/posted/reverted transactions and when.\par
+Analog: QBO “Audit Log”.\par
+\pard\li0
+\par
+\b F) Compliance (IFTA + ops)\b0\par
+\pard\li360
+\b 1. IFTA prep summary\b0\par
+Miles by jurisdiction (when available), fuel gallons by state, and exceptions.\par
+\par
+\b 2. Maintenance compliance\b0\par
+PM completion rates, overdue services by unit, and upcoming PM schedule.\par
+\pard\li0
+\par
+\b Implementation approach\b0\par
+\pard\li360
+Phase 1: Maintenance detailed + Fuel purchases + Unpaid bills + Bill payment list + Shop throughput.\par
+Phase 2: Tires/parts position report + anomaly detection + AP aging + audit log.\par
+Phase 3: IFTA/jurisdiction reporting once mileage-by-state data is reliable.\par
+\pard\li0
+\par
+End of document.\par
+}
