@@ -1462,6 +1462,107 @@ function normalizeQboBillPayment(bp) {
   };
 }
 
+function qboMoneyRound(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 0;
+  return Math.round(x * 100) / 100;
+}
+
+/** Open (unpaid) bills from QuickBooks; optional vendor filter. */
+async function qboFetchOpenBillsFromQbo(vendorQboId) {
+  const vid = String(vendorQboId || '').replace(/\D/g, '');
+  const sql = vid
+    ? `select * from Bill where Balance > '0' AND VendorRef = '${vid}' MAXRESULTS 200`
+    : `select * from Bill where Balance > '0' MAXRESULTS 150`;
+  const data = await qboQuery(sql);
+  const rows = data?.QueryResponse?.Bill;
+  const arr = Array.isArray(rows) ? rows : rows ? [rows] : [];
+  return arr
+    .map(normalizeQboBill)
+    .sort((a, b) => String(a.dueDate || a.txnDate).localeCompare(String(b.dueDate || b.txnDate)));
+}
+
+/**
+ * Create a QBO BillPayment (pay vendor bills from a bank or credit-card account).
+ * body: vendorQboId, bankAccountQboId, payType ('Check' | 'CreditCard'), txnDate?, privateNote?, checkNum?, lines: [{ billId, amount }]
+ */
+async function qboCreateBillPaymentFromApp(body) {
+  const vendorQboId = String(body?.vendorQboId || '').trim();
+  const bankAccountQboId = String(body?.bankAccountQboId || '').trim();
+  const payType = String(body?.payType || 'Check').trim();
+  const txnDate = String(body?.txnDate || '').trim() || new Date().toISOString().slice(0, 10);
+  const privateNote = String(body?.privateNote || '').trim().slice(0, 4000);
+  const checkNum = String(body?.checkNum || '').trim().slice(0, 21);
+  const rawLines = Array.isArray(body?.lines) ? body.lines : [];
+  if (!vendorQboId) throw new Error('vendorQboId is required');
+  if (!bankAccountQboId) throw new Error('bankAccountQboId is required');
+  if (!rawLines.length) throw new Error('At least one bill line is required');
+
+  const billIdsSeen = new Set();
+  const linePayloads = [];
+  let sum = 0;
+
+  for (const ln of rawLines) {
+    const billId = String(ln?.billId || '').trim();
+    const amount = qboMoneyRound(ln?.amount);
+    if (!billId) throw new Error('Each line needs billId');
+    if (!(amount > 0)) throw new Error(`Invalid amount for bill ${billId}`);
+    if (billIdsSeen.has(billId)) throw new Error(`Duplicate bill id in payment: ${billId}`);
+    billIdsSeen.add(billId);
+
+    const data = await qboGet(`bill/${encodeURIComponent(billId)}`);
+    const bill = data?.Bill;
+    if (!bill?.Id) throw new Error(`Bill ${billId} not found in QuickBooks`);
+    const bVendor = String(bill.VendorRef?.value || '').trim();
+    if (bVendor !== vendorQboId) throw new Error(`Bill ${billId} belongs to a different vendor`);
+    const balance = qboMoneyRound(bill.Balance);
+    if (!(balance > 0)) throw new Error(`Bill ${billId} has no open balance`);
+    if (amount - balance > 0.01) throw new Error(`Bill ${billId}: pay amount exceeds balance (${balance})`);
+
+    linePayloads.push({
+      Amount: amount,
+      LinkedTxn: [{ TxnId: billId, TxnType: 'Bill' }]
+    });
+    sum += amount;
+  }
+
+  sum = qboMoneyRound(sum);
+  if (!(sum > 0)) throw new Error('Total payment must be greater than 0');
+
+  const payload = {
+    VendorRef: { value: vendorQboId },
+    TxnDate: txnDate,
+    TotalAmt: sum,
+    Line: linePayloads
+  };
+  if (privateNote) payload.PrivateNote = privateNote;
+
+  if (payType === 'CreditCard') {
+    payload.PayType = 'CreditCard';
+    payload.CreditCardPayment = {
+      CCAccountRef: { value: bankAccountQboId }
+    };
+  } else {
+    payload.PayType = 'Check';
+    const cp = {
+      BankAccountRef: { value: bankAccountQboId },
+      PrintStatus: 'NotSet'
+    };
+    if (checkNum) cp.CheckNum = checkNum;
+    payload.CheckPayment = cp;
+  }
+
+  const created = await qboPost('billpayment', payload);
+  const bp = created?.BillPayment;
+  return {
+    billPaymentId: String(bp?.Id || '').trim(),
+    docNumber: bp?.DocNumber || '',
+    totalAmt: sum,
+    vendorQboId,
+    billPayment: bp || null
+  };
+}
+
 function buildErpExpenseCandidates(erp) {
   const vendors = erp.qboCache?.vendors || [];
   const vName = id => vendors.find(v => String(v.qboId) === String(id))?.name || '';
@@ -5059,6 +5160,41 @@ app.post('/api/erp/ap-transaction', (req, res) => {
     res.json({ ok: true });
   } catch (error) {
     logError('api/erp/ap-transaction POST', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/** List QuickBooks bills with an open balance (optionally for one vendor). */
+app.get('/api/qbo/open-bills', async (req, res) => {
+  try {
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    const vendorId = String(req.query.vendorId || '').trim();
+    const bills = await qboFetchOpenBillsFromQbo(vendorId);
+    res.json({ ok: true, bills });
+  } catch (error) {
+    logError('api/qbo/open-bills', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * Record a Bill Payment in QuickBooks (pays posted Bills from a bank or card account).
+ * Requires ERP write secret or admin — same as other financial writes.
+ */
+app.post('/api/qbo/bill-payment', async (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ error: 'QuickBooks is not connected' });
+    }
+    const result = await qboCreateBillPaymentFromApp(req.body || {});
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    logError('api/qbo/bill-payment', error);
     res.status(500).json({ error: error.message });
   }
 });

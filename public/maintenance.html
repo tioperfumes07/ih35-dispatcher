@@ -964,6 +964,7 @@
       <section id="section-accounting" class="section">
         <div class="subtabs">
           <button class="subtab active" onclick="openAccountingTab('acct-transactions', this)">Maintenance Expense Transactions</button>
+          <button class="subtab" onclick="openAccountingTab('acct-bill-pay', this)">Pay bills (QBO)</button>
           <button class="subtab" onclick="openAccountingTab('acct-settlement', this)">Settlement / P&amp;L by load</button>
           <button class="subtab" onclick="openAccountingTab('acct-qbo', this)">QuickBooks Live Master</button>
           <button class="subtab" onclick="openAccountingTab('acct-expense-history', this)">Expense history log</button>
@@ -1130,6 +1131,81 @@
             </div>
             <div class="panel-body">
               <div id="apList" class="card-list">No transactions yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="acct-bill-pay" class="accounting-tab hidden">
+          <div class="panel qb-panel">
+            <div class="panel-head">
+              <div class="panel-title">Pay bills (QuickBooks)</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button type="button" class="qb-btn-add" onclick="loadAccountingOpenBills()">Load open bills</button>
+              </div>
+            </div>
+            <div class="panel-body form-stack">
+              <p class="mini-note" style="margin:0 0 10px">
+                Pay open <strong>Bills</strong> in QuickBooks (vendors and driver payees set up as vendors). This creates a <strong>Bill Payment</strong> from the bank or card account you pick — the same transaction bank matching recognizes.
+                Post unpaid work as a <strong>Bill</strong> on <strong>Maintenance Expense Transactions</strong> first; one-off card expenses use <strong>Purchase</strong> and are paid differently in QBO.
+              </p>
+              <div class="wo-line-grid" style="margin-bottom:10px">
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Vendor (QuickBooks)</span>
+                  <input id="bpVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Filter by vendor (optional)" oninput="resolveBpVendorSearch()" onblur="resolveBpVendorSearch()">
+                  <input id="bpVendorQboId" type="hidden">
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Pay from account</span>
+                  <select id="bpPayType" class="qb-in">
+                    <option value="Check">Bank — check / ACH</option>
+                    <option value="CreditCard">Credit card</option>
+                  </select>
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Account (QuickBooks)</span>
+                  <input id="bpBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking or card on file in QBO" oninput="resolveBpBankSearch()" onblur="resolveBpBankSearch()">
+                  <input id="bpBankQboId" type="hidden">
+                </div>
+                <div>
+                  <span class="qb-l">Payment date</span>
+                  <input id="bpTxnDate" class="qb-in" type="date">
+                </div>
+                <div>
+                  <span class="qb-l">Check # (optional)</span>
+                  <input id="bpCheckNum" class="qb-in" placeholder="Check payments only" />
+                </div>
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Memo (private note in QBO)</span>
+                  <input id="bpPrivateNote" class="qb-in" placeholder="Optional" />
+                </div>
+              </div>
+              <p class="mini-note" style="margin:0 0 8px">
+                Leave vendor blank to load up to <strong>150</strong> open bills (all vendors). You can only pay one vendor per payment — select rows that share the same vendor.
+              </p>
+              <div id="bpOpenBillsStatus" class="mini-note" style="margin-bottom:8px">Load after QuickBooks is connected (sidebar refresh).</div>
+              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+                <table class="st-settlement" style="min-width:920px">
+                  <thead>
+                    <tr>
+                      <th>Pay</th>
+                      <th>Vendor</th>
+                      <th>Doc #</th>
+                      <th>Txn date</th>
+                      <th>Due</th>
+                      <th class="num">Balance</th>
+                      <th class="num">Pay amount</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bpOpenBillsBody">
+                    <tr><td colspan="7" class="mini-note">Load open bills to see rows.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                <button type="button" class="qb-btn-primary" onclick="submitAccountingBillPayment()">Create bill payment in QuickBooks</button>
+                <span class="mini-note" style="margin:0">Requires ERP write secret or admin (Settings).</span>
+              </div>
+              <div id="bpPaymentResult" class="mini-note" style="margin-top:10px"></div>
             </div>
           </div>
         </div>
@@ -2463,6 +2539,10 @@
       }
       if (id === 'acct-expense-history') renderExpenseHistory();
       if (id === 'acct-qbo-rollback') loadErpImportBatchesUi();
+      if (id === 'acct-bill-pay') {
+        const d = document.getElementById('bpTxnDate');
+        if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+      }
     }
 
     let reportsSummaryCache = null;
@@ -3395,6 +3475,154 @@
       if (!elIn || !elId) return;
       const match = findBestNameMatch(cacheBankAccounts(), elIn.value);
       elId.value = match ? match.qboId : '';
+    }
+
+    function resolveBpVendorSearch() {
+      const elIn = document.getElementById('bpVendorSearch');
+      const elId = document.getElementById('bpVendorQboId');
+      if (!elIn || !elId) return;
+      const match = findBestNameMatch(cacheVendors(), elIn.value);
+      elId.value = match ? match.qboId : '';
+    }
+
+    function resolveBpBankSearch() {
+      const elIn = document.getElementById('bpBankSearch');
+      const elId = document.getElementById('bpBankQboId');
+      if (!elIn || !elId) return;
+      const match = findBestNameMatch(cacheBankAccounts(), elIn.value);
+      elId.value = match ? match.qboId : '';
+    }
+
+    function bpRowTogglePay(chk) {
+      const tr = chk.closest('tr');
+      if (!tr) return;
+      const inp = tr.querySelector('.bp-pay-amt');
+      const bal = Number(tr.dataset.balance || '0') || 0;
+      if (!inp) return;
+      if (chk.checked) {
+        inp.disabled = false;
+        inp.value = (Math.round(bal * 100) / 100).toFixed(2);
+      } else {
+        inp.value = '';
+        inp.disabled = true;
+      }
+    }
+
+    async function loadAccountingOpenBills() {
+      const statusEl = document.getElementById('bpOpenBillsStatus');
+      const body = document.getElementById('bpOpenBillsBody');
+      resolveBpVendorSearch();
+      const vendorId = (document.getElementById('bpVendorQboId')?.value || '').trim();
+      const q = vendorId ? `?vendorId=${encodeURIComponent(vendorId)}` : '';
+      if (statusEl) statusEl.textContent = 'Loading…';
+      try {
+        const data = await j('/api/qbo/open-bills' + q);
+        const bills = data.bills || [];
+        window.__bpOpenBills = bills;
+        if (statusEl) {
+          statusEl.textContent = bills.length
+            ? `${bills.length} open bill(s)${vendorId ? ' for this vendor' : ' (all vendors, capped)'}.`
+            : 'No open bills for this filter.';
+        }
+        if (!body) return;
+        if (!bills.length) {
+          body.innerHTML = '<tr><td colspan="7" class="mini-note">No rows.</td></tr>';
+          return;
+        }
+        body.innerHTML = bills
+          .map(b => {
+            const bid = escapeHtml(String(b.id || ''));
+            const vid = escapeHtml(String(b.vendorId || ''));
+            const vname = escapeHtml(String(b.vendorName || ''));
+            const bal = Number(b.balance) || 0;
+            return `<tr data-bill-id="${bid}" data-vendor-id="${vid}" data-balance="${bal}">
+              <td><input type="checkbox" class="bp-pay-chk" onchange="bpRowTogglePay(this)" /></td>
+              <td>${vname}</td>
+              <td>${escapeHtml(String(b.docNumber || ''))}</td>
+              <td>${escapeHtml(String(b.txnDate || ''))}</td>
+              <td>${escapeHtml(String(b.dueDate || ''))}</td>
+              <td class="num">${bal.toFixed(2)}</td>
+              <td class="num"><input type="number" class="qb-in bp-pay-amt" style="max-width:110px" step="0.01" min="0" disabled placeholder="0" /></td>
+            </tr>`;
+          })
+          .join('');
+      } catch (e) {
+        if (statusEl) statusEl.textContent = e.message || String(e);
+        if (body) body.innerHTML = '<tr><td colspan="7" class="mini-note">Load failed.</td></tr>';
+      }
+    }
+
+    async function submitAccountingBillPayment() {
+      const resEl = document.getElementById('bpPaymentResult');
+      resolveBpVendorSearch();
+      resolveBpBankSearch();
+      const bankId = (document.getElementById('bpBankQboId')?.value || '').trim();
+      const txnDate = (document.getElementById('bpTxnDate')?.value || '').trim();
+      const payType = (document.getElementById('bpPayType')?.value || 'Check').trim();
+      const checkNum = (document.getElementById('bpCheckNum')?.value || '').trim();
+      const privateNote = (document.getElementById('bpPrivateNote')?.value || '').trim();
+      if (!bankId) {
+        alert('Choose the pay-from account (QuickBooks bank or card).');
+        return;
+      }
+      const rows = Array.from(document.querySelectorAll('#bpOpenBillsBody tr[data-bill-id]'));
+      const lines = [];
+      const vendors = new Set();
+      for (const tr of rows) {
+        const chk = tr.querySelector('.bp-pay-chk');
+        if (!chk || !chk.checked) continue;
+        const billId = tr.getAttribute('data-bill-id');
+        const vendorId = tr.getAttribute('data-vendor-id');
+        const raw = String(tr.querySelector('.bp-pay-amt')?.value || '').trim();
+        const amt = Number(raw);
+        if (!(amt > 0)) {
+          alert('Enter a pay amount greater than zero for each selected bill.');
+          return;
+        }
+        lines.push({ billId, amount: amt });
+        vendors.add(vendorId);
+      }
+      if (!lines.length) {
+        alert('Select at least one bill to pay.');
+        return;
+      }
+      if (vendors.size !== 1) {
+        alert('Select bills for a single vendor only (one Bill Payment per vendor in QuickBooks).');
+        return;
+      }
+      const vendorQboId = [...vendors][0];
+      if (!vendorQboId) {
+        alert('Missing vendor on selected row.');
+        return;
+      }
+      const hintVid = (document.getElementById('bpVendorQboId')?.value || '').trim();
+      if (hintVid && hintVid !== vendorQboId) {
+        alert('Selected bills do not match the vendor in the filter row. Clear the vendor filter or adjust your selection.');
+        return;
+      }
+      if (resEl) resEl.textContent = 'Posting to QuickBooks…';
+      try {
+        const data = await j('/api/qbo/bill-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({
+            vendorQboId,
+            bankAccountQboId: bankId,
+            payType,
+            txnDate,
+            checkNum: payType === 'Check' ? checkNum : '',
+            privateNote,
+            lines
+          })
+        });
+        const pid = data.billPaymentId || '';
+        const doc = data.docNumber ? ` Doc #: ${data.docNumber}` : '';
+        if (resEl) resEl.textContent = `Bill payment created in QuickBooks. Id: ${pid}${doc}`;
+        await loadAccountingOpenBills();
+      } catch (e) {
+        if (resEl) resEl.textContent = e.message || String(e);
+        else alert(e.message || String(e));
+      }
     }
 
     function assignedVehicleNames() {
