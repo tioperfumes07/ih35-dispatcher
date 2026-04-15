@@ -395,6 +395,17 @@ function sanitizeDriverProfile(raw) {
   return out;
 }
 
+function normalizeFuelProductType(raw) {
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (!s) return 'diesel';
+  if (s === 'def' || s.includes('def') || s.includes('urea') || s.includes('exhaust_fluid')) return 'def';
+  if (s.includes('reefer')) return 'reefer';
+  return 'diesel';
+}
+
 function sanitizeFuelPurchase(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const unit = sanitizeName(raw.unit || raw.assetUnit || raw.vehicle || raw.truck || '', '');
@@ -418,11 +429,15 @@ function sanitizeFuelPurchase(raw) {
     txnDate: txnDate || '',
     gallons: gallons != null ? Math.round(gallons * 1000) / 1000 : null,
     pricePerGallon: price != null ? Math.round(price * 1000) / 1000 : null,
-    totalCost: total != null ? Math.round(total * 100) / 100 : null
+    totalCost: total != null ? Math.round(total * 100) / 100 : null,
+    productType: normalizeFuelProductType(raw.productType || raw.kind || raw.fuelType || raw.fuelProduct)
   };
   if (vendor) out.vendor = vendor;
   if (locationText) out.location = locationText;
   if (odometerMiles != null && Number.isFinite(odometerMiles) && odometerMiles > 0) out.odometerMiles = Math.round(odometerMiles);
+  const memo = String(raw.memo || raw.notes || raw.paymentNote || '').trim().slice(0, 500);
+  if (memo) out.memo = memo;
+  if (raw.manual === true || String(raw.entrySource || '').toLowerCase() === 'manual') out.entrySource = 'manual';
   return out;
 }
 
@@ -1573,18 +1588,26 @@ function qboMoneyRound(n) {
   return Math.round(x * 100) / 100;
 }
 
-/** Open (unpaid) bills from QuickBooks; optional vendor filter. */
-async function qboFetchOpenBillsFromQbo(vendorQboId) {
+/** Open (unpaid) bills from QuickBooks; optional vendor filter; optional substring search (server-side filter). */
+async function qboFetchOpenBillsFromQbo(vendorQboId, opts = {}) {
   const vid = String(vendorQboId || '').replace(/\D/g, '');
+  const maxRaw = Number(opts.maxResults);
+  const max = Math.min(Math.max(Number.isFinite(maxRaw) && maxRaw > 0 ? Math.floor(maxRaw) : 150, 1), 500);
   const sql = vid
-    ? `select * from Bill where Balance > '0' AND VendorRef = '${vid}' MAXRESULTS 200`
-    : `select * from Bill where Balance > '0' MAXRESULTS 150`;
+    ? `select * from Bill where Balance > '0' AND VendorRef = '${vid}' MAXRESULTS ${max}`
+    : `select * from Bill where Balance > '0' MAXRESULTS ${max}`;
   const data = await qboQuery(sql);
   const rows = data?.QueryResponse?.Bill;
   const arr = Array.isArray(rows) ? rows : rows ? [rows] : [];
-  return arr
-    .map(normalizeQboBill)
-    .sort((a, b) => String(a.dueDate || a.txnDate).localeCompare(String(b.dueDate || b.txnDate)));
+  let list = arr.map(normalizeQboBill);
+  const q = String(opts.search || '').trim().toLowerCase();
+  if (q) {
+    list = list.filter(b => {
+      const hay = `${b.vendorName || ''} ${b.docNumber || ''} ${b.txnDate || ''} ${b.dueDate || ''} ${b.id || ''} ${b.balance}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  return list.sort((a, b) => String(a.dueDate || a.txnDate).localeCompare(String(b.dueDate || b.txnDate)));
 }
 
 /**
@@ -5822,7 +5845,7 @@ app.post('/api/erp/ap-transaction', (req, res) => {
   }
 });
 
-/** List QuickBooks bills with an open balance (optionally for one vendor). */
+/** List QuickBooks bills with an open balance (optionally for one vendor). Live query each call. */
 app.get('/api/qbo/open-bills', async (req, res) => {
   try {
     const store = readQbo();
@@ -5830,8 +5853,13 @@ app.get('/api/qbo/open-bills', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
     }
     const vendorId = String(req.query.vendorId || '').trim();
-    const bills = await qboFetchOpenBillsFromQbo(vendorId);
-    res.json({ ok: true, bills });
+    const search = String(req.query.search || req.query.q || '').trim();
+    const maxResults = safeNum(req.query.maxResults, null);
+    const bills = await qboFetchOpenBillsFromQbo(vendorId, {
+      search,
+      maxResults: maxResults != null && Number.isFinite(maxResults) ? maxResults : search && !vendorId ? 400 : 150
+    });
+    res.json({ ok: true, bills, live: true });
   } catch (error) {
     logError('api/qbo/open-bills', error);
     res.status(500).json({ ok: false, error: error.message });

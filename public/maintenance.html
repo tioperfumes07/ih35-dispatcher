@@ -389,300 +389,11 @@
           </div>
         </div>
         <div class="subtabs maint-main-subtabs" id="maintMainSubtabs">
-          <button type="button" class="subtab active" data-maint-main="overview" onclick="openMaintMainTab('overview', this)">Fleet overview</button>
-          <button type="button" class="subtab" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
+          <button type="button" class="subtab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
           <button type="button" class="subtab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this)">Fleet table</button>
         </div>
-        <div id="maintMainTabOverview" class="maint-main-tab-panel active">
-          <p class="mini-note" style="margin:0 0 12px;max-width:78ch">
-            Shop queue, expense rollups, exports, and integrity / fuel / parts alerts. Use <strong>Create work order</strong> to log service; <strong>Fleet table</strong> for the full maintenance grid. Bookmark <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, or <code>#maintenance-fleet</code> to open this board on the right sub-tab.
-          </p>
-          <div class="panel shop-print-area maint-section-card">
-            <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
-              <div style="flex:1;min-width:200px">
-                <div class="panel-title">Maintenance &amp; shop</div>
-                <div class="mini-note" style="margin-top:4px;max-width:52ch">
-                  Live shop queue (internal, external, roadside): status, time vs estimate, and delay reasons. Below: expense rollups by fleet type.
-                </div>
-              </div>
-              <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
-                <button type="button" onclick="window.print()">Print</button>
-                <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:13px">PDF</a>
-                <button type="button" title="Fetch latest fleet &amp; shop data now" onclick="loadAll()">Refresh now</button>
-              </div>
-            </div>
-            <div class="panel-body">
-              <div id="maintExpenseStrip" class="maint-expense-strip" style="margin-bottom:14px"></div>
-              <p class="mini-note" style="margin:0 0 10px">
-                Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
-                <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
-                · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
-              </p>
-              <div class="subtabs shop-subtabs" id="shopBoardSubtabs">
-                <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
-                <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External shop</button>
-                <button type="button" class="subtab" data-shop-tab="roadside" onclick="openShopBoardTab('roadside', this)">Roadside service</button>
-                <button type="button" class="subtab" data-shop-tab="parts" onclick="openShopBoardTab('parts', this)">Parts purchase</button>
-                <button type="button" class="subtab" data-shop-tab="oos" onclick="openShopBoardTab('oos', this)">Out of service</button>
-              </div>
-              <div id="shopTabInternal" class="shop-tab-panel active">
-                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
-                  <div style="min-width:220px;flex:1">
-                    <div class="mini-note" style="margin:0 0 4px">Search</div>
-                    <input id="shopInternalSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:160px">
-                    <div class="mini-note" style="margin:0 0 4px">From</div>
-                    <input id="shopInternalFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:160px">
-                    <div class="mini-note" style="margin:0 0 4px">To</div>
-                    <input id="shopInternalTo" class="qb-in" type="date" onchange="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:200px">
-                    <div class="mini-note" style="margin:0 0 4px">Status</div>
-                    <select id="shopInternalStatus" class="qb-in" onchange="renderShopQueues()">
-                      <option value="all">All</option>
-                      <option value="queued">Awaiting service</option>
-                      <option value="in_progress">In progress</option>
-                      <option value="finished">Completed</option>
-                    </select>
-                  </div>
-                  <button type="button" class="btn" title="Add to internal queue" onclick="openShopQueueModal('internal')">+ Add</button>
-                </div>
-                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
-                  <table class="catalog-admin-table" style="min-width:980px">
-                    <thead>
-                      <tr>
-                        <th>Unit</th>
-                        <th>Job</th>
-                        <th>Vendor</th>
-                        <th style="text-align:center">Est (h)</th>
-                        <th>Queued</th>
-                        <th>Started</th>
-                        <th>Finished</th>
-                        <th>Status</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody id="shopInternalTableBody"></tbody>
-                  </table>
-                </div>
-                <div class="shop-wo-fallback print-hide-actions">
-                  <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (same shop type, for reference)</div>
-                  <div id="shopInternalWoFallback"></div>
-                </div>
-              </div>
-              <div id="shopTabExternal" class="shop-tab-panel">
-                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
-                  <div style="min-width:220px;flex:1">
-                    <div class="mini-note" style="margin:0 0 4px">Search</div>
-                    <input id="shopExternalSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:160px">
-                    <div class="mini-note" style="margin:0 0 4px">From</div>
-                    <input id="shopExternalFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:160px">
-                    <div class="mini-note" style="margin:0 0 4px">To</div>
-                    <input id="shopExternalTo" class="qb-in" type="date" onchange="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:200px">
-                    <div class="mini-note" style="margin:0 0 4px">Status</div>
-                    <select id="shopExternalStatus" class="qb-in" onchange="renderShopQueues()">
-                      <option value="all">All</option>
-                      <option value="queued">Awaiting service</option>
-                      <option value="in_progress">In progress</option>
-                      <option value="finished">Completed</option>
-                    </select>
-                  </div>
-                  <button type="button" class="btn" title="Add to external queue" onclick="openShopQueueModal('external')">+ Add</button>
-                </div>
-                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
-                  <table class="catalog-admin-table" style="min-width:980px">
-                    <thead>
-                      <tr>
-                        <th>Unit</th>
-                        <th>Job</th>
-                        <th>Vendor</th>
-                        <th style="text-align:center">Est (h)</th>
-                        <th>Queued</th>
-                        <th>Started</th>
-                        <th>Finished</th>
-                        <th>Status</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody id="shopExternalTableBody"></tbody>
-                  </table>
-                </div>
-                <div class="shop-wo-fallback print-hide-actions">
-                  <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (external)</div>
-                  <div id="shopExternalWoFallback"></div>
-                </div>
-              </div>
-              <div id="shopTabRoadside" class="shop-tab-panel">
-                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
-                  <div style="min-width:220px;flex:1">
-                    <div class="mini-note" style="margin:0 0 4px">Search</div>
-                    <input id="shopRoadsideSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:160px">
-                    <div class="mini-note" style="margin:0 0 4px">From</div>
-                    <input id="shopRoadsideFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:160px">
-                    <div class="mini-note" style="margin:0 0 4px">To</div>
-                    <input id="shopRoadsideTo" class="qb-in" type="date" onchange="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:200px">
-                    <div class="mini-note" style="margin:0 0 4px">Status</div>
-                    <select id="shopRoadsideStatus" class="qb-in" onchange="renderShopQueues()">
-                      <option value="all">All</option>
-                      <option value="queued">Awaiting service</option>
-                      <option value="in_progress">In progress</option>
-                      <option value="finished">Completed</option>
-                    </select>
-                  </div>
-                  <button type="button" class="btn" title="Add to roadside queue" onclick="openShopQueueModal('roadside')">+ Add</button>
-                </div>
-                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
-                  <table class="catalog-admin-table" style="min-width:980px">
-                    <thead>
-                      <tr>
-                        <th>Unit</th>
-                        <th>Job</th>
-                        <th>Vendor</th>
-                        <th style="text-align:center">Est (h)</th>
-                        <th>Queued</th>
-                        <th>Started</th>
-                        <th>Finished</th>
-                        <th>Status</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody id="shopRoadsideTableBody"></tbody>
-                  </table>
-                </div>
-                <div class="shop-wo-fallback print-hide-actions">
-                  <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (road / OTR)</div>
-                  <div id="shopRoadsideWoFallback"></div>
-                </div>
-              </div>
-              <div id="shopTabParts" class="shop-tab-panel">
-                <p class="mini-note" style="margin:0 0 10px;max-width:70ch">
-                  Track vendor parts orders the same way as shop jobs: <strong>Queued</strong> = waiting on supplier, <strong>In progress</strong> = partial / in transit, <strong>Completed</strong> = received and closed.
-                </p>
-                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
-                  <div style="min-width:220px;flex:1">
-                    <div class="mini-note" style="margin:0 0 4px">Search</div>
-                    <input id="shopPartsSearch" class="qb-in" placeholder="Unit, PO, order description, supplier…" oninput="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:160px">
-                    <div class="mini-note" style="margin:0 0 4px">From</div>
-                    <input id="shopPartsFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:160px">
-                    <div class="mini-note" style="margin:0 0 4px">To</div>
-                    <input id="shopPartsTo" class="qb-in" type="date" onchange="renderShopQueues()" />
-                  </div>
-                  <div style="min-width:200px">
-                    <div class="mini-note" style="margin:0 0 4px">Status</div>
-                    <select id="shopPartsStatus" class="qb-in" onchange="renderShopQueues()">
-                      <option value="all">All</option>
-                      <option value="queued">Awaiting service</option>
-                      <option value="in_progress">In progress</option>
-                      <option value="finished">Completed</option>
-                    </select>
-                  </div>
-                  <button type="button" class="btn" title="Add to parts queue" onclick="openShopQueueModal('parts')">+ Add</button>
-                </div>
-                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
-                  <table class="catalog-admin-table" style="min-width:980px">
-                    <thead>
-                      <tr>
-                        <th>Unit</th>
-                        <th>Order / description</th>
-                        <th>Supplier</th>
-                        <th style="text-align:center">Est (h)</th>
-                        <th>Ordered</th>
-                        <th>Active</th>
-                        <th>Done</th>
-                        <th>Stage</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody id="shopPartsTableBody"></tbody>
-                  </table>
-                </div>
-                <div class="shop-wo-fallback print-hide-actions">
-                  <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (repair location: parts purchase)</div>
-                  <div id="shopPartsWoFallback"></div>
-                </div>
-              </div>
-              <div id="shopTabOos" class="shop-tab-panel">
-                <div class="shop-board-grid">
-                  <div class="shop-col" style="grid-column:1/-1">
-                    <div class="shop-col-head shop-col-head-row">
-                      <span>Out of service units</span>
-                      <button type="button" class="shop-col-add" title="Log out-of-service on selected asset" onclick="event.stopPropagation();startMaintFlow('service-oos')">+</button>
-                    </div>
-                    <div class="shop-col-body" id="shopOosBody"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div class="panel maint-section-card">
-            <div class="panel-head maint-panel-head-center">
-              <div class="panel-title">Maintenance reports</div>
-              <div class="mini-note" style="margin-top:6px;max-width:52ch">
-                Exports and rollups. Choose truck / van / flatbed category under <strong>Create work order</strong> when logging service.
-              </div>
-            </div>
-            <div class="panel-body">
-              <div style="display:flex;flex-wrap:wrap;gap:8px">
-                <button type="button" onclick="downloadUnitMaintenanceReport()">Report by unit</button>
-                <button type="button" onclick="downloadUnitExpenseReport()">Expense by unit</button>
-                <button type="button" onclick="downloadAllMaintenanceCsv()">All maintenance CSV</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel maint-section-card">
-            <div class="panel-head maint-panel-head-center">
-              <div class="panel-title">Integrity · fuel · parts alerts</div>
-              <div class="mini-note" style="margin:6px 0 0;max-width:56ch">
-                Flags unusual repair frequency, high single invoices, short tire intervals, and diesel gallons vs miles (expected MPG). Operational status (in shop / OOS) is shown when relevant — use it with dates for context, not as the only signal.
-              </div>
-            </div>
-            <div class="panel-body">
-              <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:0 0 10px">
-                <div style="min-width:220px;flex:1">
-                  <div class="mini-note" style="margin:0 0 4px">Search</div>
-                  <input id="integritySearch" class="qb-in" placeholder="Unit, type, message, driver…" oninput="renderSecurityAlerts(window.__lastSecurityAlerts||null)" />
-                </div>
-                <div style="min-width:180px">
-                  <div class="mini-note" style="margin:0 0 4px">Window (days)</div>
-                  <input id="integrityDays" class="qb-in" type="number" min="1" step="1" placeholder="30" onchange="loadSecurityCatalogUi()" />
-                </div>
-                <div style="min-width:200px">
-                  <div class="mini-note" style="margin:0 0 4px">Severity</div>
-                  <select id="integritySeverity" class="qb-in" onchange="renderSecurityAlerts(window.__lastSecurityAlerts||null)">
-                    <option value="all">All</option>
-                    <option value="high">High</option>
-                    <option value="warn">Warn</option>
-                    <option value="info">Info</option>
-                  </select>
-                </div>
-              </div>
-              <div id="securityAlertsBody" class="mini-note">Loading alerts…</div>
-            </div>
-          </div>
-        </div>
-
-        <div id="maintMainTabRecord" class="maint-main-tab-panel">
+        <div id="maintMainTabRecord" class="maint-main-tab-panel active">
         <div class="maint-workorder-category-strip maint-section-card">
           <div class="panel-body" style="padding:12px 14px">
             <span class="qb-l" style="display:block;margin-bottom:8px">Unit category (fleet type)</span>
@@ -1130,7 +841,7 @@
             <div class="panel maint-section-card">
               <div class="panel-head">
                 <div class="panel-title">Unit History</div>
-                <button type="button" class="qb-btn-add" onclick="clearMaintenanceFormNewEntry()">New work order</button>
+                <button type="button" class="qb-btn-add" onclick="void clearMaintenanceFormNewEntry()">New work order</button>
               </div>
               <div class="panel-body">
                 <div id="unitHistory" class="card-list">No records yet.</div>
@@ -1156,21 +867,290 @@
         </div>
 
         <div id="tr-maint-shop" class="tracking-sub hidden">
-          <div class="panel maint-section-card" style="margin-top:8px">
-            <div class="panel-head"><div class="panel-title">Shop &amp; maintenance</div></div>
-            <div class="panel-body">
-              <p class="mini-note" style="margin:0 0 12px;max-width:74ch">
-                Shop queue, expense rollups, CSV exports, and integrity / fuel / parts alerts are on <strong>Maintenance → Fleet overview</strong> (default when you open Maintenance). Deep links:
-                <a href="#maintenance-parts" style="color:#1d4ed8;font-weight:600">#maintenance-parts</a>
-                ·
-                <a href="#maintenance-workorder" style="color:#1d4ed8;font-weight:600">#maintenance-workorder</a>
-                ·
-                <a href="#maintenance-fleet" style="color:#1d4ed8;font-weight:600">#maintenance-fleet</a>
-              </p>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <button type="button" class="qb-btn-primary" onclick='openSectionByName("maintenance"); openMaintMainTab("overview", document.querySelector("#maintMainSubtabs [data-maint-main=overview]"));'>Open Fleet overview</button>
-                <a class="btn" href="#maintenance-parts" style="text-decoration:none;display:inline-block;line-height:1.25">Parts queue</a>
+          <p class="mini-note" style="margin:0 0 12px;max-width:78ch">
+            Shop queue, expense rollups, exports, and integrity / fuel / parts alerts — use <strong>Maintenance → Create work order</strong> to log service; <strong>Fleet table</strong> for the full maintenance grid. Bookmark <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, or <code>#maintenance-fleet</code> to open this board on the right sub-tab.
+          </p>
+          <div class="panel shop-print-area maint-section-card">
+            <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
+              <div style="flex:1;min-width:200px">
+                <div class="panel-title">Maintenance &amp; shop</div>
+                <div class="mini-note" style="margin-top:4px;max-width:52ch">
+                  Live shop queue (internal, external, roadside): status, time vs estimate, and delay reasons. Below: expense rollups by fleet type.
+                </div>
               </div>
+              <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
+                <button type="button" onclick="window.print()">Print</button>
+                <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:13px">PDF</a>
+                <button type="button" title="Fetch latest fleet &amp; shop data now" onclick="loadAll()">Refresh now</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="maintExpenseStrip" class="maint-expense-strip" style="margin-bottom:14px"></div>
+              <p class="mini-note" style="margin:0 0 10px">
+                Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
+                <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
+                · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
+              </p>
+              <div class="subtabs shop-subtabs" id="shopBoardSubtabs">
+                <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
+                <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External shop</button>
+                <button type="button" class="subtab" data-shop-tab="roadside" onclick="openShopBoardTab('roadside', this)">Roadside service</button>
+                <button type="button" class="subtab" data-shop-tab="parts" onclick="openShopBoardTab('parts', this)">Parts purchase</button>
+                <button type="button" class="subtab" data-shop-tab="oos" onclick="openShopBoardTab('oos', this)">Out of service</button>
+              </div>
+              <div id="shopTabInternal" class="shop-tab-panel active">
+                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                  <div style="min-width:220px;flex:1">
+                    <div class="mini-note" style="margin:0 0 4px">Search</div>
+                    <input id="shopInternalSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:160px">
+                    <div class="mini-note" style="margin:0 0 4px">From</div>
+                    <input id="shopInternalFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:160px">
+                    <div class="mini-note" style="margin:0 0 4px">To</div>
+                    <input id="shopInternalTo" class="qb-in" type="date" onchange="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:200px">
+                    <div class="mini-note" style="margin:0 0 4px">Status</div>
+                    <select id="shopInternalStatus" class="qb-in" onchange="renderShopQueues()">
+                      <option value="all">All</option>
+                      <option value="queued">Awaiting service</option>
+                      <option value="in_progress">In progress</option>
+                      <option value="finished">Completed</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn" title="Add to internal queue" onclick="openShopQueueModal('internal')">+ Add</button>
+                </div>
+                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                  <table class="catalog-admin-table" style="min-width:980px">
+                    <thead>
+                      <tr>
+                        <th>Unit</th>
+                        <th>Job</th>
+                        <th>Vendor</th>
+                        <th style="text-align:center">Est (h)</th>
+                        <th>Queued</th>
+                        <th>Started</th>
+                        <th>Finished</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="shopInternalTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="shop-wo-fallback print-hide-actions">
+                  <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (same shop type, for reference)</div>
+                  <div id="shopInternalWoFallback"></div>
+                </div>
+              </div>
+              <div id="shopTabExternal" class="shop-tab-panel">
+                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                  <div style="min-width:220px;flex:1">
+                    <div class="mini-note" style="margin:0 0 4px">Search</div>
+                    <input id="shopExternalSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:160px">
+                    <div class="mini-note" style="margin:0 0 4px">From</div>
+                    <input id="shopExternalFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:160px">
+                    <div class="mini-note" style="margin:0 0 4px">To</div>
+                    <input id="shopExternalTo" class="qb-in" type="date" onchange="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:200px">
+                    <div class="mini-note" style="margin:0 0 4px">Status</div>
+                    <select id="shopExternalStatus" class="qb-in" onchange="renderShopQueues()">
+                      <option value="all">All</option>
+                      <option value="queued">Awaiting service</option>
+                      <option value="in_progress">In progress</option>
+                      <option value="finished">Completed</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn" title="Add to external queue" onclick="openShopQueueModal('external')">+ Add</button>
+                </div>
+                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                  <table class="catalog-admin-table" style="min-width:980px">
+                    <thead>
+                      <tr>
+                        <th>Unit</th>
+                        <th>Job</th>
+                        <th>Vendor</th>
+                        <th style="text-align:center">Est (h)</th>
+                        <th>Queued</th>
+                        <th>Started</th>
+                        <th>Finished</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="shopExternalTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="shop-wo-fallback print-hide-actions">
+                  <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (external)</div>
+                  <div id="shopExternalWoFallback"></div>
+                </div>
+              </div>
+              <div id="shopTabRoadside" class="shop-tab-panel">
+                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                  <div style="min-width:220px;flex:1">
+                    <div class="mini-note" style="margin:0 0 4px">Search</div>
+                    <input id="shopRoadsideSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:160px">
+                    <div class="mini-note" style="margin:0 0 4px">From</div>
+                    <input id="shopRoadsideFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:160px">
+                    <div class="mini-note" style="margin:0 0 4px">To</div>
+                    <input id="shopRoadsideTo" class="qb-in" type="date" onchange="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:200px">
+                    <div class="mini-note" style="margin:0 0 4px">Status</div>
+                    <select id="shopRoadsideStatus" class="qb-in" onchange="renderShopQueues()">
+                      <option value="all">All</option>
+                      <option value="queued">Awaiting service</option>
+                      <option value="in_progress">In progress</option>
+                      <option value="finished">Completed</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn" title="Add to roadside queue" onclick="openShopQueueModal('roadside')">+ Add</button>
+                </div>
+                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                  <table class="catalog-admin-table" style="min-width:980px">
+                    <thead>
+                      <tr>
+                        <th>Unit</th>
+                        <th>Job</th>
+                        <th>Vendor</th>
+                        <th style="text-align:center">Est (h)</th>
+                        <th>Queued</th>
+                        <th>Started</th>
+                        <th>Finished</th>
+                        <th>Status</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="shopRoadsideTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="shop-wo-fallback print-hide-actions">
+                  <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (road / OTR)</div>
+                  <div id="shopRoadsideWoFallback"></div>
+                </div>
+              </div>
+              <div id="shopTabParts" class="shop-tab-panel">
+                <p class="mini-note" style="margin:0 0 10px;max-width:70ch">
+                  Track vendor parts orders the same way as shop jobs: <strong>Queued</strong> = waiting on supplier, <strong>In progress</strong> = partial / in transit, <strong>Completed</strong> = received and closed.
+                </p>
+                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                  <div style="min-width:220px;flex:1">
+                    <div class="mini-note" style="margin:0 0 4px">Search</div>
+                    <input id="shopPartsSearch" class="qb-in" placeholder="Unit, PO, order description, supplier…" oninput="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:160px">
+                    <div class="mini-note" style="margin:0 0 4px">From</div>
+                    <input id="shopPartsFrom" class="qb-in" type="date" onchange="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:160px">
+                    <div class="mini-note" style="margin:0 0 4px">To</div>
+                    <input id="shopPartsTo" class="qb-in" type="date" onchange="renderShopQueues()" />
+                  </div>
+                  <div style="min-width:200px">
+                    <div class="mini-note" style="margin:0 0 4px">Status</div>
+                    <select id="shopPartsStatus" class="qb-in" onchange="renderShopQueues()">
+                      <option value="all">All</option>
+                      <option value="queued">Awaiting service</option>
+                      <option value="in_progress">In progress</option>
+                      <option value="finished">Completed</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn" title="Add to parts queue" onclick="openShopQueueModal('parts')">+ Add</button>
+                </div>
+                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                  <table class="catalog-admin-table" style="min-width:980px">
+                    <thead>
+                      <tr>
+                        <th>Unit</th>
+                        <th>Order / description</th>
+                        <th>Supplier</th>
+                        <th style="text-align:center">Est (h)</th>
+                        <th>Ordered</th>
+                        <th>Active</th>
+                        <th>Done</th>
+                        <th>Stage</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="shopPartsTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="shop-wo-fallback print-hide-actions">
+                  <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (repair location: parts purchase)</div>
+                  <div id="shopPartsWoFallback"></div>
+                </div>
+              </div>
+              <div id="shopTabOos" class="shop-tab-panel">
+                <div class="shop-board-grid">
+                  <div class="shop-col" style="grid-column:1/-1">
+                    <div class="shop-col-head shop-col-head-row">
+                      <span>Out of service units</span>
+                      <button type="button" class="shop-col-add" title="Log out-of-service on selected asset" onclick="event.stopPropagation();startMaintFlow('service-oos')">+</button>
+                    </div>
+                    <div class="shop-col-body" id="shopOosBody"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel maint-section-card">
+            <div class="panel-head maint-panel-head-center">
+              <div class="panel-title">Maintenance reports</div>
+              <div class="mini-note" style="margin-top:6px;max-width:52ch">
+                Exports and rollups. Choose truck / van / flatbed category under <strong>Create work order</strong> when logging service.
+              </div>
+            </div>
+            <div class="panel-body">
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <button type="button" onclick="downloadUnitMaintenanceReport()">Report by unit</button>
+                <button type="button" onclick="downloadUnitExpenseReport()">Expense by unit</button>
+                <button type="button" onclick="downloadAllMaintenanceCsv()">All maintenance CSV</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel maint-section-card">
+            <div class="panel-head maint-panel-head-center">
+              <div class="panel-title">Integrity · fuel · parts alerts</div>
+              <div class="mini-note" style="margin:6px 0 0;max-width:56ch">
+                Flags unusual repair frequency, high single invoices, short tire intervals, and diesel gallons vs miles (expected MPG). Operational status (in shop / OOS) is shown when relevant — use it with dates for context, not as the only signal.
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:0 0 10px">
+                <div style="min-width:220px;flex:1">
+                  <div class="mini-note" style="margin:0 0 4px">Search</div>
+                  <input id="integritySearch" class="qb-in" placeholder="Unit, type, message, driver…" oninput="renderSecurityAlerts(window.__lastSecurityAlerts||null)" />
+                </div>
+                <div style="min-width:180px">
+                  <div class="mini-note" style="margin:0 0 4px">Window (days)</div>
+                  <input id="integrityDays" class="qb-in" type="number" min="1" step="1" placeholder="30" onchange="loadSecurityCatalogUi()" />
+                </div>
+                <div style="min-width:200px">
+                  <div class="mini-note" style="margin:0 0 4px">Severity</div>
+                  <select id="integritySeverity" class="qb-in" onchange="renderSecurityAlerts(window.__lastSecurityAlerts||null)">
+                    <option value="all">All</option>
+                    <option value="high">High</option>
+                    <option value="warn">Warn</option>
+                    <option value="info">Info</option>
+                  </select>
+                </div>
+              </div>
+              <div id="securityAlertsBody" class="mini-note">Loading alerts…</div>
             </div>
           </div>
         </div>
@@ -1468,13 +1448,21 @@
           <div class="panel qb-panel">
             <div class="panel-head">
               <div class="panel-title">Pay bills (QuickBooks)</div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <button type="button" class="qb-btn-add" onclick="loadAccountingOpenBills()">Load open bills</button>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+                <div style="min-width:220px;flex:1">
+                  <span class="qb-l">Search live bills (QuickBooks)</span>
+                  <input id="bpQbLiveSearch" class="qb-in" placeholder="Vendor name, doc #, bill id…" />
+                </div>
+                <div>
+                  <span class="qb-l">&nbsp;</span>
+                  <button type="button" class="qb-btn-add" onclick="loadAccountingOpenBills()">Load from QuickBooks</button>
+                </div>
               </div>
             </div>
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 10px">
                 Pay open <strong>Bills</strong> in QuickBooks (vendors and driver payees set up as vendors). This creates a <strong>Bill Payment</strong> from the bank or card account you pick — the same transaction bank matching recognizes.
+                <strong>Load from QuickBooks</strong> runs a live query for bills with balance due (not a cached list). Use the search box to narrow by vendor, document number, or id after loading.
                 Post unpaid work as a <strong>Bill</strong> on <strong>Maintenance Expense Transactions</strong> first; one-off card expenses use <strong>Purchase</strong> and are paid differently in QBO.
               </p>
               <div class="wo-line-grid" style="margin-bottom:10px">
@@ -1648,6 +1636,76 @@
                 Pick the <strong>vendor</strong> (fuel merchant), optional <strong>driver</strong> (name + driver-pay QBO vendor), and optional <strong>customer</strong> on the line when you bill or track by driver entity.
                 Row edits (class, vendor, item, qty, driver, etc.) <strong>save to ERP</strong> automatically after a short pause when the <strong>ERP write secret</strong> is set in Settings (same as posting).
               </p>
+              <div class="panel maint-section-card" style="margin:0 0 14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fafcff">
+                <div class="panel-title" style="font-size:15px;margin-bottom:8px">Manual fuel / DEF (card, cash, other — not from Relay)</div>
+                <p class="mini-note" style="margin:0 0 10px;max-width:96ch">
+                  Creates a <strong>fuel purchase row</strong> in this app (same list as imports). Then use <strong>Record to QuickBooks</strong> on that row with the pay-from bank/card above. Product type drives default <strong>expense account</strong> mapping (diesel vs reefer vs DEF). Note payment method (Comdata, company card, cash, etc.) in the memo.
+                </p>
+                <div class="wo-line-grid" style="margin-bottom:0">
+                  <div>
+                    <span class="qb-l">Date</span>
+                    <input id="fuelManualDate" class="qb-in" type="date" />
+                  </div>
+                  <div style="grid-column:span 2">
+                    <span class="qb-l">Truck / unit</span>
+                    <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit #" autocomplete="off" />
+                  </div>
+                  <div>
+                    <span class="qb-l">Product</span>
+                    <select id="fuelManualProductType" class="qb-in">
+                      <option value="diesel">On-highway diesel</option>
+                      <option value="reefer">Reefer diesel</option>
+                      <option value="def">DEF (diesel exhaust fluid)</option>
+                    </select>
+                  </div>
+                  <div style="grid-column:span 2">
+                    <span class="qb-l">QuickBooks class (optional)</span>
+                    <select id="fuelManualClassSel" class="qb-in">
+                      <option value="">— Match unit name —</option>
+                    </select>
+                  </div>
+                  <div style="grid-column:span 2">
+                    <span class="qb-l">Vendor (QuickBooks)</span>
+                    <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
+                    <input type="hidden" id="fuelManualVendorQboId" />
+                  </div>
+                  <div style="grid-column:span 2">
+                    <span class="qb-l">QBO item / service (optional)</span>
+                    <input id="fuelManualItemSearch" class="qb-in" list="qboItemOptions" placeholder="Fuel item for item-based posting" autocomplete="off" oninput="resolveFuelManualItem()" onblur="resolveFuelManualItem()" />
+                    <input type="hidden" id="fuelManualItemQboId" />
+                  </div>
+                  <div>
+                    <span class="qb-l">Gallons</span>
+                    <input id="fuelManualGallons" class="qb-in" type="number" step="0.001" min="0" placeholder="0" />
+                  </div>
+                  <div>
+                    <span class="qb-l">Price / gal</span>
+                    <input id="fuelManualPpg" class="qb-in" type="number" step="0.0001" min="0" placeholder="0.0000" />
+                  </div>
+                  <div>
+                    <span class="qb-l">Total $</span>
+                    <input id="fuelManualTotal" class="qb-in" type="number" step="0.01" min="0" placeholder="0.00" />
+                  </div>
+                  <div style="grid-column:span 2;display:flex;align-items:center;gap:10px;padding-top:4px">
+                    <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:0">
+                      <input type="checkbox" id="fuelManualTotalLock" />
+                      <span>Lock total (edit dollars; gallons × price ignored)</span>
+                    </label>
+                  </div>
+                  <div style="grid-column:span 2">
+                    <span class="qb-l">Location / site (optional)</span>
+                    <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
+                  </div>
+                  <div style="grid-column:span 2">
+                    <span class="qb-l">Memo (payment method, card last-4, etc.)</span>
+                    <input id="fuelManualMemo" class="qb-in" placeholder="e.g. Comdata · Visa 4821 · cash" autocomplete="off" />
+                  </div>
+                  <div style="grid-column:span 2;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                    <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase()">Save manual row</button>
+                    <span id="fuelManualSaveHint" class="mini-note" style="margin:0"></span>
+                  </div>
+                </div>
+              </div>
               <div class="wo-line-grid" style="margin-bottom:10px">
                 <div>
                   <span class="qb-l">From</span>
@@ -2896,23 +2954,24 @@
       if (btn) btn.classList.add('active');
     }
 
+    function refreshFleetShopOverviewPanels() {
+      renderMaintExpenseStrip();
+      renderShopQueues();
+      loadSecurityCatalogUi().catch(() => {});
+    }
+
     function openMaintMainTab(tab, btn) {
-      const map = { overview: 'maintMainTabOverview', record: 'maintMainTabRecord', fleet: 'maintMainTabFleet' };
+      const map = { record: 'maintMainTabRecord', fleet: 'maintMainTabFleet' };
       document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
-      const id = map[tab] || map.overview;
+      const id = map[tab] || map.record;
       const panel = document.getElementById(id);
       if (panel) panel.classList.add('active');
       document.querySelectorAll('#maintMainSubtabs .subtab').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
       else {
-        const key = tab in map ? tab : 'overview';
+        const key = tab in map ? tab : 'record';
         const b = document.querySelector(`#maintMainSubtabs [data-maint-main="${key}"]`);
         if (b) b.classList.add('active');
-      }
-      if (tab === 'overview') {
-        renderMaintExpenseStrip();
-        renderShopQueues();
-        loadSecurityCatalogUi().catch(() => {});
       }
     }
 
@@ -3645,8 +3704,8 @@
       };
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
       if (name === 'maintenance') {
-        const ob = document.querySelector('#maintMainSubtabs [data-maint-main="overview"]');
-        openMaintMainTab('overview', ob);
+        const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
+        openMaintMainTab('record', rb);
       }
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
@@ -3694,15 +3753,15 @@
         return;
       }
       if (section === 'tracking-shop') {
-        openSectionByName('maintenance');
-        const b = document.querySelector('#maintMainSubtabs [data-maint-main="overview"]');
-        openMaintMainTab('overview', b);
+        openSectionByName('tracking');
+        const tb = document.querySelector('#section-tracking .subtab[onclick*="tr-maint-shop"]');
+        openTrackingTab('tr-maint-shop', tb);
         return;
       }
       if (section === 'maintenance-parts') {
-        openSectionByName('maintenance');
-        const ob = document.querySelector('#maintMainSubtabs [data-maint-main="overview"]');
-        openMaintMainTab('overview', ob);
+        openSectionByName('tracking');
+        const tb = document.querySelector('#section-tracking .subtab[onclick*="tr-maint-shop"]');
+        openTrackingTab('tr-maint-shop', tb);
         const shopBtn = document.querySelector('#shopBoardSubtabs .subtab[data-shop-tab="parts"]');
         if (shopBtn) openShopBoardTab('parts', shopBtn);
         return;
@@ -3763,6 +3822,7 @@
         loadAccountingBillPaymentLog();
       }
       if (id === 'acct-fuel-expense') {
+        bindFuelManualFormOnce();
         loadFuelExpenseTab();
       }
     }
@@ -5529,8 +5589,15 @@
       const body = document.getElementById('bpOpenBillsBody');
       resolveBpVendorSearch();
       const vendorId = (document.getElementById('bpVendorQboId')?.value || '').trim();
-      const q = vendorId ? `?vendorId=${encodeURIComponent(vendorId)}` : '';
-      if (statusEl) statusEl.textContent = 'Loading…';
+      const liveQ = String(document.getElementById('bpQbLiveSearch')?.value || '').trim();
+      const params = new URLSearchParams();
+      if (vendorId) params.set('vendorId', vendorId);
+      if (liveQ) params.set('search', liveQ);
+      if (!vendorId) params.set('maxResults', liveQ ? '400' : '150');
+      else if (liveQ) params.set('maxResults', '250');
+      const qs = params.toString();
+      const q = qs ? `?${qs}` : '';
+      if (statusEl) statusEl.textContent = 'Loading live bills from QuickBooks…';
       try {
         const data = await j('/api/qbo/open-bills' + q);
         const bills = data.bills || [];
@@ -5542,7 +5609,7 @@
         if (m) m.value = '';
         if (statusEl) {
           statusEl.textContent = bills.length
-            ? `${bills.length} open bill(s)${vendorId ? ' for this vendor' : ' (all vendors, capped)'}.`
+            ? `${bills.length} open bill(s) from QuickBooks${vendorId ? ' (vendor filter)' : ''}${liveQ ? ' (search applied)' : ''}.`
             : 'No open bills for this filter.';
         }
         if (!body) return;
@@ -5783,6 +5850,140 @@
       const m = findBestNameMatch(cacheQboCustomers(), inp.value);
       if (hid) hid.value = m ? m.qboId : '';
       fuelExpenseSaveDraft(tr);
+    }
+
+    function fuelExpensePopulateManualClassSelect() {
+      const sel = document.getElementById('fuelManualClassSel');
+      if (!sel) return;
+      const cur = sel.value;
+      const opts = ['<option value="">— Match unit name —</option>'];
+      for (const c of cacheQboClasses()) {
+        const id = String(c.qboId);
+        opts.push(`<option value="${escapeHtml(id)}">${escapeHtml(String(c.name || id))}</option>`);
+      }
+      sel.innerHTML = opts.join('');
+      if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+    }
+
+    function recalcFuelManualTotals() {
+      const gal = Number(document.getElementById('fuelManualGallons')?.value);
+      const ppg = Number(document.getElementById('fuelManualPpg')?.value);
+      const totEl = document.getElementById('fuelManualTotal');
+      const lock = document.getElementById('fuelManualTotalLock')?.checked;
+      if (!totEl || lock) return;
+      if (Number.isFinite(gal) && gal > 0 && Number.isFinite(ppg) && ppg >= 0) {
+        totEl.value = (Math.round(gal * ppg * 100) / 100).toFixed(2);
+      }
+    }
+
+    function resolveFuelManualVendor() {
+      const raw = document.getElementById('fuelManualVendorSearch')?.value || '';
+      const m = findBestNameMatch(cacheVendors(), raw);
+      const hid = document.getElementById('fuelManualVendorQboId');
+      if (hid) hid.value = m ? m.qboId : '';
+    }
+
+    function resolveFuelManualItem() {
+      const raw = document.getElementById('fuelManualItemSearch')?.value || '';
+      const m = findBestNameMatch(cacheItems(), raw);
+      const hid = document.getElementById('fuelManualItemQboId');
+      if (hid) hid.value = m ? m.qboId : '';
+    }
+
+    let __fuelManualFormBound = false;
+    function bindFuelManualFormOnce() {
+      fuelExpensePopulateManualClassSelect();
+      if (__fuelManualFormBound) return;
+      __fuelManualFormBound = true;
+      const gal = document.getElementById('fuelManualGallons');
+      const ppg = document.getElementById('fuelManualPpg');
+      const tot = document.getElementById('fuelManualTotal');
+      const lock = document.getElementById('fuelManualTotalLock');
+      const recalc = () => recalcFuelManualTotals();
+      [gal, ppg].forEach(el => el && el.addEventListener('input', recalc));
+      lock && lock.addEventListener('change', recalc);
+      tot &&
+        tot.addEventListener('input', () => {
+          if (lock && lock.checked) return;
+        });
+      const d = document.getElementById('fuelManualDate');
+      if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+    }
+
+    async function saveManualFuelPurchase() {
+      resolveFuelManualVendor();
+      resolveFuelManualItem();
+      const hint = document.getElementById('fuelManualSaveHint');
+      const unit = String(document.getElementById('fuelManualUnit')?.value || '').trim();
+      const txnDate = String(document.getElementById('fuelManualDate')?.value || '').trim();
+      const gal = Number(document.getElementById('fuelManualGallons')?.value);
+      const ppg = Number(document.getElementById('fuelManualPpg')?.value);
+      const total = Number(document.getElementById('fuelManualTotal')?.value);
+      const productType = String(document.getElementById('fuelManualProductType')?.value || 'diesel');
+      const memo = String(document.getElementById('fuelManualMemo')?.value || '').trim();
+      const loc = String(document.getElementById('fuelManualLocation')?.value || '').trim();
+      const vendorText = String(document.getElementById('fuelManualVendorSearch')?.value || '').trim();
+      if (!unit) {
+        alert('Enter truck / unit.');
+        return;
+      }
+      if (!txnDate) {
+        alert('Pick a date.');
+        return;
+      }
+      if (!(Number.isFinite(gal) && gal > 0) && !(Number.isFinite(total) && total > 0)) {
+        alert('Enter gallons and price (or enter a positive total with “Lock total”).');
+        return;
+      }
+      const payload = {
+        unit,
+        txnDate,
+        productType,
+        manual: true,
+        memo,
+        location: loc
+      };
+      if (vendorText) payload.vendor = vendorText;
+      if (Number.isFinite(gal) && gal > 0) payload.gallons = gal;
+      if (Number.isFinite(ppg) && ppg >= 0) payload.pricePerGallon = ppg;
+      if (Number.isFinite(total) && total > 0) payload.totalCost = total;
+      try {
+        if (hint) hint.textContent = 'Saving…';
+        const r = await j('/api/fuel/purchases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify(payload)
+        });
+        const purchase = r.purchase;
+        const cls = String(document.getElementById('fuelManualClassSel')?.value || '').trim();
+        const vId = String(document.getElementById('fuelManualVendorQboId')?.value || '').trim();
+        const iId = String(document.getElementById('fuelManualItemQboId')?.value || '').trim();
+        const galStr = Number.isFinite(gal) && gal > 0 ? String(gal) : '';
+        const draftBody = {
+          qboClassId: cls.replace(/\D/g, '').slice(0, 24),
+          vendorSearch: vendorText,
+          vendorId: vId.replace(/\D/g, '').slice(0, 24),
+          itemSearch: String(document.getElementById('fuelManualItemSearch')?.value || '').trim(),
+          itemId: iId.replace(/\D/g, '').slice(0, 24),
+          qty: galStr,
+          unit: Number.isFinite(ppg) && ppg >= 0 ? String(ppg) : '',
+          line: Number.isFinite(total) && total > 0 ? String(total) : ''
+        };
+        try {
+          await j('/api/fuel/purchases/' + encodeURIComponent(purchase.id) + '/expense-draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+            body: JSON.stringify(draftBody)
+          });
+        } catch (_) {
+          /* draft optional */
+        }
+        if (hint) hint.textContent = 'Saved — row added. Use Record to QuickBooks when ready.';
+        await loadFuelExpenseTab();
+      } catch (e) {
+        if (hint) hint.textContent = '';
+        alert(e.message || String(e));
+      }
     }
 
     async function loadFuelExpenseTab() {
@@ -9505,11 +9706,16 @@
       renderRepairLocationChips();
     }
 
-    function clearMaintenanceFormNewEntry() {
+    async function clearMaintenanceFormNewEntry() {
       clearMaintenanceEditMode();
       resetMaintenanceWorkOrderFormFields();
       serviceMileageUserTouched = false;
       openMaintMainTab('record', document.querySelector('#maintMainSubtabs [data-maint-main="record"]'));
+      try {
+        await loadAll();
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     function maintAccountLabelByQboId(qboId) {
@@ -10273,9 +10479,12 @@
 
     function openTrackingTab(id, btn) {
       if (id === 'tr-maint-shop') {
-        openSectionByName('maintenance');
-        const ob = document.querySelector('#maintMainSubtabs [data-maint-main="overview"]');
-        openMaintMainTab('overview', ob);
+        document.querySelectorAll('#section-tracking .tracking-sub').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('#section-tracking .subtabs .subtab').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById('tr-maint-shop');
+        if (target) target.classList.remove('hidden');
+        if (btn) btn.classList.add('active');
+        refreshFleetShopOverviewPanels();
         return;
       }
       document.querySelectorAll('#section-tracking .tracking-sub').forEach(el => el.classList.add('hidden'));
