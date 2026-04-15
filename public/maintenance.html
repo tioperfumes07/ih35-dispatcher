@@ -2912,7 +2912,7 @@
 
     function maintPrintWorkOrderView() {
       const el = document.getElementById('maintWoBanner');
-      if (el && !el.classList.contains('hidden')) {
+      if (el) {
         try {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (_) {}
@@ -9411,7 +9411,7 @@
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
       if (!repairLoc) {
         alert(
-          'Select shop or purchase context: Internal shop, External shop, Roadside service, Parts purchase, or Over the road (datalist under Shop or purchase context).'
+          'Select where service is performed: use the quick-pick buttons on the right (Internal shop, External shop, Roadside, Parts purchase, Over the road) or the search field under them.'
         );
         document.getElementById('repairLocationSearch')?.focus();
         return;
@@ -11394,6 +11394,9 @@
 
     loadErpSidebarPreference();
     loadUnitListPreference();
+    renderRepairLocationChips();
+    const __mph = document.getElementById('maintPlannedServicesHost');
+    if (__mph && !__mph.querySelector('.maint-planned-row')) resetMaintPlannedServiceRows();
     loadAll();
     setInterval(loadAll, AUTO_REFRESH_MS);
     if (document.getElementById('woLines') && !document.getElementById('woLines').children.length) addWoLine();

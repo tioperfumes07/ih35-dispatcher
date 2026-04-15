@@ -954,13 +954,13 @@ body.erp-maintenance .grid-4 {
 
 body.erp-maintenance .panel-head {
   padding: 11px 16px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--app-frame-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #e8eef9 0%, #ffffff 100%);
 }
 
 body.erp-maintenance .panel-title {
@@ -2463,12 +2463,12 @@ body.erp-maintenance .sec-alert-info {
 }
 
 body.erp-maintenance #section-maintenance .panel-head:not(.maint-panel-head-center) {
-  border-bottom: 2px solid var(--line);
+  border-bottom: 2px solid var(--app-frame-border);
 }
 
 body.erp-maintenance #section-maintenance .unit-box,
 body.erp-maintenance .maint-form-stack .panel.maint-cost-panel {
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--app-frame-border);
   box-shadow: var(--shadow-sm);
 }
 
@@ -2523,6 +2523,12 @@ body.erp-maintenance .catalog-admin-table td {
   }
 
   body.erp-maintenance .qb-lines-header {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  body.erp-maintenance .maint-cost-lines-head {
     display: none;
   }
 }
