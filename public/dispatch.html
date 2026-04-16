@@ -235,6 +235,33 @@
       background: var(--accent-soft);
     }
     .stops-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    html:not(.dispatch-embed) .dispatch-embed-status-bar {
+      display: none !important;
+    }
+    html.dispatch-embed .dispatch-embed-status-bar {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+    html.dispatch-embed .dispatch-embed-status-bar__inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 6px 10px;
+      max-width: 100%;
+    }
+    html.dispatch-embed .dispatch-embed-status-bar__item {
+      flex: 1 1 200px;
+      min-width: min(100%, 160px);
+    }
+    html.dispatch-embed .dispatch-embed-status-bar__sep {
+      color: #cbd5e1;
+      user-select: none;
+    }
     html.dispatch-embed #boardNavMount,
     html.dispatch-embed .board-nav-wrap { display: none !important; }
     html.dispatch-embed .topbar,
@@ -334,6 +361,18 @@
               <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:200px"></span>
             </div>
           </header>
+
+          <div class="dispatch-embed-status-bar" role="status" aria-live="polite">
+            <div class="dispatch-embed-status-bar__inner">
+              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedQboStatus">QuickBooks not checked</span>
+              <span class="dispatch-embed-status-bar__sep" aria-hidden="true">·</span>
+              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedQboAlertBrief"></span>
+              <span class="dispatch-embed-status-bar__sep" aria-hidden="true">·</span>
+              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedFleetStatus">Samsara: not loaded</span>
+              <span class="dispatch-embed-status-bar__sep" aria-hidden="true">·</span>
+              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedLastUpdated">Not loaded</span>
+            </div>
+          </div>
 
           <div class="tabs dispatch-board-tabs">
     <button type="button" class="tab active" data-tab="open">Open loads</button>
@@ -1604,12 +1643,31 @@
       }
     }
 
+    function applyDispatchStatusToTargets(targets, state) {
+      for (const t of targets) {
+        const qEl = document.getElementById(t.q);
+        const qBrief = document.getElementById(t.brief);
+        const fEl = document.getElementById(t.f);
+        const lu = document.getElementById(t.lu);
+        if (qEl) qEl.textContent = state.qText;
+        if (qBrief) {
+          qBrief.style.color = state.briefColor || '';
+          qBrief.textContent = state.briefText;
+        }
+        if (fEl) fEl.textContent = state.fText;
+        if (lu) lu.textContent = state.luText;
+      }
+    }
+
     async function loadDispatchSidebarStatus() {
-      const qEl = document.getElementById('dispatchSidebarQboStatus');
-      const qBrief = document.getElementById('dispatchSidebarQboAlertBrief');
-      const fEl = document.getElementById('dispatchSidebarFleetStatus');
-      const lu = document.getElementById('dispatchSidebarLastUpdated');
-      if (!qEl && !qBrief && !fEl && !lu) return;
+      const targets = [
+        { q: 'dispatchSidebarQboStatus', brief: 'dispatchSidebarQboAlertBrief', f: 'dispatchSidebarFleetStatus', lu: 'dispatchSidebarLastUpdated' },
+        { q: 'dispatchEmbedQboStatus', brief: 'dispatchEmbedQboAlertBrief', f: 'dispatchEmbedFleetStatus', lu: 'dispatchEmbedLastUpdated' }
+      ];
+      const hasAny = targets.some(t =>
+        ['q', 'brief', 'f', 'lu'].some(k => document.getElementById(t[k]))
+      );
+      if (!hasAny) return;
       try {
         const [qStatus, qSync, boardRes, dashRes] = await Promise.all([
           fetch('/api/qbo/status', { headers: { Accept: 'application/json' } }).then(r => r.json().catch(() => ({}))),
@@ -1624,57 +1682,68 @@
             .catch(() => ({}))
         ]);
 
-        if (qEl) {
-          let txt = 'QuickBooks not checked';
-          if (!qStatus || typeof qStatus !== 'object') txt = 'QuickBooks not checked';
-          else if (!qStatus.configured) txt = 'QuickBooks env is missing';
-          else if (qStatus.connected) {
-            txt = 'Connected to QuickBooks' + (qStatus.companyName ? ' — ' + qStatus.companyName : '');
-          } else txt = 'QuickBooks not connected yet';
-          qEl.textContent = txt;
-        }
+        let qText = 'QuickBooks not checked';
+        if (!qStatus || typeof qStatus !== 'object') qText = 'QuickBooks not checked';
+        else if (!qStatus.configured) qText = 'QuickBooks env is missing';
+        else if (qStatus.connected) {
+          qText = 'Connected to QuickBooks' + (qStatus.companyName ? ' — ' + qStatus.companyName : '');
+        } else qText = 'QuickBooks not connected yet';
 
-        if (qBrief) {
-          if (!qSync || qSync.ok === false) {
-            qBrief.style.color = '#b91c1c';
-            qBrief.textContent = 'Could not load posting alerts.';
+        let briefText = '';
+        let briefColor = '';
+        if (!qSync || qSync.ok === false) {
+          briefColor = '#b91c1c';
+          briefText = 'Could not load posting alerts.';
+        } else {
+          const c = qSync.counts || {};
+          const hi = Number(c.high || 0);
+          const med = Number(c.medium || 0);
+          const low = Number(c.low || 0);
+          const nAlert = Array.isArray(qSync.alerts) ? qSync.alerts.length : 0;
+          if (!hi && !med && !low && !nAlert) {
+            briefText = 'No open posting issues.';
           } else {
-            const c = qSync.counts || {};
-            const hi = Number(c.high || 0);
-            const med = Number(c.medium || 0);
-            const low = Number(c.low || 0);
-            const nAlert = Array.isArray(qSync.alerts) ? qSync.alerts.length : 0;
-            if (!hi && !med && !low && !nAlert) {
-              qBrief.style.color = '';
-              qBrief.textContent = 'No open posting issues.';
-            } else {
-              qBrief.style.color = hi ? '#b45309' : '';
-              qBrief.textContent =
-                'Posting alerts: ' + hi + ' high · ' + med + ' med · ' + low + ' low' + (nAlert ? ' · details on ERP Accounting' : '');
-            }
+            briefColor = hi ? '#b45309' : '';
+            briefText =
+              'Posting alerts: ' + hi + ' high · ' + med + ' med · ' + low + ' low' + (nAlert ? ' · details on ERP Accounting' : '');
           }
         }
 
         const board = boardRes && typeof boardRes === 'object' ? boardRes : {};
         const nVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
         const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
-        if (fEl) fEl.textContent = 'Samsara board: ' + nVeh + ' vehicles · refreshed ' + brAt;
+        const fText = 'Samsara board: ' + nVeh + ' vehicles · refreshed ' + brAt;
 
         const dash = dashRes && typeof dashRes === 'object' ? dashRes : {};
         const fleetAt = dash.refreshedAt ? new Date(dash.refreshedAt).toLocaleString() : new Date().toLocaleString();
         const sec = Math.max(1, Math.round(DISPATCH_AUTO_REFRESH_MS / 1000));
-        if (lu) {
-          lu.textContent =
-            'Fleet snapshot (maintenance API): ' + fleetAt + ' · Sidebar status every ' + sec + 's with board refresh';
-        }
+        const luSidebar =
+          'Fleet snapshot (maintenance API): ' + fleetAt + ' · Sidebar status every ' + sec + 's with board refresh';
+        const luEmbed =
+          'Fleet snapshot: ' + fleetAt + ' · Status bar every ' + sec + 's (embed)';
+
+        applyDispatchStatusToTargets([targets[0]], {
+          qText,
+          briefText,
+          briefColor,
+          fText,
+          luText: luSidebar
+        });
+        applyDispatchStatusToTargets([targets[1]], {
+          qText,
+          briefText,
+          briefColor,
+          fText,
+          luText: luEmbed
+        });
       } catch (e) {
-        if (qEl) qEl.textContent = 'QuickBooks status check failed';
-        if (qBrief) {
-          qBrief.style.color = '#b91c1c';
-          qBrief.textContent = e.message || String(e);
-        }
-        if (fEl) fEl.textContent = 'Samsara: status unavailable';
-        if (lu) lu.textContent = 'Not loaded';
+        applyDispatchStatusToTargets(targets, {
+          qText: 'QuickBooks status check failed',
+          briefText: e.message || String(e),
+          briefColor: '#b91c1c',
+          fText: 'Samsara: status unavailable',
+          luText: 'Not loaded'
+        });
       }
     }
 
