@@ -437,6 +437,8 @@ function sanitizeFuelPurchase(raw) {
   if (odometerMiles != null && Number.isFinite(odometerMiles) && odometerMiles > 0) out.odometerMiles = Math.round(odometerMiles);
   const memo = String(raw.memo || raw.notes || raw.paymentNote || '').trim().slice(0, 500);
   if (memo) out.memo = memo;
+  const lineDesc = String(raw.lineDescription || raw.description || '').trim().slice(0, 200);
+  if (lineDesc) out.lineDescription = lineDesc;
   if (raw.manual === true || String(raw.entrySource || '').toLowerCase() === 'manual') out.entrySource = 'manual';
   let expNo = String(raw.expenseDocNumber || raw.manualExpenseNumber || '')
     .replace(/[^\w.-]/g, '')
@@ -478,6 +480,10 @@ function sanitizeFuelExpenseDraft(raw) {
     qboBankAccountId: digits('qboBankAccountId', 24)
   };
   if (expDraft) out.expenseDocNumber = expDraft;
+  const dm = String(raw.detailMode || '').toLowerCase();
+  if (dm === 'item' || dm === 'category') out.detailMode = dm;
+  const qAcct = digits('qboAccountId', 24);
+  if (qAcct) out.qboAccountId = qAcct;
   return Object.values(out).some(v => v !== '') ? out : {};
 }
 
@@ -6331,8 +6337,9 @@ function inferredFuelQbCategory(fp) {
   return relayQuickBooksCategory({ kind: pt, productsText: '' });
 }
 
-function resolveFuelPurchaseExpenseAccountId(erp, fp, bodyAccountId) {
-  const explicit = String(bodyAccountId || '')
+function resolveFuelPurchaseExpenseAccountId(erp, fp, bodyAccountId, draft) {
+  const d = draft && typeof draft === 'object' ? draft : {};
+  const explicit = String(bodyAccountId || d.qboAccountId || '')
     .trim()
     .replace(/[^\d]/g, '');
   if (explicit) return explicit;
@@ -6372,6 +6379,8 @@ function buildFuelPurchaseDocNumber(fp) {
 }
 
 function buildFuelPurchaseLineDescription(fp) {
+  const custom = String(fp?.lineDescription || '').trim();
+  if (custom) return sanitizeName(custom, 'Fuel expense');
   const unit = String(fp?.unit || '').trim();
   const prod = relayLineLabel(String(fp?.productType || 'diesel'));
   const loc = String(fp?.location || '').trim();
@@ -6396,7 +6405,8 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     const draft = fp.fuelExpenseDraft && typeof fp.fuelExpenseDraft === 'object' ? fp.fuelExpenseDraft : {};
 
     const body = req.body && typeof req.body === 'object' ? req.body : {};
-    const detailMode = String(body.detailMode || 'category').toLowerCase() === 'item' ? 'item' : 'category';
+    const detailMode =
+      String(body.detailMode || draft.detailMode || 'category').toLowerCase() === 'item' ? 'item' : 'category';
 
     let amount = safeNum(fp.totalCost, 0) || 0;
     if (body.amount != null && String(body.amount).trim() !== '') {
@@ -6431,7 +6441,8 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     const qboAccountId = resolveFuelPurchaseExpenseAccountId(
       erp,
       fp,
-      String(body.qboAccountId || '').trim().replace(/[^\d]/g, '')
+      String(body.qboAccountId || '').trim().replace(/[^\d]/g, ''),
+      draft
     );
     if (!qboAccountId) {
       return res.status(400).json({
@@ -6446,7 +6457,11 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     const qboItemId =
       String(body.qboItemId || '')
         .trim()
-        .replace(/[^\d]/g, '') || (detailMode === 'item' ? bestFuelItemId(erp) : '');
+        .replace(/[^\d]/g, '') ||
+      String(draft.itemId || '')
+        .trim()
+        .replace(/[^\d]/g, '') ||
+      (detailMode === 'item' ? bestFuelItemId(erp) : '');
     if (detailMode === 'item' && !qboItemId) {
       return res.status(400).json({
         error: 'Choose a QuickBooks item for the fuel line (item + qty + price), or switch to category mode.'

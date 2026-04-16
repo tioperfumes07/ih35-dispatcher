@@ -94,6 +94,13 @@
   <datalist id="qboAccountOptions"></datalist>
   <datalist id="qboAccountExpenseOptions"></datalist>
   <datalist id="qboExpenseCategoryOptions"></datalist>
+  <datalist id="fuelCatalogOptions">
+    <option value="On-highway diesel"></option>
+    <option value="Reefer diesel"></option>
+    <option value="DEF (diesel exhaust fluid)"></option>
+    <option value="Fuel card fee / program"></option>
+  </datalist>
+  <datalist id="settlementLoadHints"></datalist>
   <datalist id="qboProductServiceOptions"></datalist>
   <datalist id="paymentMethodOptions"></datalist>
   <datalist id="qboBankAccountOptions"></datalist>
@@ -1296,15 +1303,29 @@
       </section>
 
       <section id="section-accounting" class="section">
-        <div class="subtabs">
-          <button class="subtab active" onclick="openAccountingTab('acct-transactions', this)">Maintenance Expense Transactions</button>
-          <button class="subtab" onclick="openAccountingTab('acct-bill-pay', this)">Pay bills (QBO)</button>
-          <button class="subtab" onclick="openAccountingTab('acct-fuel-expense', this)">Fuel expenses</button>
-          <button class="subtab" onclick="openAccountingTab('acct-settlement', this)">Settlement / P&amp;L by load</button>
-          <button class="subtab" onclick="openAccountingTab('acct-qbo', this)">QuickBooks Live Master</button>
-          <button class="subtab" onclick="openAccountingTab('acct-expense-history', this)">Expense history log</button>
-          <button class="subtab" onclick="openAccountingTab('acct-qbo-rollback', this)">QBO rollback &amp; imports</button>
-          <a class="subtab" href="/banking.html" style="text-decoration:none;color:inherit;display:inline-block">Bank matching →</a>
+        <div class="subtabs acct-board-subtabs" style="gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="subtab active" onclick="openAccountingTab('acct-transactions', this)">Maintenance expenses</button>
+          <div class="nav-dropdown" style="display:inline-block">
+            <button type="button" class="subtab nav-dropdown-trigger" id="acctFuelDdTrigger" onclick="event.stopPropagation()">Fuel &amp; DEF ▾</button>
+            <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
+              <button type="button" class="nav-dd-item" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fast entry &amp; fuel ledger</button>
+            </div>
+          </div>
+          <div class="nav-dropdown" style="display:inline-block">
+            <button type="button" class="subtab nav-dropdown-trigger" id="acctQbDdTrigger" onclick="event.stopPropagation()">QuickBooks ▾</button>
+            <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
+              <button type="button" class="nav-dd-item" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctQbDdTrigger'))">Pay bills (QBO)</button>
+              <button type="button" class="nav-dd-item" onclick="openAccountingTab('acct-qbo', document.getElementById('acctQbDdTrigger'))">Live master (vendors, items, accounts)</button>
+            </div>
+          </div>
+          <div class="nav-dropdown" style="display:inline-block">
+            <button type="button" class="subtab nav-dropdown-trigger" id="acctLogsDdTrigger" onclick="event.stopPropagation()">Logs &amp; tools ▾</button>
+            <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
+              <button type="button" class="nav-dd-item" onclick="openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'))">Expense history log</button>
+              <button type="button" class="nav-dd-item" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctLogsDdTrigger'))">QBO rollback &amp; imports</button>
+              <a class="nav-dd-item" href="/banking.html" style="text-decoration:none;color:inherit;display:block">Bank matching →</a>
+            </div>
+          </div>
         </div>
 
         <div id="acct-transactions" class="accounting-tab">
@@ -1878,82 +1899,6 @@
           </div>
         </div>
 
-        <div id="acct-settlement" class="accounting-tab hidden">
-          <div class="panel qb-panel">
-            <div class="panel-head"><div class="panel-title">Trip cost rollup (load # = invoice #)</div></div>
-            <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 8px">Rolls up <strong>work orders</strong>, <strong>AP lines</strong>, and <strong>unit maintenance records</strong> that share this load/invoice #. If the load exists in TMS (Postgres), trip header and stops appear below. Export CSV for accounting.</p>
-              <div class="wo-line-grid" style="margin-bottom:10px">
-                <div style="grid-column:span 2">
-                  <span class="qb-l">Load / invoice #</span>
-                  <input id="settlementLoadInput" class="qb-in" placeholder="e.g. 13138" list="settlementLoadHints">
-                </div>
-                <div>
-                  <span class="qb-l">&nbsp;</span>
-                  <button type="button" class="qb-btn-add" onclick="runSettlementLookup()">Run lookup</button>
-                </div>
-                <div>
-                  <span class="qb-l">&nbsp;</span>
-                  <button type="button" class="qb-btn-add" onclick="downloadSettlementCsv()">Download CSV</button>
-                </div>
-              </div>
-              <datalist id="settlementLoadHints"></datalist>
-              <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
-              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid #d8deea;border-radius:8px;background:#fafcff"></div>
-              <div class="table-wrap st-settlement-wrap" style="min-width:0">
-                <table class="st-settlement" style="min-width:720px">
-                  <thead>
-                    <tr>
-                      <th>Source</th>
-                      <th>Description</th>
-                      <th>Unit</th>
-                      <th>Amount</th>
-                      <th>QB</th>
-                    </tr>
-                  </thead>
-                  <tbody id="settlementLinesBody">
-                    <tr><td colspan="5" class="mini-note">No rows.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-          </div>
-        </div>
-        <div class="panel" style="margin-top:12px">
-          <div class="panel-head"><div class="panel-title">Driver pay settlements</div></div>
-          <div class="panel-body">
-            <p class="mini-note" style="margin:0 0 8px">
-              Loads per <strong>QuickBooks driver vendor</strong>: trip revenue, rolled-up expenses (same as trip lookup), and company net.
-              Set <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) to show a suggested driver pay as a percent of linehaul revenue.
-            </p>
-            <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
-            <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Open and refresh.</div>
-          </div>
-        </div>
-        <div class="panel" style="margin-top:12px">
-          <div class="panel-head"><div class="panel-title">Loads with recorded costs (index)</div></div>
-            <div class="panel-body">
-              <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
-              <div class="table-wrap st-settlement-wrap" style="margin-top:10px;min-width:0">
-                <table class="st-settlement" style="min-width:520px">
-                  <thead>
-                    <tr>
-                      <th>Load / doc #</th>
-                      <th>WOs</th>
-                      <th>AP</th>
-                      <th>Rec</th>
-                      <th>Total $</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody id="settlementIndexBody">
-                    <tr><td colspan="6" class="mini-note">Open this tab and refresh.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div id="acct-qbo" class="accounting-tab hidden">
           <div class="panel">
             <div class="panel-head">
@@ -2169,11 +2114,19 @@
           </div>
 
           <div class="nav-dropdown" style="display:inline-block">
-            <button type="button" class="subtab nav-dropdown-trigger" onclick="event.stopPropagation()">Operations ▾</button>
+            <button type="button" class="subtab nav-dropdown-trigger" id="repOpsDdTrigger" onclick="event.stopPropagation()">Operations ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-tms', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">TMS loads</button>
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-team', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">Team &amp; security</button>
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-ifta', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">IFTA &amp; compliance</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-tms', document.getElementById('repOpsDdTrigger'))">TMS loads</button>
+              <button
+                type="button"
+                class="nav-dd-item"
+                id="repSettlementNavItem"
+                onclick="openReportsTab('rep-settlement', document.getElementById('repOpsDdTrigger'))"
+              >
+                Settlement / P&amp;L by load
+              </button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-team', document.getElementById('repOpsDdTrigger'))">Team &amp; security</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-ifta', document.getElementById('repOpsDdTrigger'))">IFTA &amp; compliance</button>
             </div>
           </div>
         </div>
@@ -2197,6 +2150,85 @@
             <div class="panel-body" id="repTmsBody"></div>
           </div>
         </div>
+
+        <div id="rep-settlement" class="reports-tab hidden">
+          <p class="mini-note" style="margin:0 0 12px;max-width:90ch">
+            <strong>TMS report:</strong> trip-level revenue vs rolled-up expenses (work orders, AP lines, and maintenance records keyed by load / invoice #). Moved from Accounting so the Accounting board stays focused on expense entry and QuickBooks operations.
+          </p>
+          <div class="panel qb-panel">
+            <div class="panel-head"><div class="panel-title">Trip cost rollup (load # = invoice #)</div></div>
+            <div class="panel-body form-stack">
+              <p class="mini-note" style="margin:0 0 8px">Rolls up <strong>work orders</strong>, <strong>AP lines</strong>, and <strong>unit maintenance records</strong> that share this load/invoice #. If the load exists in TMS (Postgres), trip header and stops appear below. Export CSV for accounting.</p>
+              <div class="wo-line-grid" style="margin-bottom:10px">
+                <div style="grid-column:span 2">
+                  <span class="qb-l">Load / invoice #</span>
+                  <input id="settlementLoadInput" class="qb-in" placeholder="e.g. 13138" list="settlementLoadHints" />
+                </div>
+                <div>
+                  <span class="qb-l">&nbsp;</span>
+                  <button type="button" class="qb-btn-add" onclick="runSettlementLookup()">Run lookup</button>
+                </div>
+                <div>
+                  <span class="qb-l">&nbsp;</span>
+                  <button type="button" class="qb-btn-add" onclick="downloadSettlementCsv()">Download CSV</button>
+                </div>
+              </div>
+              <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
+              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid #d8deea;border-radius:8px;background:#fafcff"></div>
+              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+                <table class="st-settlement" style="min-width:720px">
+                  <thead>
+                    <tr>
+                      <th>Source</th>
+                      <th>Description</th>
+                      <th>Unit</th>
+                      <th>Amount</th>
+                      <th>QB</th>
+                    </tr>
+                  </thead>
+                  <tbody id="settlementLinesBody">
+                    <tr><td colspan="5" class="mini-note">No rows.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:12px">
+            <div class="panel-head"><div class="panel-title">Driver pay settlements</div></div>
+            <div class="panel-body">
+              <p class="mini-note" style="margin:0 0 8px">
+                Loads per <strong>QuickBooks driver vendor</strong>: trip revenue, rolled-up expenses (same as trip lookup), and company net.
+                Set <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) to show a suggested driver pay as a percent of linehaul revenue.
+              </p>
+              <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
+              <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Open and refresh.</div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:12px">
+            <div class="panel-head"><div class="panel-title">Loads with recorded costs (index)</div></div>
+            <div class="panel-body">
+              <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
+              <div class="table-wrap st-settlement-wrap" style="margin-top:10px;min-width:0">
+                <table class="st-settlement" style="min-width:520px">
+                  <thead>
+                    <tr>
+                      <th>Load / doc #</th>
+                      <th>WOs</th>
+                      <th>AP</th>
+                      <th>Rec</th>
+                      <th>Total $</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="settlementIndexBody">
+                    <tr><td colspan="6" class="mini-note">Open this report and refresh.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="rep-maint" class="reports-tab hidden">
           <div class="panel">
             <div class="panel-head">
@@ -4022,10 +4054,9 @@
         return;
       }
       defaultNavBootstrapped = true;
-      if (section === 'accounting-settlement') {
-        openSectionByName('accounting');
-        const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-settlement"]');
-        openAccountingTab('acct-settlement', sub);
+      if (section === 'accounting-settlement' || section === 'reports-settlement') {
+        openSectionByName('reports');
+        openReportsTab('rep-settlement', document.getElementById('repOpsDdTrigger'));
         return;
       }
       if (section === 'accounting-fuel') {
@@ -4041,7 +4072,7 @@
           }
         }
         openSectionByName('accounting');
-        const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-fuel-expense"]');
+        const sub = document.getElementById('acctFuelDdTrigger');
         openAccountingTab('acct-fuel-expense', sub);
         return;
       }
@@ -4116,16 +4147,6 @@
           window.dispatchEvent(new Event('resize'));
         });
       }
-      if (id === 'acct-settlement') {
-        if (!tmsEnabled) {
-          alert('Trip settlement is paused (TMS database not configured). Focus: maintenance, safety, and diesel management.');
-          const first = document.querySelector('#section-accounting .subtab[onclick*="acct-transactions"]');
-          openAccountingTab('acct-transactions', first);
-          return;
-        }
-        loadSettlementIndex();
-        loadDriverPaySettlements();
-      }
       if (id === 'acct-expense-history') {
         resetExpHistQboBanner();
         renderExpenseHistory();
@@ -4168,12 +4189,10 @@
     function setTmsUiEnabled(enabled) {
       tmsEnabled = !!enabled;
       // Accounting settlement subtab + panel
-      const acctSettlementTab = document.querySelector('#section-accounting .subtab[onclick*="acct-settlement"]');
-      if (acctSettlementTab) acctSettlementTab.classList.toggle('hidden', !tmsEnabled);
-      const acctSettlementPanel = document.getElementById('acct-settlement');
-      if (acctSettlementPanel) acctSettlementPanel.classList.toggle('hidden', !tmsEnabled);
+      const repSettleItem = document.getElementById('repSettlementNavItem');
+      if (repSettleItem) repSettleItem.classList.toggle('hidden', !tmsEnabled);
       // Reports TMS tab + panel
-      const repTmsTab = document.querySelector('#section-reports .subtab[onclick*="rep-tms"]');
+      const repTmsTab = document.querySelector('#section-reports .nav-dd-item[onclick*="rep-tms"]');
       if (repTmsTab) repTmsTab.classList.toggle('hidden', !tmsEnabled);
       const repTmsPanel = document.getElementById('rep-tms');
       if (repTmsPanel) repTmsPanel.classList.toggle('hidden', !tmsEnabled);
