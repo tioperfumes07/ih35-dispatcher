@@ -474,6 +474,15 @@
             <input class="in" id="f_customer_wo_number" placeholder="e.g. 62998 (broker / customer ref)" maxlength="80" />
           </div>
           <div class="row" style="grid-column:1/-1">
+            <label class="lbl">Driver — quick pick (TMS / Samsara → QBO)</label>
+            <select class="in" id="f_driver_roster_select" onchange="onDriverRosterSelect()">
+              <option value="">— Choose linked TMS driver or Samsara driver —</option>
+            </select>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">
+              <strong>TMS roster</strong> uses drivers with a QuickBooks vendor id. <strong>Samsara</strong> rows try to match a QBO vendor by name; you can still fix the vendor in the field below.
+            </p>
+          </div>
+          <div class="row" style="grid-column:1/-1">
             <label class="lbl">Driver (QuickBooks vendor)</label>
             <input type="hidden" id="f_qbo_driver_vendor_id" />
             <div class="ac-wrap">
@@ -481,6 +490,13 @@
               <div class="ac-list" id="driver_vendor_ac"></div>
             </div>
             <p class="muted" style="margin:6px 0 0;font-size:12px">The driver/carrier is a <strong>vendor</strong> in QuickBooks. Add vendors in QBO, then use <strong>Sync QBO catalog</strong>.</p>
+          </div>
+          <div class="row" style="grid-column:1/-1">
+            <label class="lbl">Truck — pick Samsara vehicle</label>
+            <select class="in" id="f_truck_samsara_select" onchange="onSamsaraTruckSelect()">
+              <option value="">— Samsara fleet asset (optional) —</option>
+            </select>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Same list as the <strong>Fleet</strong> tab. Fills the truck field and TMS row; you can still type a different unit below.</p>
           </div>
           <div class="row">
             <label class="lbl">Truck (QBO class name, T1…)</label>
@@ -640,6 +656,16 @@
     let trailersList = [];
     /** @type {Array<{id:string,name:string,vin:string,licensePlate:string}>} */
     let samsaraFleet = [];
+    /** @type {Array<{id:string,name:string,username?:string,phone?:string}>} */
+    let samsaraDriversPick = [];
+    /** @type {Array<{id:string,name:string,qbo_vendor_id?:string,samsara_driver_id?:string}>} */
+    let tmsDriversPick = [];
+    let qboStatusMeta = {
+      catalogAutoSyncMinutes: 360,
+      catalogUiPollMinutes: 0,
+      catalogLastSyncedAt: null
+    };
+    let qboCatalogPollTimer = null;
     let currentDocsLoadId = null;
     let currentDocsLoadNumber = '';
     let currentDocsQboInvoiceId = '';
@@ -1071,7 +1097,263 @@
       const t = qboCatalog.refreshedAt
         ? new Date(qboCatalog.refreshedAt).toLocaleString()
         : '—';
-      el.textContent = nC + ' customers · ' + nV + ' vendors · ' + nCl + ' classes · ' + nI + ' items · cache ' + t;
+      const autoM = qboStatusMeta.catalogAutoSyncMinutes || 360;
+      const srv = qboStatusMeta.catalogLastSyncedAt
+        ? new Date(qboStatusMeta.catalogLastSyncedAt).toLocaleString()
+        : '—';
+      const poll = qboStatusMeta.catalogUiPollMinutes
+        ? ' · UI re-read ' + qboStatusMeta.catalogUiPollMinutes + 'm'
+        : '';
+      el.textContent =
+        nC +
+        ' customers · ' +
+        nV +
+        ' vendors · ' +
+        nCl +
+        ' classes · ' +
+        nI +
+        ' items · cache ' +
+        t +
+        ' · server sync ' +
+        autoM +
+        'm (last ' +
+        srv +
+        ')' +
+        poll;
+    }
+
+    function applyQboStatusCatalogMeta(qStatus) {
+      if (!qStatus || typeof qStatus !== 'object') return;
+      const autoM = Number(qStatus.catalogAutoSyncMinutes);
+      if (Number.isFinite(autoM) && autoM > 0) qboStatusMeta.catalogAutoSyncMinutes = autoM;
+      const pollM = Number(qStatus.catalogUiPollMinutes);
+      if (Number.isFinite(pollM) && pollM >= 0) qboStatusMeta.catalogUiPollMinutes = Math.floor(pollM);
+      if (qStatus.catalogLastSyncedAt != null && String(qStatus.catalogLastSyncedAt).trim())
+        qboStatusMeta.catalogLastSyncedAt = qStatus.catalogLastSyncedAt;
+      updateQboCatalogStatusLine();
+      restartQboCatalogUiPoll();
+    }
+
+    async function refreshQboCatalogIntervalsUi() {
+      try {
+        const r = await fetch('/api/qbo/status', { headers: { Accept: 'application/json' } });
+        const j = await r.json().catch(() => ({}));
+        applyQboStatusCatalogMeta(j);
+      } catch (_) {
+        updateQboCatalogStatusLine();
+      }
+    }
+
+    function restartQboCatalogUiPoll() {
+      if (qboCatalogPollTimer) {
+        clearInterval(qboCatalogPollTimer);
+        qboCatalogPollTimer = null;
+      }
+      const min = Number(qboStatusMeta.catalogUiPollMinutes) || 0;
+      if (min <= 0) return;
+      const ms = Math.max(60_000, min * 60_000);
+      qboCatalogPollTimer = setInterval(() => {
+        loadQboCatalog().catch(() => {});
+      }, ms);
+    }
+
+    function matchQboVendorLoose(driverDisplayName) {
+      const raw = String(driverDisplayName || '').trim();
+      if (!raw) return null;
+      const n = raw.toLowerCase();
+      const vendors = (qboCatalog.vendors || []).filter(v => v.active !== false);
+      const exact = vendors.find(
+        v =>
+          String(v.name || '')
+            .trim()
+            .toLowerCase() === n ||
+          String(v.companyName || '')
+            .trim()
+            .toLowerCase() === n
+      );
+      if (exact) return { qboId: String(exact.qboId), name: String(exact.name || exact.companyName || raw).trim() };
+      const parts = n.split(/\s+/).filter(Boolean);
+      const hit = vendors.find(v => {
+        const vn = String(v.name || '').toLowerCase();
+        const vc = String(v.companyName || '').toLowerCase();
+        return parts.some(p => p.length > 2 && (vn.includes(p) || vc.includes(p)));
+      });
+      if (hit) return { qboId: String(hit.qboId), name: String(hit.name || hit.companyName || raw).trim() };
+      return null;
+    }
+
+    function renderSamsaraTruckSelect() {
+      const sel = document.getElementById('f_truck_samsara_select');
+      if (!sel) return;
+      const cur = sel.value;
+      const rows = [...(samsaraFleet || [])].sort((a, b) =>
+        String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
+      );
+      let html = '<option value="">— Samsara fleet asset (optional) —</option>';
+      for (const v of rows) {
+        const id = String(v.id || '').trim();
+        const name = String(v.name || '').trim();
+        if (!name) continue;
+        const sub = [v.vin, v.licensePlate].filter(Boolean).join(' · ');
+        html +=
+          '<option value="' +
+          escapeHtml(id) +
+          '" data-unit="' +
+          escapeHtml(name) +
+          '">' +
+          escapeHtml(sub ? name + ' — ' + sub : name) +
+          '</option>';
+      }
+      sel.innerHTML = html;
+      if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+    }
+
+    async function loadSamsaraDriversForPicker() {
+      try {
+        const r = await fetch('/api/integrations/samsara/drivers?limit=400', {
+          headers: { Accept: 'application/json' }
+        });
+        const j = await r.json().catch(() => ({}));
+        samsaraDriversPick = j.ok && Array.isArray(j.drivers) ? j.drivers : [];
+      } catch {
+        samsaraDriversPick = [];
+      }
+    }
+
+    async function loadTmsDriversForPicker() {
+      try {
+        const j = await api('/drivers');
+        tmsDriversPick = j.data || [];
+      } catch {
+        tmsDriversPick = [];
+      }
+    }
+
+    function renderDriverRosterSelect() {
+      const sel = document.getElementById('f_driver_roster_select');
+      if (!sel) return;
+      const cur = sel.value;
+      let html = '<option value="">— Choose linked TMS driver or Samsara driver —</option>';
+      const tms = (tmsDriversPick || []).filter(d => String(d.qbo_vendor_id || '').trim());
+      if (tms.length) {
+        html += '<optgroup label="TMS drivers (QuickBooks linked)">';
+        for (const d of tms.sort((a, b) =>
+          String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
+        )) {
+          const vid = String(d.qbo_vendor_id || '').trim();
+          const label = String(d.name || '').trim() || vid;
+          html +=
+            '<option value="qbo:' +
+            escapeHtml(vid) +
+            '">' +
+            escapeHtml(label) +
+            '</option>';
+        }
+        html += '</optgroup>';
+      }
+      const sam = samsaraDriversPick || [];
+      if (sam.length) {
+        html += '<optgroup label="Samsara drivers (match QBO vendor by name)">';
+        for (const d of sam.sort((a, b) =>
+          String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
+        )) {
+          const sid = String(d.id || '').trim();
+          const nm = String(d.name || '').trim();
+          if (!sid || !nm) continue;
+          html +=
+            '<option value="sam:' +
+            escapeHtml(sid) +
+            '" data-driver-name="' +
+            escapeHtml(nm) +
+            '">' +
+            escapeHtml(d.username ? nm + ' · ' + d.username : nm) +
+            '</option>';
+        }
+        html += '</optgroup>';
+      }
+      sel.innerHTML = html;
+      if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+    }
+
+    function onDriverRosterSelect() {
+      const sel = document.getElementById('f_driver_roster_select');
+      const inv = document.getElementById('f_driver_vendor');
+      const hid = document.getElementById('f_qbo_driver_vendor_id');
+      if (!sel || !inv || !hid) return;
+      const v = sel.value;
+      if (!v) return;
+      if (v.startsWith('qbo:')) {
+        hid.value = v.slice(4);
+        const opt = sel.options[sel.selectedIndex];
+        inv.value = opt ? String(opt.textContent || '').split(' · ')[0].trim() : '';
+        return;
+      }
+      if (v.startsWith('sam:')) {
+        const opt = sel.options[sel.selectedIndex];
+        const dname = opt ? String(opt.getAttribute('data-driver-name') || opt.textContent || '').trim() : '';
+        const matched = matchQboVendorLoose(dname);
+        if (matched) {
+          hid.value = matched.qboId;
+          inv.value = matched.name;
+        } else {
+          hid.value = '';
+          inv.value = dname;
+        }
+      }
+    }
+
+    async function onSamsaraTruckSelect() {
+      const sel = document.getElementById('f_truck_samsara_select');
+      const inp = document.getElementById('f_truck_search');
+      const hid = document.getElementById('f_truck_id');
+      if (!sel || !inp || !hid) return;
+      const opt = sel.options[sel.selectedIndex];
+      const unit = opt && opt.dataset && opt.dataset.unit ? String(opt.dataset.unit).trim() : '';
+      if (!unit) {
+        return;
+      }
+      inp.value = unit;
+      hid.value = '';
+      try {
+        const id = await ensureTruckFromUnitCode(unit);
+        if (id) hid.value = id;
+      } catch (_) {}
+      setTimeout(() => {
+        if (typeof updateTruckMaintBanner === 'function') updateTruckMaintBanner();
+      }, 80);
+    }
+
+    function syncSamsaraTruckSelectToTruckField() {
+      const sel = document.getElementById('f_truck_samsara_select');
+      const inp = document.getElementById('f_truck_search');
+      if (!sel || !inp) return;
+      const code = String(inp.value || '').trim().toLowerCase();
+      if (!code) {
+        sel.value = '';
+        return;
+      }
+      const match = [...sel.options].find(
+        o => o.dataset.unit && String(o.dataset.unit).trim().toLowerCase() === code
+      );
+      sel.value = match ? match.value : '';
+    }
+
+    function syncDriverRosterSelectToVendorFields() {
+      const sel = document.getElementById('f_driver_roster_select');
+      const hid = document.getElementById('f_qbo_driver_vendor_id');
+      const inv = document.getElementById('f_driver_vendor');
+      if (!sel || !hid || !inv) return;
+      const qid = String(hid.value || '').trim();
+      if (!qid) {
+        sel.value = '';
+        return;
+      }
+      const hit = [...sel.options].find(o => o.value === 'qbo:' + qid);
+      if (hit) {
+        sel.value = hit.value;
+        return;
+      }
+      sel.value = '';
     }
 
     async function maybeRefreshQboCatalogIfItemsEmpty() {
@@ -1145,6 +1427,7 @@
         syncTruckClassDatalist();
         syncQboInvoiceItemDatalist();
         showMsg('QuickBooks catalog updated.');
+        await refreshQboCatalogIntervalsUi();
         setTimeout(() => showMsg(''), 2500);
       } catch (e) {
         showMsg(e.message || String(e), true);
@@ -1683,6 +1966,8 @@
             .catch(() => ({}))
         ]);
 
+        applyQboStatusCatalogMeta(qStatus);
+
         let qText = 'QuickBooks not checked';
         if (!qStatus || typeof qStatus !== 'object') qText = 'QuickBooks not checked';
         else if (!qStatus.configured) qText = 'QuickBooks env is missing';
@@ -2142,7 +2427,13 @@
       if (saveBtn) saveBtn.textContent = 'Save load';
       await loadMeta();
       await loadQboCatalog();
+      await refreshQboCatalogIntervalsUi();
       await refreshLookups();
+      await loadSamsaraFleetForDatalist();
+      await loadSamsaraDriversForPicker();
+      await loadTmsDriversForPicker();
+      renderSamsaraTruckSelect();
+      renderDriverRosterSelect();
       const ln = document.getElementById('f_load_number');
       const suggested = await fetchSuggestedNextLoadNumber();
       ln.value = suggested || '';
@@ -2165,6 +2456,10 @@
       clearInvoiceExtraLines();
       document.getElementById('f_driver_vendor').value = '';
       document.getElementById('f_qbo_driver_vendor_id').value = '';
+      const drSel = document.getElementById('f_driver_roster_select');
+      if (drSel) drSel.value = '';
+      const trSam = document.getElementById('f_truck_samsara_select');
+      if (trSam) trSam.value = '';
       document.getElementById('f_new_truck').value = '';
       document.getElementById('f_new_trailer').value = '';
       document.getElementById('stops').innerHTML = '';
@@ -2184,7 +2479,13 @@
       if (saveBtn) saveBtn.textContent = 'Save changes';
       await loadMeta();
       await loadQboCatalog();
+      await refreshQboCatalogIntervalsUi();
       await refreshLookups();
+      await loadSamsaraFleetForDatalist();
+      await loadSamsaraDriversForPicker();
+      await loadTmsDriversForPicker();
+      renderSamsaraTruckSelect();
+      renderDriverRosterSelect();
       let j;
       try {
         j = await api('/loads/' + encodeURIComponent(id));
@@ -2267,6 +2568,8 @@
         addStopRow();
       }
       updateStopMilesSummary();
+      syncSamsaraTruckSelectToTruckField();
+      syncDriverRosterSelectToVendorFields();
       updateTruckMaintBanner();
       document.getElementById('modalBg').classList.add('on');
     }
@@ -2289,6 +2592,7 @@
       document.getElementById('f_new_truck').value = '';
       document.getElementById('f_truck_search').value = unit_code;
       document.getElementById('f_truck_id').value = j.data.id;
+      syncSamsaraTruckSelectToTruckField();
       updateTruckMaintBanner();
     }
 

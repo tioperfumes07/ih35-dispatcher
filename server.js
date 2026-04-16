@@ -2099,6 +2099,9 @@ function readQboCatalogPayload() {
   };
 }
 
+/** Updated whenever `qboSyncMasterData` completes (also surfaced on GET /api/qbo/status). */
+let lastQboCatalogServerSyncAt = null;
+
 async function qboSyncMasterData() {
   const [
     vendorsData,
@@ -2261,6 +2264,7 @@ async function qboSyncMasterData() {
     refreshedAt: new Date().toISOString()
   };
   writeErp(erp);
+  lastQboCatalogServerSyncAt = erp.qboCache.refreshedAt || new Date().toISOString();
   return erp.qboCache;
 }
 
@@ -7129,12 +7133,29 @@ app.post('/api/import/erp-batch/undo', (req, res) => {
 
 app.get('/api/qbo/status', (_req, res) => {
   const store = readQbo();
+  const syncMinRaw = Number(process.env.QBO_AUTO_SYNC_MINUTES ?? 360);
+  const catalogAutoSyncMinutes = Math.max(5, Number.isFinite(syncMinRaw) ? syncMinRaw : 360);
+  const uiPollRaw = Number(process.env.QBO_CATALOG_UI_POLL_MINUTES ?? 0);
+  const catalogUiPollMinutes =
+    Number.isFinite(uiPollRaw) && uiPollRaw > 0 ? Math.min(24 * 60, Math.floor(uiPollRaw)) : 0;
+  let catalogLastSyncedAt = lastQboCatalogServerSyncAt;
+  if (!catalogLastSyncedAt) {
+    try {
+      const erp = readErp();
+      catalogLastSyncedAt = erp?.qboCache?.refreshedAt || null;
+    } catch (_) {
+      catalogLastSyncedAt = null;
+    }
+  }
   res.json({
     configured: qboConfigured(),
     connected: !!store.tokens?.access_token,
     realmId: store.tokens?.realmId || '',
     connectedAt: store.tokens?.connected_at || '',
-    companyName: store.tokens?.companyName || ''
+    companyName: store.tokens?.companyName || '',
+    catalogAutoSyncMinutes,
+    catalogUiPollMinutes,
+    catalogLastSyncedAt
   });
 });
 
@@ -8173,7 +8194,11 @@ async function startServer() {
   });
 
   const syncMin = Number(process.env.QBO_AUTO_SYNC_MINUTES ?? 360);
-  const QBO_SYNC_MS = Math.max(5, Number.isFinite(syncMin) ? syncMin : 360) * 60 * 1000;
+  const catalogAutoSyncMinutes = Math.max(5, Number.isFinite(syncMin) ? syncMin : 360);
+  const QBO_SYNC_MS = catalogAutoSyncMinutes * 60 * 1000;
+  console.log(
+    `[qbo] catalog auto-sync: every ${catalogAutoSyncMinutes} min (set QBO_AUTO_SYNC_MINUTES; min 5)`
+  );
   setInterval(async () => {
     try {
       const store = readQbo();
