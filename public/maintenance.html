@@ -4217,31 +4217,106 @@
       return map;
     }
 
-    function erpSbAdmin() {
+    function erpToggleSbGroup(ev, module, gid) {
+      if (ev) ev.preventDefault();
+      const head = ev && ev.currentTarget;
+      const root = head && head.closest('.erp-sb-group');
+      if (!root) return;
+      root.classList.toggle('is-open');
+      const open = root.classList.contains('is-open');
+      if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      const chev = root.querySelector('.erp-sb-group__chev');
+      if (chev) chev.textContent = open ? '\u25bc' : '\u25b6';
+      try {
+        localStorage.setItem('ih35_sb_' + module + '_' + gid, open ? '1' : '0');
+      } catch (_) {
+        /* ignore quota / private mode */
+      }
+    }
+
+    function erpSbGroup(module, gid, title, defaultOpen, bodyHtml) {
+      const key = 'ih35_sb_' + module + '_' + gid;
+      let open = defaultOpen;
+      try {
+        const v = localStorage.getItem(key);
+        if (v === '0') open = false;
+        else if (v === '1') open = true;
+      } catch (_) {
+        /* ignore */
+      }
+      const cls = open ? 'erp-sb-group is-open' : 'erp-sb-group';
+      const exp = open ? 'true' : 'false';
+      const chev = open ? '\u25bc' : '\u25b6';
       return (
-        '<div class="erp-sb-sep"></div>' +
-        '<div class="erp-sb-heading">Lists, imports &amp; admin</div>' +
+        '<div class="' +
+        cls +
+        '" data-erp-sb-module="' +
+        module +
+        '" data-erp-sb-group="' +
+        gid +
+        '">' +
+        '<button type="button" class="erp-sb-group__head" aria-expanded="' +
+        exp +
+        '" onclick="erpToggleSbGroup(event,&quot;' +
+        module +
+        '&quot;,&quot;' +
+        gid +
+        '&quot;)"><span>' +
+        title +
+        '</span><span class="erp-sb-group__chev" aria-hidden="true">' +
+        chev +
+        '</span></button>' +
+        '<div class="erp-sb-group__body">' +
+        bodyHtml +
+        '</div></div>'
+      );
+    }
+
+    function erpSbToolsDataBlock(includeBankCsv) {
+      let s =
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'service\');">Service types (database)</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'vendors\');">Vendors &amp; driver payees</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'fuel\');">Import — Fuel CSV</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'maint\');">Import — Maintenance history</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'ap\');">Import — Maintenance AP</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'comdata\');">Import — Comdata</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'sync\');">Connections &amp; Samsara writes</button>' +
-        '<button type="button" class="erp-sb-link" onclick="location.href=\'/banking.html\'">Bank CSV (matching)</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>';
+      if (includeBankCsv) {
+        s +=
+          '<button type="button" class="erp-sb-link" onclick="location.href=\'/banking.html\'">Bank CSV (matching)</button>';
+      }
+      return s;
+    }
+
+    function erpSbUploadCenterLink() {
+      return (
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'fuel\');">Upload center</button>'
+      );
+    }
+
+    function erpSbSettingsBlock() {
+      return (
         '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="location.href=\'/settings.html\'">Settings &amp; users</button>' +
         '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
         '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="window.open(\'https://cloud.samsara.com\',\'_blank\',\'noopener\');">Samsara Cloud</button>'
       );
     }
 
+    function erpSbAdmin(opts) {
+      const includeBank = !(opts && opts.includeBankCsv === false);
+      const hideUpload = opts && opts.hideUploadLink;
+      return (
+        '<div class="erp-sb-sep"></div>' +
+        '<div class="erp-sb-heading">Lists, imports &amp; admin</div>' +
+        erpSbToolsDataBlock(includeBank) +
+        (hideUpload ? '' : erpSbUploadCenterLink()) +
+        erpSbSettingsBlock()
+      );
+    }
+
     function renderErpModuleSidebar(name) {
       const inner = document.getElementById('erpModuleSidebarInner');
       if (!inner) return;
-      const adm = erpSbAdmin();
+      const admOpts = name === 'uploads' ? { hideUploadLink: true } : undefined;
+      const adm = erpSbAdmin(admOpts);
       const mt = (tab, label) =>
         `<button type="button" class="erp-sb-link" onclick="openMaintMainTab('${tab}', document.querySelector('#maintMainSubtabs [data-maint-main=&quot;${tab}&quot;]'))">${label}</button>`;
       const ast = (cat, label) => {
@@ -4249,23 +4324,52 @@
         return `<button type="button" class="erp-sb-link" onclick="setAssetCategory('${esc}')">${label}</button>`;
       };
       if (name === 'maintenance') {
+        const toolsBody = erpSbToolsDataBlock(false) + erpSbUploadCenterLink();
+        const settingsBody =
+          '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="loadAll()">Refresh now</button>' +
+          '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>' +
+          erpSbSettingsBlock();
         inner.innerHTML =
-          '<div class="erp-sb-heading">Maintenance center</div>' +
-          '<button type="button" class="erp-sb-link" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Home overview (KPIs)</button>' +
-          mt('record', 'Work orders &amp; records') +
-          mt('fleet', 'Fleet table') +
-          mt('rm', 'R&amp;M status') +
-          mt('shop-loc', 'Shop / location') +
-          '<div class="erp-sb-heading">Fleet by type</div>' +
-          ast('Trucks', 'Trucks') +
-          ast('Refrigerated Vans', 'Refrigerated vans') +
-          ast('Flatbeds', 'Flatbeds') +
-          ast('Dry Vans', 'Dry vans') +
-          ast('Company Vehicles', 'Company vehicles') +
-          '<div class="erp-sb-heading">Related</div>' +
-          '<button type="button" class="erp-sb-link" onclick="openSection(&quot;fuel&quot;, document.querySelector(&quot;.nav-btn[data-section=fuel]&quot;));">Diesel / Fuel</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openSection(&quot;tracking&quot;, document.querySelector(&quot;.nav-btn[data-section=tracking]&quot;)); openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance (tracking)</button>' +
-          adm;
+          erpSbGroup(
+            'maintenance',
+            'board',
+            'Board',
+            true,
+            '<button type="button" class="erp-sb-link" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Home overview (KPIs)</button>' +
+              mt('record', 'Maintenance board') +
+              mt('fleet', 'Fleet table')
+          ) +
+          erpSbGroup(
+            'maintenance',
+            'fleet-type',
+            'Fleet by type',
+            false,
+            ast('Trucks', 'Trucks') +
+              ast('Refrigerated Vans', 'Refrigerated vans') +
+              ast('Flatbeds', 'Flatbeds') +
+              ast('Dry Vans', 'Dry vans') +
+              ast('Company Vehicles', 'Company vehicles')
+          ) +
+          erpSbGroup(
+            'maintenance',
+            'views',
+            'Views',
+            true,
+            '<button type="button" class="erp-sb-link" onclick="openMaintWorkOrderModal()">Create work order</button>' +
+              mt('fleet', 'Fleet table') +
+              mt('rm', 'R&amp;M status') +
+              mt('shop-loc', 'Shop / location')
+          ) +
+          erpSbGroup(
+            'maintenance',
+            'related',
+            'Related',
+            false,
+            '<button type="button" class="erp-sb-link" onclick="openSection(&quot;fuel&quot;, document.querySelector(&quot;.nav-btn[data-section=fuel]&quot;));">Diesel / Fuel</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openSection(&quot;tracking&quot;, document.querySelector(&quot;.nav-btn[data-section=tracking]&quot;)); openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance (tracking)</button>'
+          ) +
+          erpSbGroup('maintenance', 'tools', 'Tools &amp; Data', false, toolsBody) +
+          erpSbGroup('maintenance', 'settings', 'Settings', false, settingsBody);
         return;
       }
       if (name === 'dashboard') {
@@ -4309,15 +4413,22 @@
         return;
       }
       if (name === 'accounting') {
-        inner.innerHTML =
-          '<div class="erp-sb-heading">Accounting</div>' +
+        const expensesBody =
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-transactions&quot;, document.querySelector(&quot;#section-accounting .subtab[onclick*=\\\'acct-transactions\\\']&quot;));">Maintenance expenses</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF (fast entry)</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF entry</button>' +
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">Pay bills</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>';
+        const qbBody =
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">QBO rollback &amp; imports</button>' +
-          adm;
+          '<button type="button" class="erp-sb-link" onclick="testQuickBooks()">Test QuickBooks connection</button>';
+        const uploadsBody = erpSbUploadCenterLink();
+        const acctToolsBody = erpSbToolsDataBlock(true) + erpSbSettingsBlock();
+        inner.innerHTML =
+          erpSbGroup('accounting', 'expenses', 'Expenses', true, expensesBody) +
+          erpSbGroup('accounting', 'quickbooks', 'QuickBooks', false, qbBody) +
+          erpSbGroup('accounting', 'uploads', 'Uploads', false, uploadsBody) +
+          erpSbGroup('accounting', 'tools', 'Tools &amp; Data', false, acctToolsBody);
         return;
       }
       if (name === 'reports') {
@@ -4340,11 +4451,8 @@
       }
       if (name === 'uploads') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Imports &amp; uploads</div>' +
-          '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;fuel&quot;);">Fuel CSV</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;maint&quot;);">Maintenance history</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;ap&quot;);">Maintenance AP</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;comdata&quot;);">Comdata</button>' +
+          '<div class="erp-sb-heading">Upload center</div>' +
+          '<p class="mini-note" style="margin:0 0 8px;line-height:1.45">Choose the import type from the <strong>tabs</strong> in the main workspace (Fuel / DEF, maintenance history, AP, Comdata, and related tools).</p>' +
           adm;
         return;
       }
