@@ -81,6 +81,8 @@
   <datalist id="qboItemOptions"></datalist>
   <datalist id="qboAccountOptions"></datalist>
   <datalist id="qboAccountExpenseOptions"></datalist>
+  <datalist id="qboExpenseCategoryOptions"></datalist>
+  <datalist id="qboProductServiceOptions"></datalist>
   <datalist id="paymentMethodOptions"></datalist>
   <datalist id="qboBankAccountOptions"></datalist>
   <datalist id="qboCustomerOptions"></datalist>
@@ -2427,20 +2429,20 @@
           <input class="qb-in wo-svc" placeholder="Description">
         </div>
         <div>
-          <span class="qb-l">Line type</span>
+          <span class="qb-l">QBO line type</span>
           <select class="qb-in wo-mode" onchange="toggleWoLineBlocks(this)">
-            <option value="category">Category</option>
-            <option value="item">Item</option>
+            <option value="category">Category details</option>
+            <option value="item">Item details</option>
           </select>
         </div>
         <div class="wo-block-cat">
-          <span class="qb-l">Category</span>
-          <input class="qb-in wo-acct" list="qboAccountOptions" placeholder="Account" oninput="resolveWoLineAccount(this)" onblur="resolveWoLineAccount(this)">
+          <span class="qb-l">Expense category</span>
+          <input class="qb-in wo-acct" list="qboExpenseCategoryOptions" placeholder="QBO expense account" oninput="resolveWoLineAccount(this)" onblur="resolveWoLineAccount(this)">
           <input type="hidden" class="wo-acct-id">
         </div>
         <div class="wo-block-item hidden">
-          <span class="qb-l">Item</span>
-          <input class="qb-in wo-item" list="qboItemOptions" placeholder="Item" oninput="resolveWoLineItem(this)" onblur="resolveWoLineItem(this)">
+          <span class="qb-l">Product / service</span>
+          <input class="qb-in wo-item" list="qboProductServiceOptions" placeholder="QBO item" oninput="resolveWoLineItem(this)" onblur="resolveWoLineItem(this)">
           <input type="hidden" class="wo-item-id">
         </div>
         <div class="wo-block-item hidden">
@@ -2477,8 +2479,8 @@
     <div class="maint-cost-line" style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa">
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;width:100%">
         <div style="flex:1;min-width:160px">
-          <span class="qb-l">Expense / item</span>
-          <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Tire, labor, rim…" autocomplete="off" />
+          <span class="qb-l">Description</span>
+          <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Tire, labor, rim…" autocomplete="off" title="Your line description (maintenance catalog). QuickBooks category vs product is chosen below." />
         </div>
         <div style="width:76px">
           <span class="qb-l">Qty</span>
@@ -2494,23 +2496,32 @@
         </div>
         <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
       </div>
-        <div class="maint-line-qbo-row" style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
-        <div>
-          <span class="qb-l">QBO line</span>
+        <div class="maint-line-qbo-row" style="width:100%;margin-top:10px;padding-top:10px;border-top:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;padding:10px 10px 8px">
+        <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">QuickBooks expense line</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;width:100%">
+        <div style="min-width:200px;max-width:100%">
+          <span class="qb-l">Line type</span>
           <select class="qb-in maint-field maint-line-mode" onchange="toggleMaintCostLineMode(this)">
-            <option value="category">Expense account</option>
-            <option value="item">Item / service</option>
+            <option value="category">Category details (account)</option>
+            <option value="item">Item details (product/service)</option>
           </select>
         </div>
-        <div class="maint-line-cat-block" style="flex:1;min-width:180px">
-          <span class="qb-l">Expense account</span>
-          <input class="qb-in maint-field maint-line-acct-search" list="qboAccountExpenseOptions" placeholder="QBO expense account (this line)" autocomplete="off" oninput="resolveMaintLineAccount(this)" onblur="resolveMaintLineAccount(this)" />
+        <div class="maint-line-cat-block maint-qbo-line-cat" style="flex:1;min-width:200px">
+          <span class="qb-l">Category</span>
+          <input class="qb-in maint-field maint-line-acct-search" list="qboExpenseCategoryOptions" placeholder="Expense account (chart)" autocomplete="off" oninput="resolveMaintLineAccount(this)" onblur="resolveMaintLineAccount(this)" title="Expense and COGS accounts only — QuickBooks category-style line" />
           <input type="hidden" class="maint-line-acct-id" />
         </div>
-        <div class="maint-line-item-block hidden" style="flex:1;min-width:180px">
-          <span class="qb-l">QBO item</span>
-          <input class="qb-in maint-field maint-line-item-search" list="qboItemOptions" placeholder="Item" autocomplete="off" oninput="resolveMaintLineItem(this)" onblur="resolveMaintLineItem(this)" />
-          <input type="hidden" class="maint-line-item-id" />
+        <div class="maint-line-item-block maint-qbo-line-item hidden" style="flex:1;min-width:220px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+          <div style="flex:1;min-width:140px">
+            <span class="qb-l">Product / service</span>
+            <input class="qb-in maint-field maint-line-item-search" list="qboProductServiceOptions" placeholder="QBO product or service" autocomplete="off" oninput="resolveMaintLineItem(this)" onblur="resolveMaintLineItem(this)" title="Service, Inventory, Non-inventory, etc. — not QBO Category bucket items" />
+            <input type="hidden" class="maint-line-item-id" />
+          </div>
+          <div style="width:92px">
+            <span class="qb-l">SKU</span>
+            <input class="qb-in maint-field maint-line-item-sku" type="text" readonly placeholder="—" style="background:#e2e8f0;cursor:default" tabindex="-1" title="Populated from QuickBooks when a product/service is matched" />
+          </div>
+        </div>
         </div>
       </div>
       <div class="maint-line-part-block" style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
@@ -2896,9 +2907,25 @@
       return hit || null;
     }
 
-    function cacheAccountsForLinked() {
+    /** Expense + COGS only — never the full chart (avoids Bank/Income in expense line pickers). */
+    function cacheExpenseCategoryAccounts() {
       const exp = erp.qboCache?.accountsExpense;
-      return Array.isArray(exp) && exp.length ? exp : cacheAccounts();
+      if (Array.isArray(exp) && exp.length) return exp;
+      return (cacheAccounts() || []).filter(a =>
+        ['Expense', 'Cost of Goods Sold'].includes(String(a.accountType || ''))
+      );
+    }
+
+    function cacheAccountsForLinked() {
+      return cacheExpenseCategoryAccounts();
+    }
+
+    /** QBO Items that can be used on purchase/expense item lines (excludes Category/Group/Subtotal buckets). */
+    function cacheItemsForProductServicePicker() {
+      const bad = new Set(['Category', 'Group', 'Subtotal']);
+      return (erp.qboCache?.items || []).filter(
+        i => i && !bad.has(String(i.type || '').trim())
+      );
     }
 
     function fillStaticMaintDatalists() {
@@ -4979,17 +5006,27 @@
       document.getElementById('qboVendorOptions').innerHTML =
         cacheVendors().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
 
+      const expenseAccRows = cacheExpenseCategoryAccounts();
+      const expOptHtml = expenseAccRows.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+
+      const allItems = cacheItems();
       document.getElementById('qboItemOptions').innerHTML =
-        cacheItems().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+        allItems.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+
+      const postableItems = cacheItemsForProductServicePicker();
+      const psEl = document.getElementById('qboProductServiceOptions');
+      if (psEl) {
+        psEl.innerHTML = postableItems
+          .map(v => `<option value="${escapeHtml(v.name)}"></option>`)
+          .join('');
+      }
 
       document.getElementById('qboAccountOptions').innerHTML =
         cacheAccounts().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
       const expAcc = document.getElementById('qboAccountExpenseOptions');
-      if (expAcc) {
-        expAcc.innerHTML = cacheAccountsForLinked()
-          .map(v => `<option value="${escapeHtml(v.name)}"></option>`)
-          .join('');
-      }
+      if (expAcc) expAcc.innerHTML = expOptHtml;
+      const expCat = document.getElementById('qboExpenseCategoryOptions');
+      if (expCat) expCat.innerHTML = expOptHtml;
 
       document.getElementById('paymentMethodOptions').innerHTML =
         paymentMethods().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
@@ -5299,9 +5336,27 @@
           onAddNew: typed => qbPickerAddNewRoute('item', typed)
         };
       }
-      if (listId === 'qboAccountOptions' || listId === 'qboAccountExpenseOptions') {
+      if (listId === 'qboProductServiceOptions') {
         return {
-          rows: () => cacheAccountsForLinked().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
+          rows: () =>
+            cacheItemsForProductServicePicker().map(i => ({
+              label: i.name || i.qboId,
+              meta: [i.type, i.sku].filter(Boolean).join(' · ') || String(i.qboId || '')
+            })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onAddNew: typed => qbPickerAddNewRoute('item', typed)
+        };
+      }
+      if (listId === 'qboAccountOptions') {
+        return {
+          rows: () => cacheAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onAddNew: typed => qbPickerAddNewRoute('account', typed)
+        };
+      }
+      if (listId === 'qboAccountExpenseOptions' || listId === 'qboExpenseCategoryOptions') {
+        return {
+          rows: () => cacheExpenseCategoryAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
           onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('account', typed)
         };
@@ -8174,8 +8229,25 @@
 
     function toggleMaintCostLineMode(sel) {
       const row = sel && sel.closest && sel.closest('.maint-cost-line');
-      if (!row) return;
+      if (!row || !sel) return;
       const mode = sel.value;
+      const prev = sel.dataset.lastMode;
+      if (prev && prev !== mode) {
+        if (mode === 'item') {
+          const hidA = row.querySelector('.maint-line-acct-id');
+          const as = row.querySelector('.maint-line-acct-search');
+          if (hidA) hidA.value = '';
+          if (as) as.value = '';
+        } else {
+          const hidI = row.querySelector('.maint-line-item-id');
+          const is = row.querySelector('.maint-line-item-search');
+          const sku = row.querySelector('.maint-line-item-sku');
+          if (hidI) hidI.value = '';
+          if (is) is.value = '';
+          if (sku) sku.value = '';
+        }
+      }
+      sel.dataset.lastMode = mode;
       row.querySelectorAll('.maint-line-cat-block').forEach(el => el.classList.toggle('hidden', mode !== 'category'));
       row.querySelectorAll('.maint-line-item-block').forEach(el => el.classList.toggle('hidden', mode !== 'item'));
     }
@@ -8184,18 +8256,31 @@
       if (!input) return;
       const row = input.closest('.maint-cost-line');
       if (!row) return;
-      const match = findBestNameMatch(cacheAccountsForLinked(), input.value);
+      const match = findBestNameMatch(cacheExpenseCategoryAccounts(), input.value);
       const hid = row.querySelector('.maint-line-acct-id');
       if (hid) hid.value = match ? match.qboId : '';
+    }
+
+    function syncMaintLineItemSku(row) {
+      const skuEl = row.querySelector('.maint-line-item-sku');
+      if (!skuEl) return;
+      const iid = (row.querySelector('.maint-line-item-id')?.value || '').trim();
+      if (!iid) {
+        skuEl.value = '';
+        return;
+      }
+      const hit = cacheItemsForProductServicePicker().find(x => String(x.qboId) === iid);
+      skuEl.value = hit && String(hit.sku || '').trim() ? String(hit.sku).trim() : '—';
     }
 
     function resolveMaintLineItem(input) {
       if (!input) return;
       const row = input.closest('.maint-cost-line');
       if (!row) return;
-      const match = findBestNameMatch(cacheItems(), input.value);
+      const match = findBestNameMatch(cacheItemsForProductServicePicker(), input.value);
       const hid = row.querySelector('.maint-line-item-id');
       if (hid) hid.value = match ? match.qboId : '';
+      syncMaintLineItemSku(row);
     }
 
     function resolveMaintCostLineRefs() {
@@ -8330,7 +8415,9 @@
       const modeSel = first.querySelector('.maint-line-mode');
       if (modeSel) {
         modeSel.value = hDm;
+        delete modeSel.dataset.lastMode;
         toggleMaintCostLineMode(modeSel);
+        modeSel.dataset.lastMode = hDm;
       }
       const hidA = first.querySelector('.maint-line-acct-id');
       const as = first.querySelector('.maint-line-acct-search');
@@ -8341,11 +8428,14 @@
         if (is) is.value = hItem ? maintItemLabelByQboId(hItem) : '';
         if (hidA) hidA.value = '';
         if (as) as.value = '';
+        syncMaintLineItemSku(first);
       } else {
         if (hidA) hidA.value = hAcct;
         if (as) as.value = hAcct ? maintAccountLabelByQboId(hAcct) : '';
         if (hidI) hidI.value = '';
         if (is) is.value = '';
+        const sku = first.querySelector('.maint-line-item-sku');
+        if (sku) sku.value = '';
       }
       recalcMaintLineRowInputs(first);
       recalcMaintCostTotalFromLines();
@@ -8497,7 +8587,10 @@
       const rows = host.querySelectorAll('.maint-cost-line');
       const last = rows[rows.length - 1];
       const modeSel = last.querySelector('.maint-line-mode');
-      if (modeSel) toggleMaintCostLineMode(modeSel);
+      if (modeSel) {
+        toggleMaintCostLineMode(modeSel);
+        modeSel.dataset.lastMode = modeSel.value;
+      }
       recalcMaintLineRowInputs(last);
       initMaintLinePartUi(last);
       bindMaintCostPartDelegation();
@@ -8528,12 +8621,16 @@
         }
         if (mode) {
           mode.value = 'category';
+          delete mode.dataset.lastMode;
           toggleMaintCostLineMode(mode);
+          mode.dataset.lastMode = mode.value;
         }
         if (as) as.value = '';
         if (ai) ai.value = '';
         if (aid) aid.value = '';
         if (iid) iid.value = '';
+        const sku = row.querySelector('.maint-line-item-sku');
+        if (sku) sku.value = '';
         const pc = row.querySelector('.maint-line-part-cat');
         if (pc) {
           pc.value = '';
@@ -9473,13 +9570,13 @@
 
     function resolveWoLineAccount(input) {
       const row = input.closest('.wo-line');
-      const match = findBestNameMatch(cacheAccounts(), input.value);
+      const match = findBestNameMatch(cacheExpenseCategoryAccounts(), input.value);
       row.querySelector('.wo-acct-id').value = match ? match.qboId : '';
     }
 
     function resolveWoLineItem(input) {
       const row = input.closest('.wo-line');
-      const match = findBestNameMatch(cacheItems(), input.value);
+      const match = findBestNameMatch(cacheItemsForProductServicePicker(), input.value);
       row.querySelector('.wo-item-id').value = match ? match.qboId : '';
     }
 
@@ -10341,8 +10438,10 @@
       const modeSel = row.querySelector('.maint-line-mode');
       const dm = String(ln.detailMode || '').trim() === 'item' ? 'item' : 'category';
       if (modeSel) {
+        delete modeSel.dataset.lastMode;
         modeSel.value = dm;
         toggleMaintCostLineMode(modeSel);
+        modeSel.dataset.lastMode = modeSel.value;
       }
       const aid = String(ln.qboAccountId || '').trim();
       const iid = String(ln.qboItemId || '').trim();
@@ -10350,10 +10449,20 @@
       const ai = row.querySelector('.maint-line-item-search');
       const hidA = row.querySelector('.maint-line-acct-id');
       const hidI = row.querySelector('.maint-line-item-id');
-      if (hidA) hidA.value = aid;
-      if (as) as.value = aid ? maintAccountLabelByQboId(aid) : '';
-      if (hidI) hidI.value = iid;
-      if (ai) ai.value = iid ? maintItemLabelByQboId(iid) : '';
+      if (dm === 'item') {
+        if (hidA) hidA.value = '';
+        if (as) as.value = '';
+        if (hidI) hidI.value = iid;
+        if (ai) ai.value = iid ? maintItemLabelByQboId(iid) : '';
+        syncMaintLineItemSku(row);
+      } else {
+        if (hidI) hidI.value = '';
+        if (ai) ai.value = '';
+        const sku = row.querySelector('.maint-line-item-sku');
+        if (sku) sku.value = '';
+        if (hidA) hidA.value = aid;
+        if (as) as.value = aid ? maintAccountLabelByQboId(aid) : '';
+      }
 
       const pcat = row.querySelector('.maint-line-part-cat');
       const pv = String(ln.partCategory || '').trim();
