@@ -451,8 +451,23 @@ body.dispatch-page #dispatchApp table.data {
    Rule 3 — + New menu: scrollable panel on small viewports (rest in erp-master-redesign)
    ============================================================================= */
 body.erp-maintenance #erpApp .erp-new-menu {
+  width: min(580px, calc(100vw - 24px));
   max-height: min(70vh, 520px);
   overflow-y: auto;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+body.erp-maintenance #erpApp .erp-new-menu__cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  body.erp-maintenance #erpApp .erp-new-menu__cols {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Rule 3: menu rows read as links (underline hover), not gray pills */
@@ -820,4 +835,109 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group.is-open .erp-sb-group__bo
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__body .erp-sb-link {
   border-bottom: 1px solid #f8f9fa;
+}
+
+/* --- Rule 3 (reports in-page sidebar): native <details> groups --- */
+body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group {
+  border-bottom: 1px solid #f1f3f4;
+}
+
+body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head {
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #5f6368;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head::-webkit-details-marker {
+  display: none;
+}
+
+body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__body {
+  padding: 0 0 6px;
+}
+
+body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__chev {
+  font-size: 10px;
+  color: #9aa0a6;
+}
+
+/* --- Rule 9: + New dropdown grid (580px, shadow) --- */
+body.erp-maintenance #erpApp .erp-new-menu {
+  width: min(580px, calc(100vw - 24px));
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+body.erp-maintenance #erpApp .erp-new-menu__cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  body.erp-maintenance #erpApp .erp-new-menu__cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Rule 16: upload center pill row --- */
+body.erp-maintenance .mr-upload-pills .subtab.active {
+  color: #1967d2;
+  border-bottom: 2px solid #1967d2;
+}
+
+/* --- Rule 17: accounting board strip --- */
+body.erp-maintenance .mr-acct-board {
+  margin-bottom: 16px;
+}
+
+/* --- Rules 12 / 19: parts map container + tire dots (SVG keeps onclick ids) --- */
+body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
+  background: #f8f9fa;
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
+  padding: 16px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+body.erp-maintenance .erp-main-body .erp-qb-parts-map-chrome .tire-svg rect {
+  fill: #f8f9fa !important;
+  stroke: #dadce0 !important;
+  stroke-width: 1.5px !important;
+}
+
+body.erp-maintenance .erp-main-body .tire-dot {
+  fill: #e8eaed;
+  stroke: #9aa0a6;
+  stroke-width: 1;
+  cursor: pointer;
+}
+
+body.erp-maintenance .erp-main-body .tire-dot:hover {
+  fill: #e8f0fe;
+  stroke: #1967d2;
+}
+
+body.erp-maintenance .erp-main-body .tire-dot.active {
+  fill: #1967d2;
+  stroke: none;
+}
+
+/* --- Rule 6: map panel chrome --- */
+body.erp-maintenance #erpTrackingMap {
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
 }

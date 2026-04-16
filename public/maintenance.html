@@ -1484,19 +1484,37 @@
         </div>
 
         <div id="tr-drivers" class="tracking-sub hidden">
-          <p class="mini-note" style="margin:8px 0">
-            Drivers from Samsara HOS clocks (same as Safety → HOS). To add or rename drivers, use
-            <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> — this dashboard is read-only for ELD data.
-            Local driver records for settlements live in Postgres / TMS when configured.
-          </p>
-          <div class="toolbar erp-ops-toolbar">
-            <label class="mini-note" for="trackingDriversDutyFilter" style="margin:0">Duty filter</label>
-            <select id="trackingDriversDutyFilter" class="in" style="max-width:240px" onchange="renderTrackingDrivers()">
-              <option value="relevant">Relevant (hide off-duty, no truck)</option>
-              <option value="active">Active duties only</option>
-              <option value="inactive">Off duty / sleeper</option>
-              <option value="all">All Samsara rows</option>
-            </select>
+          <div style="display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap">
+            <span class="mini-note" style="margin:0">Drivers (Samsara HOS)</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About drivers list">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Drivers from Samsara HOS clocks (same as Safety → HOS). To add or rename drivers, use
+                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> — this dashboard is read-only for ELD data.
+                Local driver records for settlements live in Postgres / TMS when configured.
+              </span>
+            </span>
+          </div>
+          <div class="mr-filter-bar erp-ops-filter-bar">
+            <div class="mr-filter-bar__chips">
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty filter controls which Samsara rows appear.</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Drive-left column follows the same clock math as Safety.</p></div>
+              </details>
+              <div class="mr-filter-bar__show">
+                <label class="mini-note" for="trackingDriversDutyFilter" style="margin:0">Duty filter</label>
+                <select id="trackingDriversDutyFilter" class="in mr-filter-inline-select" onchange="renderTrackingDrivers()">
+                  <option value="relevant">Relevant (hide off-duty, no truck)</option>
+                  <option value="active">Active duties only</option>
+                  <option value="inactive">Off duty / sleeper</option>
+                  <option value="all">All Samsara rows</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div class="safety-table-wrap erp-ops-data-frame erp-table-scroll">
             <table>
@@ -1513,10 +1531,16 @@
               <button type="button" onclick="loadIdleSnapshot()">Refresh</button>
             </div>
             <div class="panel-body">
-              <p class="mini-note" style="margin:0 0 10px">
-                Geofence for the truck yard (defaults: Mines Rd, Laredo — override <code>YARD_LAT</code>, <code>YARD_LON</code>,
-                <code>YARD_RADIUS_M</code> in server env). Shows live GPS, yard vs away, Samsara HOS duty, and (when TMS DB is configured) days since the last <strong>completed</strong> load and a rough revenue-at-risk estimate (<code>IDLE_EST_DAILY_REVENUE</code>).
-              </p>
+              <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap">
+                <span class="mini-note" style="margin:0">Yard &amp; idle snapshot</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Geofence &amp; columns">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Geofence for the truck yard (defaults: Mines Rd, Laredo — override <code>YARD_LAT</code>, <code>YARD_LON</code>,
+                    <code>YARD_RADIUS_M</code> in server env). Shows live GPS, yard vs away, Samsara HOS duty, and (when TMS DB is configured) days since the last <strong>completed</strong> load and a rough revenue-at-risk estimate (<code>IDLE_EST_DAILY_REVENUE</code>).
+                  </span>
+                </span>
+              </div>
               <div id="idleSnapshotMeta" class="mini-note" style="margin-bottom:10px"></div>
               <div class="table-wrap erp-table-scroll">
                 <table>
