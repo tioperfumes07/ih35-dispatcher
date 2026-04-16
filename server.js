@@ -2628,6 +2628,8 @@ async function qboCreateApTransaction(ap) {
       );
     }
     const lineArray = await buildQboPurchaseBillLinesFromCostLines(costLines, {
+      erp,
+      assetUnit: String(ap.assetUnit || '').trim(),
       classId,
       fallbackAccountId: String(ap.qboAccountId || '').trim(),
       fallbackItemId: String(ap.qboItemId || '').trim(),
@@ -4936,6 +4938,29 @@ function costLineDescriptionForQbo(cl) {
   return sanitizeName((base + suffix).slice(0, 380), 'Line');
 }
 
+/** Optional per-line memo sent as the QuickBooks expense line Description (else built from description + parts). */
+function costLineQboDescription(cl) {
+  const custom = String(cl.qboLineDescription || '').trim();
+  if (custom) return sanitizeName(custom.slice(0, 380), 'Line');
+  return costLineDescriptionForQbo(cl);
+}
+
+function maintenanceExpenseLineBillableStatus(cl) {
+  if (cl.billable === true) return 'Billable';
+  if (cl.billable === false) return 'NotBillable';
+  return undefined;
+}
+
+/** Class (unit), billable customer, billable flag on AccountBased / ItemBased expense line detail. */
+function applyMaintenanceExpenseLineRefs(erp, detail, cl, assetUnit) {
+  const cls = pickValidatedQboClassId(erp, cl.qboClassId != null ? String(cl.qboClassId) : '', assetUnit);
+  if (cls) detail.ClassRef = { value: cls };
+  const cust = pickValidatedQboCustomerId(erp, cl.qboCustomerId || '');
+  if (cust) detail.CustomerRef = { value: cust };
+  const bill = maintenanceExpenseLineBillableStatus(cl);
+  if (bill) detail.BillableStatus = bill;
+}
+
 function sanitizeMaintenanceCostLines(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
@@ -4970,6 +4995,14 @@ function sanitizeMaintenanceCostLines(raw) {
     if (partPosition) row.partPosition = partPosition;
     if (partNumber) row.partNumber = partNumber;
 
+    const qboLineDescription = String(x.qboLineDescription || '').trim().slice(0, 380);
+    if (qboLineDescription) row.qboLineDescription = qboLineDescription;
+    const qboCustomerId = String(x.qboCustomerId || '').trim().slice(0, 64);
+    if (qboCustomerId) row.qboCustomerId = qboCustomerId;
+    const qboClassId = String(x.qboClassId || '').trim().slice(0, 64);
+    if (qboClassId) row.qboClassId = qboClassId;
+    if (typeof x.billable === 'boolean') row.billable = x.billable;
+
     if (description || amount > 0 || (quantity != null && quantity > 0) || (unitPrice != null && unitPrice > 0)) {
       out.push(row);
     }
@@ -4982,23 +5015,28 @@ function sanitizeMaintenanceCostLines(raw) {
  */
 async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
   const {
-    classId,
+    erp,
+    assetUnit = '',
+    classId: _legacyHeaderClass = '',
     fallbackAccountId = '',
     fallbackItemId = '',
     fallbackDetailMode = 'category'
   } = opts;
+  if (!erp || typeof erp !== 'object') {
+    throw new Error('ERP context is required to build QuickBooks lines from maintenance cost breakdown');
+  }
   const out = [];
   for (const cl of costLines) {
     const amount = safeNum(cl.amount, 0);
     if (!(amount > 0)) continue;
     const mode =
       String(cl.detailMode || fallbackDetailMode || 'category').trim() === 'item' ? 'item' : 'category';
-    const desc = costLineDescriptionForQbo(cl);
+    const lineDesc = costLineQboDescription(cl);
     if (mode === 'item') {
       const rawItemId = String(cl.qboItemId || fallbackItemId || '').trim().replace(/[^\d]/g, '');
       if (!rawItemId) {
         throw new Error(
-          `QuickBooks item required for item line "${desc}" — pick a per-line item or set a default item on the record`
+          `QuickBooks item required for item line "${lineDesc}" — pick a per-line item or set a default item on the record`
         );
       }
       const lineAcctFallback = String(cl.qboAccountId || fallbackAccountId || '').trim().replace(/[^\d]/g, '');
@@ -5011,11 +5049,11 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
           Qty: qty,
           UnitPrice: Math.round((amount / qty) * 1000000) / 1000000
         };
-        if (classId) itemDetail.ClassRef = { value: classId };
+        applyMaintenanceExpenseLineRefs(erp, itemDetail, cl, assetUnit);
         out.push({
           Amount: amount,
           DetailType: 'ItemBasedExpenseLineDetail',
-          Description: sanitizeName(desc, 'Line'),
+          Description: sanitizeName(lineDesc, 'Line'),
           ItemBasedExpenseLineDetail: itemDetail
         });
       } else {
@@ -5025,7 +5063,7 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
             acctDigits || String(itemObj.ExpenseAccountRef?.value || '').replace(/[^\d]/g, '') || '';
           if (!acctDigits) {
             throw new Error(
-              `QuickBooks item "${itemObj.Name || rawItemId}" (type ${itemObj.Type}) cannot be used as a purchase item line for "${desc}". Pick an expense account for this line or choose a Service/non-inventory item.`
+              `QuickBooks item "${itemObj.Name || rawItemId}" (type ${itemObj.Type}) cannot be used as a purchase item line for "${lineDesc}". Pick an expense account for this line or choose a Service/non-inventory item.`
             );
           }
         } else if (!itemObj) {
@@ -5034,24 +5072,24 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
             acctDigits = String(acct.Id).replace(/[^\d]/g, '');
           } else {
             throw new Error(
-              `QuickBooks id ${rawItemId} for line "${desc}" is not a postable item or expense account — refresh QBO Master and re-link this line.`
+              `QuickBooks id ${rawItemId} for line "${lineDesc}" is not a postable item or expense account — refresh QBO Master and re-link this line.`
             );
           }
         } else {
-          throw new Error(
-            `QuickBooks item id ${rawItemId} for line "${desc}" could not be posted as an item line — refresh QBO Master.`
-          );
+            throw new Error(
+              `QuickBooks item id ${rawItemId} for line "${lineDesc}" could not be posted as an item line — refresh QBO Master.`
+            );
         }
         const accountQbo = await qboFindAccountById(acctDigits);
-        if (!accountQbo) throw new Error(`QuickBooks account not found for line: ${desc}`);
+        if (!accountQbo) throw new Error(`QuickBooks account not found for line: ${lineDesc}`);
         const acctDetail = {
           AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
         };
-        if (classId) acctDetail.ClassRef = { value: classId };
+        applyMaintenanceExpenseLineRefs(erp, acctDetail, cl, assetUnit);
         out.push({
           Amount: amount,
           DetailType: 'AccountBasedExpenseLineDetail',
-          Description: desc,
+          Description: sanitizeName(lineDesc, 'Line'),
           AccountBasedExpenseLineDetail: acctDetail
         });
       }
@@ -5059,19 +5097,19 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
       const acctId = String(cl.qboAccountId || fallbackAccountId || '').trim();
       if (!acctId) {
         throw new Error(
-          `QuickBooks expense account required for category line "${desc}" — pick per-line account or default category on the form`
+          `QuickBooks expense account required for category line "${lineDesc}" — pick per-line account or default category on the form`
         );
       }
       const accountQbo = await qboFindAccountById(acctId);
-      if (!accountQbo) throw new Error(`QuickBooks account not found for line: ${desc}`);
+      if (!accountQbo) throw new Error(`QuickBooks account not found for line: ${lineDesc}`);
       const acctDetail = {
         AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
       };
-      if (classId) acctDetail.ClassRef = { value: classId };
+      applyMaintenanceExpenseLineRefs(erp, acctDetail, cl, assetUnit);
       out.push({
         Amount: amount,
         DetailType: 'AccountBasedExpenseLineDetail',
-        Description: desc,
+        Description: sanitizeName(lineDesc, 'Line'),
         AccountBasedExpenseLineDetail: acctDetail
       });
     }

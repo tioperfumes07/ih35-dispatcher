@@ -86,6 +86,7 @@
   <datalist id="paymentMethodOptions"></datalist>
   <datalist id="qboBankAccountOptions"></datalist>
   <datalist id="qboCustomerOptions"></datalist>
+  <datalist id="qboClassOptions"></datalist>
   <datalist id="loadNumberOptions"></datalist>
   <datalist id="repairLocationOptions"></datalist>
   <datalist id="accidentFaultOptions"></datalist>
@@ -2523,6 +2524,29 @@
           </div>
         </div>
         </div>
+        <div class="maint-line-qbo-extras" style="width:100%;margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0">
+          <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:6px">Customer · class · billable (QuickBooks)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;width:100%">
+            <div style="flex:1;min-width:200px">
+              <span class="qb-l">QuickBooks line memo</span>
+              <input class="qb-in maint-field maint-line-qbo-desc" maxlength="380" placeholder="Optional — else description + part details" autocomplete="off" title="Sent as the Description on this line in QuickBooks" />
+            </div>
+            <div style="flex:1;min-width:160px">
+              <span class="qb-l">Customer</span>
+              <input class="qb-in maint-field maint-line-cust-search" list="qboCustomerOptions" placeholder="Billable customer (optional)" autocomplete="off" oninput="resolveMaintLineCustomer(this)" onblur="resolveMaintLineCustomer(this)" />
+              <input type="hidden" class="maint-line-cust-id" />
+            </div>
+            <div style="flex:1;min-width:140px">
+              <span class="qb-l">Class (unit)</span>
+              <input class="qb-in maint-field maint-line-class-search" list="qboClassOptions" placeholder="Match truck in QBO" autocomplete="off" oninput="resolveMaintLineClass(this)" onblur="resolveMaintLineClass(this)" title="Defaults from selected asset when blank; must match a QuickBooks class (often same as unit id)" />
+              <input type="hidden" class="maint-line-class-id" />
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding-bottom:6px;white-space:nowrap">
+              <input type="checkbox" class="maint-line-billable" />
+              <span class="qb-l" style="margin:0">Billable</span>
+            </label>
+          </div>
+        </div>
       </div>
       <div class="maint-line-part-block" style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
@@ -3098,12 +3122,7 @@
           loadNumber: document.getElementById('recordLoadNumberInput')?.value || '',
           notes: document.getElementById('notesInput')?.value || '',
           plannedWork: collectMaintPlannedServiceLines().map(description => ({ description })),
-          costLines: lines.map(l => ({
-            description: l.description,
-            amount: l.amount,
-            quantity: l.quantity,
-            unitPrice: l.unitPrice
-          }))
+          costLines: lines.map(l => ({ ...l }))
         };
         const r = await fetch('/api/pdf/fleet-maintenance-draft', {
           method: 'POST',
@@ -5043,6 +5062,12 @@
           .map(c => `<option value="${escapeHtml(String(c.name || '').trim())}"></option>`)
           .join('');
       }
+      const classDl = document.getElementById('qboClassOptions');
+      if (classDl) {
+        classDl.innerHTML = cacheQboClasses()
+          .map(c => `<option value="${escapeHtml(String(c.name || '').trim())}"></option>`)
+          .join('');
+      }
       const termSel = document.getElementById('apQboTermId');
       if (termSel) {
         const cur = termSel.value;
@@ -5393,6 +5418,16 @@
         return {
           rows: () =>
             cacheQboCustomers().map(c => ({
+              label: c.name || c.qboId,
+              meta: String(c.qboId || '')
+            })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label)
+        };
+      }
+      if (listId === 'qboClassOptions') {
+        return {
+          rows: () =>
+            cacheQboClasses().map(c => ({
               label: c.name || c.qboId,
               meta: String(c.qboId || '')
             })),
@@ -8081,6 +8116,9 @@
       renderSelectedUnit();
       renderMaintenanceTable();
       document.getElementById('apAssetUnit').value = unit;
+      if (!opts.preserveEditMode) {
+        document.querySelectorAll('#maintCostLinesHost .maint-cost-line').forEach(row => syncMaintCostLineDefaultsFromUnit(row));
+      }
     }
 
     function markServiceMileageTouched() {
@@ -8283,11 +8321,49 @@
       syncMaintLineItemSku(row);
     }
 
+    function resolveMaintLineCustomer(input) {
+      if (!input) return;
+      const row = input.closest('.maint-cost-line');
+      if (!row) return;
+      const match = findBestNameMatch(cacheQboCustomers(), input.value);
+      const hid = row.querySelector('.maint-line-cust-id');
+      if (hid) hid.value = match ? String(match.qboId || '').trim() : '';
+    }
+
+    function resolveMaintLineClass(input) {
+      if (!input) return;
+      const row = input.closest('.maint-cost-line');
+      if (!row) return;
+      const match = findBestNameMatch(cacheQboClasses(), input.value);
+      const hid = row.querySelector('.maint-line-class-id');
+      if (hid) hid.value = match ? String(match.qboId || '').trim() : '';
+    }
+
+    /** When class fields are empty, default QBO class from the selected asset (unit name → QBO Class). */
+    function syncMaintCostLineDefaultsFromUnit(row) {
+      if (!row) return;
+      const cid = row.querySelector('.maint-line-class-id');
+      const cs = row.querySelector('.maint-line-class-search');
+      if (!cid || !cs) return;
+      if (String(cid.value || '').trim()) return;
+      const unit = (selectedUnit || '').trim();
+      const clsId = qboClassIdForFuelUnitName(unit);
+      if (clsId) {
+        cid.value = String(clsId);
+        cs.value = qboNameByQboId(cacheQboClasses(), clsId) || unit;
+      } else {
+        cid.value = '';
+        cs.value = '';
+      }
+    }
+
     function resolveMaintCostLineRefs() {
       document.querySelectorAll('#maintCostLinesHost .maint-cost-line').forEach(row => {
         const mode = row.querySelector('.maint-line-mode')?.value || 'category';
         if (mode === 'item') resolveMaintLineItem(row.querySelector('.maint-line-item-search'));
         else resolveMaintLineAccount(row.querySelector('.maint-line-acct-search'));
+        resolveMaintLineCustomer(row.querySelector('.maint-line-cust-search'));
+        resolveMaintLineClass(row.querySelector('.maint-line-class-search'));
       });
     }
 
@@ -8311,10 +8387,14 @@
       const q = ln.quantity;
       const up = ln.unitPrice;
       const suf = maintCostLinePartSuffix(ln);
+      const bits = [];
+      if (String(ln.qboLineDescription || '').trim()) bits.push(`QBO: ${String(ln.qboLineDescription).trim().slice(0, 80)}`);
+      if (ln.billable === true || ln.billable === 'true') bits.push('billable');
+      const x = bits.length ? ` [${bits.join('; ')}]` : '';
       if (q != null && up != null && Number(q) > 0 && Number(up) >= 0) {
-        return `${desc}${suf}: ${q} × $${Number(up).toFixed(2)} = $${amt}`;
+        return `${desc}${suf}: ${q} × $${Number(up).toFixed(2)} = $${amt}${x}`;
       }
-      return `${desc}${suf}: $${amt}`;
+      return `${desc}${suf}: $${amt}${x}`;
     }
 
     function formatMaintCostLineHtml(ln) {
@@ -8323,10 +8403,18 @@
       const amt = Number(ln.amount || 0).toFixed(2);
       const q = ln.quantity;
       const up = ln.unitPrice;
-      if (q != null && up != null && Number(q) > 0 && Number(up) >= 0) {
-        return `${desc}${suf}: ${escapeHtml(String(q))} × $${Number(up).toFixed(2)} = $${amt}`;
+      const bits = [];
+      if (String(ln.qboLineDescription || '').trim()) {
+        bits.push(`QBO memo: ${escapeHtml(String(ln.qboLineDescription).trim().slice(0, 120))}`);
       }
-      return `${desc}${suf}: $${amt}`;
+      if (ln.qboCustomerId) bits.push(`Cust: ${escapeHtml(qboNameByQboId(cacheQboCustomers(), ln.qboCustomerId))}`);
+      if (ln.qboClassId) bits.push(`Class: ${escapeHtml(qboNameByQboId(cacheQboClasses(), ln.qboClassId))}`);
+      if (ln.billable === true || ln.billable === 'true') bits.push('Billable');
+      const tail = bits.length ? ` <span class="mini-note">(${bits.join(' · ')})</span>` : '';
+      if (q != null && up != null && Number(q) > 0 && Number(up) >= 0) {
+        return `${desc}${suf}: ${escapeHtml(String(q))} × $${Number(up).toFixed(2)} = $${amt}${tail}`;
+      }
+      return `${desc}${suf}: $${amt}${tail}`;
     }
 
     function plannedWorkDescriptionsFromRecord(r) {
@@ -8438,6 +8526,7 @@
         if (sku) sku.value = '';
       }
       recalcMaintLineRowInputs(first);
+      if (!(first.querySelector('.maint-line-class-id')?.value || '').trim()) syncMaintCostLineDefaultsFromUnit(first);
       recalcMaintCostTotalFromLines();
     }
 
@@ -8469,6 +8558,14 @@
         if (partCat) line.partCategory = partCat;
         if (partPos) line.partPosition = partPos;
         if (partNo) line.partNumber = partNo;
+        const qboDesc = (row.querySelector('.maint-line-qbo-desc')?.value || '').trim();
+        if (qboDesc) line.qboLineDescription = qboDesc.slice(0, 380);
+        const custId = (row.querySelector('.maint-line-cust-id')?.value || '').trim();
+        if (custId) line.qboCustomerId = custId;
+        const classId = (row.querySelector('.maint-line-class-id')?.value || '').trim();
+        if (classId) line.qboClassId = classId;
+        const billEl = row.querySelector('.maint-line-billable');
+        line.billable = !!(billEl && billEl.checked);
         if (d || amt > 0 || (quantity != null && quantity > 0) || (unitPrice != null && unitPrice > 0)) {
           out.push(line);
         }
@@ -8591,6 +8688,7 @@
         toggleMaintCostLineMode(modeSel);
         modeSel.dataset.lastMode = modeSel.value;
       }
+      syncMaintCostLineDefaultsFromUnit(last);
       recalcMaintLineRowInputs(last);
       initMaintLinePartUi(last);
       bindMaintCostPartDelegation();
@@ -8631,6 +8729,18 @@
         if (iid) iid.value = '';
         const sku = row.querySelector('.maint-line-item-sku');
         if (sku) sku.value = '';
+        const qd = row.querySelector('.maint-line-qbo-desc');
+        if (qd) qd.value = '';
+        const cst = row.querySelector('.maint-line-cust-search');
+        const cid = row.querySelector('.maint-line-cust-id');
+        if (cst) cst.value = '';
+        if (cid) cid.value = '';
+        const cls = row.querySelector('.maint-line-class-search');
+        const clid = row.querySelector('.maint-line-class-id');
+        if (cls) cls.value = '';
+        if (clid) clid.value = '';
+        const bill = row.querySelector('.maint-line-billable');
+        if (bill) bill.checked = false;
         const pc = row.querySelector('.maint-line-part-cat');
         if (pc) {
           pc.value = '';
@@ -8640,6 +8750,7 @@
         if (pfn) pfn.value = '';
         const pfree = row.querySelector('.maint-line-pos-free');
         if (pfree) pfree.value = '';
+        syncMaintCostLineDefaultsFromUnit(row);
         recalcMaintCostTotalFromLines();
         return;
       }
@@ -10443,6 +10554,20 @@
         toggleMaintCostLineMode(modeSel);
         modeSel.dataset.lastMode = modeSel.value;
       }
+      const qDesc = row.querySelector('.maint-line-qbo-desc');
+      if (qDesc) qDesc.value = String(ln.qboLineDescription || '').trim();
+      const custId = String(ln.qboCustomerId || '').trim();
+      const custSearch = row.querySelector('.maint-line-cust-search');
+      const custHid = row.querySelector('.maint-line-cust-id');
+      if (custHid) custHid.value = custId;
+      if (custSearch) custSearch.value = custId ? qboNameByQboId(cacheQboCustomers(), custId) : '';
+      const classId = String(ln.qboClassId || '').trim();
+      const classSearch = row.querySelector('.maint-line-class-search');
+      const classHid = row.querySelector('.maint-line-class-id');
+      if (classHid) classHid.value = classId;
+      if (classSearch) classSearch.value = classId ? qboNameByQboId(cacheQboClasses(), classId) : '';
+      const bill = row.querySelector('.maint-line-billable');
+      if (bill) bill.checked = ln.billable === true || ln.billable === 'true';
       const aid = String(ln.qboAccountId || '').trim();
       const iid = String(ln.qboItemId || '').trim();
       const as = row.querySelector('.maint-line-acct-search');
@@ -10484,6 +10609,7 @@
       const partNo = row.querySelector('.maint-line-part-no');
       if (partNo) partNo.value = String(ln.partNumber || '').trim();
       recalcMaintLineRowInputs(row);
+      if (!(row.querySelector('.maint-line-class-id')?.value || '').trim()) syncMaintCostLineDefaultsFromUnit(row);
     }
 
     function fillMaintCostLinesFromRecord(lines) {
@@ -10623,6 +10749,9 @@
       }
 
       fillMaintCostLinesFromRecord(r.costLines);
+      document.querySelectorAll('#maintCostLinesHost .maint-cost-line').forEach(row => {
+        if (!(row.querySelector('.maint-line-class-id')?.value || '').trim()) syncMaintCostLineDefaultsFromUnit(row);
+      });
       mergeRecordHeaderQboIntoFirstCostLineIfNeeded(r);
       resolveVendorQboIdFromVendorInput();
 
