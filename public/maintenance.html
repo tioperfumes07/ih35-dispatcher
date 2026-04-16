@@ -211,7 +211,7 @@
       <section id="section-dashboard" class="section">
         <div class="hero-grid">
           <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Diesel / Fuel Board</h3><p>Fuel planning + diesel management</p></div>
-          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Work orders, fleet table, and service records</p></div>
+          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Create work order, fleet table, R&amp;M Status, shop / location, and service records</p></div>
           <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety Board</h3><p>Samsara HOS, drivers, assignments</p></div>
           <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Map, assets, <strong>Shop &amp; maintenance</strong> tab (queues + alerts), Samsara live data</p></div>
           <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Expenses, bills, QuickBooks</p></div>
@@ -402,9 +402,10 @@
         <div class="maint-board-layout">
         <nav id="maintMainSubtabs" class="maint-board-nav maint-section-card" aria-label="Maintenance views">
           <div class="maint-board-nav__title">Views</div>
-          <button type="button" class="maint-board-nav__btn subtab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Work order</button>
+          <button type="button" class="maint-board-nav__btn subtab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
           <button type="button" class="maint-board-nav__btn subtab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this)">Fleet table</button>
-          <button type="button" class="maint-board-nav__btn subtab" data-maint-main="alerts" onclick="openMaintMainTab('alerts', this)">Alerts &amp; locations</button>
+          <button type="button" class="maint-board-nav__btn subtab" data-maint-main="rm" onclick="openMaintMainTab('rm', this)">R&amp;M Status</button>
+          <button type="button" class="maint-board-nav__btn subtab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this)">Shop / location</button>
         </nav>
         <div class="maint-board-stage">
         <div class="maint-top-toolbar maint-section-card">
@@ -801,12 +802,12 @@
         </div>
         </div>
 
-        <div id="maintMainTabAlerts" class="maint-main-tab-panel">
+        <div id="maintMainTabRm" class="maint-main-tab-panel">
           <div class="panel maint-section-card">
             <div class="panel-head maint-panel-head-center">
-              <div class="panel-title">Integrity · fuel · parts alerts</div>
+              <div class="panel-title">R&amp;M Status — integrity · fuel · parts</div>
               <div class="mini-note" style="margin:6px 0 0;max-width:62ch">
-                Same signals as Tracking → Shop &amp; maintenance, kept here for the maintenance desk. Flags unusual repair frequency, high invoices, short tire intervals, and diesel vs miles. Filter by severity or search.
+                Repair &amp; maintenance health signals (same family as Tracking → Shop &amp; maintenance). Flags unusual repair frequency, high invoices, short tire intervals, and diesel vs miles. Filter by severity or search.
               </div>
             </div>
             <div class="panel-body">
@@ -833,11 +834,14 @@
               <div id="maintSecurityAlertsBody" class="mini-note">Open this tab after load to refresh, or use Refresh alerts.</div>
             </div>
           </div>
+        </div>
+
+        <div id="maintMainTabShopLoc" class="maint-main-tab-panel">
           <div class="panel maint-section-card">
             <div class="panel-head maint-panel-head-center">
               <div class="panel-title">Vehicles by shop / location context</div>
               <div class="mini-note" style="margin:6px 0 0;max-width:62ch">
-                Shop queue rows (ERP) grouped by queue type, plus recent saved work orders by <strong>repair location type</strong> from maintenance records. Status comes from the queue or QuickBooks sync on the work order.
+                Shop queue rows (ERP) grouped by queue type, plus recent saved work orders by <strong>repair location type</strong> from maintenance records. Use this view to see which units are in internal shop, external shop, roadside, or out of service — status comes from the queue or QuickBooks sync on the work order.
               </div>
             </div>
             <div class="panel-body">
@@ -908,7 +912,7 @@
 
         <div id="tr-maint-shop" class="tracking-sub hidden">
           <p class="mini-note" style="margin:0 0 12px;max-width:78ch">
-            Shop queue, expense rollups, exports, and integrity / fuel / parts alerts. Log service under <strong>Maintenance → Create work order</strong>; full grid under <strong>Maintenance → Fleet table</strong>. Deep links: <code>#tracking-shop</code> or <code>#maintenance-shop</code> (this tab), <code>#maintenance-parts</code> (opens here + parts queue), <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>.
+            Shop queue, expense rollups, exports, and R&amp;M health signals. Log service under <strong>Maintenance → Create work order</strong>; full grid under <strong>Maintenance → Fleet table</strong>; shop / location context under <strong>Maintenance → Shop / location</strong>. Deep links: <code>#tracking-shop</code> or <code>#maintenance-shop</code> (this tab), <code>#maintenance-parts</code> (opens here + parts queue), <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> (or legacy <code>#maintenance-alerts</code>), <code>#maintenance-shop-location</code>.
           </p>
           <div class="panel shop-print-area maint-section-card">
             <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
@@ -3331,11 +3335,18 @@
       renderMaintExpenseStrip();
       renderShopQueues();
       loadSecurityCatalogUi().catch(() => {});
+      const sl = document.getElementById('maintMainTabShopLoc');
+      if (sl && sl.classList.contains('active')) renderMaintLocationBoard();
     }
 
     function openMaintMainTab(tab, btn, opts) {
       const o = opts || {};
-      const map = { record: 'maintMainTabRecord', fleet: 'maintMainTabFleet', alerts: 'maintMainTabAlerts' };
+      const map = {
+        record: 'maintMainTabRecord',
+        fleet: 'maintMainTabFleet',
+        rm: 'maintMainTabRm',
+        'shop-loc': 'maintMainTabShopLoc'
+      };
       if (tab !== 'record' || o.skipModal) closeMaintWorkOrderModal();
       document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
       const id = map[tab] || map.record;
@@ -3351,8 +3362,10 @@
       if (tab === 'record' && !o.skipModal) {
         requestAnimationFrame(() => openMaintWorkOrderModal());
       }
-      if (tab === 'alerts') {
+      if (tab === 'rm') {
         loadSecurityCatalogUi().catch(() => {});
+      }
+      if (tab === 'shop-loc') {
         renderMaintLocationBoard();
       }
     }
@@ -4216,10 +4229,16 @@
         openMaintMainTab('fleet', fb);
         return;
       }
-      if (section === 'maintenance-alerts') {
+      if (section === 'maintenance-alerts' || section === 'maintenance-rm-status') {
         openSectionByName('maintenance');
-        const ab = document.querySelector('#maintMainSubtabs [data-maint-main="alerts"]');
-        openMaintMainTab('alerts', ab, { skipModal: true });
+        const rb = document.querySelector('#maintMainSubtabs [data-maint-main="rm"]');
+        openMaintMainTab('rm', rb, { skipModal: true });
+        return;
+      }
+      if (section === 'maintenance-shop-location') {
+        openSectionByName('maintenance');
+        const sb = document.querySelector('#maintMainSubtabs [data-maint-main="shop-loc"]');
+        openMaintMainTab('shop-loc', sb, { skipModal: true });
         return;
       }
       const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog', 'uploads'];
@@ -8526,6 +8545,8 @@
               .join('')
           : '<div class="mini-note">No out-of-service unit records. Save a unit record with service type containing “out of service”.</div>';
       }
+      const sl = document.getElementById('maintMainTabShopLoc');
+      if (sl && sl.classList.contains('active')) renderMaintLocationBoard();
     }
 
     function listRetiredUnitNames() {
