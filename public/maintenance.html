@@ -751,7 +751,24 @@
                   </div>
 
                   <div class="maint-subcard maint-cost-panel-card erp-qb-cost-shell">
-                    <div class="maint-subcard__head">Cost breakdown</div>
+                    <div class="maint-subcard__head maint-subcard__head--split erp-qb-cost-global-head">
+                      <span class="erp-qb-cost-global-head__title">Cost breakdown</span>
+                      <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new cost lines">
+                        <span class="erp-qb-cost-global__label">New lines</span>
+                        <label class="erp-qb-cost-global__opt"
+                          ><input type="radio" name="maintCostGlobalMode" value="category" checked /> Category</label
+                        >
+                        <label class="erp-qb-cost-global__opt"
+                          ><input type="radio" name="maintCostGlobalMode" value="item" /> Item</label
+                        >
+                        <span class="erp-help-tip erp-qb-cost-global__tip">
+                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Line type default">?</button>
+                          <span class="erp-help-tip__panel" role="tooltip">
+                            Applies to <strong>new</strong> rows from + Add line. Each row still has its own Category / Item control (Expense form is unchanged).
+                          </span>
+                        </span>
+                      </div>
+                    </div>
                     <div class="maint-subcard__body maint-cost-table-wrap">
                       <table class="maint-cost-table" aria-label="Cost lines">
                         <thead>
@@ -1657,7 +1674,25 @@
         </div>
 
         <div id="acct-transactions" class="accounting-tab">
-          <div class="panel qb-panel qb-doc-shell">
+          <div class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec">
+            <div class="qb-doc-topbar">
+              <button
+                type="button"
+                class="qb-doc-backlink"
+                onclick="document.getElementById('acctBoardStrip')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+              >
+                ← Accounting board
+              </button>
+              <button
+                type="button"
+                class="qb-doc-closebtn"
+                aria-label="Jump to saved transactions"
+                title="Saved list"
+                onclick="document.getElementById('apList')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+              >
+                ×
+              </button>
+            </div>
             <div class="qb-doc-head">
               <div class="qb-doc-title-row">
                 <div style="flex:1;min-width:200px">
@@ -1811,18 +1846,23 @@
                   <p class="mini-note" style="margin:0">Use <strong>Repair / vendor invoice PDF</strong> above to extract lines. Full attachment sync to QBO can follow your existing posting flow.</p>
                 </div>
               </div>
-
-              <div class="qb-doc-actions">
-                <div class="qb-actions-left">
-                  <button type="button" onclick="resetWoFormPartial()">Clear</button>
-                  <span class="mini-note" style="margin:0">Cancel = navigate away from Accounting tab.</span>
-                </div>
-                <div class="qb-actions-right">
-                  <button type="button" onclick="saveApTransaction()">Save</button>
-                  <button type="button" class="qb-btn-primary" onclick="saveApTransaction()">Save and close</button>
-                </div>
-              </div>
             </div>
+            <footer class="qb-doc-footer qb-doc-footer--ap">
+              <div class="qb-doc-footer__left">
+                <button type="button" onclick="resetWoFormPartial()">Clear lines</button>
+                <button
+                  type="button"
+                  class="secondary"
+                  onclick="document.getElementById('acctBoardStrip')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                >
+                  Cancel
+                </button>
+              </div>
+              <div class="qb-doc-footer__right">
+                <button type="button" onclick="saveApTransaction({ close: false })">Save</button>
+                <button type="button" class="qb-btn-primary" onclick="saveApTransaction({ close: true })">Save and close</button>
+              </div>
+            </footer>
           </div>
 
           <div class="panel" style="margin-top:12px;">
@@ -1840,15 +1880,25 @@
         </div>
 
         <div id="acct-bill-pay" class="accounting-tab hidden">
-          <div class="panel qb-panel">
-            <div class="panel-head">
-              <div class="panel-title">Pay bills (QuickBooks)</div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
-                <div style="min-width:220px;flex:1">
+          <div class="panel qb-panel qb-doc-shell qb-doc-shell--bill-pay">
+            <div class="panel-head mr-bp-panel-head">
+              <div class="mr-bp-panel-head__title">
+                <div class="panel-title">Pay bills (QuickBooks)</div>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bill pay">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Pays open <strong>Bills</strong> in QuickBooks via a <strong>Bill Payment</strong> from the bank or card you select (what bank feeds match to).
+                    <strong>Load from QuickBooks</strong> is a live query (not cached). Narrow with the search box, or use <strong>Bill Id</strong> + <strong>Load bill by Id</strong> for one bill.
+                    Post shop work as a <strong>Bill</strong> from <strong>Maintenance expenses</strong> first; one-off <strong>Purchase</strong> card expenses are handled differently in QBO.
+                  </span>
+                </span>
+              </div>
+              <div class="mr-filter-bar mr-filter-bar--bp-load" role="group" aria-label="Load open bills from QuickBooks">
+                <div class="mr-filter-bar__grow">
                   <span class="qb-l">Search live bills (QuickBooks)</span>
                   <input id="bpQbLiveSearch" class="qb-in" placeholder="Vendor name, doc #, bill id…" onkeydown="if(event.key==='Enter'){event.preventDefault();loadAccountingOpenBills();}" />
                 </div>
-                <div>
+                <div class="mr-filter-bar__actions">
                   <span class="qb-l">&nbsp;</span>
                   <button type="button" class="qb-btn-add" onclick="loadAccountingOpenBills()">Load from QuickBooks</button>
                 </div>
@@ -1856,19 +1906,13 @@
                   <span class="qb-l">Bill Id only</span>
                   <input id="bpBillIdQuick" class="qb-in" placeholder="QBO bill id" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();bpLoadOpenBillByQuickId();}" />
                 </div>
-                <div>
+                <div class="mr-filter-bar__actions">
                   <span class="qb-l">&nbsp;</span>
                   <button type="button" class="qb-btn-add" onclick="bpLoadOpenBillByQuickId()">Load bill by Id</button>
                 </div>
               </div>
             </div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 10px">
-                Pay open <strong>Bills</strong> in QuickBooks (vendors and driver payees set up as vendors). This creates a <strong>Bill Payment</strong> from the bank or card account you pick — the same transaction bank matching recognizes.
-                <strong>Load from QuickBooks</strong> runs a live query for bills with balance due (not a cached list). Use the search box to narrow by vendor, document number, or id after loading.
-                Use <strong>Bill Id only</strong> + <strong>Load bill by Id</strong> to fetch one open bill directly by its QuickBooks id (no vendor filter).
-                Post unpaid work as a <strong>Bill</strong> on <strong>Maintenance Expense Transactions</strong> first; one-off card expenses use <strong>Purchase</strong> and are paid differently in QBO.
-              </p>
               <div class="wo-line-grid" style="margin-bottom:10px">
                 <div style="grid-column:span 2">
                   <span class="qb-l">Vendor (QuickBooks)</span>
@@ -1900,12 +1944,18 @@
                   <input id="bpPrivateNote" class="qb-in" placeholder="Optional" />
                 </div>
               </div>
-              <p class="mini-note" style="margin:0 0 8px">
-                Leave vendor blank to load up to <strong>150</strong> open bills (all vendors). You can only pay one vendor per payment — select rows that share the same vendor.
-                <strong>Partial pay:</strong> lower the pay amount; <strong>Remaining</strong> and <strong>Status</strong> update as you type (capped at open balance on blur).
-              </p>
-              <div class="search-row" style="align-items:end;max-width:820px">
-                <div style="flex:1;min-width:240px">
+              <div class="mr-bp-hintrow">
+                <span class="mini-note" style="margin:0">Vendor filter optional · one vendor per payment · partial pay edits Remaining on blur</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Selection rules">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Leave vendor blank to load up to <strong>150</strong> open bills (all vendors). Each payment is for <strong>one vendor</strong> — check rows that share the same vendor.
+                    <strong>Partial pay:</strong> lower the pay amount; <strong>Remaining</strong> and <strong>Status</strong> update as you type (capped at open balance on blur).
+                  </span>
+                </span>
+              </div>
+              <div class="mr-filter-bar mr-filter-bar--bp-open" role="group" aria-label="Filter loaded open bills">
+                <div class="mr-filter-bar__grow">
                   <span class="qb-l">Search open bills</span>
                   <input id="bpOpenBillsSearch" class="qb-in" placeholder="Vendor, doc #, QBO bill id, date…" oninput="bpApplyOpenBillsFilter()" />
                 </div>
@@ -1916,8 +1966,8 @@
               </div>
               <div id="bpOpenBillsStatus" class="mini-note" style="margin-bottom:8px">Load after QuickBooks is connected (sidebar refresh).</div>
               <div id="bpSelectionTotal" class="mini-note" style="margin-bottom:6px;font-weight:500">Draft payment total: $0.00</div>
-              <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
-                <table class="st-settlement" style="min-width:1120px">
+              <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap" style="min-width:0">
+                <table class="st-settlement erp-bp-open-table" style="min-width:1120px">
                   <thead>
                     <tr>
                       <th>Pay</th>
@@ -1937,7 +1987,7 @@
                   </tbody>
                 </table>
               </div>
-              <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+              <div class="mr-bp-submitrow">
                 <button type="button" class="qb-btn-primary" onclick="submitAccountingBillPayment()">Create bill payment in QuickBooks</button>
                 <span class="mini-note" style="margin:0">Requires ERP write secret or admin (Settings).</span>
               </div>
@@ -1954,9 +2004,15 @@
               </div>
             </div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 10px">
-                Local audit trail written when you post a bill payment above. Filter by payment date (or leave blank for the newest entries). Export matches the same filters.
-              </p>
+              <div class="mr-bp-hintrow" style="margin-bottom:10px">
+                <span class="mini-note" style="margin:0">Local log when you post above · date filters apply to export</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Payment log">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Audit trail written when you create a bill payment. Filter by payment date (or leave blank for newest). <strong>Export CSV</strong> uses the same filters.
+                  </span>
+                </span>
+              </div>
               <div class="wo-line-grid" style="margin-bottom:10px">
                 <div>
                   <span class="qb-l">From</span>
@@ -2097,7 +2153,24 @@
                     </div>
                   </div>
                   <div class="erp-qb-cost-shell erp-qb-cost-shell--embedded">
-                    <div class="erp-qb-cost-shell__label">Cost lines (same shape as maintenance)</div>
+                    <div class="erp-qb-cost-shell__headrow">
+                      <div class="erp-qb-cost-shell__label">Cost lines (same shape as maintenance)</div>
+                      <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new fuel cost lines">
+                        <span class="erp-qb-cost-global__label">New lines</span>
+                        <label class="erp-qb-cost-global__opt"
+                          ><input type="radio" name="fuelManualCostGlobalMode" value="category" checked /> Category</label
+                        >
+                        <label class="erp-qb-cost-global__opt"
+                          ><input type="radio" name="fuelManualCostGlobalMode" value="item" /> Item</label
+                        >
+                        <span class="erp-help-tip erp-qb-cost-global__tip">
+                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Line type default">?</button>
+                          <span class="erp-help-tip__panel" role="tooltip">
+                            Default for <strong>new</strong> manual fuel rows. Existing rows keep their own line type selector.
+                          </span>
+                        </span>
+                      </div>
+                    </div>
                     <p class="mini-note maint-field-hint erp-qb-cost-shell__hint">
                       Each row: <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product/service + gal × $/gal). Use the fuel description catalog or free text. <strong>Lock line $</strong> when you enter a total and want gallons priced backward.
                     </p>
@@ -2517,6 +2590,54 @@
               </details>
             </aside>
             <div class="erp-reports-main">
+        <nav class="erp-reports-hub" aria-label="Jump to a report">
+          <div class="erp-reports-hub__card">
+            <div class="erp-reports-hub__label">Standard</div>
+            <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-overview')">
+              <span class="erp-reports-hub__tile-title">Overview</span>
+              <span class="erp-reports-hub__tile-meta">Board + refresh</span>
+            </button>
+          </div>
+          <div class="erp-reports-hub__card">
+            <div class="erp-reports-hub__label">Maintenance</div>
+            <div class="erp-reports-hub__tiles">
+              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-maint')">
+                <span class="erp-reports-hub__tile-title">Spend by unit</span>
+              </button>
+              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-maint-detail')">
+                <span class="erp-reports-hub__tile-title">Parts / positions</span>
+              </button>
+            </div>
+          </div>
+          <div class="erp-reports-hub__card">
+            <div class="erp-reports-hub__label">Accounting</div>
+            <div class="erp-reports-hub__tiles">
+              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-qbo')">
+                <span class="erp-reports-hub__tile-title">QuickBooks activity</span>
+              </button>
+              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-sync')">
+                <span class="erp-reports-hub__tile-title">ERP ↔ QBO sync</span>
+              </button>
+            </div>
+          </div>
+          <div class="erp-reports-hub__card">
+            <div class="erp-reports-hub__label">Operations</div>
+            <div class="erp-reports-hub__tiles erp-reports-hub__tiles--dense">
+              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-tms')">
+                <span class="erp-reports-hub__tile-title">TMS loads</span>
+              </button>
+              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-settlement')">
+                <span class="erp-reports-hub__tile-title">Settlement / P&amp;L</span>
+              </button>
+              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-team')">
+                <span class="erp-reports-hub__tile-title">Team &amp; security</span>
+              </button>
+              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-ifta')">
+                <span class="erp-reports-hub__tile-title">IFTA</span>
+              </button>
+            </div>
+          </div>
+        </nav>
         <div class="subtabs" style="gap:8px;flex-wrap:wrap;align-items:center">
           <button type="button" class="subtab active" onclick="openReportsTab('rep-overview', this)">Overview</button>
 
@@ -7612,6 +7733,10 @@
       const last = rows[rows.length - 1];
       const modeSel = last.querySelector('.fuel-m-line-mode');
       if (modeSel) {
+        const g =
+          document.querySelector('input[name=fuelManualCostGlobalMode]:checked')?.value === 'item' ? 'item' : 'category';
+        modeSel.value = g;
+        delete modeSel.dataset.lastMode;
         toggleFuelManualLineMode(modeSel);
         modeSel.dataset.lastMode = modeSel.value;
       }
@@ -10132,6 +10257,10 @@
       const last = rows[rows.length - 1];
       const modeSel = last.querySelector('.maint-line-mode');
       if (modeSel) {
+        const g =
+          document.querySelector('input[name=maintCostGlobalMode]:checked')?.value === 'item' ? 'item' : 'category';
+        modeSel.value = g;
+        delete modeSel.dataset.lastMode;
         toggleMaintCostLineMode(modeSel);
         modeSel.dataset.lastMode = modeSel.value;
       }
@@ -14124,7 +14253,8 @@
       }
     }
 
-    async function saveApTransaction() {
+    async function saveApTransaction(opts) {
+      const close = !opts || opts.close !== false;
       const vendorId = document.getElementById('apVendorQboId').value;
       if (!vendorId) {
         alert('Choose a QuickBooks vendor (type to match the list, then save).');
@@ -14200,9 +14330,18 @@
 
       resetWoForm();
       await loadAll();
-      openSectionByName('accounting');
-      const apList = document.getElementById('apList');
-      if (apList) apList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (close) {
+        openSectionByName('accounting');
+        const apList = document.getElementById('apList');
+        if (apList) apList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        paintQboStatusBanner(
+          document.getElementById('apTxnQboBanner'),
+          'Saved. Form cleared for the next expense — adjust header fields and lines, then Save or Save and close.',
+          'success'
+        );
+        document.getElementById('apDocTitle')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     async function postWorkOrderToQbo(woId) {
