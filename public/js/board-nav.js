@@ -2,17 +2,17 @@
   const BOARDS = [
     {
       id: 'fuel',
-      label: 'Fuel Route Planner',
+      label: 'Fuel & route planning',
       href: '/maintenance.html#fuel',
       links: [
         { label: 'ERP — Fuel tab', href: '/maintenance.html#fuel' },
         { label: 'Full-screen fuel planner', href: '/fuel.html' },
-        { label: 'Operations hub', href: '/' }
+        { label: 'Company home', href: '/' }
       ]
     },
     {
       id: 'maint',
-      label: 'Maintenance Board',
+      label: 'Maintenance center',
       href: '/maintenance.html#maintenance',
       links: [
         { label: 'Maintenance & service', href: '/maintenance.html#maintenance' },
@@ -21,32 +21,32 @@
     },
     {
       id: 'loads',
-      label: 'Loads & TMS',
+      label: 'Loads & dispatch',
       href: '/dispatch.html',
       links: [
         { label: 'Loads board (full screen)', href: '/dispatch.html' },
         { label: 'ERP — Maintenance', href: '/maintenance.html#maintenance' },
-        { label: 'Operations hub', href: '/' }
+        { label: 'Company home', href: '/' }
       ]
     },
     {
       id: 'safety',
-      label: 'Safety Board',
+      label: 'Safety & compliance',
       href: '/maintenance.html#safety',
       links: [
         { label: 'ERP — Safety (HOS)', href: '/maintenance.html#safety' },
-        { label: 'Operations hub', href: '/' }
+        { label: 'Company home', href: '/' }
       ]
     },
     {
       id: 'track',
-      label: 'Vehicle Tracking',
+      label: 'Fleet tracking',
       href: '/maintenance.html#tracking',
       links: [
         { label: 'ERP — Tracking (map)', href: '/maintenance.html#tracking' },
         { label: 'Shop & maintenance (queues, rollups)', href: '/maintenance.html#tracking-shop' },
-        { label: 'Standalone map page', href: '/tracking.html' },
-        { label: 'Fuel board', href: '/maintenance.html#fuel' }
+        { label: 'Open tracking in ERP', href: '/tracking.html' },
+        { label: 'Fuel tab', href: '/maintenance.html#fuel' }
       ]
     },
     {
@@ -56,7 +56,7 @@
       links: [
         { label: 'Expenses & work orders', href: '/maintenance.html#accounting' },
         { label: 'Settlement / P&L by load', href: '/maintenance.html#reports-settlement' },
-        { label: 'QBO master data', href: '/maintenance.html#accounting' },
+        { label: 'QuickBooks lists (live master)', href: '/maintenance.html#accounting' },
         { label: 'Bank & expense matching', href: '/banking.html' }
       ]
     },
@@ -65,9 +65,9 @@
       label: 'Reports',
       href: '/maintenance.html#reports',
       links: [
-        { label: 'Reports board (TMS · maint · QBO)', href: '/maintenance.html#reports' },
-        { label: 'Accounting board', href: '/maintenance.html#accounting' },
-        { label: 'Operations hub', href: '/' }
+        { label: 'Reports hub (TMS · maintenance · QuickBooks)', href: '/maintenance.html#reports' },
+        { label: 'Accounting', href: '/maintenance.html#accounting' },
+        { label: 'Company home', href: '/' }
       ]
     }
   ];
@@ -104,7 +104,7 @@
         </div>
       </div>`
       ).join('') +
-      '<span class="board-nav-hint">Double-click a board name to open · Single-click for menu</span>';
+      '<span class="board-nav-hint">Double-click a name to go there · Single-click opens shortcuts</span>';
 
     const wrap = document.createElement('div');
     wrap.className = 'board-nav-wrap';

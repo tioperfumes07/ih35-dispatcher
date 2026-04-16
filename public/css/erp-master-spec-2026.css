@@ -247,11 +247,6 @@ body.erp-maintenance .erp-new-menu__item {
   font-family: inherit;
 }
 
-body.erp-maintenance .erp-new-menu__item:hover {
-  text-decoration: underline;
-  background: transparent;
-}
-
 body.erp-maintenance .erp-new-menu__col-title {
   font-size: 11px;
   font-weight: 500;
@@ -457,6 +452,12 @@ body.dispatch-page #dispatchApp table.data {
 body.erp-maintenance #erpApp .erp-new-menu {
   max-height: min(70vh, 520px);
   overflow-y: auto;
+}
+
+/* Rule 3: menu rows read as links (underline hover), not gray pills */
+body.erp-maintenance #erpApp .erp-new-menu__item:hover {
+  background: transparent !important;
+  text-decoration: underline;
 }
 
 /* =============================================================================
