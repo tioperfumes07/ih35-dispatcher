@@ -2051,8 +2051,8 @@
                 </div>
               </div>
               <div id="bpLogStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
-              <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
-                <table class="st-settlement" style="min-width:960px">
+              <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap mr-bp-log-wrap" style="min-width:0">
+                <table class="st-settlement erp-bp-log-table" style="min-width:960px">
                   <thead>
                     <tr>
                       <th>Txn date</th>
@@ -2098,7 +2098,25 @@
                 Pick the <strong>vendor</strong> (fuel merchant), optional <strong>driver</strong> (name + driver-pay QBO vendor), and optional <strong>customer</strong> on the line when you bill or track by driver entity.
                 Row edits (class, vendor, item, qty, driver, payment method, pay-from account, expense #, etc.) <strong>save to ERP</strong> automatically after a short pause when the <strong>ERP write secret</strong> is set in Settings (same as posting).
               </p>
-              <div class="panel qb-panel qb-doc-shell" style="margin:0 0 14px">
+              <div class="panel qb-panel qb-doc-shell qb-doc-shell--fuel-spec" style="margin:0 0 14px">
+                <div class="qb-doc-topbar qb-doc-topbar--fuel">
+                  <button
+                    type="button"
+                    class="qb-doc-backlink"
+                    onclick="document.getElementById('acctBoardStrip')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                  >
+                    ← Accounting board
+                  </button>
+                  <button
+                    type="button"
+                    class="qb-doc-closebtn"
+                    aria-label="Jump to fuel ledger grid"
+                    title="Fuel ledger grid"
+                    onclick="document.getElementById('fuelExpLedgerAnchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                  >
+                    ×
+                  </button>
+                </div>
                 <div class="qb-doc-head">
                   <div class="qb-doc-title-row">
                     <div style="flex:1;min-width:200px">
@@ -2208,19 +2226,19 @@
                     </div>
                     <div class="mini-note" style="align-self:end">Payment method and pay-from account are saved on each row for posting.</div>
                   </div>
-                  <div class="qb-doc-actions">
-                    <div class="qb-actions-left">
-                      <button type="button" onclick="resetManualFuelForm(false)">Clear</button>
-                    </div>
-                    <div class="qb-actions-right" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                      <button type="button" class="btn" onclick="saveManualFuelPurchase()">Save to fuel ledger</button>
-                      <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase({ postToQbo: true })">
-                        Confirm &amp; record to QuickBooks
-                      </button>
-                      <span id="fuelManualSaveHint" class="mini-note" style="margin:0"></span>
-                    </div>
-                  </div>
                 </div>
+                <footer class="qb-doc-footer qb-doc-footer--fuel">
+                  <div class="qb-doc-footer__left">
+                    <button type="button" onclick="resetManualFuelForm(false)">Clear</button>
+                  </div>
+                  <div class="qb-doc-footer__right" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                    <button type="button" class="btn" onclick="saveManualFuelPurchase()">Save to fuel ledger</button>
+                    <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase({ postToQbo: true })">
+                      Confirm &amp; record to QuickBooks
+                    </button>
+                    <span id="fuelManualSaveHint" class="mini-note" style="margin:0"></span>
+                  </div>
+                </footer>
               </div>
               <div class="wo-line-grid" style="margin-bottom:10px">
                 <div>
@@ -2301,7 +2319,11 @@
                 </div>
               </div>
               <div id="fuelExpStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
-              <div class="table-wrap st-settlement-wrap fuel-exp-table-wrap erp-table-scroll" style="min-width:0;width:100%;max-width:100%">
+              <div
+                id="fuelExpLedgerAnchor"
+                class="table-wrap st-settlement-wrap fuel-exp-table-wrap erp-table-scroll"
+                style="min-width:0;width:100%;max-width:100%"
+              >
                 <table class="st-settlement fuel-exp-table" style="min-width:1720px;width:max-content;max-width:none">
                   <thead>
                     <tr>
@@ -2643,18 +2665,18 @@
           <button type="button" class="subtab active" onclick="openReportsTab('rep-overview', this)">Overview</button>
 
           <div class="nav-dropdown" style="display:inline-block">
-            <button type="button" class="subtab nav-dropdown-trigger" onclick="event.stopPropagation()">Maintenance ▾</button>
+            <button type="button" class="subtab nav-dropdown-trigger" id="repMaintDdTrigger" onclick="event.stopPropagation()">Maintenance ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-maint', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">Spend by unit</button>
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-maint-detail', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">Detailed maintenance (parts/positions)</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-maint', document.getElementById('repMaintDdTrigger'))">Spend by unit</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-maint-detail', document.getElementById('repMaintDdTrigger'))">Detailed maintenance (parts/positions)</button>
             </div>
           </div>
 
           <div class="nav-dropdown" style="display:inline-block">
-            <button type="button" class="subtab nav-dropdown-trigger" onclick="event.stopPropagation()">Accounting ▾</button>
+            <button type="button" class="subtab nav-dropdown-trigger" id="repAcctDdTrigger" onclick="event.stopPropagation()">Accounting ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-qbo', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">QuickBooks activity</button>
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-sync', document.querySelector('#section-reports .subtab.nav-dropdown-trigger'))">ERP ↔ QBO sync</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-qbo', document.getElementById('repAcctDdTrigger'))">QuickBooks activity</button>
+              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-sync', document.getElementById('repAcctDdTrigger'))">ERP ↔ QBO sync</button>
             </div>
           </div>
 
