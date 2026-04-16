@@ -987,7 +987,7 @@
                   </div>
                   <button type="button" class="btn" title="Add to internal queue" onclick="openShopQueueModal('internal')">+ Add</button>
                 </div>
-                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div class="erp-table-scroll" style="border:1px solid var(--line);border-radius:12px;background:var(--panel)">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
                       <tr>
@@ -1035,7 +1035,7 @@
                   </div>
                   <button type="button" class="btn" title="Add to external queue" onclick="openShopQueueModal('external')">+ Add</button>
                 </div>
-                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div class="erp-table-scroll" style="border:1px solid var(--line);border-radius:12px;background:var(--panel)">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
                       <tr>
@@ -1083,7 +1083,7 @@
                   </div>
                   <button type="button" class="btn" title="Add to roadside queue" onclick="openShopQueueModal('roadside')">+ Add</button>
                 </div>
-                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div class="erp-table-scroll" style="border:1px solid var(--line);border-radius:12px;background:var(--panel)">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
                       <tr>
@@ -1134,7 +1134,7 @@
                   </div>
                   <button type="button" class="btn" title="Add to parts queue" onclick="openShopQueueModal('parts')">+ Add</button>
                 </div>
-                <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div class="erp-table-scroll" style="border:1px solid var(--line);border-radius:12px;background:var(--panel)">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
                       <tr>
@@ -4584,7 +4584,7 @@
             `<tr>${cols.map(c => `<td>${escapeHtml(String(r[c] ?? ''))}</td>`).join('')}</tr>`
         )
         .join('');
-      return `<div class="table-wrap" style="min-width:0"><table style="min-width:640px;font-size:11px"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`;
+      return `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:640px;font-size:11px"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`;
     }
 
     function renderReportsAll() {
@@ -6226,7 +6226,7 @@
               let extra = '';
               if (a.type === 'fuel_volume_mismatch' && Array.isArray(a.purchases)) {
                 extra =
-                  '<div style="margin-top:8px;font-size:11px;overflow:auto"><table class="catalog-admin-table"><thead><tr><th>Date</th><th>Gal</th><th>Vendor</th><th>Odometer</th></tr></thead><tbody>' +
+                  '<div class="erp-table-scroll" style="margin-top:8px;font-size:11px"><table class="catalog-admin-table"><thead><tr><th>Date</th><th>Gal</th><th>Vendor</th><th>Odometer</th></tr></thead><tbody>' +
                   a.purchases
                     .map(
                       pr =>
@@ -6281,7 +6281,7 @@
         return;
       }
       el.innerHTML = `
-        <div style="overflow:auto">
+        <div class="erp-table-scroll">
           <table class="catalog-admin-table">
             <thead><tr><th>Name</th><th>Active</th><th>Sort</th><th></th></tr></thead>
             <tbody>
@@ -7351,7 +7351,7 @@
       } else {
         relayW.innerHTML =
           '<div class="mini-note" style="margin-bottom:6px;font-weight:700">Relay → QB category (staging)</div>' +
-          '<table class="acct-fuel-import-table"><thead><tr>' +
+          '<div class="erp-table-scroll"><table class="acct-fuel-import-table"><thead><tr>' +
           '<th><input type="checkbox" id="acctPickAllRelay" checked title="Toggle all" onclick="acctTogglePickAllRelay(this)" /></th>' +
           '<th>Doc #</th><th>Date</th><th>Unit</th><th>QB category</th><th>Line type</th>' +
           '<th class="num">$</th><th class="num">Gal</th><th>Memo</th></tr></thead><tbody>' +
@@ -7369,7 +7369,7 @@
                 `<td>${escapeHtml(String(row.memo || '').slice(0, 80))}${(row.memo || '').length > 80 ? '…' : ''}</td></tr>`
             )
             .join('') +
-          '</tbody></table>';
+          '</tbody></table></div>';
       }
 
       if (!fuels.length) {
@@ -7377,7 +7377,7 @@
       } else {
         fuelW.innerHTML =
           '<div class="mini-note" style="margin-bottom:6px;font-weight:700">Fuel ledger lines</div>' +
-          '<table class="acct-fuel-import-table"><thead><tr>' +
+          '<div class="erp-table-scroll"><table class="acct-fuel-import-table"><thead><tr>' +
           '<th><input type="checkbox" id="acctPickAllFuel" checked title="Toggle all" onclick="acctTogglePickAllFuel(this)" /></th>' +
           '<th>Date</th><th>Unit</th><th>Product</th><th class="num">Gal</th><th class="num">$/gal</th><th class="num">Total</th></tr></thead><tbody>' +
           fuels
@@ -7392,7 +7392,7 @@
                 `<td class="num">${row.totalCost != null ? Number(row.totalCost).toFixed(2) : '—'}</td></tr>`
             )
             .join('') +
-          '</tbody></table>';
+          '</tbody></table></div>';
       }
 
       wrap.hidden = false;
