@@ -8,6 +8,7 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/css/app-theme.css" />
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
+  <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
   <style>
     /* Layout, panels, tables, shop/QBO chrome: /css/app-theme.css under body.erp-maintenance */
@@ -251,14 +252,33 @@
           <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety Board</h3><p>Samsara HOS, drivers, assignments</p></div>
           <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Map, assets, <strong>Shop &amp; maintenance</strong> tab (queues + alerts), Samsara live data</p></div>
           <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Expenses, bills, QuickBooks</p></div>
-          <div class="hero-card" onclick="openSectionByName('reports')"><h3>Reports Board</h3><p>Maintenance, safety, QBO sync &amp; activity</p></div>
+          <div class="hero-card hero-card--hint" role="note">
+            <h3>Reports</h3>
+            <p>All downloadable reports and analytics live on the <strong>Reports</strong> module only (≡ in the left icon rail). Home cards here stay operational — no report shortcuts on other boards.</p>
+          </div>
         </div>
 
-        <div class="grid grid-4 erp-kpi-grid">
-          <div class="metric"><div class="metric-label">Tracked Assets</div><div class="metric-value" id="dashTrackedAssets">0</div></div>
-          <div class="metric"><div class="metric-label">Assigned / Working</div><div class="metric-value" id="dashAssignedAssets">0</div></div>
-          <div class="metric"><div class="metric-label">Maintenance Past Due</div><div class="metric-value" id="dashPastDue">0</div></div>
-          <div class="metric"><div class="metric-label">QBO Vendor Count</div><div class="metric-value" id="dashQboVendors">0</div></div>
+        <div class="grid grid-4 erp-kpi-grid mr-kpi-strip">
+          <div class="metric mr-kpi-card">
+            <div class="metric-label">Tracked assets</div>
+            <div class="metric-value" id="dashTrackedAssets">0</div>
+            <div class="metric-sub muted" id="dashTrackedAssetsSub">—</div>
+          </div>
+          <div class="metric mr-kpi-card">
+            <div class="metric-label">Active work orders</div>
+            <div class="metric-value" id="dashAssignedAssets">0</div>
+            <div class="metric-sub muted">Assigned / in progress</div>
+          </div>
+          <div class="metric mr-kpi-card" id="dashPastDueCard">
+            <div class="metric-label">Maintenance past due</div>
+            <div class="metric-value" id="dashPastDue">0</div>
+            <div class="metric-sub muted">PM &amp; critical</div>
+          </div>
+          <div class="metric mr-kpi-card">
+            <div class="metric-label">QBO vendor count</div>
+            <div class="metric-value" id="dashQboVendors">0</div>
+            <div class="metric-sub muted">From last catalog sync</div>
+          </div>
         </div>
 
         <div class="grid grid-2" style="margin-top:12px;">
@@ -4230,10 +4250,11 @@
       };
       if (name === 'maintenance') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Maintenance</div>' +
-          mt('record', 'Create work order') +
+          '<div class="erp-sb-heading">Maintenance board</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Overview (KPIs)</button>' +
+          mt('record', 'Work orders &amp; records') +
           mt('fleet', 'Fleet table') +
-          mt('rm', 'R&amp;M Status') +
+          mt('rm', 'R&amp;M status') +
           mt('shop-loc', 'Shop / location') +
           '<div class="erp-sb-heading">Fleet by type</div>' +
           ast('Trucks', 'Trucks') +
@@ -4253,7 +4274,7 @@
           '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance board</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;fuel&quot;);">Diesel / Fuel</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;accounting&quot;);">Accounting</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;reports&quot;);">Reports</button>' +
+          '<p class="mini-note" style="margin:8px 0 0;line-height:1.45">Reports: use the <strong>Reports</strong> icon (≡) in the left rail — not duplicated here.</p>' +
           adm;
         return;
       }
@@ -5143,8 +5164,19 @@
         bar.removeAttribute('data-fp');
         bar.setAttribute('role', 'status');
         bar.innerHTML = `
-          <div class="qbo-sync-head">QuickBooks sync status unavailable</div>
-          <p class="qbo-sync-meta" style="margin:6px 0 0">Check your connection and sign-in, then use Refresh now.</p>`;
+          <div class="mr-qbo-banner mr-qbo-banner--degraded">
+            <div class="mr-qbo-banner__left">
+              <span class="mr-qbo-banner__icon" aria-hidden="true">!</span>
+              <div>
+                <div class="mr-qbo-banner__title">QuickBooks — status unavailable</div>
+                <p class="mr-qbo-banner__meta">Check your connection and sign-in, then use <strong>Refresh now</strong>.</p>
+              </div>
+            </div>
+            <div class="mr-qbo-banner__right print-hide-actions">
+              <button type="button" class="mr-qbo-banner__linkbtn" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'))">Go to Accounting</button>
+              <button type="button" class="mr-qbo-banner__dismiss" onclick="dismissQboSyncAlertBar()">Hide ×</button>
+            </div>
+          </div>`;
         if (side) {
           side.style.color = '#fca5a5';
           side.textContent = 'Could not load posting alerts.';
@@ -5207,44 +5239,51 @@
         side.textContent = parts.join(' · ');
       }
 
-      const acctBtn = `<button type="button" class="qb-btn-add" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); const _s=document.querySelector('#section-accounting .subtab[onclick*=\\"acct-transactions\\"]'); if(_s)openAccountingTab('acct-transactions', _s);">Accounting</button>`;
+      const acctBtn = `<button type="button" class="mr-qbo-banner__linkbtn" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); const _s=document.querySelector('#section-accounting .subtab[onclick*=\\"acct-transactions\\"]'); if(_s)openAccountingTab('acct-transactions', _s);">Go to Accounting</button>`;
       const connectBtn = needsConnect
-        ? `<button type="button" class="qb-btn-add" onclick="connectQuickBooks()">Connect QuickBooks</button>
-           <button type="button" class="btn" onclick="location.href='/settings.html'">Settings</button>`
+        ? `<button type="button" class="mr-qbo-banner__linkbtn" onclick="connectQuickBooks()">Connect QuickBooks</button>
+           <button type="button" class="mr-qbo-banner__ghost" onclick="location.href='/settings.html'">Settings</button>`
         : '';
       const notifDefault =
         typeof Notification !== 'undefined' && Notification.permission === 'default'
-          ? `<button type="button" class="btn" onclick="requestQboDesktopNotifyPermission()">Desktop notifications</button>`
+          ? `<button type="button" class="mr-qbo-banner__ghost" onclick="requestQboDesktopNotifyPermission()">Desktop notifications</button>`
           : '';
+      const title =
+        'QuickBooks — ' + String(alerts.length) + ' item' + (alerts.length === 1 ? '' : 's') + ' need attention';
 
       bar.innerHTML = `
-        <div style="display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-start;justify-content:space-between">
-          <div style="flex:1;min-width:0">
-            <div class="qbo-sync-head">QuickBooks — action required</div>
-            <p class="qbo-sync-meta">${escapeHtml(String(alerts.length))} item(s) in the last ${escapeHtml(
-              String(lookback)
-            )}-day window · auto-refresh every ${Math.round(AUTO_REFRESH_MS / 1000)}s</p>
-            <ul class="qbo-sync-list">
+        <div class="mr-qbo-banner">
+          <div class="mr-qbo-banner__left">
+            <span class="mr-qbo-banner__icon" aria-hidden="true">!</span>
+            <div class="mr-qbo-banner__body">
+              <div class="mr-qbo-banner__title">${escapeHtml(title)}</div>
+              <p class="mr-qbo-banner__meta">${escapeHtml(String(alerts.length))} in the last ${escapeHtml(
+                String(lookback)
+              )}-day window · auto-refresh every ${Math.round(AUTO_REFRESH_MS / 1000)}s</p>
+              <ul class="mr-qbo-banner__list">
               ${alerts
                 .slice(0, 18)
                 .map(a => {
                   const sev =
                     a.severity === 'high' ? 'Error' : a.severity === 'medium' ? 'Pending' : 'Info';
-                  const det = a.detail ? ` <span class="qbo-sync-meta">— ${escapeHtml(a.detail)}</span>` : '';
-                  return `<li><strong>${escapeHtml(sev)}</strong> · ${escapeHtml(a.title || a.code || '')}${det}</li>`;
+                  const det = a.detail ? ` — ${escapeHtml(a.detail)}` : '';
+                  return `<li><span class="mr-qbo-banner__sev">${escapeHtml(sev)}</span> · ${escapeHtml(
+                    a.title || a.code || ''
+                  )}${det}</li>`;
                 })
                 .join('')}
-            </ul>
-            ${
-              alerts.length > 18
-                ? `<p class="qbo-sync-meta" style="margin:8px 0 0">Showing 18 of ${alerts.length}. Open Accounting for the full list.</p>`
-                : ''
-            }
+              </ul>
+              ${
+                alerts.length > 18
+                  ? `<p class="mr-qbo-banner__meta">Showing 18 of ${alerts.length}. Use Accounting for the full list.</p>`
+                  : ''
+              }
+            </div>
           </div>
-          <div class="print-hide-actions qbo-sync-actions">
+          <div class="mr-qbo-banner__right print-hide-actions">
             ${connectBtn}
             ${acctBtn}
-            <button type="button" class="btn" onclick="dismissQboSyncAlertBar()">Hide this session</button>
+            <button type="button" class="mr-qbo-banner__dismiss" onclick="dismissQboSyncAlertBar()">Hide ×</button>
             ${notifDefault}
           </div>
         </div>`;
@@ -8285,10 +8324,26 @@
       const assigned = assignedVehicleNames();
       const past = dashboard.filter(x => x.status === 'past due').length;
       const nVendors = cacheVendors().length;
+      const byCat = vehiclesByCategory();
       document.getElementById('dashTrackedAssets').textContent = vehicles.length;
+      const dashSub = document.getElementById('dashTrackedAssetsSub');
+      if (dashSub) {
+        dashSub.textContent = [
+          'Trucks ' + byCat['Trucks'].length,
+          'Ref vans ' + byCat['Refrigerated Vans'].length,
+          'Flatbeds ' + byCat['Flatbeds'].length,
+          'Dry vans ' + byCat['Dry Vans'].length,
+          'Co vehicles ' + byCat['Company Vehicles'].length
+        ].join(' · ');
+      }
       document.getElementById('dashAssignedAssets').textContent = assigned.size;
       document.getElementById('dashPastDue').textContent = past;
       document.getElementById('dashQboVendors').textContent = nVendors;
+      const pastCard = document.getElementById('dashPastDueCard');
+      if (pastCard) {
+        pastCard.classList.toggle('mr-kpi-card--bad', past > 0);
+        pastCard.classList.toggle('mr-kpi-card--ok', past === 0);
+      }
 
       const mTa = document.getElementById('maintDashTrackedAssets');
       const mAs = document.getElementById('maintDashAssignedAssets');
@@ -8299,7 +8354,6 @@
       if (mPd) mPd.textContent = String(past);
       if (mQv) mQv.textContent = String(nVendors);
 
-      const byCat = vehiclesByCategory();
       const maintSum = document.getElementById('maintDashSummaryLine');
       if (maintSum) {
         maintSum.textContent = [

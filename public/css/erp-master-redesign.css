@@ -673,7 +673,7 @@ body.erp-maintenance .erp-qb-dialog__head {
 body.erp-maintenance .erp-qb-dialog__title {
   margin: 0;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--qb-text-strong);
   letter-spacing: -0.02em;
 }
@@ -736,7 +736,7 @@ body.erp-maintenance .erp-qb-dialog select.qb-in:focus {
 body.erp-maintenance .maint-workorder-fullmodal__shell.erp-qb-fullsheet {
   border-radius: var(--qb-radius-card);
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(32, 33, 36, 0.18);
+  box-shadow: none;
 }
 
 @media (max-width: 720px) {
@@ -870,7 +870,7 @@ body.erp-maintenance .erp-main-body .erp-qb-cost-shell--embedded {
 
 body.erp-maintenance .erp-main-body .erp-qb-cost-shell__label {
   margin: 0 0 6px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 12px;
   color: var(--qb-text-strong);
   letter-spacing: 0.04em;
@@ -890,7 +890,7 @@ body.erp-maintenance .erp-main-body .tire-layout-wrap {
 }
 
 body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
-  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.06);
+  box-shadow: none;
 }
 
 body.erp-maintenance .erp-main-body .tire-svg {
@@ -1085,12 +1085,12 @@ body.erp-maintenance .erp-reports-toolbar {
   background: var(--qb-panel);
   border: 1px solid var(--qb-line);
   border-radius: var(--qb-radius-card);
-  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.06);
+  box-shadow: none;
 }
 
 body.erp-maintenance .erp-reports-toolbar__title {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--qb-text-strong);
   letter-spacing: -0.02em;
   flex: 0 0 auto;
@@ -1169,7 +1169,7 @@ body.erp-maintenance .erp-reports-sblink:hover {
 body.erp-maintenance .erp-reports-sblink--active {
   background: var(--qb-sidebar-active-bg);
   color: var(--qb-blue);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 body.erp-maintenance .erp-reports-main {
@@ -1185,7 +1185,7 @@ body.erp-maintenance .erp-kpi-grid .metric {
   border: 1px solid var(--qb-line);
   border-radius: var(--qb-radius-card);
   padding: 12px 14px;
-  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.04);
+  box-shadow: none;
 }
 
 @media (max-width: 900px) {
@@ -1278,7 +1278,7 @@ body.erp-maintenance .erp-main-body .safety-table-wrap.erp-ops-data-frame {
   border-color: var(--qb-line);
   border-radius: var(--qb-radius-card);
   background: var(--qb-panel);
-  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.04);
+  box-shadow: none;
 }
 
 body.erp-maintenance .erp-main-body .safety-active-grid {
@@ -1317,7 +1317,7 @@ body.dispatch-page .topbar {
 
 body.dispatch-page .topbar h1 {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--qb-text-strong);
   letter-spacing: -0.02em;
 }
@@ -1380,7 +1380,7 @@ body.dispatch-page .tabs button.active {
   background: var(--qb-sidebar-active-bg);
   border-color: var(--qb-blue);
   color: var(--qb-blue);
-  font-weight: 600;
+  font-weight: 500;
   box-shadow: none;
 }
 
@@ -1425,13 +1425,13 @@ body.dispatch-page table.data tr:hover {
 body.dispatch-page .modal {
   border-radius: var(--qb-radius-card);
   border-color: var(--qb-line);
-  box-shadow: 0 8px 32px rgba(32, 33, 36, 0.16);
+  box-shadow: none;
 }
 
 body.dispatch-page .modal h2 {
   background: #fafbfc;
   border-bottom-color: var(--qb-line);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--qb-text-strong);
 }
 
@@ -1480,10 +1480,10 @@ body.dispatch-page #dispatchApp .sidebar-expand-fab {
   border-radius: 12px;
   border: 1px solid var(--qb-line-input);
   background: var(--qb-panel);
-  box-shadow: 0 2px 8px rgba(60, 64, 67, 0.12);
+  box-shadow: none;
   cursor: pointer;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
   align-items: center;
   justify-content: center;
   color: var(--qb-blue);
@@ -1661,7 +1661,7 @@ body.dispatch-page #dispatchApp .erp-sb-link:hover {
 body.dispatch-page #dispatchApp .erp-sb-link.erp-sb-link--active {
   background: var(--qb-sidebar-active-bg);
   color: var(--qb-blue);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 body.dispatch-page #dispatchApp .erp-main-col {
@@ -2002,7 +2002,7 @@ html.dispatch-embed body.dispatch-page .dispatch-embed-status-bar {
 
   body.dispatch-page #dispatchApp table.data th {
     background: #f0f0f0 !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
   }
 
   body.dispatch-page #dispatchApp table.data a {
@@ -2038,7 +2038,7 @@ body.fuel-board .topbar {
 
 body.fuel-board .topbar h1 {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--qb-text-strong);
   letter-spacing: -0.02em;
 }
@@ -2059,7 +2059,7 @@ body.fuel-board .panel {
 body.fuel-board .panel h2 {
   background: #fafbfc;
   border-bottom: 1px solid var(--qb-line);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--qb-text-strong);
 }
 
@@ -2109,7 +2109,7 @@ body.banking-page .wrap {
 
 body.banking-page h1 {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--qb-text-strong);
   letter-spacing: -0.02em;
 }
@@ -2130,7 +2130,7 @@ body.banking-page .ph {
   background: #fafbfc;
   border-bottom-color: var(--qb-line);
   color: var(--qb-text-strong);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 body.banking-page .pb {
@@ -2199,7 +2199,7 @@ body.settings-page .wrap {
 
 body.settings-page h1 {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--qb-text-strong);
   letter-spacing: -0.02em;
 }
