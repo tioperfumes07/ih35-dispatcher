@@ -297,7 +297,7 @@
         <div class="panel">
           <div class="panel-head">
             <div class="panel-title">Fuel &amp; route planning</div>
-            <div class="mini-note">Same planner as the standalone page, without duplicate top navigation. <a href="/fuel.html" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:600">Open full screen</a></div>
+            <div class="mini-note">Same planner as the standalone page, without duplicate top navigation. <a href="/fuel.html" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:500">Open full screen</a></div>
           </div>
           <div class="panel-body" style="padding:0">
             <iframe class="erp-iframe" src="/fuel.html?embed=1" title="Fuel planner"></iframe>
@@ -988,8 +988,8 @@
               <div id="maintExpenseStrip" class="maint-expense-strip" style="margin-bottom:14px"></div>
               <p class="mini-note" style="margin:0 0 10px">
                 Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
-                <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
-                · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
+                <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1d4ed8;font-weight:500">Vehicle map</a>
+                · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:500">Safety / HOS</a>
               </p>
               <div class="subtabs shop-subtabs erp-ops-shop-subtabs" id="shopBoardSubtabs">
                 <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
@@ -1635,7 +1635,7 @@
                 </div>
               </div>
               <div id="bpOpenBillsStatus" class="mini-note" style="margin-bottom:8px">Load after QuickBooks is connected (sidebar refresh).</div>
-              <div id="bpSelectionTotal" class="mini-note" style="margin-bottom:6px;font-weight:600">Draft payment total: $0.00</div>
+              <div id="bpSelectionTotal" class="mini-note" style="margin-bottom:6px;font-weight:500">Draft payment total: $0.00</div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:1120px">
                   <thead>
@@ -1909,7 +1909,7 @@
                   Upload Relay “All Transactions” exports here (same place you record expenses). Requires <strong>ERP write secret</strong> in Settings. After import, rows appear in the table below — use <strong>Record to QuickBooks</strong> for each line to create QuickBooks Purchases.
                 </p>
                 <details class="mini-note" style="margin:0 0 10px">
-                  <summary style="cursor:pointer;font-weight:600;color:#1e40af">How this file maps to QuickBooks</summary>
+                  <summary style="cursor:pointer;font-weight:500;color:#1e40af">How this file maps to QuickBooks</summary>
                   <div style="margin-top:8px;line-height:1.55;max-width:96ch">
                     <p style="margin:0 0 8px">
                       <strong>Fuel ledger lines</strong> (diesel / DEF / reefer from <code>volume_*</code> and <code>total_price_*</code>) store unit, gallons, $/gal, total, vendor text, <code>work_date</code>, and a suggested <strong>QB expense path</strong> (same as Relay template). Each <strong>Record to QuickBooks</strong> creates <strong>its own</strong> QuickBooks <strong>Purchase</strong> with <strong>DocNumber</strong> (Relay doc / load ref / auto id), <strong>Vendor</strong>, <strong>Class</strong> = truck, pay-from <strong>Bank</strong>, and by default an <strong>AccountBasedExpenseLineDetail</strong> to the expense account that best matches the path (override with the category field above if needed).
@@ -3345,7 +3345,7 @@
           rows
             .map(e => {
               const st = String(e.status || 'queued');
-              const overdue = e.overdue ? ' <span style="color:#b45309;font-weight:600">(past est.)</span>' : '';
+              const overdue = e.overdue ? ' <span style="color:#b45309;font-weight:500">(past est.)</span>' : '';
               return `<tr><td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(
                 e.assetCategory || ''
               )}</div></td><td>${escapeHtml(e.title || '')}${overdue}</td><td>${escapeHtml(statusLabel(st))}</td><td>${escapeHtml(
@@ -3368,7 +3368,7 @@
       else {
         for (const k of keys) {
           const list = byLoc[k].slice(0, 14);
-          html += `<div style="margin:10px 0 4px;font-weight:600;font-size:12px;color:#334155">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
+          html += `<div style="margin:10px 0 4px;font-weight:500;font-size:12px;color:#334155">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
           for (const r of list) {
             const svc = String(r.serviceType || '').trim() || '—';
             const st = String(r.qboSyncStatus || r.syncStatus || 'local').trim();
@@ -4930,7 +4930,7 @@
                           <td>${lc}</td>
                           <td>${ls}</td>
                           <td>${escapeHtml(idle)}</td>
-                          <td style="color:${cl};font-weight:600">${escapeHtml(r.alert || '')}</td>
+                          <td style="color:${cl};font-weight:500">${escapeHtml(r.alert || '')}</td>
                         </tr>`;
                       })
                       .join('')}
@@ -5167,7 +5167,7 @@
           <div class="mr-qbo-banner mr-qbo-banner--degraded">
             <div class="mr-qbo-banner__left">
               <span class="mr-qbo-banner__icon" aria-hidden="true">!</span>
-              <div>
+              <div class="mr-qbo-banner__body">
                 <div class="mr-qbo-banner__title">QuickBooks — status unavailable</div>
                 <p class="mr-qbo-banner__meta">Check your connection and sign in, then choose <strong>Refresh</strong> in the top bar.</p>
               </div>
@@ -9517,7 +9517,7 @@
       const diff = Math.abs(lineSum - inv);
       if (diff < 0.02) {
         matchEl.innerHTML =
-          '<span style="color:#15803d;font-weight:600">✓</span> Invoice total matches line sum: $' + lineSum.toFixed(2);
+          '<span style="color:#15803d;font-weight:500">✓</span> Invoice total matches line sum: $' + lineSum.toFixed(2);
         costEl.classList.add('cost-total-ok');
         costEl.classList.remove('cost-total-bad');
       } else {
