@@ -870,25 +870,6 @@ body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__chev {
   color: #9aa0a6;
 }
 
-/* --- Rule 9: + New dropdown grid (580px, shadow) --- */
-body.erp-maintenance #erpApp .erp-new-menu {
-  width: min(580px, calc(100vw - 24px));
-  padding: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-
-body.erp-maintenance #erpApp .erp-new-menu__cols {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-@media (max-width: 720px) {
-  body.erp-maintenance #erpApp .erp-new-menu__cols {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* --- Rule 16: upload center pill row --- */
 body.erp-maintenance .mr-upload-pills .subtab.active {
   color: #1967d2;

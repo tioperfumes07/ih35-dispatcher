@@ -2355,10 +2355,16 @@
               </div>
             </div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 10px">
-                Combined view of <strong>maintenance AP transactions</strong>, <strong>work order lines</strong>, <strong>unit maintenance records</strong> (cost lines), <strong>Relay fuel-import staging</strong>, and <strong>QuickBooks bill payments</strong> recorded from this app.
-                Filter by date (txn / service date) and source. QuickBooks columns reflect API posting status where applicable; Relay rows use the fuel import flags when expenses already exist in QBO.
-              </p>
+              <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap">
+                <span class="mini-note" style="margin:0">Combined expense history</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What this log includes">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Combined view of <strong>maintenance AP transactions</strong>, <strong>work order lines</strong>, <strong>unit maintenance records</strong> (cost lines), <strong>Relay fuel-import staging</strong>, and <strong>QuickBooks bill payments</strong> recorded from this app.
+                    Filter by date (txn / service date) and source. QuickBooks columns reflect API posting status where applicable; Relay rows use the fuel import flags when expenses already exist in QBO.
+                  </span>
+                </span>
+              </div>
               <div class="wo-line-grid" style="margin-bottom:10px">
                 <div>
                   <span class="qb-l">From date</span>
@@ -2393,9 +2399,15 @@
               <div
                 id="expHistQboBanner"
                 class="mini-note"
-                style="margin:0 0 10px;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.55;font-size:13px;color:#334155"
+                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.45;font-size:13px;color:#334155;display:flex;align-items:center;gap:8px;flex-wrap:wrap"
               >
-                For posted maintenance AP, work orders, and unit records, use <strong>Check QBO</strong> on a row to call QuickBooks and confirm the Purchase/Bill still exists. Bill payments and Relay staging are not checked here.
+                <span>Use <strong>Check QBO</strong> on posted rows to verify Purchase/Bill still exists.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO verification">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    For posted maintenance AP, work orders, and unit records, <strong>Check QBO</strong> calls QuickBooks to confirm the Purchase/Bill still exists. Bill payments and Relay staging are not checked here.
+                  </span>
+                </span>
               </div>
               <div id="expHistSummary" class="mini-note" style="margin-bottom:8px">Open this tab and refresh data (sidebar) if counts look stale.</div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
@@ -5116,6 +5128,7 @@
           });
         });
       }
+      requestAnimationFrame(() => refreshAcctBoardStrip());
     }
 
     let reportsSummaryCache = null;
