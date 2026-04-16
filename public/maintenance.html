@@ -1639,6 +1639,24 @@
               <div class="metric-sub muted">Imported fuel rows</div>
             </div>
           </div>
+          <div
+            id="maintIntegrationStrip"
+            class="mini-note"
+            style="margin-top:10px;padding:10px 12px;border:1px solid var(--line,#e2e8f0);border-radius:8px;background:#fafafa;line-height:1.55;font-size:13px"
+          >
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px">
+              <strong>Connections</strong>
+              <span id="maintConnSamsara" class="muted">Samsara: —</span>
+              <span class="muted">·</span>
+              <span id="maintConnQbo" class="muted">QuickBooks: —</span>
+              <span class="muted">·</span>
+              <span id="maintConnApi" class="muted">API health: —</span>
+              <label style="cursor:pointer;font-weight:500;margin-left:4px;white-space:nowrap"
+                ><input type="checkbox" id="maintAutoQboMasterRefresh" /> Refresh QBO master lists on each timer tick</label
+              >
+            </div>
+            <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:#92400e"></div>
+          </div>
           <div class="mr-acct-board__cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px">
             <div class="panel" style="margin:0">
               <div class="panel-head"><div class="panel-title" style="font-size:13px">Maintenance expenses</div></div>
@@ -5765,16 +5783,109 @@
         ${cmms}`;
     }
 
-    async function loadQboStatus() {
+    async function loadQboStatus(preloaded) {
       try {
-        const s = await j('/api/qbo/status');
+        const s = preloaded != null ? preloaded : await j('/api/qbo/status');
         let txt = 'QuickBooks: not connected yet';
-        if (!s.configured) txt = 'QuickBooks: not configured on server';
+        if (!s || !s.configured) txt = 'QuickBooks: not configured on server';
         else if (s.connected) txt = `QuickBooks: connected${s.companyName ? ' — ' + s.companyName : ''}`;
-        document.getElementById('sidebarQboStatus').textContent = txt;
+        const side = document.getElementById('sidebarQboStatus');
+        if (side) side.textContent = txt;
       } catch {
-        document.getElementById('sidebarQboStatus').textContent = 'QuickBooks: status check failed';
+        const side = document.getElementById('sidebarQboStatus');
+        if (side) side.textContent = 'QuickBooks: status check failed';
       }
+    }
+
+    function paintMaintConnectionStrip(health, qboSt, board) {
+      const sEl = document.getElementById('maintConnSamsara');
+      const qEl = document.getElementById('maintConnQbo');
+      const aEl = document.getElementById('maintConnApi');
+      if (!sEl && !qEl && !aEl) return;
+      if (sEl) {
+        if (health && health.ok && health.hasSamsaraToken) {
+          const n = health.samsaraVehicles != null ? String(health.samsaraVehicles) : '?';
+          sEl.textContent = `Samsara: OK · ${n} vehicles (stats rows ${health.samsaraStatsRows ?? '—'})`;
+          sEl.style.color = '#065f46';
+        } else if (health && !health.hasSamsaraToken) {
+          sEl.textContent = 'Samsara: API token not set on server';
+          sEl.style.color = '#92400e';
+        } else {
+          sEl.textContent = 'Samsara: check failed';
+          sEl.style.color = '#b91c1c';
+        }
+      }
+      if (qEl) {
+        if (qboSt && qboSt.configured && qboSt.connected) {
+          qEl.textContent = `QuickBooks: connected${qboSt.companyName ? ' — ' + qboSt.companyName : ''}`;
+          qEl.style.color = '#065f46';
+        } else if (qboSt && qboSt.configured) {
+          qEl.textContent = 'QuickBooks: configured · not connected';
+          qEl.style.color = '#92400e';
+        } else if (qboSt) {
+          qEl.textContent = 'QuickBooks: not configured';
+          qEl.style.color = '#64748b';
+        } else {
+          qEl.textContent = 'QuickBooks: status unavailable';
+          qEl.style.color = '#b91c1c';
+        }
+      }
+      if (aEl) {
+        if (health && health.ok) {
+          aEl.textContent = 'API health: OK';
+          aEl.style.color = '#065f46';
+        } else {
+          aEl.textContent = 'API health: ' + (health && health.error ? String(health.error).slice(0, 80) : 'failed');
+          aEl.style.color = '#b91c1c';
+        }
+      }
+    }
+
+    function runPostingPreflight() {
+      const el = document.getElementById('maintPostingPreflight');
+      if (!el) return;
+      const issues = [];
+      for (const wo of erp.workOrders || []) {
+        if (wo.voided) continue;
+        if (qboPostedRowWo(wo)) continue;
+        const lines = wo.lines || [];
+        const tot = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+        if (!(tot > 0)) continue;
+        if (!String(wo.qboVendorId || '').trim()) {
+          issues.push(`${wo.workOrderNumber || wo.id}: missing QuickBooks vendor`);
+        }
+        lines.forEach((l, i) => {
+          const amt = Number(l.amount) || 0;
+          if (!(amt > 0)) return;
+          const dm = String(l.detailMode || 'category');
+          if (dm === 'item' && !String(l.qboItemId || '').trim()) {
+            issues.push(`${wo.workOrderNumber || wo.id} line ${i + 1}: missing QBO item`);
+          }
+          if (dm !== 'item' && !String(l.qboAccountId || '').trim()) {
+            issues.push(`${wo.workOrderNumber || wo.id} line ${i + 1}: missing QBO account`);
+          }
+        });
+      }
+      for (const ap of erp.apTransactions || []) {
+        if (qboPostedRowAp(ap)) continue;
+        const amt = Number(ap.amount) || 0;
+        if (!(amt > 0)) continue;
+        if (!String(ap.qboVendorId || '').trim()) issues.push(`AP ${ap.docNumber || ap.id}: missing vendor`);
+        const dm = String(ap.detailMode || 'category');
+        if (dm === 'item' && !String(ap.qboItemId || '').trim()) issues.push(`AP ${ap.docNumber || ap.id}: missing QBO item`);
+        if (dm !== 'item' && !String(ap.qboAccountId || '').trim()) issues.push(`AP ${ap.docNumber || ap.id}: missing QBO account`);
+      }
+      if (!issues.length) {
+        el.style.display = 'none';
+        el.textContent = '';
+        return;
+      }
+      el.style.display = 'block';
+      el.textContent =
+        'Posting preflight: ' +
+        issues.slice(0, 8).join('; ') +
+        (issues.length > 8 ? ` … (+${issues.length - 8} more)` : '') +
+        '. Fix references before Record to QuickBooks.';
     }
 
     const QBO_SYNC_BAR_SUPPRESS_KEY = 'ih35_qbo_sync_bar_suppress';
@@ -6470,25 +6581,28 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes] = await Promise.all([
-          j('/api/maintenance/dashboard'),
-          j('/api/maintenance/records'),
-          j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
-          j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
-          detectTmsEnabled(),
-          j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] })),
-          j('/api/maintenance/shop-queue').catch(() => ({ ok: false, queue: [] })),
-          j('/api/maintenance/expense-summary?days=7&compare=1').catch(() => null),
-          j('/api/maintenance/expense-summary?days=30&compare=1').catch(() => null),
-          j('/api/qbo/sync-alerts').catch(() => ({
-            ok: false,
-            alerts: [],
-            counts: {},
-            lookbackDays: 120,
-            configured: false,
-            connected: false
-          }))
-        ]);
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes] =
+          await Promise.all([
+            j('/api/maintenance/dashboard'),
+            j('/api/maintenance/records'),
+            j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
+            j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
+            detectTmsEnabled(),
+            j('/api/safety/driver-profiles').catch(() => ({ ok: false, drivers: [] })),
+            j('/api/maintenance/shop-queue').catch(() => ({ ok: false, queue: [] })),
+            j('/api/maintenance/expense-summary?days=7&compare=1').catch(() => null),
+            j('/api/maintenance/expense-summary?days=30&compare=1').catch(() => null),
+            j('/api/qbo/sync-alerts').catch(() => ({
+              ok: false,
+              alerts: [],
+              counts: {},
+              lookbackDays: 120,
+              configured: false,
+              connected: false
+            })),
+            j('/api/health').catch(err => ({ ok: false, error: err?.message || String(err) })),
+            j('/api/qbo/status').catch(() => null)
+          ]);
         if (bar) {
           bar.classList.add('hidden');
           bar.textContent = '';
@@ -6556,9 +6670,14 @@
         renderShopQueues();
         renderQboMaster();
         await loadSecurityCatalogUi();
-        await loadQboStatus();
+        paintMaintConnectionStrip(healthRes, qboStatusRes, boardRes);
+        await loadQboStatus(qboStatusRes != null ? qboStatusRes : undefined);
         renderQboSyncAlerts(qboSyncRes);
+        runPostingPreflight();
         refreshAcctBoardStrip();
+        if (document.getElementById('maintAutoQboMasterRefresh')?.checked) {
+          refreshQboMaster().catch(() => {});
+        }
 
         const fleetAt = dashRes.refreshedAt
           ? new Date(dashRes.refreshedAt).toLocaleString()
@@ -11742,6 +11861,7 @@
       let pendingN = 0;
       let pending$ = 0;
       (erp.workOrders || []).forEach(wo => {
+        if (wo.voided) return;
         if (!qboPostedRowWo(wo)) {
           pendingN++;
           pending$ += (wo.lines || []).reduce((s, l) => s + (Number(l.amount) || 0), 0);
@@ -13605,14 +13725,27 @@
               `${escapeHtml(l.serviceType || '')}: $${escapeHtml(String(l.amount ?? ''))} (${escapeHtml(l.detailMode || '')})`
           )
           .join('<br>');
+        const voided = !!r.voided;
+        const posted = qboPostedRowWo(r);
+        const postBtn = voided
+          ? '<span class="mini-note">Voided — excluded from rollups; cannot post.</span>'
+          : `<button type="button" onclick="recordWorkOrderToQboWithConfirm(${JSON.stringify(r.id)})">Record to QuickBooks</button>`;
+        const voidDel =
+          posted || voided
+            ? ''
+            : `<button type="button" class="btn" onclick="voidWorkOrderClient(${JSON.stringify(r.id)})">Void</button>
+                <button type="button" class="btn" style="color:#991b1b" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete</button>`;
+        const voidDelPosted = !posted && voided ? `<button type="button" class="btn" style="color:#991b1b" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete draft</button>` : '';
         return `
-            <div class="record-card">
+            <div class="record-card"${voided ? ' style="opacity:0.88"' : ''}>
               <div class="record-head">
-                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}</div>
+                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:#b91c1c;font-weight:700">VOID</span>' : ''}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
+              <div class="mini-note"><strong>WO #</strong> ${escapeHtml(r.workOrderNumber || '—')} <span class="muted">(system)</span></div>
               <div class="mini-note">Load / inv # (settlement): ${escapeHtml(r.loadNumber || '—')}</div>
-              <div class="mini-note">Vendor invoice: ${escapeHtml(r.vendorInvoiceNumber || '—')} · WO: ${escapeHtml(r.internalWorkOrderNumber || '—')}</div>
+              <div class="mini-note">Vendor invoice: ${escapeHtml(r.vendorInvoiceNumber || '—')} · Shop WO: ${escapeHtml(r.internalWorkOrderNumber || '—')}</div>
+              ${voided && r.voidReason ? `<div class="mini-note">Void reason: ${escapeHtml(r.voidReason)}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
               <div class="mini-note">Unit: ${escapeHtml(r.unit || '')} | Date: ${escapeHtml(r.serviceDate || '')}</div>
               ${r.repairLocationType ? `<div class="mini-note">Repair location: ${escapeHtml(r.repairLocationType)}</div>` : ''}
@@ -13624,13 +13757,15 @@
               ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/work-order/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
-                <button onclick="recordWorkOrderToQboWithConfirm('${r.id}')">Record to QuickBooks</button>
+                ${postBtn}
                 ${
-                  qboPostedRowWo(r)
+                  posted
                     ? `<button type="button" class="btn" onclick="verifyMaintenanceExpenseInQbo('wo', ${JSON.stringify(r.id)})">Verify in QuickBooks</button>
                 <button type="button" onclick="revertQboPostedClient('wo', ${JSON.stringify(r.id)})">Revert in QuickBooks</button>`
                     : ''
                 }
+                ${voidDel}
+                ${voidDelPosted}
               </div>
             </div>
           `;
@@ -13831,9 +13966,10 @@
         const qboRef = [wo.qboEntityType, wo.qboEntityId].filter(Boolean).join(' ');
         const postedAt = wo.qboPostedAt ? new Date(wo.qboPostedAt).toLocaleString() : '—';
         const docParts = [
+          wo.workOrderNumber && `Sys ${wo.workOrderNumber}`,
           wo.loadNumber && `Load ${wo.loadNumber}`,
           wo.vendorInvoiceNumber && `Inv ${wo.vendorInvoiceNumber}`,
-          wo.internalWorkOrderNumber && `WO ${wo.internalWorkOrderNumber}`
+          wo.internalWorkOrderNumber && `Shop ${wo.internalWorkOrderNumber}`
         ].filter(Boolean);
         const docBase = docParts.length ? docParts.join(' · ') : wo.id || '—';
         const sortDate = String(wo.serviceDate || '').slice(0, 10) || (wo.createdAt || '').slice(0, 10) || '';
@@ -13849,7 +13985,7 @@
             sortDate,
             sortTs: Date.parse(wo.createdAt || `${sortDate}T12:00:00`) || 0,
             date: sortDate || '—',
-            source: 'Work order',
+            source: wo.voided ? 'Work order · voided' : 'Work order',
             doc: docBase,
             txnType: `${wo.txnType || 'expense'} (line ${idx + 1})`,
             vendor: vn || '—',
@@ -13874,7 +14010,7 @@
             sortDate,
             sortTs: Date.parse(wo.createdAt || `${sortDate}T12:00:00`) || 0,
             date: sortDate || '—',
-            source: 'Work order',
+            source: wo.voided ? 'Work order · voided' : 'Work order',
             doc: docBase,
             txnType: `${wo.txnType || 'expense'} (no lines)`,
             vendor: vn || '—',
@@ -14378,6 +14514,32 @@
       await postApToQbo(apId);
     }
 
+    async function voidWorkOrderClient(id) {
+      const reason = window.prompt('Void reason (optional):', '') ?? '';
+      if (reason === null) return;
+      if (!confirm('Void this work order? It will be excluded from totals and cannot be posted until reverted if ever posted.')) return;
+      try {
+        await j(`/api/work-orders/${encodeURIComponent(id)}/void`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({ reason })
+        });
+        await loadAll();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    async function deleteWorkOrderClient(id) {
+      if (!confirm('Permanently delete this work order? Allowed only when it has not been posted to QuickBooks.')) return;
+      try {
+        await j(`/api/work-orders/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { ...erpWriteHeaders() } });
+        await loadAll();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
     async function recordWorkOrderToQboWithConfirm(woId) {
       if (!confirm('Record this work order in QuickBooks?')) return;
       await postWorkOrderToQbo(woId);
@@ -14446,7 +14608,7 @@
 
       await j('/api/work-orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
         body: JSON.stringify({
           unit,
           assetCategory: activeAssetCategory,
@@ -14490,9 +14652,10 @@
 
     async function postWorkOrderToQbo(woId) {
       try {
-        const r = await fetch(`/api/qbo/post-work-order/${woId}`, { method: 'POST' });
-        const result = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(result.error || r.statusText);
+        const result = await j(`/api/qbo/post-work-order/${encodeURIComponent(woId)}`, {
+          method: 'POST',
+          headers: { ...erpWriteHeaders() }
+        });
         alert(`Posted to QuickBooks. ${result.workOrder?.qboEntityType || ''} ID: ${result.workOrder?.qboEntityId || ''}`);
         paintApTxnQboBanner(
           `Recorded in QuickBooks: ${escapeHtml(String(result.workOrder?.qboEntityType || ''))} ${escapeHtml(String(result.workOrder?.qboEntityId || ''))}. Use Verify in QuickBooks on the card to confirm it still exists online.`,

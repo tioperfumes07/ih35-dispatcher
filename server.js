@@ -220,6 +220,8 @@ function defaultErpData() {
     lastFuelImportBatch: null,
     /** Short audit trail of file imports (newest last). */
     fuelImportBatches: [],
+    /** Monotonic counter for display work order numbers (WO-YYYY-#####). */
+    workOrderSeq: 0,
     paymentMethods: [
       { id: 'pm_cash', name: 'Cash', qboType: 'Cash' },
       { id: 'pm_check', name: 'Check', qboType: 'Check' },
@@ -268,6 +270,19 @@ function defaultErpData() {
   };
 }
 
+/** Work orders excluded from rollups, dashboards, and settlement after void. */
+function erpActiveWorkOrders(erp) {
+  return (erp.workOrders || []).filter(w => !w.voided);
+}
+
+/** Assign next monotonic system work order number (WO-YYYY-#####) and bump `workOrderSeq`. Mutates `erp`. */
+function allocNextWorkOrderNumber(erp) {
+  const y = new Date().getFullYear();
+  const cur = safeNum(erp.workOrderSeq, 0) || 0;
+  erp.workOrderSeq = cur + 1;
+  return `WO-${y}-${String(erp.workOrderSeq).padStart(5, '0')}`;
+}
+
 function ensureErpFile() {
   ensureDataDir();
   if (!fs.existsSync(ERP_FILE)) {
@@ -296,6 +311,16 @@ function ensureErpFile() {
   if (!Array.isArray(merged.fuelPurchases)) merged.fuelPurchases = [];
   if (!Array.isArray(merged.relayExpenses)) merged.relayExpenses = [];
   if (!Array.isArray(merged.fuelImportBatches)) merged.fuelImportBatches = [];
+  if (merged.workOrderSeq == null || typeof merged.workOrderSeq !== 'number' || !Number.isFinite(merged.workOrderSeq)) {
+    let mx = 0;
+    for (const w of merged.workOrders || []) {
+      const s = Number(w.workOrderSeq);
+      if (Number.isFinite(s) && s > mx) mx = s;
+      const mm = String(w.workOrderNumber || '').match(/^WO-\d{4}-(\d+)$/);
+      if (mm) mx = Math.max(mx, Number(mm[1]) || 0);
+    }
+    merged.workOrderSeq = mx;
+  }
   if (!Array.isArray(merged.paymentMethods)) merged.paymentMethods = defaultErpData().paymentMethods;
   if (!merged.qboCache) merged.qboCache = defaultErpData().qboCache;
   if (!Array.isArray(merged.qboCache.vendors)) merged.qboCache.vendors = [];
@@ -319,6 +344,13 @@ function ensureErpFile() {
   if (!Array.isArray(merged.maintenanceShopQueue)) merged.maintenanceShopQueue = [];
   if (!Array.isArray(merged.employees)) merged.employees = [];
   if (!Array.isArray(merged.qboBillPaymentLog)) merged.qboBillPaymentLog = [];
+
+  for (const w of merged.workOrders || []) {
+    if (w.voided == null) w.voided = false;
+    if (!String(w.workOrderNumber || '').trim()) {
+      w.workOrderNumber = allocNextWorkOrderNumber(merged);
+    }
+  }
 
   fs.writeFileSync(ERP_FILE, JSON.stringify(merged, null, 2));
 }
@@ -1047,7 +1079,7 @@ async function fetchVehicleStatsCurrentSafely() {
 function flattenWorkOrderLines(workOrder) {
   return (workOrder.lines || []).map(line => ({
     workOrderId: workOrder.id,
-    workOrderNumber: workOrder.internalWorkOrderNumber || '',
+    workOrderNumber: workOrder.workOrderNumber || workOrder.internalWorkOrderNumber || '',
     vendorInvoiceNumber: workOrder.vendorInvoiceNumber || '',
     vendorWorkOrderNumber: workOrder.vendorWorkOrderNumber || '',
     unit: workOrder.unit || '',
@@ -1160,7 +1192,7 @@ function calcStatus(nextDueMiles, nextDueDate, currentMileage) {
 
 function buildDashboardRows(vehicles, erpStore) {
   const currentMileage = erpStore.currentMileage || {};
-  const allLines = (erpStore.workOrders || []).flatMap(flattenWorkOrderLines);
+  const allLines = erpActiveWorkOrders(erpStore).flatMap(flattenWorkOrderLines);
 
   return vehicles.flatMap(v => {
     const unit = v.name;
@@ -1298,7 +1330,7 @@ function aggregateDispatchMaintenanceAlerts(dashboardRows, erp) {
 }
 
 function buildTireAlerts(erp) {
-  const lines = (erp.workOrders || [])
+  const lines = erpActiveWorkOrders(erp)
     .flatMap(wo => (wo.lines || []).map(line => ({ ...line, unit: wo.unit, serviceDate: wo.serviceDate })))
     .filter(line => String(line.lineType || '').toLowerCase() === 'tire');
 
@@ -1920,14 +1952,16 @@ function buildErpExpenseCandidates(erp) {
   const vendors = erp.qboCache?.vendors || [];
   const vName = id => vendors.find(v => String(v.qboId) === String(id))?.name || '';
   const out = [];
-  for (const wo of erp.workOrders || []) {
+  for (const wo of erpActiveWorkOrders(erp)) {
     const lines = wo.lines || [];
     const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
     if (!(total > 0)) continue;
     out.push({
       kind: 'erp_wo',
       ref: wo.id,
-      label: `WO ${wo.unit || ''} · ${wo.internalWorkOrderNumber || wo.vendorInvoiceNumber || wo.id}`,
+      label: [wo.workOrderNumber && `WO ${wo.workOrderNumber}`, wo.unit || '', wo.internalWorkOrderNumber || wo.vendorInvoiceNumber || wo.id]
+        .filter(Boolean)
+        .join(' · '),
       amount: total,
       date: wo.serviceDate || '',
       vendorText: vName(wo.qboVendorId) || wo.vendor || '',
@@ -2849,12 +2883,12 @@ async function qboCreateWorkOrderTransaction(workOrder) {
     const paymentType = paymentMethod?.qboType || 'Other';
     const payload = {
       TxnDate: workOrder.serviceDate || new Date().toISOString().slice(0, 10),
-      DocNumber: workOrder.vendorInvoiceNumber || workOrder.internalWorkOrderNumber || undefined,
+      DocNumber: workOrderDocNumberForQbo(workOrder),
       PaymentType: paymentType,
       EntityRef: { type: 'Vendor', value: vendorIdNorm },
       Line: lines,
       PrivateNote: sanitizeName(
-        `Load/Inv:${workOrder.loadNumber || workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} Unit:${workOrder.unit || ''}`,
+        `WO#${workOrder.workOrderNumber || workOrder.id} Load/Inv:${workOrder.loadNumber || workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} Unit:${workOrder.unit || ''}`,
         'Work Order'
       )
     };
@@ -2871,10 +2905,10 @@ async function qboCreateWorkOrderTransaction(workOrder) {
     VendorRef: { value: vendorIdNorm },
     TxnDate: workOrder.serviceDate || new Date().toISOString().slice(0, 10),
     DueDate: workOrder.dueDate || '',
-    DocNumber: workOrder.vendorInvoiceNumber || workOrder.internalWorkOrderNumber || undefined,
+    DocNumber: workOrderDocNumberForQbo(workOrder),
     Line: lines,
     PrivateNote: sanitizeName(
-      `Load/Inv:${workOrder.loadNumber || workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} Unit:${workOrder.unit || ''}`,
+      `WO#${workOrder.workOrderNumber || workOrder.id} Load/Inv:${workOrder.loadNumber || workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} Unit:${workOrder.unit || ''}`,
       'Work Order'
     )
   };
@@ -3420,7 +3454,7 @@ app.post('/api/maintenance/asset-active', (req, res) => {
 
 function buildUnitCategoryMap(erp) {
   const m = new Map();
-  for (const wo of erp.workOrders || []) {
+  for (const wo of erpActiveWorkOrders(erp)) {
     const u = String(wo.unit || '').trim();
     if (u && wo.assetCategory) m.set(u, wo.assetCategory);
   }
@@ -3441,7 +3475,7 @@ function expenseSummaryByCategoryWindow(erp, startIso, endIso) {
     return ucat.get(x) || 'Other';
   }
 
-  for (const wo of erp.workOrders || []) {
+  for (const wo of erpActiveWorkOrders(erp)) {
     const d = String(wo.serviceDate || '').slice(0, 10);
     if (!d || d < start || (end && d > end)) continue;
     const cat = catForUnit(wo.unit, wo.assetCategory);
@@ -3613,7 +3647,7 @@ function computeDriverRiskAlerts(erp, driversByUnit) {
     }
   }
 
-  for (const wo of erp.workOrders || []) {
+  for (const wo of erpActiveWorkOrders(erp)) {
     const d = String(wo.serviceDate || '').slice(0, 10);
     if (!d || d < drWin.cutoffStr) continue;
     const unit = String(wo.unit || '').trim();
@@ -4544,7 +4578,7 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
       vehicles: enrichedVehicles,
       dashboard,
       tireAlerts: buildTireAlerts(erp),
-      workOrders: erp.workOrders || [],
+      workOrders: erpActiveWorkOrders(erp),
       records: erp.records || [],
       refreshedAt,
       statsInfo: {
@@ -5651,7 +5685,7 @@ app.get('/api/reports/summary', async (_req, res) => {
     const c = erp.qboCache || {};
     const posting = {
       maintenanceRecords: summarizePostingRows(erp.records),
-      workOrders: summarizePostingRows(erp.workOrders),
+      workOrders: summarizePostingRows(erpActiveWorkOrders(erp)),
       apTransactions: summarizePostingRows(erp.apTransactions)
     };
     let tms = { ok: false, configured: false };
@@ -5730,6 +5764,9 @@ app.get('/api/reports/export/work-orders.csv', (_req, res) => {
     const erp = readErp();
     const header = [
       'wo_id',
+      'system_wo_number',
+      'voided',
+      'void_reason',
       'txn_type',
       'unit',
       'asset_category',
@@ -5769,6 +5806,9 @@ app.get('/api/reports/export/work-orders.csv', (_req, res) => {
       lines.push(
         [
           csvEscape(wo.id),
+          csvEscape(wo.workOrderNumber || ''),
+          csvEscape(wo.voided ? 'yes' : 'no'),
+          csvEscape(wo.voidReason || ''),
           csvEscape(wo.txnType || ''),
           csvEscape(wo.unit || ''),
           csvEscape(wo.assetCategory || ''),
@@ -6011,6 +6051,7 @@ app.get('/api/reports/export/relay-qb-sync.csv', (_req, res) => {
 
 app.post('/api/work-orders', (req, res) => {
   try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
     const body = req.body || {};
     if (!body.unit) return res.status(400).json({ error: 'unit is required' });
     if (!Array.isArray(body.lines) || !body.lines.length) {
@@ -6024,6 +6065,8 @@ app.post('/api/work-orders', (req, res) => {
     const vendorInv = String(body.vendorInvoiceNumber || '').trim();
     const workOrder = {
       id: uid('wo'),
+      workOrderNumber: allocNextWorkOrderNumber(erp),
+      voided: false,
       unit: body.unit,
       loadNumber: loadRef || null,
       assetCategory: body.assetCategory || '',
@@ -6090,10 +6133,66 @@ app.post('/api/work-orders', (req, res) => {
   }
 });
 
+app.post('/api/work-orders/:id/void', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const erp = readErp();
+    const idx = (erp.workOrders || []).findIndex(x => String(x.id) === String(req.params.id));
+    if (idx === -1) return res.status(404).json({ error: 'Work order not found' });
+    const wo = erp.workOrders[idx];
+    if (wo.voided) return res.status(400).json({ error: 'Work order is already voided' });
+    const qid = String(wo.qboEntityId || '').trim();
+    if (qid) {
+      return res.status(400).json({
+        error: 'This work order is posted to QuickBooks. Use Revert in QuickBooks first, then void here.'
+      });
+    }
+    const reason = String(req.body?.reason || req.body?.voidReason || '').trim().slice(0, 500);
+    erp.workOrders[idx] = {
+      ...wo,
+      voided: true,
+      voidedAt: new Date().toISOString(),
+      voidReason: reason || null
+    };
+    writeErp(erp);
+    res.json({ ok: true, workOrder: erp.workOrders[idx] });
+  } catch (error) {
+    logError('api/work-orders/:id/void', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/work-orders/:id', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const erp = readErp();
+    const id = String(req.params.id || '');
+    const idx = (erp.workOrders || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ error: 'Work order not found' });
+    const wo = erp.workOrders[idx];
+    const qid = String(wo.qboEntityId || '').trim();
+    if (qid) {
+      return res.status(400).json({
+        error: 'Cannot delete a work order posted to QuickBooks. Revert in QuickBooks first.'
+      });
+    }
+    erp.workOrders.splice(idx, 1);
+    writeErp(erp);
+    res.json({ ok: true, removedId: id });
+  } catch (error) {
+    logError('api/work-orders DELETE', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/qbo/post-work-order/:id', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
   const erp = readErp();
   const idx = (erp.workOrders || []).findIndex(x => String(x.id) === String(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Work order not found' });
+  if (erp.workOrders[idx].voided) {
+    return res.status(400).json({ error: 'Voided work orders cannot be posted to QuickBooks' });
+  }
 
   try {
     const result = await qboCreateWorkOrderTransaction(erp.workOrders[idx]);
@@ -6361,6 +6460,14 @@ function sanitizeQboDocNumber(raw, maxLen = 21) {
   if (!s) return '';
   if (s.length > maxLen) s = s.slice(0, maxLen);
   return s;
+}
+
+function workOrderDocNumberForQbo(wo) {
+  const a = sanitizeQboDocNumber(String(wo.vendorInvoiceNumber || '').trim());
+  const b = sanitizeQboDocNumber(String(wo.internalWorkOrderNumber || '').trim());
+  const c = sanitizeQboDocNumber(String(wo.workOrderNumber || '').trim());
+  const out = a || b || c;
+  return out || undefined;
 }
 
 function buildFuelPurchaseDocNumber(fp) {
@@ -7282,7 +7389,7 @@ app.get('/api/qbo/sync-alerts', (_req, res) => {
       }
     }
 
-    for (const wo of erp.workOrders || []) {
+    for (const wo of erpActiveWorkOrders(erp)) {
       const total = qboAlertWorkOrderLineTotal(wo);
       if (!(total > 0)) continue;
       if (!qboAlertRowWithinLookback(wo.serviceDate, wo.createdAt)) continue;
@@ -7720,6 +7827,8 @@ app.post('/api/import/maintenance', upload.single('file'), (req, res) => {
 
       const workOrder = {
         id: uid('imp_wo'),
+        workOrderNumber: allocNextWorkOrderNumber(erp),
+        voided: false,
         unit,
         loadNumber: String(loadTripNo).trim() || null,
         assetCategory: '',
