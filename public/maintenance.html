@@ -874,7 +874,7 @@
             <div class="panel maint-section-card">
               <div class="panel-head"><div class="panel-title">Maintenance Table</div></div>
               <div class="panel-body">
-                <div class="table-wrap">
+                <div class="table-wrap erp-table-scroll">
                   <table>
                     <thead>
                       <tr>
@@ -1248,7 +1248,7 @@
                 Local TMS trucks/trailers in Postgres (when <code>DATABASE_URL</code> is set) are managed from the dispatch / TMS screens; use the same unit codes (e.g. T160) for consistency.
               </p>
               <input id="trackingAssetFilter" class="in" placeholder="Filter unit…" style="max-width:260px;margin-bottom:10px" oninput="renderTrackingAssetsTable()">
-              <div class="table-wrap">
+              <div class="table-wrap erp-table-scroll">
                 <table>
                   <thead>
                     <tr><th>Unit</th><th>Category</th><th>Mileage</th><th>Fuel</th><th>Engine</th><th>GPS</th></tr>
@@ -1295,7 +1295,7 @@
                 <code>YARD_RADIUS_M</code> in server env). Shows live GPS, yard vs away, Samsara HOS duty, and (when TMS DB is configured) days since the last <strong>completed</strong> load and a rough revenue-at-risk estimate (<code>IDLE_EST_DAILY_REVENUE</code>).
               </p>
               <div id="idleSnapshotMeta" class="mini-note" style="margin-bottom:10px"></div>
-              <div class="table-wrap">
+              <div class="table-wrap erp-table-scroll">
                 <table>
                   <thead>
                     <tr>
@@ -1599,7 +1599,7 @@
               </div>
               <div id="bpOpenBillsStatus" class="mini-note" style="margin-bottom:8px">Load after QuickBooks is connected (sidebar refresh).</div>
               <div id="bpSelectionTotal" class="mini-note" style="margin-bottom:6px;font-weight:600">Draft payment total: $0.00</div>
-              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+              <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:1120px">
                   <thead>
                     <tr>
@@ -1677,7 +1677,7 @@
                 </div>
               </div>
               <div id="bpLogStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
-              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+              <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:960px">
                   <thead>
                     <tr>
@@ -1908,7 +1908,7 @@
                 </div>
               </div>
               <div id="fuelExpStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
-              <div class="table-wrap st-settlement-wrap fuel-exp-table-wrap" style="min-width:0;width:100%;max-width:100%">
+              <div class="table-wrap st-settlement-wrap fuel-exp-table-wrap erp-table-scroll" style="min-width:0;width:100%;max-width:100%">
                 <table class="st-settlement fuel-exp-table" style="min-width:1720px;width:max-content;max-width:none">
                   <thead>
                     <tr>
@@ -2079,7 +2079,7 @@
                 For posted maintenance AP, work orders, and unit records, use <strong>Check QBO</strong> on a row to call QuickBooks and confirm the Purchase/Bill still exists. Bill payments and Relay staging are not checked here.
               </div>
               <div id="expHistSummary" class="mini-note" style="margin-bottom:8px">Open this tab and refresh data (sidebar) if counts look stale.</div>
-              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+              <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:1240px">
                   <thead>
                     <tr>
@@ -2217,7 +2217,7 @@
               </div>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
               <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid #d8deea;border-radius:8px;background:#fafcff"></div>
-              <div class="table-wrap st-settlement-wrap" style="min-width:0">
+              <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:720px">
                   <thead>
                     <tr>
@@ -2250,7 +2250,7 @@
             <div class="panel-head"><div class="panel-title">Loads with recorded costs (index)</div></div>
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
-              <div class="table-wrap st-settlement-wrap" style="margin-top:10px;min-width:0">
+              <div class="table-wrap st-settlement-wrap erp-table-scroll" style="margin-top:10px;min-width:0">
                 <table class="st-settlement" style="min-width:520px">
                   <thead>
                     <tr>
@@ -3265,7 +3265,7 @@
           continue;
         }
         html +=
-          '<div class="table-wrap"><table><thead><tr><th>Unit</th><th>Job</th><th>Status</th><th>Vendor hint</th><th>Queued</th></tr></thead><tbody>' +
+          '<div class="table-wrap erp-table-scroll"><table><thead><tr><th>Unit</th><th>Job</th><th>Status</th><th>Vendor hint</th><th>Queued</th></tr></thead><tbody>' +
           rows
             .map(e => {
               const st = String(e.status || 'queued');
@@ -4631,7 +4631,7 @@
             .join('');
           tb.innerHTML = `
             <p class="mini-note">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
-            <div class="table-wrap" style="min-width:0;max-width:560px">
+            <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:560px">
               <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>${
                 rows || '<tr><td colspan="2">No loads</td></tr>'
               }</tbody></table>
@@ -4643,7 +4643,7 @@
       const mbEl = document.getElementById('repMaintBody');
       if (mbEl) {
         mbEl.innerHTML = mb.length
-          ? `<div class="table-wrap" style="min-width:0"><table style="min-width:400px;font-size:12px"><thead><tr><th>Unit</th><th>Records</th><th>Cost sum</th></tr></thead><tbody>${mb
+          ? `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:400px;font-size:12px"><thead><tr><th>Unit</th><th>Records</th><th>Cost sum</th></tr></thead><tbody>${mb
               .map(
                 r =>
                   `<tr><td>${escapeHtml(r.unit)}</td><td>${r.recordCount}</td><td>$${Number(r.costSum || 0).toFixed(2)}</td></tr>`
@@ -4690,7 +4690,7 @@
         ];
         syEl.innerHTML = `
           <p class="mini-note">Counts of rows saved in this app that were posted to QuickBooks vs still local-only or error.</p>
-          <div class="table-wrap" style="min-width:0;max-width:720px">
+          <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:720px">
             <table style="font-size:12px">
               <thead><tr><th>Source</th><th>Total</th><th>Posted</th><th>Local only</th><th>Error</th></tr></thead>
               <tbody>
@@ -4794,7 +4794,7 @@
               <div class="panel-body mini-note" style="margin-bottom:10px;line-height:1.5">${escapeHtml(team.disclaimer || '')}</div>
               <p class="mini-note" style="margin:0 0 6px">Vendor audit portals:</p>
               <ul style="margin:0;padding-left:1.2rem;line-height:1.45">${ext}</ul>
-              <div class="table-wrap" style="min-width:0;margin-top:12px">
+              <div class="table-wrap erp-table-scroll" style="min-width:0;margin-top:12px">
                 <table class="catalog-admin-table" style="font-size:12px">
                   <thead><tr><th>User</th><th>Role</th><th>Last login</th><th>Last activity</th><th>Days idle</th><th>Status</th></tr></thead>
                   <tbody>
@@ -4846,7 +4846,7 @@
               <div class="panel-head"><div class="panel-title">Security audit log (recent)</div></div>
               <div class="panel-body">
                 <p class="mini-note" style="margin:0 0 8px">Server file <code>data/security-audit.log</code> (git-ignored <code>*.log</code>). Entries include logins and sensitive write actions.</p>
-                <div class="table-wrap" style="min-width:0;max-height:240px;overflow:auto">
+                <div class="table-wrap erp-table-scroll" style="min-width:0;max-height:240px;overflow:auto">
                   <table class="catalog-admin-table" style="font-size:11px"><thead><tr><th>When</th><th>Summary</th></tr></thead><tbody>${
                     rows || '<tr><td colspan="2" class="mini-note">No entries yet.</td></tr>'
                   }</tbody></table>
@@ -11150,7 +11150,7 @@
       } else if (!erpBatches.length) {
         erpBody.innerHTML = '<span class="mini-note">No maintenance/AP import batches recorded yet.</span>';
       } else {
-        erpBody.innerHTML = `<div class="table-wrap" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
+        erpBody.innerHTML = `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
           <th>When</th><th>Kind</th><th>Batch id</th><th>Rows</th><th>Status</th><th></th>
         </tr></thead><tbody>` +
           erpBatches
@@ -11180,7 +11180,7 @@
         fuelBody.innerHTML =
           '<span class="mini-note">No fuel batches recorded. Confirm a fuel import on the <a href="/fuel.html">Fuel Board</a> first.</span>';
       } else {
-        fuelBody.innerHTML = `<div class="table-wrap" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
+        fuelBody.innerHTML = `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
           <th>When</th><th>Batch id</th><th>Fuel</th><th>Relay</th><th>Status</th><th></th>
         </tr></thead><tbody>` +
           fuelBatches
@@ -13227,7 +13227,7 @@
                     `<tr><td>${escapeHtml(L.loadNumber)}</td><td>${escapeHtml(L.status || '')}</td><td>${Number(L.revenue).toFixed(2)}</td><td>${Number(L.expenseRollup).toFixed(2)}</td><td>${Number(L.companyNet).toFixed(2)}</td><td>${L.suggestedDriverPay != null ? Number(L.suggestedDriverPay).toFixed(2) : '—'}</td></tr>`
                 )
                 .join('');
-              return `<div style="margin-bottom:18px"><div style="font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><span>${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QBO ${escapeHtml(dr.qboVendorId)}</span></span><a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/driver-settlement/${encodeURIComponent(dr.qboVendorId)}" target="_blank" rel="noopener">Driver settlement PDF</a></div><div class="table-wrap st-settlement-wrap" style="min-width:0"><table class="st-settlement" style="min-width:520px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+              return `<div style="margin-bottom:18px"><div style="font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><span>${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QBO ${escapeHtml(dr.qboVendorId)}</span></span><a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/driver-settlement/${encodeURIComponent(dr.qboVendorId)}" target="_blank" rel="noopener">Driver settlement PDF</a></div><div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0"><table class="st-settlement" style="min-width:520px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
             })
             .join('');
       } catch (e) {
