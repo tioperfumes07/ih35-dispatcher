@@ -3917,7 +3917,17 @@
       }
       if (id === 'acct-fuel-expense') {
         bindFuelManualFormOnce();
-        loadFuelExpenseTab();
+        void loadFuelExpenseTab().then(() => {
+          requestAnimationFrame(() => {
+            const shell = document.querySelector('#acct-fuel-expense .qb-doc-shell');
+            if (!shell) return;
+            try {
+              shell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (_) {
+              shell.scrollIntoView();
+            }
+          });
+        });
       }
     }
 
@@ -9879,7 +9889,7 @@
       const el = document.getElementById('fuelExpenseQboBanner');
       paintQboStatusBanner(
         el,
-        'Fuel lines are not in QuickBooks until you choose Record to QuickBooks on each row (or Record filtered). After posting, use Verify in QuickBooks on a posted row to confirm the Purchase still exists in your company file.',
+        'Fuel lines are not in QuickBooks until you post them. Use Confirm & record to QuickBooks on manual entry, Record to QuickBooks on a row, or Record filtered. After posting, use Verify in QuickBooks to confirm the Purchase still exists in your company file.',
         'info'
       );
     }

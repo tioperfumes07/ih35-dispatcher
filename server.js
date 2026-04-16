@@ -1514,6 +1514,13 @@ async function qboPost(pathname, payload) {
   return data;
 }
 
+/** Append operator guidance when QBO rejects a stale or wrong entity reference. */
+function enrichQboInvalidReferenceMessage(message) {
+  const m = String(message || '');
+  if (!/invalid\s*reference\s*id/i.test(m)) return m;
+  return `${m} — QuickBooks rejected an id on this transaction (vendor, pay-from bank, class, account or item, customer, payment method mapping, etc.). Refresh QBO Master in the app, re-select the linked fields on the form or row, and post again.`;
+}
+
 async function qboQuery(sql) {
   return qboGet(`query?query=${encodeURIComponent(sql)}`);
 }
@@ -5163,18 +5170,19 @@ app.post('/api/qbo/post-record/:id', async (req, res) => {
     const record = await qboPostMaintenanceRecord(req.params.id);
     res.json({ ok: true, record });
   } catch (error) {
+    const msg = enrichQboInvalidReferenceMessage(error.message || String(error));
     const erp = readErp();
     const idx = (erp.records || []).findIndex(x => String(x.id) === String(req.params.id));
     if (idx !== -1) {
       erp.records[idx] = {
         ...erp.records[idx],
         qboSyncStatus: 'error',
-        qboError: error.message
+        qboError: msg
       };
       writeErp(erp);
     }
     logError('api/qbo/post-record', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: msg });
   }
 });
 
@@ -6290,6 +6298,7 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     res.json({ ok: true, fuelPurchase: erp.fuelPurchases[idx] });
   } catch (error) {
     logError('api/qbo/post-fuel-purchase', error);
+    const msg = enrichQboInvalidReferenceMessage(error.message || String(error));
     try {
       const erpErr = readErp();
       const ixe = (erpErr.fuelPurchases || []).findIndex(x => String(x.id) === id);
@@ -6297,7 +6306,7 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
         erpErr.fuelPurchases[ixe] = {
           ...erpErr.fuelPurchases[ixe],
           qboSyncStatus: 'error',
-          qboError: error.message,
+          qboError: msg,
           qboErrorAt: new Date().toISOString()
         };
         writeErp(erpErr);
@@ -6305,7 +6314,7 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     } catch (_) {
       /* ignore secondary persist errors */
     }
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: msg });
   }
 });
 
