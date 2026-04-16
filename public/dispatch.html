@@ -357,6 +357,7 @@
               <a class="erp-topbar__link" href="/maintenance.html#reports-settlement">Settlement</a>
               <button type="button" class="erp-btn-primary" onclick="openBookModal()">Book new load</button>
               <button type="button" class="secondary" onclick="refreshDispatchBoard()" title="Reload loads / fleet now">Refresh now</button>
+              <button type="button" class="secondary" onclick="window.print()" title="Print this screen (loads or fleet tab)">Print view</button>
               <button type="button" class="secondary" onclick="refreshQboCatalog()">Sync QBO catalog</button>
               <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:200px"></span>
             </div>
@@ -382,7 +383,7 @@
     <button type="button" class="tab" data-tab="fleet">Fleet</button>
           </div>
   <div class="wrap dispatch-board-wrap">
-    <p class="muted" style="margin:0 0 12px;font-size:12px;line-height:1.5">
+    <p class="muted dispatch-board-intro" style="margin:0 0 12px;font-size:12px;line-height:1.5">
       Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver/carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> = status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QBO</strong> to clear them from that list. Each leg is its own load #. Optional <strong>customer W/O #</strong> on the load is for the broker/customer reference (Maintenance WOs can still use the load/invoice # for shop work).
     </p>
     <div id="msg"></div>
@@ -402,7 +403,7 @@
             <th>Miles (Ld / Em)</th>
             <th>Rev $</th>
             <th>Docs</th>
-            <th>Driver / Co / Inv / Trip</th>
+            <th>Driver / Co / Inv / Load PDF</th>
             <th>Edit</th>
             <th>QBO invoice</th>
           </tr>
@@ -1282,7 +1283,7 @@
         settleLinks.push(
           '<a class="link" href="/api/pdf/tms-load/' +
             encodeURIComponent(l.id) +
-            '" target="_blank" rel="noopener">Trip</a>'
+            '" target="_blank" rel="noopener">Load PDF</a>'
         );
         const pdfCell = settleLinks.join(' · ');
         const qboCell =

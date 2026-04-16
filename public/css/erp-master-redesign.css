@@ -1918,6 +1918,110 @@ html.dispatch-embed body.dispatch-page .dispatch-embed-status-bar {
   }
 }
 
+@media print {
+  body.dispatch-page {
+    overflow: visible !important;
+    height: auto !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.dispatch-page #boardNavMount,
+  body.dispatch-page #dispatchApp .erp-icon-nav,
+  body.dispatch-page #dispatchApp .erp-module-sidebar,
+  body.dispatch-page #dispatchApp .sidebar-expand-fab,
+  body.dispatch-page .print-hide-actions,
+  body.dispatch-page .dispatch-embed-status-bar,
+  body.dispatch-page .dispatch-board-intro,
+  body.dispatch-page .erp-topbar__search,
+  body.dispatch-page .dispatch-board-search-clear {
+    display: none !important;
+  }
+
+  body.dispatch-page #dispatchApp.app.erp-master {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body.dispatch-page #dispatchApp .erp-main-col,
+  body.dispatch-page #dispatchApp .erp-main-surface.main,
+  body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body {
+    overflow: visible !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
+  body.dispatch-page #dispatchApp .erp-topbar.topbar {
+    position: static !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0 8px !important;
+    page-break-after: avoid;
+  }
+
+  body.dispatch-page #dispatchApp .erp-topbar .title {
+    font-size: 14pt !important;
+    color: #000 !important;
+  }
+
+  body.dispatch-page #dispatchApp .erp-topbar .topbar-home-link {
+    display: none !important;
+  }
+
+  body.dispatch-page #dispatchApp .tabs.dispatch-board-tabs {
+    display: none !important;
+  }
+
+  body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.dispatch-page #dispatchApp #msg {
+    margin-bottom: 8px;
+  }
+
+  body.dispatch-page #dispatchApp table.data {
+    width: 100% !important;
+    font-size: 9pt !important;
+    border-collapse: collapse !important;
+    box-shadow: none !important;
+    page-break-inside: auto;
+  }
+
+  body.dispatch-page #dispatchApp table.data th,
+  body.dispatch-page #dispatchApp table.data td {
+    border: 1px solid #ccc !important;
+    padding: 4px 6px !important;
+    vertical-align: top !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  body.dispatch-page #dispatchApp table.data th {
+    background: #f0f0f0 !important;
+    font-weight: 600 !important;
+  }
+
+  body.dispatch-page #dispatchApp table.data a {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+
+  body.dispatch-page #dispatchApp .badge {
+    border: 1px solid #999 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.dispatch-page #dispatchApp select.sm {
+    border: 1px solid #999 !important;
+    max-width: 100% !important;
+  }
+}
+
 /* ========== Standalone fuel board (fuel.html) ========== */
 body.fuel-board {
   background: var(--qb-page);
