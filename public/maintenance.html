@@ -2324,19 +2324,35 @@
           </header>
           <div class="erp-reports-columns">
             <aside class="erp-reports-sidebar" aria-label="Report categories">
-              <div class="erp-sb-heading">Browse</div>
-              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-overview')">Overview</button>
-              <div class="erp-sb-heading">Maintenance</div>
-              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-maint')">Spend by unit</button>
-              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-maint-detail')">Detailed (parts / positions)</button>
-              <div class="erp-sb-heading">Accounting</div>
-              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-qbo')">QuickBooks activity</button>
-              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-sync')">ERP ↔ QBO sync</button>
-              <div class="erp-sb-heading">Operations</div>
-              <button type="button" class="erp-reports-sblink" id="repSidebarTmsLoads" onclick="openReportsTabFromSidebar('rep-tms')">TMS loads</button>
-              <button type="button" class="erp-reports-sblink" id="repSidebarSettlement" onclick="openReportsTabFromSidebar('rep-settlement')">Settlement / P&amp;L by load</button>
-              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-team')">Team &amp; security</button>
-              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-ifta')">IFTA &amp; compliance</button>
+              <details class="mr-rep-nav-group" open>
+                <summary class="mr-rep-nav-group__head">Standard <span class="mr-rep-nav-group__chev" aria-hidden="true">▼</span></summary>
+                <div class="mr-rep-nav-group__body">
+                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-overview')">Overview</button>
+                </div>
+              </details>
+              <details class="mr-rep-nav-group" open>
+                <summary class="mr-rep-nav-group__head">Maintenance <span class="mr-rep-nav-group__chev" aria-hidden="true">▼</span></summary>
+                <div class="mr-rep-nav-group__body">
+                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-maint')">Spend by unit</button>
+                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-maint-detail')">Detailed (parts / positions)</button>
+                </div>
+              </details>
+              <details class="mr-rep-nav-group">
+                <summary class="mr-rep-nav-group__head">Accounting <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
+                <div class="mr-rep-nav-group__body">
+                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-qbo')">QuickBooks activity</button>
+                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-sync')">ERP ↔ QBO sync</button>
+                </div>
+              </details>
+              <details class="mr-rep-nav-group">
+                <summary class="mr-rep-nav-group__head">Operations <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
+                <div class="mr-rep-nav-group__body">
+                  <button type="button" class="erp-reports-sblink" id="repSidebarTmsLoads" onclick="openReportsTabFromSidebar('rep-tms')">TMS loads</button>
+                  <button type="button" class="erp-reports-sblink" id="repSidebarSettlement" onclick="openReportsTabFromSidebar('rep-settlement')">Settlement / P&amp;L by load</button>
+                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-team')">Team &amp; security</button>
+                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-ifta')">IFTA &amp; compliance</button>
+                </div>
+              </details>
             </aside>
             <div class="erp-reports-main">
         <div class="subtabs" style="gap:8px;flex-wrap:wrap;align-items:center">
@@ -4466,15 +4482,21 @@
       );
     }
 
-    function erpSbAdmin(opts) {
+    function erpSbAdminBody(opts) {
       const includeBank = !(opts && opts.includeBankCsv === false);
       const hideUpload = opts && opts.hideUploadLink;
       return (
-        '<div class="erp-sb-sep"></div>' +
-        '<div class="erp-sb-heading">Lists, imports &amp; admin</div>' +
         erpSbToolsDataBlock(includeBank) +
         (hideUpload ? '' : erpSbUploadCenterLink()) +
         erpSbSettingsBlock()
+      );
+    }
+
+    function erpSbAdmin(opts) {
+      return (
+        '<div class="erp-sb-sep"></div>' +
+        '<div class="erp-sb-heading">Lists, imports &amp; admin</div>' +
+        erpSbAdminBody(opts)
       );
     }
 
@@ -4540,20 +4562,36 @@
       }
       if (name === 'dashboard') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Home overview</div>' +
-          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;fuel&quot;);">Fuel &amp; route planning</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;accounting&quot;);">Accounting</button>' +
-          '<p class="mini-note" style="margin:8px 0 0;line-height:1.45">For <strong>Reports</strong>, open the <strong>Reports</strong> icon (≡) in the company navigation — this column stays on day-to-day operations.</p>' +
-          adm;
+          erpSbGroup(
+            'dashboard',
+            'shortcuts',
+            'Shortcuts',
+            true,
+            '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;fuel&quot;);">Fuel &amp; route planning</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;accounting&quot;);">Accounting</button>'
+          ) +
+          erpSbGroup(
+            'dashboard',
+            'reports-hint',
+            'Reports',
+            false,
+            '<p class="mini-note" style="margin:0;line-height:1.45">Open the <strong>Reports</strong> icon (≡) in company navigation for financial and operational reports.</p>'
+          ) +
+          erpSbGroup('dashboard', 'admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'fuel') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Fuel &amp; route planning</div>' +
-          '<p class="mini-note" style="margin:0 0 8px">Planner runs inside this app. Open full screen when you want a dedicated browser tab.</p>' +
-          '<a class="erp-sb-link" href="/fuel.html" target="_blank" rel="noopener" style="display:inline-block">Open fuel planner (full screen)</a>' +
-          adm;
+          erpSbGroup(
+            'fuel',
+            'planner',
+            'Planner',
+            true,
+            '<a class="erp-sb-link" href="/fuel.html" target="_blank" rel="noopener" style="display:inline-block">Open fuel planner (full screen)</a>' +
+              '<p class="mini-note" style="margin:8px 0 0">Embedded planner runs below; full screen opens a dedicated tab.</p>'
+          ) +
+          erpSbGroup('fuel', 'admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'safety') {
@@ -4607,20 +4645,30 @@
       }
       if (name === 'reports') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Reports</div>' +
-          '<p class="mini-note" style="margin:0 0 8px">Use <strong>Browse</strong> on this board or the tabs across the top. TMS and settlement reports reflect your live connection to the database.</p>' +
-          adm;
+          erpSbGroup(
+            'reports',
+            'module-hub',
+            'This workspace',
+            true,
+            '<p class="mini-note" style="margin:0;line-height:1.45">Use the <strong>Browse</strong> column on the left of the reports board or the tabs across the top. TMS and settlement reports use your live database connection.</p>'
+          ) +
+          erpSbGroup('reports', 'module-admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'catalog') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Lists &amp; catalogs</div>' +
-          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;operational&quot;);">Operational labels</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;fleet&quot;);">Fleet &amp; Samsara writes</button>' +
-          adm;
+          erpSbGroup(
+            'catalog',
+            'lists',
+            'Catalogs',
+            true,
+            '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;operational&quot;);">Operational labels</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;fleet&quot;);">Fleet &amp; Samsara writes</button>'
+          ) +
+          erpSbGroup('catalog', 'module-admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'uploads') {
@@ -4631,9 +4679,14 @@
         return;
       }
         inner.innerHTML =
-        '<div class="erp-sb-heading">Shortcuts</div>' +
-        '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>' +
-        adm;
+          erpSbGroup(
+            'erp',
+            'fallback-shortcuts',
+            'Shortcuts',
+            true,
+            '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>'
+          ) +
+          erpSbGroup('erp', 'fallback-admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
     }
 
     function erpCloseNewMenu() {
