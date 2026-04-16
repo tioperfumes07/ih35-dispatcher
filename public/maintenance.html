@@ -1714,10 +1714,11 @@
             </div>
             <div
               id="apTxnQboBanner"
-              class="mini-note"
+              class="mini-note qb-doc-banner qb-doc-banner--ap"
               style="margin:0;padding:8px 14px;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.45;font-size:13px;color:#334155;display:flex;align-items:center;gap:8px;flex-wrap:wrap"
             >
-              <span>Rows save here first; use <strong>Record to QuickBooks</strong> then <strong>Verify in QuickBooks</strong> when posting.</span>
+              <span id="apTxnQboBannerText"
+                >Rows save here first; use <strong>Record to QuickBooks</strong> then <strong>Verify in QuickBooks</strong> when posting.</span>
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posting workflow">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
@@ -11664,6 +11665,25 @@
       el.textContent = text;
     }
 
+    /** AP expense banner: keep help tip sibling; only replace #apTxnQboBannerText body. */
+    function paintApTxnQboBanner(text, tier) {
+      const el = document.getElementById('apTxnQboBanner');
+      const textEl = document.getElementById('apTxnQboBannerText');
+      if (!el || !textEl) return;
+      const colors = {
+        info: { bg: '#f8fafc', border: '#cbd5e1', fg: '#334155' },
+        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: '#065f46' },
+        warn: { bg: '#fffbeb', border: '#fcd34d', fg: '#92400e' },
+        error: { bg: '#fef2f2', border: '#fecaca', fg: '#991b1b' }
+      };
+      const c = colors[tier] || colors.info;
+      el.style.display = 'flex';
+      el.style.background = c.bg;
+      el.style.borderTop = `1px solid ${c.border}`;
+      el.style.color = c.fg;
+      textEl.innerHTML = text;
+    }
+
     function resetFuelExpenseQboBanner() {
       const el = document.getElementById('fuelExpenseQboBanner');
       paintQboStatusBanner(
@@ -11674,10 +11694,8 @@
     }
 
     function resetApTxnQboBanner() {
-      const el = document.getElementById('apTxnQboBanner');
-      paintQboStatusBanner(
-        el,
-        'Rows in the list below are stored in this app first. Use Record to QuickBooks to create the Purchase or Bill in your company file. After posting, use Verify in QuickBooks to confirm the transaction still exists online.',
+      paintApTxnQboBanner(
+        'Rows save here first; use <strong>Record to QuickBooks</strong> then <strong>Verify in QuickBooks</strong> when posting.',
         'info'
       );
     }
@@ -11715,16 +11733,15 @@
     }
 
     async function verifyMaintenanceExpenseInQbo(kind, id) {
-      const el = document.getElementById('apTxnQboBanner');
-      paintQboStatusBanner(el, 'Checking QuickBooks…', 'info');
+      paintApTxnQboBanner('Checking QuickBooks…', 'info');
       try {
         const data = await verifyPostedInQuickbooks(kind, id);
-        const msg = data.message || 'Verification complete.';
-        if (data.existsInQuickBooks === true) paintQboStatusBanner(el, msg, 'success');
-        else if (data.existsInQuickBooks === false) paintQboStatusBanner(el, msg, 'warn');
-        else paintQboStatusBanner(el, msg, 'info');
+        const msg = escapeHtml(data.message || 'Verification complete.');
+        if (data.existsInQuickBooks === true) paintApTxnQboBanner(msg, 'success');
+        else if (data.existsInQuickBooks === false) paintApTxnQboBanner(msg, 'warn');
+        else paintApTxnQboBanner(msg, 'info');
       } catch (e) {
-        paintQboStatusBanner(el, e.message || String(e), 'error');
+        paintApTxnQboBanner(escapeHtml(e.message || String(e)), 'error');
       }
     }
 
@@ -11830,9 +11847,8 @@
         const result = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(result.error || r.statusText);
         alert(`Posted to QuickBooks. Purchase ID: ${result.record?.qboPurchaseId || ''}`);
-        paintQboStatusBanner(
-          document.getElementById('apTxnQboBanner'),
-          `Recorded in QuickBooks: Purchase ${result.record?.qboPurchaseId || result.record?.qboEntityId || ''}. Open Accounting → Maintenance expense transactions to verify online if needed.`,
+        paintApTxnQboBanner(
+          `Recorded in QuickBooks: Purchase ${escapeHtml(String(result.record?.qboPurchaseId || result.record?.qboEntityId || ''))}. Open Accounting → Maintenance expense transactions to verify online if needed.`,
           'success'
         );
         await loadAll();
@@ -14241,9 +14257,8 @@
       try {
         const result = await j(`/api/qbo/post-ap/${apId}`, { method: 'POST' });
         alert(`Posted to QuickBooks. ${result.ap.qboEntityType} ID: ${result.ap.qboEntityId || ''}`);
-        paintQboStatusBanner(
-          document.getElementById('apTxnQboBanner'),
-          `Recorded in QuickBooks: ${result.ap?.qboEntityType || ''} ${result.ap?.qboEntityId || ''}. Use Verify in QuickBooks on the card to confirm it still exists online.`,
+        paintApTxnQboBanner(
+          `Recorded in QuickBooks: ${escapeHtml(String(result.ap?.qboEntityType || ''))} ${escapeHtml(String(result.ap?.qboEntityId || ''))}. Use Verify in QuickBooks on the card to confirm it still exists online.`,
           'success'
         );
         await loadAll();
@@ -14335,8 +14350,7 @@
         const apList = document.getElementById('apList');
         if (apList) apList.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
-        paintQboStatusBanner(
-          document.getElementById('apTxnQboBanner'),
+        paintApTxnQboBanner(
           'Saved. Form cleared for the next expense — adjust header fields and lines, then Save or Save and close.',
           'success'
         );
@@ -14350,9 +14364,8 @@
         const result = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(result.error || r.statusText);
         alert(`Posted to QuickBooks. ${result.workOrder?.qboEntityType || ''} ID: ${result.workOrder?.qboEntityId || ''}`);
-        paintQboStatusBanner(
-          document.getElementById('apTxnQboBanner'),
-          `Recorded in QuickBooks: ${result.workOrder?.qboEntityType || ''} ${result.workOrder?.qboEntityId || ''}. Use Verify in QuickBooks on the card to confirm it still exists online.`,
+        paintApTxnQboBanner(
+          `Recorded in QuickBooks: ${escapeHtml(String(result.workOrder?.qboEntityType || ''))} ${escapeHtml(String(result.workOrder?.qboEntityId || ''))}. Use Verify in QuickBooks on the card to confirm it still exists online.`,
           'success'
         );
         await loadAll();

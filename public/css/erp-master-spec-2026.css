@@ -634,6 +634,18 @@ body.erp-maintenance .mr-filter-bar {
   margin-bottom: 0;
 }
 
+body.erp-maintenance .mr-filter-bar__grow {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+body.erp-maintenance .mr-filter-bar__actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
 body.erp-maintenance .mr-filter-bar__chips {
   display: flex;
   flex-wrap: wrap;
