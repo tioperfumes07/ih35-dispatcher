@@ -296,8 +296,16 @@
       <section id="section-fuel" class="section">
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">Fuel &amp; route planning</div>
-            <div class="mini-note">Same planner as the standalone page, without duplicate top navigation. <a href="/fuel.html" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:500">Open full screen</a></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="panel-title" style="margin:0">Fuel &amp; route planning</div>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About embedded planner">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">
+                  Same planner as the standalone page, without duplicate top navigation.
+                  <a href="/fuel.html" target="_blank" rel="noopener" style="color:#1967d2;font-weight:500">Open full screen</a>
+                </span>
+              </span>
+            </div>
           </div>
           <div class="panel-body" style="padding:0">
             <iframe class="erp-iframe" src="/fuel.html?embed=1" title="Fuel planner"></iframe>
@@ -395,14 +403,26 @@
               </span>
             </span>
           </div>
-          <div class="toolbar erp-ops-toolbar">
-            <label class="mini-note" for="safetyActiveDutyFilter" style="margin:0">List filter</label>
-            <select id="safetyActiveDutyFilter" class="in" style="max-width:240px" onchange="renderSafetyActivePanels()" title="Same modes as HOS tab">
-              <option value="relevant">Relevant (hide off-duty, no truck)</option>
-              <option value="active">Active duties only</option>
-              <option value="inactive">Off duty / sleeper</option>
-              <option value="all">All Samsara rows</option>
-            </select>
+          <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Active list filters">
+            <div class="mr-filter-bar__chips">
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use the HOS tab search to narrow tags when enabled.</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty and vehicle columns follow the live Samsara clock.</p></div>
+              </details>
+              <div class="mr-filter-bar__show">
+                <label class="mini-note" for="safetyActiveDutyFilter" style="margin:0">List filter</label>
+                <select id="safetyActiveDutyFilter" class="in mr-filter-inline-select" onchange="renderSafetyActivePanels()" title="Same modes as HOS tab">
+                  <option value="relevant">Relevant (hide off-duty, no truck)</option>
+                  <option value="active">Active duties only</option>
+                  <option value="inactive">Off duty / sleeper</option>
+                  <option value="all">All Samsara rows</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div class="safety-active-grid">
             <div>
@@ -439,15 +459,29 @@
               <span class="erp-help-tip__panel" role="tooltip">Driver ↔ vehicle assignments from Samsara for the current window.</span>
             </span>
           </div>
-          <div class="toolbar erp-ops-toolbar">
-            <input id="safetyAssignSearch" class="in" style="max-width:260px" placeholder="Filter vehicle or driver…" oninput="renderSafetyAssignments()" />
-            <label class="mini-note" for="safetyAssignFilter" style="margin:0">Show</label>
-            <select id="safetyAssignFilter" class="in" style="max-width:200px" onchange="renderSafetyAssignments()" title="Active = open assignment or end time in the future">
-              <option value="all">All</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive / ended</option>
-            </select>
-            <span class="mini-note" id="safetyAssignMeta"></span>
+          <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Assignment filters">
+            <div class="mr-filter-bar__chips">
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Search filters the assignment grid.</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Rows reflect the current Samsara assignment window.</p></div>
+              </details>
+              <input id="safetyAssignSearch" class="in mr-filter-search" style="width:200px" placeholder="Search…" oninput="renderSafetyAssignments()" title="Filter vehicle or driver" />
+              <div class="mr-filter-bar__show">
+                <label class="mini-note" for="safetyAssignFilter" style="margin:0">Show</label>
+                <select id="safetyAssignFilter" class="in mr-filter-inline-select" onchange="renderSafetyAssignments()" title="Active = open assignment or end time in the future">
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive / ended</option>
+                </select>
+              </div>
+            </div>
+            <div class="mr-filter-bar__right">
+              <span class="mini-note" id="safetyAssignMeta"></span>
+            </div>
           </div>
           <div class="safety-table-wrap erp-ops-data-frame">
             <table>
@@ -476,15 +510,29 @@
               </span>
             </span>
           </div>
-          <div class="toolbar erp-ops-toolbar">
-            <input id="driverFilesSearch" class="in" style="max-width:280px" placeholder="Search driver…" oninput="renderDriverFiles()" />
-            <label class="mini-note" for="driverFilesUrgentOnly" style="margin:0">Show</label>
-            <select id="driverFilesUrgentOnly" class="in" style="max-width:220px" onchange="renderDriverFiles()">
-              <option value="all">All drivers</option>
-              <option value="dueSoon">Due soon / expired</option>
-              <option value="missing">Missing key dates</option>
-            </select>
-            <span class="mini-note" id="driverFilesMeta"></span>
+          <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Driver files filters">
+            <div class="mr-filter-bar__chips">
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Search narrows the driver compliance table.</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Dates and notes are stored in this app (not QuickBooks).</p></div>
+              </details>
+              <div class="mr-filter-bar__show">
+                <label class="mini-note" for="driverFilesUrgentOnly" style="margin:0">Show</label>
+                <select id="driverFilesUrgentOnly" class="in mr-filter-inline-select" onchange="renderDriverFiles()">
+                  <option value="all">All drivers</option>
+                  <option value="dueSoon">Due soon / expired</option>
+                  <option value="missing">Missing key dates</option>
+                </select>
+              </div>
+            </div>
+            <div class="mr-filter-bar__right">
+              <input id="driverFilesSearch" class="in mr-filter-search" placeholder="Search…" oninput="renderDriverFiles()" title="Search driver" />
+              <span class="mini-note" id="driverFilesMeta"></span>
+            </div>
           </div>
           <div class="safety-table-wrap erp-ops-data-frame">
             <table>
@@ -1394,14 +1442,35 @@
 
         <div id="tr-assets" class="tracking-sub hidden">
           <div class="panel" style="margin-top:8px">
-            <div class="panel-head"><div class="panel-title">All tracked assets</div></div>
+            <div class="panel-head">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <div class="panel-title" style="margin:0">All tracked assets</div>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Data sources">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Vehicle names, VIN, and GPS come from <strong>Samsara</strong>. Editing or adding assets in Samsara is done in
+                    <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> (this app uses read-only fleet APIs).
+                    Local TMS trucks/trailers in Postgres (when <code>DATABASE_URL</code> is set) are managed from the dispatch / TMS screens; use the same unit codes (e.g. T160) for consistency.
+                  </span>
+                </span>
+              </div>
+            </div>
             <div class="panel-body">
-              <p class="mini-note" style="margin:0 0 10px">
-                Vehicle names, VIN, and GPS come from <strong>Samsara</strong>. Editing or adding assets in Samsara is done in
-                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> (this app uses read-only fleet APIs).
-                Local TMS trucks/trailers in Postgres (when <code>DATABASE_URL</code> is set) are managed from the dispatch / TMS screens; use the same unit codes (e.g. T160) for consistency.
-              </p>
-              <input id="trackingAssetFilter" class="in" placeholder="Filter unit…" style="max-width:260px;margin-bottom:10px" oninput="renderTrackingAssetsTable()">
+              <div class="mr-filter-bar erp-ops-filter-bar" style="padding-top:0">
+                <div class="mr-filter-bar__chips">
+                  <details class="mr-filter-chipwrap">
+                    <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
+                    <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use the filter box to narrow units in the grid.</p></div>
+                  </details>
+                  <details class="mr-filter-chipwrap">
+                    <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
+                    <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Columns blend Samsara telemetry with ERP mileage where linked.</p></div>
+                  </details>
+                </div>
+                <div class="mr-filter-bar__right">
+                  <input id="trackingAssetFilter" class="in mr-filter-search" placeholder="Search…" oninput="renderTrackingAssetsTable()" title="Filter unit" />
+                </div>
+              </div>
               <div class="table-wrap erp-table-scroll">
                 <table>
                   <thead>
@@ -1502,6 +1571,63 @@
               <button type="button" class="nav-dd-item" onclick="openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'))">Expense history log</button>
               <button type="button" class="nav-dd-item" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctLogsDdTrigger'))">QBO rollback &amp; imports</button>
               <a class="nav-dd-item" href="/banking.html" style="text-decoration:none;color:inherit;display:block">Bank matching →</a>
+            </div>
+          </div>
+        </div>
+
+        <div id="acctBoardStrip" class="mr-acct-board maint-section-card" aria-label="Accounting overview">
+          <div class="grid grid-4 erp-kpi-grid mr-kpi-strip" style="margin:0">
+            <div class="metric mr-kpi-card">
+              <div class="metric-label">Maintenance expenses (30d)</div>
+              <div class="metric-value" id="acctBoardKpiExp30">—</div>
+              <div class="metric-sub muted">Rollup from maintenance</div>
+            </div>
+            <div class="metric mr-kpi-card">
+              <div class="metric-label">Pending post (WO + AP)</div>
+              <div class="metric-value" id="acctBoardKpiPending">—</div>
+              <div class="metric-sub muted" id="acctBoardKpiPendingSub"></div>
+            </div>
+            <div class="metric mr-kpi-card">
+              <div class="metric-label">QuickBooks sync alerts</div>
+              <div class="metric-value" id="acctBoardKpiSyncAlerts">—</div>
+              <div class="metric-sub muted">From last alert poll</div>
+            </div>
+            <div class="metric mr-kpi-card">
+              <div class="metric-label">Fuel purchases (30d)</div>
+              <div class="metric-value" id="acctBoardKpiFuel30">—</div>
+              <div class="metric-sub muted">Imported fuel rows</div>
+            </div>
+          </div>
+          <div class="mr-acct-board__cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px">
+            <div class="panel" style="margin:0">
+              <div class="panel-head"><div class="panel-title" style="font-size:13px">Maintenance expenses</div></div>
+              <div class="panel-body">
+                <p class="mini-note" id="acctCardMaintSum" style="margin:0 0 8px">—</p>
+                <button type="button" class="btn" onclick="openAccountingTab('acct-transactions', document.querySelector('#section-accounting .subtab[onclick*=&quot;acct-transactions&quot;]'))">View all</button>
+              </div>
+            </div>
+            <div class="panel" style="margin:0">
+              <div class="panel-head"><div class="panel-title" style="font-size:13px">Fuel &amp; DEF</div></div>
+              <div class="panel-body">
+                <p class="mini-note" style="margin:0 0 8px">Fast entry, imports, and ledger.</p>
+                <button type="button" class="btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">New fuel entry</button>
+              </div>
+            </div>
+            <div class="panel" style="margin:0">
+              <div class="panel-head"><div class="panel-title" style="font-size:13px">QuickBooks sync</div></div>
+              <div class="panel-body">
+                <p class="mini-note" style="margin:0 0 8px">Master lists, rollback, and connection tests.</p>
+                <button type="button" class="btn" style="margin-right:6px" onclick="refreshQboMaster()">Refresh lists</button>
+                <button type="button" class="btn" onclick="testQuickBooks()">Test connection</button>
+              </div>
+            </div>
+            <div class="panel" style="margin:0">
+              <div class="panel-head"><div class="panel-title" style="font-size:13px">Tools &amp; data</div></div>
+              <div class="panel-body" style="display:flex;flex-direction:column;gap:6px">
+                <a href="/banking.html" style="color:#1967d2;font-size:13px;font-weight:500;text-decoration:none">Bank CSV matching</a>
+                <button type="button" class="erp-sb-link" style="text-align:left;padding:4px 0;border:none;background:none;cursor:pointer;color:#1967d2;font-size:13px;font-weight:500" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types</button>
+                <button type="button" class="erp-sb-link" style="text-align:left;padding:4px 0;border:none;background:none;cursor:pointer;color:#1967d2;font-size:13px;font-weight:500" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('fuel');">Upload center</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2401,7 +2527,15 @@
               </div>
             </div>
             <div class="panel-body" id="repOverviewBody">
-              <p class="mini-note">After you connect QuickBooks, use <strong>Refresh reports</strong> (catalog plus bills, purchases, and invoices for the configured window).</p>
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                <span class="mini-note" style="margin:0">Connect QuickBooks, then refresh this board.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Refresh reports">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    After you connect QuickBooks, use <strong>Refresh reports</strong> to pull catalog plus bills, purchases, and invoices for the configured time window.
+                  </span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -2697,16 +2831,26 @@
       <section id="section-uploads" class="section">
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">Imports &amp; uploads</div>
-            <div class="mini-note" style="margin:0">One place for spreadsheet imports. Use the sidebar <strong>Imports &amp; uploads</strong> shortcuts for quick access.</div>
+            <div class="panel-title">Upload center</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+              <span class="mini-note" style="margin:0">One workspace for spreadsheet imports.</span>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About uploads">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">
+                  Use the category pills below, then the form in each panel. The module sidebar <strong>Upload center</strong> link jumps here; <strong>Connections</strong> covers QuickBooks list refresh notes and Samsara write scopes.
+                </span>
+              </span>
+            </div>
           </div>
           <div class="panel-body">
-            <div class="subtabs" style="margin-bottom:14px">
-              <button type="button" class="subtab active" data-up-sub="fuel" onclick="openUploadSubpanel('fuel', this)">Loves / Relay / fuel</button>
-              <button type="button" class="subtab" data-up-sub="maint" onclick="openUploadSubpanel('maint', this)">Maintenance data</button>
-              <button type="button" class="subtab" data-up-sub="ap" onclick="openUploadSubpanel('ap', this)">Expense AP rows</button>
-              <button type="button" class="subtab" data-up-sub="comdata" onclick="openUploadSubpanel('comdata', this)">Comdata / cards</button>
+            <div class="subtabs mr-upload-pills" style="margin-bottom:14px;flex-wrap:wrap">
+              <button type="button" class="subtab active" data-up-sub="fuel" onclick="openUploadSubpanel('fuel', this)">Fuel / DEF</button>
+              <button type="button" class="subtab" data-up-sub="maint" onclick="openUploadSubpanel('maint', this)">Maintenance history</button>
+              <button type="button" class="subtab" data-up-sub="ap" onclick="openUploadSubpanel('ap', this)">Maintenance AP</button>
+              <button type="button" class="subtab" data-up-sub="comdata" onclick="openUploadSubpanel('comdata', this)">Comdata / Relay</button>
+              <button type="button" class="subtab" data-up-sub="bank" onclick="openUploadSubpanel('bank', this)">Bank CSV</button>
               <button type="button" class="subtab" data-up-sub="sync" onclick="openUploadSubpanel('sync', this)">Connections</button>
+              <button type="button" class="subtab" data-up-sub="other" onclick="openUploadSubpanel('other', this)">Other</button>
             </div>
             <div id="upload-panel-fuel" class="upload-subpanel active">
               <p class="mini-note" style="margin:0 0 10px">
@@ -2726,9 +2870,16 @@
             </div>
             <div id="upload-panel-comdata" class="upload-subpanel">
               <p class="mini-note" style="margin:0 0 10px">
-                If your Comdata export matches the same columns as Relay / fuel card templates, use <strong>Loves / Relay / fuel</strong> above. Otherwise export to CSV and ask your admin to map columns to the fuel import format.
+                If your Comdata export matches the same columns as Relay / fuel card templates, use <strong>Fuel / DEF</strong> above. Otherwise export to CSV and ask your admin to map columns to the fuel import format.
               </p>
               <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/maintenance.html#accounting-fuel">Open Accounting → Fuel expenses → import</a>
+            </div>
+            <div id="upload-panel-bank" class="upload-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">Bank statement and CSV matching runs in the dedicated banking workspace (same rules as QuickBooks bank feeds).</p>
+              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/banking.html">Open bank CSV matching</a>
+            </div>
+            <div id="upload-panel-other" class="upload-subpanel">
+              <p class="mini-note" style="margin:0 0 10px">Use <strong>Other</strong> for one-off files or procedures that do not fit the standard import categories. Prefer the specific tabs when possible so validation and batch ids stay consistent.</p>
             </div>
             <div id="upload-panel-sync" class="upload-subpanel">
               <p class="mini-note" style="margin:0 0 10px">
@@ -4798,6 +4949,7 @@
       }
       if (name === 'catalog') loadServiceCatalogAdminOnly();
       renderErpModuleSidebar(name);
+      if (name === 'accounting') requestAnimationFrame(() => refreshAcctBoardStrip());
     }
 
     function openSectionByName(name) {
@@ -6117,6 +6269,7 @@
         await loadSecurityCatalogUi();
         await loadQboStatus();
         renderQboSyncAlerts(qboSyncRes);
+        refreshAcctBoardStrip();
 
         const fleetAt = dashRes.refreshedAt
           ? new Date(dashRes.refreshedAt).toLocaleString()
@@ -11263,6 +11416,66 @@
         String(fp.qboEntityId || '').trim() &&
         String(fp.qboEntityType || '').trim()
       );
+    }
+
+    function refreshAcctBoardStrip() {
+      const wrap = document.getElementById('acctBoardStrip');
+      if (!wrap) return;
+      const sync = __maintQboSyncPayloadCache;
+      const c = (sync && sync.counts) || {};
+      const alertTotal =
+        c.total != null
+          ? Number(c.total)
+          : Array.isArray(sync?.alerts)
+            ? sync.alerts.length
+            : 0;
+      const elAlerts = document.getElementById('acctBoardKpiSyncAlerts');
+      if (elAlerts) {
+        elAlerts.textContent = String(Number.isFinite(alertTotal) ? alertTotal : 0);
+        elAlerts.style.color = alertTotal > 0 ? '#d93025' : '#1e8e3e';
+      }
+      const s30 = expenseSummaryCache && expenseSummaryCache.d30;
+      const elE30 = document.getElementById('acctBoardKpiExp30');
+      if (elE30) {
+        elE30.textContent =
+          s30 && s30.ok && s30.total != null && Number.isFinite(Number(s30.total))
+            ? '$' + Number(s30.total).toFixed(2)
+            : '—';
+      }
+      let pendingN = 0;
+      let pending$ = 0;
+      (erp.workOrders || []).forEach(wo => {
+        if (!qboPostedRowWo(wo)) {
+          pendingN++;
+          pending$ += (wo.lines || []).reduce((s, l) => s + (Number(l.amount) || 0), 0);
+        }
+      });
+      (erp.apTransactions || []).forEach(ap => {
+        if (!qboPostedRowAp(ap)) {
+          pendingN++;
+          pending$ += Number(ap.amount) || 0;
+        }
+      });
+      const elP = document.getElementById('acctBoardKpiPending');
+      if (elP) elP.textContent = String(pendingN);
+      const elPS = document.getElementById('acctBoardKpiPendingSub');
+      if (elPS) elPS.textContent = pendingN ? '≈ $' + pending$.toFixed(2) + ' draft' : '';
+
+      const cutoff = Date.now() - 30 * 86400000;
+      let fuelSum = 0;
+      (erp.fuelPurchases || []).forEach(p => {
+        const raw = p.createdAt || p.date || p.txnDate || p.purchaseDate || '';
+        const t = raw ? new Date(raw).getTime() : 0;
+        if (t >= cutoff) fuelSum += Number(p.total) || Number(p.amount) || Number(p.totalCost) || 0;
+      });
+      const elF = document.getElementById('acctBoardKpiFuel30');
+      if (elF) elF.textContent = fuelSum > 0 ? '$' + fuelSum.toFixed(2) : '—';
+
+      const sumEl = document.getElementById('acctCardMaintSum');
+      if (sumEl) {
+        const roll = elE30 && elE30.textContent && elE30.textContent !== '—' ? elE30.textContent : '—';
+        sumEl.textContent = String(pendingN) + ' pending · rollups ' + roll;
+      }
     }
 
     function paintQboStatusBanner(el, text, tier) {
