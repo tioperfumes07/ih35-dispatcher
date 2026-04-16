@@ -4952,19 +4952,20 @@ app.post('/api/maintenance/record', async (req, res) => {
         qbo = { ok: true, posted: true, record: posted };
       } catch (err) {
         logError('api/maintenance/record qbo', err);
+        const errMsg = enrichQboInvalidReferenceMessage(err.message || String(err));
         const erp2 = readErp();
         const idx2 = (erp2.records || []).findIndex(x => String(x.id) === String(record.id));
         if (idx2 !== -1) {
           erp2.records[idx2] = {
             ...erp2.records[idx2],
             qboSyncStatus: 'error',
-            qboError: err.message
+            qboError: errMsg
           };
           writeErp(erp2);
           record.qboSyncStatus = 'error';
-          record.qboError = err.message;
+          record.qboError = errMsg;
         }
-        qbo = { ok: false, posted: false, error: err.message };
+        qbo = { ok: false, posted: false, error: errMsg };
       }
     } else if (cost > 0 && postToQbo) {
       qbo = { ok: false, skipped: true, reason: 'quickbooks_not_connected' };
@@ -5056,19 +5057,20 @@ app.patch('/api/maintenance/record/:id', async (req, res) => {
         qbo = { ok: true, posted: true, record: posted };
       } catch (err) {
         logError('api/maintenance/record/:id PATCH qbo', err);
+        const errMsg = enrichQboInvalidReferenceMessage(err.message || String(err));
         const erp2 = readErp();
         const idx2 = (erp2.records || []).findIndex(x => String(x.id) === String(record.id));
         if (idx2 !== -1) {
           erp2.records[idx2] = {
             ...erp2.records[idx2],
             qboSyncStatus: 'error',
-            qboError: err.message
+            qboError: errMsg
           };
           writeErp(erp2);
           record.qboSyncStatus = 'error';
-          record.qboError = err.message;
+          record.qboError = errMsg;
         }
-        qbo = { ok: false, posted: false, error: err.message };
+        qbo = { ok: false, posted: false, error: errMsg };
       }
     } else if (!alreadyPosted && cost > 0 && postToQbo) {
       qbo = { ok: false, skipped: true, reason: 'quickbooks_not_connected' };
@@ -5840,14 +5842,15 @@ app.post('/api/qbo/post-work-order/:id', async (req, res) => {
     writeErp(erp);
     res.json({ ok: true, workOrder: erp.workOrders[idx] });
   } catch (error) {
+    const msg = enrichQboInvalidReferenceMessage(error.message || String(error));
     erp.workOrders[idx] = {
       ...erp.workOrders[idx],
       qboSyncStatus: 'error',
-      qboError: error.message,
+      qboError: msg,
       qboErrorAt: new Date().toISOString()
     };
     writeErp(erp);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: msg });
   }
 });
 
@@ -5923,7 +5926,7 @@ app.get('/api/qbo/open-bills', async (req, res) => {
     res.json({ ok: true, bills, live: true });
   } catch (error) {
     logError('api/qbo/open-bills', error);
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({ ok: false, error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -5953,7 +5956,7 @@ app.post('/api/qbo/bill-payment', async (req, res) => {
     });
   } catch (error) {
     logError('api/qbo/bill-payment', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -5978,14 +5981,15 @@ app.post('/api/qbo/post-ap/:id', async (req, res) => {
     writeErp(erp);
     res.json({ ok: true, ap: erp.apTransactions[idx] });
   } catch (error) {
+    const msg = enrichQboInvalidReferenceMessage(error.message || String(error));
     erp.apTransactions[idx] = {
       ...erp.apTransactions[idx],
       qboSyncStatus: 'error',
-      qboError: error.message,
+      qboError: msg,
       qboErrorAt: new Date().toISOString()
     };
     writeErp(erp);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: msg });
   }
 });
 
@@ -6440,7 +6444,7 @@ app.post('/api/qbo/revert-posted', async (req, res) => {
     res.json({ ok: true, kind, id });
   } catch (error) {
     logError('api/qbo/revert-posted', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -6539,7 +6543,7 @@ app.post('/api/qbo/verify-posted', async (req, res) => {
     });
   } catch (error) {
     logError('api/qbo/verify-posted', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -6560,13 +6564,18 @@ app.post('/api/qbo/revert-posted-batch', async (req, res) => {
         await revertQboPostedTransaction(kind, id);
         results.push({ kind, id, ok: true });
       } catch (e) {
-        results.push({ kind, id, ok: false, error: e.message });
+        results.push({
+          kind,
+          id,
+          ok: false,
+          error: enrichQboInvalidReferenceMessage(e.message || String(e))
+        });
       }
     }
     res.json({ ok: true, results });
   } catch (error) {
     logError('api/qbo/revert-posted-batch', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -6626,7 +6635,7 @@ app.post('/api/qbo/revert-bill-payment', async (req, res) => {
     });
   } catch (error) {
     logError('api/qbo/revert-bill-payment', error);
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({ ok: false, error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7030,7 +7039,12 @@ app.get('/api/qbo/sync-alerts', (_req, res) => {
     });
   } catch (error) {
     logError('api/qbo/sync-alerts', error);
-    res.status(500).json({ ok: false, error: error.message, alerts: [], counts: {} });
+    res.status(500).json({
+      ok: false,
+      error: enrichQboInvalidReferenceMessage(error.message || String(error)),
+      alerts: [],
+      counts: {}
+    });
   }
 });
 
@@ -7137,7 +7151,7 @@ app.get('/api/qbo/company', async (_req, res) => {
     const data = await qboGet(`companyinfo/${store.tokens.realmId}`);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7152,7 +7166,7 @@ app.get('/api/qbo/catalog', (req, res) => {
       ...payload
     });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({ ok: false, error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7171,7 +7185,7 @@ app.post('/api/qbo/catalog/refresh', async (_req, res) => {
       ...payload
     });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({ ok: false, error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7183,7 +7197,7 @@ app.get('/api/qbo/master', async (_req, res) => {
   } catch (error) {
     const payload = readQboCatalogPayload();
     res.status(500).json({
-      error: error.message,
+      error: enrichQboInvalidReferenceMessage(error.message || String(error)),
       ...payload
     });
   }
@@ -7195,7 +7209,7 @@ app.post('/api/qbo/create-vendor', async (req, res) => {
     const cache = await qboSyncMasterData();
     res.json({ ok: true, created: result.created, vendor: result.vendor, cache });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7205,7 +7219,7 @@ app.post('/api/qbo/create-customer', async (req, res) => {
     const cache = await qboSyncMasterData();
     res.json({ ok: true, created: result.created, customer: result.customer, cache });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7216,7 +7230,7 @@ app.post('/api/qbo/create-item', async (req, res) => {
     const cache = await qboSyncMasterData();
     res.json({ ok: true, created: result.created, item: result.item, cache });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7227,7 +7241,7 @@ app.post('/api/qbo/create-account', async (req, res) => {
     const cache = await qboSyncMasterData();
     res.json({ ok: true, created: result.created, account: result.account, cache });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7321,7 +7335,7 @@ app.post('/api/qbo/invoice-from-load', async (req, res) => {
     });
   } catch (error) {
     logError('api/qbo/invoice-from-load', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
@@ -7361,7 +7375,7 @@ app.post('/api/qbo/sync-load-documents', async (req, res) => {
     res.json({ ok: true, loadNumber: loadRow.load_number, ...attachmentsSynced });
   } catch (error) {
     logError('api/qbo/sync-load-documents', error);
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({ ok: false, error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
   }
 });
 
