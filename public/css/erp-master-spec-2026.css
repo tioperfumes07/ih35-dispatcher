@@ -1,10 +1,8 @@
 /**
- * IH35 ERP — Master redesign spec (Rules 0–22 coverage, incremental).
- * Rules 0–1, 3, 4 (filter bar + legend), 9 fragments, 15–16, 22 (help tips): concrete CSS here.
- * Rule 2: copy in maintenance.html + dispatch.html.
- * Rules 5–8 (QBO book dialogs, WO chrome): see erp-master-redesign.css; maintenance + dispatch wired.
- * Rules 9–11, 15–18: reports search + hub, AP/fuel doc shells, bill pay, accounting strip — maintenance.html + this file.
- * Rules 17–21: KPI strip, parts map, help tips — maintenance + spec; satellite pages use Rule 0–1 blocks below.
+ * IH35 ERP — Master redesign spec (Rules 0–22; maintenance is the reference surface).
+ * Rules 0–1, 3–4, 9 (reports layout + search + roadmap), 10–11, 13–16, 18, 22: maintenance.html + this file.
+ * Rule 2: QBO-style wording — maintenance + dispatch (dispatch sidebar tip: load # ↔ invoice).
+ * Rules 5–8, 12, 17, 19–21: dialog shells, ops density, KPI/parts/QBO chrome — erp-master-redesign.css + maintenance; dispatch gets flat chrome below.
  * Load order: app-theme → erp-master-redesign → this file (maintenance, dispatch, fuel, banking, settings).
  */
 
