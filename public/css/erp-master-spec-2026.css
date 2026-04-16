@@ -452,28 +452,11 @@ body.dispatch-page #dispatchApp table.data {
 }
 
 /* =============================================================================
-   Rule 3 — + New menu panel (QuickBooks-style create drawer)
+   Rule 3 — + New menu: scrollable panel on small viewports (rest in erp-master-redesign)
    ============================================================================= */
 body.erp-maintenance #erpApp .erp-new-menu {
   max-height: min(70vh, 520px);
   overflow-y: auto;
-  border: 1px solid #dadce0;
-  border-radius: 8px;
-  background: #fff;
-  min-width: min(100vw - 32px, 520px);
-  padding: 12px 16px 14px;
-}
-
-body.erp-maintenance #erpApp .erp-new-menu__cols {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px 28px;
-  align-items: flex-start;
-}
-
-body.erp-maintenance #erpApp .erp-new-menu__col {
-  flex: 1 1 10rem;
-  min-width: min(100%, 9rem);
 }
 
 /* =============================================================================
@@ -482,10 +465,6 @@ body.erp-maintenance #erpApp .erp-new-menu__col {
 body.erp-maintenance .erp-qb-dialog__foot .qb-btn-primary,
 body.erp-maintenance .erp-qb-dialog__foot button.qb-btn-primary {
   min-height: 32px;
-  font-weight: 500;
-}
-
-body.dispatch-page .modal h2 {
   font-weight: 500;
 }
 
@@ -549,17 +528,6 @@ body.erp-maintenance .erp-main-body .tire-svg,
 body.erp-maintenance .erp-main-body .tire-svg svg {
   max-width: 100%;
   height: auto;
-}
-
-/* =============================================================================
-   Rule 14 — Module sidebar taxonomy (visual rhythm; link set in maintenance.html JS)
-   ============================================================================= */
-body.erp-maintenance .erp-module-sidebar .erp-sb-heading {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--qb-muted, #5f6368);
 }
 
 /* =============================================================================
