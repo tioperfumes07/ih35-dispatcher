@@ -17,75 +17,91 @@
 <body class="erp-app erp-maintenance">
   <div id="boardNavMount"></div>
   <div id="maintCatModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintCatModal()">
-    <div class="maint-modal" onclick="event.stopPropagation()">
+    <div class="maint-modal erp-qb-dialog" onclick="event.stopPropagation()">
       <div id="maintModalFlowTitle" class="hidden"></div>
-      <h3 style="margin:0 0 6px;font-size:18px">Vehicle type</h3>
-      <p class="mini-note" style="margin:0 0 8px">Pick the category, then complete the service or purchase form. Matches Samsara / Maintenance asset groups.</p>
-      <div class="asset-cat-grid">
-        <div class="asset-cat-tile" onclick="completeMaintCategory('Trucks')">Truck</div>
-        <div class="asset-cat-tile" onclick="completeMaintCategory('Refrigerated Vans')">Refrigerated van</div>
-        <div class="asset-cat-tile" onclick="completeMaintCategory('Flatbeds')">Flatbed</div>
-        <div class="asset-cat-tile" onclick="completeMaintCategory('Dry Vans')">Dry van</div>
-        <div class="asset-cat-tile" onclick="completeMaintCategory('Company Vehicles')" style="grid-column:span 2">Company vehicle</div>
+      <header class="erp-qb-dialog__head">
+        <h3 class="erp-qb-dialog__title">Vehicle type</h3>
+      </header>
+      <p class="mini-note erp-qb-dialog__sub">Pick the category, then complete the service or purchase form. Matches Samsara / Maintenance asset groups.</p>
+      <div class="erp-qb-dialog__body">
+        <div class="asset-cat-grid">
+          <div class="asset-cat-tile" onclick="completeMaintCategory('Trucks')">Truck</div>
+          <div class="asset-cat-tile" onclick="completeMaintCategory('Refrigerated Vans')">Refrigerated van</div>
+          <div class="asset-cat-tile" onclick="completeMaintCategory('Flatbeds')">Flatbed</div>
+          <div class="asset-cat-tile" onclick="completeMaintCategory('Dry Vans')">Dry van</div>
+          <div class="asset-cat-tile" onclick="completeMaintCategory('Company Vehicles')" style="grid-column:span 2">Company vehicle</div>
+        </div>
       </div>
-      <button type="button" class="btn" onclick="closeMaintCatModal()">Cancel</button>
+      <footer class="erp-qb-dialog__foot">
+        <button type="button" class="btn erp-qb-dialog__btn-secondary" onclick="closeMaintCatModal()">Cancel</button>
+      </footer>
     </div>
   </div>
   <div id="shopQueueAddModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopQueueModal()">
-    <div class="maint-modal" onclick="event.stopPropagation()" style="max-width:520px">
-      <h3 style="margin:0 0 8px;font-size:17px">Add to shop queue</h3>
-      <p class="mini-note" style="margin:0 0 12px">Track units through internal, external, roadside, or parts-purchase queues. Status and bottlenecks are saved in the ERP.</p>
-      <input type="hidden" id="sqShopType" value="internal" />
-      <label class="qb-l">Unit</label>
-      <input id="sqUnit" class="qb-in maint-field" list="unitOptions" placeholder="T1234" style="width:100%;max-width:100%;margin-bottom:10px" />
-      <label class="qb-l">Fleet type</label>
-      <select id="sqAssetCat" class="qb-in" style="width:100%;margin-bottom:10px">
-        <option>Trucks</option>
-        <option>Refrigerated Vans</option>
-        <option>Flatbeds</option>
-        <option>Dry Vans</option>
-        <option>Company Vehicles</option>
-      </select>
-      <label class="qb-l">Job title</label>
-      <input id="sqTitle" class="qb-in" placeholder="Brakes, PM, tire, engine…" style="width:100%;margin-bottom:10px" />
-      <label class="qb-l">Estimated hours (for delay alerts)</label>
-      <input id="sqEstH" type="number" min="0" step="0.5" class="qb-in" placeholder="8" style="width:120px;margin-bottom:10px" />
-      <label class="qb-l">Vendor / shop hint (external, roadside, or parts)</label>
-      <input id="sqVendor" class="qb-in" placeholder="Supplier / vendor (optional)" style="width:100%;margin-bottom:14px" />
-      <button type="button" class="btn" onclick="submitShopQueueAdd()">Add to queue</button>
-      <button type="button" class="btn" onclick="closeShopQueueModal()" style="margin-left:8px">Cancel</button>
+    <div class="maint-modal erp-qb-dialog" onclick="event.stopPropagation()" style="max-width:520px">
+      <header class="erp-qb-dialog__head">
+        <h3 class="erp-qb-dialog__title">Add to shop queue</h3>
+      </header>
+      <p class="mini-note erp-qb-dialog__sub">Track units through internal, external, roadside, or parts-purchase queues. Status and bottlenecks are saved in the ERP.</p>
+      <div class="erp-qb-dialog__body">
+        <input type="hidden" id="sqShopType" value="internal" />
+        <label class="qb-l">Unit</label>
+        <input id="sqUnit" class="qb-in maint-field" list="unitOptions" placeholder="T1234" style="width:100%;max-width:100%;margin-bottom:10px" />
+        <label class="qb-l">Fleet type</label>
+        <select id="sqAssetCat" class="qb-in" style="width:100%;margin-bottom:10px">
+          <option>Trucks</option>
+          <option>Refrigerated Vans</option>
+          <option>Flatbeds</option>
+          <option>Dry Vans</option>
+          <option>Company Vehicles</option>
+        </select>
+        <label class="qb-l">Job title</label>
+        <input id="sqTitle" class="qb-in" placeholder="Brakes, PM, tire, engine…" style="width:100%;margin-bottom:10px" />
+        <label class="qb-l">Estimated hours (for delay alerts)</label>
+        <input id="sqEstH" type="number" min="0" step="0.5" class="qb-in" placeholder="8" style="width:120px;margin-bottom:10px" />
+        <label class="qb-l">Vendor / shop hint (external, roadside, or parts)</label>
+        <input id="sqVendor" class="qb-in" placeholder="Supplier / vendor (optional)" style="width:100%;margin-bottom:0" />
+      </div>
+      <footer class="erp-qb-dialog__foot">
+        <button type="button" class="btn erp-qb-dialog__btn-secondary" onclick="closeShopQueueModal()">Cancel</button>
+        <button type="button" class="btn qb-btn-primary" onclick="submitShopQueueAdd()">Add to queue</button>
+      </footer>
     </div>
   </div>
   <div id="maintWorkOrderModal" class="maint-modal-bg maint-workorder-fullmodal" onclick="if(event.target===this)closeMaintWorkOrderModal()" aria-hidden="true">
-    <div class="maint-modal maint-workorder-fullmodal__shell" onclick="event.stopPropagation()">
+    <div class="maint-modal maint-workorder-fullmodal__shell erp-qb-fullsheet" onclick="event.stopPropagation()">
       <div class="maint-workorder-fullmodal__head">
         <div>
           <div class="maint-workorder-fullmodal__title">Create work order</div>
           <div class="mini-note" style="margin:2px 0 0;max-width:56ch">Full-window form (QuickBooks-style). Close when you need the fleet tabs underneath.</div>
         </div>
-        <button type="button" class="btn" onclick="closeMaintWorkOrderModal()">Close</button>
+        <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
       </div>
       <div id="maintWorkOrderModalBody" class="maint-workorder-fullmodal__body"></div>
     </div>
   </div>
   <div id="shopDelayModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopDelayModal()">
-    <div class="maint-modal" onclick="event.stopPropagation()" style="max-width:480px">
-      <h3 style="margin:0 0 8px;font-size:17px">Past estimated time — bottleneck</h3>
-      <p class="mini-note" style="margin:0 0 12px">Pick a reason so we can see delays (parts, queue, payment, etc.).</p>
-      <label class="qb-l">Reason</label>
-      <select id="sqDelayCode" class="qb-in" style="width:100%;margin-bottom:10px">
-        <option value="missing_parts">Missing parts</option>
-        <option value="long_queue">Long shop queue</option>
-        <option value="payment">Payment / approval</option>
-        <option value="vendor_delay">Vendor / external delay</option>
-        <option value="other">Other</option>
-      </select>
-      <label class="qb-l">Note</label>
-      <textarea id="sqDelayNote" class="qb-memo" style="width:100%;min-height:72px" placeholder="Optional detail"></textarea>
-      <div style="margin-top:14px">
-        <button type="button" class="btn" onclick="submitShopDelay()">Save &amp; continue</button>
-        <button type="button" class="btn" onclick="closeShopDelayModal()" style="margin-left:8px">Cancel</button>
+    <div class="maint-modal erp-qb-dialog" onclick="event.stopPropagation()" style="max-width:480px">
+      <header class="erp-qb-dialog__head">
+        <h3 class="erp-qb-dialog__title">Past estimated time — bottleneck</h3>
+      </header>
+      <p class="mini-note erp-qb-dialog__sub">Pick a reason so we can see delays (parts, queue, payment, etc.).</p>
+      <div class="erp-qb-dialog__body">
+        <label class="qb-l">Reason</label>
+        <select id="sqDelayCode" class="qb-in" style="width:100%;margin-bottom:10px">
+          <option value="missing_parts">Missing parts</option>
+          <option value="long_queue">Long shop queue</option>
+          <option value="payment">Payment / approval</option>
+          <option value="vendor_delay">Vendor / external delay</option>
+          <option value="other">Other</option>
+        </select>
+        <label class="qb-l">Note</label>
+        <textarea id="sqDelayNote" class="qb-memo" style="width:100%;min-height:72px" placeholder="Optional detail"></textarea>
       </div>
+      <footer class="erp-qb-dialog__foot">
+        <button type="button" class="btn erp-qb-dialog__btn-secondary" onclick="closeShopDelayModal()">Cancel</button>
+        <button type="button" class="btn qb-btn-primary" onclick="submitShopDelay()">Save &amp; continue</button>
+      </footer>
     </div>
   </div>
   <datalist id="unitOptions"></datalist>
@@ -269,8 +285,8 @@
         </div>
       </section>
 
-      <section id="section-safety" class="section">
-        <div class="subtabs" style="margin-bottom:12px">
+      <section id="section-safety" class="section erp-ops-section">
+        <div class="subtabs erp-ops-subtabs-bar" style="margin-bottom:12px">
           <button type="button" class="subtab active" onclick="openSafetyTab('safe-hos', this)">HOS clocks</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-active', this)">Active / in service</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-assign', this)">Assignments</button>
@@ -279,7 +295,7 @@
         </div>
         <div id="safe-hos" class="tracking-sub">
           <p class="mini-note" style="margin:0 0 10px">Samsara HOS clocks: <strong>on duty, driving, sleeper berth, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle is hidden. Off duty <strong>with</strong> a vehicle is shown. Token needs <strong>Read ELD Compliance Settings (US)</strong>.</p>
-          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+          <div class="toolbar erp-ops-toolbar">
             <input id="safetySearch" class="in" style="max-width:280px" placeholder="Search driver or vehicle…" oninput="renderSafetyHos()" />
             <label class="mini-note" for="safetyHosDutyFilter" style="margin:0">Show</label>
             <select id="safetyHosDutyFilter" class="in" style="max-width:240px" onchange="renderSafetyHos()" title="Filter by duty state">
@@ -290,7 +306,7 @@
             </select>
             <span class="mini-note" id="safetyHosMeta"></span>
           </div>
-          <div class="safety-table-wrap">
+          <div class="safety-table-wrap erp-ops-data-frame">
             <table>
               <thead>
                 <tr>
@@ -312,7 +328,7 @@
           <p class="mini-note" style="margin:0 0 10px">
             <strong>Active</strong> = on duty (not off duty or sleeper). <strong>In service now</strong> = driving, on duty, or yard move (from Samsara HOS clocks).
           </p>
-          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+          <div class="toolbar erp-ops-toolbar">
             <label class="mini-note" for="safetyActiveDutyFilter" style="margin:0">List filter</label>
             <select id="safetyActiveDutyFilter" class="in" style="max-width:240px" onchange="renderSafetyActivePanels()" title="Same modes as HOS tab">
               <option value="relevant">Relevant (hide off-duty, no truck)</option>
@@ -327,7 +343,7 @@
                 <span class="panel-title" style="font-size:14px;margin:0">Active drivers</span>
                 <span class="mini-note" id="safetyActiveMeta"></span>
               </div>
-              <div class="safety-table-wrap" style="max-height:min(520px,60vh)">
+              <div class="safety-table-wrap erp-ops-data-frame" style="max-height:min(520px,60vh)">
                 <table>
                   <thead><tr><th>Driver</th><th>Duty</th><th>Vehicle</th></tr></thead>
                   <tbody id="safetyActiveBody"></tbody>
@@ -339,7 +355,7 @@
                 <span class="panel-title" style="font-size:14px;margin:0">In service now</span>
                 <span class="mini-note" id="safetyInServiceMeta"></span>
               </div>
-              <div class="safety-table-wrap" style="max-height:min(520px,60vh)">
+              <div class="safety-table-wrap erp-ops-data-frame" style="max-height:min(520px,60vh)">
                 <table>
                   <thead><tr><th>Driver</th><th>Duty</th><th>Vehicle</th></tr></thead>
                   <tbody id="safetyInServiceBody"></tbody>
@@ -350,7 +366,7 @@
         </div>
         <div id="safe-assign" class="tracking-sub hidden">
           <p class="mini-note" style="margin:0 0 10px">Driver ↔ vehicle assignments from Samsara (current window).</p>
-          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+          <div class="toolbar erp-ops-toolbar">
             <input id="safetyAssignSearch" class="in" style="max-width:260px" placeholder="Filter vehicle or driver…" oninput="renderSafetyAssignments()" />
             <label class="mini-note" for="safetyAssignFilter" style="margin:0">Show</label>
             <select id="safetyAssignFilter" class="in" style="max-width:200px" onchange="renderSafetyAssignments()" title="Active = open assignment or end time in the future">
@@ -360,7 +376,7 @@
             </select>
             <span class="mini-note" id="safetyAssignMeta"></span>
           </div>
-          <div class="safety-table-wrap">
+          <div class="safety-table-wrap erp-ops-data-frame">
             <table>
               <thead><tr><th>Vehicle</th><th>Driver</th><th>Start</th><th>End</th></tr></thead>
               <tbody id="safetyAssignBody"></tbody>
@@ -375,7 +391,7 @@
           <p class="mini-note" style="margin:0 0 10px">
             Driver compliance file basics (local to this app): CDL, med card, drug test, hire date, notes. This is intentionally separate from QuickBooks vendor PII.
           </p>
-          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+          <div class="toolbar erp-ops-toolbar">
             <input id="driverFilesSearch" class="in" style="max-width:280px" placeholder="Search driver…" oninput="renderDriverFiles()" />
             <label class="mini-note" for="driverFilesUrgentOnly" style="margin:0">Show</label>
             <select id="driverFilesUrgentOnly" class="in" style="max-width:220px" onchange="renderDriverFiles()">
@@ -385,7 +401,7 @@
             </select>
             <span class="mini-note" id="driverFilesMeta"></span>
           </div>
-          <div class="safety-table-wrap">
+          <div class="safety-table-wrap erp-ops-data-frame">
             <table>
               <thead>
                 <tr>
@@ -601,7 +617,7 @@
                     </div>
                   </div>
 
-                  <div class="maint-subcard maint-cost-panel-card">
+                  <div class="maint-subcard maint-cost-panel-card erp-qb-cost-shell">
                     <div class="maint-subcard__head">Cost breakdown</div>
                     <div class="maint-subcard__body maint-cost-table-wrap">
                       <table class="maint-cost-table" aria-label="Cost lines">
@@ -675,7 +691,7 @@
                   </div>
 
                   <div id="tireFields" class="hidden">
-                    <div class="tire-layout-wrap">
+                    <div class="tire-layout-wrap erp-qb-parts-map-chrome">
                       <div>
                         <svg class="tire-svg" viewBox="0 0 240 420">
                           <rect x="85" y="20" width="70" height="380" rx="18" fill="#e2e8f0" stroke="#64748b" />
@@ -914,15 +930,15 @@
         </div>
       </section>
 
-      <section id="section-tracking" class="section">
-        <div class="grid grid-4">
+      <section id="section-tracking" class="section erp-ops-section">
+        <div class="grid grid-4 erp-kpi-grid erp-ops-kpi-strip">
           <div class="metric"><div class="metric-label">Trucks</div><div class="metric-value" id="trackTruckCount">0</div></div>
           <div class="metric"><div class="metric-label">Refrigerated Vans</div><div class="metric-value" id="trackReeferCount">0</div></div>
           <div class="metric"><div class="metric-label">Flatbeds</div><div class="metric-value" id="trackFlatbedCount">0</div></div>
           <div class="metric"><div class="metric-label">Other / Company Vehicles</div><div class="metric-value" id="trackOtherCount">0</div></div>
         </div>
 
-        <div class="subtabs" style="margin-top:12px">
+        <div class="subtabs erp-ops-subtabs-bar" style="margin-top:12px">
           <button type="button" class="subtab" onclick="openTrackingTab('tr-maint-shop', this)">Shop &amp; maintenance</button>
           <button type="button" class="subtab active" onclick="openTrackingTab('tr-map', this)">Map</button>
           <button type="button" class="subtab" onclick="openTrackingTab('tr-assets', this)">Assets</button>
@@ -935,7 +951,7 @@
             Shop queue, expense rollups, exports, and R&amp;M health signals. Log service under <strong>Maintenance → Create work order</strong>; full grid under <strong>Maintenance → Fleet table</strong>; shop / location context under <strong>Maintenance → Shop / location</strong>. Deep links: <code>#tracking-shop</code> or <code>#maintenance-shop</code> (this tab), <code>#maintenance-parts</code> (opens here + parts queue), <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> (or legacy <code>#maintenance-alerts</code>), <code>#maintenance-shop-location</code>.
           </p>
           <div class="panel shop-print-area maint-section-card">
-            <div class="panel-head" style="align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line-strong);background:linear-gradient(180deg,#f0f4fc 0%,#fff 100%)">
+            <div class="panel-head erp-ops-hero-head">
               <div style="flex:1;min-width:200px">
                 <div class="panel-title">Maintenance &amp; shop</div>
                 <div class="mini-note" style="margin-top:4px;max-width:52ch">
@@ -955,7 +971,7 @@
                 <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1d4ed8;font-weight:600">Vehicle map</a>
                 · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:600">Safety / HOS</a>
               </p>
-              <div class="subtabs shop-subtabs" id="shopBoardSubtabs">
+              <div class="subtabs shop-subtabs erp-ops-shop-subtabs" id="shopBoardSubtabs">
                 <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
                 <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External shop</button>
                 <button type="button" class="subtab" data-shop-tab="roadside" onclick="openShopBoardTab('roadside', this)">Roadside service</button>
@@ -963,7 +979,7 @@
                 <button type="button" class="subtab" data-shop-tab="oos" onclick="openShopBoardTab('oos', this)">Out of service</button>
               </div>
               <div id="shopTabInternal" class="shop-tab-panel active">
-                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                <div class="toolbar erp-ops-toolbar erp-ops-toolbar--dense">
                   <div style="min-width:220px;flex:1">
                     <div class="mini-note" style="margin:0 0 4px">Search</div>
                     <input id="shopInternalSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
@@ -987,7 +1003,7 @@
                   </div>
                   <button type="button" class="btn" title="Add to internal queue" onclick="openShopQueueModal('internal')">+ Add</button>
                 </div>
-                <div class="erp-table-scroll" style="border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
                       <tr>
@@ -1011,7 +1027,7 @@
                 </div>
               </div>
               <div id="shopTabExternal" class="shop-tab-panel">
-                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                <div class="toolbar erp-ops-toolbar erp-ops-toolbar--dense">
                   <div style="min-width:220px;flex:1">
                     <div class="mini-note" style="margin:0 0 4px">Search</div>
                     <input id="shopExternalSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
@@ -1035,7 +1051,7 @@
                   </div>
                   <button type="button" class="btn" title="Add to external queue" onclick="openShopQueueModal('external')">+ Add</button>
                 </div>
-                <div class="erp-table-scroll" style="border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
                       <tr>
@@ -1059,7 +1075,7 @@
                 </div>
               </div>
               <div id="shopTabRoadside" class="shop-tab-panel">
-                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                <div class="toolbar erp-ops-toolbar erp-ops-toolbar--dense">
                   <div style="min-width:220px;flex:1">
                     <div class="mini-note" style="margin:0 0 4px">Search</div>
                     <input id="shopRoadsideSearch" class="qb-in" placeholder="Unit, job title, vendor…" oninput="renderShopQueues()" />
@@ -1083,7 +1099,7 @@
                   </div>
                   <button type="button" class="btn" title="Add to roadside queue" onclick="openShopQueueModal('roadside')">+ Add</button>
                 </div>
-                <div class="erp-table-scroll" style="border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
                       <tr>
@@ -1110,7 +1126,7 @@
                 <p class="mini-note" style="margin:0 0 10px;max-width:70ch">
                   Track vendor parts orders the same way as shop jobs: <strong>Queued</strong> = waiting on supplier, <strong>In progress</strong> = partial / in transit, <strong>Completed</strong> = received and closed.
                 </p>
-                <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px;align-items:end">
+                <div class="toolbar erp-ops-toolbar erp-ops-toolbar--dense">
                   <div style="min-width:220px;flex:1">
                     <div class="mini-note" style="margin:0 0 4px">Search</div>
                     <input id="shopPartsSearch" class="qb-in" placeholder="Unit, PO, order description, supplier…" oninput="renderShopQueues()" />
@@ -1134,7 +1150,7 @@
                   </div>
                   <button type="button" class="btn" title="Add to parts queue" onclick="openShopQueueModal('parts')">+ Add</button>
                 </div>
-                <div class="erp-table-scroll" style="border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
                       <tr>
@@ -1195,7 +1211,7 @@
               </div>
             </div>
             <div class="panel-body">
-              <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:0 0 10px">
+              <div class="toolbar erp-ops-toolbar erp-ops-toolbar--dense">
                 <div style="min-width:220px;flex:1">
                   <div class="mini-note" style="margin:0 0 4px">Search</div>
                   <input id="integritySearch" class="qb-in" placeholder="Unit, type, message, driver…" oninput="renderSecurityAlerts(window.__lastSecurityAlerts||null)" />
@@ -1220,7 +1236,7 @@
         </div>
 
         <div id="tr-map" class="tracking-sub">
-          <div class="track-grid" style="margin-top:8px">
+          <div class="track-grid erp-ops-split" style="margin-top:8px">
             <div class="panel">
               <div class="panel-head"><div class="panel-title">Units</div></div>
               <div class="panel-body">
@@ -1266,7 +1282,7 @@
             <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> — this dashboard is read-only for ELD data.
             Local driver records for settlements live in Postgres / TMS when configured.
           </p>
-          <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+          <div class="toolbar erp-ops-toolbar">
             <label class="mini-note" for="trackingDriversDutyFilter" style="margin:0">Duty filter</label>
             <select id="trackingDriversDutyFilter" class="in" style="max-width:240px" onchange="renderTrackingDrivers()">
               <option value="relevant">Relevant (hide off-duty, no truck)</option>
@@ -1275,7 +1291,7 @@
               <option value="all">All Samsara rows</option>
             </select>
           </div>
-          <div class="safety-table-wrap">
+          <div class="safety-table-wrap erp-ops-data-frame erp-table-scroll">
             <table>
               <thead><tr><th>Driver</th><th>Duty</th><th>Vehicle</th><th>Drive left</th></tr></thead>
               <tbody id="trackingDriversBody"></tbody>
@@ -1779,31 +1795,33 @@
                       <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
                     </div>
                   </div>
-                  <div style="margin:4px 0 0;font-weight:700;font-size:12px;color:#334155">Cost lines (same shape as maintenance)</div>
-                  <p class="mini-note maint-field-hint" style="margin:4px 0 8px">
-                    Each row: <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product/service + gal × $/gal). Use the fuel description catalog or free text. <strong>Lock line $</strong> when you enter a total and want gallons priced backward.
-                  </p>
-                  <div class="maint-cost-table-wrap">
-                    <table class="maint-cost-table acct-fuel-manual-table" aria-label="Manual fuel cost lines">
-                      <thead>
-                        <tr>
-                          <th>Description</th>
-                          <th>QBO item / account</th>
-                          <th class="maint-cost-table__num">Qty (gal)</th>
-                          <th class="maint-cost-table__num">Unit $</th>
-                          <th class="maint-cost-table__num">Line $</th>
-                          <th class="maint-cost-table__del"></th>
-                        </tr>
-                      </thead>
-                      <tbody id="fuelManualLines"></tbody>
-                      <tfoot>
-                        <tr class="maint-cost-table__addrow">
-                          <td colspan="6">
-                            <button type="button" class="maint-cost-addline" onclick="addFuelManualLine()">+ Add line</button>
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                  <div class="erp-qb-cost-shell erp-qb-cost-shell--embedded">
+                    <div class="erp-qb-cost-shell__label">Cost lines (same shape as maintenance)</div>
+                    <p class="mini-note maint-field-hint erp-qb-cost-shell__hint">
+                      Each row: <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product/service + gal × $/gal). Use the fuel description catalog or free text. <strong>Lock line $</strong> when you enter a total and want gallons priced backward.
+                    </p>
+                    <div class="maint-cost-table-wrap">
+                      <table class="maint-cost-table acct-fuel-manual-table" aria-label="Manual fuel cost lines">
+                        <thead>
+                          <tr>
+                            <th>Description</th>
+                            <th>QBO item / account</th>
+                            <th class="maint-cost-table__num">Qty (gal)</th>
+                            <th class="maint-cost-table__num">Unit $</th>
+                            <th class="maint-cost-table__num">Line $</th>
+                            <th class="maint-cost-table__del"></th>
+                          </tr>
+                        </thead>
+                        <tbody id="fuelManualLines"></tbody>
+                        <tfoot>
+                          <tr class="maint-cost-table__addrow">
+                            <td colspan="6">
+                              <button type="button" class="maint-cost-addline" onclick="addFuelManualLine()">+ Add line</button>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                   <p class="mini-note" style="margin:6px 0 0">
                     Multiple lines share the header; each line is its own fuel ledger row. If you enter an expense #, extra lines use <code>-L2</code>, <code>-L3</code>… so QuickBooks DocNumbers stay unique.
