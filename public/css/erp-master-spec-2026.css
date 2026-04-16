@@ -1014,6 +1014,82 @@ body.erp-maintenance #acct-transactions .qb-doc-footer__right {
   gap: 8px;
 }
 
+body.erp-maintenance #acct-fuel-expense .qb-doc-shell--fuel-spec {
+  border: 1px solid #e8eaed;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-shell--fuel-spec .qb-doc-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e8eaed;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-backlink {
+  border: none;
+  background: transparent;
+  color: #1967d2;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-backlink:hover {
+  background: #e8f0fe;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-closebtn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  background: #fff;
+  color: #5f6368;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-closebtn:hover {
+  background: #f1f3f4;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-footer--fuel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid #e8eaed;
+  background: #fafbfc;
+}
+
+body.erp-maintenance #acct-fuel-expense .qb-doc-footer--fuel .qb-doc-footer__left,
+body.erp-maintenance #acct-fuel-expense .qb-doc-footer--fuel .qb-doc-footer__right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 /* =============================================================================
    Rule 11 — Global default for new cost lines (WO + manual fuel)
    ============================================================================= */
@@ -1134,6 +1210,16 @@ body.erp-maintenance #acct-bill-pay .mr-bp-table-wrap {
   background: #fff;
 }
 
+body.erp-maintenance #acct-bill-pay .erp-bp-log-table {
+  table-layout: fixed;
+}
+
+body.erp-maintenance #acct-bill-pay .mr-bp-log-wrap {
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
+  background: #fff;
+}
+
 /* =============================================================================
    Rule 18 — Reports hub: category tiles above subtabs
    ============================================================================= */
@@ -1208,6 +1294,12 @@ body.erp-maintenance .erp-reports-hub__tile {
 body.erp-maintenance .erp-reports-hub__tile:hover {
   background: #f1f3f4;
   border-color: #c4c7c5;
+}
+
+body.erp-maintenance .erp-reports-hub__tile--active {
+  border-color: #1967d2;
+  background: #e8f0fe;
+  box-shadow: none;
 }
 
 body.erp-maintenance .erp-reports-hub__tile-title {
