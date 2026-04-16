@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>IH35 Unified Dashboard</title>
+  <title>IH35 ERP — Operations</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="/manifest.json" />
@@ -130,29 +130,29 @@
   <datalist id="tireConditionOptions"></datalist>
 
   <div class="app erp-master" id="erpApp">
-    <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show sidebar">»</button>
+    <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show lists &amp; shortcuts column">»</button>
 
-    <nav id="erpIconNav" class="erp-icon-nav" aria-label="Primary modules">
-      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Home" onclick="openSection('dashboard', this)">
+    <nav id="erpIconNav" class="erp-icon-nav" aria-label="Company navigation">
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Home overview" onclick="openSection('dashboard', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Home</span>
       </button>
-      <button type="button" class="erp-icon-nav__btn nav-btn active" data-section="maintenance" title="Maintenance" onclick="openSection('maintenance', this)">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maint</span>
+      <button type="button" class="erp-icon-nav__btn nav-btn active" data-section="maintenance" title="Maintenance — work orders, fleet, shop" onclick="openSection('maintenance', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maintenance</span>
       </button>
-      <a class="erp-icon-nav__link" href="/dispatch.html" title="Loads &amp; TMS (dispatch board)">
+      <a class="erp-icon-nav__link" href="/dispatch.html" title="Loads &amp; dispatch (TMS board)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">⎔</span><span class="erp-icon-nav__lbl">Loads</span>
       </a>
-      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="safety" title="Safety" onclick="openSection('safety', this)">
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="safety" title="Safety &amp; compliance" onclick="openSection('safety', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">◎</span><span class="erp-icon-nav__lbl">Safety</span>
       </button>
-      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="tracking" title="Tracking" onclick="openSection('tracking', this)">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">▣</span><span class="erp-icon-nav__lbl">Track</span>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="tracking" title="Fleet tracking &amp; assets" onclick="openSection('tracking', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">▣</span><span class="erp-icon-nav__lbl">Tracking</span>
       </button>
-      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="accounting" title="Accounting" onclick="openSection('accounting', this)">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Acct</span>
-        <span id="navAccountingBadge" class="nav-badge nav-badge--danger erp-icon-nav__badge hidden" aria-label="QuickBooks errors">0</span>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="accounting" title="Accounting — expenses, bills, QuickBooks" onclick="openSection('accounting', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Accounting</span>
+        <span id="navAccountingBadge" class="nav-badge nav-badge--danger erp-icon-nav__badge hidden" aria-label="QuickBooks sync needs attention">0</span>
       </button>
-      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="reports" title="Reports" onclick="openSection('reports', this)">
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="reports" title="Reports — browse and export" onclick="openSection('reports', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">≡</span><span class="erp-icon-nav__lbl">Reports</span>
       </button>
     </nav>
@@ -163,20 +163,20 @@
       <button type="button" class="nav-btn" data-section="fuel" onclick="openSection('fuel', this);" tabindex="-1" aria-hidden="true"></button>
     </div>
 
-    <aside class="erp-module-sidebar" aria-label="Module menu">
+    <aside class="erp-module-sidebar" aria-label="Lists and shortcuts for the open area">
       <div class="erp-module-sidebar__head">
         <div class="erp-module-sidebar__brand-title">IH35 ERP</div>
-        <button type="button" class="erp-module-sidebar__collapse" onclick="toggleErpSidebar(true)" title="Hide sidebar">«</button>
+        <button type="button" class="erp-module-sidebar__collapse" onclick="toggleErpSidebar(true)" title="Hide lists column">«</button>
       </div>
       <div class="erp-module-sidebar__scroll">
         <div id="erpModuleSidebarInner" class="erp-module-sidebar__inner"></div>
       </div>
       <div class="erp-module-sidebar__footer">
-        <div class="erp-sb-heading">Status</div>
-        <div id="sidebarQboStatus" class="mini-note">QuickBooks not checked</div>
+        <div class="erp-sb-heading">Connections</div>
+        <div id="sidebarQboStatus" class="mini-note">QuickBooks: checking connection…</div>
         <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
-        <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: not loaded</div>
-        <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Not loaded</div>
+        <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: waiting for first refresh…</div>
+        <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Last refresh: waiting…</div>
       </div>
     </aside>
 
@@ -184,7 +184,7 @@
       <div id="erpDrawerBackdrop" class="erp-drawer__backdrop" onclick="closeErpDrawer()"></div>
       <aside id="erpDrawer" class="erp-drawer" aria-hidden="true">
         <div class="erp-drawer__head">
-          <div class="erp-drawer__title" id="erpDrawerTitle">Add new</div>
+          <div class="erp-drawer__title" id="erpDrawerTitle">Create</div>
           <button type="button" class="erp-drawer__close" onclick="closeErpDrawer()">Close</button>
         </div>
         <div class="erp-drawer__body" id="erpDrawerBody"></div>
@@ -194,15 +194,15 @@
         <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
         <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
         <header class="topbar erp-topbar">
-          <div class="title" id="pageTitle">Maintenance &amp; shop</div>
-          <a href="/" class="topbar-home-link">Ops hub</a>
+          <div class="title" id="pageTitle">Maintenance center</div>
+          <a href="/" class="topbar-home-link">Company home</a>
           <div class="erp-topbar__search">
             <div class="erp-topbar__search-inner">
-              <input id="globalSearchInput" class="qb-in" placeholder="Search ERP (units, vendors, loads, bills, work orders…)" autocomplete="off" oninput="globalSearchRender()" onkeydown="globalSearchKeydown(event)" />
+              <input id="globalSearchInput" class="qb-in" placeholder="Search vendors, units, loads, bills, and work orders…" autocomplete="off" oninput="globalSearchRender()" onkeydown="globalSearchKeydown(event)" />
               <div id="globalSearchMenu" class="qb-picker-menu hidden" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"></div>
             </div>
           </div>
-          <span class="mini-note topbar-hint">Modules: left rail · Search · + New</span>
+          <span class="mini-note topbar-hint">Tip: use the left menu to switch areas, search here, or <strong>+ New</strong> to create.</span>
           <div class="erp-topbar__actions print-hide-actions">
             <div class="erp-new-wrap">
               <button type="button" class="erp-btn-primary" id="erpNewMenuBtn" onclick="erpToggleNewMenu(event)">+ New</button>
@@ -238,23 +238,23 @@
                 </div>
               </div>
             </div>
-            <button type="button" title="Fetch latest data now (also auto-refreshes)" onclick="loadAll()">Refresh now</button>
-            <button type="button" onclick="testQuickBooks()">Test QuickBooks</button>
-            <button type="button" onclick="refreshQboMaster()">Refresh QBO Master</button>
+            <button type="button" title="Reload lists and boards (auto-refresh also runs in the background)" onclick="loadAll()">Refresh</button>
+            <button type="button" title="Verify QuickBooks OAuth and API reachability" onclick="testQuickBooks()">Test QuickBooks connection</button>
+            <button type="button" title="Reload vendors, items, and accounts from QuickBooks" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
           </div>
         </header>
 
         <div class="erp-main-body">
       <section id="section-dashboard" class="section">
         <div class="hero-grid">
-          <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Diesel / Fuel Board</h3><p>Fuel planning + diesel management</p></div>
-          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance Board</h3><p>Create work order, fleet table, R&amp;M Status, shop / location, and service records</p></div>
-          <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety Board</h3><p>Samsara HOS, drivers, assignments</p></div>
-          <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Vehicle Tracking Board</h3><p>Map, assets, <strong>Shop &amp; maintenance</strong> tab (queues + alerts), Samsara live data</p></div>
-          <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting Board</h3><p>Expenses, bills, QuickBooks</p></div>
+          <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Fuel &amp; route planning</h3><p>Diesel planner, relay pricing, and fuel history</p></div>
+          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance center</h3><p>Work orders, fleet table, R&amp;M status, shop / location, and service records</p></div>
+          <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety &amp; compliance</h3><p>Samsara HOS, drivers, and assignments</p></div>
+          <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Fleet tracking</h3><p>Live map, assets, <strong>Shop &amp; maintenance</strong> (queues and alerts), and Samsara data</p></div>
+          <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting</h3><p>Expenses, bills, and QuickBooks sync</p></div>
           <div class="hero-card hero-card--hint" role="note">
             <h3>Reports</h3>
-            <p>All downloadable reports and analytics live on the <strong>Reports</strong> module only (≡ in the left icon rail). Home cards here stay operational — no report shortcuts on other boards.</p>
+            <p>Financial and operational reports live under <strong>Reports</strong> (≡ in company navigation). This home screen stays focused on working transactions.</p>
           </div>
         </div>
 
@@ -275,9 +275,9 @@
             <div class="metric-sub muted">PM &amp; critical</div>
           </div>
           <div class="metric mr-kpi-card">
-            <div class="metric-label">QBO vendor count</div>
+            <div class="metric-label">QuickBooks vendors</div>
             <div class="metric-value" id="dashQboVendors">0</div>
-            <div class="metric-sub muted">From last catalog sync</div>
+            <div class="metric-sub muted">From last list sync</div>
           </div>
         </div>
 
@@ -843,13 +843,13 @@
 
             <div class="panel">
               <div class="panel-head">
-                <div class="panel-title">File uploads</div>
+                <div class="panel-title">Imports &amp; uploads</div>
               </div>
               <div class="panel-body form-stack">
                 <p class="mini-note" style="margin:0">
-                  Spreadsheet imports live under <strong>Uploads</strong> in the sidebar (hover <strong>Uploads ▾</strong>) so there is a single hub — maintenance history, AP expenses, fuel/Relay, and connection notes.
+                  Spreadsheet imports live under <strong>Imports &amp; uploads</strong> in the lists column (see <strong>Lists, imports &amp; admin</strong> at the bottom of the sidebar, or use the button below) — maintenance history, AP expenses, fuel and Relay, and connection notes.
                 </p>
-                <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to Uploads</button>
+                <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to imports &amp; uploads</button>
               </div>
             </div>
 
@@ -981,7 +981,7 @@
               <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
                 <button type="button" onclick="window.print()">Print</button>
                 <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:13px">PDF</a>
-                <button type="button" title="Fetch latest fleet &amp; shop data now" onclick="loadAll()">Refresh now</button>
+                <button type="button" title="Reload fleet, shop, and accounting data" onclick="loadAll()">Refresh</button>
               </div>
             </div>
             <div class="panel-body">
@@ -2251,11 +2251,11 @@
               <div class="panel-title">Executive overview</div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <button type="button" onclick="loadReportsData()">Refresh reports</button>
-                <button type="button" class="secondary" onclick="refreshQboMaster()">Sync QBO master + activity</button>
+                <button type="button" class="secondary" title="Reload QuickBooks lists and recent transactions for reports" onclick="refreshQboMaster()">Sync QuickBooks lists + activity</button>
               </div>
             </div>
             <div class="panel-body" id="repOverviewBody">
-              <p class="mini-note">Use Refresh reports after connecting QuickBooks (runs catalog + bills/purchases/invoices for the configured window).</p>
+              <p class="mini-note">After you connect QuickBooks, use <strong>Refresh reports</strong> (catalog plus bills, purchases, and invoices for the configured window).</p>
             </div>
           </div>
         </div>
@@ -2432,7 +2432,7 @@
                 <strong>Next implementation steps:</strong> (1) persist Samsara <code>vehicleId</code> on <code>trucks</code>/<code>trailers</code>; (2) nightly job: odometer or GPS miles by state (route polyline + boundary lookup); (3) import fuel transactions from QBO or fuel card CSV; (4) quarterly IFTA worksheet + CSV/PDF export; (5) driver profile table (CDL/med card/drug test dates) linked to <code>drivers.qbo_vendor_id</code>, separate from QBO PII.
               </p>
               <p class="mini-note" style="margin:0">
-                <strong>In this app today:</strong> Fuel planner (<a href="/fuel.html" target="_blank" rel="noopener">Fuel Board</a>), Samsara fleet/HOS, load-level settlement and driver-pay rollup (Accounting → Settlement), and QBO master sync. Run <code>npm run db:migrate</code> after pull for new fleet/driver columns (see migration <code>011_fleet_driver_compliance.sql</code>).
+                <strong>In this app today:</strong> Fuel planner (<a href="/fuel.html" target="_blank" rel="noopener">full-screen fuel planner</a>), Samsara fleet and HOS, load-level settlement and driver-pay rollup (<strong>Accounting → Settlement</strong>), and QuickBooks list sync. Run <code>npm run db:migrate</code> after pull for new fleet and driver columns (see migration <code>011_fleet_driver_compliance.sql</code>).
               </p>
             </div>
           </div>
@@ -2445,8 +2445,8 @@
       <section id="section-catalog" class="section">
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">Catalogs</div>
-            <div class="mini-note" style="margin:0">Use the sidebar <strong>Catalogs ▾</strong> menu, or pick a catalog below.</div>
+            <div class="panel-title">Lists &amp; catalogs</div>
+            <div class="mini-note" style="margin:0">Use the sidebar <strong>Lists &amp; catalogs</strong> shortcuts, or pick a list below.</div>
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
@@ -2475,10 +2475,10 @@
             </div>
             <div id="catalog-panel-qbo" class="catalog-subpanel">
               <p class="mini-note" style="margin:0 0 10px">
-                Vendors, items, and expense accounts are mastered in <strong>QuickBooks Online</strong>. Refresh the live cache here, then pick them on bills and maintenance expense lines. Use <strong>Vendors &amp; drivers</strong> to search and link Samsara drivers to QBO payees.
+                Vendors, items, and expense accounts are mastered in <strong>QuickBooks Online</strong>. Refresh the live cache here, then pick them on bills and maintenance expense lines. Use <strong>Vendors &amp; drivers</strong> to search and link Samsara drivers to QuickBooks payees.
               </p>
-              <button type="button" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
-              <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-qbo', document.getElementById('acctQbDdTrigger'));">Open Accounting → QuickBooks Live Master</button>
+              <button type="button" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
+              <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-qbo', document.getElementById('acctQbDdTrigger'));">Open Accounting → QuickBooks live master</button>
               <div class="catalog-add-card" style="margin-top:16px;max-width:560px">
                 <div class="catalog-add-card__head"><span class="catalog-add-card__title">New QuickBooks vendor</span></div>
                 <div class="catalog-add-card__body form-stack">
@@ -2503,7 +2503,7 @@
             </div>
             <div id="catalog-panel-vendors" class="catalog-subpanel">
               <p class="mini-note" style="margin:0 0 10px">
-                <strong>QuickBooks vendors</strong> (shops, fuel, etc.) and <strong>TMS drivers</strong> linked as QBO vendors for pay — one list for expense routing. Sync QBO master after adding vendors in QuickBooks.
+                <strong>QuickBooks vendors</strong> (shops, fuel, and so on) and <strong>TMS drivers</strong> linked as QuickBooks vendors for pay — one list for expense routing. After you add vendors in QuickBooks, use <strong>Refresh QuickBooks lists</strong> in the top bar.
               </p>
               <div id="vendorCatalogBody" class="mini-note">Open this tab to load.</div>
             </div>
@@ -2551,8 +2551,8 @@
       <section id="section-uploads" class="section">
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">Uploads</div>
-            <div class="mini-note" style="margin:0">One place for spreadsheet imports. Use the sidebar <strong>Uploads ▾</strong> menu for quick access.</div>
+            <div class="panel-title">Imports &amp; uploads</div>
+            <div class="mini-note" style="margin:0">One place for spreadsheet imports. Use the sidebar <strong>Imports &amp; uploads</strong> shortcuts for quick access.</div>
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
@@ -4220,16 +4220,16 @@
     function erpSbAdmin() {
       return (
         '<div class="erp-sb-sep"></div>' +
-        '<div class="erp-sb-heading">Tools &amp; data</div>' +
+        '<div class="erp-sb-heading">Lists, imports &amp; admin</div>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'service\');">Service types (database)</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'vendors\');">Vendors &amp; driver payees</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'fuel\');">Uploads → Fuel CSV</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'maint\');">Uploads → Maintenance history</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'ap\');">Uploads → Maintenance AP</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'comdata\');">Uploads → Comdata</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'fuel\');">Import — Fuel CSV</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'maint\');">Import — Maintenance history</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'ap\');">Import — Maintenance AP</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'comdata\');">Import — Comdata</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'sync\');">Connections &amp; Samsara writes</button>' +
         '<button type="button" class="erp-sb-link" onclick="location.href=\'/banking.html\'">Bank CSV (matching)</button>' +
         '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="location.href=\'/settings.html\'">Settings &amp; users</button>' +
@@ -4250,8 +4250,8 @@
       };
       if (name === 'maintenance') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Maintenance board</div>' +
-          '<button type="button" class="erp-sb-link" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Overview (KPIs)</button>' +
+          '<div class="erp-sb-heading">Maintenance center</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Home overview (KPIs)</button>' +
           mt('record', 'Work orders &amp; records') +
           mt('fleet', 'Fleet table') +
           mt('rm', 'R&amp;M status') +
@@ -4270,25 +4270,25 @@
       }
       if (name === 'dashboard') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Overview</div>' +
-          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance board</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;fuel&quot;);">Diesel / Fuel</button>' +
+          '<div class="erp-sb-heading">Home overview</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;fuel&quot;);">Fuel &amp; route planning</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;accounting&quot;);">Accounting</button>' +
-          '<p class="mini-note" style="margin:8px 0 0;line-height:1.45">Reports: use the <strong>Reports</strong> icon (≡) in the left rail — not duplicated here.</p>' +
+          '<p class="mini-note" style="margin:8px 0 0;line-height:1.45">For <strong>Reports</strong>, open the <strong>Reports</strong> icon (≡) in the company navigation — this column stays on day-to-day operations.</p>' +
           adm;
         return;
       }
       if (name === 'fuel') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Fuel</div>' +
-          '<p class="mini-note" style="margin:0 0 8px">Embedded fuel planner. Use the link for a full-window view.</p>' +
-          '<a class="erp-sb-link" href="/fuel.html" target="_blank" rel="noopener" style="display:inline-block">Open full-screen fuel planner</a>' +
+          '<div class="erp-sb-heading">Fuel &amp; route planning</div>' +
+          '<p class="mini-note" style="margin:0 0 8px">Planner runs inside this app. Open full screen when you want a dedicated browser tab.</p>' +
+          '<a class="erp-sb-link" href="/fuel.html" target="_blank" rel="noopener" style="display:inline-block">Open fuel planner (full screen)</a>' +
           adm;
         return;
       }
       if (name === 'safety') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Safety</div>' +
+          '<div class="erp-sb-heading">Safety &amp; compliance</div>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-hos&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-hos\\\']&quot;));">HOS clocks</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-active&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-active\\\']&quot;));">Active / in service</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-assign&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-assign\\\']&quot;));">Assignments</button>' +
@@ -4299,7 +4299,7 @@
       }
       if (name === 'tracking') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Tracking</div>' +
+          '<div class="erp-sb-heading">Fleet tracking</div>' +
           '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-map\\\']&quot;));">Live map</button>' +
           '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance</button>' +
           '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Assets</button>' +
@@ -4322,14 +4322,14 @@
       }
       if (name === 'reports') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Reports hub</div>' +
-          '<p class="mini-note" style="margin:0 0 8px">Use the left <strong>Browse</strong> column on this board, or the top tab row. TMS loads and settlement follow your database connection status.</p>' +
+          '<div class="erp-sb-heading">Reports</div>' +
+          '<p class="mini-note" style="margin:0 0 8px">Use <strong>Browse</strong> on this board or the tabs across the top. TMS and settlement reports reflect your live connection to the database.</p>' +
           adm;
         return;
       }
       if (name === 'catalog') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Catalogs</div>' +
+          '<div class="erp-sb-heading">Lists &amp; catalogs</div>' +
           '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
           '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
           '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>' +
@@ -4340,7 +4340,7 @@
       }
       if (name === 'uploads') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Uploads</div>' +
+          '<div class="erp-sb-heading">Imports &amp; uploads</div>' +
           '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;fuel&quot;);">Fuel CSV</button>' +
           '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;maint&quot;);">Maintenance history</button>' +
           '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;ap&quot;);">Maintenance AP</button>' +
@@ -4348,9 +4348,9 @@
           adm;
         return;
       }
-      inner.innerHTML =
-        '<div class="erp-sb-heading">Navigate</div>' +
-        '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance</button>' +
+        inner.innerHTML =
+        '<div class="erp-sb-heading">Shortcuts</div>' +
+        '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>' +
         adm;
     }
 
@@ -4424,8 +4424,8 @@
     function erpNewPlaceholder(label) {
       erpCloseNewMenu();
       openErpDrawer(
-        label || 'New',
-        `<div class="form-stack"><p class="mini-note" style="margin:0 0 10px">Use <strong>Accounting → Maintenance expenses</strong> (or related tabs) to enter this in QuickBooks from this app. This menu item is a shortcut shell only.</p><button type="button" class="btn" onclick="closeErpDrawer()">Close</button></div>`,
+        label || 'Create',
+        `<div class="form-stack"><p class="mini-note" style="margin:0 0 10px">This type is not wired end-to-end yet. Use <strong>Accounting</strong> (for example <strong>Maintenance expenses</strong> or related tabs) to record it and sync with QuickBooks.</p><button type="button" class="btn" onclick="closeErpDrawer()">Close</button></div>`,
         null
       );
     }
@@ -4439,15 +4439,15 @@
       if (btn) btn.classList.add('active');
 
       const titleMap = {
-        dashboard: 'Overview',
-        fuel: 'Diesel & route planning',
-        maintenance: 'Maintenance & shop',
-        safety: 'Safety Board',
-        tracking: 'Vehicle Tracking Board',
-        accounting: 'Accounting Board',
-        reports: 'Reports Board',
-        catalog: 'Catalogs',
-        uploads: 'Uploads'
+        dashboard: 'Home overview',
+        fuel: 'Fuel & route planning',
+        maintenance: 'Maintenance center',
+        safety: 'Safety & compliance',
+        tracking: 'Fleet tracking',
+        accounting: 'Accounting',
+        reports: 'Reports',
+        catalog: 'Lists & catalogs',
+        uploads: 'Imports & uploads'
       };
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
       if (name === 'maintenance') {
@@ -4772,7 +4772,7 @@
       if (qbEl) {
         if (!ta || !ta.startDate) {
           qbEl.innerHTML =
-            '<p class="mini-note">No QBO transaction window loaded. Set <code>QBO_SYNC_TRANSACTION_DAYS</code> in server env (e.g. 90), connect QuickBooks, then use <strong>Sync QBO master + activity</strong> or Refresh QBO Master.</p>';
+            '<p class="mini-note">No QuickBooks transaction window loaded. Set <code>QBO_SYNC_TRANSACTION_DAYS</code> in server env (e.g. 90), connect QuickBooks, then run <strong>Sync QuickBooks lists + activity</strong> or <strong>Refresh QuickBooks lists</strong> in the top bar.</p>';
         } else {
           const tot = ta.totals || {};
           qbEl.innerHTML = `
@@ -4992,12 +4992,12 @@
     async function loadQboStatus() {
       try {
         const s = await j('/api/qbo/status');
-        let txt = 'QuickBooks not connected yet';
-        if (!s.configured) txt = 'QuickBooks env is missing';
-        else if (s.connected) txt = `Connected to QuickBooks${s.companyName ? ' - ' + s.companyName : ''}`;
+        let txt = 'QuickBooks: not connected yet';
+        if (!s.configured) txt = 'QuickBooks: not configured on server';
+        else if (s.connected) txt = `QuickBooks: connected${s.companyName ? ' — ' + s.companyName : ''}`;
         document.getElementById('sidebarQboStatus').textContent = txt;
       } catch {
-        document.getElementById('sidebarQboStatus').textContent = 'QuickBooks status check failed';
+        document.getElementById('sidebarQboStatus').textContent = 'QuickBooks: status check failed';
       }
     }
 
@@ -5169,7 +5169,7 @@
               <span class="mr-qbo-banner__icon" aria-hidden="true">!</span>
               <div>
                 <div class="mr-qbo-banner__title">QuickBooks — status unavailable</div>
-                <p class="mr-qbo-banner__meta">Check your connection and sign-in, then use <strong>Refresh now</strong>.</p>
+                <p class="mr-qbo-banner__meta">Check your connection and sign in, then choose <strong>Refresh</strong> in the top bar.</p>
               </div>
             </div>
             <div class="mr-qbo-banner__right print-hide-actions">
@@ -5445,7 +5445,7 @@
       const body = document.getElementById('erpDrawerBody');
       if (!d || !b || !t || !body) return;
       __drawerReturnFocusEl = document.activeElement;
-      t.textContent = title || 'Add new';
+      t.textContent = title || 'Create';
       body.innerHTML = html || '';
       d.classList.add('is-open');
       b.classList.add('is-open');
@@ -5787,11 +5787,11 @@
           ? new Date(dashRes.refreshedAt).toLocaleString()
           : new Date().toLocaleString();
         document.getElementById('sidebarLastUpdated').textContent =
-          'Fleet snapshot (Samsara): ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
+          'Samsara live data: ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
         const nVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
         const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
         const sf = document.getElementById('sidebarFleetStatus');
-        if (sf) sf.textContent = `Samsara board: ${nVeh} vehicles · refreshed ${brAt}`;
+        if (sf) sf.textContent = `Samsara: ${nVeh} vehicles · last refresh ${brAt}`;
         applyNavHash();
         if (activeSection === 'reports') loadReportsData();
         const repTeamPanel = document.getElementById('rep-team');
@@ -9089,7 +9089,7 @@
       const rec = resolvedServiceMileageRecommendation(selectedUnit);
       const mi = rec.miles;
       if (mi == null || !Number.isFinite(mi)) {
-        alert('No Samsara odometer (or saved fallback) for this unit yet. Use Refresh now or check the asset in Samsara Cloud.');
+        alert('No Samsara odometer (or saved fallback) for this unit yet. Choose Refresh in the top bar, or verify the asset in Samsara Cloud.');
         return;
       }
       const el = document.getElementById('serviceMileageInput');
@@ -10084,7 +10084,7 @@
                         String(v.qboId || '')
                       )}</span></div>`
                   )
-                  .join('') || '<span class="mini-note">None — refresh QBO master.</span>'}
+                  .join('') || '<span class="mini-note">None — refresh QuickBooks lists.</span>'}
               </div>
             </div>
             <div><div style="font-weight:700;margin-bottom:6px">TMS drivers (${dv.length})</div>
@@ -12239,7 +12239,7 @@
 
       document.getElementById('trackingSummaryText').innerHTML =
         `Tracked assets: ${vehicles.length}<br>` +
-        `Board vehicles loaded: ${(board.vehicles || []).length}<br>` +
+        `Fleet vehicles loaded: ${(board.vehicles || []).length}<br>` +
         `Live stat rows: ${(board.live || []).length}<br>` +
         `Assignments loaded: ${(board.assignments || []).length}<br>` +
         `HOS rows: ${(board.hos || []).length}`;

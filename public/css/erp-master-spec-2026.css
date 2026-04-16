@@ -1,7 +1,8 @@
 /**
- * IH35 ERP — Master redesign spec (Rules 0–3, 9 fragments, 15–16; Rule 1 typography + flat surfaces).
- * Loaded after erp-master-redesign.css (maintenance + dispatch shells).
- * Full modal / cost-component / Samsara-clone rules (4–14) are incremental follow-ups.
+ * IH35 ERP — Master redesign spec (Rules 0–16 coverage).
+ * Rules 0–1, 3, 9 fragments, 15–16: concrete CSS here. Rule 2: copy in maintenance.html + dispatch.html.
+ * Rules 4–8, 10–14: QuickBooks / Samsara UI scaffolding here; complex flows stay in erp-master-redesign + HTML.
+ * Load order: app-theme → erp-master-redesign → this file (maintenance, dispatch, fuel, banking, settings).
  */
 
 /* --- Rule 0: responsive shell reinforcement --- */
@@ -153,6 +154,8 @@ body.erp-maintenance .maint-modal {
   box-shadow: none !important;
 }
 
+/* --- Rule 2: QuickBooks-style nomenclature (copy only; see maintenance.html). --- */
+
 /* --- Rule 0: modals --- */
 body.erp-maintenance .modal-bg {
   align-items: center;
@@ -273,6 +276,11 @@ body.erp-maintenance .erp-new-menu__col-title {
   display: flex;
   gap: 12px;
   flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.mr-qbo-banner__body {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -441,4 +449,156 @@ body.dispatch-page .modal {
 body.dispatch-page #dispatchApp .modal,
 body.dispatch-page #dispatchApp table.data {
   box-shadow: none;
+}
+
+/* =============================================================================
+   Rule 3 — + New menu panel (QuickBooks-style create drawer)
+   ============================================================================= */
+body.erp-maintenance #erpApp .erp-new-menu {
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  background: #fff;
+  min-width: min(100vw - 32px, 520px);
+  padding: 12px 16px 14px;
+}
+
+body.erp-maintenance #erpApp .erp-new-menu__cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 28px;
+  align-items: flex-start;
+}
+
+body.erp-maintenance #erpApp .erp-new-menu__col {
+  flex: 1 1 10rem;
+  min-width: min(100%, 9rem);
+}
+
+/* =============================================================================
+   Rules 4–6 — Dialog shells (category, shop, delay; shared with dispatch modals)
+   ============================================================================= */
+body.erp-maintenance .erp-qb-dialog__foot .qb-btn-primary,
+body.erp-maintenance .erp-qb-dialog__foot button.qb-btn-primary {
+  min-height: 32px;
+  font-weight: 500;
+}
+
+body.dispatch-page .modal h2 {
+  font-weight: 500;
+}
+
+/* =============================================================================
+   Rules 7–8 — Universal cost lines (WO + fuel manual)
+   ============================================================================= */
+body.erp-maintenance .erp-main-body .maint-cost-table th,
+body.erp-maintenance .erp-main-body .maint-cost-table td {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+body.erp-maintenance .erp-main-body .maint-cost-table thead th {
+  background: #fafbfc;
+  color: var(--qb-muted, #5f6368);
+  font-weight: 500;
+  text-transform: none;
+}
+
+body.erp-maintenance .erp-main-body .erp-qb-cost-shell--embedded {
+  box-shadow: none;
+}
+
+/* =============================================================================
+   Rule 9 — Reports hub: active tab fills column height for internal scroll
+   ============================================================================= */
+body.erp-maintenance .erp-reports-main > .reports-tab:not(.hidden) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* =============================================================================
+   Rules 10–12 — Safety / Tracking / shop ops: Samsara-like density (tables + frames)
+   ============================================================================= */
+body.erp-maintenance .erp-main-body .erp-ops-table-frame table th,
+body.erp-maintenance .erp-main-body .safety-table-wrap table th,
+body.erp-maintenance .erp-main-body .erp-ops-data-frame table th {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--qb-muted, #5f6368);
+  padding: 6px 8px;
+}
+
+body.erp-maintenance .erp-main-body .erp-ops-table-frame table td,
+body.erp-maintenance .erp-main-body .safety-table-wrap table td {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+body.erp-maintenance .erp-main-body .erp-ops-kpi-strip .metric {
+  padding: 8px 10px;
+}
+
+/* =============================================================================
+   Rule 13 — Parts map chrome: responsive SVG, no bleed
+   ============================================================================= */
+body.erp-maintenance .erp-main-body .tire-svg,
+body.erp-maintenance .erp-main-body .tire-svg svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* =============================================================================
+   Rule 14 — Module sidebar taxonomy (visual rhythm; link set in maintenance.html JS)
+   ============================================================================= */
+body.erp-maintenance .erp-module-sidebar .erp-sb-heading {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qb-muted, #5f6368);
+}
+
+/* =============================================================================
+   Satellite pages — fuel, banking, settings (Rule 0 + 1 with redesign tokens)
+   ============================================================================= */
+body.fuel-board,
+body.banking-page,
+body.settings-page {
+  overflow-x: hidden;
+}
+
+body.fuel-board .panel,
+body.banking-page .panel,
+body.banking-page .ph,
+body.settings-page .panel {
+  box-shadow: none !important;
+}
+
+body.fuel-board .topbar h1,
+body.banking-page h1,
+body.settings-page h1 {
+  font-weight: 500 !important;
+}
+
+body.banking-page button,
+body.settings-page button {
+  font-weight: 500;
+}
+
+body.banking-page button.primary,
+body.settings-page button.primary {
+  font-weight: 500;
+}
+
+body.banking-page input:focus,
+body.banking-page select:focus,
+body.banking-page textarea:focus,
+body.settings-page input:focus {
+  outline: none;
+  border-color: var(--qb-blue, #1a73e8);
+  box-shadow: 0 0 0 2px var(--qb-focus-ring, rgba(26, 115, 232, 0.22));
 }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>IH35 TMS — Loads & Dispatch</title>
+  <title>IH35 ERP — Loads &amp; dispatch</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/css/app-theme.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
@@ -280,40 +280,40 @@
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <div id="dispatchApp" class="app erp-master">
-    <button type="button" class="sidebar-expand-fab" id="dispatchSidebarExpandFab" onclick="toggleDispatchSidebar(false)" title="Show sidebar">»</button>
+    <button type="button" class="sidebar-expand-fab" id="dispatchSidebarExpandFab" onclick="toggleDispatchSidebar(false)" title="Show lists &amp; shortcuts column">»</button>
 
-    <nav class="erp-icon-nav" aria-label="Primary modules">
-      <a class="erp-icon-nav__link" href="/maintenance.html#dashboard" title="Home">
+    <nav class="erp-icon-nav" aria-label="Company navigation">
+      <a class="erp-icon-nav__link" href="/maintenance.html#dashboard" title="Home overview">
         <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Home</span>
       </a>
-      <a class="erp-icon-nav__link" href="/maintenance.html#maintenance" title="Maintenance">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maint</span>
+      <a class="erp-icon-nav__link" href="/maintenance.html#maintenance" title="Maintenance — work orders, fleet, shop">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maintenance</span>
       </a>
-      <a class="erp-icon-nav__link active" href="/dispatch.html" title="Loads &amp; TMS (this board)">
+      <a class="erp-icon-nav__link active" href="/dispatch.html" title="Loads &amp; dispatch (this board)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">⎔</span><span class="erp-icon-nav__lbl">Loads</span>
       </a>
-      <a class="erp-icon-nav__link" href="/maintenance.html#safety" title="Safety">
+      <a class="erp-icon-nav__link" href="/maintenance.html#safety" title="Safety &amp; compliance">
         <span class="erp-icon-nav__glyph" aria-hidden="true">◎</span><span class="erp-icon-nav__lbl">Safety</span>
       </a>
-      <a class="erp-icon-nav__link" href="/maintenance.html#tracking" title="Tracking">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">▣</span><span class="erp-icon-nav__lbl">Track</span>
+      <a class="erp-icon-nav__link" href="/maintenance.html#tracking" title="Fleet tracking &amp; assets">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">▣</span><span class="erp-icon-nav__lbl">Tracking</span>
       </a>
-      <a class="erp-icon-nav__link" href="/maintenance.html#accounting" title="Accounting">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Acct</span>
+      <a class="erp-icon-nav__link" href="/maintenance.html#accounting" title="Accounting — expenses, bills, QuickBooks">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Accounting</span>
       </a>
-      <a class="erp-icon-nav__link" href="/maintenance.html#reports" title="Reports">
+      <a class="erp-icon-nav__link" href="/maintenance.html#reports" title="Reports — browse and export">
         <span class="erp-icon-nav__glyph" aria-hidden="true">≡</span><span class="erp-icon-nav__lbl">Reports</span>
       </a>
     </nav>
 
-    <aside class="erp-module-sidebar" aria-label="Dispatch views">
+    <aside class="erp-module-sidebar" aria-label="Lists and shortcuts for loads and dispatch">
       <div class="erp-module-sidebar__head">
-        <div class="erp-module-sidebar__brand-title">Loads &amp; TMS</div>
-        <button type="button" class="erp-module-sidebar__collapse" onclick="toggleDispatchSidebar(true)" title="Hide sidebar">«</button>
+        <div class="erp-module-sidebar__brand-title">Loads &amp; dispatch</div>
+        <button type="button" class="erp-module-sidebar__collapse" onclick="toggleDispatchSidebar(true)" title="Hide lists column">«</button>
       </div>
       <div class="erp-module-sidebar__scroll">
         <div class="erp-module-sidebar__inner">
-          <div class="erp-sb-heading">Board</div>
+          <div class="erp-sb-heading">Loads</div>
           <button type="button" class="erp-sb-link" data-dispatch-sblink="open" onclick="dispatchGoTab('open')">Open loads</button>
           <button type="button" class="erp-sb-link" data-dispatch-sblink="delivered" onclick="dispatchGoTab('delivered')">Delivered / completed</button>
           <button type="button" class="erp-sb-link" data-dispatch-sblink="unbilled" onclick="dispatchGoTab('unbilled')">Unbilled loads</button>
@@ -328,14 +328,14 @@
         </div>
       </div>
       <div class="erp-module-sidebar__footer dispatch-sidebar-footer">
-        <div class="erp-sb-heading">Status</div>
-        <div id="dispatchSidebarQboStatus" class="mini-note dispatch-sidebar-footer__line">QuickBooks not checked</div>
+        <div class="erp-sb-heading">Connections</div>
+        <div id="dispatchSidebarQboStatus" class="mini-note dispatch-sidebar-footer__line">QuickBooks: checking connection…</div>
         <div id="dispatchSidebarQboAlertBrief" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px;line-height:1.4"></div>
-        <div id="dispatchSidebarFleetStatus" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px">Samsara: not loaded</div>
-        <div id="dispatchSidebarLastUpdated" class="mini-note dispatch-sidebar-footer__line" style="margin-top:8px">Not loaded</div>
+        <div id="dispatchSidebarFleetStatus" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px">Samsara: waiting for first refresh…</div>
+        <div id="dispatchSidebarLastUpdated" class="mini-note dispatch-sidebar-footer__line" style="margin-top:8px">Last refresh: waiting…</div>
         <div class="erp-sb-heading" style="margin-top:14px">Tips</div>
         <p class="mini-note" style="margin:0;line-height:1.45;font-size:12px;color:var(--qb-muted, #5f6368)">
-          Load # = customer invoice # in QuickBooks. Row actions set status, QBO invoice, and documents. Full QBO banner lives on the ERP Accounting board.
+          Load # = customer invoice # in QuickBooks. Row actions set status, QuickBooks invoice, and documents. Full posting banner lives on the ERP Accounting board.
         </p>
       </div>
     </aside>
@@ -344,8 +344,8 @@
       <main class="main erp-main-surface">
         <div class="erp-main-body dispatch-board-body">
           <header class="topbar erp-topbar">
-            <div class="title" id="dispatchPageTitle">Dispatch — Loads &amp; TMS</div>
-            <a href="/" class="topbar-home-link keep-embed">Ops hub</a>
+            <div class="title" id="dispatchPageTitle">Loads &amp; dispatch</div>
+            <a href="/" class="topbar-home-link keep-embed">Company home</a>
             <div class="erp-topbar__search">
               <div class="erp-topbar__search-inner dispatch-topbar-search">
                 <input class="qb-in" id="boardSearch" type="search" placeholder="Load #, W/O#, customer, driver, truck, trailer…" autocomplete="off" />
@@ -357,22 +357,22 @@
               <a class="erp-topbar__link" href="/maintenance.html">ERP</a>
               <a class="erp-topbar__link" href="/maintenance.html#reports-settlement">Settlement</a>
               <button type="button" class="erp-btn-primary" onclick="openBookModal()">Book new load</button>
-              <button type="button" class="secondary" onclick="refreshDispatchBoard()" title="Reload loads / fleet now">Refresh now</button>
+              <button type="button" class="secondary" onclick="refreshDispatchBoard()" title="Reload loads and fleet data">Refresh</button>
               <button type="button" class="secondary" onclick="window.print()" title="Print this screen (loads or fleet tab)">Print view</button>
-              <button type="button" class="secondary" onclick="refreshQboCatalog()">Sync QBO catalog</button>
+              <button type="button" class="secondary" onclick="refreshQboCatalog()" title="Reload vendors, items, and accounts from QuickBooks">Sync QuickBooks catalog</button>
               <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:200px"></span>
             </div>
           </header>
 
           <div class="dispatch-embed-status-bar" role="status" aria-live="polite">
             <div class="dispatch-embed-status-bar__inner">
-              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedQboStatus">QuickBooks not checked</span>
+              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedQboStatus">QuickBooks: checking connection…</span>
               <span class="dispatch-embed-status-bar__sep" aria-hidden="true">·</span>
               <span class="dispatch-embed-status-bar__item" id="dispatchEmbedQboAlertBrief"></span>
               <span class="dispatch-embed-status-bar__sep" aria-hidden="true">·</span>
-              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedFleetStatus">Samsara: not loaded</span>
+              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedFleetStatus">Samsara: waiting for first refresh…</span>
               <span class="dispatch-embed-status-bar__sep" aria-hidden="true">·</span>
-              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedLastUpdated">Not loaded</span>
+              <span class="dispatch-embed-status-bar__item" id="dispatchEmbedLastUpdated">Last refresh: waiting…</span>
             </div>
           </div>
 
@@ -385,7 +385,7 @@
           </div>
   <div class="wrap dispatch-board-wrap">
     <p class="muted dispatch-board-intro" style="margin:0 0 12px;font-size:12px;line-height:1.5">
-      Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver/carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> = status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QBO</strong> to clear them from that list. Each leg is its own load #. Optional <strong>customer W/O #</strong> on the load is for the broker/customer reference (Maintenance WOs can still use the load/invoice # for shop work).
+      Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver or carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> means status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QuickBooks</strong> to clear them from that list. Each leg is its own load #. Optional <strong>customer W/O #</strong> on the load is for the broker or customer reference (maintenance work orders can still use the load or invoice # for shop work).
     </p>
     <div id="msg"></div>
     <div id="viewLoads">
@@ -406,7 +406,7 @@
             <th>Docs</th>
             <th>Driver / Co / Inv / Load PDF</th>
             <th>Edit</th>
-            <th>QBO invoice</th>
+            <th>QuickBooks invoice</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -468,7 +468,7 @@
               <datalist id="qboCustomerDatalist"></datalist>
               <div class="ac-list" id="customer_ac"></div>
             </div>
-            <p class="muted" style="margin:6px 0 0;font-size:12px">Type to filter; pick from the list or datalist. Sync QBO catalog after customer changes in QuickBooks.</p>
+            <p class="muted" style="margin:6px 0 0;font-size:12px">Type to filter; pick from the list or datalist. Sync QuickBooks catalog after customer changes in QuickBooks Online.</p>
           </div>
           <div class="row">
             <label class="lbl">Customer W/O #</label>
@@ -490,7 +490,7 @@
               <input class="in" id="f_driver_vendor" placeholder="Type vendor name…" autocomplete="off" />
               <div class="ac-list" id="driver_vendor_ac"></div>
             </div>
-            <p class="muted" style="margin:6px 0 0;font-size:12px">The driver/carrier is a <strong>vendor</strong> in QuickBooks. Add vendors in QBO, then use <strong>Sync QBO catalog</strong>.</p>
+            <p class="muted" style="margin:6px 0 0;font-size:12px">The driver or carrier is a <strong>vendor</strong> in QuickBooks. Add vendors in QuickBooks Online, then use <strong>Sync QuickBooks catalog</strong>.</p>
           </div>
           <div class="row" style="grid-column:1/-1">
             <label class="lbl">Truck — pick Samsara vehicle</label>
@@ -564,9 +564,9 @@
                 <input class="in" id="f_linehaul_item_search" list="qboInvoiceItemDatalist" placeholder="Type QBO service item name (autofill from list)…" autocomplete="off" />
                 <datalist id="qboInvoiceItemDatalist"></datalist>
               </div>
-              <button type="button" class="btn btn-ghost" style="padding:10px 14px;white-space:nowrap;margin-top:0" onclick="refreshQboCatalog()" title="Pull latest items from QuickBooks">Sync QBO items</button>
+              <button type="button" class="btn btn-ghost" style="padding:10px 14px;white-space:nowrap;margin-top:0" onclick="refreshQboCatalog()" title="Pull latest items from QuickBooks">Sync QuickBooks items</button>
             </div>
-            <p class="muted" style="margin:6px 0 0;font-size:11px">Pickup and delivery are the same load — choose the item <strong>once</strong> here for the main invoice line. If the list is empty while QBO is connected, the app pulls items automatically once; use <strong>Sync QBO items</strong> to refresh.</p>
+            <p class="muted" style="margin:6px 0 0;font-size:11px">Pickup and delivery are the same load — choose the item <strong>once</strong> here for the main invoice line. If the list is empty while QuickBooks is connected, the app pulls items automatically once; use <strong>Sync QuickBooks items</strong> to refresh.</p>
           </div>
           <div class="row" style="grid-column:1/-1">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">
@@ -1574,13 +1574,13 @@
           '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">' +
           '<button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="createQboInvoiceForLoad(' +
           JSON.stringify(l.load_number) +
-          ')">Create in QBO</button>' +
+          ')">Create in QuickBooks</button>' +
           (l.qbo_invoice_id
             ? '<button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="syncLoadDocsToQboFromRow(' +
               JSON.stringify(l.id) +
               ',' +
               JSON.stringify(l.load_number || '') +
-              ')">Sync QBO docs</button>'
+              ')">Sync QuickBooks attachments</button>'
             : '') +
           '</div>';
         return '<tr>' +
@@ -1969,12 +1969,12 @@
 
         applyQboStatusCatalogMeta(qStatus);
 
-        let qText = 'QuickBooks not checked';
-        if (!qStatus || typeof qStatus !== 'object') qText = 'QuickBooks not checked';
-        else if (!qStatus.configured) qText = 'QuickBooks env is missing';
+        let qText = 'QuickBooks: checking connection…';
+        if (!qStatus || typeof qStatus !== 'object') qText = 'QuickBooks: status unavailable';
+        else if (!qStatus.configured) qText = 'QuickBooks: not configured on server';
         else if (qStatus.connected) {
-          qText = 'Connected to QuickBooks' + (qStatus.companyName ? ' — ' + qStatus.companyName : '');
-        } else qText = 'QuickBooks not connected yet';
+          qText = 'QuickBooks: connected' + (qStatus.companyName ? ' — ' + qStatus.companyName : '');
+        } else qText = 'QuickBooks: not connected yet';
 
         let briefText = '';
         let briefColor = '';
@@ -1999,15 +1999,15 @@
         const board = boardRes && typeof boardRes === 'object' ? boardRes : {};
         const nVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
         const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
-        const fText = 'Samsara board: ' + nVeh + ' vehicles · refreshed ' + brAt;
+        const fText = 'Samsara: ' + nVeh + ' vehicles · last refresh ' + brAt;
 
         const dash = dashRes && typeof dashRes === 'object' ? dashRes : {};
         const fleetAt = dash.refreshedAt ? new Date(dash.refreshedAt).toLocaleString() : new Date().toLocaleString();
         const sec = Math.max(1, Math.round(DISPATCH_AUTO_REFRESH_MS / 1000));
         const luSidebar =
-          'Fleet snapshot (maintenance API): ' + fleetAt + ' · Sidebar status every ' + sec + 's with board refresh';
+          'Samsara live data (maintenance API): ' + fleetAt + ' · Sidebar updates every ' + sec + 's with board refresh';
         const luEmbed =
-          'Fleet snapshot: ' + fleetAt + ' · Status bar every ' + sec + 's (embed)';
+          'Samsara live data: ' + fleetAt + ' · Status bar every ' + sec + 's (embed)';
 
         applyDispatchStatusToTargets([targets[0]], {
           qText,
@@ -2025,11 +2025,11 @@
         });
       } catch (e) {
         applyDispatchStatusToTargets(targets, {
-          qText: 'QuickBooks status check failed',
+          qText: 'QuickBooks: status check failed',
           briefText: e.message || String(e),
           briefColor: '#b91c1c',
           fText: 'Samsara: status unavailable',
-          luText: 'Not loaded'
+          luText: 'Last refresh: waiting…'
         });
       }
     }
