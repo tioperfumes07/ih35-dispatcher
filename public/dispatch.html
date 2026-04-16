@@ -237,8 +237,10 @@
     .stops-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     html.dispatch-embed #boardNavMount,
     html.dispatch-embed .board-nav-wrap { display: none !important; }
-    html.dispatch-embed .topbar { padding: 8px 12px; }
-    html.dispatch-embed .topbar a:not(.keep-embed) { display: none; }
+    html.dispatch-embed .topbar,
+    html.dispatch-embed .erp-topbar { padding: 8px 12px; }
+    html.dispatch-embed .topbar a:not(.keep-embed),
+    html.dispatch-embed .erp-topbar .erp-topbar__link { display: none; }
     .hidden { display: none !important; }
   </style>
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
@@ -249,34 +251,101 @@
 <body class="dispatch-page">
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
-  <div class="topbar">
-    <h1>Dispatch — Loads &amp; TMS</h1>
-    <a href="/" class="keep-embed">Home</a>
-    <a href="/fuel.html">Fuel &amp; routes</a>
-    <a href="/maintenance.html">Maintenance</a>
-    <a href="/maintenance.html#reports-settlement">Settlement</a>
-    <span style="flex:1"></span>
-    <button type="button" onclick="openBookModal()">Book new load</button>
-    <button type="button" class="secondary" onclick="refreshDispatchBoard()" title="Reload loads / fleet now">Refresh now</button>
-    <button type="button" class="secondary" onclick="refreshQboCatalog()">Sync QBO catalog</button>
-    <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:320px"></span>
-  </div>
-  <div class="tabs">
+  <div id="dispatchApp" class="app erp-master">
+    <button type="button" class="sidebar-expand-fab" id="dispatchSidebarExpandFab" onclick="toggleDispatchSidebar(false)" title="Show sidebar">»</button>
+
+    <nav class="erp-icon-nav" aria-label="Primary modules">
+      <a class="erp-icon-nav__link" href="/maintenance.html#dashboard" title="Home">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Home</span>
+      </a>
+      <a class="erp-icon-nav__link" href="/maintenance.html#maintenance" title="Maintenance">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maint</span>
+      </a>
+      <a class="erp-icon-nav__link active" href="/dispatch.html" title="Loads &amp; TMS (this board)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">⎔</span><span class="erp-icon-nav__lbl">Loads</span>
+      </a>
+      <a class="erp-icon-nav__link" href="/maintenance.html#safety" title="Safety">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">◎</span><span class="erp-icon-nav__lbl">Safety</span>
+      </a>
+      <a class="erp-icon-nav__link" href="/maintenance.html#tracking" title="Tracking">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">▣</span><span class="erp-icon-nav__lbl">Track</span>
+      </a>
+      <a class="erp-icon-nav__link" href="/maintenance.html#accounting" title="Accounting">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Acct</span>
+      </a>
+      <a class="erp-icon-nav__link" href="/maintenance.html#reports" title="Reports">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">≡</span><span class="erp-icon-nav__lbl">Reports</span>
+      </a>
+    </nav>
+
+    <aside class="erp-module-sidebar" aria-label="Dispatch views">
+      <div class="erp-module-sidebar__head">
+        <div class="erp-module-sidebar__brand-title">Loads &amp; TMS</div>
+        <button type="button" class="erp-module-sidebar__collapse" onclick="toggleDispatchSidebar(true)" title="Hide sidebar">«</button>
+      </div>
+      <div class="erp-module-sidebar__scroll">
+        <div class="erp-module-sidebar__inner">
+          <div class="erp-sb-heading">Board</div>
+          <button type="button" class="erp-sb-link" data-dispatch-sblink="open" onclick="dispatchGoTab('open')">Open loads</button>
+          <button type="button" class="erp-sb-link" data-dispatch-sblink="delivered" onclick="dispatchGoTab('delivered')">Delivered / completed</button>
+          <button type="button" class="erp-sb-link" data-dispatch-sblink="unbilled" onclick="dispatchGoTab('unbilled')">Unbilled loads</button>
+          <button type="button" class="erp-sb-link" data-dispatch-sblink="all" onclick="dispatchGoTab('all')">All loads</button>
+          <button type="button" class="erp-sb-link" data-dispatch-sblink="fleet" onclick="dispatchGoTab('fleet')">Fleet</button>
+          <div class="erp-sb-heading">Shortcuts</div>
+          <a class="erp-sb-link" href="/maintenance.html#fuel">Fuel (ERP tab)</a>
+          <a class="erp-sb-link" href="/fuel.html" target="_blank" rel="noopener">Fuel planner (full screen)</a>
+          <a class="erp-sb-link" href="/maintenance.html#accounting">Accounting</a>
+          <a class="erp-sb-link" href="/maintenance.html#reports-settlement">Settlement report</a>
+          <a class="erp-sb-link" href="/banking.html">Bank matching</a>
+        </div>
+      </div>
+      <div class="erp-module-sidebar__footer dispatch-sidebar-footer">
+        <div class="erp-sb-heading">Status</div>
+        <div id="dispatchSidebarQboStatus" class="mini-note dispatch-sidebar-footer__line">QuickBooks not checked</div>
+        <div id="dispatchSidebarQboAlertBrief" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px;line-height:1.4"></div>
+        <div id="dispatchSidebarFleetStatus" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px">Samsara: not loaded</div>
+        <div id="dispatchSidebarLastUpdated" class="mini-note dispatch-sidebar-footer__line" style="margin-top:8px">Not loaded</div>
+        <div class="erp-sb-heading" style="margin-top:14px">Tips</div>
+        <p class="mini-note" style="margin:0;line-height:1.45;font-size:12px;color:var(--qb-muted, #5f6368)">
+          Load # = customer invoice # in QuickBooks. Row actions set status, QBO invoice, and documents. Full QBO banner lives on the ERP Accounting board.
+        </p>
+      </div>
+    </aside>
+
+    <div class="erp-main-col">
+      <main class="main erp-main-surface">
+        <div class="erp-main-body dispatch-board-body">
+          <header class="topbar erp-topbar">
+            <div class="title" id="dispatchPageTitle">Dispatch — Loads &amp; TMS</div>
+            <a href="/" class="topbar-home-link keep-embed">Ops hub</a>
+            <div class="erp-topbar__search">
+              <div class="erp-topbar__search-inner dispatch-topbar-search">
+                <input class="qb-in" id="boardSearch" type="search" placeholder="Load #, W/O#, customer, driver, truck, trailer…" autocomplete="off" />
+                <button type="button" class="btn btn-ghost dispatch-board-search-clear" onclick="clearBoardSearch()">Clear</button>
+              </div>
+            </div>
+            <div class="erp-topbar__actions print-hide-actions">
+              <a class="erp-topbar__link" href="/fuel.html">Fuel</a>
+              <a class="erp-topbar__link" href="/maintenance.html">ERP</a>
+              <a class="erp-topbar__link" href="/maintenance.html#reports-settlement">Settlement</a>
+              <button type="button" class="erp-btn-primary" onclick="openBookModal()">Book new load</button>
+              <button type="button" class="secondary" onclick="refreshDispatchBoard()" title="Reload loads / fleet now">Refresh now</button>
+              <button type="button" class="secondary" onclick="refreshQboCatalog()">Sync QBO catalog</button>
+              <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:200px"></span>
+            </div>
+          </header>
+
+          <div class="tabs dispatch-board-tabs">
     <button type="button" class="tab active" data-tab="open">Open loads</button>
     <button type="button" class="tab" data-tab="delivered">Delivered / completed</button>
     <button type="button" class="tab" data-tab="unbilled">Unbilled loads</button>
     <button type="button" class="tab" data-tab="all">All loads</button>
     <button type="button" class="tab" data-tab="fleet">Fleet</button>
-  </div>
-  <div class="wrap">
+          </div>
+  <div class="wrap dispatch-board-wrap">
     <p class="muted" style="margin:0 0 12px;font-size:12px;line-height:1.5">
       Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver/carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> = status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QBO</strong> to clear them from that list. Each leg is its own load #. Optional <strong>customer W/O #</strong> on the load is for the broker/customer reference (Maintenance WOs can still use the load/invoice # for shop work).
     </p>
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-      <label for="boardSearch" class="muted" style="font-size:12px;font-weight:700;white-space:nowrap">Search</label>
-      <input class="in" id="boardSearch" type="search" placeholder="Load #, W/O#, customer, driver, truck, trailer…" autocomplete="off" style="max-width:440px;flex:1;min-width:200px" />
-      <button type="button" class="btn btn-ghost" onclick="clearBoardSearch()">Clear</button>
-    </div>
     <div id="msg"></div>
     <div id="viewLoads">
       <table class="data">
@@ -317,6 +386,10 @@
       <p class="muted" style="margin-top:10px">These are the assets returned by the Samsara Fleet API. Use the same unit names when assigning a truck on a load; the app will match or create a TMS truck row.</p>
     </div>
     <p class="muted" style="margin-top:12px">Stops: type a location and pick autocomplete. <strong>Auto miles</strong>: practical miles use <strong>PC*Miler</strong> when <code>PCMILER_API_KEY</code> is set on the server; otherwise OSRM + straight-line “shortest.”</p>
+  </div>
+        </div>
+      </main>
+    </div>
   </div>
 
   <div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeBookModal()">
@@ -512,6 +585,7 @@
 
   <script>
     let currentTab = 'open';
+    const DISPATCH_AUTO_REFRESH_MS = 60000;
     let metaStatuses = [];
     let qboCatalog = {
       connected: false,
@@ -1530,8 +1604,83 @@
       }
     }
 
+    async function loadDispatchSidebarStatus() {
+      const qEl = document.getElementById('dispatchSidebarQboStatus');
+      const qBrief = document.getElementById('dispatchSidebarQboAlertBrief');
+      const fEl = document.getElementById('dispatchSidebarFleetStatus');
+      const lu = document.getElementById('dispatchSidebarLastUpdated');
+      if (!qEl && !qBrief && !fEl && !lu) return;
+      try {
+        const [qStatus, qSync, boardRes, dashRes] = await Promise.all([
+          fetch('/api/qbo/status', { headers: { Accept: 'application/json' } }).then(r => r.json().catch(() => ({}))),
+          fetch('/api/qbo/sync-alerts', { headers: { Accept: 'application/json' } })
+            .then(r => r.json().catch(() => ({ ok: false, alerts: [], counts: {} })))
+            .catch(() => ({ ok: false, alerts: [], counts: {} })),
+          fetch('/api/board', { headers: { Accept: 'application/json' } })
+            .then(r => r.json().catch(() => ({})))
+            .catch(() => ({})),
+          fetch('/api/maintenance/dashboard', { headers: { Accept: 'application/json' } })
+            .then(r => r.json().catch(() => ({})))
+            .catch(() => ({}))
+        ]);
+
+        if (qEl) {
+          let txt = 'QuickBooks not checked';
+          if (!qStatus || typeof qStatus !== 'object') txt = 'QuickBooks not checked';
+          else if (!qStatus.configured) txt = 'QuickBooks env is missing';
+          else if (qStatus.connected) {
+            txt = 'Connected to QuickBooks' + (qStatus.companyName ? ' — ' + qStatus.companyName : '');
+          } else txt = 'QuickBooks not connected yet';
+          qEl.textContent = txt;
+        }
+
+        if (qBrief) {
+          if (!qSync || qSync.ok === false) {
+            qBrief.style.color = '#b91c1c';
+            qBrief.textContent = 'Could not load posting alerts.';
+          } else {
+            const c = qSync.counts || {};
+            const hi = Number(c.high || 0);
+            const med = Number(c.medium || 0);
+            const low = Number(c.low || 0);
+            const nAlert = Array.isArray(qSync.alerts) ? qSync.alerts.length : 0;
+            if (!hi && !med && !low && !nAlert) {
+              qBrief.style.color = '';
+              qBrief.textContent = 'No open posting issues.';
+            } else {
+              qBrief.style.color = hi ? '#b45309' : '';
+              qBrief.textContent =
+                'Posting alerts: ' + hi + ' high · ' + med + ' med · ' + low + ' low' + (nAlert ? ' · details on ERP Accounting' : '');
+            }
+          }
+        }
+
+        const board = boardRes && typeof boardRes === 'object' ? boardRes : {};
+        const nVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
+        const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
+        if (fEl) fEl.textContent = 'Samsara board: ' + nVeh + ' vehicles · refreshed ' + brAt;
+
+        const dash = dashRes && typeof dashRes === 'object' ? dashRes : {};
+        const fleetAt = dash.refreshedAt ? new Date(dash.refreshedAt).toLocaleString() : new Date().toLocaleString();
+        const sec = Math.max(1, Math.round(DISPATCH_AUTO_REFRESH_MS / 1000));
+        if (lu) {
+          lu.textContent =
+            'Fleet snapshot (maintenance API): ' + fleetAt + ' · Sidebar status every ' + sec + 's with board refresh';
+        }
+      } catch (e) {
+        if (qEl) qEl.textContent = 'QuickBooks status check failed';
+        if (qBrief) {
+          qBrief.style.color = '#b91c1c';
+          qBrief.textContent = e.message || String(e);
+        }
+        if (fEl) fEl.textContent = 'Samsara: status unavailable';
+        if (lu) lu.textContent = 'Not loaded';
+      }
+    }
+
     function refreshDispatchBoard() {
       loadMaintenanceDispatchAlerts();
+      loadDispatchSidebarStatus();
       if (currentTab === 'fleet') loadFleetTab();
       else loadTab();
     }
@@ -1602,11 +1751,50 @@
       }
     }
 
+    function toggleDispatchSidebar(collapse) {
+      const app = document.getElementById('dispatchApp');
+      if (!app) return;
+      if (collapse) {
+        app.classList.add('sidebar-collapsed');
+        try {
+          localStorage.setItem('dispatchSidebarCollapsed', '1');
+        } catch (_) {}
+      } else {
+        app.classList.remove('sidebar-collapsed');
+        try {
+          localStorage.setItem('dispatchSidebarCollapsed', '0');
+        } catch (_) {}
+      }
+    }
+
+    function loadDispatchSidebarPreference() {
+      try {
+        if (localStorage.getItem('dispatchSidebarCollapsed') === '1') {
+          document.getElementById('dispatchApp')?.classList.add('sidebar-collapsed');
+        }
+      } catch (_) {}
+    }
+
+    function dispatchGoTab(tabId) {
+      const tid = String(tabId || '').trim();
+      const btn = document.querySelector('.dispatch-board-tabs .tab[data-tab="' + tid.replace(/"/g, '') + '"]');
+      if (btn) btn.click();
+    }
+
+    function syncDispatchSidebarTabMarkers() {
+      const tab = typeof currentTab === 'string' ? currentTab : '';
+      document.querySelectorAll('[data-dispatch-sblink]').forEach(el => {
+        const id = el.getAttribute('data-dispatch-sblink') || '';
+        el.classList.toggle('erp-sb-link--active', id === tab);
+      });
+    }
+
     document.querySelectorAll('.tab').forEach(b => {
       b.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
         currentTab = b.getAttribute('data-tab');
+        syncDispatchSidebarTabMarkers();
         if (currentTab === 'fleet') {
           setListView('fleet');
           loadFleetTab();
@@ -2194,6 +2382,7 @@
     }
 
     (async function init() {
+      loadDispatchSidebarPreference();
       bindDriverVendorAc();
       bindCustomerAc();
       bindTruckClassAc();
@@ -2207,9 +2396,10 @@
       await loadSamsaraFleetForDatalist();
       await loadMaintenanceDispatchAlerts();
       await loadTab();
+      syncDispatchSidebarTabMarkers();
+      await loadDispatchSidebarStatus();
     })();
 
-    const DISPATCH_AUTO_REFRESH_MS = 60000;
     setInterval(refreshDispatchBoard, DISPATCH_AUTO_REFRESH_MS);
   </script>
 </body>
