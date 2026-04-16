@@ -14517,7 +14517,7 @@
     async function voidWorkOrderClient(id) {
       const reason = window.prompt('Void reason (optional):', '') ?? '';
       if (reason === null) return;
-      if (!confirm('Void this work order? It will be excluded from totals and cannot be posted until reverted if ever posted.')) return;
+      if (!confirm('Void this work order? It stays on file for audit but is excluded from totals and cannot be posted (only allowed while not in QuickBooks).')) return;
       try {
         await j(`/api/work-orders/${encodeURIComponent(id)}/void`, {
           method: 'POST',
