@@ -238,7 +238,7 @@
           <div class="hero-card" onclick="openSectionByName('reports')"><h3>Reports Board</h3><p>Maintenance, safety, QBO sync &amp; activity</p></div>
         </div>
 
-        <div class="grid grid-4">
+        <div class="grid grid-4 erp-kpi-grid">
           <div class="metric"><div class="metric-label">Tracked Assets</div><div class="metric-value" id="dashTrackedAssets">0</div></div>
           <div class="metric"><div class="metric-label">Assigned / Working</div><div class="metric-value" id="dashAssignedAssets">0</div></div>
           <div class="metric"><div class="metric-label">Maintenance Past Due</div><div class="metric-value" id="dashPastDue">0</div></div>
@@ -2136,6 +2136,40 @@
       </section>
 
       <section id="section-reports" class="section">
+        <div class="erp-reports-shell">
+          <header class="erp-reports-toolbar" role="banner">
+            <div class="erp-reports-toolbar__title">Reports</div>
+            <input
+              type="search"
+              class="qb-in erp-reports-toolbar__search"
+              id="repToolbarSearch"
+              placeholder="Search reports…"
+              disabled
+              aria-disabled="true"
+              title="Filter coming soon"
+            />
+            <div class="erp-reports-toolbar__actions print-hide-actions">
+              <button type="button" class="btn" disabled title="Coming soon">+ New custom report</button>
+              <button type="button" class="btn" disabled title="Coming soon">Scheduled reports</button>
+            </div>
+          </header>
+          <div class="erp-reports-columns">
+            <aside class="erp-reports-sidebar" aria-label="Report categories">
+              <div class="erp-sb-heading">Browse</div>
+              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-overview')">Overview</button>
+              <div class="erp-sb-heading">Maintenance</div>
+              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-maint')">Spend by unit</button>
+              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-maint-detail')">Detailed (parts / positions)</button>
+              <div class="erp-sb-heading">Accounting</div>
+              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-qbo')">QuickBooks activity</button>
+              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-sync')">ERP ↔ QBO sync</button>
+              <div class="erp-sb-heading">Operations</div>
+              <button type="button" class="erp-reports-sblink" id="repSidebarTmsLoads" onclick="openReportsTabFromSidebar('rep-tms')">TMS loads</button>
+              <button type="button" class="erp-reports-sblink" id="repSidebarSettlement" onclick="openReportsTabFromSidebar('rep-settlement')">Settlement / P&amp;L by load</button>
+              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-team')">Team &amp; security</button>
+              <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-ifta')">IFTA &amp; compliance</button>
+            </aside>
+            <div class="erp-reports-main">
         <div class="subtabs" style="gap:8px;flex-wrap:wrap;align-items:center">
           <button type="button" class="subtab active" onclick="openReportsTab('rep-overview', this)">Overview</button>
 
@@ -2361,6 +2395,9 @@
               <p class="mini-note" style="margin:0">
                 <strong>In this app today:</strong> Fuel planner (<a href="/fuel.html" target="_blank" rel="noopener">Fuel Board</a>), Samsara fleet/HOS, load-level settlement and driver-pay rollup (Accounting → Settlement), and QBO master sync. Run <code>npm run db:migrate</code> after pull for new fleet/driver columns (see migration <code>011_fleet_driver_compliance.sql</code>).
               </p>
+            </div>
+          </div>
+        </div>
             </div>
           </div>
         </div>
@@ -4245,8 +4282,8 @@
       }
       if (name === 'reports') {
         inner.innerHTML =
-          '<div class="erp-sb-heading">Reports</div>' +
-          '<p class="mini-note" style="margin:0 0 8px">Use the Reports board tabs and Operations menu for settlements and TMS reports.</p>' +
+          '<div class="erp-sb-heading">Reports hub</div>' +
+          '<p class="mini-note" style="margin:0 0 8px">Use the left <strong>Browse</strong> column on this board, or the top tab row. TMS loads and settlement follow your database connection status.</p>' +
           adm;
         return;
       }
@@ -4380,7 +4417,10 @@
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
       }
-      if (name === 'reports') loadReportsData();
+      if (name === 'reports') {
+        loadReportsData();
+        requestAnimationFrame(() => syncReportsSidebarActive());
+      }
       if (name === 'catalog') loadServiceCatalogAdminOnly();
       renderErpModuleSidebar(name);
     }
@@ -4529,6 +4569,37 @@
 
     let reportsSummaryCache = null;
 
+    function syncReportsSidebarActive() {
+      const root = document.getElementById('section-reports');
+      if (!root) return;
+      const active = root.querySelector('.reports-tab:not(.hidden)');
+      const tabId = active && active.id ? String(active.id) : '';
+      if (!tabId) return;
+      document.querySelectorAll('.erp-reports-sblink').forEach(el => {
+        const oc = el.getAttribute('onclick') || '';
+        el.classList.toggle(
+          'erp-reports-sblink--active',
+          oc.includes('openReportsTabFromSidebar') && oc.includes(`'${tabId}'`)
+        );
+      });
+    }
+
+    function openReportsTabFromSidebar(tabId) {
+      const root = document.getElementById('section-reports');
+      if (!root) return;
+      const tid = String(tabId || '').trim();
+      const nodes = root.querySelectorAll('button[onclick*="openReportsTab"]');
+      for (const el of nodes) {
+        const oc = el.getAttribute('onclick') || '';
+        if (oc.includes(`openReportsTab('${tid}'`) || oc.includes(`openReportsTab("${tid}"`)) {
+          el.click();
+          return;
+        }
+      }
+      const fb = root.querySelector('.subtab[onclick*="rep-overview"]');
+      openReportsTab(tid, fb);
+    }
+
     function openReportsTab(id, btn) {
       let tabId = id;
       let tabBtn = btn;
@@ -4542,6 +4613,7 @@
       if (panel) panel.classList.remove('hidden');
       document.querySelectorAll('#section-reports .subtab').forEach(el => el.classList.remove('active'));
       if (tabBtn) tabBtn.classList.add('active');
+      syncReportsSidebarActive();
       if (tabId === 'rep-team') loadTeamSecurityPanel();
       if (tabId === 'rep-maint-detail') renderMaintDetailedReport();
       if (tabId === 'rep-settlement') {
@@ -4559,7 +4631,11 @@
       const repTmsTab = document.querySelector('#section-reports .nav-dd-item[onclick*="rep-tms"]');
       if (repTmsTab) repTmsTab.classList.toggle('hidden', !tmsEnabled);
       const repTmsPanel = document.getElementById('rep-tms');
-      if (repTmsPanel) repTmsPanel.classList.toggle('hidden', !tmsEnabled);
+      if (repTmsPanel && !tmsEnabled) repTmsPanel.classList.add('hidden');
+      const repSideTms = document.getElementById('repSidebarTmsLoads');
+      if (repSideTms) repSideTms.classList.toggle('hidden', !tmsEnabled);
+      const repSideSettle = document.getElementById('repSidebarSettlement');
+      if (repSideSettle) repSideSettle.classList.toggle('hidden', !tmsEnabled);
       if ((location.hash || '').replace(/^#/, '') === 'dispatch') {
         location.hash = '#maintenance';
       }
