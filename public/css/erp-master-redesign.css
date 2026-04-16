@@ -812,3 +812,131 @@ body.erp-maintenance .erp-topbar .qb-picker-menu {
 body.erp-maintenance .erp-main-body .maint-status-pill {
   font-weight: 500;
 }
+
+/* =============================================================================
+   Phase 3 — Wide tables + responsive shell (UI only)
+   ============================================================================= */
+
+body.erp-maintenance .erp-main-body .table-wrap,
+body.erp-maintenance .erp-main-body .safety-table-wrap,
+body.erp-maintenance .erp-main-body .maint-cost-table-wrap,
+body.erp-maintenance .erp-main-body .fuel-exp-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-color: var(--qb-line);
+  border-radius: var(--qb-radius-control);
+}
+
+body.erp-maintenance .erp-main-body .table-wrap > table,
+body.erp-maintenance .erp-main-body .safety-table-wrap table,
+body.erp-maintenance .erp-main-body .maint-cost-table-wrap table {
+  max-width: none;
+}
+
+body.erp-maintenance .erp-main-body .erp-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --- Form controls: QuickBooks-style focus ring (content area) --- */
+body.erp-maintenance .erp-main-body .qb-in:focus,
+body.erp-maintenance .erp-main-body .qb-memo:focus,
+body.erp-maintenance .erp-main-body select.qb-in:focus,
+body.erp-maintenance .erp-main-body textarea:focus {
+  outline: none;
+  border-color: var(--qb-blue);
+  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+}
+
+/* --- Narrow / tablet: compact icon rail, hide tiny labels --- */
+@media (max-width: 1100px) {
+  body.erp-maintenance .erp-icon-nav__lbl {
+    display: none;
+  }
+
+  body.erp-maintenance .erp-icon-nav {
+    flex: 0 0 48px;
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    padding-top: 6px;
+  }
+
+  body.erp-maintenance .erp-icon-nav__btn.nav-btn,
+  body.erp-maintenance .erp-icon-nav__link {
+    min-height: 44px;
+    padding: 8px 4px;
+  }
+
+  body.erp-maintenance #erpApp.erp-master.sidebar-collapsed .sidebar-expand-fab {
+    left: 48px;
+  }
+}
+
+/* --- Phone: trim chrome, safe areas, slightly narrower module column --- */
+@media (max-width: 720px) {
+  body.erp-maintenance .erp-topbar__hint {
+    display: none;
+  }
+
+  body.erp-maintenance .erp-main-body {
+    padding: 12px max(12px, env(safe-area-inset-right, 0px)) 16px max(12px, env(safe-area-inset-left, 0px));
+  }
+
+  body.erp-maintenance .erp-topbar.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+    gap: 8px;
+  }
+
+  body.erp-maintenance .erp-topbar__search {
+    flex: 1 1 100%;
+    order: 3;
+    max-width: none;
+  }
+
+  body.erp-maintenance .erp-topbar .title {
+    flex: 1 1 auto;
+    order: 1;
+  }
+
+  body.erp-maintenance .erp-topbar .topbar-home-link {
+    order: 2;
+  }
+
+  body.erp-maintenance .erp-topbar__actions {
+    order: 4;
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+
+  body.erp-maintenance .erp-module-sidebar {
+    flex: 0 0 clamp(140px, 38vw, 220px);
+    width: clamp(140px, 38vw, 220px);
+    min-width: 140px;
+    max-width: 220px;
+  }
+
+  body.erp-maintenance .erp-module-sidebar__head,
+  body.erp-maintenance .erp-module-sidebar__inner,
+  body.erp-maintenance .erp-module-sidebar__footer {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+
+  body.erp-maintenance .erp-new-menu {
+    right: auto;
+    left: 0;
+    width: min(calc(100vw - 24px), 860px);
+  }
+}
