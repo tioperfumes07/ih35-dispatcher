@@ -601,11 +601,8 @@
                       </table>
                       <div class="mini-note maint-field-hint" id="maintCostLinesSubtotal"></div>
 
-                      <div class="maint-print-hide-qbo-link maint-qbo-header-grid" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)">
-                        <div class="panel-title" style="font-size:13px;margin-bottom:6px">QuickBooks — this invoice (header only)</div>
-                        <p class="mini-note" style="margin:0 0 8px">
-                          Vendor and each line’s account or item are set <strong>above</strong> (vendor field + each cost row). Use this block only for <strong>how</strong> the transaction posts in QuickBooks (expense vs bill, bank account, dates, doc #). Supplier invoice # can pre-fill doc # when left blank.
-                        </p>
+                      <div class="maint-print-hide-qbo-link maint-qbo-header-grid" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)" title="Expense vs bill, bank, dates — vendor and line accounts are on the form above">
+                        <div class="panel-title" style="font-size:13px;margin-bottom:6px">QuickBooks — posting header</div>
                         <div class="search-row">
                           <div>
                             <span class="qb-l">Txn type</span>
@@ -636,20 +633,11 @@
                     </div>
                   </div>
                   <div class="maint-subcard">
-                    <div class="maint-subcard__head">Attachments &amp; notes</div>
+                    <div class="maint-subcard__head">Notes</div>
                     <div class="maint-subcard__body">
-                  <div class="search-row" style="max-width:560px;margin-top:8px;align-items:flex-end">
-                    <div style="flex:1;min-width:200px">
-                      <span class="qb-l">Vendor invoice PDF (optional)</span>
-                      <input id="maintInvoicePdfInput" type="file" accept="application/pdf" />
-                    </div>
-                    <div>
-                      <span class="qb-l">&nbsp;</span>
-                      <button type="button" class="qb-btn-add" onclick="parseMaintRecordInvoicePdf()">Extract &amp; fill lines</button>
-                    </div>
-                  </div>
-                  <div id="maintInvoicePdfStatus" class="mini-note" style="max-width:560px"></div>
-                  <textarea id="notesInput" class="qb-memo" placeholder="Notes" style="max-width:560px"></textarea>
+                  <input id="maintInvoicePdfInput" type="file" accept="application/pdf" class="maint-hidden-file" tabindex="-1" aria-hidden="true" />
+                  <div id="maintInvoicePdfStatus" class="mini-note maint-field-hint"></div>
+                  <textarea id="notesInput" class="qb-memo maint-notes" placeholder="Notes"></textarea>
                     </div>
                   </div>
 
