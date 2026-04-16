@@ -450,7 +450,7 @@
               <div id="maintAssetStatusPanel" class="maint-asset-status-panel hidden" aria-hidden="true">
                 <div class="maint-asset-status-panel__head">
                   <span class="panel-title" style="font-size:13px;margin:0">Operational status</span>
-                  <button type="button" class="btn btn--small" onclick="document.getElementById('maintAssetStatusPanel').classList.add('hidden')">Done</button>
+                  <button type="button" class="btn btn--small" onclick="closeMaintAssetStatusPanel()">Done</button>
                 </div>
                 <div id="maintAssetStatusPanelBody"></div>
               </div>
@@ -541,7 +541,7 @@
                           <option value="over-the-road">Over the road</option>
                         </select>
                         <input type="hidden" id="repairLocationTypeInput" value="" />
-                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Location detail" autocomplete="off" oninput="resolveRepairLocationSearch()" onblur="resolveRepairLocationSearch()" title="Vendor, yard, notes" />
+                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Location detail" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Vendor, yard, notes" />
                       </div>
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
@@ -551,11 +551,11 @@
                       </div>
                       <div id="maintWoNumberFieldWrap" class="maint-field-cell">
                         <span class="qb-l" id="maintWoNumberLabel">Internal WO #</span>
-                        <input id="recordWorkOrderInput" class="qb-in maint-field maint-field--readonly" placeholder="Auto" readonly title="Assigned automatically for internal shop" />
+                        <input id="recordWorkOrderInput" class="qb-in maint-field" placeholder="WO #" title="Internal shop numbers are assigned automatically" oninput="renderMaintAsideWoSummary()" />
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l">Invoice total</span>
-                        <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Sum of line amounts" />
+                        <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Sum of line amounts" oninput="renderMaintAsideWoSummary()" />
                         <label class="maint-lock-inline"><input type="checkbox" id="costTotalLock" /> Lock total</label>
                         <div id="maintCostTotalMatch" class="mini-note maint-field-hint"></div>
                         <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
@@ -738,7 +738,7 @@
                     </p>
                   </div>
 
-                  <div class="maint-save-toolbar maint-save-toolbar--qb">
+                  <div class="maint-form-actions maint-section-card">
                     <select id="maintSaveAction" class="maint-save-action-hidden" aria-hidden="true" tabindex="-1">
                       <option value="save">Save</option>
                       <option value="save_close">Save &amp; close</option>
@@ -746,30 +746,16 @@
                       <option value="save_print">Save &amp; print</option>
                       <option value="save_post">Save &amp; post to QuickBooks</option>
                     </select>
-                    <span class="mini-note maint-save-toolbar__hint" id="maintSaveHint"></span>
-                    <span class="mini-note" id="maintEditRecordHint" style="flex:1;min-width:10rem;color:#64748b"></span>
-                    <div class="maint-save-toolbar__actions">
-                      <div class="qb-split qb-split--primary">
-                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Save and record</button>
-                        <button type="button" class="qb-split__caret" aria-label="More save options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
-                        <ul class="qb-split__menu" role="menu" hidden>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save')">Save</button></li>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_close')">Save &amp; close</button></li>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_to_ap')">Accounting draft</button></li>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_print')">Save + print</button></li>
-                        </ul>
-                      </div>
-                      <div class="qb-split qb-split--neutral">
-                        <button type="button" class="qb-split__main" onclick="maintCloseSplitMenus(); maintPrintWorkOrderView()">Print form</button>
-                        <button type="button" class="qb-split__caret" aria-label="More print and PDF options" aria-expanded="false" aria-haspopup="true" onclick="maintToggleSplitMenu(event, this)">▾</button>
-                        <ul class="qb-split__menu" role="menu" hidden>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_print')">Save + print</button></li>
-                          <li role="none"><button type="button" class="qb-split__menu-item" role="menuitem" onclick="maintCloseSplitMenus(); maintDraftWorkOrderPdf()">Draft WO PDF</button></li>
-                          <li role="none">
-                            <a class="qb-split__menu-item qb-split__menu-item--link" role="menuitem" href="/api/pdf/shop-queue" target="_blank" rel="noopener" onclick="maintCloseSplitMenus()">Shop queue PDF</a>
-                          </li>
-                        </ul>
-                      </div>
+                    <div class="maint-form-actions__row">
+                      <button type="button" class="btn btn--primary" onclick="maintCloseSplitMenus(); saveRecordWithAction('save')">Save</button>
+                      <button type="button" class="btn btn--primary" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Post to QuickBooks</button>
+                      <button type="button" class="btn" onclick="document.getElementById('maintInvoicePdfInput').click()">Attach file</button>
+                      <button type="button" class="btn btn--ghost" onclick="parseMaintRecordInvoicePdf()">Parse PDF to lines</button>
+                      <button type="button" class="btn btn--ghost" onclick="maintPrintWorkOrderView()">Print</button>
+                    </div>
+                    <div class="maint-form-actions__meta">
+                      <span class="mini-note" id="maintSaveHint"></span>
+                      <span class="mini-note" id="maintEditRecordHint" style="color:#64748b"></span>
                     </div>
                   </div>
                 </div>
@@ -2521,107 +2507,106 @@
   </template>
 
   <template id="maintCostLineTpl">
-    <div class="maint-cost-line" style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa">
-      <div class="maint-cost-line__primary">
-        <div class="maint-cl-type">
-          <span class="qb-l">Type</span>
-          <select class="qb-in maint-field maint-line-mode" onchange="toggleMaintCostLineMode(this)">
-            <option value="category">Category</option>
-            <option value="item">Item</option>
-          </select>
-        </div>
-        <div class="maint-cl-desc">
-          <span class="qb-l">Description</span>
-          <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Tire, labor, rim…" autocomplete="off" title="Maintenance catalog label; also seeds QBO line description when memo is blank." />
-        </div>
-        <div class="maint-cl-qty">
-          <span class="qb-l">Qty</span>
-          <input class="qb-in maint-field maint-line-qty" type="number" step="any" min="0" placeholder="1" value="1" />
-        </div>
-        <div class="maint-cl-unit">
-          <span class="qb-l">Unit</span>
-          <input class="qb-in maint-field maint-line-unit" type="number" step="0.01" min="0" placeholder="0.00" />
-        </div>
-        <div class="maint-cl-amt">
-          <span class="qb-l">Line $</span>
-          <input class="qb-in maint-field maint-line-amt" type="number" step="0.01" min="0" placeholder="0.00" />
-        </div>
-        <div class="maint-cl-cust">
-          <span class="qb-l">Customer</span>
-          <input class="qb-in maint-field maint-line-cust-search" list="qboCustomerOptions" placeholder="Optional" autocomplete="off" oninput="resolveMaintLineCustomer(this)" onblur="resolveMaintLineCustomer(this)" />
-          <input type="hidden" class="maint-line-cust-id" />
-        </div>
-        <div class="maint-cl-class">
-          <span class="qb-l">Class</span>
-          <input class="qb-in maint-field maint-line-class-search" list="qboClassOptions" placeholder="Unit class" autocomplete="off" oninput="resolveMaintLineClass(this)" onblur="resolveMaintLineClass(this)" title="Defaults from selected asset when blank" />
-          <input type="hidden" class="maint-line-class-id" />
-        </div>
-        <div class="maint-cl-del">
-          <span class="qb-l">&nbsp;</span>
-          <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
-        </div>
-      </div>
-      <div class="maint-line-qbo-row maint-cost-line__acct">
-        <div class="maint-line-cat-block maint-qbo-line-cat" style="flex:1;min-width:200px">
-          <span class="qb-l">Expense account</span>
-          <input class="qb-in maint-field maint-line-acct-search" list="qboExpenseCategoryOptions" placeholder="Expense account (chart)" autocomplete="off" oninput="resolveMaintLineAccount(this)" onblur="resolveMaintLineAccount(this)" title="Expense and COGS accounts only — QuickBooks category-style line" />
-          <input type="hidden" class="maint-line-acct-id" />
-        </div>
-        <div class="maint-line-item-block maint-qbo-line-item hidden" style="flex:1;min-width:220px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
-          <div style="flex:1;min-width:140px">
-            <span class="qb-l">Product / service</span>
-            <input class="qb-in maint-field maint-line-item-search" list="qboProductServiceOptions" placeholder="QBO product or service" autocomplete="off" oninput="resolveMaintLineItem(this)" onblur="resolveMaintLineItem(this)" title="Service, Inventory, Non-inventory, etc." />
-            <input type="hidden" class="maint-line-item-id" />
-          </div>
-          <div style="width:92px">
-            <span class="qb-l">SKU</span>
-            <input class="qb-in maint-field maint-line-item-sku" type="text" readonly placeholder="—" style="background:#e2e8f0;cursor:default" tabindex="-1" title="From QuickBooks when item matched" />
-          </div>
-        </div>
-      </div>
-      <div class="maint-line-qbo-extras maint-cost-line__extras">
-        <div style="flex:1;min-width:200px">
-          <span class="qb-l">QBO line memo</span>
-          <input class="qb-in maint-field maint-line-qbo-desc" maxlength="380" placeholder="Optional — else description + part details" autocomplete="off" title="Sent as the Description on this line in QuickBooks" />
-        </div>
-        <label class="maint-cost-line__billable">
-          <input type="checkbox" class="maint-line-billable" />
-          <span class="qb-l" style="margin:0">Billable</span>
-        </label>
-      </div>
-      <div class="maint-line-part-block" style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
-          <div>
-            <span class="qb-l">Multi-position part</span>
-            <select class="qb-in maint-field maint-line-part-cat" onchange="onMaintLinePartCategoryChange(this)">
-              <option value="">— None —</option>
-              <option value="tire">Tires</option>
-              <option value="battery">Batteries</option>
-              <option value="air_suspension">Air springs / bags</option>
-              <option value="brake">Brakes</option>
-              <option value="filter">Filters</option>
-              <option value="lighting">Lighting</option>
-              <option value="other_multi">Other (describe)</option>
+    <tr class="maint-cost-line">
+      <td class="maint-cost-td-desc">
+        <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Description" autocomplete="off" title="Maintenance catalog label; also seeds QBO line description when memo is blank." />
+      </td>
+      <td class="maint-cost-td-qbo">
+        <div class="maint-cost-qbo-stack">
+          <div class="maint-cost-qbo-mode">
+            <span class="qb-l">Line type</span>
+            <select class="qb-in maint-field maint-line-mode" onchange="toggleMaintCostLineMode(this)">
+              <option value="category">Category</option>
+              <option value="item">Item</option>
             </select>
           </div>
-          <div class="maint-line-pos-select-wrap" style="flex:1;min-width:160px">
-            <span class="qb-l">Position</span>
-            <select class="qb-in maint-field maint-line-pos-select" onchange="syncMaintLinePartMapFromSelect(this)">
-              <option value="">— Choose —</option>
-            </select>
+          <div class="maint-line-qbo-row maint-cost-line__acct">
+            <div class="maint-line-cat-block maint-qbo-line-cat" style="flex:1;min-width:200px">
+              <span class="qb-l">Expense account</span>
+              <input class="qb-in maint-field maint-line-acct-search" list="qboExpenseCategoryOptions" placeholder="Expense account (chart)" autocomplete="off" oninput="resolveMaintLineAccount(this)" onblur="resolveMaintLineAccount(this)" title="Expense and COGS accounts only — QuickBooks category-style line" />
+              <input type="hidden" class="maint-line-acct-id" />
+            </div>
+            <div class="maint-line-item-block maint-qbo-line-item hidden" style="flex:1;min-width:220px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+              <div style="flex:1;min-width:140px">
+                <span class="qb-l">Product / service</span>
+                <input class="qb-in maint-field maint-line-item-search" list="qboProductServiceOptions" placeholder="QBO product or service" autocomplete="off" oninput="resolveMaintLineItem(this)" onblur="resolveMaintLineItem(this)" title="Service, Inventory, Non-inventory, etc." />
+                <input type="hidden" class="maint-line-item-id" />
+              </div>
+              <div style="width:92px">
+                <span class="qb-l">SKU</span>
+                <input class="qb-in maint-field maint-line-item-sku" type="text" readonly placeholder="—" style="background:#e2e8f0;cursor:default" tabindex="-1" title="From QuickBooks when item matched" />
+              </div>
+            </div>
           </div>
-          <div class="maint-line-pos-free-wrap hidden" style="flex:1;min-width:160px">
-            <span class="qb-l">Position (free text)</span>
-            <input class="qb-in maint-field maint-line-pos-free" placeholder="e.g. Liftgate motor" />
+          <div class="maint-line-qbo-extras maint-cost-line__extras">
+            <div style="flex:1;min-width:200px">
+              <span class="qb-l">QBO line memo</span>
+              <input class="qb-in maint-field maint-line-qbo-desc" maxlength="380" placeholder="Optional — else description + part details" autocomplete="off" title="Sent as the Description on this line in QuickBooks" />
+            </div>
+            <label class="maint-cost-line__billable">
+              <input type="checkbox" class="maint-line-billable" />
+              <span class="qb-l" style="margin:0">Billable</span>
+            </label>
           </div>
-          <div style="min-width:100px">
-            <span class="qb-l">Part #</span>
-            <input class="qb-in maint-field maint-line-part-no" placeholder="OEM / SKU" />
+          <div class="maint-cost-qbo-custclass">
+            <div class="maint-cost-qbo-custclass__cell">
+              <span class="qb-l">Customer</span>
+              <input class="qb-in maint-field maint-line-cust-search" list="qboCustomerOptions" placeholder="Optional" autocomplete="off" oninput="resolveMaintLineCustomer(this)" onblur="resolveMaintLineCustomer(this)" />
+              <input type="hidden" class="maint-line-cust-id" />
+            </div>
+            <div class="maint-cost-qbo-custclass__cell">
+              <span class="qb-l">Class</span>
+              <input class="qb-in maint-field maint-line-class-search" list="qboClassOptions" placeholder="Unit class" autocomplete="off" oninput="resolveMaintLineClass(this)" onblur="resolveMaintLineClass(this)" title="Defaults from selected asset when blank" />
+              <input type="hidden" class="maint-line-class-id" />
+            </div>
+          </div>
+          <div class="maint-line-part-block" style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+              <div>
+                <span class="qb-l">Multi-position part</span>
+                <select class="qb-in maint-field maint-line-part-cat" onchange="onMaintLinePartCategoryChange(this)">
+                  <option value="">— None —</option>
+                  <option value="tire">Tires</option>
+                  <option value="battery">Batteries</option>
+                  <option value="air_suspension">Air springs / bags</option>
+                  <option value="brake">Brakes</option>
+                  <option value="filter">Filters</option>
+                  <option value="lighting">Lighting</option>
+                  <option value="other_multi">Other (describe)</option>
+                </select>
+              </div>
+              <div class="maint-line-pos-select-wrap" style="flex:1;min-width:160px">
+                <span class="qb-l">Position</span>
+                <select class="qb-in maint-field maint-line-pos-select" onchange="syncMaintLinePartMapFromSelect(this)">
+                  <option value="">— Choose —</option>
+                </select>
+              </div>
+              <div class="maint-line-pos-free-wrap hidden" style="flex:1;min-width:160px">
+                <span class="qb-l">Position (free text)</span>
+                <input class="qb-in maint-field maint-line-pos-free" placeholder="e.g. Liftgate motor" />
+              </div>
+              <div style="min-width:100px">
+                <span class="qb-l">Part #</span>
+                <input class="qb-in maint-field maint-line-part-no" placeholder="OEM / SKU" />
+              </div>
+            </div>
+            <div class="maint-line-part-map-host hidden"></div>
           </div>
         </div>
-        <div class="maint-line-part-map-host hidden"></div>
-      </div>
-    </div>
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field maint-line-qty" type="number" step="any" min="0" placeholder="1" value="1" />
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field maint-line-unit" type="number" step="0.01" min="0" placeholder="0.00" />
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field maint-line-amt" type="number" step="0.01" min="0" placeholder="0.00" />
+      </td>
+      <td class="maint-cost-table__del maint-cost-td-del">
+        <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
+      </td>
+    </tr>
   </template>
 
   <template id="tireExtraLineTpl">
@@ -3225,7 +3210,7 @@
       const id = map[tab] || map.record;
       const panel = document.getElementById(id);
       if (panel) panel.classList.add('active');
-      document.querySelectorAll('#maintMainSubtabs .subtab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#maintMainSubtabs .maint-board-nav__btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
       else {
         const key = tab in map ? tab : 'record';
@@ -3366,8 +3351,13 @@
         woWrap.classList.remove('hidden');
         if (woLab) woLab.textContent = 'Work order #';
         if (vLab) vLab.textContent = 'Vendor invoice #';
-        if (woInp) woInp.placeholder = 'Assigned when you pick a unit';
+        if (woInp) {
+          woInp.placeholder = 'Assigned when you pick a unit';
+          woInp.readOnly = false;
+          woInp.classList.remove('maint-field--readonly');
+        }
         if (vInp) vInp.placeholder = 'Supplier invoice';
+        renderMaintAsideWoSummary();
         return;
       }
       if (unitLine) unitLine.textContent = selectedUnit;
@@ -3378,23 +3368,39 @@
         woWrap.classList.remove('hidden');
         if (woLab) woLab.textContent = 'Shop WO # (internal)';
         if (vLab) vLab.textContent = 'Vendor invoice #';
-        if (woInp) woInp.placeholder = 'Assigned on save if empty';
+        if (woInp) {
+          woInp.placeholder = 'Assigned on save if empty';
+          woInp.readOnly = true;
+          woInp.classList.add('maint-field--readonly');
+          woInp.title = 'Auto-assigned for internal shop (read-only)';
+        }
         ensureInternalShopWorkOrderPreview();
       } else if (repairLoc === 'external' || repairLoc === 'road-service' || repairLoc === 'parts-purchase') {
         vWrap.classList.remove('hidden');
         woWrap.classList.remove('hidden');
         if (woLab) woLab.textContent = repairLoc === 'parts-purchase' ? 'PO / ref #' : 'Vendor WO #';
         if (vLab) vLab.textContent = 'Vendor invoice #';
-        if (woInp) woInp.placeholder = repairLoc === 'parts-purchase' ? 'Order or ref' : 'Vendor work order';
+        if (woInp) {
+          woInp.placeholder = repairLoc === 'parts-purchase' ? 'Order or ref' : 'Vendor work order';
+          woInp.readOnly = false;
+          woInp.classList.remove('maint-field--readonly');
+          woInp.title = 'Vendor or reference work order #';
+        }
         if (vInp) vInp.placeholder = 'Supplier invoice';
       } else {
         vWrap.classList.remove('hidden');
         woWrap.classList.remove('hidden');
         if (woLab) woLab.textContent = 'Reference / WO #';
         if (vLab) vLab.textContent = 'Vendor invoice #';
-        if (woInp) woInp.placeholder = 'Vendor WO / internal ref';
+        if (woInp) {
+          woInp.placeholder = 'Vendor WO / internal ref';
+          woInp.readOnly = false;
+          woInp.classList.remove('maint-field--readonly');
+          woInp.title = 'Reference or work order #';
+        }
         if (vInp) vInp.placeholder = 'Supplier invoice (optional)';
       }
+      renderMaintAsideWoSummary();
     }
 
     async function loadTmsLoadsForMaint() {
@@ -4551,7 +4557,100 @@
       } catch (_) {}
     }
 
+    let __maintQboSyncPayloadCache = null;
+
+    function updateAccountingNavBadge(payload) {
+      const badge = document.getElementById('navAccountingBadge');
+      if (!badge) return;
+      let n = 0;
+      if (payload && payload.ok !== false) {
+        if (payload.counts && Number(payload.counts.high) > 0) n = Number(payload.counts.high);
+        else if (Array.isArray(payload.alerts))
+          n = payload.alerts.filter(a => a && a.severity === 'high').length;
+      }
+      if (n > 0) {
+        badge.textContent = String(n);
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function renderMaintAsideQbIssues() {
+      const host = document.getElementById('maintAsideQbIssues');
+      if (!host) return;
+      const payload = __maintQboSyncPayloadCache;
+      if (!payload || payload.ok === false) {
+        host.innerHTML = '<span class="mini-note">Sync unavailable.</span>';
+        return;
+      }
+      const alerts = payload.alerts || [];
+      if (!alerts.length) {
+        host.innerHTML = '<span class="mini-note">No open issues.</span>';
+        return;
+      }
+      const rank = { high: 0, medium: 1, low: 2 };
+      const sorted = [...alerts].sort(
+        (a, b) => (rank[a.severity] ?? 3) - (rank[b.severity] ?? 3)
+      );
+      host.innerHTML = sorted
+        .slice(0, 5)
+        .map(a => {
+          const sev = a.severity === 'high' ? 'err' : a.severity === 'medium' ? 'med' : 'low';
+          return `<div class="maint-aside-issue maint-aside-issue--${sev}">${escapeHtml(
+            a.title || a.code || 'Notice'
+          )}</div>`;
+        })
+        .join('');
+    }
+
+    function renderMaintAsideWoSummary() {
+      const host = document.getElementById('maintAsideWoSummary');
+      if (!host) return;
+      const unit = selectedUnit || '—';
+      const wo = (document.getElementById('recordWorkOrderInput')?.value || '').trim() || '—';
+      const costRaw = document.getElementById('costInput')?.value;
+      const costNum = Number(costRaw);
+      const cost =
+        costRaw != null && String(costRaw).trim() !== '' && Number.isFinite(costNum)
+          ? '$' + costNum.toFixed(2)
+          : '—';
+      const loc = (document.getElementById('repairLocationSearch')?.value || '').trim() || '—';
+      host.innerHTML = `
+        <div class="maint-aside-kv"><span>Unit</span><strong>${escapeHtml(unit)}</strong></div>
+        <div class="maint-aside-kv"><span>WO #</span><strong>${escapeHtml(wo)}</strong></div>
+        <div class="maint-aside-kv"><span>Total</span><strong>${escapeHtml(cost)}</strong></div>
+        <div class="maint-aside-kv"><span>Location</span><strong>${escapeHtml(loc)}</strong></div>`;
+    }
+
+    function openMaintAssetStatusPanel() {
+      const p = document.getElementById('maintAssetStatusPanel');
+      if (!p) return;
+      p.classList.remove('hidden');
+      p.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeMaintAssetStatusPanel() {
+      const p = document.getElementById('maintAssetStatusPanel');
+      if (!p) return;
+      p.classList.add('hidden');
+      p.setAttribute('aria-hidden', 'true');
+    }
+
+    function maintOperationalStatusPillClass(code) {
+      const v = String(code || '')
+        .toLowerCase()
+        .replace(/\s+/g, '_');
+      if (v === 'in_service' || v === 'in-service') return 'maint-status-pill maint-status-pill--ok';
+      if (v.includes('out_of') || v.includes('down') || v.includes('shop') || v.includes('hold'))
+        return 'maint-status-pill maint-status-pill--warn';
+      return 'maint-status-pill';
+    }
+
     function renderQboSyncAlerts(payload) {
+      __maintQboSyncPayloadCache = payload;
+      updateAccountingNavBadge(payload);
+      renderMaintAsideQbIssues();
       const bar = document.getElementById('qboSyncAlertBar');
       const side = document.getElementById('sidebarQboAlertBrief');
       if (!bar) return;
@@ -8855,6 +8954,9 @@
       updateMaintCostTotalMatchUi(rounded, hasAmt);
       updateMaintInvoiceCostCoordination(lines, rounded, hasAmt);
       scheduleSyncMaintLinkAccountingFromCostLines();
+      const tblTot = document.getElementById('maintCostTableTotalDisplay');
+      if (tblTot) tblTot.textContent = '$' + rounded.toFixed(2);
+      renderMaintAsideWoSummary();
     }
 
     function updateMaintInvoiceCostCoordination(lines, rounded, hasAmt) {
@@ -9960,11 +10062,21 @@
     function renderSelectedUnit() {
       const v = vehicles.find(x => x.name === selectedUnit);
       if (!v) {
-        document.getElementById('selectedUnitInfo').textContent = 'Select an asset.';
+        document.getElementById('selectedUnitInfo').innerHTML = '';
+        const cardEl = document.getElementById('maintAssetHeaderCard');
+        if (cardEl) {
+          cardEl.innerHTML = '<div class="maint-asset-header-card__placeholder">Select a unit from the list.</div>';
+        }
+        const body = document.getElementById('maintAssetStatusPanelBody');
+        if (body) body.innerHTML = '';
+        closeMaintAssetStatusPanel();
+        document.getElementById('maintUnitSummaryStrip')?.classList.add('hidden');
         syncMaintWorkOrderHeader();
         renderRepairLocationChips();
         return;
       }
+
+      closeMaintAssetStatusPanel();
 
       const rows = dashboard.filter(x => x.unit === v.name);
       const past = rows.filter(x => x.status === 'past due').length;
@@ -9982,17 +10094,51 @@
           )}</option>`;
         })
         .join('');
-      document.getElementById('selectedUnitInfo').innerHTML = `
-        <b>${escapeHtml(v.name)}</b><br>
-        <span class="mini-note">Samsara / fleet identity (when API provides it):</span><br>
-        <span class="mini-note">Make / model / year:</span> ${escapeHtml([v.make, v.model, v.year].filter(Boolean).join(' · ') || '—')}<br>
-        <span class="mini-note">VIN:</span> ${escapeHtml(v.vin || '—')}
-        ${v.licensePlate ? ` · <span class="mini-note">Plate:</span> ${escapeHtml(v.licensePlate)}` : ''}<br>
-        ${v.engineSerialNumber ? `<span class="mini-note">Engine serial (ESN):</span> ${escapeHtml(v.engineSerialNumber)}<br>` : ''}
-        ${v.serial ? `<span class="mini-note">Asset serial:</span> ${escapeHtml(v.serial)}<br>` : ''}
-        <span class="mini-note">Category:</span> ${escapeHtml(v.assetCategory || '—')}
-        ${v.notes ? `<br><span class="mini-note">Fleet notes (Samsara):</span> ${escapeHtml(v.notes)}` : ''}
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #edf1f7">
+
+      const odoRec = resolvedServiceMileageRecommendation(v.name);
+      const displayMi =
+        odoRec.miles != null && Number.isFinite(odoRec.miles)
+          ? odoRec.miles
+          : v.odometerMiles != null && Number.isFinite(Number(v.odometerMiles))
+            ? Number(v.odometerMiles)
+            : null;
+
+      let opLabel = String(opStatus || '').replace(/_/g, ' ') || '—';
+      for (const r of operationalCatalogRows()) {
+        const val = typeof r === 'object' ? String(r.value || '').trim() : String(r || '').trim();
+        if (val === opStatus) {
+          opLabel = (typeof r === 'object' ? String(r.label || r.value || val).trim() : val) || opLabel;
+          break;
+        }
+      }
+
+      const ymm = [v.year, v.make, v.model].filter(Boolean).join(' ') || '—';
+      const vin = v.vin || '—';
+      const plate = v.licensePlate ? String(v.licensePlate) : '—';
+      const odoStr = displayMi != null && Number.isFinite(displayMi) ? Math.round(displayMi).toLocaleString() : '—';
+      const pillClass = maintOperationalStatusPillClass(opStatus);
+      const cardEl = document.getElementById('maintAssetHeaderCard');
+      if (cardEl) {
+        cardEl.innerHTML = `
+          <div class="maint-asset-header-card__main">
+            <div class="maint-asset-header-card__row">
+              <div class="maint-asset-header-card__unit">${escapeHtml(v.name)}</div>
+              <div class="maint-asset-header-card__ymm">${escapeHtml(ymm)}</div>
+              <span class="${pillClass}">${escapeHtml(opLabel)}</span>
+              <button type="button" class="btn btn--small" onclick="openMaintAssetStatusPanel()">Edit status</button>
+            </div>
+            <div class="maint-asset-header-card__ids">
+              <span>VIN ${escapeHtml(vin)}</span>
+              <span>Plate ${escapeHtml(plate)}</span>
+              <span>Odo ${escapeHtml(odoStr)}</span>
+            </div>
+          </div>`;
+      }
+
+      const panelBody = document.getElementById('maintAssetStatusPanelBody');
+      if (panelBody) {
+        panelBody.innerHTML = `
+        <div class="maint-asset-panel-block">
           <span class="qb-l">Operational status</span>
           <div class="search-row" style="grid-template-columns:1fr 1fr;align-items:end">
             <div>
@@ -10005,7 +10151,7 @@
           <input id="assetStatusNote" class="qb-in maint-field" placeholder="Optional note (reason, ETA, shop name)" value="${escapeHtml(st.note || '')}" style="margin-top:8px" />
           ${st.updatedAt ? `<div class="mini-note" style="margin-top:4px">Updated ${escapeHtml(new Date(st.updatedAt).toLocaleString())}${st.updatedBy ? ` · ${escapeHtml(st.updatedBy)}` : ''}</div>` : ''}
         </div>
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #edf1f7">
+        <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid #edf1f7">
           <span class="qb-l">Fleet roster</span>
           <p class="mini-note" style="margin:4px 0 8px">Retired units are hidden from this list, the live board, fuel unit pickers, and dispatch maintenance alerts. History and imports for that unit name are unchanged.</p>
           <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px">
@@ -10016,17 +10162,12 @@
             <button type="button" onclick="saveAssetFleetActive()">Save roster</button>
           </div>
         </div>
-        <div id="assetPartsRefHint" class="mini-note" style="margin-top:8px;line-height:1.45"></div>
-      `;
+        <div id="assetPartsRefHint" class="mini-note" style="margin-top:8px;line-height:1.45"></div>`;
+      }
+      document.getElementById('selectedUnitInfo').innerHTML = '';
       loadPartsReferenceHint();
 
-      const odoRec = resolvedServiceMileageRecommendation(v.name);
-      const displayMi =
-        odoRec.miles != null && Number.isFinite(odoRec.miles)
-          ? odoRec.miles
-          : v.odometerMiles != null && Number.isFinite(Number(v.odometerMiles))
-            ? Number(v.odometerMiles)
-            : null;
+      document.getElementById('maintUnitSummaryStrip')?.classList.remove('hidden');
       document.getElementById('unitMileageBox').textContent =
         displayMi != null ? Math.round(displayMi).toLocaleString() : 'N/A';
       const latestFuel = latestFuelPurchaseForUnit(v.name);
@@ -10615,6 +10756,7 @@
           })
         });
         await loadAll();
+        closeMaintAssetStatusPanel();
       } catch (e) {
         alert(e.message || String(e));
       }

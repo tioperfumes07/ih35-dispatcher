@@ -2083,6 +2083,408 @@ body.erp-maintenance .maint-section-card {
   background: linear-gradient(180deg, var(--app-section-surface) 0%, var(--panel) 32%);
 }
 
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 5px;
+  margin-left: 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+}
+.nav-badge--danger {
+  background: var(--red);
+  color: #fff;
+}
+
+body.erp-maintenance .maint-board-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+  gap: 14px 18px;
+  align-items: start;
+  margin-top: 10px;
+}
+body.erp-maintenance .maint-board-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 14px;
+  position: sticky;
+  top: 10px;
+}
+body.erp-maintenance .maint-board-nav__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+body.erp-maintenance .maint-board-nav__btn {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+body.erp-maintenance .maint-board-nav__btn:hover {
+  background: rgba(29, 78, 216, 0.06);
+  color: var(--text);
+}
+body.erp-maintenance .maint-board-nav__btn.active {
+  background: #1e3a5a;
+  color: #f8fafc;
+  border-color: #0f172a;
+}
+body.erp-maintenance .maint-board-stage {
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+body.erp-maintenance .maint-kpi-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--bg-elevated);
+}
+body.erp-maintenance .maint-kpi-card__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+body.erp-maintenance .maint-kpi-card__val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-top: 2px;
+  color: #0f172a;
+}
+
+body.erp-maintenance .maint-wo-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  gap: 14px 16px;
+  align-items: start;
+}
+body.erp-maintenance .maint-wo-main-aside {
+  display: contents;
+}
+body.erp-maintenance .maint-wo-workspace {
+  min-width: 0;
+}
+body.erp-maintenance .maint-wo-aside {
+  position: sticky;
+  top: 10px;
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+body.erp-maintenance .maint-aside-block__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+body.erp-maintenance .maint-aside-block__body {
+  font-size: 12px;
+  line-height: 1.45;
+}
+body.erp-maintenance .maint-aside-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+body.erp-maintenance .maint-aside-kv span {
+  color: var(--muted);
+  font-weight: 600;
+}
+body.erp-maintenance .maint-aside-kv strong {
+  font-weight: 700;
+  text-align: right;
+  word-break: break-word;
+}
+body.erp-maintenance .maint-aside-issue {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+body.erp-maintenance .maint-aside-issue--err {
+  color: var(--red);
+}
+body.erp-maintenance .maint-aside-issue--med {
+  color: var(--yellow);
+}
+body.erp-maintenance .maint-aside-issue--low {
+  color: var(--muted);
+}
+
+body.erp-maintenance .maint-asset-header-card {
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  padding: 10px 14px 12px;
+  margin-bottom: 10px;
+  background: linear-gradient(180deg, #fff 0%, var(--app-section-surface) 100%);
+}
+body.erp-maintenance .maint-asset-header-card__placeholder {
+  font-size: 13px;
+  color: var(--muted);
+}
+body.erp-maintenance .maint-asset-header-card__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+body.erp-maintenance .maint-asset-header-card__unit {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+body.erp-maintenance .maint-asset-header-card__ymm {
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex: 1;
+  min-width: 12rem;
+}
+body.erp-maintenance .maint-asset-header-card__ids {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+body.erp-maintenance .maint-status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #334155;
+}
+body.erp-maintenance .maint-status-pill--ok {
+  background: var(--green-soft);
+  color: var(--green);
+}
+body.erp-maintenance .maint-status-pill--warn {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+body.erp-maintenance .maint-asset-status-panel {
+  border: 1px dashed var(--line-strong);
+  border-radius: 10px;
+  padding: 10px 12px 12px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+body.erp-maintenance .maint-asset-status-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+body.erp-maintenance .maint-asset-panel-block {
+  margin-top: 0;
+}
+
+body.erp-maintenance .maint-cost-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+body.erp-maintenance .maint-cost-table th,
+body.erp-maintenance .maint-cost-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 6px;
+  vertical-align: top;
+  text-align: left;
+}
+body.erp-maintenance .maint-cost-table thead th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+  font-weight: 700;
+}
+body.erp-maintenance .maint-cost-table__num {
+  text-align: right;
+  white-space: nowrap;
+  width: 1%;
+}
+body.erp-maintenance .maint-cost-table__del {
+  width: 36px;
+  text-align: center;
+}
+body.erp-maintenance .maint-cost-td-num .qb-in {
+  max-width: 7rem;
+  margin-left: auto;
+}
+body.erp-maintenance .maint-cost-td-desc .qb-in {
+  width: 100%;
+  min-width: 140px;
+}
+body.erp-maintenance .maint-cost-qbo-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+body.erp-maintenance .maint-cost-qbo-custclass {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+body.erp-maintenance .maint-cost-qbo-custclass__cell {
+  flex: 1;
+  min-width: 140px;
+}
+body.erp-maintenance .maint-cost-table__addrow td {
+  border-bottom: none;
+  padding: 4px 6px 8px;
+}
+body.erp-maintenance .maint-cost-addline {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  padding: 6px 4px;
+}
+body.erp-maintenance .maint-cost-addline:hover {
+  text-decoration: underline;
+}
+body.erp-maintenance .maint-cost-table__totalrow td {
+  font-weight: 800;
+  border-top: 1px solid var(--line-strong);
+  padding-top: 10px;
+}
+body.erp-maintenance .maint-cost-table__total-label {
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+body.erp-maintenance .maint-form-actions {
+  margin-top: 12px;
+  padding: 12px 14px;
+}
+body.erp-maintenance .maint-form-actions__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+body.erp-maintenance .maint-form-actions__meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+body.erp-maintenance .maint-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 14px;
+}
+body.erp-maintenance .maint-form-grid__row {
+  display: grid;
+  gap: 12px 14px;
+  align-items: end;
+}
+body.erp-maintenance .maint-form-grid__row--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  body.erp-maintenance .maint-form-grid__row--3 {
+    grid-template-columns: 1fr;
+  }
+}
+body.erp-maintenance .maint-field-cell--grow {
+  grid-column: 1 / -1;
+}
+body.erp-maintenance .maint-field-cell .qb-in,
+body.erp-maintenance .maint-field-cell select {
+  width: 100%;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-field--readonly {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  cursor: not-allowed;
+}
+
+body.erp-maintenance .maint-hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+body.erp-maintenance .btn--ghost {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--text-secondary);
+}
+body.erp-maintenance .btn--ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+}
+
+@media (max-width: 1100px) {
+  body.erp-maintenance .maint-board-layout {
+    grid-template-columns: 1fr;
+  }
+  body.erp-maintenance .maint-board-nav {
+    position: relative;
+    top: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  body.erp-maintenance .maint-board-nav__btn {
+    width: auto;
+  }
+  body.erp-maintenance .maint-wo-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+  body.erp-maintenance .maint-wo-aside {
+    position: relative;
+    top: auto;
+  }
+}
+
 body.erp-maintenance .maint-wo-form-shell {
   margin-top: 6px;
 }
@@ -2852,6 +3254,7 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
 
   body.erp-maintenance.print-wo-only .maint-top-toolbar,
   body.erp-maintenance.print-wo-only #maintMainSubtabs,
+  body.erp-maintenance.print-wo-only #maintWoRightAside,
   body.erp-maintenance.print-wo-only .maint-workorder-category-strip,
   body.erp-maintenance.print-wo-only #maintenanceSplit > .unit-list-panel,
   body.erp-maintenance.print-wo-only #maintMainTabFleet,
@@ -2884,8 +3287,8 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
     display: none !important;
   }
 
-  /* Asset panel: keep identity lines, drop roster / status / parts-reference tooling */
-  body.erp-maintenance.print-wo-only #maintMainTabRecord #selectedUnitInfo > div {
+  /* Asset: print header card; legacy hidden block has no layout */
+  body.erp-maintenance.print-wo-only #maintMainTabRecord #maintAssetStatusPanel {
     display: none !important;
   }
 
