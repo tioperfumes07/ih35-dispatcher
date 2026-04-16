@@ -2,6 +2,7 @@
 /**
  * Non-destructive HTTP checks against a running server (default http://127.0.0.1:3400).
  * Run: `npm start` in another terminal, then `npm run smoke`.
+ * Also GETs key static HTML pages (maintenance, dispatch, fuel, banking, settings) and checks for a stable substring.
  * Set SMOKE_BASE=http://host:port to target another environment.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
@@ -24,6 +25,15 @@ const CRITICAL = [
 /** Optional: DB reachability (fails in dev when URL points at a dead host). */
 const SOFT_DB = ['GET', '/api/health/db'];
 
+/** Static ERP shells (HTML) — catches broken public paths or 500 on page boot. */
+const HTML_PAGES = [
+  ['/maintenance.html', 'section-reports'],
+  ['/dispatch.html', 'dispatchApp'],
+  ['/fuel.html', 'fuel-board'],
+  ['/banking.html', 'banking-page'],
+  ['/settings.html', 'settings-page']
+];
+
 const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 8000));
 
 async function one(method, path) {
@@ -44,6 +54,21 @@ async function one(method, path) {
         ? `(alerts total ${json.counts.total ?? '—'})`
         : '';
   return { path, status: r.status, ok: r.ok, hint, jsonSnippet: summarize(json, path) };
+}
+
+async function oneHtml(path, needle) {
+  const url = base + path;
+  const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
+  const r = await fetch(url, { method: 'GET', headers: { Accept: 'text/html' }, signal: ctrl });
+  const text = await r.text();
+  const has = needle && text.includes(needle);
+  return {
+    path,
+    status: r.status,
+    ok: r.ok && has,
+    hint: has ? `contains "${needle}"` : r.ok ? `missing "${needle}"` : '',
+    jsonSnippet: r.ok ? `bytes=${text.length}` : text.slice(0, 80)
+  };
 }
 
 function summarize(j, path) {
@@ -88,6 +113,19 @@ for (const [method, path] of CRITICAL) {
     console.log(`✗ FAIL ${method} ${path}: ${e.message || e}`);
     console.log('   Is the server running? Try: npm start');
     process.exit(1);
+  }
+}
+
+for (const [path, needle] of HTML_PAGES) {
+  try {
+    const row = await oneHtml(path, needle);
+    const pass = row.ok;
+    if (!pass) criticalFailures++;
+    console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${path} ${row.hint}`.trim());
+    if (!pass) console.log('   ', row.jsonSnippet);
+  } catch (e) {
+    criticalFailures++;
+    console.log(`✗ FAIL GET ${path}: ${e.message || e}`);
   }
 }
 

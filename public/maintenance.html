@@ -2662,39 +2662,40 @@
             </div>
           </div>
         </nav>
-        <div class="subtabs" style="gap:8px;flex-wrap:wrap;align-items:center">
-          <button type="button" class="subtab active" onclick="openReportsTab('rep-overview', this)">Overview</button>
+        <div id="repMainSubtabs" class="subtabs" style="gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="subtab active" data-rep-k="overview executive dashboard metrics board refresh" onclick="openReportsTab('rep-overview', this)">Overview</button>
 
           <div class="nav-dropdown" style="display:inline-block">
             <button type="button" class="subtab nav-dropdown-trigger" id="repMaintDdTrigger" onclick="event.stopPropagation()">Maintenance ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-maint', document.getElementById('repMaintDdTrigger'))">Spend by unit</button>
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-maint-detail', document.getElementById('repMaintDdTrigger'))">Detailed maintenance (parts/positions)</button>
+              <button type="button" class="nav-dd-item" data-rep-k="spend unit maintenance cost work order" onclick="openReportsTab('rep-maint', document.getElementById('repMaintDdTrigger'))">Spend by unit</button>
+              <button type="button" class="nav-dd-item" data-rep-k="parts positions tires detailed breakdown" onclick="openReportsTab('rep-maint-detail', document.getElementById('repMaintDdTrigger'))">Detailed maintenance (parts/positions)</button>
             </div>
           </div>
 
           <div class="nav-dropdown" style="display:inline-block">
             <button type="button" class="subtab nav-dropdown-trigger" id="repAcctDdTrigger" onclick="event.stopPropagation()">Accounting ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-qbo', document.getElementById('repAcctDdTrigger'))">QuickBooks activity</button>
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-sync', document.getElementById('repAcctDdTrigger'))">ERP ↔ QBO sync</button>
+              <button type="button" class="nav-dd-item" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTab('rep-qbo', document.getElementById('repAcctDdTrigger'))">QuickBooks activity</button>
+              <button type="button" class="nav-dd-item" data-rep-k="erp sync qbo quickbooks reconcile" onclick="openReportsTab('rep-sync', document.getElementById('repAcctDdTrigger'))">ERP ↔ QBO sync</button>
             </div>
           </div>
 
           <div class="nav-dropdown" style="display:inline-block">
             <button type="button" class="subtab nav-dropdown-trigger" id="repOpsDdTrigger" onclick="event.stopPropagation()">Operations ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-tms', document.getElementById('repOpsDdTrigger'))">TMS loads</button>
+              <button type="button" class="nav-dd-item" data-rep-k="tms loads pipeline postgres trips" onclick="openReportsTab('rep-tms', document.getElementById('repOpsDdTrigger'))">TMS loads</button>
               <button
                 type="button"
                 class="nav-dd-item"
                 id="repSettlementNavItem"
+                data-rep-k="settlement pnl profit load trip invoice rollup"
                 onclick="openReportsTab('rep-settlement', document.getElementById('repOpsDdTrigger'))"
               >
                 Settlement / P&amp;L by load
               </button>
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-team', document.getElementById('repOpsDdTrigger'))">Team &amp; security</button>
-              <button type="button" class="nav-dd-item" onclick="openReportsTab('rep-ifta', document.getElementById('repOpsDdTrigger'))">IFTA &amp; compliance</button>
+              <button type="button" class="nav-dd-item" data-rep-k="team security users roles audit" onclick="openReportsTab('rep-team', document.getElementById('repOpsDdTrigger'))">Team &amp; security</button>
+              <button type="button" class="nav-dd-item" data-rep-k="ifta miles fuel tax jurisdiction compliance" onclick="openReportsTab('rep-ifta', document.getElementById('repOpsDdTrigger'))">IFTA &amp; compliance</button>
             </div>
           </div>
         </div>
@@ -5336,6 +5337,27 @@
         });
         card.classList.toggle('rep-filter-hidden', ql.length > 0 && n === 0);
       });
+
+      const strip = root.querySelector('#repMainSubtabs');
+      if (strip) {
+        strip.querySelectorAll('.nav-dropdown').forEach(dd => {
+          const trig = dd.querySelector('.nav-dropdown-trigger')?.textContent || '';
+          let n = 0;
+          dd.querySelectorAll('.nav-dd-item').forEach(item => {
+            const keys = (item.getAttribute('data-rep-k') || '').toLowerCase();
+            const ok = match(item.textContent) || match(trig) || (keys && match(keys));
+            item.classList.toggle('rep-filter-hidden', !ok);
+            if (ok) n++;
+          });
+          dd.classList.toggle('rep-filter-hidden', ql.length > 0 && n === 0);
+        });
+        strip.querySelectorAll('.subtab').forEach(btn => {
+          if (btn.classList.contains('nav-dropdown-trigger')) return;
+          const keys = (btn.getAttribute('data-rep-k') || '').toLowerCase();
+          const ok = match(btn.textContent) || (keys && match(keys));
+          btn.classList.toggle('rep-filter-hidden', ql.length > 0 && !ok);
+        });
+      }
     }
 
     function repReportsRoadmapMsg(kind) {
