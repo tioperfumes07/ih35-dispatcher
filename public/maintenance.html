@@ -14789,11 +14789,49 @@
         window.location.href = '/api/reports/export/work-orders.csv';
         return;
       } catch (_) {}
-      const rows = [['WO ID','Txn type','Unit','Load / inv (settlement)','Vendor invoice #','Shop / internal WO #','Vendor QBO ID','Service date','Due date','Repair location','Line count','Total amount','QB status','QB type','QB ID']];
+      const rows = [
+        [
+          'System WO #',
+          'WO ID',
+          'Voided',
+          'Txn type',
+          'Unit',
+          'Load / inv (settlement)',
+          'Vendor invoice #',
+          'Shop / internal WO #',
+          'Vendor QBO ID',
+          'Service date',
+          'Due date',
+          'Repair location',
+          'Line count',
+          'Total amount',
+          'QB status',
+          'QB type',
+          'QB ID'
+        ]
+      ];
       (erp.workOrders || []).forEach(wo => {
         const lines = wo.lines || [];
         const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
-        rows.push([wo.id, wo.txnType, wo.unit, wo.loadNumber || '', wo.vendorInvoiceNumber || '', wo.internalWorkOrderNumber || '', wo.qboVendorId, wo.serviceDate || '', wo.dueDate || '', wo.repairLocationType || '', lines.length, Math.round(total * 100) / 100, wo.qboSyncStatus || '', wo.qboEntityType || '', wo.qboEntityId || '']);
+        rows.push([
+          wo.workOrderNumber || '',
+          wo.id,
+          wo.voided ? 'yes' : 'no',
+          wo.txnType,
+          wo.unit,
+          wo.loadNumber || '',
+          wo.vendorInvoiceNumber || '',
+          wo.internalWorkOrderNumber || '',
+          wo.qboVendorId,
+          wo.serviceDate || '',
+          wo.dueDate || '',
+          wo.repairLocationType || '',
+          lines.length,
+          Math.round(total * 100) / 100,
+          wo.qboSyncStatus || '',
+          wo.qboEntityType || '',
+          wo.qboEntityId || ''
+        ]);
       });
       downloadCsv(`work-orders.csv`, rows);
     }
