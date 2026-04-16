@@ -2616,7 +2616,7 @@
         <nav class="erp-reports-hub" aria-label="Jump to a report">
           <div class="erp-reports-hub__card">
             <div class="erp-reports-hub__label">Standard</div>
-            <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-overview')">
+            <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-overview" onclick="openReportsTabFromSidebar('rep-overview')">
               <span class="erp-reports-hub__tile-title">Overview</span>
               <span class="erp-reports-hub__tile-meta">Board + refresh</span>
             </button>
@@ -2624,10 +2624,10 @@
           <div class="erp-reports-hub__card">
             <div class="erp-reports-hub__label">Maintenance</div>
             <div class="erp-reports-hub__tiles">
-              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-maint')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-maint" onclick="openReportsTabFromSidebar('rep-maint')">
                 <span class="erp-reports-hub__tile-title">Spend by unit</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-maint-detail')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-maint-detail" onclick="openReportsTabFromSidebar('rep-maint-detail')">
                 <span class="erp-reports-hub__tile-title">Parts / positions</span>
               </button>
             </div>
@@ -2635,10 +2635,10 @@
           <div class="erp-reports-hub__card">
             <div class="erp-reports-hub__label">Accounting</div>
             <div class="erp-reports-hub__tiles">
-              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-qbo')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-qbo" onclick="openReportsTabFromSidebar('rep-qbo')">
                 <span class="erp-reports-hub__tile-title">QuickBooks activity</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-sync')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-sync" onclick="openReportsTabFromSidebar('rep-sync')">
                 <span class="erp-reports-hub__tile-title">ERP ↔ QBO sync</span>
               </button>
             </div>
@@ -2646,16 +2646,16 @@
           <div class="erp-reports-hub__card">
             <div class="erp-reports-hub__label">Operations</div>
             <div class="erp-reports-hub__tiles erp-reports-hub__tiles--dense">
-              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-tms')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-tms" onclick="openReportsTabFromSidebar('rep-tms')">
                 <span class="erp-reports-hub__tile-title">TMS loads</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-settlement')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-settlement" onclick="openReportsTabFromSidebar('rep-settlement')">
                 <span class="erp-reports-hub__tile-title">Settlement / P&amp;L</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-team')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-team" onclick="openReportsTabFromSidebar('rep-team')">
                 <span class="erp-reports-hub__tile-title">Team &amp; security</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" onclick="openReportsTabFromSidebar('rep-ifta')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-ifta" onclick="openReportsTabFromSidebar('rep-ifta')">
                 <span class="erp-reports-hub__tile-title">IFTA</span>
               </button>
             </div>
@@ -5183,8 +5183,7 @@
       }
       if (section === 'reports-team') {
         openSectionByName('reports');
-        const sub = document.querySelector('#section-reports .subtab[onclick*="rep-team"]');
-        openReportsTab('rep-team', sub);
+        openReportsTab('rep-team', document.getElementById('repOpsDdTrigger'));
         return;
       }
       if (section === 'tracking-shop' || section === 'maintenance-shop') {
@@ -5290,12 +5289,37 @@
           oc.includes('openReportsTabFromSidebar') && oc.includes(`'${tabId}'`)
         );
       });
+      root.querySelectorAll('.erp-reports-hub__tile[data-rep-tab]').forEach(el => {
+        el.classList.toggle('erp-reports-hub__tile--active', el.getAttribute('data-rep-tab') === tabId);
+      });
+    }
+
+    function resolveReportsTabButton(tabId) {
+      const tid = String(tabId || '').trim();
+      const byId = {
+        'rep-overview': () => document.querySelector('#section-reports .subtab[onclick*="rep-overview"]'),
+        'rep-maint': () => document.getElementById('repMaintDdTrigger'),
+        'rep-maint-detail': () => document.getElementById('repMaintDdTrigger'),
+        'rep-qbo': () => document.getElementById('repAcctDdTrigger'),
+        'rep-sync': () => document.getElementById('repAcctDdTrigger'),
+        'rep-tms': () => document.getElementById('repOpsDdTrigger'),
+        'rep-settlement': () => document.getElementById('repOpsDdTrigger'),
+        'rep-team': () => document.getElementById('repOpsDdTrigger'),
+        'rep-ifta': () => document.getElementById('repOpsDdTrigger')
+      };
+      const fn = byId[tid];
+      return fn ? fn() : null;
     }
 
     function openReportsTabFromSidebar(tabId) {
       const root = document.getElementById('section-reports');
       if (!root) return;
       const tid = String(tabId || '').trim();
+      const trig = resolveReportsTabButton(tid);
+      if (trig) {
+        openReportsTab(tid, trig);
+        return;
+      }
       const nodes = root.querySelectorAll('button[onclick*="openReportsTab"]');
       for (const el of nodes) {
         const oc = el.getAttribute('onclick') || '';
