@@ -1755,17 +1755,35 @@
                       <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
                     </div>
                   </div>
-                  <div style="margin:4px 0 0;font-weight:700;font-size:12px;color:#334155">Fuel product lines</div>
-                  <div class="qb-lines-wrap">
-                    <div class="qb-lines-header fuel-manual-lines-head" aria-hidden="true">
-                      <span>#</span><span>Product</span><span>QBO item (optional)</span><span>Gal</span><span>$/gal</span><span class="num">Line $</span><span>Lock $</span><span></span>
-                    </div>
-                    <div id="fuelManualLines"></div>
-                    <div class="qb-lines-actions">
-                      <button type="button" class="qb-btn-add" onclick="addFuelManualLine()">+ Add line</button>
-                      <span class="mini-note" style="margin:0">Multiple lines share the header; each line is saved as its own row. If you enter an expense #, extra lines use <code>-L2</code>, <code>-L3</code>… so QuickBooks DocNumbers stay unique.</span>
-                    </div>
+                  <div style="margin:4px 0 0;font-weight:700;font-size:12px;color:#334155">Cost lines (same shape as maintenance)</div>
+                  <p class="mini-note maint-field-hint" style="margin:4px 0 8px">
+                    Each row: <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product/service + gal × $/gal). Use the fuel description catalog or free text. <strong>Lock line $</strong> when you enter a total and want gallons priced backward.
+                  </p>
+                  <div class="maint-cost-table-wrap">
+                    <table class="maint-cost-table acct-fuel-manual-table" aria-label="Manual fuel cost lines">
+                      <thead>
+                        <tr>
+                          <th>Description</th>
+                          <th>QBO item / account</th>
+                          <th class="maint-cost-table__num">Qty (gal)</th>
+                          <th class="maint-cost-table__num">Unit $</th>
+                          <th class="maint-cost-table__num">Line $</th>
+                          <th class="maint-cost-table__del"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="fuelManualLines"></tbody>
+                      <tfoot>
+                        <tr class="maint-cost-table__addrow">
+                          <td colspan="6">
+                            <button type="button" class="maint-cost-addline" onclick="addFuelManualLine()">+ Add line</button>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
+                  <p class="mini-note" style="margin:6px 0 0">
+                    Multiple lines share the header; each line is its own fuel ledger row. If you enter an expense #, extra lines use <code>-L2</code>, <code>-L3</code>… so QuickBooks DocNumbers stay unique.
+                  </p>
                   <div class="qb-doc-memo-row fuel-manual-memo-row">
                     <div>
                       <span class="qb-l">Memo (QuickBooks private note)</span>
@@ -2360,7 +2378,7 @@
                 Vendors, items, and expense accounts are mastered in <strong>QuickBooks Online</strong>. Refresh the live cache here, then pick them on bills and maintenance expense lines. Use <strong>Vendors &amp; drivers</strong> to search and link Samsara drivers to QBO payees.
               </p>
               <button type="button" onclick="refreshQboMaster()">Refresh QuickBooks Master</button>
-              <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); const t=document.querySelector('#section-accounting .subtab[onclick*=acct-qbo]'); if(t) openAccountingTab('acct-qbo', t);">Open Accounting → QuickBooks Live Master</button>
+              <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-qbo', document.getElementById('acctQbDdTrigger'));">Open Accounting → QuickBooks Live Master</button>
               <div class="catalog-add-card" style="margin-top:16px;max-width:560px">
                 <div class="catalog-add-card__head"><span class="catalog-add-card__title">New QuickBooks vendor</span></div>
                 <div class="catalog-add-card__body form-stack">
@@ -2637,6 +2655,87 @@
       </td>
       <td class="maint-cost-table__del maint-cost-td-del">
         <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
+      </td>
+    </tr>
+  </template>
+
+  <template id="fuelManualCostLineTpl">
+    <tr class="fuel-m-cost-line">
+      <td class="maint-cost-td-desc">
+        <input
+          class="qb-in maint-field fuel-m-line-desc"
+          list="fuelCatalogOptions"
+          placeholder="Description (catalog or free text)"
+          autocomplete="off"
+        />
+      </td>
+      <td class="maint-cost-td-qbo">
+        <div class="maint-cost-qbo-stack">
+          <div class="maint-cost-qbo-mode">
+            <span class="qb-l">Line type</span>
+            <select class="qb-in maint-field fuel-m-line-mode" onchange="toggleFuelManualLineMode(this)">
+              <option value="category">Category</option>
+              <option value="item">Item</option>
+            </select>
+          </div>
+          <div class="maint-line-qbo-row maint-cost-line__acct">
+            <div class="fuel-m-line-cat-block maint-line-cat-block maint-qbo-line-cat" style="flex:1;min-width:200px">
+              <span class="qb-l">Expense account</span>
+              <input
+                class="qb-in maint-field fuel-m-line-acct-search"
+                list="qboExpenseCategoryOptions"
+                placeholder="Expense account"
+                autocomplete="off"
+                oninput="resolveFuelManualLineAccount(this)"
+                onblur="resolveFuelManualLineAccount(this)"
+              />
+              <input type="hidden" class="fuel-m-line-acct-id" />
+            </div>
+            <div
+              class="fuel-m-line-item-block maint-line-item-block maint-qbo-line-item hidden"
+              style="flex:1;min-width:220px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end"
+            >
+              <div style="flex:1;min-width:140px">
+                <span class="qb-l">Product / service</span>
+                <input
+                  class="qb-in maint-field fuel-m-line-item-search"
+                  list="qboProductServiceOptions"
+                  placeholder="QBO item"
+                  autocomplete="off"
+                  oninput="resolveFuelManualLineItem(this)"
+                  onblur="resolveFuelManualLineItem(this)"
+                />
+                <input type="hidden" class="fuel-m-line-item-id" />
+              </div>
+              <div style="width:92px">
+                <span class="qb-l">SKU</span>
+                <input
+                  class="qb-in maint-field fuel-m-line-item-sku"
+                  type="text"
+                  readonly
+                  placeholder="—"
+                  tabindex="-1"
+                />
+              </div>
+            </div>
+          </div>
+          <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 0">
+            <input type="checkbox" class="fuel-m-line-lock" />
+            <span>Lock line $</span>
+          </label>
+        </div>
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field fuel-m-line-gal" type="number" step="0.001" min="0" placeholder="0" />
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field fuel-m-line-ppg" type="number" step="0.0001" min="0" placeholder="0" />
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field fuel-m-line-total" type="number" step="0.01" min="0" placeholder="0.00" />
+      </td>
+      <td class="maint-cost-table__del maint-cost-td-del">
+        <button type="button" class="qb-btn-del" onclick="removeFuelManualLine(this)" title="Remove line">×</button>
       </td>
     </tr>
   </template>
@@ -3717,8 +3816,7 @@
         if (hay.includes(q)) {
           push('Bill payment', label, 'Accounting', () => {
             openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
-            const t = document.querySelector('#section-accounting .subtab[onclick*="acct-bill-pay"]');
-            if (t) openAccountingTab('acct-bill-pay', t);
+            openAccountingTab('acct-bill-pay', document.getElementById('acctQbDdTrigger'));
             document.getElementById('bpLogBody')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
           });
         }
@@ -4078,8 +4176,7 @@
       }
       if (section === 'accounting-bill-pay') {
         openSectionByName('accounting');
-        const sub = document.querySelector('#section-accounting .subtab[onclick*="acct-bill-pay"]');
-        openAccountingTab('acct-bill-pay', sub);
+        openAccountingTab('acct-bill-pay', document.getElementById('acctQbDdTrigger'));
         return;
       }
       if (section === 'uploads') {
@@ -4177,13 +4274,24 @@
     let reportsSummaryCache = null;
 
     function openReportsTab(id, btn) {
+      let tabId = id;
+      let tabBtn = btn;
+      if (tabId === 'rep-settlement' && !tmsEnabled) {
+        alert('Settlement / P&L by load needs the TMS database (Postgres). Configure DATABASE_URL and run migrations.');
+        tabId = 'rep-overview';
+        tabBtn = document.querySelector('#section-reports .subtab[onclick*="rep-overview"]');
+      }
       document.querySelectorAll('.reports-tab').forEach(el => el.classList.add('hidden'));
-      const panel = document.getElementById(id);
+      const panel = document.getElementById(tabId);
       if (panel) panel.classList.remove('hidden');
       document.querySelectorAll('#section-reports .subtab').forEach(el => el.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      if (id === 'rep-team') loadTeamSecurityPanel();
-      if (id === 'rep-maint-detail') renderMaintDetailedReport();
+      if (tabBtn) tabBtn.classList.add('active');
+      if (tabId === 'rep-team') loadTeamSecurityPanel();
+      if (tabId === 'rep-maint-detail') renderMaintDetailedReport();
+      if (tabId === 'rep-settlement') {
+        loadSettlementIndex();
+        loadDriverPaySettlements();
+      }
     }
 
     function setTmsUiEnabled(enabled) {
@@ -6481,45 +6589,75 @@
       return (base.slice(0, maxBase) + suf).slice(0, 21);
     }
 
-    function fuelManualLineRowHtml() {
-      return `<div class="fuel-manual-line-row">
-      <span class="mini-note fuel-manual-line-n" style="padding-top:6px">1</span>
-      <select class="fuel-manual-prod qb-in">
-        <option value="diesel">On-highway diesel</option>
-        <option value="reefer">Reefer diesel</option>
-        <option value="def">DEF</option>
-      </select>
-      <div>
-        <input class="fuel-manual-item qb-in" list="qboItemOptions" placeholder="QBO item (optional)" autocomplete="off" onblur="fuelManualBlurLineItem(this)" />
-        <input type="hidden" class="fuel-manual-item-id" />
-      </div>
-      <input type="number" class="fuel-manual-gal qb-in" step="0.001" min="0" placeholder="0" />
-      <input type="number" class="fuel-manual-ppg qb-in" step="0.0001" min="0" placeholder="0" />
-      <input type="number" class="fuel-manual-total qb-in" step="0.01" min="0" placeholder="0.00" />
-      <label class="mini-note" style="display:flex;align-items:center;gap:6px;margin:0;padding-top:4px">
-        <input type="checkbox" class="fuel-manual-lock" />
-        <span>Lock $</span>
-      </label>
-      <button type="button" class="btn" onclick="removeFuelManualLine(this)" title="Remove line">×</button>
-    </div>`;
+    function inferFuelProductTypeFromDesc(desc) {
+      const s = String(desc || '').toLowerCase();
+      if (s.includes('def') || s.includes('exhaust') || s.includes('urea')) return 'def';
+      if (s.includes('reefer') || s.includes('reef')) return 'reefer';
+      return 'diesel';
     }
 
-    function renumberFuelManualLines() {
-      const host = document.getElementById('fuelManualLines');
-      if (!host) return;
-      const rows = host.querySelectorAll('.fuel-manual-line-row');
-      rows.forEach((row, i) => {
-        const lab = row.querySelector('.fuel-manual-line-n');
-        if (lab) lab.textContent = String(i + 1);
-      });
+    function toggleFuelManualLineMode(sel) {
+      const row = sel && sel.closest && sel.closest('tr.fuel-m-cost-line');
+      if (!row || !sel) return;
+      const mode = sel.value;
+      const prev = sel.dataset.lastMode;
+      if (prev && prev !== mode) {
+        if (mode === 'item') {
+          const hidA = row.querySelector('.fuel-m-line-acct-id');
+          const as = row.querySelector('.fuel-m-line-acct-search');
+          if (hidA) hidA.value = '';
+          if (as) as.value = '';
+        } else {
+          const hidI = row.querySelector('.fuel-m-line-item-id');
+          const is = row.querySelector('.fuel-m-line-item-search');
+          const sku = row.querySelector('.fuel-m-line-item-sku');
+          if (hidI) hidI.value = '';
+          if (is) is.value = '';
+          if (sku) sku.value = '';
+        }
+      }
+      sel.dataset.lastMode = mode;
+      row.querySelectorAll('.fuel-m-line-cat-block').forEach(el => el.classList.toggle('hidden', mode !== 'category'));
+      row.querySelectorAll('.fuel-m-line-item-block').forEach(el => el.classList.toggle('hidden', mode !== 'item'));
+    }
+
+    function resolveFuelManualLineAccount(input) {
+      if (!input) return;
+      const row = input.closest('tr.fuel-m-cost-line');
+      if (!row) return;
+      const match = findBestNameMatch(cacheExpenseCategoryAccounts(), input.value);
+      const hid = row.querySelector('.fuel-m-line-acct-id');
+      if (hid) hid.value = match ? match.qboId : '';
+    }
+
+    function syncFuelManualLineItemSku(row) {
+      const skuEl = row.querySelector('.fuel-m-line-item-sku');
+      if (!skuEl) return;
+      const iid = (row.querySelector('.fuel-m-line-item-id')?.value || '').trim();
+      if (!iid) {
+        skuEl.value = '';
+        return;
+      }
+      const hit = cacheItemsForProductServicePicker().find(x => String(x.qboId) === iid);
+      skuEl.value = hit && String(hit.sku || '').trim() ? String(hit.sku).trim() : '—';
+    }
+
+    function resolveFuelManualLineItem(input) {
+      if (!input) return;
+      const row = input.closest('tr.fuel-m-cost-line');
+      if (!row) return;
+      const match = findBestNameMatch(cacheItemsForProductServicePicker(), input.value);
+      const hid = row.querySelector('.fuel-m-line-item-id');
+      if (hid) hid.value = match ? match.qboId : '';
+      syncFuelManualLineItemSku(row);
     }
 
     function recalcFuelManualSingleLine(row, sourceEl) {
       if (!row) return;
-      const galEl = row.querySelector('.fuel-manual-gal');
-      const ppgEl = row.querySelector('.fuel-manual-ppg');
-      const totEl = row.querySelector('.fuel-manual-total');
-      const lockEl = row.querySelector('.fuel-manual-lock');
+      const galEl = row.querySelector('.fuel-m-line-gal');
+      const ppgEl = row.querySelector('.fuel-m-line-ppg');
+      const totEl = row.querySelector('.fuel-m-line-total');
+      const lockEl = row.querySelector('.fuel-m-line-lock');
       if (!galEl || !ppgEl || !totEl || !lockEl) return;
       const gal = Number(galEl.value);
       const ppg = Number(ppgEl.value);
@@ -6543,7 +6681,7 @@
       const out = document.getElementById('fuelManualHeaderTotal');
       if (!host || !out) return;
       let sum = 0;
-      host.querySelectorAll('.fuel-manual-total').forEach(el => {
+      host.querySelectorAll('.fuel-m-line-total').forEach(el => {
         const v = Number(el.value);
         if (Number.isFinite(v) && v > 0) sum += v;
       });
@@ -6551,33 +6689,31 @@
     }
 
     function addFuelManualLine() {
+      const tpl = document.getElementById('fuelManualCostLineTpl');
       const host = document.getElementById('fuelManualLines');
-      if (!host) return;
-      host.insertAdjacentHTML('beforeend', fuelManualLineRowHtml());
-      renumberFuelManualLines();
+      if (!tpl || !host) return;
+      host.appendChild(tpl.content.cloneNode(true));
+      const rows = host.querySelectorAll('tr.fuel-m-cost-line');
+      const last = rows[rows.length - 1];
+      const modeSel = last.querySelector('.fuel-m-line-mode');
+      if (modeSel) {
+        toggleFuelManualLineMode(modeSel);
+        modeSel.dataset.lastMode = modeSel.value;
+      }
       fuelManualUpdateHeaderTotal();
     }
 
     function removeFuelManualLine(btn) {
       const host = document.getElementById('fuelManualLines');
-      const row = btn && btn.closest ? btn.closest('.fuel-manual-line-row') : null;
+      const row = btn && btn.closest ? btn.closest('tr.fuel-m-cost-line') : null;
       if (!host || !row) return;
-      const rows = host.querySelectorAll('.fuel-manual-line-row');
+      const rows = host.querySelectorAll('tr.fuel-m-cost-line');
       if (rows.length <= 1) {
-        alert('Keep at least one product line.');
+        alert('Keep at least one line.');
         return;
       }
       row.remove();
-      renumberFuelManualLines();
       fuelManualUpdateHeaderTotal();
-    }
-
-    function fuelManualBlurLineItem(inp) {
-      const row = inp.closest('.fuel-manual-line-row');
-      if (!row) return;
-      const hid = row.querySelector('.fuel-manual-item-id');
-      const m = findBestNameMatch(cacheItems(), inp.value);
-      if (hid) hid.value = m ? m.qboId : '';
     }
 
     function resolveFuelManualVendor() {
@@ -6642,18 +6778,18 @@
           const t = e.target;
           if (!t || !t.classList) return;
           if (
-            t.classList.contains('fuel-manual-gal') ||
-            t.classList.contains('fuel-manual-ppg') ||
-            t.classList.contains('fuel-manual-total')
+            t.classList.contains('fuel-m-line-gal') ||
+            t.classList.contains('fuel-m-line-ppg') ||
+            t.classList.contains('fuel-m-line-total')
           ) {
-            const row = t.closest('.fuel-manual-line-row');
+            const row = t.closest('tr.fuel-m-cost-line');
             if (row) recalcFuelManualSingleLine(row, t);
           }
         });
         host.addEventListener('change', e => {
           const t = e.target;
-          if (t && t.classList && t.classList.contains('fuel-manual-lock')) {
-            const row = t.closest('.fuel-manual-line-row');
+          if (t && t.classList && t.classList.contains('fuel-m-line-lock')) {
+            const row = t.closest('tr.fuel-m-cost-line');
             if (row) recalcFuelManualSingleLine(row, t);
           }
         });
@@ -6667,7 +6803,7 @@
       }
       const d = document.getElementById('fuelManualDate');
       if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
-      if (host && !host.querySelector('.fuel-manual-line-row')) addFuelManualLine();
+      if (host && !host.querySelector('tr.fuel-m-cost-line')) addFuelManualLine();
       else fuelManualUpdateHeaderTotal();
       syncFuelManualClassFromUnit();
     }
@@ -6700,7 +6836,7 @@
       const bankId = String(document.getElementById('fuelManualBankQboId')?.value || '').trim();
       const bankSearch = String(document.getElementById('fuelManualBankSearch')?.value || '').trim();
       const host = document.getElementById('fuelManualLines');
-      const lineRows = host ? Array.from(host.querySelectorAll('.fuel-manual-line-row')) : [];
+      const lineRows = host ? Array.from(host.querySelectorAll('tr.fuel-m-cost-line')) : [];
       if (!unit) {
         alert('Enter truck / unit.');
         return;
@@ -6720,22 +6856,45 @@
 
       const lines = [];
       for (const row of lineRows) {
-        const productType = String(row.querySelector('.fuel-manual-prod')?.value || 'diesel');
-        const gal = Number(row.querySelector('.fuel-manual-gal')?.value);
-        const ppg = Number(row.querySelector('.fuel-manual-ppg')?.value);
-        const total = Number(row.querySelector('.fuel-manual-total')?.value);
-        const lock = !!row.querySelector('.fuel-manual-lock')?.checked;
-        const itemSearch = String(row.querySelector('.fuel-manual-item')?.value || '').trim();
-        const itemId = String(row.querySelector('.fuel-manual-item-id')?.value || '').trim();
+        resolveFuelManualLineAccount(row.querySelector('.fuel-m-line-acct-search'));
+        resolveFuelManualLineItem(row.querySelector('.fuel-m-line-item-search'));
+        const lineDesc = String(row.querySelector('.fuel-m-line-desc')?.value || '').trim();
+        const productType = inferFuelProductTypeFromDesc(lineDesc);
+        const mode = String(row.querySelector('.fuel-m-line-mode')?.value || 'category').trim();
+        const gal = Number(row.querySelector('.fuel-m-line-gal')?.value);
+        const ppg = Number(row.querySelector('.fuel-m-line-ppg')?.value);
+        const total = Number(row.querySelector('.fuel-m-line-total')?.value);
+        const lock = !!row.querySelector('.fuel-m-line-lock')?.checked;
+        const itemSearch = String(row.querySelector('.fuel-m-line-item-search')?.value || '').trim();
+        const itemId = String(row.querySelector('.fuel-m-line-item-id')?.value || '').trim();
+        const acctId = String(row.querySelector('.fuel-m-line-acct-id')?.value || '').trim();
+        if (mode === 'item' && !itemId) {
+          alert('Each line in Item mode needs a matched QuickBooks product/service.');
+          return;
+        }
+        if (mode === 'category' && !acctId) {
+          alert('Each line in Category mode needs a matched QuickBooks expense account.');
+          return;
+        }
         if (!(Number.isFinite(gal) && gal > 0) && !(Number.isFinite(total) && total > 0)) {
-          alert('Each line needs gallons and price, or a positive line total with Lock $.');
+          alert('Each line needs gallons and price, or a positive line total with Lock line $.');
           return;
         }
         if (lock && !(Number.isFinite(total) && total > 0)) {
           alert('Locked lines need a positive line total.');
           return;
         }
-        lines.push({ productType, gal, ppg, total, itemSearch, itemId });
+        lines.push({
+          productType,
+          gal,
+          ppg,
+          total,
+          itemSearch,
+          itemId,
+          lineDesc,
+          detailMode: mode,
+          acctId
+        });
       }
 
       const nLines = lines.length;
@@ -6761,6 +6920,7 @@
           if (Number.isFinite(gal) && gal > 0) payload.gallons = gal;
           if (Number.isFinite(ppg) && ppg >= 0) payload.pricePerGallon = ppg;
           if (Number.isFinite(total) && total > 0) payload.totalCost = total;
+          if (ln.lineDesc) payload.lineDescription = ln.lineDesc;
           const r = await j('/api/fuel/purchases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
@@ -6780,7 +6940,12 @@
             paymentMethodId: pmId.replace(/[^\w.-]/g, '').slice(0, 48),
             paymentMethodSearch: pmSearch.slice(0, 120),
             qboBankAccountId: bankId.replace(/\D/g, '').slice(0, 24),
-            bankSearch: bankSearch.slice(0, 160)
+            bankSearch: bankSearch.slice(0, 160),
+            detailMode: ln.detailMode === 'item' ? 'item' : 'category',
+            qboAccountId: String(ln.acctId || '')
+              .trim()
+              .replace(/\D/g, '')
+              .slice(0, 24)
           };
           if (docForLine) draftBody.expenseDocNumber = docForLine;
           try {
@@ -7318,7 +7483,6 @@
       const fid = String(fuelId).replace(/"/g, '');
       const tr = document.querySelector('#fuelExpBody tr[data-fuel-id="' + fid + '"]');
       const st = tr ? tr.querySelector('.fuel-post-status') : null;
-      const acctId = String(document.getElementById('fuelExpAccountQboId')?.value || '').trim();
       if (!tr) {
         return { ok: false, validationError: 'Could not find fuel row in the table (refresh and try again).' };
       }
@@ -7339,19 +7503,40 @@
       ).trim();
       const paymentMethodId = String(rowDraft.paymentMethodId || '').trim() || 'pm_other';
       const docNumber = String(tr.querySelector('.fuel-exp-doc')?.value || rowDraft.expenseDocNumber || fpRow.expenseDocNumber || '').trim();
-      const useCat = !!document.getElementById('fuelExpUseCategory')?.checked;
+      const draftMode = String(rowDraft.detailMode || '').toLowerCase();
+      const useCat =
+        draftMode === 'item' ? false : draftMode === 'category' ? true : !!document.getElementById('fuelExpUseCategory')?.checked;
       const detailMode = useCat ? 'category' : 'item';
+      const acctId = String(
+        (rowDraft.qboAccountId || '').toString().replace(/\D/g, '') ||
+          String(document.getElementById('fuelExpAccountQboId')?.value || '')
+            .trim()
+            .replace(/\D/g, '')
+      ).trim();
       const qboClassId = String(tr.querySelector('.fuel-class-sel')?.value || '').trim();
       const qboVendorId = String(tr.querySelector('.fuel-vendor-id')?.value || '').trim();
-      const qboItemId = String(tr.querySelector('.fuel-item-id')?.value || '').trim();
+      const qboItemId = String(
+        tr.querySelector('.fuel-item-id')?.value ||
+          rowDraft.itemId ||
+          ''
+      )
+        .trim()
+        .replace(/\D/g, '');
       const qty = Number(tr.querySelector('.fuel-qty')?.value || 0);
       const lineAmt = Number(tr.querySelector('.fuel-line')?.value || 0);
       const driverMemo = String(tr.querySelector('.fuel-driver')?.value || '').trim();
       const driverVendorQboId = String(tr.querySelector('.fuel-driver-vend-id')?.value || '').trim();
       let qboCustomerId = String(tr.querySelector('.fuel-cust-id')?.value || '').trim();
       if (!qboCustomerId) qboCustomerId = String(document.getElementById('fuelExpDefaultCustomerQboId')?.value || '').trim();
-      if (!useCat && !qboItemId) {
+      if (detailMode === 'item' && !qboItemId) {
         return { ok: false, validationError: 'Choose a QuickBooks item for this fuel line (or enable category line).' };
+      }
+      if (detailMode === 'category' && !acctId) {
+        return {
+          ok: false,
+          validationError:
+            'Choose a QuickBooks expense account for this fuel line (use manual entry category, grid override, or Relay mapping).'
+        };
       }
       if (!qboVendorId) {
         return { ok: false, validationError: 'Match the fuel merchant to a QuickBooks vendor on the row.' };
@@ -9756,9 +9941,8 @@
 
     function goToCreateQboVendor() {
       openSectionByName('accounting');
-      const tabs = document.querySelectorAll('#section-accounting .subtab');
-      const qboTab = Array.from(tabs).find(t => (t.getAttribute('onclick') || '').includes('acct-qbo'));
-      if (qboTab) openAccountingTab('acct-qbo', qboTab);
+      const tr = document.getElementById('acctQbDdTrigger');
+      if (tr) openAccountingTab('acct-qbo', tr);
       document.getElementById('newVendorName')?.focus();
     }
 
