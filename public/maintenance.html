@@ -55,6 +55,18 @@
       <button type="button" class="btn" onclick="closeShopQueueModal()" style="margin-left:8px">Cancel</button>
     </div>
   </div>
+  <div id="maintWorkOrderModal" class="maint-modal-bg maint-workorder-fullmodal" onclick="if(event.target===this)closeMaintWorkOrderModal()" aria-hidden="true">
+    <div class="maint-modal maint-workorder-fullmodal__shell" onclick="event.stopPropagation()">
+      <div class="maint-workorder-fullmodal__head">
+        <div>
+          <div class="maint-workorder-fullmodal__title">Create work order</div>
+          <div class="mini-note" style="margin:2px 0 0;max-width:56ch">Full-window form (QuickBooks-style). Close when you need the fleet tabs underneath.</div>
+        </div>
+        <button type="button" class="btn" onclick="closeMaintWorkOrderModal()">Close</button>
+      </div>
+      <div id="maintWorkOrderModalBody" class="maint-workorder-fullmodal__body"></div>
+    </div>
+  </div>
   <div id="shopDelayModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopDelayModal()">
     <div class="maint-modal" onclick="event.stopPropagation()" style="max-width:480px">
       <h3 style="margin:0 0 8px;font-size:17px">Past estimated time — bottleneck</h3>
@@ -415,9 +427,11 @@
         <div class="subtabs maint-main-subtabs" id="maintMainSubtabs">
           <button type="button" class="subtab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
           <button type="button" class="subtab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this)">Fleet table</button>
+          <button type="button" class="subtab" data-maint-main="alerts" onclick="openMaintMainTab('alerts', this)">Alerts &amp; locations</button>
         </div>
 
         <div id="maintMainTabRecord" class="maint-main-tab-panel active">
+        <div id="maintWorkOrderFormMount">
         <div class="maint-workorder-category-strip maint-section-card">
           <div class="panel-body" style="padding:12px 14px">
             <span class="qb-l" style="display:block;margin-bottom:8px">Unit category (fleet type)</span>
@@ -451,8 +465,11 @@
                   <div class="unit-box"><div class="k">Due Soon</div><div class="v" id="unitDueSoonBox">0</div></div>
                 </div>
 
-                <div class="maint-wo-split">
-                  <div class="maint-wo-split__main">
+                <div class="maint-wo-form-shell">
+                <div id="maintWoBanner" class="maint-wo-banner maint-wo-banner--inline" aria-live="polite">
+                  <div class="maint-wo-banner__eyebrow">Fleet maintenance work order</div>
+                  <div id="maintWoBannerUnit" class="maint-wo-banner__unit">Select an asset to attach this work order</div>
+                </div>
                 <div class="form-stack maint-form-stack">
                   <div class="maint-subcard">
                     <div class="maint-subcard__head">Vehicle &amp; mileage</div>
@@ -479,6 +496,23 @@
                     <div class="maint-subcard__head">Service &amp; scheduling</div>
                     <div class="maint-subcard__body">
                   <div>
+                    <span class="qb-l">Where service is performed (type)</span>
+                    <select id="repairLocationSelect" class="qb-in maint-field" onchange="onRepairLocationSelectChange()">
+                      <option value="">— Choose location type —</option>
+                      <option value="in-house">Internal shop</option>
+                      <option value="external">External shop</option>
+                      <option value="road-service">Roadside service</option>
+                      <option value="parts-purchase">Parts purchase</option>
+                      <option value="over-the-road">Over the road</option>
+                    </select>
+                    <input type="hidden" id="repairLocationTypeInput" value="" />
+                  </div>
+                  <div style="margin-top:10px">
+                    <span class="qb-l">Location detail (optional — vendor, site, notes)</span>
+                    <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Vendor / shop name, yard, address…" autocomplete="off" oninput="resolveRepairLocationSearch()" onblur="resolveRepairLocationSearch()" />
+                    <p class="mini-note" style="margin:6px 0 0;line-height:1.4">Required: pick a <strong>location type</strong> above before save. The detail field is optional context (still saved on draft PDFs).</p>
+                  </div>
+                  <div style="margin-top:12px">
                     <span class="qb-l">Service / maintenance (catalog — type to filter or enter any text)</span>
                     <input
                       id="serviceSearchInput"
@@ -548,6 +582,16 @@
                     </div>
                     <button type="button" class="qb-btn-add" onclick="goToCreateQboVendor()">New vendor → QBO</button>
                   </div>
+                  <div class="maint-vendor-ref-row">
+                    <div id="maintVendorInvFieldWrap" class="maint-vendor-ref-row__field">
+                      <span class="qb-l" id="maintVendorInvLabel">Vendor invoice #</span>
+                      <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-vendor-ref-input" placeholder="Supplier invoice" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()">
+                    </div>
+                    <div id="maintWoNumberFieldWrap" class="maint-vendor-ref-row__field">
+                      <span class="qb-l" id="maintWoNumberLabel">Work order #</span>
+                      <input id="recordWorkOrderInput" class="qb-in maint-field maint-vendor-ref-input" placeholder="Vendor WO / internal ref" autocomplete="off">
+                    </div>
+                  </div>
                   <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 6px;max-width:560px">
                     <input type="checkbox" id="costTotalLock" />
                     Lock invoice total — do not auto-fill from cost lines (you enter the total manually; it must still match line sum to save)
@@ -569,7 +613,7 @@
                         Optional <strong>multi-position parts</strong> (tires, batteries, air bags, etc.): pick a category, choose position from the list or the mini map, add part # — including for <strong>accident</strong> visits.
                       </p>
                       <div class="maint-cost-lines-head" aria-hidden="true">
-                        <span>Expense / item</span><span>Qty</span><span>Unit $</span><span>Line $</span><span></span>
+                        <span>Type</span><span>Description</span><span>Qty</span><span>Unit</span><span>Line $</span><span>Customer</span><span>Class</span><span></span>
                       </div>
                       <div id="maintCostLinesHost"></div>
                       <div class="maint-cost-lines-footer">
@@ -594,7 +638,7 @@
                         </div>
 
                         <div class="search-row">
-                          <input id="linkedDocNumber" class="qb-in maint-field" placeholder="Expense / bill #" />
+                          <input id="linkedDocNumber" class="qb-in maint-field" placeholder="Expense / bill #" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />
                         </div>
                         <input id="linkedVendorQboId" type="hidden" />
 
@@ -762,35 +806,6 @@
                     </div>
                   </div>
                 </div>
-                  </div>
-                  <aside class="maint-wo-split__side" aria-label="Work order references and shop context">
-                    <div id="maintWoBanner" class="maint-wo-banner" aria-live="polite">
-                      <div class="maint-wo-banner__left">
-                        <div class="maint-wo-banner__eyebrow">Fleet maintenance work order</div>
-                        <div id="maintWoBannerUnit" class="maint-wo-banner__unit"></div>
-                      </div>
-                      <div class="maint-wo-banner__refs">
-                        <div id="maintWoVendorInvWrap" class="maint-wo-field">
-                          <span class="qb-l" id="maintWoVendorInvLabel">Vendor invoice #</span>
-                          <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-wo-input" placeholder="Supplier invoice" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()">
-                        </div>
-                        <div id="maintWoWoWrap" class="maint-wo-field">
-                          <span class="qb-l" id="maintWoWoLabel">Work order #</span>
-                          <input id="recordWorkOrderInput" class="qb-in maint-field maint-wo-input" placeholder="Vendor WO / internal ref" autocomplete="off">
-                        </div>
-                      </div>
-                    </div>
-                    <div id="repairFields" class="maint-subcard maint-repair-loc-card">
-                      <div class="maint-subcard__head">Where service is performed</div>
-                      <div class="maint-subcard__body">
-                        <div id="repairLocationChips" class="maint-repair-chip-row" aria-label="Repair location quick picks"></div>
-                        <span class="qb-l">Or search / refine</span>
-                        <input type="hidden" id="repairLocationTypeInput" value="" />
-                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Internal shop, External shop, Roadside, Parts purchase…" autocomplete="off" oninput="resolveRepairLocationSearch()" onblur="resolveRepairLocationSearch()" />
-                        <p class="mini-note" style="margin:8px 0 0;line-height:1.4">Required before save. Quick picks set the same values as the datalist.</p>
-                      </div>
-                    </div>
-                  </aside>
                 </div>
               </div>
             </div>
@@ -809,6 +824,52 @@
 
           </div>
         </div>
+        </div>
+        </div>
+
+        <div id="maintMainTabAlerts" class="maint-main-tab-panel">
+          <div class="panel maint-section-card">
+            <div class="panel-head maint-panel-head-center">
+              <div class="panel-title">Integrity · fuel · parts alerts</div>
+              <div class="mini-note" style="margin:6px 0 0;max-width:62ch">
+                Same signals as Tracking → Shop &amp; maintenance, kept here for the maintenance desk. Flags unusual repair frequency, high invoices, short tire intervals, and diesel vs miles. Filter by severity or search.
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:0 0 10px">
+                <div style="min-width:220px;flex:1">
+                  <div class="mini-note" style="margin:0 0 4px">Search</div>
+                  <input id="maintIntegritySearch" class="qb-in" placeholder="Unit, type, message, driver…" oninput="renderSecurityAlerts(window.__lastSecurityAlerts||null, maintSecurityAlertRenderOpts)" />
+                </div>
+                <div style="min-width:180px">
+                  <div class="mini-note" style="margin:0 0 4px">Window (days)</div>
+                  <input id="maintIntegrityDays" class="qb-in" type="number" min="1" step="1" placeholder="30" onchange="loadSecurityCatalogUi()" />
+                </div>
+                <div style="min-width:200px">
+                  <div class="mini-note" style="margin:0 0 4px">Severity</div>
+                  <select id="maintIntegritySeverity" class="qb-in" onchange="renderSecurityAlerts(window.__lastSecurityAlerts||null, maintSecurityAlertRenderOpts)">
+                    <option value="all">All</option>
+                    <option value="high">High</option>
+                    <option value="warn">Warn</option>
+                    <option value="info">Info</option>
+                  </select>
+                </div>
+                <button type="button" class="btn" onclick="loadSecurityCatalogUi()">Refresh alerts</button>
+              </div>
+              <div id="maintSecurityAlertsBody" class="mini-note">Open this tab after load to refresh, or use Refresh alerts.</div>
+            </div>
+          </div>
+          <div class="panel maint-section-card">
+            <div class="panel-head maint-panel-head-center">
+              <div class="panel-title">Vehicles by shop / location context</div>
+              <div class="mini-note" style="margin:6px 0 0;max-width:62ch">
+                Shop queue rows (ERP) grouped by queue type, plus recent saved work orders by <strong>repair location type</strong> from maintenance records. Status comes from the queue or QuickBooks sync on the work order.
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="maintLocationBoardHost" class="mini-note">Loading…</div>
+            </div>
+          </div>
         </div>
 
         <div id="maintMainTabFleet" class="maint-main-tab-panel">
@@ -844,7 +905,7 @@
             <div class="panel maint-section-card">
               <div class="panel-head">
                 <div class="panel-title">Unit History</div>
-                <button type="button" class="qb-btn-add" onclick="void clearMaintenanceFormNewEntry()">New work order</button>
+                <button type="button" class="qb-btn-add" onclick="clearMaintenanceFormNewEntry()">New work order</button>
               </div>
               <div class="panel-body">
                 <div id="unitHistory" class="card-list">No records yet.</div>
@@ -2478,75 +2539,72 @@
 
   <template id="maintCostLineTpl">
     <div class="maint-cost-line" style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#fafafa">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;width:100%">
-        <div style="flex:1;min-width:160px">
-          <span class="qb-l">Description</span>
-          <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Tire, labor, rim…" autocomplete="off" title="Your line description (maintenance catalog). QuickBooks category vs product is chosen below." />
+      <div class="maint-cost-line__primary">
+        <div class="maint-cl-type">
+          <span class="qb-l">Type</span>
+          <select class="qb-in maint-field maint-line-mode" onchange="toggleMaintCostLineMode(this)">
+            <option value="category">Category</option>
+            <option value="item">Item</option>
+          </select>
         </div>
-        <div style="width:76px">
+        <div class="maint-cl-desc">
+          <span class="qb-l">Description</span>
+          <input class="qb-in maint-field maint-line-desc" list="serviceOptions" placeholder="Tire, labor, rim…" autocomplete="off" title="Maintenance catalog label; also seeds QBO line description when memo is blank." />
+        </div>
+        <div class="maint-cl-qty">
           <span class="qb-l">Qty</span>
           <input class="qb-in maint-field maint-line-qty" type="number" step="any" min="0" placeholder="1" value="1" />
         </div>
-        <div style="width:104px">
-          <span class="qb-l">Unit $</span>
+        <div class="maint-cl-unit">
+          <span class="qb-l">Unit</span>
           <input class="qb-in maint-field maint-line-unit" type="number" step="0.01" min="0" placeholder="0.00" />
         </div>
-        <div style="width:104px">
+        <div class="maint-cl-amt">
           <span class="qb-l">Line $</span>
           <input class="qb-in maint-field maint-line-amt" type="number" step="0.01" min="0" placeholder="0.00" />
         </div>
-        <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
-      </div>
-        <div class="maint-line-qbo-row" style="width:100%;margin-top:10px;padding-top:10px;border-top:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;padding:10px 10px 8px">
-        <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">QuickBooks expense line</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;width:100%">
-        <div style="min-width:200px;max-width:100%">
-          <span class="qb-l">Line type</span>
-          <select class="qb-in maint-field maint-line-mode" onchange="toggleMaintCostLineMode(this)">
-            <option value="category">Category details (account)</option>
-            <option value="item">Item details (product/service)</option>
-          </select>
+        <div class="maint-cl-cust">
+          <span class="qb-l">Customer</span>
+          <input class="qb-in maint-field maint-line-cust-search" list="qboCustomerOptions" placeholder="Optional" autocomplete="off" oninput="resolveMaintLineCustomer(this)" onblur="resolveMaintLineCustomer(this)" />
+          <input type="hidden" class="maint-line-cust-id" />
         </div>
+        <div class="maint-cl-class">
+          <span class="qb-l">Class</span>
+          <input class="qb-in maint-field maint-line-class-search" list="qboClassOptions" placeholder="Unit class" autocomplete="off" oninput="resolveMaintLineClass(this)" onblur="resolveMaintLineClass(this)" title="Defaults from selected asset when blank" />
+          <input type="hidden" class="maint-line-class-id" />
+        </div>
+        <div class="maint-cl-del">
+          <span class="qb-l">&nbsp;</span>
+          <button type="button" class="qb-btn-del" onclick="removeMaintCostLine(this)" title="Remove line">×</button>
+        </div>
+      </div>
+      <div class="maint-line-qbo-row maint-cost-line__acct">
         <div class="maint-line-cat-block maint-qbo-line-cat" style="flex:1;min-width:200px">
-          <span class="qb-l">Category</span>
+          <span class="qb-l">Expense account</span>
           <input class="qb-in maint-field maint-line-acct-search" list="qboExpenseCategoryOptions" placeholder="Expense account (chart)" autocomplete="off" oninput="resolveMaintLineAccount(this)" onblur="resolveMaintLineAccount(this)" title="Expense and COGS accounts only — QuickBooks category-style line" />
           <input type="hidden" class="maint-line-acct-id" />
         </div>
         <div class="maint-line-item-block maint-qbo-line-item hidden" style="flex:1;min-width:220px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
           <div style="flex:1;min-width:140px">
             <span class="qb-l">Product / service</span>
-            <input class="qb-in maint-field maint-line-item-search" list="qboProductServiceOptions" placeholder="QBO product or service" autocomplete="off" oninput="resolveMaintLineItem(this)" onblur="resolveMaintLineItem(this)" title="Service, Inventory, Non-inventory, etc. — not QBO Category bucket items" />
+            <input class="qb-in maint-field maint-line-item-search" list="qboProductServiceOptions" placeholder="QBO product or service" autocomplete="off" oninput="resolveMaintLineItem(this)" onblur="resolveMaintLineItem(this)" title="Service, Inventory, Non-inventory, etc." />
             <input type="hidden" class="maint-line-item-id" />
           </div>
           <div style="width:92px">
             <span class="qb-l">SKU</span>
-            <input class="qb-in maint-field maint-line-item-sku" type="text" readonly placeholder="—" style="background:#e2e8f0;cursor:default" tabindex="-1" title="Populated from QuickBooks when a product/service is matched" />
+            <input class="qb-in maint-field maint-line-item-sku" type="text" readonly placeholder="—" style="background:#e2e8f0;cursor:default" tabindex="-1" title="From QuickBooks when item matched" />
           </div>
         </div>
+      </div>
+      <div class="maint-line-qbo-extras maint-cost-line__extras">
+        <div style="flex:1;min-width:200px">
+          <span class="qb-l">QBO line memo</span>
+          <input class="qb-in maint-field maint-line-qbo-desc" maxlength="380" placeholder="Optional — else description + part details" autocomplete="off" title="Sent as the Description on this line in QuickBooks" />
         </div>
-        <div class="maint-line-qbo-extras" style="width:100%;margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0">
-          <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:6px">Customer · class · billable (QuickBooks)</div>
-          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;width:100%">
-            <div style="flex:1;min-width:200px">
-              <span class="qb-l">QuickBooks line memo</span>
-              <input class="qb-in maint-field maint-line-qbo-desc" maxlength="380" placeholder="Optional — else description + part details" autocomplete="off" title="Sent as the Description on this line in QuickBooks" />
-            </div>
-            <div style="flex:1;min-width:160px">
-              <span class="qb-l">Customer</span>
-              <input class="qb-in maint-field maint-line-cust-search" list="qboCustomerOptions" placeholder="Billable customer (optional)" autocomplete="off" oninput="resolveMaintLineCustomer(this)" onblur="resolveMaintLineCustomer(this)" />
-              <input type="hidden" class="maint-line-cust-id" />
-            </div>
-            <div style="flex:1;min-width:140px">
-              <span class="qb-l">Class (unit)</span>
-              <input class="qb-in maint-field maint-line-class-search" list="qboClassOptions" placeholder="Match truck in QBO" autocomplete="off" oninput="resolveMaintLineClass(this)" onblur="resolveMaintLineClass(this)" title="Defaults from selected asset when blank; must match a QuickBooks class (often same as unit id)" />
-              <input type="hidden" class="maint-line-class-id" />
-            </div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding-bottom:6px;white-space:nowrap">
-              <input type="checkbox" class="maint-line-billable" />
-              <span class="qb-l" style="margin:0">Billable</span>
-            </label>
-          </div>
-        </div>
+        <label class="maint-cost-line__billable">
+          <input type="checkbox" class="maint-line-billable" />
+          <span class="qb-l" style="margin:0">Billable</span>
+        </label>
       </div>
       <div class="maint-line-part-block" style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
@@ -2916,6 +2974,12 @@
       { code: 'over-the-road', label: 'Over the road' }
     ];
 
+    const maintSecurityAlertRenderOpts = {
+      bodyId: 'maintSecurityAlertsBody',
+      searchId: 'maintIntegritySearch',
+      severityId: 'maintIntegritySeverity'
+    };
+
     function findBestNameMatch(rows, typedRaw) {
       const typed = String(typedRaw || '').trim().toLowerCase();
       if (!typed || !Array.isArray(rows)) return null;
@@ -2971,13 +3035,24 @@
     function setRepairLocationCode(code) {
       const hid = document.getElementById('repairLocationTypeInput');
       const vis = document.getElementById('repairLocationSearch');
+      const sel = document.getElementById('repairLocationSelect');
       if (hid) hid.value = code || '';
+      if (sel) sel.value = code || '';
       if (vis) {
         const def = REPAIR_LOCATION_DEFS.find(d => d.code === code);
-        vis.value = def ? def.label : '';
+        const cur = String(vis.value || '').trim();
+        const looksLikePreset = REPAIR_LOCATION_DEFS.some(d => d.label.toLowerCase() === cur.toLowerCase());
+        if (def && (!cur || looksLikePreset)) vis.value = def.label;
+        if (!code) vis.value = '';
       }
       syncMaintWorkOrderHeader();
       renderRepairLocationChips();
+    }
+
+    function onRepairLocationSelectChange() {
+      const sel = document.getElementById('repairLocationSelect');
+      const code = String(sel?.value || '').trim();
+      setRepairLocationCode(code);
     }
 
     function renderRepairLocationChips() {
@@ -2989,6 +3064,122 @@
         const codeJs = String(d.code).replace(/'/g, "\\'");
         return `<button type="button" class="maint-repair-chip${active}" data-loc-code="${escapeHtml(d.code)}" onclick="setRepairLocationCode('${codeJs}')">${escapeHtml(d.label)}</button>`;
       }).join('');
+    }
+
+    function getMaintWorkOrderFormMount() {
+      return document.getElementById('maintWorkOrderFormMount');
+    }
+
+    function dockMaintWorkOrderFormToRecordPanel() {
+      const mount = getMaintWorkOrderFormMount();
+      const panel = document.getElementById('maintMainTabRecord');
+      if (!mount || !panel) return;
+      if (mount.parentElement !== panel) panel.appendChild(mount);
+    }
+
+    function openMaintWorkOrderModal() {
+      if (!window.__maintWoModalKeys) {
+        window.__maintWoModalKeys = true;
+        document.addEventListener('keydown', e => {
+          if (e.key !== 'Escape') return;
+          const m = document.getElementById('maintWorkOrderModal');
+          if (m && m.classList.contains('on')) {
+            e.preventDefault();
+            closeMaintWorkOrderModal();
+          }
+        });
+      }
+      const modal = document.getElementById('maintWorkOrderModal');
+      const body = document.getElementById('maintWorkOrderModalBody');
+      const mount = getMaintWorkOrderFormMount();
+      if (!modal || !body || !mount) return;
+      body.appendChild(mount);
+      modal.classList.add('on');
+      modal.setAttribute('aria-hidden', 'false');
+      window.__maintWoModalOpen = true;
+      document.body.classList.add('maint-wo-modal-open');
+      try {
+        modal.querySelector('.maint-workorder-fullmodal__head .btn')?.focus();
+      } catch (_) {}
+    }
+
+    function closeMaintWorkOrderModal() {
+      const modal = document.getElementById('maintWorkOrderModal');
+      if (modal && modal.classList.contains('on')) {
+        modal.classList.remove('on');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+      dockMaintWorkOrderFormToRecordPanel();
+      window.__maintWoModalOpen = false;
+      document.body.classList.remove('maint-wo-modal-open');
+    }
+
+    function renderMaintLocationBoard() {
+      const host = document.getElementById('maintLocationBoardHost');
+      if (!host) return;
+      const statusLabel = s =>
+        s === 'queued' ? 'Awaiting service' : s === 'in_progress' ? 'In progress' : s === 'finished' ? 'Completed' : String(s || '');
+      const fmtIso = iso => {
+        const d = String(iso || '').slice(0, 10);
+        return d || '—';
+      };
+      const pickDate = e => e.finishedAt || e.startedAt || e.queuedAt || '';
+      const shopTitles = {
+        internal: 'Internal shop queue',
+        external: 'External shop queue',
+        roadside: 'Roadside queue',
+        parts: 'Parts purchase queue'
+      };
+      const q = shopQueueCache || [];
+      let html = '';
+      for (const key of ['internal', 'external', 'roadside', 'parts']) {
+        const rows = q.filter(e => String(e.shopType || '') === key).slice().sort((a, b) => String(pickDate(b)).localeCompare(String(pickDate(a))));
+        html += `<div class="maint-loc-bucket" style="margin-bottom:16px"><div class="panel-title" style="font-size:13px;margin:0 0 8px">${shopTitles[key]}</div>`;
+        if (!rows.length) {
+          html += '<p class="mini-note" style="margin:0">No queue rows.</p></div>';
+          continue;
+        }
+        html +=
+          '<div class="table-wrap"><table><thead><tr><th>Unit</th><th>Job</th><th>Status</th><th>Vendor hint</th><th>Queued</th></tr></thead><tbody>' +
+          rows
+            .map(e => {
+              const st = String(e.status || 'queued');
+              const overdue = e.overdue ? ' <span style="color:#b45309;font-weight:600">(past est.)</span>' : '';
+              return `<tr><td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(
+                e.assetCategory || ''
+              )}</div></td><td>${escapeHtml(e.title || '')}${overdue}</td><td>${escapeHtml(statusLabel(st))}</td><td>${escapeHtml(
+                e.vendorHint || ''
+              )}</td><td class="mini-note">${escapeHtml(fmtIso(e.queuedAt))}</td></tr>`;
+            })
+            .join('') +
+          '</tbody></table></div></div>';
+      }
+      const recs = (erp.records || []).slice().reverse().slice(0, 80);
+      const byLoc = {};
+      for (const r of recs) {
+        const t = String(r.repairLocationType || '—').trim() || '—';
+        if (!byLoc[t]) byLoc[t] = [];
+        byLoc[t].push(r);
+      }
+      html += `<div class="maint-loc-bucket" style="margin-top:8px"><div class="panel-title" style="font-size:13px;margin:0 0 8px">Recent maintenance visits by repair location type</div>`;
+      const keys = Object.keys(byLoc).sort();
+      if (!keys.length) html += '<p class="mini-note" style="margin:0">No maintenance records loaded yet.</p>';
+      else {
+        for (const k of keys) {
+          const list = byLoc[k].slice(0, 14);
+          html += `<div style="margin:10px 0 4px;font-weight:600;font-size:12px;color:#334155">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
+          for (const r of list) {
+            const svc = String(r.serviceType || '').trim() || '—';
+            const st = String(r.qboSyncStatus || r.syncStatus || 'local').trim();
+            html += `<li><strong>${escapeHtml(r.unit || '')}</strong> — ${escapeHtml(svc)} <span class="mini-note">· ${escapeHtml(
+              st
+            )} · ${escapeHtml(String(r.serviceDate || '').slice(0, 10))}</span></li>`;
+          }
+          html += '</ul>';
+        }
+      }
+      html += '</div>';
+      host.innerHTML = html;
     }
 
     function maybeMaintPlannedPlaceholder() {
@@ -3043,8 +3234,10 @@
       loadSecurityCatalogUi().catch(() => {});
     }
 
-    function openMaintMainTab(tab, btn) {
-      const map = { record: 'maintMainTabRecord', fleet: 'maintMainTabFleet' };
+    function openMaintMainTab(tab, btn, opts) {
+      const o = opts || {};
+      const map = { record: 'maintMainTabRecord', fleet: 'maintMainTabFleet', alerts: 'maintMainTabAlerts' };
+      if (tab !== 'record' || o.skipModal) closeMaintWorkOrderModal();
       document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
       const id = map[tab] || map.record;
       const panel = document.getElementById(id);
@@ -3055,6 +3248,13 @@
         const key = tab in map ? tab : 'record';
         const b = document.querySelector(`#maintMainSubtabs [data-maint-main="${key}"]`);
         if (b) b.classList.add('active');
+      }
+      if (tab === 'record' && !o.skipModal) {
+        requestAnimationFrame(() => openMaintWorkOrderModal());
+      }
+      if (tab === 'alerts') {
+        loadSecurityCatalogUi().catch(() => {});
+        renderMaintLocationBoard();
       }
     }
 
@@ -3067,6 +3267,11 @@
         if (!sec || !sec.classList.contains('active')) return;
         const rec = document.getElementById('maintMainTabRecord');
         if (!rec || !rec.classList.contains('active')) return;
+        const modal = document.getElementById('maintWorkOrderModal');
+        const mount = document.getElementById('maintWorkOrderFormMount');
+        const inModal = modal && modal.classList.contains('on') && mount && modal.contains(mount);
+        const inline = mount && rec.contains(mount);
+        if (!inModal && !inline) return;
         document.body.classList.add('print-wo-only');
       });
       window.addEventListener('afterprint', () => {
@@ -3077,8 +3282,9 @@
     function maintPreparePrintWorkOrderOnly() {
       bindMaintPrintWorkOrderOnlyListeners();
       document.body.classList.add('print-wo-only');
+      closeMaintWorkOrderModal();
       const recBtn = document.querySelector('#maintMainSubtabs .subtab[data-maint-main="record"]');
-      openMaintMainTab('record', recBtn);
+      openMaintMainTab('record', recBtn, { skipModal: true });
     }
 
     function maintPrintWorkOrderView() {
@@ -3163,10 +3369,10 @@
     function syncMaintWorkOrderHeader() {
       const ban = document.getElementById('maintWoBanner');
       const unitLine = document.getElementById('maintWoBannerUnit');
-      const vWrap = document.getElementById('maintWoVendorInvWrap');
-      const woWrap = document.getElementById('maintWoWoWrap');
-      const vLab = document.getElementById('maintWoVendorInvLabel');
-      const woLab = document.getElementById('maintWoWoLabel');
+      const vWrap = document.getElementById('maintVendorInvFieldWrap');
+      const woWrap = document.getElementById('maintWoNumberFieldWrap');
+      const vLab = document.getElementById('maintVendorInvLabel');
+      const woLab = document.getElementById('maintWoNumberLabel');
       const vInp = document.getElementById('recordVendorInvoiceInput');
       const woInp = document.getElementById('recordWorkOrderInput');
       if (!ban || !vWrap || !woWrap) return;
@@ -3298,7 +3504,7 @@
       );
       const svcWide = __servicePresetList.length ? __servicePresetList : DEFAULT_MAINT_SERVICE_TYPES;
       styleFieldToLongest('serviceSearchInput', svcWide);
-      ['recordTypeSelect', 'repairLocationSearch', 'linkedTxnTypeSelect'].forEach(id => {
+      ['recordTypeSelect', 'repairLocationSelect', 'repairLocationSearch', 'linkedTxnTypeSelect'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.width = 'min(100%, 28ch)';
       });
@@ -3782,6 +3988,7 @@
     }
 
     function openSection(name, btn) {
+      if (name !== 'maintenance') closeMaintWorkOrderModal();
       activeSection = name;
       document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
       document.getElementById(`section-${name}`).classList.add('active');
@@ -3802,7 +4009,7 @@
       document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
       if (name === 'maintenance') {
         const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
-        openMaintMainTab('record', rb);
+        openMaintMainTab('record', rb, { skipModal: true });
       }
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
@@ -3890,6 +4097,12 @@
         openSectionByName('maintenance');
         const fb = document.querySelector('#maintMainSubtabs [data-maint-main="fleet"]');
         openMaintMainTab('fleet', fb);
+        return;
+      }
+      if (section === 'maintenance-alerts') {
+        openSectionByName('maintenance');
+        const ab = document.querySelector('#maintMainSubtabs [data-maint-main="alerts"]');
+        openMaintMainTab('alerts', ab, { skipModal: true });
         return;
       }
       const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog', 'uploads'];
@@ -5486,39 +5699,48 @@
 
     async function loadSecurityCatalogUi() {
       try {
-        const days = document.getElementById('integrityDays')?.value;
+        const daysEl = document.getElementById('integrityDays') || document.getElementById('maintIntegrityDays');
+        const days = daysEl?.value;
         const u = new URL('/api/maintenance/security-alerts', window.location.origin);
         if (days != null && String(days).trim() !== '') u.searchParams.set('days', String(days).trim());
         const sec = await j(u.pathname + u.search);
         window.__lastSecurityAlerts = sec;
         renderSecurityAlerts(sec);
+        renderSecurityAlerts(sec, maintSecurityAlertRenderOpts);
       } catch (e) {
+        const msg = '<span style="color:#b91c1c">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
         const el = document.getElementById('securityAlertsBody');
-        if (el) el.innerHTML = '<span style="color:#b91c1c">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
+        if (el) el.innerHTML = msg;
+        const el2 = document.getElementById('maintSecurityAlertsBody');
+        if (el2) el2.innerHTML = msg;
       }
       await loadServiceCatalogAdminOnly();
     }
 
-    function renderSecurityAlerts(sec) {
-      const el = document.getElementById('securityAlertsBody');
+    function renderSecurityAlerts(sec, opts) {
+      const o = opts || {};
+      const bodyId = o.bodyId || 'securityAlertsBody';
+      const searchId = o.searchId || 'integritySearch';
+      const severityId = o.severityId || 'integritySeverity';
+      const el = document.getElementById(bodyId);
       if (!el) return;
-      if (!sec || !sec.ok) {
+      const payload = sec && sec.ok ? sec : window.__lastSecurityAlerts;
+      if (!payload || !payload.ok) {
         el.innerHTML = '<span style="color:#b91c1c">No alert data.</span>';
         return;
       }
-      // Store for client-side filtering.
-      window.__lastSecurityAlerts = sec;
-      const q = String(document.getElementById('integritySearch')?.value || '').trim().toLowerCase();
-      const sev = String(document.getElementById('integritySeverity')?.value || 'all').trim();
-      const p = sec.parameters || {};
-      const head = `<p class="mini-note" style="margin:0 0 10px">Window: last <strong>${sec.windowDays}</strong> days (since ${escapeHtml(
-        sec.cutoff || ''
+      window.__lastSecurityAlerts = payload;
+      const q = String(document.getElementById(searchId)?.value || '').trim().toLowerCase();
+      const sev = String(document.getElementById(severityId)?.value || 'all').trim();
+      const p = payload.parameters || {};
+      const head = `<p class="mini-note" style="margin:0 0 10px">Window: last <strong>${payload.windowDays}</strong> days (since ${escapeHtml(
+        payload.cutoff || ''
       )}). Ratio fuel: <strong>${p.fuelPurchaseRatio}</strong> · default MPG: <strong>${p.defaultMpg}</strong> · max repairs / 7d: <strong>${p.maxRepairs7d}</strong> · tire min interval: <strong>${p.tireMinIntervalMiles} mi</strong> · high cost: <strong>$${p.highCostSingle}</strong>${
         p.driverRiskWindowDays != null
           ? ` · driver-risk window: <strong>${p.driverRiskWindowDays}</strong>d (min events <strong>${p.driverRiskMinEvents}</strong>) · accidents: <strong>${p.driverAccidentWindowDays}</strong>d / max <strong>${p.driverRiskMaxAccidents}</strong>`
           : ''
       }</p>`;
-      const list = (sec.alerts || []).filter(a => {
+      const list = (payload.alerts || []).filter(a => {
         if (sev !== 'all' && String(a.severity || '') !== sev) return false;
         if (!q) return true;
         const hay =
@@ -5558,9 +5780,9 @@
             })
             .join('')
         : '<p class="mini-note" style="margin:0">No integrity alerts for current filters.</p>';
-      const dr = (sec.driverRiskAlerts || []).length
+      const dr = (payload.driverRiskAlerts || []).length
         ? `<div style="margin:12px 0 6px;font-weight:700;font-size:13px;color:#0f172a">Driver / damage expense signals</div>` +
-          (sec.driverRiskAlerts || [])
+          (payload.driverRiskAlerts || [])
             .map(a => {
               const cls =
                 a.severity === 'high'
@@ -8199,7 +8421,11 @@
     function resolveRepairLocationSearch() {
       const lab = document.getElementById('repairLocationSearch').value.trim();
       const hit = REPAIR_LOCATION_DEFS.find(d => d.label.toLowerCase() === lab.toLowerCase());
-      document.getElementById('repairLocationTypeInput').value = hit ? hit.code : '';
+      const code = hit ? hit.code : '';
+      const hid = document.getElementById('repairLocationTypeInput');
+      const sel = document.getElementById('repairLocationSelect');
+      if (hid) hid.value = code;
+      if (sel) sel.value = code;
       syncMaintWorkOrderHeader();
       renderRepairLocationChips();
     }
@@ -8689,6 +8915,12 @@
         modeSel.dataset.lastMode = modeSel.value;
       }
       syncMaintCostLineDefaultsFromUnit(last);
+      if (rows.length > 1) {
+        const firstQty = rows[0].querySelector('.maint-line-qty');
+        const qv = String(firstQty?.value || '').trim();
+        const lastQty = last.querySelector('.maint-line-qty');
+        if (lastQty && qv && !String(lastQty.value || '').trim()) lastQty.value = qv;
+      }
       recalcMaintLineRowInputs(last);
       initMaintLinePartUi(last);
       bindMaintCostPartDelegation();
@@ -8838,9 +9070,12 @@
       __maintLinkSyncing = true;
       try {
         syncLinkedVendorFromMainVendor();
-        const invNo = String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
+        const invEl = document.getElementById('recordVendorInvoiceInput');
         const docEl = document.getElementById('linkedDocNumber');
-        if (docEl && invNo && !String(docEl.value || '').trim()) docEl.value = invNo;
+        const invNo = String(invEl?.value || '').trim();
+        const docVal = String(docEl?.value || '').trim();
+        if (docEl && invNo && !docVal) docEl.value = invNo;
+        if (invEl && docVal && !invNo) invEl.value = docVal;
       } finally {
         __maintLinkSyncing = false;
       }
@@ -9391,7 +9626,6 @@
     function toggleRecordFields() {
       const type = document.getElementById('recordTypeSelect').value;
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
-      document.getElementById('repairFields').classList.remove('hidden');
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
       document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'custom');
       const sameWrap = document.getElementById('recordSameCostServicesWrap');
@@ -10471,6 +10705,8 @@
       document.getElementById('tireConditionValue').value = '';
       document.getElementById('repairLocationSearch').value = '';
       document.getElementById('repairLocationTypeInput').value = '';
+      const rls = document.getElementById('repairLocationSelect');
+      if (rls) rls.value = '';
       document.getElementById('accidentAtFaultSearch').value = '';
       document.getElementById('accidentAtFaultValue').value = '';
       document.getElementById('recordTypeSelect').value = 'maintenance';
@@ -10816,9 +11052,9 @@
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
       if (!repairLoc) {
         alert(
-          'Select where service is performed: use the quick-pick buttons on the right (Internal shop, External shop, Roadside, Parts purchase, Over the road) or the search field under them.'
+          'Select where service is performed: choose a location type in Service & scheduling (Internal shop, External shop, Roadside, Parts purchase, or Over the road).'
         );
-        document.getElementById('repairLocationSearch')?.focus();
+        document.getElementById('repairLocationSelect')?.focus();
         return;
       }
       const vendorInvNo = String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
