@@ -1508,7 +1508,7 @@
                 <p class="mini-note" style="margin:6px 0 0">Fills invoice #, date, unit, total into the first expense line when possible. Digital PDFs only (not scanned images without OCR).</p>
               </div>
 
-              <div style="margin:4px 0 0;font-weight:700;font-size:12px;color:#334155">Category &amp; item lines</div>
+              <div style="margin:4px 0 0;font-weight:500;font-size:12px;color:#334155">Category &amp; item lines</div>
               <div class="qb-lines-wrap">
                 <div class="qb-lines-header" aria-hidden="true">
                   <span>#</span><span>Part / service</span><span>Type</span><span>Category</span><span>Item</span><span>Qty</span><span class="num">Amount</span><span>Tire / ref</span><span>&nbsp;</span>
@@ -1927,7 +1927,7 @@
                   <span id="acctFuelRelayImportUndoMeta" class="mini-note"></span>
                 </div>
                 <div id="acctFuelRelayImportPreview" class="acct-fuel-import-preview" hidden>
-                  <div style="font-weight:700;margin-bottom:8px;font-size:13px">Import preview</div>
+                  <div style="font-weight:500;margin-bottom:8px;font-size:13px">Import preview</div>
                   <div id="acctFuelRelayImportSummary" class="mini-note"></div>
                   <label class="mini-note" style="display:flex;gap:8px;align-items:center;margin:10px 0">
                     <input type="checkbox" id="acctFuelRelayImportAlreadyQbo" checked />
@@ -3829,7 +3829,7 @@
           if (bar) {
             bar.classList.remove('hidden');
             bar.innerHTML =
-              '<span>Login required — </span><a href="/settings.html" style="color:#1d4ed8;font-weight:700">Open Settings</a> to sign in.';
+              '<span>Login required — </span><a href="/settings.html" style="color:#1d4ed8;font-weight:500">Open Settings</a> to sign in.';
           }
         }
         throw new Error(data.error || data.message || text.slice(0, 200));
@@ -4104,7 +4104,7 @@
         return `<div style="padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fbfdff">
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
             <div style="min-width:0;flex:1"><strong>${desc}</strong>${extraHtml}</div>
-            <div style="white-space:nowrap;font-weight:800">${escapeHtml(amt)}</div>
+            <div style="white-space:nowrap;font-weight:500">${escapeHtml(amt)}</div>
           </div>
         </div>`;
       };
@@ -4126,13 +4126,13 @@
           return `<div style="border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px;margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
               <div style="min-width:260px;flex:1">
-                <div style="font-weight:900">${u} · ${d}</div>
+                <div style="font-weight:500">${u} · ${d}</div>
                 <div style="margin-top:4px">${svc}</div>
                 <div class="mini-note" style="margin-top:4px">${vendor}${inv ? ` · Inv # ${inv}` : ''}${wo ? ` · WO # ${wo}` : ''}</div>
               </div>
               <div style="text-align:right;min-width:140px">
                 <div class="mini-note">Total</div>
-                <div style="font-weight:900;font-size:18px">${escapeHtml(cost)}</div>
+                <div style="font-weight:500;font-size:18px">${escapeHtml(cost)}</div>
               </div>
             </div>
             ${plannedBlock}
@@ -4868,7 +4868,7 @@
       const checks = (posture.checks || [])
         .map(
           c =>
-            `<li style="margin:5px 0"><span style="font-weight:700;color:${c.ok ? 'var(--green)' : 'var(--red)'}">${
+            `<li style="margin:5px 0"><span style="font-weight:500;color:${c.ok ? 'var(--green)' : 'var(--red)'}">${
               c.ok ? 'OK' : 'Fix'
             }</span> — ${escapeHtml(c.label)} <span class="mini-note">${escapeHtml(c.hint || '')}</span></li>`
         )
@@ -5803,7 +5803,7 @@
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
         if (bar) {
           bar.classList.remove('hidden');
-          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:#1d4ed8;font-weight:700">Sign in</a>`;
+          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:#1d4ed8;font-weight:500">Sign in</a>`;
         }
       }
     }
@@ -6380,7 +6380,7 @@
             .join('')
         : '<p class="mini-note" style="margin:0">No integrity alerts for current filters.</p>';
       const dr = (payload.driverRiskAlerts || []).length
-        ? `<div style="margin:12px 0 6px;font-weight:700;font-size:13px;color:#0f172a">Driver / damage expense signals</div>` +
+        ? `<div style="margin:12px 0 6px;font-weight:500;font-size:13px;color:#0f172a">Driver / damage expense signals</div>` +
           (payload.driverRiskAlerts || [])
             .map(a => {
               const cls =
@@ -7475,7 +7475,7 @@
       }
       if (data.duplicates?.duplicateCount) {
         parts.push(
-          `<span style="color:#b45309;font-weight:700">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
+          `<span style="color:#b45309;font-weight:500">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
         );
       }
       sum.innerHTML = parts.join('<br>');
@@ -7484,7 +7484,7 @@
         relayW.innerHTML = '<p class="mini-note">No Relay expense lines (check Truck #, work_date, volume/total columns).</p>';
       } else {
         relayW.innerHTML =
-          '<div class="mini-note" style="margin-bottom:6px;font-weight:700">Relay → QB category (staging)</div>' +
+          '<div class="mini-note" style="margin-bottom:6px;font-weight:500">Relay → QuickBooks category (staging)</div>' +
           '<div class="erp-table-scroll"><table class="acct-fuel-import-table"><thead><tr>' +
           '<th><input type="checkbox" id="acctPickAllRelay" checked title="Toggle all" onclick="acctTogglePickAllRelay(this)" /></th>' +
           '<th>Doc #</th><th>Date</th><th>Unit</th><th>QB category</th><th>Line type</th>' +
@@ -7510,7 +7510,7 @@
         fuelW.innerHTML = '<p class="mini-note">No fuel purchase lines parsed.</p>';
       } else {
         fuelW.innerHTML =
-          '<div class="mini-note" style="margin-bottom:6px;font-weight:700">Fuel ledger lines</div>' +
+          '<div class="mini-note" style="margin-bottom:6px;font-weight:500">Fuel ledger lines</div>' +
           '<div class="erp-table-scroll"><table class="acct-fuel-import-table"><thead><tr>' +
           '<th><input type="checkbox" id="acctPickAllFuel" checked title="Toggle all" onclick="acctTogglePickAllFuel(this)" /></th>' +
           '<th>Date</th><th>Unit</th><th>Product</th><th class="num">Gal</th><th class="num">$/gal</th><th class="num">Total</th></tr></thead><tbody>' +
@@ -8539,7 +8539,7 @@
         const head = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:${
           firstExpBlock ? '0' : '10px'
         }">
-          <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${escapeHtml(label)}</div>
+          <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${escapeHtml(label)}</div>
           <div class="mini-note">${maintDeltaBadge((label.includes('7') ? s7.delta : s30.delta) || null)}</div>
         </div>`;
         firstExpBlock = false;
@@ -10074,7 +10074,7 @@
             </div>
           </div>
           <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0">
-            <div><div style="font-weight:700;margin-bottom:6px">Cached QBO vendors (${qv.length})</div>
+            <div><div style="font-weight:500;margin-bottom:6px">Cached QuickBooks vendors (${qv.length})</div>
               <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px;min-width:0">
                 ${qv
                   .slice(0, 200)
@@ -10087,14 +10087,14 @@
                   .join('') || '<span class="mini-note">None — refresh QuickBooks lists.</span>'}
               </div>
             </div>
-            <div><div style="font-weight:700;margin-bottom:6px">TMS drivers (${dv.length})</div>
+            <div><div style="font-weight:500;margin-bottom:6px">TMS drivers (${dv.length})</div>
               <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px;min-width:0">
                 ${dv
                   .slice(0, 200)
                   .map(d => {
                     const q = d.qboVendorId
-                      ? '<span class="mini-note">QBO ' + escapeHtml(String(d.qboVendorId)) + '</span>'
-                      : '<span class="mini-note">(no QBO)</span>';
+                      ? '<span class="mini-note">QuickBooks vendor #' + escapeHtml(String(d.qboVendorId)) + '</span>'
+                      : '<span class="mini-note">(not linked to QuickBooks)</span>';
                     const s = d.samsaraDriverId
                       ? ' <span class="mini-note">Sam ' + escapeHtml(String(d.samsaraDriverId)) + '</span>'
                       : '';
@@ -13376,7 +13376,7 @@
                     `<tr><td>${escapeHtml(L.loadNumber)}</td><td>${escapeHtml(L.status || '')}</td><td>${Number(L.revenue).toFixed(2)}</td><td>${Number(L.expenseRollup).toFixed(2)}</td><td>${Number(L.companyNet).toFixed(2)}</td><td>${L.suggestedDriverPay != null ? Number(L.suggestedDriverPay).toFixed(2) : '—'}</td></tr>`
                 )
                 .join('');
-              return `<div style="margin-bottom:18px"><div style="font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><span>${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QBO ${escapeHtml(dr.qboVendorId)}</span></span><a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/driver-settlement/${encodeURIComponent(dr.qboVendorId)}" target="_blank" rel="noopener">Driver settlement PDF</a></div><div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0"><table class="st-settlement" style="min-width:520px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+              return `<div style="margin-bottom:18px"><div style="font-weight:500;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><span>${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QuickBooks vendor ${escapeHtml(dr.qboVendorId)}</span></span><a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/driver-settlement/${encodeURIComponent(dr.qboVendorId)}" target="_blank" rel="noopener">Driver settlement PDF</a></div><div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0"><table class="st-settlement" style="min-width:520px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
             })
             .join('');
       } catch (e) {
