@@ -1538,6 +1538,7 @@ async function qboPost(pathname, payload) {
 function enrichQboInvalidReferenceMessage(message) {
   const m = String(message || '');
   if (!/invalid\s*reference\s*id/i.test(m)) return m;
+  if (/Refresh QBO Master in the app, re-select the linked fields/i.test(m)) return m;
   return `${m} — QuickBooks rejected an id on this transaction (vendor, pay-from bank, class, account or item, customer, payment method mapping, etc.). Refresh QBO Master in the app, re-select the linked fields on the form or row, and post again.`;
 }
 
@@ -2427,9 +2428,43 @@ async function qboFindItemById(id) {
   return data?.Item || null;
 }
 
+async function qboTryGetItemById(id) {
+  const raw = String(id || '').trim().replace(/[^\d]/g, '');
+  if (!raw) return null;
+  try {
+    const data = await qboGet(`item/${encodeURIComponent(raw)}`);
+    return data?.Item || null;
+  } catch {
+    return null;
+  }
+}
+
 async function qboFindAccountById(id) {
   const data = await qboGet(`account/${id}`);
   return data?.Account || null;
+}
+
+async function qboTryGetAccountById(id) {
+  const raw = String(id || '').trim().replace(/[^\d]/g, '');
+  if (!raw) return null;
+  try {
+    const data = await qboGet(`account/${encodeURIComponent(raw)}`);
+    return data?.Account || null;
+  } catch {
+    return null;
+  }
+}
+
+function qboExpenseAccountTypeOk(accountType) {
+  const t = String(accountType || '');
+  return t === 'Expense' || t === 'Cost of Goods Sold';
+}
+
+/** Category / Group / Subtotal items cannot be used as ItemBasedExpenseLineDetail on Purchases (QBO 2500). */
+function qboItemTypeOkForPurchaseExpenseLine(itemType) {
+  const t = String(itemType || '').trim();
+  if (!t) return false;
+  return !['Category', 'Group', 'Subtotal'].includes(t);
 }
 
 function findPaymentMethodLocal(erp, paymentMethodId) {
@@ -2519,10 +2554,54 @@ function resolveLinehaulItemId(erp) {
   return DEFAULT_QBO_INVOICE_ITEM_ID;
 }
 
+/**
+ * Single-line Purchase/Bill: avoid QBO 2500 when "item" points at a Category-type QBO item or an expense account id.
+ */
+async function reconcileApSingleLineForPurchase(ap) {
+  const wantItem = String(ap.detailMode || 'category').toLowerCase() === 'item';
+  if (!wantItem) {
+    return {
+      detailMode: String(ap.detailMode || 'category'),
+      qboItemId: ap.qboItemId || '',
+      qboAccountId: ap.qboAccountId || ''
+    };
+  }
+  const itemDigits = String(ap.qboItemId || '').trim().replace(/[^\d]/g, '');
+  const acctDigits = String(ap.qboAccountId || '').trim().replace(/[^\d]/g, '');
+  if (!itemDigits) {
+    if (!acctDigits) {
+      throw new Error(
+        'Line detail is set to item but no QuickBooks item id is stored — pick a Service/non-inventory item, or switch to category (expense account) mode.'
+      );
+    }
+    return { detailMode: 'category', qboItemId: '', qboAccountId: acctDigits };
+  }
+  const itemObj = await qboTryGetItemById(itemDigits);
+  if (itemObj && qboItemTypeOkForPurchaseExpenseLine(itemObj.Type)) {
+    return { detailMode: 'item', qboItemId: itemDigits, qboAccountId: acctDigits };
+  }
+  if (itemObj && !qboItemTypeOkForPurchaseExpenseLine(itemObj.Type)) {
+    const fb =
+      acctDigits || String(itemObj.ExpenseAccountRef?.value || '').replace(/[^\d]/g, '') || '';
+    if (!fb) {
+      throw new Error(
+        `QuickBooks item "${itemObj.Name || itemDigits}" is type "${itemObj.Type}" — it cannot be used as a purchase item line. Switch to category (expense account) mode or pick a Service/non-inventory item.`
+      );
+    }
+    return { detailMode: 'category', qboItemId: '', qboAccountId: fb };
+  }
+  const acct = await qboTryGetAccountById(itemDigits);
+  if (acct && qboExpenseAccountTypeOk(acct.AccountType)) {
+    return { detailMode: 'category', qboItemId: '', qboAccountId: String(acct.Id).replace(/[^\d]/g, '') };
+  }
+  throw new Error(
+    `QuickBooks id ${itemDigits} is not a postable item or an expense account — refresh QBO Master. For category posting, pick an expense account (not a QBO Category-type item).`
+  );
+}
+
 async function qboCreateApTransaction(ap) {
   const erp = readErp();
   const txnDate = ap.txnDate || new Date().toISOString().slice(0, 10);
-  const detailMode = ap.detailMode || 'category';
   const txnType = ap.txnType || 'expense';
   const amount = safeNum(ap.amount, 0);
 
@@ -2530,6 +2609,15 @@ async function qboCreateApTransaction(ap) {
   const classId = pickValidatedQboClassId(erp, ap.qboClassId, ap.assetUnit);
   const rawCostLines = Array.isArray(ap.costLines) ? ap.costLines : [];
   const costLines = rawCostLines.filter(cl => cl && typeof cl === 'object');
+
+  if (!costLines.length) {
+    const r = await reconcileApSingleLineForPurchase(ap);
+    ap.detailMode = r.detailMode;
+    ap.qboItemId = r.qboItemId;
+    ap.qboAccountId = r.qboAccountId;
+  }
+
+  const detailMode = ap.detailMode || 'category';
 
   if (costLines.length > 0) {
     if (!(amount > 0)) throw new Error('Amount must be greater than 0');
@@ -4907,28 +4995,66 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
       String(cl.detailMode || fallbackDetailMode || 'category').trim() === 'item' ? 'item' : 'category';
     const desc = costLineDescriptionForQbo(cl);
     if (mode === 'item') {
-      const itemId = String(cl.qboItemId || fallbackItemId || '').trim();
-      if (!itemId) {
+      const rawItemId = String(cl.qboItemId || fallbackItemId || '').trim().replace(/[^\d]/g, '');
+      if (!rawItemId) {
         throw new Error(
           `QuickBooks item required for item line "${desc}" — pick a per-line item or set a default item on the record`
         );
       }
-      const itemQbo = await qboFindItemById(itemId);
-      if (!itemQbo) throw new Error(`QuickBooks item not found for line: ${desc}`);
-      const qtyBase = safeNum(cl.quantity, safeNum(cl.qty, 1)) || 1;
-      const qty = qtyBase > 0 ? qtyBase : 1;
-      const itemDetail = {
-        ItemRef: { value: itemQbo.Id, name: itemQbo.Name },
-        Qty: qty,
-        UnitPrice: Math.round((amount / qty) * 1000000) / 1000000
-      };
-      if (classId) itemDetail.ClassRef = { value: classId };
-      out.push({
-        Amount: amount,
-        DetailType: 'ItemBasedExpenseLineDetail',
-        Description: sanitizeName(desc, 'Line'),
-        ItemBasedExpenseLineDetail: itemDetail
-      });
+      const lineAcctFallback = String(cl.qboAccountId || fallbackAccountId || '').trim().replace(/[^\d]/g, '');
+      const itemObj = await qboTryGetItemById(rawItemId);
+      if (itemObj && qboItemTypeOkForPurchaseExpenseLine(itemObj.Type)) {
+        const qtyBase = safeNum(cl.quantity, safeNum(cl.qty, 1)) || 1;
+        const qty = qtyBase > 0 ? qtyBase : 1;
+        const itemDetail = {
+          ItemRef: { value: String(itemObj.Id), name: itemObj.Name },
+          Qty: qty,
+          UnitPrice: Math.round((amount / qty) * 1000000) / 1000000
+        };
+        if (classId) itemDetail.ClassRef = { value: classId };
+        out.push({
+          Amount: amount,
+          DetailType: 'ItemBasedExpenseLineDetail',
+          Description: sanitizeName(desc, 'Line'),
+          ItemBasedExpenseLineDetail: itemDetail
+        });
+      } else {
+        let acctDigits = lineAcctFallback;
+        if (itemObj && !qboItemTypeOkForPurchaseExpenseLine(itemObj.Type)) {
+          acctDigits =
+            acctDigits || String(itemObj.ExpenseAccountRef?.value || '').replace(/[^\d]/g, '') || '';
+          if (!acctDigits) {
+            throw new Error(
+              `QuickBooks item "${itemObj.Name || rawItemId}" (type ${itemObj.Type}) cannot be used as a purchase item line for "${desc}". Pick an expense account for this line or choose a Service/non-inventory item.`
+            );
+          }
+        } else if (!itemObj) {
+          const acct = await qboTryGetAccountById(rawItemId);
+          if (acct && qboExpenseAccountTypeOk(acct.AccountType)) {
+            acctDigits = String(acct.Id).replace(/[^\d]/g, '');
+          } else {
+            throw new Error(
+              `QuickBooks id ${rawItemId} for line "${desc}" is not a postable item or expense account — refresh QBO Master and re-link this line.`
+            );
+          }
+        } else {
+          throw new Error(
+            `QuickBooks item id ${rawItemId} for line "${desc}" could not be posted as an item line — refresh QBO Master.`
+          );
+        }
+        const accountQbo = await qboFindAccountById(acctDigits);
+        if (!accountQbo) throw new Error(`QuickBooks account not found for line: ${desc}`);
+        const acctDetail = {
+          AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
+        };
+        if (classId) acctDetail.ClassRef = { value: classId };
+        out.push({
+          Amount: amount,
+          DetailType: 'AccountBasedExpenseLineDetail',
+          Description: desc,
+          AccountBasedExpenseLineDetail: acctDetail
+        });
+      }
     } else {
       const acctId = String(cl.qboAccountId || fallbackAccountId || '').trim();
       if (!acctId) {
