@@ -1393,9 +1393,16 @@ async function qboGet(pathname) {
   });
 
   const raw = await response.text();
-  const data = JSON.parse(raw);
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(
+      `QuickBooks GET returned non-JSON (HTTP ${response.status}): ${String(raw || '').slice(0, 200)}`
+    );
+  }
   if (!response.ok) {
-    throw new Error(data?.Fault?.Error?.[0]?.Message || 'QuickBooks GET failed');
+    throw new Error(enrichQboInvalidReferenceMessage(formatQboFaultMessage(data)));
   }
   return data;
 }
@@ -1430,9 +1437,14 @@ async function qboDeletePurchaseOrBill(entityPath, entityId) {
     body: JSON.stringify(payload)
   });
   const raw = await response.text();
-  const out = JSON.parse(raw);
+  let out;
+  try {
+    out = JSON.parse(raw);
+  } catch {
+    throw new Error(`QuickBooks delete returned non-JSON (HTTP ${response.status}): ${String(raw || '').slice(0, 200)}`);
+  }
   if (!response.ok) {
-    throw new Error(out?.Fault?.Error?.[0]?.Message || out?.Fault?.Error?.[0]?.Detail || 'QuickBooks delete failed');
+    throw new Error(enrichQboInvalidReferenceMessage(formatQboFaultMessage(out)));
   }
   logQboEvent('DELETE_OK', { entity: path, qboId: id });
   return out;
@@ -1468,9 +1480,14 @@ async function qboDeleteBillPayment(billPaymentId) {
     body: JSON.stringify(payload)
   });
   const raw = await response.text();
-  const out = JSON.parse(raw);
+  let out;
+  try {
+    out = JSON.parse(raw);
+  } catch {
+    throw new Error(`QuickBooks delete returned non-JSON (HTTP ${response.status}): ${String(raw || '').slice(0, 200)}`);
+  }
   if (!response.ok) {
-    throw new Error(out?.Fault?.Error?.[0]?.Message || out?.Fault?.Error?.[0]?.Detail || 'QuickBooks delete failed');
+    throw new Error(enrichQboInvalidReferenceMessage(formatQboFaultMessage(out)));
   }
   logQboEvent('BILL_PAYMENT_DELETE_OK', { qboBillPaymentId: id });
   return out;
@@ -1503,13 +1520,16 @@ async function qboPost(pathname, payload) {
   });
 
   const raw = await response.text();
-  const data = JSON.parse(raw);
-  if (!response.ok) {
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
     throw new Error(
-      data?.Fault?.Error?.[0]?.Message ||
-      data?.Fault?.Error?.[0]?.Detail ||
-      'QuickBooks POST failed'
+      `QuickBooks POST returned non-JSON (HTTP ${response.status}): ${String(raw || '').slice(0, 200)}`
     );
+  }
+  if (!response.ok) {
+    throw new Error(enrichQboInvalidReferenceMessage(formatQboFaultMessage(data)));
   }
   return data;
 }
@@ -1519,6 +1539,25 @@ function enrichQboInvalidReferenceMessage(message) {
   const m = String(message || '');
   if (!/invalid\s*reference\s*id/i.test(m)) return m;
   return `${m} — QuickBooks rejected an id on this transaction (vendor, pay-from bank, class, account or item, customer, payment method mapping, etc.). Refresh QBO Master in the app, re-select the linked fields on the form or row, and post again.`;
+}
+
+/** Best-effort fault text from a QBO JSON error body (minor version errors include Detail). */
+function formatQboFaultMessage(data) {
+  const faults = data?.Fault?.Error;
+  if (Array.isArray(faults) && faults.length) {
+    return faults
+      .map(e => {
+        const parts = [e.Message, e.Detail].filter(Boolean);
+        if (e.code) parts.push(`(${String(e.code)})`);
+        return parts.join(' ').trim();
+      })
+      .filter(Boolean)
+      .join(' | ');
+  }
+  return (
+    String(data?.error_description || data?.error || data?.Message || data?.message || '').trim() ||
+    'QuickBooks request failed'
+  );
 }
 
 async function qboQuery(sql) {
@@ -2403,6 +2442,62 @@ function resolveQboBankAccountId(erp, explicit) {
   return DEFAULT_QBO_BANK_ACCOUNT_ID;
 }
 
+function qboDigitsId(v) {
+  return String(v || '')
+    .trim()
+    .replace(/[^\d]/g, '');
+}
+
+/** When class cache is loaded, drop unknown class ids so QBO does not reject the whole Purchase. */
+function pickValidatedQboClassId(erp, rawClassId, assetUnit) {
+  const classes = erp?.qboCache?.classes || [];
+  const known = new Set(classes.map(c => qboDigitsId(c.qboId)).filter(Boolean));
+  if (!known.size) {
+    return qboDigitsId(rawClassId) || qboClassIdForUnit(assetUnit, erp);
+  }
+  const fromRaw = qboDigitsId(rawClassId);
+  if (fromRaw && known.has(fromRaw)) return fromRaw;
+  const fromUnit = qboClassIdForUnit(assetUnit, erp);
+  const u = qboDigitsId(fromUnit);
+  if (u && known.has(u)) return u;
+  return '';
+}
+
+function pickValidatedQboCustomerId(erp, rawCustomerId) {
+  const id = qboDigitsId(rawCustomerId);
+  if (!id) return '';
+  const rows = erp?.qboCache?.customers || [];
+  if (!rows.length) return id;
+  return rows.some(r => qboDigitsId(r.qboId) === id) ? id : '';
+}
+
+/**
+ * Resolve pay-from bank for Purchase; if bank accounts were synced, require a listed id
+ * (prevents Invalid Reference Id from stale DEFAULT_QBO_BANK_ACCOUNT_ID or bad row data).
+ */
+function pickValidatedQboBankIdForPurchase(erp, explicit) {
+  const id = qboDigitsId(resolveQboBankAccountId(erp, explicit));
+  if (!id) return '';
+  const banks = erp?.qboCache?.accountsBank || [];
+  if (!banks.length) return id;
+  if (banks.some(b => qboDigitsId(b.qboId) === id)) return id;
+  throw new Error(
+    `Pay-from bank/card QuickBooks id ${id} is not in the synced bank list — refresh QBO Master, then pick pay-from again on the row (or fix DEFAULT_QBO_BANK_ACCOUNT_ID on the server).`
+  );
+}
+
+function assertQboVendorIdKnown(erp, vendorId) {
+  const id = qboDigitsId(vendorId);
+  if (!id) throw new Error('QuickBooks vendor is required');
+  const vendors = erp?.qboCache?.vendors || [];
+  if (vendors.length && !vendors.some(v => qboDigitsId(v.qboId) === id)) {
+    throw new Error(
+      `Vendor QuickBooks id ${id} is not in the synced vendor list — refresh QBO Master and pick the vendor again (IDs change if the vendor was recreated in QuickBooks).`
+    );
+  }
+  return id;
+}
+
 /** Match QBO Class name to vehicle unit (e.g. T160) for P&amp;L by truck. */
 function qboClassIdForUnit(unitRaw, erp) {
   const u = String(unitRaw || '').trim();
@@ -2431,12 +2526,8 @@ async function qboCreateApTransaction(ap) {
   const txnType = ap.txnType || 'expense';
   const amount = safeNum(ap.amount, 0);
 
-  if (!ap.qboVendorId) throw new Error('QuickBooks vendor is required');
-
-  const classId =
-    String(ap.qboClassId || '')
-      .trim()
-      .replace(/[^\d]/g, '') || qboClassIdForUnit(ap.assetUnit, erp);
+  const vendorIdNorm = assertQboVendorIdKnown(erp, ap.qboVendorId);
+  const classId = pickValidatedQboClassId(erp, ap.qboClassId, ap.assetUnit);
   const rawCostLines = Array.isArray(ap.costLines) ? ap.costLines : [];
   const costLines = rawCostLines.filter(cl => cl && typeof cl === 'object');
 
@@ -2478,23 +2569,23 @@ async function qboCreateApTransaction(ap) {
         TxnDate: txnDate,
         DocNumber: ap.docNumber || undefined,
         PaymentType: paymentType,
-        EntityRef: { type: 'Vendor', value: ap.qboVendorId },
+        EntityRef: { type: 'Vendor', value: vendorIdNorm },
         Line: lineArray,
         PrivateNote: privateNote
       };
-      const bankId = resolveQboBankAccountId(erp, ap.qboBankAccountId);
+      const bankId = pickValidatedQboBankIdForPurchase(erp, ap.qboBankAccountId);
       if (bankId) payload.AccountRef = { value: bankId };
       const created = await qboPost('purchase', payload);
       return {
         qboEntityType: 'Purchase',
         qboEntityId: created?.Purchase?.Id || '',
-        qboVendorId: ap.qboVendorId,
+        qboVendorId: vendorIdNorm,
         qboItemId,
         qboAccountId
       };
     }
     const billPayload = {
-      VendorRef: { value: ap.qboVendorId },
+      VendorRef: { value: vendorIdNorm },
       TxnDate: txnDate,
       DueDate: ap.dueDate || '',
       DocNumber: ap.docNumber || undefined,
@@ -2506,7 +2597,7 @@ async function qboCreateApTransaction(ap) {
     return {
       qboEntityType: 'Bill',
       qboEntityId: createdBill?.Bill?.Id || '',
-      qboVendorId: ap.qboVendorId,
+      qboVendorId: vendorIdNorm,
       qboItemId,
       qboAccountId
     };
@@ -2526,7 +2617,7 @@ async function qboCreateApTransaction(ap) {
       AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
     };
     if (classId) acctDetail.ClassRef = { value: classId };
-    const custA = String(ap.qboCustomerId || '').trim().replace(/[^\d]/g, '');
+    const custA = pickValidatedQboCustomerId(erp, ap.qboCustomerId);
     if (custA) acctDetail.CustomerRef = { value: custA };
     line = {
       Amount: amount,
@@ -2546,7 +2637,7 @@ async function qboCreateApTransaction(ap) {
       UnitPrice: amount / qty
     };
     if (classId) itemDetail.ClassRef = { value: classId };
-    const cust = String(ap.qboCustomerId || '').trim().replace(/[^\d]/g, '');
+    const cust = pickValidatedQboCustomerId(erp, ap.qboCustomerId);
     if (cust) itemDetail.CustomerRef = { value: cust };
     line = {
       Amount: amount,
@@ -2564,24 +2655,24 @@ async function qboCreateApTransaction(ap) {
       TxnDate: txnDate,
       DocNumber: ap.docNumber || undefined,
       PaymentType: paymentType,
-      EntityRef: { type: 'Vendor', value: ap.qboVendorId },
+      EntityRef: { type: 'Vendor', value: vendorIdNorm },
       Line: [line],
       PrivateNote: sanitizeName(ap.memo || `${ap.assetUnit || ''} ${ap.description || ''}`, 'Expense')
     };
-    const bankId = resolveQboBankAccountId(erp, ap.qboBankAccountId);
+    const bankId = pickValidatedQboBankIdForPurchase(erp, ap.qboBankAccountId);
     if (bankId) payload.AccountRef = { value: bankId };
     const created = await qboPost('purchase', payload);
     return {
       qboEntityType: 'Purchase',
       qboEntityId: created?.Purchase?.Id || '',
-      qboVendorId: ap.qboVendorId,
+      qboVendorId: vendorIdNorm,
       qboItemId,
       qboAccountId
     };
   }
 
   const payload = {
-    VendorRef: { value: ap.qboVendorId },
+    VendorRef: { value: vendorIdNorm },
     TxnDate: txnDate,
     DueDate: ap.dueDate || '',
     DocNumber: ap.docNumber || undefined,
@@ -2593,7 +2684,7 @@ async function qboCreateApTransaction(ap) {
   return {
     qboEntityType: 'Bill',
     qboEntityId: created?.Bill?.Id || '',
-    qboVendorId: ap.qboVendorId,
+    qboVendorId: vendorIdNorm,
     qboItemId,
     qboAccountId
   };
@@ -2604,7 +2695,8 @@ async function qboCreateWorkOrderTransaction(workOrder) {
   if (!workOrder.qboVendorId) throw new Error('QuickBooks vendor is required on work order');
   if (!Array.isArray(workOrder.lines) || !workOrder.lines.length) throw new Error('Work order needs at least one line');
 
-  const classId = qboClassIdForUnit(workOrder.unit, erp);
+  const vendorIdNorm = assertQboVendorIdKnown(erp, workOrder.qboVendorId);
+  const classId = pickValidatedQboClassId(erp, '', workOrder.unit);
   const lines = [];
   for (const line of workOrder.lines) {
     const amount = safeNum(line.amount, 0);
@@ -2659,14 +2751,14 @@ async function qboCreateWorkOrderTransaction(workOrder) {
       TxnDate: workOrder.serviceDate || new Date().toISOString().slice(0, 10),
       DocNumber: workOrder.vendorInvoiceNumber || workOrder.internalWorkOrderNumber || undefined,
       PaymentType: paymentType,
-      EntityRef: { type: 'Vendor', value: workOrder.qboVendorId },
+      EntityRef: { type: 'Vendor', value: vendorIdNorm },
       Line: lines,
       PrivateNote: sanitizeName(
         `Load/Inv:${workOrder.loadNumber || workOrder.internalWorkOrderNumber || ''} ${workOrder.vendorWorkOrderNumber || ''} Unit:${workOrder.unit || ''}`,
         'Work Order'
       )
     };
-    const bankId = resolveQboBankAccountId(erp, workOrder.qboBankAccountId);
+    const bankId = pickValidatedQboBankIdForPurchase(erp, workOrder.qboBankAccountId);
     if (bankId) payload.AccountRef = { value: bankId };
     const created = await qboPost('purchase', payload);
     return {
@@ -2676,7 +2768,7 @@ async function qboCreateWorkOrderTransaction(workOrder) {
   }
 
   const payload = {
-    VendorRef: { value: workOrder.qboVendorId },
+    VendorRef: { value: vendorIdNorm },
     TxnDate: workOrder.serviceDate || new Date().toISOString().slice(0, 10),
     DueDate: workOrder.dueDate || '',
     DocNumber: workOrder.vendorInvoiceNumber || workOrder.internalWorkOrderNumber || undefined,
