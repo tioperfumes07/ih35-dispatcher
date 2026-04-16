@@ -314,17 +314,58 @@
           <button type="button" class="subtab" onclick="openSafetyTab('safe-files', this)">Driver files</button>
         </div>
         <div id="safe-hos" class="tracking-sub">
-          <p class="mini-note" style="margin:0 0 10px">Samsara HOS clocks: <strong>on duty, driving, sleeper berth, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle is hidden. Off duty <strong>with</strong> a vehicle is shown. Token needs <strong>Read ELD Compliance Settings (US)</strong>.</p>
-          <div class="toolbar erp-ops-toolbar">
-            <input id="safetySearch" class="in" style="max-width:280px" placeholder="Search driver or vehicle…" oninput="renderSafetyHos()" />
-            <label class="mini-note" for="safetyHosDutyFilter" style="margin:0">Show</label>
-            <select id="safetyHosDutyFilter" class="in" style="max-width:240px" onchange="renderSafetyHos()" title="Filter by duty state">
-              <option value="relevant">Relevant (hide off-duty, no truck)</option>
-              <option value="active">Active duties only</option>
-              <option value="inactive">Off duty / sleeper</option>
-              <option value="all">All Samsara rows</option>
-            </select>
-            <span class="mini-note" id="safetyHosMeta"></span>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 4px">
+            <div class="mr-violation-legend" aria-label="Violation legend">
+              <span class="mr-violation-legend__item"><span class="mr-violation-legend__dot mr-violation-legend__dot--pink"></span> In violation</span>
+              <span class="mr-violation-legend__item"><span class="mr-violation-legend__dot mr-violation-legend__dot--yellow"></span> Nearing violation</span>
+            </div>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this table">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Samsara HOS clocks: <strong>on duty, driving, sleeper berth, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle is hidden. Off duty <strong>with</strong> a vehicle is shown. The integration token needs <strong>Read ELD Compliance Settings (US)</strong>.
+              </span>
+            </span>
+          </div>
+          <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
+            <div class="mr-filter-bar__chips">
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use search (right) to narrow by driver or vehicle. Saved tag chips will mirror Samsara when enabled.</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Row values follow the live Samsara HOS clock payload (duty, vehicle, timers, violations).</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Duty status <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use the <strong>Show</strong> list beside this row to filter duty states (relevant, active only, off duty / sleeper, or all rows).</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Violations <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Rows with active violations use the table tint from the legend above.</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Active drivers <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Choose <strong>Show → Active duties only</strong> to match that lens.</p></div>
+              </details>
+              <details class="mr-filter-chipwrap">
+                <summary class="mr-filter-chip">Vehicle assignment <span aria-hidden="true">▾</span></summary>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Relevant</strong> hides off-duty rows without a truck; other modes show the full Samsara window.</p></div>
+              </details>
+              <div class="mr-filter-bar__show">
+                <label class="mini-note" for="safetyHosDutyFilter" style="margin:0">Show</label>
+                <select id="safetyHosDutyFilter" class="in mr-filter-inline-select" onchange="renderSafetyHos()" title="Filter by duty state">
+                  <option value="relevant">Relevant (hide off-duty, no truck)</option>
+                  <option value="active">Active duties only</option>
+                  <option value="inactive">Off duty / sleeper</option>
+                  <option value="all">All Samsara rows</option>
+                </select>
+              </div>
+            </div>
+            <div class="mr-filter-bar__right">
+              <input id="safetySearch" class="in mr-filter-search" placeholder="Search…" oninput="renderSafetyHos()" title="Search driver or vehicle" />
+              <span class="mini-note" id="safetyHosMeta"></span>
+            </div>
           </div>
           <div class="safety-table-wrap erp-ops-data-frame">
             <table>
@@ -345,9 +386,15 @@
           </div>
         </div>
         <div id="safe-active" class="tracking-sub hidden">
-          <p class="mini-note" style="margin:0 0 10px">
-            <strong>Active</strong> = on duty (not off duty or sleeper). <strong>In service now</strong> = driving, on duty, or yard move (from Samsara HOS clocks).
-          </p>
+          <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
+            <span class="mini-note" style="margin:0">Active / in service lists</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Definitions">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <strong>Active</strong> = on duty (not off duty or sleeper). <strong>In service now</strong> = driving, on duty, or yard move (from Samsara HOS clocks).
+              </span>
+            </span>
+          </div>
           <div class="toolbar erp-ops-toolbar">
             <label class="mini-note" for="safetyActiveDutyFilter" style="margin:0">List filter</label>
             <select id="safetyActiveDutyFilter" class="in" style="max-width:240px" onchange="renderSafetyActivePanels()" title="Same modes as HOS tab">
@@ -385,7 +432,13 @@
           </div>
         </div>
         <div id="safe-assign" class="tracking-sub hidden">
-          <p class="mini-note" style="margin:0 0 10px">Driver ↔ vehicle assignments from Samsara (current window).</p>
+          <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
+            <span class="mini-note" style="margin:0">Assignments</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About assignments">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">Driver ↔ vehicle assignments from Samsara for the current window.</span>
+            </span>
+          </div>
           <div class="toolbar erp-ops-toolbar">
             <input id="safetyAssignSearch" class="in" style="max-width:260px" placeholder="Filter vehicle or driver…" oninput="renderSafetyAssignments()" />
             <label class="mini-note" for="safetyAssignFilter" style="margin:0">Show</label>
@@ -404,13 +457,25 @@
           </div>
         </div>
         <div id="safe-fleet" class="tracking-sub hidden">
-          <p class="mini-note" style="margin:0 0 10px">Tracked fleet counts (same filter as Maintenance / Fuel).</p>
+          <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
+            <span class="mini-note" style="margin:0">Fleet snapshot</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About fleet snapshot">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">Tracked fleet counts use the same asset filter family as Maintenance and Fuel.</span>
+            </span>
+          </div>
           <div id="safetyFleetSummary" class="mini-note">—</div>
         </div>
         <div id="safe-files" class="tracking-sub hidden">
-          <p class="mini-note" style="margin:0 0 10px">
-            Driver compliance file basics (local to this app): CDL, med card, drug test, hire date, notes. This is intentionally separate from QuickBooks vendor PII.
-          </p>
+          <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
+            <span class="mini-note" style="margin:0">Driver files</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About driver files">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Driver compliance file basics stored locally in this app: CDL, med card, drug test, hire date, notes. This is intentionally separate from QuickBooks vendor PII.
+              </span>
+            </span>
+          </div>
           <div class="toolbar erp-ops-toolbar">
             <input id="driverFilesSearch" class="in" style="max-width:280px" placeholder="Search driver…" oninput="renderDriverFiles()" />
             <label class="mini-note" for="driverFilesUrgentOnly" style="margin:0">Show</label>
@@ -846,10 +911,16 @@
                 <div class="panel-title">Imports &amp; uploads</div>
               </div>
               <div class="panel-body form-stack">
-                <p class="mini-note" style="margin:0">
-                  Spreadsheet imports live under <strong>Imports &amp; uploads</strong> in the lists column (see <strong>Lists, imports &amp; admin</strong> at the bottom of the sidebar, or use the button below) — maintenance history, AP expenses, fuel and Relay, and connection notes.
-                </p>
-                <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to imports &amp; uploads</button>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px">
+                  <span class="mini-note" style="margin:0">Spreadsheet imports</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Where to import">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      CSV and Excel imports live under <strong>Upload center</strong> in the lists column (see <strong>Lists, imports &amp; admin</strong> at the bottom of the sidebar) — maintenance history, AP expenses, fuel / Relay, and connection notes.
+                    </span>
+                  </span>
+                </div>
+                <button type="button" class="qb-btn-add" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to upload center</button>
               </div>
             </div>
 
@@ -861,9 +932,14 @@
         <div id="maintMainTabRm" class="maint-main-tab-panel">
           <div class="panel maint-section-card">
             <div class="panel-head maint-panel-head-center">
-              <div class="panel-title">R&amp;M Status — integrity · fuel · parts</div>
-              <div class="mini-note" style="margin:6px 0 0;max-width:62ch">
-                Repair &amp; maintenance health signals (same family as Tracking → Shop &amp; maintenance). Flags unusual repair frequency, high invoices, short tire intervals, and diesel vs miles. Filter by severity or search.
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                <div class="panel-title" style="margin:0">R&amp;M Status — integrity · fuel · parts</div>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About R&amp;M status">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Repair &amp; maintenance health signals (same family as Tracking → Shop &amp; maintenance). Flags unusual repair frequency, high invoices, short tire intervals, and diesel vs miles. Filter by severity or search.
+                  </span>
+                </span>
               </div>
             </div>
             <div class="panel-body">
@@ -910,6 +986,30 @@
             <div class="panel maint-section-card">
               <div class="panel-head"><div class="panel-title">Maintenance Table</div></div>
               <div class="panel-body">
+                <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Fleet table filters" style="padding-top:0">
+                  <div class="mr-filter-bar__chips">
+                    <details class="mr-filter-chipwrap">
+                      <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use <strong>Find unit</strong> above and column sort in the grid to narrow rows.</p></div>
+                    </details>
+                    <details class="mr-filter-chipwrap">
+                      <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Service, status, and mileage fields come from maintenance records and Samsara where linked.</p></div>
+                    </details>
+                    <details class="mr-filter-chipwrap">
+                      <summary class="mr-filter-chip">Fleet type <span aria-hidden="true">▾</span></summary>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use the <strong>Fleet by type</strong> shortcuts in the sidebar to focus trucks, vans, flatbeds, and other groups.</p></div>
+                    </details>
+                    <details class="mr-filter-chipwrap">
+                      <summary class="mr-filter-chip">Service status <span aria-hidden="true">▾</span></summary>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Status and QuickBooks sync columns reflect each saved work order row.</p></div>
+                    </details>
+                    <details class="mr-filter-chipwrap">
+                      <summary class="mr-filter-chip">Past due <span aria-hidden="true">▾</span></summary>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Compare <strong>Next due date / mileage</strong> with the KPI strip for PM and critical items.</p></div>
+                    </details>
+                  </div>
+                </div>
                 <div class="table-wrap erp-table-scroll">
                   <table>
                     <thead>
@@ -967,15 +1067,26 @@
         </div>
 
         <div id="tr-maint-shop" class="tracking-sub hidden">
-          <p class="mini-note" style="margin:0 0 12px;max-width:78ch">
-            Shop queue, expense rollups, exports, and R&amp;M health signals. Log service under <strong>Maintenance → Create work order</strong>; full grid under <strong>Maintenance → Fleet table</strong>; shop / location context under <strong>Maintenance → Shop / location</strong>. Deep links: <code>#tracking-shop</code> or <code>#maintenance-shop</code> (this tab), <code>#maintenance-parts</code> (opens here + parts queue), <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> (or legacy <code>#maintenance-alerts</code>), <code>#maintenance-shop-location</code>.
-          </p>
+          <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap">
+            <span class="mini-note" style="margin:0">Shop queue &amp; rollups</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Navigation &amp; deep links">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Shop queue, expense rollups, exports, and R&amp;M health signals. Log service under <strong>Maintenance → Create work order</strong>; full grid under <strong>Maintenance → Fleet table</strong>; shop / location context under <strong>Maintenance → Shop / location</strong>. Deep links: <code>#tracking-shop</code> or <code>#maintenance-shop</code> (this tab), <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> (or legacy <code>#maintenance-alerts</code>), <code>#maintenance-shop-location</code>.
+              </span>
+            </span>
+          </div>
           <div class="panel shop-print-area maint-section-card">
             <div class="panel-head erp-ops-hero-head">
               <div style="flex:1;min-width:200px">
-                <div class="panel-title">Maintenance &amp; shop</div>
-                <div class="mini-note" style="margin-top:4px;max-width:52ch">
-                  Live shop queue (internal, external, roadside): status, time vs estimate, and delay reasons. Below: expense rollups by fleet type.
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <div class="panel-title" style="margin:0">Maintenance &amp; shop</div>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Live shop queue (internal, external, roadside): status, time vs estimate, and delay reasons. Below: expense rollups by fleet type.
+                    </span>
+                  </span>
                 </div>
               </div>
               <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
@@ -986,11 +1097,17 @@
             </div>
             <div class="panel-body">
               <div id="maintExpenseStrip" class="maint-expense-strip" style="margin-bottom:14px"></div>
-              <p class="mini-note" style="margin:0 0 10px">
-                Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
-                <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1d4ed8;font-weight:500">Vehicle map</a>
-                · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1d4ed8;font-weight:500">Safety / HOS</a>
-              </p>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+                <span class="mini-note" style="margin:0">Shop tabs &amp; queues</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tab meanings">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
+                    <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1967d2;font-weight:500">Vehicle map</a>
+                    · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1967d2;font-weight:500">Safety / HOS</a>
+                  </span>
+                </span>
+              </div>
               <div class="subtabs shop-subtabs erp-ops-shop-subtabs" id="shopBoardSubtabs">
                 <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
                 <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External shop</button>
@@ -1394,8 +1511,15 @@
             <div class="qb-doc-head">
               <div class="qb-doc-title-row">
                 <div style="flex:1;min-width:200px">
-                  <h2 class="qb-doc-h2" id="apDocTitle">Expense</h2>
-                  <p class="mini-note" style="margin:6px 0 0">QuickBooks-style header: one vendor, multiple lines. Use the same <strong>load / invoice #</strong> for trip P&amp;L. Post from the saved list below.</p>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <h2 class="qb-doc-h2" id="apDocTitle" style="margin:0">Expense</h2>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this form">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        QuickBooks-style header: one vendor, multiple lines. Use the same <strong>load / invoice #</strong> for trip P&amp;L. Post from the saved list below after you save rows in this app.
+                      </span>
+                    </span>
+                  </div>
                 </div>
                 <div class="qb-doc-total-block">
                   <span class="qb-l" id="apDocTotalLabel">Amount</span>
@@ -1406,9 +1530,15 @@
             <div
               id="apTxnQboBanner"
               class="mini-note"
-              style="margin:0;padding:10px 14px;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.55;font-size:13px;color:#334155"
+              style="margin:0;padding:8px 14px;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.45;font-size:13px;color:#334155;display:flex;align-items:center;gap:8px;flex-wrap:wrap"
             >
-              Rows in the list below are stored in this app first. Use <strong>Record to QuickBooks</strong> to create the Purchase or Bill in your company file. After posting, use <strong>Verify in QuickBooks</strong> to confirm the transaction still exists online.
+              <span>Rows save here first; use <strong>Record to QuickBooks</strong> then <strong>Verify in QuickBooks</strong> when posting.</span>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posting workflow">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">
+                  Rows in the list below are stored in this app first. Use <strong>Record to QuickBooks</strong> to create the Purchase or Bill in your company file. After posting, use <strong>Verify in QuickBooks</strong> to confirm the transaction still exists online.
+                </span>
+              </span>
             </div>
             <div class="panel-body form-stack qb-doc-body">
               <div class="wo-line-grid">
@@ -4217,6 +4347,42 @@
       return map;
     }
 
+    function erpHelpTipToggle(ev) {
+      if (!ev) return;
+      ev.stopPropagation();
+      const btn = ev.currentTarget;
+      const wrap = btn && btn.closest('.erp-help-tip');
+      const panel = wrap && wrap.querySelector('.erp-help-tip__panel');
+      if (!panel) return;
+      const willOpen = !panel.classList.contains('is-open');
+      document.querySelectorAll('.erp-help-tip__panel.is-open').forEach(p => {
+        p.classList.remove('is-open');
+        const w = p.closest('.erp-help-tip');
+        const b = w && w.querySelector('.erp-help-tip__btn');
+        if (b) b.setAttribute('aria-expanded', 'false');
+      });
+      if (willOpen) {
+        panel.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+      } else {
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    (function bindErpHelpTipOutsideClose() {
+      if (window.__erpHelpTipOutsideClose) return;
+      window.__erpHelpTipOutsideClose = true;
+      document.addEventListener('click', function (ev) {
+        if (ev.target.closest('.erp-help-tip')) return;
+        document.querySelectorAll('.erp-help-tip__panel.is-open').forEach(p => {
+          p.classList.remove('is-open');
+          const w = p.closest('.erp-help-tip');
+          const b = w && w.querySelector('.erp-help-tip__btn');
+          if (b) b.setAttribute('aria-expanded', 'false');
+        });
+      });
+    })();
+
     function erpToggleSbGroup(ev, module, gid) {
       if (ev) ev.preventDefault();
       const head = ev && ev.currentTarget;
@@ -4391,24 +4557,32 @@
         return;
       }
       if (name === 'safety') {
-        inner.innerHTML =
-          '<div class="erp-sb-heading">Safety &amp; compliance</div>' +
+        const safetyViewsBody =
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-hos&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-hos\\\']&quot;));">HOS clocks</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-active&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-active\\\']&quot;));">Active / in service</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-assign&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-assign\\\']&quot;));">Assignments</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-fleet&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-fleet\\\']&quot;));">Fleet snapshot</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-files\\\']&quot;));">Driver files</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-files\\\']&quot;));">Driver files</button>';
+        const safetyToolsBody =
+          '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="window.open(&quot;https://cloud.samsara.com&quot;,&quot;_blank&quot;,&quot;noopener&quot;);">Video library (Samsara)</button>' +
+          '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="window.open(&quot;https://www.samsara.com/products/cm31&quot;,&quot;_blank&quot;,&quot;noopener&quot;);">Cameras (product info)</button>';
+        inner.innerHTML =
+          erpSbGroup('safety', 'views', 'Safety', true, safetyViewsBody) +
+          erpSbGroup('safety', 'tools', 'Tools', false, safetyToolsBody) +
           adm;
         return;
       }
       if (name === 'tracking') {
-        inner.innerHTML =
-          '<div class="erp-sb-heading">Fleet tracking</div>' +
+        const trackLiveBody =
           '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-map\\\']&quot;));">Live map</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Assets</button>' +
           '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-drivers&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-drivers\\\']&quot;));">Drivers</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-idle&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-idle\\\']&quot;));">Yard &amp; idle</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Vehicles</button>';
+        const trackOpsBody =
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-idle&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-idle\\\']&quot;));">Yard &amp; idle</button>';
+        inner.innerHTML =
+          erpSbGroup('tracking', 'live', 'Live', true, trackLiveBody) +
+          erpSbGroup('tracking', 'ops', 'Operations', false, trackOpsBody) +
           adm;
         return;
       }
