@@ -1,0 +1,570 @@
+/**
+ * IH35 ERP — QuickBooks-style shell (UI only).
+ * Loaded after app-theme.css; overrides layout for body.erp-maintenance #erpApp.erp-master.
+ */
+
+:root {
+  --qb-page: #f4f6f8;
+  --qb-panel: #ffffff;
+  --qb-line: #e8eaed;
+  --qb-line-input: #dadce0;
+  --qb-text: #3c4043;
+  --qb-text-strong: #202124;
+  --qb-muted: #5f6368;
+  --qb-placeholder: #9aa0a6;
+  --qb-green: #1e8e3e;
+  --qb-blue: #1967d2;
+  --qb-red: #d93025;
+  --qb-amber: #f9ab00;
+  --qb-icon-nav-bg: #1a1a2e;
+  --qb-icon-nav-muted: #8a8fa8;
+  --qb-focus-ring: rgba(25, 103, 210, 0.12);
+  --qb-sidebar-active-bg: #e8f0fe;
+  --qb-radius-card: 8px;
+  --qb-radius-control: 4px;
+}
+
+/* --- App shell: full viewport, no horizontal bleed --- */
+html,
+body.erp-maintenance {
+  height: 100%;
+}
+
+body.erp-maintenance {
+  margin: 0;
+  background: var(--qb-page);
+  color: var(--qb-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  overflow: hidden;
+}
+
+body.erp-maintenance .board-nav-wrap {
+  display: none !important;
+}
+
+body.erp-maintenance #erpApp.erp-master {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: 100vh;
+  max-height: 100vh;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+  grid-template-columns: unset;
+}
+
+body.erp-maintenance #erpApp.erp-master.sidebar-collapsed .erp-module-sidebar {
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  border: none;
+  overflow: hidden;
+  padding: 0;
+}
+
+body.erp-maintenance #erpApp.erp-master.sidebar-collapsed .sidebar-expand-fab {
+  display: flex;
+  left: 52px;
+}
+
+/* --- Icon rail (52px) --- */
+body.erp-maintenance .erp-icon-nav {
+  flex: 0 0 52px;
+  width: 52px;
+  min-width: 52px;
+  max-width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 8px 0 12px;
+  background: var(--qb-icon-nav-bg);
+  border-right: 1px solid var(--qb-line);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body.erp-maintenance .erp-icon-nav__btn.nav-btn,
+body.erp-maintenance .erp-icon-nav__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 4px;
+  margin: 0;
+  border: none;
+  border-radius: var(--qb-radius-control);
+  background: transparent;
+  color: var(--qb-icon-nav-muted);
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  line-height: 1.15;
+}
+
+body.erp-maintenance .erp-icon-nav__btn.nav-btn:hover,
+body.erp-maintenance .erp-icon-nav__link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+body.erp-maintenance .erp-icon-nav__btn.nav-btn.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+body.erp-maintenance .erp-icon-nav__glyph {
+  font-size: 16px;
+  line-height: 1;
+}
+
+body.erp-maintenance .erp-icon-nav__lbl {
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  max-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.erp-maintenance .erp-icon-nav__btn {
+  position: relative;
+}
+
+body.erp-maintenance .erp-icon-nav__badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* --- Module sidebar (220px) --- */
+body.erp-maintenance .erp-module-sidebar {
+  flex: 0 0 220px;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--qb-panel);
+  border-right: 1px solid var(--qb-line);
+  transition: opacity 0.18s ease, width 0.18s ease, min-width 0.18s ease;
+}
+
+body.erp-maintenance .erp-module-sidebar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--qb-line);
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .erp-module-sidebar__brand-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--qb-text-strong);
+}
+
+body.erp-maintenance .erp-module-sidebar__collapse {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--qb-radius-control);
+  border: 1px solid var(--qb-line-input);
+  background: var(--qb-panel);
+  color: var(--qb-muted);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+body.erp-maintenance .erp-module-sidebar__collapse:hover {
+  background: #f1f3f4;
+}
+
+body.erp-maintenance .erp-module-sidebar__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0 12px;
+}
+
+body.erp-maintenance .erp-module-sidebar__inner {
+  padding: 0 10px;
+}
+
+body.erp-maintenance .erp-module-sidebar__footer {
+  flex-shrink: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--qb-line);
+  background: #fafbfc;
+}
+
+body.erp-maintenance .erp-sb-heading {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qb-muted);
+  font-weight: 500;
+  margin: 12px 0 6px;
+}
+
+body.erp-maintenance .erp-module-sidebar__inner .erp-sb-heading:first-child {
+  margin-top: 4px;
+}
+
+body.erp-maintenance .erp-sb-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-radius: var(--qb-radius-control);
+  background: transparent;
+  color: var(--qb-blue);
+  font-size: 13px;
+  font-weight: 400;
+  padding: 8px 10px;
+  margin: 0 0 2px;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+body.erp-maintenance .erp-sb-link:hover {
+  background: #f1f3f4;
+  color: var(--qb-blue);
+}
+
+body.erp-maintenance .erp-sb-link--muted {
+  color: var(--qb-muted);
+}
+
+body.erp-maintenance .erp-sb-sep {
+  height: 1px;
+  background: var(--qb-line);
+  margin: 10px 0;
+}
+
+/* --- Main column --- */
+body.erp-maintenance .erp-main-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+body.erp-maintenance .erp-main-surface.main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body.erp-maintenance .erp-main-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 1.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --- Top bar --- */
+body.erp-maintenance .erp-topbar.topbar {
+  flex-shrink: 0;
+  min-height: 52px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 1.25rem;
+  margin: 0;
+  background: var(--qb-panel);
+  border-bottom: 1px solid var(--qb-line);
+}
+
+body.erp-maintenance .erp-topbar .title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--qb-text-strong);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+body.erp-maintenance .erp-topbar__search {
+  flex: 1;
+  min-width: min(100%, 12rem);
+  max-width: 36rem;
+}
+
+body.erp-maintenance .erp-topbar__search-inner {
+  position: relative;
+  width: 100%;
+}
+
+body.erp-maintenance .erp-topbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+body.erp-maintenance .erp-topbar .topbar-home-link {
+  font-weight: 500;
+  color: var(--qb-blue);
+  font-size: 13px;
+}
+
+body.erp-maintenance .erp-topbar .topbar-hint {
+  color: var(--qb-muted);
+  font-size: 12px;
+}
+
+body.erp-maintenance .erp-btn-primary {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: var(--qb-radius-control);
+  border: none;
+  background: var(--qb-green);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+body.erp-maintenance .erp-btn-primary:hover {
+  filter: brightness(0.95);
+}
+
+body.erp-maintenance .erp-new-wrap {
+  position: relative;
+}
+
+body.erp-maintenance .erp-new-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 80;
+  width: min(100vw - 24px, 860px);
+  max-width: calc(100vw - 24px);
+  background: var(--qb-panel);
+  border: 1px solid var(--qb-line);
+  border-radius: var(--qb-radius-card);
+  padding: 12px 14px 14px;
+  box-shadow: none;
+}
+
+body.erp-maintenance .erp-new-menu__cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+body.erp-maintenance .erp-new-menu__col {
+  flex: 1 1 200px;
+  min-width: min(100%, 200px);
+}
+
+body.erp-maintenance .erp-new-menu__col-title {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qb-muted);
+  font-weight: 500;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--qb-line);
+}
+
+body.erp-maintenance .erp-new-menu__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  color: var(--qb-blue);
+  font-size: 13px;
+  font-weight: 400;
+  padding: 6px 2px;
+  cursor: pointer;
+  border-radius: var(--qb-radius-control);
+}
+
+body.erp-maintenance .erp-new-menu__item:hover {
+  background: #f1f3f4;
+}
+
+/* --- Ghost nav (preserve querySelector targets) --- */
+body.erp-maintenance .erp-ghost-nav {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  pointer-events: none;
+}
+
+body.erp-maintenance .erp-ghost-nav .nav-btn {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+/* --- QBO alert bar (Rule 15 look, same IDs) --- */
+body.erp-maintenance #qboSyncAlertBar:not(.hidden) {
+  flex-shrink: 0;
+  background: #fce8e6;
+  border-bottom: 1px solid #f5c6c2;
+  color: var(--qb-text);
+  padding: 10px 1.25rem;
+}
+
+body.erp-maintenance #qboSyncAlertBar .qbo-sync-head {
+  color: var(--qb-red);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+body.erp-maintenance #qboSyncAlertBar .qbo-sync-actions a,
+body.erp-maintenance #qboSyncAlertBar .qbo-sync-actions button {
+  font-weight: 500;
+}
+
+/* --- KPI strip (Rule 16 friendly) --- */
+body.erp-maintenance .maint-kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.25rem, 1fr));
+  gap: 0.75rem;
+}
+
+body.erp-maintenance .maint-kpi-card {
+  background: var(--qb-panel);
+  border: 1px solid var(--qb-line);
+  border-radius: var(--qb-radius-card);
+  padding: 14px 16px;
+}
+
+body.erp-maintenance .maint-kpi-card__label {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--qb-muted);
+  font-weight: 500;
+}
+
+body.erp-maintenance .maint-kpi-card__val {
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--qb-text-strong);
+  margin-top: 4px;
+}
+
+/* --- Table safety: horizontal scroll wrapper (opt-in class) --- */
+body.erp-maintenance .erp-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.erp-maintenance .erp-table-scroll table {
+  table-layout: fixed;
+}
+
+/* --- Inputs in top bar --- */
+body.erp-maintenance .erp-topbar .qb-in {
+  width: 100%;
+  max-width: 100%;
+  height: 32px;
+  border-radius: var(--qb-radius-control);
+  border: 1px solid var(--qb-line-input);
+  font-size: 13px;
+}
+
+body.erp-maintenance .erp-topbar .qb-in:focus {
+  outline: none;
+  border-color: var(--qb-blue);
+  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+}
+
+body.erp-maintenance .erp-topbar .print-hide-actions button {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--qb-radius-control);
+  border: 1px solid var(--qb-line-input);
+  background: var(--qb-panel);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+body.erp-maintenance .erp-topbar .print-hide-actions button:hover {
+  background: #f1f3f4;
+}
+
+@media print {
+  body.erp-maintenance {
+    overflow: visible;
+    height: auto;
+  }
+  body.erp-maintenance #erpApp.erp-master {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+  body.erp-maintenance .erp-main-col,
+  body.erp-maintenance .erp-main-surface.main {
+    overflow: visible;
+  }
+  body.erp-maintenance .erp-main-body {
+    overflow: visible;
+  }
+}
+
+/* --- Auth banner sits above top bar content flow --- */
+body.erp-maintenance .erp-main-surface > #authBanner:not(.hidden) {
+  flex-shrink: 0;
+  margin: 0 1.25rem;
+  margin-top: 10px;
+}
+
+body.erp-maintenance .erp-main-surface > #qboSyncAlertBar:not(.hidden) {
+  margin: 0;
+}

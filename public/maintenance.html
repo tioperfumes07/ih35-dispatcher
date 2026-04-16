@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/css/app-theme.css" />
+  <link rel="stylesheet" href="/css/erp-master-redesign.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
   <style>
     /* Layout, panels, tables, shop/QBO chrome: /css/app-theme.css under body.erp-maintenance */
@@ -111,103 +112,122 @@
   <datalist id="accidentFaultOptions"></datalist>
   <datalist id="tireConditionOptions"></datalist>
 
-  <div class="app" id="erpApp">
-    <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show menu">»</button>
-    <aside class="sidebar">
-      <div class="sidebar-brand-row">
-        <div>
-          <div class="brand">IH35 ERP</div>
-          <div class="brand-sub">Diesel · Maintenance · Safety · Tracking · Accounting · Reports</div>
-        </div>
-        <button type="button" class="sidebar-collapse-btn" onclick="toggleErpSidebar(true)" title="Hide menu">«</button>
-      </div>
+  <div class="app erp-master" id="erpApp">
+    <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show sidebar">»</button>
 
-      <div class="nav-title">Main</div>
-      <button class="nav-btn active" data-section="maintenance" onclick="openSection('maintenance', this)">Maintenance</button>
-      <button class="nav-btn" data-section="dashboard" onclick="openSection('dashboard', this)">Overview</button>
-      <button class="nav-btn" data-section="fuel" onclick="openSection('fuel', this)">Diesel / Fuel</button>
-      <button class="nav-btn" data-section="safety" onclick="openSection('safety', this)">Safety</button>
-      <button class="nav-btn" data-section="tracking" onclick="openSection('tracking', this)">Vehicle tracking</button>
-      <button class="nav-btn" data-section="reports" onclick="openSection('reports', this)">Reports</button>
-      <div style="margin:10px 0 4px">
-        <input class="qb-in" style="width:100%" placeholder="Search (top bar)" onclick="document.getElementById('globalSearchInput')?.focus?.()" />
-      </div>
-
-      <div class="nav-title">Catalogs</div>
-      <div class="nav-dropdown">
-        <button type="button" class="nav-btn nav-dropdown-trigger" data-section="catalog" onclick="openSection('catalog', this); openCatalogSubpanel('service');">Catalogs ▾</button>
-        <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types (database)</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
-          <div class="nav-dd-sep"></div>
-          <button type="button" class="nav-dd-item" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Assets (tracking)</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('safety', document.querySelector('.nav-btn[data-section=safety]')); openSafetyTab('safe-files', document.querySelector('#section-safety .subtab[onclick*=\'safe-files\']'));">Drivers &amp; files (safety)</button>
-          <button type="button" class="nav-dd-item" onclick="window.open('https://cloud.samsara.com','_blank','noopener');">Samsara Cloud (external)</button>
-        </div>
-      </div>
-
-      <div class="nav-title">Finance</div>
-      <button type="button" class="nav-btn nav-btn--with-badge" data-section="accounting" onclick="openSection('accounting', this)">
-        Accounting <span id="navAccountingBadge" class="nav-badge nav-badge--danger hidden" aria-label="QuickBooks errors">0</span>
+    <nav id="erpIconNav" class="erp-icon-nav" aria-label="Primary modules">
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Home" onclick="openSection('dashboard', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Home</span>
       </button>
-      <div class="nav-dropdown">
-        <button type="button" class="nav-btn nav-dropdown-trigger" data-section="uploads" onclick="openSection('uploads', this); openUploadSubpanel('fuel');">Uploads ▾</button>
-        <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('fuel');">Loves / Relay / fuel CSV</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Maintenance history (CSV / Excel)</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('ap');">Maintenance expense AP (CSV / Excel)</button>
-          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('comdata');">Comdata / card exports</button>
-          <button type="button" class="nav-dd-item" onclick="window.location.href='/banking.html'">Bank CSV (bank matching)</button>
-          <div class="nav-dd-sep"></div>
-          <button type="button" class="nav-dd-item" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('sync');">Connections &amp; Samsara writes</button>
+      <button type="button" class="erp-icon-nav__btn nav-btn active" data-section="maintenance" title="Maintenance" onclick="openSection('maintenance', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maint</span>
+      </button>
+      <a class="erp-icon-nav__link" href="/dispatch.html" title="Loads &amp; TMS (dispatch board)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">⎔</span><span class="erp-icon-nav__lbl">Loads</span>
+      </a>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="safety" title="Safety" onclick="openSection('safety', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">◎</span><span class="erp-icon-nav__lbl">Safety</span>
+      </button>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="tracking" title="Tracking" onclick="openSection('tracking', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">▣</span><span class="erp-icon-nav__lbl">Track</span>
+      </button>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="accounting" title="Accounting" onclick="openSection('accounting', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Acct</span>
+        <span id="navAccountingBadge" class="nav-badge nav-badge--danger erp-icon-nav__badge hidden" aria-label="QuickBooks errors">0</span>
+      </button>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="reports" title="Reports" onclick="openSection('reports', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">≡</span><span class="erp-icon-nav__lbl">Reports</span>
+      </button>
+    </nav>
+
+    <div id="erpSectionGhostNav" class="erp-ghost-nav" aria-hidden="true">
+      <button type="button" class="nav-btn" data-section="catalog" onclick="openSection('catalog', this); openCatalogSubpanel('service');" tabindex="-1" aria-hidden="true"></button>
+      <button type="button" class="nav-btn" data-section="uploads" onclick="openSection('uploads', this); openUploadSubpanel('fuel');" tabindex="-1" aria-hidden="true"></button>
+      <button type="button" class="nav-btn" data-section="fuel" onclick="openSection('fuel', this);" tabindex="-1" aria-hidden="true"></button>
+    </div>
+
+    <aside class="erp-module-sidebar" aria-label="Module menu">
+      <div class="erp-module-sidebar__head">
+        <div class="erp-module-sidebar__brand-title">IH35 ERP</div>
+        <button type="button" class="erp-module-sidebar__collapse" onclick="toggleErpSidebar(true)" title="Hide sidebar">«</button>
+      </div>
+      <div class="erp-module-sidebar__scroll">
+        <div id="erpModuleSidebarInner" class="erp-module-sidebar__inner"></div>
+      </div>
+      <div class="erp-module-sidebar__footer">
+        <div class="erp-sb-heading">Status</div>
+        <div id="sidebarQboStatus" class="mini-note">QuickBooks not checked</div>
+        <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
+        <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: not loaded</div>
+        <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Not loaded</div>
+      </div>
+    </aside>
+
+    <div class="erp-main-col">
+      <div id="erpDrawerBackdrop" class="erp-drawer__backdrop" onclick="closeErpDrawer()"></div>
+      <aside id="erpDrawer" class="erp-drawer" aria-hidden="true">
+        <div class="erp-drawer__head">
+          <div class="erp-drawer__title" id="erpDrawerTitle">Add new</div>
+          <button type="button" class="erp-drawer__close" onclick="closeErpDrawer()">Close</button>
         </div>
-      </div>
+        <div class="erp-drawer__body" id="erpDrawerBody"></div>
+      </aside>
 
-      <div class="nav-title">Settings</div>
-      <button class="nav-btn" type="button" onclick="location.href='/settings.html'">Settings &amp; users</button>
-      <button class="nav-btn" type="button" title="Fetch latest fleet, ERP, and shop queue now" onclick="loadAll()">Refresh now</button>
-      <button class="nav-btn" onclick="refreshQboMaster()">Refresh QuickBooks master</button>
-      <button class="nav-btn" onclick="connectQuickBooks()">Connect QuickBooks</button>
-
-      <div class="nav-title">Status</div>
-      <div id="sidebarQboStatus" class="mini-note">QuickBooks not checked</div>
-      <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
-      <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: not loaded</div>
-      <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Not loaded</div>
-    </aside>
-
-    <div id="erpDrawerBackdrop" class="erp-drawer__backdrop" onclick="closeErpDrawer()"></div>
-    <aside id="erpDrawer" class="erp-drawer" aria-hidden="true">
-      <div class="erp-drawer__head">
-        <div class="erp-drawer__title" id="erpDrawerTitle">Add new</div>
-        <button type="button" class="erp-drawer__close" onclick="closeErpDrawer()">Close</button>
-      </div>
-      <div class="erp-drawer__body" id="erpDrawerBody"></div>
-    </aside>
-
-    <main class="main">
-      <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
-      <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
-      <div class="topbar">
-        <div class="title" id="pageTitle">Maintenance &amp; shop</div>
-        <a href="/" class="topbar-home-link">Home</a>
-        <div style="flex:1;min-width:220px;max-width:520px">
-          <div style="position:relative">
-            <input id="globalSearchInput" class="qb-in" placeholder="Search ERP (units, vendors, loads, bills, work orders…)" autocomplete="off" oninput="globalSearchRender()" onkeydown="globalSearchKeydown(event)" />
-            <div id="globalSearchMenu" class="qb-picker-menu hidden" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"></div>
+      <main class="main erp-main-surface">
+        <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
+        <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
+        <header class="topbar erp-topbar">
+          <div class="title" id="pageTitle">Maintenance &amp; shop</div>
+          <a href="/" class="topbar-home-link">Ops hub</a>
+          <div class="erp-topbar__search">
+            <div class="erp-topbar__search-inner">
+              <input id="globalSearchInput" class="qb-in" placeholder="Search ERP (units, vendors, loads, bills, work orders…)" autocomplete="off" oninput="globalSearchRender()" onkeydown="globalSearchKeydown(event)" />
+              <div id="globalSearchMenu" class="qb-picker-menu hidden" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"></div>
+            </div>
           </div>
-        </div>
-        <span class="mini-note topbar-hint">Left nav: modules · top bar: refresh &amp; QBO</span>
-        <span class="print-hide-actions">
-        <button type="button" title="Fetch latest data now (also auto-refreshes)" onclick="loadAll()">Refresh now</button>
-        <button onclick="testQuickBooks()">Test QuickBooks</button>
-        <button onclick="refreshQboMaster()">Refresh QBO Master</button>
-        </span>
-      </div>
+          <span class="mini-note topbar-hint">Modules: left rail · Search · + New</span>
+          <div class="erp-topbar__actions print-hide-actions">
+            <div class="erp-new-wrap">
+              <button type="button" class="erp-btn-primary" id="erpNewMenuBtn" onclick="erpToggleNewMenu(event)">+ New</button>
+              <div id="erpNewMenu" class="erp-new-menu hidden" role="menu" aria-labelledby="erpNewMenuBtn" onclick="event.stopPropagation()">
+                <div class="erp-new-menu__cols">
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Expenses &amp; bills</div>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewExpense()">Expense</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewBill()">Bill</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Check')">Check</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Purchase order')">Purchase order</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPayBills()">Pay bills</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Vendor credit')">Vendor credit</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Item receipt')">Item receipt</button>
+                  </div>
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Maintenance</div>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Work order</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">PM service</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Fleet repair</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Tire record</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Air bag record</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Battery record</button>
+                  </div>
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Other</div>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewDriverSettlement()">Driver settlement</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewFuelRecord()">Fuel record</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Journal entry')">Journal entry</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Transfer')">Transfer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="button" title="Fetch latest data now (also auto-refreshes)" onclick="loadAll()">Refresh now</button>
+            <button type="button" onclick="testQuickBooks()">Test QuickBooks</button>
+            <button type="button" onclick="refreshQboMaster()">Refresh QBO Master</button>
+          </div>
+        </header>
 
+        <div class="erp-main-body">
       <section id="section-dashboard" class="section">
         <div class="hero-grid">
           <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Diesel / Fuel Board</h3><p>Fuel planning + diesel management</p></div>
@@ -2502,7 +2522,9 @@
           </div>
         </div>
       </section>
+        </div>
     </main>
+    </div>
   </div>
 
   <template id="woLineTemplate">
@@ -4119,12 +4141,224 @@
       return map;
     }
 
+    function erpSbAdmin() {
+      return (
+        '<div class="erp-sb-sep"></div>' +
+        '<div class="erp-sb-heading">Tools &amp; data</div>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'service\');">Service types (database)</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'vendors\');">Vendors &amp; driver payees</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'fuel\');">Uploads → Fuel CSV</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'maint\');">Uploads → Maintenance history</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'ap\');">Uploads → Maintenance AP</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'comdata\');">Uploads → Comdata</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'uploads\', document.querySelector(\'.nav-btn[data-section=uploads]\')); openUploadSubpanel(\'sync\');">Connections &amp; Samsara writes</button>' +
+        '<button type="button" class="erp-sb-link" onclick="location.href=\'/banking.html\'">Bank CSV (matching)</button>' +
+        '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="location.href=\'/settings.html\'">Settings &amp; users</button>' +
+        '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
+        '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="window.open(\'https://cloud.samsara.com\',\'_blank\',\'noopener\');">Samsara Cloud</button>'
+      );
+    }
+
+    function renderErpModuleSidebar(name) {
+      const inner = document.getElementById('erpModuleSidebarInner');
+      if (!inner) return;
+      const adm = erpSbAdmin();
+      const mt = (tab, label) =>
+        `<button type="button" class="erp-sb-link" onclick="openMaintMainTab('${tab}', document.querySelector('#maintMainSubtabs [data-maint-main=&quot;${tab}&quot;]'))">${label}</button>`;
+      const ast = (cat, label) => {
+        const esc = String(cat).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return `<button type="button" class="erp-sb-link" onclick="setAssetCategory('${esc}')">${label}</button>`;
+      };
+      if (name === 'maintenance') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Maintenance</div>' +
+          mt('record', 'Create work order') +
+          mt('fleet', 'Fleet table') +
+          mt('rm', 'R&amp;M Status') +
+          mt('shop-loc', 'Shop / location') +
+          '<div class="erp-sb-heading">Fleet by type</div>' +
+          ast('Trucks', 'Trucks') +
+          ast('Refrigerated Vans', 'Refrigerated vans') +
+          ast('Flatbeds', 'Flatbeds') +
+          ast('Dry Vans', 'Dry vans') +
+          ast('Company Vehicles', 'Company vehicles') +
+          '<div class="erp-sb-heading">Related</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openSection(&quot;fuel&quot;, document.querySelector(&quot;.nav-btn[data-section=fuel]&quot;));">Diesel / Fuel</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSection(&quot;tracking&quot;, document.querySelector(&quot;.nav-btn[data-section=tracking]&quot;)); openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance (tracking)</button>' +
+          adm;
+        return;
+      }
+      if (name === 'dashboard') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Overview</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance board</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;fuel&quot;);">Diesel / Fuel</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;accounting&quot;);">Accounting</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;reports&quot;);">Reports</button>' +
+          adm;
+        return;
+      }
+      if (name === 'fuel') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Fuel</div>' +
+          '<p class="mini-note" style="margin:0 0 8px">Embedded fuel planner. Use the link for a full-window view.</p>' +
+          '<a class="erp-sb-link" href="/fuel.html" target="_blank" rel="noopener" style="display:inline-block">Open full-screen fuel planner</a>' +
+          adm;
+        return;
+      }
+      if (name === 'safety') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Safety</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-hos&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-hos\\\']&quot;));">HOS clocks</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-active&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-active\\\']&quot;));">Active / in service</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-assign&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-assign\\\']&quot;));">Assignments</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-fleet&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-fleet\\\']&quot;));">Fleet snapshot</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-files\\\']&quot;));">Driver files</button>' +
+          adm;
+        return;
+      }
+      if (name === 'tracking') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Tracking</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-map\\\']&quot;));">Live map</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Assets</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-drivers&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-drivers\\\']&quot;));">Drivers</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-idle&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-idle\\\']&quot;));">Yard &amp; idle</button>' +
+          adm;
+        return;
+      }
+      if (name === 'accounting') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Accounting</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-transactions&quot;, document.querySelector(&quot;#section-accounting .subtab[onclick*=\\\'acct-transactions\\\']&quot;));">Maintenance expenses</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF (fast entry)</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">Pay bills</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">QBO rollback &amp; imports</button>' +
+          adm;
+        return;
+      }
+      if (name === 'reports') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Reports</div>' +
+          '<p class="mini-note" style="margin:0 0 8px">Use the Reports board tabs and Operations menu for settlements and TMS reports.</p>' +
+          adm;
+        return;
+      }
+      if (name === 'catalog') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Catalogs</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;operational&quot;);">Operational labels</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;fleet&quot;);">Fleet &amp; Samsara writes</button>' +
+          adm;
+        return;
+      }
+      if (name === 'uploads') {
+        inner.innerHTML =
+          '<div class="erp-sb-heading">Uploads</div>' +
+          '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;fuel&quot;);">Fuel CSV</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;maint&quot;);">Maintenance history</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;ap&quot;);">Maintenance AP</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openUploadSubpanel(&quot;comdata&quot;);">Comdata</button>' +
+          adm;
+        return;
+      }
+      inner.innerHTML =
+        '<div class="erp-sb-heading">Navigate</div>' +
+        '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance</button>' +
+        adm;
+    }
+
+    function erpCloseNewMenu() {
+      const m = document.getElementById('erpNewMenu');
+      if (m) m.classList.add('hidden');
+    }
+
+    function erpToggleNewMenu(ev) {
+      if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+      const m = document.getElementById('erpNewMenu');
+      if (!m) return;
+      m.classList.toggle('hidden');
+    }
+
+    function erpDocClickCloseNew(ev) {
+      if (!ev.target.closest('.erp-new-wrap')) erpCloseNewMenu();
+    }
+
+    function erpNewExpense() {
+      erpCloseNewMenu();
+      openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
+      const t = document.querySelector('#section-accounting .subtab[onclick*="acct-transactions"]');
+      if (t) openAccountingTab('acct-transactions', t);
+    }
+
+    function erpNewBill() {
+      erpCloseNewMenu();
+      openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
+      const t = document.querySelector('#section-accounting .subtab[onclick*="acct-transactions"]');
+      if (t) openAccountingTab('acct-transactions', t);
+      const sel = document.getElementById('apTxnType');
+      if (sel) {
+        sel.value = 'bill';
+        if (typeof syncApDocTitle === 'function') syncApDocTitle();
+      }
+    }
+
+    function erpNewPayBills() {
+      erpCloseNewMenu();
+      openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
+      const trig = document.getElementById('acctQbDdTrigger');
+      if (trig) openAccountingTab('acct-bill-pay', trig);
+    }
+
+    function erpNewWorkOrder() {
+      erpCloseNewMenu();
+      openSection('maintenance', document.querySelector('#erpIconNav .nav-btn[data-section="maintenance"]'));
+      const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
+      openMaintMainTab('record', rb);
+      openMaintWorkOrderModal();
+    }
+
+    function erpNewLoadsEntry() {
+      erpCloseNewMenu();
+      window.location.href = '/dispatch.html';
+    }
+
+    function erpNewDriverSettlement() {
+      erpCloseNewMenu();
+      window.location.hash = 'reports-settlement';
+      if (typeof applyNavHash === 'function') applyNavHash();
+    }
+
+    function erpNewFuelRecord() {
+      erpCloseNewMenu();
+      window.location.hash = 'accounting-fuel';
+      if (typeof applyNavHash === 'function') applyNavHash();
+    }
+
+    function erpNewPlaceholder(label) {
+      erpCloseNewMenu();
+      openErpDrawer(
+        label || 'New',
+        `<div class="form-stack"><p class="mini-note" style="margin:0 0 10px">Use <strong>Accounting → Maintenance expenses</strong> (or related tabs) to enter this in QuickBooks from this app. This menu item is a shortcut shell only.</p><button type="button" class="btn" onclick="closeErpDrawer()">Close</button></div>`,
+        null
+      );
+    }
+
     function openSection(name, btn) {
       if (name !== 'maintenance') closeMaintWorkOrderModal();
       activeSection = name;
       document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
       document.getElementById(`section-${name}`).classList.add('active');
-      document.querySelectorAll('.nav-btn[data-section]').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('#erpIconNav .nav-btn[data-section], #erpSectionGhostNav .nav-btn[data-section]').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
 
       const titleMap = {
@@ -4148,10 +4382,13 @@
       }
       if (name === 'reports') loadReportsData();
       if (name === 'catalog') loadServiceCatalogAdminOnly();
+      renderErpModuleSidebar(name);
     }
 
     function openSectionByName(name) {
-      const btn = document.querySelector(`.nav-btn[data-section="${name}"]`);
+      const btn = document.querySelector(
+        `#erpIconNav .nav-btn[data-section="${name}"], #erpSectionGhostNav .nav-btn[data-section="${name}"]`
+      );
       openSection(name, btn);
     }
 
@@ -13390,6 +13627,11 @@
     }
 
     loadErpSidebarPreference();
+    if (!window.__erpNewMenuDoc) {
+      window.__erpNewMenuDoc = true;
+      document.addEventListener('click', erpDocClickCloseNew);
+    }
+    renderErpModuleSidebar(activeSection || 'maintenance');
     loadUnitListPreference();
     bindMaintPrintWorkOrderOnlyListeners();
     renderRepairLocationChips();
