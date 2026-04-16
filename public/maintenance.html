@@ -2570,45 +2570,46 @@
               type="search"
               class="qb-in erp-reports-toolbar__search"
               id="repToolbarSearch"
-              placeholder="Search reports…"
-              disabled
-              aria-disabled="true"
-              title="Filter coming soon"
+              placeholder="Search reports (sidebar + hub)…"
+              autocomplete="off"
+              title="Filters report links by name"
+              oninput="repFilterReports(this.value)"
             />
             <div class="erp-reports-toolbar__actions print-hide-actions">
-              <button type="button" class="btn" disabled title="Coming soon">+ New custom report</button>
-              <button type="button" class="btn" disabled title="Coming soon">Scheduled reports</button>
+              <button type="button" class="btn" onclick="repReportsRoadmapMsg('custom')">+ New custom report</button>
+              <button type="button" class="btn" onclick="repReportsRoadmapMsg('scheduled')">Scheduled reports</button>
             </div>
           </header>
+          <div id="repRoadmapBanner" class="mini-note erp-reports-roadmap hidden" role="status" aria-live="polite"></div>
           <div class="erp-reports-columns">
             <aside class="erp-reports-sidebar" aria-label="Report categories">
               <details class="mr-rep-nav-group" open>
                 <summary class="mr-rep-nav-group__head">Standard <span class="mr-rep-nav-group__chev" aria-hidden="true">▼</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-overview')">Overview</button>
+                  <button type="button" class="erp-reports-sblink" data-rep-k="overview executive dashboard metrics board refresh" onclick="openReportsTabFromSidebar('rep-overview')">Overview</button>
                 </div>
               </details>
               <details class="mr-rep-nav-group" open>
                 <summary class="mr-rep-nav-group__head">Maintenance <span class="mr-rep-nav-group__chev" aria-hidden="true">▼</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-maint')">Spend by unit</button>
-                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-maint-detail')">Detailed (parts / positions)</button>
+                  <button type="button" class="erp-reports-sblink" data-rep-k="spend unit maintenance cost work order" onclick="openReportsTabFromSidebar('rep-maint')">Spend by unit</button>
+                  <button type="button" class="erp-reports-sblink" data-rep-k="parts positions tires detailed breakdown" onclick="openReportsTabFromSidebar('rep-maint-detail')">Detailed (parts / positions)</button>
                 </div>
               </details>
               <details class="mr-rep-nav-group">
                 <summary class="mr-rep-nav-group__head">Accounting <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-qbo')">QuickBooks activity</button>
-                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-sync')">ERP ↔ QBO sync</button>
+                  <button type="button" class="erp-reports-sblink" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTabFromSidebar('rep-qbo')">QuickBooks activity</button>
+                  <button type="button" class="erp-reports-sblink" data-rep-k="erp sync qbo quickbooks reconcile" onclick="openReportsTabFromSidebar('rep-sync')">ERP ↔ QBO sync</button>
                 </div>
               </details>
               <details class="mr-rep-nav-group">
                 <summary class="mr-rep-nav-group__head">Operations <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink" id="repSidebarTmsLoads" onclick="openReportsTabFromSidebar('rep-tms')">TMS loads</button>
-                  <button type="button" class="erp-reports-sblink" id="repSidebarSettlement" onclick="openReportsTabFromSidebar('rep-settlement')">Settlement / P&amp;L by load</button>
-                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-team')">Team &amp; security</button>
-                  <button type="button" class="erp-reports-sblink" onclick="openReportsTabFromSidebar('rep-ifta')">IFTA &amp; compliance</button>
+                  <button type="button" class="erp-reports-sblink" id="repSidebarTmsLoads" data-rep-k="tms loads pipeline postgres trips" onclick="openReportsTabFromSidebar('rep-tms')">TMS loads</button>
+                  <button type="button" class="erp-reports-sblink" id="repSidebarSettlement" data-rep-k="settlement pnl profit load trip invoice rollup" onclick="openReportsTabFromSidebar('rep-settlement')">Settlement / P&amp;L by load</button>
+                  <button type="button" class="erp-reports-sblink" data-rep-k="team security users roles audit" onclick="openReportsTabFromSidebar('rep-team')">Team &amp; security</button>
+                  <button type="button" class="erp-reports-sblink" data-rep-k="ifta miles fuel tax jurisdiction compliance" onclick="openReportsTabFromSidebar('rep-ifta')">IFTA &amp; compliance</button>
                 </div>
               </details>
             </aside>
@@ -2616,7 +2617,7 @@
         <nav class="erp-reports-hub" aria-label="Jump to a report">
           <div class="erp-reports-hub__card">
             <div class="erp-reports-hub__label">Standard</div>
-            <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-overview" onclick="openReportsTabFromSidebar('rep-overview')">
+            <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-overview" data-rep-k="overview executive dashboard metrics board refresh" onclick="openReportsTabFromSidebar('rep-overview')">
               <span class="erp-reports-hub__tile-title">Overview</span>
               <span class="erp-reports-hub__tile-meta">Board + refresh</span>
             </button>
@@ -2624,10 +2625,10 @@
           <div class="erp-reports-hub__card">
             <div class="erp-reports-hub__label">Maintenance</div>
             <div class="erp-reports-hub__tiles">
-              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-maint" onclick="openReportsTabFromSidebar('rep-maint')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-maint" data-rep-k="spend unit maintenance cost work order" onclick="openReportsTabFromSidebar('rep-maint')">
                 <span class="erp-reports-hub__tile-title">Spend by unit</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-maint-detail" onclick="openReportsTabFromSidebar('rep-maint-detail')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-maint-detail" data-rep-k="parts positions tires detailed breakdown" onclick="openReportsTabFromSidebar('rep-maint-detail')">
                 <span class="erp-reports-hub__tile-title">Parts / positions</span>
               </button>
             </div>
@@ -2635,10 +2636,10 @@
           <div class="erp-reports-hub__card">
             <div class="erp-reports-hub__label">Accounting</div>
             <div class="erp-reports-hub__tiles">
-              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-qbo" onclick="openReportsTabFromSidebar('rep-qbo')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-qbo" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTabFromSidebar('rep-qbo')">
                 <span class="erp-reports-hub__tile-title">QuickBooks activity</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-sync" onclick="openReportsTabFromSidebar('rep-sync')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-sync" data-rep-k="erp sync qbo quickbooks reconcile" onclick="openReportsTabFromSidebar('rep-sync')">
                 <span class="erp-reports-hub__tile-title">ERP ↔ QBO sync</span>
               </button>
             </div>
@@ -2646,16 +2647,16 @@
           <div class="erp-reports-hub__card">
             <div class="erp-reports-hub__label">Operations</div>
             <div class="erp-reports-hub__tiles erp-reports-hub__tiles--dense">
-              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-tms" onclick="openReportsTabFromSidebar('rep-tms')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-tms" data-rep-k="tms loads pipeline postgres trips" onclick="openReportsTabFromSidebar('rep-tms')">
                 <span class="erp-reports-hub__tile-title">TMS loads</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-settlement" onclick="openReportsTabFromSidebar('rep-settlement')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-settlement" data-rep-k="settlement pnl profit load trip invoice rollup" onclick="openReportsTabFromSidebar('rep-settlement')">
                 <span class="erp-reports-hub__tile-title">Settlement / P&amp;L</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-team" onclick="openReportsTabFromSidebar('rep-team')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-team" data-rep-k="team security users roles audit" onclick="openReportsTabFromSidebar('rep-team')">
                 <span class="erp-reports-hub__tile-title">Team &amp; security</span>
               </button>
-              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-ifta" onclick="openReportsTabFromSidebar('rep-ifta')">
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-ifta" data-rep-k="ifta miles fuel tax jurisdiction compliance" onclick="openReportsTabFromSidebar('rep-ifta')">
                 <span class="erp-reports-hub__tile-title">IFTA</span>
               </button>
             </div>
@@ -5125,6 +5126,16 @@
       }
       if (name === 'reports') {
         loadReportsData();
+        const rs = document.getElementById('repToolbarSearch');
+        if (rs) {
+          rs.value = '';
+          repFilterReports('');
+        }
+        const rb = document.getElementById('repRoadmapBanner');
+        if (rb) {
+          rb.textContent = '';
+          rb.classList.add('hidden');
+        }
         requestAnimationFrame(() => syncReportsSidebarActive());
       }
       if (name === 'catalog') loadServiceCatalogAdminOnly();
@@ -5294,6 +5305,55 @@
       });
     }
 
+    function repFilterReports(q) {
+      const ql = String(q || '')
+        .trim()
+        .toLowerCase();
+      const root = document.getElementById('section-reports');
+      if (!root) return;
+      const match = s => !ql || String(s || '').toLowerCase().includes(ql);
+
+      root.querySelectorAll('.mr-rep-nav-group').forEach(det => {
+        const sum = det.querySelector('.mr-rep-nav-group__head')?.textContent || '';
+        let n = 0;
+        det.querySelectorAll('.erp-reports-sblink').forEach(btn => {
+          const keys = (btn.getAttribute('data-rep-k') || '').toLowerCase();
+          const ok = match(btn.textContent) || match(sum) || (keys && match(keys));
+          btn.classList.toggle('rep-filter-hidden', !ok);
+          if (ok) n++;
+        });
+        det.classList.toggle('rep-filter-hidden', ql.length > 0 && n === 0);
+      });
+
+      root.querySelectorAll('.erp-reports-hub__card').forEach(card => {
+        const lab = card.querySelector('.erp-reports-hub__label')?.textContent || '';
+        let n = 0;
+        card.querySelectorAll('.erp-reports-hub__tile').forEach(tile => {
+          const keys = (tile.getAttribute('data-rep-k') || '').toLowerCase();
+          const ok = match(tile.textContent) || match(lab) || (keys && match(keys));
+          tile.classList.toggle('rep-filter-hidden', !ok);
+          if (ok) n++;
+        });
+        card.classList.toggle('rep-filter-hidden', ql.length > 0 && n === 0);
+      });
+    }
+
+    function repReportsRoadmapMsg(kind) {
+      const el = document.getElementById('repRoadmapBanner');
+      if (!el) return;
+      const custom =
+        'Custom report builder is not available in this build. Use the report hub and sidebar, per-report CSV exports (where offered), and Accounting / Maintenance exports for operational data.';
+      const scheduled =
+        'Scheduled reports are not available in this build. Use Refresh reports on the Overview tab and export CSVs from individual reports; connect QuickBooks for live lists on the Accounting board.';
+      el.textContent = kind === 'scheduled' ? scheduled : custom;
+      el.classList.remove('hidden');
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch (_) {
+        el.scrollIntoView();
+      }
+    }
+
     function resolveReportsTabButton(tabId) {
       const tid = String(tabId || '').trim();
       const byId = {
@@ -5352,6 +5412,8 @@
         loadSettlementIndex();
         loadDriverPaySettlements();
       }
+      const rq = document.getElementById('repToolbarSearch')?.value || '';
+      if (String(rq).trim()) repFilterReports(rq);
     }
 
     function setTmsUiEnabled(enabled) {

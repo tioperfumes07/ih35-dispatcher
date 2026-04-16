@@ -2,7 +2,9 @@
  * IH35 ERP — Master redesign spec (Rules 0–22 coverage, incremental).
  * Rules 0–1, 3, 4 (filter bar + legend), 9 fragments, 15–16, 22 (help tips): concrete CSS here.
  * Rule 2: copy in maintenance.html + dispatch.html.
- * Rules 5–8, 10–11 (AP doc shell + cost defaults), 15 (bill pay), 18 (reports hub tiles), 17–21: QBO / Samsara UI + HTML in maintenance; complex flows in erp-master-redesign.
+ * Rules 5–8 (QBO book dialogs, WO chrome): see erp-master-redesign.css; maintenance + dispatch wired.
+ * Rules 9–11, 15–18: reports search + hub, AP/fuel doc shells, bill pay, accounting strip — maintenance.html + this file.
+ * Rules 17–21: KPI strip, parts map, help tips — maintenance + spec; satellite pages use Rule 0–1 blocks below.
  * Load order: app-theme → erp-master-redesign → this file (maintenance, dispatch, fuel, banking, settings).
  */
 
@@ -548,14 +550,16 @@ body.erp-maintenance .erp-main-body .tire-svg svg {
 }
 
 /* =============================================================================
-   Satellite pages — fuel, banking, settings (Rule 0 + 1 with redesign tokens)
+   Satellite + dispatch (Rule 0 + 1: flat surfaces, readable weights)
    ============================================================================= */
+body.dispatch-page,
 body.fuel-board,
 body.banking-page,
 body.settings-page {
   overflow-x: hidden;
 }
 
+body.dispatch-page .modal,
 body.fuel-board .panel,
 body.banking-page .panel,
 body.banking-page .ph,
@@ -563,10 +567,24 @@ body.settings-page .panel {
   box-shadow: none !important;
 }
 
+body.dispatch-page #dispatchApp.erp-master .erp-topbar,
+body.dispatch-page #dispatchApp.erp-master .erp-icon-nav,
+body.dispatch-page #dispatchApp.erp-master .erp-module-sidebar,
+body.dispatch-page #dispatchApp.erp-master .erp-new-menu,
+body.dispatch-page #dispatchApp.erp-master .nav-dropdown-menu {
+  box-shadow: none !important;
+}
+
 body.fuel-board .topbar h1,
+body.dispatch-page .erp-topbar .title,
 body.banking-page h1,
 body.settings-page h1 {
   font-weight: 500 !important;
+}
+
+body.dispatch-page #dispatchApp.erp-master .erp-main-body button,
+body.dispatch-page #dispatchApp.erp-master .erp-main-body .btn {
+  box-shadow: none !important;
 }
 
 body.banking-page button,
@@ -1314,4 +1332,28 @@ body.erp-maintenance .erp-reports-hub__tile-meta {
   font-size: 11px;
   color: #80868b;
   margin-top: 2px;
+}
+
+body.erp-maintenance #section-reports .rep-filter-hidden {
+  display: none !important;
+}
+
+body.erp-maintenance .erp-reports-roadmap {
+  margin: 0 16px 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+  max-width: min(96ch, 100%);
+  line-height: 1.55;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  body.erp-maintenance .erp-reports-roadmap {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
 }
