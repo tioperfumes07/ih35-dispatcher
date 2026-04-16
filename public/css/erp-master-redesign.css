@@ -568,3 +568,247 @@ body.erp-maintenance .erp-main-surface > #authBanner:not(.hidden) {
 body.erp-maintenance .erp-main-surface > #qboSyncAlertBar:not(.hidden) {
   margin: 0;
 }
+
+/* =============================================================================
+   Phase 2 — QuickBooks-like chrome inside main content (UI only, overrides)
+   ============================================================================= */
+
+/* --- Horizontal subtabs: blue underline, no pill shadow --- */
+body.erp-maintenance .erp-main-body .subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0;
+  margin: 0 0 14px;
+  padding: 0;
+  border-bottom: 1px solid var(--qb-line);
+  background: var(--qb-panel);
+}
+
+body.erp-maintenance .erp-main-body .subtab {
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--qb-muted);
+  font-weight: 500;
+  font-size: 13px;
+  padding: 10px 14px;
+  margin: 0 2px 0 0;
+  box-shadow: none;
+}
+
+body.erp-maintenance .erp-main-body .subtab:hover {
+  background: #f1f3f4;
+  color: var(--qb-text);
+  border-color: transparent;
+}
+
+body.erp-maintenance .erp-main-body .subtab.active {
+  color: var(--qb-blue);
+  background: transparent;
+  border-bottom-color: var(--qb-blue);
+  font-weight: 500;
+  box-shadow: none;
+}
+
+body.erp-maintenance .erp-main-body a.subtab {
+  color: inherit;
+}
+
+/* --- Maintenance board vertical tabs (Create WO / Fleet / R&M / Shop) --- */
+body.erp-maintenance .erp-main-body .maint-board-nav__btn {
+  font-weight: 500;
+  border: 1px solid transparent;
+  border-radius: var(--qb-radius-control);
+}
+
+body.erp-maintenance .erp-main-body .maint-board-nav__btn:hover {
+  background: #f1f3f4;
+  color: var(--qb-text-strong);
+}
+
+body.erp-maintenance .erp-main-body .maint-board-nav__btn.active {
+  background: var(--qb-sidebar-active-bg);
+  color: var(--qb-blue);
+  border-color: var(--qb-line);
+  font-weight: 500;
+}
+
+body.erp-maintenance .erp-main-body .maint-board-nav__title {
+  font-weight: 500;
+  color: var(--qb-muted);
+}
+
+/* --- Standard modals (not full-screen WO) --- */
+body.erp-maintenance .maint-modal-bg:not(.maint-workorder-fullmodal) {
+  background: rgba(0, 0, 0, 0.45);
+  padding: 20px;
+}
+
+body.erp-maintenance .maint-modal-bg:not(.maint-workorder-fullmodal) .maint-modal {
+  max-width: 860px;
+  width: calc(100% - 40px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  border-radius: var(--qb-radius-card);
+  border: 1px solid var(--qb-line);
+  box-shadow: none;
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+/* --- Full-screen work order modal: flat header, same dimmer --- */
+body.erp-maintenance .maint-workorder-fullmodal.maint-modal-bg {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+body.erp-maintenance .maint-workorder-fullmodal__head {
+  background: var(--qb-panel);
+  border-bottom: 1px solid var(--qb-line);
+}
+
+body.erp-maintenance .maint-workorder-fullmodal__title {
+  font-weight: 500;
+  color: var(--qb-text-strong);
+  font-size: 16px;
+}
+
+body.erp-maintenance .maint-workorder-fullmodal__body {
+  background: var(--qb-page);
+}
+
+body.erp-maintenance .maint-workorder-fullmodal__head .btn {
+  height: 32px;
+  font-weight: 500;
+  border-radius: var(--qb-radius-control);
+  border: 1px solid var(--qb-line-input);
+  box-shadow: none;
+}
+
+/* --- Panels, hero, metrics: flat cards --- */
+body.erp-maintenance .erp-main-body .panel,
+body.erp-maintenance .erp-main-body .hero-card,
+body.erp-maintenance .erp-main-body .metric,
+body.erp-maintenance .erp-main-body .maint-section-card {
+  border: 1px solid var(--qb-line);
+  border-radius: var(--qb-radius-card);
+  box-shadow: none;
+}
+
+body.erp-maintenance .erp-main-body .hero-card:hover {
+  box-shadow: none;
+  border-color: var(--qb-line-input);
+  background: #fafbfc;
+}
+
+body.erp-maintenance .erp-main-body .panel-head {
+  border-bottom: 1px solid var(--qb-line);
+  background: #fafbfc;
+}
+
+body.erp-maintenance .erp-main-body .panel-title {
+  font-weight: 500;
+  color: var(--qb-text-strong);
+}
+
+body.erp-maintenance .erp-main-body .metric-label {
+  color: var(--qb-muted);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+body.erp-maintenance .erp-main-body .metric-value {
+  color: var(--qb-text-strong);
+  font-weight: 400;
+}
+
+body.erp-maintenance .erp-main-body .mini-note {
+  color: var(--qb-muted);
+}
+
+/* --- Primary / green actions in content --- */
+body.erp-maintenance .erp-main-body .qb-btn-primary,
+body.erp-maintenance .erp-main-body button.qb-btn-primary {
+  background: var(--qb-green);
+  color: #fff;
+  border: none;
+  border-radius: var(--qb-radius-control);
+  font-weight: 500;
+  box-shadow: none;
+  height: auto;
+  min-height: 32px;
+  padding: 8px 16px;
+}
+
+body.erp-maintenance .erp-main-body .qb-btn-primary:hover {
+  filter: brightness(0.96);
+}
+
+/* --- Default buttons in content area --- */
+body.erp-maintenance .erp-main-body .btn,
+body.erp-maintenance .erp-main-body .print-hide-actions button {
+  border-radius: var(--qb-radius-control);
+  font-weight: 500;
+}
+
+/* --- Accounting / QBO doc shell --- */
+body.erp-maintenance .erp-main-body .qb-doc-h2 {
+  font-weight: 500;
+  color: var(--qb-text-strong);
+}
+
+body.erp-maintenance .erp-main-body .qb-doc-total-amt {
+  font-weight: 400;
+  color: var(--qb-text-strong);
+}
+
+/* --- Vehicle parts map container: restyle chrome only (SVG untouched) --- */
+body.erp-maintenance .erp-main-body .tire-layout-wrap {
+  border: 1px solid var(--qb-line);
+  border-radius: var(--qb-radius-card);
+  padding: 12px;
+  background: var(--qb-panel);
+}
+
+body.erp-maintenance .erp-main-body .tire-svg {
+  border-radius: var(--qb-radius-control);
+}
+
+/* --- List rows --- */
+body.erp-maintenance .erp-main-body .list-row:hover {
+  background: #f8f9fa;
+}
+
+body.erp-maintenance .erp-main-body .list-row.active {
+  background: var(--qb-sidebar-active-bg);
+  border-color: var(--qb-line);
+}
+
+/* --- Chips (asset category) --- */
+body.erp-maintenance .erp-main-body .chip {
+  font-weight: 500;
+  border-radius: 999px;
+  border: 1px solid var(--qb-line-input);
+}
+
+body.erp-maintenance .erp-main-body .chip.active {
+  background: var(--qb-sidebar-active-bg);
+  color: var(--qb-blue);
+  border-color: var(--qb-blue);
+  font-weight: 500;
+}
+
+/* --- Global search menu under top bar --- */
+body.erp-maintenance .erp-topbar .qb-picker-menu {
+  border: 1px solid var(--qb-line);
+  border-radius: var(--qb-radius-card);
+  box-shadow: none;
+  background: var(--qb-panel);
+}
+
+/* --- Status pills (lighter weight per design system) --- */
+body.erp-maintenance .erp-main-body .maint-status-pill {
+  font-weight: 500;
+}
