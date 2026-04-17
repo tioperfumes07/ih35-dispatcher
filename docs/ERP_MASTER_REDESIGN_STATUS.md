@@ -12,13 +12,13 @@ This file maps the **consolidated master redesign** (Rules 0–24 + protection b
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~56%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.560**.)
+**Overall completion: ~56%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.562** → **56.2%** unrounded.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
 | Rule | Theme | Fraction (this revision) | Notes |
 |------|--------|-------------------------|--------|
-| 0 | Design tokens | 0.56 | Linked file + satellites; spot uses of **`var(--color-text-*)`** (e.g. upload Connections meta); full var migration deferred |
+| 0 | Design tokens | 0.57 | Linked file + satellites; **`var(--color-text-*)`** in upload meta + accounting nav QBO summary HTML; full var migration deferred |
 | 1 | Responsive | 0.45 | Shell patterns; full viewport audit deferred |
 | 2 | App shell | 0.45 | `erp-master` present; spec dimensions/copy deferred |
 | 3 | Collapsible sidebar | 1.0 | Pattern shipped (`ih35_sb_*`) |
@@ -29,18 +29,18 @@ This file maps the **consolidated master redesign** (Rules 0–24 + protection b
 | 12 | Maintenance layout | 0.45 | Iterated; full spec QA deferred |
 | 13 | Accounting board | 0.45 | KPIs exist; dark-panel cleanup partial |
 | 14 | Upload center | 0.54 | Tabs + flows; **?** tips on every upload subpanel intro (Bank, Comdata, Fuel, AP, Maint, Other, Connections); alphabetical / full QA deferred |
-| 15 | Filter bar | 0.50 | Several tables; not universal |
+| 15 | Filter bar | 0.52 | Several tables + **Maintenance → Security alerts** toolbar wrapped in **`mr-filter-bar`**; not universal |
 | 16 | Safety / HOS | 0.55 | Tables + **Rule 23** pagers on Safety + idle snapshot |
-| 17 | Reports | 0.45 | Hub + settlement work; “all on one page” partial |
+| 17 | Reports | 0.46 | Hub + settlement work; **TMS load pipeline** tab title **`erp-help-tip`**; “all on one page” partial |
 | 18 | QBO GET aliases | 0.90 | Skipped — existing catalog/status routes |
 | 19 | Toasts | 1.0 | `showToast` + `erpNotify` pattern |
 | 20 | Button loading | 1.0 | `erpWithBusy` pattern |
 | 21 | QBO error banner | 0.45 | Maintenance messaging; sticky spec deferred |
-| 22 | “?” tips | 0.72 | Global pattern + **Upload center** intros; WO/shop/settlement samples; many `mini-note` blocks remain |
+| 22 | “?” tips | 0.74 | Global pattern + **Upload** + **shop / location** board + **TMS pipeline** tab; WO/Parts/settlement samples; many `mini-note` blocks remain |
 | 23 | Pagination | 0.78 | Broad `erpPagerRender` coverage; not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 = **0.560 → ~56%**. When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 = **0.562 → ~56%** (detail **56.2%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -63,7 +63,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 0 — Design system tokens
 
-- **Partial (this pass):** Added `public/css/design-tokens.css` with spec-aligned **additional** `:root` variables (`--color-*`, `--btn-*`, `--pill-*`, spacing, dimensions). Linked **before** `app-theme.css` on maintenance, dispatch, fuel, banking, settings. **Satellite page shells** use **`background: var(--color-bg-page, var(--bg))`** on **banking**, **settings**, and **fuel** (company hub stays dark **`--bg`** only).
+- **Partial (this pass):** Added `public/css/design-tokens.css` with spec-aligned **additional** `:root` variables (`--color-*`, `--btn-*`, `--pill-*`, spacing, dimensions). Linked **before** `app-theme.css` on maintenance, dispatch, fuel, banking, settings. **Satellite page shells** use **`background: var(--color-bg-page, var(--bg))`** on **banking**, **settings**, and **fuel** (company hub stays dark **`--bg`** only). Inline maintenance UI (e.g. accounting nav QBO flyout summary) uses **`var(--color-text-body|label, …)`** where updated.
 - **Not done:** Full migration of all components from legacy `--bg`, `--panel`, etc. to `--color-*` (would be a large visual sweep).
 - **Spec path:** Use `public/css/design-tokens.css`, not `/src/styles/`.
 
@@ -112,7 +112,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 15 — Samsara-style filter bar
 
-- **Partial:** Filter patterns exist on several tables (see spec comments in `erp-master-spec-2026.css`). Not every table has full chip + pager parity.
+- **Partial:** Filter patterns exist on several tables (see spec comments in `erp-master-spec-2026.css`). **Maintenance → Security alerts** uses **`mr-filter-bar`** + **`mr-filter-bar__grow`** / **`__right`** for search, window, severity, and **Refresh alerts**. Not every table has full chip + pager parity.
 
 ### Rule 16 — Safety / HOS
 
@@ -120,7 +120,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 17 — Reports
 
-- **Partial:** Reports hub shell in maintenance; “all reports on one page / remove links from other sidebars” — **not fully enforced** in this pass.
+- **Partial:** Reports hub shell in maintenance; **TMS load pipeline** tab panel title includes **`erp-help-tip`** (Postgres / refresh hint). “All reports on one page / remove links from other sidebars” — **not fully enforced** in this pass.
 
 ### Rule 18 — QBO GET endpoints
 
@@ -140,7 +140,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 22 — Instruction cleanup → “?” tips
 
-- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Settlement / P&L** intro + trip rollup panel use the same pattern. Many other long **`mini-note`** blocks remain for future passes.
+- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Settlement / P&L** intro + trip rollup panel use the same pattern; **Fleet → Vehicles by shop / location context** title + **?**; **reports → TMS load pipeline** title + **?**; **Upload center** (prior pass). Many other long **`mini-note`** blocks remain for future passes.
 
 ### Rule 23 — Pagination
 
@@ -178,6 +178,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 22. **Rule 23 (safety + idle snapshot):** **`maintenance.html`** — **Safety / HOS** tab: **`#safetyHosPagerHost`** + **`safetyHosPager`**; **`#safetyActivePagerHost`** / **`#safetyInServicePagerHost`** + **`safetyActivePager`** / **`safetyInServicePager`** (duty filter resets page); **`#safetyAssignPagerHost`** + **`safetyAssignPager`** (assign filter + search reset page). **Tracking → Idle:** **`#idleSnapshotPagerHost`** + **`idleSnapshotPager`** with **`renderIdleSnapshotTableBody`** paging **`idleSnapshotPager._rows`** after **`loadIdleSnapshot`** succeeds.
 23. **Rule 22 (upload Connections):** **`maintenance.html`** — **Upload center → Connections**: title row **`erp-help-tip`** + shortened **`mr-upload-panel-desc`** so long guidance sits behind **?**.
 24. **Rule 22 + 0 (upload subpanels):** **`maintenance.html`** — **Bank CSV**, **Comdata / Relay**, **Fuel / DEF**, **Maintenance AP**, **Maintenance history**, **Other**: same title **`erp-help-tip`** + one-line **`mr-upload-panel-desc`**; existing **`<details>`** help kept. **Connections** Samsara meta line uses **`var(--color-text-label, …)`**.
+25. **Rules 22 + 15 + 17 + 0:** **`maintenance.html`** — **Fleet → Vehicles by shop / location context**: long intro → title **`erp-help-tip`** + short line. **Security alerts**: **`mr-filter-bar`** around search / window / severity + **Refresh**. **Reports → TMS load pipeline**: panel title **`erp-help-tip`**. Accounting nav QBO summary box: **`var(--color-text-body|label)`** instead of hard-coded grays.
 
 ---
 

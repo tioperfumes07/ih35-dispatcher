@@ -1089,25 +1089,29 @@
               </div>
             </div>
             <div class="panel-body">
-              <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:0 0 10px">
-                <div style="min-width:220px;flex:1">
-                  <div class="mini-note" style="margin:0 0 4px">Search</div>
-                  <input id="maintIntegritySearch" class="qb-in" placeholder="Unit, type, message, driver…" oninput="renderSecurityAlerts(window.__lastSecurityAlerts||null, maintSecurityAlertRenderOpts)" />
+              <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Security alerts filters" style="padding-top:0;margin-bottom:10px">
+                <div class="mr-filter-bar__grow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+                  <div style="min-width:220px;flex:1">
+                    <div class="mini-note" style="margin:0 0 4px">Search</div>
+                    <input id="maintIntegritySearch" class="qb-in" placeholder="Unit, type, message, driver…" oninput="renderSecurityAlerts(window.__lastSecurityAlerts||null, maintSecurityAlertRenderOpts)" />
+                  </div>
+                  <div style="min-width:180px">
+                    <div class="mini-note" style="margin:0 0 4px">Window (days)</div>
+                    <input id="maintIntegrityDays" class="qb-in" type="number" min="1" step="1" placeholder="30" onchange="loadSecurityCatalogUi()" />
+                  </div>
+                  <div style="min-width:200px">
+                    <div class="mini-note" style="margin:0 0 4px">Severity</div>
+                    <select id="maintIntegritySeverity" class="qb-in" onchange="renderSecurityAlerts(window.__lastSecurityAlerts||null, maintSecurityAlertRenderOpts)">
+                      <option value="all">All</option>
+                      <option value="high">High</option>
+                      <option value="warn">Warn</option>
+                      <option value="info">Info</option>
+                    </select>
+                  </div>
                 </div>
-                <div style="min-width:180px">
-                  <div class="mini-note" style="margin:0 0 4px">Window (days)</div>
-                  <input id="maintIntegrityDays" class="qb-in" type="number" min="1" step="1" placeholder="30" onchange="loadSecurityCatalogUi()" />
+                <div class="mr-filter-bar__right">
+                  <button type="button" class="btn" onclick="loadSecurityCatalogUi()">Refresh alerts</button>
                 </div>
-                <div style="min-width:200px">
-                  <div class="mini-note" style="margin:0 0 4px">Severity</div>
-                  <select id="maintIntegritySeverity" class="qb-in" onchange="renderSecurityAlerts(window.__lastSecurityAlerts||null, maintSecurityAlertRenderOpts)">
-                    <option value="all">All</option>
-                    <option value="high">High</option>
-                    <option value="warn">Warn</option>
-                    <option value="info">Info</option>
-                  </select>
-                </div>
-                <button type="button" class="btn" onclick="loadSecurityCatalogUi()">Refresh alerts</button>
               </div>
               <div id="maintSecurityAlertsBody" class="mini-note">Open this tab after load to refresh, or use Refresh alerts.</div>
             </div>
@@ -1117,10 +1121,18 @@
         <div id="maintMainTabShopLoc" class="maint-main-tab-panel">
           <div class="panel maint-section-card">
             <div class="panel-head maint-panel-head-center">
-              <div class="panel-title">Vehicles by shop / location context</div>
-              <div class="mini-note" style="margin:6px 0 0;max-width:62ch">
-                Shop queue rows (ERP) grouped by queue type, plus recent saved work orders by <strong>repair location type</strong> from maintenance records. Use this view to see which units are in internal shop, external shop, roadside, or out of service — status comes from the queue or QuickBooks sync on the work order.
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
+                <span>Vehicles by shop / location context</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Shop queue rows (ERP) grouped by queue type, plus recent saved work orders by <strong>repair location type</strong> from maintenance records. Use this view to see which units are in internal shop, external shop, roadside, or out of service — status comes from the queue or QuickBooks sync on the work order.
+                  </span>
+                </span>
               </div>
+              <p class="mini-note" style="margin:6px auto 0;max-width:48ch;text-align:center">
+                Queue + repair-location snapshot for shop and roadside units.
+              </p>
             </div>
             <div class="panel-body">
               <div id="maintLocationBoardHost" class="mini-note">Loading…</div>
@@ -2883,7 +2895,17 @@
         </div>
         <div id="rep-tms" class="reports-tab hidden">
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">TMS load pipeline</div></div>
+            <div class="panel-head">
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>TMS load pipeline</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About TMS loads report">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Loads and trips from the <strong>TMS / Postgres</strong> pipeline when that database is configured. Refresh reports from the overview if the table is empty after setup.
+                  </span>
+                </span>
+              </div>
+            </div>
             <div class="panel-body" id="repTmsBody"></div>
           </div>
         </div>
@@ -6552,7 +6574,7 @@
       const dot = ok =>
         `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:${ok ? '#1e8e3e' : '#d93025'}"></span>`;
       box.innerHTML =
-        `<div style="font-size:11px;color:#5f6368;line-height:1.6">` +
+        `<div style="font-size:11px;color:var(--color-text-body,#3c4257);line-height:1.6">` +
         `<div>${dot(qboOk)}QuickBooks: ${qboOk ? 'Connected' : 'Disconnected'} — ${escapeHtml(company)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(lastUp)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(fleetLn)}</div>` +
@@ -6560,7 +6582,7 @@
           ? `<div style="margin-top:4px">Notices / errors: <strong style="color:#d93025">${nNote}</strong></div>`
           : `<div style="margin-top:4px">Notices / errors: 0</div>`) +
         (brief
-          ? `<div style="margin-top:6px;font-size:10px;color:#9aa0a6">${escapeHtml(brief.slice(0, 200))}</div>`
+          ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-label,#6b7385)">${escapeHtml(brief.slice(0, 200))}</div>`
           : '') +
         `</div>`;
     }
