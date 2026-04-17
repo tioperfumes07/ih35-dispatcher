@@ -707,7 +707,7 @@ body.erp-maintenance .mr-filter-search {
   border-radius: 20px;
   padding: 0 12px;
   font-size: 12px;
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   border: 1px solid transparent;
 }
 
@@ -723,12 +723,12 @@ body.erp-maintenance .mr-filter-chipwrap > summary {
   gap: 4px;
   height: 28px;
   padding: 0 12px;
-  border: 1px solid #dadce0;
+  border: 1px solid var(--color-border, #dadce0);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  color: #3c4043;
-  background: #fff;
+  color: var(--color-text-primary, #3c4043);
+  background: var(--color-bg-card, #fff);
   font-family: inherit;
 }
 
@@ -736,10 +736,15 @@ body.erp-maintenance .mr-filter-chipwrap > summary::-webkit-details-marker {
   display: none;
 }
 
+body.erp-maintenance .mr-filter-chipwrap > summary:focus-visible {
+  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline-offset: 2px;
+}
+
 body.erp-maintenance .mr-filter-chipwrap[open] > summary {
-  border-color: #1967d2;
-  background: #e8f0fe;
-  color: #1967d2;
+  border-color: var(--color-border-focus, #1967d2);
+  background: var(--pill-blue-bg, #e8f0fe);
+  color: var(--pill-blue-text, #1967d2);
 }
 
 body.erp-maintenance .mr-filter-drop {
@@ -748,18 +753,18 @@ body.erp-maintenance .mr-filter-drop {
   margin-top: 4px;
   min-width: 200px;
   max-width: min(320px, 92vw);
-  background: #fff;
-  border: 1px solid #dadce0;
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #dadce0);
   border-radius: 8px;
   padding: 8px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-dropdown, 0 2px 8px rgba(0, 0, 0, 0.08));
 }
 
 body.erp-maintenance .mr-filter-drop__hint {
   margin: 0;
   padding: 8px 16px;
   font-size: 12px;
-  color: #3c4043;
+  color: var(--color-text-primary, #3c4043);
   line-height: 1.5;
 }
 
@@ -777,9 +782,9 @@ body.erp-maintenance .mr-filter-drop__hint {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1px solid #dadce0;
-  background: #f8f9fa;
-  color: #5f6368;
+  border: 1px solid var(--color-border, #dadce0);
+  background: var(--color-bg-header, #f8f9fa);
+  color: var(--color-text-label, #5f6368);
   font-size: 10px;
   line-height: 1;
   cursor: pointer;
@@ -792,12 +797,12 @@ body.erp-maintenance .mr-filter-drop__hint {
 }
 
 .erp-help-tip__btn:hover {
-  background: #fff;
-  border-color: #c4c7c5;
+  background: var(--color-bg-card, #fff);
+  border-color: var(--color-border-input, #c4c7c5);
 }
 
 .erp-help-tip__btn:focus-visible {
-  outline: 2px solid #1967d2;
+  outline: 2px solid var(--color-border-focus, #1967d2);
   outline-offset: 2px;
 }
 
@@ -807,15 +812,15 @@ body.erp-maintenance .mr-filter-drop__hint {
   left: 0;
   top: calc(100% + 6px);
   z-index: 300;
-  background: #fff;
-  border: 1px solid #e8eaed;
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #e8eaed);
   border-radius: 6px;
   padding: 10px 14px;
   font-size: 12px;
-  color: #3c4043;
+  color: var(--color-text-primary, #3c4043);
   line-height: 1.6;
   max-width: 320px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-dropdown, 0 2px 8px rgba(0, 0, 0, 0.1));
 }
 
 .erp-help-tip__panel.is-open {

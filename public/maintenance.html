@@ -404,6 +404,9 @@
               </span>
             </span>
           </div>
+          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385);font-size:12px;max-width:76ch">
+            Live Samsara HOS clocks — use chips, search, and <strong>Show</strong>; open <strong>?</strong> for which duty rows appear and required token scopes.
+          </p>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
@@ -3898,7 +3901,7 @@
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
                 <p class="mini-note" style="margin:0 0 8px">CSV or Excel accepted — same flow as Fuel / DEF.</p>
-                <div class="mr-upload-drop" data-up-bind="comdata" onclick="document.getElementById('upCenterComdataFile').click()">
+                <div class="mr-upload-drop" tabindex="0" role="button" aria-label="Choose file to upload" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" data-up-bind="comdata" onclick="document.getElementById('upCenterComdataFile').click()">
                   <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
                   <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
                   <div class="mr-upload-drop__sub">CSV or Excel files accepted</div>
@@ -3982,7 +3985,7 @@
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
-                <div class="mr-upload-drop" data-up-bind="fuel" onclick="document.getElementById('upCenterFuelFile').click()">
+                <div class="mr-upload-drop" tabindex="0" role="button" aria-label="Choose file to upload" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" data-up-bind="fuel" onclick="document.getElementById('upCenterFuelFile').click()">
                   <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
                   <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
                   <div class="mr-upload-drop__sub">CSV or Excel files accepted</div>
@@ -4021,7 +4024,7 @@
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
-                <div class="mr-upload-drop" data-up-bind="ap" onclick="document.getElementById('apImportFile').click()">
+                <div class="mr-upload-drop" tabindex="0" role="button" aria-label="Choose file to upload" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" data-up-bind="ap" onclick="document.getElementById('apImportFile').click()">
                   <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
                   <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
                   <div class="mr-upload-drop__sub">CSV or Excel files accepted</div>
@@ -4058,7 +4061,7 @@
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
-                <div class="mr-upload-drop" data-up-bind="maint" onclick="document.getElementById('maintenanceImportFile').click()">
+                <div class="mr-upload-drop" tabindex="0" role="button" aria-label="Choose file to upload" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" data-up-bind="maint" onclick="document.getElementById('maintenanceImportFile').click()">
                   <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
                   <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
                   <div class="mr-upload-drop__sub">CSV or Excel files accepted</div>
@@ -4090,7 +4093,7 @@
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
-                <div class="mr-upload-drop" data-up-bind="other" onclick="document.getElementById('upOtherFile').click()">
+                <div class="mr-upload-drop" tabindex="0" role="button" aria-label="Choose file to upload" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" data-up-bind="other" onclick="document.getElementById('upOtherFile').click()">
                   <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
                   <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
                   <div class="mr-upload-drop__sub">CSV, Excel, or PDF</div>

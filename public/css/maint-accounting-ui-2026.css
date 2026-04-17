@@ -751,32 +751,37 @@ body.erp-maintenance .mr-upload-panel-card {
 }
 
 body.erp-maintenance .mr-upload-drop {
-  border: 2px dashed #dadce0;
+  border: 2px dashed var(--color-border, #dadce0);
   border-radius: 8px;
   padding: 32px 20px;
   text-align: center;
-  background: #f8f9fa;
+  background: var(--color-bg-header, #f8f9fa);
   cursor: pointer;
   box-sizing: border-box;
 }
 
 body.erp-maintenance .mr-upload-drop:hover,
 body.erp-maintenance .mr-upload-drop.mr-upload-drop--drag {
-  border-color: #1967d2;
-  background: #f0f7ff;
+  border-color: var(--color-border-focus, #1967d2);
+  background: var(--pill-blue-bg, #f0f7ff);
+}
+
+body.erp-maintenance .mr-upload-drop:focus-visible {
+  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline-offset: 3px;
 }
 
 body.erp-maintenance .mr-upload-drop__title,
 body.erp-maintenance .mr-upload-drop__primary {
   font-size: 14px;
-  color: #1967d2;
+  color: var(--color-border-focus, #1967d2);
   margin-top: 8px;
 }
 
 body.erp-maintenance .mr-upload-drop__icon {
   display: block;
   font-size: 22px;
-  color: #9aa0a6;
+  color: var(--color-text-placeholder, #9aa0a6);
   line-height: 1;
   margin-bottom: 6px;
 }

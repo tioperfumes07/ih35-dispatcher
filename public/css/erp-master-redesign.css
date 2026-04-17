@@ -450,14 +450,14 @@ body.erp-maintenance .erp-ghost-nav .nav-btn {
 /* --- QBO alert bar (Rule 15 look, same IDs) --- */
 body.erp-maintenance #qboSyncAlertBar:not(.hidden) {
   flex-shrink: 0;
-  background: #fce8e6;
-  border-bottom: 1px solid #f5c6c2;
-  color: var(--qb-text);
+  background: var(--pill-red-bg, #fce8e6);
+  border-bottom: 1px solid var(--btn-danger-border, #f5c6c2);
+  color: var(--color-text-primary, var(--qb-text));
   padding: 10px 1.25rem;
 }
 
 body.erp-maintenance #qboSyncAlertBar .qbo-sync-head {
-  color: var(--qb-red);
+  color: var(--pill-red-text, var(--qb-red));
   font-weight: 500;
   font-size: 14px;
 }

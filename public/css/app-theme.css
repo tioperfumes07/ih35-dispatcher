@@ -200,9 +200,15 @@ main,
 }
 
 .qbo-sync-alert-bar .qbo-sync-meta {
-  color: var(--muted);
+  color: var(--muted, var(--color-text-label, #64748b));
   font-size: 0.88rem;
   margin-top: 2px;
+}
+
+.qbo-sync-alert-bar .qbo-sync-actions a:focus-visible,
+.qbo-sync-alert-bar .qbo-sync-actions button:focus-visible {
+  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline-offset: 2px;
 }
 
 /* Catalogs (maintenance) — add rows, vendor / Samsara linking */
