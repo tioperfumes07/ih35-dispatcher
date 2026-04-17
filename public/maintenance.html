@@ -674,7 +674,7 @@
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
             </div>
             <div id="maintDashSummaryLine" class="maint-kpi-strip__meta mini-note"></div>
-            <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--muted)"></div>
+            <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--color-text-label, var(--muted))"></div>
             <button type="button" class="btn btn--small maint-kpi-strip__dash" onclick="openSectionByName('dashboard')">Full overview</button>
           </div>
         </div>
@@ -7400,7 +7400,7 @@
                             ? 'var(--color-semantic-error)'
                             : r.alert === 'warn'
                               ? 'var(--color-semantic-warn-accent)'
-                              : 'var(--muted)';
+                              : 'var(--color-text-label, var(--muted))';
                         return `<tr>
                           <td>${escapeHtml(r.name || '')}<div class="mini-note">${escapeHtml(r.email || '')}</div></td>
                           <td>${escapeHtml(r.role || '')}</td>
@@ -11561,7 +11561,7 @@
         const head = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:${
           firstExpBlock ? '0' : '10px'
         }">
-          <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${escapeHtml(label)}</div>
+          <div style="font-size:11px;font-weight:500;color:var(--color-text-label, var(--muted));text-transform:uppercase;letter-spacing:.06em">${escapeHtml(label)}</div>
           <div class="mini-note">${maintDeltaBadge((label.includes('7') ? s7.delta : s30.delta) || null)}</div>
         </div>`;
         firstExpBlock = false;
@@ -14595,10 +14595,10 @@
     function paintQboStatusBanner(el, text, tier) {
       if (!el) return;
       const colors = {
-        info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body)' },
-        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success)' },
-        warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning)' },
-        error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text)' }
+        info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
+        success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft)', fg: 'var(--color-semantic-success)' },
+        warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning)' },
+        error: { bg: 'var(--pill-red-bg)', border: 'var(--btn-danger-border)', fg: 'var(--btn-danger-text)' }
       };
       const c = colors[tier] || colors.info;
       el.style.display = 'block';
@@ -14624,10 +14624,10 @@
         return;
       }
       const colors = {
-        info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body)' },
-        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success)' },
-        warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning)' },
-        error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text)' }
+        info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
+        success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft)', fg: 'var(--color-semantic-success)' },
+        warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning)' },
+        error: { bg: 'var(--pill-red-bg)', border: 'var(--btn-danger-border)', fg: 'var(--btn-danger-text)' }
       };
       const c = colors[tier] || colors.info;
       el.style.display = 'flex';

@@ -20,3 +20,14 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Smoke:** Maintenance HTML needles extended with `section-uploads` and `erp-reports-shell` so regressions in those large static regions fail the GET check early.
 
 **Files (cumulative this log date):** `public/css/maint-accounting-ui-2026.css`, `public/css/app-theme.css`, `public/maintenance.html`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`, `docs/ERP_MASTER_REDESIGN_FINAL_REPORT.md` (§9 pointer to this log; former §9 Maintainer note renumbered to §10).
+
+---
+
+## 2026-04-18
+
+- **`app-theme.css`:** Additional token-first cleanup for slate-style stacks (`var(--color-text-body, #334155)`, label grays, `#cbd5e1` / `#e2e8f0` borders → `var(--color-border-input)` / `var(--color-border)`, header grays → `var(--color-bg-header)`) used by maintenance-adjacent panels and tables.
+- **`maintenance.html`:** Remaining `var(--color-text-primary,#0f172a)`, shop queue warn accent, pill green, and danger button text stacks normalized to token-only; **`paintQboStatusBanner`** / **`paintApTxnQboBanner`** tier maps now assign **`var(--color-bg-hover)`**, **`var(--pill-*-bg)`**, **`var(--color-*-border-soft)`**, **`var(--btn-danger-border)`** instead of bare hex for fills and strokes.
+- **Rule 1:** `maint-accounting-ui-2026.css` — `:is(#section-dashboard, #section-fuel, #section-safety, #section-maintenance, #section-tracking, #section-catalog)` active sections plus `.panel` / `.panel-body` get **`min-width: 0`** so remaining modules match accounting / reports / uploads overflow discipline.
+- **Smoke:** Maintenance HTML needles add **`section-maintenance`** and **`section-catalog`** (core shells always present in the static document).
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `public/css/app-theme.css`, `public/maintenance.html`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

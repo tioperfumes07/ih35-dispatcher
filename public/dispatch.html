@@ -66,7 +66,7 @@
     }
     .st-default {
       background: var(--color-bg-header, #f1f5f9);
-      color: var(--text-secondary);
+      color: var(--color-text-body, var(--text-secondary));
     }
     select.sm,
     input.sm {
@@ -106,7 +106,14 @@
     .modal-body { padding: 16px 20px; max-height: calc(100vh - 180px); overflow: auto; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
-    label.lbl { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
+    label.lbl {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--color-text-label, var(--muted));
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
     .row { margin-bottom: 12px; }
     input.in, select.in { width: 100%; padding: 8px 10px; border: 1px solid var(--color-border, var(--line)); border-radius: 8px; }
     .stops-head { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 8px; }
@@ -184,7 +191,13 @@
       padding: 6px 12px;
       text-align: right;
     }
-    .stop-miles-summary th { background: var(--color-bg-header, #f1f5f9); text-align: center; font-size: 11px; text-transform: uppercase; color: var(--muted); }
+    .stop-miles-summary th {
+      background: var(--color-bg-header, #f1f5f9);
+      text-align: center;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--color-text-label, var(--muted));
+    }
     .stop-miles-summary td:first-child { text-align: left; font-weight: 600; }
     .modal-actions {
       padding: 14px 20px;
@@ -223,7 +236,10 @@
       border-color: var(--color-border, var(--line));
     }
     .link { color: var(--accent); cursor: pointer; font-weight: 600; font-size: 13px; }
-    .muted { color: var(--muted); font-size: 12px; }
+    .muted {
+      color: var(--color-text-label, var(--muted));
+      font-size: 12px;
+    }
     .ac-wrap { position: relative; }
     .ac-list {
       display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 6000;
@@ -249,7 +265,7 @@
       background: var(--color-bg-header, #f8fafc);
       font-size: 12px;
       line-height: 1.45;
-      color: var(--muted);
+      color: var(--color-text-label, var(--muted));
     }
     html.dispatch-embed .dispatch-embed-status-bar__inner {
       display: flex;

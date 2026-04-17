@@ -34,6 +34,8 @@ const HTML_PAGES = [
       'section-reports',
       'section-accounting',
       'section-uploads',
+      'section-maintenance',
+      'section-catalog',
       'erp-reports-shell',
       'acct-dash-kpis',
       'erpConnectionStrip',
