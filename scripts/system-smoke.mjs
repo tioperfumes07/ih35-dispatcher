@@ -30,7 +30,15 @@ const HTML_PAGES = [
   ['/index.html', ['hub-page', 'erpConnectionStrip', '/js/erp-ui.js']],
   [
     '/maintenance.html',
-    ['section-reports', 'section-accounting', 'acct-dash-kpis', 'erpConnectionStrip', 'topbar-hint-wrap']
+    [
+      'section-reports',
+      'section-accounting',
+      'section-uploads',
+      'erp-reports-shell',
+      'acct-dash-kpis',
+      'erpConnectionStrip',
+      'topbar-hint-wrap'
+    ]
   ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
   ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],

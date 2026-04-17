@@ -12,4 +12,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **`maintenance.html`:** Global replace of a small set of inline `style=` token stacks (e.g. `var(--color-text-body,#3c4257)` → `var(--color-text-body)`, legacy `var(--color-border,var(--line,#e2e8f0))` → `var(--color-border)`) wherever those exact patterns appeared (including accounting board strip).
 - **Smoke:** `scripts/system-smoke.mjs` — maintenance HTML check now requires stable markers `section-accounting` and `acct-dash-kpis` in addition to existing needles.
 
-**Files:** `public/css/maint-accounting-ui-2026.css`, `public/css/app-theme.css`, `public/maintenance.html`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`, `docs/ERP_MASTER_REDESIGN_FINAL_REPORT.md` (§9 pointer to this log; former §9 Maintainer note renumbered to §10).
+**Follow-up (same day):**
+
+- **`app-theme.css`:** Second-pass cleanup — common `var(--color-bg-card, #fff)`, `var(--color-bg-hover, #f8fafc)`, `var(--color-border, #e8eaed)`, `var(--color-border-focus, #1967d2)`, `var(--color-text-primary, #202124)`, catalog card head gradient, and `var(--color-bg-card, var(--panel|bg-elevated, #fff)))` stacks now rely on `design-tokens.css` / legacy `:root` without repeating hex in the outer `var()`.
+- **`maintenance.html`:** Broader inline + JS template sweep — `var(--color-text-label,#6b7385)`, ad hoc border hexes on dividers/cards, `var(--color-border,var(--line))`, semantic / pill stacks with redundant fallbacks, and strip-board / settlement / upload / shop-queue adjacent patterns normalized to token-only `var(--color-*)` / `var(--pill-*)`.
+- **Rule 1:** `maint-accounting-ui-2026.css` — `#section-reports` and `#section-uploads` active shells, panels, and key layout wrappers get `min-width: 0` (parity with accounting board pass).
+- **Smoke:** Maintenance HTML needles extended with `section-uploads` and `erp-reports-shell` so regressions in those large static regions fail the GET check early.
+
+**Files (cumulative this log date):** `public/css/maint-accounting-ui-2026.css`, `public/css/app-theme.css`, `public/maintenance.html`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`, `docs/ERP_MASTER_REDESIGN_FINAL_REPORT.md` (§9 pointer to this log; former §9 Maintainer note renumbered to §10).

@@ -410,6 +410,17 @@ body.erp-maintenance #section-accounting .acct-dash-cards {
   min-width: 0;
 }
 
+/* Rule 1: reports hub + upload center — flex descendants may shrink without widening the viewport. */
+body.erp-maintenance #section-reports.section.active,
+body.erp-maintenance #section-reports .erp-reports-shell,
+body.erp-maintenance #section-reports .erp-reports-columns,
+body.erp-maintenance #section-reports .erp-reports-main,
+body.erp-maintenance #section-uploads.section.active,
+body.erp-maintenance #section-uploads .panel,
+body.erp-maintenance #section-uploads .panel-body {
+  min-width: 0;
+}
+
 body.erp-maintenance .acct-dash-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

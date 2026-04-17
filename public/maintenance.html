@@ -412,7 +412,7 @@
               </span>
             </span>
           </div>
-          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385);font-size:12px;max-width:76ch">
+          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label);font-size:12px;max-width:76ch">
             Live Samsara HOS clocks — use chips, search, and <strong>Show</strong>; open <strong>?</strong> for which duty rows appear and required token scopes.
           </p>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
@@ -742,7 +742,7 @@
             </div>
             <div class="panel-body">
               <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
-              <div id="retiredAssetsWrap" class="mini-note" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--color-border,#e5e9f0)"></div>
+              <div id="retiredAssetsWrap" class="mini-note" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--color-border)"></div>
             </div>
           </div>
           </div>
@@ -789,7 +789,7 @@
                   <button type="button" class="maint-form-help-btn" onclick="document.getElementById('maintFormHelpDrawer').classList.toggle('hidden')" title="Field help">?</button>
                   <div id="maintFormHelpDrawer" class="maint-form-help-drawer hidden" role="region" aria-label="Form help">
                     <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 8px">
-                      <p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385);max-width:44ch">Service field merges catalog, history, and presets.</p>
+                      <p class="mini-note" style="margin:0;color:var(--color-text-label);max-width:44ch">Service field merges catalog, history, and presets.</p>
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines & invoice total">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
@@ -999,7 +999,7 @@
                       </div>
                       <div class="mini-note maint-field-hint" id="maintCostLinesSubtotal"></div>
 
-                      <div class="maint-print-hide-qbo-link maint-qbo-header-grid" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-border,var(--line))" title="Expense vs bill, bank, dates — vendor and line accounts are on the form above">
+                      <div class="maint-print-hide-qbo-link maint-qbo-header-grid" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-border)" title="Expense vs bill, bank, dates — vendor and line accounts are on the form above">
                         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
                           <div class="panel-title" style="font-size:13px;margin:0">QuickBooks — posting header</div>
                           <span class="erp-help-tip">
@@ -1231,7 +1231,7 @@
                     </div>
                     <div class="maint-form-actions__meta">
                       <span class="mini-note" id="maintSaveHint" role="status" aria-live="polite" aria-atomic="true"></span>
-                      <span class="mini-note" id="maintEditRecordHint" style="color:var(--color-text-label,#6b7385)"></span>
+                      <span class="mini-note" id="maintEditRecordHint" style="color:var(--color-text-label)"></span>
                     </div>
                   </div>
                 </div>
@@ -1466,7 +1466,7 @@
               </div>
               <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
                 <button type="button" onclick="window.print()">Print</button>
-                <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--color-border,var(--line));background:var(--color-bg-card,var(--panel));color:var(--text);font-size:13px">PDF</a>
+                <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg-card,var(--panel));color:var(--text);font-size:13px">PDF</a>
                 <button type="button" title="Reload fleet, shop, and accounting data" onclick="loadAll()">Refresh</button>
               </div>
             </div>
@@ -2078,7 +2078,7 @@
                 ><input type="checkbox" id="maintAutoQboMasterRefresh" /> Refresh QBO master lists on each timer tick</label
               >
             </div>
-            <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:var(--color-semantic-warning,#92400e)"></div>
+            <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:var(--color-semantic-warning)"></div>
           </div>
         </div>
 
@@ -2848,7 +2848,7 @@
                   </div>
                 </div>
               </div>
-              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-card,#fafcff)">
+              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-card)">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
                   <div class="qb-l" style="margin:0">Relay / Love’s fuel file (CSV or Excel)</div>
                   <span class="erp-help-tip">
@@ -2959,10 +2959,10 @@
                 <input id="newVendorAddress" placeholder="Address">
                 <button onclick="createQboVendor()">Create Vendor in QuickBooks</button>
                 <p class="mini-note" style="margin:8px 0 4px">Vendors save from here; accounts, items, and payroll employees normally start in QBO — see <strong>?</strong>.</p>
-                <p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">After QBO changes, click <strong>Refresh Live QuickBooks Master</strong>.</p>
+                <p class="mini-note" style="margin:0;color:var(--color-text-label)">After QBO changes, click <strong>Refresh Live QuickBooks Master</strong>.</p>
               </div>
 
-              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border,#edf1f7)">
+              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border)">
                 <div class="mini-note">Create Product / Service (QuickBooks)</div>
                 <div class="search-row">
                   <input id="newItemName" class="qb-in" placeholder="Item name (service)" autocomplete="off">
@@ -2984,7 +2984,7 @@
                 <p id="newItemHint" class="mini-note" style="margin:0"></p>
               </div>
 
-              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border,#edf1f7)">
+              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border)">
                 <div class="mini-note">Create Account / Category (QuickBooks)</div>
                 <div class="search-row">
                   <input id="newAccountName" class="qb-in" placeholder="Account name" autocomplete="off">
@@ -3096,7 +3096,7 @@
               <div
                 id="expHistQboBanner"
                 class="mini-note"
-                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border,#cbd5e1);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap"
+                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border-input);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap"
               >
                 <span>Use <strong>Check QBO</strong> on posted rows to verify Purchase/Bill still exists.</span>
                 <span class="erp-help-tip">
@@ -3156,9 +3156,9 @@
             </div>
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 6px">Choose <strong>Revert in QBO</strong> vs <strong>Undo spreadsheet import</strong> based on whether QuickBooks should change — see <strong>?</strong>.</p>
-              <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label,#6b7385)">Posted-row checklist and batch tables below load when you click <strong>Refresh</strong>.</p>
-              <div id="erpRollbackPostedSection" class="mini-note" style="margin-bottom:12px;color:var(--color-text-label,#6b7385)">Click <strong>Refresh</strong> to list rows posted to QuickBooks and import batches.</div>
-              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border,#edf1f7);margin-top:4px">
+              <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">Posted-row checklist and batch tables below load when you click <strong>Refresh</strong>.</p>
+              <div id="erpRollbackPostedSection" class="mini-note" style="margin-bottom:12px;color:var(--color-text-label)">Click <strong>Refresh</strong> to list rows posted to QuickBooks and import batches.</div>
+              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:4px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <div class="panel-title" style="font-size:14px;margin:0">ERP import batches (maintenance &amp; AP files)</div>
                   <span class="erp-help-tip">
@@ -3170,7 +3170,7 @@
                 </div>
               </div>
               <div id="erpImportBatchesBody" class="mini-note" style="margin-top:8px">—</div>
-              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border,#edf1f7);margin-top:16px">
+              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:16px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <div class="panel-title" style="font-size:14px;margin:0">Fuel / Relay import batches</div>
                   <span class="erp-help-tip">
@@ -3350,7 +3350,7 @@
               </div>
             </div>
             <div class="panel-body" id="repOverviewBody">
-              <p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Connect QuickBooks, then use the actions above to load data.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-label)">Connect QuickBooks, then use the actions above to load data.</p>
             </div>
           </div>
         </div>
@@ -3427,7 +3427,7 @@
                 </div>
               </div>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
-              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid var(--color-border,#d8deea);border-radius:8px;background:var(--color-bg-card,#fafcff)"></div>
+              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card)"></div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:720px">
                   <thead>
@@ -3462,7 +3462,7 @@
             </div>
             <div class="panel-body">
               <p class="mini-note" style="margin:0 0 8px">Per-driver load rollups from QBO vendors — details in <strong>?</strong>.</p>
-              <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385)">Optional: <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) for a suggested pay line.</p>
+              <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Optional: <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) for a suggested pay line.</p>
               <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
               <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Open and refresh.</div>
             </div>
@@ -3654,7 +3654,7 @@
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(820px,100%)">
-              <p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">
+              <p class="mini-note" style="margin:0;color:var(--color-text-label)">
                 Roadmap tab — open <strong>?</strong> on the title for jurisdiction miles, fuel tax, driver compliance, and what already ships today.
               </p>
             </div>
@@ -3677,7 +3677,7 @@
                 </span>
               </span>
             </div>
-            <div class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Sidebar shortcuts or tabs below.</div>
+            <div class="mini-note" style="margin:0;color:var(--color-text-label)">Sidebar shortcuts or tabs below.</div>
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
@@ -3806,7 +3806,7 @@
               </div>
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
-              <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border,#e0e3e8);max-width:560px" class="form-stack">
+              <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border);max-width:560px" class="form-stack">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span class="qb-l" style="margin:0">Rename vehicle in Samsara</span>
                   <span class="erp-help-tip">
@@ -3816,7 +3816,7 @@
                     </span>
                   </span>
                 </div>
-                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label,#6b7385);font-size:12px">Enter id + new display name, then POST.</p>
+                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Enter id + new display name, then POST.</p>
                 <input id="samsaraVehicleIdInput" class="qb-in maint-field" placeholder="Samsara vehicle id">
                 <input id="samsaraVehicleNameInput" class="qb-in maint-field" placeholder="New display name">
                 <button type="button" onclick="pushSamsaraVehicleName()">POST update to Samsara</button>
@@ -3829,7 +3829,7 @@
                     </span>
                   </span>
                 </div>
-                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label,#6b7385);font-size:12px">Enter driver id + new name, then POST.</p>
+                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Enter driver id + new name, then POST.</p>
                 <input id="samsaraDriverIdInput" class="qb-in maint-field" placeholder="Samsara driver id">
                 <input id="samsaraDriverNameInput" class="qb-in maint-field" placeholder="New driver name">
                 <button type="button" onclick="pushSamsaraDriverName()">POST update to Samsara</button>
@@ -3953,7 +3953,7 @@
                 <div class="mr-upload-conn-card">
                   <div class="mr-upload-conn-card__title">Samsara Cloud</div>
                   <p class="mini-note" id="upConnSamsaraStatus" style="margin:0 0 8px">Status: —</p>
-                  <p class="mini-note" id="upConnSamsaraMeta" style="margin:0 0 10px;color:var(--color-text-label,#6b7385);font-size:12px">—</p>
+                  <p class="mini-note" id="upConnSamsaraMeta" style="margin:0 0 10px;color:var(--color-text-label);font-size:12px">—</p>
                   <div class="mr-upload-conn-card__actions">
                     <button type="button" class="btn" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Configure</button>
                     <button type="button" class="btn" onclick="loadAll()">Refresh data</button>
@@ -4478,7 +4478,7 @@
   </template>
 
   <template id="tireExtraLineTpl">
-    <div class="tire-extra-row" style="border:1px solid var(--color-border,#e5e7eb);border-radius:8px;padding:10px;margin-top:8px;background:var(--color-bg-header,#fafafa)">
+    <div class="tire-extra-row" style="border:1px solid var(--color-border);border-radius:8px;padding:10px;margin-top:8px;background:var(--color-bg-header)">
       <div class="search-row" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
         <div>
           <span class="qb-l">Position</span>
@@ -5081,7 +5081,7 @@
           rows
             .map(e => {
               const st = String(e.status || 'queued');
-              const overdue = e.overdue ? ' <span style="color:var(--color-semantic-warn-accent,#b45309);font-weight:500">(past est.)</span>' : '';
+              const overdue = e.overdue ? ' <span style="color:var(--color-semantic-warn-accent);font-weight:500">(past est.)</span>' : '';
               return `<tr><td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(
                 e.assetCategory || ''
               )}</div></td><td>${escapeHtml(e.title || '')}${overdue}</td><td>${escapeHtml(statusLabel(st))}</td><td>${escapeHtml(
@@ -5841,7 +5841,7 @@
         const part = escapeHtml(String(l.partRef || ''));
         const extra = [pos ? `Pos: ${pos}` : '', part ? `Part: ${part}` : ''].filter(Boolean).join(' · ');
         const extraHtml = extra ? `<div class="mini-note" style="margin-top:4px">${extra}</div>` : '';
-        return `<div style="padding:8px 10px;border:1px solid var(--color-border,var(--line));border-radius:10px;background:var(--color-bg-hover,#fbfdff)">
+        return `<div style="padding:8px 10px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-hover)">
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
             <div style="min-width:0;flex:1"><strong>${desc}</strong>${extraHtml}</div>
             <div style="white-space:nowrap;font-weight:500">${escapeHtml(amt)}</div>
@@ -5871,7 +5871,7 @@
           ? `<div style="display:grid;gap:8px;margin-top:10px">${lines.map(lineHtml).join('')}</div>`
           : `<div class="mini-note" style="margin-top:8px">No cost breakdown lines saved on this record.</div>`;
         const plannedBlock = formatPlannedWorkHtmlCard(r);
-        return `<div style="border:1px solid var(--color-border,var(--line));border-radius:14px;background:var(--color-bg-card,var(--panel));padding:12px;margin-bottom:10px">
+        return `<div style="border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card,var(--panel));padding:12px;margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
               <div style="min-width:260px;flex:1">
                 <div style="font-weight:500">${u} · ${d}</div>
@@ -7122,7 +7122,7 @@
       if (!mb.length) {
         mbEl.innerHTML =
           '<p class="mini-note" style="margin:0 0 6px">No maintenance expense rows in this rollup yet.</p>' +
-          '<p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Post or import maintenance expenses, then use <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
+          '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Post or import maintenance expenses, then use <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -7173,7 +7173,7 @@
       const ov = document.getElementById('repOverviewBody');
       if (ov) {
         ov.innerHTML = `
-          <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label,#6b7385)">Generated: ${escapeHtml(d.generatedAt || '')} · QBO cache refreshed: ${
+          <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">Generated: ${escapeHtml(d.generatedAt || '')} · QBO cache refreshed: ${
             qc.refreshedAt ? escapeHtml(new Date(qc.refreshedAt).toLocaleString()) : '—'
           }</p>
           <div class="grid grid-4" style="margin-top:12px">
@@ -7197,11 +7197,11 @@
         if (!tms.configured) {
           tb.innerHTML =
             '<p class="mini-note" style="margin:0 0 6px">PostgreSQL / TMS not configured.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Set <code>DATABASE_URL</code> and run <code>npm run db:migrate</code>.</p>';
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Set <code>DATABASE_URL</code> and run <code>npm run db:migrate</code>.</p>';
         } else if (!tms.ok) {
           tb.innerHTML =
             '<p class="mini-note" style="margin:0 0 6px">Could not read the TMS summary.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-semantic-error,#b91c1c)">' +
+            '<p class="mini-note" style="margin:0;color:var(--color-semantic-error)">' +
             escapeHtml(tms.error || 'Unknown error') +
             '</p>';
         } else {
@@ -7209,7 +7209,7 @@
             .map(([status, c]) => `<tr><td>${escapeHtml(status)}</td><td>${c}</td></tr>`)
             .join('');
           tb.innerHTML = `
-            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385)">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
+            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
             <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:560px">
               <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>${
                 rows || '<tr><td colspan="2">No loads</td></tr>'
@@ -7225,11 +7225,11 @@
         if (!ta || !ta.startDate) {
           qbEl.innerHTML =
             '<p class="mini-note" style="margin:0 0 6px">No QuickBooks transaction window loaded yet.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Connect QuickBooks, set <code>QBO_SYNC_TRANSACTION_DAYS</code> on the server if needed (e.g. 90), then run <strong>Sync QuickBooks lists + activity</strong> from the overview or <strong>Refresh QuickBooks lists</strong> in the top bar.</p>';
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Connect QuickBooks, set <code>QBO_SYNC_TRANSACTION_DAYS</code> on the server if needed (e.g. 90), then run <strong>Sync QuickBooks lists + activity</strong> from the overview or <strong>Refresh QuickBooks lists</strong> in the top bar.</p>';
         } else {
           const tot = ta.totals || {};
           qbEl.innerHTML = `
-            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385)">Window: last <strong>${ta.windowDays}</strong> days (from <strong>${escapeHtml(
+            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Window: last <strong>${ta.windowDays}</strong> days (from <strong>${escapeHtml(
             ta.startDate || ''
           )}</strong>) · up to 200 rows per type.</p>
             <div class="grid grid-4" style="margin-bottom:12px">
@@ -7258,7 +7258,7 @@
           { label: 'AP / expense transactions', p: post.apTransactions }
         ];
         syEl.innerHTML = `
-          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385)">Posted vs local-only vs error — by source (see <strong>?</strong> on the panel title for context).</p>
+          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Posted vs local-only vs error — by source (see <strong>?</strong> on the panel title for context).</p>
           <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:720px">
             <table style="font-size:12px">
               <thead><tr><th>Source</th><th>Total</th><th>Posted</th><th>Local only</th><th>Error</th></tr></thead>
@@ -7272,7 +7272,7 @@
               </tbody>
             </table>
           </div>
-          <p class="mini-note" style="margin-top:12px;color:var(--color-text-label,#6b7385)">Post from <strong>Maintenance</strong> / <strong>Accounting</strong>; refresh master lists via QuickBooks sync.</p>
+          <p class="mini-note" style="margin-top:12px;color:var(--color-text-label)">Post from <strong>Maintenance</strong> / <strong>Accounting</strong>; refresh master lists via QuickBooks sync.</p>
         `;
       }
     }
@@ -7284,7 +7284,7 @@
         reportsSummaryCache = await j('/api/reports/summary');
         renderReportsAll();
       } catch (e) {
-        if (ob) ob.innerHTML = '<p class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">Failed: ' + escapeHtml(e.message || String(e)) + '</p>';
+        if (ob) ob.innerHTML = '<p class="mini-note" style="color:var(--color-semantic-error)">Failed: ' + escapeHtml(e.message || String(e)) + '</p>';
       }
     }
 
@@ -7310,7 +7310,7 @@
       try {
         posture = await j('/api/security/posture');
       } catch (e) {
-        host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">${escapeHtml(e.message || String(e))}</p>`;
+        host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</p>`;
         return;
       }
       if (posture.authDisabled) {
@@ -7335,7 +7335,7 @@
         )
         .join('');
       const cmms = `
-        <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--color-border,var(--line))">
+        <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--color-border)">
           <div class="panel-head">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="panel-title" style="margin:0">CMMS benchmark (industry reference)</div>
@@ -7368,7 +7368,7 @@
             )
             .join('');
           teamBlock = `
-            <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--color-border,var(--line))">
+            <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--color-border)">
               <div class="panel-head">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <div class="panel-title" style="margin:0">ERP user activity</div>
@@ -7397,9 +7397,9 @@
                             : '—';
                         const cl =
                           r.alert === 'critical'
-                            ? 'var(--color-semantic-error,#b91c1c)'
+                            ? 'var(--color-semantic-error)'
                             : r.alert === 'warn'
-                              ? 'var(--color-semantic-warn-accent,#b45309)'
+                              ? 'var(--color-semantic-warn-accent)'
                               : 'var(--muted)';
                         return `<tr>
                           <td>${escapeHtml(r.name || '')}<div class="mini-note">${escapeHtml(r.email || '')}</div></td>
@@ -7419,7 +7419,7 @@
               )}</strong> days · critical ≥ <strong>${escapeHtml(String(team.criticalDays ?? ''))}</strong> days. Override with <code>TEAM_ACTIVITY_WARN_DAYS</code> / <code>TEAM_ACTIVITY_CRITICAL_DAYS</code>.</p>
             </div>`;
         } catch (e) {
-          teamBlock = `<p class="mini-note" style="color:var(--color-semantic-error,#b91c1c);margin-top:12px">Team roster: ${escapeHtml(e.message || String(e))}</p>`;
+          teamBlock = `<p class="mini-note" style="color:var(--color-semantic-error);margin-top:12px">Team roster: ${escapeHtml(e.message || String(e))}</p>`;
         }
         try {
           const aud = await j('/api/security/audit-recent?limit=30');
@@ -7435,7 +7435,7 @@
             })
             .join('');
           auditBlock = `
-            <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--color-border,var(--line))">
+            <div class="panel" style="box-shadow:none;margin-top:14px;border:1px solid var(--color-border)">
               <div class="panel-head">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <div class="panel-title" style="margin:0">Security audit log (recent)</div>
@@ -7457,7 +7457,7 @@
               </div>
             </div>`;
         } catch (e) {
-          auditBlock = `<p class="mini-note" style="color:var(--color-semantic-error,#b91c1c);margin-top:12px">Audit log: ${escapeHtml(e.message || String(e))}</p>`;
+          auditBlock = `<p class="mini-note" style="color:var(--color-semantic-error);margin-top:12px">Audit log: ${escapeHtml(e.message || String(e))}</p>`;
         }
       } else {
         teamBlock = `<p class="mini-note" style="margin-top:12px;line-height:1.5">Signed in as <strong>${escapeHtml(
@@ -7474,7 +7474,7 @@
             </span>
           </span>
         </div>
-        <div class="panel" style="box-shadow:none;border:1px solid var(--color-border,var(--line))">
+        <div class="panel" style="box-shadow:none;border:1px solid var(--color-border)">
           <div class="panel-head">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="panel-title" style="margin:0">Configuration posture</div>
@@ -7520,37 +7520,37 @@
         if (health && health.ok && health.hasSamsaraToken) {
           const n = health.samsaraVehicles != null ? String(health.samsaraVehicles) : '?';
           sEl.textContent = `Samsara: OK · ${n} vehicles (stats rows ${health.samsaraStatsRows ?? '—'})`;
-          sEl.style.color = 'var(--color-semantic-success,#065f46)';
+          sEl.style.color = 'var(--color-semantic-success)';
         } else if (health && !health.hasSamsaraToken) {
           sEl.textContent = 'Samsara: API token not set on server';
-          sEl.style.color = 'var(--color-semantic-warning,#92400e)';
+          sEl.style.color = 'var(--color-semantic-warning)';
         } else {
           sEl.textContent = 'Samsara: check failed';
-          sEl.style.color = 'var(--color-semantic-error,#b91c1c)';
+          sEl.style.color = 'var(--color-semantic-error)';
         }
       }
       if (qEl) {
         if (qboSt && qboSt.configured && qboSt.connected) {
           qEl.textContent = `QuickBooks: connected${qboSt.companyName ? ' — ' + qboSt.companyName : ''}`;
-          qEl.style.color = 'var(--color-semantic-success,#065f46)';
+          qEl.style.color = 'var(--color-semantic-success)';
         } else if (qboSt && qboSt.configured) {
           qEl.textContent = 'QuickBooks: configured · not connected';
-          qEl.style.color = 'var(--color-semantic-warning,#92400e)';
+          qEl.style.color = 'var(--color-semantic-warning)';
         } else if (qboSt) {
           qEl.textContent = 'QuickBooks: not configured';
-          qEl.style.color = 'var(--color-text-label,#6b7385)';
+          qEl.style.color = 'var(--color-text-label)';
         } else {
           qEl.textContent = 'QuickBooks: status unavailable';
-          qEl.style.color = 'var(--color-semantic-error,#b91c1c)';
+          qEl.style.color = 'var(--color-semantic-error)';
         }
       }
       if (aEl) {
         if (health && health.ok) {
           aEl.textContent = 'API health: OK';
-          aEl.style.color = 'var(--color-semantic-success,#065f46)';
+          aEl.style.color = 'var(--color-semantic-success)';
         } else {
           aEl.textContent = 'API health: ' + (health && health.error ? String(health.error).slice(0, 80) : 'failed');
-          aEl.style.color = 'var(--color-semantic-error,#b91c1c)';
+          aEl.style.color = 'var(--color-semantic-error)';
         }
       }
     }
@@ -7741,17 +7741,17 @@
       const fleetLn = document.getElementById('sidebarFleetStatus')?.textContent || '—';
       const brief = document.getElementById('sidebarQboAlertBrief')?.textContent || '';
       const dot = ok =>
-        `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:${ok ? 'var(--pill-green-text,#1e8e3e)' : 'var(--pill-red-text,#d93025)'}"></span>`;
+        `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:${ok ? 'var(--pill-green-text)' : 'var(--pill-red-text)'}"></span>`;
       box.innerHTML =
         `<div style="font-size:11px;color:var(--color-text-body);line-height:1.6">` +
         `<div>${dot(qboOk)}QuickBooks: ${qboOk ? 'Connected' : 'Disconnected'} — ${escapeHtml(company)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(lastUp)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(fleetLn)}</div>` +
         (nNote > 0
-          ? `<div style="margin-top:4px">Notices / errors: <strong style="color:var(--pill-red-text,#d93025)">${nNote}</strong></div>`
+          ? `<div style="margin-top:4px">Notices / errors: <strong style="color:var(--pill-red-text)">${nNote}</strong></div>`
           : `<div style="margin-top:4px">Notices / errors: 0</div>`) +
         (brief
-          ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-label,#6b7385)">${escapeHtml(brief.slice(0, 200))}</div>`
+          ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-label)">${escapeHtml(brief.slice(0, 200))}</div>`
           : '') +
         `</div>`;
     }
@@ -9051,7 +9051,7 @@
         const el = document.getElementById('serviceCatalogAdminBody');
         if (el) {
           el.innerHTML =
-            '<span style="color:var(--color-semantic-error,#b91c1c)">Catalog admin needs DATABASE_URL: ' +
+            '<span style="color:var(--color-semantic-error)">Catalog admin needs DATABASE_URL: ' +
             escapeHtml(e.message || String(e)) +
             '</span>';
         }
@@ -9076,7 +9076,7 @@
         renderSecurityAlerts(sec);
         renderSecurityAlerts(sec, maintSecurityAlertRenderOpts);
       } catch (e) {
-        const msg = '<span style="color:var(--color-semantic-error,#b91c1c)">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
+        const msg = '<span style="color:var(--color-semantic-error)">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
         const el = document.getElementById('securityAlertsBody');
         if (el) el.innerHTML = msg;
         const el2 = document.getElementById('maintSecurityAlertsBody');
@@ -9094,7 +9094,7 @@
       if (!el) return;
       const payload = sec && sec.ok ? sec : window.__lastSecurityAlerts;
       if (!payload || !payload.ok) {
-        el.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">No alert data.</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error)">No alert data.</span>';
         return;
       }
       window.__lastSecurityAlerts = payload;
@@ -10331,7 +10331,7 @@
       }
       if (data.duplicates?.duplicateCount) {
         parts.push(
-          `<span style="color:var(--color-semantic-warn-accent,#b45309);font-weight:500">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
+          `<span style="color:var(--color-semantic-warn-accent);font-weight:500">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
         );
       }
       sum.innerHTML = parts.join('<br>');
@@ -11634,7 +11634,7 @@
               </div>
               ${
                 delayTxt
-                  ? `<div class="mini-note" style="color:var(--color-semantic-warn-accent,#b45309);margin-top:4px">Bottleneck: ${delayTxt}</div>`
+                  ? `<div class="mini-note" style="color:var(--color-semantic-warn-accent);margin-top:4px">Bottleneck: ${delayTxt}</div>`
                   : ''
               }
             </div>
@@ -11645,7 +11645,7 @@
                 <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>In progress</option>
                 <option value="finished" ${status === 'finished' ? 'selected' : ''}>Finished</option>
               </select>
-              <button type="button" class="mini-note" style="background:none;border:none;color:var(--color-text-label,#6b7385);cursor:pointer;text-decoration:underline;padding:0" data-shop-id="${escapeHtml(entry.id)}" onclick="removeShopQueueEntry(this.getAttribute('data-shop-id'))">Remove</button>
+              <button type="button" class="mini-note" style="background:none;border:none;color:var(--color-text-label);cursor:pointer;text-decoration:underline;padding:0" data-shop-id="${escapeHtml(entry.id)}" onclick="removeShopQueueEntry(this.getAttribute('data-shop-id'))">Remove</button>
             </div>
           </div>
         </div>`;
@@ -11881,7 +11881,7 @@
             return `
               <tr>
                 <td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(e.assetCategory || '')}</div></td>
-                <td>${escapeHtml(e.title || '')}${overdue ? '<div class="mini-note" style="color:var(--color-semantic-warn-accent,#b45309);margin-top:4px"><strong>Past estimate</strong></div>' : ''}</td>
+                <td>${escapeHtml(e.title || '')}${overdue ? '<div class="mini-note" style="color:var(--color-semantic-warn-accent);margin-top:4px"><strong>Past estimate</strong></div>' : ''}</td>
                 <td>${vendor ? escapeHtml(vendor) : '—'}</td>
                 <td style="text-align:center">${est != null && Number.isFinite(est) ? escapeHtml(String(est)) : '—'}</td>
                 <td>${escapeHtml(fmtIso(e.queuedAt))}</td>
@@ -12568,7 +12568,7 @@
         costEl.classList.remove('cost-total-bad');
       } else {
         matchEl.innerHTML =
-          '<span style="color:var(--color-semantic-error,#b91c1c);font-weight:500">✗</span> Invoice total $' +
+          '<span style="color:var(--color-semantic-error);font-weight:500">✗</span> Invoice total $' +
           inv.toFixed(2) +
           ' ≠ line sum $' +
           lineSum.toFixed(2) +
@@ -12953,7 +12953,7 @@
           )
           .join('');
       } catch (e) {
-        box.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
+        box.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -12985,7 +12985,7 @@
           )
           .join('');
       } catch (e) {
-        box.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
+        box.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -13167,7 +13167,7 @@
           </div>
           <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0">
             <div><div style="font-weight:500;margin-bottom:6px">Cached QuickBooks vendors (${qv.length})</div>
-              <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--color-border,var(--line));border-radius:var(--radius-sm);padding:6px;min-width:0">
+              <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:6px;min-width:0">
                 ${qv
                   .slice(0, 200)
                   .map(
@@ -13180,7 +13180,7 @@
               </div>
             </div>
             <div><div style="font-weight:500;margin-bottom:6px">TMS drivers (${dv.length})</div>
-              <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--color-border,var(--line));border-radius:var(--radius-sm);padding:6px;min-width:0">
+              <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:6px;min-width:0">
                 ${dv
                   .slice(0, 200)
                   .map(d => {
@@ -13201,7 +13201,7 @@
         await runQbVendorSearch();
         await runSamDriverSearch();
       } catch (e) {
-        el.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -13222,7 +13222,7 @@
             .join('') +
           '</ul>';
       } catch (e) {
-        el.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -13510,7 +13510,7 @@
           detail: e.message || String(e)
         });
         if (resultEl) {
-          resultEl.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text,#d93025)">${escapeHtml(
+          resultEl.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text)">${escapeHtml(
             e.message || String(e)
           )}</span>`;
         }
@@ -14262,7 +14262,7 @@
           <input id="assetStatusNote" class="qb-in maint-field" placeholder="Optional note (reason, ETA, shop name)" value="${escapeHtml(st.note || '')}" style="margin-top:8px" />
           ${st.updatedAt ? `<div class="mini-note" style="margin-top:4px">Updated ${escapeHtml(new Date(st.updatedAt).toLocaleString())}${st.updatedBy ? ` · ${escapeHtml(st.updatedBy)}` : ''}</div>` : ''}
         </div>
-        <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border,#edf1f7)">
+        <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border)">
           <span class="qb-l">Fleet roster</span>
           <p class="mini-note" style="margin:4px 0 8px">Retired units are hidden from this list, the live board, fuel unit pickers, and dispatch maintenance alerts. History and imports for that unit name are unchanged.</p>
           <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px">
@@ -14596,8 +14596,8 @@
       if (!el) return;
       const colors = {
         info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body)' },
-        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success,#065f46)' },
-        warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning,#92400e)' },
+        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success)' },
+        warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning)' },
         error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text,#991b1b)' }
       };
       const c = colors[tier] || colors.info;
@@ -14625,8 +14625,8 @@
       }
       const colors = {
         info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body)' },
-        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success,#065f46)' },
-        warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning,#92400e)' },
+        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success)' },
+        warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning)' },
         error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text,#991b1b)' }
       };
       const c = colors[tier] || colors.info;
@@ -14765,7 +14765,7 @@
               ${r.repairLocationType ? `<div class="mini-note">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
               ${r.accidentAtFault ? `<div class="mini-note">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
               ${r.qboPurchaseId ? `<div class="mini-note">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               ${formatPlannedWorkHtmlCard(r)}
               <div class="mini-note">${escapeHtml(r.notes || '')}</div>
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
@@ -14966,7 +14966,7 @@
         postedEl.innerHTML =
           `<div style="margin-bottom:8px"><strong>Posted to QuickBooks — bulk revert</strong></div>
           <p class="mini-note" style="margin:0 0 8px">Includes fuel expense posts. Requires admin login or ERP write secret (same as posting).</p>
-          <div style="max-height:240px;overflow:auto;border:1px solid var(--color-border,#edf1f7);border-radius:10px;padding:8px;background:var(--color-bg-card,#fafcff)">${rows}</div>
+          <div style="max-height:240px;overflow:auto;border:1px solid var(--color-border);border-radius:10px;padding:8px;background:var(--color-bg-card)">${rows}</div>
           ${more}
           <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="revertQboPostedBatchClient()">Revert selected in QuickBooks</button>`;
       }
@@ -16063,7 +16063,7 @@
         });
         const res = document.getElementById('upMaintResult');
         if (res) {
-          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text,#d93025)">${escapeHtml(
+          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text)">${escapeHtml(
             e.message || String(e)
           )}</span>`;
         }
@@ -16113,7 +16113,7 @@
         });
         const res = document.getElementById('upApResult');
         if (res) {
-          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text,#d93025)">${escapeHtml(
+          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text)">${escapeHtml(
             e.message || String(e)
           )}</span>`;
         }
@@ -16349,7 +16349,7 @@
             data.samsaraRefreshedAt || ''
           )}`;
         }
-        const notes = (data.notes || []).map(n => `<div class="mini-note" style="color:var(--color-semantic-warn-accent,#b45309)">${escapeHtml(n)}</div>`).join('');
+        const notes = (data.notes || []).map(n => `<div class="mini-note" style="color:var(--color-semantic-warn-accent)">${escapeHtml(n)}</div>`).join('');
         if (meta && notes) meta.innerHTML += notes;
         const rows = data.vehicles || [];
         const fk = `${data.samsaraRefreshedAt || ''}|${rows.length}|${y.latitude}|${y.longitude}`;
@@ -16364,7 +16364,7 @@
         if (meta) meta.textContent = 'Error: ' + (e.message || String(e));
         if (tb) {
           tb.innerHTML =
-            '<tr><td colspan="10" class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">Could not load idle snapshot. Check Samsara token and server logs.</td></tr>';
+            '<tr><td colspan="10" class="mini-note" style="color:var(--color-semantic-error)">Could not load idle snapshot. Check Samsara token and server logs.</td></tr>';
         }
         if (pagerHost) {
           pagerHost.innerHTML = '';
@@ -16955,7 +16955,7 @@
         return `
             <div class="record-card"${voided ? ' style="opacity:0.88"' : ''}>
               <div class="record-head">
-                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:var(--color-semantic-error,#b91c1c);font-weight:700">VOID</span>' : ''}</div>
+                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:var(--color-semantic-error);font-weight:700">VOID</span>' : ''}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
               <div class="mini-note"><strong>WO #</strong> ${escapeHtml(r.workOrderNumber || '—')} <span class="muted">(system)</span></div>
@@ -16970,7 +16970,7 @@
               <div class="mini-note">${lineSumm}</div>
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
               ${r.importBatchId ? `<div class="mini-note">Import batch: ${escapeHtml(r.importBatchId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/work-order/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 ${postBtn}
@@ -17004,7 +17004,7 @@
               ${r.detailMode === 'category' ? `<div class="mini-note">Category: ${escapeHtml(accountName(r.qboAccountId))}</div>` : ''}
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
               ${r.importBatchId ? `<div class="mini-note">Import batch: ${escapeHtml(r.importBatchId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/ap-transaction/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="recordApToQboWithConfirm('${r.id}')">Record to QuickBooks</button>
@@ -17641,7 +17641,7 @@
       } catch (e) {
         const tb = document.getElementById('settlementIndexBody');
         if (tb) {
-          tb.innerHTML = `<tr><td colspan="6" class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">${escapeHtml(e.message)}</td></tr>`;
+          tb.innerHTML = `<tr><td colspan="6" class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(e.message)}</td></tr>`;
         }
         if (pagerHost) {
           pagerHost.innerHTML = '';
