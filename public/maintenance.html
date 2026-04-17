@@ -1584,6 +1584,7 @@
                   <tbody id="trackingAssetsTableBody"></tbody>
                 </table>
               </div>
+              <div id="trackingAssetsPagerHost" hidden></div>
             </div>
           </div>
         </div>
@@ -1627,6 +1628,7 @@
               <tbody id="trackingDriversBody"></tbody>
             </table>
           </div>
+          <div id="trackingDriversPagerHost" hidden></div>
         </div>
 
         <div id="tr-idle" class="tracking-sub hidden">
@@ -2204,6 +2206,7 @@
                   </tbody>
                 </table>
               </div>
+              <div id="bpLogPagerHost" hidden></div>
             </div>
           </div>
         </div>
@@ -3725,6 +3728,12 @@
     let maintDashboardTablePager = { page: 1, pageSize: 15, filterKey: '' };
     /** Rule 23 — tracking board unit cards */
     let trackingListPager = { page: 1, pageSize: 12, filterKey: '' };
+    /** Rule 23 — tracking → All tracked assets table */
+    let trackingAssetsTablePager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — tracking → Drivers (HOS) table */
+    let trackingDriversPager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — accounting bill payment log */
+    let bpLogPager = { page: 1, pageSize: 15, filterKey: '' };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
