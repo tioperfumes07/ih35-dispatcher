@@ -401,7 +401,7 @@ body.erp-maintenance .qb-picker-item__meta {
   right: 0;
   width: min(520px, calc(100vw - 44px));
   height: 100vh;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   border-left: 1px solid var(--line);
   box-shadow: -8px 0 28px rgba(15, 23, 42, 0.12);
   z-index: 3000;
@@ -423,7 +423,7 @@ body.erp-maintenance .qb-picker-item__meta {
 .erp-drawer__body { padding: 12px 14px 18px; overflow: auto; }
 .erp-drawer__close {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   border-radius: 10px;
   padding: 6px 10px;
   cursor: pointer;
@@ -710,9 +710,9 @@ body.erp-maintenance .sidebar-collapse-btn {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  border: 1px solid #334155;
-  background: #1e293b;
-  color: #e2e8f0;
+  border: 1px solid var(--sidebar-border, #334155);
+  background: var(--nav-hover, #1e293b);
+  color: var(--nav-text, #e2e8f0);
   cursor: pointer;
   font-size: 18px;
   font-weight: 700;
@@ -720,7 +720,7 @@ body.erp-maintenance .sidebar-collapse-btn {
 }
 
 body.erp-maintenance .sidebar-collapse-btn:hover {
-  background: #334155;
+  filter: brightness(1.12);
 }
 
 body.erp-maintenance .sidebar-expand-fab {
@@ -775,7 +775,7 @@ body.erp-maintenance .nav-btn {
   display: block;
   text-align: left;
   background: transparent;
-  color: #fff;
+  color: var(--sidebar-text, #fff);
   border: 1px solid transparent;
   padding: 9px 11px;
   border-radius: var(--radius-sm);
@@ -791,7 +791,7 @@ body.erp-maintenance .nav-btn:hover {
 
 body.erp-maintenance .nav-btn.active {
   background: rgba(30, 41, 59, 0.95);
-  border-color: #334155;
+  border-color: var(--sidebar-border, #334155);
 }
 
 body.erp-maintenance .main {
@@ -971,7 +971,7 @@ body.erp-maintenance .panel-head {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  background: linear-gradient(180deg, #e8eef9 0%, #ffffff 100%);
+  background: linear-gradient(180deg, var(--color-bg-header, #e8eef9) 0%, var(--color-bg-card, #ffffff) 100%);
 }
 
 body.erp-maintenance .panel-title {
@@ -1007,7 +1007,7 @@ body.erp-maintenance .chips {
 
 body.erp-maintenance .chip {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   border-radius: 999px;
   padding: 7px 11px;
   cursor: pointer;
@@ -1032,7 +1032,7 @@ body.erp-maintenance .list {
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .list-row {
@@ -1046,7 +1046,7 @@ body.erp-maintenance .list-row:last-child {
 }
 
 body.erp-maintenance .list-row:hover {
-  background: #f8fafc;
+  background: var(--color-bg-hover, #f8fafc);
 }
 
 body.erp-maintenance .list-row.active {
@@ -1119,7 +1119,7 @@ body.erp-maintenance .unit-summary {
 }
 
 body.erp-maintenance .unit-box {
-  background: #f8fafc;
+  background: var(--color-bg-hover, #f8fafc);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 10px;
@@ -1140,7 +1140,7 @@ body.erp-maintenance .table-wrap {
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1157,7 +1157,7 @@ body.erp-maintenance .table-wrap td {
 }
 
 body.erp-maintenance .table-wrap th {
-  background: #f8fafc;
+  background: var(--color-bg-hover, #f8fafc);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -1182,7 +1182,7 @@ body.erp-maintenance td {
 }
 
 body.erp-maintenance th {
-  background: #f8fafc;
+  background: var(--color-bg-hover, #f8fafc);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -1195,7 +1195,7 @@ body.erp-maintenance .st-settlement-wrap {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   box-shadow: var(--shadow-sm);
 }
 
@@ -1206,28 +1206,28 @@ body.erp-maintenance table.st-settlement {
 }
 
 body.erp-maintenance table.st-settlement th {
-  background: linear-gradient(180deg, #1e3a5f 0%, #172554 100%);
-  color: #fff;
+  background: linear-gradient(180deg, var(--color-nav-bg, #1e3a5f) 0%, var(--color-nav-bg, #172554) 100%);
+  color: var(--color-bg-card, #fff);
   font-weight: 600;
   font-size: 11px;
   text-transform: none;
   letter-spacing: 0.03em;
-  border-bottom: 2px solid #0f172a;
+  border-bottom: 2px solid var(--sidebar-bg, #0f172a);
   padding: 10px 12px;
 }
 
 body.erp-maintenance table.st-settlement td {
   padding: 9px 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
   vertical-align: middle;
 }
 
 body.erp-maintenance table.st-settlement tbody tr:nth-child(even) td {
-  background: #f8fafc;
+  background: var(--color-bg-hover, #f8fafc);
 }
 
 body.erp-maintenance table.st-settlement tbody tr:hover td {
-  background: #f1f5f9;
+  background: var(--color-bg-header, #f1f5f9);
 }
 
 body.erp-maintenance table.st-settlement th.num,
