@@ -608,6 +608,15 @@
       <section id="section-maintenance" class="section active">
         <div class="maint-kpi-strip maint-kpi-strip--compact maint-section-card" aria-label="Fleet and maintenance snapshot">
           <div class="panel-body maint-kpi-strip__body">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+              <span class="mini-note" style="margin:0;font-weight:500">Workspace snapshot</span>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Strip counts">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">
+                  Quick counts for <strong>this maintenance tab</strong> (tracked assets, assigned units, past-due PM, QBO vendor cache). <strong>Full overview</strong> opens <strong>Home</strong> for dashboard cards and sync summary.
+                </span>
+              </span>
+            </div>
             <div class="maint-kpi-cards">
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Tracked assets</div><div class="maint-kpi-card__val" id="maintDashTrackedAssets">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Assigned / working</div><div class="maint-kpi-card__val" id="maintDashAssignedAssets">0</div></div>
@@ -1848,6 +1857,15 @@
         </div>
 
         <div id="acctBoardStrip" class="mr-acct-board maint-section-card" aria-label="Accounting overview">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--color-border,var(--line,#e2e8f0))">
+            <span class="panel-title" style="margin:0;font-size:17px">Accounting board</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="KPIs vs tabs">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Top <strong>KPIs</strong> summarize expenses, bills, sync alerts, and items needing review. <strong>Dash cards</strong> jump into the matching accounting tab; <strong>Connections</strong> below shows live Samsara / QuickBooks / API status for this workspace.
+              </span>
+            </span>
+          </div>
           <div class="acct-dash-kpis">
             <div class="acct-dash-kpi">
               <div class="acct-dash-kpi__label">Expenses this month</div>
@@ -2984,7 +3002,15 @@
       <section id="section-reports" class="section">
         <div class="erp-reports-shell">
           <header class="erp-reports-toolbar" role="banner">
-            <div class="erp-reports-toolbar__title">Reports</div>
+            <div class="erp-reports-toolbar__title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
+              <span>Reports</span>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How this hub works">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">
+                  Use the <strong>left sidebar</strong> or <strong>tile hub</strong> below to open a report tab. The search box filters <strong>link labels</strong> in both places. Each tab’s own <strong>Refresh</strong> / QBO actions live in the report body — this header is navigation only.
+                </span>
+              </span>
+            </div>
             <input
               type="search"
               class="qb-in erp-reports-toolbar__search"
@@ -5509,7 +5535,7 @@
         const part = escapeHtml(String(l.partRef || ''));
         const extra = [pos ? `Pos: ${pos}` : '', part ? `Part: ${part}` : ''].filter(Boolean).join(' · ');
         const extraHtml = extra ? `<div class="mini-note" style="margin-top:4px">${extra}</div>` : '';
-        return `<div style="padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fbfdff">
+        return `<div style="padding:8px 10px;border:1px solid var(--color-border,var(--line));border-radius:10px;background:#fbfdff">
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
             <div style="min-width:0;flex:1"><strong>${desc}</strong>${extraHtml}</div>
             <div style="white-space:nowrap;font-weight:500">${escapeHtml(amt)}</div>
@@ -5539,7 +5565,7 @@
           ? `<div style="display:grid;gap:8px;margin-top:10px">${lines.map(lineHtml).join('')}</div>`
           : `<div class="mini-note" style="margin-top:8px">No cost breakdown lines saved on this record.</div>`;
         const plannedBlock = formatPlannedWorkHtmlCard(r);
-        return `<div style="border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px;margin-bottom:10px">
+        return `<div style="border:1px solid var(--color-border,var(--line));border-radius:14px;background:var(--panel);padding:12px;margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
               <div style="min-width:260px;flex:1">
                 <div style="font-weight:500">${u} · ${d}</div>
@@ -12502,7 +12528,7 @@
           </div>
           <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0">
             <div><div style="font-weight:500;margin-bottom:6px">Cached QuickBooks vendors (${qv.length})</div>
-              <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px;min-width:0">
+              <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--color-border,var(--line));border-radius:var(--radius-sm);padding:6px;min-width:0">
                 ${qv
                   .slice(0, 200)
                   .map(
@@ -12515,7 +12541,7 @@
               </div>
             </div>
             <div><div style="font-weight:500;margin-bottom:6px">TMS drivers (${dv.length})</div>
-              <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px;min-width:0">
+              <div style="max-height:200px;overflow:auto;font-size:12px;border:1px solid var(--color-border,var(--line));border-radius:var(--radius-sm);padding:6px;min-width:0">
                 ${dv
                   .slice(0, 200)
                   .map(d => {
