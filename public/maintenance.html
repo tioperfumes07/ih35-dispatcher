@@ -9149,7 +9149,7 @@
             .join('')
         : '<p class="mini-note" style="margin:0">No integrity alerts for current filters.</p>';
       const dr = (payload.driverRiskAlerts || []).length
-        ? `<div style="margin:12px 0 6px;font-weight:500;font-size:13px;color:var(--color-text-primary,#0f172a)">Driver / damage expense signals</div>` +
+        ? `<div style="margin:12px 0 6px;font-weight:500;font-size:13px;color:var(--color-text-primary)">Driver / damage expense signals</div>` +
           (payload.driverRiskAlerts || [])
             .map(a => {
               const cls =
@@ -11888,7 +11888,7 @@
                 <td>${escapeHtml(fmtIso(e.startedAt))}</td>
                 <td>${escapeHtml(fmtIso(e.finishedAt))}</td>
                 <td>
-                  <select class="qb-in" style="font-size:12px;max-width:200px;${overdue ? 'border-color:var(--color-semantic-warn-accent,#f59e0b)' : ''}" data-shop-id="${id}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
+                  <select class="qb-in" style="font-size:12px;max-width:200px;${overdue ? 'border-color:var(--color-semantic-warn-accent)' : ''}" data-shop-id="${id}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
                     <option value="queued" ${status === 'queued' ? 'selected' : ''}>${statusLabel('queued')}</option>
                     <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>${statusLabel('in_progress')}</option>
                     <option value="finished" ${status === 'finished' ? 'selected' : ''}>${statusLabel('finished')}</option>
@@ -12563,7 +12563,7 @@
       const diff = Math.abs(lineSum - inv);
       if (diff < 0.02) {
         matchEl.innerHTML =
-          '<span style="color:var(--pill-green-text,#15803d);font-weight:500">✓</span> Invoice total matches line sum: $' + lineSum.toFixed(2);
+          '<span style="color:var(--pill-green-text);font-weight:500">✓</span> Invoice total matches line sum: $' + lineSum.toFixed(2);
         costEl.classList.add('cost-total-ok');
         costEl.classList.remove('cost-total-bad');
       } else {
@@ -14598,7 +14598,7 @@
         info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body)' },
         success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success)' },
         warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning)' },
-        error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text,#991b1b)' }
+        error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text)' }
       };
       const c = colors[tier] || colors.info;
       el.style.display = 'block';
@@ -14627,7 +14627,7 @@
         info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body)' },
         success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success)' },
         warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning)' },
-        error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text,#991b1b)' }
+        error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text)' }
       };
       const c = colors[tier] || colors.info;
       el.style.display = 'flex';
@@ -16950,8 +16950,8 @@
           posted || voided
             ? ''
             : `<button type="button" class="btn" onclick="voidWorkOrderClient(${JSON.stringify(r.id)})">Void</button>
-                <button type="button" class="btn" style="color:var(--btn-danger-text,#991b1b)" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete</button>`;
-        const voidDelPosted = !posted && voided ? `<button type="button" class="btn" style="color:var(--btn-danger-text,#991b1b)" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete draft</button>` : '';
+                <button type="button" class="btn" style="color:var(--btn-danger-text)" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete</button>`;
+        const voidDelPosted = !posted && voided ? `<button type="button" class="btn" style="color:var(--btn-danger-text)" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete draft</button>` : '';
         return `
             <div class="record-card"${voided ? ' style="opacity:0.88"' : ''}>
               <div class="record-head">

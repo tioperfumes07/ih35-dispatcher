@@ -421,6 +421,25 @@ body.erp-maintenance #section-uploads .panel-body {
   min-width: 0;
 }
 
+/* Rule 1: remaining maintenance modules — panels inherit min-width from shell flex. */
+body.erp-maintenance
+  :is(
+    #section-dashboard,
+    #section-fuel,
+    #section-safety,
+    #section-maintenance,
+    #section-tracking,
+    #section-catalog
+  ).section.active,
+body.erp-maintenance
+  :is(#section-dashboard, #section-fuel, #section-safety, #section-maintenance, #section-tracking, #section-catalog)
+  .panel,
+body.erp-maintenance
+  :is(#section-dashboard, #section-fuel, #section-safety, #section-maintenance, #section-tracking, #section-catalog)
+  .panel-body {
+  min-width: 0;
+}
+
 body.erp-maintenance .acct-dash-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
