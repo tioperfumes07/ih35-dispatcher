@@ -1,0 +1,77 @@
+/**
+ * IH35 ERP — Master spec design tokens (Rule 0).
+ * Loaded with app pages; does not replace legacy :root in app-theme.css — use these names for new UI.
+ * Spec referenced /src/styles/design-tokens.css; this repo uses public/css/.
+ */
+:root {
+  --color-bg-page: #f5f6f8;
+  --color-bg-card: #ffffff;
+  --color-bg-hover: #f8f9fa;
+  --color-bg-active: #e8f0fe;
+  --color-bg-header: #f1f3f4;
+  --color-border: #e0e3e8;
+  --color-border-input: #d0d4da;
+  --color-border-focus: #1967d2;
+  --color-text-primary: #1a1f36;
+  --color-text-body: #3c4257;
+  --color-text-label: #6b7385;
+  --color-text-placeholder: #a0a8b8;
+  --color-nav-bg: #16213e;
+  --color-nav-inactive: #7a85a0;
+
+  --btn-primary-save-bg: #1a7a3c;
+  --btn-primary-save-hover: #166832;
+  --btn-post-qbo-bg: #1557a0;
+  --btn-post-qbo-hover: #0f4480;
+  --btn-danger-border: #f5c6c2;
+  --btn-danger-text: #c5221f;
+  --btn-secondary-border: #d0d4da;
+  --btn-warning-bg: #b06000;
+  --btn-info-border: #c5d9f7;
+  --btn-info-text: #1557a0;
+  --btn-cancel-bg: #f8f9fa;
+
+  --pill-green-bg: #e6f4ea;
+  --pill-green-text: #137333;
+  --pill-red-bg: #fce8e6;
+  --pill-red-text: #c5221f;
+  --pill-yellow-bg: #fef7e0;
+  --pill-yellow-text: #8a5200;
+  --pill-gray-bg: #f1f3f4;
+  --pill-gray-text: #5f6368;
+  --pill-blue-bg: #e8f0fe;
+  --pill-blue-text: #1557a0;
+  --pill-purple-bg: #f0effe;
+  --pill-purple-text: #5e35b1;
+
+  --font-spec-sans: Inter, system-ui, -apple-system, sans-serif;
+  --font-xs: 10px;
+  --font-sm: 11px;
+  --font-base: 12px;
+  --font-md: 13px;
+  --font-lg: 14px;
+  --font-xl: 15px;
+  --font-2xl: 16px;
+
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 6px;
+  --space-md: 10px;
+  --space-lg: 14px;
+  --space-xl: 18px;
+  --space-2xl: 24px;
+
+  --input-height: 30px;
+  --button-height: 30px;
+  --topbar-height: 48px;
+  --tabbar-height: 38px;
+  --nav-width: 68px;
+  --sidebar-width: 216px;
+
+  --radius-input: 4px;
+  --radius-card: 8px;
+  --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.11);
+  --shadow-dropdown: 0 6px 24px rgba(0, 0, 0, 0.14);
+  --focus-ring: 0 0 0 2px rgba(25, 103, 210, 0.1);
+  --transition-fast: 0.15s ease;
+}

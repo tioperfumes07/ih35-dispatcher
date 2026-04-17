@@ -2,6 +2,7 @@
  * IH35 ERP — shared UI helpers:
  * FIX 10 — async button busy + table pager (`erpWithBusy`, `erpPagerRender`, …).
  * Rule 22 — inline “?” help panels (`erpHelpTipToggle`); style in `erp-master-spec-2026.css`.
+ * Rule 19 — toasts (`showToast`); host `#erpToastHost` + styles in `erp-master-spec-2026.css`.
  */
 (function (global) {
   'use strict';
@@ -173,4 +174,56 @@
   })();
 
   global.erpHelpTipToggle = erpHelpTipToggle;
+
+  /**
+   * Rule 19 — global toast. Uses `#erpToastHost` if present; otherwise creates one on `document.body`.
+   * @param {string} message
+   * @param {'success'|'error'|'warning'|'info'} [type]
+   */
+  function showToast(message, type) {
+    const text = String(message || '').trim();
+    if (!text) return;
+    let host = document.getElementById('erpToastHost');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'erpToastHost';
+      host.className = 'erp-toast-host';
+      host.setAttribute('aria-live', 'polite');
+      document.body.appendChild(host);
+    }
+    const row = document.createElement('div');
+    row.className = 'erp-toast';
+    const dot = document.createElement('span');
+    const t = String(type || 'success').toLowerCase();
+    dot.className =
+      'erp-toast__dot' +
+      (t === 'error' ? ' erp-toast__dot--err' : '') +
+      (t === 'warning' ? ' erp-toast__dot--warn' : '') +
+      (t === 'info' ? ' erp-toast__dot--info' : '');
+    const msg = document.createElement('div');
+    msg.className = 'erp-toast__msg';
+    msg.textContent = text;
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'erp-toast__x';
+    x.setAttribute('aria-label', 'Dismiss');
+    x.textContent = '\u00d7';
+    x.onclick = () => row.remove();
+    row.appendChild(dot);
+    row.appendChild(msg);
+    row.appendChild(x);
+    host.appendChild(row);
+    const timer = global.setTimeout(() => {
+      row.remove();
+    }, 5000);
+    row.addEventListener(
+      'mouseenter',
+      () => {
+        global.clearTimeout(timer);
+      },
+      { once: true }
+    );
+  }
+
+  global.showToast = showToast;
 })(typeof window !== 'undefined' ? window : globalThis);

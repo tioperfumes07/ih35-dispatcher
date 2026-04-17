@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bank &amp; expense matching — IH35</title>
+  <link rel="stylesheet" href="/css/design-tokens.css" />
   <link rel="stylesheet" href="/css/app-theme.css" />
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
   <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
@@ -39,6 +40,7 @@
   </style>
 </head>
 <body class="banking-page">
+  <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <script src="/js/erp-ui.js" defer></script>
@@ -188,10 +190,15 @@
               method: 'POST',
               body: JSON.stringify({ importBatchId, bankRowId, matchType, ref })
             });
-          if (window.erpWithBusy) await window.erpWithBusy(btn, run);
-          else await run();
-          btn.textContent = 'Linked';
-          btn.disabled = true;
+          try {
+            if (window.erpWithBusy) await window.erpWithBusy(btn, run);
+            else await run();
+            btn.textContent = 'Linked';
+            btn.disabled = true;
+            if (window.showToast) window.showToast('Match link saved.', 'success');
+          } catch (e) {
+            if (window.showToast) window.showToast(e.message || String(e), 'error');
+          }
         };
       });
     }
@@ -256,8 +263,13 @@
           )
           .join('');
       };
-      if (window.erpWithBusy) return window.erpWithBusy(btn, run);
-      return run();
+      try {
+        if (window.erpWithBusy) await window.erpWithBusy(btn, run);
+        else await run();
+        if (window.showToast) window.showToast('Banking snapshot loaded.', 'success');
+      } catch (e) {
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
     };
 
     document.getElementById('btnImport').onclick = async () => {
