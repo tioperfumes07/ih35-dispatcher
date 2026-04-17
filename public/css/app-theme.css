@@ -3331,6 +3331,29 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
     gap: 6px;
   }
 
+  /* Rule 1 — Safety / HOS: primary subtabs, filter rows, HOS table viewport on tablets. */
+  body.erp-maintenance #section-safety .erp-ops-subtabs-bar {
+    margin-bottom: 10px !important;
+    gap: 4px;
+  }
+
+  body.erp-maintenance #section-safety .erp-ops-subtabs-bar .subtab {
+    padding: 6px 11px;
+    font-size: 12px;
+  }
+
+  body.erp-maintenance #section-safety .mr-filter-bar.erp-ops-filter-bar {
+    gap: 6px;
+  }
+
+  body.erp-maintenance #section-safety .safety-table-wrap {
+    max-height: min(560px, 58vh);
+  }
+
+  body.erp-maintenance #section-safety .safety-active-grid {
+    gap: 10px;
+  }
+
   /* Rule 1 — Lists & catalogs: tighter sub-tab pills so the panel fits small laptops. */
   body.erp-maintenance #section-catalog .panel-body > .subtabs {
     gap: 6px;
