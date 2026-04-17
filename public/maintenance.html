@@ -2992,7 +2992,14 @@
                   </span>
                 </span>
               </div>
-              <div class="wo-line-grid" style="margin-bottom:10px">
+              <div
+                class="mr-filter-bar erp-ops-filter-bar"
+                role="group"
+                aria-label="Settlement trip lookup"
+                style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap"
+              >
+                <div class="mr-filter-bar__grow" style="min-width:0;flex:1 1 280px">
+                  <div class="wo-line-grid" style="margin-bottom:0">
                 <div style="grid-column:span 2">
                   <span class="qb-l">Load / invoice #</span>
                   <input id="settlementLoadInput" class="qb-in" placeholder="e.g. 13138" list="settlementLoadHints" />
@@ -3004,6 +3011,8 @@
                 <div>
                   <span class="qb-l">&nbsp;</span>
                   <button type="button" class="qb-btn-add" onclick="downloadSettlementCsv()">Download CSV</button>
+                </div>
+                  </div>
                 </div>
               </div>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
