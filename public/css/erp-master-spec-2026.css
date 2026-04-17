@@ -723,13 +723,28 @@ body.erp-maintenance .mr-filter-search:focus-visible {
 
 body.erp-maintenance .mr-filter-bar .qb-in:focus-visible,
 body.erp-maintenance .mr-filter-bar .in:focus-visible,
-body.erp-maintenance .mr-filter-bar select.in:focus-visible {
+body.erp-maintenance .mr-filter-bar select.in:focus-visible,
+body.fuel-board .mr-filter-bar .qb-in:focus-visible,
+body.fuel-board .mr-filter-bar .in:focus-visible,
+body.fuel-board .mr-filter-bar select.in:focus-visible,
+body.banking-page .mr-filter-bar .qb-in:focus-visible,
+body.banking-page .mr-filter-bar .in:focus-visible,
+body.banking-page .mr-filter-bar select.in:focus-visible,
+body.settings-page .mr-filter-bar .qb-in:focus-visible,
+body.settings-page .mr-filter-bar .in:focus-visible,
+body.settings-page .mr-filter-bar select.in:focus-visible {
   outline: 2px solid var(--color-border-focus, #1967d2);
   outline-offset: 2px;
 }
 
 body.erp-maintenance .mr-filter-bar .btn:focus-visible,
-body.erp-maintenance .mr-filter-bar button:focus-visible {
+body.erp-maintenance .mr-filter-bar button:focus-visible,
+body.fuel-board .mr-filter-bar .btn:focus-visible,
+body.fuel-board .mr-filter-bar button:focus-visible,
+body.banking-page .mr-filter-bar .btn:focus-visible,
+body.banking-page .mr-filter-bar button:focus-visible,
+body.settings-page .mr-filter-bar .btn:focus-visible,
+body.settings-page .mr-filter-bar button:focus-visible {
   outline: 2px solid var(--color-border-focus, #1967d2);
   outline-offset: 2px;
 }
