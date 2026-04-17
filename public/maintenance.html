@@ -996,7 +996,6 @@
               </div>
             </div>
 
-          </div>
         </div>
         </div>
 
@@ -1116,7 +1115,6 @@
                 <div id="unitHistory" class="card-list">No records yet.</div>
               </div>
             </div>
-        </div>
         </div>
         </div>
       </section>
@@ -3953,13 +3951,10 @@
       const id = map[tab] || map.record;
       const panel = document.getElementById(id);
       if (panel) panel.classList.add('active');
-      document.querySelectorAll('#maintMainSubtabs .maint-board-nav__btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      else {
-        const key = tab in map ? tab : 'record';
-        const b = document.querySelector(`#maintMainSubtabs [data-maint-main="${key}"]`);
-        if (b) b.classList.add('active');
-      }
+      const key = tab in map ? tab : 'record';
+      document.querySelectorAll('.maint-nav-tab[data-maint-main]').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-maint-main') === key);
+      });
       if (tab === 'record' && !o.skipModal) {
         requestAnimationFrame(() => openMaintWorkOrderModal());
       }
@@ -5970,35 +5965,51 @@
 
     function renderMaintAsideQbIssues() {
       const host = document.getElementById('maintAsideQbIssues');
-      if (!host) return;
+      const top = document.getElementById('maintTopQboIssuesInd');
+      const fill = html => {
+        if (host) host.innerHTML = html;
+      };
       const payload = __maintQboSyncPayloadCache;
       if (!payload || payload.ok === false) {
-        host.innerHTML = '<span class="mini-note">Sync unavailable.</span>';
+        fill('<span class="mini-note">Sync unavailable.</span>');
+        if (top) top.innerHTML = '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:#5f6368">QBO issues: —</span>';
         return;
       }
       const alerts = payload.alerts || [];
       if (!alerts.length) {
-        host.innerHTML = '<span class="mini-note">No open issues.</span>';
+        fill('<span class="mini-note">No open issues.</span>');
+        if (top) {
+          top.innerHTML =
+            '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:#5f6368">QBO: no open issues</span>';
+        }
         return;
       }
       const rank = { high: 0, medium: 1, low: 2 };
       const sorted = [...alerts].sort(
         (a, b) => (rank[a.severity] ?? 3) - (rank[b.severity] ?? 3)
       );
-      host.innerHTML = sorted
-        .slice(0, 5)
-        .map(a => {
-          const sev = a.severity === 'high' ? 'err' : a.severity === 'medium' ? 'med' : 'low';
-          return `<div class="maint-aside-issue maint-aside-issue--${sev}">${escapeHtml(
-            a.title || a.code || 'Notice'
-          )}</div>`;
-        })
-        .join('');
+      fill(
+        sorted
+          .slice(0, 5)
+          .map(a => {
+            const sev = a.severity === 'high' ? 'err' : a.severity === 'medium' ? 'med' : 'low';
+            return `<div class="maint-aside-issue maint-aside-issue--${sev}">${escapeHtml(
+              a.title || a.code || 'Notice'
+            )}</div>`;
+          })
+          .join('')
+      );
+      const errN = alerts.filter(a => a && a.severity === 'high').length || alerts.length;
+      if (top) {
+        top.innerHTML =
+          `<span class="maint-qbo-dot" aria-hidden="true"></span><span class="maint-qbo-issues-text">${errN} error${errN === 1 ? '' : 's'}</span>` +
+          `<button type="button" class="maint-qbo-issues-view" onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})">View</button>`;
+      }
     }
 
     function renderMaintAsideWoSummary() {
       const host = document.getElementById('maintAsideWoSummary');
-      if (!host) return;
+      const bar = document.getElementById('maintWoSummaryBar');
       const unit = selectedUnit || '—';
       const wo = (document.getElementById('recordWorkOrderInput')?.value || '').trim() || '—';
       const costRaw = document.getElementById('costInput')?.value;
@@ -6008,11 +6019,19 @@
           ? '$' + costNum.toFixed(2)
           : '—';
       const loc = (document.getElementById('repairLocationSearch')?.value || '').trim() || '—';
-      host.innerHTML = `
-        <div class="maint-aside-kv"><span>Unit</span><strong>${escapeHtml(unit)}</strong></div>
-        <div class="maint-aside-kv"><span>WO #</span><strong>${escapeHtml(wo)}</strong></div>
-        <div class="maint-aside-kv"><span>Total</span><strong>${escapeHtml(cost)}</strong></div>
-        <div class="maint-aside-kv"><span>Location</span><strong>${escapeHtml(loc)}</strong></div>`;
+      const inner = `
+        <span class="kv"><span class="kv-l">Unit:</span><span class="kv-v">${escapeHtml(unit)}</span></span>
+        <span class="kv"><span class="kv-l">WO #:</span><span class="kv-v">${escapeHtml(wo)}</span></span>
+        <span class="kv"><span class="kv-l">Total:</span><span class="kv-v">${escapeHtml(cost)}</span></span>
+        <span class="kv"><span class="kv-l">Location:</span><span class="kv-v">${escapeHtml(loc)}</span></span>`;
+      if (host) host.innerHTML = inner;
+      if (bar) {
+        if (!selectedUnit) bar.classList.add('hidden');
+        else {
+          bar.classList.remove('hidden');
+          bar.innerHTML = inner;
+        }
+      }
     }
 
     function openMaintAssetStatusPanel() {
@@ -9307,18 +9326,16 @@
     // Dispatch board removed (maintenance/safety/diesel focus).
 
     function renderMaintenanceCategoryChips() {
-      const host = document.getElementById('assetCategoryChips');
-      const title = document.getElementById('assetCategoryTitle');
+      const host = document.getElementById('maintActionFleetPills') || document.getElementById('assetCategoryChips');
       if (!host) return;
       const cats = ['Trucks', 'Refrigerated Vans', 'Flatbeds', 'Dry Vans', 'Company Vehicles'];
+      const short = { Trucks: 'Trucks', 'Refrigerated Vans': 'Ref. Vans', Flatbeds: 'Flatbeds', 'Dry Vans': 'Dry Vans', 'Company Vehicles': 'Company' };
       host.innerHTML = cats
-        .map(
-          c => `
-        <button type="button" class="chip ${activeAssetCategory === c ? 'active' : ''}" onclick="setAssetCategory('${c.replace(/'/g, "\\'")}')">${escapeHtml(c)}</button>
-      `
-        )
+        .map(c => {
+          const lab = short[c] || c;
+          return `<button type="button" class="maint-fleet-pill ${activeAssetCategory === c ? 'active' : ''}" onclick="setAssetCategory('${c.replace(/'/g, "\\'")}')">${escapeHtml(lab)}</button>`;
+        })
         .join('');
-      if (title) title.textContent = activeAssetCategory;
     }
 
     function setAssetCategory(cat) {
@@ -9916,13 +9933,15 @@
           const soon = rows.filter(r => r.status === 'due soon').length;
 
           return `
-            <div class="list-row ${selectedUnit === v.name ? 'active' : ''}" onclick="selectUnit('${v.name}')">
+            <div class="list-row maint-unit-list-row ${selectedUnit === v.name ? 'active' : ''}" onclick="selectUnit('${v.name}')">
               <div class="list-title">${escapeHtml(v.name)}</div>
               <div class="list-sub">
                 ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}<br>
                 Mileage: ${v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : 'N/A'}<br>
                 Fuel: ${v.fuelPercent != null ? `${Math.round(v.fuelPercent)}%` : 'N/A'}<br>
-                Past due: ${past} | Due soon: ${soon}
+                <span class="maint-unit-pd ${past > 0 ? 'maint-unit-pd--past' : ''}">Past due: ${past}</span>
+                <span class="maint-unit-pd"> · </span>
+                <span class="maint-unit-pd ${soon > 0 ? 'maint-unit-pd--soon' : ''}">Due soon: ${soon}</span>
               </div>
             </div>
           `;
@@ -11581,7 +11600,12 @@
 
     function renderSelectedUnit() {
       const v = vehicles.find(x => x.name === selectedUnit);
+      const ph = document.getElementById('maintWoNoUnitPlaceholder');
+      const fa = document.getElementById('maintWoFormArea');
       if (!v) {
+        ph?.classList.remove('hidden');
+        fa?.classList.add('hidden');
+        document.getElementById('maintWoSummaryBar')?.classList.add('hidden');
         document.getElementById('selectedUnitInfo').innerHTML = '';
         const cardEl = document.getElementById('maintAssetHeaderCard');
         if (cardEl) {
@@ -11593,8 +11617,14 @@
         document.getElementById('maintUnitSummaryStrip')?.classList.add('hidden');
         syncMaintWorkOrderHeader();
         renderRepairLocationChips();
+        renderMaintAsideWoSummary();
         return;
       }
+      ph?.classList.add('hidden');
+      fa?.classList.remove('hidden');
+      fa?.classList.remove('maint-wo-form-animate');
+      void fa?.offsetWidth;
+      fa?.classList.add('maint-wo-form-animate');
 
       closeMaintAssetStatusPanel();
 
