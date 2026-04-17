@@ -780,7 +780,15 @@
                 <div class="form-stack maint-form-stack">
                   <button type="button" class="maint-form-help-btn" onclick="document.getElementById('maintFormHelpDrawer').classList.toggle('hidden')" title="Field help">?</button>
                   <div id="maintFormHelpDrawer" class="maint-form-help-drawer hidden" role="region" aria-label="Form help">
-                    <p class="mini-note" style="margin:0 0 8px">Service field merges catalog, history, and presets. Cost lines post to QuickBooks from each row’s account or item. Lock invoice total only if you enter the header total manually.</p>
+                    <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 8px">
+                      <p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385);max-width:44ch">Service field merges catalog, history, and presets.</p>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines & invoice total">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          Each cost line posts to <strong>QuickBooks</strong> from that row’s account or item. Use <strong>Lock invoice total</strong> only when you typed the header total yourself and do not want line items to re-total it.
+                        </span>
+                      </span>
+                    </div>
                     <button type="button" class="btn btn--small" onclick="document.getElementById('maintFormHelpDrawer').classList.add('hidden')">Close help</button>
                   </div>
 

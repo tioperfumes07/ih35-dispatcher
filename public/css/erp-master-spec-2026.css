@@ -1421,9 +1421,9 @@ body.erp-maintenance .erp-reports-roadmap {
   margin: 0 16px 12px;
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid #fde68a;
-  background: #fffbeb;
-  color: #92400e;
+  border: 1px solid var(--color-semantic-warning, #fde68a);
+  background: var(--pill-yellow-bg, #fffbeb);
+  color: var(--pill-yellow-text, #92400e);
   max-width: min(96ch, 100%);
   line-height: 1.55;
   font-size: 13px;
@@ -1444,6 +1444,16 @@ body.erp-maintenance .erp-reports-roadmap {
 
   body.erp-maintenance .erp-reports-main {
     gap: 8px;
+  }
+
+  /* Rule 1 — tablet / narrow laptop: trim main column + top bar padding (icon rail already compacts ≤1100px). */
+  body.erp-maintenance .erp-main-body {
+    padding: 14px 12px;
+  }
+
+  body.erp-maintenance .erp-topbar.topbar {
+    padding: 8px 12px;
+    gap: 10px;
   }
 }
 

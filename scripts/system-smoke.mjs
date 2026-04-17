@@ -32,7 +32,8 @@ const HTML_PAGES = [
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
   ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],
   ['/banking.html', ['banking-page', 'erpConnectionStrip']],
-  ['/settings.html', ['settings-page', 'erpConnectionStrip']]
+  ['/settings.html', ['settings-page', 'erpConnectionStrip']],
+  ['/tracking.html', ['maintenance.html#tracking']]
 ];
 
 const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 8000));
