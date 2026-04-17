@@ -5055,42 +5055,6 @@
       return map;
     }
 
-    function erpHelpTipToggle(ev) {
-      if (!ev) return;
-      ev.stopPropagation();
-      const btn = ev.currentTarget;
-      const wrap = btn && btn.closest('.erp-help-tip');
-      const panel = wrap && wrap.querySelector('.erp-help-tip__panel');
-      if (!panel) return;
-      const willOpen = !panel.classList.contains('is-open');
-      document.querySelectorAll('.erp-help-tip__panel.is-open').forEach(p => {
-        p.classList.remove('is-open');
-        const w = p.closest('.erp-help-tip');
-        const b = w && w.querySelector('.erp-help-tip__btn');
-        if (b) b.setAttribute('aria-expanded', 'false');
-      });
-      if (willOpen) {
-        panel.classList.add('is-open');
-        btn.setAttribute('aria-expanded', 'true');
-      } else {
-        btn.setAttribute('aria-expanded', 'false');
-      }
-    }
-
-    (function bindErpHelpTipOutsideClose() {
-      if (window.__erpHelpTipOutsideClose) return;
-      window.__erpHelpTipOutsideClose = true;
-      document.addEventListener('click', function (ev) {
-        if (ev.target.closest('.erp-help-tip')) return;
-        document.querySelectorAll('.erp-help-tip__panel.is-open').forEach(p => {
-          p.classList.remove('is-open');
-          const w = p.closest('.erp-help-tip');
-          const b = w && w.querySelector('.erp-help-tip__btn');
-          if (b) b.setAttribute('aria-expanded', 'false');
-        });
-      });
-    })();
-
     function erpToggleSbGroup(ev, module, gid) {
       if (ev) ev.preventDefault();
       const head = ev && ev.currentTarget;

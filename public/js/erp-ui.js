@@ -1,6 +1,7 @@
 /**
- * IH35 ERP — shared UI helpers (FIX 10: async button busy + table pager).
- * Include after DOM-ready scripts that call these, or before inline handlers that reference window.*.
+ * IH35 ERP — shared UI helpers:
+ * FIX 10 — async button busy + table pager (`erpWithBusy`, `erpPagerRender`, …).
+ * Rule 22 — inline “?” help panels (`erpHelpTipToggle`); style in `erp-master-spec-2026.css`.
  */
 (function (global) {
   'use strict';
@@ -121,4 +122,55 @@
   global.erpSetButtonBusy = erpSetButtonBusy;
   global.erpWithBusy = erpWithBusy;
   global.erpPagerRender = erpPagerRender;
+
+  /** Rule 22 — toggle one inline help panel; closes others. */
+  function erpHelpTipToggle(ev) {
+    if (!ev) return;
+    ev.stopPropagation();
+    const btn = ev.currentTarget;
+    const wrap = btn && btn.closest('.erp-help-tip');
+    const panel = wrap && wrap.querySelector('.erp-help-tip__panel');
+    if (!panel) return;
+    const willOpen = !panel.classList.contains('is-open');
+    document.querySelectorAll('.erp-help-tip__panel.is-open').forEach(p => {
+      p.classList.remove('is-open');
+      const w = p.closest('.erp-help-tip');
+      const b = w && w.querySelector('.erp-help-tip__btn');
+      if (b) b.setAttribute('aria-expanded', 'false');
+    });
+    if (willOpen) {
+      panel.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
+    } else {
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function closeAllErpHelpTips(returnFocusBtn) {
+    document.querySelectorAll('.erp-help-tip__panel.is-open').forEach(p => {
+      p.classList.remove('is-open');
+      const w = p.closest('.erp-help-tip');
+      const b = w && w.querySelector('.erp-help-tip__btn');
+      if (b) b.setAttribute('aria-expanded', 'false');
+      if (returnFocusBtn && b && typeof b.focus === 'function') b.focus();
+    });
+  }
+
+  (function bindErpHelpTipDocumentListeners() {
+    if (global.__erpHelpTipUiBound) return;
+    global.__erpHelpTipUiBound = true;
+    document.addEventListener('click', function (ev) {
+      if (ev.target.closest && ev.target.closest('.erp-help-tip')) return;
+      closeAllErpHelpTips(false);
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Escape') return;
+      const open = document.querySelector('.erp-help-tip__panel.is-open');
+      if (!open) return;
+      closeAllErpHelpTips(true);
+      ev.preventDefault();
+    });
+  })();
+
+  global.erpHelpTipToggle = erpHelpTipToggle;
 })(typeof window !== 'undefined' ? window : globalThis);

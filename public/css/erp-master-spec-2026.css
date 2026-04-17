@@ -1,7 +1,8 @@
 /**
  * IH35 ERP — Master redesign spec (Rules 0–22; maintenance is the reference surface).
- * Rules 0–1, 3–4, 9 (reports layout + search + roadmap), 10–11, 13–16, 18, 22: maintenance.html + this file.
- * FIX 10 (pagination + async button busy): `/js/erp-ui.js` + classes `.erp-pager`, `.erp-btn--busy` below (all ERP surfaces).
+ * Rules 0–1, 3–4, 9 (reports layout + search + roadmap), 10–11, 13–16, 18: maintenance.html + this file (mostly `body.erp-maintenance …`).
+ * FIX 10 (pagination + async button busy): `/js/erp-ui.js` + `.erp-pager`, `.erp-btn--busy` — global; used on maintenance, dispatch, fuel, banking, settings.
+ * Rule 22 (inline “?” help): `.erp-help-tip*` — global; `erpHelpTipToggle` + click/Escape close in `/js/erp-ui.js` (maintenance + banking, etc.).
  * Rule 2: QBO-style wording — maintenance + dispatch (dispatch sidebar tip: load # ↔ invoice).
  * Rules 5–8, 12, 17, 19–21: dialog shells, ops density, KPI/parts/QBO chrome — erp-master-redesign.css + maintenance; dispatch gets flat chrome below.
  * Load order: app-theme → erp-master-redesign → this file (maintenance, dispatch, fuel, banking, settings).
@@ -754,16 +755,16 @@ body.erp-maintenance .mr-filter-drop__hint {
 }
 
 /* =============================================================================
-   Rule 22 — Inline “?” help (tooltip panel)
+   Rule 22 — Inline “?” help (tooltip panel) — global classnames (any ERP page)
    ============================================================================= */
-body.erp-maintenance .erp-help-tip {
+.erp-help-tip {
   position: relative;
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
 }
 
-body.erp-maintenance .erp-help-tip__btn {
+.erp-help-tip__btn {
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -781,12 +782,17 @@ body.erp-maintenance .erp-help-tip__btn {
   font-family: inherit;
 }
 
-body.erp-maintenance .erp-help-tip__btn:hover {
+.erp-help-tip__btn:hover {
   background: #fff;
   border-color: #c4c7c5;
 }
 
-body.erp-maintenance .erp-help-tip__panel {
+.erp-help-tip__btn:focus-visible {
+  outline: 2px solid #1967d2;
+  outline-offset: 2px;
+}
+
+.erp-help-tip__panel {
   display: none;
   position: absolute;
   left: 0;
@@ -803,7 +809,7 @@ body.erp-maintenance .erp-help-tip__panel {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-body.erp-maintenance .erp-help-tip__panel.is-open {
+.erp-help-tip__panel.is-open {
   display: block;
 }
 
