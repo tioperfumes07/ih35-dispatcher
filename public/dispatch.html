@@ -360,9 +360,9 @@
               <a class="erp-topbar__link" href="/maintenance.html">ERP</a>
               <a class="erp-topbar__link" href="/maintenance.html#reports-settlement">Settlement</a>
               <button type="button" class="erp-btn-primary" onclick="openBookModal()">Book new load</button>
-              <button type="button" class="secondary" onclick="refreshDispatchBoard()" title="Reload loads and fleet data">Refresh</button>
+              <button type="button" class="secondary" id="dispatchBtnRefreshBoard" onclick="refreshDispatchBoard(true)" title="Reload loads and fleet data">Refresh</button>
               <button type="button" class="secondary" onclick="window.print()" title="Print this screen (loads or fleet tab)">Print view</button>
-              <button type="button" class="secondary" onclick="refreshQboCatalog()" title="Reload vendors, items, and accounts from QuickBooks">Sync QuickBooks catalog</button>
+              <button type="button" class="secondary" id="dispatchBtnSyncQboCatalog" onclick="refreshQboCatalog()" title="Reload vendors, items, and accounts from QuickBooks">Sync QuickBooks catalog</button>
               <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:200px"></span>
             </div>
           </header>
@@ -387,8 +387,14 @@
     <button type="button" class="tab" data-tab="fleet">Fleet</button>
           </div>
   <div class="wrap dispatch-board-wrap">
-    <p class="muted dispatch-board-intro" style="margin:0 0 12px;font-size:12px;line-height:1.5">
-      Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver or carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> means status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QuickBooks</strong> to clear them from that list. Each leg is its own load #. Optional <strong>customer W/O #</strong> on the load is for the broker or customer reference (maintenance work orders can still use the load or invoice # for shop work).
+    <p class="muted dispatch-board-intro dispatch-board-intro--compact" style="margin:0 0 12px;font-size:12px;line-height:1.5;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+      <span>Book loads here — load # is the <strong>QuickBooks invoice #</strong>. Use tabs, search, and row actions for status, invoices, and documents.</span>
+      <span class="erp-help-tip">
+        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How dispatch maps to QuickBooks">?</button>
+        <span class="erp-help-tip__panel" role="tooltip">
+          Dispatcher books a <strong>load</strong> (load # = <strong>customer invoice #</strong> in QuickBooks). Assign customer, driver or carrier, revenue and extra charges, stops and dates, upload rate confirmation; miles can use PC*Miler. Loads stay on <strong>Open loads</strong> until the trip is done, then set status to <strong>delivered</strong> (or <strong>unsettled</strong> for your own workflow). <strong>Unbilled loads</strong> means status <strong>delivered</strong> and not yet linked to a QuickBooks invoice — use <strong>Create in QuickBooks</strong> to clear them from that list. Each leg is its own load #. Optional <strong>customer W/O #</strong> on the load is for the broker or customer reference (maintenance work orders can still use the load or invoice # for shop work).
+        </span>
+      </span>
     </p>
     <div id="msg"></div>
     <div id="viewLoads">
@@ -429,7 +435,15 @@
       </table>
       <p class="muted" style="margin-top:10px">These are the assets returned by the Samsara Fleet API. Use the same unit names when assigning a truck on a load; the app will match or create a TMS truck row.</p>
     </div>
-    <p class="muted" style="margin-top:12px">Stops: type a location and pick autocomplete. <strong>Auto miles</strong>: practical miles use <strong>PC*Miler</strong> when <code>PCMILER_API_KEY</code> is set on the server; otherwise OSRM + straight-line “shortest.”</p>
+    <p class="muted" style="margin-top:12px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+      <span>Stops use autocomplete. <strong>Auto miles</strong> uses PC*Miler when configured.</span>
+      <span class="erp-help-tip">
+        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Miles routing">?</button>
+        <span class="erp-help-tip__panel" role="tooltip">
+          Type a location and pick from autocomplete. <strong>Auto miles</strong>: practical miles use <strong>PC*Miler</strong> when <code>PCMILER_API_KEY</code> is set on the server; otherwise OSRM plus straight-line “shortest” heuristics.
+        </span>
+      </span>
+    </p>
   </div>
         </div>
       </main>
@@ -450,7 +464,7 @@
             <label class="lbl">Rate confirmation PDF (autofill)</label>
             <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
               <input type="file" accept="application/pdf" id="rateConPdfInput" />
-              <button type="button" class="btn btn-ghost" onclick="applyRateConPdf()">Extract &amp; fill form</button>
+              <button type="button" class="btn btn-ghost" id="dispatchBtnRateConPdf" onclick="dispatchApplyRateConPdf()">Extract &amp; fill form</button>
               <span id="rateConPdfStatus" class="muted" style="font-size:12px"></span>
             </div>
             <p class="muted" style="margin:6px 0 0;font-size:11px">
@@ -629,7 +643,7 @@
               <option value="delivery">Delivery / POD</option>
               <option value="other">Other</option>
             </select>
-            <button type="button" class="btn btn-primary" onclick="uploadLoadDoc()">Upload</button>
+            <button type="button" class="btn btn-primary" id="dispatchBtnUploadDoc" onclick="uploadLoadDoc()">Upload</button>
           </div>
         </div>
         <ul id="loadDocsList" style="list-style:none;padding:0;margin:0"></ul>

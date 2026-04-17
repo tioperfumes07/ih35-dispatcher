@@ -1554,3 +1554,15 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
 .erp-toast__x:hover {
   color: #1a1f36;
 }
+
+/* Dispatch — align main column with shared design tokens (works with erp-master-redesign dispatch rules) */
+body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body {
+  background: var(--color-bg-page, var(--bg, #f5f6f8));
+}
+body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
+  padding: 16px 18px 28px;
+  box-sizing: border-box;
+}
+body.dispatch-page #dispatchApp .dispatch-board-intro--compact {
+  max-width: min(72ch, 100%);
+}
