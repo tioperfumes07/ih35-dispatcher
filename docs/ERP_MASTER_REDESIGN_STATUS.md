@@ -25,7 +25,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 0 — Design system tokens
 
-- **Partial (this pass):** Added `public/css/design-tokens.css` with spec-aligned **additional** `:root` variables (`--color-*`, `--btn-*`, `--pill-*`, spacing, dimensions). Linked **before** `app-theme.css` on maintenance, dispatch, fuel, banking, settings.
+- **Partial (this pass):** Added `public/css/design-tokens.css` with spec-aligned **additional** `:root` variables (`--color-*`, `--btn-*`, `--pill-*`, spacing, dimensions). Linked **before** `app-theme.css` on maintenance, dispatch, fuel, banking, settings. **Satellite page shells** use **`background: var(--color-bg-page, var(--bg))`** on **banking**, **settings**, and **fuel** (company hub stays dark **`--bg`** only).
 - **Not done:** Full migration of all components from legacy `--bg`, `--panel`, etc. to `--color-*` (would be a large visual sweep).
 - **Spec path:** Use `public/css/design-tokens.css`, not `/src/styles/`.
 
@@ -90,7 +90,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 19 — Toasts
 
-- **Done (this pass):** Global **`.erp-toast-host` / `.erp-toast*`** styles in `erp-master-spec-2026.css`. **`window.showToast(message, type)`** in `erp-ui.js` (`success` | `error` | `warning` | `info`). Host div added to banking, settings, dispatch, fuel. Maintenance keeps existing **`showErpToast`** (inline) for current call sites; new pages can use **`showToast`**.
+- **Done (this pass):** Global **`.erp-toast-host` / `.erp-toast*`** styles in `erp-master-spec-2026.css`. **`window.showToast(message, type)`** and **`window.erpNotify(message, type?)`** in `erp-ui.js` (`success` | `error` | `warning` | `info`; `erpNotify` infers type when omitted and replaces legacy **`alert()`** across maintenance, fuel, banking, settings, dispatch). Host div on banking, settings, dispatch, fuel, maintenance, and company **`index.html`** (hub loads **`erp-ui.js`** deferred for future use).
 
 ### Rule 20 — Button loading
 
@@ -102,7 +102,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 22 — Instruction cleanup → “?” tips
 
-- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Maintenance still contains many inline help tips; **not every long paragraph** has been converted in one pass.
+- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** accident-type WO **Cost breakdown** paragraph folded into a short line + **`erp-help-tip`** (catalog / QBO line detail in panel). Many other long **`mini-note`** blocks remain for future passes.
 
 ### Rule 23 — Pagination
 
@@ -110,7 +110,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 24 — Connection verification on load
 
-- **Partial:** Maintenance loads QBO status / sync alerts in places; universal “persistent yellow banner for Samsara + QBO on every page” — **not fully implemented** here.
+- **Partial:** Maintenance loads QBO status / sync alerts in the **sidebar** and embed bars. **`erpMountConnectionStrip(hostId)`** in **`erp-ui.js`** + **`.erp-connection-strip*`** in **`erp-master-spec-2026.css`** show a **read-only QuickBooks status** line on **banking**, **settings**, **fuel**, and **company hub** (`index.html`) after load. Universal yellow **Samsara + QBO** banner on every surface — still **not** fully unified with maintenance’s richer status text.
 
 ---
 
@@ -124,6 +124,8 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 6. **`showErpToast`** in maintenance delegates to **`window.showToast`** when present (single toast implementation).
 7. **Banking / settings / fuel** async flows call **`showToast`** on success and error (and banking uses **warning/info** where appropriate).
 8. **`dispatch.html`** — Rule 22 compact intro + help tips; token-backed main column tweaks in **`erp-master-spec-2026.css`**; **`erpWithBusy`** on refresh, QBO catalog sync (toolbar), save load, doc upload, rate-con PDF extract, auto miles, docs-modal QBO sync, **board row** QBO buttons (invoice + attachments), and **quick-add** truck/trailer; status changes disable the row `<select>` while saving; **`showToast`** on those outcomes plus QBO invoice / attachment sync, **`patchStatus`**, and **openEditLoad** load failures; **`showMsg`** escapes text; manual refresh passes **`loadTab(true)`** so failures surface as toasts while the timer refresh stays quiet.
+9. **`erp-ui.js` — `erpNotify(message, type?)`:** toast-first replacement for legacy **`alert()`** across **`maintenance.html`**, **`fuel.html`**, **`banking.html`**, **`settings.html`**, **`dispatch.html`** (with heuristic type when `type` omitted). **`index.html`** — shared **`design-tokens`**, **`erp-master-spec-2026`** (toasts), **`#erpToastHost`**, **`erp-ui.js`** for consistency if hub gains scripts later.
+10. **Rule 24 + Rule 0 (continuation):** **`erpMountConnectionStrip`** + **`#erpConnectionStrip`** on **banking**, **settings**, **fuel**, **index**; token-backed **`--color-bg-page`** body background on banking/settings/fuel. **Rule 22:** maintenance **accident** WO inline help → **`erp-help-tip`**.
 
 ---
 

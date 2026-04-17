@@ -58,16 +58,20 @@
     }
     footer strong { color: #cbd5f5; }
   </style>
+  <link rel="stylesheet" href="/css/design-tokens.css" />
   <link rel="stylesheet" href="/css/app-theme.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
+  <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
 </head>
 <body class="hub-page">
+  <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <header>
     <h1>IH35 ERP</h1>
     <p>Choose a workspace. Maintenance, fuel, safety, and accounting share the ERP shell; loads and billing use the full-screen dispatch board.</p>
   </header>
+  <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
   <div class="grid">
     <a class="card" href="/dispatch.html">
       <span class="card-tag tag-dispatch">Loads &amp; TMS</span>
@@ -115,5 +119,9 @@
   <footer>
     <strong>Mileage (practical vs shortest):</strong> The loads board “Auto miles” feature uses road routing (OSRM) for <strong>practical</strong> miles and a straight-line approximation for <strong>shortest</strong>. For settlement-grade practical/short pairs like Always Track + PC*Miler, plan to connect <strong>Trimble PCMiler / Maps</strong> (commercial API). Set <code>PCMILER_API_KEY</code> or vendor-specific env vars when you license it—we can swap the calculator behind the same button later.
   </footer>
+  <script src="/js/erp-ui.js"></script>
+  <script>
+    if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
+  </script>
 </body>
 </html>

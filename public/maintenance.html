@@ -941,8 +941,14 @@
                       <input id="accidentReportNumberInput" class="qb-in maint-field" placeholder="Accident report #">
                     </div>
                     <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
-                    <p class="mini-note" style="margin:8px 0 0;max-width:72ch;line-height:1.45">
-                      This visit is still saved as an <strong>accident</strong> record. Add each part, tire, fluid, and labor line under <strong>Cost breakdown</strong> below — each row uses the same <strong>maintenance / repair service catalog</strong> (datalist), optional <strong>multi-position part</strong> (tires, batteries, brakes, etc.), and per-line QuickBooks account or item. The “Service / maintenance” fields above stay the summary label for the visit (default <em>Accident Report</em>); line descriptions are what you want on the invoice (e.g. radiator, steer tires, body labor).
+                    <p class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;max-width:72ch;line-height:1.45">
+                      <span>Accident visit: add part/labor lines under <strong>Cost breakdown</strong>; the service fields above stay the summary label for the visit.</span>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accident costing &amp; QuickBooks lines">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          This visit is still saved as an <strong>accident</strong> record. Add each part, tire, fluid, and labor line under <strong>Cost breakdown</strong> below — each row uses the same <strong>maintenance / repair service catalog</strong> (datalist), optional <strong>multi-position part</strong> (tires, batteries, brakes, etc.), and per-line QuickBooks account or item. The “Service / maintenance” fields above stay the summary label for the visit (default <em>Accident Report</em>); line descriptions are what you want on the invoice (e.g. radiator, steer tires, body labor).
+                        </span>
+                      </span>
                     </p>
                     <p class="mini-note" style="margin:4px 0 0">
                       <button type="button" class="qb-btn-add" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Catalogs → Service types</button>
@@ -4349,7 +4355,7 @@
 
     async function maintDraftWorkOrderPdf() {
       if (!selectedUnit) {
-        alert('Select an asset first.');
+        erpNotify('Select an asset first.');
         return;
       }
       const hint = document.getElementById('maintSaveHint');
@@ -4395,7 +4401,7 @@
         maintToneSaveHint(hint, 'Draft PDF opened.', null);
       } catch (e) {
         if (hint) maintToneSaveHint(hint, e.message || String(e), 'error');
-        else alert(e.message || String(e));
+        else erpNotify(e.message || String(e));
       }
     }
 
@@ -4853,7 +4859,7 @@
         document.getElementById('globalSearchInput')?.blur?.();
         r.run && r.run();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -5822,7 +5828,7 @@
       let tabId = id;
       let tabBtn = btn;
       if (tabId === 'rep-settlement' && !tmsEnabled) {
-        alert('Settlement / P&L by load needs the TMS database (Postgres). Configure DATABASE_URL and run migrations.');
+        erpNotify('Settlement / P&L by load needs the TMS database (Postgres). Configure DATABASE_URL and run migrations.');
         tabId = 'rep-overview';
         tabBtn = document.querySelector('#section-reports .subtab[onclick*="rep-overview"]');
       }
@@ -6738,7 +6744,7 @@
         renderDashboardHome();
         if (activeSection === 'reports') loadReportsData();
       } catch (e) {
-        alert('QBO refresh failed: ' + e.message);
+        erpNotify('QBO refresh failed: ' + e.message);
       }
     }
 
@@ -6771,9 +6777,9 @@
           document.getElementById(id).value = '';
         });
 
-        alert(result.created ? 'Vendor created in QuickBooks.' : 'Vendor already existed in QuickBooks.');
+        erpNotify(result.created ? 'Vendor created in QuickBooks.' : 'Vendor already existed in QuickBooks.');
       } catch (e) {
-        alert('Create vendor failed: ' + e.message);
+        erpNotify('Create vendor failed: ' + e.message);
       }
     }
 
@@ -7874,7 +7880,7 @@
         });
         await loadAll();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -8038,7 +8044,7 @@
       const statusEl = document.getElementById('bpOpenBillsStatus');
       const body = document.getElementById('bpOpenBillsBody');
       if (!billId) {
-        alert('Enter a numeric QuickBooks bill id (digits only).');
+        erpNotify('Enter a numeric QuickBooks bill id (digits only).');
         return;
       }
       if (statusEl) statusEl.textContent = 'Loading bill from QuickBooks…';
@@ -8526,7 +8532,7 @@
       if (!host || !row) return;
       const rows = host.querySelectorAll('tr.fuel-m-cost-line');
       if (rows.length <= 1) {
-        alert('Keep at least one line.');
+        erpNotify('Keep at least one line.');
         return;
       }
       row.remove();
@@ -8655,15 +8661,15 @@
       const host = document.getElementById('fuelManualLines');
       const lineRows = host ? Array.from(host.querySelectorAll('tr.fuel-m-cost-line')) : [];
       if (!unit) {
-        alert('Enter truck / unit.');
+        erpNotify('Enter truck / unit.');
         return;
       }
       if (!txnDate) {
-        alert('Pick a date.');
+        erpNotify('Pick a date.');
         return;
       }
       if (!lineRows.length) {
-        alert('Add at least one fuel line.');
+        erpNotify('Add at least one fuel line.');
         return;
       }
       const gBankIn = document.getElementById('fuelExpBankSearch');
@@ -8686,19 +8692,19 @@
         const itemId = String(row.querySelector('.fuel-m-line-item-id')?.value || '').trim();
         const acctId = String(row.querySelector('.fuel-m-line-acct-id')?.value || '').trim();
         if (mode === 'item' && !itemId) {
-          alert('Each line in Item mode needs a matched QuickBooks product/service.');
+          erpNotify('Each line in Item mode needs a matched QuickBooks product/service.');
           return;
         }
         if (mode === 'category' && !acctId) {
-          alert('Each line in Category mode needs a matched QuickBooks expense account.');
+          erpNotify('Each line in Category mode needs a matched QuickBooks expense account.');
           return;
         }
         if (!(Number.isFinite(gal) && gal > 0) && !(Number.isFinite(total) && total > 0)) {
-          alert('Each line needs gallons and price, or a positive line total with Lock line $.');
+          erpNotify('Each line needs gallons and price, or a positive line total with Lock line $.');
           return;
         }
         if (lock && !(Number.isFinite(total) && total > 0)) {
-          alert('Locked lines need a positive line total.');
+          erpNotify('Locked lines need a positive line total.');
           return;
         }
         lines.push({
@@ -8807,7 +8813,7 @@
                 : `Posted ${ok}; ${fails.length} failed — fix row data and use Record to QuickBooks, or check the banner.`;
           }
           if (fails.length) {
-            alert(
+            erpNotify(
               'Some lines did not post to QuickBooks:\n\n' +
                 fails.map(f => `${f.fid}: ${f.err}`).join('\n')
             );
@@ -8823,7 +8829,7 @@
         await loadFuelExpenseTab();
       } catch (e) {
         if (hint) hint.textContent = '';
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -8973,7 +8979,7 @@
 
     async function acctPreviewRelayFuelImport() {
       const input = document.getElementById('acctFuelRelayImportFile');
-      if (!input?.files?.[0]) return alert('Choose a Relay CSV or Excel file first.');
+      if (!input?.files?.[0]) return erpNotify('Choose a Relay CSV or Excel file first.');
       const fd = new FormData();
       fd.append('file', input.files[0]);
       try {
@@ -8983,12 +8989,12 @@
         acctPendingRelayFuelImportPreview = data;
         acctRenderRelayFuelImportPreview(data);
       } catch (e) {
-        alert('Preview failed: ' + (e.message || String(e)));
+        erpNotify('Preview failed: ' + (e.message || String(e)));
       }
     }
 
     async function acctConfirmRelayFuelImport() {
-      if (!acctPendingRelayFuelImportPreview) return alert('Run preview on a file first.');
+      if (!acctPendingRelayFuelImportPreview) return erpNotify('Run preview on a file first.');
       const fuels = acctPendingRelayFuelImportPreview.fuelPurchases || [];
       const relays = acctPendingRelayFuelImportPreview.relayExpenses || [];
       const fuelPick = new Set(
@@ -9000,7 +9006,7 @@
       const fuelPayload = fuels.filter((_, i) => fuelPick.has(i));
       const relayPayload = relays.filter((_, i) => relayPick.has(i));
       if (!fuelPayload.length && !relayPayload.length) {
-        return alert('Select at least one row to import.');
+        return erpNotify('Select at least one row to import.');
       }
       const alreadyInQbo = !!document.getElementById('acctFuelRelayImportAlreadyQbo')?.checked;
       try {
@@ -9019,12 +9025,12 @@
         acctApplyRelayFuelImportMetaFromPayload({ import: { lastBatch: { importBatchId: acctLastConfirmedRelayFuelImportBatchId } } });
         acctCancelRelayFuelImportPreview();
         await loadFuelExpenseTab();
-        alert(
+        erpNotify(
           `Saved ${data.savedFuel ?? 0} fuel line(s) and ${data.savedRelay ?? 0} Relay line(s).` +
             (data.alreadyInQbo ? ' Marked as already in QuickBooks (staging).' : '')
         );
       } catch (e) {
-        alert('Confirm import failed: ' + (e.message || String(e)));
+        erpNotify('Confirm import failed: ' + (e.message || String(e)));
       }
     }
 
@@ -9037,7 +9043,7 @@
           /* ignore */
         }
       }
-      if (!acctLastConfirmedRelayFuelImportBatchId) return alert('No confirmed import batch to undo yet.');
+      if (!acctLastConfirmedRelayFuelImportBatchId) return erpNotify('No confirmed import batch to undo yet.');
       if (!confirm('Undo the last confirmed Relay/fuel import batch?')) return;
       try {
         const r = await fetch('/api/import/fuel/undo', {
@@ -9050,9 +9056,9 @@
         acctLastConfirmedRelayFuelImportBatchId = '';
         acctApplyRelayFuelImportMetaFromPayload({});
         await loadFuelExpenseTab();
-        alert(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`);
+        erpNotify(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`);
       } catch (e) {
-        alert('Undo failed: ' + (e.message || String(e)));
+        erpNotify('Undo failed: ' + (e.message || String(e)));
       }
     }
 
@@ -9424,12 +9430,12 @@
       const r = await postFuelExpenseToQbo(fuelId);
       if (r.ok) return;
       if (r.validationError) {
-        alert(r.validationError);
+        erpNotify(r.validationError);
         return;
       }
       const tr2 = document.querySelector('#fuelExpBody tr[data-fuel-id="' + fid + '"]');
       const st2 = tr2 ? tr2.querySelector('.fuel-post-status') : null;
-      if (r.error && !st2) alert(r.error);
+      if (r.error && !st2) erpNotify(r.error);
     }
 
     /** Queue one QBO Purchase per visible unposted row (same rules as row Post). ~400ms between calls to ease rate limits. */
@@ -9438,7 +9444,7 @@
       const filtered = filterFuelPurchasesForExpenseTab();
       const todo = filtered.filter(r => String(r.qboSyncStatus || '').trim() !== 'posted');
       if (!todo.length) {
-        alert('No unposted fuel rows in the current date/search filter.');
+        erpNotify('No unposted fuel rows in the current date/search filter.');
         return;
       }
       if (
@@ -9476,7 +9482,7 @@
         /* ignore */
       }
       if (failed.length) {
-        alert(
+        erpNotify(
           `Finished with errors.\nPosted: ${ok}\nFailed: ${failed.length}\n\n` +
             failed
               .slice(0, 12)
@@ -9497,7 +9503,7 @@
       const checkNum = (document.getElementById('bpCheckNum')?.value || '').trim();
       const privateNote = (document.getElementById('bpPrivateNote')?.value || '').trim();
       if (!bankId) {
-        alert('Choose the pay-from account (QuickBooks bank or card).');
+        erpNotify('Choose the pay-from account (QuickBooks bank or card).');
         return;
       }
       const rows = Array.from(document.querySelectorAll('#bpOpenBillsBody tr[data-bill-id]'));
@@ -9515,32 +9521,32 @@
         if (!Number.isFinite(amt)) amt = 0;
         amt = Math.max(0, Math.min(open, Math.round(amt * 100) / 100));
         if (!(amt > 0)) {
-          alert('Enter a pay amount greater than zero for each selected bill.');
+          erpNotify('Enter a pay amount greater than zero for each selected bill.');
           return;
         }
         if (amt - open > 0.01) {
-          alert(`Pay amount cannot exceed open balance for bill ${billId}.`);
+          erpNotify(`Pay amount cannot exceed open balance for bill ${billId}.`);
           return;
         }
         lines.push({ billId, amount: amt });
         vendors.add(vendorId);
       }
       if (!lines.length) {
-        alert('Select at least one bill to pay.');
+        erpNotify('Select at least one bill to pay.');
         return;
       }
       if (vendors.size !== 1) {
-        alert('Select bills for a single vendor only (one Bill Payment per vendor in QuickBooks).');
+        erpNotify('Select bills for a single vendor only (one Bill Payment per vendor in QuickBooks).');
         return;
       }
       const vendorQboId = [...vendors][0];
       if (!vendorQboId) {
-        alert('Missing vendor on selected row.');
+        erpNotify('Missing vendor on selected row.');
         return;
       }
       const hintVid = (document.getElementById('bpVendorQboId')?.value || '').trim();
       if (hintVid && hintVid !== vendorQboId) {
-        alert('Selected bills do not match the vendor in the filter row. Clear the vendor filter or adjust your selection.');
+        erpNotify('Selected bills do not match the vendor in the filter row. Clear the vendor filter or adjust your selection.');
         return;
       }
       if (resEl) resEl.textContent = 'Posting to QuickBooks…';
@@ -9567,7 +9573,7 @@
         loadAccountingBillPaymentLog();
       } catch (e) {
         if (resEl) resEl.textContent = e.message || String(e);
-        else alert(e.message || String(e));
+        else erpNotify(e.message || String(e));
       }
     }
 
@@ -9654,8 +9660,8 @@
     async function revertBillPaymentFromLog(erpLogId, qboBillPaymentId) {
       const id = String(erpLogId || '').trim();
       const qboId = String(qboBillPaymentId || '').trim();
-      if (!id) return alert('Missing ERP log id.');
-      if (!qboId) return alert('Missing QuickBooks bill payment id.');
+      if (!id) return erpNotify('Missing ERP log id.');
+      if (!qboId) return erpNotify('Missing QuickBooks bill payment id.');
       if (
         !confirm(
           `Delete/void this Bill Payment in QuickBooks?\n\nQBO BillPayment Id: ${qboId}\nERP log: ${id}\n\nThis will reopen the bill balances in QBO.`
@@ -9675,7 +9681,7 @@
         if (st) st.textContent = 'Bill payment reversed.';
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
-        else alert(e.message || String(e));
+        else erpNotify(e.message || String(e));
       }
     }
 
@@ -9734,7 +9740,7 @@
         a.click();
         URL.revokeObjectURL(a.href);
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -10071,7 +10077,7 @@
           document.getElementById('shopDelayModal').classList.add('on');
           return false;
         }
-        alert(data.error || 'Update failed');
+        erpNotify(data.error || 'Update failed');
         return false;
       }
       if (data.entry) {
@@ -10099,7 +10105,7 @@
         shopQueueCache = shopQueueCache.filter(x => String(x.id) !== String(id));
         renderShopQueues();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -10147,7 +10153,7 @@
       const estimatedHoursRaw = document.getElementById('sqEstH').value.trim();
       const vendorHint = document.getElementById('sqVendor').value.trim();
       if (!unit) {
-        alert('Unit is required');
+        erpNotify('Unit is required');
         return;
       }
       try {
@@ -10168,7 +10174,7 @@
         shopQueueCache = sqRes && sqRes.ok && Array.isArray(sqRes.queue) ? sqRes.queue : [];
         renderShopQueues();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -10395,7 +10401,7 @@
         });
         await loadAll();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -10419,7 +10425,7 @@
         });
         await loadAll();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -10516,7 +10522,7 @@
       const rec = resolvedServiceMileageRecommendation(selectedUnit);
       const mi = rec.miles;
       if (mi == null || !Number.isFinite(mi)) {
-        alert('No Samsara odometer (or saved fallback) for this unit yet. Choose Refresh in the top bar, or verify the asset in Samsara Cloud.');
+        erpNotify('No Samsara odometer (or saved fallback) for this unit yet. Choose Refresh in the top bar, or verify the asset in Samsara Cloud.');
         return;
       }
       const el = document.getElementById('serviceMileageInput');
@@ -11579,14 +11585,14 @@
         await loadAll();
         await loadOperationalCatalogPanel();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
     async function pushSamsaraVehicleName() {
       const id = document.getElementById('samsaraVehicleIdInput')?.value?.trim();
       const name = document.getElementById('samsaraVehicleNameInput')?.value?.trim();
-      if (!id || !name) return alert('Vehicle id and new name are required.');
+      if (!id || !name) return erpNotify('Vehicle id and new name are required.');
       try {
         const r = await fetch('/api/integrations/samsara/vehicle/' + encodeURIComponent(id), {
           method: 'POST',
@@ -11595,17 +11601,17 @@
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
-        alert('Samsara vehicle updated.');
+        erpNotify('Samsara vehicle updated.');
         await loadAll();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
     async function pushSamsaraDriverName() {
       const id = document.getElementById('samsaraDriverIdInput')?.value?.trim();
       const name = document.getElementById('samsaraDriverNameInput')?.value?.trim();
-      if (!id || !name) return alert('Driver id and new name are required.');
+      if (!id || !name) return erpNotify('Driver id and new name are required.');
       try {
         const r = await fetch('/api/integrations/samsara/driver/' + encodeURIComponent(id), {
           method: 'POST',
@@ -11614,10 +11620,10 @@
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
-        alert('Samsara driver updated.');
+        erpNotify('Samsara driver updated.');
         await loadAll();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -11945,7 +11951,7 @@
         await loadAll();
       } catch (e) {
         if (hint) hint.textContent = e.message || String(e);
-        else alert(e.message || String(e));
+        else erpNotify(e.message || String(e));
       }
     }
 
@@ -12271,7 +12277,7 @@
         }
       } catch (e) {
         if (st) st.textContent = '';
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -12294,7 +12300,7 @@
         }
       } catch (e) {
         if (st) st.textContent = '';
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -12983,14 +12989,14 @@
         const r = await fetch(`/api/qbo/post-record/${recordId}`, { method: 'POST' });
         const result = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(result.error || r.statusText);
-        alert(`Posted to QuickBooks. Purchase ID: ${result.record?.qboPurchaseId || ''}`);
+        erpNotify(`Posted to QuickBooks. Purchase ID: ${result.record?.qboPurchaseId || ''}`);
         paintApTxnQboBanner(
           `Recorded in QuickBooks: Purchase ${escapeHtml(String(result.record?.qboPurchaseId || result.record?.qboEntityId || ''))}. Open Accounting → Maintenance expense transactions to verify online if needed.`,
           'success'
         );
         await loadAll();
       } catch (e) {
-        alert(`QuickBooks posting failed: ${e.message}`);
+        erpNotify(`QuickBooks posting failed: ${e.message}`);
         await loadAll();
       }
     }
@@ -13014,7 +13020,7 @@
         const rb = document.getElementById('acct-qbo-rollback');
         if (rb && !rb.classList.contains('hidden')) loadErpImportBatchesUi();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -13022,7 +13028,7 @@
       const boxes = document.querySelectorAll('.erp-revert-cb:checked');
       const items = Array.from(boxes).map(cb => ({ kind: cb.dataset.kind, id: cb.dataset.id }));
       if (!items.length) {
-        alert('Select at least one posted row.');
+        erpNotify('Select at least one posted row.');
         return;
       }
       if (!confirm(`Delete ${items.length} transaction(s) in QuickBooks and clear posting here?`)) return;
@@ -13034,7 +13040,7 @@
         });
         const bad = (out.results || []).filter(x => !x.ok);
         if (bad.length) {
-          alert(
+          erpNotify(
             'Some reverts failed:\n' +
               bad.slice(0, 8).map(b => `${b.kind} ${b.id}: ${b.error || ''}`).join('\n')
           );
@@ -13042,7 +13048,7 @@
         await loadAll();
         loadErpImportBatchesUi();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -13058,11 +13064,11 @@
           kind === 'maintenance'
             ? `Removed ${out.removedWo || 0} work order(s).`
             : `Removed ${out.removedAp || 0} AP transaction row(s).`;
-        alert(msg);
+        erpNotify(msg);
         await loadAll();
         loadErpImportBatchesUi();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -13074,11 +13080,11 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ importBatchId })
         });
-        alert(`Removed ${out.removedFuel || 0} fuel + ${out.removedRelay || 0} relay row(s).`);
+        erpNotify(`Removed ${out.removedFuel || 0} fuel + ${out.removedRelay || 0} relay row(s).`);
         await loadAll();
         loadErpImportBatchesUi();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -13235,7 +13241,7 @@
         await loadAll();
         closeMaintAssetStatusPanel();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -13476,7 +13482,7 @@
       try {
         const targetUnit = String(r.unit || '').trim();
         if (!targetUnit) {
-          alert('This record has no unit; cannot load into the form.');
+          erpNotify('This record has no unit; cannot load into the form.');
           return;
         }
         if (targetUnit !== selectedUnit) {
@@ -13630,12 +13636,12 @@
           const out = await j('/api/maintenance/record/' + encodeURIComponent(id));
           r = out.record;
         } catch (e) {
-          alert(e.message || String(e));
+          erpNotify(e.message || String(e));
           return;
         }
       }
       if (!r) {
-        alert('Record not found.');
+        erpNotify('Record not found.');
         return;
       }
       hydrateMaintenanceRecordForm(r);
@@ -13657,7 +13663,7 @@
       // Required fields by repair location.
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
       if (!repairLoc) {
-        alert(
+        erpNotify(
           'Select where service is performed: choose a location type in Service & scheduling (Internal shop, External shop, Roadside, Parts purchase, or Over the road).'
         );
         document.getElementById('repairLocationSelect')?.focus();
@@ -13667,7 +13673,7 @@
       let woNo = String(document.getElementById('recordWorkOrderInput')?.value || '').trim();
       if (repairLoc === 'external' || repairLoc === 'road-service' || repairLoc === 'parts-purchase') {
         if (!vendorInvNo && !woNo) {
-          alert('External shop, roadside service, and parts purchases require a vendor invoice # or a reference / WO #.');
+          erpNotify('External shop, roadside service, and parts purchases require a vendor invoice # or a reference / WO #.');
           document.getElementById('recordVendorInvoiceInput')?.focus();
           return false;
         }
@@ -13684,7 +13690,7 @@
       if (recordType === 'custom') {
         const c = document.getElementById('customServiceTypeInput').value.trim();
         if (!c) {
-          alert('Enter a custom service type name.');
+          erpNotify('Enter a custom service type name.');
           return false;
         }
         serviceType = c;
@@ -13696,7 +13702,7 @@
           if (withDesc) serviceType = withDesc.description;
         }
         if (!serviceType) {
-          alert('Choose or type the service / maintenance performed (or enter a description on the first cost line).');
+          erpNotify('Choose or type the service / maintenance performed (or enter a description on the first cost line).');
           return false;
         }
       }
@@ -13707,7 +13713,7 @@
       const invTotal = Number(document.getElementById('costInput')?.value || 0);
       const hasLineMoney = costLinesPayload.some(l => Number(l.amount) > 0);
       if (hasLineMoney && Math.abs(lineSum - invTotal) > 0.02) {
-        alert(
+        erpNotify(
           `Invoice total ($${invTotal.toFixed(2)}) must equal the sum of cost lines ($${lineSum.toFixed(
             2
           )}). Adjust qty × unit $, line amounts, or the invoice total (uncheck “Lock invoice total” to auto-fill from lines).`
@@ -13729,7 +13735,7 @@
         if (smEl) smEl.value = String(Math.round(samsaraMi));
       }
       if (!Number.isFinite(smNum) || smNum <= 0) {
-        alert(
+        erpNotify(
           'Enter a valid service mileage (positive number). The field defaults to the Samsara odometer when available — use “Use Samsara” or refresh fleet data.'
         );
         smEl?.focus();
@@ -13758,19 +13764,19 @@
       if (postToQbo) {
         const qvIdPost = (document.getElementById('linkedVendorQboId')?.value || '').trim();
         if (!qvIdPost) {
-          alert(
+          erpNotify(
             'Match the vendor to a QuickBooks vendor (type in the vendor field until it matches your QBO vendor list), then save again.'
           );
           document.getElementById('vendorInput')?.focus();
           return false;
         }
         if (!(invTotal > 0)) {
-          alert('Enter an invoice total greater than zero to post to QuickBooks.');
+          erpNotify('Enter an invoice total greater than zero to post to QuickBooks.');
           document.getElementById('costInput')?.focus();
           return false;
         }
         if (!hasLineMoney) {
-          alert(
+          erpNotify(
             'Add at least one cost breakdown line with a line amount so QuickBooks receives the correct account or item on each line.'
           );
           return false;
@@ -13783,7 +13789,7 @@
           return !String(l.qboAccountId || '').trim();
         });
         if (badQboLine) {
-          alert(
+          erpNotify(
             'Each cost line with a dollar amount needs a QuickBooks expense account or item on that row (QBO line under the row). Then try Save & post again.'
           );
           return false;
@@ -13844,11 +13850,11 @@
 
       const qbo = saveOut && saveOut.qbo;
       if (postToQbo && qbo && !qbo.ok && !qbo.skipped) {
-        alert('Record saved, but QuickBooks posting failed:\n' + (qbo.error || 'Unknown error'));
+        erpNotify('Record saved, but QuickBooks posting failed:\n' + (qbo.error || 'Unknown error'));
       } else if (postToQbo && qbo && qbo.skipped && qbo.reason === 'quickbooks_not_connected') {
         const cst = Number(document.getElementById('costInput').value || 0);
         if (cst > 0) {
-          alert('Record saved locally. Connect QuickBooks in Settings to post this expense automatically.');
+          erpNotify('Record saved locally. Connect QuickBooks in Settings to post this expense automatically.');
         }
       }
 
@@ -14035,7 +14041,7 @@
       maintCloseSplitMenus();
       const hint = document.getElementById('maintSaveHint');
       if (!selectedUnit) {
-        alert('Select an asset first.');
+        erpNotify('Select an asset first.');
         maintToneSaveHint(hint, 'Select a unit before saving.', 'caution');
         return;
       }
@@ -14091,7 +14097,7 @@
         );
       } catch (e) {
         if (hint) maintToneSaveHint(hint, e.message || String(e), 'error');
-        else alert(e.message || String(e));
+        else erpNotify(e.message || String(e));
       }
     }
 
@@ -14118,7 +14124,7 @@
       const lines = collectMaintCostLines();
       const usable = Array.isArray(lines) ? lines.filter(l => (Number(l.amount) || 0) > 0 || String(l.description || '').trim()) : [];
       if (!usable.length) {
-        alert('No cost breakdown lines to transfer. Add at least one cost line amount or description.');
+        erpNotify('No cost breakdown lines to transfer. Add at least one cost line amount or description.');
         return;
       }
 
@@ -15429,7 +15435,7 @@
       const sm = window.__lastSettlementMiles;
       const loadId = window.__lastTmsLoadId;
       if (!loadId || !sm || !sm.ok) {
-        alert('Run a settlement lookup with a TMS load that has at least two stops and addresses on first and last stop.');
+        erpNotify('Run a settlement lookup with a TMS load that has at least two stops and addresses on first and last stop.');
         return;
       }
       try {
@@ -15443,10 +15449,10 @@
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || r.statusText);
-        alert('TMS load miles updated from settlement calculation.');
+        erpNotify('TMS load miles updated from settlement calculation.');
         await runSettlementLookup();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -15488,7 +15494,7 @@
     function downloadSettlementCsv() {
       const raw = document.getElementById('settlementLoadInput').value.trim();
       if (!raw) {
-        alert('Enter a load / invoice number first.');
+        erpNotify('Enter a load / invoice number first.');
         return;
       }
       window.location.href = '/api/settlement/export?load=' + encodeURIComponent(raw);
@@ -15497,7 +15503,7 @@
     async function runSettlementLookup() {
       const raw = document.getElementById('settlementLoadInput').value.trim();
       if (!raw) {
-        alert('Enter a load / invoice number.');
+        erpNotify('Enter a load / invoice number.');
         return;
       }
       try {
@@ -15610,7 +15616,7 @@
           })
           .join('');
       } catch (e) {
-        alert('Settlement lookup failed: ' + e.message);
+        erpNotify('Settlement lookup failed: ' + e.message);
       }
     }
 
@@ -15631,7 +15637,7 @@
         });
         await loadAll();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -15641,7 +15647,7 @@
         await j(`/api/work-orders/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { ...erpWriteHeaders() } });
         await loadAll();
       } catch (e) {
-        alert(e.message || String(e));
+        erpNotify(e.message || String(e));
       }
     }
 
@@ -15653,14 +15659,14 @@
     async function postApToQbo(apId) {
       try {
         const result = await j(`/api/qbo/post-ap/${apId}`, { method: 'POST' });
-        alert(`Posted to QuickBooks. ${result.ap.qboEntityType} ID: ${result.ap.qboEntityId || ''}`);
+        erpNotify(`Posted to QuickBooks. ${result.ap.qboEntityType} ID: ${result.ap.qboEntityId || ''}`);
         paintApTxnQboBanner(
           `Recorded in QuickBooks: ${escapeHtml(String(result.ap?.qboEntityType || ''))} ${escapeHtml(String(result.ap?.qboEntityId || ''))}. Use Verify in QuickBooks on the card to confirm it still exists online.`,
           'success'
         );
         await loadAll();
       } catch (e) {
-        alert(`QuickBooks posting failed: ${e.message}`);
+        erpNotify(`QuickBooks posting failed: ${e.message}`);
         await loadAll();
       }
     }
@@ -15669,12 +15675,12 @@
       const close = !opts || opts.close !== false;
       const vendorId = document.getElementById('apVendorQboId').value;
       if (!vendorId) {
-        alert('Choose a QuickBooks vendor (type to match the list, then save).');
+        erpNotify('Choose a QuickBooks vendor (type to match the list, then save).');
         return;
       }
       const unit = document.getElementById('apAssetUnit').value.trim();
       if (!unit) {
-        alert('Unit / asset is required.');
+        erpNotify('Unit / asset is required.');
         return;
       }
       const loadInv = document.getElementById('apLoadInvoiceNumber').value.trim();
@@ -15696,17 +15702,17 @@
       }).filter(l => l.amount > 0);
 
       if (!lines.length) {
-        alert('Add at least one line with an amount greater than zero.');
+        erpNotify('Add at least one line with an amount greater than zero.');
         return;
       }
 
       for (const l of lines) {
         if (l.detailMode === 'category' && !l.qboAccountId) {
-          alert('Each category line needs a resolved QuickBooks account (pick from list).');
+          erpNotify('Each category line needs a resolved QuickBooks account (pick from list).');
           return;
         }
         if (l.detailMode === 'item' && !l.qboItemId) {
-          alert('Each item line needs a resolved QuickBooks item.');
+          erpNotify('Each item line needs a resolved QuickBooks item.');
           return;
         }
       }
@@ -15761,14 +15767,14 @@
           method: 'POST',
           headers: { ...erpWriteHeaders() }
         });
-        alert(`Posted to QuickBooks. ${result.workOrder?.qboEntityType || ''} ID: ${result.workOrder?.qboEntityId || ''}`);
+        erpNotify(`Posted to QuickBooks. ${result.workOrder?.qboEntityType || ''} ID: ${result.workOrder?.qboEntityId || ''}`);
         paintApTxnQboBanner(
           `Recorded in QuickBooks: ${escapeHtml(String(result.workOrder?.qboEntityType || ''))} ${escapeHtml(String(result.workOrder?.qboEntityId || ''))}. Use Verify in QuickBooks on the card to confirm it still exists online.`,
           'success'
         );
         await loadAll();
       } catch (e) {
-        alert(`QuickBooks posting failed: ${e.message}`);
+        erpNotify(`QuickBooks posting failed: ${e.message}`);
         await loadAll();
       }
     }

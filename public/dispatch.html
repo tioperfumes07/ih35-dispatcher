@@ -1973,7 +1973,7 @@
       const typeEl = document.getElementById('doc_type');
       if (!fileEl || !fileEl.files || !fileEl.files[0]) {
         if (typeof showToast === 'function') showToast('Choose a file first.', 'warning');
-        else alert('Choose a file first.');
+        else erpNotify('Choose a file first.');
         return;
       }
       const btn = document.getElementById('dispatchBtnUploadDoc');
@@ -2000,7 +2000,7 @@
         if (typeof showToast === 'function') showToast('Document uploaded.', 'success');
       } catch (e) {
         if (typeof showToast === 'function') showToast(e.message || String(e), 'error');
-        else alert(e.message || String(e));
+        else erpNotify(e.message || String(e));
       }
     }
 
@@ -2436,7 +2436,7 @@
         .filter(Boolean);
       if (addresses.length < 2) {
         if (typeof showToast === 'function') showToast('Enter at least two stops with address or location text.', 'warning');
-        else alert('Enter at least two stops with address or location text.');
+        else erpNotify('Enter at least two stops with address or location text.');
         return;
       }
       const run = async () => {
@@ -2479,7 +2479,7 @@
             '\n\nTip: use a full street address in the stop (or set GEOAPIFY_API_KEY on the server for faster geocoding).';
         }
         if (typeof showToast === 'function') showToast(msg, 'error');
-        else alert(msg);
+        else erpNotify(msg);
       }
     }
 

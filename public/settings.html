@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
   <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
   <style>
-    body { margin: 0; background: var(--bg); color: var(--text); padding: 24px 18px 40px; }
+    body { margin: 0; background: var(--color-bg-page, var(--bg)); color: var(--text); padding: 24px 18px 40px; }
     .wrap { max-width: 640px; margin: 0 auto; }
     h1 { font-size: 1.35rem; margin: 0 0 8px; letter-spacing: -0.02em; font-weight: 700; }
     p { color: var(--muted); font-size: 14px; line-height: 1.55; }
@@ -32,6 +32,7 @@
 <body class="settings-page">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div class="wrap">
+    <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
     <p><a href="/maintenance.html">← Back to Maintenance / ERP</a></p>
     <h1>Settings &amp; users</h1>
     <p>Sign in when the server has user accounts. The first administrator can be created once (bootstrap), or set <code>IH35_BOOTSTRAP_ADMIN_EMAIL</code> and <code>IH35_BOOTSTRAP_ADMIN_PASSWORD</code> in the server environment.</p>
@@ -437,9 +438,13 @@
         if (window.showToast) window.showToast('User removed.', 'success');
       } catch (e) {
         if (window.showToast) window.showToast(e.message || String(e), 'error');
-        else alert(e.message || String(e));
+        else erpNotify(e.message || String(e));
       }
     }
+
+    window.addEventListener('load', () => {
+      if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
+    });
 
     refresh();
   </script>

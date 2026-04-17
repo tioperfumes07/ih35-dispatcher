@@ -3,6 +3,8 @@
  * FIX 10 — async button busy + table pager (`erpWithBusy`, `erpPagerRender`, …).
  * Rule 22 — inline “?” help panels (`erpHelpTipToggle`); style in `erp-master-spec-2026.css`.
  * Rule 19 — toasts (`showToast`); host `#erpToastHost` + styles in `erp-master-spec-2026.css`.
+ * `erpNotify` — toast-first replacement for `alert()` (inference for type when omitted); falls back to `alert` if toasts unavailable.
+ * Rule 24 — `erpMountConnectionStrip(id)` reads `GET /api/qbo/status` into a one-line status strip (banking, settings, fuel).
  */
 (function (global) {
   'use strict';
@@ -226,4 +228,92 @@
   }
 
   global.showToast = showToast;
+
+  /**
+   * Non-blocking user feedback across ERP pages. Prefer `showToast`; use `alert` only if toast is unavailable.
+   * When `type` is omitted, infers success / error / warning / info from message text (covers legacy `alert()` sites).
+   * @param {string} message
+   * @param {'success'|'error'|'warning'|'info'} [type]
+   */
+  function erpNotify(message, type) {
+    const text = String(message || '').trim();
+    if (!text) return;
+    let kind = String(type || '').trim().toLowerCase();
+    if (kind !== 'success' && kind !== 'error' && kind !== 'warning' && kind !== 'info') {
+      kind = '';
+    }
+    if (!kind) {
+      const lower = text.toLowerCase();
+      if (
+        /\bfail|\berror\b|invalid |could not|cannot |unable to|undo failed|preview failed|posting failed|lookup failed|update failed|import failed|confirm import failed|refresh failed|not found|missing erp|missing quickbooks|qbo refresh failed|settlement lookup failed|choose the pay-from|does not match|cannot exceed|no unposted|no confirmed import|record saved, but quickbooks posting failed|this record has no unit/i.test(
+          lower
+        )
+      ) {
+        kind = 'error';
+      } else if (
+        /^select |^enter |^choose |^add |^keep |^pick |^paste |required\.?$|must |\bmissing\b|^no |\bat least one\b|\bat least two\b|each line|locked lines|numeric quickbooks|single vendor|vehicle id and|driver id and|unit is required|run preview|run a settlement|external shop|custom service type|invoice total greater|vendor invoice|work order|digits only|for this unit yet/i.test(
+          lower
+        )
+      ) {
+        kind = 'warning';
+      } else if (
+        /saved|created|updated|posted|removed|cleared|undone|added|success|complete|synced|attached|invoice created|mileages updated|vendor already existed|vehicle updated|driver updated|removed \d|imported|undo\.|tms load miles updated/i.test(
+          lower
+        )
+      ) {
+        kind = 'success';
+      } else {
+        kind = 'info';
+      }
+    }
+    if (typeof global.showToast === 'function') {
+      showToast(text, kind);
+      return;
+    }
+    global.alert(text);
+  }
+
+  global.erpNotify = erpNotify;
+
+  /**
+   * Rule 24 — hydrate a host element with QuickBooks connection text (read-only status).
+   * @param {string | HTMLElement} hostIdOrEl
+   */
+  async function erpMountConnectionStrip(hostIdOrEl) {
+    const el =
+      typeof hostIdOrEl === 'string' ? document.getElementById(hostIdOrEl) : hostIdOrEl;
+    if (!el || !(el instanceof HTMLElement)) return;
+    el.classList.add('erp-connection-strip');
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    el.textContent = 'QuickBooks: checking…';
+    el.classList.remove('erp-connection-strip--ok', 'erp-connection-strip--warn', 'erp-connection-strip--muted');
+    try {
+      const r = await fetch('/api/qbo/status', { headers: { Accept: 'application/json' } });
+      const j = await r.json().catch(() => ({}));
+      if (!j || typeof j !== 'object') {
+        el.classList.add('erp-connection-strip--muted');
+        el.textContent = 'QuickBooks: status unavailable.';
+        return;
+      }
+      if (!j.configured) {
+        el.classList.add('erp-connection-strip--warn');
+        el.textContent = 'QuickBooks: not configured on server.';
+        return;
+      }
+      if (j.connected) {
+        el.classList.add('erp-connection-strip--ok');
+        el.textContent =
+          'QuickBooks: connected' + (j.companyName ? ' — ' + String(j.companyName) : '') + '.';
+        return;
+      }
+      el.classList.add('erp-connection-strip--warn');
+      el.textContent = 'QuickBooks: not connected — open Settings to authorize.';
+    } catch (_) {
+      el.classList.add('erp-connection-strip--muted');
+      el.textContent = 'QuickBooks: could not load status.';
+    }
+  }
+
+  global.erpMountConnectionStrip = erpMountConnectionStrip;
 })(typeof window !== 'undefined' ? window : globalThis);

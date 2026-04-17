@@ -17,7 +17,7 @@
       --green:#16a34a;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--text)}
+    body{margin:0;font-family:var(--font-sans);background:var(--color-bg-page,var(--bg));color:var(--text)}
     .topbar{
       padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);
       display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000
@@ -130,6 +130,7 @@
     <label><input type="checkbox" id="urgentOnly" onchange="renderFleet()"> FUEL NOW only</label>
     <span id="lastUpdated" class="small">Loading… · auto-refresh every 60s</span>
   </div>
+  <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
   <p class="roadmap-note">
     <strong>Roadmap:</strong> tie origin/destination from active TMS loads into this planner, combine uploaded Love’s price sheets and live tank levels from Samsara, and suggest cheapest legal fuel stops along the route (including state price spreads). PC*Miler practical/short miles will replace heuristic routing for driver-pay mileage when licensed.
   </p>
@@ -252,15 +253,15 @@
     function saveErpWriteSecret() {
       const el = document.getElementById('erpWriteSecretInput');
       const v = (el?.value || '').trim();
-      if (!v) return alert('Paste the ERP_WRITE_SECRET value from your server environment.');
+      if (!v) return erpNotify('Paste the ERP_WRITE_SECRET value from your server environment.');
       localStorage.setItem(LS_ERP_KEY, v);
       if (el) el.value = '';
-      alert('Saved in this browser. Fuel saves and Relay import actions will send the secret automatically.');
+      erpNotify('Saved in this browser. Fuel saves and Relay import actions will send the secret automatically.');
     }
 
     function clearErpWriteSecret() {
       localStorage.removeItem(LS_ERP_KEY);
-      alert('Cleared from this browser.');
+      erpNotify('Cleared from this browser.');
     }
 
     const HOME = { lat: 27.5306, lon: -99.4803, text: 'Laredo, TX' };
@@ -916,7 +917,7 @@
 
     async function saveFuelPurchase() {
       const unit = selectedUnit;
-      if (!unit) return alert('Select a unit first.');
+      if (!unit) return erpNotify('Select a unit first.');
       const boardRow = boardRows.find(r => r.unit === unit);
       const payload = {
         unit,
@@ -947,7 +948,7 @@
         } catch (e) {
           const msg = 'Save fuel purchase failed: ' + (e.message || String(e));
           if (window.showToast) window.showToast(msg, 'error');
-          else alert(msg);
+          else erpNotify(msg);
         }
       };
       if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
@@ -1191,6 +1192,10 @@
       if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
       return run();
     }
+
+    window.addEventListener('load', () => {
+      if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
+    });
 
     wireAutocomplete(document.getElementById('originInput'), document.getElementById('originAuto'));
     addDestination('San Antonio, TX');

@@ -1566,3 +1566,50 @@ body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
 body.dispatch-page #dispatchApp .dispatch-board-intro--compact {
   max-width: min(72ch, 100%);
 }
+
+/* Rule 24 — shared QuickBooks connection one-liner (satellite pages; maintenance uses sidebar) */
+.erp-connection-strip {
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 8px 14px;
+  margin: 0 0 12px;
+  border-radius: var(--radius-card, 8px);
+  border: 1px solid var(--color-border, var(--line, #e5e7eb));
+  background: var(--color-bg-card, #fff);
+  color: var(--color-text-body, var(--text, #334155));
+  box-sizing: border-box;
+}
+body.banking-page .wrap > .erp-connection-strip {
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+}
+body.settings-page .wrap > .erp-connection-strip {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+body.fuel-board .erp-connection-strip {
+  margin: 0 12px 10px;
+  max-width: 1100px;
+}
+body.hub-page .erp-connection-strip {
+  max-width: 1100px;
+  margin: 0 auto 16px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+.erp-connection-strip--ok {
+  border-color: #bce3c9;
+  background: var(--pill-green-bg, #e6f4ea);
+  color: var(--pill-green-text, #137333);
+}
+.erp-connection-strip--warn {
+  border-color: #fcd34d;
+  background: var(--pill-yellow-bg, #fef7e0);
+  color: var(--pill-yellow-text, #8a5200);
+}
+.erp-connection-strip--muted {
+  background: var(--color-bg-header, #f1f3f4);
+  color: var(--color-text-label, #6b7385);
+}
