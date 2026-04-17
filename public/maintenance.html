@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/app-theme.css" />
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
   <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
+  <link rel="stylesheet" href="/css/maint-accounting-ui-2026.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
   <style>
     /* Layout, panels, tables, shop/QBO chrome: /css/app-theme.css under body.erp-maintenance */
@@ -568,18 +569,28 @@
             <button type="button" class="btn btn--small maint-kpi-strip__dash" onclick="openSectionByName('dashboard')">Full overview</button>
           </div>
         </div>
-        <div class="maint-board-layout">
-        <nav id="maintMainSubtabs" class="maint-board-nav maint-section-card" aria-label="Maintenance views">
-          <div class="maint-board-nav__title">Views</div>
-          <button type="button" class="maint-board-nav__btn subtab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
-          <button type="button" class="maint-board-nav__btn subtab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this)">Fleet table</button>
-          <button type="button" class="maint-board-nav__btn subtab" data-maint-main="rm" onclick="openMaintMainTab('rm', this)">R&amp;M Status</button>
-          <button type="button" class="maint-board-nav__btn subtab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this)">Shop / location</button>
-        </nav>
-        <div class="maint-board-stage">
-        <div class="maint-top-toolbar maint-section-card">
-          <div class="maint-top-toolbar__inner">
-            <div class="maint-top-toolbar__field maint-top-toolbar__grow">
+        <div class="maint-page-shell">
+          <div class="maint-action-strip" aria-label="Maintenance actions">
+            <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
+            <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
+            <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
+            <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
+            <div class="maint-fleet-inline">
+              <span class="maint-fleet-inline__label">Fleet:</span>
+              <span id="maintActionFleetPills"></span>
+            </div>
+            <div class="maint-action-strip__qbo" id="maintTopQboIssuesWrap" aria-live="polite">
+              <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0"></span>
+            </div>
+          </div>
+          <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
+            <button type="button" class="maint-nav-tab active" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
+            <button type="button" class="maint-nav-tab" data-maint-main="fleet" tabindex="-1" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
+            <button type="button" class="maint-nav-tab" data-maint-main="rm" tabindex="-1" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
+            <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
+          </div>
+          <div class="maint-search-row">
+            <div class="maint-search-field maint-search-field--grow">
               <span class="qb-l">Find unit</span>
               <input
                 id="maintenanceUnitSearch"
@@ -590,35 +601,38 @@
                 autocomplete="off"
               />
             </div>
-            <div class="maint-top-toolbar__field maint-top-toolbar__grow">
-              <span class="qb-l">Filter maintenance table by service</span>
+            <div class="maint-search-field maint-search-field--right">
+              <span class="qb-l">Filter by service</span>
               <input
                 id="maintenanceServiceFilter"
                 class="qb-in"
                 list="serviceOptions"
-                placeholder="Type service (filters Fleet table)"
+                placeholder="Type service (filters table)"
                 oninput="renderMaintenanceTable()"
                 autocomplete="off"
               />
             </div>
           </div>
-        </div>
 
         <div id="maintMainTabRecord" class="maint-main-tab-panel active">
         <div id="maintWorkOrderFormMount">
-        <div class="split maint-wo-split-main" id="maintenanceSplit" style="margin-top:12px;">
+        <div class="maint-wo-columns" id="maintenanceSplit">
+          <div class="maint-wo-col-units">
           <div class="panel unit-list-panel">
             <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-              <div class="panel-title" id="assetCategoryTitle">Trucks</div>
-              <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse truck list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
+              <div class="panel-title">Units</div>
+              <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse unit list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
             </div>
             <div class="panel-body">
               <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
               <div id="retiredAssetsWrap" class="mini-note" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #e5e9f0"></div>
             </div>
           </div>
+          </div>
 
-          <div class="grid maint-wo-workspace-grid">
+          <div class="maint-wo-col-form">
+            <div id="maintWoNoUnitPlaceholder" class="maint-wo-placeholder">Select a unit from the list to create or view a work order.</div>
+            <div id="maintWoFormArea" class="hidden maint-wo-form-stack-inner">
             <div class="maint-wo-main-aside">
             <div class="maint-wo-workspace maint-section-card">
               <div id="maintAssetHeaderCard" class="maint-asset-header-card" aria-live="polite">
@@ -638,6 +652,8 @@
                 <div class="unit-box"><div class="k">Due soon</div><div class="v" id="unitDueSoonBox">0</div></div>
                 <div class="unit-box"><div class="k">Saved odo</div><div class="v" id="unitMileageBox">N/A</div></div>
               </div>
+
+                <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
 
                 <div class="maint-wo-form-shell">
                 <div id="maintWoBanner" class="maint-wo-banner maint-wo-banner--inline hidden" aria-live="polite">
@@ -932,7 +948,7 @@
                     </p>
                   </div>
 
-                  <div class="maint-form-actions maint-section-card">
+                  <div class="maint-form-actions maint-section-card maint-form-actions--sticky">
                     <select id="maintSaveAction" class="maint-save-action-hidden" aria-hidden="true" tabindex="-1">
                       <option value="save">Save</option>
                       <option value="save_close">Save &amp; close</option>
@@ -955,21 +971,12 @@
                 </div>
                 </div>
             </div>
-              <aside id="maintWoRightAside" class="maint-wo-aside maint-section-card" aria-label="Work order context">
-                <div class="maint-aside-block">
-                  <div class="maint-aside-block__title">QuickBooks issues</div>
-                  <div id="maintAsideQbIssues" class="maint-aside-block__body mini-note">—</div>
-                </div>
-                <div class="maint-aside-block">
-                  <div class="maint-aside-block__title">This work order</div>
-                  <div id="maintAsideWoSummary" class="maint-aside-block__body mini-note">Select a unit to see summary.</div>
-                </div>
-                <div class="maint-aside-block">
-                  <div class="maint-aside-block__title">Fleet type</div>
-                  <div class="chips" id="assetCategoryChips"></div>
-                </div>
-              </aside>
+            <div id="maintAsideQbIssues" class="erp-sr-tab-anchor" aria-hidden="true"></div>
+            <div id="maintAsideWoSummary" class="erp-sr-tab-anchor" aria-hidden="true"></div>
+            <div id="assetCategoryChips" class="erp-sr-tab-anchor" aria-hidden="true"></div>
             </div>
+            </div>
+        </div>
 
             <div class="panel">
               <div class="panel-head">
@@ -990,7 +997,6 @@
             </div>
 
           </div>
-        </div>
         </div>
         </div>
 
