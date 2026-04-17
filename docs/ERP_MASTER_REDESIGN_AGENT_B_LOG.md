@@ -199,3 +199,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 0:** **`app-theme.css`** — **`body.erp-maintenance .list-sub`** reads **`var(--color-text-label)`** only (maintenance loads **`design-tokens.css`**).
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-07
+
+- **Rule 1:** **`app-theme.css`** — legacy maintenance **`.grid`**, **`.panel-head`**, and **`.chips`** get **`min-width: 0`** so nested **`minmax(0, 1fr)`** grids and chip rows do not inherit min-content width from flex/grid parents.
+- **Rule 0:** **`app-theme.css`** — under **`body.erp-maintenance`**, drop redundant **`var(--muted)`** / legacy accent fallbacks where **`design-tokens.css`** already defines the stack (**`.hero-card p`**, **`.metric-label`**, **`.table-wrap th`**, general **`th`**, **`.unit-box .k`**, **`.chip.active`**, **`.list-row.active`**) and use **`var(--color-app-frame-border)`** alone on **`.panel-head`** (same maintenance-only assumption).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

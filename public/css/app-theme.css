@@ -475,7 +475,7 @@ button.linkish:hover {
 body.dispatch-page,
 body.fuel-board {
   font-family: var(--font-sans);
-  color: var(--text);
+  color: var(--color-text-body, var(--text));
   -webkit-font-smoothing: antialiased;
 }
 
@@ -495,7 +495,7 @@ body.dispatch-page .topbar {
   gap: 10px 14px;
   padding: 12px 18px;
   background: var(--color-bg-card);
-  color: var(--text);
+  color: var(--color-text-body, var(--text));
   border-bottom: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   position: sticky;
@@ -508,7 +508,7 @@ body.dispatch-page .topbar h1 {
   font-size: 1.12rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--text);
+  color: var(--color-text-primary, var(--text));
 }
 
 body.dispatch-page .topbar a {
@@ -527,7 +527,7 @@ body.dispatch-page .topbar button {
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   background: var(--color-bg-card);
-  color: var(--text);
+  color: var(--color-text-body, var(--text));
   font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
@@ -566,7 +566,7 @@ body.dispatch-page .tabs button {
   cursor: pointer;
   font-weight: 500;
   font-size: 0.88rem;
-  color: var(--text-secondary);
+  color: var(--color-text-label, var(--text-secondary));
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
@@ -856,7 +856,7 @@ body.erp-maintenance .title {
   font-weight: 700;
   margin-right: auto;
   letter-spacing: -0.03em;
-  color: var(--color-text-primary, var(--text));
+  color: var(--color-text-primary);
 }
 
 body.erp-maintenance .btn,
@@ -875,7 +875,7 @@ body.erp-maintenance
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  color: var(--color-text-body, var(--text));
+  color: var(--color-text-body);
   box-shadow: var(--shadow-sm);
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -884,7 +884,7 @@ body.erp-maintenance .btn:hover,
 body.erp-maintenance
   button:not(.catalog-plus-btn):not(.catalog-search-hit):not(.linkish):not(.shop-col-add):not(.sidebar-collapse-btn):not(.nav-dd-item):not(.nav-btn):hover {
   background: var(--color-bg-hover);
-  border-color: var(--color-border, var(--line-strong));
+  border-color: var(--color-border-input);
 }
 
 body.erp-maintenance input,
@@ -895,7 +895,7 @@ body.erp-maintenance textarea {
   background: var(--color-bg-card);
   padding: 9px 11px;
   border-radius: var(--radius-sm);
-  color: var(--color-text-body, var(--text));
+  color: var(--color-text-body);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -957,7 +957,7 @@ body.erp-maintenance .hero-card h3 {
 body.erp-maintenance .hero-card p {
   margin: 0;
   font-size: 12px;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
   line-height: 1.4;
 }
 
@@ -972,6 +972,7 @@ body.erp-maintenance .section.active {
 body.erp-maintenance .grid {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 body.erp-maintenance .grid-2 {
@@ -988,12 +989,13 @@ body.erp-maintenance .grid-4 {
 
 body.erp-maintenance .panel-head {
   padding: 11px 16px;
-  border-bottom: 2px solid var(--color-app-frame-border, var(--app-frame-border));
+  border-bottom: 2px solid var(--color-app-frame-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
   background: linear-gradient(180deg, var(--color-bg-header) 0%, var(--color-bg-card) 100%);
 }
 
@@ -1013,7 +1015,7 @@ body.erp-maintenance .metric {
 
 body.erp-maintenance .metric-label {
   font-size: 12px;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
   margin-bottom: 4px;
 }
 
@@ -1026,6 +1028,7 @@ body.erp-maintenance .chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 body.erp-maintenance .chip {
@@ -1038,9 +1041,9 @@ body.erp-maintenance .chip {
 }
 
 body.erp-maintenance .chip.active {
-  background: var(--pill-blue-bg, var(--accent-soft));
-  border-color: var(--btn-info-border, var(--accent-border));
-  color: var(--pill-blue-text, var(--accent));
+  background: var(--pill-blue-bg);
+  border-color: var(--btn-info-border);
+  color: var(--pill-blue-text);
   font-weight: 700;
 }
 
@@ -1074,7 +1077,7 @@ body.erp-maintenance .list-row:hover {
 }
 
 body.erp-maintenance .list-row.active {
-  background: var(--pill-blue-bg, var(--accent-soft));
+  background: var(--pill-blue-bg);
 }
 
 body.erp-maintenance .list-title {
@@ -1098,28 +1101,28 @@ body.erp-maintenance .status {
 }
 
 body.erp-maintenance .status-current {
-  background: var(--pill-green-bg, var(--green-soft));
-  color: var(--pill-green-text, var(--green));
+  background: var(--pill-green-bg);
+  color: var(--pill-green-text);
 }
 
 body.erp-maintenance .status-soon {
-  background: var(--pill-yellow-bg, var(--yellow-soft));
-  color: var(--pill-yellow-text, var(--yellow));
+  background: var(--pill-yellow-bg);
+  color: var(--pill-yellow-text);
 }
 
 body.erp-maintenance .status-past {
-  background: var(--pill-red-bg, var(--red-soft));
-  color: var(--pill-red-text, var(--red));
+  background: var(--pill-red-bg);
+  color: var(--pill-red-text);
 }
 
 body.erp-maintenance .status-posted {
-  background: var(--pill-blue-bg, var(--accent-soft));
-  color: var(--pill-blue-text, var(--accent));
+  background: var(--pill-blue-bg);
+  color: var(--pill-blue-text);
 }
 
 body.erp-maintenance .status-error {
-  background: var(--pill-red-bg, var(--red-soft));
-  color: var(--pill-red-text, var(--red));
+  background: var(--pill-red-bg);
+  color: var(--pill-red-text);
 }
 
 body.erp-maintenance .toolbar,
@@ -1152,7 +1155,7 @@ body.erp-maintenance .unit-box {
 
 body.erp-maintenance .unit-box .k {
   font-size: 11px;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
   margin-bottom: 4px;
 }
 
@@ -1186,7 +1189,7 @@ body.erp-maintenance .table-wrap th {
   position: sticky;
   top: 0;
   z-index: 1;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -1211,7 +1214,7 @@ body.erp-maintenance th {
   position: sticky;
   top: 0;
   z-index: 1;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -1265,16 +1268,18 @@ body.erp-maintenance table.st-settlement td.num {
 body.erp-maintenance .form-stack {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 body.erp-maintenance .mini-note {
   font-size: 12px;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
 }
 
 body.erp-maintenance .card-list {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 body.erp-maintenance .record-card {
@@ -1284,7 +1289,7 @@ body.erp-maintenance .record-card {
 
 body.erp-maintenance .record-card:hover {
   box-shadow: var(--shadow);
-  border-color: var(--color-border, var(--line-strong));
+  border-color: var(--color-border-input);
 }
 
 body.erp-maintenance .record-head {
@@ -1294,6 +1299,7 @@ body.erp-maintenance .record-head {
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 8px;
+  min-width: 0;
 }
 
 body.erp-maintenance .subtabs {
@@ -1302,6 +1308,7 @@ body.erp-maintenance .subtabs {
   gap: 6px;
   margin-bottom: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 body.erp-maintenance .subtab {
