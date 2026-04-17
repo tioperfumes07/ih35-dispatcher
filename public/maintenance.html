@@ -4349,7 +4349,7 @@
       }
       const hint = document.getElementById('maintSaveHint');
       try {
-        if (hint) hint.textContent = 'Building draft PDF…';
+        maintToneSaveHint(hint, 'Building draft PDF…', null);
         resolveServiceSearch();
         resolveRepairLocationSearch();
         const repairLab = (document.getElementById('repairLocationSearch')?.value || '').trim();
@@ -4387,9 +4387,9 @@
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank', 'noopener');
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        if (hint) hint.textContent = 'Draft PDF opened.';
+        maintToneSaveHint(hint, 'Draft PDF opened.', null);
       } catch (e) {
-        if (hint) hint.textContent = e.message || String(e);
+        if (hint) maintToneSaveHint(hint, e.message || String(e), 'error');
         else alert(e.message || String(e));
       }
     }
@@ -13357,6 +13357,8 @@
     async function clearMaintenanceFormNewEntry() {
       clearMaintenanceEditMode();
       resetMaintenanceWorkOrderFormFields();
+      maintCloseSplitMenus();
+      maintToneSaveHint(document.getElementById('maintSaveHint'), '', null);
       serviceMileageUserTouched = false;
       openMaintMainTab('record', document.querySelector('#maintMainSubtabs [data-maint-main="record"]'));
       try {
@@ -13506,6 +13508,8 @@
           if (!confirm(`This record is for unit ${targetUnit}. Switch the selected asset to load it?`)) return;
           selectUnit(targetUnit, { preserveEditMode: true });
         }
+      maintCloseSplitMenus();
+      maintToneSaveHint(document.getElementById('maintSaveHint'), '', null);
       __editingMaintRecordId = String(r.id || '').trim() || null;
       updateMaintEditRecordHint();
 
@@ -13894,6 +13898,15 @@
       });
     }
 
+    /** @param {'caution'|'error'|null|undefined} tone */
+    function maintToneSaveHint(hintEl, text, tone) {
+      if (!hintEl) return;
+      hintEl.classList.remove('maint-save-hint--caution', 'maint-save-hint--error');
+      hintEl.textContent = text == null ? '' : String(text);
+      if (tone === 'caution') hintEl.classList.add('maint-save-hint--caution');
+      else if (tone === 'error') hintEl.classList.add('maint-save-hint--error');
+    }
+
     function maintToggleSplitMenu(ev, caretBtn) {
       ev.preventDefault();
       ev.stopPropagation();
@@ -13905,6 +13918,10 @@
       if (!wasOpen) {
         menu.hidden = false;
         caretBtn.setAttribute('aria-expanded', 'true');
+        queueMicrotask(() => {
+          const first = menu.querySelector('.qb-split__menu-item');
+          if (first && typeof first.focus === 'function') first.focus();
+        });
       }
     }
 
@@ -13913,6 +13930,16 @@
       document.addEventListener('mousedown', e => {
         if (e.target.closest && e.target.closest('.maint-save-toolbar--qb .qb-split')) return;
         maintCloseSplitMenus();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        const open = document.querySelector('.maint-save-toolbar--qb .qb-split__menu:not([hidden])');
+        if (!open) return;
+        const wrap = open.closest('.qb-split');
+        const caret = wrap && wrap.querySelector('.qb-split__caret');
+        maintCloseSplitMenus();
+        if (caret && typeof caret.focus === 'function') caret.focus();
+        e.preventDefault();
       });
     }
 
@@ -13933,11 +13960,12 @@
 
     async function saveRecordWithAction(actionOverride) {
       maintCloseSplitMenus();
+      const hint = document.getElementById('maintSaveHint');
       if (!selectedUnit) {
         alert('Select an asset first.');
+        maintToneSaveHint(hint, 'Select a unit before saving.', 'caution');
         return;
       }
-      const hint = document.getElementById('maintSaveHint');
       const sel = document.getElementById('maintSaveAction');
       if (actionOverride && sel) sel.value = String(actionOverride);
       const act = String(actionOverride || sel?.value || 'save');
@@ -13946,8 +13974,9 @@
       const toAp = act === 'save_to_ap';
       const toPrint = act === 'save_print';
       try {
-        if (hint) {
-          hint.textContent = post
+        maintToneSaveHint(
+          hint,
+          post
             ? 'Saving + posting…'
             : toAp
               ? 'Saving + opening Accounting draft…'
@@ -13955,11 +13984,16 @@
                 ? 'Saving, then opening print…'
                 : close
                   ? 'Saving + clearing form…'
-                  : 'Saving…';
-        }
+                  : 'Saving…',
+          null
+        );
         const saved = await saveRecord(post, close);
         if (!saved) {
-          if (hint) hint.textContent = '';
+          maintToneSaveHint(
+            hint,
+            'Not saved — review the alert, confirmation, or required fields, then try again.',
+            'caution'
+          );
           return;
         }
         if (toAp) {
@@ -13969,15 +14003,21 @@
           maintPreparePrintWorkOrderOnly();
           setTimeout(() => window.print(), 50);
         }
-        if (hint) {
-          if (post) hint.textContent = 'Saved and posted to QuickBooks.';
-          else if (toPrint) hint.textContent = 'Saved — print dialog opened.';
-          else if (toAp) hint.textContent = 'Saved — Accounting draft opened.';
-          else if (close) hint.textContent = 'Saved — form cleared for next entry.';
-          else hint.textContent = 'Saved.';
-        }
+        maintToneSaveHint(
+          hint,
+          post
+            ? 'Saved and posted to QuickBooks.'
+            : toPrint
+              ? 'Saved — print dialog opened.'
+              : toAp
+                ? 'Saved — Accounting draft opened.'
+                : close
+                  ? 'Saved — form cleared for next entry.'
+                  : 'Saved.',
+          null
+        );
       } catch (e) {
-        if (hint) hint.textContent = e.message || String(e);
+        if (hint) maintToneSaveHint(hint, e.message || String(e), 'error');
         else alert(e.message || String(e));
       }
     }
