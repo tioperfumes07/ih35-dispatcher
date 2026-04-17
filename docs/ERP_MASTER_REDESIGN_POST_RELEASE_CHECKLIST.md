@@ -93,8 +93,8 @@
 ## 9. Satellite pages
 
 - [ ] **Dispatch:** Refresh, catalog sync, save load, upload doc, auto miles, row **Create invoice** / **Sync attachments**, status `<select>` busy state, toasts on failure.
-- [ ] **Banking:** Snapshot, CSV import, suggest pager, link row, **`erp-auth-banner`** on 401, connection strip.
-- [ ] **Settings:** Login/bootstrap, employees pager, connection strip, focus/error token styles.
+- [ ] **Banking:** **Step 1** days + **Load snapshot** and **step 3** batch id + **Run suggestions** in **`mr-filter-bar`**; CSV import; suggest pager; link row; **`erp-auth-banner`** on 401; connection strip.
+- [ ] **Settings:** Login/bootstrap; **Employees** title **?** opens; search + **Refresh** in **`mr-filter-bar`**; employees pager (**16+**); connection strip; focus/error token styles.
 - [ ] **Fuel:** **Selected Unit** title **?** opens; **Diesel purchase** fields sit in **`mr-filter-bar`**; save purchase, recommend (busy if wired), connection strip; write-secret banner styling when **`ERP_WRITE_SECRET`** is configured.
 - [ ] **Index (hub):** Connection strip, no console errors.
 

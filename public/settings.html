@@ -20,7 +20,7 @@
     input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); margin-bottom: 12px; box-sizing: border-box; font-family: var(--font-sans); }
     input:focus { border-color: var(--color-border-focus, #1967d2); box-shadow: var(--focus-ring, 0 0 0 2px rgba(25, 103, 210, 0.1)); outline: none; }
     button { padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 600; font-family: var(--font-sans); }
-    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.primary { background: var(--accent); color: var(--color-bg-card, #fff); border-color: var(--accent); }
     button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     .mini { font-size: 12px; color: var(--muted); margin-top: 8px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -29,6 +29,7 @@
     a:hover { text-decoration: underline; }
     .hidden { display: none !important; }
     .err { color: var(--color-semantic-error, #b91c1c); font-size: 13px; margin-top: 8px; }
+    #adminTabPanelEmployees .mr-filter-bar__grow input { margin-bottom: 0; }
   </style>
 </head>
 <body class="settings-page">
@@ -97,11 +98,30 @@
         </div>
 
         <div id="adminTabPanelEmployees" class="hidden">
-          <h2 style="font-size:16px;margin:0 0 12px">Employees</h2>
+          <h2 style="font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span>Employees</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Employees vs QuickBooks">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Internal <strong>ERP directory</strong> for staff contact and status. <strong>QuickBooks vendors</strong> are maintained under <strong>Maintenance → Lists &amp; catalogs</strong>. Use <strong>Refresh</strong> after edits elsewhere; search filters the rows on this page.
+              </span>
+            </span>
+          </h2>
           <p class="mini" style="margin-top:0">Internal directory for staff contact + status (separate from QBO vendors).</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-            <input id="empSearch" placeholder="Search employee…" oninput="renderEmployeesTable()" />
-            <button type="button" id="btnEmpRefresh" onclick="loadEmployees()">Refresh</button>
+          <div
+            class="mr-filter-bar erp-ops-filter-bar"
+            role="group"
+            aria-label="Employee directory filter"
+            style="margin:0 0 10px;padding:0;border:none;align-items:flex-end;flex-wrap:wrap"
+          >
+            <div class="mr-filter-bar__grow" style="min-width:0;flex:1 1 220px">
+              <label for="empSearch">Search</label>
+              <input id="empSearch" placeholder="Search employee…" oninput="renderEmployeesTable()" autocomplete="off" />
+            </div>
+            <div class="mr-filter-bar__actions">
+              <label class="mini" style="margin:0 0 4px;visibility:hidden;line-height:0;height:0;overflow:hidden" aria-hidden="true">&nbsp;</label>
+              <button type="button" id="btnEmpRefresh" onclick="loadEmployees()">Refresh</button>
+            </div>
           </div>
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Title</th><th>Status</th><th></th></tr></thead>
