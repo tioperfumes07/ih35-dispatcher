@@ -1294,7 +1294,7 @@ body.erp-maintenance .subtabs {
 }
 
 body.erp-maintenance .subtab {
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   background: var(--panel);
   border-radius: 999px;
   padding: 7px 14px;
@@ -1481,7 +1481,7 @@ body.erp-maintenance .qb-memo {
 }
 
 body.erp-maintenance .wo-line {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   padding-bottom: 8px;
   margin-bottom: 8px;
 }
@@ -1700,7 +1700,7 @@ body.erp-maintenance .shop-tab-panel.active {
 }
 
 body.erp-maintenance .shop-col {
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
   background: var(--panel);
   overflow: hidden;
@@ -1724,7 +1724,7 @@ body.erp-maintenance .shop-col-body {
 
 body.erp-maintenance .shop-row {
   padding: 8px 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   line-height: 1.35;
 }
 
@@ -1936,7 +1936,7 @@ body.erp-maintenance .asset-cat-grid {
 }
 
 body.erp-maintenance .asset-cat-tile {
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
   padding: 14px 12px;
   cursor: pointer;
@@ -2103,7 +2103,7 @@ body.erp-maintenance .shop-queue-row {
 body.erp-maintenance .shop-wo-fallback {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px dashed var(--line);
+  border-top: 1px dashed var(--color-border, var(--line-strong, #cbd5e1));
 }
 
 body.erp-maintenance .shop-q-print-only {
@@ -2247,7 +2247,7 @@ body.erp-maintenance .maint-aside-kv {
   justify-content: space-between;
   gap: 10px;
   padding: 4px 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
 }
 body.erp-maintenance .maint-aside-kv span {
   color: var(--muted);
@@ -2260,7 +2260,7 @@ body.erp-maintenance .maint-aside-kv strong {
 }
 body.erp-maintenance .maint-aside-issue {
   padding: 4px 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   font-size: 12px;
 }
 body.erp-maintenance .maint-aside-issue--err {
@@ -2274,7 +2274,7 @@ body.erp-maintenance .maint-aside-issue--low {
 }
 
 body.erp-maintenance .maint-asset-header-card {
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--color-border, var(--line-strong, #cdd4e0));
   border-radius: 12px;
   padding: 10px 14px 12px;
   margin-bottom: 10px;
@@ -2332,7 +2332,7 @@ body.erp-maintenance .maint-status-pill--warn {
   color: var(--yellow);
 }
 body.erp-maintenance .maint-asset-status-panel {
-  border: 1px dashed var(--line-strong);
+  border: 1px dashed var(--color-border, var(--line-strong, #cbd5e1));
   border-radius: 10px;
   padding: 10px 12px 12px;
   margin-bottom: 10px;
@@ -2356,7 +2356,7 @@ body.erp-maintenance .maint-cost-table {
 }
 body.erp-maintenance .maint-cost-table th,
 body.erp-maintenance .maint-cost-table td {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   padding: 8px 6px;
   vertical-align: top;
   text-align: left;
@@ -3448,7 +3448,7 @@ body.erp-maintenance .acct-fuel-import-table {
 body.erp-maintenance .acct-fuel-import-table th,
 body.erp-maintenance .acct-fuel-import-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   text-align: left;
   vertical-align: top;
 }
