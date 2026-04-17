@@ -2075,7 +2075,14 @@
               </div>
             </div>
             <div class="panel-body form-stack">
-              <div class="wo-line-grid" style="margin-bottom:10px">
+              <div
+                class="mr-filter-bar erp-ops-filter-bar"
+                role="group"
+                aria-label="Bill payment composer fields"
+                style="margin-bottom:10px;align-items:flex-start"
+              >
+                <div class="mr-filter-bar__grow" style="min-width:0;width:100%">
+                  <div class="wo-line-grid" style="margin-bottom:0">
                 <div style="grid-column:span 2">
                   <span class="qb-l">Vendor (QuickBooks)</span>
                   <input id="bpVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Filter by vendor (optional)" oninput="resolveBpVendorSearch()" onblur="resolveBpVendorSearch()">
@@ -2104,6 +2111,8 @@
                 <div style="grid-column:span 2">
                   <span class="qb-l">Memo (private note in QBO)</span>
                   <input id="bpPrivateNote" class="qb-in" placeholder="Optional" />
+                </div>
+                  </div>
                 </div>
               </div>
               <div class="mr-bp-hintrow">
@@ -2175,7 +2184,14 @@
                   </span>
                 </span>
               </div>
-              <div class="wo-line-grid" style="margin-bottom:10px">
+              <div
+                class="mr-filter-bar erp-ops-filter-bar"
+                role="group"
+                aria-label="Bill payment log filters"
+                style="margin-bottom:10px;align-items:flex-start"
+              >
+                <div class="mr-filter-bar__grow" style="min-width:0;width:100%">
+                  <div class="wo-line-grid" style="margin-bottom:0">
                 <div>
                   <span class="qb-l">From</span>
                   <input id="bpLogFrom" class="qb-in" type="date" />
@@ -2209,6 +2225,8 @@
                 <div>
                   <span class="qb-l">&nbsp;</span>
                   <button type="button" class="qb-btn-add" onclick="setBpLogDatePreset(90)">Last 90 days</button>
+                </div>
+                  </div>
                 </div>
               </div>
               <div id="bpLogStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>

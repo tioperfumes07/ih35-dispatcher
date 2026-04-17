@@ -1,6 +1,6 @@
 # IH35 ERP — Master redesign checklist vs codebase
 
-**Consolidated report:** For a single document with **changelog**, **recommendations**, and **verification**, see **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)**. **Post-checklist / deferred work** (e.g. open bills pager + selection model): **[`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md)**.
+**Consolidated report:** For a single document with **changelog**, **recommendations**, and **verification**, see **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)**. **Post-checklist / deferred work** (e.g. open bills pager + selection model): **[`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md)**. **Suggested QA when redesign is “complete” / before release:** **[`ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md`](./ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md)**.
 
 This file maps the **consolidated master redesign** (Rules 0–24) to **this repository** (`public/*.html`, `public/css/*`, `server.js`, no `/src` React tree). It is the durable checklist the assistant referenced when uploaded lists lived only in chat.
 
@@ -12,7 +12,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~59.8%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.598** → **59.8%**; rounded headline **~59.8%**.)
+**Overall completion: ~59.9%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.599** → **59.9%**; rounded headline **~59.9%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
@@ -29,7 +29,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 12 | Maintenance layout | 0.49 | **Lists & catalogs** sub-tab intros (**Rule 22**) + **Service types (DB)** filter/pager (**Rules 15/23**); **Accounting → QuickBooks rollback** title **`erp-help-tip`** + compact body copy; full spec QA deferred |
 | 13 | Accounting board | 0.50 | KPIs + dash cards; card subcopy uses **token** text colors; **`#authBanner`** login strip: **`erp-auth-banner`** token chrome on **maintenance** + **banking** (**`erp-master-spec-2026.css`**); **QuickBooks Live Master** title **`erp-help-tip`** + **AP** / **expense history** inline QBO banners use **token** borders/backgrounds (**changelog 47**); dark-panel cleanup partial |
 | 14 | Upload center | 0.55 | Tabs + flows; **?** tips on every upload subpanel intro (Bank, Comdata, Fuel, AP, Maint, Other, Connections); sub-tab row **A–Z** by label; full file QA deferred |
-| 15 | Filter bar | 0.56 | Several tables + **Security alerts** + **Lists & catalogs → Service types (DB)** + **Reports → Maintenance detailed report** + **Accounting → Fuel expenses** ledger date/search/QBO fields wrapped in **`mr-filter-bar`** + **`mr-filter-bar__grow`** (**changelog 48**); not universal |
+| 15 | Filter bar | 0.57 | Several tables + **Security alerts** + **Lists & catalogs → Service types (DB)** + **Reports → Maintenance detailed report** + **Accounting → Fuel expenses** + **Pay bills** composer + **Recent bill payments** log filters wrapped in **`mr-filter-bar`** + **`mr-filter-bar__grow`** (**changelogs 48–49**); not universal |
 | 16 | Safety / HOS | 0.55 | Tables + **Rule 23** pagers on Safety + idle snapshot |
 | 17 | Reports | 0.61 | Hub + settlement; **Executive overview** panel title + **`erp-help-tip`**; **TMS**, **QBO**, **sync**, **IFTA**, **Maintenance spend by unit**, **Team & security**, **Maint detailed** tab titles + **`erp-help-tip`**; **Settlement** TMS trip box uses **`var(--color-border|bg-card)`**; **Driver pay settlements** title **`erp-help-tip`** + short body lines; **QBO / sync / IFTA** bodies use shorter intro copy (**Rule 22**); **Executive overview** timestamp line + **TMS** summary / empty / error copy use token-muted (**Rule 0**); **Maint spend by unit** empty state two-line pattern; **Maint spend by unit** + **Maint detailed** bodies paginated (**Rule 23**); “all on one page” partial |
 | 18 | QBO GET aliases | 0.90 | Skipped — existing catalog/status routes |
@@ -40,7 +40,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 23 | Pagination | 0.86 | Broad `erpPagerRender` coverage; **Lists & catalogs → Service types (DB)** (**`serviceCatalogAdminPager`**); **Reports** spend-by-unit + maint detailed (prior); not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.598** (**59.8%**; headline **~59.8%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.599** (**59.9%**; headline **~59.9%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -112,7 +112,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 15 — Samsara-style filter bar
 
-- **Partial:** Filter patterns exist on several tables (see spec comments in `erp-master-spec-2026.css`). **Maintenance → Security alerts** uses **`mr-filter-bar`** + **`mr-filter-bar__grow`** / **`__right`** for search, window, severity, and **Refresh alerts**. **Lists & catalogs → Service types (DB)** adds **`mr-filter-bar`** + live name filter for the Postgres catalog admin table. **Reports → Maintenance detailed report** wraps unit/date/type/search controls in **`mr-filter-bar`** + **`mr-filter-bar__grow`**. **Accounting → Fuel expenses** ledger filters (dates, search, QBO fields, category checkbox) use the same **`mr-filter-bar`** + **`mr-filter-bar__grow`** shell (**changelog 48**). Not every table has full chip + pager parity.
+- **Partial:** Filter patterns exist on several tables (see spec comments in `erp-master-spec-2026.css`). **Maintenance → Security alerts** uses **`mr-filter-bar`** + **`mr-filter-bar__grow`** / **`__right`** for search, window, severity, and **Refresh alerts**. **Lists & catalogs → Service types (DB)** adds **`mr-filter-bar`** + live name filter for the Postgres catalog admin table. **Reports → Maintenance detailed report** wraps unit/date/type/search controls in **`mr-filter-bar`** + **`mr-filter-bar__grow`**. **Accounting → Fuel expenses** ledger filters and **Pay bills** vendor/payment composer + **Recent bill payments** log filters use the same **`mr-filter-bar`** + **`mr-filter-bar__grow`** shell (**changelogs 48–49**). Not every table has full chip + pager parity.
 
 ### Rule 16 — Safety / HOS
 
@@ -202,6 +202,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 46. **Accounting rollback + settlement driver pay + banking auth strip (Rules 22 + 0 + 12 + 17 + 13):** **`maintenance.html`** — **Accounting → QuickBooks rollback & import safety**: panel title **`erp-help-tip`**; long intro paragraph → two short lines + token-muted secondary; sub-head borders use **`var(--color-border)`**. **Reports → Settlement / P&L**: **`#settlementTmsBox`** border/background **`var(--color-border|bg-card)`**; **Driver pay settlements** title **`erp-help-tip`** + shortened body. **`banking.html`** — **`#authBanner`** adds **`erp-auth-banner`**, removes inline red banner CSS. **`erp-master-spec-2026.css`** — same **`erp-auth-banner`** token strip for **`body.banking-page`** (warning palette; **`margin-bottom: 16px`** on banking).
 47. **Accounting QBO Live Master + token chrome (Rules 22 + 0 + 13):** **`maintenance.html`** — **Accounting → QuickBooks Live Master**: panel title **`erp-help-tip`** (vendors vs items vs accounts vs payroll); vendor form long **`mini-note`** → short line + **`var(--color-text-label)`** second line; section dividers **`var(--color-border)`**. **Fuel & DEF entry** Relay import panel: **`var(--color-border|bg-card)`**. **Expense history** QBO verify strip + **AP expense** doc QBO banner: token border/background/text. **Rollback** bulk-revert checkbox scroller + **Maintenance → unit** fleet roster block: **`var(--color-border)`**.
 48. **Accounting connections strip + fuel ledger filter bar (Rules 0 + 15):** **`maintenance.html`** — **`#maintIntegrationStrip`**: border/background/text use **`var(--color-border|bg-card|text-body)`** with legacy fallbacks; **`#maintPostingPreflight`** default color **`var(--color-semantic-warning)`**. **Accounting → Fuel expenses**: ledger **`wo-line-grid`** wrapped in **`mr-filter-bar`** + **`mr-filter-bar__grow`**. **Lists & catalogs** panel subtitle uses **`var(--color-text-label)`**.
+49. **Pay bills filter chrome + post-release QA doc (Rule 15 + docs):** **`maintenance.html`** — **Accounting → Pay bills**: payment composer **`wo-line-grid`** (vendor, pay-from, bank, date, check #, memo) and **Recent bill payments** log **`wo-line-grid`** each wrapped in **`mr-filter-bar`** + **`mr-filter-bar__grow`** with **`aria-label`**. **`docs/ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md`** — expanded suggested check list for release / “redesign complete” sign-off (environment, auth, maintenance hotspots, satellites, deferred follow-ups); linked from **`ERP_MASTER_REDESIGN_STATUS.md`** header and **`ERP_MASTER_REDESIGN_FINAL_REPORT.md`** §7.
 
 ---
 
@@ -210,7 +211,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 | Source | Status |
 |--------|--------|
 | **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md) §5 P0** — smoke test, sign-in / 401 paths, QBO strip with server | **Manual / environment** — not executable as static code; run when a server and credentials are available. |
-| **§7 verification checklist** (checkbox list) | **Manual QA** — same; items remain unchecked in that doc until a human runs them. |
+| **§7 verification checklist** (checkbox list) | **Manual QA** — expanded list lives in **[`ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md`](./ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md)**; tick there when you run sign-off. |
 | **[`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md)** — open bills pager + selection model, driver pay nested table pagination, Safety → Driver files pager | **Intentionally not implemented** — requires architecture/product decisions per deferred doc. |
 | **Deferred §2** — remaining upload / dense **`mini-note`** sweeps | **Partial** — upload subpanels already use title **`erp-help-tip`** + short **`mr-upload-panel-desc`**; further folding is optional. |
 | **Deferred §3–4** — universal Samsara strip, Rule 4/10/18 platform items | **Out of scope** for checklist UI passes unless product picks them up. |
