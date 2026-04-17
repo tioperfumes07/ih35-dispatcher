@@ -1733,7 +1733,7 @@
           <div class="acct-dash-cards">
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">Maintenance expenses</div>
-              <p class="mini-note" id="acctCardMaintSum" style="margin:0;color:#5f6368;font-size:12px;line-height:1.45">—</p>
+              <p class="mini-note" id="acctCardMaintSum" style="margin:0;color:var(--color-text-body,#3c4257);font-size:12px;line-height:1.45">—</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">View all</button>
                 <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="acctScrollToPendingPost()">Post pending to QBO</button>
@@ -1741,7 +1741,7 @@
             </div>
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">Fuel &amp; DEF</div>
-              <p class="mini-note" style="margin:0;color:#5f6368;font-size:12px;line-height:1.45">Fast entry, imports, and ledger.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-body,#3c4257);font-size:12px;line-height:1.45">Fast entry, imports, and ledger.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">View all</button>
                 <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">New fuel entry</button>
@@ -3059,13 +3059,33 @@
         </div>
         <div id="rep-qbo" class="reports-tab hidden">
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">QuickBooks — bills, purchases, credits, invoices</div></div>
+            <div class="panel-head">
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>QuickBooks — bills, purchases, credits, invoices</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Pulls recent <strong>QuickBooks</strong> bills, purchases, vendor credits, and invoices after you <strong>Refresh reports</strong> from the overview (same catalog window as the accounting board). Rows render here for read-only review.
+                  </span>
+                </span>
+              </div>
+            </div>
             <div class="panel-body" id="repQboBody"></div>
           </div>
         </div>
         <div id="rep-sync" class="reports-tab hidden">
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">Local ERP vs QuickBooks posting</div></div>
+            <div class="panel-head">
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>Local ERP vs QuickBooks posting</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About sync comparison">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Compares <strong>ERP maintenance / expense</strong> records already in this database with what has been posted to <strong>QuickBooks</strong>, so you can spot drift, duplicates, or missing posts. Use <strong>Refresh reports</strong> if the table is stale.
+                  </span>
+                </span>
+              </div>
+            </div>
             <div class="panel-body" id="repSyncBody"></div>
           </div>
         </div>
@@ -3082,17 +3102,24 @@
         </div>
         <div id="rep-ifta" class="reports-tab hidden">
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">IFTA, fuel tax &amp; DOT compliance (roadmap)</div></div>
+            <div class="panel-head">
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>IFTA, fuel tax &amp; DOT compliance (roadmap)</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="IFTA roadmap">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <strong>IFTA</strong> needs jurisdiction mileage, fuel by jurisdiction/type, and years of auditable source data. Typical inputs: <strong>Samsara</strong> ELD/GPS + <strong>QuickBooks</strong> fuel coding; this hub already ties revenue and rolls maintenance/AP into settlement views.
+                    <br /><br />
+                    <strong>Next steps (engineering):</strong> (1) persist Samsara <code>vehicleId</code> on <code>trucks</code>/<code>trailers</code>; (2) nightly miles-by-state; (3) fuel import from QBO or card CSV; (4) quarterly IFTA export; (5) driver compliance profile linked to <code>drivers.qbo_vendor_id</code>.
+                    <br /><br />
+                    <strong>Today:</strong> <a href="/fuel.html" target="_blank" rel="noopener">Fuel planner</a>, Samsara fleet/HOS, settlement + driver-pay rollup under <strong>Accounting → Settlement</strong>, QBO list sync. Run <code>npm run db:migrate</code> after pull (see <code>011_fleet_driver_compliance.sql</code>).
+                  </span>
+                </span>
+              </div>
+            </div>
             <div class="panel-body form-stack" style="max-width:min(820px,100%)">
               <p class="mini-note" style="margin:0">
-                <strong>IFTA</strong> filings need jurisdiction mileage (taxable and total where applicable), fuel gallons by jurisdiction and fuel type, and auditable source data (often four years).
-                GPS/ELD (for example <strong>Samsara</strong> vehicle stats and trip history) plus fuel purchases coded in <strong>QuickBooks</strong> are the usual inputs; this hub already ties loads to revenue and rolls maintenance/AP into settlement views.
-              </p>
-              <p class="mini-note" style="margin:0">
-                <strong>Next implementation steps:</strong> (1) persist Samsara <code>vehicleId</code> on <code>trucks</code>/<code>trailers</code>; (2) nightly job: odometer or GPS miles by state (route polyline + boundary lookup); (3) import fuel transactions from QBO or fuel card CSV; (4) quarterly IFTA worksheet + CSV/PDF export; (5) driver profile table (CDL/med card/drug test dates) linked to <code>drivers.qbo_vendor_id</code>, separate from QBO PII.
-              </p>
-              <p class="mini-note" style="margin:0">
-                <strong>In this app today:</strong> Fuel planner (<a href="/fuel.html" target="_blank" rel="noopener">full-screen fuel planner</a>), Samsara fleet and HOS, load-level settlement and driver-pay rollup (<strong>Accounting → Settlement</strong>), and QuickBooks list sync. Run <code>npm run db:migrate</code> after pull for new fleet and driver columns (see migration <code>011_fleet_driver_compliance.sql</code>).
+                Roadmap tab — jurisdiction miles, fuel tax, and driver compliance will layer on existing <strong>fuel</strong>, <strong>ELD</strong>, <strong>settlement</strong>, and <strong>QBO</strong> data. Open <strong>?</strong> for the full plan and what already ships.
               </p>
             </div>
           </div>
@@ -3105,8 +3132,16 @@
       <section id="section-catalog" class="section">
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">Lists &amp; catalogs</div>
-            <div class="mini-note" style="margin:0">Use the sidebar <strong>Lists &amp; catalogs</strong> shortcuts, or pick a list below.</div>
+            <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span>Lists &amp; catalogs</span>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About lists">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">
+                  Same data as the sidebar <strong>Lists &amp; catalogs</strong> shortcuts — pick a sub-tab for service types, QuickBooks items/accounts, vendors, operational labels, or fleet / Samsara write settings.
+                </span>
+              </span>
+            </div>
+            <div class="mini-note" style="margin:0">Sidebar shortcuts or tabs below.</div>
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
