@@ -2,7 +2,7 @@
 /**
  * Non-destructive HTTP checks against a running server (default http://127.0.0.1:3400).
  * Run: `npm start` in another terminal, then `npm run smoke`.
- * Also GETs key static HTML pages (maintenance, dispatch, fuel, banking, settings) and checks for a stable substring.
+ * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings) and checks for stable substring(s).
  * Set SMOKE_BASE=http://host:port to target another environment.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
@@ -27,6 +27,7 @@ const SOFT_DB = ['GET', '/api/health/db'];
 
 /** Static ERP shells (HTML) — catches broken public paths or 500 on page boot. Second value: one substring or all of a list must be present. */
 const HTML_PAGES = [
+  ['/index.html', ['hub-page', 'erpConnectionStrip', '/js/erp-ui.js']],
   ['/maintenance.html', ['section-reports', 'erpConnectionStrip']],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
   ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],

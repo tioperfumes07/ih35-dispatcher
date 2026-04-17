@@ -76,6 +76,25 @@
       color: var(--muted); font-size: 12px; line-height: 1.6;
     }
     footer strong { color: var(--color-text-placeholder, #cbd5f5); }
+    .hub-footer-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .hub-footer-lead {
+      margin: 0;
+      flex: 1;
+      min-width: min(100%, 240px);
+      max-width: min(72ch, 100%);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .hub-footer-tip {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
   </style>
   <link rel="stylesheet" href="/css/design-tokens.css" />
   <link rel="stylesheet" href="/css/app-theme.css" />
@@ -152,7 +171,17 @@
     </a>
   </div>
   <footer>
-    <strong>Mileage (practical vs shortest):</strong> The loads board “Auto miles” feature uses road routing (OSRM) for <strong>practical</strong> miles and a straight-line approximation for <strong>shortest</strong>. For settlement-grade practical/short pairs like Always Track + PC*Miler, plan to connect <strong>Trimble PCMiler / Maps</strong> (commercial API). Set <code>PCMILER_API_KEY</code> or vendor-specific env vars when you license it—we can swap the calculator behind the same button later.
+    <div class="hub-footer-row">
+      <p class="hub-footer-lead">
+        <strong>Mileage (practical vs shortest):</strong> Dispatch <strong>Auto miles</strong> uses OSRM for <strong>practical</strong> miles and a straight-line hint for <strong>shortest</strong>. Settlement-grade pairs (e.g. Always Track + PC*Miler) need a licensed routing API later.
+      </p>
+      <span class="erp-help-tip hub-footer-tip">
+        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Routing &amp; env">?</button>
+        <span class="erp-help-tip__panel" role="tooltip">
+          The loads board <strong>Auto miles</strong> feature uses road routing (OSRM) for <strong>practical</strong> miles and a straight-line approximation for <strong>shortest</strong>. For settlement-grade practical/short pairs, plan to connect <strong>Trimble PCMiler / Maps</strong> (commercial API). Set <code>PCMILER_API_KEY</code> or vendor-specific env vars when you license it — the same button can call a different calculator behind the scenes.
+        </span>
+      </span>
+    </div>
   </footer>
   <script src="/js/erp-ui.js"></script>
   <script>
