@@ -1150,14 +1150,14 @@ body.erp-maintenance .maint-qb-lines-table--item {
 }
 
 body.erp-maintenance .maint-qb-lines-table thead th {
-  background: #f8f9fa;
+  background: var(--color-bg-hover, #f8f9fa);
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #6b7385;
+  color: var(--color-text-label, #6b7385);
   padding: 6px 10px;
-  border-bottom: 1px solid #e0e3e8;
+  border-bottom: 1px solid var(--color-border, #e0e3e8);
   text-align: left;
   white-space: nowrap;
 }
@@ -1179,12 +1179,12 @@ body.erp-maintenance .maint-qb-td-del {
 }
 
 body.erp-maintenance .maint-qb-lines-table tbody tr.maint-cost-line:hover {
-  background: #fafafa;
+  background: var(--color-bg-hover, #fafafa);
 }
 
 body.erp-maintenance .maint-qb-lines-table tbody td {
   padding: 4px 8px;
-  border-bottom: 1px solid #eef0f5;
+  border-bottom: 1px solid var(--color-bg-header, #eef0f5);
   vertical-align: middle;
 }
 
@@ -1201,13 +1201,13 @@ body.erp-maintenance .maint-qb-lines-table .qb-in {
 
 body.erp-maintenance .maint-qb-lines-table .qb-in:focus {
   outline: none;
-  background: #f0f7ff;
-  box-shadow: inset 0 -1px 0 0 #1967d2;
+  background: var(--pill-blue-bg, #f0f7ff);
+  box-shadow: inset 0 -1px 0 0 var(--color-border-focus, #1967d2);
 }
 
 body.erp-maintenance .maint-qb-dollar {
   font-size: 11px;
-  color: #6b7385;
+  color: var(--color-text-label, #6b7385);
   margin-right: 2px;
 }
 
@@ -1235,7 +1235,7 @@ body.erp-maintenance .maint-line-part-map-host--inline {
 
 body.erp-maintenance .maint-qb-cost-details__actions {
   padding: 6px 10px 8px;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .maint-qb-cost-totals-bar {
@@ -1246,20 +1246,20 @@ body.erp-maintenance .maint-qb-cost-totals-bar {
   gap: 16px;
   padding: 10px 12px;
   margin-top: 10px;
-  border-top: 2px solid #e0e3e8;
-  background: #fff;
+  border-top: 2px solid var(--color-border, #e0e3e8);
+  background: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .maint-qb-cost-totals-bar__lbl {
   font-size: 11px;
-  color: #6b7385;
+  color: var(--color-text-label, #6b7385);
   margin-right: 4px;
 }
 
 body.erp-maintenance .maint-qb-cost-totals-bar__val {
   font-size: 13px;
   font-weight: 500;
-  color: #1a1f36;
+  color: var(--color-text-primary, #1a1f36);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1271,12 +1271,12 @@ body.erp-maintenance .maint-qb-cost-totals-bar__piece--grand .maint-qb-cost-tota
 body.erp-maintenance .maint-qb-cost-totals-bar__sep {
   width: 1px;
   height: 16px;
-  background: #e0e3e8;
+  background: var(--color-border, #e0e3e8);
 }
 
 body.erp-maintenance .erp-qb-seg {
   display: flex;
-  border: 1px solid #d0d4da;
+  border: 1px solid var(--color-border-input, #d0d4da);
   border-radius: 4px;
   overflow: hidden;
   width: fit-content;
@@ -1290,13 +1290,13 @@ body.erp-maintenance .erp-qb-seg__btn {
   cursor: pointer;
   font-family: inherit;
   height: 26px;
-  background: #ffffff;
-  color: #6b7385;
+  background: var(--color-bg-card, #ffffff);
+  color: var(--color-text-label, #6b7385);
 }
 
 body.erp-maintenance .erp-qb-seg__btn--active {
-  background: #e8f0fe;
-  color: #1557a0;
+  background: var(--pill-blue-bg, #e8f0fe);
+  color: var(--pill-blue-text, #1557a0);
 }
 
 body.erp-maintenance .maint-qb-td-hidden {
