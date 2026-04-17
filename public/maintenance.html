@@ -977,7 +977,7 @@
                             aria-controls="maintSaveSplitMenu"
                             aria-expanded="false"
                             aria-label="More save options"
-                            title="Save and close, open Accounting, or print"
+                            title="Save and close, open Accounting, or print. Enter, Space, or ↓ opens; ↑ opens on last item."
                           >
                             ▾
                           </button>
@@ -13970,6 +13970,21 @@
           }
         }
 
+        const saveMain = document.getElementById('maintBtnSaveRecord');
+        if (
+          saveMain instanceof HTMLElement &&
+          caret instanceof HTMLElement &&
+          menu &&
+          document.activeElement === saveMain &&
+          menu.hidden &&
+          !e.repeat &&
+          e.key === 'ArrowRight'
+        ) {
+          e.preventDefault();
+          maintOpenSaveSplitMenuFromCaret(caret, false);
+          return;
+        }
+
         const open = document.querySelector('.maint-save-toolbar--qb .qb-split__menu:not([hidden])');
         if (!open) return;
 
@@ -13979,6 +13994,20 @@
           maintCloseSplitMenus();
           if (caret && typeof caret.focus === 'function') caret.focus();
           e.preventDefault();
+          return;
+        }
+
+        if (e.key === 'ArrowLeft') {
+          if (!open.contains(document.activeElement)) return;
+          const itemsL = Array.prototype.slice
+            .call(open.querySelectorAll('.qb-split__menu-item'))
+            .filter(el => el instanceof HTMLElement && !el.disabled);
+          if (!itemsL.length || itemsL.indexOf(document.activeElement) !== 0) return;
+          e.preventDefault();
+          const wrapL = open.closest('.qb-split');
+          const mainBtn = wrapL && wrapL.querySelector('.qb-split__main');
+          maintCloseSplitMenus();
+          if (mainBtn && typeof mainBtn.focus === 'function') mainBtn.focus();
           return;
         }
 
@@ -14003,6 +14032,15 @@
           e.preventDefault();
           items[next].focus();
         }
+      });
+      document.addEventListener('focusin', e => {
+        const open = document.querySelector('.maint-save-toolbar--qb .qb-split__menu:not([hidden])');
+        if (!open) return;
+        const wrap = open.closest('.qb-split');
+        const t = e.target;
+        if (!(t instanceof Node) || !wrap) return;
+        if (wrap.contains(t)) return;
+        maintCloseSplitMenus();
       });
     }
 
