@@ -1497,11 +1497,6 @@ body.erp-maintenance .erp-reports-roadmap {
     padding-right: max(12px, env(safe-area-inset-right, 0px));
   }
 
-  body.erp-maintenance #authBanner.erp-auth-banner {
-    padding-left: max(14px, env(safe-area-inset-left, 0px));
-    padding-right: max(14px, env(safe-area-inset-right, 0px));
-  }
-
   /* Rules 1 + 2 — icon rail is flush to the viewport; pad top/left/bottom with safe-area (≤1100 rail width still applies from erp-master-redesign). */
   body.erp-maintenance .erp-icon-nav {
     padding: max(8px, env(safe-area-inset-top, 0px)) 0 max(12px, env(safe-area-inset-bottom, 0px))
@@ -1595,11 +1590,6 @@ body.erp-maintenance .erp-reports-roadmap {
   body.erp-maintenance .erp-reports-toolbar {
     padding: 8px max(10px, env(safe-area-inset-right, 0px)) 10px max(10px, env(safe-area-inset-left, 0px));
     margin-bottom: 8px;
-  }
-
-  body.erp-maintenance #authBanner.erp-auth-banner {
-    padding-left: max(12px, env(safe-area-inset-left, 0px));
-    padding-right: max(12px, env(safe-area-inset-right, 0px));
   }
 }
 
@@ -1819,6 +1809,12 @@ body.dispatch-page #dispatchApp .dispatch-board-intro--compact {
   max-width: min(72ch, 100%);
 }
 
+/* Dispatch QBO strip before ≤900px block so shorthand does not overwrite margin-left/right (Rule 24). */
+body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connection-strip {
+  margin: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 8px max(1.25rem, env(safe-area-inset-left, 0px));
+  flex-shrink: 0;
+}
+
 @media (max-width: 900px) {
   /* Rule 1 — dispatch + banking/settings/fuel: slightly tighter horizontal chrome on tablets. */
   body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
@@ -1868,7 +1864,7 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
 .erp-connection-strip {
   font-size: 12px;
   line-height: 1.45;
-  padding: 8px 14px;
+  padding: 8px max(14px, env(safe-area-inset-right, 0px)) 8px max(14px, env(safe-area-inset-left, 0px));
   margin: 0 0 12px;
   border-radius: var(--radius-card, 8px);
   border: 1px solid var(--color-border, var(--line, #e5e7eb));
@@ -1919,10 +1915,6 @@ body.hub-page .erp-help-tip__btn:focus-visible {
   outline-color: var(--color-hub-accent, #3b82f6);
 }
 
-body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connection-strip {
-  margin: 10px 1.25rem 8px;
-  flex-shrink: 0;
-}
 .erp-connection-strip--ok {
   border-color: var(--color-success-border-soft, #bce3c9);
   background: var(--pill-green-bg, #e6f4ea);
@@ -1942,7 +1934,7 @@ body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connec
 body.erp-maintenance #authBanner.erp-auth-banner,
 body.banking-page #authBanner.erp-auth-banner {
   margin-bottom: 10px;
-  padding: 10px 14px;
+  padding: 10px max(14px, env(safe-area-inset-right, 0px)) 10px max(14px, env(safe-area-inset-left, 0px));
   border-radius: 10px;
   width: 100%;
   max-width: 100%;

@@ -564,8 +564,7 @@ body.erp-maintenance .erp-topbar .print-hide-actions button:hover {
 /* --- Auth banner sits above top bar content flow --- */
 body.erp-maintenance .erp-main-surface > #authBanner:not(.hidden) {
   flex-shrink: 0;
-  margin: 0 1.25rem;
-  margin-top: 10px;
+  margin: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 0 max(1.25rem, env(safe-area-inset-left, 0px));
 }
 
 body.erp-maintenance .erp-main-surface > #qboSyncAlertBar:not(.hidden) {
