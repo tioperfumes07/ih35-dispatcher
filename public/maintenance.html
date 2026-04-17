@@ -3200,6 +3200,19 @@
                   <p id="catalogSectionServiceHint" class="mini-note" style="margin:0">Same API as the maintenance form — requires database + signed-in admin where applicable.</p>
                 </div>
               </div>
+              <div id="serviceCatalogAdminToolbar" class="mr-filter-bar" style="margin-bottom:0;display:none">
+                <div class="mr-filter-bar__grow">
+                  <input
+                    id="serviceCatalogAdminSearch"
+                    type="search"
+                    class="qb-in"
+                    placeholder="Filter by service name…"
+                    autocomplete="off"
+                    oninput="onServiceCatalogAdminSearchInput()"
+                  />
+                </div>
+              </div>
+              <div id="serviceCatalogAdminPagerHost" hidden></div>
               <div id="serviceCatalogAdminBody" class="mini-note">Loading catalog…</div>
             </div>
             <div id="catalog-panel-qbo" class="catalog-subpanel">
@@ -3913,6 +3926,9 @@
     let repMaintDetailPager = { page: 1, pageSize: 10 };
     /** Rule 23 — reports → Maintenance spend by unit */
     let repMaintByUnitPager = { page: 1, pageSize: 15 };
+    /** Lists & catalogs → Service types (DB): filter + Rule 23 pager */
+    let serviceCatalogAdminCache = null;
+    let serviceCatalogAdminPager = { page: 1, pageSize: 15, filterKey: '' };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -8043,6 +8059,14 @@
         const cat = await j('/api/maintenance/service-catalog-admin');
         renderServiceCatalogAdmin(cat);
       } catch (e) {
+        serviceCatalogAdminCache = null;
+        const toolbar = document.getElementById('serviceCatalogAdminToolbar');
+        const pagerHost = document.getElementById('serviceCatalogAdminPagerHost');
+        if (toolbar) toolbar.style.display = 'none';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
         const el = document.getElementById('serviceCatalogAdminBody');
         if (el) {
           el.innerHTML =
@@ -8051,6 +8075,13 @@
             '</span>';
         }
       }
+    }
+
+    function onServiceCatalogAdminSearchInput() {
+      const inp = document.getElementById('serviceCatalogAdminSearch');
+      serviceCatalogAdminPager.filterKey = inp ? String(inp.value || '') : '';
+      serviceCatalogAdminPager.page = 1;
+      renderServiceCatalogAdmin();
     }
 
     async function loadSecurityCatalogUi() {
@@ -8157,26 +8188,76 @@
     }
 
     function renderServiceCatalogAdmin(cat) {
+      const toolbar = document.getElementById('serviceCatalogAdminToolbar');
+      const pagerHost = document.getElementById('serviceCatalogAdminPagerHost');
       const el = document.getElementById('serviceCatalogAdminBody');
       if (!el) return;
-      if (!cat || !cat.ok) {
+
+      const hideChrome = () => {
+        if (toolbar) toolbar.style.display = 'none';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+      };
+
+      if (cat !== undefined) {
+        serviceCatalogAdminCache = cat;
+        if (cat && cat.ok) {
+          serviceCatalogAdminPager.page = 1;
+          const si = document.getElementById('serviceCatalogAdminSearch');
+          if (si) si.value = '';
+          serviceCatalogAdminPager.filterKey = '';
+        }
+      }
+      const c = serviceCatalogAdminCache;
+
+      if (!c || !c.ok) {
+        hideChrome();
         el.innerHTML =
           '<p class="mini-note">' +
-          escapeHtml(cat?.error || 'Catalog requires PostgreSQL and maintenance_service_catalog.') +
+          escapeHtml(c?.error || 'Catalog requires PostgreSQL and maintenance_service_catalog.') +
           '</p>';
         return;
       }
-      const rows = cat.rows || [];
-      if (!rows.length) {
+      const allRows = c.rows || [];
+      if (toolbar) toolbar.style.display = allRows.length ? 'flex' : 'none';
+
+      if (!allRows.length) {
+        hideChrome();
         el.innerHTML = '<p class="mini-note">No catalog rows.</p>';
         return;
       }
+
+      const ql = String(serviceCatalogAdminPager.filterKey || '')
+        .trim()
+        .toLowerCase();
+      const rows = !ql ? allRows.slice() : allRows.filter(r => String(r.name || '').toLowerCase().includes(ql));
+
+      if (!rows.length) {
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        el.innerHTML = '<p class="mini-note">No rows match this filter.</p>';
+        return;
+      }
+
+      const pState = serviceCatalogAdminPager;
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const n = rows.length;
+      const pages = Math.max(1, Math.ceil(n / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const slice = rows.slice(start, start + ps);
+
       el.innerHTML = `
         <div class="erp-table-scroll">
           <table class="catalog-admin-table">
             <thead><tr><th>Name</th><th>Active</th><th>Sort</th><th></th></tr></thead>
             <tbody>
-              ${rows
+              ${slice
                 .map(
                   r => `
                 <tr>
@@ -8195,6 +8276,22 @@
           </table>
         </div>
         <p class="mini-note" style="margin-top:10px">Add new names from the maintenance form (“Add to catalog”) or POST <code>/api/maintenance/service-types</code>.</p>`;
+
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total: n },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderServiceCatalogAdmin();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
     }
 
     async function toggleCatalogActiveFromBtn(btn) {
@@ -8207,6 +8304,7 @@
           body: JSON.stringify({ id, active })
         });
         await loadAll();
+        await loadServiceCatalogAdminOnly();
       } catch (e) {
         erpNotify(e.message || String(e));
       }
