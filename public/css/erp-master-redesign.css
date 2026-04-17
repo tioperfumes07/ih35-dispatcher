@@ -1861,7 +1861,8 @@ html.dispatch-embed #dispatchApp .erp-main-body.dispatch-board-body {
   padding: 0;
 }
 
-html.dispatch-embed body.dispatch-page .dispatch-embed-status-bar {
+html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
+  padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
   border-bottom-color: var(--qb-line);
   background: var(--color-bg-header, #fafbfc);
   color: var(--qb-muted);

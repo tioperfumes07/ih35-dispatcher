@@ -380,7 +380,7 @@
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About embedded planner">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
                   Same planner as the standalone page, without duplicate top navigation.
-                  <a href="/fuel.html" target="_blank" rel="noopener" style="color:var(--color-border-focus,#1967d2);font-weight:500">Open full screen</a>
+                  <a href="/fuel.html" target="_blank" rel="noopener" style="color:var(--color-border-focus);font-weight:500">Open full screen</a>
                 </span>
               </span>
             </div>
@@ -1478,8 +1478,8 @@
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tab meanings">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
                     Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
-                    <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:var(--color-border-focus,#1967d2);font-weight:500">Vehicle map</a>
-                    · <a href="#" onclick="openSectionByName('safety');return false;" style="color:var(--color-border-focus,#1967d2);font-weight:500">Safety / HOS</a>
+                    <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:var(--color-border-focus);font-weight:500">Vehicle map</a>
+                    · <a href="#" onclick="openSectionByName('safety');return false;" style="color:var(--color-border-focus);font-weight:500">Safety / HOS</a>
                   </span>
                 </span>
               </div>
@@ -1979,7 +1979,7 @@
         </div>
 
         <div id="acctBoardStrip" class="mr-acct-board maint-section-card" aria-label="Accounting overview">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--color-border,var(--line,#e2e8f0))">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--color-border)">
             <span class="panel-title" style="margin:0;font-size:17px">Accounting board</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="KPIs vs tabs">?</button>
@@ -2013,7 +2013,7 @@
           <div class="acct-dash-cards">
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">Maintenance expenses</div>
-              <p class="mini-note" id="acctCardMaintSum" style="margin:0;color:var(--color-text-body,#3c4257);font-size:12px;line-height:1.45">—</p>
+              <p class="mini-note" id="acctCardMaintSum" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">View all</button>
                 <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="acctScrollToPendingPost()">Post pending to QBO</button>
@@ -2021,7 +2021,7 @@
             </div>
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">Fuel &amp; DEF</div>
-              <p class="mini-note" style="margin:0;color:var(--color-text-body,#3c4257);font-size:12px;line-height:1.45">Fast entry, imports, and ledger.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">Fast entry, imports, and ledger.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">View all</button>
                 <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">New fuel entry</button>
@@ -2029,7 +2029,7 @@
             </div>
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">QuickBooks sync</div>
-              <p class="mini-note" style="margin:0;color:var(--color-text-body,#3c4257);font-size:12px;line-height:1.45">Master lists, rollback, and connection.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">Master lists, rollback, and connection.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
                 <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
@@ -2039,7 +2039,7 @@
                 type="button"
                 id="acctDashQboErrMore"
                 class="acct-dash-btn hidden"
-                style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus,#1967d2);background:transparent"
+                style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus);background:transparent"
                 onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})"
               >
                 View all errors
@@ -2065,7 +2065,7 @@
           <div
             id="maintIntegrationStrip"
             class="mini-note"
-            style="margin-top:14px;padding:10px 12px;border:1px solid var(--color-border,var(--line,#e2e8f0));border-radius:8px;background:var(--color-bg-card,#fafafa);line-height:1.55;font-size:13px;color:var(--color-text-body,var(--text,#1e293b))"
+            style="margin-top:14px;padding:10px 12px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card);line-height:1.55;font-size:13px;color:var(--color-text-body,var(--text))"
           >
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px">
               <strong>Connections</strong>
@@ -2130,7 +2130,7 @@
             <div
               id="apTxnQboBanner"
               class="mini-note qb-doc-banner qb-doc-banner--ap"
-              style="display:none;margin:0;padding:8px 14px;border-top:1px solid var(--color-border,#e2e8f0);background:var(--color-bg-header,#f8fafc);line-height:1.45;font-size:13px;color:var(--color-text-body,#334155);align-items:center;gap:8px;flex-wrap:wrap"
+              style="display:none;margin:0;padding:8px 14px;border-top:1px solid var(--color-border);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);align-items:center;gap:8px;flex-wrap:wrap"
             >
               <span id="apTxnQboBannerText"></span>
             </div>
@@ -2848,7 +2848,7 @@
                   </div>
                 </div>
               </div>
-              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border,#e2e8f0);border-radius:10px;background:var(--color-bg-card,#fafcff)">
+              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-card,#fafcff)">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
                   <div class="qb-l" style="margin:0">Relay / Love’s fuel file (CSV or Excel)</div>
                   <span class="erp-help-tip">
@@ -3096,7 +3096,7 @@
               <div
                 id="expHistQboBanner"
                 class="mini-note"
-                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border,#cbd5e1);background:var(--color-bg-header,#f8fafc);line-height:1.45;font-size:13px;color:var(--color-text-body,#334155);display:flex;align-items:center;gap:8px;flex-wrap:wrap"
+                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border,#cbd5e1);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap"
               >
                 <span>Use <strong>Check QBO</strong> on posted rows to verify Purchase/Bill still exists.</span>
                 <span class="erp-help-tip">
@@ -5104,7 +5104,7 @@
       else {
         for (const k of keys) {
           const list = byLoc[k].slice(0, 14);
-          html += `<div style="margin:10px 0 4px;font-weight:500;font-size:12px;color:var(--color-text-body,#334155)">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
+          html += `<div style="margin:10px 0 4px;font-weight:500;font-size:12px;color:var(--color-text-body)">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
           for (const r of list) {
             const svc = String(r.serviceType || '').trim() || '—';
             const st = String(r.qboSyncStatus || r.syncStatus || 'local').trim();
@@ -5562,7 +5562,7 @@
           if (bar) {
             bar.classList.remove('hidden');
             bar.innerHTML =
-              '<span>Login required — </span><a href="/settings.html" style="color:var(--color-border-focus,#1967d2);font-weight:500">Open Settings</a> to sign in.';
+              '<span>Login required — </span><a href="/settings.html" style="color:var(--color-border-focus);font-weight:500">Open Settings</a> to sign in.';
           }
         }
         throw new Error(data.error || data.message || text.slice(0, 200));
@@ -7743,7 +7743,7 @@
       const dot = ok =>
         `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:${ok ? 'var(--pill-green-text,#1e8e3e)' : 'var(--pill-red-text,#d93025)'}"></span>`;
       box.innerHTML =
-        `<div style="font-size:11px;color:var(--color-text-body,#3c4257);line-height:1.6">` +
+        `<div style="font-size:11px;color:var(--color-text-body);line-height:1.6">` +
         `<div>${dot(qboOk)}QuickBooks: ${qboOk ? 'Connected' : 'Disconnected'} — ${escapeHtml(company)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(lastUp)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(fleetLn)}</div>` +
@@ -7782,7 +7782,7 @@
       const payload = __maintQboSyncPayloadCache;
       if (!payload || payload.ok === false) {
         fill('<span class="mini-note">Sync unavailable.</span>');
-        if (top) top.innerHTML = '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body,#3c4257)">QBO issues: —</span>';
+        if (top) top.innerHTML = '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body)">QBO issues: —</span>';
         return;
       }
       const alerts = payload.alerts || [];
@@ -7790,7 +7790,7 @@
         fill('<span class="mini-note">No open issues.</span>');
         if (top) {
           top.innerHTML =
-            '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body,#3c4257)">QBO: no open issues</span>';
+            '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body)">QBO: no open issues</span>';
         }
         return;
       }
@@ -8551,7 +8551,7 @@
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
         if (bar) {
           bar.classList.remove('hidden');
-          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:var(--color-border-focus,#1967d2);font-weight:500">Sign in</a>`;
+          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:var(--color-border-focus);font-weight:500">Sign in</a>`;
         }
         try {
           applyNavHash();
@@ -14595,7 +14595,7 @@
     function paintQboStatusBanner(el, text, tier) {
       if (!el) return;
       const colors = {
-        info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body,#334155)' },
+        info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body)' },
         success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success,#065f46)' },
         warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning,#92400e)' },
         error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text,#991b1b)' }
@@ -14624,7 +14624,7 @@
         return;
       }
       const colors = {
-        info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body,#334155)' },
+        info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body)' },
         success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success,#065f46)' },
         warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning,#92400e)' },
         error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text,#991b1b)' }
