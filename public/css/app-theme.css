@@ -1499,9 +1499,9 @@ body.erp-maintenance .wo-line-grid {
 body.erp-maintenance .qb-btn-del {
   padding: 2px 6px;
   font-size: 13px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: 4px;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   cursor: pointer;
 }
 
@@ -1515,14 +1515,22 @@ body.erp-maintenance .qb-doc-shell {
   border: 1px solid var(--app-frame-border);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: linear-gradient(180deg, var(--app-section-surface) 0%, #fff 28%);
+  background: linear-gradient(
+    180deg,
+    var(--app-section-surface) 0%,
+    var(--color-bg-card, #fff) 28%
+  );
   box-shadow: var(--shadow-sm);
 }
 
 body.erp-maintenance .qb-doc-head {
   padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-header, #fafbfc) 0%,
+    var(--color-bg-card, #fff) 100%
+  );
 }
 
 body.erp-maintenance .qb-doc-title-row {
@@ -1538,7 +1546,7 @@ body.erp-maintenance .qb-doc-h2 {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #0f172a;
+  color: var(--color-text-primary, #0f172a);
 }
 
 body.erp-maintenance .qb-doc-total-block {
@@ -1548,7 +1556,7 @@ body.erp-maintenance .qb-doc-total-block {
 body.erp-maintenance .qb-doc-total-amt {
   font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-text-primary, #0f172a);
   line-height: 1.1;
 }
 
@@ -1562,15 +1570,15 @@ body.erp-maintenance .qb-logistics-bar {
   gap: 10px;
   margin: 12px 0 8px;
   padding: 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
-  background: #fafafa;
+  background: var(--color-bg-header, #fafafa);
 }
 
 body.erp-maintenance .qb-lines-wrap {
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   margin-top: 10px;
 }
 
@@ -1583,8 +1591,8 @@ body.erp-maintenance .qb-lines-header {
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
-  border-bottom: 1px solid var(--line);
-  background: #f8fafc;
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
+  background: var(--color-bg-hover, #f8fafc);
 }
 
 body.erp-maintenance .qb-lines-header .num {
@@ -1597,8 +1605,8 @@ body.erp-maintenance .qb-lines-actions {
   gap: 8px;
   align-items: center;
   padding: 10px;
-  border-top: 1px solid var(--line);
-  background: #f8fafc;
+  border-top: 1px solid var(--color-border, var(--line, #e2e6ee));
+  background: var(--color-bg-hover, #f8fafc);
 }
 
 body.erp-maintenance .qb-doc-memo-row {
@@ -1609,10 +1617,10 @@ body.erp-maintenance .qb-doc-memo-row {
 }
 
 body.erp-maintenance .qb-attach-box {
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--color-border, #cbd5e1);
   border-radius: var(--radius-sm);
   padding: 12px;
-  background: #fafafa;
+  background: var(--color-bg-header, #fafafa);
   min-height: 96px;
 }
 
@@ -1702,8 +1710,8 @@ body.erp-maintenance .shop-col-head {
   padding: 10px 12px;
   font-weight: 700;
   font-size: 13px;
-  border-bottom: 1px solid var(--line);
-  background: #f8fafc;
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
+  background: var(--color-bg-hover, #f8fafc);
 }
 
 body.erp-maintenance .shop-col-body {
@@ -1742,10 +1750,11 @@ body.erp-maintenance .nav-dropdown-menu {
   margin-top: 4px;
   padding: 6px 0;
   background: var(--sidebar-bg);
-  border: 1px solid #334155;
+  border: 1px solid var(--sidebar-border, #334155);
   border-radius: 10px;
   z-index: 100;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-dropdown, 0 8px 24px rgba(0, 0, 0, 0.25));
   max-height: min(70vh, 420px);
   overflow: auto;
 }
@@ -1761,7 +1770,7 @@ body.erp-maintenance .nav-dd-item {
   padding: 9px 14px;
   background: transparent;
   border: 0;
-  color: #e2e8f0;
+  color: var(--nav-text, #e2e8f0);
   font-size: 13px;
   cursor: pointer;
   font: inherit;
@@ -1769,11 +1778,12 @@ body.erp-maintenance .nav-dd-item {
 
 body.erp-maintenance .nav-dd-item:hover {
   background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--sidebar-text, #f1f5f9) 8%, transparent);
 }
 
 body.erp-maintenance .nav-dd-sep {
   height: 1px;
-  background: #334155;
+  background: var(--sidebar-border, #334155);
   margin: 6px 0;
 }
 
@@ -1835,6 +1845,7 @@ body.erp-maintenance .maint-modal-bg {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
+  background: var(--color-modal-backdrop, rgba(15, 23, 42, 0.5));
   z-index: 9000;
   align-items: center;
   justify-content: center;
@@ -1907,10 +1918,10 @@ body.erp-maintenance .maint-modal {
 body.erp-maintenance #maintModalFlowTitle {
   font-size: 15px;
   font-weight: 700;
-  color: #1e3a5f;
+  color: var(--color-text-primary, #1e3a5f);
   margin: 0 0 10px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
 }
 
 body.erp-maintenance .asset-cat-grid {
@@ -2190,7 +2201,7 @@ body.erp-maintenance .maint-kpi-card__val {
   font-size: 1.25rem;
   font-weight: 800;
   margin-top: 2px;
-  color: #0f172a;
+  color: var(--color-text-primary, #0f172a);
 }
 
 body.erp-maintenance .maint-wo-workspace-grid {
@@ -2262,7 +2273,11 @@ body.erp-maintenance .maint-asset-header-card {
   border-radius: 12px;
   padding: 10px 14px 12px;
   margin-bottom: 10px;
-  background: linear-gradient(180deg, #fff 0%, var(--app-section-surface) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-card, #fff) 0%,
+    var(--app-section-surface) 100%
+  );
 }
 body.erp-maintenance .maint-asset-header-card__placeholder {
   font-size: 13px;
@@ -2277,7 +2292,7 @@ body.erp-maintenance .maint-asset-header-card__row {
 body.erp-maintenance .maint-asset-header-card__unit {
   font-size: 1.1rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-text-primary, #0f172a);
 }
 body.erp-maintenance .maint-asset-header-card__ymm {
   font-size: 13px;
@@ -2300,8 +2315,8 @@ body.erp-maintenance .maint-status-pill {
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 700;
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--color-bg-header, #e2e8f0);
+  color: var(--color-text-body, #334155);
 }
 body.erp-maintenance .maint-status-pill--ok {
   background: var(--green-soft);
@@ -2316,7 +2331,7 @@ body.erp-maintenance .maint-asset-status-panel {
   border-radius: 10px;
   padding: 10px 12px 12px;
   margin-bottom: 10px;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
 }
 body.erp-maintenance .maint-asset-status-panel__head {
   display: flex;
@@ -2345,7 +2360,7 @@ body.erp-maintenance .maint-cost-table thead th {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #475569;
+  color: var(--color-text-label, #475569);
   font-weight: 700;
 }
 body.erp-maintenance .maint-cost-table__num {
