@@ -95,7 +95,7 @@
 - [ ] **Dispatch:** Refresh, catalog sync, save load, upload doc, auto miles, row **Create invoice** / **Sync attachments**, status `<select>` busy state, toasts on failure.
 - [ ] **Banking:** Snapshot, CSV import, suggest pager, link row, **`erp-auth-banner`** on 401, connection strip.
 - [ ] **Settings:** Login/bootstrap, employees pager, connection strip, focus/error token styles.
-- [ ] **Fuel:** Save purchase, recommend (busy if wired), connection strip.
+- [ ] **Fuel:** **Selected Unit** title **?** opens; **Diesel purchase** fields sit in **`mr-filter-bar`**; save purchase, recommend (busy if wired), connection strip; write-secret banner styling when **`ERP_WRITE_SECRET`** is configured.
 - [ ] **Index (hub):** Connection strip, no console errors.
 
 ---
