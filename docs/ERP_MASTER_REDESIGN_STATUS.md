@@ -104,11 +104,11 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 22 — Instruction cleanup → “?” tips
 
-- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel. Many other long **`mini-note`** blocks remain for future passes.
+- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Settlement / P&L** intro + trip rollup panel use the same pattern. Many other long **`mini-note`** blocks remain for future passes.
 
 ### Rule 23 — Pagination
 
-- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**)). Not literally every table >10 rows.
+- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**)). Not literally every table >10 rows.
 
 ### Rule 24 — Connection verification on load
 
@@ -134,6 +134,8 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 14. **Rule 23 (fuel expense grid):** **`maintenance.html`** — **`#fuelExpPagerHost`** + **`fuelExpensePager`** slice the fuel expense table; **`postFuelExpenseToQbo`** reads ERP row + draft when the row is not on the current page so **Record filtered to QuickBooks** still posts the full filtered set.
 15. **Rule 23 (expense history):** **`maintenance.html`** — **`#expHistPagerHost`** + **`expHistPager`** paginate the combined expense history table; **Export filtered CSV** still uses the full filtered row set.
 16. **Rule 23 (settlement report):** **`maintenance.html`** — **`#settlementIndexPagerHost`** / **`settlementIndexPager`** for **Loads with recorded costs**; **`#settlementLinesPagerHost`** / **`settlementLinesPager`** for trip lookup line items (new load # resets page). **Download CSV** still exports the full load from the API.
+17. **Rule 23 (saved WO + AP cards):** **`maintenance.html`** — **`#apListPagerHost`** + **`apTxnListPager`** paginate the combined work-order and AP **record-card** list (default 10 cards/page); CSV exports still use server / full **`erp`** datasets.
+18. **Rule 22 (settlement report copy):** **`maintenance.html`** — **Reports → Settlement / P&L** page intro and trip rollup panel: long paragraphs replaced with short **`mini-note`** lines plus **`erp-help-tip`** panels.
 
 ---
 

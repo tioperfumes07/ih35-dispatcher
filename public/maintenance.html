@@ -1175,6 +1175,7 @@
                     <tbody id="maintenanceTableBody"></tbody>
                   </table>
                 </div>
+                <div id="maintTablePagerHost" hidden></div>
               </div>
             </div>
 
@@ -2007,6 +2008,7 @@
             </div>
             <div class="panel-body">
               <div id="apList" class="card-list">No transactions yet.</div>
+              <div id="apListPagerHost" hidden></div>
             </div>
           </div>
         </div>
@@ -2878,13 +2880,27 @@
         </div>
 
         <div id="rep-settlement" class="reports-tab hidden">
-          <p class="mini-note" style="margin:0 0 12px;max-width:90ch">
-            <strong>TMS report:</strong> trip-level revenue vs rolled-up expenses (work orders, AP lines, and maintenance records keyed by load / invoice #). Moved from Accounting so the Accounting board stays focused on expense entry and QuickBooks operations.
-          </p>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;max-width:90ch">
+            <span class="mini-note" style="margin:0"><strong>TMS report</strong> — trip revenue vs rolled-up expenses by load / invoice #.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Combines <strong>work orders</strong>, <strong>AP lines</strong>, and <strong>unit maintenance records</strong> that share the same load or invoice number. When the load exists in TMS (Postgres), the trip header and stops appear in the panel below. This view was moved out of Accounting so the board stays focused on expense entry and QuickBooks operations.
+              </span>
+            </span>
+          </div>
           <div class="panel qb-panel">
             <div class="panel-head"><div class="panel-title">Trip cost rollup (load # = invoice #)</div></div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 8px">Rolls up <strong>work orders</strong>, <strong>AP lines</strong>, and <strong>unit maintenance records</strong> that share this load/invoice #. If the load exists in TMS (Postgres), trip header and stops appear below. Export CSV for accounting.</p>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px">
+                <span class="mini-note" style="margin:0">Match load # on WOs, AP, and unit records · TMS context when available · CSV export.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Rollup rules">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Enter the same <strong>load / invoice #</strong> you use on work orders, AP documents, and maintenance records so costs roll into one trip. <strong>Run lookup</strong> refreshes totals; <strong>Download CSV</strong> exports the current load for accounting.
+                  </span>
+                </span>
+              </div>
               <div class="wo-line-grid" style="margin-bottom:10px">
                 <div style="grid-column:span 2">
                   <span class="qb-l">Load / invoice #</span>
@@ -3702,6 +3718,10 @@
     let settlementIndexPager = { page: 1, pageSize: 15, filterKey: '' };
     /** Rule 23 — reports settlement: line items for current load lookup */
     let settlementLinesPager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — accounting saved WO + AP cards */
+    let apTxnListPager = { page: 1, pageSize: 10, filterKey: '' };
+    /** Rule 23 — maintenance fleet dashboard table */
+    let maintDashboardTablePager = { page: 1, pageSize: 15, filterKey: '' };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -12780,6 +12800,9 @@
     }
 
     function renderMaintenanceTable() {
+      const tb = document.getElementById('maintenanceTableBody');
+      const pagerHost = document.getElementById('maintTablePagerHost');
+      if (!tb) return;
       const selectedServiceFilter = document.getElementById('maintenanceServiceFilter').value.trim().toLowerCase();
       const listNames = new Set((vehiclesByCategory()[activeAssetCategory] || []).map(v => v.name));
 
@@ -12787,7 +12810,33 @@
         .filter(r => listNames.has(r.unit))
         .filter(r => !selectedServiceFilter || String(r.serviceType || '').toLowerCase().includes(selectedServiceFilter));
 
-      document.getElementById('maintenanceTableBody').innerHTML = rows.map(r => `
+      const filterKey = `${activeAssetCategory}|${selectedServiceFilter}`;
+      const pState = maintDashboardTablePager;
+      if (pState.filterKey !== filterKey) {
+        pState.page = 1;
+      }
+      pState.filterKey = filterKey;
+
+      if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="14">No rows found.</td></tr>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        return;
+      }
+
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const total = rows.length;
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const slice = rows.slice(start, start + ps);
+
+      tb.innerHTML = slice
+        .map(
+          r => `
         <tr>
           <td>${escapeHtml(r.unit)}</td>
           <td>${escapeHtml(r.serviceType)}</td>
@@ -12803,8 +12852,25 @@
           <td>${escapeHtml(r.loadNumber || '')}</td>
           <td>${r.cost ?? ''}</td>
           <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || '')}</span></td>
-        </tr>
-      `).join('') || '<tr><td colspan="14">No rows found.</td></tr>';
+        </tr>`
+        )
+        .join('');
+
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderMaintenanceTable();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
     }
 
     function fuelCellForMaintRow(r) {
@@ -15013,7 +15079,7 @@
       const wos = (erp.workOrders || []).slice().reverse();
       const apRows = (erp.apTransactions || []).slice().reverse();
 
-      const woHtml = wos.map(r => {
+      const woCards = wos.map(r => {
         const lines = r.lines || [];
         const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
         const lineSumm = lines
@@ -15068,7 +15134,7 @@
           `;
       });
 
-      const apHtml = apRows.map(
+      const apCards = apRows.map(
         r => `
             <div class="record-card">
               <div class="record-head">
@@ -15100,8 +15166,46 @@
           `
       );
 
-      const all = [...woHtml, ...apHtml].join('');
-      document.getElementById('apList').innerHTML = all || 'No maintenance expense transactions yet.';
+      const cards = [...woCards, ...apCards];
+      const apListEl = document.getElementById('apList');
+      const pagerHost = document.getElementById('apListPagerHost');
+      if (!apListEl) return;
+      const pState = apTxnListPager;
+      const filterKey = `${wos.length}|${apRows.length}`;
+      if (pState.filterKey !== filterKey) {
+        pState.page = 1;
+      }
+      pState.filterKey = filterKey;
+      if (!cards.length) {
+        apListEl.innerHTML = 'No maintenance expense transactions yet.';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        return;
+      }
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 10);
+      const total = cards.length;
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      apListEl.innerHTML = cards.slice(start, start + ps).join('');
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderApTransactions();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
     }
 
     function localIsoDate(d) {
