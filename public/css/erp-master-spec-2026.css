@@ -164,7 +164,7 @@ body.erp-maintenance .modal-bg {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.45) !important;
+  background: var(--color-modal-backdrop, rgba(0, 0, 0, 0.45)) !important;
 }
 
 body.erp-maintenance .modal {
@@ -1463,6 +1463,19 @@ body.erp-maintenance .erp-reports-roadmap {
   body.erp-maintenance .erp-topbar.topbar {
     padding: 8px 12px;
     gap: 10px;
+  }
+
+  /* Rule 1 — module sidebar: slightly tighter horizontal padding on tablets. */
+  body.erp-maintenance .erp-module-sidebar__head {
+    padding: 10px;
+  }
+
+  body.erp-maintenance .erp-module-sidebar__inner {
+    padding: 0 8px;
+  }
+
+  body.erp-maintenance .erp-module-sidebar__footer {
+    padding: 9px 10px 10px;
   }
 }
 
