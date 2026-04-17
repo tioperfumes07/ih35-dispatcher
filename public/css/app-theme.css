@@ -1,6 +1,7 @@
 /**
  * IH35 — shared visual language: calm, precise, trustworthy.
  * Load before page-specific <style> blocks so local rules can override.
+ * Text ink: prefer `var(--color-text-*, var(--text|muted|text-secondary))` so pages stay readable if `design-tokens.css` is not linked (see `docs/ERP_MASTER_REDESIGN_STATUS.md` changelog 195).
  */
 
 :root {
@@ -96,7 +97,7 @@ main,
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-border-focus, var(--accent));
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
@@ -136,7 +137,7 @@ main,
 .banking-page .panel {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-app-frame-border, var(--app-frame-border));
+  border: 1px solid var(--color-app-frame-border);
   background: linear-gradient(180deg, var(--app-section-surface) 0%, var(--color-bg-card) 38%);
 }
 
@@ -336,7 +337,7 @@ main,
   max-width: 520px;
   max-height: 260px;
   overflow: auto;
-  border: 1px solid var(--color-border, var(--line-strong));
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-bg-card);
   box-shadow: var(--shadow-dropdown, var(--shadow-md));
@@ -444,7 +445,7 @@ body.erp-maintenance .qb-picker-item__meta {
 .erp-drawer__backdrop {
   position: fixed;
   inset: 0;
-  background: var(--color-modal-backdrop, rgba(15, 23, 42, 0.35));
+  background: var(--color-modal-backdrop);
   z-index: 2990;
   opacity: 0;
   pointer-events: none;
@@ -480,11 +481,11 @@ body.fuel-board {
 }
 
 body.dispatch-page {
-  background: var(--color-bg-page, var(--bg));
+  background: var(--color-bg-page);
 }
 
 body.fuel-board {
-  background: var(--color-bg-page, var(--bg));
+  background: var(--color-bg-page);
 }
 
 /* —— Dispatch (TMS) —— */
@@ -536,7 +537,7 @@ body.dispatch-page .topbar button {
 
 body.dispatch-page .topbar button:hover {
   background: var(--color-bg-hover);
-  border-color: var(--color-border, var(--line-strong));
+  border-color: var(--color-border);
 }
 
 body.dispatch-page .topbar button.secondary {
@@ -554,7 +555,7 @@ body.dispatch-page .tabs {
   flex-wrap: wrap;
   gap: 6px;
   padding: 10px 18px 12px;
-  background: var(--color-bg-page, var(--bg));
+  background: var(--color-bg-page);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -658,7 +659,7 @@ body.fuel-board .topbar {
 body.fuel-board .panel {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-app-frame-border, var(--app-frame-border));
+  border: 1px solid var(--color-app-frame-border);
   background: linear-gradient(180deg, var(--app-section-surface) 0%, var(--color-bg-card) 40%);
 }
 
@@ -1874,7 +1875,7 @@ body.erp-maintenance .maint-modal-bg {
   display: none;
   position: fixed;
   inset: 0;
-  background: var(--color-modal-backdrop, rgba(15, 23, 42, 0.5));
+  background: var(--color-modal-backdrop);
   z-index: 9000;
   align-items: center;
   justify-content: center;
@@ -2498,6 +2499,7 @@ body.erp-maintenance .maint-form-grid__row {
   display: grid;
   gap: 12px 14px;
   align-items: end;
+  min-width: 0;
 }
 body.erp-maintenance .maint-form-grid__row--3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2800,7 +2802,7 @@ body.erp-maintenance .maint-wo-banner {
     var(--color-bg-hover) 45%,
     var(--color-bg-card) 100%
   );
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--color-text-primary, var(--text)) 6%, transparent);
 }
 body.erp-maintenance .maint-wo-banner__eyebrow {
   font-size: 11px;

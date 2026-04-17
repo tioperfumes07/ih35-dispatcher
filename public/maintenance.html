@@ -412,7 +412,7 @@
               </span>
             </span>
           </div>
-          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label);font-size:12px;max-width:76ch">
+          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label, var(--muted));font-size:12px;max-width:76ch">
             Live Samsara HOS clocks — use chips, search, and <strong>Show</strong>; open <strong>?</strong> for which duty rows appear and required token scopes.
           </p>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
@@ -789,7 +789,7 @@
                   <button type="button" class="maint-form-help-btn" onclick="document.getElementById('maintFormHelpDrawer').classList.toggle('hidden')" title="Field help">?</button>
                   <div id="maintFormHelpDrawer" class="maint-form-help-drawer hidden" role="region" aria-label="Form help">
                     <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 8px">
-                      <p class="mini-note" style="margin:0;color:var(--color-text-label);max-width:44ch">Service field merges catalog, history, and presets.</p>
+                      <p class="mini-note" style="margin:0;color:var(--color-text-label, var(--muted));max-width:44ch">Service field merges catalog, history, and presets.</p>
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines & invoice total">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
@@ -1231,7 +1231,7 @@
                     </div>
                     <div class="maint-form-actions__meta">
                       <span class="mini-note" id="maintSaveHint" role="status" aria-live="polite" aria-atomic="true"></span>
-                      <span class="mini-note" id="maintEditRecordHint" style="color:var(--color-text-label)"></span>
+                      <span class="mini-note" id="maintEditRecordHint" style="color:var(--color-text-label, var(--muted))"></span>
                     </div>
                   </div>
                 </div>
@@ -2013,7 +2013,7 @@
           <div class="acct-dash-cards">
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">Maintenance expenses</div>
-              <p class="mini-note" id="acctCardMaintSum" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
+              <p class="mini-note" id="acctCardMaintSum" style="margin:0;color:var(--color-text-body, var(--text));font-size:12px;line-height:1.45">—</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">View all</button>
                 <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="acctScrollToPendingPost()">Post pending to QBO</button>
@@ -2021,7 +2021,7 @@
             </div>
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">Fuel &amp; DEF</div>
-              <p class="mini-note" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">Fast entry, imports, and ledger.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-body, var(--text));font-size:12px;line-height:1.45">Fast entry, imports, and ledger.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">View all</button>
                 <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">New fuel entry</button>
@@ -2029,7 +2029,7 @@
             </div>
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">QuickBooks sync</div>
-              <p class="mini-note" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">Master lists, rollback, and connection.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-body, var(--text));font-size:12px;line-height:1.45">Master lists, rollback, and connection.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
                 <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
@@ -2130,7 +2130,7 @@
             <div
               id="apTxnQboBanner"
               class="mini-note qb-doc-banner qb-doc-banner--ap"
-              style="display:none;margin:0;padding:8px 14px;border-top:1px solid var(--color-border);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);align-items:center;gap:8px;flex-wrap:wrap"
+              style="display:none;margin:0;padding:8px 14px;border-top:1px solid var(--color-border);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body, var(--text));align-items:center;gap:8px;flex-wrap:wrap"
             >
               <span id="apTxnQboBannerText"></span>
             </div>
@@ -2959,7 +2959,7 @@
                 <input id="newVendorAddress" placeholder="Address">
                 <button onclick="createQboVendor()">Create Vendor in QuickBooks</button>
                 <p class="mini-note" style="margin:8px 0 4px">Vendors save from here; accounts, items, and payroll employees normally start in QBO — see <strong>?</strong>.</p>
-                <p class="mini-note" style="margin:0;color:var(--color-text-label)">After QBO changes, click <strong>Refresh Live QuickBooks Master</strong>.</p>
+                <p class="mini-note" style="margin:0;color:var(--color-text-label, var(--muted))">After QBO changes, click <strong>Refresh Live QuickBooks Master</strong>.</p>
               </div>
 
               <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border)">
@@ -3096,7 +3096,7 @@
               <div
                 id="expHistQboBanner"
                 class="mini-note"
-                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border-input);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap"
+                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border-input);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body, var(--text));display:flex;align-items:center;gap:8px;flex-wrap:wrap"
               >
                 <span>Use <strong>Check QBO</strong> on posted rows to verify Purchase/Bill still exists.</span>
                 <span class="erp-help-tip">
@@ -3156,8 +3156,8 @@
             </div>
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 6px">Choose <strong>Revert in QBO</strong> vs <strong>Undo spreadsheet import</strong> based on whether QuickBooks should change — see <strong>?</strong>.</p>
-              <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">Posted-row checklist and batch tables below load when you click <strong>Refresh</strong>.</p>
-              <div id="erpRollbackPostedSection" class="mini-note" style="margin-bottom:12px;color:var(--color-text-label)">Click <strong>Refresh</strong> to list rows posted to QuickBooks and import batches.</div>
+              <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label, var(--muted))">Posted-row checklist and batch tables below load when you click <strong>Refresh</strong>.</p>
+              <div id="erpRollbackPostedSection" class="mini-note" style="margin-bottom:12px;color:var(--color-text-label, var(--muted))">Click <strong>Refresh</strong> to list rows posted to QuickBooks and import batches.</div>
               <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:4px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <div class="panel-title" style="font-size:14px;margin:0">ERP import batches (maintenance &amp; AP files)</div>
@@ -3350,7 +3350,7 @@
               </div>
             </div>
             <div class="panel-body" id="repOverviewBody">
-              <p class="mini-note" style="margin:0;color:var(--color-text-label)">Connect QuickBooks, then use the actions above to load data.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-label, var(--muted))">Connect QuickBooks, then use the actions above to load data.</p>
             </div>
           </div>
         </div>
@@ -3462,7 +3462,7 @@
             </div>
             <div class="panel-body">
               <p class="mini-note" style="margin:0 0 8px">Per-driver load rollups from QBO vendors — details in <strong>?</strong>.</p>
-              <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Optional: <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) for a suggested pay line.</p>
+              <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label, var(--muted))">Optional: <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) for a suggested pay line.</p>
               <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
               <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Open and refresh.</div>
             </div>
@@ -3654,7 +3654,7 @@
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(820px,100%)">
-              <p class="mini-note" style="margin:0;color:var(--color-text-label)">
+              <p class="mini-note" style="margin:0;color:var(--color-text-label, var(--muted))">
                 Roadmap tab — open <strong>?</strong> on the title for jurisdiction miles, fuel tax, driver compliance, and what already ships today.
               </p>
             </div>
@@ -3677,7 +3677,7 @@
                 </span>
               </span>
             </div>
-            <div class="mini-note" style="margin:0;color:var(--color-text-label)">Sidebar shortcuts or tabs below.</div>
+            <div class="mini-note" style="margin:0;color:var(--color-text-label, var(--muted))">Sidebar shortcuts or tabs below.</div>
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
@@ -3816,7 +3816,7 @@
                     </span>
                   </span>
                 </div>
-                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Enter id + new display name, then POST.</p>
+                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label, var(--muted));font-size:12px">Enter id + new display name, then POST.</p>
                 <input id="samsaraVehicleIdInput" class="qb-in maint-field" placeholder="Samsara vehicle id">
                 <input id="samsaraVehicleNameInput" class="qb-in maint-field" placeholder="New display name">
                 <button type="button" onclick="pushSamsaraVehicleName()">POST update to Samsara</button>
@@ -3829,7 +3829,7 @@
                     </span>
                   </span>
                 </div>
-                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Enter driver id + new name, then POST.</p>
+                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label, var(--muted));font-size:12px">Enter driver id + new name, then POST.</p>
                 <input id="samsaraDriverIdInput" class="qb-in maint-field" placeholder="Samsara driver id">
                 <input id="samsaraDriverNameInput" class="qb-in maint-field" placeholder="New driver name">
                 <button type="button" onclick="pushSamsaraDriverName()">POST update to Samsara</button>
@@ -3953,7 +3953,7 @@
                 <div class="mr-upload-conn-card">
                   <div class="mr-upload-conn-card__title">Samsara Cloud</div>
                   <p class="mini-note" id="upConnSamsaraStatus" style="margin:0 0 8px">Status: —</p>
-                  <p class="mini-note" id="upConnSamsaraMeta" style="margin:0 0 10px;color:var(--color-text-label);font-size:12px">—</p>
+                  <p class="mini-note" id="upConnSamsaraMeta" style="margin:0 0 10px;color:var(--color-text-label, var(--muted));font-size:12px">—</p>
                   <div class="mr-upload-conn-card__actions">
                     <button type="button" class="btn" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Configure</button>
                     <button type="button" class="btn" onclick="loadAll()">Refresh data</button>
@@ -5104,7 +5104,7 @@
       else {
         for (const k of keys) {
           const list = byLoc[k].slice(0, 14);
-          html += `<div style="margin:10px 0 4px;font-weight:500;font-size:12px;color:var(--color-text-body)">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
+          html += `<div style="margin:10px 0 4px;font-weight:500;font-size:12px;color:var(--color-text-body, var(--text))">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
           for (const r of list) {
             const svc = String(r.serviceType || '').trim() || '—';
             const st = String(r.qboSyncStatus || r.syncStatus || 'local').trim();
@@ -7122,7 +7122,7 @@
       if (!mb.length) {
         mbEl.innerHTML =
           '<p class="mini-note" style="margin:0 0 6px">No maintenance expense rows in this rollup yet.</p>' +
-          '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Post or import maintenance expenses, then use <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
+          '<p class="mini-note" style="margin:0;color:var(--color-text-label, var(--muted))">Post or import maintenance expenses, then use <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -7173,7 +7173,7 @@
       const ov = document.getElementById('repOverviewBody');
       if (ov) {
         ov.innerHTML = `
-          <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">Generated: ${escapeHtml(d.generatedAt || '')} · QBO cache refreshed: ${
+          <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label, var(--muted))">Generated: ${escapeHtml(d.generatedAt || '')} · QBO cache refreshed: ${
             qc.refreshedAt ? escapeHtml(new Date(qc.refreshedAt).toLocaleString()) : '—'
           }</p>
           <div class="grid grid-4" style="margin-top:12px">
@@ -7197,7 +7197,7 @@
         if (!tms.configured) {
           tb.innerHTML =
             '<p class="mini-note" style="margin:0 0 6px">PostgreSQL / TMS not configured.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Set <code>DATABASE_URL</code> and run <code>npm run db:migrate</code>.</p>';
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label, var(--muted))">Set <code>DATABASE_URL</code> and run <code>npm run db:migrate</code>.</p>';
         } else if (!tms.ok) {
           tb.innerHTML =
             '<p class="mini-note" style="margin:0 0 6px">Could not read the TMS summary.</p>' +
@@ -7209,7 +7209,7 @@
             .map(([status, c]) => `<tr><td>${escapeHtml(status)}</td><td>${c}</td></tr>`)
             .join('');
           tb.innerHTML = `
-            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
+            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label, var(--muted))">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
             <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:560px">
               <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>${
                 rows || '<tr><td colspan="2">No loads</td></tr>'
@@ -7225,11 +7225,11 @@
         if (!ta || !ta.startDate) {
           qbEl.innerHTML =
             '<p class="mini-note" style="margin:0 0 6px">No QuickBooks transaction window loaded yet.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Connect QuickBooks, set <code>QBO_SYNC_TRANSACTION_DAYS</code> on the server if needed (e.g. 90), then run <strong>Sync QuickBooks lists + activity</strong> from the overview or <strong>Refresh QuickBooks lists</strong> in the top bar.</p>';
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label, var(--muted))">Connect QuickBooks, set <code>QBO_SYNC_TRANSACTION_DAYS</code> on the server if needed (e.g. 90), then run <strong>Sync QuickBooks lists + activity</strong> from the overview or <strong>Refresh QuickBooks lists</strong> in the top bar.</p>';
         } else {
           const tot = ta.totals || {};
           qbEl.innerHTML = `
-            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Window: last <strong>${ta.windowDays}</strong> days (from <strong>${escapeHtml(
+            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label, var(--muted))">Window: last <strong>${ta.windowDays}</strong> days (from <strong>${escapeHtml(
             ta.startDate || ''
           )}</strong>) · up to 200 rows per type.</p>
             <div class="grid grid-4" style="margin-bottom:12px">
@@ -7258,7 +7258,7 @@
           { label: 'AP / expense transactions', p: post.apTransactions }
         ];
         syEl.innerHTML = `
-          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Posted vs local-only vs error — by source (see <strong>?</strong> on the panel title for context).</p>
+          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label, var(--muted))">Posted vs local-only vs error — by source (see <strong>?</strong> on the panel title for context).</p>
           <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:720px">
             <table style="font-size:12px">
               <thead><tr><th>Source</th><th>Total</th><th>Posted</th><th>Local only</th><th>Error</th></tr></thead>
@@ -7272,7 +7272,7 @@
               </tbody>
             </table>
           </div>
-          <p class="mini-note" style="margin-top:12px;color:var(--color-text-label)">Post from <strong>Maintenance</strong> / <strong>Accounting</strong>; refresh master lists via QuickBooks sync.</p>
+          <p class="mini-note" style="margin-top:12px;color:var(--color-text-label, var(--muted))">Post from <strong>Maintenance</strong> / <strong>Accounting</strong>; refresh master lists via QuickBooks sync.</p>
         `;
       }
     }
@@ -7538,7 +7538,7 @@
           qEl.style.color = 'var(--color-semantic-warning)';
         } else if (qboSt) {
           qEl.textContent = 'QuickBooks: not configured';
-          qEl.style.color = 'var(--color-text-label)';
+          qEl.style.color = 'var(--color-text-label, var(--muted))';
         } else {
           qEl.textContent = 'QuickBooks: status unavailable';
           qEl.style.color = 'var(--color-semantic-error)';
@@ -7743,7 +7743,7 @@
       const dot = ok =>
         `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:${ok ? 'var(--pill-green-text)' : 'var(--pill-red-text)'}"></span>`;
       box.innerHTML =
-        `<div style="font-size:11px;color:var(--color-text-body);line-height:1.6">` +
+        `<div style="font-size:11px;color:var(--color-text-body, var(--text));line-height:1.6">` +
         `<div>${dot(qboOk)}QuickBooks: ${qboOk ? 'Connected' : 'Disconnected'} — ${escapeHtml(company)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(lastUp)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(fleetLn)}</div>` +
@@ -7751,7 +7751,7 @@
           ? `<div style="margin-top:4px">Notices / errors: <strong style="color:var(--pill-red-text)">${nNote}</strong></div>`
           : `<div style="margin-top:4px">Notices / errors: 0</div>`) +
         (brief
-          ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-label)">${escapeHtml(brief.slice(0, 200))}</div>`
+          ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-label, var(--muted))">${escapeHtml(brief.slice(0, 200))}</div>`
           : '') +
         `</div>`;
     }
@@ -7782,7 +7782,7 @@
       const payload = __maintQboSyncPayloadCache;
       if (!payload || payload.ok === false) {
         fill('<span class="mini-note">Sync unavailable.</span>');
-        if (top) top.innerHTML = '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body)">QBO issues: —</span>';
+        if (top) top.innerHTML = '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body, var(--text))">QBO issues: —</span>';
         return;
       }
       const alerts = payload.alerts || [];
@@ -7790,7 +7790,7 @@
         fill('<span class="mini-note">No open issues.</span>');
         if (top) {
           top.innerHTML =
-            '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body)">QBO: no open issues</span>';
+            '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body, var(--text))">QBO: no open issues</span>';
         }
         return;
       }
@@ -9149,7 +9149,7 @@
             .join('')
         : '<p class="mini-note" style="margin:0">No integrity alerts for current filters.</p>';
       const dr = (payload.driverRiskAlerts || []).length
-        ? `<div style="margin:12px 0 6px;font-weight:500;font-size:13px;color:var(--color-text-primary)">Driver / damage expense signals</div>` +
+        ? `<div style="margin:12px 0 6px;font-weight:500;font-size:13px;color:var(--color-text-primary, var(--text))">Driver / damage expense signals</div>` +
           (payload.driverRiskAlerts || [])
             .map(a => {
               const cls =
@@ -11645,7 +11645,7 @@
                 <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>In progress</option>
                 <option value="finished" ${status === 'finished' ? 'selected' : ''}>Finished</option>
               </select>
-              <button type="button" class="mini-note" style="background:none;border:none;color:var(--color-text-label);cursor:pointer;text-decoration:underline;padding:0" data-shop-id="${escapeHtml(entry.id)}" onclick="removeShopQueueEntry(this.getAttribute('data-shop-id'))">Remove</button>
+              <button type="button" class="mini-note" style="background:none;border:none;color:var(--color-text-label, var(--muted));cursor:pointer;text-decoration:underline;padding:0" data-shop-id="${escapeHtml(entry.id)}" onclick="removeShopQueueEntry(this.getAttribute('data-shop-id'))">Remove</button>
             </div>
           </div>
         </div>`;
@@ -14595,7 +14595,7 @@
     function paintQboStatusBanner(el, text, tier) {
       if (!el) return;
       const colors = {
-        info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
+        info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body, var(--text))' },
         success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft)', fg: 'var(--color-semantic-success)' },
         warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning)' },
         error: { bg: 'var(--pill-red-bg)', border: 'var(--btn-danger-border)', fg: 'var(--btn-danger-text)' }
@@ -14624,7 +14624,7 @@
         return;
       }
       const colors = {
-        info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
+        info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body, var(--text))' },
         success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft)', fg: 'var(--color-semantic-success)' },
         warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning)' },
         error: { bg: 'var(--pill-red-bg)', border: 'var(--btn-danger-border)', fg: 'var(--btn-danger-text)' }

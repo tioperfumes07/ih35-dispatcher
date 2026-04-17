@@ -235,3 +235,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`body.erp-maintenance`** — **`maint-board-layout`**, **`maint-wo-workspace-grid`**, **`maint-form-grid`**, and **`maint-vendor-ref-row`** gain **`min-width: 0`** so board / WO / vendor rows cooperate with **`minmax(0, …)`** tracks and flex shrink without widening the page.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-11
+
+- **Rule 0:** **`app-theme.css`** — Restored the text-token sweep where stacks had reappeared; also dropped legacy second hops on **`--color-border`** / **`--line-strong`**, **`--color-bg-page`** / **`--bg`**, **`--color-app-frame-border`** / **`--app-frame-border`**, **`--color-border-focus`** / **`--accent`**, and **`--color-modal-backdrop`** / raw **`rgba(...)`** so values resolve through **`design-tokens.css`** only.
+- **Rule 1:** **`body.erp-maintenance .maint-form-grid__row`** — **`min-width: 0`** on the row grid so **`minmax(0, 1fr)`** columns in **`maint-form-grid__row--3`** can shrink inside narrow shells.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

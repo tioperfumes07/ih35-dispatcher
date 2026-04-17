@@ -34,7 +34,7 @@ body.erp-maintenance .maint-action-strip__btn {
   cursor: pointer;
   font-family: inherit;
   background: var(--color-bg-card);
-  color: var(--color-text-body);
+  color: var(--color-text-body, var(--text));
 }
 
 body.erp-maintenance .maint-action-strip__btn:hover {
@@ -66,7 +66,7 @@ body.erp-maintenance .maint-fleet-inline {
 
 body.erp-maintenance .maint-fleet-inline__label {
   font-size: 12px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   margin-right: 2px;
 }
 
@@ -78,7 +78,7 @@ body.erp-maintenance .maint-fleet-pill {
   border: 1px solid var(--color-border-input);
   border-radius: 20px;
   background: var(--color-bg-card);
-  color: var(--color-text-body);
+  color: var(--color-text-body, var(--text));
   cursor: pointer;
   font-family: inherit;
 }
@@ -179,7 +179,7 @@ body.erp-maintenance .maint-search-field--right {
 
 body.erp-maintenance .maint-search-field .qb-l {
   font-size: 12px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
 }
 
 body.erp-maintenance .maint-search-field .qb-in {
@@ -230,7 +230,7 @@ body.erp-maintenance .maint-wo-col-units .panel-head {
 body.erp-maintenance .maint-wo-col-units .panel-title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
 }
 
 body.erp-maintenance .maint-wo-col-units .panel-body {
@@ -259,12 +259,12 @@ body.erp-maintenance .maint-unit-list-row.active {
 body.erp-maintenance .maint-unit-list-row .list-title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
 }
 
 body.erp-maintenance .maint-unit-list-row .list-sub {
   font-size: 12px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   line-height: 1.45;
 }
 
@@ -299,7 +299,7 @@ body.erp-maintenance .maint-wo-placeholder {
   min-height: 200px;
   text-align: center;
   font-size: 14px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -346,7 +346,7 @@ body.erp-maintenance .maint-wo-summary-bar .kv-l {
 body.erp-maintenance .maint-wo-summary-bar .kv-v {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
 }
 
 body.erp-maintenance .maint-wo-form-stack-inner {
@@ -365,7 +365,7 @@ body.erp-maintenance .maint-form-actions--sticky {
   border-top: 1px solid var(--color-border);
   padding: 12px 20px;
   margin: 16px -16px -16px;
-  box-shadow: 0 -2px 8px color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  box-shadow: 0 -2px 8px color-mix(in srgb, var(--color-text-primary, var(--text)) 5%, transparent);
 }
 
 /* --- Collapsible sidebar groups (all modules on this page) --- */
@@ -388,7 +388,7 @@ body.erp-app .erp-module-sidebar .erp-sb-group:not(.is-open) .erp-sb-group__body
 body.erp-maintenance .erp-topbar .title {
   font-size: 15px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
 }
 
 body.erp-maintenance .erp-topbar .topbar-home-link {
@@ -473,14 +473,14 @@ body.erp-maintenance .acct-dash-kpi__label {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   letter-spacing: 0.04em;
 }
 
 body.erp-maintenance .acct-dash-kpi__val {
   font-size: 24px;
   font-weight: 400;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
   margin-top: 4px;
 }
 
@@ -515,7 +515,7 @@ body.erp-maintenance .acct-dash-card {
 body.erp-maintenance .acct-dash-card__head {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
   padding-bottom: 10px;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 12px;
@@ -535,7 +535,7 @@ body.erp-maintenance .acct-dash-btn {
   border: 1px solid var(--color-border-input);
   border-radius: 4px;
   background: var(--color-bg-card);
-  color: var(--color-text-body);
+  color: var(--color-text-body, var(--text));
   cursor: pointer;
   font-family: inherit;
 }
@@ -669,7 +669,7 @@ body.erp-maintenance #acct-transactions .ap-lines-section-label {
   margin: 4px 0 0;
   font-weight: 500;
   font-size: 12px;
-  color: var(--color-text-body);
+  color: var(--color-text-body, var(--text));
 }
 
 body.erp-maintenance #acct-transactions .ap-attach-head {
@@ -727,14 +727,14 @@ body.erp-maintenance .erp-toast__close {
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
 }
 
 body.erp-maintenance .erp-toast__msg {
   flex: 1;
   min-width: 0;
   line-height: 1.45;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
 }
 
 body.erp-maintenance .erp-toast__dot {
@@ -757,12 +757,12 @@ body.erp-maintenance .erp-toast__x {
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   flex-shrink: 0;
 }
 
 body.erp-maintenance .erp-toast__x:hover {
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
 }
 
 /* --- Upload center tab panels --- */
@@ -780,13 +780,13 @@ body.erp-maintenance .mr-upload-tabbar .subtab {
   background: none;
   padding: 10px 14px;
   font-size: 13px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   cursor: pointer;
   font-family: inherit;
 }
 
 body.erp-maintenance .mr-upload-tabbar .subtab:hover {
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
 }
 
 body.erp-maintenance .mr-upload-tabbar .subtab.active {
@@ -854,13 +854,13 @@ body.erp-maintenance .mr-upload-file-hidden {
 body.erp-maintenance .mr-upload-panel-title {
   font-size: 15px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
   margin: 0 0 8px;
 }
 
 body.erp-maintenance .mr-upload-panel-desc {
   font-size: 12px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   line-height: 1.5;
   margin: 0 0 10px;
 }
@@ -868,14 +868,14 @@ body.erp-maintenance .mr-upload-panel-desc {
 body.erp-maintenance .mr-upload-section-h {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
   margin: 0 0 10px;
 }
 
 body.erp-maintenance .mr-upload-help {
   margin-top: 8px;
   font-size: 12px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
 }
 
 body.erp-maintenance .mr-upload-help summary {
@@ -896,7 +896,7 @@ body.erp-maintenance .mr-upload-help summary:focus-visible {
 
 body.erp-maintenance .mr-upload-panel-card .mini-note,
 body.erp-maintenance .mr-upload-help .mini-note {
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   font-size: 12px;
   line-height: 1.45;
 }
@@ -911,7 +911,7 @@ body.erp-maintenance .mr-upload-pickline {
 }
 
 body.erp-maintenance .mr-upload-pickline__name {
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
   font-weight: 500;
 }
 
@@ -929,7 +929,7 @@ body.erp-maintenance .mr-upload-pickline__x {
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
 }
 
 body.erp-maintenance .mr-upload-pickline__x:hover {
@@ -938,7 +938,7 @@ body.erp-maintenance .mr-upload-pickline__x:hover {
 
 body.erp-maintenance .mr-upload-importbtn:disabled {
   background: var(--color-border) !important;
-  color: var(--color-text-label) !important;
+  color: var(--color-text-label, var(--muted)) !important;
   cursor: not-allowed;
 }
 
@@ -986,7 +986,7 @@ body.erp-maintenance .mr-upload-recent-empty {
   text-align: center;
   padding: 20px;
   font-size: 13px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
 }
 
 body.erp-maintenance .mr-upload-recent-table {
@@ -1008,7 +1008,7 @@ body.erp-maintenance .mr-upload-recent-table th {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   background: var(--color-bg-hover);
 }
 
@@ -1070,7 +1070,7 @@ body.erp-maintenance .mr-upload-conn-card {
 body.erp-maintenance .mr-upload-conn-card__title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
   margin-bottom: 6px;
 }
 
@@ -1100,7 +1100,7 @@ body.erp-maintenance .mr-upload-import-btn {
 
 body.erp-maintenance .mr-upload-import-btn:disabled {
   background: var(--color-border);
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   cursor: not-allowed;
 }
 
@@ -1111,7 +1111,7 @@ body.erp-maintenance .mr-upload-import-btn:not(:disabled) {
 
 body.erp-maintenance .acct-conn-sb {
   font-size: 11px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   line-height: 1.6;
 }
 
@@ -1160,7 +1160,7 @@ body.erp-maintenance .maint-qb-cost-details__sum {
   list-style: none;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
 }
 
 body.erp-maintenance .maint-qb-cost-details__sum::-webkit-details-marker {
@@ -1171,7 +1171,7 @@ body.erp-maintenance .maint-qb-cost-details__chev::before {
   content: '▶';
   display: inline-block;
   font-size: 10px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   transform: rotate(0deg);
   transition: transform 0.2s ease;
 }
@@ -1215,7 +1215,7 @@ body.erp-maintenance .maint-qb-lines-table thead th {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   padding: 6px 10px;
   border-bottom: 1px solid var(--color-border);
   text-align: left;
@@ -1267,7 +1267,7 @@ body.erp-maintenance .maint-qb-lines-table .qb-in:focus {
 
 body.erp-maintenance .maint-qb-dollar {
   font-size: 11px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   margin-right: 2px;
 }
 
@@ -1312,14 +1312,14 @@ body.erp-maintenance .maint-qb-cost-totals-bar {
 
 body.erp-maintenance .maint-qb-cost-totals-bar__lbl {
   font-size: 11px;
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
   margin-right: 4px;
 }
 
 body.erp-maintenance .maint-qb-cost-totals-bar__val {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, var(--text));
   font-variant-numeric: tabular-nums;
 }
 
@@ -1351,7 +1351,7 @@ body.erp-maintenance .erp-qb-seg__btn {
   font-family: inherit;
   height: 26px;
   background: var(--color-bg-card);
-  color: var(--color-text-label);
+  color: var(--color-text-label, var(--muted));
 }
 
 body.erp-maintenance .erp-qb-seg__btn--active {
