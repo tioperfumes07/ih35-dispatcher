@@ -1793,7 +1793,7 @@
           <div
             id="maintIntegrationStrip"
             class="mini-note"
-            style="margin-top:14px;padding:10px 12px;border:1px solid var(--line,#e2e8f0);border-radius:8px;background:#fafafa;line-height:1.55;font-size:13px"
+            style="margin-top:14px;padding:10px 12px;border:1px solid var(--color-border,var(--line,#e2e8f0));border-radius:8px;background:var(--color-bg-card,#fafafa);line-height:1.55;font-size:13px;color:var(--color-text-body,var(--text,#1e293b))"
           >
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px">
               <strong>Connections</strong>
@@ -1806,7 +1806,7 @@
                 ><input type="checkbox" id="maintAutoQboMasterRefresh" /> Refresh QBO master lists on each timer tick</label
               >
             </div>
-            <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:#92400e"></div>
+            <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:var(--color-semantic-warning,#92400e)"></div>
           </div>
         </div>
 
@@ -2413,7 +2413,14 @@
                   </div>
                 </footer>
               </div>
-              <div class="wo-line-grid" style="margin-bottom:10px">
+              <div
+                class="mr-filter-bar erp-ops-filter-bar"
+                role="group"
+                aria-label="Fuel expense ledger filters"
+                style="margin-bottom:10px;align-items:flex-start"
+              >
+                <div class="mr-filter-bar__grow" style="min-width:0;width:100%">
+                  <div class="wo-line-grid" style="margin-bottom:0">
                 <div>
                   <span class="qb-l">From</span>
                   <input id="fuelExpFrom" class="qb-in" type="date" onchange="renderFuelExpenseRows()" />
@@ -2452,6 +2459,8 @@
                       Checked (default): one Purchase per row using your <strong>expense accounts</strong> for Diesel / DEF / Reefer. Unchecked: QBO <strong>item</strong> lines with gallons × rate.
                     </span>
                   </span>
+                </div>
+                  </div>
                 </div>
               </div>
               <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border,#e2e8f0);border-radius:10px;background:var(--color-bg-card,#fafcff)">
@@ -3211,7 +3220,7 @@
                 </span>
               </span>
             </div>
-            <div class="mini-note" style="margin:0">Sidebar shortcuts or tabs below.</div>
+            <div class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Sidebar shortcuts or tabs below.</div>
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
