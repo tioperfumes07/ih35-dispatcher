@@ -906,7 +906,7 @@ body.erp-maintenance .qb-doc-title-row {
    Rule 3 — Collapsible module sidebar groups (maintenance.html)
    ============================================================================= */
 body.erp-maintenance .erp-module-sidebar .erp-sb-group {
-  border-bottom: 1px solid var(--color-bg-header, #f1f3f4);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   background: var(--color-bg-card, #fff);
 }
 
@@ -926,7 +926,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
   letter-spacing: 0.08em;
   background: var(--color-bg-card, #fff);
   border: none;
-  border-bottom: 1px solid var(--color-bg-header, #f1f3f4);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   font-family: inherit;
   text-align: left;
 }
@@ -958,7 +958,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__body .erp-sb-link {
 
 /* --- Rule 3 (reports in-page sidebar): native <details> groups --- */
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group {
-  border-bottom: 1px solid var(--color-bg-header, #f1f3f4);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
 }
 
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head {
