@@ -533,10 +533,6 @@ body.erp-maintenance .acct-qbo-err-list {
 }
 
 body.erp-maintenance .acct-expense-form-wrap {
-  background: #ffffff;
-  border: 1px solid #e8eaed;
-  border-radius: 8px;
-  padding: 20px;
   margin-top: 16px;
   box-sizing: border-box;
 }
@@ -576,6 +572,41 @@ body.erp-maintenance .erp-toast__close {
   font-size: 16px;
   line-height: 1;
   color: #5f6368;
+}
+
+body.erp-maintenance .erp-toast__msg {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.45;
+  color: #202124;
+}
+
+body.erp-maintenance .erp-toast__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+  background: #1e8e3e;
+}
+
+body.erp-maintenance .erp-toast__dot--err {
+  background: #d93025;
+}
+
+body.erp-maintenance .erp-toast__x {
+  margin-left: auto;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: #5f6368;
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .erp-toast__x:hover {
+  color: #202124;
 }
 
 /* --- Upload center tab panels --- */
