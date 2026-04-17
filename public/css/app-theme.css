@@ -1089,28 +1089,28 @@ body.erp-maintenance .status {
 }
 
 body.erp-maintenance .status-current {
-  background: var(--green-soft);
-  color: var(--green);
+  background: var(--pill-green-bg, var(--green-soft));
+  color: var(--pill-green-text, var(--green));
 }
 
 body.erp-maintenance .status-soon {
-  background: var(--yellow-soft);
-  color: var(--yellow);
+  background: var(--pill-yellow-bg, var(--yellow-soft));
+  color: var(--pill-yellow-text, var(--yellow));
 }
 
 body.erp-maintenance .status-past {
-  background: var(--red-soft);
-  color: var(--red);
+  background: var(--pill-red-bg, var(--red-soft));
+  color: var(--pill-red-text, var(--red));
 }
 
 body.erp-maintenance .status-posted {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--pill-blue-bg, var(--accent-soft));
+  color: var(--pill-blue-text, var(--accent));
 }
 
 body.erp-maintenance .status-error {
-  background: var(--red-soft);
-  color: var(--red);
+  background: var(--pill-red-bg, var(--red-soft));
+  color: var(--pill-red-text, var(--red));
 }
 
 body.erp-maintenance .toolbar,
