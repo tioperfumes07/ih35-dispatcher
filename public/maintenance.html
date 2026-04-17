@@ -6060,6 +6060,10 @@
 
     function erpNewExpense() {
       erpCloseNewMenu();
+      if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
+      window.__erpDedicatedApPreset = '';
+      const sel = document.getElementById('apTxnType');
+      if (sel) sel.disabled = false;
       openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
       const t = document.getElementById('acctStubTrans');
       if (t) openAccountingTab('acct-transactions', t);
@@ -6067,6 +6071,10 @@
 
     function erpNewBill() {
       erpCloseNewMenu();
+      if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
+      window.__erpDedicatedApPreset = '';
+      const sel = document.getElementById('apTxnType');
+      if (sel) sel.disabled = false;
       openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
       const t = document.getElementById('acctStubTrans');
       if (t) openAccountingTab('acct-transactions', t);
@@ -6079,9 +6087,8 @@
 
     function erpNewPayBills() {
       erpCloseNewMenu();
-      openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
-      const trig = document.getElementById('acctBillPayStub');
-      if (trig) openAccountingTab('acct-bill-pay', trig);
+      if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
+      erpOpenAccountingPayBillsStandard();
     }
 
     /** +New → Maintenance: optional preset shapes record type, shop location, and catalog service line. */
@@ -6153,6 +6160,205 @@
       erpCloseNewMenu();
       window.location.hash = 'accounting-fuel';
       if (typeof applyNavHash === 'function') applyNavHash();
+    }
+
+    const ERP_WRENCH_ICON =
+      '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="#137333" d="M22.7 19.3l-3-3a1 1 0 0 0-1.4 0l-.8.8-4.3-4.3a8 8 0 1 0-2.8 2.8l4.3 4.3.8-.8a1 1 0 0 0 0-1.4l3-3a1 1 0 0 0 0-1.4zM7 9a2 2 0 1 1 4 0 2 2 0 0 1-4 0z"/></svg>';
+    const ERP_PUMP_ICON =
+      '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="#1967d2" d="M5 22V10h4V6h6v4h4v12H5zm6-12V8H9v2h2zm-4 4h10v-2H7v2zm0 4h10v-2H7v2z"/></svg>';
+
+    let __erpDriverPayeeVendorIdSet = null;
+    let __erpDedicatedEscHandler = null;
+
+    async function erpEnsureDriverPayeeVendorIds() {
+      if (__erpDriverPayeeVendorIdSet instanceof Set && __erpDriverPayeeVendorIdSet.size) return __erpDriverPayeeVendorIdSet;
+      __erpDriverPayeeVendorIdSet = new Set();
+      try {
+        const data = await j('/api/maintenance/vendor-catalog');
+        (data.driverPayees || []).forEach(d => {
+          const id = String(d.qboVendorId || '').trim();
+          if (id) __erpDriverPayeeVendorIdSet.add(id);
+        });
+      } catch (_) {}
+      window.__driverPayeeVendorQboIds = __erpDriverPayeeVendorIdSet;
+      return __erpDriverPayeeVendorIdSet;
+    }
+
+    function erpRefreshBillPayChrome() {
+      const chip = document.getElementById('bpDriverPayChip');
+      const title = document.getElementById('bpPanelTitle');
+      const isDriver = !!window.__accountingDriverBillPayMode;
+      if (chip) chip.classList.toggle('hidden', !isDriver);
+      if (title) title.textContent = isDriver ? 'Driver bill pay' : 'Pay bills (QuickBooks)';
+    }
+
+    function erpOpenAccountingPayBillsStandard() {
+      window.__accountingDriverBillPayMode = false;
+      window.location.hash = 'accounting-bill-pay';
+      if (typeof applyNavHash === 'function') applyNavHash();
+    }
+
+    function erpOpenDriverBillPay() {
+      erpCloseNewMenu();
+      window.__accountingDriverBillPayMode = true;
+      __erpDriverPayeeVendorIdSet = null;
+      window.location.hash = 'accounting-driver-bill-pay';
+      if (typeof applyNavHash === 'function') applyNavHash();
+    }
+
+    function erpDedicatedFormDirty() {
+      if (window.__erpDedicatedModalKind === 'fuel') {
+        return !!(
+          (document.getElementById('fuelManualVendorSearch')?.value || '').trim() ||
+          (document.getElementById('fuelManualUnit')?.value || '').trim()
+        );
+      }
+      if (window.__erpDedicatedModalKind === 'ap') {
+        const v = (document.getElementById('apVendorSearch')?.value || '').trim();
+        let apAmt = 0;
+        document.querySelectorAll('#woLines .wo-amt').forEach(inp => {
+          apAmt += Number(inp.value) || 0;
+        });
+        return !!(v || apAmt > 0);
+      }
+      return false;
+    }
+
+    function erpDedicatedModalBindEscape(on) {
+      if (on) {
+        if (__erpDedicatedEscHandler) return;
+        __erpDedicatedEscHandler = ev => {
+          if (ev.key === 'Escape' && !document.getElementById('erpDedicatedFormModal')?.classList.contains('hidden')) {
+            erpCloseDedicatedFormModal();
+          }
+        };
+        document.addEventListener('keydown', __erpDedicatedEscHandler, true);
+      } else if (__erpDedicatedEscHandler) {
+        document.removeEventListener('keydown', __erpDedicatedEscHandler, true);
+        __erpDedicatedEscHandler = null;
+      }
+    }
+
+    function erpCloseDedicatedFormModal(opts) {
+      const force = !!(opts && opts.force);
+      const modal = document.getElementById('erpDedicatedFormModal');
+      if (!modal || modal.classList.contains('hidden')) return;
+      if (!force && erpDedicatedFormDirty()) {
+        if (!confirm('Discard unsaved changes and close this form?')) return;
+      }
+      if (window.__erpDedicatedModalKind === 'ap') {
+        const shell = document.getElementById('erpApDocShellPanel');
+        const ph = document.getElementById('erpApDocShellPlaceholder');
+        if (shell && ph && ph.parentNode) ph.parentNode.insertBefore(shell, ph.nextSibling);
+        const sel = document.getElementById('apTxnType');
+        if (sel) sel.disabled = false;
+        window.__erpDedicatedApPreset = '';
+        const acc = document.getElementById('erpApDocTitleAccent');
+        if (acc) {
+          acc.innerHTML = '';
+          acc.classList.add('hidden');
+        }
+        syncApDocTitle();
+      }
+      if (window.__erpDedicatedModalKind === 'fuel') {
+        const shell = document.getElementById('erpFuelManualDocShellPanel');
+        const ph = document.getElementById('erpFuelManualPlaceholder');
+        if (shell && ph && ph.parentNode) ph.parentNode.insertBefore(shell, ph.nextSibling);
+        const acc = document.getElementById('erpFuelDocTitleAccent');
+        if (acc) {
+          acc.innerHTML = '';
+          acc.classList.add('hidden');
+        }
+        const h2 = document.getElementById('fuelManualDocTitleH2');
+        if (h2) h2.textContent = 'Manual fuel / DEF expense';
+      }
+      window.__erpDedicatedModalKind = '';
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('erp-dedicated-modal-open');
+      erpDedicatedModalBindEscape(false);
+    }
+
+    function erpOpenDedicatedAccountingForm(mode, opts) {
+      opts = opts || {};
+      const fromHash = !!opts.fromHash;
+      erpCloseNewMenu();
+      const dedModal = document.getElementById('erpDedicatedFormModal');
+      if (dedModal && !dedModal.classList.contains('hidden')) {
+        erpCloseDedicatedFormModal({ force: true });
+      }
+      const mount = document.getElementById('erpDedicatedFormModalBody');
+      const modal = document.getElementById('erpDedicatedFormModal');
+      if (!mount || !modal) return;
+      const acctBtn = document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]');
+
+      if (mode === 'fuel-expense') {
+        window.__erpDedicatedApPreset = '';
+        window.__erpDedicatedModalKind = 'fuel';
+        openSection('accounting', acctBtn);
+        const trig = document.getElementById('acctFuelDdTrigger');
+        openAccountingTab('acct-fuel-expense', trig);
+        const shell = document.getElementById('erpFuelManualDocShellPanel');
+        mount.appendChild(shell);
+        const acc = document.getElementById('erpFuelDocTitleAccent');
+        if (acc) {
+          acc.innerHTML = ERP_PUMP_ICON;
+          acc.classList.remove('hidden');
+        }
+        const h2 = document.getElementById('fuelManualDocTitleH2');
+        if (h2) h2.textContent = 'Fuel expense';
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('erp-dedicated-modal-open');
+        erpDedicatedModalBindEscape(true);
+        if (!fromHash) window.location.hash = 'accounting-fuel-expense-new';
+        return;
+      }
+
+      window.__erpDedicatedModalKind = 'ap';
+      const presetMap = {
+        'maintenance-expense': 'maintenance-expense',
+        'maintenance-bill': 'maintenance-bill',
+        'fuel-bill': 'fuel-bill',
+        'vendor-driver-bill': 'vendor-driver-bill'
+      };
+      window.__erpDedicatedApPreset = presetMap[mode] || '';
+      openSection('accounting', acctBtn);
+      const stub = document.getElementById('acctStubTrans');
+      openAccountingTab('acct-transactions', stub);
+      const sel = document.getElementById('apTxnType');
+      if (sel) {
+        if (mode === 'maintenance-expense') sel.value = 'expense';
+        else sel.value = 'bill';
+        sel.disabled = true;
+      }
+      syncApDocTitle();
+      const shell = document.getElementById('erpApDocShellPanel');
+      mount.appendChild(shell);
+      const acc = document.getElementById('erpApDocTitleAccent');
+      if (acc) {
+        if (mode === 'maintenance-expense' || mode === 'maintenance-bill') {
+          acc.innerHTML = ERP_WRENCH_ICON;
+          acc.classList.remove('hidden');
+        } else if (mode === 'fuel-bill') {
+          acc.innerHTML = ERP_PUMP_ICON;
+          acc.classList.remove('hidden');
+        } else {
+          acc.innerHTML = '';
+          acc.classList.add('hidden');
+        }
+      }
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('erp-dedicated-modal-open');
+      erpDedicatedModalBindEscape(true);
+      const hashMap = {
+        'maintenance-expense': 'accounting-maintenance-expense-new',
+        'maintenance-bill': 'accounting-maintenance-bill-new',
+        'fuel-bill': 'accounting-fuel-bill-new',
+        'vendor-driver-bill': 'accounting-vendor-driver-bill-new'
+      };
+      if (!fromHash && hashMap[mode]) window.location.hash = hashMap[mode];
     }
 
     function erpNewPlaceholder(label) {
@@ -6263,8 +6469,29 @@
         return;
       }
       if (section === 'accounting-bill-pay') {
+        window.__accountingDriverBillPayMode = false;
         openSectionByName('accounting');
         openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
+        return;
+      }
+      if (section === 'accounting-driver-bill-pay') {
+        window.__accountingDriverBillPayMode = true;
+        __erpDriverPayeeVendorIdSet = null;
+        openSectionByName('accounting');
+        openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
+        requestAnimationFrame(() => loadAccountingOpenBills());
+        return;
+      }
+      const erpDedicatedHashToMode = {
+        'accounting-maintenance-expense-new': 'maintenance-expense',
+        'accounting-maintenance-bill-new': 'maintenance-bill',
+        'accounting-fuel-expense-new': 'fuel-expense',
+        'accounting-fuel-bill-new': 'fuel-bill',
+        'accounting-vendor-driver-bill-new': 'vendor-driver-bill'
+      };
+      if (erpDedicatedHashToMode[section]) {
+        openSectionByName('accounting');
+        requestAnimationFrame(() => erpOpenDedicatedAccountingForm(erpDedicatedHashToMode[section], { fromHash: true }));
         return;
       }
       if (section === 'uploads') {
@@ -6338,12 +6565,26 @@
     window.addEventListener('hashchange', applyNavHash);
 
     function openAccountingTab(id, btn) {
+      if (window.__erpDedicatedModalKind === 'ap' && id !== 'acct-transactions') {
+        erpCloseDedicatedFormModal({ force: true });
+      }
+      if (window.__erpDedicatedModalKind === 'fuel' && id !== 'acct-fuel-expense') {
+        erpCloseDedicatedFormModal({ force: true });
+      }
+      if (id === 'acct-transactions' && window.__erpDedicatedModalKind === 'ap') {
+        erpCloseDedicatedFormModal({ force: true });
+      }
+      if (id === 'acct-fuel-expense' && window.__erpDedicatedModalKind === 'fuel') {
+        erpCloseDedicatedFormModal({ force: true });
+      }
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
       document.querySelectorAll('#section-accounting .subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
       if (id === 'acct-transactions') {
         resetApTxnQboBanner();
+        const tsel = document.getElementById('apTxnType');
+        if (tsel && !window.__erpDedicatedApPreset) tsel.disabled = false;
         const wl = document.getElementById('woLines');
         if (wl && !wl.children.length) addWoLine();
         syncApDocTitle();
@@ -6359,6 +6600,7 @@
       }
       if (id === 'acct-qbo-rollback') loadErpImportBatchesUi();
       if (id === 'acct-bill-pay') {
+        erpRefreshBillPayChrome();
         const d = document.getElementById('bpTxnDate');
         if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
         bpRefreshSelectionTotal();
@@ -8969,7 +9211,11 @@
       if (statusEl) statusEl.textContent = 'Loading live bills from QuickBooks…';
       try {
         const data = await j('/api/qbo/open-bills' + q);
-        const bills = data.bills || [];
+        let bills = data.bills || [];
+        if (window.__accountingDriverBillPayMode) {
+          const idSet = await erpEnsureDriverPayeeVendorIds();
+          bills = bills.filter(b => idSet.has(String(b.vendorId || '').trim()));
+        }
         window.__bpOpenBills = bills;
         // Reset client-side filters after reload.
         const s = document.getElementById('bpOpenBillsSearch');
@@ -8977,9 +9223,13 @@
         if (s) s.value = '';
         if (m) m.value = '';
         if (statusEl) {
-          statusEl.textContent = bills.length
-            ? `${bills.length} open bill(s) from QuickBooks${vendorId ? ' (vendor filter)' : ''}${liveQ ? ' (search applied)' : ''}.`
-            : 'No open bills for this filter.';
+          if (!bills.length) {
+            statusEl.textContent = window.__accountingDriverBillPayMode
+              ? 'No open bills matched linked driver payee QuickBooks vendors. Use Lists → Vendors & driver payees to link drivers.'
+              : 'No open bills for this filter.';
+          } else {
+            statusEl.textContent = `${bills.length} open bill(s) from QuickBooks${vendorId ? ' (vendor filter)' : ''}${liveQ ? ' (search applied)' : ''}${window.__accountingDriverBillPayMode ? ' — driver payees only' : ''}.`;
+          }
         }
         if (!body) return;
         bpMountOpenBillsInTable(bills);
@@ -17292,7 +17542,8 @@
         }
       }
 
-      await j('/api/work-orders', {
+      const postToQbo = !!(opts && opts.postToQbo);
+      const data = await j('/api/work-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
         body: JSON.stringify({
@@ -17320,9 +17571,13 @@
           lines
         })
       });
+      const woId = data && data.workOrder && data.workOrder.id ? String(data.workOrder.id) : '';
 
       resetWoForm();
       await loadAll();
+      if (postToQbo && woId) {
+        await postWorkOrderToQbo(woId);
+      }
       if (close) {
         openSectionByName('accounting');
         const apList = document.getElementById('apList');
@@ -17533,6 +17788,13 @@
     if (!window.__erpNewMenuDoc) {
       window.__erpNewMenuDoc = true;
       document.addEventListener('click', erpDocClickCloseNew);
+    }
+    if (!window.__erpDedicatedModalUi) {
+      window.__erpDedicatedModalUi = true;
+      document.addEventListener('click', function (ev) {
+        const t = ev.target;
+        if (t && t.closest && t.closest('[data-erp-ded-close]')) erpCloseDedicatedFormModal();
+      });
     }
     renderErpModuleSidebar(activeSection || 'maintenance');
     loadUnitListPreference();
