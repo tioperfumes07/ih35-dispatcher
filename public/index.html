@@ -4,23 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>IH35 ERP — Company home</title>
+  <link rel="stylesheet" href="/css/design-tokens.css" />
   <style>
-    :root {
-      --bg: #0f1428;
-      --card: #1a2142;
-      --line: #2d3558;
-      --text: #f1f5ff;
-      --muted: #9ca8d9;
-      --accent: #3b82f6;
-      --fuel: #f59e0b;
-      --dispatch: #22c55e;
-      --maint: #a78bfa;
-    }
     * { box-sizing: border-box; }
     body {
       margin: 0; min-height: 100vh; font-family: var(--font-spec-sans, "Segoe UI", system-ui, sans-serif);
-      background: radial-gradient(1200px 600px at 10% -10%, var(--color-nav-bg, #1e3a5f) 0%, transparent 55%), var(--bg);
-      color: var(--text);
+      background: radial-gradient(1200px 600px at 10% -10%, var(--color-nav-bg, #1e3a5f) 0%, transparent 55%),
+        var(--color-hub-bg-deep, #0f1428);
+      color: var(--color-hub-text, #f1f5ff);
     }
     header {
       padding: 28px 24px 8px; max-width: 1100px; margin: 0 auto;
@@ -41,19 +32,22 @@
       margin-top: 4px;
     }
     header h1 { margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
-    header p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; max-width: 640px; }
+    header p { margin: 0; color: var(--color-hub-text-muted, #9ca8d9); font-size: 15px; line-height: 1.5; max-width: 640px; }
     .grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px; padding: 24px; max-width: 1100px; margin: 0 auto;
     }
     a.card {
       display: block; text-decoration: none; color: inherit;
-      background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+      background: var(--color-hub-card, #1a2142);
+      border: 1px solid var(--color-hub-border, #2d3558);
+      border-radius: 16px;
       padding: 24px; transition: transform .15s, border-color .15s, box-shadow .15s;
       min-height: 180px;
     }
     a.card:hover {
-      transform: translateY(-3px); border-color: var(--accent);
+      transform: translateY(-3px);
+      border-color: var(--color-hub-accent, #3b82f6);
       box-shadow: var(--shadow-dropdown, 0 12px 40px rgba(0, 0, 0, 0.35));
     }
     .card-tag {
@@ -69,13 +63,17 @@
     .tag-lists { background: var(--pill-gray-bg, rgba(148, 163, 184, 0.18)); color: var(--pill-gray-text, #e2e8f0); }
     .tag-banking { background: var(--btn-info-border, rgba(59, 130, 246, 0.25)); color: var(--btn-info-text, #93c5fd); }
     a.card h2 { margin: 0 0 10px; font-size: 20px; }
-    a.card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
-    .arrow { margin-top: 16px; font-weight: 700; color: var(--accent); font-size: 14px; }
+    a.card p { margin: 0; color: var(--color-hub-text-muted, #9ca8d9); font-size: 14px; line-height: 1.55; }
+    .arrow { margin-top: 16px; font-weight: 700; color: var(--color-hub-accent, #3b82f6); font-size: 14px; }
     footer {
       max-width: 1100px; margin: 0 auto; padding: 16px 24px 40px;
-      color: var(--muted); font-size: 12px; line-height: 1.6;
+      color: var(--color-hub-text-muted, #9ca8d9);
+      font-size: 12px;
+      line-height: 1.6;
     }
-    footer strong { color: var(--color-text-placeholder, #cbd5f5); }
+    footer strong {
+      color: var(--color-hub-footer-strong, #cbd5f5);
+    }
     .hub-footer-row {
       display: flex;
       align-items: flex-start;
@@ -87,7 +85,7 @@
       flex: 1;
       min-width: min(100%, 240px);
       max-width: min(72ch, 100%);
-      color: var(--muted);
+      color: var(--color-hub-text-muted, #9ca8d9);
       font-size: 12px;
       line-height: 1.6;
     }
@@ -96,7 +94,6 @@
       margin-top: 2px;
     }
   </style>
-  <link rel="stylesheet" href="/css/design-tokens.css" />
   <link rel="stylesheet" href="/css/app-theme.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
   <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
