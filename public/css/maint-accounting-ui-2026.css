@@ -988,18 +988,18 @@ body.erp-maintenance .mr-upload-pill--green {
 }
 
 body.erp-maintenance .mr-upload-pill--yellow {
-  background: #fef7e0;
-  color: #b06000;
+  background: var(--pill-yellow-bg, #fef7e0);
+  color: var(--pill-yellow-text, #b06000);
 }
 
 body.erp-maintenance .mr-upload-pill--gray {
-  background: #f1f3f4;
-  color: #5f6368;
+  background: var(--pill-gray-bg, #f1f3f4);
+  color: var(--pill-gray-text, #5f6368);
 }
 
 body.erp-maintenance .mr-upload-pill--red {
-  background: #fce8e6;
-  color: #d93025;
+  background: var(--pill-red-bg, #fce8e6);
+  color: var(--pill-red-text, #d93025);
 }
 
 body.erp-maintenance .mr-upload-conn-grid {
@@ -1009,16 +1009,16 @@ body.erp-maintenance .mr-upload-conn-grid {
 }
 
 body.erp-maintenance .mr-upload-conn-card {
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--color-border, #e8eaed);
   border-radius: 8px;
   padding: 14px 16px;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .mr-upload-conn-card__title {
   font-size: 13px;
   font-weight: 500;
-  color: #202124;
+  color: var(--color-text-primary, #202124);
   margin-bottom: 6px;
 }
 

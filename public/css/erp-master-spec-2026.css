@@ -728,6 +728,12 @@ body.erp-maintenance .mr-filter-bar select.in:focus-visible {
   outline-offset: 2px;
 }
 
+body.erp-maintenance .mr-filter-bar .btn:focus-visible,
+body.erp-maintenance .mr-filter-bar button:focus-visible {
+  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline-offset: 2px;
+}
+
 body.erp-maintenance .mr-filter-chipwrap {
   position: relative;
 }
