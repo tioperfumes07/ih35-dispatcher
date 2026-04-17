@@ -3270,6 +3270,7 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
 @media (max-width: 900px) {
   body.erp-maintenance .shop-board-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   body.erp-maintenance .qb-doc-memo-row {
@@ -3278,6 +3279,56 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
 
   body.erp-maintenance .safety-active-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Rule 1 — Shop board (Maintenance + Tracking embed) + ops toolbars: denser chrome on tablets. */
+  body.erp-maintenance #section-maintenance .shop-subtabs,
+  body.erp-maintenance #section-tracking .shop-subtabs {
+    margin-bottom: 10px;
+    gap: 4px;
+  }
+
+  body.erp-maintenance #section-maintenance .shop-subtabs .subtab,
+  body.erp-maintenance #section-tracking .shop-subtabs .subtab {
+    padding: 6px 11px;
+    font-size: 12px;
+  }
+
+  body.erp-maintenance #section-maintenance .shop-col-head,
+  body.erp-maintenance #section-tracking .shop-col-head {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  body.erp-maintenance #section-maintenance .shop-col-body,
+  body.erp-maintenance #section-tracking .shop-col-body {
+    padding: 6px 10px;
+    max-height: min(240px, 42vh);
+  }
+
+  body.erp-maintenance #section-maintenance .erp-ops-toolbar--dense,
+  body.erp-maintenance #section-tracking .erp-ops-toolbar--dense {
+    gap: 8px;
+  }
+
+  /* Rule 1 — Vehicle tracking: fleet KPI strip 2×2 + primary subtabs + filter rows. */
+  body.erp-maintenance #section-tracking .erp-ops-kpi-strip.grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-tracking .erp-ops-subtabs-bar {
+    margin-top: 10px;
+    gap: 4px;
+  }
+
+  body.erp-maintenance #section-tracking .erp-ops-subtabs-bar .subtab {
+    padding: 6px 11px;
+    font-size: 12px;
+  }
+
+  body.erp-maintenance #section-tracking .mr-filter-bar.erp-ops-filter-bar {
+    gap: 6px;
   }
 
   /* Rule 1 — Lists & catalogs: tighter sub-tab pills so the panel fits small laptops. */
