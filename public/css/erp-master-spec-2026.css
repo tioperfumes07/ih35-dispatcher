@@ -642,22 +642,25 @@ body.erp-maintenance .mr-violation-legend__dot--yellow {
   border: 1px solid #b06000;
 }
 
-body.erp-maintenance .mr-filter-bar {
+body.erp-maintenance .mr-filter-bar,
+body.fuel-board .mr-filter-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid #e8eaed;
+  border-bottom: 1px solid var(--color-border, #e8eaed);
   margin-bottom: 0;
 }
 
-body.erp-maintenance .mr-filter-bar__grow {
+body.erp-maintenance .mr-filter-bar__grow,
+body.fuel-board .mr-filter-bar__grow {
   flex: 1 1 220px;
   min-width: 0;
 }
 
-body.erp-maintenance .mr-filter-bar__actions {
+body.erp-maintenance .mr-filter-bar__actions,
+body.fuel-board .mr-filter-bar__actions {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
