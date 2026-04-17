@@ -19,6 +19,16 @@
 </head>
 <body class="erp-app erp-maintenance">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
+  <div id="erpDedicatedFormModal" class="erp-dedicated-form-modal hidden" aria-hidden="true">
+    <div class="erp-dedicated-form-modal__backdrop" data-erp-ded-close="1"></div>
+    <div class="erp-dedicated-form-modal__shell" role="dialog" aria-modal="true" aria-label="Dedicated expense form">
+      <div class="erp-dedicated-form-modal__bar">
+        <button type="button" class="erp-dedicated-form-modal__x" data-erp-ded-close="1" title="Close">×</button>
+        <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
+      </div>
+      <div id="erpDedicatedFormModalBody" class="erp-dedicated-form-modal__body"></div>
+    </div>
+  </div>
   <div id="boardNavMount"></div>
   <div id="maintCatModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintCatModal()">
     <div class="maint-modal erp-qb-dialog" onclick="event.stopPropagation()">
@@ -221,13 +231,31 @@
                 <div class="erp-new-menu__cols">
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Expenses &amp; bills</div>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Standard</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewExpense()">Expense</button>
                     <button type="button" class="erp-new-menu__item" onclick="erpNewBill()">Bill</button>
                     <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Check')">Check</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewExpense()">Expense</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Item receipt')">Item receipt</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPayBills()">Pay bills</button>
                     <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Purchase order')">Purchase order</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPayBills()">Pay bills</button>
                     <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Vendor credit')">Vendor credit</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Item receipt')">Item receipt</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Maintenance &amp; fuel</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Drivers</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDriverBillPay()">Driver bill pay</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Maintenance</div>
@@ -1970,7 +1998,8 @@
         </div>
 
         <div id="acct-transactions" class="accounting-tab">
-          <div class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec acct-expense-form-wrap">
+          <div id="erpApDocShellPlaceholder" class="erp-dom-placeholder" aria-hidden="true"></div>
+          <div id="erpApDocShellPanel" class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec acct-expense-form-wrap">
             <div class="qb-doc-topbar">
               <button
                 type="button"
@@ -1993,7 +2022,10 @@
               <div class="qb-doc-title-row">
                 <div style="flex:1;min-width:200px">
                   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                    <h2 class="qb-doc-h2" id="apDocTitle" style="margin:0">Expense</h2>
+                    <h2 class="qb-doc-h2" style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                      <span id="erpApDocTitleAccent" class="erp-ap-doc-accent hidden" aria-hidden="true"></span>
+                      <span id="apDocTitle">Expense</span>
+                    </h2>
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this form">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
@@ -2179,8 +2211,15 @@
                 </button>
               </div>
               <div class="qb-doc-footer__right">
-                <button type="button" onclick="saveApTransaction({ close: false })">Save</button>
-                <button type="button" class="qb-btn-primary" onclick="saveApTransaction({ close: true })">Save and close</button>
+                <button type="button" onclick="window.erpWithBusy(this, () => saveApTransaction({ close: false }))">Save</button>
+                <button
+                  type="button"
+                  class="qb-btn-primary"
+                  onclick="window.erpWithBusy(this, () => saveApTransaction({ close: false, postToQbo: true }))"
+                >
+                  Post to QuickBooks
+                </button>
+                <button type="button" class="qb-btn-primary" onclick="window.erpWithBusy(this, () => saveApTransaction({ close: true }))">Save and close</button>
               </div>
             </footer>
           </div>
@@ -2214,7 +2253,10 @@
           <div class="panel qb-panel qb-doc-shell qb-doc-shell--bill-pay">
             <div class="panel-head mr-bp-panel-head">
               <div class="mr-bp-panel-head__title">
-                <div class="panel-title">Pay bills (QuickBooks)</div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <div class="panel-title" id="bpPanelTitle">Pay bills (QuickBooks)</div>
+                  <span id="bpDriverPayChip" class="bp-driver-pay-chip hidden" aria-live="polite">Driver payees only</span>
+                </div>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bill pay">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -2454,7 +2496,8 @@
             </div>
             <div id="fuelExpenseQboBanner" class="mini-note fuel-expense-qbo-banner" style="display:none;margin:0 0 12px"></div>
             <div class="panel-body form-stack fuel-expense-stack">
-              <div class="panel qb-panel qb-doc-shell qb-doc-shell--fuel-spec" style="margin:0 0 14px">
+              <div id="erpFuelManualPlaceholder" class="erp-dom-placeholder" aria-hidden="true"></div>
+              <div id="erpFuelManualDocShellPanel" class="panel qb-panel qb-doc-shell qb-doc-shell--fuel-spec" style="margin:0 0 14px">
                 <div class="qb-doc-topbar qb-doc-topbar--fuel">
                   <button
                     type="button"
@@ -2476,8 +2519,9 @@
                 <div class="qb-doc-head">
                   <div class="qb-doc-title-row">
                     <div style="flex:1;min-width:200px">
-                      <div class="fuel-manual-doc-title">
-                        <h2 class="qb-doc-h2">Manual fuel / DEF expense</h2>
+                      <div class="fuel-manual-doc-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                        <span id="erpFuelDocTitleAccent" class="erp-ap-doc-accent hidden" aria-hidden="true"></span>
+                        <h2 class="qb-doc-h2" id="fuelManualDocTitleH2">Manual fuel / DEF expense</h2>
                         <span class="erp-help-tip">
                           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Manual fuel form">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
@@ -5929,9 +5973,16 @@
       if (name === 'accounting') {
         const expensesBody =
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF entry</button>' +
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-transactions&quot;, document.getElementById(&quot;acctStubTrans&quot;));">Maintenance expenses</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Pay bills</button>';
+          '<button type="button" class="erp-sb-link" onclick="erpOpenAccountingPayBillsStandard()">Pay bills</button>' +
+          '<div class="erp-sb-sep" role="presentation"><span class="erp-sb-sep__line"></span><span class="erp-sb-sep__label">Specialized</span><span class="erp-sb-sep__line"></span></div>' +
+          '<button type="button" class="erp-sb-link" onclick="erpOpenDriverBillPay()">Driver bill pay</button>' +
+          '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-bill&quot;)">Fuel bill</button>' +
+          '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;)">Fuel expense</button>' +
+          '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
+          '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
+          '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-driver-bill&quot;)">Vendor / driver bill</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF entry (board)</button>';
         const qbBody =
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctQboRollbackStub&quot;));">QBO rollback &amp; imports</button>' +
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
@@ -13121,7 +13172,40 @@
       const h = document.getElementById('apDocTitle');
       const lab = document.getElementById('apDocTotalLabel');
       if (!sel || !h) return;
+      const preset = window.__erpDedicatedApPreset || '';
       const isBill = sel.value === 'bill';
+      if (preset === 'maintenance-expense') {
+        sel.value = 'expense';
+        h.textContent = 'Maintenance expense';
+        if (lab) lab.textContent = 'Amount';
+        document.getElementById('apWrapDue')?.classList.add('hidden');
+        document.getElementById('apWrapTerms')?.classList.add('hidden');
+        return;
+      }
+      if (preset === 'maintenance-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Maintenance bill';
+        if (lab) lab.textContent = 'Balance due';
+        document.getElementById('apWrapDue')?.classList.remove('hidden');
+        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+        return;
+      }
+      if (preset === 'fuel-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Fuel bill';
+        if (lab) lab.textContent = 'Balance due';
+        document.getElementById('apWrapDue')?.classList.remove('hidden');
+        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+        return;
+      }
+      if (preset === 'vendor-driver-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Vendor / driver bill';
+        if (lab) lab.textContent = 'Balance due';
+        document.getElementById('apWrapDue')?.classList.remove('hidden');
+        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+        return;
+      }
       h.textContent = isBill ? 'Bill' : 'Expense';
       if (lab) lab.textContent = isBill ? 'Balance due' : 'Amount';
       document.getElementById('apWrapDue')?.classList.toggle('hidden', !isBill);

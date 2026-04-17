@@ -39,13 +39,13 @@
 - [ ] **Board nav / hub:** Company hub and satellite strips link to expected workspaces (maintenance, banking, fuel, dispatch, settings).
 - [ ] **+ New menu:** Columns load; items are usable (handlers fire); **A–Z** order still looks correct after any menu edits.
 - [ ] **Collapsible sidebars:** Toggle groups; refresh page — **`localStorage`** keys **`ih35_sb_*`** restore state without layout break.
-- [ ] **Home dashboard:** **System Summary** + **Sync Summary** panel **`?`** tips open; copy matches expectations (cards vs QBO window). **Maintenance → Units** list column **`?`** describes selection vs **Maintenance Table** filters and the collapse **▼** control.
+- [ ] **Home dashboard:** **System Summary** + **Sync Summary** panel **`?`** tips open; copy matches expectations (cards vs QBO window). **Maintenance → Units** list column **`?`** describes selection vs **Maintenance Table** filters and the collapse **▼** control. **Maintenance** top **Workspace snapshot** strip **`?`** opens (strip vs **Home** overview).
 
 ---
 
 ## 4. Maintenance — accounting (high value)
 
-- [ ] **Accounting board:** Dash cards and **Connections** strip (`#maintIntegrationStrip`) render; **Refresh** updates counts where applicable.
+- [ ] **Accounting board:** Dash cards and **Connections** strip (`#maintIntegrationStrip`) render; **Refresh** updates counts where applicable. **`#acctBoardStrip`** **Accounting board** title-row **`?`** opens (KPI strip vs dash cards vs **Connections**).
 - [ ] **QuickBooks Live Master:** **`erp-help-tip`** on title + **Vendors** / **Items** / **Accounts** column titles; **Create vendor** / refresh master still work.
 - [ ] **Fuel expenses:** Filter **`mr-filter-bar`** (dates, search, QBO fields) + grid; **Manual fuel / DEF expense** — document header fields in **`mr-filter-bar`**; **Refresh fuel purchases**; pager with **16+** rows; **Record filtered to QuickBooks** still includes rows **off the current page** (regression from Rule 23 wiring).
 - [ ] **Expense history:** Panel title **`?`** + body **`?`**; filters + pager (**16+** rows); **Export filtered CSV** = full filtered set, not current page only.
@@ -70,7 +70,7 @@
 
 - [ ] **Shop board:** Each queue tab — pager (**16+**), filters reset page. **Maintenance reports** + **Integrity · fuel · parts alerts** panel title **`?`** tips open.
 - [ ] **Safety / HOS:** HOS + active + in-service + assignments pagers and filter reset behavior. **Active drivers** + **In service now** column title **`?`** tips open.
-- [ ] **Tracking:** Map **Units** + **Live map** panel **`?`** tips open; copy matches expectations (map list vs **Maintenance → Units**). **Yard & idle** + **Summary** title **`?`** tips. Map units pager; assets + drivers pagers; **Idle** snapshot pager uses cache on page change (no unnecessary refetch).
+- [ ] **Tracking:** **Fleet mix snapshot** (above the four-metric strip) **`?`** opens. Map **Units** + **Live map** panel **`?`** tips open; copy matches expectations (map list vs **Maintenance → Units**). **Yard & idle** + **Summary** title **`?`** tips. Map units pager; assets + drivers pagers; **Idle** snapshot pager uses cache on page change (no unnecessary refetch). Pager chrome borders look correct in light theme (token **`--color-border`** when set).
 - [ ] **Maintenance table (fleet):** **Maintenance Table** + **Unit History** panel **`?`** tips; pager + category/service filter reset page.
 - [ ] **Security alerts:** **`mr-filter-bar`** + **Refresh alerts**.
 
