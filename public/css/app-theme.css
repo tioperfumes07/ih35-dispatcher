@@ -746,7 +746,7 @@ body.erp-maintenance .sidebar-expand-fab {
   height: 42px;
   border-radius: 12px;
   border: 1px solid var(--color-border, var(--line, #e2e6ee));
-  background: var(--panel);
+  background: var(--color-bg-card, var(--panel));
   box-shadow: var(--shadow);
   cursor: pointer;
   font-size: 22px;
@@ -1295,7 +1295,7 @@ body.erp-maintenance .subtabs {
 
 body.erp-maintenance .subtab {
   border: 1px solid var(--color-border, var(--line, #e2e6ee));
-  background: var(--panel);
+  background: var(--color-bg-card, var(--panel));
   border-radius: 999px;
   padding: 7px 14px;
   cursor: pointer;
@@ -1702,7 +1702,7 @@ body.erp-maintenance .shop-tab-panel.active {
 body.erp-maintenance .shop-col {
   border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
-  background: var(--panel);
+  background: var(--color-bg-card, var(--panel));
   overflow: hidden;
   min-height: 120px;
 }
