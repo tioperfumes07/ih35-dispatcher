@@ -1532,6 +1532,7 @@
               <div class="panel-body">
                 <input id="trackingSearch" list="unitOptions" placeholder="Filter unit…" oninput="renderTrackingBoard()">
                 <div class="track-list" id="trackingList" style="margin-top:10px;"></div>
+                <div id="trackingListPagerHost" hidden></div>
               </div>
             </div>
             <div class="panel">
@@ -3722,6 +3723,8 @@
     let apTxnListPager = { page: 1, pageSize: 10, filterKey: '' };
     /** Rule 23 — maintenance fleet dashboard table */
     let maintDashboardTablePager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — tracking board unit cards */
+    let trackingListPager = { page: 1, pageSize: 12, filterKey: '' };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -14554,7 +14557,31 @@
         .filter(v => !q || String(v.name || '').toLowerCase().includes(q))
         .sort(byUnitOrder);
 
-      document.getElementById('trackingList').innerHTML = list.map(v => `
+      const trackListEl = document.getElementById('trackingList');
+      const trackPagerHost = document.getElementById('trackingListPagerHost');
+      const tpState = trackingListPager;
+      if (tpState.filterKey !== q) {
+        tpState.page = 1;
+      }
+      tpState.filterKey = q;
+      if (!list.length) {
+        if (trackListEl) trackListEl.innerHTML = 'No vehicles found.';
+        if (trackPagerHost) {
+          trackPagerHost.innerHTML = '';
+          trackPagerHost.hidden = true;
+        }
+      } else {
+        const tps = Math.max(1, Math.floor(Number(tpState.pageSize)) || 12);
+        const ttotal = list.length;
+        const tpages = Math.max(1, Math.ceil(ttotal / tps));
+        if (tpState.page > tpages) tpState.page = tpages;
+        if (tpState.page < 1) tpState.page = 1;
+        const tstart = (tpState.page - 1) * tps;
+        const listSlice = list.slice(tstart, tstart + tps);
+        if (trackListEl) {
+          trackListEl.innerHTML = listSlice
+            .map(
+              v => `
         <div class="track-card ${selectedTrackingVehicle === v.name ? 'active' : ''}" onclick="selectTrackingVehicle('${v.name}')">
           <div><b>${escapeHtml(v.name)}</b></div>
           <div class="mini-note">${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}</div>
@@ -14562,8 +14589,26 @@
           <div class="mini-note">Fuel: ${v.fuelPercent != null ? `${Math.round(v.fuelPercent)}%` : 'N/A'}</div>
           <div class="mini-note">Engine: ${escapeHtml(v.engineState || 'N/A')}</div>
           <div class="mini-note">Category: ${escapeHtml(v.assetCategory || '')}</div>
-        </div>
-      `).join('') || 'No vehicles found.';
+        </div>`
+            )
+            .join('');
+        }
+        if (trackPagerHost && window.erpPagerRender) {
+          window.erpPagerRender(
+            trackPagerHost,
+            { page: tpState.page, pageSize: tps, total: ttotal },
+            (nextPage, newPageSize) => {
+              if (newPageSize) tpState.pageSize = newPageSize;
+              tpState.page = nextPage;
+              renderTrackingBoard();
+            }
+          );
+          trackPagerHost.hidden = false;
+        } else if (trackPagerHost) {
+          trackPagerHost.innerHTML = '';
+          trackPagerHost.hidden = true;
+        }
+      }
 
       const selected = vehicles.find(v => v.name === selectedTrackingVehicle) || list[0] || null;
       if (selected && !selectedTrackingVehicle) selectedTrackingVehicle = selected.name;

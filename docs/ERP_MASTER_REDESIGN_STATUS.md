@@ -108,7 +108,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 23 — Pagination
 
-- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**)). Not literally every table >10 rows.
+- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**); **maintenance → Maintenance Table** (**`maintDashboardTablePager`**); **tracking → Units** card list (**`trackingListPager`**)). Not literally every table >10 rows.
 
 ### Rule 24 — Connection verification on load
 
@@ -136,6 +136,8 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 16. **Rule 23 (settlement report):** **`maintenance.html`** — **`#settlementIndexPagerHost`** / **`settlementIndexPager`** for **Loads with recorded costs**; **`#settlementLinesPagerHost`** / **`settlementLinesPager`** for trip lookup line items (new load # resets page). **Download CSV** still exports the full load from the API.
 17. **Rule 23 (saved WO + AP cards):** **`maintenance.html`** — **`#apListPagerHost`** + **`apTxnListPager`** paginate the combined work-order and AP **record-card** list (default 10 cards/page); CSV exports still use server / full **`erp`** datasets.
 18. **Rule 22 (settlement report copy):** **`maintenance.html`** — **Reports → Settlement / P&L** page intro and trip rollup panel: long paragraphs replaced with short **`mini-note`** lines plus **`erp-help-tip`** panels.
+19. **Rule 23 (maintenance fleet table):** **`maintenance.html`** — **`#maintTablePagerHost`** + **`maintDashboardTablePager`** paginate the **Maintenance Table** (filter key = fleet category + service filter string).
+20. **Rule 23 (tracking unit cards):** **`maintenance.html`** — **`#trackingListPagerHost`** + **`trackingListPager`** paginate **Tracking → Map → Units** cards (filter key = search text).
 
 ---
 
