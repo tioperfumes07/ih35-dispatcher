@@ -5949,6 +5949,16 @@
         openMaintMainTab('shop-loc', sb, { skipModal: true });
         return;
       }
+      if (section === 'catalog' || section.startsWith('catalog-')) {
+        openSectionByName('catalog');
+        let which = 'service';
+        if (section.startsWith('catalog-')) {
+          const rest = section.slice('catalog-'.length);
+          if (['service', 'qbo', 'vendors', 'operational', 'fleet'].includes(rest)) which = rest;
+        }
+        requestAnimationFrame(() => openCatalogSubpanel(which, null));
+        return;
+      }
       const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog', 'uploads'];
       if (allowed.includes(section)) openSectionByName(section);
     }

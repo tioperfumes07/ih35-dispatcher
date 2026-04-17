@@ -61,6 +61,19 @@
       ]
     },
     {
+      id: 'lists',
+      label: 'Lists & catalogs',
+      href: '/maintenance.html#catalog',
+      links: [
+        { label: 'Fleet & Samsara writes', href: '/maintenance.html#catalog-fleet' },
+        { label: 'Operational status', href: '/maintenance.html#catalog-operational' },
+        { label: 'QuickBooks items & accounts', href: '/maintenance.html#catalog-qbo' },
+        { label: 'Service types (database)', href: '/maintenance.html#catalog-service' },
+        { label: 'Upload center', href: '/maintenance.html#uploads' },
+        { label: 'Vendors & driver payees', href: '/maintenance.html#catalog-vendors' }
+      ]
+    },
+    {
       id: 'reports',
       label: 'Reports',
       href: '/maintenance.html#reports',

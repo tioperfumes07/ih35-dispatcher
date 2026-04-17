@@ -51,6 +51,7 @@
     .tag-reports { background: rgba(59,130,246,.2); color: #93c5fd; }
     .tag-safety { background: rgba(248,113,113,.2); color: #fca5a5; }
     .tag-tracking { background: rgba(56,189,248,.2); color: #7dd3fc; }
+    .tag-lists { background: rgba(148,163,184,.18); color: #e2e8f0; }
     a.card h2 { margin: 0 0 10px; font-size: 20px; }
     a.card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
     .arrow { margin-top: 16px; font-weight: 700; color: var(--accent); font-size: 14px; }
@@ -71,7 +72,7 @@
   <script src="/js/board-nav.js" defer></script>
   <header>
     <h1>IH35 ERP</h1>
-    <p>Choose a workspace. Maintenance, fuel, safety, and accounting share the ERP shell; loads and billing use the full-screen dispatch board.</p>
+    <p>Choose a workspace. Maintenance, lists &amp; catalogs, fuel, safety, and accounting share the ERP shell; loads and billing use the full-screen dispatch board.</p>
   </header>
   <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
   <div class="grid">
@@ -92,6 +93,12 @@
       <h2>Maintenance &amp; accounting</h2>
       <p>Unified dashboard, work orders, mileage, QuickBooks, imports, and fleet maintenance views.</p>
       <div class="arrow">Open maintenance →</div>
+    </a>
+    <a class="card" href="/maintenance.html#catalog">
+      <span class="card-tag tag-lists">Lists</span>
+      <h2>Lists &amp; catalogs</h2>
+      <p>Service types, QuickBooks items and accounts, vendors, operational labels, and fleet / Samsara write settings.</p>
+      <div class="arrow">Open lists →</div>
     </a>
     <a class="card" href="/maintenance.html#safety">
       <span class="card-tag tag-safety">Safety</span>
