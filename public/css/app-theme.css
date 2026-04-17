@@ -324,7 +324,7 @@ main,
 }
 .catalog-search-hit__meta {
   font-size: 0.78rem;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   margin-top: 2px;
 }
 
@@ -372,7 +372,7 @@ main,
 }
 .qb-picker-item__meta {
   font-size: 0.78rem;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   white-space: nowrap;
 }
 .qb-picker-addnew {
@@ -398,6 +398,7 @@ body.erp-maintenance .qb-picker-item__label {
 }
 body.erp-maintenance .qb-picker-item__meta {
   font-size: 0.72rem;
+  color: var(--color-text-label, var(--muted));
 }
 
 /* Right-side “Add new” drawer (QBO-like) */
@@ -631,7 +632,7 @@ body.dispatch-page table.data th {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   font-weight: 650;
 }
 
@@ -683,6 +684,7 @@ body.fuel-board .fleet-item.active {
 
 body.erp-maintenance .app {
   min-height: 100vh;
+  min-width: 0;
   display: grid;
   grid-template-columns: 260px 1fr;
   transition: grid-template-columns 0.22s ease;
@@ -721,6 +723,7 @@ body.erp-maintenance .sidebar-brand-row {
   align-items: flex-start;
   gap: 10px;
   margin-bottom: 4px;
+  min-width: 0;
 }
 
 body.erp-maintenance .sidebar-collapse-btn {
@@ -829,6 +832,7 @@ body.erp-maintenance .topbar {
   margin-bottom: 14px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--color-border);
+  min-width: 0;
 }
 
 body.erp-maintenance .topbar-home-link {
@@ -917,6 +921,7 @@ body.erp-maintenance .hero-grid {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance .hero-card,
@@ -1041,8 +1046,9 @@ body.erp-maintenance .chip.active {
 
 body.erp-maintenance .split {
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 340px minmax(0, 1fr);
   gap: 12px;
+  min-width: 0;
 }
 
 body.erp-maintenance .list {
@@ -1079,7 +1085,7 @@ body.erp-maintenance .list-title {
 
 body.erp-maintenance .list-sub {
   font-size: 12px;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
   line-height: 1.35;
 }
 
@@ -1121,6 +1127,7 @@ body.erp-maintenance .search-row,
 body.erp-maintenance .unit-summary {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 body.erp-maintenance .toolbar {
@@ -1262,7 +1269,7 @@ body.erp-maintenance .form-stack {
 
 body.erp-maintenance .mini-note {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
 }
 
 body.erp-maintenance .card-list {
@@ -1433,7 +1440,7 @@ body.erp-maintenance .qb-panel {
 body.erp-maintenance .qb-l {
   display: block;
   font-size: 10px;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   margin-bottom: 2px;
   text-transform: uppercase;
   font-weight: 600;
@@ -1473,7 +1480,7 @@ body.erp-maintenance .maint-cost-panel {
 
 body.erp-maintenance .maint-inline-hint {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   margin-top: 4px;
 }
 
@@ -1594,7 +1601,7 @@ body.erp-maintenance .qb-lines-header {
   padding: 8px 10px;
   font-size: 10px;
   font-weight: 700;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   text-transform: uppercase;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-hover);
@@ -1661,7 +1668,7 @@ body.erp-maintenance .qb-btn-primary:hover {
 
 body.erp-maintenance .wo-line-num {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   padding-bottom: 6px;
   text-align: center;
 }
@@ -2154,7 +2161,7 @@ body.erp-maintenance .maint-board-nav__title {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   margin-bottom: 4px;
 }
 body.erp-maintenance .maint-board-nav__btn {
@@ -2166,13 +2173,13 @@ body.erp-maintenance .maint-board-nav__btn {
   padding: 8px 10px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-body, var(--text-secondary));
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 body.erp-maintenance .maint-board-nav__btn:hover {
   background: color-mix(in srgb, var(--accent) 6%, transparent);
-  color: var(--text);
+  color: var(--color-text-body, var(--text));
 }
 body.erp-maintenance .maint-board-nav__btn.active {
   background: var(--color-nav-bg, var(--app-frame-border));
@@ -2197,7 +2204,7 @@ body.erp-maintenance .maint-kpi-card {
 body.erp-maintenance .maint-kpi-card__label {
   font-size: 11px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
 }
 body.erp-maintenance .maint-kpi-card__val {
   font-size: 1.25rem;
@@ -2232,7 +2239,7 @@ body.erp-maintenance .maint-aside-block__title {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--color-text-label, var(--muted));
   margin-bottom: 6px;
 }
 body.erp-maintenance .maint-aside-block__body {

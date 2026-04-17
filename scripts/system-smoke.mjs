@@ -3,7 +3,7 @@
  * Non-destructive HTTP checks against a running server (default http://127.0.0.1:3400).
  * Run: `npm start` in another terminal, then `npm run smoke`.
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings) and checks for stable substring(s),
- * plus static CSS/JS (design-tokens, app-theme, maint-accounting, board-nav, erp-ui) for HTTP 200 + stable header needles.
+ * plus static CSS/JS (design-tokens, app-theme, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
  * Set SMOKE_BASE=http://host:port to target another environment.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
@@ -67,7 +67,8 @@ const STATIC_TEXT = [
   ['/css/maint-accounting-ui-2026.css', 'Maintenance center action strip'],
   ['/css/app-theme.css', 'IH35 — shared visual language'],
   ['/css/board-nav.css', 'Persistent operations bar'],
-  ['/js/erp-ui.js', 'IH35 ERP — shared UI helpers', '*/*']
+  ['/js/erp-ui.js', 'IH35 ERP — shared UI helpers', '*/*'],
+  ['/js/board-nav.js', 'Fuel & route planning', '*/*']
 ];
 
 const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 8000));

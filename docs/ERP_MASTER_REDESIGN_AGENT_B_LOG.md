@@ -181,3 +181,21 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Smoke:** **`scripts/system-smoke.mjs`** — **`oneStatic()`** accepts an optional **`Accept`** header; **`STATIC_TEXT`** adds **`/js/erp-ui.js`** with needle **`IH35 ERP — shared UI helpers`** and a broad **`Accept`** value so a missing **`public/js`** mount fails CI alongside CSS.
 
 **Files:** `public/css/app-theme.css`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-05
+
+- **Rule 1:** **`app-theme.css`** — legacy maintenance shell **`.app`** (sidebar + main grid) gets **`min-width: 0`** so the page can shrink inside nested viewports without the grid’s default min-content floor forcing horizontal scroll. **`sidebar-brand-row`** and **`.topbar`** get **`min-width: 0`** so dense sidebar chrome and classic topbars cooperate with **`flex-wrap`** without widening the column.
+- **Smoke:** **`scripts/system-smoke.mjs`** — **`STATIC_TEXT`** adds **`/js/board-nav.js`** with stable substring **`Fuel & route planning`** (first board entry in that bundle).
+
+**Files:** `public/css/app-theme.css`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-06
+
+- **Rule 1:** **`app-theme.css`** — legacy maintenance **`.split`** uses **`minmax(0, 1fr)`** for the fluid column (was plain **`1fr`**) plus **`min-width: 0`** on the grid so the list + detail pattern cannot force extra horizontal overflow. **`hero-grid`**, **`.toolbar`**, **`.search-row`**, and **`.unit-summary`** grids get **`min-width: 0`** so **`minmax(0, 1fr)`** tracks can actually shrink inside narrow shells.
+- **Rule 0:** **`app-theme.css`** — **`body.erp-maintenance .list-sub`** reads **`var(--color-text-label)`** only (maintenance loads **`design-tokens.css`**).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
