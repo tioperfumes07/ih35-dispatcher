@@ -19,7 +19,7 @@
   --qb-icon-nav-bg: #1a1a2e;
   --qb-icon-nav-muted: #8a8fa8;
   --qb-focus-ring: rgba(25, 103, 210, 0.12);
-  --qb-sidebar-active-bg: #e8f0fe;
+  --qb-sidebar-active-bg: var(--pill-blue-bg, #e8f0fe);
   --qb-radius-card: 8px;
   --qb-radius-control: 4px;
 }
@@ -117,12 +117,12 @@ body.erp-maintenance .erp-icon-nav__link {
 body.erp-maintenance .erp-icon-nav__btn.nav-btn:hover,
 body.erp-maintenance .erp-icon-nav__link:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .erp-icon-nav__btn.nav-btn.active {
   background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .erp-icon-nav__glyph {
@@ -201,7 +201,7 @@ body.erp-maintenance .erp-module-sidebar__collapse {
 }
 
 body.erp-maintenance .erp-module-sidebar__collapse:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
 }
 
 body.erp-maintenance .erp-module-sidebar__scroll {
@@ -220,7 +220,7 @@ body.erp-maintenance .erp-module-sidebar__footer {
   flex-shrink: 0;
   padding: 10px 12px 12px;
   border-top: 1px solid var(--qb-line);
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
 }
 
 body.erp-maintenance .erp-sb-heading {
@@ -253,7 +253,7 @@ body.erp-maintenance .erp-sb-link {
 }
 
 body.erp-maintenance .erp-sb-link:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   color: var(--qb-blue);
 }
 
@@ -358,7 +358,7 @@ body.erp-maintenance .erp-btn-primary {
   border-radius: var(--qb-radius-control);
   border: none;
   background: var(--qb-green);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -423,7 +423,7 @@ body.erp-maintenance .erp-new-menu__item {
 }
 
 body.erp-maintenance .erp-new-menu__item:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
 }
 
 /* --- Ghost nav (preserve querySelector targets) --- */
@@ -536,7 +536,7 @@ body.erp-maintenance .erp-topbar .print-hide-actions button {
 }
 
 body.erp-maintenance .erp-topbar .print-hide-actions button:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
 }
 
 @media print {
@@ -599,7 +599,7 @@ body.erp-maintenance .erp-main-body .subtab {
 }
 
 body.erp-maintenance .erp-main-body .subtab:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   color: var(--qb-text);
   border-color: transparent;
 }
@@ -624,7 +624,7 @@ body.erp-maintenance .erp-main-body .maint-board-nav__btn {
 }
 
 body.erp-maintenance .erp-main-body .maint-board-nav__btn:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   color: var(--qb-text-strong);
 }
 
@@ -704,7 +704,7 @@ body.erp-maintenance .erp-qb-dialog__foot {
   gap: 8px;
   padding: 12px 20px 14px;
   border-top: 1px solid var(--qb-line);
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
 }
 
 body.erp-maintenance .erp-qb-dialog__btn-secondary,
@@ -720,7 +720,7 @@ body.erp-maintenance .erp-qb-sheet-close {
 
 body.erp-maintenance .erp-qb-dialog__btn-secondary:hover,
 body.erp-maintenance .erp-qb-sheet-close:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   border-color: var(--qb-muted);
 }
 
@@ -787,12 +787,12 @@ body.erp-maintenance .erp-main-body .maint-section-card {
 body.erp-maintenance .erp-main-body .hero-card:hover {
   box-shadow: none;
   border-color: var(--qb-line-input);
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
 }
 
 body.erp-maintenance .erp-main-body .panel-head {
   border-bottom: 1px solid var(--qb-line);
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
 }
 
 body.erp-maintenance .erp-main-body .panel-title {
@@ -821,7 +821,7 @@ body.erp-maintenance .erp-main-body .mini-note {
 body.erp-maintenance .erp-main-body .qb-btn-primary,
 body.erp-maintenance .erp-main-body button.qb-btn-primary {
   background: var(--qb-green);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
   border: none;
   border-radius: var(--qb-radius-control);
   font-weight: 500;
@@ -865,7 +865,7 @@ body.erp-maintenance .erp-main-body .erp-qb-cost-shell--embedded {
   padding: 12px 12px 14px;
   border: 1px solid var(--qb-line);
   border-radius: var(--qb-radius-card);
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
 }
 
 body.erp-maintenance .erp-main-body .erp-qb-cost-shell__label {
@@ -899,7 +899,7 @@ body.erp-maintenance .erp-main-body .tire-svg {
 
 /* --- List rows --- */
 body.erp-maintenance .erp-main-body .list-row:hover {
-  background: #f8f9fa;
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.erp-maintenance .erp-main-body .list-row.active {
@@ -1167,7 +1167,7 @@ body.erp-maintenance .erp-reports-sblink {
 }
 
 body.erp-maintenance .erp-reports-sblink:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
 }
 
 body.erp-maintenance .erp-reports-sblink--active {
@@ -1232,7 +1232,7 @@ body.erp-maintenance .erp-main-body .erp-ops-hero-head {
   gap: 12px;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--qb-line) !important;
-  background: #fafbfc !important;
+  background: var(--color-bg-header, #fafbfc) !important;
 }
 
 body.erp-maintenance .erp-main-body .erp-ops-table-frame {
@@ -2061,7 +2061,7 @@ body.fuel-board .panel {
 }
 
 body.fuel-board .panel h2 {
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
   border-bottom: 1px solid var(--qb-line);
   font-weight: 500;
   color: var(--qb-text-strong);
@@ -2069,7 +2069,7 @@ body.fuel-board .panel h2 {
 
 body.fuel-board .fleet-summary,
 body.fuel-board .fleet-section-title {
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
   border-color: var(--qb-line);
   color: var(--qb-muted);
 }
@@ -2079,7 +2079,7 @@ body.fuel-board .fleet-item {
 }
 
 body.fuel-board .fleet-item:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
 }
 
 body.fuel-board .fleet-item.active {
@@ -2131,7 +2131,7 @@ body.banking-page .panel {
 }
 
 body.banking-page .ph {
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
   border-bottom-color: var(--qb-line);
   color: var(--qb-text-strong);
   font-weight: 500;
@@ -2165,7 +2165,7 @@ body.banking-page button {
 
 body.banking-page button.primary {
   background: var(--qb-green);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
   border-color: var(--qb-green);
 }
 
@@ -2174,12 +2174,12 @@ body.banking-page button.primary:hover {
 }
 
 body.banking-page th {
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
   color: var(--qb-muted);
 }
 
 body.banking-page tr:hover td {
-  background: #f8f9fa;
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.banking-page .metric {
@@ -2239,7 +2239,7 @@ body.settings-page button {
 
 body.settings-page button.primary {
   background: var(--qb-green);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
   border-color: var(--qb-green);
 }
 
@@ -2249,7 +2249,7 @@ body.settings-page button.primary:hover {
 
 body.settings-page table th {
   color: var(--qb-muted);
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
 }
 
 body.settings-page a {
