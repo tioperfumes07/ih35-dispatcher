@@ -3176,9 +3176,17 @@
               <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; Samsara</button>
             </div>
             <div id="catalog-panel-service" class="catalog-subpanel active">
-              <p class="mini-note" style="margin:0 0 10px">
-                When <code>DATABASE_URL</code> is set, service-type names come from Postgres <code>maintenance_service_catalog</code>. Lists on the maintenance form refresh after changes.
-              </p>
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+                <span class="mini-note" style="margin:0"
+                  >Service types live in Postgres when <code>DATABASE_URL</code> is set — the maintenance form list refreshes after you edit here.</span
+                >
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About service types">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    When <code>DATABASE_URL</code> is set, service-type names come from Postgres <code>maintenance_service_catalog</code>. Lists on the maintenance form refresh after changes.
+                  </span>
+                </span>
+              </div>
               <div class="catalog-add-card" style="margin-bottom:16px;max-width:520px">
                 <div class="catalog-add-card__head">
                   <span class="catalog-add-card__title">Add service type</span>
@@ -3193,9 +3201,15 @@
               <div id="serviceCatalogAdminBody" class="mini-note">Loading catalog…</div>
             </div>
             <div id="catalog-panel-qbo" class="catalog-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">
-                Vendors, items, and expense accounts are mastered in <strong>QuickBooks Online</strong>. Refresh the live cache here, then pick them on bills and maintenance expense lines. Use <strong>Vendors &amp; drivers</strong> to search and link Samsara drivers to QuickBooks payees.
-              </p>
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+                <span class="mini-note" style="margin:0">QuickBooks lists drive bills and expense lines — <strong>Refresh lists</strong> below, then pick vendors/items/accounts on work orders and AP.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About QuickBooks lists">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Vendors, items, and expense accounts are mastered in <strong>QuickBooks Online</strong>. Refresh the live cache here, then pick them on bills and maintenance expense lines. Use <strong>Vendors &amp; drivers</strong> to search and link Samsara drivers to QuickBooks payees.
+                  </span>
+                </span>
+              </div>
               <button type="button" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
               <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-qbo', document.getElementById('acctQbDdTrigger'));">Open Accounting → QuickBooks live master</button>
               <div class="catalog-add-card" style="margin-top:16px;max-width:560px">
@@ -12287,7 +12301,7 @@
           detail: e.message || String(e)
         });
         if (resultEl) {
-          resultEl.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:#d93025">${escapeHtml(
+          resultEl.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text,#d93025)">${escapeHtml(
             e.message || String(e)
           )}</span>`;
         }
@@ -14710,7 +14724,7 @@
         });
         const res = document.getElementById('upMaintResult');
         if (res) {
-          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:#d93025">${escapeHtml(
+          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text,#d93025)">${escapeHtml(
             e.message || String(e)
           )}</span>`;
         }
@@ -14760,7 +14774,7 @@
         });
         const res = document.getElementById('upApResult');
         if (res) {
-          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:#d93025">${escapeHtml(
+          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:var(--pill-red-text,#d93025)">${escapeHtml(
             e.message || String(e)
           )}</span>`;
         }
@@ -15597,8 +15611,8 @@
           posted || voided
             ? ''
             : `<button type="button" class="btn" onclick="voidWorkOrderClient(${JSON.stringify(r.id)})">Void</button>
-                <button type="button" class="btn" style="color:#991b1b" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete</button>`;
-        const voidDelPosted = !posted && voided ? `<button type="button" class="btn" style="color:#991b1b" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete draft</button>` : '';
+                <button type="button" class="btn" style="color:var(--btn-danger-text,#991b1b)" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete</button>`;
+        const voidDelPosted = !posted && voided ? `<button type="button" class="btn" style="color:var(--btn-danger-text,#991b1b)" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete draft</button>` : '';
         return `
             <div class="record-card"${voided ? ' style="opacity:0.88"' : ''}>
               <div class="record-head">

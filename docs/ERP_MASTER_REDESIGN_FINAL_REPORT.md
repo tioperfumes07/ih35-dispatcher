@@ -7,15 +7,16 @@ This report consolidates **what was built**, **how it maps to the master rules (
 
 ---
 
-## 1. Protection block (non-negotiable)
+## 1. Implementation guardrails
 
-The following were **respected** across implementation passes:
+These **engineering** practices stay in force; they are **not** “permission slips” to remove product security:
 
-- **No** intentional changes to backend **save / post / sync** semantics unless explicitly scoped (most work was **UI/CSS/client JS**).
-- **No** removal of form fields or **parts-map SVG** assets.
-- **Read-only** server use for new cross-page features (e.g. `GET /api/qbo/status` for connection strips).
+- **Application security:** Authentication, roles, API tokens, and server-side checks remain as implemented—**do not** strip them to “speed up” the checklist.
+- **Persistence:** Prefer **not** mixing large **save / post / sync** semantic changes with cosmetic-only passes; scope persistence edits in their own PRs with clear notes.
+- **Assets / fields:** Do **not** remove form fields or **parts-map SVG** assets.
+- **New server reads:** Prefer **read-only** additions for cross-page UI (e.g. `GET /api/qbo/status` for connection strips) unless a write route is explicitly part of the task.
 
-Any future work that touches `server.js` persistence should re-state the protection block in the PR description.
+PRs that change `server.js` persistence should still describe intent and risk briefly.
 
 ---
 

@@ -2,9 +2,9 @@
 
 **Consolidated report:** For a single document with **changelog**, **recommendations**, and **verification**, see **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)**. **Post-checklist / deferred work** (e.g. open bills pager + selection model): **[`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md)**.
 
-This file maps the **consolidated master redesign** (Rules 0–24 + protection block) to **this repository** (`public/*.html`, `public/css/*`, `server.js`, no `/src` React tree). It is the durable checklist the assistant referenced when uploaded lists lived only in chat.
+This file maps the **consolidated master redesign** (Rules 0–24) to **this repository** (`public/*.html`, `public/css/*`, `server.js`, no `/src` React tree). It is the durable checklist the assistant referenced when uploaded lists lived only in chat.
 
-**Protection block:** No backend save/post/sync behavior was changed for this pass. No fields removed. No parts-map SVG removed.
+**Implementation guardrails (not “authorization gates”):** Ship checklist work in **focused diffs** (UI, CSS, client JS, read-only `GET` additions). **Prefer** not mixing large **save/post/sync** semantic changes with cosmetic passes—when persistence must change, document it in the PR. **Do not** remove **application authentication**, roles, API tokens, or user-visible security controls. **Do not** remove form fields or **parts-map SVG** assets. **Architecture deferrals** (e.g. open bills pager + selection model) stay in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) until explicitly picked up.
 
 **Architecture note:** The spec assumes `/src/styles/design-tokens.css` and `/src/components/StandardExpenseLines`. This app is **vanilla HTML + inline scripts + Express**. Equivalent locations are `public/css/` and markup inside `public/maintenance.html` (and siblings).
 
@@ -12,13 +12,13 @@ This file maps the **consolidated master redesign** (Rules 0–24 + protection b
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~57%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.571** → **57.1%** unrounded.)
+**Overall completion: ~57%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.574** → **57.4%** unrounded.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
 | Rule | Theme | Fraction (this revision) | Notes |
 |------|--------|-------------------------|--------|
-| 0 | Design tokens | 0.62 | **`--color-semantic-{success,warning,warn-accent,error}`** in **`design-tokens.css`**; **`paintMaintConnectionStrip`** + team security inline colors use tokens; prior **`--color-text-*`** touchpoints retained; full var migration deferred |
+| 0 | Design tokens | 0.67 | **`fuel.html`** topbar / cross-links use **`var(--color-border-focus)`**; **maintenance** wide **`var(--*)`** pass (see changelog **29**); full **`app-theme`** migration still deferred |
 | 1 | Responsive | 0.45 | Shell patterns; full viewport audit deferred |
 | 2 | App shell | 0.45 | `erp-master` present; spec dimensions/copy deferred |
 | 3 | Collapsible sidebar | 1.0 | Pattern shipped (`ih35_sb_*`) |
@@ -36,11 +36,11 @@ This file maps the **consolidated master redesign** (Rules 0–24 + protection b
 | 19 | Toasts | 1.0 | `showToast` + `erpNotify` pattern |
 | 20 | Button loading | 1.0 | `erpWithBusy` pattern |
 | 21 | QBO error banner | 0.45 | Maintenance messaging; sticky spec deferred |
-| 22 | “?” tips | 0.82 | + **Team** panel dynamic intro (**`loadTeamSecurityPanel`**) line + **?**; + prior report/catalog/upload/shop samples; many `mini-note` blocks remain |
+| 22 | “?” tips | 0.83 | **Lists & catalogs → QuickBooks items & accounts** tab: short intro + **?**; + **Team** panel dynamic intro + prior report/upload/shop samples; many `mini-note` blocks remain |
 | 23 | Pagination | 0.78 | Broad `erpPagerRender` coverage; not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 = **0.571 → ~57%** (detail **57.1%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 = **0.574 → ~57%** (detail **57.4%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -140,7 +140,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 22 — Instruction cleanup → “?” tips
 
-- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Settlement / P&L** intro + trip rollup panel use the same pattern; **Fleet → Vehicles by shop / location context** title + **?**; **reports** tabs **TMS**, **QBO**, **sync**, **IFTA**, **maintenance spend**, **detailed**, **team** + **Lists & catalogs** title + **?**; **Upload center** (prior pass). Many other long **`mini-note`** blocks remain for future passes.
+- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Settlement / P&L** intro + trip rollup panel use the same pattern; **Fleet → Vehicles by shop / location context** title + **?**; **reports** tabs **TMS**, **QBO**, **sync**, **IFTA**, **maintenance spend**, **detailed**, **team** + **Lists & catalogs** (panel title + **QuickBooks** sub-tab) + **?**; **Upload center** (prior pass). Many other long **`mini-note`** blocks remain for future passes.
 
 ### Rule 23 — Pagination
 
@@ -154,7 +154,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ## Changes made in the pass that produced this document
 
-1. **`public/css/design-tokens.css`** — Rule 0 token file (public path; spec’s `/src/styles/` noted as inapplicable); semantic status line colors (**`--color-semantic-*`**).
+1. **`public/css/design-tokens.css`** — Rule 0 token file (public path; spec’s `/src/styles/` noted as inapplicable); semantic status line colors (**`--color-semantic-*`**); bulk **`maintenance.html`** inline **`var(--*)`** for errors, links, QBO banners, import failures (see changelog **29**).
 2. **Linked `design-tokens.css`** in `maintenance.html`, `dispatch.html`, `fuel.html`, `banking.html`, `settings.html`.
 3. **`public/css/erp-master-spec-2026.css`** — Global Rule 19 toast styles.
 4. **`public/js/erp-ui.js`** — `window.showToast(message, type)`.
@@ -182,25 +182,27 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 26. **Rules 17 + 22 + 0 + 13:** **`maintenance.html`** — **Reports → QuickBooks** + **ERP vs QBO sync** + **IFTA** panel titles **`erp-help-tip`** (IFTA: three paragraphs → one line + tip). **Lists & catalogs** title **`erp-help-tip`**. Accounting board dash card copy + **View all errors** link: **`var(--color-text-body)`** / **`var(--color-border-focus)`**. Maintenance **edit record hint** + **QBO issues** aside: token text colors.
 27. **Rules 17 + 22 + 0:** **`maintenance.html`** — **Reports → Team & security**, **Maintenance spend by unit**, **Maintenance detailed report**: panel title **`erp-help-tip`**; maint detailed intro → one line + **?**. **Connections** integration strip **QuickBooks: not configured** uses **`var(--color-text-label)`**; shop queue **Remove** uses same token.
 28. **Rules 0 + 22:** **`design-tokens.css`** — **`--color-semantic-success|warning|warn-accent|error`**. **`maintenance.html`** — **`paintMaintConnectionStrip`** uses semantic tokens; **`loadTeamSecurityPanel`** intro → short line + **`erp-help-tip`**; team/audit errors + idle alert column colors use **`var(--color-semantic-*)`**.
+29. **Rule 0 + docs:** **`maintenance.html`** — bulk **`var(--color-semantic-error|…)`**, **`var(--color-border-focus)`**, **`var(--pill-red-text|green-text)`** on inline error/link/import/QBO-dot/banner strings; **`paintQboStatusBanner`** / **`paintApTxnQboBanner`** tier text uses tokens. **`ERP_MASTER_REDESIGN_STATUS.md`** — “protection block” reframed as **implementation guardrails** (auth stays); “human review” → optional product notes.
+30. **Rules 0 + 22:** **`fuel.html`** — **Home** + maintenance fuel link use **`var(--color-border-focus)`**. **`maintenance.html`** — **Lists & catalogs → QuickBooks items & accounts**: compact line + **`erp-help-tip`**.
 
 ---
 
-## Items needing **human review**
+## Product / engineering notes (optional; not blockers for checklist work)
 
-1. **Priorities:** Which rules are mandatory for the next release vs nice-to-have (spec asks for everything at once; engineering needs sequencing).
-2. **Rule 10 / React path:** Whether to invest in a **shared component** (would likely mean introducing a build step or strict ES modules) vs keeping **one** canonical cost-line implementation in JS.
-3. **Rule 4 custom New menu rows:** Which presets are worth shipping if they only **deep-link** or **pre-fill** existing modals (no new APIs).
-4. **Rule 18:** Whether to add **thin** `GET /api/qbo/accounts`-style aliases that delegate to existing catalog cache (documentation win vs endpoint proliferation).
-5. **Full regression:** Run server + manual click-through of every tab and import path; run smoke script with server up.
+1. **Priorities:** Which rules are mandatory for the next release vs nice-to-have (spec asks for everything at once; engineering may still sequence).
+2. **Rule 10 / React path:** Shared component + build step vs one canonical HTML/JS cost-line implementation.
+3. **Rule 4 — + New menu:** Which rows are deep-links vs new modals (avoid new save APIs unless explicitly scoped).
+4. **Rule 18:** Thin `GET /api/qbo/accounts`-style aliases vs documenting existing catalog routes only.
+5. **Regression:** Run server + manual click-through + `node scripts/system-smoke.mjs` when convenient before release.
 
 ---
 
-## Rules that could **not** be “fully completed” in one autonomous pass (why)
+## Rules that are **large** or **platform-shaped** (why “100%” is staged)
 
 - **Scope:** Rules 5–12, 17, modals, and layout restructures touch **tens of thousands** of lines in `maintenance.html` alone.
-- **Protection block:** No mass changes to save/post/sync without explicit approval.
+- **Persistence:** Big-bang **save/post/sync** edits are **risky**—keep them scoped PRs, not mixed with UI-only sweeps.
 - **No `/src` tree:** StandardExpenseLines as a separate framework component **does not apply** without a broader platform decision.
-- **Verification:** “Click every button / every API” requires a **running environment**, credentials, and QBO/Samsara connectivity — not automated here.
+- **Verification:** Full QBO/Samsara click-through requires a **running environment** and credentials—not fully automated in CI.
 
 ---
 
