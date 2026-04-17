@@ -3020,7 +3020,10 @@
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/reports/export/maintenance-by-unit.csv">Download CSV</a>
               </div>
             </div>
-            <div class="panel-body" id="repMaintBody"></div>
+            <div class="panel-body">
+              <div id="repMaintByUnitPagerHost" hidden></div>
+              <div id="repMaintBody"></div>
+            </div>
           </div>
         </div>
 
@@ -3908,6 +3911,8 @@
     /** Rule 23 — tracking idle snapshot */
     let idleSnapshotPager = { page: 1, pageSize: 15, filterKey: '' };
     let repMaintDetailPager = { page: 1, pageSize: 10 };
+    /** Rule 23 — reports → Maintenance spend by unit */
+    let repMaintByUnitPager = { page: 1, pageSize: 15 };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -6162,6 +6167,55 @@
       return `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:640px;font-size:11px"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`;
     }
 
+    function renderRepMaintSpendByUnitTable(opts) {
+      const keepPagerPage = opts && typeof opts === 'object' && opts.keepPagerPage === true;
+      const d = reportsSummaryCache;
+      if (!d || !d.ok) return;
+      const mb = d.maintenanceCostByUnit || [];
+      const mbEl = document.getElementById('repMaintBody');
+      const pagerHost = document.getElementById('repMaintByUnitPagerHost');
+      if (!mbEl) return;
+      if (!keepPagerPage) repMaintByUnitPager.page = 1;
+      if (!mb.length) {
+        mbEl.innerHTML = '<p class="mini-note">No maintenance records yet.</p>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        return;
+      }
+      const pState = repMaintByUnitPager;
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const n = mb.length;
+      const pages = Math.max(1, Math.ceil(n / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const slice = mb.slice(start, start + ps);
+      const bodyRows = slice
+        .map(
+          r =>
+            `<tr><td>${escapeHtml(r.unit)}</td><td>${r.recordCount}</td><td>$${Number(r.costSum || 0).toFixed(2)}</td></tr>`
+        )
+        .join('');
+      mbEl.innerHTML = `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:400px;font-size:12px"><thead><tr><th>Unit</th><th>Records</th><th>Cost sum</th></tr></thead><tbody>${bodyRows}</tbody></table></div>`;
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total: n },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderRepMaintSpendByUnitTable({ keepPagerPage: true });
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
+    }
+
     function renderReportsAll() {
       const d = reportsSummaryCache;
       if (!d || !d.ok) return;
@@ -6214,18 +6268,7 @@
         }
       }
 
-      const mb = d.maintenanceCostByUnit || [];
-      const mbEl = document.getElementById('repMaintBody');
-      if (mbEl) {
-        mbEl.innerHTML = mb.length
-          ? `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:400px;font-size:12px"><thead><tr><th>Unit</th><th>Records</th><th>Cost sum</th></tr></thead><tbody>${mb
-              .map(
-                r =>
-                  `<tr><td>${escapeHtml(r.unit)}</td><td>${r.recordCount}</td><td>$${Number(r.costSum || 0).toFixed(2)}</td></tr>`
-              )
-              .join('')}</tbody></table></div>`
-          : '<p class="mini-note">No maintenance records yet.</p>';
-      }
+      renderRepMaintSpendByUnitTable();
 
       const qbEl = document.getElementById('repQboBody');
       if (qbEl) {
