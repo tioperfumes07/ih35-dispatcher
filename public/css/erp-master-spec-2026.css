@@ -1586,7 +1586,10 @@ body.dispatch-page #dispatchApp .dispatch-board-intro--compact {
   max-width: min(72ch, 100%);
 }
 
-/* Rule 24 — shared QuickBooks connection one-liner (satellite pages; maintenance uses sidebar) */
+/* Rule 24 — shared QuickBooks connection one-liner (satellites + maintenance main column; sidebar keeps richer text) */
+body.erp-maintenance .erp-main-surface > .erp-connection-strip {
+  margin: 0 0 10px;
+}
 .erp-connection-strip {
   font-size: 12px;
   line-height: 1.45;
@@ -1691,15 +1694,57 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-dedicated-form-modal__bar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border, #e2e8f0);
   background: var(--color-bg-card, #fff);
 }
+.erp-dedicated-form-modal__bar-center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.erp-dedicated-form-modal__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0f172a);
+  max-width: 48%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.erp-dedicated-form-modal__total-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.erp-dedicated-form-modal__total-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-label, #64748b);
+}
+.erp-dedicated-form-modal__total-amt {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0f172a);
+  font-variant-numeric: tabular-nums;
+}
+.erp-dedicated-form-modal__bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .erp-dedicated-form-modal__x {
-  margin-right: auto;
+  margin-right: 0;
   border: none;
   background: transparent;
   font-size: 22px;

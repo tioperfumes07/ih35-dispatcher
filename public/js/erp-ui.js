@@ -4,7 +4,7 @@
  * Rule 22 — inline “?” help panels (`erpHelpTipToggle`); style in `erp-master-spec-2026.css`.
  * Rule 19 — toasts (`showToast`); host `#erpToastHost` + styles in `erp-master-spec-2026.css`.
  * `erpNotify` — toast-first replacement for `alert()` (inference for type when omitted); falls back to `alert` if toasts unavailable.
- * Rule 24 — `erpMountConnectionStrip(id)` reads `GET /api/qbo/status` into a one-line status strip (banking, settings, fuel).
+ * Rule 24 — `erpMountConnectionStrip(id)` reads `GET /api/qbo/status` into a one-line status strip (banking, settings, fuel, maintenance).
  */
 (function (global) {
   'use strict';
