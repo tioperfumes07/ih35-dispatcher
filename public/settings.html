@@ -282,26 +282,27 @@
       const btn = document.getElementById('btnAddEmployee');
       document.getElementById('empErr').textContent = '';
       const run = async () => {
-        const body = {
-          name: document.getElementById('newEmpName').value.trim(),
-          email: document.getElementById('newEmpEmail').value.trim(),
-          phone: document.getElementById('newEmpPhone').value.trim(),
-          title: document.getElementById('newEmpTitle').value.trim(),
-          department: document.getElementById('newEmpDept').value.trim(),
-          status: document.getElementById('newEmpStatus').value
-        };
-        await api('/api/erp/employees', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        document.getElementById('newEmpName').value = '';
-        document.getElementById('newEmpEmail').value = '';
-        document.getElementById('newEmpPhone').value = '';
-        document.getElementById('newEmpTitle').value = '';
-        document.getElementById('newEmpDept').value = '';
-        document.getElementById('newEmpStatus').value = 'active';
-        __empPage = 1;
-        await loadEmployees();
-      } catch (e) {
-        document.getElementById('empErr').textContent = e.message || String(e);
-      }
+        try {
+          const body = {
+            name: document.getElementById('newEmpName').value.trim(),
+            email: document.getElementById('newEmpEmail').value.trim(),
+            phone: document.getElementById('newEmpPhone').value.trim(),
+            title: document.getElementById('newEmpTitle').value.trim(),
+            department: document.getElementById('newEmpDept').value.trim(),
+            status: document.getElementById('newEmpStatus').value
+          };
+          await api('/api/erp/employees', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          document.getElementById('newEmpName').value = '';
+          document.getElementById('newEmpEmail').value = '';
+          document.getElementById('newEmpPhone').value = '';
+          document.getElementById('newEmpTitle').value = '';
+          document.getElementById('newEmpDept').value = '';
+          document.getElementById('newEmpStatus').value = 'active';
+          __empPage = 1;
+          await loadEmployees();
+        } catch (e) {
+          document.getElementById('empErr').textContent = e.message || String(e);
+        }
       };
       try {
         if (window.erpWithBusy && btn) await window.erpWithBusy(btn, run);
@@ -335,39 +336,49 @@
     }
 
     async function doLogin() {
+      const btn = document.getElementById('btnLogin');
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPass').value;
       document.getElementById('loginErr').textContent = '';
-      try {
-        const data = await api('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        setToken(data.token);
-        await refresh();
-      } catch (e) {
-        document.getElementById('loginErr').textContent = e.message || String(e);
-      }
+      const run = async () => {
+        try {
+          const data = await api('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          setToken(data.token);
+          await refresh();
+        } catch (e) {
+          document.getElementById('loginErr').textContent = e.message || String(e);
+        }
+      };
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
     }
 
     async function doBootstrap() {
+      const btn = document.getElementById('btnBootstrap');
       document.getElementById('bootErr').textContent = '';
-      try {
-        const data = await api('/api/auth/bootstrap-first-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: document.getElementById('bootEmail').value.trim(),
-            password: document.getElementById('bootPass').value,
-            name: document.getElementById('bootName').value.trim()
-          })
-        });
-        setToken(data.token);
-        await refresh();
-      } catch (e) {
-        document.getElementById('bootErr').textContent = e.message || String(e);
-      }
+      const run = async () => {
+        try {
+          const data = await api('/api/auth/bootstrap-first-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: document.getElementById('bootEmail').value.trim(),
+              password: document.getElementById('bootPass').value,
+              name: document.getElementById('bootName').value.trim()
+            })
+          });
+          setToken(data.token);
+          await refresh();
+        } catch (e) {
+          document.getElementById('bootErr').textContent = e.message || String(e);
+        }
+      };
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
     }
 
     function doLogout() {
@@ -376,25 +387,30 @@
     }
 
     async function addUser() {
+      const btn = document.getElementById('btnAddUser');
       document.getElementById('userErr').textContent = '';
-      try {
-        await api('/api/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: document.getElementById('newUserEmail').value.trim(),
-            password: document.getElementById('newUserPass').value,
-            name: document.getElementById('newUserName').value.trim(),
-            role: document.getElementById('newUserRole').value
-          })
-        });
-        document.getElementById('newUserEmail').value = '';
-        document.getElementById('newUserName').value = '';
-        document.getElementById('newUserPass').value = '';
-        await refresh();
-      } catch (e) {
-        document.getElementById('userErr').textContent = e.message || String(e);
-      }
+      const run = async () => {
+        try {
+          await api('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: document.getElementById('newUserEmail').value.trim(),
+              password: document.getElementById('newUserPass').value,
+              name: document.getElementById('newUserName').value.trim(),
+              role: document.getElementById('newUserRole').value
+            })
+          });
+          document.getElementById('newUserEmail').value = '';
+          document.getElementById('newUserName').value = '';
+          document.getElementById('newUserPass').value = '';
+          await refresh();
+        } catch (e) {
+          document.getElementById('userErr').textContent = e.message || String(e);
+        }
+      };
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
     }
 
     async function removeUser(id) {

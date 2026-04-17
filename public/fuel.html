@@ -116,13 +116,14 @@
 <body class="fuel-board">
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
+  <script src="/js/erp-ui.js" defer></script>
   <div class="topbar">
     <h1>Fuel &amp; route planning</h1>
     <a href="/" style="margin-right:8px;font-weight:700;color:#1d4ed8">Home</a>
     <a href="/dispatch.html" style="margin-right:10px;font-weight:600;color:#15803d">Loads &amp; TMS</a>
     <a href="/maintenance.html" style="margin-right:10px;font-weight:600;color:#6b21a8">Maintenance</a>
-    <button type="button" onclick="loadBoard()" title="Fetch latest Samsara fleet data now">Refresh now</button>
-    <button onclick="recommendForSelected()">Recommend Stops</button>
+    <button type="button" id="fuelBtnRefreshBoard" onclick="refreshFuelBoardNow()" title="Fetch latest Samsara fleet data now">Refresh now</button>
+    <button type="button" id="fuelBtnRecommend" onclick="recommendForSelected()">Recommend Stops</button>
     <input id="unitSearch" placeholder="Search unit e.g. T148" oninput="renderFleet()" />
     <label><input type="checkbox" id="urgentOnly" onchange="renderFleet()"> FUEL NOW only</label>
     <span id="lastUpdated" class="small">Loading… · auto-refresh every 60s</span>
@@ -207,7 +208,7 @@
           <div class="small">Vendor / station</div>
           <input id="fuelVendor" placeholder="Love's / Pilot / TA…">
         </div>
-        <button onclick="saveFuelPurchase()">Save purchase</button>
+        <button type="button" id="fuelBtnSavePurchase" onclick="saveFuelPurchase()">Save purchase</button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
         <button onclick="exportFuelCsv()">Export fuel CSV</button>
@@ -599,34 +600,47 @@
 
     const FUEL_AUTO_REFRESH_MS = 60000;
 
+    let __fuelBoardClickBtn = null;
+
+    function refreshFuelBoardNow() {
+      __fuelBoardClickBtn = document.getElementById('fuelBtnRefreshBoard');
+      return loadBoard();
+    }
+
     async function loadBoard() {
-      try {
-        initMap();
-        const payload = await j('/api/board');
-        boardRows = buildBoardRows(payload);
+      const busyBtn = __fuelBoardClickBtn;
+      __fuelBoardClickBtn = null;
+      const core = async () => {
         try {
-          const fp = await j('/api/fuel/purchases');
-          fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
-          applyFuelImportMeta(fp);
-        } catch {
-          fuelPurchases = [];
+          initMap();
+          const payload = await j('/api/board');
+          boardRows = buildBoardRows(payload);
+          try {
+            const fp = await j('/api/fuel/purchases');
+            fuelPurchases = Array.isArray(fp?.purchases) ? fp.purchases : [];
+            applyFuelImportMeta(fp);
+          } catch {
+            fuelPurchases = [];
+          }
+          if (!selectedUnit && boardRows.length) selectedUnit = boardRows[0].unit;
+          if (selectedUnit && !boardRows.find(x => x.unit === selectedUnit) && boardRows.length) {
+            selectedUnit = boardRows[0].unit;
+          }
+          renderFleet();
+          renderMap();
+          renderSelectedDetail();
+          renderFuelLedger();
+          const t = new Date(payload.refreshedAt || Date.now()).toLocaleTimeString();
+          document.getElementById('lastUpdated').textContent =
+            'Last updated: ' + t + ' · Auto every ' + FUEL_AUTO_REFRESH_MS / 1000 + 's';
+        } catch (e) {
+          const el = document.getElementById('lastUpdated');
+          if (el) el.textContent = 'Update failed: ' + (e && e.message ? e.message : String(e));
+          console.error(e);
         }
-        if (!selectedUnit && boardRows.length) selectedUnit = boardRows[0].unit;
-        if (selectedUnit && !boardRows.find(x => x.unit === selectedUnit) && boardRows.length) {
-          selectedUnit = boardRows[0].unit;
-        }
-        renderFleet();
-        renderMap();
-        renderSelectedDetail();
-        renderFuelLedger();
-        const t = new Date(payload.refreshedAt || Date.now()).toLocaleTimeString();
-        document.getElementById('lastUpdated').textContent =
-          'Last updated: ' + t + ' · Auto every ' + FUEL_AUTO_REFRESH_MS / 1000 + 's';
-      } catch (e) {
-        const el = document.getElementById('lastUpdated');
-        if (el) el.textContent = 'Update failed: ' + (e && e.message ? e.message : String(e));
-        console.error(e);
-      }
+      };
+      if (busyBtn && window.erpWithBusy) return window.erpWithBusy(busyBtn, core);
+      return core();
     }
 
     function renderFleetColumn(rows) {
@@ -911,22 +925,27 @@
         odometerMiles: boardRow?.odometerMiles ?? null,
         location: boardRow?.currentLocation || ''
       };
-      try {
-        const r = await j('/api/fuel/purchases', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        fuelPurchases = Array.isArray(r?.purchases) ? r.purchases : fuelPurchases;
-        applyFuelImportMeta(r);
-        document.getElementById('fuelGallons').value = '';
-        document.getElementById('fuelPpg').value = '';
-        document.getElementById('fuelTotal').value = '';
-        document.getElementById('fuelVendor').value = '';
-        renderFuelLedger();
-      } catch (e) {
-        alert('Save fuel purchase failed: ' + (e.message || String(e)));
-      }
+      const btn = document.getElementById('fuelBtnSavePurchase');
+      const run = async () => {
+        try {
+          const r = await j('/api/fuel/purchases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          fuelPurchases = Array.isArray(r?.purchases) ? r.purchases : fuelPurchases;
+          applyFuelImportMeta(r);
+          document.getElementById('fuelGallons').value = '';
+          document.getElementById('fuelPpg').value = '';
+          document.getElementById('fuelTotal').value = '';
+          document.getElementById('fuelVendor').value = '';
+          renderFuelLedger();
+        } catch (e) {
+          alert('Save fuel purchase failed: ' + (e.message || String(e)));
+        }
+      };
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
     }
 
 
@@ -1114,31 +1133,33 @@
     }
 
     async function recommendForSelected() {
-      try {
-        await loadCsvStops();
-        const row = boardRows.find(r => r.unit === selectedUnit);
-        if (!row) {
-          document.getElementById('recommendedStops').innerHTML = 'Select a unit first.';
-          return;
-        }
+      const btn = document.getElementById('fuelBtnRecommend');
+      const run = async () => {
+        try {
+          await loadCsvStops();
+          const row = boardRows.find(r => r.unit === selectedUnit);
+          if (!row) {
+            document.getElementById('recommendedStops').innerHTML = 'Select a unit first.';
+            return;
+          }
 
-        const routeData = await buildRouteForSelected();
-        const scoredStops = scoreStopsForRow(row, routeData.routeCoords, routeData.tripMiles);
-        const recs = recommendStopsForRow(row, scoredStops);
-        const visibleStops = scoredStops
-          .filter(s => s.inScope)
-          .sort((a, b) => a.routeMile - b.routeMile)
-          .slice(0, 120);
+          const routeData = await buildRouteForSelected();
+          const scoredStops = scoreStopsForRow(row, routeData.routeCoords, routeData.tripMiles);
+          const recs = recommendStopsForRow(row, scoredStops);
+          const visibleStops = scoredStops
+            .filter(s => s.inScope)
+            .sort((a, b) => a.routeMile - b.routeMile)
+            .slice(0, 120);
 
-        renderMap(routeData.routeCoords, recs, visibleStops);
-        renderSelectedDetail(routeData);
+          renderMap(routeData.routeCoords, recs, visibleStops);
+          renderSelectedDetail(routeData);
 
-        const decision = decisionSummary(row);
-        const scopeMiles = practicalScopeMiles(row, routeData);
-        const hosHrs = hosDriveHoursAvailable(row);
-        const mph = avgSpeedMphForRoute(routeData);
+          const decision = decisionSummary(row);
+          const scopeMiles = practicalScopeMiles(row, routeData);
+          const hosHrs = hosDriveHoursAvailable(row);
+          const mph = avgSpeedMphForRoute(routeData);
 
-        document.getElementById('recommendedStops').innerHTML = recs.length ? `
+          document.getElementById('recommendedStops').innerHTML = recs.length ? `
           <div class="stop-card">
             <div><b>Planner action:</b> ${decision.action}</div>
             <div class="small">${decision.reason}</div>
@@ -1157,9 +1178,12 @@
             </div>
           `).join('')}
         ` : 'No recommended stops found.';
-      } catch (e) {
-        document.getElementById('recommendedStops').innerHTML = `<div class="stop-card">${e.message}</div>`;
-      }
+        } catch (e) {
+          document.getElementById('recommendedStops').innerHTML = `<div class="stop-card">${e.message}</div>`;
+        }
+      };
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
     }
 
     wireAutocomplete(document.getElementById('originInput'), document.getElementById('originAuto'));

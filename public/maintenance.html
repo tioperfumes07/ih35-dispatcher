@@ -223,11 +223,11 @@
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Maintenance</div>
                     <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Work order</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">PM service</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Fleet repair</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Tire record</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Air bag record</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Battery record</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('pm')">PM service</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('repair')">Fleet repair</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('tire')">Tire record</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('air_bag')">Air bag record</button>
+                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('battery')">Battery record</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Other</div>
@@ -5128,7 +5128,7 @@
             'views',
             'Views',
             true,
-            '<button type="button" class="erp-sb-link" onclick="openMaintWorkOrderModal()">Create work order</button>' +
+            mt('record', 'Create work order') +
               mt('fleet', 'Fleet table') +
               mt('rm', 'R&amp;M status') +
               mt('shop-loc', 'Shop / location')
@@ -5316,12 +5316,71 @@
       if (trig) openAccountingTab('acct-bill-pay', trig);
     }
 
-    function erpNewWorkOrder() {
+    /** +New → Maintenance: optional preset shapes record type, shop location, and service hint. */
+    function maintApplyNewWorkOrderPreset(preset) {
+      const p = String(preset || '').trim();
+      if (!p) return;
+      const rts = document.getElementById('recordTypeSelect');
+      const svc = document.getElementById('serviceSearchInput');
+      try {
+        if (p === 'pm') {
+          if (rts) rts.value = 'maintenance';
+          toggleRecordFields();
+          setRepairLocationCode('in-house');
+          if (svc) {
+            svc.value = 'PM / preventive maintenance';
+            resolveServiceSearch();
+            syncPrimaryServiceToFirstCostLine();
+          }
+        } else if (p === 'repair') {
+          if (rts) rts.value = 'repair';
+          toggleRecordFields();
+          setRepairLocationCode('external');
+          if (svc) {
+            svc.value = '';
+            resolveServiceSearch();
+            syncPrimaryServiceToFirstCostLine();
+          }
+        } else if (p === 'tire') {
+          if (rts) rts.value = 'tire';
+          toggleRecordFields();
+          setRepairLocationCode('in-house');
+          if (svc) {
+            svc.value = '';
+            resolveServiceSearch();
+            syncPrimaryServiceToFirstCostLine();
+          }
+        } else if (p === 'air_bag') {
+          if (rts) rts.value = 'maintenance';
+          toggleRecordFields();
+          setRepairLocationCode('external');
+          if (svc) {
+            svc.value = 'Air suspension / air bag';
+            resolveServiceSearch();
+            syncPrimaryServiceToFirstCostLine();
+          }
+        } else if (p === 'battery') {
+          if (rts) rts.value = 'maintenance';
+          toggleRecordFields();
+          setRepairLocationCode('in-house');
+          if (svc) {
+            svc.value = 'Battery service';
+            resolveServiceSearch();
+            syncPrimaryServiceToFirstCostLine();
+          }
+        }
+      } catch (_) {}
+      syncMaintWorkOrderHeader();
+      renderMaintAsideWoSummary();
+    }
+
+    function erpNewWorkOrder(preset) {
       erpCloseNewMenu();
       openSection('maintenance', document.querySelector('#erpIconNav .nav-btn[data-section="maintenance"]'));
       const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
       openMaintMainTab('record', rb);
-      openMaintWorkOrderModal();
+      const pre = typeof preset === 'string' ? String(preset).trim() : '';
+      if (pre) requestAnimationFrame(() => maintApplyNewWorkOrderPreset(pre));
     }
 
     function erpNewLoadsEntry() {
