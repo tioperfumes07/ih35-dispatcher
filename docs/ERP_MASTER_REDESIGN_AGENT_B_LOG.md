@@ -208,3 +208,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 0:** **`app-theme.css`** — under **`body.erp-maintenance`**, drop redundant **`var(--muted)`** / legacy accent fallbacks where **`design-tokens.css`** already defines the stack (**`.hero-card p`**, **`.metric-label`**, **`.table-wrap th`**, general **`th`**, **`.unit-box .k`**, **`.chip.active`**, **`.list-row.active`**) and use **`var(--color-app-frame-border)`** alone on **`.panel-head`** (same maintenance-only assumption).
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-09
+
+- **Rule 1:** **`app-theme.css`** — WO / tracking / tires: **`.tire-layout-wrap`** and **`.track-grid`** use **`minmax(0, 1fr)`** for the fluid column plus **`min-width: 0`** where missing; **`.track-list`**, **`.maint-form-stack`**, **`.maint-expense-strip`**, **`.shop-queue-row`**, **`.maint-board-nav`**, **`.maint-repair-chip-row`**, **`.vendor-row-maint`**, **`.shop-action-row`**, **`.shop-board-grid`**, **`.wo-line-grid`**, **`.maint-cost-line__primary`**, **`.maint-cost-lines-head` / `-footer`**, **`.maint-form-actions__row`**, **`.maint-asset-header-card`** (+ **`__row`**) get **`min-width: 0`** as needed. **`.maint-wo-banner__refs`** drops the **`min(100%, 360px)`** floor in favor of **`0`** so the banner flex row can shrink on narrow widths. QB doc chrome (**`.qb-doc-title-row`**, **`.qb-logistics-bar`**, **`.qb-lines-header`**, **`.qb-doc-actions`**, **`.qb-doc-memo-row`**) gets the same overflow discipline.
+- **Rule 0:** **`app-theme.css`** — broad **`body.erp-maintenance`** sweep: borders that chained **`--color-border` + `--line-strong`** or **`--color-app-frame-border` + `--app-frame-border`** now use the spec token alone; label/body text drops **`var(--muted)` / `var(--text)` / `var(--text-secondary)`** fallbacks in favor of **`--color-text-label`** / **`--color-text-body`**; **`--color-bg-card`** replaces **`--bg-elevated`** on KPI cards; board nav active state uses **`--color-nav-bg`** consistently.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
