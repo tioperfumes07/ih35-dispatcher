@@ -1621,6 +1621,13 @@ body.hub-page .erp-connection-strip {
   padding-left: 24px;
   padding-right: 24px;
 }
+/* Hub dark shell: neutral strip before QBO tier classes are applied (Rule 0) */
+body.hub-page
+  .erp-connection-strip:not(.erp-connection-strip--ok):not(.erp-connection-strip--warn):not(.erp-connection-strip--muted) {
+  background: var(--color-hub-card, #1a2142);
+  border-color: var(--color-hub-border, #2d3558);
+  color: var(--color-hub-text-muted, #9ca8d9);
+}
 body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connection-strip {
   margin: 10px 1.25rem 8px;
   flex-shrink: 0;
