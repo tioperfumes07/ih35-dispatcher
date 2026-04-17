@@ -82,7 +82,7 @@
     }
     .modal-bg.on { display: flex; }
     .modal {
-      background: var(--panel);
+      background: var(--color-bg-card, var(--panel));
       border-radius: var(--radius);
       max-width: 920px;
       width: 100%;
@@ -199,7 +199,7 @@
       border: 1px solid var(--line);
       font-weight: 600;
       cursor: pointer;
-      background: var(--panel);
+      background: var(--color-bg-card, var(--panel));
       color: var(--text);
       box-shadow: var(--shadow-sm);
       transition: background 0.15s ease, border-color 0.15s ease;
