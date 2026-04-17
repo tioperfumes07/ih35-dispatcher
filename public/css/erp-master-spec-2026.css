@@ -1512,6 +1512,30 @@ body.erp-maintenance .erp-reports-roadmap {
   body.erp-maintenance #section-accounting .acct-dash-tools-grid {
     gap: 6px 12px;
   }
+
+  /* Rule 1 — Work order full-screen modal: denser chrome + notched inset on tablets. */
+  body.erp-maintenance .maint-workorder-fullmodal__head {
+    padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
+    gap: 10px;
+  }
+
+  body.erp-maintenance .maint-workorder-fullmodal__body {
+    padding: 10px max(12px, env(safe-area-inset-right, 0px)) max(18px, env(safe-area-inset-bottom, 0px))
+      max(12px, env(safe-area-inset-left, 0px));
+  }
+
+  body.erp-maintenance .maint-workorder-fullmodal__title {
+    font-size: 15px;
+  }
+
+  body.erp-maintenance .maint-workorder-fullmodal .maint-save-toolbar {
+    padding: 5px 8px;
+    margin-top: 10px;
+  }
+
+  body.erp-maintenance .maint-workorder-fullmodal .maint-save-toolbar--qb {
+    gap: 6px 10px;
+  }
 }
 
 /* =============================================================================
