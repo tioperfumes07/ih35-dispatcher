@@ -2855,6 +2855,12 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main 
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main:hover {
   filter: brightness(1.05);
 }
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main:focus-visible {
+  outline: 2px solid #fde047;
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral .qb-split__main {
   background: linear-gradient(180deg, #fff 0%, #f1f5f9 100%);
   color: #334155;
@@ -2879,6 +2885,12 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__caret
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__caret:hover {
   filter: brightness(1.08);
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__caret:focus-visible {
+  outline: 2px solid #fde047;
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral .qb-split__caret {
   border-left-color: #cbd5e1;
@@ -2917,6 +2929,11 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item {
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item:hover {
   background: #f1f5f9;
+}
+body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+  background: #eff6ff;
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item--link {
   text-decoration: none;
