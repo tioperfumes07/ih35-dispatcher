@@ -94,7 +94,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 20 — Button loading
 
-- **Done (pattern):** **FIX 10** — `erpWithBusy`, `erp-btn--busy`, spinners in `erp-ui.js` + CSS. Applied on multiple async actions (maintenance save split, banking, settings, fuel, **dispatch** refresh / catalog / save / uploads / auto miles / QBO doc sync from modal).
+- **Done (pattern):** **FIX 10** — `erpWithBusy`, `erp-btn--busy`, spinners in `erp-ui.js` + CSS. Applied on multiple async actions (maintenance save split, banking, settings, fuel, **dispatch** refresh / catalog / save / uploads / auto miles / QBO doc sync from modal, **row** Create invoice & Sync attachments, quick-add truck/trailer; status `<select>` uses `disabled` + `aria-busy` while patching).
 
 ### Rule 21 — QBO error banner
 
@@ -123,7 +123,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 5. **`#erpToastHost`** on banking, settings, dispatch, fuel (maintenance already had it).
 6. **`showErpToast`** in maintenance delegates to **`window.showToast`** when present (single toast implementation).
 7. **Banking / settings / fuel** async flows call **`showToast`** on success and error (and banking uses **warning/info** where appropriate).
-8. **`dispatch.html`** — Rule 22 compact intro + help tips; token-backed main column tweaks in **`erp-master-spec-2026.css`**; **`erpWithBusy`** on refresh, QBO catalog sync (toolbar), save load, doc upload, rate-con PDF extract, auto miles, and docs-modal QBO sync; **`showToast`** on those outcomes plus QBO invoice / attachment sync from the board; **`showMsg`** escapes text; manual refresh passes **`loadTab(true)`** so failures surface as toasts while the timer refresh stays quiet.
+8. **`dispatch.html`** — Rule 22 compact intro + help tips; token-backed main column tweaks in **`erp-master-spec-2026.css`**; **`erpWithBusy`** on refresh, QBO catalog sync (toolbar), save load, doc upload, rate-con PDF extract, auto miles, docs-modal QBO sync, **board row** QBO buttons (invoice + attachments), and **quick-add** truck/trailer; status changes disable the row `<select>` while saving; **`showToast`** on those outcomes plus QBO invoice / attachment sync, **`patchStatus`**, and **openEditLoad** load failures; **`showMsg`** escapes text; manual refresh passes **`loadTab(true)`** so failures surface as toasts while the timer refresh stays quiet.
 
 ---
 
