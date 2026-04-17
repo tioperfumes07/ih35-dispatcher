@@ -72,6 +72,7 @@ PRs that change `server.js` persistence should still describe intent and risk br
 | **`docs/ERP_MASTER_REDESIGN_FINAL_REPORT.md`** | **This file** — narrative, recommendations, verification (§7 points to post-release checklist). |
 | **`docs/ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md`** | **Suggested check items** when redesign is complete / before release (smoke, auth, maintenance, satellites, deferred themes). |
 | **`scripts/system-smoke.mjs`** | Non-destructive HTTP smoke: **`HTML_PAGES`** includes **`/tracking.html`** (**`maintenance.html#tracking`** — **changelog 85**); **`/maintenance.html`** asserts **`topbar-hint-wrap`** (**changelog 86**). |
+| **`scripts/generate-erp-progress-report.mjs`** | Word-openable **RTF** report from **`ERP_MASTER_REDESIGN_STATUS.md`** → **`docs/reports/ERP_MASTER_REDESIGN_PROGRESS_latest.rtf`**; **`npm run report:erp`** (**changelog 90**). |
 
 ---
 

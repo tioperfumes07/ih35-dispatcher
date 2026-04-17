@@ -409,26 +409,26 @@ body.erp-maintenance .mr-kpi-card .metric-label {
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #5f6368;
+  color: var(--color-text-label, #5f6368);
   font-weight: 500;
 }
 
 body.erp-maintenance .mr-kpi-card .metric-value {
   font-size: 24px;
   font-weight: 400;
-  color: #202124;
+  color: var(--color-text-primary, #202124);
   line-height: 1.2;
 }
 
 body.erp-maintenance .mr-kpi-card .metric-sub {
   margin-top: 4px;
   font-size: 11px;
-  color: #9aa0a6;
+  color: var(--color-text-placeholder, #9aa0a6);
 }
 
 body.erp-maintenance .mr-kpi-card--bad {
-  border-color: #f5c6c2 !important;
-  background: #fff8f7 !important;
+  border-color: var(--btn-danger-border, #f5c6c2) !important;
+  background: var(--pill-red-bg, #fff8f7) !important;
 }
 
 body.erp-maintenance .mr-kpi-card--ok {
@@ -1668,13 +1668,13 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
   cursor: pointer;
   font-size: 15px;
   line-height: 1;
-  color: #6b7385;
+  color: var(--color-text-label, #6b7385);
   flex-shrink: 0;
   padding: 0 2px;
 }
 
 .erp-toast__x:hover {
-  color: #1a1f36;
+  color: var(--color-text-primary, #1a1f36);
 }
 
 /* Dispatch — align main column with shared design tokens (works with erp-master-redesign dispatch rules) */
