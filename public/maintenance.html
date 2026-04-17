@@ -5347,6 +5347,19 @@
         requestAnimationFrame(() => syncReportsSidebarActive());
       }
       if (name === 'catalog') loadServiceCatalogAdminOnly();
+      if (name === 'uploads') {
+        requestAnimationFrame(() => {
+          uploadCenterBindUploadUiOnce();
+          let tab = 'fuel';
+          try {
+            tab = localStorage.getItem('ih35_upload_tab') || 'fuel';
+          } catch (_) {
+            /* ignore */
+          }
+          openUploadSubpanel(tab, null);
+          upImportLogRenderAll();
+        });
+      }
       renderErpModuleSidebar(name);
       if (name === 'accounting') requestAnimationFrame(() => syncAcctDashFromQboPayload());
     }
@@ -5397,7 +5410,13 @@
       }
       if (section === 'uploads') {
         openSectionByName('uploads');
-        openUploadSubpanel('fuel');
+        let tab = 'fuel';
+        try {
+          tab = localStorage.getItem('ih35_upload_tab') || 'fuel';
+        } catch (_) {
+          /* ignore */
+        }
+        requestAnimationFrame(() => openUploadSubpanel(tab, null));
         return;
       }
       if (section === 'reports-team') {
@@ -7008,6 +7027,10 @@
         const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
         const sf = document.getElementById('sidebarFleetStatus');
         if (sf) sf.textContent = `Samsara: ${nVeh} vehicles · last refresh ${brAt}`;
+        requestAnimationFrame(() => {
+          uploadCenterBindUploadUiOnce();
+          uploadCenterPaintConnectionCards();
+        });
         applyNavHash();
         if (activeSection === 'reports') loadReportsData();
         const repTeamPanel = document.getElementById('rep-team');
@@ -11476,7 +11499,7 @@
       host.innerHTML =
         '<table class="mr-upload-recent-table"><thead><tr><th style="width:100px">Date</th><th>File name</th><th style="width:80px;text-align:right">Records</th><th style="width:100px">Status</th><th style="width:120px">Actions</th></tr></thead><tbody>' +
         rows
-          .map((r, i) => {
+          .map(r => {
             const dt = new Date(r.t || r.date);
             const ds = Number.isFinite(dt.getTime())
               ? `${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')}/${dt.getFullYear()} ${String(
@@ -11485,11 +11508,11 @@
               : '—';
             const fn = String(r.fileName || '');
             const fshort = fn.length > 48 ? fn.slice(0, 45) + '…' : fn;
-            const det = escapeHtml(String(r.detail || '').replace(/"/g, '&quot;'));
+            const ts = Number(r.t) || 0;
             return (
               `<tr><td>${escapeHtml(ds)}</td><td title="${escapeHtml(fn)}">${escapeHtml(fshort)}</td>` +
               `<td style="text-align:right">${escapeHtml(String(r.records))}</td><td>${upImportStatusPill(r.status)}</td>` +
-              `<td><button type="button" class="mr-upload-linkbtn" onclick="uploadCenterViewImportDetail('${escapeHtml(String(cat).replace(/'/g, "\\'"))}',${i})">View</button></td></tr>`
+              `<td><button type="button" class="mr-upload-linkbtn" onclick="uploadCenterViewImportDetailTs(${ts})">View</button></td></tr>`
             );
           })
           .join('') +
@@ -11500,14 +11523,11 @@
       ['bank', 'comdata', 'sync', 'fuel', 'ap', 'maint', 'other'].forEach(upImportLogRender);
     }
 
-    function uploadCenterViewImportDetail(cat, idx) {
-      const rows = upImportLogRead()
-        .filter(e => e.cat === cat)
-        .slice(0, 10);
-      const r = rows[idx];
+    function uploadCenterViewImportDetailTs(ts) {
+      const r = upImportLogRead().find(x => Number(x.t) === Number(ts));
       if (!r) return;
       const msg = [r.fileName, r.detail, 'Records: ' + r.records, 'Status: ' + r.status].filter(Boolean).join('\n');
-      showErpToast(msg.slice(0, 380), r.status === 'Failed' ? 'error' : 'success');
+      showErpToast(msg.slice(0, 380), String(r.status || '').toLowerCase() === 'failed' ? 'error' : 'success');
     }
 
     function uploadCenterPaintConnectionCards() {
@@ -11521,7 +11541,7 @@
         sEl.textContent = ok ? 'Status: Connected' : 'Status: Check token';
       }
       if (sM) sM.textContent = rawS || rawL || '—';
-      const qbo = typeof __erpLastQboStatusJson !== 'undefined' ? __erpLastQboStatusJson : null;
+      const qbo = __erpLastQboStatusJson;
       if (qEl) {
         const ok = qbo && qbo.configured && qbo.connected;
         qEl.textContent = ok ? 'Status: Connected' : qbo && qbo.configured ? 'Status: Disconnected' : 'Status: Not configured';
@@ -11582,10 +11602,10 @@
 
     function uploadCenterClearFile(inputId, pickId, btnId) {
       const inp = document.getElementById(inputId);
-      if (inp) inp.value = '';
-      document.getElementById(pickId)?.classList.add('hidden');
-      const b = document.getElementById(btnId);
-      if (b) b.disabled = true;
+      if (inp) {
+        inp.value = '';
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }
 
     function uploadCenterDownloadTemplate(kind) {
@@ -11630,9 +11650,7 @@
           detail: `${nF} fuel line(s), ${nR} Relay line(s) — open Accounting to confirm`
         });
         if (resultEl) {
-          resultEl.innerHTML =
-            `<span class="mr-upload-pill mr-upload-pill--green">Parsed ${nF + nR} row(s)</span> ` +
-            `<button type="button" class="mr-upload-linkbtn" onclick="openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section=accounting]')); openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger')); acctRenderRelayFuelImportPreview(acctPendingRelayFuelImportPreview); document.getElementById('acct-fuel-expense')?.scrollIntoView({behavior:'smooth',block:'start'})">Open Fuel &amp; DEF to confirm</button>`;
+          resultEl.innerHTML = `<span class="mr-upload-pill mr-upload-pill--green">Parsed ${nF + nR} row(s)</span> <span class="mini-note">Opened <strong>Accounting → Fuel &amp; DEF</strong> to confirm.</span>`;
         }
         openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
         openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'));
@@ -11658,12 +11676,24 @@
       }
     }
 
-    function uploadCenterRunMaintImport() {
-      uploadMaintenanceFile();
+    async function uploadCenterRunMaintImport() {
+      const pe = document.getElementById('upMaintProgress');
+      pe?.classList.remove('hidden');
+      try {
+        await uploadMaintenanceFile();
+      } finally {
+        pe?.classList.add('hidden');
+      }
     }
 
-    function uploadCenterRunApImport() {
-      uploadApFile();
+    async function uploadCenterRunApImport() {
+      const pe = document.getElementById('upApProgress');
+      pe?.classList.remove('hidden');
+      try {
+        await uploadApFile();
+      } finally {
+        pe?.classList.add('hidden');
+      }
     }
 
     function uploadCenterRunOtherStub() {
