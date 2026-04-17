@@ -432,7 +432,7 @@ body.erp-maintenance .mr-kpi-card--bad {
 }
 
 body.erp-maintenance .mr-kpi-card--ok {
-  border-color: #e8eaed !important;
+  border-color: var(--color-border, #e8eaed) !important;
 }
 
 /* --- Dispatch board: same modal + no-shadow baseline (Rule 0 / 1) --- */
@@ -440,7 +440,7 @@ body.dispatch-page .modal-bg {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.45) !important;
+  background: var(--color-modal-backdrop, rgba(0, 0, 0, 0.45)) !important;
 }
 
 body.dispatch-page .modal {
@@ -450,7 +450,7 @@ body.dispatch-page .modal {
   overflow-y: auto;
   border-radius: 8px;
   box-shadow: none;
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--color-border, var(--qb-line, #e8eaed));
 }
 
 body.dispatch-page #dispatchApp .modal,
@@ -506,7 +506,7 @@ body.erp-maintenance .erp-main-body .maint-cost-table td {
 }
 
 body.erp-maintenance .erp-main-body .maint-cost-table thead th {
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
   color: var(--qb-muted, #5f6368);
   font-weight: 500;
   text-transform: none;
@@ -1687,6 +1687,33 @@ body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
 }
 body.dispatch-page #dispatchApp .dispatch-board-intro--compact {
   max-width: min(72ch, 100%);
+}
+
+@media (max-width: 900px) {
+  /* Rule 1 — dispatch + banking/settings/fuel: slightly tighter horizontal chrome on tablets. */
+  body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
+    padding: 14px 12px 22px;
+  }
+
+  body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connection-strip {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+  body.banking-page .wrap {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+
+  body.settings-page {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+
+  body.fuel-board .erp-connection-strip {
+    margin-left: 8px;
+    margin-right: 8px;
+  }
 }
 
 /* Rule 24 — shared QuickBooks connection one-liner (satellites + maintenance main column; sidebar keeps richer text) */
