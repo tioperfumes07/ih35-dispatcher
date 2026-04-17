@@ -2479,8 +2479,8 @@ body.erp-maintenance .maint-field-cell select {
 }
 
 body.erp-maintenance .maint-field--readonly {
-  background: #f1f5f9 !important;
-  color: #64748b !important;
+  background: var(--color-bg-header, #f1f5f9) !important;
+  color: var(--color-text-label, #64748b) !important;
   cursor: not-allowed;
 }
 
@@ -2583,14 +2583,14 @@ body.erp-maintenance .maint-repair-chip-row {
 }
 
 body.erp-maintenance .maint-repair-chip {
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  border: 1px solid var(--color-border, #cbd5e1);
+  background: var(--color-bg-card, #fff);
   border-radius: 999px;
   padding: 7px 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  color: #334155;
+  color: var(--color-text-body, #334155);
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
@@ -2602,9 +2602,9 @@ body.erp-maintenance .maint-repair-chip:hover {
 
 body.erp-maintenance .maint-repair-chip--active {
   border-color: var(--app-frame-border);
-  background: #1e3a5a;
-  color: #f8fafc;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  background: var(--app-frame-border, #1e3a5a);
+  color: var(--sidebar-text, #f8fafc);
+  box-shadow: var(--shadow-sm);
 }
 
 body.erp-maintenance .maint-cost-lines-head {
@@ -2617,7 +2617,7 @@ body.erp-maintenance .maint-cost-lines-head {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #475569;
+  color: var(--color-text-label, #475569);
   border-bottom: 1px solid var(--line-strong);
   margin-bottom: 6px;
 }
@@ -2638,8 +2638,8 @@ body.erp-maintenance .maint-cost-line__acct {
   width: 100%;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #cbd5e1;
-  background: #f8fafc;
+  border-top: 1px solid var(--color-border, #cbd5e1);
+  background: var(--color-bg-hover, #f8fafc);
   border-radius: 6px;
   padding: 8px 10px;
 }
@@ -2652,7 +2652,7 @@ body.erp-maintenance .maint-cost-line__extras {
   width: 100%;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px dashed var(--color-border, #e2e8f0);
 }
 
 body.erp-maintenance .maint-cost-line__billable {
@@ -2750,7 +2750,12 @@ body.erp-maintenance .maint-wo-banner {
   padding: 14px 16px;
   border: 1px solid var(--app-frame-border);
   border-radius: 12px;
-  background: linear-gradient(135deg, #e8eef9 0%, #f8fafc 45%, #fff 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-header, #e8eef9) 0%,
+    var(--color-bg-hover, #f8fafc) 45%,
+    var(--color-bg-card, #fff) 100%
+  );
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
 }
 body.erp-maintenance .maint-wo-banner__eyebrow {
@@ -2758,12 +2763,12 @@ body.erp-maintenance .maint-wo-banner__eyebrow {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #475569;
+  color: var(--color-text-label, #475569);
 }
 body.erp-maintenance .maint-wo-banner__unit {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-text-primary, #0f172a);
   margin-top: 4px;
 }
 body.erp-maintenance .maint-wo-banner__refs {
@@ -2793,19 +2798,19 @@ body.erp-maintenance .maint-subcard {
   border-radius: 12px;
   background: var(--app-section-surface);
   margin-bottom: 14px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 body.erp-maintenance .maint-subcard__head {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--color-text-label, #64748b);
   padding: 10px 14px 0;
 }
 body.erp-maintenance .maint-subcard__body {
   padding: 10px 14px 14px;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   border-radius: 0 0 11px 11px;
 }
 
@@ -2820,7 +2825,11 @@ body.erp-maintenance .maint-save-toolbar {
   padding: 6px 10px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-hover, #f8fafc) 0%,
+    var(--color-bg-card, #fff) 100%
+  );
 }
 body.erp-maintenance .maint-save-toolbar--qb {
   display: flex;
@@ -2835,7 +2844,7 @@ body.erp-maintenance .maint-save-toolbar__hint {
   min-width: 0;
   font-size: 11px;
   line-height: 1.35;
-  color: #64748b;
+  color: var(--color-text-label, #64748b);
   text-align: left;
 }
 body.erp-maintenance .maint-save-toolbar__actions {
@@ -2869,7 +2878,7 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split {
   overflow: visible;
   font-size: 11px;
   line-height: 1.2;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary {
   border: 1px solid #15803d;
@@ -2935,12 +2944,16 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__caret
   z-index: 1;
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral .qb-split__caret {
-  border-left-color: #cbd5e1;
-  background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
-  color: #475569;
+  border-left-color: var(--color-border, #cbd5e1);
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-header, #e2e8f0) 0%,
+    var(--color-border, #cbd5e1) 100%
+  );
+  color: var(--color-text-label, #475569);
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--neutral .qb-split__caret:hover {
-  background: #cbd5e1;
+  background: var(--color-border, #cbd5e1);
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu {
   position: absolute;
@@ -2951,10 +2964,11 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu {
   margin: 0;
   padding: 4px 0;
   list-style: none;
-  background: #fff;
-  border: 1px solid #cbd5e1;
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #cbd5e1);
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--shadow-dropdown, 0 8px 24px rgba(15, 23, 42, 0.12));
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item {
   display: block;
@@ -2966,16 +2980,16 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item {
   text-align: left;
   font-size: 11px;
   line-height: 1.35;
-  color: #0f172a;
+  color: var(--color-text-primary, #0f172a);
   cursor: pointer;
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item:hover {
-  background: #f1f5f9;
+  background: var(--color-bg-header, #f1f5f9);
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--color-border-focus, #2563eb);
   outline-offset: -2px;
-  background: #eff6ff;
+  background: var(--pill-blue-bg, #eff6ff);
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item--link {
   text-decoration: none;
@@ -2995,10 +3009,10 @@ body.erp-maintenance .maint-save-action-hidden {
 }
 
 body.erp-maintenance #maintSaveHint.maint-save-hint--caution {
-  color: #b45309;
+  color: var(--color-semantic-warning, #b45309);
 }
 body.erp-maintenance #maintSaveHint.maint-save-hint--error {
-  color: #b91c1c;
+  color: var(--color-semantic-error, #b91c1c);
 }
 
 body.erp-maintenance .maint-panel-head-center {
@@ -3006,7 +3020,11 @@ body.erp-maintenance .maint-panel-head-center {
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: linear-gradient(180deg, #eef2f9 0%, #fff 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-header, #eef2f9) 0%,
+    var(--color-bg-card, #fff) 100%
+  );
   border-bottom: 2px solid var(--line-strong);
   padding: 14px 16px;
 }
@@ -3022,7 +3040,11 @@ body.erp-maintenance .maint-cost-coordination {
   padding: 12px 14px;
   border: 1px solid var(--accent-border);
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+  background: linear-gradient(
+    180deg,
+    var(--pill-blue-bg, #eff6ff) 0%,
+    var(--color-bg-hover, #f8fafc) 100%
+  );
   font-size: 13px;
   line-height: 1.5;
 }
@@ -3038,7 +3060,7 @@ body.erp-maintenance .maint-cost-coordination .coord-row {
 body.erp-maintenance .maint-cost-coordination .coord-total {
   font-size: 18px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-text-primary, #0f172a);
 }
 
 body.erp-maintenance .sec-alert-high {
