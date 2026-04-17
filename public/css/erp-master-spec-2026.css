@@ -1714,6 +1714,11 @@ body.dispatch-page #dispatchApp .dispatch-board-intro--compact {
     margin-left: 8px;
     margin-right: 8px;
   }
+
+  body.hub-page .erp-connection-strip {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 
 /* Rule 24 — shared QuickBooks connection one-liner (satellites + maintenance main column; sidebar keeps richer text) */
@@ -1779,12 +1784,12 @@ body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connec
   flex-shrink: 0;
 }
 .erp-connection-strip--ok {
-  border-color: #bce3c9;
+  border-color: var(--color-success-border-soft, #bce3c9);
   background: var(--pill-green-bg, #e6f4ea);
   color: var(--pill-green-text, #137333);
 }
 .erp-connection-strip--warn {
-  border-color: #fcd34d;
+  border-color: var(--color-warning-border-soft, #fcd34d);
   background: var(--pill-yellow-bg, #fef7e0);
   color: var(--pill-yellow-text, #8a5200);
 }
@@ -1829,7 +1834,7 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-dedicated-form-modal__backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--color-modal-backdrop, rgba(15, 23, 42, 0.45));
   z-index: 0;
 }
 .erp-dedicated-form-modal__shell {
