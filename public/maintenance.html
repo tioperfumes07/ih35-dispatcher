@@ -1304,6 +1304,15 @@
       </section>
 
       <section id="section-tracking" class="section erp-ops-section">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <span class="mini-note" style="margin:0;font-weight:500">Fleet mix snapshot</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About these counts">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              Counts split <strong>tracked Samsara assets</strong> by fleet type (truck / reefer / flatbed / other). Use <strong>Assets</strong> for the full grid, <strong>Map</strong> for GPS, and <strong>Shop &amp; maintenance</strong> for queues — those views are separate from this strip.
+            </span>
+          </span>
+        </div>
         <div class="grid grid-4 erp-kpi-grid erp-ops-kpi-strip">
           <div class="metric"><div class="metric-label">Trucks</div><div class="metric-value" id="trackTruckCount">0</div></div>
           <div class="metric"><div class="metric-label">Refrigerated Vans</div><div class="metric-value" id="trackReeferCount">0</div></div>
