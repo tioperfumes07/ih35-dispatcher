@@ -6318,7 +6318,6 @@
       openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
       const t = document.getElementById('acctStubTrans');
       if (t) openAccountingTab('acct-transactions', t);
-      const sel = document.getElementById('apTxnType');
       if (sel) {
         sel.value = 'bill';
         if (typeof syncApDocTitle === 'function') syncApDocTitle();
@@ -12797,7 +12796,8 @@
       };
       syncUi(hid.value || 'category');
       seg.addEventListener('click', ev => {
-        const b = ev.target.closest('[data-mcg-mode]');
+        const tgt = ev.target;
+        const b = tgt && typeof tgt.closest === 'function' ? tgt.closest('[data-mcg-mode]') : null;
         if (!b || !seg.contains(b)) return;
         syncUi(b.getAttribute('data-mcg-mode'));
       });
@@ -12885,7 +12885,8 @@
       const samBox = el.querySelector('#samDriverFilterResults');
       if (qbBox) {
         qbBox.addEventListener('click', ev => {
-          const row = ev.target.closest('[data-qbid]');
+          const tgt = ev.target;
+          const row = tgt && typeof tgt.closest === 'function' ? tgt.closest('[data-qbid]') : null;
           if (!row) return;
           __vendorLinkPick.qboId = row.getAttribute('data-qbid') || '';
           __vendorLinkPick.qboName = row.querySelector('.catalog-search-hit__name')?.textContent?.trim() || '';
@@ -12896,7 +12897,8 @@
       }
       if (samBox) {
         samBox.addEventListener('click', ev => {
-          const row = ev.target.closest('[data-sid]');
+          const tgt = ev.target;
+          const row = tgt && typeof tgt.closest === 'function' ? tgt.closest('[data-sid]') : null;
           if (!row) return;
           __vendorLinkPick.samsaraId = row.getAttribute('data-sid') || '';
           __vendorLinkPick.samsaraName = row.querySelector('.catalog-search-hit__name')?.textContent?.trim() || '';

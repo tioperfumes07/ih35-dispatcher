@@ -105,7 +105,10 @@
   }
 
   function onDocClick(e) {
-    if (!e.target.closest('.board-nav-wrap')) closeAll();
+    const raw = e && e.target;
+    const t = raw && raw.nodeType === 1 ? raw : raw && raw.parentElement;
+    if (!t || typeof t.closest !== 'function') closeAll();
+    else if (!t.closest('.board-nav-wrap')) closeAll();
   }
 
   function mount() {
