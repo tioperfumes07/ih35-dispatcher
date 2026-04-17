@@ -49,12 +49,13 @@ PRs that change `server.js` persistence should still describe intent and risk br
 | **`public/css/design-tokens.css`** | Spec-aligned `:root` tokens (colors, buttons, pills, spacing, radii, toast shadow, focus ring, transitions). |
 | **`public/css/erp-master-redesign.css`** | (Prior passes) ERP shell / module chrome. |
 | **`public/css/erp-master-spec-2026.css`** | Toasts, busy spinners, help tips, maintenance/dispatch/fuel/banking/settings hooks, **`.erp-connection-strip*`**, dispatch main-column token bridge. |
+| **`public/css/board-nav.css`** | Company hub workspace strip: dropdown row borders, shadow, link hover use **`var(--color-*|pill-*|shadow-dropdown)`** with fallbacks. |
 
 ### 3.3 HTML pages
 
 | File | Changes |
 |------|---------|
-| **`public/maintenance.html`** | `design-tokens.css`, `#erpToastHost`, `erp-ui.js`, `showErpToast` → `showToast`, **`erpNotify`** replaces **`alert`**, save split / busy patterns (prior), **accident** + **tire** WO Rule 22 tips; **shop board** queue tables paginated (**`erpPagerRender`** + **`shopQueuePager`**); **parts** queue tab Rule 22 tip; **Fuel expense** accounting grid paginated (**`fuelExpensePager`**) with off-page **`postFuelExpenseToQbo`** draft/data path for bulk QBO post; **Expense history** log paginated (**`expHistPager`** / **`#expHistPagerHost`**); **Reports → Settlement** load index + line-item tables paginated (**`settlementIndexPager`**, **`settlementLinesPager`**) + Rule 22 intro tips; **Reports → Maintenance spend by unit** paginated (**`repMaintByUnitPager`** / **`#repMaintByUnitPagerHost`**, **`renderRepMaintSpendByUnitTable`**); **Reports → Maintenance detailed** filtered record cards paginated (**`repMaintDetailPager`** / **`#repMaintDetailPagerHost`**); **Saved Maintenance Expense** WO/AP card list (**`apTxnListPager`** / **`#apListPagerHost`**); **Maintenance Table** + **Tracking → Map → Units** pagers (**`maintDashboardTablePager`**, **`trackingListPager`**); **Tracking → All tracked assets** + **Drivers** + **Pay bills → Recent bill payments** (**`trackingAssetsTablePager`**, **`trackingDriversPager`**, **`bpLogPager`** + **`__bpBillPaymentLogAllRows`**); **Safety / HOS** tab (**`safetyHosPager`**, **`safetyActivePager`**, **`safetyInServicePager`**, **`safetyAssignPager`**); **Tracking → Idle** snapshot (**`idleSnapshotPager`**, **`idleSnapshotPager._rows`**, **`renderIdleSnapshotTableBody`**). |
+| **`public/maintenance.html`** | `design-tokens.css`, `#erpToastHost`, `erp-ui.js`, `showErpToast` → `showToast`, **`erpNotify`** replaces **`alert`**, save split / busy patterns (prior), **accident** + **tire** WO Rule 22 tips; **Lists & catalogs → Service types (DB)** — **`mr-filter-bar`** name filter + **`serviceCatalogAdminPager`** / **`#serviceCatalogAdminPagerHost`** + **`renderServiceCatalogAdmin`**; **shop board** queue tables paginated (**`erpPagerRender`** + **`shopQueuePager`**); **parts** queue tab Rule 22 tip; **Fuel expense** accounting grid paginated (**`fuelExpensePager`**) with off-page **`postFuelExpenseToQbo`** draft/data path for bulk QBO post; **Expense history** log paginated (**`expHistPager`** / **`#expHistPagerHost`**); **Reports → Settlement** load index + line-item tables paginated (**`settlementIndexPager`**, **`settlementLinesPager`**) + Rule 22 intro tips; **Reports → Maintenance spend by unit** paginated (**`repMaintByUnitPager`** / **`#repMaintByUnitPagerHost`**, **`renderRepMaintSpendByUnitTable`**); **Reports → Maintenance detailed** filtered record cards paginated (**`repMaintDetailPager`** / **`#repMaintDetailPagerHost`**); **Saved Maintenance Expense** WO/AP card list (**`apTxnListPager`** / **`#apListPagerHost`**); **Maintenance Table** + **Tracking → Map → Units** pagers (**`maintDashboardTablePager`**, **`trackingListPager`**); **Tracking → All tracked assets** + **Drivers** + **Pay bills → Recent bill payments** (**`trackingAssetsTablePager`**, **`trackingDriversPager`**, **`bpLogPager`** + **`__bpBillPaymentLogAllRows`**); **Safety / HOS** tab (**`safetyHosPager`**, **`safetyActivePager`**, **`safetyInServicePager`**, **`safetyAssignPager`**); **Tracking → Idle** snapshot (**`idleSnapshotPager`**, **`idleSnapshotPager._rows`**, **`renderIdleSnapshotTableBody`**). |
 | **`public/dispatch.html`** | Tokens, toast host, `erp-ui.js`, intro + stops help tips, sidebar **Connections** + **Tips** (**`erp-help-tip`**), `erpWithBusy` / `showToast` on refresh, QBO catalog, save, uploads, PDF, auto miles, row QBO, quick-add, `patchStatus`, escaped `showMsg`, `loadTab(rethrow)` for manual refresh; load-docs list + sidebar **QBO alert** + page `<style>` chrome (**stops**, modal, miles table, buttons) use **`var(--color-*)`**. |
 | **`public/fuel.html`** | Tokens, toast host, `erp-ui.js`, toasts + busy on key actions, **`erpNotify`**, **`--color-bg-page`** body, **connection strip** + `load` mount. |
 | **`public/banking.html`** | Tokens, toast host, `erp-ui.js`, toasts + busy, Rule 22 tip, **`erpNotify`**, pager on suggestions, **`--color-bg-page`**, **connection strip** + `load` mount; inline **`var(--color-bg-header|border|card|pill-red|btn-danger-*)`** in page `<style>` / suggest cards. |
@@ -74,7 +75,7 @@ PRs that change `server.js` persistence should still describe intent and risk br
 
 | Rule | Theme | Status in repo |
 |------|--------|------------------|
-| **0** | Design tokens | **Partial** — `design-tokens.css` + satellite **`--color-bg-page`**; full migration of every legacy var not done. |
+| **0** | Design tokens | **Partial** — `design-tokens.css` + satellite **`--color-bg-page`** + **`board-nav.css`** token bridges; full migration of every legacy var not done. |
 | **1** | Responsive | **Partial** — maintenance + spec CSS; full viewport audit **Future**. |
 | **2** | App shell | **Partial** — maintenance `erp-master`; spec copy/dimensions **Future**. |
 | **3** | Collapsible sidebar | **Done (pattern)** — `ih35_sb_*` keys. |
@@ -85,7 +86,7 @@ PRs that change `server.js` persistence should still describe intent and risk br
 | **12** | Maintenance layout | **Partial / evolving**. |
 | **13** | Accounting board | **Partial**. |
 | **14** | Upload center | **Partial** — manual file QA **Future**. |
-| **15** | Filter bar | **Partial** — not every table. |
+| **15** | Filter bar | **Partial** — security alerts + **Lists & catalogs → Service types (DB)** search row; not every table. |
 | **16** | Safety / HOS | **Partial**. |
 | **17** | Reports | **Partial**. |
 | **18** | QBO GET aliases | **Skipped** — existing catalog routes; thin aliases optional product call. |
@@ -93,7 +94,7 @@ PRs that change `server.js` persistence should still describe intent and risk br
 | **20** | Button loading | **Done (pattern)** — `erpWithBusy` on key flows incl. dispatch rows. |
 | **21** | QBO error banner | **Partial** — maintenance has messaging; compare to spec. |
 | **22** | “?” tips | **Done (pattern)** + **samples** (incl. **reports settlement** intros); many maintenance paragraphs remain. |
-| **23** | Pagination | **Partial** — banking/settings + maintenance **shop queues**, **fuel expense**, **expense history**, **saved WO/AP cards**, **maintenance fleet table**, **Safety / HOS** (HOS table + active / in-service + assignments), **tracking** (map unit cards, assets grid, HOS drivers, **idle snapshot**), **bill payment log**, **reports settlement** (index + load lines), **reports → Maintenance spend by unit**, and **reports → Maintenance detailed** record cards wired; upload center “recent” lists stay capped at 10; other long tables remain. |
+| **23** | Pagination | **Partial** — banking/settings + maintenance **shop queues**, **fuel expense**, **expense history**, **saved WO/AP cards**, **Lists & catalogs → Service types (DB)**, **maintenance fleet table**, **Safety / HOS** (HOS table + active / in-service + assignments), **tracking** (map unit cards, assets grid, HOS drivers, **idle snapshot**), **bill payment log**, **reports settlement** (index + load lines), **reports → Maintenance spend by unit**, and **reports → Maintenance detailed** record cards wired; upload center “recent” lists stay capped at 10; other long tables remain. |
 | **24** | Connection verification | **Partial** — maintenance sidebar + **new strip** on satellites/index; not universal Samsara+QBO banner everywhere. |
 
 ---
@@ -123,6 +124,7 @@ PRs that change `server.js` persistence should still describe intent and risk br
 
 ## 7. Verification checklist (manual)
 
+- [ ] **Maintenance:** **Lists & catalogs → Service types (DB)** — 16+ rows (or narrow filter to force multi-page): pager + search filter; **Activate/Deactivate** refreshes the grid.
 - [ ] **Maintenance:** **Shop board** (internal / external / roadside / parts) — with 16+ filtered rows, pager appears; change page size; filters reset to page 1.
 - [ ] **Maintenance:** **Accounting → Fuel expense** — 16+ rows with date/search filter: pager appears; **Record filtered to QuickBooks** still processes unposted rows not on the current page (optional: narrow filters so some unposted rows sit on page 2, then bulk post).
 - [ ] **Maintenance:** **Accounting → Expense history** — 16+ filtered rows: pager under table; summary line shows page count when multi-page; **Export filtered CSV** includes all filtered rows, not only the current page.
