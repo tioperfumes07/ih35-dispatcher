@@ -336,9 +336,17 @@
         <div id="dispatchSidebarQboAlertBrief" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px;line-height:1.4"></div>
         <div id="dispatchSidebarFleetStatus" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px">Samsara: waiting for first refresh…</div>
         <div id="dispatchSidebarLastUpdated" class="mini-note dispatch-sidebar-footer__line" style="margin-top:8px">Last refresh: waiting…</div>
-        <div class="erp-sb-heading" style="margin-top:14px">Tips</div>
-        <p class="mini-note" style="margin:0;line-height:1.45;font-size:12px;color:var(--color-text-label,#6b7385)">
-          Load # = customer invoice # in QuickBooks. Row actions set status, QuickBooks invoice, and documents. Full posting banner lives on the ERP Accounting board.
+        <div class="erp-sb-heading" style="margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>Tips</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Dispatch tips">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              Load # is the customer invoice # in QuickBooks. Row actions set status, QuickBooks invoice, and documents. The full posting banner lives on the ERP Accounting board.
+            </span>
+          </span>
+        </div>
+        <p class="mini-note dispatch-sidebar-footer__line" style="margin:6px 0 0;line-height:1.45;font-size:12px;color:var(--color-text-label,#6b7385)">
+          Load # = QuickBooks invoice #; row actions drive status, invoice, and documents.
         </p>
       </div>
     </aside>

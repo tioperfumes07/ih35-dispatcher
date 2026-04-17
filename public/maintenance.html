@@ -3069,6 +3069,7 @@
                 </div>
               </div>
               <div id="repMaintDetailStatus" class="mini-note" style="margin-bottom:8px">Open this report to load.</div>
+              <div id="repMaintDetailPagerHost" hidden></div>
               <div id="repMaintDetailBody" class="mini-note">—</div>
             </div>
           </div>
@@ -3906,6 +3907,7 @@
     let safetyAssignPager = { page: 1, pageSize: 15, filterKey: '' };
     /** Rule 23 — tracking idle snapshot */
     let idleSnapshotPager = { page: 1, pageSize: 15, filterKey: '' };
+    let repMaintDetailPager = { page: 1, pageSize: 10 };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -5134,10 +5136,13 @@
     });
 
     // --- Reports: Maintenance detailed ---
-    function renderMaintDetailedReport() {
+    function renderMaintDetailedReport(opts) {
+      const keepPagerPage = opts && typeof opts === 'object' && opts.keepPagerPage === true;
       const out = document.getElementById('repMaintDetailBody');
       const st = document.getElementById('repMaintDetailStatus');
+      const pagerHost = document.getElementById('repMaintDetailPagerHost');
       if (!out || !st) return;
+      if (!keepPagerPage) repMaintDetailPager.page = 1;
       const unit = String(document.getElementById('repMaintUnit')?.value || '').trim();
       const from = String(document.getElementById('repMaintFrom')?.value || '').trim();
       const to = String(document.getElementById('repMaintTo')?.value || '').trim();
@@ -5168,9 +5173,13 @@
         .slice()
         .sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
 
-      st.textContent = `${recs.length} record(s) shown.`;
+      st.textContent = `${recs.length} record(s) match filters.`;
       if (!recs.length) {
         out.innerHTML = '<p class="mini-note" style="margin:0">No records for current filters.</p>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
         return;
       }
 
@@ -5193,21 +5202,29 @@
         </div>`;
       };
 
-      out.innerHTML = recs
-        .map(r => {
-          const d = escapeHtml(String(r.serviceDate || '').slice(0, 10));
-          const u = escapeHtml(String(r.unit || '—'));
-          const svc = escapeHtml(String(r.serviceType || r.recordType || 'Record'));
-          const vendor = escapeHtml(String(r.vendor || ''));
-          const inv = escapeHtml(String(r.vendorInvoiceNumber || ''));
-          const wo = escapeHtml(String(r.workOrderNumber || ''));
-          const cost = fmtMoney(r.cost || 0);
-          const lines = Array.isArray(r.costLines) ? r.costLines : [];
-          const linesBlock = lines.length
-            ? `<div style="display:grid;gap:8px;margin-top:10px">${lines.map(lineHtml).join('')}</div>`
-            : `<div class="mini-note" style="margin-top:8px">No cost breakdown lines saved on this record.</div>`;
-          const plannedBlock = formatPlannedWorkHtmlCard(r);
-          return `<div style="border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px;margin-bottom:10px">
+      const pState = repMaintDetailPager;
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 10);
+      const n = recs.length;
+      const pages = Math.max(1, Math.ceil(n / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const pageRecs = recs.slice(start, start + ps);
+
+      const cardHtml = r => {
+        const d = escapeHtml(String(r.serviceDate || '').slice(0, 10));
+        const u = escapeHtml(String(r.unit || '—'));
+        const svc = escapeHtml(String(r.serviceType || r.recordType || 'Record'));
+        const vendor = escapeHtml(String(r.vendor || ''));
+        const inv = escapeHtml(String(r.vendorInvoiceNumber || ''));
+        const wo = escapeHtml(String(r.workOrderNumber || ''));
+        const cost = fmtMoney(r.cost || 0);
+        const lines = Array.isArray(r.costLines) ? r.costLines : [];
+        const linesBlock = lines.length
+          ? `<div style="display:grid;gap:8px;margin-top:10px">${lines.map(lineHtml).join('')}</div>`
+          : `<div class="mini-note" style="margin-top:8px">No cost breakdown lines saved on this record.</div>`;
+        const plannedBlock = formatPlannedWorkHtmlCard(r);
+        return `<div style="border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px;margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
               <div style="min-width:260px;flex:1">
                 <div style="font-weight:500">${u} · ${d}</div>
@@ -5222,8 +5239,25 @@
             ${plannedBlock}
             ${linesBlock}
           </div>`;
-        })
-        .join('');
+      };
+
+      out.innerHTML = pageRecs.map(cardHtml).join('');
+
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total: n },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderMaintDetailedReport({ keepPagerPage: true });
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
     }
 
     function statusClass(s) {

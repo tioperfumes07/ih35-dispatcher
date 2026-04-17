@@ -12,7 +12,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~58%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.577** → **57.7%**; rounded headline **~58%**.)
+**Overall completion: ~58%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.579** → **57.9%**; rounded headline **~58%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
@@ -31,16 +31,16 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 14 | Upload center | 0.54 | Tabs + flows; **?** tips on every upload subpanel intro (Bank, Comdata, Fuel, AP, Maint, Other, Connections); alphabetical / full QA deferred |
 | 15 | Filter bar | 0.52 | Several tables + **Maintenance → Security alerts** toolbar wrapped in **`mr-filter-bar`**; not universal |
 | 16 | Safety / HOS | 0.55 | Tables + **Rule 23** pagers on Safety + idle snapshot |
-| 17 | Reports | 0.54 | Hub + settlement; **TMS**, **QBO**, **sync**, **IFTA**, **Maintenance spend by unit**, **Team & security**, **Maint detailed** tab titles + **`erp-help-tip`**; “all on one page” partial |
+| 17 | Reports | 0.55 | Hub + settlement; **TMS**, **QBO**, **sync**, **IFTA**, **Maintenance spend by unit**, **Team & security**, **Maint detailed** tab titles + **`erp-help-tip`**; **Maint detailed** body paginated (**Rule 23**); “all on one page” partial |
 | 18 | QBO GET aliases | 0.90 | Skipped — existing catalog/status routes |
 | 19 | Toasts | 1.0 | `showToast` + `erpNotify` pattern |
 | 20 | Button loading | 1.0 | `erpWithBusy` pattern |
 | 21 | QBO error banner | 0.45 | Maintenance messaging; sticky spec deferred |
-| 22 | “?” tips | 0.86 | **Lists & catalogs** — every sub-tab (**Service**, **QBO**, **Vendors**, **Operational**, **Fleet**) has short intro + **?**; + **Team** dynamic intro + prior report/upload/shop; many `mini-note` blocks remain |
-| 23 | Pagination | 0.78 | Broad `erpPagerRender` coverage; not every long table |
+| 22 | “?” tips | 0.87 | **Lists & catalogs** — every sub-tab (**Service**, **QBO**, **Vendors**, **Operational**, **Fleet**) has short intro + **?**; + **Team** dynamic intro + prior report/upload/shop; **dispatch** sidebar **Tips** line + **?**; many `mini-note` blocks remain |
+| 23 | Pagination | 0.81 | Broad `erpPagerRender` coverage; **Reports → Maintenance detailed** record cards paginated (**`repMaintDetailPager`**); not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.577** (**57.7%**; headline **~58%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.579** (**57.9%**; headline **~58%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -144,7 +144,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 23 — Pagination
 
-- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **accounting → Pay bills → Recent bill payments** log (**`bpLogPager`**, **`__bpBillPaymentLogAllRows`** + client filter); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**); **maintenance → Maintenance Table** (**`maintDashboardTablePager`**); **maintenance → Safety / HOS** tab: **HOS clocks** (**`safetyHosPager`**), **Active** / **In service** panels (**`safetyActivePager`**, **`safetyInServicePager`**), **Assignments** (**`safetyAssignPager`**); **tracking → Map → Units** cards (**`trackingListPager`**); **tracking → All tracked assets** + **Drivers (HOS)** tables (**`trackingAssetsTablePager`**, **`trackingDriversPager`**); **tracking → Idle snapshot** vehicles table (**`idleSnapshotPager`**, rows cached on **`idleSnapshotPager._rows`** for page changes without refetch). Not literally every table >10 rows.
+- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **accounting → Pay bills → Recent bill payments** log (**`bpLogPager`**, **`__bpBillPaymentLogAllRows`** + client filter); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**); **reports → Maintenance detailed report** filtered record cards (**`repMaintDetailPager`**, **`#repMaintDetailPagerHost`**); **maintenance → Maintenance Table** (**`maintDashboardTablePager`**); **maintenance → Safety / HOS** tab: **HOS clocks** (**`safetyHosPager`**), **Active** / **In service** panels (**`safetyActivePager`**, **`safetyInServicePager`**), **Assignments** (**`safetyAssignPager`**); **tracking → Map → Units** cards (**`trackingListPager`**); **tracking → All tracked assets** + **Drivers (HOS)** tables (**`trackingAssetsTablePager`**, **`trackingDriversPager`**); **tracking → Idle snapshot** vehicles table (**`idleSnapshotPager`**, rows cached on **`idleSnapshotPager._rows`** for page changes without refetch). Not literally every table >10 rows.
 
 ### Rule 24 — Connection verification on load
 
@@ -187,6 +187,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 31. **Rules 22 + 0:** **`maintenance.html`** — **Lists & catalogs** sub-tabs **Service types**, **Vendors & drivers**, **Operational status**, **Fleet & Samsara**: same short line + **`erp-help-tip`** pattern as QBO tab; **Fleet** Samsara write card top border uses **`var(--color-border)`**.
 32. **Rule 0:** **`dispatch.html`** — load document list **`border-bottom`** uses **`var(--color-border)`**; **QBO posting alert** brief text colors use **`var(--color-semantic-error|warn-accent)`**; board intro **`mini-note`** uses **`var(--color-text-label)`**.
 33. **Rule 0:** **`banking.html`** — metrics + table header + **`#authBanner`** + suggest-card inline styles use **`var(--color-bg-header|border|card|pill-red|btn-danger-*)`**. **`settings.html`** — **`input:focus`** + **`.err`** use **`var(--color-border-focus|focus-ring|semantic-error)`**. **`dispatch.html`** — modal/stop/embed/chrome backgrounds and miles table borders use **`var(--color-bg-header|bg-hover|bg-card|color-border)`**.
+34. **Rules 23 + 22 + hub polish:** **`maintenance.html`** — **Reports → Maintenance detailed report**: **`#repMaintDetailPagerHost`** + **`repMaintDetailPager`** paginate filtered record cards (default 10/page; filters reset page). **`index.html`** — **Safety** / **Tracking** hub card tags use **`.tag-safety`** / **`.tag-tracking`** (no inline colors). **`dispatch.html`** — sidebar **Tips**: one-line summary + **`erp-help-tip`** behind **?** (**`erpHelpTipToggle`**).
 
 ---
 
