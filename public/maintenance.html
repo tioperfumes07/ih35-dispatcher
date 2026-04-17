@@ -1749,58 +1749,64 @@
               <span id="apTxnQboBannerText"></span>
             </div>
             <div class="panel-body form-stack qb-doc-body">
-              <div class="wo-line-grid">
-                <div>
-                  <span class="qb-l">Type</span>
-                  <select id="apTxnType" class="qb-in" onchange="syncApDocTitle()">
-                    <option value="expense">Expense</option>
-                    <option value="bill">Bill</option>
-                  </select>
+              <div class="ap-expense-form">
+                <div class="ap-exp-row">
+                  <div class="ap-exp-field ap-exp-field--type">
+                    <span class="qb-l">Type</span>
+                    <select id="apTxnType" class="qb-in" onchange="syncApDocTitle()">
+                      <option value="expense">Expense</option>
+                      <option value="bill">Bill</option>
+                    </select>
+                  </div>
+                  <div class="ap-exp-field ap-exp-field--vendor">
+                    <span class="qb-l">Vendor (QuickBooks)</span>
+                    <input id="apVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor" oninput="resolveApVendorSearch()" onblur="resolveApVendorSearch()">
+                    <input id="apVendorQboId" type="hidden">
+                  </div>
+                  <div class="ap-exp-field ap-exp-field--unit">
+                    <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
+                    <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
+                  </div>
                 </div>
-                <div style="grid-column:span 2">
-                  <span class="qb-l">Vendor (QuickBooks)</span>
-                  <input id="apVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor" oninput="resolveApVendorSearch()" onblur="resolveApVendorSearch()">
-                  <input id="apVendorQboId" type="hidden">
+                <div class="ap-exp-row">
+                  <div class="ap-exp-field ap-exp-field--160">
+                    <span class="qb-l">Load / inv # (settlement)</span>
+                    <input id="apLoadInvoiceNumber" class="qb-in" placeholder="Trip P&amp;L key (often load #)">
+                  </div>
+                  <div class="ap-exp-field ap-exp-field--150">
+                    <span class="qb-l">Vendor invoice #</span>
+                    <input id="apVendorInvoiceNumber" class="qb-in" placeholder="Supplier invoice no.">
+                  </div>
+                  <div class="ap-exp-field ap-exp-field--150">
+                    <span class="qb-l">Shop / internal WO #</span>
+                    <input id="apInternalWorkOrderNumber" class="qb-in" placeholder="Your work order ref">
+                  </div>
+                  <div class="ap-exp-field ap-exp-field--130">
+                    <span class="qb-l">Txn date</span>
+                    <input id="apTxnDate" class="qb-in" type="date">
+                  </div>
+                  <div class="ap-exp-field ap-exp-field--130 hidden" id="apWrapDue">
+                    <span class="qb-l">Due</span>
+                    <input id="apDueDate" class="qb-in" type="date">
+                  </div>
                 </div>
-                <div>
-                  <span class="qb-l">Load / inv # (settlement)</span>
-                  <input id="apLoadInvoiceNumber" class="qb-in" placeholder="Trip P&amp;L key (often load #)">
-                </div>
-                <div>
-                  <span class="qb-l">Vendor invoice #</span>
-                  <input id="apVendorInvoiceNumber" class="qb-in" placeholder="Supplier invoice no.">
-                </div>
-                <div>
-                  <span class="qb-l">Shop / internal WO #</span>
-                  <input id="apInternalWorkOrderNumber" class="qb-in" placeholder="Your work order ref">
-                </div>
-                <div>
-                  <span class="qb-l">Txn date</span>
-                  <input id="apTxnDate" class="qb-in" type="date">
-                </div>
-                <div>
-                  <span class="qb-l">Due</span>
-                  <input id="apDueDate" class="qb-in" type="date">
-                </div>
-                <div style="grid-column:span 2">
-                  <span class="qb-l">Payment terms (QuickBooks — bills)</span>
-                  <select id="apQboTermId" class="qb-in">
-                    <option value="">— None —</option>
-                  </select>
-                </div>
-                <div style="grid-column:span 2">
-                  <span class="qb-l">Payment method</span>
-                  <input id="apPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Payment" oninput="resolveApPaymentMethodSearch()" onblur="resolveApPaymentMethodSearch()">
-                  <input id="apPaymentMethodId" type="hidden">
-                </div>
-                <div style="grid-column:span 2">
-                  <span class="qb-l">Pay from bank account (QuickBooks)</span>
-                  <input id="apBankAccountSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card (for Purchase + bank feed match)" oninput="resolveApBankSearch()" onblur="resolveApBankSearch()">
-                  <input id="apBankAccountQboId" type="hidden">
-                </div>
-                <div style="grid-column:span 2">
-                  <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
-                  <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
+                <div class="ap-exp-row">
+                  <div class="ap-exp-field ap-exp-field--160 hidden" id="apWrapTerms">
+                    <span class="qb-l">Payment terms (QuickBooks — bills)</span>
+                    <select id="apQboTermId" class="qb-in">
+                      <option value="">— None —</option>
+                    </select>
+                  </div>
+                  <div class="ap-exp-field ap-exp-field--150">
+                    <span class="qb-l">Payment method</span>
+                    <input id="apPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Payment" oninput="resolveApPaymentMethodSearch()" onblur="resolveApPaymentMethodSearch()">
+                    <input id="apPaymentMethodId" type="hidden">
+                  </div>
+                  <div class="ap-exp-field ap-exp-field--bank">
+                    <span class="qb-l">Pay from bank account (QuickBooks)</span>
+                    <input id="apBankAccountSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card (for Purchase + bank feed match)" oninput="resolveApBankSearch()" onblur="resolveApBankSearch()">
+                    <input id="apBankAccountQboId" type="hidden">
+                  </div>
                 </div>
                 <input type="hidden" id="woRepairLocationType" value="" />
               </div>
@@ -1836,17 +1842,32 @@
                 </div>
               </div>
 
-              <div class="row" style="grid-column:1/-1;margin-top:8px">
-                <span class="qb-l">Repair / vendor invoice PDF</span>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                  <input id="apInvoicePdfInput" type="file" accept="application/pdf" />
-                  <button type="button" class="qb-btn-add" onclick="parseApInvoicePdf()">Extract &amp; fill lines</button>
-                  <span id="apInvoicePdfStatus" class="mini-note"></span>
+              <div class="ap-exp-row ap-exp-row--pdf">
+                <div class="ap-exp-field ap-exp-field--pdf">
+                  <span class="qb-l">Repair / vendor invoice PDF</span>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                    <input id="apInvoicePdfInput" type="file" accept="application/pdf" />
+                    <button type="button" class="qb-btn-add" onclick="parseApInvoicePdf()">Extract &amp; fill lines</button>
+                    <span id="apInvoicePdfStatus" class="mini-note"></span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="PDF extract">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Fills invoice #, date, unit, and total into the first expense line when possible. Use digital PDFs with selectable text; scanned images without OCR usually will not parse.
+                      </span>
+                    </span>
+                  </div>
                 </div>
-                <p class="mini-note" style="margin:6px 0 0">Fills invoice #, date, unit, total into the first expense line when possible. Digital PDFs only (not scanned images without OCR).</p>
               </div>
 
-              <div style="margin:4px 0 0;font-weight:500;font-size:12px;color:#334155">Category &amp; item lines</div>
+              <div class="ap-lines-section-label">
+                <span>Category &amp; item lines</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Category lines">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Add one row per part or service. Pick category and item from your QuickBooks master, or type free text. Amounts roll into the document total and posting uses the same shape as QuickBooks expects.
+                  </span>
+                </span>
+              </div>
               <div class="qb-lines-wrap">
                 <div class="qb-lines-header" aria-hidden="true">
                   <span>#</span><span>Part / service</span><span>Type</span><span>Category</span><span>Item</span><span>Qty</span><span class="num">Amount</span><span>Tire / ref</span><span>&nbsp;</span>
@@ -1865,8 +1886,15 @@
                   <textarea id="apMemo" class="qb-memo" placeholder="Notes for QuickBooks (header)"></textarea>
                 </div>
                 <div class="qb-attach-box">
-                  <span class="qb-l">Attachments</span>
-                  <p class="mini-note" style="margin:0">Use <strong>Repair / vendor invoice PDF</strong> above to extract lines. Full attachment sync to QBO can follow your existing posting flow.</p>
+                  <div class="ap-attach-head">
+                    <span class="qb-l">Attachments</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Attachments">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Use <strong>Repair / vendor invoice PDF</strong> above to extract lines into the grid. Full attachment sync to QuickBooks follows your normal posting flow from this screen.
+                      </span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2099,7 +2127,15 @@
         <div id="acct-fuel-expense" class="accounting-tab hidden">
           <div class="panel qb-panel">
             <div class="panel-head">
-              <div class="panel-title">Fuel expenses (dispatcher fast entry)</div>
+              <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;flex-wrap:wrap">
+                <div class="panel-title">Fuel expenses (dispatcher fast entry)</div>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel tab overview">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Each grid row is its own QuickBooks <strong>Purchase (Expense)</strong>. Default lines use an <strong>expense category</strong> (Diesel / DEF / Reefer → your chart) with <strong>Class</strong> = truck. Uncheck category on the grid to post as a QBO <strong>item</strong> (qty × rate). Pick vendor, optional driver and customer on the line. Edits save to ERP after a pause when the <strong>ERP write secret</strong> is set (same as posting).
+                  </span>
+                </span>
+              </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <button type="button" class="qb-btn-add" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
                 <button type="button" class="qb-btn-primary" onclick="postFilteredFuelExpensesToQuickBooks()">
@@ -2107,19 +2143,8 @@
                 </button>
               </div>
             </div>
-            <div
-              id="fuelExpenseQboBanner"
-              class="mini-note"
-              style="margin:0 0 12px;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.55;font-size:13px;color:#334155"
-            >
-              Fuel lines are <strong>not</strong> in QuickBooks until you post them. Use <strong>Confirm &amp; record to QuickBooks</strong> on manual entry to save the ledger row(s) and create each QuickBooks Purchase in one step, or <strong>Save to fuel ledger</strong> then <strong>Record to QuickBooks</strong> on a row. After posting, use <strong>Verify in QuickBooks</strong> on a posted row to confirm the Purchase still exists in your company file.
-            </div>
+            <div id="fuelExpenseQboBanner" class="mini-note fuel-expense-qbo-banner" style="display:none;margin:0 0 12px"></div>
             <div class="panel-body form-stack fuel-expense-stack">
-              <p class="mini-note" style="margin:0 0 10px">
-                Record each row as its own QuickBooks <strong>Purchase (Expense)</strong>. Default is an <strong>expense category</strong> line (Diesel / DEF / Reefer mapped to your chart of accounts) with <strong>Class</strong> = truck/unit. Uncheck “category” to post as a QBO <strong>fuel item</strong> (qty × $/unit).
-                Pick the <strong>vendor</strong> (fuel merchant), optional <strong>driver</strong> (name + driver-pay QBO vendor), and optional <strong>customer</strong> on the line when you bill or track by driver entity.
-                Row edits (class, vendor, item, qty, driver, payment method, pay-from account, expense #, etc.) <strong>save to ERP</strong> automatically after a short pause when the <strong>ERP write secret</strong> is set in Settings (same as posting).
-              </p>
               <div class="panel qb-panel qb-doc-shell qb-doc-shell--fuel-spec" style="margin:0 0 14px">
                 <div class="qb-doc-topbar qb-doc-topbar--fuel">
                   <button
@@ -2142,10 +2167,15 @@
                 <div class="qb-doc-head">
                   <div class="qb-doc-title-row">
                     <div style="flex:1;min-width:200px">
-                      <h2 class="qb-doc-h2">Manual fuel / DEF expense</h2>
-                      <p class="mini-note" style="margin:6px 0 0;max-width:96ch">
-                        Same layout as <strong>Maintenance expense transactions</strong>: one vendor and header (payment method, pay-from bank, expense #), then one or more <strong>product lines</strong> (diesel, reefer, DEF). Use <strong>Confirm &amp; record to QuickBooks</strong> to save each line and create its Purchase in one step, or <strong>Save to fuel ledger</strong> and post from the grid below.
-                      </p>
+                      <div class="fuel-manual-doc-title">
+                        <h2 class="qb-doc-h2">Manual fuel / DEF expense</h2>
+                        <span class="erp-help-tip">
+                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Manual fuel form">?</button>
+                          <span class="erp-help-tip__panel" role="tooltip">
+                            Same shape as <strong>Maintenance expense</strong>: one vendor header (payment method, pay-from bank, expense #) plus <strong>product lines</strong>. <strong>Confirm &amp; record to QuickBooks</strong> saves each line and creates its Purchase in one step; <strong>Save to fuel ledger</strong> then post from the grid below.
+                          </span>
+                        </span>
+                      </div>
                     </div>
                     <div class="qb-doc-total-block">
                       <span class="qb-l">Lines total</span>
@@ -2195,7 +2225,15 @@
                   </div>
                   <div class="erp-qb-cost-shell erp-qb-cost-shell--embedded">
                     <div class="erp-qb-cost-shell__headrow">
-                      <div class="erp-qb-cost-shell__label">Cost lines (same shape as maintenance)</div>
+                      <div class="erp-qb-cost-shell__label erp-qb-cost-shell__label--with-tip">
+                        <span>Cost lines (same shape as maintenance)</span>
+                        <span class="erp-help-tip">
+                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines">?</button>
+                          <span class="erp-help-tip__panel" role="tooltip">
+                            Each row: <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product + gal × $/gal). Use the fuel catalog or free text. <strong>Lock line $</strong> when you enter a total and want gallons priced backward.
+                          </span>
+                        </span>
+                      </div>
                       <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new fuel cost lines">
                         <span class="erp-qb-cost-global__label">New lines</span>
                         <label class="erp-qb-cost-global__opt"
@@ -2212,9 +2250,6 @@
                         </span>
                       </div>
                     </div>
-                    <p class="mini-note maint-field-hint erp-qb-cost-shell__hint">
-                      Each row: <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product/service + gal × $/gal). Use the fuel description catalog or free text. <strong>Lock line $</strong> when you enter a total and want gallons priced backward.
-                    </p>
                     <div class="maint-cost-table-wrap">
                       <table class="maint-cost-table acct-fuel-manual-table" aria-label="Manual fuel cost lines">
                         <thead>
@@ -2238,15 +2273,19 @@
                       </table>
                     </div>
                   </div>
-                  <p class="mini-note" style="margin:6px 0 0">
-                    Multiple lines share the header; each line is its own fuel ledger row. If you enter an expense #, extra lines use <code>-L2</code>, <code>-L3</code>… so QuickBooks DocNumbers stay unique.
-                  </p>
                   <div class="qb-doc-memo-row fuel-manual-memo-row">
                     <div>
                       <span class="qb-l">Memo (QuickBooks private note)</span>
                       <textarea id="fuelManualMemo" class="qb-memo" rows="2" placeholder="e.g. Pilot 35 · card last 4"></textarea>
                     </div>
-                    <div class="mini-note" style="align-self:end">Payment method and pay-from account are saved on each row for posting.</div>
+                    <div class="fuel-manual-memo-aside" style="align-self:end;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Lines &amp; posting">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          Multiple lines share the header; each line is its own fuel ledger row. With an expense #, extra lines use <code>-L2</code>, <code>-L3</code>… so QuickBooks DocNumbers stay unique. Payment method and pay-from account are stored on each row for posting.
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <footer class="qb-doc-footer qb-doc-footer--fuel">
@@ -2290,30 +2329,30 @@
                   <input id="fuelExpDefaultCustomerSearch" class="qb-in" list="qboCustomerOptions" placeholder="Customer / driver billing" oninput="resolveFuelExpDefaultCustomer()" onblur="resolveFuelExpDefaultCustomer()" />
                   <input id="fuelExpDefaultCustomerQboId" type="hidden" />
                 </div>
-                <div style="grid-column:span 2;display:flex;align-items:center;gap:10px;padding-top:4px">
+                <div style="grid-column:span 2;display:flex;align-items:center;gap:10px;padding-top:4px;flex-wrap:wrap">
                   <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:0">
                     <input type="checkbox" id="fuelExpUseCategory" checked />
-                    Post as <strong>expense category</strong> (one Purchase per row; maps Diesel/DEF/Reefer to your chart of accounts). Uncheck for QBO <strong>item</strong> + gallons × rate.
+                    Post as expense category line
                   </label>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Category vs item">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Checked (default): one Purchase per row using your <strong>expense accounts</strong> for Diesel / DEF / Reefer. Unchecked: QBO <strong>item</strong> lines with gallons × rate.
+                    </span>
+                  </span>
                 </div>
               </div>
               <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fafcff">
-                <div class="qb-l" style="margin-bottom:6px">Relay / Love’s fuel file (CSV or Excel)</div>
-                <p class="mini-note" style="margin:0 0 10px">
-                  Upload Relay “All Transactions” exports here (same place you record expenses). Requires <strong>ERP write secret</strong> in Settings. After import, rows appear in the table below — use <strong>Record to QuickBooks</strong> for each line to create QuickBooks Purchases.
-                </p>
-                <details class="mini-note" style="margin:0 0 10px">
-                  <summary style="cursor:pointer;font-weight:500;color:#1e40af">How this file maps to QuickBooks</summary>
-                  <div style="margin-top:8px;line-height:1.55;max-width:96ch">
-                    <p style="margin:0 0 8px">
-                      <strong>Fuel ledger lines</strong> (diesel / DEF / reefer from <code>volume_*</code> and <code>total_price_*</code>) store unit, gallons, $/gal, total, vendor text, <code>work_date</code>, and a suggested <strong>QB expense path</strong> (same as Relay template). Each <strong>Record to QuickBooks</strong> creates <strong>its own</strong> QuickBooks <strong>Purchase</strong> with <strong>DocNumber</strong> (Relay doc / load ref / auto id), <strong>Vendor</strong>, <strong>Class</strong> = truck, pay-from <strong>Bank</strong>, and by default an <strong>AccountBasedExpenseLineDetail</strong> to the expense account that best matches the path (override with the category field above if needed).
-                    </p>
-                    <p style="margin:0 0 8px">
-                      <strong>Relay staging lines</strong> (parallel list in the preview) use category labels aligned to your spreadsheet template — e.g. Diesel → <code>Fuel Expenses:Fuel-Truck Diesel</code>, DEF → <code>Fuel Expenses:Fuel-DEF-Diesel Exhaust Fluid</code>, Reefer → <code>Fuel Expenses:Fuel-Reefer-Diesel</code>, Relay card fee → <code>Bank Charges:BC-Relay Diesel Code Fee</code>. Those rows are for export / reconciliation; they are not sent to the QuickBooks API from this app unless you use a separate sync process.
-                    </p>
-                    <p class="mini-note" style="margin:0">Sample Relay CSV uses <code>work_date</code> like <code>4/15/26</code> — dates are normalized to ISO on import.</p>
-                  </div>
-                </details>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                  <div class="qb-l" style="margin:0">Relay / Love’s fuel file (CSV or Excel)</div>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Relay import">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Upload Relay “All Transactions” exports here. Requires <strong>ERP write secret</strong> in Settings. After import, rows appear in the grid — use <strong>Record to QuickBooks</strong> per line.
+                      <strong>Fuel ledger lines</strong> (from <code>volume_*</code> / <code>total_price_*</code>) store unit, gallons, totals, vendor, <code>work_date</code>, and a suggested QB expense path; each Record creates its own Purchase (DocNumber, Vendor, Class, bank, account line). <strong>Relay staging</strong> in the preview mirrors template labels (Diesel, DEF, Reefer, fees) for reconciliation only unless you use a separate sync. Dates like <code>4/15/26</code> normalize to ISO on import.
+                    </span>
+                  </span>
+                </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
                   <input type="file" id="acctFuelRelayImportFile" accept=".csv,.xlsx,.xls" />
                   <button type="button" class="qb-btn-add" onclick="acctPreviewRelayFuelImport()">Preview import</button>
@@ -2321,7 +2360,15 @@
                   <span id="acctFuelRelayImportUndoMeta" class="mini-note"></span>
                 </div>
                 <div id="acctFuelRelayImportPreview" class="acct-fuel-import-preview" hidden>
-                  <div style="font-weight:500;margin-bottom:8px;font-size:13px">Import preview</div>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                    <span style="font-weight:500;font-size:13px">Import preview</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="After confirm">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Confirm appends to ERP only. Each <strong>Record to QuickBooks</strong> in the grid creates one Purchase (not batched). With category mode (default), QBO uses the expense account mapped from the Relay-style path.
+                      </span>
+                    </span>
+                  </div>
                   <div id="acctFuelRelayImportSummary" class="mini-note"></div>
                   <label class="mini-note" style="display:flex;gap:8px;align-items:center;margin:10px 0">
                     <input type="checkbox" id="acctFuelRelayImportAlreadyQbo" checked />
@@ -2335,9 +2382,6 @@
                     <button type="button" class="qb-btn-primary" onclick="acctConfirmRelayFuelImport()">Confirm import</button>
                     <button type="button" onclick="acctCancelRelayFuelImportPreview()">Cancel</button>
                   </div>
-                  <p class="mini-note" style="margin:8px 0 0">
-                    Confirm appends to ERP only. In the grid below, each <strong>Record to QuickBooks</strong> creates <strong>one separate QuickBooks Purchase</strong> (expense) for that row — nothing is batched. With <strong>Category line</strong> checked (default), QuickBooks uses your <strong>expense account</strong> mapped from the Relay-style path (Diesel / DEF / Reefer / fee), not the generic fuel item.
-                  </p>
                 </div>
               </div>
               <div id="fuelExpStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
@@ -11909,6 +11953,8 @@
       const isBill = sel.value === 'bill';
       h.textContent = isBill ? 'Bill' : 'Expense';
       if (lab) lab.textContent = isBill ? 'Balance due' : 'Amount';
+      document.getElementById('apWrapDue')?.classList.toggle('hidden', !isBill);
+      document.getElementById('apWrapTerms')?.classList.toggle('hidden', !isBill);
     }
 
     function refreshApDocTotal() {
@@ -12642,11 +12688,9 @@
 
     function resetFuelExpenseQboBanner() {
       const el = document.getElementById('fuelExpenseQboBanner');
-      paintQboStatusBanner(
-        el,
-        'Fuel lines are not in QuickBooks until you post them. Use Confirm & record to QuickBooks on manual entry, Record to QuickBooks on a row, or Record filtered. After posting, use Verify in QuickBooks to confirm the Purchase still exists in your company file.',
-        'info'
-      );
+      if (!el) return;
+      el.style.display = 'none';
+      el.textContent = '';
     }
 
     function resetApTxnQboBanner() {

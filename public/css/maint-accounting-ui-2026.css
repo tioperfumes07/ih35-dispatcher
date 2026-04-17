@@ -537,6 +537,109 @@ body.erp-maintenance .acct-expense-form-wrap {
   box-sizing: border-box;
 }
 
+/* AP expense doc — flex header rows (FIX 3) */
+body.erp-maintenance #acct-transactions .ap-expense-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin-bottom: 16px;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-row--pdf {
+  margin-bottom: 12px;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 120px;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field--type {
+  flex: 0 1 130px;
+  max-width: 100%;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field--vendor {
+  flex: 2 1 220px;
+  min-width: 180px;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field--unit {
+  flex: 0 1 150px;
+  min-width: 140px;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field--160 {
+  flex: 0 1 160px;
+  min-width: 130px;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field--150 {
+  flex: 0 1 150px;
+  min-width: 120px;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field--130 {
+  flex: 0 1 130px;
+  min-width: 115px;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field--bank {
+  flex: 2 1 220px;
+  min-width: 200px;
+}
+
+body.erp-maintenance #acct-transactions .ap-exp-field--pdf {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+body.erp-maintenance #acct-transactions .ap-lines-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 0;
+  font-weight: 500;
+  font-size: 12px;
+  color: #334155;
+}
+
+body.erp-maintenance #acct-transactions .ap-attach-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body.erp-maintenance .fuel-manual-doc-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body.erp-maintenance .erp-qb-cost-shell__label--with-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* --- Toast --- */
 body.erp-maintenance .erp-toast-host {
   position: fixed;

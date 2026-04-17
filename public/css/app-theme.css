@@ -1798,19 +1798,9 @@ body.erp-maintenance #section-accounting .qb-doc-body {
   max-width: 100%;
 }
 
-body.erp-maintenance #section-accounting #acct-transactions .qb-doc-body > .wo-line-grid:first-of-type {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr)) !important;
+body.erp-maintenance #section-accounting #acct-transactions .qb-doc-body > .ap-expense-form {
   width: 100%;
-}
-
-body.erp-maintenance
-  #section-accounting
-  #acct-transactions
-  .qb-doc-body
-  > .wo-line-grid:first-of-type
-  > div[style*='grid-column'] {
-  grid-column: 1 / -1 !important;
+  min-width: 0;
 }
 
 body.erp-maintenance #section-accounting #woLines .wo-line-grid {
