@@ -12,7 +12,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~58%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.583** → **58.3%**; rounded headline **~58%**.)
+**Overall completion: ~58%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.584** → **58.4%**; rounded headline **~58%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
@@ -20,7 +20,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 |------|--------|-------------------------|--------|
 | 0 | Design tokens | 0.72 | **`board-nav.css`** bridges dropdown/hover to **`var(--color-*|pill-*|shadow-dropdown)`**; **`banking.html`** / **`settings.html`** / **`dispatch.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
 | 1 | Responsive | 0.45 | Shell patterns; full viewport audit deferred |
-| 2 | App shell | 0.45 | `erp-master` present; spec dimensions/copy deferred |
+| 2 | App shell | 0.47 | **`erp-master`** + **Lists** (**▤**) icon opens **`#catalog`**; dispatch nav link to same; spec dimensions/copy deferred |
 | 3 | Collapsible sidebar | 1.0 | Pattern shipped (`ih35_sb_*`) |
 | 4 | + New menu | 0.40 | Exists; spec matrix / new modals deferred or blocked |
 | 5–9 | Modal shells | 0.45 each (avg) | QB-style modals; parity not verified rule-by-rule |
@@ -40,7 +40,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 23 | Pagination | 0.86 | Broad `erpPagerRender` coverage; **Lists & catalogs → Service types (DB)** (**`serviceCatalogAdminPager`**); **Reports** spend-by-unit + maint detailed (prior); not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.583** (**58.3%**; headline **~58%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.584** (**58.4%**; headline **~58%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -190,6 +190,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 34. **Rules 23 + 22 + hub polish:** **`maintenance.html`** — **Reports → Maintenance detailed report**: **`#repMaintDetailPagerHost`** + **`repMaintDetailPager`** paginate filtered record cards (default 10/page; filters reset page). **`index.html`** — **Safety** / **Tracking** hub card tags use **`.tag-safety`** / **`.tag-tracking`** (no inline colors). **`dispatch.html`** — sidebar **Tips**: one-line summary + **`erp-help-tip`** behind **?** (**`erpHelpTipToggle`**).
 35. **Rule 23:** **`maintenance.html`** — **Reports → Maintenance spend by unit**: **`#repMaintByUnitPagerHost`** + **`repMaintByUnitPager`** + **`renderRepMaintSpendByUnitTable`** paginate the rollup table after **Refresh reports** (default 15/page; full refresh resets page). **CSV export** unchanged (server route).
 36. **Rules 0 + 12 + 15 + 23 (lists, not reports):** **`public/css/board-nav.css`** — company hub strip dropdown borders/shadow/hover use **`var(--color-border|shadow-dropdown|pill-blue-*|color-bg-card)`** with legacy fallbacks. **`maintenance.html`** — **Lists & catalogs → Service types (DB)**: **`mr-filter-bar`** + **`#serviceCatalogAdminSearch`**, **`#serviceCatalogAdminPagerHost`** + **`serviceCatalogAdminPager`**, **`renderServiceCatalogAdmin`** (filter slices rows then **`erpPagerRender`**); **`toggleCatalogActiveFromBtn`** calls **`loadServiceCatalogAdminOnly`** after **`loadAll`** so the grid refreshes.
+37. **Discoverability (Rule 2 / shell):** **`maintenance.html`** — new **Lists** (**▤**) icon in **`#erpIconNav`** (between **Accounting** and **Reports**) opens **`#catalog`**; duplicate hidden ghost **`catalog`** nav control removed. Sidebar block title **`Lists, imports & admin`** → **`Lists & catalogs`** plus one-line pointer to the **Lists** icon. **`dispatch.html`** — same **Lists** link to **`/maintenance.html#catalog`** for parity.
 
 ---
 

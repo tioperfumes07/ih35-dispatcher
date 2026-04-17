@@ -155,13 +155,21 @@
         <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Accounting</span>
         <span id="navAccountingBadge" class="nav-badge nav-badge--danger erp-icon-nav__badge hidden" aria-label="QuickBooks sync needs attention">0</span>
       </button>
+      <button
+        type="button"
+        class="erp-icon-nav__btn nav-btn"
+        data-section="catalog"
+        title="Lists &amp; catalogs — service types, QuickBooks items, vendors, operational labels, fleet / Samsara"
+        onclick="openSection('catalog', this); openCatalogSubpanel('service');"
+      >
+        <span class="erp-icon-nav__glyph" aria-hidden="true">▤</span><span class="erp-icon-nav__lbl">Lists</span>
+      </button>
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="reports" title="Reports — browse and export" onclick="openSection('reports', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">≡</span><span class="erp-icon-nav__lbl">Reports</span>
       </button>
     </nav>
 
     <div id="erpSectionGhostNav" class="erp-ghost-nav" aria-hidden="true">
-      <button type="button" class="nav-btn" data-section="catalog" onclick="openSection('catalog', this); openCatalogSubpanel('service');" tabindex="-1" aria-hidden="true"></button>
       <button type="button" class="nav-btn" data-section="uploads" onclick="openSection('uploads', this); openUploadSubpanel('fuel');" tabindex="-1" aria-hidden="true"></button>
       <button type="button" class="nav-btn" data-section="fuel" onclick="openSection('fuel', this);" tabindex="-1" aria-hidden="true"></button>
     </div>
@@ -5467,7 +5475,8 @@
     function erpSbAdmin(opts) {
       return (
         '<div class="erp-sb-sep"></div>' +
-        '<div class="erp-sb-heading">Lists, imports &amp; admin</div>' +
+        '<div class="erp-sb-heading">Lists &amp; catalogs</div>' +
+        '<p class="mini-note" style="margin:0 0 8px;line-height:1.45">Same workspace as the <strong>Lists</strong> icon (▤) in company navigation — plus upload center and settings shortcuts below.</p>' +
         erpSbAdminBody(opts)
       );
     }
