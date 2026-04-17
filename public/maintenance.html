@@ -3177,9 +3177,7 @@
             </div>
             <div id="catalog-panel-service" class="catalog-subpanel active">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0"
-                  >Service types live in Postgres when <code>DATABASE_URL</code> is set — the maintenance form list refreshes after you edit here.</span
-                >
+                <span class="mini-note" style="margin:0">Service types live in Postgres when <code>DATABASE_URL</code> is set — the maintenance form list refreshes after you edit here.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About service types">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -3235,15 +3233,27 @@
               </div>
             </div>
             <div id="catalog-panel-vendors" class="catalog-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">
-                <strong>QuickBooks vendors</strong> (shops, fuel, and so on) and <strong>TMS drivers</strong> linked as QuickBooks vendors for pay — one list for expense routing. After you add vendors in QuickBooks, use <strong>Refresh QuickBooks lists</strong> in the top bar.
-              </p>
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+                <span class="mini-note" style="margin:0">One list for <strong>QBO vendors</strong> and <strong>driver payees</strong> — refresh master lists from the top bar after you add vendors in QuickBooks.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About vendors & drivers">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <strong>QuickBooks vendors</strong> (shops, fuel, and so on) and <strong>TMS drivers</strong> linked as QuickBooks vendors for pay — one list for expense routing. After you add vendors in QuickBooks, use <strong>Refresh QuickBooks lists</strong> in the top bar.
+                  </span>
+                </span>
+              </div>
               <div id="vendorCatalogBody" class="mini-note">Open this tab to load.</div>
             </div>
             <div id="catalog-panel-operational" class="catalog-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">
-                Codes used on each unit’s <strong>Operational status</strong> picker (maintenance board). Defaults ship with the ERP file; add custom rows for your vocabulary (yard hold, wash bay, etc.).
-              </p>
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+                <span class="mini-note" style="margin:0">Machine codes + labels for each unit’s <strong>Operational status</strong> picker — defaults ship with the ERP; add rows for your yard vocabulary.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About operational status">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Codes used on each unit’s <strong>Operational status</strong> picker (maintenance board). Defaults ship with the ERP file; add custom rows for your vocabulary (yard hold, wash bay, etc.).
+                  </span>
+                </span>
+              </div>
               <div id="operationalCatalogBody" class="mini-note">Open this tab to load.</div>
               <div class="catalog-add-card" style="margin-top:14px;max-width:520px">
                 <div class="catalog-add-card__head">
@@ -3260,12 +3270,18 @@
               </div>
             </div>
             <div id="catalog-panel-fleet" class="catalog-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">
-                <strong>Assets</strong> and live GPS come from <strong>Samsara</strong>. With a write-scoped token and admin (or ERP write secret), you can push vehicle/driver name updates from here; otherwise use Samsara Cloud.
-              </p>
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+                <span class="mini-note" style="margin:0"><strong>Samsara</strong> feeds assets and GPS — optional POST renames below need a write-scoped token + admin (or ERP write secret).</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Fleet & Samsara">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <strong>Assets</strong> and live GPS come from <strong>Samsara</strong>. With a write-scoped token and admin (or ERP write secret), you can push vehicle/driver name updates from here; otherwise use Samsara Cloud.
+                  </span>
+                </span>
+              </div>
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
-              <div style="margin-top:14px;padding-top:12px;border-top:1px solid #edf1f7;max-width:560px" class="form-stack">
+              <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border,#e0e3e8);max-width:560px" class="form-stack">
                 <span class="qb-l">Rename vehicle in Samsara</span>
                 <p class="mini-note" style="margin:0">Use the vehicle’s Samsara id (from API / board JSON). Requires <code>SAMSARA_WRITE_API_TOKEN</code> or a read token upgraded with write scopes.</p>
                 <input id="samsaraVehicleIdInput" class="qb-in maint-field" placeholder="Samsara vehicle id">

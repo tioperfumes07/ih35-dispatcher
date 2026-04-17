@@ -12,13 +12,13 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~57%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.574** → **57.4%** unrounded.)
+**Overall completion: ~58%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.577** → **57.7%**; rounded headline **~58%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
 | Rule | Theme | Fraction (this revision) | Notes |
 |------|--------|-------------------------|--------|
-| 0 | Design tokens | 0.67 | **`fuel.html`** topbar / cross-links use **`var(--color-border-focus)`**; **maintenance** wide **`var(--*)`** pass (see changelog **29**); full **`app-theme`** migration still deferred |
+| 0 | Design tokens | 0.71 | **`banking.html`** / **`settings.html`** / **`dispatch.html`** page CSS + JS strings use **`var(--color-*|pill-*|btn-danger-*|focus-ring)`** where updated; **`fuel.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
 | 1 | Responsive | 0.45 | Shell patterns; full viewport audit deferred |
 | 2 | App shell | 0.45 | `erp-master` present; spec dimensions/copy deferred |
 | 3 | Collapsible sidebar | 1.0 | Pattern shipped (`ih35_sb_*`) |
@@ -26,7 +26,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 5–9 | Modal shells | 0.45 each (avg) | QB-style modals; parity not verified rule-by-rule |
 | 10 | StandardExpenseLines | 0.15 | No React tree; documented blocked / future |
 | 11 | Pay bills | 0.45 | Flows exist; driver variant + open-bills pager deferred |
-| 12 | Maintenance layout | 0.45 | Iterated; full spec QA deferred |
+| 12 | Maintenance layout | 0.46 | **Lists & catalogs** sub-tab intros aligned with Rule 22; full spec QA deferred |
 | 13 | Accounting board | 0.46 | KPIs + dash cards; card subcopy uses **token** text colors; dark-panel cleanup partial |
 | 14 | Upload center | 0.54 | Tabs + flows; **?** tips on every upload subpanel intro (Bank, Comdata, Fuel, AP, Maint, Other, Connections); alphabetical / full QA deferred |
 | 15 | Filter bar | 0.52 | Several tables + **Maintenance → Security alerts** toolbar wrapped in **`mr-filter-bar`**; not universal |
@@ -36,11 +36,11 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 19 | Toasts | 1.0 | `showToast` + `erpNotify` pattern |
 | 20 | Button loading | 1.0 | `erpWithBusy` pattern |
 | 21 | QBO error banner | 0.45 | Maintenance messaging; sticky spec deferred |
-| 22 | “?” tips | 0.83 | **Lists & catalogs → QuickBooks items & accounts** tab: short intro + **?**; + **Team** panel dynamic intro + prior report/upload/shop samples; many `mini-note` blocks remain |
+| 22 | “?” tips | 0.86 | **Lists & catalogs** — every sub-tab (**Service**, **QBO**, **Vendors**, **Operational**, **Fleet**) has short intro + **?**; + **Team** dynamic intro + prior report/upload/shop; many `mini-note` blocks remain |
 | 23 | Pagination | 0.78 | Broad `erpPagerRender` coverage; not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 = **0.574 → ~57%** (detail **57.4%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.577** (**57.7%**; headline **~58%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -63,7 +63,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 0 — Design system tokens
 
-- **Partial (this pass):** Added `public/css/design-tokens.css` with spec-aligned **additional** `:root` variables (`--color-*`, **`--color-semantic-*`**, `--btn-*`, `--pill-*`, spacing, dimensions). Linked **before** `app-theme.css` on maintenance, dispatch, fuel, banking, settings. **Satellite page shells** use **`background: var(--color-bg-page, var(--bg))`** on **banking**, **settings**, and **fuel** (company hub stays dark **`--bg`** only). Inline maintenance UI uses **`var(--color-text-*|semantic-*)`** where updated (integration strip, shop **Remove**, team security errors/alert column).
+- **Partial (this pass):** Added `public/css/design-tokens.css` with spec-aligned **additional** `:root` variables (`--color-*`, **`--color-semantic-*`**, `--btn-*`, `--pill-*`, spacing, dimensions). Linked **before** `app-theme.css` on maintenance, dispatch, fuel, banking, settings. **Satellite page shells** use **`background: var(--color-bg-page, var(--bg))`** on **banking**, **settings**, and **fuel** (company hub stays dark **`--bg`** only). **Banking**, **settings**, **dispatch**, and **maintenance** inline / `<style>` blocks increasingly use **`var(--color-*|pill-*|btn-danger-*|focus-ring|semantic-*)`** (see changelog **33**).
 - **Not done:** Full migration of all components from legacy `--bg`, `--panel`, etc. to `--color-*` (would be a large visual sweep).
 - **Spec path:** Use `public/css/design-tokens.css`, not `/src/styles/`.
 
@@ -100,7 +100,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 12 — Maintenance page layout
 
-- **Partial / evolving:** Layout has been iterated (action bar, two-column patterns). Spec’s “remove views/QBO panels” list may not be 100% applied — needs visual QA against spec.
+- **Partial / evolving:** Layout has been iterated (action bar, two-column patterns). **Lists & catalogs** sub-tabs use compact copy + **`erp-help-tip`** on each intro (Rule 22). Spec’s “remove views/QBO panels” list may not be 100% applied — needs visual QA against spec.
 
 ### Rule 13 — Accounting board
 
@@ -140,7 +140,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 22 — Instruction cleanup → “?” tips
 
-- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Settlement / P&L** intro + trip rollup panel use the same pattern; **Fleet → Vehicles by shop / location context** title + **?**; **reports** tabs **TMS**, **QBO**, **sync**, **IFTA**, **maintenance spend**, **detailed**, **team** + **Lists & catalogs** (panel title + **QuickBooks** sub-tab) + **?**; **Upload center** (prior pass). Many other long **`mini-note`** blocks remain for future passes.
+- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Settlement / P&L** intro + trip rollup panel use the same pattern; **Fleet → Vehicles by shop / location context** title + **?**; **reports** tabs **TMS**, **QBO**, **sync**, **IFTA**, **maintenance spend**, **detailed**, **team** + **Lists & catalogs** (panel title + **all five** sub-tab intros) + **?**; **Upload center** (prior pass). Many other long **`mini-note`** blocks remain for future passes.
 
 ### Rule 23 — Pagination
 
@@ -184,6 +184,9 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 28. **Rules 0 + 22:** **`design-tokens.css`** — **`--color-semantic-success|warning|warn-accent|error`**. **`maintenance.html`** — **`paintMaintConnectionStrip`** uses semantic tokens; **`loadTeamSecurityPanel`** intro → short line + **`erp-help-tip`**; team/audit errors + idle alert column colors use **`var(--color-semantic-*)`**.
 29. **Rule 0 + docs:** **`maintenance.html`** — bulk **`var(--color-semantic-error|…)`**, **`var(--color-border-focus)`**, **`var(--pill-red-text|green-text)`** on inline error/link/import/QBO-dot/banner strings; **`paintQboStatusBanner`** / **`paintApTxnQboBanner`** tier text uses tokens. **`ERP_MASTER_REDESIGN_STATUS.md`** — “protection block” reframed as **implementation guardrails** (auth stays); “human review” → optional product notes.
 30. **Rules 0 + 22:** **`fuel.html`** — **Home** + maintenance fuel link use **`var(--color-border-focus)`**. **`maintenance.html`** — **Lists & catalogs → QuickBooks items & accounts**: compact line + **`erp-help-tip`**.
+31. **Rules 22 + 0:** **`maintenance.html`** — **Lists & catalogs** sub-tabs **Service types**, **Vendors & drivers**, **Operational status**, **Fleet & Samsara**: same short line + **`erp-help-tip`** pattern as QBO tab; **Fleet** Samsara write card top border uses **`var(--color-border)`**.
+32. **Rule 0:** **`dispatch.html`** — load document list **`border-bottom`** uses **`var(--color-border)`**; **QBO posting alert** brief text colors use **`var(--color-semantic-error|warn-accent)`**; board intro **`mini-note`** uses **`var(--color-text-label)`**.
+33. **Rule 0:** **`banking.html`** — metrics + table header + **`#authBanner`** + suggest-card inline styles use **`var(--color-bg-header|border|card|pill-red|btn-danger-*)`**. **`settings.html`** — **`input:focus`** + **`.err`** use **`var(--color-border-focus|focus-ring|semantic-error)`**. **`dispatch.html`** — modal/stop/embed/chrome backgrounds and miles table borders use **`var(--color-bg-header|bg-hover|bg-card|color-border)`**.
 
 ---
 

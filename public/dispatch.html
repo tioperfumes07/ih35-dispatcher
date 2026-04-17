@@ -65,7 +65,7 @@
       color: var(--accent);
     }
     .st-default {
-      background: #f1f5f9;
+      background: var(--color-bg-header, #f1f5f9);
       color: var(--text-secondary);
     }
     select.sm,
@@ -101,7 +101,7 @@
       font-size: 1.05rem;
       font-weight: 700;
       letter-spacing: -0.02em;
-      background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+      background: linear-gradient(180deg, var(--color-bg-header, #f8fafc) 0%, var(--color-bg-card, #fff) 100%);
     }
     .modal-body { padding: 16px 20px; max-height: calc(100vh - 180px); overflow: auto; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -180,11 +180,11 @@
     }
     .stop-miles-summary th,
     .stop-miles-summary td {
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--color-border, #e2e8f0);
       padding: 6px 12px;
       text-align: right;
     }
-    .stop-miles-summary th { background: #f1f5f9; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--muted); }
+    .stop-miles-summary th { background: var(--color-bg-header, #f1f5f9); text-align: center; font-size: 11px; text-transform: uppercase; color: var(--muted); }
     .stop-miles-summary td:first-child { text-align: left; font-weight: 600; }
     .modal-actions {
       padding: 14px 20px;
@@ -205,7 +205,7 @@
       transition: background 0.15s ease, border-color 0.15s ease;
     }
     .btn:hover {
-      background: #f8fafc;
+      background: var(--color-bg-hover, #f8fafc);
       border-color: var(--line-strong);
     }
     .btn-primary {
@@ -218,7 +218,7 @@
       border-color: var(--accent-hover);
     }
     .btn-ghost {
-      background: #f1f5f9;
+      background: var(--color-bg-header, #f1f5f9);
       color: var(--text);
       border-color: var(--line);
     }
@@ -243,7 +243,7 @@
       flex-shrink: 0;
       padding: 8px 12px;
       border-bottom: 1px solid var(--line);
-      background: #f8fafc;
+      background: var(--color-bg-header, #f8fafc);
       font-size: 12px;
       line-height: 1.45;
       color: var(--muted);
@@ -337,7 +337,7 @@
         <div id="dispatchSidebarFleetStatus" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px">Samsara: waiting for first refresh…</div>
         <div id="dispatchSidebarLastUpdated" class="mini-note dispatch-sidebar-footer__line" style="margin-top:8px">Last refresh: waiting…</div>
         <div class="erp-sb-heading" style="margin-top:14px">Tips</div>
-        <p class="mini-note" style="margin:0;line-height:1.45;font-size:12px;color:var(--qb-muted, #5f6368)">
+        <p class="mini-note" style="margin:0;line-height:1.45;font-size:12px;color:var(--color-text-label,#6b7385)">
           Load # = customer invoice # in QuickBooks. Row actions set status, QuickBooks invoice, and documents. Full posting banner lives on the ERP Accounting board.
         </p>
       </div>
@@ -1947,7 +1947,7 @@
                 ? ' · ' + Math.round(Number(doc.byte_size) / 1024) + ' KB'
                 : '';
             return (
-              '<li style="padding:10px 0;border-bottom:1px solid #eef0f5">' +
+              '<li style="padding:10px 0;border-bottom:1px solid var(--color-border,#e0e3e8)">' +
               '<div><strong>' +
               escapeHtml(doc.doc_type || 'other') +
               '</strong> · ' +
@@ -2055,7 +2055,7 @@
         let briefText = '';
         let briefColor = '';
         if (!qSync || qSync.ok === false) {
-          briefColor = '#b91c1c';
+          briefColor = 'var(--color-semantic-error,#b91c1c)';
           briefText = 'Could not load posting alerts.';
         } else {
           const c = qSync.counts || {};
@@ -2066,7 +2066,7 @@
           if (!hi && !med && !low && !nAlert) {
             briefText = 'No open posting issues.';
           } else {
-            briefColor = hi ? '#b45309' : '';
+            briefColor = hi ? 'var(--color-semantic-warn-accent,#b45309)' : '';
             briefText =
               'Posting alerts: ' + hi + ' high · ' + med + ' med · ' + low + ' low' + (nAlert ? ' · details on ERP Accounting' : '');
           }
@@ -2103,7 +2103,7 @@
         applyDispatchStatusToTargets(targets, {
           qText: 'QuickBooks: status check failed',
           briefText: e.message || String(e),
-          briefColor: '#b91c1c',
+          briefColor: 'var(--color-semantic-error,#b91c1c)',
           fText: 'Samsara: status unavailable',
           luText: 'Last refresh: waiting…'
         });
