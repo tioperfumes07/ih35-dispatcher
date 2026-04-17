@@ -53,7 +53,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 | File | Changes |
 |------|---------|
-| **`public/maintenance.html`** | `design-tokens.css`, `#erpToastHost`, `erp-ui.js`, `showErpToast` → `showToast`, **`erpNotify`** replaces **`alert`**, save split / busy patterns (prior), **accident** + **tire** WO Rule 22 tips. |
+| **`public/maintenance.html`** | `design-tokens.css`, `#erpToastHost`, `erp-ui.js`, `showErpToast` → `showToast`, **`erpNotify`** replaces **`alert`**, save split / busy patterns (prior), **accident** + **tire** WO Rule 22 tips; **shop board** queue tables paginated (**`erpPagerRender`** + **`shopQueuePager`**); **parts** queue tab Rule 22 tip. |
 | **`public/dispatch.html`** | Tokens, toast host, `erp-ui.js`, intro + stops help tips, `erpWithBusy` / `showToast` on refresh, QBO catalog, save, uploads, PDF, auto miles, row QBO, quick-add, `patchStatus`, escaped `showMsg`, `loadTab(rethrow)` for manual refresh. |
 | **`public/fuel.html`** | Tokens, toast host, `erp-ui.js`, toasts + busy on key actions, **`erpNotify`**, **`--color-bg-page`** body, **connection strip** + `load` mount. |
 | **`public/banking.html`** | Tokens, toast host, `erp-ui.js`, toasts + busy, Rule 22 tip, **`erpNotify`**, pager on suggestions, **`--color-bg-page`**, **connection strip** + `load` mount. |
@@ -107,7 +107,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 ### P1 — UX consistency (no new APIs)
 
-1. **Maintenance `erpPagerRender`:** pick 2–3 highest-row-count tables (e.g. expense history, upload grids) and wire pager + `erpPagerSliceRange` like banking/settings.
+1. **Maintenance `erpPagerRender`:** shop queue board (**internal / external / roadside / parts**) is wired. Next candidates: expense history, upload grids, or other long tables — same **`erpPagerRender`** + slice pattern.
 2. **More Rule 22:** convert long **`mini-note`** blocks in **accounting fuel**, **settlement**, and **upload center** tabs using the same **`erp-help-tip`** pattern as dispatch/accident/tire.
 3. **`erpMountConnectionStrip`:** optional second line **only if** a **cheap read-only** endpoint exists (avoid calling **`GET /api/board`** on every page load — it can fan out to Samsara; cache server-side or piggyback maintenance dashboard payload if product wants it).
 
@@ -136,6 +136,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 ## 7. Verification checklist (manual)
 
+- [ ] **Maintenance:** **Shop board** (internal / external / roadside / parts) — with 16+ filtered rows, pager appears; change page size; filters reset to page 1.
 - [ ] **Maintenance:** open WO → **Accident** → help **?** opens/closes; Escape closes.
 - [ ] **Maintenance:** **Tire** record → first-tire help **?** panel.
 - [ ] **Dispatch:** Refresh, QBO catalog, save load, upload doc, auto miles, row **Create invoice** / **Sync attachments**, status select.

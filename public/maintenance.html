@@ -1299,6 +1299,7 @@
                     <tbody id="shopInternalTableBody"></tbody>
                   </table>
                 </div>
+                <div id="shopInternalPagerHost" hidden></div>
                 <div class="shop-wo-fallback print-hide-actions">
                   <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (same shop type, for reference)</div>
                   <div id="shopInternalWoFallback"></div>
@@ -1347,6 +1348,7 @@
                     <tbody id="shopExternalTableBody"></tbody>
                   </table>
                 </div>
+                <div id="shopExternalPagerHost" hidden></div>
                 <div class="shop-wo-fallback print-hide-actions">
                   <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (external)</div>
                   <div id="shopExternalWoFallback"></div>
@@ -1395,14 +1397,21 @@
                     <tbody id="shopRoadsideTableBody"></tbody>
                   </table>
                 </div>
+                <div id="shopRoadsidePagerHost" hidden></div>
                 <div class="shop-wo-fallback print-hide-actions">
                   <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (road / OTR)</div>
                   <div id="shopRoadsideWoFallback"></div>
                 </div>
               </div>
               <div id="shopTabParts" class="shop-tab-panel">
-                <p class="mini-note" style="margin:0 0 10px;max-width:70ch">
-                  Track vendor parts orders the same way as shop jobs: <strong>Queued</strong> = waiting on supplier, <strong>In progress</strong> = partial / in transit, <strong>Completed</strong> = received and closed.
+                <p class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;max-width:70ch">
+                  <span>Parts queue uses the same <strong>Queued / In progress / Completed</strong> stages as other shop tabs.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Parts queue stages">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Track vendor parts orders the same way as shop jobs: <strong>Queued</strong> = waiting on supplier, <strong>In progress</strong> = partial / in transit, <strong>Completed</strong> = received and closed.
+                    </span>
+                  </span>
                 </p>
                 <div class="toolbar erp-ops-toolbar erp-ops-toolbar--dense">
                   <div style="min-width:220px;flex:1">
@@ -1446,6 +1455,7 @@
                     <tbody id="shopPartsTableBody"></tbody>
                   </table>
                 </div>
+                <div id="shopPartsPagerHost" hidden></div>
                 <div class="shop-wo-fallback print-hide-actions">
                   <div class="mini-note" style="margin:0 0 6px"><strong>Work orders</strong> (repair location: parts purchase)</div>
                   <div id="shopPartsWoFallback"></div>
@@ -3673,6 +3683,13 @@
     let tmsEnabled = false;
     let driverProfiles = [];
     let shopQueueCache = [];
+    /** Rule 23 — shop queue tables (internal / external / roadside / parts) */
+    let shopQueuePager = {
+      internal: { page: 1, pageSize: 15, filterKey: '' },
+      external: { page: 1, pageSize: 15, filterKey: '' },
+      roadside: { page: 1, pageSize: 15, filterKey: '' },
+      parts: { page: 1, pageSize: 15, filterKey: '' }
+    };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -10261,12 +10278,32 @@
           .slice()
           .sort((a, b) => String(pickDate(b)).localeCompare(String(pickDate(a))));
 
+        const pagerHost = document.getElementById(`shop${cap(shopType)}PagerHost`);
+        const pState = shopQueuePager[shopType] || (shopQueuePager[shopType] = { page: 1, pageSize: 15, filterKey: '' });
+        const filterKey = `${query}|${from}|${to}|${st}`;
+        if (pState.filterKey !== filterKey) {
+          pState.page = 1;
+          pState.filterKey = filterKey;
+        }
+
         if (!rows.length) {
           host.innerHTML = `<tr><td colspan="9" class="mini-note" style="padding:10px">No rows for current filters.</td></tr>`;
+          if (pagerHost) {
+            pagerHost.innerHTML = '';
+            pagerHost.hidden = true;
+          }
           return;
         }
 
-        host.innerHTML = rows
+        const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+        const total = rows.length;
+        const pages = Math.max(1, Math.ceil(total / ps));
+        if (pState.page > pages) pState.page = pages;
+        if (pState.page < 1) pState.page = 1;
+        const start = (pState.page - 1) * ps;
+        const pageRows = rows.slice(start, start + ps);
+
+        host.innerHTML = pageRows
           .map(e => {
             const overdue = !!e.overdue;
             const id = escapeHtml(String(e.id || ''));
@@ -10295,6 +10332,22 @@
               </tr>`;
           })
           .join('');
+
+        if (pagerHost && window.erpPagerRender) {
+          window.erpPagerRender(
+            pagerHost,
+            { page: pState.page, pageSize: ps, total },
+            (nextPage, newPageSize) => {
+              if (newPageSize) pState.pageSize = newPageSize;
+              pState.page = nextPage;
+              renderShopQueues();
+            }
+          );
+          pagerHost.hidden = false;
+        } else if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
       };
 
       renderTable('internal');

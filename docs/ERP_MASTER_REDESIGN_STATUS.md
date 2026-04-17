@@ -104,11 +104,11 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 22 — Instruction cleanup → “?” tips
 
-- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” copy each use a short line + **`erp-help-tip`** panel. Many other long **`mini-note`** blocks remain for future passes.
+- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel. Many other long **`mini-note`** blocks remain for future passes.
 
 ### Rule 23 — Pagination
 
-- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired; not literally every table >10 rows.
+- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state). Not literally every table >10 rows.
 
 ### Rule 24 — Connection verification on load
 
@@ -130,6 +130,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 10. **Rule 24 + Rule 0 (continuation):** **`erpMountConnectionStrip`** + **`#erpConnectionStrip`** on **banking**, **settings**, **fuel**, **index**; token-backed **`--color-bg-page`** body background on banking/settings/fuel. **Rule 22:** maintenance **accident** WO inline help → **`erp-help-tip`**.
 11. **Rule 22 (tire WO):** **Tire** record first-tire / same-invoice copy → compact line + **`erp-help-tip`** panel in **`maintenance.html`**.
 12. **Documentation:** **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)** — consolidated changelog, rule matrix, recommendations, verification, risks.
+13. **Rule 23 + 22 (shop board):** **`maintenance.html`** — shop queue tables (**internal**, **external**, **roadside**, **parts**) use **`erpPagerRender`** with **`shopQueuePager`** state (default 15 rows/page; filters reset page). **Parts** tab intro uses compact copy + **`erp-help-tip`**.
 
 ---
 
