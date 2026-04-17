@@ -787,10 +787,12 @@ body.erp-maintenance .nav-btn {
 
 body.erp-maintenance .nav-btn:hover {
   background: rgba(255, 255, 255, 0.07);
+  background: color-mix(in srgb, var(--sidebar-text, #f1f5f9) 7%, transparent);
 }
 
 body.erp-maintenance .nav-btn.active {
   background: rgba(30, 41, 59, 0.95);
+  background: color-mix(in srgb, var(--nav-hover, #1e293b) 96%, transparent);
   border-color: var(--sidebar-border, #334155);
 }
 
