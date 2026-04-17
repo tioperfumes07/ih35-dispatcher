@@ -1521,7 +1521,7 @@ body.erp-maintenance .erp-reports-roadmap {
   padding: 6px 12px;
   border-radius: 8px;
   border: 1px solid var(--color-border, var(--line, #cbd5e1));
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   font: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -1530,7 +1530,7 @@ body.erp-maintenance .erp-reports-roadmap {
 }
 
 .erp-pager__btn:hover:not(:disabled) {
-  background: #f1f5f9;
+  background: var(--color-bg-header, #f1f5f9);
 }
 
 .erp-pager__btn:disabled {
@@ -1558,7 +1558,7 @@ body.erp-maintenance .erp-reports-roadmap {
   padding: 5px 8px;
   border-radius: 8px;
   border: 1px solid var(--color-border, var(--line, #cbd5e1));
-  background: #fff;
+  background: var(--color-bg-card, #fff);
 }
 
 @keyframes erp-ui-spin {
@@ -1590,17 +1590,17 @@ button.primary.erp-btn--busy::after,
 .banking-page button.primary.erp-btn--busy::after,
 body.erp-maintenance button.btn--primary.erp-btn--busy::after {
   border-color: rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
+  border-top-color: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.erp-btn--busy::after {
   border-color: rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
+  border-top-color: var(--color-bg-card, #fff);
 }
 
 .settings-page button.primary.erp-btn--busy::after {
   border-color: rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
+  border-top-color: var(--color-bg-card, #fff);
 }
 
 /* =============================================================================
@@ -1620,8 +1620,8 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
 
 .erp-toast {
   pointer-events: auto;
-  background: #fff;
-  border: 1px solid #e0e3e8;
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #e0e3e8);
   border-radius: 7px;
   padding: 10px 14px;
   font-size: 12px;
@@ -1638,7 +1638,7 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
   flex: 1;
   min-width: 0;
   line-height: 1.45;
-  color: #3c4257;
+  color: var(--color-text-body, #3c4257);
 }
 
 .erp-toast__dot {
@@ -1646,19 +1646,19 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
   height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #1a7a3c;
+  background: var(--btn-primary-save-bg, #1a7a3c);
 }
 
 .erp-toast__dot--err {
-  background: #c5221f;
+  background: var(--pill-red-text, #c5221f);
 }
 
 .erp-toast__dot--warn {
-  background: #b06000;
+  background: var(--btn-warning-bg, #b06000);
 }
 
 .erp-toast__dot--info {
-  background: #1557a0;
+  background: var(--btn-post-qbo-bg, #1557a0);
 }
 
 .erp-toast__x {
@@ -1940,14 +1940,14 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-new-menu__sep-line {
   flex: 1;
   height: 1px;
-  background: #eef0f5;
+  background: var(--color-bg-header, #eef0f5);
 }
 .erp-new-menu__sep-label {
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #a0a8b8;
+  color: var(--color-text-placeholder, #a0a8b8);
   white-space: nowrap;
 }
 .erp-sb-sep {
@@ -1960,14 +1960,14 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-sb-sep__line {
   flex: 1;
   height: 1px;
-  background: #eef0f5;
+  background: var(--color-bg-header, #eef0f5);
 }
 .erp-sb-sep__label {
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #a0a8b8;
+  color: var(--color-text-placeholder, #a0a8b8);
   white-space: nowrap;
 }
 .bp-driver-pay-chip {
@@ -1978,9 +1978,9 @@ body.banking-page #authBanner.erp-auth-banner {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
-  background: #e8f0fe;
-  color: #1967d2;
-  border: 1px solid #c6dafc;
+  background: var(--pill-blue-bg, #e8f0fe);
+  color: var(--pill-blue-text, #1967d2);
+  border: 1px solid var(--btn-info-border, #c6dafc);
 }
 .erp-ap-doc-accent svg {
   display: block;
