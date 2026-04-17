@@ -1361,6 +1361,16 @@ body.erp-maintenance .erp-reports-roadmap {
     margin-left: 12px;
     margin-right: 12px;
   }
+
+  /* Rule 1 — Reports hub: slightly tighter chrome when the shell stacks (sidebar above main). */
+  body.erp-maintenance .erp-reports-toolbar {
+    padding: 8px 10px 10px;
+    margin-bottom: 8px;
+  }
+
+  body.erp-maintenance .erp-reports-main {
+    gap: 8px;
+  }
 }
 
 /* =============================================================================
@@ -1612,4 +1622,17 @@ body.hub-page .erp-connection-strip {
 .erp-connection-strip--muted {
   background: var(--color-bg-header, #f1f3f4);
   color: var(--color-text-label, #6b7385);
+}
+
+/* Rule 0 / 13 — login-required banner (maintenance) */
+body.erp-maintenance #authBanner.erp-auth-banner {
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: var(--pill-yellow-bg, #fff7ed);
+  border: 1px solid var(--color-border, #fed7aa);
+  color: var(--color-semantic-warning, #92400e);
 }

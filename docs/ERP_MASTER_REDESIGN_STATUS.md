@@ -12,14 +12,14 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~59%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.586** → **58.6%**; rounded headline **~59%**.)
+**Overall completion: ~59.5%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.595** → **59.5%**; rounded headline **~59.5%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
 | Rule | Theme | Fraction (this revision) | Notes |
 |------|--------|-------------------------|--------|
-| 0 | Design tokens | 0.72 | **`board-nav.css`** bridges dropdown/hover to **`var(--color-*|pill-*|shadow-dropdown)`**; **`banking.html`** / **`settings.html`** / **`dispatch.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
-| 1 | Responsive | 0.45 | Shell patterns; full viewport audit deferred |
+| 0 | Design tokens | 0.75 | **`board-nav.css`** bridges dropdown/hover to **`var(--color-*|pill-*|shadow-dropdown)`**; **QBO sync alert bar** + **`#authBanner.erp-auth-banner`** use **`pill-*`** / **`color-*`** fallbacks in CSS; **`renderReportsAll`** / **`renderRepMaintSpendByUnitTable`** empty states use **`var(--color-text-label|semantic-error)`**; **`banking.html`** / **`settings.html`** / **`dispatch.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
+| 1 | Responsive | 0.47 | Shell patterns; **Reports** toolbar + main column gap tighten at **≤900px** (**`erp-master-spec-2026.css`**); full viewport audit deferred |
 | 2 | App shell | 0.49 | **`erp-master`** + **Lists** (**▤**) icon opens **`#catalog`**; dispatch + **settings** + hub **`board-nav`** strip; spec dimensions/copy deferred |
 | 3 | Collapsible sidebar | 1.0 | Pattern shipped (`ih35_sb_*`) |
 | 4 | + New menu | 0.42 | **+ New** three-column menu: items **A–Z** within each column; spec width/matrix / new modals deferred or blocked |
@@ -27,20 +27,20 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 10 | StandardExpenseLines | 0.15 | No React tree; documented blocked / future |
 | 11 | Pay bills | 0.45 | Flows exist; driver variant + open-bills pager deferred |
 | 12 | Maintenance layout | 0.48 | **Lists & catalogs** sub-tab intros (**Rule 22**) + **Service types (DB)** filter/pager (**Rules 15/23**); full spec QA deferred |
-| 13 | Accounting board | 0.46 | KPIs + dash cards; card subcopy uses **token** text colors; dark-panel cleanup partial |
-| 14 | Upload center | 0.54 | Tabs + flows; **?** tips on every upload subpanel intro (Bank, Comdata, Fuel, AP, Maint, Other, Connections); alphabetical / full QA deferred |
-| 15 | Filter bar | 0.54 | Several tables + **Security alerts** + **Lists & catalogs → Service types (DB)** search use **`mr-filter-bar`** / filter row; not universal |
+| 13 | Accounting board | 0.48 | KPIs + dash cards; card subcopy uses **token** text colors; **`#authBanner`** login strip uses **`erp-auth-banner`** token chrome (**`erp-master-spec-2026.css`**); dark-panel cleanup partial |
+| 14 | Upload center | 0.55 | Tabs + flows; **?** tips on every upload subpanel intro (Bank, Comdata, Fuel, AP, Maint, Other, Connections); sub-tab row **A–Z** by label; full file QA deferred |
+| 15 | Filter bar | 0.55 | Several tables + **Security alerts** + **Lists & catalogs → Service types (DB)** + **Reports → Maintenance detailed report** filters use **`mr-filter-bar`** / filter row; not universal |
 | 16 | Safety / HOS | 0.55 | Tables + **Rule 23** pagers on Safety + idle snapshot |
-| 17 | Reports | 0.56 | Hub + settlement; **TMS**, **QBO**, **sync**, **IFTA**, **Maintenance spend by unit**, **Team & security**, **Maint detailed** tab titles + **`erp-help-tip`**; **Maint spend by unit** + **Maint detailed** bodies paginated (**Rule 23**); “all on one page” partial |
+| 17 | Reports | 0.60 | Hub + settlement; **Executive overview** panel title + **`erp-help-tip`**; **TMS**, **QBO**, **sync**, **IFTA**, **Maintenance spend by unit**, **Team & security**, **Maint detailed** tab titles + **`erp-help-tip`**; **QBO / sync / IFTA** bodies use shorter intro copy (**Rule 22**); **Executive overview** timestamp line + **TMS** summary / empty / error copy use token-muted (**Rule 0**); **Maint spend by unit** empty state two-line pattern; **Maint spend by unit** + **Maint detailed** bodies paginated (**Rule 23**); “all on one page” partial |
 | 18 | QBO GET aliases | 0.90 | Skipped — existing catalog/status routes |
 | 19 | Toasts | 1.0 | `showToast` + `erpNotify` pattern |
 | 20 | Button loading | 1.0 | `erpWithBusy` pattern |
-| 21 | QBO error banner | 0.45 | Maintenance messaging; sticky spec deferred |
-| 22 | “?” tips | 0.87 | **Lists & catalogs** — every sub-tab (**Service**, **QBO**, **Vendors**, **Operational**, **Fleet**) has short intro + **?**; + **Team** dynamic intro + prior report/upload/shop; **dispatch** sidebar **Tips** line + **?**; many `mini-note` blocks remain |
+| 21 | QBO error banner | 0.52 | **`#qboSyncAlertBar`** **`position: sticky; top: 0`** so sync issues stay visible while scrolling the ERP main column; tier colors use **token fallbacks** |
+| 22 | “?” tips | 0.90 | **Lists & catalogs** — every sub-tab (**Service**, **QBO**, **Vendors**, **Operational**, **Fleet**) has short intro + **?**; **Reports → Executive overview** title **`erp-help-tip`**; **QBO activity**, **ERP ↔ QBO sync**, and **IFTA** bodies: dense paragraphs shortened + **`var(--color-text-label)`** on secondary lines; **TMS** + **Maint spend by unit** empty states split headline + muted steps; + **Team** dynamic intro + prior report/upload/shop; **dispatch** sidebar **Tips** line + **?**; many `mini-note` blocks remain |
 | 23 | Pagination | 0.86 | Broad `erpPagerRender` coverage; **Lists & catalogs → Service types (DB)** (**`serviceCatalogAdminPager`**); **Reports** spend-by-unit + maint detailed (prior); not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.586** (**58.6%**; headline **~59%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.595** (**59.5%**; headline **~59.5%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -63,13 +63,13 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 0 — Design system tokens
 
-- **Partial (this pass):** Added `public/css/design-tokens.css` with spec-aligned **additional** `:root` variables (`--color-*`, **`--color-semantic-*`**, `--btn-*`, `--pill-*`, spacing, dimensions). Linked **before** `app-theme.css` on maintenance, dispatch, fuel, banking, settings. **Satellite page shells** use **`background: var(--color-bg-page, var(--bg))`** on **banking**, **settings**, and **fuel** (company hub stays dark **`--bg`** only). **Banking**, **settings**, **dispatch**, and **maintenance** inline / `<style>` blocks increasingly use **`var(--color-*|pill-*|btn-danger-*|focus-ring|semantic-*)`** (see changelog **33**).
+- **Partial (this pass):** Added `public/css/design-tokens.css` with spec-aligned **additional** `:root` variables (`--color-*`, **`--color-semantic-*`**, `--btn-*`, `--pill-*`, spacing, dimensions). Linked **before** `app-theme.css` on maintenance, dispatch, fuel, banking, settings. **Satellite page shells** use **`background: var(--color-bg-page, var(--bg))`** on **banking**, **settings**, and **fuel** (company hub stays dark **`--bg`** only). **Banking**, **settings**, **dispatch**, and **maintenance** inline / `<style>` blocks increasingly use **`var(--color-*|pill-*|btn-danger-*|focus-ring|semantic-*)`** (see changelog **33**). Maintenance **`#authBanner.erp-auth-banner`** (401 strip) uses the same token vocabulary in **`erp-master-spec-2026.css`** (changelog **43**). **`renderReportsAll`** overview timestamp, **TMS** loaded summary, and **`renderRepMaintSpendByUnitTable`** empty secondary line use **`var(--color-text-label)`**; **TMS** errors use **`var(--color-semantic-error)`** (changelog **45**).
 - **Not done:** Full migration of all components from legacy `--bg`, `--panel`, etc. to `--color-*` (would be a large visual sweep).
 - **Spec path:** Use `public/css/design-tokens.css`, not `/src/styles/`.
 
 ### Rule 1 — Responsive layout
 
-- **Partial:** `erp-master-spec-2026.css` + `app-theme.css` already enforce `min-width:0`, scroll columns, table wrappers for maintenance shell. Dispatch/fuel/banking use simpler layouts.
+- **Partial:** `erp-master-spec-2026.css` + `app-theme.css` already enforce `min-width:0`, scroll columns, table wrappers for maintenance shell. **Reports** hub: at **≤900px**, toolbar padding and **`erp-reports-main`** vertical gap tighten slightly when the browse column stacks (**changelog 45**). Dispatch/fuel/banking use simpler layouts.
 - **Future:** Strict “no horizontal scrollbar at 1280/1440/1920” audit across every section tab.
 
 ### Rule 2 — App shell
@@ -104,15 +104,15 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 13 — Accounting board
 
-- **Partial:** KPI-style cards and QBO chrome exist in maintenance accounting sections; accounting **dash card** subcopy uses **`var(--color-text-body)`** / link color **`var(--color-border-focus)`** where updated. “Remove dark panel / instruction paragraphs” — partially addressed over time; confirm with UX pass.
+- **Partial:** KPI-style cards and QBO chrome exist in maintenance accounting sections; accounting **dash card** subcopy uses **`var(--color-text-body)`** / link color **`var(--color-border-focus)`** where updated. **`#authBanner`** (401 “login required”) uses class **`erp-auth-banner`** with **token-backed** warning strip styling in **`erp-master-spec-2026.css`** (replaces inline-only colors). “Remove dark panel / instruction paragraphs” — partially addressed over time; confirm with UX pass.
 
 ### Rule 14 — Upload center
 
-- **Partial:** Tabs and import flows exist; panel-head **?** on **Upload center**; **?** + one-line intro on **every** upload subpanel (**Bank**, **Comdata**, **Fuel**, **AP**, **Maint history**, **Other**, **Connections**). Alphabetical tab order and “every tab fully functional” should be verified with manual tests and real files.
+- **Partial:** Tabs and import flows exist; panel-head **?** on **Upload center**; **?** + one-line intro on **every** upload subpanel (**Bank**, **Comdata**, **Fuel**, **AP**, **Maint history**, **Other**, **Connections**). Sub-tab buttons are ordered **A–Z** by label (**Bank CSV** … **Other**). “Every tab fully functional” should be verified with manual tests and real files.
 
 ### Rule 15 — Samsara-style filter bar
 
-- **Partial:** Filter patterns exist on several tables (see spec comments in `erp-master-spec-2026.css`). **Maintenance → Security alerts** uses **`mr-filter-bar`** + **`mr-filter-bar__grow`** / **`__right`** for search, window, severity, and **Refresh alerts**. **Lists & catalogs → Service types (DB)** adds **`mr-filter-bar`** + live name filter for the Postgres catalog admin table. Not every table has full chip + pager parity.
+- **Partial:** Filter patterns exist on several tables (see spec comments in `erp-master-spec-2026.css`). **Maintenance → Security alerts** uses **`mr-filter-bar`** + **`mr-filter-bar__grow`** / **`__right`** for search, window, severity, and **Refresh alerts**. **Lists & catalogs → Service types (DB)** adds **`mr-filter-bar`** + live name filter for the Postgres catalog admin table. **Reports → Maintenance detailed report** wraps unit/date/type/search controls in **`mr-filter-bar`** + **`mr-filter-bar__grow`**. Not every table has full chip + pager parity.
 
 ### Rule 16 — Safety / HOS
 
@@ -120,7 +120,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 17 — Reports
 
-- **Partial:** Reports hub shell in maintenance; **TMS**, **QBO**, **sync**, **IFTA**, **Maintenance spend by unit**, **Team activity & security**, **Maintenance detailed report** tab titles include **`erp-help-tip`** (IFTA / maint detailed body copy shortened + tip). **Spend by unit** rollup table and **Maintenance detailed** cards use **Rule 23** pagers after **Refresh reports**. “All reports on one page / remove links from other sidebars” — **not fully enforced** in this pass.
+- **Partial:** Reports hub shell in maintenance; **Executive overview** panel title includes **`erp-help-tip`** (Refresh vs **Sync QuickBooks lists + activity**); **TMS**, **QBO**, **sync**, **IFTA**, **Maintenance spend by unit**, **Team activity & security**, **Maintenance detailed report** tab titles include **`erp-help-tip`** (IFTA / maint detailed body copy shortened + tip). **Executive overview** generated/cache line and **TMS** summary use muted token text; **TMS** not-configured / error and **Spend by unit** empty states use two-line headline + secondary (**Rule 22**). **Spend by unit** rollup table and **Maintenance detailed** cards use **Rule 23** pagers after **Refresh reports**. “All reports on one page / remove links from other sidebars” — **not fully enforced** in this pass.
 
 ### Rule 18 — QBO GET endpoints
 
@@ -136,11 +136,11 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 21 — QBO error banner
 
-- **Partial:** QBO alert / sync messaging exists in maintenance; sticky banner + accounting badge behavior — compare to spec.
+- **Partial:** QBO alert / sync messaging exists in maintenance (**`#qboSyncAlertBar`**). Banner is **`position: sticky`** at the top of the scrollable main column so users keep context while scrolling; tier styling uses **design-token fallbacks** in **`app-theme.css`**. Accounting nav badge behavior — compare to spec.
 
 ### Rule 22 — Instruction cleanup → “?” tips
 
-- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Settlement / P&L** intro + trip rollup panel use the same pattern; **Fleet → Vehicles by shop / location context** title + **?**; **reports** tabs **TMS**, **QBO**, **sync**, **IFTA**, **maintenance spend**, **detailed**, **team** + **Lists & catalogs** (panel title + **all five** sub-tab intros) + **?**; **Upload center** (prior pass). Many other long **`mini-note`** blocks remain for future passes.
+- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” + **shop → Parts** queue intro each use a short line + **`erp-help-tip`** panel; **reports → Executive overview** panel title + **?** (Refresh vs QBO sync); **reports → Settlement / P&L** intro + trip rollup panel use the same pattern; **Fleet → Vehicles by shop / location context** title + **?**; **reports** tabs **TMS**, **QBO**, **sync**, **IFTA**, **maintenance spend**, **detailed**, **team** + **Lists & catalogs** (panel title + **all five** sub-tab intros) + **?**; **Upload center** (prior pass). Many other long **`mini-note`** blocks remain for future passes.
 
 ### Rule 23 — Pagination
 
@@ -195,6 +195,10 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 39. **Lists deep links + hub strip (Rule 2):** **`maintenance.html`** — **`applyNavHash`** handles **`#catalog`**, **`#catalog-service`**, **`#catalog-qbo`**, **`#catalog-vendors`**, **`#catalog-operational`**, **`#catalog-fleet`** so the matching **Lists & catalogs** sub-tab opens (not only the section). **`board-nav.js`** — new **Lists & catalogs** workspace item (dropdown links A–Z + **Upload center**) for **`index`**, **`dispatch`**, **`fuel`**, **`banking`**, and **`maintenance`** strips. **`index.html`** — hub card + strip copy mention **Lists & catalogs**.
 40. **Settings workspace strip (Rule 2):** **`settings.html`** — link **`board-nav.css`**, add **`#boardNavMount`** + **`board-nav.js`** (defer) so **Settings & users** matches banking/fuel/dispatch hub navigation to ERP workspaces (**Lists & catalogs**, reports, etc.).
 41. **+ New menu A–Z (Rule 4):** **`maintenance.html`** — **`#erpNewMenu`** column items reordered **alphabetically** by label within **Expenses & bills**, **Maintenance**, and **Other** (handlers unchanged).
+42. **Reports detailed filters + QBO banner (Rules 15 / 21 / 0):** **`maintenance.html`** — **Reports → Maintenance detailed report**: filter row wrapped in **`mr-filter-bar`** + **`mr-filter-bar__grow`** (same pattern as other filter strips). **`app-theme.css`** — **`.qbo-sync-alert-bar`** **`sticky`** top chrome + **`var(--pill-*|btn-danger-border|color-border|color-text-primary)`** fallbacks for default / critical / degraded tiers.
+43. **Reports overview tip + auth banner tokens (Rules 17 / 22 / 0 / 13):** **`maintenance.html`** — **Reports → Executive overview**: **`panel-title`** row adds **`erp-help-tip`** (Refresh vs QBO sync); body keeps a short **`mini-note`** before **`loadReportsData`** replaces it. **`#authBanner`**: class **`erp-auth-banner`**, remove inline colors. **`erp-master-spec-2026.css`** — **`body.erp-maintenance #authBanner.erp-auth-banner`** uses **`var(--pill-yellow-bg|color-border|color-semantic-warning)`** fallbacks.
+44. **Reports QBO / sync / IFTA body copy (Rules 22 + 17 + 14):** **`maintenance.html`** — **`renderReportsAll`**: **QuickBooks activity** empty state split into headline + muted steps; loaded-state window line shortened + token color; **ERP ↔ QBO sync** intro/footer **`mini-note`**s shortened and cross-reference panel **`?`**; **IFTA** roadmap body reduced to one line pointing at title **`?`**. Rule **14** notes: upload sub-tab row **A–Z** by label (verified in layout).
+45. **Reports overview + TMS + spend-by-unit empty (Rules 0 + 22 + 17 + 1):** **`maintenance.html`** — **`renderReportsAll`**: **Executive overview** generated/cache line uses **`var(--color-text-label)`**; **TMS loads** not-configured / error / OK summary lines use headline + token-muted or **`var(--color-semantic-error)`** on the error text. **`renderRepMaintSpendByUnitTable`**: empty rollup uses two-line pattern (headline + **Refresh reports** hint). **`erp-master-spec-2026.css`** — at **≤900px**, **Reports** toolbar padding and **`erp-reports-main`** gap tighten slightly (**Rule 1**).
 
 ---
 

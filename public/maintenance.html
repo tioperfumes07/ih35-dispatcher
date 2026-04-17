@@ -202,7 +202,7 @@
       </aside>
 
       <main class="main erp-main-surface">
-        <div id="authBanner" class="hidden mini-note" style="margin-bottom:10px;padding:10px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;width:100%;max-width:100%"></div>
+        <div id="authBanner" class="hidden mini-note erp-auth-banner" aria-live="polite"></div>
         <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
         <header class="topbar erp-topbar">
           <div class="title" id="pageTitle">Maintenance center</div>
@@ -2882,22 +2882,22 @@
         <div id="rep-overview" class="reports-tab">
           <div class="panel">
             <div class="panel-head">
-              <div class="panel-title">Executive overview</div>
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+                <span>Executive overview</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About executive overview">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Connect <strong>QuickBooks</strong> first when you need live bills and invoices. <strong>Refresh reports</strong> rebuilds this hub from cached ERP + QBO data; <strong>Sync QuickBooks lists + activity</strong> reloads the catalog and recent transactions for the configured time window before you refresh.
+                  </span>
+                </span>
+              </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <button type="button" onclick="loadReportsData()">Refresh reports</button>
                 <button type="button" class="secondary" title="Reload QuickBooks lists and recent transactions for reports" onclick="refreshQboMaster()">Sync QuickBooks lists + activity</button>
               </div>
             </div>
             <div class="panel-body" id="repOverviewBody">
-              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
-                <span class="mini-note" style="margin:0">Connect QuickBooks, then refresh this board.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Refresh reports">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    After you connect QuickBooks, use <strong>Refresh reports</strong> to pull catalog plus bills, purchases, and invoices for the configured time window.
-                  </span>
-                </span>
-              </div>
+              <p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Connect QuickBooks, then use the actions above to load data.</p>
             </div>
           </div>
         </div>
@@ -3050,33 +3050,42 @@
             </div>
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 10px">Filter the grid by unit, dates, record type, and search — open <strong>?</strong> for column semantics.</p>
-              <div id="repMaintDetailFilters" class="wo-line-grid rep-maint-detail-filters" style="margin-bottom:10px">
-                <div style="grid-column:span 2">
-                  <span class="qb-l">Unit</span>
-                  <input id="repMaintUnit" class="qb-in" list="unitOptions" placeholder="All units" oninput="renderMaintDetailedReport()" />
-                </div>
-                <div>
-                  <span class="qb-l">From</span>
-                  <input id="repMaintFrom" class="qb-in" type="date" onchange="renderMaintDetailedReport()" />
-                </div>
-                <div>
-                  <span class="qb-l">To</span>
-                  <input id="repMaintTo" class="qb-in" type="date" onchange="renderMaintDetailedReport()" />
-                </div>
-                <div>
-                  <span class="qb-l">Record type</span>
-                  <select id="repMaintType" class="qb-in" onchange="renderMaintDetailedReport()">
-                    <option value="all">All</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="repair">Repair</option>
-                    <option value="tire">Tire</option>
-                    <option value="accident">Accident</option>
-                    <option value="custom">Custom</option>
-                  </select>
-                </div>
-                <div style="grid-column:span 3">
-                  <span class="qb-l">Search</span>
-                  <input id="repMaintSearch" class="qb-in" placeholder="Service, vendor, invoice, WO, notes, planned work…" oninput="renderMaintDetailedReport()" />
+              <div
+                class="mr-filter-bar erp-ops-filter-bar"
+                role="group"
+                aria-label="Detailed maintenance report filters"
+                style="margin-bottom:10px;align-items:flex-start"
+              >
+                <div class="mr-filter-bar__grow" style="min-width:0;width:100%">
+                  <div id="repMaintDetailFilters" class="wo-line-grid rep-maint-detail-filters" style="margin-bottom:0">
+                    <div style="grid-column:span 2">
+                      <span class="qb-l">Unit</span>
+                      <input id="repMaintUnit" class="qb-in" list="unitOptions" placeholder="All units" oninput="renderMaintDetailedReport()" />
+                    </div>
+                    <div>
+                      <span class="qb-l">From</span>
+                      <input id="repMaintFrom" class="qb-in" type="date" onchange="renderMaintDetailedReport()" />
+                    </div>
+                    <div>
+                      <span class="qb-l">To</span>
+                      <input id="repMaintTo" class="qb-in" type="date" onchange="renderMaintDetailedReport()" />
+                    </div>
+                    <div>
+                      <span class="qb-l">Record type</span>
+                      <select id="repMaintType" class="qb-in" onchange="renderMaintDetailedReport()">
+                        <option value="all">All</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="repair">Repair</option>
+                        <option value="tire">Tire</option>
+                        <option value="accident">Accident</option>
+                        <option value="custom">Custom</option>
+                      </select>
+                    </div>
+                    <div style="grid-column:span 3">
+                      <span class="qb-l">Search</span>
+                      <input id="repMaintSearch" class="qb-in" placeholder="Service, vendor, invoice, WO, notes, planned work…" oninput="renderMaintDetailedReport()" />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div id="repMaintDetailStatus" class="mini-note" style="margin-bottom:8px">Open this report to load.</div>
@@ -3154,8 +3163,8 @@
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(820px,100%)">
-              <p class="mini-note" style="margin:0">
-                Roadmap tab — jurisdiction miles, fuel tax, and driver compliance will layer on existing <strong>fuel</strong>, <strong>ELD</strong>, <strong>settlement</strong>, and <strong>QBO</strong> data. Open <strong>?</strong> for the full plan and what already ships.
+              <p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">
+                Roadmap tab — open <strong>?</strong> on the title for jurisdiction miles, fuel tax, driver compliance, and what already ships today.
               </p>
             </div>
           </div>
@@ -6212,7 +6221,9 @@
       if (!mbEl) return;
       if (!keepPagerPage) repMaintByUnitPager.page = 1;
       if (!mb.length) {
-        mbEl.innerHTML = '<p class="mini-note">No maintenance records yet.</p>';
+        mbEl.innerHTML =
+          '<p class="mini-note" style="margin:0 0 6px">No maintenance expense rows in this rollup yet.</p>' +
+          '<p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Post or import maintenance expenses, then use <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -6263,7 +6274,7 @@
       const ov = document.getElementById('repOverviewBody');
       if (ov) {
         ov.innerHTML = `
-          <p class="mini-note">Generated: ${escapeHtml(d.generatedAt || '')} · QBO cache refreshed: ${
+          <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label,#6b7385)">Generated: ${escapeHtml(d.generatedAt || '')} · QBO cache refreshed: ${
             qc.refreshedAt ? escapeHtml(new Date(qc.refreshedAt).toLocaleString()) : '—'
           }</p>
           <div class="grid grid-4" style="margin-top:12px">
@@ -6286,15 +6297,20 @@
       if (tb) {
         if (!tms.configured) {
           tb.innerHTML =
-            '<p class="mini-note">PostgreSQL / TMS not configured. Set DATABASE_URL and run <code>npm run db:migrate</code>.</p>';
+            '<p class="mini-note" style="margin:0 0 6px">PostgreSQL / TMS not configured.</p>' +
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Set <code>DATABASE_URL</code> and run <code>npm run db:migrate</code>.</p>';
         } else if (!tms.ok) {
-          tb.innerHTML = '<p class="mini-note">TMS error: ' + escapeHtml(tms.error || '') + '</p>';
+          tb.innerHTML =
+            '<p class="mini-note" style="margin:0 0 6px">Could not read the TMS summary.</p>' +
+            '<p class="mini-note" style="margin:0;color:var(--color-semantic-error,#b91c1c)">' +
+            escapeHtml(tms.error || 'Unknown error') +
+            '</p>';
         } else {
           const rows = Object.entries(tms.byStatus || {})
             .map(([status, c]) => `<tr><td>${escapeHtml(status)}</td><td>${c}</td></tr>`)
             .join('');
           tb.innerHTML = `
-            <p class="mini-note">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
+            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385)">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
             <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:560px">
               <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>${
                 rows || '<tr><td colspan="2">No loads</td></tr>'
@@ -6309,13 +6325,14 @@
       if (qbEl) {
         if (!ta || !ta.startDate) {
           qbEl.innerHTML =
-            '<p class="mini-note">No QuickBooks transaction window loaded. Set <code>QBO_SYNC_TRANSACTION_DAYS</code> in server env (e.g. 90), connect QuickBooks, then run <strong>Sync QuickBooks lists + activity</strong> or <strong>Refresh QuickBooks lists</strong> in the top bar.</p>';
+            '<p class="mini-note" style="margin:0 0 6px">No QuickBooks transaction window loaded yet.</p>' +
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">Connect QuickBooks, set <code>QBO_SYNC_TRANSACTION_DAYS</code> on the server if needed (e.g. 90), then run <strong>Sync QuickBooks lists + activity</strong> from the overview or <strong>Refresh QuickBooks lists</strong> in the top bar.</p>';
         } else {
           const tot = ta.totals || {};
           qbEl.innerHTML = `
-            <p class="mini-note">Window: last ${ta.windowDays} days (TxnDate ≥ ${escapeHtml(
+            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385)">Window: last <strong>${ta.windowDays}</strong> days (from <strong>${escapeHtml(
             ta.startDate || ''
-          )}) · Up to 200 rows per type from QuickBooks.</p>
+          )}</strong>) · up to 200 rows per type.</p>
             <div class="grid grid-4" style="margin-bottom:12px">
               <div class="metric"><div class="metric-label">Bills Σ $</div><div class="metric-value">${Number(tot.bills || 0).toFixed(0)}</div></div>
               <div class="metric"><div class="metric-label">Purchases Σ $</div><div class="metric-value">${Number(tot.purchases || 0).toFixed(0)}</div></div>
@@ -6342,7 +6359,7 @@
           { label: 'AP / expense transactions', p: post.apTransactions }
         ];
         syEl.innerHTML = `
-          <p class="mini-note">Counts of rows saved in this app that were posted to QuickBooks vs still local-only or error.</p>
+          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385)">Posted vs local-only vs error — by source (see <strong>?</strong> on the panel title for context).</p>
           <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:720px">
             <table style="font-size:12px">
               <thead><tr><th>Source</th><th>Total</th><th>Posted</th><th>Local only</th><th>Error</th></tr></thead>
@@ -6356,7 +6373,7 @@
               </tbody>
             </table>
           </div>
-          <p class="mini-note" style="margin-top:12px">Post from Maintenance and Accounting tabs; master lists (vendors, customers, classes/units, items) refresh via QuickBooks sync.</p>
+          <p class="mini-note" style="margin-top:12px;color:var(--color-text-label,#6b7385)">Post from <strong>Maintenance</strong> / <strong>Accounting</strong>; refresh master lists via QuickBooks sync.</p>
         `;
       }
     }
