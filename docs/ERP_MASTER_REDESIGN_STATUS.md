@@ -108,7 +108,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 23 — Pagination
 
-- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state). Not literally every table >10 rows.
+- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**). Not literally every table >10 rows.
 
 ### Rule 24 — Connection verification on load
 
@@ -131,6 +131,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 11. **Rule 22 (tire WO):** **Tire** record first-tire / same-invoice copy → compact line + **`erp-help-tip`** panel in **`maintenance.html`**.
 12. **Documentation:** **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)** — consolidated changelog, rule matrix, recommendations, verification, risks.
 13. **Rule 23 + 22 (shop board):** **`maintenance.html`** — shop queue tables (**internal**, **external**, **roadside**, **parts**) use **`erpPagerRender`** with **`shopQueuePager`** state (default 15 rows/page; filters reset page). **Parts** tab intro uses compact copy + **`erp-help-tip`**.
+14. **Rule 23 (fuel expense grid):** **`maintenance.html`** — **`#fuelExpPagerHost`** + **`fuelExpensePager`** slice the fuel expense table; **`postFuelExpenseToQbo`** reads ERP row + draft when the row is not on the current page so **Record filtered to QuickBooks** still posts the full filtered set.
 
 ---
 

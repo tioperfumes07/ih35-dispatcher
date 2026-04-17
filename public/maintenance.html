@@ -2499,6 +2499,7 @@
                   </tbody>
                 </table>
               </div>
+              <div id="fuelExpPagerHost" hidden></div>
             </div>
           </div>
         </div>
@@ -3690,6 +3691,8 @@
       roadside: { page: 1, pageSize: 15, filterKey: '' },
       parts: { page: 1, pageSize: 15, filterKey: '' }
     };
+    /** Rule 23 — accounting fuel expense grid */
+    let fuelExpensePager = { page: 1, pageSize: 15, filterKey: '' };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -8865,6 +8868,8 @@
         const data = await j('/api/fuel/purchases');
         const rows = Array.isArray(data.purchases) ? data.purchases : [];
         window.__fuelPurchasesRows = rows;
+        fuelExpensePager.page = 1;
+        fuelExpensePager.filterKey = '';
         acctApplyRelayFuelImportMetaFromPayload(data);
         if (st) st.textContent = `${rows.length} fuel purchase row(s) loaded.`;
         renderFuelExpenseRows();
@@ -8880,6 +8885,11 @@
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
         if (tb) tb.innerHTML = '<tr><td colspan="18" class="mini-note">Failed to load.</td></tr>';
+        const ph = document.getElementById('fuelExpPagerHost');
+        if (ph) {
+          ph.innerHTML = '';
+          ph.hidden = true;
+        }
       }
     }
 
@@ -9130,13 +9140,35 @@
 
     function renderFuelExpenseRows() {
       const tb = document.getElementById('fuelExpBody');
+      const pagerHost = document.getElementById('fuelExpPagerHost');
       if (!tb) return;
       const filtered = filterFuelPurchasesForExpenseTab();
 
       if (!filtered.length) {
         tb.innerHTML = '<tr><td colspan="18" class="mini-note">No rows for current filters.</td></tr>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
         return;
       }
+
+      const q = String(document.getElementById('fuelExpSearch')?.value || '').trim().toLowerCase();
+      const from = String(document.getElementById('fuelExpFrom')?.value || '').trim();
+      const to = String(document.getElementById('fuelExpTo')?.value || '').trim();
+      const filterKey = `${q}|${from}|${to}`;
+      const pState = fuelExpensePager;
+      if (pState.filterKey !== filterKey) {
+        pState.page = 1;
+        pState.filterKey = filterKey;
+      }
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const total = filtered.length;
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const pageSlice = filtered.slice(start, start + ps);
       const fuelClassSelectHtml = selectedVal => {
         const sv = String(selectedVal || '');
         let h = `<option value=""${!sv ? ' selected' : ''}>— Auto (match unit)—</option>`;
@@ -9147,7 +9179,7 @@
         }
         return h;
       };
-      tb.innerHTML = filtered
+      tb.innerHTML = pageSlice
         .map(r => {
           const rid = String(r.id || '');
           const idEsc = escapeHtml(rid);
@@ -9316,11 +9348,28 @@
           </tr>`;
         })
         .join('');
+
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderFuelExpenseRows();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
     }
 
     /**
      * Post one fuel row to QBO. Returns { ok, fuelPurchase?, validationError?, error? }.
      * Used by single Post and by bulk "Post filtered to QuickBooks".
+     * When the row is not in the DOM (e.g. another pager page), fields are taken from ERP data + saved draft + name resolution.
      */
     async function postFuelExpenseToQbo(fuelId) {
       resolveFuelExpBank();
@@ -9329,26 +9378,23 @@
       const fid = String(fuelId).replace(/"/g, '');
       const tr = document.querySelector('#fuelExpBody tr[data-fuel-id="' + fid + '"]');
       const st = tr ? tr.querySelector('.fuel-post-status') : null;
-      if (!tr) {
-        return { ok: false, validationError: 'Could not find fuel row in the table (refresh and try again).' };
-      }
-      blurFuelRowVendor(tr.querySelector('.fuel-vendor'));
-      blurFuelRowItem(tr.querySelector('.fuel-item'));
-      blurFuelRowDriverVend(tr.querySelector('.fuel-driver-vend'));
-      blurFuelRowCust(tr.querySelector('.fuel-cust'));
-      blurFuelRowPaymentMethod(tr.querySelector('.fuel-pm'));
-      blurFuelRowBank(tr.querySelector('.fuel-bank'));
       const rowsSnap = Array.isArray(window.__fuelPurchasesRows) ? window.__fuelPurchasesRows : [];
       const fpRow = rowsSnap.find(x => String(x.id) === String(fid)) || {};
+      if (String(fpRow.qboSyncStatus || '').trim() === 'posted') {
+        return { ok: false, validationError: 'This fuel line is already posted to QuickBooks.' };
+      }
+      if (tr) {
+        blurFuelRowVendor(tr.querySelector('.fuel-vendor'));
+        blurFuelRowItem(tr.querySelector('.fuel-item'));
+        blurFuelRowDriverVend(tr.querySelector('.fuel-driver-vend'));
+        blurFuelRowCust(tr.querySelector('.fuel-cust'));
+        blurFuelRowPaymentMethod(tr.querySelector('.fuel-pm'));
+        blurFuelRowBank(tr.querySelector('.fuel-bank'));
+      }
       const erpDraft =
         fpRow.fuelExpenseDraft && typeof fpRow.fuelExpenseDraft === 'object' ? fpRow.fuelExpenseDraft : {};
       const winDraft = (window.__fuelExpenseDraft && window.__fuelExpenseDraft[fid]) || {};
       const rowDraft = { ...erpDraft, ...winDraft };
-      const bankId = String(
-        rowDraft.qboBankAccountId || document.getElementById('fuelExpBankQboId')?.value || ''
-      ).trim();
-      const paymentMethodId = String(rowDraft.paymentMethodId || '').trim() || 'pm_other';
-      const docNumber = String(tr.querySelector('.fuel-exp-doc')?.value || rowDraft.expenseDocNumber || fpRow.expenseDocNumber || '').trim();
       const draftMode = String(rowDraft.detailMode || '').toLowerCase();
       const useCat =
         draftMode === 'item' ? false : draftMode === 'category' ? true : !!document.getElementById('fuelExpUseCategory')?.checked;
@@ -9359,20 +9405,92 @@
             .trim()
             .replace(/\D/g, '')
       ).trim();
-      const qboClassId = String(tr.querySelector('.fuel-class-sel')?.value || '').trim();
-      const qboVendorId = String(tr.querySelector('.fuel-vendor-id')?.value || '').trim();
-      const qboItemId = String(
-        tr.querySelector('.fuel-item-id')?.value ||
-          rowDraft.itemId ||
-          ''
-      )
-        .trim()
-        .replace(/\D/g, '');
-      const qty = Number(tr.querySelector('.fuel-qty')?.value || 0);
-      const lineAmt = Number(tr.querySelector('.fuel-line')?.value || 0);
-      const driverMemo = String(tr.querySelector('.fuel-driver')?.value || '').trim();
-      const driverVendorQboId = String(tr.querySelector('.fuel-driver-vend-id')?.value || '').trim();
-      let qboCustomerId = String(tr.querySelector('.fuel-cust-id')?.value || '').trim();
+      const bankId = String(
+        rowDraft.qboBankAccountId ||
+          (tr ? String(tr.querySelector('.fuel-bank-id')?.value || '').trim() : '') ||
+          String(document.getElementById('fuelExpBankQboId')?.value || '')
+      ).trim();
+      const paymentMethodId =
+        String((tr ? tr.querySelector('.fuel-pm-id')?.value : '') || rowDraft.paymentMethodId || '').trim() || 'pm_other';
+
+      let docNumber;
+      let qboClassId;
+      let qboVendorId;
+      let qboItemId;
+      let qty;
+      let lineAmt;
+      let driverMemo;
+      let driverVendorQboId;
+      let qboCustomerId;
+      if (tr) {
+        docNumber = String(tr.querySelector('.fuel-exp-doc')?.value || rowDraft.expenseDocNumber || fpRow.expenseDocNumber || '').trim();
+        qboClassId = String(tr.querySelector('.fuel-class-sel')?.value || '').trim();
+        qboVendorId = String(tr.querySelector('.fuel-vendor-id')?.value || '').trim();
+        qboItemId = String(tr.querySelector('.fuel-item-id')?.value || rowDraft.itemId || '')
+          .trim()
+          .replace(/\D/g, '');
+        qty = Number(tr.querySelector('.fuel-qty')?.value || 0);
+        lineAmt = Number(tr.querySelector('.fuel-line')?.value || 0);
+        driverMemo = String(tr.querySelector('.fuel-driver')?.value || '').trim();
+        driverVendorQboId = String(tr.querySelector('.fuel-driver-vend-id')?.value || '').trim();
+        qboCustomerId = String(tr.querySelector('.fuel-cust-id')?.value || '').trim();
+      } else {
+        docNumber = String(
+          rowDraft.expenseDocNumber || fpRow.expenseDocNumber || fpRow.relayDocNumber || fpRow.relayExpenseNo || ''
+        ).trim();
+        const autoCls = qboClassIdForFuelUnitName(fpRow.unit);
+        qboClassId =
+          rowDraft.qboClassId != null && String(rowDraft.qboClassId) !== ''
+            ? String(rowDraft.qboClassId).trim()
+            : String(autoCls || '').trim();
+        const vendSearchRaw =
+          rowDraft.vendorSearch !== undefined && rowDraft.vendorSearch !== ''
+            ? String(rowDraft.vendorSearch)
+            : String(fpRow.vendor || '');
+        qboVendorId =
+          String(rowDraft.vendorId || '').trim() ||
+          (() => {
+            const m = findBestNameMatch(cacheVendors(), vendSearchRaw);
+            return m ? String(m.qboId) : '';
+          })();
+        const itemSearchRaw =
+          rowDraft.itemSearch !== undefined && rowDraft.itemSearch !== '' ? String(rowDraft.itemSearch) : '';
+        qboItemId =
+          String(rowDraft.itemId || '')
+            .trim()
+            .replace(/\D/g, '') ||
+          (() => {
+            if (!itemSearchRaw) return '';
+            const m = findBestNameMatch(cacheItems(), itemSearchRaw);
+            return m ? String(m.qboId).replace(/\D/g, '') : '';
+          })();
+        const gal = fpRow.gallons != null ? Number(fpRow.gallons) : null;
+        const tot = Number(fpRow.totalCost || 0) || 0;
+        const galStr = gal != null && Number.isFinite(gal) ? gal.toFixed(3) : '1';
+        const qtyStr = rowDraft.qty !== undefined && rowDraft.qty !== '' ? String(rowDraft.qty) : galStr;
+        const lineStr = rowDraft.line !== undefined && rowDraft.line !== '' ? String(rowDraft.line) : tot.toFixed(2);
+        qty = Number(qtyStr || 0);
+        lineAmt = Number(lineStr || 0);
+        driverMemo = String(rowDraft.driver != null ? rowDraft.driver : '').trim();
+        const dvRaw =
+          rowDraft.driverVendSearch !== undefined && rowDraft.driverVendSearch !== ''
+            ? String(rowDraft.driverVendSearch)
+            : '';
+        driverVendorQboId =
+          String(rowDraft.driverVendId || '').trim() ||
+          (() => {
+            const m = findBestNameMatch(cacheVendors(), dvRaw);
+            return m ? String(m.qboId) : '';
+          })();
+        const custRaw =
+          rowDraft.custSearch !== undefined && rowDraft.custSearch !== '' ? String(rowDraft.custSearch) : '';
+        qboCustomerId =
+          String(rowDraft.custId || '').trim() ||
+          (() => {
+            const m = findBestNameMatch(cacheQboCustomers(), custRaw);
+            return m ? String(m.qboId) : '';
+          })();
+      }
       if (!qboCustomerId) qboCustomerId = String(document.getElementById('fuelExpDefaultCustomerQboId')?.value || '').trim();
       if (detailMode === 'item' && !qboItemId) {
         return { ok: false, validationError: 'Choose a QuickBooks item for this fuel line (or enable category line).' };
@@ -9461,7 +9579,7 @@
       if (r.error && !st2) erpNotify(r.error);
     }
 
-    /** Queue one QBO Purchase per visible unposted row (same rules as row Post). ~400ms between calls to ease rate limits. */
+    /** Queue one QBO Purchase per filtered unposted row (all pages; same rules as row Post). ~400ms between calls to ease rate limits. */
     async function postFilteredFuelExpensesToQuickBooks() {
       const statusEl = document.getElementById('fuelExpStatus');
       const filtered = filterFuelPurchasesForExpenseTab();

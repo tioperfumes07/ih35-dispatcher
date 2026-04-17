@@ -53,7 +53,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 | File | Changes |
 |------|---------|
-| **`public/maintenance.html`** | `design-tokens.css`, `#erpToastHost`, `erp-ui.js`, `showErpToast` → `showToast`, **`erpNotify`** replaces **`alert`**, save split / busy patterns (prior), **accident** + **tire** WO Rule 22 tips; **shop board** queue tables paginated (**`erpPagerRender`** + **`shopQueuePager`**); **parts** queue tab Rule 22 tip. |
+| **`public/maintenance.html`** | `design-tokens.css`, `#erpToastHost`, `erp-ui.js`, `showErpToast` → `showToast`, **`erpNotify`** replaces **`alert`**, save split / busy patterns (prior), **accident** + **tire** WO Rule 22 tips; **shop board** queue tables paginated (**`erpPagerRender`** + **`shopQueuePager`**); **parts** queue tab Rule 22 tip; **Fuel expense** accounting grid paginated (**`fuelExpensePager`**) with off-page **`postFuelExpenseToQbo`** draft/data path for bulk QBO post. |
 | **`public/dispatch.html`** | Tokens, toast host, `erp-ui.js`, intro + stops help tips, `erpWithBusy` / `showToast` on refresh, QBO catalog, save, uploads, PDF, auto miles, row QBO, quick-add, `patchStatus`, escaped `showMsg`, `loadTab(rethrow)` for manual refresh. |
 | **`public/fuel.html`** | Tokens, toast host, `erp-ui.js`, toasts + busy on key actions, **`erpNotify`**, **`--color-bg-page`** body, **connection strip** + `load` mount. |
 | **`public/banking.html`** | Tokens, toast host, `erp-ui.js`, toasts + busy, Rule 22 tip, **`erpNotify`**, pager on suggestions, **`--color-bg-page`**, **connection strip** + `load` mount. |
@@ -92,7 +92,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 | **20** | Button loading | **Done (pattern)** — `erpWithBusy` on key flows incl. dispatch rows. |
 | **21** | QBO error banner | **Partial** — maintenance has messaging; compare to spec. |
 | **22** | “?” tips | **Done (pattern)** + **samples**; many maintenance paragraphs remain. |
-| **23** | Pagination | **Partial** — banking/settings suggest tables; maintenance tables largely unwired. |
+| **23** | Pagination | **Partial** — banking/settings + maintenance **shop queues** + **fuel expense** grid wired; other long tables remain. |
 | **24** | Connection verification | **Partial** — maintenance sidebar + **new strip** on satellites/index; not universal Samsara+QBO banner everywhere. |
 
 ---
@@ -107,7 +107,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 ### P1 — UX consistency (no new APIs)
 
-1. **Maintenance `erpPagerRender`:** shop queue board (**internal / external / roadside / parts**) is wired. Next candidates: expense history, upload grids, or other long tables — same **`erpPagerRender`** + slice pattern.
+1. **Maintenance `erpPagerRender`:** shop queue board (**internal / external / roadside / parts**) and **accounting → Fuel expense** grid are wired. Next candidates: expense history, upload grids, or other long tables — same **`erpPagerRender`** + slice pattern.
 2. **More Rule 22:** convert long **`mini-note`** blocks in **accounting fuel**, **settlement**, and **upload center** tabs using the same **`erp-help-tip`** pattern as dispatch/accident/tire.
 3. **`erpMountConnectionStrip`:** optional second line **only if** a **cheap read-only** endpoint exists (avoid calling **`GET /api/board`** on every page load — it can fan out to Samsara; cache server-side or piggyback maintenance dashboard payload if product wants it).
 
@@ -137,6 +137,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 ## 7. Verification checklist (manual)
 
 - [ ] **Maintenance:** **Shop board** (internal / external / roadside / parts) — with 16+ filtered rows, pager appears; change page size; filters reset to page 1.
+- [ ] **Maintenance:** **Accounting → Fuel expense** — 16+ rows with date/search filter: pager appears; **Record filtered to QuickBooks** still processes unposted rows not on the current page (optional: narrow filters so some unposted rows sit on page 2, then bulk post).
 - [ ] **Maintenance:** open WO → **Accident** → help **?** opens/closes; Escape closes.
 - [ ] **Maintenance:** **Tire** record → first-tire help **?** panel.
 - [ ] **Dispatch:** Refresh, QBO catalog, save load, upload doc, auto miles, row **Create invoice** / **Sync attachments**, status select.
