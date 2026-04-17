@@ -9779,37 +9779,38 @@
       loadAccountingBillPaymentLog();
     }
 
-    function renderBpBillPaymentLogTable(entries) {
-      const tb = document.getElementById('bpLogBody');
-      if (!tb) return;
-      window.__bpBillPaymentLogRows = Array.isArray(entries) ? entries : [];
-      if (!entries || !entries.length) {
-        tb.innerHTML = '<tr><td colspan="8" class="mini-note">No rows.</td></tr>';
-        return;
-      }
-      tb.innerHTML = entries
-        .map(e => {
-          const lines = Array.isArray(e.lines) ? e.lines : [];
-          const bills =
-            lines.length > 0
-              ? lines
-                  .map(
-                    l =>
-                      `${escapeHtml(String(l.billDocNumber || l.billQboId || ''))}: $${(Number(l.amountPaid) || 0).toFixed(2)}` +
-                      (Number(l.balanceAfter) > 0.01 ? ` (rem $${(Number(l.balanceAfter) || 0).toFixed(2)})` : '')
-                  )
-                  .join('<br>')
-              : '—';
-          const tot = Number(e.totalAmt || 0).toFixed(2);
-          const reversed = !!e.reversedAt;
-          const revTag = reversed ? `<span class="status status-error" title="${escapeHtml(String(e.reversedAt || ''))}">reversed</span>` : '';
-          const btn =
-            reversed
-              ? ''
-              : `<button type="button" class="qb-btn-add" onclick="revertBillPaymentFromLog(${JSON.stringify(
-                  String(e.id || '')
-                )}, ${JSON.stringify(String(e.qboBillPaymentId || ''))})">Void in QBO</button>`;
-          return `<tr>
+    function bpFilteredBillPaymentLogEntries() {
+      const all = Array.isArray(window.__bpBillPaymentLogAllRows) ? window.__bpBillPaymentLogAllRows : [];
+      const q = String(document.getElementById('bpLogSearch')?.value || '').trim().toLowerCase();
+      if (!q) return all.slice();
+      return all.filter(e => {
+        const hay = `${e.vendorName || ''} ${e.vendorQboId || ''} ${e.billPaymentId || ''} ${e.docNumber || ''} ${e.privateNote || ''} ${e.recordedBy || ''} ${e.bankAccountName || ''} ${e.payType || ''}`.toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    function bpHtmlForBillPaymentLogRow(e) {
+      const lines = Array.isArray(e.lines) ? e.lines : [];
+      const bills =
+        lines.length > 0
+          ? lines
+              .map(
+                l =>
+                  `${escapeHtml(String(l.billDocNumber || l.billQboId || ''))}: $${(Number(l.amountPaid) || 0).toFixed(2)}` +
+                  (Number(l.balanceAfter) > 0.01 ? ` (rem $${(Number(l.balanceAfter) || 0).toFixed(2)})` : '')
+              )
+              .join('<br>')
+          : '—';
+      const tot = Number(e.totalAmt || 0).toFixed(2);
+      const reversed = !!e.reversedAt;
+      const revTag = reversed ? `<span class="status status-error" title="${escapeHtml(String(e.reversedAt || ''))}">reversed</span>` : '';
+      const btn =
+        reversed
+          ? ''
+          : `<button type="button" class="qb-btn-add" onclick="revertBillPaymentFromLog(${JSON.stringify(
+              String(e.id || '')
+            )}, ${JSON.stringify(String(e.qboBillPaymentId || ''))})">Void in QBO</button>`;
+      return `<tr>
             <td>${escapeHtml(String(e.txnDate || '').slice(0, 10) || '—')}</td>
             <td>${escapeHtml(String(e.vendorName || e.vendorQboId || '—'))}</td>
             <td>${escapeHtml(String(e.bankAccountName || '—'))}</td>
@@ -9819,24 +9820,76 @@
             <td class="mini-note" style="max-width:320px">${bills}</td>
             <td class="mini-note">${escapeHtml(String(e.recordedBy || '—'))}<div style="margin-top:6px">${btn}</div></td>
           </tr>`;
-        })
-        .join('');
+    }
+
+    function bpRenderBillPaymentLogPage() {
+      const tb = document.getElementById('bpLogBody');
+      const pagerHost = document.getElementById('bpLogPagerHost');
+      if (!tb) return;
+      const filtered = bpFilteredBillPaymentLogEntries();
+      window.__bpBillPaymentLogRows = filtered.slice();
+      const all = Array.isArray(window.__bpBillPaymentLogAllRows) ? window.__bpBillPaymentLogAllRows : [];
+      const q = String(document.getElementById('bpLogSearch')?.value || '').trim().toLowerCase();
+      const dataKey = `${all.length}|${String(all[0]?.id || '')}|${String(all[all.length - 1]?.id || '')}`;
+      const fk = `${q}|${dataKey}`;
+      const pState = bpLogPager;
+      if (pState.filterKey !== fk) {
+        pState.page = 1;
+        pState.filterKey = fk;
+      }
+      if (!filtered.length) {
+        tb.innerHTML = '<tr><td colspan="8" class="mini-note">No rows.</td></tr>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        return;
+      }
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const total = filtered.length;
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const slice = filtered.slice(start, start + ps);
+      tb.innerHTML = slice.map(e => bpHtmlForBillPaymentLogRow(e)).join('');
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            bpRenderBillPaymentLogPage();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
+    }
+
+    function renderBpBillPaymentLogTable(entries) {
+      window.__bpBillPaymentLogAllRows = Array.isArray(entries) ? entries : [];
+      bpLogPager.filterKey = '';
+      bpLogPager.page = 1;
+      bpRenderBillPaymentLogPage();
     }
 
     function bpApplyBillPaymentLogFilter() {
-      const q = String(document.getElementById('bpLogSearch')?.value || '').trim().toLowerCase();
-      const rows = Array.isArray(window.__bpBillPaymentLogRows) ? window.__bpBillPaymentLogRows : [];
-      if (!q) {
-        renderBpBillPaymentLogTable(rows);
-        return;
-      }
-      const filtered = rows.filter(e => {
-        const hay = `${e.vendorName || ''} ${e.vendorQboId || ''} ${e.billPaymentId || ''} ${e.docNumber || ''} ${e.privateNote || ''} ${e.recordedBy || ''} ${e.bankAccountName || ''} ${e.payType || ''}`.toLowerCase();
-        return hay.includes(q);
-      });
-      renderBpBillPaymentLogTable(filtered);
+      bpLogPager.filterKey = '';
+      bpLogPager.page = 1;
+      bpRenderBillPaymentLogPage();
       const st = document.getElementById('bpLogStatus');
-      if (st) st.textContent = `${filtered.length} shown (filtered) · ${rows.length} loaded.`;
+      const all = Array.isArray(window.__bpBillPaymentLogAllRows) ? window.__bpBillPaymentLogAllRows : [];
+      const filtered = bpFilteredBillPaymentLogEntries();
+      const q = String(document.getElementById('bpLogSearch')?.value || '').trim().toLowerCase();
+      if (st) {
+        st.textContent = q
+          ? `${filtered.length} shown (filtered) · ${all.length} loaded.`
+          : `${all.length} payment(s) loaded.`;
+      }
     }
 
     async function revertBillPaymentFromLog(erpLogId, qboBillPaymentId) {
@@ -9892,6 +9945,13 @@
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
         if (tb) tb.innerHTML = '<tr><td colspan="8" class="mini-note">Failed to load.</td></tr>';
+        window.__bpBillPaymentLogAllRows = [];
+        window.__bpBillPaymentLogRows = [];
+        const ph = document.getElementById('bpLogPagerHost');
+        if (ph) {
+          ph.innerHTML = '';
+          ph.hidden = true;
+        }
       }
     }
 
@@ -15083,14 +15143,34 @@
 
     function renderTrackingAssetsTable() {
       const tb = document.getElementById('trackingAssetsTableBody');
+      const pagerHost = document.getElementById('trackingAssetsPagerHost');
       if (!tb) return;
       const inp = document.getElementById('trackingAssetFilter');
       const q = (inp?.value || '').trim().toLowerCase();
       const list = vehicles.filter(v => !q || String(v.name || '').toLowerCase().includes(q)).sort(byUnitOrder);
-      tb.innerHTML =
-        list
-          .map(
-            v => `<tr>
+      const pState = trackingAssetsTablePager;
+      if (pState.filterKey !== q) {
+        pState.page = 1;
+        pState.filterKey = q;
+      }
+      if (!list.length) {
+        tb.innerHTML = '<tr><td colspan="6" class="mini-note">No rows.</td></tr>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        return;
+      }
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const total = list.length;
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const slice = list.slice(start, start + ps);
+      tb.innerHTML = slice
+        .map(
+          v => `<tr>
           <td>${escapeHtml(v.name)}</td>
           <td>${escapeHtml(v.assetCategory || '')}</td>
           <td>${v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : '—'}</td>
@@ -15098,26 +15178,76 @@
           <td>${escapeHtml(v.engineState || '')}</td>
           <td>${v.latitude != null ? escapeHtml(String(v.latitude)) + ', ' + escapeHtml(String(v.longitude)) : '—'}</td>
         </tr>`
-          )
-          .join('') || '<tr><td colspan="6" class="mini-note">No rows.</td></tr>';
+        )
+        .join('');
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderTrackingAssetsTable();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
     }
 
     function renderTrackingDrivers() {
       const tb = document.getElementById('trackingDriversBody');
+      const pagerHost = document.getElementById('trackingDriversPagerHost');
       if (!tb) return;
       const mode = document.getElementById('trackingDriversDutyFilter')?.value || 'relevant';
       const rows = applySafetyHosDutyMode((board.hos || []).map(normalizeHosClock), mode);
-      tb.innerHTML =
-        rows
-          .map(
-            r => `<tr>
+      const pState = trackingDriversPager;
+      if (pState.filterKey !== mode) {
+        pState.page = 1;
+        pState.filterKey = mode;
+      }
+      if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="4" class="mini-note">No rows.</td></tr>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        return;
+      }
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const total = rows.length;
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const slice = rows.slice(start, start + ps);
+      tb.innerHTML = slice
+        .map(
+          r => `<tr>
           <td>${escapeHtml(r.driver)}</td>
           <td>${escapeHtml(r.dutyType)}</td>
           <td>${escapeHtml(r.vehicle)}</td>
           <td>${escapeHtml(fmtDurationMs(r.dr))}</td>
         </tr>`
-          )
-          .join('') || '<tr><td colspan="4" class="mini-note">No rows.</td></tr>';
+        )
+        .join('');
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderTrackingDrivers();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
     }
 
     function selectTrackingVehicle(name) {
