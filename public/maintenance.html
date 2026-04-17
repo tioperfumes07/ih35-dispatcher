@@ -305,7 +305,7 @@
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About embedded planner">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
                   Same planner as the standalone page, without duplicate top navigation.
-                  <a href="/fuel.html" target="_blank" rel="noopener" style="color:#1967d2;font-weight:500">Open full screen</a>
+                  <a href="/fuel.html" target="_blank" rel="noopener" style="color:var(--color-border-focus,#1967d2);font-weight:500">Open full screen</a>
                 </span>
               </span>
             </div>
@@ -1261,8 +1261,8 @@
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tab meanings">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
                     Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
-                    <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:#1967d2;font-weight:500">Vehicle map</a>
-                    · <a href="#" onclick="openSectionByName('safety');return false;" style="color:#1967d2;font-weight:500">Safety / HOS</a>
+                    <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:var(--color-border-focus,#1967d2);font-weight:500">Vehicle map</a>
+                    · <a href="#" onclick="openSectionByName('safety');return false;" style="color:var(--color-border-focus,#1967d2);font-weight:500">Safety / HOS</a>
                   </span>
                 </span>
               </div>
@@ -3006,8 +3006,16 @@
 
         <div id="rep-maint" class="reports-tab hidden">
           <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">Maintenance spend by unit (ERP records)</div>
+            <div class="panel-head" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between">
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+                <span>Maintenance spend by unit (ERP records)</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Rolls up <strong>saved maintenance expense</strong> rows from this ERP by unit (same universe as the Maintenance Table, filtered server-side for the report). Use <strong>Download CSV</strong> for a spreadsheet export.
+                  </span>
+                </span>
+              </div>
               <div>
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/reports/export/maintenance-by-unit.csv">Download CSV</a>
               </div>
@@ -3018,11 +3026,19 @@
 
         <div id="rep-maint-detail" class="reports-tab hidden">
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">Maintenance detailed report (records + cost breakdown)</div></div>
+            <div class="panel-head">
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>Maintenance detailed report (records + cost breakdown)</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Lists each maintenance record with its full <strong>cost breakdown</strong>. When lines include position-based parts (tires, batteries, etc.), the report includes the position and part reference columns.
+                  </span>
+                </span>
+              </div>
+            </div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 10px">
-                Shows each maintenance record with its full cost breakdown. When lines include position-based parts (tires, batteries, etc.), the report includes the position + part reference.
-              </p>
+              <p class="mini-note" style="margin:0 0 10px">Filter the grid by unit, dates, record type, and search — open <strong>?</strong> for column semantics.</p>
               <div id="repMaintDetailFilters" class="wo-line-grid rep-maint-detail-filters" style="margin-bottom:10px">
                 <div style="grid-column:span 2">
                   <span class="qb-l">Unit</span>
@@ -3091,8 +3107,16 @@
         </div>
         <div id="rep-team" class="reports-tab hidden">
           <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">Team activity &amp; security posture</div>
+            <div class="panel-head" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between">
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+                <span>Team activity &amp; security posture</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this panel">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Loads roster snippets, recent sign-ins, and security posture text when you click <strong>Refresh panel</strong>. Aligns with <strong>Maintenance → Security alerts</strong> data where the same APIs are used.
+                  </span>
+                </span>
+              </div>
               <button type="button" onclick="loadTeamSecurityPanel()">Refresh panel</button>
             </div>
             <div class="panel-body form-stack" id="repTeamBody" style="max-width:min(960px,100%)">
@@ -4378,7 +4402,7 @@
           rows
             .map(e => {
               const st = String(e.status || 'queued');
-              const overdue = e.overdue ? ' <span style="color:#b45309;font-weight:500">(past est.)</span>' : '';
+              const overdue = e.overdue ? ' <span style="color:var(--color-semantic-warn-accent,#b45309);font-weight:500">(past est.)</span>' : '';
               return `<tr><td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(
                 e.assetCategory || ''
               )}</div></td><td>${escapeHtml(e.title || '')}${overdue}</td><td>${escapeHtml(statusLabel(st))}</td><td>${escapeHtml(
@@ -4859,7 +4883,7 @@
           if (bar) {
             bar.classList.remove('hidden');
             bar.innerHTML =
-              '<span>Login required — </span><a href="/settings.html" style="color:#1d4ed8;font-weight:500">Open Settings</a> to sign in.';
+              '<span>Login required — </span><a href="/settings.html" style="color:var(--color-border-focus,#1967d2);font-weight:500">Open Settings</a> to sign in.';
           }
         }
         throw new Error(data.error || data.message || text.slice(0, 200));
@@ -6202,7 +6226,7 @@
         reportsSummaryCache = await j('/api/reports/summary');
         renderReportsAll();
       } catch (e) {
-        if (ob) ob.innerHTML = '<p class="mini-note" style="color:#b91c1c">Failed: ' + escapeHtml(e.message || String(e)) + '</p>';
+        if (ob) ob.innerHTML = '<p class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">Failed: ' + escapeHtml(e.message || String(e)) + '</p>';
       }
     }
 
@@ -6228,7 +6252,7 @@
       try {
         posture = await j('/api/security/posture');
       } catch (e) {
-        host.innerHTML = `<p class="mini-note" style="color:#b91c1c">${escapeHtml(e.message || String(e))}</p>`;
+        host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">${escapeHtml(e.message || String(e))}</p>`;
         return;
       }
       if (posture.authDisabled) {
@@ -6294,7 +6318,11 @@
                             ? String(r.daysSinceActivity)
                             : '—';
                         const cl =
-                          r.alert === 'critical' ? '#b91c1c' : r.alert === 'warn' ? '#b45309' : 'var(--muted)';
+                          r.alert === 'critical'
+                            ? 'var(--color-semantic-error,#b91c1c)'
+                            : r.alert === 'warn'
+                              ? 'var(--color-semantic-warn-accent,#b45309)'
+                              : 'var(--muted)';
                         return `<tr>
                           <td>${escapeHtml(r.name || '')}<div class="mini-note">${escapeHtml(r.email || '')}</div></td>
                           <td>${escapeHtml(r.role || '')}</td>
@@ -6313,7 +6341,7 @@
               )}</strong> days · critical ≥ <strong>${escapeHtml(String(team.criticalDays ?? ''))}</strong> days. Override with <code>TEAM_ACTIVITY_WARN_DAYS</code> / <code>TEAM_ACTIVITY_CRITICAL_DAYS</code>.</p>
             </div>`;
         } catch (e) {
-          teamBlock = `<p class="mini-note" style="color:#b91c1c;margin-top:12px">Team roster: ${escapeHtml(e.message || String(e))}</p>`;
+          teamBlock = `<p class="mini-note" style="color:var(--color-semantic-error,#b91c1c);margin-top:12px">Team roster: ${escapeHtml(e.message || String(e))}</p>`;
         }
         try {
           const aud = await j('/api/security/audit-recent?limit=30');
@@ -6341,7 +6369,7 @@
               </div>
             </div>`;
         } catch (e) {
-          auditBlock = `<p class="mini-note" style="color:#b91c1c;margin-top:12px">Audit log: ${escapeHtml(e.message || String(e))}</p>`;
+          auditBlock = `<p class="mini-note" style="color:var(--color-semantic-error,#b91c1c);margin-top:12px">Audit log: ${escapeHtml(e.message || String(e))}</p>`;
         }
       } else {
         teamBlock = `<p class="mini-note" style="margin-top:12px;line-height:1.5">Signed in as <strong>${escapeHtml(
@@ -6349,7 +6377,15 @@
         )}</strong>. Team roster, vendor audit links, and the audit tail require an <strong>administrator</strong> account.</p>`;
       }
       host.innerHTML = `
-        <p class="mini-note" style="margin:0 0 8px;line-height:1.5">Use this board for <strong>fraud resistance</strong> (who can change money data) and <strong>staff engagement</strong> with this ERP. QuickBooks and Samsara each maintain their own login history for accounting and ELD staff.</p>
+        <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 8px">
+          <span class="mini-note" style="margin:0;line-height:1.5">Fraud resistance + staff engagement — QBO and Samsara keep separate staff login histories.</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              Use this board for <strong>fraud resistance</strong> (who can change money data) and <strong>staff engagement</strong> with this ERP. QuickBooks and Samsara each maintain their own login history for accounting and ELD staff.
+            </span>
+          </span>
+        </div>
         <div class="panel" style="box-shadow:none;border:1px solid var(--line)">
           <div class="panel-head"><div class="panel-title">Configuration posture</div></div>
           <div class="panel-body"><ul style="margin:0;padding-left:1.2rem">${checks}</ul></div>
@@ -6386,37 +6422,37 @@
         if (health && health.ok && health.hasSamsaraToken) {
           const n = health.samsaraVehicles != null ? String(health.samsaraVehicles) : '?';
           sEl.textContent = `Samsara: OK · ${n} vehicles (stats rows ${health.samsaraStatsRows ?? '—'})`;
-          sEl.style.color = '#065f46';
+          sEl.style.color = 'var(--color-semantic-success,#065f46)';
         } else if (health && !health.hasSamsaraToken) {
           sEl.textContent = 'Samsara: API token not set on server';
-          sEl.style.color = '#92400e';
+          sEl.style.color = 'var(--color-semantic-warning,#92400e)';
         } else {
           sEl.textContent = 'Samsara: check failed';
-          sEl.style.color = '#b91c1c';
+          sEl.style.color = 'var(--color-semantic-error,#b91c1c)';
         }
       }
       if (qEl) {
         if (qboSt && qboSt.configured && qboSt.connected) {
           qEl.textContent = `QuickBooks: connected${qboSt.companyName ? ' — ' + qboSt.companyName : ''}`;
-          qEl.style.color = '#065f46';
+          qEl.style.color = 'var(--color-semantic-success,#065f46)';
         } else if (qboSt && qboSt.configured) {
           qEl.textContent = 'QuickBooks: configured · not connected';
-          qEl.style.color = '#92400e';
+          qEl.style.color = 'var(--color-semantic-warning,#92400e)';
         } else if (qboSt) {
           qEl.textContent = 'QuickBooks: not configured';
-          qEl.style.color = '#64748b';
+          qEl.style.color = 'var(--color-text-label,#6b7385)';
         } else {
           qEl.textContent = 'QuickBooks: status unavailable';
-          qEl.style.color = '#b91c1c';
+          qEl.style.color = 'var(--color-semantic-error,#b91c1c)';
         }
       }
       if (aEl) {
         if (health && health.ok) {
           aEl.textContent = 'API health: OK';
-          aEl.style.color = '#065f46';
+          aEl.style.color = 'var(--color-semantic-success,#065f46)';
         } else {
           aEl.textContent = 'API health: ' + (health && health.error ? String(health.error).slice(0, 80) : 'failed');
-          aEl.style.color = '#b91c1c';
+          aEl.style.color = 'var(--color-semantic-error,#b91c1c)';
         }
       }
     }
@@ -6607,14 +6643,14 @@
       const fleetLn = document.getElementById('sidebarFleetStatus')?.textContent || '—';
       const brief = document.getElementById('sidebarQboAlertBrief')?.textContent || '';
       const dot = ok =>
-        `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:${ok ? '#1e8e3e' : '#d93025'}"></span>`;
+        `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:${ok ? 'var(--pill-green-text,#1e8e3e)' : 'var(--pill-red-text,#d93025)'}"></span>`;
       box.innerHTML =
         `<div style="font-size:11px;color:var(--color-text-body,#3c4257);line-height:1.6">` +
         `<div>${dot(qboOk)}QuickBooks: ${qboOk ? 'Connected' : 'Disconnected'} — ${escapeHtml(company)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(lastUp)}</div>` +
         `<div style="margin-top:4px">${escapeHtml(fleetLn)}</div>` +
         (nNote > 0
-          ? `<div style="margin-top:4px">Notices / errors: <strong style="color:#d93025">${nNote}</strong></div>`
+          ? `<div style="margin-top:4px">Notices / errors: <strong style="color:var(--pill-red-text,#d93025)">${nNote}</strong></div>`
           : `<div style="margin-top:4px">Notices / errors: 0</div>`) +
         (brief
           ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-label,#6b7385)">${escapeHtml(brief.slice(0, 200))}</div>`
@@ -7417,7 +7453,7 @@
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
         if (bar) {
           bar.classList.remove('hidden');
-          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:#1d4ed8;font-weight:500">Sign in</a>`;
+          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:var(--color-border-focus,#1967d2);font-weight:500">Sign in</a>`;
         }
       }
     }
@@ -7903,7 +7939,7 @@
         const el = document.getElementById('serviceCatalogAdminBody');
         if (el) {
           el.innerHTML =
-            '<span style="color:#b91c1c">Catalog admin needs DATABASE_URL: ' +
+            '<span style="color:var(--color-semantic-error,#b91c1c)">Catalog admin needs DATABASE_URL: ' +
             escapeHtml(e.message || String(e)) +
             '</span>';
         }
@@ -7921,7 +7957,7 @@
         renderSecurityAlerts(sec);
         renderSecurityAlerts(sec, maintSecurityAlertRenderOpts);
       } catch (e) {
-        const msg = '<span style="color:#b91c1c">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
+        const msg = '<span style="color:var(--color-semantic-error,#b91c1c)">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
         const el = document.getElementById('securityAlertsBody');
         if (el) el.innerHTML = msg;
         const el2 = document.getElementById('maintSecurityAlertsBody');
@@ -7939,7 +7975,7 @@
       if (!el) return;
       const payload = sec && sec.ok ? sec : window.__lastSecurityAlerts;
       if (!payload || !payload.ok) {
-        el.innerHTML = '<span style="color:#b91c1c">No alert data.</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">No alert data.</span>';
         return;
       }
       window.__lastSecurityAlerts = payload;
@@ -9100,7 +9136,7 @@
       }
       if (data.duplicates?.duplicateCount) {
         parts.push(
-          `<span style="color:#b45309;font-weight:500">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
+          `<span style="color:var(--color-semantic-warn-accent,#b45309);font-weight:500">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
         );
       }
       sum.innerHTML = parts.join('<br>');
@@ -10403,7 +10439,7 @@
               </div>
               ${
                 delayTxt
-                  ? `<div class="mini-note" style="color:#b45309;margin-top:4px">Bottleneck: ${delayTxt}</div>`
+                  ? `<div class="mini-note" style="color:var(--color-semantic-warn-accent,#b45309);margin-top:4px">Bottleneck: ${delayTxt}</div>`
                   : ''
               }
             </div>
@@ -10414,7 +10450,7 @@
                 <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>In progress</option>
                 <option value="finished" ${status === 'finished' ? 'selected' : ''}>Finished</option>
               </select>
-              <button type="button" class="mini-note" style="background:none;border:none;color:#64748b;cursor:pointer;text-decoration:underline;padding:0" data-shop-id="${escapeHtml(entry.id)}" onclick="removeShopQueueEntry(this.getAttribute('data-shop-id'))">Remove</button>
+              <button type="button" class="mini-note" style="background:none;border:none;color:var(--color-text-label,#6b7385);cursor:pointer;text-decoration:underline;padding:0" data-shop-id="${escapeHtml(entry.id)}" onclick="removeShopQueueEntry(this.getAttribute('data-shop-id'))">Remove</button>
             </div>
           </div>
         </div>`;
@@ -10650,7 +10686,7 @@
             return `
               <tr>
                 <td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(e.assetCategory || '')}</div></td>
-                <td>${escapeHtml(e.title || '')}${overdue ? '<div class="mini-note" style="color:#b45309;margin-top:4px"><strong>Past estimate</strong></div>' : ''}</td>
+                <td>${escapeHtml(e.title || '')}${overdue ? '<div class="mini-note" style="color:var(--color-semantic-warn-accent,#b45309);margin-top:4px"><strong>Past estimate</strong></div>' : ''}</td>
                 <td>${vendor ? escapeHtml(vendor) : '—'}</td>
                 <td style="text-align:center">${est != null && Number.isFinite(est) ? escapeHtml(String(est)) : '—'}</td>
                 <td>${escapeHtml(fmtIso(e.queuedAt))}</td>
@@ -11346,12 +11382,12 @@
       const diff = Math.abs(lineSum - inv);
       if (diff < 0.02) {
         matchEl.innerHTML =
-          '<span style="color:#15803d;font-weight:500">✓</span> Invoice total matches line sum: $' + lineSum.toFixed(2);
+          '<span style="color:var(--pill-green-text,#15803d);font-weight:500">✓</span> Invoice total matches line sum: $' + lineSum.toFixed(2);
         costEl.classList.add('cost-total-ok');
         costEl.classList.remove('cost-total-bad');
       } else {
         matchEl.innerHTML =
-          '<span style="color:#b91c1c;font-weight:500">✗</span> Invoice total $' +
+          '<span style="color:var(--color-semantic-error,#b91c1c);font-weight:500">✗</span> Invoice total $' +
           inv.toFixed(2) +
           ' ≠ line sum $' +
           lineSum.toFixed(2) +
@@ -11694,7 +11730,7 @@
           )
           .join('');
       } catch (e) {
-        box.innerHTML = '<span style="color:#b91c1c">' + escapeHtml(e.message || String(e)) + '</span>';
+        box.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -11726,7 +11762,7 @@
           )
           .join('');
       } catch (e) {
-        box.innerHTML = '<span style="color:#b91c1c">' + escapeHtml(e.message || String(e)) + '</span>';
+        box.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -11942,7 +11978,7 @@
         await runQbVendorSearch();
         await runSamDriverSearch();
       } catch (e) {
-        el.innerHTML = '<span style="color:#b91c1c">' + escapeHtml(e.message || String(e)) + '</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -11963,7 +11999,7 @@
             .join('') +
           '</ul>';
       } catch (e) {
-        el.innerHTML = '<span style="color:#b91c1c">' + escapeHtml(e.message || String(e)) + '</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error,#b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -13232,10 +13268,10 @@
     function paintQboStatusBanner(el, text, tier) {
       if (!el) return;
       const colors = {
-        info: { bg: '#f8fafc', border: '#cbd5e1', fg: '#334155' },
-        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: '#065f46' },
-        warn: { bg: '#fffbeb', border: '#fcd34d', fg: '#92400e' },
-        error: { bg: '#fef2f2', border: '#fecaca', fg: '#991b1b' }
+        info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body,#334155)' },
+        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success,#065f46)' },
+        warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning,#92400e)' },
+        error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text,#991b1b)' }
       };
       const c = colors[tier] || colors.info;
       el.style.display = 'block';
@@ -13261,10 +13297,10 @@
         return;
       }
       const colors = {
-        info: { bg: '#f8fafc', border: '#cbd5e1', fg: '#334155' },
-        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: '#065f46' },
-        warn: { bg: '#fffbeb', border: '#fcd34d', fg: '#92400e' },
-        error: { bg: '#fef2f2', border: '#fecaca', fg: '#991b1b' }
+        info: { bg: '#f8fafc', border: '#cbd5e1', fg: 'var(--color-text-body,#334155)' },
+        success: { bg: '#ecfdf5', border: '#6ee7b7', fg: 'var(--color-semantic-success,#065f46)' },
+        warn: { bg: '#fffbeb', border: '#fcd34d', fg: 'var(--color-semantic-warning,#92400e)' },
+        error: { bg: '#fef2f2', border: '#fecaca', fg: 'var(--btn-danger-text,#991b1b)' }
       };
       const c = colors[tier] || colors.info;
       el.style.display = 'flex';
@@ -13402,7 +13438,7 @@
               ${r.repairLocationType ? `<div class="mini-note">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
               ${r.accidentAtFault ? `<div class="mini-note">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
               ${r.qboPurchaseId ? `<div class="mini-note">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               ${formatPlannedWorkHtmlCard(r)}
               <div class="mini-note">${escapeHtml(r.notes || '')}</div>
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
@@ -14960,7 +14996,7 @@
             data.samsaraRefreshedAt || ''
           )}`;
         }
-        const notes = (data.notes || []).map(n => `<div class="mini-note" style="color:#b45309">${escapeHtml(n)}</div>`).join('');
+        const notes = (data.notes || []).map(n => `<div class="mini-note" style="color:var(--color-semantic-warn-accent,#b45309)">${escapeHtml(n)}</div>`).join('');
         if (meta && notes) meta.innerHTML += notes;
         const rows = data.vehicles || [];
         const fk = `${data.samsaraRefreshedAt || ''}|${rows.length}|${y.latitude}|${y.longitude}`;
@@ -14975,7 +15011,7 @@
         if (meta) meta.textContent = 'Error: ' + (e.message || String(e));
         if (tb) {
           tb.innerHTML =
-            '<tr><td colspan="10" class="mini-note" style="color:#b91c1c">Could not load idle snapshot. Check Samsara token and server logs.</td></tr>';
+            '<tr><td colspan="10" class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">Could not load idle snapshot. Check Samsara token and server logs.</td></tr>';
         }
         if (pagerHost) {
           pagerHost.innerHTML = '';
@@ -15566,7 +15602,7 @@
         return `
             <div class="record-card"${voided ? ' style="opacity:0.88"' : ''}>
               <div class="record-head">
-                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:#b91c1c;font-weight:700">VOID</span>' : ''}</div>
+                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:var(--color-semantic-error,#b91c1c);font-weight:700">VOID</span>' : ''}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
               <div class="mini-note"><strong>WO #</strong> ${escapeHtml(r.workOrderNumber || '—')} <span class="muted">(system)</span></div>
@@ -15581,7 +15617,7 @@
               <div class="mini-note">${lineSumm}</div>
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
               ${r.importBatchId ? `<div class="mini-note">Import batch: ${escapeHtml(r.importBatchId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/work-order/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 ${postBtn}
@@ -15615,7 +15651,7 @@
               ${r.detailMode === 'category' ? `<div class="mini-note">Category: ${escapeHtml(accountName(r.qboAccountId))}</div>` : ''}
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
               ${r.importBatchId ? `<div class="mini-note">Import batch: ${escapeHtml(r.importBatchId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:#b91c1c">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/ap-transaction/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="recordApToQboWithConfirm('${r.id}')">Record to QuickBooks</button>
@@ -16252,7 +16288,7 @@
       } catch (e) {
         const tb = document.getElementById('settlementIndexBody');
         if (tb) {
-          tb.innerHTML = `<tr><td colspan="6" class="mini-note" style="color:#b91c1c">${escapeHtml(e.message)}</td></tr>`;
+          tb.innerHTML = `<tr><td colspan="6" class="mini-note" style="color:var(--color-semantic-error,#b91c1c)">${escapeHtml(e.message)}</td></tr>`;
         }
         if (pagerHost) {
           pagerHost.innerHTML = '';
