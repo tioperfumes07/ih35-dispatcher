@@ -362,7 +362,7 @@
               <button type="button" class="erp-btn-primary" onclick="openBookModal()">Book new load</button>
               <button type="button" class="secondary" id="dispatchBtnRefreshBoard" onclick="refreshDispatchBoard(true)" title="Reload loads and fleet data">Refresh</button>
               <button type="button" class="secondary" onclick="window.print()" title="Print this screen (loads or fleet tab)">Print view</button>
-              <button type="button" class="secondary" id="dispatchBtnSyncQboCatalog" onclick="refreshQboCatalog()" title="Reload vendors, items, and accounts from QuickBooks">Sync QuickBooks catalog</button>
+              <button type="button" class="secondary" id="dispatchBtnSyncQboCatalog" onclick="refreshQboCatalog(true)" title="Reload vendors, items, and accounts from QuickBooks">Sync QuickBooks catalog</button>
               <span id="qboCatStatus" class="muted" style="font-size:12px;max-width:200px"></span>
             </div>
           </header>
@@ -531,7 +531,7 @@
             <span class="lbl">Quick add truck</span>
             <div style="display:flex;gap:8px">
               <input class="in" id="f_new_truck" placeholder="Unit e.g. T172" style="flex:1" />
-              <button type="button" class="btn btn-ghost" onclick="quickAddTruck()">Add</button>
+              <button type="button" class="btn btn-ghost" id="dispatchBtnQuickAddTruck" onclick="quickAddTruck()">Add</button>
             </div>
           </div>
           <div class="row">
@@ -547,7 +547,7 @@
             <span class="lbl">Quick add trailer</span>
             <div style="display:flex;gap:8px">
               <input class="in" id="f_new_trailer" placeholder="Unit e.g. 10219" style="flex:1" />
-              <button type="button" class="btn btn-ghost" onclick="quickAddTrailer()">Add</button>
+              <button type="button" class="btn btn-ghost" id="dispatchBtnQuickAddTrailer" onclick="quickAddTrailer()">Add</button>
             </div>
           </div>
           <div class="row">
@@ -598,7 +598,7 @@
           <strong>Pickup &amp; delivery stops</strong>
           <div class="stops-actions">
             <button type="button" class="btn btn-ghost" onclick="addStopRow()">+ Add stop</button>
-            <button type="button" class="btn btn-ghost" onclick="autoMilesFromStops()" title="Geocode each stop address, then fill practical/shortest miles per leg">Auto miles</button>
+            <button type="button" class="btn btn-ghost" id="dispatchBtnAutoMiles" onclick="autoMilesFromStops()" title="Geocode each stop address, then fill practical/shortest miles per leg">Auto miles</button>
             <button type="button" class="btn btn-ghost" onclick="applyStopMilesToHeader()" title="Sum stop miles into header loaded/empty fields">Sum → header</button>
             <span class="link" style="cursor:pointer" onclick="updateStopMilesSummary()" title="Recalculate totals">Refresh totals</span>
           </div>
@@ -1430,9 +1430,10 @@
       syncQboInvoiceItemDatalist();
     }
 
-    async function refreshQboCatalog() {
-      showMsg('');
-      try {
+    async function refreshQboCatalog(fromToolbar) {
+      const btn = fromToolbar ? document.getElementById('dispatchBtnSyncQboCatalog') : null;
+      const run = async () => {
+        showMsg('');
         const r = await fetch('/api/qbo/catalog/refresh', {
           method: 'POST',
           headers: { Accept: 'application/json' }
@@ -1444,18 +1445,33 @@
         syncCustomerDatalist();
         syncTruckClassDatalist();
         syncQboInvoiceItemDatalist();
-        showMsg('QuickBooks catalog updated.');
         await refreshQboCatalogIntervalsUi();
-        setTimeout(() => showMsg(''), 2500);
+      };
+      try {
+        if (btn && typeof erpWithBusy === 'function') {
+          await erpWithBusy(btn, run);
+        } else {
+          await run();
+        }
+        if (typeof showToast === 'function') showToast('QuickBooks catalog updated.', 'success');
       } catch (e) {
         showMsg(e.message || String(e), true);
+        if (typeof showToast === 'function') showToast(e.message || String(e), 'error');
       }
     }
 
     function showMsg(text, isErr) {
       const el = document.getElementById('msg');
-      if (!text) { el.innerHTML = ''; return; }
-      el.innerHTML = '<div class="banner' + (isErr ? ' err' : '') + '">' + text + '</div>';
+      if (!text) {
+        el.innerHTML = '';
+        return;
+      }
+      el.innerHTML =
+        '<div class="banner' +
+        (isErr ? ' err' : '') +
+        '">' +
+        escapeHtml(text) +
+        '</div>';
     }
 
     async function api(path, opt) {
@@ -1591,13 +1607,13 @@
           '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">' +
           '<button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="createQboInvoiceForLoad(' +
           JSON.stringify(l.load_number) +
-          ')">Create in QuickBooks</button>' +
+          ', this)">Create in QuickBooks</button>' +
           (l.qbo_invoice_id
             ? '<button type="button" class="sm" style="padding:4px 8px;cursor:pointer" onclick="syncLoadDocsToQboFromRow(' +
               JSON.stringify(l.id) +
               ',' +
               JSON.stringify(l.load_number || '') +
-              ')">Sync QuickBooks attachments</button>'
+              ', this)">Sync QuickBooks attachments</button>'
             : '') +
           '</div>';
         return '<tr>' +
@@ -1656,7 +1672,8 @@
           if (as.errors && as.errors.length)
             msg += '. ' + as.errors.length + ' file(s) failed (check Maintenance or server log).';
         }
-        showMsg(msg);
+        if (typeof showToast === 'function') showToast(msg, 'success');
+        else showMsg(msg);
         const newInv = String(j.qboEntityId || '').trim();
         if (
           newInv &&
@@ -1670,6 +1687,7 @@
         loadTab();
       } catch (e) {
         showMsg(e.message || String(e), true);
+        if (typeof showToast === 'function') showToast(e.message || String(e), 'error');
       }
     }
 
@@ -1696,24 +1714,40 @@
           if (j.skipped) msg += ' (' + j.skipped + ' already linked)';
           if (j.errors && j.errors.length) msg += ' · ' + j.errors.length + ' failed (see server log).';
         }
-        showMsg(msg);
+        if (typeof showToast === 'function') showToast(msg, 'success');
+        else showMsg(msg);
         if (typeof refreshLoadDocsList === 'function') await refreshLoadDocsList();
         loadTab();
       } catch (e) {
         showMsg(e.message || String(e), true);
+        if (typeof showToast === 'function') showToast(e.message || String(e), 'error');
+        throw e;
       }
     }
 
     async function syncLoadDocsToQboFromRow(loadId, loadNumber) {
-      await syncLoadDocsToQbo(loadId, loadNumber);
+      try {
+        await syncLoadDocsToQbo(loadId, loadNumber);
+      } catch (_) {}
     }
 
     async function syncLoadDocsToQboFromBoard() {
       if (!currentDocsLoadId) {
         showMsg('No load in context.', true);
+        if (typeof showToast === 'function') showToast('No load in context.', 'error');
         return;
       }
-      await syncLoadDocsToQbo(currentDocsLoadId, currentDocsLoadNumber || null);
+      const btn = document.getElementById('docsSyncQboBtn');
+      const run = async () => {
+        await syncLoadDocsToQbo(currentDocsLoadId, currentDocsLoadNumber || null);
+      };
+      try {
+        if (typeof erpWithBusy === 'function' && btn) {
+          await erpWithBusy(btn, run);
+        } else {
+          await run();
+        }
+      } catch (_) {}
     }
 
     function escapeHtml(s) {
@@ -1924,24 +1958,35 @@
       const fileEl = document.getElementById('doc_file');
       const typeEl = document.getElementById('doc_type');
       if (!fileEl || !fileEl.files || !fileEl.files[0]) {
-        alert('Choose a file first.');
+        if (typeof showToast === 'function') showToast('Choose a file first.', 'warning');
+        else alert('Choose a file first.');
         return;
       }
-      const fd = new FormData();
-      fd.append('file', fileEl.files[0]);
-      fd.append('doc_type', typeEl ? typeEl.value : 'other');
-      try {
+      const btn = document.getElementById('dispatchBtnUploadDoc');
+      const run = async () => {
+        const fd = new FormData();
+        fd.append('file', fileEl.files[0]);
+        fd.append('doc_type', typeEl ? typeEl.value : 'other');
         const r = await fetch('/api/tms/loads/' + encodeURIComponent(currentDocsLoadId) + '/documents', {
           method: 'POST',
           body: fd
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || r.statusText);
+      };
+      try {
+        if (typeof erpWithBusy === 'function' && btn) {
+          await erpWithBusy(btn, run);
+        } else {
+          await run();
+        }
         fileEl.value = '';
         await refreshLoadDocsList();
         loadTab();
+        if (typeof showToast === 'function') showToast('Document uploaded.', 'success');
       } catch (e) {
-        alert(e.message || String(e));
+        if (typeof showToast === 'function') showToast(e.message || String(e), 'error');
+        else alert(e.message || String(e));
       }
     }
 
@@ -2051,11 +2096,31 @@
       }
     }
 
-    function refreshDispatchBoard() {
-      loadMaintenanceDispatchAlerts();
-      loadDispatchSidebarStatus();
-      if (currentTab === 'fleet') loadFleetTab();
-      else loadTab();
+    async function refreshDispatchBoard(fromUser) {
+      const user = !!fromUser;
+      const run = async () => {
+        await loadMaintenanceDispatchAlerts();
+        await loadDispatchSidebarStatus();
+        if (currentTab === 'fleet') await loadFleetTab();
+        else await loadTab(user);
+      };
+      if (user) {
+        const btn = document.getElementById('dispatchBtnRefreshBoard');
+        try {
+          if (typeof erpWithBusy === 'function' && btn) {
+            await erpWithBusy(btn, run);
+          } else {
+            await run();
+          }
+          if (typeof showToast === 'function') showToast('Board refreshed.', 'success');
+        } catch (e) {
+          if (typeof showToast === 'function') showToast(e.message || String(e), 'error');
+        }
+      } else {
+        try {
+          await run();
+        } catch (_) {}
+      }
     }
 
     let boardSearchTimer = null;
@@ -2069,7 +2134,7 @@
       boardSearchTimer = setTimeout(() => loadTab(), 400);
     }
 
-    async function loadTab() {
+    async function loadTab(rethrowOnError) {
       showMsg('');
       setListView('loads');
       try {
@@ -2081,6 +2146,7 @@
       } catch (e) {
         showMsg(e.message || String(e), true);
         document.getElementById('tbody').innerHTML = '';
+        if (rethrowOnError) throw e;
       }
     }
 
@@ -2335,6 +2401,7 @@
     }
 
     async function autoMilesFromStops() {
+      const btn = document.getElementById('dispatchBtnAutoMiles');
       const rows = Array.from(document.querySelectorAll('.stop-block'));
       const addresses = rows
         .map(r => {
@@ -2345,10 +2412,11 @@
         })
         .filter(Boolean);
       if (addresses.length < 2) {
-        alert('Enter at least two stops with address or location text.');
+        if (typeof showToast === 'function') showToast('Enter at least two stops with address or location text.', 'warning');
+        else alert('Enter at least two stops with address or location text.');
         return;
       }
-      try {
+      const run = async () => {
         const r = await fetch('/api/tms/compute-leg-miles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -2369,19 +2437,26 @@
         });
         updateStopMilesSummary();
         applyStopMilesToHeader();
-        showMsg(
-          '<strong>Leg miles applied</strong> (row 2 = stop 1→2, …). Loaded / empty totals in the header were updated from stop types. Practical ≈ OSRM driving; shortest = straight-line per leg. For PC*Miler-style “shortest practical,” connect Trimble when licensed.',
-          false
-        );
+      };
+      try {
+        if (typeof erpWithBusy === 'function' && btn) {
+          await erpWithBusy(btn, run);
+        } else {
+          await run();
+        }
+        const detail =
+          'Leg miles applied (row 2 = stop 1→2, …). Header loaded/empty totals updated from stop types. Practical ≈ OSRM; shortest = straight-line per leg. For PC*Miler-style practical miles, configure the server.';
+        showMsg(detail, false);
         setTimeout(() => showMsg(''), 12000);
+        if (typeof showToast === 'function') showToast('Leg miles applied — review stop rows and header.', 'success');
       } catch (e) {
-        const msg = e.message || String(e);
-        alert(
-          msg +
-            (msg.includes('geocode') || msg.includes('Geocode')
-              ? '\n\nTip: use a full street address in the stop (or set GEOAPIFY_API_KEY on the server for faster geocoding).'
-              : '')
-        );
+        let msg = e.message || String(e);
+        if (msg.includes('geocode') || msg.includes('Geocode')) {
+          msg +=
+            '\n\nTip: use a full street address in the stop (or set GEOAPIFY_API_KEY on the server for faster geocoding).';
+        }
+        if (typeof showToast === 'function') showToast(msg, 'error');
+        else alert(msg);
       }
     }
 
@@ -2630,11 +2705,21 @@
       document.getElementById('f_trailer_id').value = j.data.id;
     }
 
+    async function dispatchApplyRateConPdf() {
+      const btn = document.getElementById('dispatchBtnRateConPdf');
+      if (typeof erpWithBusy === 'function' && btn) {
+        await erpWithBusy(btn, () => applyRateConPdf());
+      } else {
+        await applyRateConPdf();
+      }
+    }
+
     async function applyRateConPdf() {
       const input = document.getElementById('rateConPdfInput');
       const statusEl = document.getElementById('rateConPdfStatus');
       if (!input?.files?.[0]) {
         if (statusEl) statusEl.textContent = 'Choose a PDF first.';
+        if (typeof showToast === 'function') showToast('Choose a PDF first.', 'warning');
         return;
       }
       if (statusEl) statusEl.textContent = 'Reading PDF…';
@@ -2685,9 +2770,11 @@
             'Applied heuristics (hints: ' + (p.hints && p.hints.length ? p.hints.join(', ') : 'none') + '). Review all fields.';
         }
         if (typeof updateTruckMaintBanner === 'function') updateTruckMaintBanner();
+        if (typeof showToast === 'function') showToast('PDF hints applied — review all fields.', 'success');
       } catch (e) {
         if (statusEl) statusEl.textContent = '';
         showMsg(e.message || String(e), true);
+        if (typeof showToast === 'function') showToast(e.message || String(e), 'error');
       }
     }
 
@@ -2764,18 +2851,33 @@
         invoice_extra_lines: collectInvoiceExtraLines(),
         stops
       };
-      try {
+      const saveBtn = document.getElementById('saveLoadBtn');
+      const doSave = async () => {
         const wasEdit = !!editingLoadId;
         if (wasEdit) {
           await api('/loads/' + encodeURIComponent(editingLoadId), { method: 'PATCH', body: common });
         } else {
           await api('/loads', { method: 'POST', body: { ...common, load_number } });
         }
+        return wasEdit;
+      };
+      try {
+        let wasEdit;
+        if (typeof erpWithBusy === 'function' && saveBtn) {
+          wasEdit = await erpWithBusy(saveBtn, doSave);
+        } else {
+          wasEdit = await doSave();
+        }
         closeBookModal();
-        showMsg(wasEdit ? 'Load updated.' : 'Load saved.');
         loadTab();
+        if (typeof showToast === 'function') {
+          showToast(wasEdit ? 'Load updated.' : 'Load saved.', 'success');
+        } else {
+          showMsg(wasEdit ? 'Load updated.' : 'Load saved.', false);
+        }
       } catch (e) {
         showMsg(e.message, true);
+        if (typeof showToast === 'function') showToast(e.message || String(e), 'error');
       }
     }
 
@@ -2798,7 +2900,9 @@
       await loadDispatchSidebarStatus();
     })();
 
-    setInterval(refreshDispatchBoard, DISPATCH_AUTO_REFRESH_MS);
+    setInterval(() => {
+      void refreshDispatchBoard(false);
+    }, DISPATCH_AUTO_REFRESH_MS);
   </script>
 </body>
 </html>
