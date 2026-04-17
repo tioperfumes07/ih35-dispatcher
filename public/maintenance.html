@@ -5104,7 +5104,7 @@
       else {
         for (const k of keys) {
           const list = byLoc[k].slice(0, 14);
-          html += `<div style="margin:10px 0 4px;font-weight:500;font-size:12px;color:#334155">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
+          html += `<div style="margin:10px 0 4px;font-weight:500;font-size:12px;color:var(--color-text-body,#334155)">${escapeHtml(k)}</div><ul style="margin:0;padding-left:1.1rem;line-height:1.5">`;
           for (const r of list) {
             const svc = String(r.serviceType || '').trim() || '—';
             const st = String(r.qboSyncStatus || r.syncStatus || 'local').trim();
@@ -9149,7 +9149,7 @@
             .join('')
         : '<p class="mini-note" style="margin:0">No integrity alerts for current filters.</p>';
       const dr = (payload.driverRiskAlerts || []).length
-        ? `<div style="margin:12px 0 6px;font-weight:500;font-size:13px;color:#0f172a">Driver / damage expense signals</div>` +
+        ? `<div style="margin:12px 0 6px;font-weight:500;font-size:13px;color:var(--color-text-primary,#0f172a)">Driver / damage expense signals</div>` +
           (payload.driverRiskAlerts || [])
             .map(a => {
               const cls =
@@ -11888,7 +11888,7 @@
                 <td>${escapeHtml(fmtIso(e.startedAt))}</td>
                 <td>${escapeHtml(fmtIso(e.finishedAt))}</td>
                 <td>
-                  <select class="qb-in" style="font-size:12px;max-width:200px;${overdue ? 'border-color:#f59e0b' : ''}" data-shop-id="${id}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
+                  <select class="qb-in" style="font-size:12px;max-width:200px;${overdue ? 'border-color:var(--color-semantic-warn-accent,#f59e0b)' : ''}" data-shop-id="${id}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
                     <option value="queued" ${status === 'queued' ? 'selected' : ''}>${statusLabel('queued')}</option>
                     <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>${statusLabel('in_progress')}</option>
                     <option value="finished" ${status === 'finished' ? 'selected' : ''}>${statusLabel('finished')}</option>
