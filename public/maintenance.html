@@ -2676,7 +2676,14 @@
                   </span>
                 </span>
               </div>
-              <div class="wo-line-grid" style="margin-bottom:10px">
+              <div
+                class="mr-filter-bar erp-ops-filter-bar"
+                role="group"
+                aria-label="Expense history filters"
+                style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap"
+              >
+                <div class="mr-filter-bar__grow" style="min-width:0;flex:1 1 320px">
+                  <div class="wo-line-grid" style="margin-bottom:0">
                 <div>
                   <span class="qb-l">From date</span>
                   <input id="expHistDateFrom" class="qb-in" type="date" onchange="renderExpenseHistory()">
@@ -2700,12 +2707,14 @@
                   <span class="qb-l">Search (doc, vendor, unit, memo)</span>
                   <input id="expHistSearch" class="qb-in" placeholder="Type to filter…" oninput="expHistSearchDebounce()">
                 </div>
-              </div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+                  </div>
+                </div>
+                <div class="mr-filter-bar__right" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:2px">
                 <button type="button" class="qb-btn-add" onclick="setExpenseHistoryPreset(7)">Last 7 days</button>
                 <button type="button" class="qb-btn-add" onclick="setExpenseHistoryPreset(30)">Last 30 days</button>
                 <button type="button" class="qb-btn-add" onclick="setExpenseHistoryPreset(90)">Last 90 days</button>
                 <button type="button" class="qb-btn-add" onclick="clearExpenseHistoryDates()">All dates</button>
+                </div>
               </div>
               <div
                 id="expHistQboBanner"

@@ -88,7 +88,7 @@ PRs that change `server.js` persistence should still describe intent and risk br
 | **12** | Maintenance layout | **Partial / evolving** — **Lists** shell target + **Service types (DB)** filter/pager in **Lists & catalogs**; **Accounting → QuickBooks rollback** title tip + compact intro. |
 | **13** | Accounting board | **Partial** — KPI strip; **`#authBanner`** **`erp-auth-banner`** on **maintenance** + **banking**; **QuickBooks Live Master** title **`erp-help-tip`** + token-backed QBO banners in **AP** / **expense history** chrome. |
 | **14** | Upload center | **Partial** — tips shipped; sub-tabs **A–Z**; manual file QA **Future**. |
-| **15** | Filter bar | **Partial** — security alerts + **Lists & catalogs → Service types (DB)** search row + **Reports → Maintenance detailed** + **Accounting → Fuel expenses** + **Pay bills** composer + **Recent bill payments** log **`mr-filter-bar`**; not every table. |
+| **15** | Filter bar | **Partial** — security alerts + **Lists & catalogs → Service types (DB)** search row + **Reports → Maintenance detailed** + **Accounting → Fuel expenses** + **Expense history** + **Pay bills** composer + **Recent bill payments** log **`mr-filter-bar`**; not every table. |
 | **16** | Safety / HOS | **Partial**. |
 | **17** | Reports | **Partial** — hub + **Executive overview** title **`erp-help-tip`**; **QBO / sync / IFTA** body intros shortened in **`renderReportsAll`**; **TMS** + **spend-by-unit** empty states aligned with headline + muted second line; **Settlement** TMS trip box + **Driver pay settlements** title tip + short body. |
 | **18** | QBO GET aliases | **Skipped** — existing catalog routes; thin aliases optional product call. |
