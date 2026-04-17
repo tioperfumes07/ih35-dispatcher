@@ -749,6 +749,28 @@ body.settings-page .mr-filter-bar button:focus-visible {
   outline-offset: 2px;
 }
 
+/* Workspace strip on satellites + dispatch: spec sans + medium weight (Rules 0 + 2; hub / maintenance unchanged). */
+body.fuel-board .board-nav-wrap,
+body.banking-page .board-nav-wrap,
+body.settings-page .board-nav-wrap,
+body.dispatch-page .board-nav-wrap {
+  font-family: var(--font-spec-sans, var(--font-sans, system-ui, sans-serif));
+}
+
+body.fuel-board .board-nav-trigger,
+body.banking-page .board-nav-trigger,
+body.settings-page .board-nav-trigger,
+body.dispatch-page .board-nav-trigger {
+  font-weight: 500;
+}
+
+body.fuel-board .board-nav-strip-toggle,
+body.banking-page .board-nav-strip-toggle,
+body.settings-page .board-nav-strip-toggle,
+body.dispatch-page .board-nav-strip-toggle {
+  font-weight: 500;
+}
+
 body.erp-maintenance .mr-filter-chipwrap {
   position: relative;
 }
