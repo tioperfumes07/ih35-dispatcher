@@ -615,7 +615,7 @@ body.erp-maintenance .mr-violation-legend {
   gap: 16px;
   padding: 8px 0;
   font-size: 12px;
-  color: #5f6368;
+  color: var(--color-text-label, #5f6368);
   align-items: center;
 }
 
@@ -633,13 +633,13 @@ body.erp-maintenance .mr-violation-legend__dot {
 }
 
 body.erp-maintenance .mr-violation-legend__dot--pink {
-  background: #fce8e6;
-  border: 1px solid #c5221f;
+  background: var(--pill-red-bg, #fce8e6);
+  border: 1px solid var(--pill-red-text, #c5221f);
 }
 
 body.erp-maintenance .mr-violation-legend__dot--yellow {
-  background: #fef7e0;
-  border: 1px solid #b06000;
+  background: var(--pill-yellow-bg, #fef7e0);
+  border: 1px solid var(--pill-yellow-text, #b06000);
 }
 
 body.erp-maintenance .mr-filter-bar,
@@ -700,6 +700,11 @@ body.erp-maintenance .mr-filter-inline-select {
   max-width: 260px;
 }
 
+body.erp-maintenance .mr-filter-inline-select:focus-visible {
+  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline-offset: 2px;
+}
+
 body.erp-maintenance .mr-filter-search {
   width: 200px;
   max-width: 100%;
@@ -709,6 +714,18 @@ body.erp-maintenance .mr-filter-search {
   font-size: 12px;
   background: var(--color-bg-header, #f1f3f4);
   border: 1px solid transparent;
+}
+
+body.erp-maintenance .mr-filter-search:focus-visible {
+  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline-offset: 2px;
+}
+
+body.erp-maintenance .mr-filter-bar .qb-in:focus-visible,
+body.erp-maintenance .mr-filter-bar .in:focus-visible,
+body.erp-maintenance .mr-filter-bar select.in:focus-visible {
+  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline-offset: 2px;
 }
 
 body.erp-maintenance .mr-filter-chipwrap {
