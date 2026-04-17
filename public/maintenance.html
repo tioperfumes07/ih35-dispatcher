@@ -6293,7 +6293,9 @@
     }
 
     function erpDocClickCloseNew(ev) {
-      if (!ev.target.closest('.erp-new-wrap')) erpCloseNewMenu();
+      const t = ev && ev.target;
+      if (!t || typeof t.closest !== 'function') return;
+      if (!t.closest('.erp-new-wrap')) erpCloseNewMenu();
     }
 
     function erpNewExpense() {
@@ -6639,9 +6641,14 @@
 
     function openSection(name, btn) {
       if (name !== 'maintenance') closeMaintWorkOrderModal();
+      const secEl = document.getElementById(`section-${name}`);
+      if (!secEl) {
+        console.warn('openSection: missing #section-' + name);
+        return;
+      }
       activeSection = name;
       document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-      document.getElementById(`section-${name}`).classList.add('active');
+      secEl.classList.add('active');
       document.querySelectorAll('#erpIconNav .nav-btn[data-section], #erpSectionGhostNav .nav-btn[data-section]').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
 
@@ -6832,6 +6839,11 @@
     window.addEventListener('hashchange', applyNavHash);
 
     function openAccountingTab(id, btn) {
+      const acctPanel = document.getElementById(id);
+      if (!acctPanel) {
+        console.warn('openAccountingTab: missing #' + id);
+        return;
+      }
       if (window.__erpDedicatedModalKind === 'ap' && id !== 'acct-transactions') {
         erpCloseDedicatedFormModal({ force: true });
       }
@@ -6845,7 +6857,7 @@
         erpCloseDedicatedFormModal({ force: true });
       }
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
-      document.getElementById(id).classList.remove('hidden');
+      acctPanel.classList.remove('hidden');
       document.querySelectorAll('#section-accounting .subtab').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
       if (id === 'acct-transactions') {
@@ -8525,6 +8537,11 @@
         if (bar) {
           bar.classList.remove('hidden');
           bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:var(--color-border-focus,#1967d2);font-weight:500">Sign in</a>`;
+        }
+        try {
+          applyNavHash();
+        } catch (e2) {
+          console.error('applyNavHash after load failure', e2);
         }
       }
     }
