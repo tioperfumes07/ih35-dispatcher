@@ -2,7 +2,8 @@
 /**
  * Non-destructive HTTP checks against a running server (default http://127.0.0.1:3400).
  * Run: `npm start` in another terminal, then `npm run smoke`.
- * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings) and checks for stable substring(s).
+ * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings) and checks for stable substring(s),
+ * plus static CSS/JS (design-tokens, app-theme, maint-accounting, board-nav, erp-ui) for HTTP 200 + stable header needles.
  * Set SMOKE_BASE=http://host:port to target another environment.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
@@ -32,12 +33,23 @@ const HTML_PAGES = [
     '/maintenance.html',
     [
       'section-reports',
+      'section-dashboard',
+      'section-fuel',
+      'section-safety',
+      'section-tracking',
       'section-accounting',
       'section-uploads',
       'section-maintenance',
       'section-catalog',
+      'maint-action-strip',
+      'maint-page-shell',
+      'shopBoardSubtabs',
+      'id="erpApp"',
+      'id="erpToastHost"',
+      'id="qboSyncAlertBar"',
       'erp-reports-shell',
       'acct-dash-kpis',
+      'id="acctBoardStrip"',
       'erpConnectionStrip',
       'topbar-hint-wrap'
     ]
@@ -47,6 +59,15 @@ const HTML_PAGES = [
   ['/banking.html', ['banking-page', 'erpConnectionStrip']],
   ['/settings.html', ['settings-page', 'erpConnectionStrip']],
   ['/tracking.html', ['maintenance.html#tracking']]
+];
+
+/** Static assets (200 + stable header): `[path, needle]` or `[path, needle, accept]`. */
+const STATIC_TEXT = [
+  ['/css/design-tokens.css', 'IH35 ERP — Master spec design tokens (Rule 0).'],
+  ['/css/maint-accounting-ui-2026.css', 'Maintenance center action strip'],
+  ['/css/app-theme.css', 'IH35 — shared visual language'],
+  ['/css/board-nav.css', 'Persistent operations bar'],
+  ['/js/erp-ui.js', 'IH35 ERP — shared UI helpers', '*/*']
 ];
 
 const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 8000));
@@ -83,6 +104,26 @@ async function oneHtml(path, needleOrList) {
     ? `contains ${needles.map(n => `"${n}"`).join(' + ')}`
     : r.ok
       ? `missing ${missing.map(n => `"${n}"`).join(', ')}`
+      : '';
+  return {
+    path,
+    status: r.status,
+    ok: r.ok && has,
+    hint,
+    jsonSnippet: r.ok ? `bytes=${text.length}` : text.slice(0, 80)
+  };
+}
+
+async function oneStatic(path, needle, accept = 'text/css,*/*') {
+  const url = base + path;
+  const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
+  const r = await fetch(url, { method: 'GET', headers: { Accept: accept }, signal: ctrl });
+  const text = await r.text();
+  const has = Boolean(needle && text.includes(needle));
+  const hint = has
+    ? `contains "${needle}"`
+    : r.ok
+      ? `missing "${needle}"`
       : '';
   return {
     path,
@@ -141,6 +182,22 @@ for (const [method, path] of CRITICAL) {
 for (const [path, needle] of HTML_PAGES) {
   try {
     const row = await oneHtml(path, needle);
+    const pass = row.ok;
+    if (!pass) criticalFailures++;
+    console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${path} ${row.hint}`.trim());
+    if (!pass) console.log('   ', row.jsonSnippet);
+  } catch (e) {
+    criticalFailures++;
+    console.log(`✗ FAIL GET ${path}: ${e.message || e}`);
+  }
+}
+
+for (const entry of STATIC_TEXT) {
+  const path = entry[0];
+  const needle = entry[1];
+  const accept = entry[2] || 'text/css,*/*';
+  try {
+    const row = await oneStatic(path, needle, accept);
     const pass = row.ok;
     if (!pass) criticalFailures++;
     console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${path} ${row.hint}`.trim());

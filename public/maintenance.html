@@ -1466,7 +1466,7 @@
               </div>
               <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
                 <button type="button" onclick="window.print()">Print</button>
-                <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg-card,var(--panel));color:var(--text);font-size:13px">PDF</a>
+                <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg-card,var(--panel));color:var(--color-text-body,var(--text));font-size:13px">PDF</a>
                 <button type="button" title="Reload fleet, shop, and accounting data" onclick="loadAll()">Refresh</button>
               </div>
             </div>
@@ -6418,9 +6418,9 @@
     }
 
     const ERP_WRENCH_ICON =
-      '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="#137333" d="M22.7 19.3l-3-3a1 1 0 0 0-1.4 0l-.8.8-4.3-4.3a8 8 0 1 0-2.8 2.8l4.3 4.3.8-.8a1 1 0 0 0 0-1.4l3-3a1 1 0 0 0 0-1.4zM7 9a2 2 0 1 1 4 0 2 2 0 0 1-4 0z"/></svg>';
+      '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="var(--pill-green-text)" d="M22.7 19.3l-3-3a1 1 0 0 0-1.4 0l-.8.8-4.3-4.3a8 8 0 1 0-2.8 2.8l4.3 4.3.8-.8a1 1 0 0 0 0-1.4l3-3a1 1 0 0 0 0-1.4zM7 9a2 2 0 1 1 4 0 2 2 0 0 1-4 0z"/></svg>';
     const ERP_PUMP_ICON =
-      '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="#1967d2" d="M5 22V10h4V6h6v4h4v12H5zm6-12V8H9v2h2zm-4 4h10v-2H7v2zm0 4h10v-2H7v2z"/></svg>';
+      '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="var(--color-border-focus)" d="M5 22V10h4V6h6v4h4v12H5zm6-12V8H9v2h2zm-4 4h10v-2H7v2zm0 4h10v-2H7v2z"/></svg>';
 
     let __erpDriverPayeeVendorIdSet = null;
     let __erpDedicatedEscHandler = null;
@@ -7619,10 +7619,10 @@
         const side = document.getElementById('sidebarQboAlertBrief');
         if (p === 'granted' && side) {
           side.textContent = 'Desktop notifications on for QuickBooks errors.';
-          side.style.color = '#86efac';
+          side.style.color = 'var(--color-success-border-soft)';
         } else if (p === 'denied' && side) {
           side.textContent = 'Notifications blocked in browser settings.';
-          side.style.color = '#fca5a5';
+          side.style.color = 'var(--pill-red-text)';
         }
       });
     }
@@ -7909,7 +7909,7 @@
             </div>
           </div>`;
         if (side) {
-          side.style.color = '#fca5a5';
+          side.style.color = 'var(--pill-red-text)';
           side.textContent = 'Could not load posting alerts.';
         }
         syncAcctDashFromQboPayload();
@@ -7933,7 +7933,7 @@
           if (configured && connected) {
             side.textContent = 'QuickBooks: no posting alerts.';
           } else if (configured && !connected) {
-            side.style.color = '#fde68a';
+            side.style.color = 'var(--color-warning-border-soft)';
             side.textContent = 'QuickBooks: not connected — posting is off.';
           } else {
             side.textContent = '';
@@ -7965,7 +7965,7 @@
       bar.setAttribute('aria-label', 'QuickBooks synchronization notices');
 
       if (side) {
-        side.style.color = high ? '#fca5a5' : '#fde68a';
+        side.style.color = high ? 'var(--pill-red-text)' : 'var(--color-warning-border-soft)';
         const parts = [`${alerts.length} notice(s)`];
         if (high) parts.push(`${high} error(s)`);
         if (med) parts.push(`${med} pending`);
@@ -16232,13 +16232,17 @@
       if (!trackingMap || !trackingMarkersLayer) return;
       trackingMarkersLayer.clearLayers();
       const bounds = [];
+      const tok = n => (getComputedStyle(document.documentElement).getPropertyValue(n) || '').trim();
+      const cFocus = tok('--color-border-focus') || '#1967d2';
+      const cAccent = tok('--color-hub-accent') || '#3b82f6';
+      const cMuted = tok('--color-text-label') || '#64748b';
       for (const v of vehicles) {
         if (v.latitude == null || v.longitude == null) continue;
         bounds.push([v.latitude, v.longitude]);
         const m = L.circleMarker([v.latitude, v.longitude], {
           radius: v.name === selectedTrackingVehicle ? 10 : 7,
-          color: v.name === selectedTrackingVehicle ? '#1d4ed8' : '#334155',
-          fillColor: v.name === selectedTrackingVehicle ? '#3b82f6' : '#64748b',
+          color: v.name === selectedTrackingVehicle ? cFocus : cMuted,
+          fillColor: v.name === selectedTrackingVehicle ? cAccent : cMuted,
           fillOpacity: 0.85
         });
         m.bindPopup('<b>' + escapeHtml(v.name) + '</b><br>' + escapeHtml(v.engineState || ''));

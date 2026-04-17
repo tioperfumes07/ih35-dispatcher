@@ -33,7 +33,7 @@ body.erp-maintenance {
 body.erp-maintenance {
   margin: 0;
   background: var(--qb-page);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
   font-weight: 400;
@@ -105,7 +105,7 @@ body.erp-maintenance .erp-icon-nav__link {
   border: none;
   border-radius: var(--qb-radius-control);
   background: transparent;
-  color: var(--qb-icon-nav-muted);
+  color: var(--color-nav-inactive, var(--qb-icon-nav-muted));
   font-size: 11px;
   font-weight: 500;
   text-decoration: none;
@@ -184,7 +184,7 @@ body.erp-maintenance .erp-module-sidebar__head {
 body.erp-maintenance .erp-module-sidebar__brand-title {
   font-size: 15px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
 }
 
 body.erp-maintenance .erp-module-sidebar__collapse {
@@ -194,7 +194,7 @@ body.erp-maintenance .erp-module-sidebar__collapse {
   border-radius: var(--qb-radius-control);
   border: 1px solid var(--qb-line-input);
   background: var(--qb-panel);
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -227,7 +227,7 @@ body.erp-maintenance .erp-sb-heading {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-weight: 500;
   margin: 12px 0 6px;
 }
@@ -258,7 +258,7 @@ body.erp-maintenance .erp-sb-link:hover {
 }
 
 body.erp-maintenance .erp-sb-link--muted {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 body.erp-maintenance .erp-sb-sep {
@@ -318,7 +318,7 @@ body.erp-maintenance .erp-topbar.topbar {
 body.erp-maintenance .erp-topbar .title {
   font-size: 16px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -349,7 +349,7 @@ body.erp-maintenance .erp-topbar .topbar-home-link {
 }
 
 body.erp-maintenance .erp-topbar .topbar-hint {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-size: 12px;
 }
 
@@ -402,7 +402,7 @@ body.erp-maintenance .erp-new-menu__col-title {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-weight: 500;
   padding-bottom: 6px;
   margin-bottom: 8px;
@@ -489,14 +489,14 @@ body.erp-maintenance .maint-kpi-card__label {
   font-size: 11px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-weight: 500;
 }
 
 body.erp-maintenance .maint-kpi-card__val {
   font-size: 24px;
   font-weight: 400;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   margin-top: 4px;
 }
 
@@ -593,7 +593,7 @@ body.erp-maintenance .erp-main-body .subtab {
   border-bottom: 2px solid transparent;
   border-radius: 0;
   background: transparent;
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-weight: 500;
   font-size: 13px;
   padding: 10px 14px;
@@ -603,7 +603,7 @@ body.erp-maintenance .erp-main-body .subtab {
 
 body.erp-maintenance .erp-main-body .subtab:hover {
   background: var(--color-bg-header, #f1f3f4);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   border-color: transparent;
 }
 
@@ -628,7 +628,7 @@ body.erp-maintenance .erp-main-body .maint-board-nav__btn {
 
 body.erp-maintenance .erp-main-body .maint-board-nav__btn:hover {
   background: var(--color-bg-header, #f1f3f4);
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
 }
 
 body.erp-maintenance .erp-main-body .maint-board-nav__btn.active {
@@ -640,7 +640,7 @@ body.erp-maintenance .erp-main-body .maint-board-nav__btn.active {
 
 body.erp-maintenance .erp-main-body .maint-board-nav__title {
   font-weight: 500;
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 /* --- Standard modals (not full-screen WO) --- */
@@ -677,13 +677,14 @@ body.erp-maintenance .erp-qb-dialog__title {
   margin: 0;
   font-size: 18px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   letter-spacing: -0.02em;
 }
 
 body.erp-maintenance .erp-qb-dialog__sub {
   margin: 0 20px 12px;
   padding-top: 6px;
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 body.erp-maintenance .erp-qb-dialog__body {
@@ -717,14 +718,14 @@ body.erp-maintenance .erp-qb-sheet-close {
   border-radius: var(--qb-radius-control);
   border: 1px solid var(--qb-line-input);
   background: var(--qb-panel);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   box-shadow: none;
 }
 
 body.erp-maintenance .erp-qb-dialog__btn-secondary:hover,
 body.erp-maintenance .erp-qb-sheet-close:hover {
   background: var(--color-bg-header, #f1f3f4);
-  border-color: var(--qb-muted);
+  border-color: var(--color-text-label, var(--qb-muted));
 }
 
 body.erp-maintenance .erp-qb-dialog .qb-in:focus,
@@ -761,7 +762,7 @@ body.erp-maintenance .maint-workorder-fullmodal__head {
 
 body.erp-maintenance .maint-workorder-fullmodal__title {
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   font-size: 16px;
 }
 
@@ -800,11 +801,11 @@ body.erp-maintenance .erp-main-body .panel-head {
 
 body.erp-maintenance .erp-main-body .panel-title {
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
 }
 
 body.erp-maintenance .erp-main-body .metric-label {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
@@ -812,12 +813,12 @@ body.erp-maintenance .erp-main-body .metric-label {
 }
 
 body.erp-maintenance .erp-main-body .metric-value {
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   font-weight: 400;
 }
 
 body.erp-maintenance .erp-main-body .mini-note {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 /* --- Primary / green actions in content --- */
@@ -848,12 +849,12 @@ body.erp-maintenance .erp-main-body .print-hide-actions button {
 /* --- Accounting / QBO doc shell --- */
 body.erp-maintenance .erp-main-body .qb-doc-h2 {
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
 }
 
 body.erp-maintenance .erp-main-body .qb-doc-total-amt {
   font-weight: 400;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
 }
 
 /* Rules 10–12: shared cost-lines shell (maintenance WO + fuel manual) */
@@ -875,7 +876,7 @@ body.erp-maintenance .erp-main-body .erp-qb-cost-shell__label {
   margin: 0 0 6px;
   font-weight: 500;
   font-size: 12px;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -1099,7 +1100,7 @@ body.erp-maintenance .erp-reports-toolbar {
 body.erp-maintenance .erp-reports-toolbar__title {
   font-size: 18px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   letter-spacing: -0.02em;
   flex: 0 0 auto;
 }
@@ -1163,7 +1164,7 @@ body.erp-maintenance .erp-reports-sblink {
   border: none;
   border-radius: var(--qb-radius-control);
   background: transparent;
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   font: inherit;
   font-size: 13px;
   cursor: pointer;
@@ -1309,7 +1310,7 @@ body.dispatch-page {
   margin: 0;
   overflow: hidden;
   background: var(--qb-page);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   font-size: 13px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 400;
@@ -1326,7 +1327,7 @@ body.dispatch-page .topbar {
 body.dispatch-page .topbar h1 {
   font-size: 16px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   letter-spacing: -0.02em;
 }
 
@@ -1340,7 +1341,7 @@ body.dispatch-page .topbar button {
   border-radius: var(--qb-radius-control);
   border: 1px solid var(--qb-line-input);
   background: var(--qb-panel);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   font-weight: 500;
   box-shadow: none;
   font-size: 13px;
@@ -1348,7 +1349,7 @@ body.dispatch-page .topbar button {
 
 body.dispatch-page .topbar button:hover {
   background: var(--color-bg-header, #f1f3f4);
-  border-color: var(--qb-muted);
+  border-color: var(--color-text-label, var(--qb-muted));
 }
 
 body.dispatch-page .topbar button.secondary {
@@ -1373,7 +1374,7 @@ body.dispatch-page .tabs button {
   border-radius: var(--qb-radius-control);
   border: 1px solid var(--qb-line-input);
   background: var(--qb-panel);
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-weight: 500;
   font-size: 13px;
 }
@@ -1381,7 +1382,7 @@ body.dispatch-page .tabs button {
 body.dispatch-page .tabs button:hover {
   background: var(--color-bg-header, #f1f3f4);
   border-color: var(--qb-line-input);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
 }
 
 body.dispatch-page .tabs button.active {
@@ -1398,7 +1399,7 @@ body.dispatch-page .wrap {
 }
 
 body.dispatch-page .muted {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 body.dispatch-page .in,
@@ -1424,7 +1425,7 @@ body.dispatch-page table.data {
 
 body.dispatch-page table.data th {
   background: var(--color-bg-header, #fafbfc);
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 body.dispatch-page table.data tr:hover {
@@ -1441,7 +1442,7 @@ body.dispatch-page .modal h2 {
   background: var(--color-bg-header, #fafbfc);
   border-bottom-color: var(--qb-line);
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
 }
 
 /* ========== Dispatch: full ERP shell (icon rail + module sidebar + main) ========== */
@@ -1527,7 +1528,7 @@ body.dispatch-page #dispatchApp .erp-icon-nav__link {
   border: none;
   border-radius: var(--qb-radius-control);
   background: transparent;
-  color: var(--qb-icon-nav-muted);
+  color: var(--color-nav-inactive, var(--qb-icon-nav-muted));
   font-size: 11px;
   font-weight: 500;
   text-decoration: none;
@@ -1586,7 +1587,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__head {
 body.dispatch-page #dispatchApp .erp-module-sidebar__brand-title {
   font-size: 15px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
 }
 
 body.dispatch-page #dispatchApp .erp-module-sidebar__collapse {
@@ -1596,7 +1597,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__collapse {
   border-radius: var(--qb-radius-control);
   border: 1px solid var(--qb-line-input);
   background: var(--qb-panel);
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -1626,7 +1627,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__footer {
 }
 
 body.dispatch-page #dispatchApp .dispatch-sidebar-footer__line {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-size: 12px;
   line-height: 1.45;
 }
@@ -1635,7 +1636,7 @@ body.dispatch-page #dispatchApp .erp-sb-heading {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-weight: 500;
   margin: 12px 0 6px;
 }
@@ -1723,7 +1724,7 @@ body.dispatch-page #dispatchApp .erp-topbar.topbar {
 body.dispatch-page #dispatchApp .erp-topbar .title {
   font-size: 16px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -1780,7 +1781,7 @@ body.dispatch-page #dispatchApp .erp-topbar button {
   border-radius: var(--qb-radius-control);
   border: 1px solid var(--qb-line-input);
   background: var(--qb-panel);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   font-weight: 500;
   box-shadow: none;
   font-size: 13px;
@@ -1789,7 +1790,7 @@ body.dispatch-page #dispatchApp .erp-topbar button {
 
 body.dispatch-page #dispatchApp .erp-topbar button:hover {
   background: var(--color-bg-header, #f1f3f4);
-  border-color: var(--qb-muted);
+  border-color: var(--color-text-label, var(--qb-muted));
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button.secondary {
@@ -1865,7 +1866,7 @@ html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
   padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
   border-bottom-color: var(--qb-line);
   background: var(--color-bg-header, #fafbfc);
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 @media (max-width: 1100px) {
@@ -2035,7 +2036,7 @@ html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
 /* ========== Standalone fuel board (fuel.html) ========== */
 body.fuel-board {
   background: var(--qb-page);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   font-size: 13px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
@@ -2049,7 +2050,7 @@ body.fuel-board .topbar {
 body.fuel-board .topbar h1 {
   font-size: 18px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   letter-spacing: -0.02em;
 }
 
@@ -2070,14 +2071,14 @@ body.fuel-board .panel h2 {
   background: var(--color-bg-header, #fafbfc);
   border-bottom: 1px solid var(--qb-line);
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
 }
 
 body.fuel-board .fleet-summary,
 body.fuel-board .fleet-section-title {
   background: var(--color-bg-header, #fafbfc);
   border-color: var(--qb-line);
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 body.fuel-board .fleet-item {
@@ -2107,7 +2108,7 @@ body.fuel-board input:focus {
 /* ========== Bank matching (banking.html) ========== */
 body.banking-page {
   background: var(--qb-page);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   font-size: 13px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
@@ -2121,12 +2122,12 @@ body.banking-page .wrap {
 body.banking-page h1 {
   font-size: 18px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   letter-spacing: -0.02em;
 }
 
 body.banking-page p.lead {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-size: 13px;
 }
 
@@ -2140,7 +2141,7 @@ body.banking-page .panel {
 body.banking-page .ph {
   background: var(--color-bg-header, #fafbfc);
   border-bottom-color: var(--qb-line);
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   font-weight: 500;
 }
 
@@ -2182,7 +2183,7 @@ body.banking-page button.primary:hover {
 
 body.banking-page th {
   background: var(--color-bg-header, #fafbfc);
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
 }
 
 body.banking-page tr:hover td {
@@ -2198,7 +2199,7 @@ body.banking-page .metric {
 /* ========== Settings & users (settings.html) ========== */
 body.settings-page {
   background: var(--qb-page);
-  color: var(--qb-text);
+  color: var(--color-text-body, var(--qb-text));
   font-size: 13px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
@@ -2212,12 +2213,12 @@ body.settings-page .wrap {
 body.settings-page h1 {
   font-size: 18px;
   font-weight: 500;
-  color: var(--qb-text-strong);
+  color: var(--color-text-primary, var(--qb-text-strong));
   letter-spacing: -0.02em;
 }
 
 body.settings-page p {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   font-size: 13px;
 }
 
@@ -2256,7 +2257,7 @@ body.settings-page button.primary:hover {
 }
 
 body.settings-page table th {
-  color: var(--qb-muted);
+  color: var(--color-text-label, var(--qb-muted));
   background: var(--color-bg-header, #fafbfc);
 }
 

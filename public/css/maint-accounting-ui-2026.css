@@ -7,6 +7,7 @@ body.erp-maintenance #section-maintenance .maint-page-shell {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -20,6 +21,7 @@ body.erp-maintenance .maint-action-strip {
   background: var(--color-bg-card);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-action-strip__btn {
@@ -50,7 +52,7 @@ body.erp-maintenance .maint-action-strip__btn--primary:hover {
 }
 
 body.erp-maintenance .maint-action-strip__btn.active {
-  box-shadow: 0 0 0 2px rgba(25, 103, 210, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-border-focus) 22%, transparent);
   border-color: var(--color-border-focus);
 }
 
@@ -97,6 +99,7 @@ body.erp-maintenance .maint-action-strip__qbo {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-qbo-dot {
@@ -362,7 +365,7 @@ body.erp-maintenance .maint-form-actions--sticky {
   border-top: 1px solid var(--color-border);
   padding: 12px 20px;
   margin: 16px -16px -16px;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 -2px 8px color-mix(in srgb, var(--color-text-primary) 5%, transparent);
 }
 
 /* --- Collapsible sidebar groups (all modules on this page) --- */
@@ -437,6 +440,17 @@ body.erp-maintenance
 body.erp-maintenance
   :is(#section-dashboard, #section-fuel, #section-safety, #section-maintenance, #section-tracking, #section-catalog)
   .panel-body {
+  min-width: 0;
+}
+
+/* Rule 1: shop queues — wide tables live inside .erp-table-scroll; parents must allow shrink. */
+body.erp-maintenance #section-maintenance .shop-tab-panel,
+body.erp-maintenance #section-maintenance .shop-tab-panel .erp-table-scroll {
+  min-width: 0;
+}
+
+/* Rule 1: QB cost / line tables — scroll frame participates in flex shrink inside accounting docs. */
+body.erp-maintenance #section-accounting .maint-qb-lines-scroll {
   min-width: 0;
 }
 
@@ -698,12 +712,12 @@ body.erp-maintenance .erp-toast {
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 13px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-toast);
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  min-width: 280px;
-  max-width: 400px;
+  min-width: min(280px, calc(100vw - 32px));
+  max-width: min(400px, calc(100vw - 32px));
 }
 
 body.erp-maintenance .erp-toast__close {
@@ -1473,4 +1487,34 @@ body.erp-maintenance .ap-wo-lines-root {
     grid-template-columns: 1fr;
     gap: 8px;
   }
+}
+
+/* Rule 1: main content column — defensive min-width for nested ERP flex (spec may also set). */
+body.erp-maintenance #erpApp.erp-master .erp-main-col {
+  min-width: 0;
+}
+
+body.erp-maintenance #erpApp.erp-master .main.erp-main-surface,
+body.erp-maintenance #erpApp.erp-master .erp-main-body {
+  min-width: 0;
+}
+
+/* Rule 1: global search host can shrink when topbar actions need horizontal space. */
+body.erp-maintenance #erpApp.erp-master .erp-topbar__search-inner {
+  min-width: 0;
+}
+
+/* Rule 1: search flex slot may sit below a 12rem floor in redesign — allow shrink on very narrow main columns. */
+body.erp-maintenance #erpApp.erp-master .erp-topbar__search {
+  min-width: 0;
+}
+
+/* Rule 1: action cluster can wrap without forcing the topbar row wider than the main column. */
+body.erp-maintenance #erpApp.erp-master .erp-topbar__actions {
+  min-width: 0;
+}
+
+/* Rule 1: + New menu columns — flex row can shrink inside the capped menu width. */
+body.erp-maintenance #erpApp .erp-new-menu__cols {
+  min-width: 0;
 }
