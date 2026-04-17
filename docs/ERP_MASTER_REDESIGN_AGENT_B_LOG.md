@@ -226,3 +226,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 0:** **`app-theme.css`** — broad **`body.erp-maintenance`** sweep: borders that chained **`--color-border` + `--line-strong`** or **`--color-app-frame-border` + `--app-frame-border`** now use the spec token alone; label/body text drops **`var(--muted)` / `var(--text)` / `var(--text-secondary)`** fallbacks in favor of **`--color-text-label`** / **`--color-text-body`**; **`--color-bg-card`** replaces **`--bg-elevated`** on KPI cards; board nav active state uses **`--color-nav-bg`** consistently.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-10
+
+- **Rule 0:** **`app-theme.css`** — repo-wide cleanup of redundant **`var(--color-text-label, var(--muted))`**, **`var(--color-text-body, var(--text|text-secondary))`**, **`var(--color-text-primary, var(--text))`**, **`var(--color-bg-card, var(--bg-elevated))`**, and **`var(--color-nav-bg, var(--sidebar-bg))`** now use the outer design-token names only (every HTML shell that loads **`app-theme.css`** already loads **`design-tokens.css`**). **`maint-field--readonly`** and dispatch tab chrome were fixed where **`!important`** or **`text-secondary`** prevented the earlier bulk replace.
+- **Rule 1:** **`body.erp-maintenance`** — **`maint-board-layout`**, **`maint-wo-workspace-grid`**, **`maint-form-grid`**, and **`maint-vendor-ref-row`** gain **`min-width: 0`** so board / WO / vendor rows cooperate with **`minmax(0, …)`** tracks and flex shrink without widening the page.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
