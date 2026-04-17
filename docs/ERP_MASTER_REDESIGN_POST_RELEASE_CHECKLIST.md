@@ -39,18 +39,19 @@
 - [ ] **Board nav / hub:** Company hub and satellite strips link to expected workspaces (maintenance, banking, fuel, dispatch, settings).
 - [ ] **+ New menu:** Columns load; items are usable (handlers fire); **A–Z** order still looks correct after any menu edits.
 - [ ] **Collapsible sidebars:** Toggle groups; refresh page — **`localStorage`** keys **`ih35_sb_*`** restore state without layout break.
+- [ ] **Home dashboard:** **System Summary** + **Sync Summary** panel **`?`** tips open; copy matches expectations (cards vs QBO window). **Maintenance → Units** list column **`?`** describes selection vs **Maintenance Table** filters and the collapse **▼** control.
 
 ---
 
 ## 4. Maintenance — accounting (high value)
 
 - [ ] **Accounting board:** Dash cards and **Connections** strip (`#maintIntegrationStrip`) render; **Refresh** updates counts where applicable.
-- [ ] **QuickBooks Live Master:** **`erp-help-tip`** on title; **Create vendor** / refresh master still work.
+- [ ] **QuickBooks Live Master:** **`erp-help-tip`** on title + **Vendors** / **Items** / **Accounts** column titles; **Create vendor** / refresh master still work.
 - [ ] **Fuel expenses:** Filter **`mr-filter-bar`** (dates, search, QBO fields) + grid; **Manual fuel / DEF expense** — document header fields in **`mr-filter-bar`**; **Refresh fuel purchases**; pager with **16+** rows; **Record filtered to QuickBooks** still includes rows **off the current page** (regression from Rule 23 wiring).
-- [ ] **Expense history:** Filters + pager (**16+** rows); **Export filtered CSV** = full filtered set, not current page only.
-- [ ] **Pay bills:** Load open bills (if QBO available); **Create bill payment** path; **Recent bill payments** — **Refresh log**, filters (**`mr-filter-bar`**), pager (**16+**), clear search restores full loaded set; **Export CSV**.
-- [ ] **QuickBooks rollback:** **Refresh** loads batches + posted checklist; **Revert** / undo flows unchanged.
-- [ ] **Saved WO + AP cards:** Pager when **11+** cards; exports still full dataset.
+- [ ] **Expense history:** Panel title **`?`** + body **`?`**; filters + pager (**16+** rows); **Export filtered CSV** = full filtered set, not current page only.
+- [ ] **Pay bills:** Load open bills (if QBO available); **Create bill payment** path; **Recent bill payments** — title **`?`** + **Refresh log**, filters (**`mr-filter-bar`**), pager (**16+**), clear search restores full loaded set; **Export CSV**.
+- [ ] **QuickBooks rollback:** **Refresh** loads batches + posted checklist; **ERP import batches** + **Fuel / Relay import batches** sub-head **`?`** tips; **Revert** / undo flows unchanged.
+- [ ] **Saved WO + AP cards:** Panel title **`?`**; pager when **11+** cards; exports still full dataset.
 
 ---
 
@@ -60,30 +61,31 @@
 - [ ] **TMS / QBO / sync / IFTA tabs:** Empty and loaded states; **?** tips open.
 - [ ] **Maintenance spend by unit:** After refresh, pager with **16+** units; **Download CSV** full export.
 - [ ] **Maintenance detailed:** Filters + pager (**11+** records); filters reset page to **1**.
-- [ ] **Settlement / P&L:** Index pager (**16+** loads), line-item pager on heavy load, **Download CSV** full load; **Driver pay settlements** refresh; TMS box when applicable.
-- [ ] **Team & security:** **Refresh panel** loads without error when auth enabled.
+- [ ] **Settlement / P&L:** **Trip cost rollup** + **Loads with recorded costs (index)** panel **`?`** tips open; index pager (**16+** loads), line-item pager on heavy load, **Download CSV** full load; **Driver pay settlements** refresh; TMS box when applicable.
+- [ ] **Team & security:** **Refresh panel** loads without error when auth enabled. **Configuration posture**, **ERP user activity**, **Security audit log**, and **CMMS benchmark** panel **`?`** tips open (admin); borders use token fallback.
 
 ---
 
 ## 6. Maintenance — shop, safety, tracking, fleet (Rules 12, 16–17)
 
-- [ ] **Shop board:** Each queue tab — pager (**16+**), filters reset page.
-- [ ] **Safety / HOS:** HOS + active + in-service + assignments pagers and filter reset behavior.
-- [ ] **Tracking:** Map units pager; assets + drivers pagers; **Idle** snapshot pager uses cache on page change (no unnecessary refetch).
-- [ ] **Maintenance table (fleet):** Pager + category/service filter reset page.
+- [ ] **Shop board:** Each queue tab — pager (**16+**), filters reset page. **Maintenance reports** + **Integrity · fuel · parts alerts** panel title **`?`** tips open.
+- [ ] **Safety / HOS:** HOS + active + in-service + assignments pagers and filter reset behavior. **Active drivers** + **In service now** column title **`?`** tips open.
+- [ ] **Tracking:** Map **Units** + **Live map** panel **`?`** tips open; copy matches expectations (map list vs **Maintenance → Units**). **Yard & idle** + **Summary** title **`?`** tips. Map units pager; assets + drivers pagers; **Idle** snapshot pager uses cache on page change (no unnecessary refetch).
+- [ ] **Maintenance table (fleet):** **Maintenance Table** + **Unit History** panel **`?`** tips; pager + category/service filter reset page.
 - [ ] **Security alerts:** **`mr-filter-bar`** + **Refresh alerts**.
 
 ---
 
 ## 7. Maintenance — uploads and catalogs (Rules 14–15)
 
-- [ ] **Upload center:** Each sub-tab (Bank, Comdata, Connections, Fuel, AP, Maint history, Other) — title **?** + short intro; file pick / stub flows do not throw in console.
+- [ ] **Upload center:** Main **Upload center** panel — title + **`?`** on one row. Each sub-tab (Bank, Comdata, Connections, Fuel, AP, Maint history, Other) — title **?** + short intro; file pick / stub flows do not throw in console. **Maintenance → Imports & uploads** shortcut panel — title **`?`** (body no duplicate **`?`**).
 - [ ] **Lists & catalogs → Service types (DB):** Name filter + pager (**16+**); activate/deactivate refreshes grid.
 
 ---
 
 ## 8. Maintenance — work orders and modals (Rules 5–9, 22 samples)
 
+- [ ] **WO chrome:** **Operational status** flyout + **QuickBooks — posting header** title **`?`** tips open when panel visible.
 - [ ] **Accident WO:** Cost breakdown **?** opens/closes.
 - [ ] **Tire WO:** First-tire / same-invoice **?** panel.
 - [ ] **AP expense modal:** QBO banner tier colors when posting errors present.
@@ -92,9 +94,9 @@
 
 ## 9. Satellite pages
 
-- [ ] **Dispatch:** Refresh, catalog sync, save load, upload doc, auto miles, row **Create invoice** / **Sync attachments**, status `<select>` busy state, toasts on failure.
-- [ ] **Banking:** **Step 1** days + **Load snapshot** and **step 3** batch id + **Run suggestions** in **`mr-filter-bar`**; CSV import; suggest pager; link row; **`erp-auth-banner`** on 401; connection strip.
-- [ ] **Settings:** Login/bootstrap; **Employees** title **?** opens; search + **Refresh** in **`mr-filter-bar`**; employees pager (**16+**); connection strip; focus/error token styles.
+- [ ] **Dispatch:** Refresh, catalog sync, save load, upload doc, auto miles, row **Create invoice** / **Sync attachments**, status `<select>` busy state, toasts on failure; **QBO / maintenance** banner tiers and **autocomplete** dropdown use token-backed chrome (no raw gray-only strips).
+- [ ] **Banking:** **Step 1** days + **Load snapshot** and **step 3** batch id + **Run suggestions** in **`mr-filter-bar`**; **step 2** column hint + **?** (batch id → step 3); CSV import; suggest pager; link row; **`erp-auth-banner`** on 401; connection strip.
+- [ ] **Settings:** Login/bootstrap; **Users** + **Employees** title **?** panels open; **Employees** search + **Refresh** in **`mr-filter-bar`**; employees pager (**16+**); connection strip; focus/error token styles.
 - [ ] **Fuel:** **Selected Unit** title **?** opens; **Diesel purchase** fields sit in **`mr-filter-bar`**; save purchase, recommend (busy if wired), connection strip; write-secret banner styling when **`ERP_WRITE_SECRET`** is configured.
 - [ ] **Index (hub):** Header **?** opens; connection strip; workspace cards + tags readable on dark shell; no console errors.
 

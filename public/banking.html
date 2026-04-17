@@ -89,7 +89,17 @@
     <div class="panel">
       <div class="ph">2 · Import bank CSV</div>
       <div class="pb">
-        <p class="mini" style="margin-top:0">Expected columns: <strong>Date</strong>, <strong>Amount</strong> (negative for outflows), and <strong>Description</strong> (or Memo). Tab or comma separated.</p>
+        <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+          <p class="mini" style="margin:0;flex:1;min-width:200px;max-width:820px;line-height:1.45">
+            Expected columns: <strong>Date</strong>, <strong>Amount</strong> (negative for outflows), and <strong>Description</strong> (or Memo). Tab or comma separated.
+          </p>
+          <span class="erp-help-tip" style="flex-shrink:0;margin-top:2px">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Import batch id">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              After <strong>Import rows</strong>, note the <strong>import batch id</strong> in the result text — paste it into <strong>step 3</strong> to run suggestions. Use <strong>YYYY-MM-DD</strong> dates when possible for reliable parsing.
+            </span>
+          </span>
+        </div>
         <textarea id="csvPaste" placeholder="Date,Amount,Description&#10;2026-01-15,-523.40,SHELL OIL 5789"></textarea>
         <button type="button" class="primary" id="btnImport" style="margin-top:10px">Import rows</button>
         <div id="importOut" class="mini" style="margin-top:10px"></div>

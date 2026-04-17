@@ -76,7 +76,15 @@
         </div>
 
         <div id="adminTabPanelUsers">
-          <h2 style="font-size:16px;margin:0 0 12px">Users</h2>
+          <h2 style="font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span>Users</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP sign-in vs QuickBooks">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                These accounts control <strong>sign-in to this ERP</strong> (JWT in the browser). They are <strong>not</strong> QuickBooks users. <strong>Admin</strong> can add users and remove accounts here; <strong>Employees</strong> is the separate staff directory tab.
+              </span>
+            </span>
+          </h2>
           <table>
             <thead><tr><th>Email</th><th>Name</th><th>Role</th><th></th></tr></thead>
             <tbody id="usersBody"></tbody>
