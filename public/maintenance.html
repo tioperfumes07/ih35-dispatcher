@@ -921,8 +921,14 @@
                           <input id="removeMileageInput" type="number" placeholder="Remove mileage">
                           <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
                         </div>
-                        <p class="mini-note" style="margin:8px 0 0">
-                          <strong>First tire</strong> uses the fields above. Add more positions for the <strong>same vendor invoice / total cost</strong> below.
+                        <p class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                          <span><strong>First tire</strong> uses the fields above; add more wheel positions for the <strong>same vendor invoice / total</strong> below.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Same invoice, multiple tires">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              Each extra row shares one vendor invoice and one QuickBooks expense or bill header. Use <strong>+ Add another tire (same total cost)</strong> for additional positions on that invoice.
+                            </span>
+                          </span>
                         </p>
                         <div id="tireExtraLinesHost"></div>
                         <button type="button" class="qb-btn-add" onclick="addTireExtraLine()">+ Add another tire (same total cost)</button>

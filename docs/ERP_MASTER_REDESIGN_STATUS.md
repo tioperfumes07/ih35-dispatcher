@@ -1,6 +1,8 @@
 # IH35 ERP — Master redesign checklist vs codebase
 
-This document maps the **consolidated master redesign** (Rules 0–24 + protection block) to **this repository** (`public/*.html`, `public/css/*`, `server.js`, no `/src` React tree). It is the durable checklist the assistant referenced when uploaded lists lived only in chat.
+**Consolidated report:** For a single document with **changelog**, **recommendations**, and **verification**, see **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)**.
+
+This file maps the **consolidated master redesign** (Rules 0–24 + protection block) to **this repository** (`public/*.html`, `public/css/*`, `server.js`, no `/src` React tree). It is the durable checklist the assistant referenced when uploaded lists lived only in chat.
 
 **Protection block:** No backend save/post/sync behavior was changed for this pass. No fields removed. No parts-map SVG removed.
 
@@ -102,7 +104,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 22 — Instruction cleanup → “?” tips
 
-- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** accident-type WO **Cost breakdown** paragraph folded into a short line + **`erp-help-tip`** (catalog / QBO line detail in panel). Many other long **`mini-note`** blocks remain for future passes.
+- **Done (pattern):** Global **`.erp-help-tip*`** styles; **`erpHelpTipToggle`** + click/Escape close in **`erp-ui.js`**. Banking includes a sample tip. Dispatch board uses compact copy + tips. **Maintenance:** **accident** WO **Cost breakdown** + **tire** WO “same invoice / multiple positions” copy each use a short line + **`erp-help-tip`** panel. Many other long **`mini-note`** blocks remain for future passes.
 
 ### Rule 23 — Pagination
 
@@ -126,6 +128,8 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 8. **`dispatch.html`** — Rule 22 compact intro + help tips; token-backed main column tweaks in **`erp-master-spec-2026.css`**; **`erpWithBusy`** on refresh, QBO catalog sync (toolbar), save load, doc upload, rate-con PDF extract, auto miles, docs-modal QBO sync, **board row** QBO buttons (invoice + attachments), and **quick-add** truck/trailer; status changes disable the row `<select>` while saving; **`showToast`** on those outcomes plus QBO invoice / attachment sync, **`patchStatus`**, and **openEditLoad** load failures; **`showMsg`** escapes text; manual refresh passes **`loadTab(true)`** so failures surface as toasts while the timer refresh stays quiet.
 9. **`erp-ui.js` — `erpNotify(message, type?)`:** toast-first replacement for legacy **`alert()`** across **`maintenance.html`**, **`fuel.html`**, **`banking.html`**, **`settings.html`**, **`dispatch.html`** (with heuristic type when `type` omitted). **`index.html`** — shared **`design-tokens`**, **`erp-master-spec-2026`** (toasts), **`#erpToastHost`**, **`erp-ui.js`** for consistency if hub gains scripts later.
 10. **Rule 24 + Rule 0 (continuation):** **`erpMountConnectionStrip`** + **`#erpConnectionStrip`** on **banking**, **settings**, **fuel**, **index**; token-backed **`--color-bg-page`** body background on banking/settings/fuel. **Rule 22:** maintenance **accident** WO inline help → **`erp-help-tip`**.
+11. **Rule 22 (tire WO):** **Tire** record first-tire / same-invoice copy → compact line + **`erp-help-tip`** panel in **`maintenance.html`**.
+12. **Documentation:** **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)** — consolidated changelog, rule matrix, recommendations, verification, risks.
 
 ---
 
