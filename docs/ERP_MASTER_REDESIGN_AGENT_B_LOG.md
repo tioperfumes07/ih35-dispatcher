@@ -211,6 +211,15 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 
 ---
 
+## 2026-05-08
+
+- **Rule 0:** **`app-theme.css`** — legacy maintenance chrome: **`.title`**, default **`.btn` / `button` / `input` / `select` / `textarea`** text colors use spec tokens only (**`--color-text-primary`**, **`--color-text-body`**). Button hover border uses **`--color-border-input`** (replacing **`--color-border` + `--line-strong`**). **`.status-*`** pills use **`--pill-*`** tokens only. **`.mini-note`** uses **`--color-text-label`**. **`.record-card:hover`** border uses **`--color-border-input`** for a slightly stronger edge than the resting card border.
+- **Rule 1:** **`app-theme.css`** — **`form-stack`**, **`card-list`**, **`record-head`**, and **`subtabs`** get **`min-width: 0`** so dashboard cards and subtabs do not widen the main column from intrinsic min-width.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
 ## 2026-05-09
 
 - **Rule 1:** **`app-theme.css`** — WO / tracking / tires: **`.tire-layout-wrap`** and **`.track-grid`** use **`minmax(0, 1fr)`** for the fluid column plus **`min-width: 0`** where missing; **`.track-list`**, **`.maint-form-stack`**, **`.maint-expense-strip`**, **`.shop-queue-row`**, **`.maint-board-nav`**, **`.maint-repair-chip-row`**, **`.vendor-row-maint`**, **`.shop-action-row`**, **`.shop-board-grid`**, **`.wo-line-grid`**, **`.maint-cost-line__primary`**, **`.maint-cost-lines-head` / `-footer`**, **`.maint-form-actions__row`**, **`.maint-asset-header-card`** (+ **`__row`**) get **`min-width: 0`** as needed. **`.maint-wo-banner__refs`** drops the **`min(100%, 360px)`** floor in favor of **`0`** so the banner flex row can shrink on narrow widths. QB doc chrome (**`.qb-doc-title-row`**, **`.qb-logistics-bar`**, **`.qb-lines-header`**, **`.qb-doc-actions`**, **`.qb-doc-memo-row`**) gets the same overflow discipline.
