@@ -1021,7 +1021,7 @@ body.erp-maintenance .chips {
 }
 
 body.erp-maintenance .chip {
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   background: var(--color-bg-card, #fff);
   border-radius: 999px;
   padding: 7px 11px;
@@ -1030,9 +1030,9 @@ body.erp-maintenance .chip {
 }
 
 body.erp-maintenance .chip.active {
-  background: var(--accent-soft);
-  border-color: var(--accent-border);
-  color: var(--accent);
+  background: var(--pill-blue-bg, var(--accent-soft));
+  border-color: var(--btn-info-border, var(--accent-border));
+  color: var(--pill-blue-text, var(--accent));
   font-weight: 700;
 }
 
@@ -1045,14 +1045,14 @@ body.erp-maintenance .split {
 body.erp-maintenance .list {
   max-height: 720px;
   overflow: auto;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
   background: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .list-row {
   padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   cursor: pointer;
 }
 
@@ -1065,7 +1065,7 @@ body.erp-maintenance .list-row:hover {
 }
 
 body.erp-maintenance .list-row.active {
-  background: var(--accent-soft);
+  background: var(--pill-blue-bg, var(--accent-soft));
 }
 
 body.erp-maintenance .list-title {
