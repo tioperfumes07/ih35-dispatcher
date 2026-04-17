@@ -224,24 +224,24 @@ body.erp-maintenance .mr-table-scroll > table {
 }
 
 .mr-pill--green {
-  background: #e6f4ea;
-  color: #137333;
+  background: var(--pill-green-bg, #e6f4ea);
+  color: var(--pill-green-text, #137333);
 }
 .mr-pill--red {
-  background: #fce8e6;
-  color: #c5221f;
+  background: var(--pill-red-bg, #fce8e6);
+  color: var(--pill-red-text, #c5221f);
 }
 .mr-pill--yellow {
-  background: #fef7e0;
-  color: #b06000;
+  background: var(--pill-yellow-bg, #fef7e0);
+  color: var(--pill-yellow-text, #b06000);
 }
 .mr-pill--gray {
-  background: #f1f3f4;
-  color: #5f6368;
+  background: var(--pill-gray-bg, #f1f3f4);
+  color: var(--pill-gray-text, #5f6368);
 }
 .mr-pill--blue {
-  background: #e8f0fe;
-  color: #1967d2;
+  background: var(--pill-blue-bg, #e8f0fe);
+  color: var(--pill-blue-text, #1967d2);
 }
 
 /* --- Rule 3: + New menu items as blue text links --- */
@@ -251,7 +251,7 @@ body.erp-maintenance .erp-new-menu__item {
   text-align: left;
   border: none;
   background: transparent;
-  color: #1967d2;
+  color: var(--pill-blue-text, #1967d2);
   font-size: 13px;
   font-weight: 400;
   padding: 6px 0;
@@ -905,8 +905,8 @@ body.erp-maintenance .qb-doc-title-row {
    Rule 3 — Collapsible module sidebar groups (maintenance.html)
    ============================================================================= */
 body.erp-maintenance .erp-module-sidebar .erp-sb-group {
-  border-bottom: 1px solid #f1f3f4;
-  background: #fff;
+  border-bottom: 1px solid var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-card, #fff);
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
@@ -920,24 +920,24 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
   cursor: pointer;
   font-size: 11px;
   font-weight: 500;
-  color: #5f6368;
+  color: var(--color-text-label, #5f6368);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   border: none;
-  border-bottom: 1px solid #f1f3f4;
+  border-bottom: 1px solid var(--color-bg-header, #f1f3f4);
   font-family: inherit;
   text-align: left;
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__head:hover {
-  background: #f8f9fa;
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__chev {
   flex-shrink: 0;
   font-size: 10px;
-  color: #9aa0a6;
+  color: var(--color-text-placeholder, #9aa0a6);
   line-height: 1;
 }
 
@@ -952,12 +952,12 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group.is-open .erp-sb-group__bo
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__body .erp-sb-link {
-  border-bottom: 1px solid #f8f9fa;
+  border-bottom: 1px solid var(--color-bg-hover, #f8f9fa);
 }
 
 /* --- Rule 3 (reports in-page sidebar): native <details> groups --- */
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group {
-  border-bottom: 1px solid #f1f3f4;
+  border-bottom: 1px solid var(--color-bg-header, #f1f3f4);
 }
 
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head {
@@ -966,7 +966,7 @@ body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head {
   padding: 8px 12px;
   font-size: 11px;
   font-weight: 500;
-  color: #5f6368;
+  color: var(--color-text-label, #5f6368);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   display: flex;
@@ -985,7 +985,7 @@ body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__body {
 
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__chev {
   font-size: 10px;
-  color: #9aa0a6;
+  color: var(--color-text-placeholder, #9aa0a6);
 }
 
 /* --- Rule 16: upload center pill row --- */
@@ -1001,8 +1001,8 @@ body.erp-maintenance .mr-acct-board {
 
 /* --- Rules 12 / 19: parts map container + tire dots (SVG keeps onclick ids) --- */
 body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
-  background: #f8f9fa;
-  border: 1px solid #e8eaed;
+  background: var(--color-bg-hover, #f8f9fa);
+  border: 1px solid var(--color-border, #e8eaed);
   border-radius: 8px;
   padding: 16px;
   width: fit-content;
@@ -1011,41 +1011,41 @@ body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
 }
 
 body.erp-maintenance .erp-main-body .erp-qb-parts-map-chrome .tire-svg rect {
-  fill: #f8f9fa !important;
-  stroke: #dadce0 !important;
+  fill: var(--color-bg-hover, #f8f9fa) !important;
+  stroke: var(--color-border-input, #dadce0) !important;
   stroke-width: 1.5px !important;
 }
 
 body.erp-maintenance .erp-main-body .tire-dot {
-  fill: #e8eaed;
-  stroke: #9aa0a6;
+  fill: var(--color-border, #e8eaed);
+  stroke: var(--color-text-placeholder, #9aa0a6);
   stroke-width: 1;
   cursor: pointer;
 }
 
 body.erp-maintenance .erp-main-body .tire-dot:hover {
-  fill: #e8f0fe;
-  stroke: #1967d2;
+  fill: var(--pill-blue-bg, #e8f0fe);
+  stroke: var(--color-border-focus, #1967d2);
 }
 
 body.erp-maintenance .erp-main-body .tire-dot.active {
-  fill: #1967d2;
+  fill: var(--color-border-focus, #1967d2);
   stroke: none;
 }
 
 /* --- Rule 6: map panel chrome --- */
 body.erp-maintenance #erpTrackingMap {
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--color-border, #e8eaed);
   border-radius: 8px;
   overflow: hidden;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
 }
 
 /* =============================================================================
    Rule 10 — Maintenance expense doc shell (Accounting → AP form)
    ============================================================================= */
 body.erp-maintenance #acct-transactions .qb-doc-shell--ap-spec {
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--color-border, #e8eaed);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
@@ -1064,14 +1064,14 @@ body.erp-maintenance #acct-transactions .qb-doc-topbar {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 12px;
-  background: #fafbfc;
-  border-bottom: 1px solid #e8eaed;
+  background: var(--color-bg-header, #fafbfc);
+  border-bottom: 1px solid var(--color-border, #e8eaed);
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-backlink {
   border: none;
   background: transparent;
-  color: #1967d2;
+  color: var(--pill-blue-text, #1967d2);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -1081,7 +1081,7 @@ body.erp-maintenance #acct-transactions .qb-doc-backlink {
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-backlink:hover {
-  background: #e8f0fe;
+  background: var(--pill-blue-bg, #e8f0fe);
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-closebtn {
