@@ -2681,6 +2681,7 @@
                   </tbody>
                 </table>
               </div>
+              <div id="expHistPagerHost" hidden></div>
             </div>
           </div>
         </div>
@@ -2916,6 +2917,7 @@
                   </tbody>
                 </table>
               </div>
+              <div id="settlementLinesPagerHost" hidden></div>
             </div>
           </div>
           <div class="panel" style="margin-top:12px">
@@ -2950,6 +2952,7 @@
                   </tbody>
                 </table>
               </div>
+              <div id="settlementIndexPagerHost" hidden></div>
             </div>
           </div>
         </div>
@@ -3693,6 +3696,12 @@
     };
     /** Rule 23 — accounting fuel expense grid */
     let fuelExpensePager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — accounting expense history log */
+    let expHistPager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — reports settlement: loads index */
+    let settlementIndexPager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — reports settlement: line items for current load lookup */
+    let settlementLinesPager = { page: 1, pageSize: 15, filterKey: '' };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -15464,18 +15473,41 @@
     function renderExpenseHistory() {
       const tb = document.getElementById('expHistBody');
       const sumEl = document.getElementById('expHistSummary');
+      const pagerHost = document.getElementById('expHistPagerHost');
       if (!tb) return;
       const all = buildExpenseHistoryRows();
       const filtered = filterExpenseHistoryRows(all);
       const tot = filtered.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      const fromF = (document.getElementById('expHistDateFrom')?.value || '').trim();
+      const toF = (document.getElementById('expHistDateTo')?.value || '').trim();
+      const srcF = document.getElementById('expHistSource')?.value || 'all';
+      const qF = (document.getElementById('expHistSearch')?.value || '').trim().toLowerCase();
+      const filterKey = `${fromF}|${toF}|${srcF}|${qF}`;
+      const pState = expHistPager;
+      if (pState.filterKey !== filterKey) {
+        pState.page = 1;
+        pState.filterKey = filterKey;
+      }
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const total = filtered.length;
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      const pageSlice = filtered.slice(start, start + ps);
       if (sumEl) {
-        sumEl.textContent = `Showing ${filtered.length} of ${all.length} row(s) · Filtered total $${tot.toFixed(2)}`;
+        const pageNote = pages > 1 ? ` · Page ${pState.page} of ${pages}` : '';
+        sumEl.textContent = `${total} filtered of ${all.length} row(s) · Filtered total $${tot.toFixed(2)}${pageNote}`;
       }
       if (!filtered.length) {
         tb.innerHTML = '<tr><td colspan="16" class="mini-note">No rows match filters.</td></tr>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
         return;
       }
-      tb.innerHTML = filtered
+      tb.innerHTML = pageSlice
         .map(r => {
           const stCls = expenseHistoryStatusClass(r.kind, r.qboSyncRaw || r.qboSync, r.qboSync);
           const errTitle = r.qboError ? escapeHtml(r.qboError) : '';
@@ -15512,6 +15544,22 @@
           </tr>`;
         })
         .join('');
+
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderExpenseHistory();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
     }
 
     function downloadExpenseHistoryCsv() {
@@ -15571,6 +15619,7 @@
     }
 
     async function loadSettlementIndex() {
+      const pagerHost = document.getElementById('settlementIndexPagerHost');
       try {
         const data = await settlementFetchJson('/api/settlement/index');
         const loads = data.loads || [];
@@ -15582,12 +15631,29 @@
             .join('');
         }
         const tb = document.getElementById('settlementIndexBody');
+        const pState = settlementIndexPager;
+        const filterKey = `${loads.length}|${loads[0]?.label || ''}|${loads[loads.length - 1]?.label || ''}`;
+        if (pState.filterKey !== filterKey) {
+          pState.page = 1;
+        }
+        pState.filterKey = filterKey;
         if (!loads.length) {
+          if (pagerHost) {
+            pagerHost.innerHTML = '';
+            pagerHost.hidden = true;
+          }
           tb.innerHTML =
             '<tr><td colspan="6" class="mini-note">No work orders, AP, or unit records with a load/doc # yet.</td></tr>';
           return;
         }
-        tb.innerHTML = loads
+        const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+        const total = loads.length;
+        const pages = Math.max(1, Math.ceil(total / ps));
+        if (pState.page > pages) pState.page = pages;
+        if (pState.page < 1) pState.page = 1;
+        const start = (pState.page - 1) * ps;
+        const pageLoads = loads.slice(start, start + ps);
+        tb.innerHTML = pageLoads
           .map(
             x => `
           <tr>
@@ -15600,10 +15666,29 @@
           </tr>`
           )
           .join('');
+        if (pagerHost && window.erpPagerRender) {
+          window.erpPagerRender(
+            pagerHost,
+            { page: pState.page, pageSize: ps, total },
+            (nextPage, newPageSize) => {
+              if (newPageSize) pState.pageSize = newPageSize;
+              pState.page = nextPage;
+              loadSettlementIndex();
+            }
+          );
+          pagerHost.hidden = false;
+        } else if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
       } catch (e) {
         const tb = document.getElementById('settlementIndexBody');
         if (tb) {
           tb.innerHTML = `<tr><td colspan="6" class="mini-note" style="color:#b91c1c">${escapeHtml(e.message)}</td></tr>`;
+        }
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
         }
       }
     }
@@ -15761,12 +15846,29 @@
         }
 
         const tb = document.getElementById('settlementLinesBody');
+        const linesPagerHost = document.getElementById('settlementLinesPagerHost');
         if (!lines.length) {
+          if (linesPagerHost) {
+            linesPagerHost.innerHTML = '';
+            linesPagerHost.hidden = true;
+          }
           tb.innerHTML =
             '<tr><td colspan="5" class="mini-note">No matching rows. Use this load # on work orders, AP doc #, or unit maintenance records.</td></tr>';
           return;
         }
-        tb.innerHTML = lines
+        const lsState = settlementLinesPager;
+        if (lsState.filterKey !== raw) {
+          lsState.page = 1;
+          lsState.filterKey = raw;
+        }
+        const lps = Math.max(1, Math.floor(Number(lsState.pageSize)) || 15);
+        const ltotal = lines.length;
+        const lpages = Math.max(1, Math.ceil(ltotal / lps));
+        if (lsState.page > lpages) lsState.page = lpages;
+        if (lsState.page < 1) lsState.page = 1;
+        const lstart = (lsState.page - 1) * lps;
+        const lineSlice = lines.slice(lstart, lstart + lps);
+        tb.innerHTML = lineSlice
           .map(li => {
             let src = '—';
             if (li.kind === 'work_order_line') src = 'WO line';
@@ -15792,6 +15894,21 @@
           </tr>`;
           })
           .join('');
+        if (linesPagerHost && window.erpPagerRender) {
+          window.erpPagerRender(
+            linesPagerHost,
+            { page: lsState.page, pageSize: lps, total: ltotal },
+            (nextPage, newPageSize) => {
+              if (newPageSize) lsState.pageSize = newPageSize;
+              lsState.page = nextPage;
+              runSettlementLookup();
+            }
+          );
+          linesPagerHost.hidden = false;
+        } else if (linesPagerHost) {
+          linesPagerHost.innerHTML = '';
+          linesPagerHost.hidden = true;
+        }
       } catch (e) {
         erpNotify('Settlement lookup failed: ' + e.message);
       }

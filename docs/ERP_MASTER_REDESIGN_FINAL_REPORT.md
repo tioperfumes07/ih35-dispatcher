@@ -53,7 +53,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 | File | Changes |
 |------|---------|
-| **`public/maintenance.html`** | `design-tokens.css`, `#erpToastHost`, `erp-ui.js`, `showErpToast` → `showToast`, **`erpNotify`** replaces **`alert`**, save split / busy patterns (prior), **accident** + **tire** WO Rule 22 tips; **shop board** queue tables paginated (**`erpPagerRender`** + **`shopQueuePager`**); **parts** queue tab Rule 22 tip; **Fuel expense** accounting grid paginated (**`fuelExpensePager`**) with off-page **`postFuelExpenseToQbo`** draft/data path for bulk QBO post. |
+| **`public/maintenance.html`** | `design-tokens.css`, `#erpToastHost`, `erp-ui.js`, `showErpToast` → `showToast`, **`erpNotify`** replaces **`alert`**, save split / busy patterns (prior), **accident** + **tire** WO Rule 22 tips; **shop board** queue tables paginated (**`erpPagerRender`** + **`shopQueuePager`**); **parts** queue tab Rule 22 tip; **Fuel expense** accounting grid paginated (**`fuelExpensePager`**) with off-page **`postFuelExpenseToQbo`** draft/data path for bulk QBO post; **Expense history** log paginated (**`expHistPager`** / **`#expHistPagerHost`**); **Reports → Settlement** load index + line-item tables paginated (**`settlementIndexPager`**, **`settlementLinesPager`**). |
 | **`public/dispatch.html`** | Tokens, toast host, `erp-ui.js`, intro + stops help tips, `erpWithBusy` / `showToast` on refresh, QBO catalog, save, uploads, PDF, auto miles, row QBO, quick-add, `patchStatus`, escaped `showMsg`, `loadTab(rethrow)` for manual refresh. |
 | **`public/fuel.html`** | Tokens, toast host, `erp-ui.js`, toasts + busy on key actions, **`erpNotify`**, **`--color-bg-page`** body, **connection strip** + `load` mount. |
 | **`public/banking.html`** | Tokens, toast host, `erp-ui.js`, toasts + busy, Rule 22 tip, **`erpNotify`**, pager on suggestions, **`--color-bg-page`**, **connection strip** + `load` mount. |
@@ -92,7 +92,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 | **20** | Button loading | **Done (pattern)** — `erpWithBusy` on key flows incl. dispatch rows. |
 | **21** | QBO error banner | **Partial** — maintenance has messaging; compare to spec. |
 | **22** | “?” tips | **Done (pattern)** + **samples**; many maintenance paragraphs remain. |
-| **23** | Pagination | **Partial** — banking/settings + maintenance **shop queues** + **fuel expense** grid wired; other long tables remain. |
+| **23** | Pagination | **Partial** — banking/settings + maintenance **shop queues**, **fuel expense**, **expense history**, and **reports settlement** (index + load lines) wired; upload center “recent” lists stay capped at 10; other long tables remain. |
 | **24** | Connection verification | **Partial** — maintenance sidebar + **new strip** on satellites/index; not universal Samsara+QBO banner everywhere. |
 
 ---
@@ -107,7 +107,7 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 ### P1 — UX consistency (no new APIs)
 
-1. **Maintenance `erpPagerRender`:** shop queue board (**internal / external / roadside / parts**) and **accounting → Fuel expense** grid are wired. Next candidates: expense history, upload grids, or other long tables — same **`erpPagerRender`** + slice pattern.
+1. **Maintenance `erpPagerRender`:** shop queues, **Fuel expense**, **Expense history**, and **Reports → Settlement** (load index + trip line items) are wired. Upload center “recent imports” stays at 10 rows per category in localStorage; other long tables (e.g. driver-pay nested tables) remain if needed.
 2. **More Rule 22:** convert long **`mini-note`** blocks in **accounting fuel**, **settlement**, and **upload center** tabs using the same **`erp-help-tip`** pattern as dispatch/accident/tire.
 3. **`erpMountConnectionStrip`:** optional second line **only if** a **cheap read-only** endpoint exists (avoid calling **`GET /api/board`** on every page load — it can fan out to Samsara; cache server-side or piggyback maintenance dashboard payload if product wants it).
 
@@ -138,6 +138,8 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 - [ ] **Maintenance:** **Shop board** (internal / external / roadside / parts) — with 16+ filtered rows, pager appears; change page size; filters reset to page 1.
 - [ ] **Maintenance:** **Accounting → Fuel expense** — 16+ rows with date/search filter: pager appears; **Record filtered to QuickBooks** still processes unposted rows not on the current page (optional: narrow filters so some unposted rows sit on page 2, then bulk post).
+- [ ] **Maintenance:** **Accounting → Expense history** — 16+ filtered rows: pager under table; summary line shows page count when multi-page; **Export filtered CSV** includes all filtered rows, not only the current page.
+- [ ] **Maintenance:** **Reports → Settlement / P&L** (TMS on) — **Loads with recorded costs** pager when 16+ loads; **Run lookup** on a heavy load: line-item pager; **Download CSV** still full load.
 - [ ] **Maintenance:** open WO → **Accident** → help **?** opens/closes; Escape closes.
 - [ ] **Maintenance:** **Tire** record → first-tire help **?** panel.
 - [ ] **Dispatch:** Refresh, QBO catalog, save load, upload doc, auto miles, row **Create invoice** / **Sync attachments**, status select.
