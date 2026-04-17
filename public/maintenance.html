@@ -32,7 +32,7 @@
           </div>
         </div>
         <div class="erp-dedicated-form-modal__bar-actions">
-          <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
+        <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
           <button type="button" class="btn btn--small secondary" data-erp-ded-close="1">Cancel</button>
         </div>
       </div>
@@ -910,11 +910,11 @@
                         </summary>
                         <div class="maint-qb-lines-scroll">
                           <table class="maint-qb-lines-table" aria-label="Category cost lines">
-                            <thead>
-                              <tr>
+                        <thead>
+                          <tr>
                                 <th class="maint-qb-th-num">#</th>
                                 <th>Category</th>
-                                <th>Description</th>
+                            <th>Description</th>
                                 <th class="maint-qb-th-num">Amount</th>
                                 <th class="maint-qb-th-bill">Billable</th>
                                 <th>Customer</th>
@@ -923,8 +923,8 @@
                                 <th>Part #</th>
                                 <th>Line memo</th>
                                 <th class="maint-qb-th-del"></th>
-                              </tr>
-                            </thead>
+                          </tr>
+                        </thead>
                             <tbody id="maintCostCatHost"></tbody>
                           </table>
                         </div>
@@ -956,10 +956,10 @@
                                 <th>Part #</th>
                                 <th>Line memo</th>
                                 <th class="maint-qb-th-del"></th>
-                              </tr>
+                          </tr>
                             </thead>
                             <tbody id="maintCostItemHost"></tbody>
-                          </table>
+                      </table>
                         </div>
                         <div class="maint-qb-cost-details__actions">
                           <button type="button" class="maint-cost-addline" onclick="addMaintItemCostLine()">+ Add item line</button>
@@ -2260,7 +2260,7 @@
                         </thead>
                         <tbody id="apWoCatHost"></tbody>
                       </table>
-                    </div>
+                </div>
                     <div class="maint-qb-cost-details__actions">
                       <button type="button" class="qb-btn-add" onclick="addWoCategoryLine()">+ Add category line</button>
                     </div>
@@ -4209,7 +4209,7 @@
           onblur="resolveMaintLineAccount(this)"
           title="QuickBooks expense account (category line)"
         />
-        <input type="hidden" class="maint-line-acct-id" />
+              <input type="hidden" class="maint-line-acct-id" />
       </td>
       <td class="maint-qb-td-desc">
         <input
@@ -4236,7 +4236,7 @@
           oninput="resolveMaintLineCustomer(this)"
           onblur="resolveMaintLineCustomer(this)"
         />
-        <input type="hidden" class="maint-line-cust-id" />
+              <input type="hidden" class="maint-line-cust-id" />
       </td>
       <td class="maint-qb-td-class">
         <input
@@ -4248,25 +4248,25 @@
           onblur="resolveMaintLineClass(this)"
           title="Defaults from selected asset when blank"
         />
-        <input type="hidden" class="maint-line-class-id" />
+              <input type="hidden" class="maint-line-class-id" />
       </td>
       <td class="maint-qb-td-pos">
         <select class="qb-in maint-field maint-line-part-cat maint-qb-inline-select" onchange="onMaintLinePartCategoryChange(this)" title="Part family">
           <option value="">Part type</option>
-          <option value="tire">Tires</option>
-          <option value="battery">Batteries</option>
-          <option value="air_suspension">Air springs / bags</option>
-          <option value="brake">Brakes</option>
-          <option value="filter">Filters</option>
-          <option value="lighting">Lighting</option>
+                  <option value="tire">Tires</option>
+                  <option value="battery">Batteries</option>
+                  <option value="air_suspension">Air springs / bags</option>
+                  <option value="brake">Brakes</option>
+                  <option value="filter">Filters</option>
+                  <option value="lighting">Lighting</option>
           <option value="other_multi">Other</option>
-        </select>
+                </select>
         <select class="qb-in maint-field maint-line-pos-select maint-qb-inline-select" onchange="syncMaintLinePartMapFromSelect(this)" title="Position">
           <option value="">Position</option>
-        </select>
+                </select>
         <div class="maint-line-pos-free-wrap hidden">
           <input class="qb-in maint-field maint-line-pos-free" placeholder="Position (text)" />
-        </div>
+              </div>
         <div class="maint-line-part-map-host maint-line-part-map-host--inline hidden"></div>
       </td>
       <td class="maint-qb-td-partno">
@@ -4744,10 +4744,10 @@
           posSel.appendChild(o);
         });
       }
-      const isOther = cat === 'other_multi';
+        const isOther = cat === 'other_multi';
       if (posSel) posSel.classList.toggle('hidden', isOther);
       if (wrapFree) wrapFree.classList.toggle('hidden', !isOther);
-      if (freeIn && !isOther) freeIn.value = '';
+        if (freeIn && !isOther) freeIn.value = '';
       const showMap =
         cat === 'tire' || cat === 'battery' || cat === 'air_suspension' || cat === 'brake';
       if (mapHost) {
@@ -12589,8 +12589,8 @@
     function updateMaintInvoiceCostCoordination(lines, rounded, hasAmt) {
       const wrap = document.getElementById('maintInvoiceCostSummary');
       if (!wrap) return;
-      wrap.style.display = 'none';
-      wrap.innerHTML = '';
+        wrap.style.display = 'none';
+        wrap.innerHTML = '';
     }
 
     function syncPrimaryServiceToFirstCostLine() {
@@ -13853,9 +13853,9 @@
         return;
       }
       row.remove();
-      refreshWoLineIndices();
-      refreshApDocTotal();
-    }
+        refreshWoLineIndices();
+        refreshApDocTotal();
+      }
 
     function addWoCategoryLine() {
       const tpl = document.getElementById('woLineCategoryTpl');
@@ -15388,8 +15388,8 @@
       document
         .querySelectorAll('#maintCostCatHost .maint-cost-cat-line, #maintCostItemHost .maint-cost-item-line')
         .forEach(row => {
-          if (!(row.querySelector('.maint-line-class-id')?.value || '').trim()) syncMaintCostLineDefaultsFromUnit(row);
-        });
+        if (!(row.querySelector('.maint-line-class-id')?.value || '').trim()) syncMaintCostLineDefaultsFromUnit(row);
+      });
       mergeRecordHeaderQboIntoFirstCostLineIfNeeded(r);
       resolveVendorQboIdFromVendorInput();
 
