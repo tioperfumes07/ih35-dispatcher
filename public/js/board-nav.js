@@ -54,10 +54,17 @@
       label: 'Accounting',
       href: '/maintenance.html#accounting',
       links: [
-        { label: 'Expenses & work orders', href: '/maintenance.html#accounting' },
-        { label: 'Settlement / P&L by load', href: '/maintenance.html#reports-settlement' },
+        { label: 'Accounting board', href: '/maintenance.html#accounting' },
+        { label: 'Bank & expense matching', href: '/banking.html' },
+        { label: 'Driver bill pay', href: '/maintenance.html#accounting-driver-bill-pay' },
+        { label: 'Fuel bill (dedicated)', href: '/maintenance.html#accounting-fuel-bill-new' },
+        { label: 'Fuel expense (dedicated)', href: '/maintenance.html#accounting-fuel-expense-new' },
+        { label: 'Maintenance bill (dedicated)', href: '/maintenance.html#accounting-maintenance-bill-new' },
+        { label: 'Maintenance expense (dedicated)', href: '/maintenance.html#accounting-maintenance-expense-new' },
+        { label: 'Pay bills', href: '/maintenance.html#accounting-bill-pay' },
         { label: 'QuickBooks lists (live master)', href: '/maintenance.html#accounting' },
-        { label: 'Bank & expense matching', href: '/banking.html' }
+        { label: 'Settlement / P&L by load', href: '/maintenance.html#reports-settlement' },
+        { label: 'Vendor / driver bill (dedicated)', href: '/maintenance.html#accounting-vendor-driver-bill-new' }
       ]
     },
     {
