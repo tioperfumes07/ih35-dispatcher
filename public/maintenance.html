@@ -13663,7 +13663,7 @@
     }
 
     async function saveRecord(postToQbo = false, closeAfter = false) {
-      if (!selectedUnit) return;
+      if (!selectedUnit) return false;
 
       resolveServiceSearch();
 
@@ -13682,7 +13682,7 @@
           'Select where service is performed: choose a location type in Service & scheduling (Internal shop, External shop, Roadside, Parts purchase, or Over the road).'
         );
         document.getElementById('repairLocationSelect')?.focus();
-        return;
+        return false;
       }
       const vendorInvNo = String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
       let woNo = String(document.getElementById('recordWorkOrderInput')?.value || '').trim();
@@ -13690,7 +13690,7 @@
         if (!vendorInvNo && !woNo) {
           alert('External shop, roadside service, and parts purchases require a vendor invoice # or a reference / WO #.');
           document.getElementById('recordVendorInvoiceInput')?.focus();
-          return;
+          return false;
         }
       }
       if (repairLoc === 'in-house' && !woNo) {
@@ -13706,7 +13706,7 @@
         const c = document.getElementById('customServiceTypeInput').value.trim();
         if (!c) {
           alert('Enter a custom service type name.');
-          return;
+          return false;
         }
         serviceType = c;
       } else {
@@ -13718,7 +13718,7 @@
         }
         if (!serviceType) {
           alert('Choose or type the service / maintenance performed (or enter a description on the first cost line).');
-          return;
+          return false;
         }
       }
 
@@ -13733,7 +13733,7 @@
             2
           )}). Adjust qty × unit $, line amounts, or the invoice total (uncheck “Lock invoice total” to auto-fill from lines).`
         );
-        return;
+        return false;
       }
       syncLinkedVendorFromMainVendor();
       const tireLineItems = recordType === 'tire' ? collectTireLineItems() : [];
@@ -13754,7 +13754,7 @@
           'Enter a valid service mileage (positive number). The field defaults to the Samsara odometer when available — use “Use Samsara” or refresh fleet data.'
         );
         smEl?.focus();
-        return;
+        return false;
       }
       const matchesSamsara =
         samsaraMi != null &&
@@ -13769,7 +13769,7 @@
           )
         ) {
           smEl?.focus();
-          return;
+          return false;
         }
       }
       const serviceMileageFinal = String(smNum);
@@ -13783,18 +13783,18 @@
             'Match the vendor to a QuickBooks vendor (type in the vendor field until it matches your QBO vendor list), then save again.'
           );
           document.getElementById('vendorInput')?.focus();
-          return;
+          return false;
         }
         if (!(invTotal > 0)) {
           alert('Enter an invoice total greater than zero to post to QuickBooks.');
           document.getElementById('costInput')?.focus();
-          return;
+          return false;
         }
         if (!hasLineMoney) {
           alert(
             'Add at least one cost breakdown line with a line amount so QuickBooks receives the correct account or item on each line.'
           );
-          return;
+          return false;
         }
         const badQboLine = costLinesPayload.find(l => {
           const amt = Number(l.amount) || 0;
@@ -13807,7 +13807,7 @@
           alert(
             'Each cost line with a dollar amount needs a QuickBooks expense account or item on that row (QBO line under the row). Then try Save & post again.'
           );
-          return;
+          return false;
         }
       }
 
@@ -13875,13 +13875,14 @@
 
       if (!closeAfter) {
         await loadAll();
-        return;
+        return true;
       }
 
       resetMaintenanceWorkOrderFormFields();
       clearMaintenanceEditMode();
       serviceMileageUserTouched = false;
       await loadAll();
+      return true;
     }
 
     function maintCloseSplitMenus() {
@@ -13952,9 +13953,15 @@
               ? 'Saving + opening Accounting draft…'
               : toPrint
                 ? 'Saving, then opening print…'
-                : 'Saving…';
+                : close
+                  ? 'Saving + clearing form…'
+                  : 'Saving…';
         }
-        await saveRecord(post, close);
+        const saved = await saveRecord(post, close);
+        if (!saved) {
+          if (hint) hint.textContent = '';
+          return;
+        }
         if (toAp) {
           openAccountingDraftFromMaintenanceForm();
         }
