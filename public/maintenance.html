@@ -964,6 +964,7 @@
                             type="button"
                             id="maintBtnSaveRecord"
                             class="qb-split__main"
+                            title="Save this maintenance record. When the menu is closed, Right Arrow opens more save actions."
                             onclick="maintCloseSplitMenus(); maintSaveRecordWithActionBusy('save', event)"
                           >
                             Save
@@ -977,7 +978,7 @@
                             aria-controls="maintSaveSplitMenu"
                             aria-expanded="false"
                             aria-label="More save options"
-                            title="Save and close, open Accounting, or print. Enter, Space, or ↓ opens; ↑ opens on last item."
+                            title="Save and close, open Accounting, or print. Enter, Space, or ↓ opens; ↑ focuses last; ← from first item returns to Save."
                           >
                             ▾
                           </button>
@@ -1022,7 +1023,7 @@
                       <button type="button" class="btn btn--ghost" onclick="maintPrintWorkOrderView()">Print</button>
                     </div>
                     <div class="maint-form-actions__meta">
-                      <span class="mini-note" id="maintSaveHint"></span>
+                      <span class="mini-note" id="maintSaveHint" role="status" aria-live="polite" aria-atomic="true"></span>
                       <span class="mini-note" id="maintEditRecordHint" style="color:#64748b"></span>
                     </div>
                   </div>
