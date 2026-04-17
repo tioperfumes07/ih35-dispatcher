@@ -174,7 +174,16 @@ body.erp-maintenance .modal {
   overflow-y: auto;
   border-radius: 8px;
   box-shadow: none;
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--color-border, var(--qb-line, #e8eaed));
+}
+
+/* Rule 2 / 22 — topbar short hint + ? (markup in maintenance.html `.topbar-hint-wrap`). */
+body.erp-maintenance .erp-topbar .topbar-hint-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
 }
 
 /* --- Rule 0: form rows (book-style grids) --- */

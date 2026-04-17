@@ -234,7 +234,15 @@
               <div id="globalSearchMenu" class="qb-picker-menu hidden" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"></div>
             </div>
           </div>
-          <span class="mini-note topbar-hint">Tip: use the left menu to switch areas, search here, or <strong>+ New</strong> to create.</span>
+          <div class="topbar-hint-wrap" aria-label="Workspace tips">
+            <span class="mini-note topbar-hint topbar-hint--lead">Tip: left rail, search, and <strong>+ New</strong>.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How navigation works">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Use the <strong>left icon rail</strong> to switch modules (Maintenance, Accounting, Reports, and more). Global search spans vendors, units, loads, bills, and work orders. <strong>+ New</strong> opens the three-column create menu (expenses, bills, work orders, settlements, fuel records, and other shortcuts).
+              </span>
+            </span>
+          </div>
           <div class="erp-topbar__actions print-hide-actions">
             <div class="erp-new-wrap">
               <button type="button" class="erp-btn-primary" id="erpNewMenuBtn" onclick="erpToggleNewMenu(event)">+ New</button>
