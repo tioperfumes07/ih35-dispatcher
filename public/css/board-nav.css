@@ -13,11 +13,53 @@
 .board-nav-inner {
   display: flex;
   align-items: stretch;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0;
   max-width: min(1560px, 100%);
   margin: 0 auto;
   padding: 0 12px;
+  min-width: 0;
+}
+
+.board-nav-strip {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  gap: 0;
+  min-width: 0;
+}
+
+.board-nav-strip-toggle {
+  flex: 0 0 auto;
+  align-self: stretch;
+  margin: 0 8px 0 0;
+  padding: 0 10px;
+  border: none;
+  border-right: 1px solid var(--nav-line, #1e293b);
+  background: transparent;
+  color: var(--nav-text-muted, #94a3b8);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.board-nav-strip-toggle:hover {
+  color: #fff;
+  background: var(--nav-hover, #1e293b);
+}
+
+.board-nav-wrap.board-nav-collapsed .board-nav-strip,
+.board-nav-wrap.board-nav-collapsed .board-nav-hint {
+  display: none !important;
+}
+
+.board-nav-wrap.board-nav-collapsed .board-nav-inner {
+  padding: 0 10px;
+  justify-content: flex-start;
 }
 .board-nav-item {
   position: relative;

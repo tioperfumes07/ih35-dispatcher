@@ -2113,21 +2113,27 @@
       if (collapse) {
         app.classList.add('sidebar-collapsed');
         try {
-          localStorage.setItem('dispatchSidebarCollapsed', '1');
+          localStorage.setItem('erpSidebarCollapsed', '1');
         } catch (_) {}
       } else {
         app.classList.remove('sidebar-collapsed');
         try {
-          localStorage.setItem('dispatchSidebarCollapsed', '0');
+          localStorage.setItem('erpSidebarCollapsed', '0');
         } catch (_) {}
       }
     }
 
     function loadDispatchSidebarPreference() {
       try {
-        if (localStorage.getItem('dispatchSidebarCollapsed') === '1') {
-          document.getElementById('dispatchApp')?.classList.add('sidebar-collapsed');
+        let c = localStorage.getItem('erpSidebarCollapsed');
+        if (c === null) {
+          const legacy = localStorage.getItem('dispatchSidebarCollapsed');
+          if (legacy === '1') {
+            localStorage.setItem('erpSidebarCollapsed', '1');
+            c = '1';
+          }
         }
+        if (c === '1') document.getElementById('dispatchApp')?.classList.add('sidebar-collapsed');
       } catch (_) {}
     }
 

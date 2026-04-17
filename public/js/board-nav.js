@@ -94,7 +94,20 @@
 
     const inner = document.createElement('div');
     inner.className = 'board-nav-inner';
-    inner.innerHTML =
+
+    const stripToggle = document.createElement('button');
+    stripToggle.type = 'button';
+    stripToggle.className = 'board-nav-strip-toggle';
+    stripToggle.setAttribute('aria-expanded', 'true');
+    stripToggle.setAttribute('aria-controls', 'board-nav-strip');
+    stripToggle.title = 'Collapse workspace navigation strip';
+    stripToggle.textContent = '\u00ab';
+    inner.appendChild(stripToggle);
+
+    const strip = document.createElement('div');
+    strip.id = 'board-nav-strip';
+    strip.className = 'board-nav-strip';
+    strip.innerHTML =
       BOARDS.map(
         b => `
       <div class="board-nav-item" data-board="${b.id}">
@@ -106,10 +119,33 @@
       ).join('') +
       '<span class="board-nav-hint">Double-click a name to go there · Single-click opens shortcuts</span>';
 
+    inner.appendChild(strip);
+
     const wrap = document.createElement('div');
     wrap.className = 'board-nav-wrap';
     wrap.appendChild(inner);
     mountEl.replaceWith(wrap);
+
+    stripToggle.addEventListener('click', ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const collapsed = wrap.classList.toggle('board-nav-collapsed');
+      stripToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      stripToggle.title = collapsed ? 'Expand workspace navigation strip' : 'Collapse workspace navigation strip';
+      stripToggle.textContent = collapsed ? '\u00bb' : '\u00ab';
+      try {
+        localStorage.setItem('ih35_board_nav_collapsed', collapsed ? '1' : '0');
+      } catch (_) {}
+    });
+
+    try {
+      if (localStorage.getItem('ih35_board_nav_collapsed') === '1') {
+        wrap.classList.add('board-nav-collapsed');
+        stripToggle.setAttribute('aria-expanded', 'false');
+        stripToggle.title = 'Expand workspace navigation strip';
+        stripToggle.textContent = '\u00bb';
+      }
+    } catch (_) {}
 
     wrap.querySelectorAll('.board-nav-trigger').forEach(btn => {
       const id = btn.getAttribute('data-board');

@@ -40,7 +40,7 @@
       <input id="loginEmail" type="email" autocomplete="username" />
       <label>Password</label>
       <input id="loginPass" type="password" autocomplete="current-password" />
-      <button type="button" class="primary" onclick="doLogin()">Sign in</button>
+      <button type="button" class="primary" id="btnLogin" onclick="doLogin()">Sign in</button>
       <div id="loginErr" class="err"></div>
     </div>
 
@@ -53,7 +53,7 @@
       <input id="bootEmail" type="email" />
       <label>Password (8+ characters)</label>
       <input id="bootPass" type="password" />
-      <button type="button" class="primary" onclick="doBootstrap()">Create admin</button>
+      <button type="button" class="primary" id="btnBootstrap" onclick="doBootstrap()">Create admin</button>
       <div id="bootErr" class="err"></div>
     </div>
 
@@ -85,7 +85,7 @@
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
-          <button type="button" class="primary" style="margin-top:12px" onclick="addUser()">Add user</button>
+          <button type="button" class="primary" style="margin-top:12px" id="btnAddUser" onclick="addUser()">Add user</button>
           <div id="userErr" class="err"></div>
         </div>
 
@@ -94,12 +94,13 @@
           <p class="mini" style="margin-top:0">Internal directory for staff contact + status (separate from QBO vendors).</p>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
             <input id="empSearch" placeholder="Search employee…" oninput="renderEmployeesTable()" />
-            <button type="button" onclick="loadEmployees()">Refresh</button>
+            <button type="button" id="btnEmpRefresh" onclick="loadEmployees()">Refresh</button>
           </div>
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Title</th><th>Status</th><th></th></tr></thead>
             <tbody id="empBody"></tbody>
           </table>
+          <div id="empPagerHost" hidden></div>
           <h3 style="font-size:14px;margin:16px 0 8px">Add employee</h3>
           <label>Name</label>
           <input id="newEmpName" />
@@ -116,12 +117,13 @@
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <button type="button" class="primary" style="margin-top:12px" onclick="addEmployee()">Add employee</button>
+          <button type="button" class="primary" style="margin-top:12px" id="btnAddEmployee" onclick="addEmployee()">Add employee</button>
           <div id="empErr" class="err"></div>
         </div>
       </div>
     </div>
   </div>
+  <script src="/js/erp-ui.js"></script>
   <script>
     function token() { return localStorage.getItem('ih35_token'); }
     function setToken(t) { if (t) localStorage.setItem('ih35_token', t); else localStorage.removeItem('ih35_token'); }
@@ -201,12 +203,21 @@
     }
 
     let __employees = [];
+    let __empPage = 1;
+    let __empPageSize = 12;
+    let __lastEmpQ = '';
+
     async function loadEmployees() {
-      document.getElementById('empErr').textContent = '';
-      try {
+      const btn = document.getElementById('btnEmpRefresh');
+      const run = async () => {
+        document.getElementById('empErr').textContent = '';
         const data = await api('/api/erp/employees');
         __employees = data.employees || [];
         renderEmployeesTable();
+      };
+      try {
+        if (window.erpWithBusy && btn) await window.erpWithBusy(btn, run);
+        else await run();
       } catch (e) {
         document.getElementById('empErr').textContent = e.message || String(e);
       }
@@ -214,14 +225,28 @@
 
     function renderEmployeesTable() {
       const tb = document.getElementById('empBody');
+      const pagerHost = document.getElementById('empPagerHost');
       if (!tb) return;
       const q = String(document.getElementById('empSearch')?.value || '').trim().toLowerCase();
+      if (q !== __lastEmpQ) {
+        __lastEmpQ = q;
+        __empPage = 1;
+      }
       const rows = (__employees || []).filter(e => {
         if (!q) return true;
         const hay = `${e.name || ''} ${e.email || ''} ${e.phone || ''} ${e.title || ''} ${e.department || ''}`.toLowerCase();
         return hay.includes(q);
       });
-      tb.innerHTML = rows.length ? rows.map(e => `
+      const total = rows.length;
+      const ps = Math.max(1, __empPageSize);
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (__empPage > pages) __empPage = pages;
+      const start = (__empPage - 1) * ps;
+      const pageRows = rows.slice(start, start + ps);
+      tb.innerHTML = pageRows.length
+        ? pageRows
+            .map(
+              e => `
         <tr>
           <td>${escapeHtml(e.name)}</td>
           <td>${escapeHtml(e.email || '')}</td>
@@ -234,13 +259,29 @@
             </select>
           </td>
           <td><button type="button" onclick="removeEmployee('${e.id}')">Remove</button></td>
-        </tr>
-      `).join('') : '<tr><td colspan="6" class="mini">No employees.</td></tr>';
+        </tr>`
+            )
+            .join('')
+        : '<tr><td colspan="6" class="mini">No employees.</td></tr>';
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: __empPage, pageSize: ps, total },
+          (p, newPs) => {
+            if (newPs) __empPageSize = newPs;
+            __empPage = p;
+            renderEmployeesTable();
+          }
+        );
+      } else if (pagerHost) {
+        pagerHost.hidden = true;
+      }
     }
 
     async function addEmployee() {
+      const btn = document.getElementById('btnAddEmployee');
       document.getElementById('empErr').textContent = '';
-      try {
+      const run = async () => {
         const body = {
           name: document.getElementById('newEmpName').value.trim(),
           email: document.getElementById('newEmpEmail').value.trim(),
@@ -256,7 +297,15 @@
         document.getElementById('newEmpTitle').value = '';
         document.getElementById('newEmpDept').value = '';
         document.getElementById('newEmpStatus').value = 'active';
+        __empPage = 1;
         await loadEmployees();
+      } catch (e) {
+        document.getElementById('empErr').textContent = e.message || String(e);
+      }
+      };
+      try {
+        if (window.erpWithBusy && btn) await window.erpWithBusy(btn, run);
+        else await run();
       } catch (e) {
         document.getElementById('empErr').textContent = e.message || String(e);
       }

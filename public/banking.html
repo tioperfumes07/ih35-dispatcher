@@ -41,6 +41,7 @@
 <body class="banking-page">
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
+  <script src="/js/erp-ui.js" defer></script>
   <div class="wrap">
     <div id="authBanner" class="hidden"></div>
     <h1>Bank transactions &amp; QuickBooks matching</h1>
@@ -86,6 +87,7 @@
           <button type="button" class="primary" id="btnSuggest">Run suggestions</button>
         </div>
         <div id="suggestOut"></div>
+        <div id="suggestPagerHost" hidden></div>
       </div>
     </div>
   </div>
@@ -122,117 +124,183 @@
         .replaceAll('"', '&quot;');
     }
 
-    document.getElementById('btnSnap').onclick = async () => {
-      const days = Number(document.getElementById('daysWin').value) || 60;
-      const d = await j('/api/banking/snapshot?days=' + encodeURIComponent(days));
-      document.getElementById('snapMeta').textContent =
-        'Window from ' + (d.windowStart || '—') + ' · ERP expense rows considered: ' + (d.erpCandidates || []).length;
-      const q = d.qbo || {};
-      document.getElementById('snapMetrics').innerHTML = [
-        ['QBO Purchases', (q.purchases || []).length],
-        ['QBO Bills', (q.bills || []).length],
-        ['Bill payments', (q.billPayments || []).length],
-        ['Vendor credits', (q.vendorCredits || []).length],
-        ['Bank CSV imports stored', (d.bankImports || []).length],
-        ['Saved links', (d.matchLinks || []).length]
-      ]
+    let __bankSuggestState = { rows: [], page: 1, pageSize: 10, importBatchId: '' };
+
+    function bankSuggestBlockHtml(s, batchId) {
+      const sugRows = (s.suggestions || [])
         .map(
-          ([k, v]) =>
-            '<div class="metric"><div class="k">' +
-            esc(k) +
-            '</div><div class="v">' +
-            esc(v) +
-            '</div></div>'
+          x =>
+            '<tr><td>' +
+            esc(x.kind) +
+            '</td><td>' +
+            esc(x.label) +
+            '</td><td>' +
+            esc(x.amount) +
+            '</td><td>' +
+            esc(x.date) +
+            '</td><td>' +
+            esc(x.score) +
+            '</td><td><button type="button" data-link="1" data-bid="' +
+            esc(batchId) +
+            '" data-brow="' +
+            esc(s.bankRowId) +
+            '" data-mt="' +
+            esc(x.kind) +
+            '" data-ref="' +
+            esc(x.ref) +
+            '">Link</button></td></tr>'
         )
         .join('');
-    };
+      return (
+        '<div style="margin-bottom:16px;border:1px solid #edf1f7;border-radius:10px;padding:10px;background:#fafcff">' +
+        '<div style="font-weight:700;margin-bottom:6px">' +
+        esc(s.date) +
+        ' · ' +
+        esc(s.amount) +
+        '</div>' +
+        '<div class="mini" style="margin-bottom:8px">' +
+        esc(s.memo) +
+        '</div>' +
+        (sugRows
+          ? '<table><thead><tr><th>Kind</th><th>Candidate</th><th>Amt</th><th>Date</th><th>Score</th><th></th></tr></thead><tbody>' +
+            sugRows +
+            '</tbody></table>'
+          : '<span class="mini">No candidates ( widen QBO window or check amounts/dates).</span>') +
+        '</div>'
+      );
+    }
 
-    document.getElementById('btnImport').onclick = async () => {
-      const csvText = document.getElementById('csvPaste').value;
-      const out = await j('/api/banking/import-csv', { method: 'POST', body: JSON.stringify({ csvText }) });
-      document.getElementById('importOut').innerHTML =
-        'Imported <strong>' +
-        out.rowCount +
-        '</strong> rows. Batch id: <code>' +
-        esc(out.importBatchId) +
-        '</code> — paste this into step 3.';
-      document.getElementById('batchId').value = out.importBatchId;
-    };
-
-    document.getElementById('btnSuggest').onclick = async () => {
-      const importBatchId = document.getElementById('batchId').value.trim();
-      if (!importBatchId) return alert('Enter import batch id.');
-      const days = Number(document.getElementById('daysWin').value) || 90;
-      const data = await j('/api/banking/suggest', {
-        method: 'POST',
-        body: JSON.stringify({ importBatchId, days })
-      });
-      const box = document.getElementById('suggestOut');
-      if (!(data.suggestions || []).length) {
-        box.innerHTML = '<p class="mini">No rows.</p>';
-        return;
-      }
-      const rows = data.suggestions
-        .map(s => {
-          const sugRows = (s.suggestions || [])
-            .map(
-              x =>
-                '<tr><td>' +
-                esc(x.kind) +
-                '</td><td>' +
-                esc(x.label) +
-                '</td><td>' +
-                esc(x.amount) +
-                '</td><td>' +
-                esc(x.date) +
-                '</td><td>' +
-                esc(x.score) +
-                '</td><td><button type="button" data-link="1" data-bid="' +
-                esc(data.importBatchId) +
-                '" data-brow="' +
-                esc(s.bankRowId) +
-                '" data-mt="' +
-                esc(x.kind) +
-                '" data-ref="' +
-                esc(x.ref) +
-                '">Link</button></td></tr>'
-            )
-            .join('');
-          return (
-            '<div style="margin-bottom:16px;border:1px solid #edf1f7;border-radius:10px;padding:10px;background:#fafcff">' +
-            '<div style="font-weight:700;margin-bottom:6px">' +
-            esc(s.date) +
-            ' · ' +
-            esc(s.amount) +
-            '</div>' +
-            '<div class="mini" style="margin-bottom:8px">' +
-            esc(s.memo) +
-            '</div>' +
-            (sugRows
-              ? '<table><thead><tr><th>Kind</th><th>Candidate</th><th>Amt</th><th>Date</th><th>Score</th><th></th></tr></thead><tbody>' +
-                sugRows +
-                '</tbody></table>'
-              : '<span class="mini">No candidates ( widen QBO window or check amounts/dates).</span>') +
-            '</div>'
-          );
-        })
-        .join('');
-      box.innerHTML = rows;
-
+    function wireBankSuggestLinkButtons(box) {
       box.querySelectorAll('button[data-link]').forEach(btn => {
         btn.onclick = async () => {
           const importBatchId = btn.getAttribute('data-bid');
           const bankRowId = btn.getAttribute('data-brow');
           const matchType = btn.getAttribute('data-mt');
           const ref = btn.getAttribute('data-ref');
-          await j('/api/banking/link', {
-            method: 'POST',
-            body: JSON.stringify({ importBatchId, bankRowId, matchType, ref })
-          });
+          const run = () =>
+            j('/api/banking/link', {
+              method: 'POST',
+              body: JSON.stringify({ importBatchId, bankRowId, matchType, ref })
+            });
+          if (window.erpWithBusy) await window.erpWithBusy(btn, run);
+          else await run();
           btn.textContent = 'Linked';
           btn.disabled = true;
         };
       });
+    }
+
+    function renderBankSuggestView() {
+      const box = document.getElementById('suggestOut');
+      const pagerHost = document.getElementById('suggestPagerHost');
+      const total = (__bankSuggestState.rows || []).length;
+      if (!total) {
+        box.innerHTML = '<p class="mini">No rows.</p>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        return;
+      }
+      const ps = Math.max(1, Number(__bankSuggestState.pageSize) || 10);
+      const pages = Math.max(1, Math.ceil(total / ps));
+      if (__bankSuggestState.page > pages) __bankSuggestState.page = pages;
+      if (__bankSuggestState.page < 1) __bankSuggestState.page = 1;
+      const start = (__bankSuggestState.page - 1) * ps;
+      const slice = __bankSuggestState.rows.slice(start, start + ps);
+      const bid = __bankSuggestState.importBatchId || '';
+      box.innerHTML = slice.map(s => bankSuggestBlockHtml(s, bid)).join('');
+      wireBankSuggestLinkButtons(box);
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: __bankSuggestState.page, pageSize: ps, total },
+          (p, newPs) => {
+            if (newPs) __bankSuggestState.pageSize = newPs;
+            __bankSuggestState.page = p;
+            renderBankSuggestView();
+          }
+        );
+      }
+    }
+
+    document.getElementById('btnSnap').onclick = async () => {
+      const btn = document.getElementById('btnSnap');
+      const run = async () => {
+        const days = Number(document.getElementById('daysWin').value) || 60;
+        const d = await j('/api/banking/snapshot?days=' + encodeURIComponent(days));
+        document.getElementById('snapMeta').textContent =
+          'Window from ' + (d.windowStart || '—') + ' · ERP expense rows considered: ' + (d.erpCandidates || []).length;
+        const q = d.qbo || {};
+        document.getElementById('snapMetrics').innerHTML = [
+          ['QBO Purchases', (q.purchases || []).length],
+          ['QBO Bills', (q.bills || []).length],
+          ['Bill payments', (q.billPayments || []).length],
+          ['Vendor credits', (q.vendorCredits || []).length],
+          ['Bank CSV imports stored', (d.bankImports || []).length],
+          ['Saved links', (d.matchLinks || []).length]
+        ]
+          .map(
+            ([k, v]) =>
+              '<div class="metric"><div class="k">' +
+              esc(k) +
+              '</div><div class="v">' +
+              esc(v) +
+              '</div></div>'
+          )
+          .join('');
+      };
+      if (window.erpWithBusy) return window.erpWithBusy(btn, run);
+      return run();
+    };
+
+    document.getElementById('btnImport').onclick = async () => {
+      const btn = document.getElementById('btnImport');
+      const run = async () => {
+        const csvText = document.getElementById('csvPaste').value;
+        const out = await j('/api/banking/import-csv', { method: 'POST', body: JSON.stringify({ csvText }) });
+        document.getElementById('importOut').innerHTML =
+          'Imported <strong>' +
+          out.rowCount +
+          '</strong> rows. Batch id: <code>' +
+          esc(out.importBatchId) +
+          '</code> — paste this into step 3.';
+        document.getElementById('batchId').value = out.importBatchId;
+      };
+      if (window.erpWithBusy) return window.erpWithBusy(btn, run);
+      return run();
+    };
+
+    document.getElementById('btnSuggest').onclick = async () => {
+      const btn = document.getElementById('btnSuggest');
+      const run = async () => {
+        const importBatchId = document.getElementById('batchId').value.trim();
+        if (!importBatchId) return alert('Enter import batch id.');
+        const days = Number(document.getElementById('daysWin').value) || 90;
+        const data = await j('/api/banking/suggest', {
+          method: 'POST',
+          body: JSON.stringify({ importBatchId, days })
+        });
+        if (!(data.suggestions || []).length) {
+          __bankSuggestState = { rows: [], page: 1, pageSize: 10, importBatchId: '' };
+          document.getElementById('suggestOut').innerHTML = '<p class="mini">No rows.</p>';
+          const ph = document.getElementById('suggestPagerHost');
+          if (ph) {
+            ph.innerHTML = '';
+            ph.hidden = true;
+          }
+          return;
+        }
+        __bankSuggestState = {
+          rows: data.suggestions,
+          page: 1,
+          pageSize: 10,
+          importBatchId: data.importBatchId || importBatchId
+        };
+        renderBankSuggestView();
+      };
+      if (window.erpWithBusy) return window.erpWithBusy(btn, run);
+      return run();
     };
   </script>
 </body>
