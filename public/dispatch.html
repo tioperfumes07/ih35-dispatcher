@@ -269,6 +269,7 @@
     }
     html.dispatch-embed #boardNavMount,
     html.dispatch-embed .board-nav-wrap { display: none !important; }
+    html.dispatch-embed #erpConnectionStrip { display: none !important; }
     html.dispatch-embed .topbar,
     html.dispatch-embed .erp-topbar { padding: 8px 12px; }
     html.dispatch-embed .topbar a:not(.keep-embed),
@@ -361,6 +362,7 @@
     <div class="erp-main-col">
       <main class="main erp-main-surface">
         <div class="erp-main-body dispatch-board-body">
+          <div id="erpConnectionStrip" class="erp-connection-strip print-hide-actions" aria-live="polite"></div>
           <header class="topbar erp-topbar">
             <div class="title" id="dispatchPageTitle">Loads &amp; dispatch</div>
             <a href="/" class="topbar-home-link keep-embed">Company home</a>
@@ -2948,6 +2950,9 @@
 
     (async function init() {
       loadDispatchSidebarPreference();
+      if (typeof erpMountConnectionStrip === 'function' && !document.documentElement.classList.contains('dispatch-embed')) {
+        void erpMountConnectionStrip('erpConnectionStrip');
+      }
       bindDriverVendorAc();
       bindCustomerAc();
       bindTruckClassAc();

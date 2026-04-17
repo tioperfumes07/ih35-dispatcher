@@ -25,13 +25,13 @@ const CRITICAL = [
 /** Optional: DB reachability (fails in dev when URL points at a dead host). */
 const SOFT_DB = ['GET', '/api/health/db'];
 
-/** Static ERP shells (HTML) — catches broken public paths or 500 on page boot. */
+/** Static ERP shells (HTML) — catches broken public paths or 500 on page boot. Second value: one substring or all of a list must be present. */
 const HTML_PAGES = [
-  ['/maintenance.html', 'section-reports'],
-  ['/dispatch.html', 'dispatchApp'],
-  ['/fuel.html', 'fuel-board'],
-  ['/banking.html', 'banking-page'],
-  ['/settings.html', 'settings-page']
+  ['/maintenance.html', ['section-reports', 'erpConnectionStrip']],
+  ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
+  ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],
+  ['/banking.html', ['banking-page', 'erpConnectionStrip']],
+  ['/settings.html', ['settings-page', 'erpConnectionStrip']]
 ];
 
 const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 8000));
@@ -56,17 +56,24 @@ async function one(method, path) {
   return { path, status: r.status, ok: r.ok, hint, jsonSnippet: summarize(json, path) };
 }
 
-async function oneHtml(path, needle) {
+async function oneHtml(path, needleOrList) {
   const url = base + path;
   const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
   const r = await fetch(url, { method: 'GET', headers: { Accept: 'text/html' }, signal: ctrl });
   const text = await r.text();
-  const has = needle && text.includes(needle);
+  const needles = Array.isArray(needleOrList) ? needleOrList : needleOrList ? [needleOrList] : [];
+  const missing = needles.filter(n => n && !text.includes(n));
+  const has = needles.length > 0 && missing.length === 0;
+  const hint = has
+    ? `contains ${needles.map(n => `"${n}"`).join(' + ')}`
+    : r.ok
+      ? `missing ${missing.map(n => `"${n}"`).join(', ')}`
+      : '';
   return {
     path,
     status: r.status,
     ok: r.ok && has,
-    hint: has ? `contains "${needle}"` : r.ok ? `missing "${needle}"` : '',
+    hint,
     jsonSnippet: r.ok ? `bytes=${text.length}` : text.slice(0, 80)
   };
 }

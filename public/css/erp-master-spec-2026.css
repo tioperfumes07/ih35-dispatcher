@@ -1621,6 +1621,10 @@ body.hub-page .erp-connection-strip {
   padding-left: 24px;
   padding-right: 24px;
 }
+body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connection-strip {
+  margin: 10px 1.25rem 8px;
+  flex-shrink: 0;
+}
 .erp-connection-strip--ok {
   border-color: #bce3c9;
   background: var(--pill-green-bg, #e6f4ea);
