@@ -74,7 +74,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 2 — App shell
 
-- **Partial:** Maintenance uses `erp-master` shell (icon nav, sidebars, top bar patterns in HTML/CSS). **Lists & catalogs** is a first-class **Lists** (**▤**) target in icon nav (and **`/maintenance.html#catalog`** + **`#catalog-*`** sub-tabs); dispatch nav includes the same deep link. **Settings** uses the shared **`board-nav.js`** workspace strip (**`board-nav.css`**) like banking, fuel, dispatch, maintenance, and **company hub**. **`index.html`** hub header adds **`erp-help-tip`** for workspace cards + strip + QBO status (**changelog 55**). Labels and module order still differ from the spec’s canonical list in places (e.g. “Fuel Plan” naming).
+- **Partial:** Maintenance uses `erp-master` shell (icon nav, sidebars, top bar patterns in HTML/CSS). **Lists & catalogs** is a first-class **Lists** (**▤**) target in icon nav (and **`/maintenance.html#catalog`** + **`#catalog-*`** sub-tabs); dispatch nav includes the same deep link. **Settings** uses the shared **`board-nav.js`** workspace strip (**`board-nav.css`**) like banking, fuel, dispatch, maintenance, and **company hub**. **`index.html`** hub header adds **`erp-help-tip`** for workspace cards + strip + QBO status (**changelog 55**); footer mileage / routing note uses the same **`?`** pattern (**changelog 67**). **`system-smoke.mjs`** includes **`GET /index.html`** shell checks (**changelog 67**). Labels and module order still differ from the spec’s canonical list in places (e.g. “Fuel Plan” naming).
 - **Future:** Align copy, dimensions (68px / 216px / 48px), and tab set exactly to spec.
 
 ### Rule 3 — Collapsible sidebar
