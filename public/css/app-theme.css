@@ -481,7 +481,7 @@ body.fuel-board {
 }
 
 body.dispatch-page {
-  background: var(--bg);
+  background: var(--color-bg-page, var(--bg));
 }
 
 body.fuel-board {
@@ -495,9 +495,9 @@ body.dispatch-page .topbar {
   flex-wrap: wrap;
   gap: 10px 14px;
   padding: 12px 18px;
-  background: var(--panel);
+  background: var(--color-bg-card, var(--panel));
   color: var(--text);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
@@ -526,8 +526,8 @@ body.dispatch-page .topbar a:hover {
 body.dispatch-page .topbar button {
   padding: 8px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--line);
-  background: var(--panel);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
+  background: var(--color-bg-card, var(--panel));
   color: var(--text);
   font-weight: 600;
   cursor: pointer;
@@ -537,7 +537,7 @@ body.dispatch-page .topbar button {
 
 body.dispatch-page .topbar button:hover {
   background: var(--color-bg-hover, #f8fafc);
-  border-color: var(--line-strong);
+  border-color: var(--color-border, var(--line-strong));
 }
 
 body.dispatch-page .topbar button.secondary {
@@ -556,14 +556,14 @@ body.dispatch-page .tabs {
   gap: 6px;
   padding: 10px 18px 12px;
   background: var(--bg);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line));
 }
 
 body.dispatch-page .tabs button {
   padding: 7px 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 999px;
-  background: var(--panel);
+  background: var(--color-bg-card, var(--panel));
   cursor: pointer;
   font-weight: 500;
   font-size: 0.88rem;
@@ -612,8 +612,8 @@ body.dispatch-page .banner.err {
 body.dispatch-page table.data {
   width: 100%;
   border-collapse: collapse;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: var(--color-bg-card, var(--panel));
+  border: 1px solid var(--color-border, var(--line));
   border-radius: var(--radius-sm);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -624,7 +624,7 @@ body.dispatch-page table.data th,
 body.dispatch-page table.data td {
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line));
   vertical-align: top;
 }
 
