@@ -2314,7 +2314,14 @@
                   </div>
                 </div>
                 <div class="panel-body form-stack qb-doc-body">
-                  <div class="wo-line-grid">
+                  <div
+                    class="mr-filter-bar erp-ops-filter-bar"
+                    role="group"
+                    aria-label="Manual fuel expense header"
+                    style="margin-bottom:12px;align-items:flex-start"
+                  >
+                    <div class="mr-filter-bar__grow" style="min-width:0;width:100%">
+                      <div class="wo-line-grid" style="margin-bottom:0">
                     <div style="grid-column:span 2">
                       <span class="qb-l">Vendor (QuickBooks)</span>
                       <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
@@ -2351,6 +2358,8 @@
                     <div style="grid-column:span 2">
                       <span class="qb-l">Location / site (optional)</span>
                       <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
+                    </div>
+                      </div>
                     </div>
                   </div>
                   <div class="erp-qb-cost-shell erp-qb-cost-shell--embedded">

@@ -46,7 +46,7 @@
 
 - [ ] **Accounting board:** Dash cards and **Connections** strip (`#maintIntegrationStrip`) render; **Refresh** updates counts where applicable.
 - [ ] **QuickBooks Live Master:** **`erp-help-tip`** on title; **Create vendor** / refresh master still work.
-- [ ] **Fuel expenses:** Filter **`mr-filter-bar`** (dates, search, QBO fields) + grid; **Refresh fuel purchases**; pager with **16+** rows; **Record filtered to QuickBooks** still includes rows **off the current page** (regression from Rule 23 wiring).
+- [ ] **Fuel expenses:** Filter **`mr-filter-bar`** (dates, search, QBO fields) + grid; **Manual fuel / DEF expense** — document header fields in **`mr-filter-bar`**; **Refresh fuel purchases**; pager with **16+** rows; **Record filtered to QuickBooks** still includes rows **off the current page** (regression from Rule 23 wiring).
 - [ ] **Expense history:** Filters + pager (**16+** rows); **Export filtered CSV** = full filtered set, not current page only.
 - [ ] **Pay bills:** Load open bills (if QBO available); **Create bill payment** path; **Recent bill payments** — **Refresh log**, filters (**`mr-filter-bar`**), pager (**16+**), clear search restores full loaded set; **Export CSV**.
 - [ ] **QuickBooks rollback:** **Refresh** loads batches + posted checklist; **Revert** / undo flows unchanged.
