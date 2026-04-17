@@ -12,13 +12,13 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~59.7%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.597** → **59.7%**; rounded headline **~59.7%**.)
+**Overall completion: ~59.8%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.598** → **59.8%**; rounded headline **~59.8%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
 | Rule | Theme | Fraction (this revision) | Notes |
 |------|--------|-------------------------|--------|
-| 0 | Design tokens | 0.76 | **`board-nav.css`** bridges dropdown/hover to **`var(--color-*|pill-*|shadow-dropdown)`**; **QBO sync alert bar** + **`#authBanner.erp-auth-banner`** use **`pill-*`** / **`color-*`** fallbacks in CSS (**maintenance** + **banking**); **Settlement** TMS context box + rollback sub-head borders use **`var(--color-border|bg-card)`**; **`renderReportsAll`** / **`renderRepMaintSpendByUnitTable`** empty states use **`var(--color-text-label|semantic-error)`**; **`settings.html`** / **`dispatch.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
+| 0 | Design tokens | 0.77 | **`board-nav.css`** bridges dropdown/hover to **`var(--color-*|pill-*|shadow-dropdown)`**; **QBO sync alert bar** + **`#authBanner.erp-auth-banner`** use **`pill-*`** / **`color-*`** fallbacks in CSS (**maintenance** + **banking**); **Settlement** TMS box + rollback + **Fuel expense** Relay panel + **expense history** / **AP doc** QBO banners + **rollback** checkbox scroller + **fleet roster** panel use **`var(--color-border|bg-card|bg-header|text-body)`**; **`renderReportsAll`** / **`renderRepMaintSpendByUnitTable`** empty states use **`var(--color-text-label|semantic-error)`**; **`settings.html`** / **`dispatch.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
 | 1 | Responsive | 0.47 | Shell patterns; **Reports** toolbar + main column gap tighten at **≤900px** (**`erp-master-spec-2026.css`**); full viewport audit deferred |
 | 2 | App shell | 0.49 | **`erp-master`** + **Lists** (**▤**) icon opens **`#catalog`**; dispatch + **settings** + hub **`board-nav`** strip; spec dimensions/copy deferred |
 | 3 | Collapsible sidebar | 1.0 | Pattern shipped (`ih35_sb_*`) |
@@ -27,7 +27,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 10 | StandardExpenseLines | 0.15 | No React tree; documented blocked / future |
 | 11 | Pay bills | 0.45 | Flows exist; driver variant + open-bills pager deferred |
 | 12 | Maintenance layout | 0.49 | **Lists & catalogs** sub-tab intros (**Rule 22**) + **Service types (DB)** filter/pager (**Rules 15/23**); **Accounting → QuickBooks rollback** title **`erp-help-tip`** + compact body copy; full spec QA deferred |
-| 13 | Accounting board | 0.49 | KPIs + dash cards; card subcopy uses **token** text colors; **`#authBanner`** login strip: **`erp-auth-banner`** token chrome on **maintenance** + **banking** (**`erp-master-spec-2026.css`**); dark-panel cleanup partial |
+| 13 | Accounting board | 0.50 | KPIs + dash cards; card subcopy uses **token** text colors; **`#authBanner`** login strip: **`erp-auth-banner`** token chrome on **maintenance** + **banking** (**`erp-master-spec-2026.css`**); **QuickBooks Live Master** title **`erp-help-tip`** + **AP** / **expense history** inline QBO banners use **token** borders/backgrounds (**changelog 47**); dark-panel cleanup partial |
 | 14 | Upload center | 0.55 | Tabs + flows; **?** tips on every upload subpanel intro (Bank, Comdata, Fuel, AP, Maint, Other, Connections); sub-tab row **A–Z** by label; full file QA deferred |
 | 15 | Filter bar | 0.55 | Several tables + **Security alerts** + **Lists & catalogs → Service types (DB)** + **Reports → Maintenance detailed report** filters use **`mr-filter-bar`** / filter row; not universal |
 | 16 | Safety / HOS | 0.55 | Tables + **Rule 23** pagers on Safety + idle snapshot |
@@ -36,11 +36,11 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 19 | Toasts | 1.0 | `showToast` + `erpNotify` pattern |
 | 20 | Button loading | 1.0 | `erpWithBusy` pattern |
 | 21 | QBO error banner | 0.52 | **`#qboSyncAlertBar`** **`position: sticky; top: 0`** so sync issues stay visible while scrolling the ERP main column; tier colors use **token fallbacks** |
-| 22 | “?” tips | 0.91 | **Lists & catalogs** — every sub-tab (**Service**, **QBO**, **Vendors**, **Operational**, **Fleet**) has short intro + **?**; **Reports → Executive overview** title **`erp-help-tip`**; **Accounting → QuickBooks rollback & import safety** + **Reports → Settlement → Driver pay settlements** panel titles **`erp-help-tip`**; **QBO activity**, **ERP ↔ QBO sync**, and **IFTA** bodies: dense paragraphs shortened + **`var(--color-text-label)`** on secondary lines; **TMS** + **Maint spend by unit** empty states split headline + muted steps; + **Team** dynamic intro + prior report/upload/shop; **dispatch** sidebar **Tips** line + **?**; many `mini-note` blocks remain |
+| 22 | “?” tips | 0.92 | **Lists & catalogs** — every sub-tab (**Service**, **QBO**, **Vendors**, **Operational**, **Fleet**) has short intro + **?**; **Reports → Executive overview** title **`erp-help-tip`**; **Accounting → QuickBooks Live Master** + **rollback** + **Reports → Settlement → Driver pay settlements** panel titles **`erp-help-tip`**; **QBO activity**, **ERP ↔ QBO sync**, and **IFTA** bodies: dense paragraphs shortened + **`var(--color-text-label)`** on secondary lines; **TMS** + **Maint spend by unit** empty states split headline + muted steps; **Live Master** vendor intro folded into **`?`** + short lines; + **Team** dynamic intro + prior report/upload/shop; **dispatch** sidebar **Tips** line + **?**; many `mini-note` blocks remain |
 | 23 | Pagination | 0.86 | Broad `erpPagerRender` coverage; **Lists & catalogs → Service types (DB)** (**`serviceCatalogAdminPager`**); **Reports** spend-by-unit + maint detailed (prior); not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.597** (**59.7%**; headline **~59.7%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.598** (**59.8%**; headline **~59.8%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -104,7 +104,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 13 — Accounting board
 
-- **Partial:** KPI-style cards and QBO chrome exist in maintenance accounting sections; accounting **dash card** subcopy uses **`var(--color-text-body)`** / link color **`var(--color-border-focus)`** where updated. **`#authBanner`** (401 “login required”) uses class **`erp-auth-banner`** with **token-backed** warning strip styling in **`erp-master-spec-2026.css`** on **maintenance** and **banking** (replaces banking’s prior inline red strip). “Remove dark panel / instruction paragraphs” — partially addressed over time; confirm with UX pass.
+- **Partial:** KPI-style cards and QBO chrome exist in maintenance accounting sections; accounting **dash card** subcopy uses **`var(--color-text-body)`** / link color **`var(--color-border-focus)`** where updated. **`#authBanner`** (401 “login required”) uses class **`erp-auth-banner`** with **token-backed** warning strip styling in **`erp-master-spec-2026.css`** on **maintenance** and **banking** (replaces banking’s prior inline red strip). **QuickBooks Live Master** uses title **`erp-help-tip`** and shorter vendor intro (**changelog 47**); **AP** / **expense history** QBO strips use **token** borders/backgrounds. “Remove dark panel / instruction paragraphs” — partially addressed over time; confirm with UX pass.
 
 ### Rule 14 — Upload center
 
@@ -200,6 +200,19 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 44. **Reports QBO / sync / IFTA body copy (Rules 22 + 17 + 14):** **`maintenance.html`** — **`renderReportsAll`**: **QuickBooks activity** empty state split into headline + muted steps; loaded-state window line shortened + token color; **ERP ↔ QBO sync** intro/footer **`mini-note`**s shortened and cross-reference panel **`?`**; **IFTA** roadmap body reduced to one line pointing at title **`?`**. Rule **14** notes: upload sub-tab row **A–Z** by label (verified in layout).
 45. **Reports overview + TMS + spend-by-unit empty (Rules 0 + 22 + 17 + 1):** **`maintenance.html`** — **`renderReportsAll`**: **Executive overview** generated/cache line uses **`var(--color-text-label)`**; **TMS loads** not-configured / error / OK summary lines use headline + token-muted or **`var(--color-semantic-error)`** on the error text. **`renderRepMaintSpendByUnitTable`**: empty rollup uses two-line pattern (headline + **Refresh reports** hint). **`erp-master-spec-2026.css`** — at **≤900px**, **Reports** toolbar padding and **`erp-reports-main`** gap tighten slightly (**Rule 1**).
 46. **Accounting rollback + settlement driver pay + banking auth strip (Rules 22 + 0 + 12 + 17 + 13):** **`maintenance.html`** — **Accounting → QuickBooks rollback & import safety**: panel title **`erp-help-tip`**; long intro paragraph → two short lines + token-muted secondary; sub-head borders use **`var(--color-border)`**. **Reports → Settlement / P&L**: **`#settlementTmsBox`** border/background **`var(--color-border|bg-card)`**; **Driver pay settlements** title **`erp-help-tip`** + shortened body. **`banking.html`** — **`#authBanner`** adds **`erp-auth-banner`**, removes inline red banner CSS. **`erp-master-spec-2026.css`** — same **`erp-auth-banner`** token strip for **`body.banking-page`** (warning palette; **`margin-bottom: 16px`** on banking).
+47. **Accounting QBO Live Master + token chrome (Rules 22 + 0 + 13):** **`maintenance.html`** — **Accounting → QuickBooks Live Master**: panel title **`erp-help-tip`** (vendors vs items vs accounts vs payroll); vendor form long **`mini-note`** → short line + **`var(--color-text-label)`** second line; section dividers **`var(--color-border)`**. **Fuel & DEF entry** Relay import panel: **`var(--color-border|bg-card)`**. **Expense history** QBO verify strip + **AP expense** doc QBO banner: token border/background/text. **Rollback** bulk-revert checkbox scroller + **Maintenance → unit** fleet roster block: **`var(--color-border)`**.
+
+---
+
+## Recommendation audit vs codebase (FINAL_REPORT §5–7)
+
+| Source | Status |
+|--------|--------|
+| **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md) §5 P0** — smoke test, sign-in / 401 paths, QBO strip with server | **Manual / environment** — not executable as static code; run when a server and credentials are available. |
+| **§7 verification checklist** (checkbox list) | **Manual QA** — same; items remain unchecked in that doc until a human runs them. |
+| **[`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md)** — open bills pager + selection model, driver pay nested table pagination, Safety → Driver files pager | **Intentionally not implemented** — requires architecture/product decisions per deferred doc. |
+| **Deferred §2** — remaining upload / dense **`mini-note`** sweeps | **Partial** — upload subpanels already use title **`erp-help-tip`** + short **`mr-upload-panel-desc`**; further folding is optional. |
+| **Deferred §3–4** — universal Samsara strip, Rule 4/10/18 platform items | **Out of scope** for checklist UI passes unless product picks them up. |
 
 ---
 

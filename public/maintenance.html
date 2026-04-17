@@ -1854,7 +1854,7 @@
             <div
               id="apTxnQboBanner"
               class="mini-note qb-doc-banner qb-doc-banner--ap"
-              style="display:none;margin:0;padding:8px 14px;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.45;font-size:13px;color:#334155;align-items:center;gap:8px;flex-wrap:wrap"
+              style="display:none;margin:0;padding:8px 14px;border-top:1px solid var(--color-border,#e2e8f0);background:var(--color-bg-header,#f8fafc);line-height:1.45;font-size:13px;color:var(--color-text-body,#334155);align-items:center;gap:8px;flex-wrap:wrap"
             >
               <span id="apTxnQboBannerText"></span>
             </div>
@@ -2454,7 +2454,7 @@
                   </span>
                 </div>
               </div>
-              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fafcff">
+              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border,#e2e8f0);border-radius:10px;background:var(--color-bg-card,#fafcff)">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
                   <div class="qb-l" style="margin:0">Relay / Love’s fuel file (CSV or Excel)</div>
                   <span class="erp-help-tip">
@@ -2538,7 +2538,15 @@
         <div id="acct-qbo" class="accounting-tab hidden">
           <div class="panel">
             <div class="panel-head">
-              <div class="panel-title">QuickBooks Live Master</div>
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+                <span>QuickBooks Live Master</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendors vs items vs accounts">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    New <strong>vendors</strong> can be created in this panel and sync immediately. New <strong>accounts (categories)</strong> and <strong>items</strong> are usually created in QuickBooks Online, then use <strong>Refresh Live QuickBooks Master</strong> so this app picks them up. Employees are managed in QBO payroll; refresh the master list after changes there.
+                  </span>
+                </span>
+              </div>
               <div><button onclick="refreshQboMaster()">Refresh Live QuickBooks Master</button></div>
             </div>
             <div class="panel-body">
@@ -2556,10 +2564,11 @@
                 </div>
                 <input id="newVendorAddress" placeholder="Address">
                 <button onclick="createQboVendor()">Create Vendor in QuickBooks</button>
-                <p class="mini-note" style="margin-top:10px">New <strong>vendors</strong> can be created here and sync immediately. New <strong>accounts (categories)</strong> and <strong>items</strong> are usually created in QuickBooks Online, then use <strong>Refresh QuickBooks Master</strong> so this app picks them up. Employees are managed in QBO payroll; refresh the master list after changes.</p>
+                <p class="mini-note" style="margin:8px 0 4px">Vendors save from here; accounts, items, and payroll employees normally start in QBO — see <strong>?</strong>.</p>
+                <p class="mini-note" style="margin:0;color:var(--color-text-label,#6b7385)">After QBO changes, click <strong>Refresh Live QuickBooks Master</strong>.</p>
               </div>
 
-              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid #edf1f7">
+              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border,#edf1f7)">
                 <div class="mini-note">Create Product / Service (QuickBooks)</div>
                 <div class="search-row">
                   <input id="newItemName" class="qb-in" placeholder="Item name (service)" autocomplete="off">
@@ -2581,7 +2590,7 @@
                 <p id="newItemHint" class="mini-note" style="margin:0"></p>
               </div>
 
-              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid #edf1f7">
+              <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border,#edf1f7)">
                 <div class="mini-note">Create Account / Category (QuickBooks)</div>
                 <div class="search-row">
                   <input id="newAccountName" class="qb-in" placeholder="Account name" autocomplete="off">
@@ -2674,7 +2683,7 @@
               <div
                 id="expHistQboBanner"
                 class="mini-note"
-                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.45;font-size:13px;color:#334155;display:flex;align-items:center;gap:8px;flex-wrap:wrap"
+                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border,#cbd5e1);background:var(--color-bg-header,#f8fafc);line-height:1.45;font-size:13px;color:var(--color-text-body,#334155);display:flex;align-items:center;gap:8px;flex-wrap:wrap"
               >
                 <span>Use <strong>Check QBO</strong> on posted rows to verify Purchase/Bill still exists.</span>
                 <span class="erp-help-tip">
@@ -13192,7 +13201,7 @@
           <input id="assetStatusNote" class="qb-in maint-field" placeholder="Optional note (reason, ETA, shop name)" value="${escapeHtml(st.note || '')}" style="margin-top:8px" />
           ${st.updatedAt ? `<div class="mini-note" style="margin-top:4px">Updated ${escapeHtml(new Date(st.updatedAt).toLocaleString())}${st.updatedBy ? ` · ${escapeHtml(st.updatedBy)}` : ''}</div>` : ''}
         </div>
-        <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid #edf1f7">
+        <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border,#edf1f7)">
           <span class="qb-l">Fleet roster</span>
           <p class="mini-note" style="margin:4px 0 8px">Retired units are hidden from this list, the live board, fuel unit pickers, and dispatch maintenance alerts. History and imports for that unit name are unchanged.</p>
           <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px">
@@ -13896,7 +13905,7 @@
         postedEl.innerHTML =
           `<div style="margin-bottom:8px"><strong>Posted to QuickBooks — bulk revert</strong></div>
           <p class="mini-note" style="margin:0 0 8px">Includes fuel expense posts. Requires admin login or ERP write secret (same as posting).</p>
-          <div style="max-height:240px;overflow:auto;border:1px solid #edf1f7;border-radius:10px;padding:8px;background:#fafcff">${rows}</div>
+          <div style="max-height:240px;overflow:auto;border:1px solid var(--color-border,#edf1f7);border-radius:10px;padding:8px;background:var(--color-bg-card,#fafcff)">${rows}</div>
           ${more}
           <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="revertQboPostedBatchClient()">Revert selected in QuickBooks</button>`;
       }
