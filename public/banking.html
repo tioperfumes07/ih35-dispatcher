@@ -284,16 +284,25 @@
           esc(out.importBatchId) +
           '</code> — paste this into step 3.';
         document.getElementById('batchId').value = out.importBatchId;
+        return Number(out.rowCount) || 0;
       };
-      if (window.erpWithBusy) return window.erpWithBusy(btn, run);
-      return run();
+      try {
+        const n = window.erpWithBusy ? await window.erpWithBusy(btn, run) : await run();
+        if (window.showToast) window.showToast('Imported ' + n + ' bank row(s).', 'success');
+      } catch (e) {
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
     };
 
     document.getElementById('btnSuggest').onclick = async () => {
       const btn = document.getElementById('btnSuggest');
       const run = async () => {
         const importBatchId = document.getElementById('batchId').value.trim();
-        if (!importBatchId) return alert('Enter import batch id.');
+        if (!importBatchId) {
+          if (window.showToast) window.showToast('Enter import batch id.', 'warning');
+          else alert('Enter import batch id.');
+          return null;
+        }
         const days = Number(document.getElementById('daysWin').value) || 90;
         const data = await j('/api/banking/suggest', {
           method: 'POST',
@@ -307,7 +316,7 @@
             ph.innerHTML = '';
             ph.hidden = true;
           }
-          return;
+          return 0;
         }
         __bankSuggestState = {
           rows: data.suggestions,
@@ -316,9 +325,18 @@
           importBatchId: data.importBatchId || importBatchId
         };
         renderBankSuggestView();
+        return (data.suggestions || []).length;
       };
-      if (window.erpWithBusy) return window.erpWithBusy(btn, run);
-      return run();
+      try {
+        const n = window.erpWithBusy ? await window.erpWithBusy(btn, run) : await run();
+        if (n === null) return;
+        if (window.showToast) {
+          if (n === 0) window.showToast('No match suggestions for this batch.', 'info');
+          else window.showToast('Loaded ' + n + ' bank row suggestion(s).', 'success');
+        }
+      } catch (e) {
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
     };
   </script>
 </body>

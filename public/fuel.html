@@ -639,6 +639,7 @@
           const el = document.getElementById('lastUpdated');
           if (el) el.textContent = 'Update failed: ' + (e && e.message ? e.message : String(e));
           console.error(e);
+          if (window.showToast) window.showToast('Fuel board update failed: ' + (e && e.message ? e.message : String(e)), 'error');
         }
       };
       if (busyBtn && window.erpWithBusy) return window.erpWithBusy(busyBtn, core);
@@ -942,8 +943,11 @@
           document.getElementById('fuelTotal').value = '';
           document.getElementById('fuelVendor').value = '';
           renderFuelLedger();
+          if (window.showToast) window.showToast('Fuel purchase saved.', 'success');
         } catch (e) {
-          alert('Save fuel purchase failed: ' + (e.message || String(e)));
+          const msg = 'Save fuel purchase failed: ' + (e.message || String(e));
+          if (window.showToast) window.showToast(msg, 'error');
+          else alert(msg);
         }
       };
       if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);

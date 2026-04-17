@@ -222,6 +222,7 @@
         else await run();
       } catch (e) {
         document.getElementById('empErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
       }
     }
 
@@ -302,8 +303,10 @@
           document.getElementById('newEmpStatus').value = 'active';
           __empPage = 1;
           await loadEmployees();
+          if (window.showToast) window.showToast('Employee added.', 'success');
         } catch (e) {
           document.getElementById('empErr').textContent = e.message || String(e);
+          if (window.showToast) window.showToast(e.message || String(e), 'error');
         }
       };
       try {
@@ -311,6 +314,7 @@
         else await run();
       } catch (e) {
         document.getElementById('empErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
       }
     }
 
@@ -318,8 +322,10 @@
       try {
         await api('/api/erp/employees/' + encodeURIComponent(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
         await loadEmployees();
+        if (window.showToast) window.showToast('Status updated.', 'success');
       } catch (e) {
         document.getElementById('empErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
       }
     }
 
@@ -328,8 +334,10 @@
       try {
         await api('/api/erp/employees/' + encodeURIComponent(id), { method: 'DELETE' });
         await loadEmployees();
+        if (window.showToast) window.showToast('Employee removed.', 'success');
       } catch (e) {
         document.getElementById('empErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
       }
     }
 
@@ -351,8 +359,10 @@
           });
           setToken(data.token);
           await refresh();
+          if (window.showToast) window.showToast('Signed in.', 'success');
         } catch (e) {
           document.getElementById('loginErr').textContent = e.message || String(e);
+          if (window.showToast) window.showToast(e.message || String(e), 'error');
         }
       };
       if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
@@ -375,8 +385,10 @@
           });
           setToken(data.token);
           await refresh();
+          if (window.showToast) window.showToast('Administrator account created. You are signed in.', 'success');
         } catch (e) {
           document.getElementById('bootErr').textContent = e.message || String(e);
+          if (window.showToast) window.showToast(e.message || String(e), 'error');
         }
       };
       if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
@@ -407,8 +419,10 @@
           document.getElementById('newUserName').value = '';
           document.getElementById('newUserPass').value = '';
           await refresh();
+          if (window.showToast) window.showToast('User added.', 'success');
         } catch (e) {
           document.getElementById('userErr').textContent = e.message || String(e);
+          if (window.showToast) window.showToast(e.message || String(e), 'error');
         }
       };
       if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
@@ -420,8 +434,10 @@
       try {
         await api('/api/users/' + encodeURIComponent(id), { method: 'DELETE' });
         await refresh();
+        if (window.showToast) window.showToast('User removed.', 'success');
       } catch (e) {
-        alert(e.message || String(e));
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+        else alert(e.message || String(e));
       }
     }
 

@@ -121,6 +121,8 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 3. **`public/css/erp-master-spec-2026.css`** — Global Rule 19 toast styles.
 4. **`public/js/erp-ui.js`** — `window.showToast(message, type)`.
 5. **`#erpToastHost`** on banking, settings, dispatch, fuel (maintenance already had it).
+6. **`showErpToast`** in maintenance delegates to **`window.showToast`** when present (single toast implementation).
+7. **Banking / settings / fuel** async flows call **`showToast`** on success and error (and banking uses **warning/info** where appropriate).
 
 ---
 
