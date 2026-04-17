@@ -1343,18 +1343,18 @@ body.dispatch-page .topbar button {
 }
 
 body.dispatch-page .topbar button:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   border-color: var(--qb-muted);
 }
 
 body.dispatch-page .topbar button.secondary {
-  background: #e8f0fe;
-  border-color: #aec9f9;
+  background: var(--pill-blue-bg, #e8f0fe);
+  border-color: var(--btn-info-border, #aec9f9);
   color: var(--qb-blue);
 }
 
 body.dispatch-page .topbar button.secondary:hover {
-  background: #d2e3fc;
+  background: var(--color-bg-active, #d2e3fc);
   border-color: var(--qb-blue);
 }
 
@@ -1375,7 +1375,7 @@ body.dispatch-page .tabs button {
 }
 
 body.dispatch-page .tabs button:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   border-color: var(--qb-line-input);
   color: var(--qb-text);
 }
@@ -1418,12 +1418,12 @@ body.dispatch-page table.data {
 }
 
 body.dispatch-page table.data th {
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
   color: var(--qb-muted);
 }
 
 body.dispatch-page table.data tr:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
 }
 
 body.dispatch-page .modal {
@@ -1433,7 +1433,7 @@ body.dispatch-page .modal {
 }
 
 body.dispatch-page .modal h2 {
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
   border-bottom-color: var(--qb-line);
   font-weight: 500;
   color: var(--qb-text-strong);
@@ -1533,12 +1533,12 @@ body.dispatch-page #dispatchApp .erp-icon-nav__link {
 
 body.dispatch-page #dispatchApp .erp-icon-nav__link:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
 }
 
 body.dispatch-page #dispatchApp .erp-icon-nav__link.active {
   background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
 }
 
 body.dispatch-page #dispatchApp .erp-icon-nav__glyph {
@@ -1598,7 +1598,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__collapse {
 }
 
 body.dispatch-page #dispatchApp .erp-module-sidebar__collapse:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
 }
 
 body.dispatch-page #dispatchApp .erp-module-sidebar__scroll {
@@ -1617,7 +1617,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__footer {
   flex-shrink: 0;
   padding: 10px 12px 12px;
   border-top: 1px solid var(--qb-line);
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
 }
 
 body.dispatch-page #dispatchApp .dispatch-sidebar-footer__line {
@@ -1658,7 +1658,7 @@ body.dispatch-page #dispatchApp .erp-sb-link {
 }
 
 body.dispatch-page #dispatchApp .erp-sb-link:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   color: var(--qb-blue);
 }
 
@@ -1783,18 +1783,18 @@ body.dispatch-page #dispatchApp .erp-topbar button {
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button:hover {
-  background: #f1f3f4;
+  background: var(--color-bg-header, #f1f3f4);
   border-color: var(--qb-muted);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button.secondary {
-  background: #e8f0fe;
-  border-color: #aec9f9;
+  background: var(--pill-blue-bg, #e8f0fe);
+  border-color: var(--btn-info-border, #aec9f9);
   color: var(--qb-blue);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button.secondary:hover {
-  background: #d2e3fc;
+  background: var(--color-bg-active, #d2e3fc);
   border-color: var(--qb-blue);
 }
 
@@ -1804,7 +1804,7 @@ body.dispatch-page #dispatchApp .erp-btn-primary {
   border-radius: var(--qb-radius-control);
   border: none;
   background: var(--qb-green);
-  color: #fff;
+  color: var(--color-bg-card, #fff);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -1858,7 +1858,7 @@ html.dispatch-embed #dispatchApp .erp-main-body.dispatch-board-body {
 
 html.dispatch-embed body.dispatch-page .dispatch-embed-status-bar {
   border-bottom-color: var(--qb-line);
-  background: #fafbfc;
+  background: var(--color-bg-header, #fafbfc);
   color: var(--qb-muted);
 }
 
