@@ -28,7 +28,10 @@ const SOFT_DB = ['GET', '/api/health/db'];
 /** Static ERP shells (HTML) — catches broken public paths or 500 on page boot. Second value: one substring or all of a list must be present. */
 const HTML_PAGES = [
   ['/index.html', ['hub-page', 'erpConnectionStrip', '/js/erp-ui.js']],
-  ['/maintenance.html', ['section-reports', 'erpConnectionStrip', 'topbar-hint-wrap']],
+  [
+    '/maintenance.html',
+    ['section-reports', 'section-accounting', 'acct-dash-kpis', 'erpConnectionStrip', 'topbar-hint-wrap']
+  ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
   ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],
   ['/banking.html', ['banking-page', 'erpConnectionStrip']],

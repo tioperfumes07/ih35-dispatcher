@@ -147,7 +147,13 @@ No new write routes were added for this program of work.
 
 ---
 
-## 9. Maintainer note
+## 9. Parallel work (Agent B — maintenance / accounting UI)
+
+Ongoing **Agent B** passes on **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, **`maintenance.html`**, **`public/js/*.js`**, **`server.js`**, and **`scripts/system-smoke.mjs`** are recorded in **[`ERP_MASTER_REDESIGN_AGENT_B_LOG.md`](./ERP_MASTER_REDESIGN_AGENT_B_LOG.md)**. Agent A merges highlights into **`ERP_MASTER_REDESIGN_STATUS.md`** on a schedule.
+
+---
+
+## 10. Maintainer note
 
 When the **“master instructions list”** changes outside this repo, append deltas under **`docs/`** or extend **`ERP_MASTER_REDESIGN_STATUS.md`** so implementation traceability stays in git history.
 
