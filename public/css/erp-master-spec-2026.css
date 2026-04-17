@@ -1459,7 +1459,8 @@ button.erp-btn--busy::after {
 }
 
 button.primary.erp-btn--busy::after,
-.banking-page button.primary.erp-btn--busy::after {
+.banking-page button.primary.erp-btn--busy::after,
+body.erp-maintenance button.btn--primary.erp-btn--busy::after {
   border-color: rgba(255, 255, 255, 0.35);
   border-top-color: #fff;
 }

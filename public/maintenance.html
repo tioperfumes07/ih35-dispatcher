@@ -958,8 +958,22 @@
                       <option value="save_post">Save &amp; post to QuickBooks</option>
                     </select>
                     <div class="maint-form-actions__row">
-                      <button type="button" class="btn btn--primary" onclick="maintCloseSplitMenus(); saveRecordWithAction('save')">Save</button>
-                      <button type="button" class="btn btn--primary" onclick="maintCloseSplitMenus(); saveRecordWithAction('save_post')">Post to QuickBooks</button>
+                      <button
+                        type="button"
+                        id="maintBtnSaveRecord"
+                        class="btn btn--primary"
+                        onclick="maintCloseSplitMenus(); maintSaveRecordWithActionBusy('save', event)"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        id="maintBtnSavePostQbo"
+                        class="btn btn--primary"
+                        onclick="maintCloseSplitMenus(); maintSaveRecordWithActionBusy('save_post', event)"
+                      >
+                        Post to QuickBooks
+                      </button>
                       <button type="button" class="btn" onclick="document.getElementById('maintInvoicePdfInput').click()">Attach file</button>
                       <button type="button" class="btn btn--ghost" onclick="parseMaintRecordInvoicePdf()">Parse PDF to lines</button>
                       <button type="button" class="btn btn--ghost" onclick="maintPrintWorkOrderView()">Print</button>
@@ -3870,6 +3884,7 @@
       'Air suspension / air bags',
       'Radiator / cooling system',
       'Lighting / electrical',
+      'Battery service',
       'Windshield / glass',
       'Mirrors',
       'Body / paint / aesthetic',
@@ -3893,6 +3908,69 @@
       { code: 'parts-purchase', label: 'Parts purchase' },
       { code: 'over-the-road', label: 'Over the road' }
     ];
+
+    /** Same name pool as fillDataLists service datalist (catalog API or defaults). */
+    function maintEffectiveServiceCatalog() {
+      const raw =
+        Array.isArray(catalogServiceNames) && catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES;
+      return Array.from(new Set(raw.map(n => String(n || '').trim()).filter(Boolean)));
+    }
+
+    /**
+     * @param {string[]} preferredExact ordered exact labels from catalog
+     * @param {string[]} containsNeedles substring needles (lowercase ok)
+     */
+    function maintPickServiceFromCatalog(preferredExact, containsNeedles) {
+      const names = maintEffectiveServiceCatalog();
+      if (!names.length) return '';
+      for (const p of preferredExact || []) {
+        const want = String(p || '').trim();
+        if (!want) continue;
+        const hit = names.find(n => n === want);
+        if (hit) return hit;
+      }
+      const lows = names.map(n => n.toLowerCase());
+      for (const nd of containsNeedles || []) {
+        const q = String(nd || '').trim().toLowerCase();
+        if (!q) continue;
+        const ix = lows.findIndex(l => l.includes(q));
+        if (ix >= 0) return names[ix];
+      }
+      return '';
+    }
+
+    /** Map +New maintenance preset to a catalog service label when possible. */
+    function maintPresetServiceCatalogValue(preset) {
+      const p = String(preset || '').trim();
+      if (p === 'pm') {
+        return maintPickServiceFromCatalog(
+          ['PM / preventive maintenance', 'Oil change', 'DOT inspection', 'Annual inspection'],
+          ['preventive', 'dot inspection', 'annual inspection', 'pm /', 'oil change']
+        );
+      }
+      if (p === 'repair') {
+        return maintPickServiceFromCatalog(
+          ['Repair', 'Body / paint / aesthetic', 'Trailer service', 'Steering', 'Exhaust / aftertreatment'],
+          ['repair', 'body /', 'trailer', 'steering']
+        );
+      }
+      if (p === 'tire') {
+        return maintPickServiceFromCatalog(['Tires', 'Tire rotation', 'Wheel alignment'], ['tire', 'alignment']);
+      }
+      if (p === 'air_bag') {
+        return maintPickServiceFromCatalog(
+          ['Air suspension / air bags', 'Suspension / shocks'],
+          ['air suspension', 'air bag', 'suspension /']
+        );
+      }
+      if (p === 'battery') {
+        return maintPickServiceFromCatalog(
+          ['Battery service'],
+          ['battery', 'alternator', 'starting', 'electrical', 'lighting']
+        );
+      }
+      return '';
+    }
 
     const maintSecurityAlertRenderOpts = {
       bodyId: 'maintSecurityAlertsBody',
@@ -5316,58 +5394,45 @@
       if (trig) openAccountingTab('acct-bill-pay', trig);
     }
 
-    /** +New → Maintenance: optional preset shapes record type, shop location, and service hint. */
+    /** +New → Maintenance: optional preset shapes record type, shop location, and catalog service line. */
     function maintApplyNewWorkOrderPreset(preset) {
       const p = String(preset || '').trim();
       if (!p) return;
       const rts = document.getElementById('recordTypeSelect');
       const svc = document.getElementById('serviceSearchInput');
+      const applyService = () => {
+        if (!svc) return;
+        const picked = maintPresetServiceCatalogValue(p);
+        svc.value = picked || '';
+        resolveServiceSearch();
+        syncPrimaryServiceToFirstCostLine();
+      };
       try {
         if (p === 'pm') {
           if (rts) rts.value = 'maintenance';
           toggleRecordFields();
           setRepairLocationCode('in-house');
-          if (svc) {
-            svc.value = 'PM / preventive maintenance';
-            resolveServiceSearch();
-            syncPrimaryServiceToFirstCostLine();
-          }
+          applyService();
         } else if (p === 'repair') {
           if (rts) rts.value = 'repair';
           toggleRecordFields();
           setRepairLocationCode('external');
-          if (svc) {
-            svc.value = '';
-            resolveServiceSearch();
-            syncPrimaryServiceToFirstCostLine();
-          }
+          applyService();
         } else if (p === 'tire') {
           if (rts) rts.value = 'tire';
           toggleRecordFields();
           setRepairLocationCode('in-house');
-          if (svc) {
-            svc.value = '';
-            resolveServiceSearch();
-            syncPrimaryServiceToFirstCostLine();
-          }
+          applyService();
         } else if (p === 'air_bag') {
           if (rts) rts.value = 'maintenance';
           toggleRecordFields();
           setRepairLocationCode('external');
-          if (svc) {
-            svc.value = 'Air suspension / air bag';
-            resolveServiceSearch();
-            syncPrimaryServiceToFirstCostLine();
-          }
+          applyService();
         } else if (p === 'battery') {
           if (rts) rts.value = 'maintenance';
           toggleRecordFields();
           setRepairLocationCode('in-house');
-          if (svc) {
-            svc.value = 'Battery service';
-            resolveServiceSearch();
-            syncPrimaryServiceToFirstCostLine();
-          }
+          applyService();
         }
       } catch (_) {}
       syncMaintWorkOrderHeader();
@@ -13808,6 +13873,13 @@
         if (e.target.closest && e.target.closest('.maint-save-toolbar--qb .qb-split')) return;
         maintCloseSplitMenus();
       });
+    }
+
+    async function maintSaveRecordWithActionBusy(actionOverride, ev) {
+      const btn = ev && ev.currentTarget instanceof HTMLElement ? ev.currentTarget : null;
+      const run = async () => saveRecordWithAction(actionOverride);
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
     }
 
     async function saveRecordWithAction(actionOverride) {
