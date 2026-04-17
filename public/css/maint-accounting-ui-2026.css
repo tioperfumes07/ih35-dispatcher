@@ -737,9 +737,9 @@ body.erp-maintenance .mr-upload-tabbar .subtab:hover {
 }
 
 body.erp-maintenance .mr-upload-tabbar .subtab.active {
-  color: #1967d2;
+  color: var(--color-border-focus, #1967d2);
   font-weight: 500;
-  border-bottom-color: #1967d2;
+  border-bottom-color: var(--color-border-focus, #1967d2);
 }
 
 body.erp-maintenance .mr-upload-panel-card {
@@ -1304,4 +1304,25 @@ body.erp-maintenance .maint-qb-td-hidden {
 
 body.erp-maintenance .ap-wo-lines-root {
   padding: 4px 0 0;
+}
+
+/* Rule 1 — Upload center: tighter chrome on narrow viewports (tab row already wraps). */
+@media (max-width: 900px) {
+  body.erp-maintenance .mr-upload-tabbar {
+    margin-bottom: 12px;
+  }
+
+  body.erp-maintenance .mr-upload-tabbar .subtab {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  body.erp-maintenance .mr-upload-panel-card {
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+
+  body.erp-maintenance .mr-upload-drop {
+    padding: 24px 14px;
+  }
 }

@@ -3788,12 +3788,29 @@
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
               <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border,#e0e3e8);max-width:560px" class="form-stack">
-                <span class="qb-l">Rename vehicle in Samsara</span>
-                <p class="mini-note" style="margin:0">Use the vehicle’s Samsara id (from API / board JSON). Requires <code>SAMSARA_WRITE_API_TOKEN</code> or a read token upgraded with write scopes.</p>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span class="qb-l" style="margin:0">Rename vehicle in Samsara</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara id and API token">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Use the vehicle’s Samsara id (from the API or board JSON). Requires <code>SAMSARA_WRITE_API_TOKEN</code> or a read token upgraded with write scopes; re-issue the token after adding scopes (read-only tokens return 403 from Samsara).
+                    </span>
+                  </span>
+                </div>
+                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label,#6b7385);font-size:12px">Enter id + new display name, then POST.</p>
                 <input id="samsaraVehicleIdInput" class="qb-in maint-field" placeholder="Samsara vehicle id">
                 <input id="samsaraVehicleNameInput" class="qb-in maint-field" placeholder="New display name">
                 <button type="button" onclick="pushSamsaraVehicleName()">POST update to Samsara</button>
-                <span class="qb-l" style="margin-top:12px">Rename driver in Samsara</span>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px">
+                  <span class="qb-l" style="margin:0">Rename driver in Samsara</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara driver id and API token">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Use the driver’s Samsara id (from the API, HOS payloads, or Samsara Cloud). Same write requirements as vehicle rename: <code>SAMSARA_WRITE_API_TOKEN</code> or a read token upgraded with write scopes; re-issue after scope changes (read-only returns 403).
+                    </span>
+                  </span>
+                </div>
+                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label,#6b7385);font-size:12px">Enter driver id + new name, then POST.</p>
                 <input id="samsaraDriverIdInput" class="qb-in maint-field" placeholder="Samsara driver id">
                 <input id="samsaraDriverNameInput" class="qb-in maint-field" placeholder="New driver name">
                 <button type="button" onclick="pushSamsaraDriverName()">POST update to Samsara</button>
