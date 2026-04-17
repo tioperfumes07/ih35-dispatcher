@@ -4,20 +4,20 @@
  */
 
 :root {
-  --qb-page: #f4f6f8;
-  --qb-panel: #ffffff;
-  --qb-line: #e8eaed;
-  --qb-line-input: #dadce0;
-  --qb-text: #3c4043;
-  --qb-text-strong: #202124;
-  --qb-muted: #5f6368;
-  --qb-placeholder: #9aa0a6;
-  --qb-green: #1e8e3e;
-  --qb-blue: #1967d2;
-  --qb-red: #d93025;
+  --qb-page: var(--color-bg-page, #f4f6f8);
+  --qb-panel: var(--color-bg-card, #ffffff);
+  --qb-line: var(--color-border, #e8eaed);
+  --qb-line-input: var(--color-border-input, #dadce0);
+  --qb-text: var(--color-text-body, #3c4043);
+  --qb-text-strong: var(--color-text-primary, #202124);
+  --qb-muted: var(--color-text-label, #5f6368);
+  --qb-placeholder: var(--color-text-placeholder, #9aa0a6);
+  --qb-green: var(--btn-primary-save-bg, #1e8e3e);
+  --qb-blue: var(--color-border-focus, #1967d2);
+  --qb-red: var(--color-semantic-error, #d93025);
   --qb-amber: #f9ab00;
-  --qb-icon-nav-bg: #1a1a2e;
-  --qb-icon-nav-muted: #8a8fa8;
+  --qb-icon-nav-bg: var(--color-nav-bg, #1a1a2e);
+  --qb-icon-nav-muted: var(--color-nav-inactive, #8a8fa8);
   --qb-focus-ring: rgba(25, 103, 210, 0.12);
   --qb-sidebar-active-bg: var(--pill-blue-bg, #e8f0fe);
   --qb-radius-card: 8px;
