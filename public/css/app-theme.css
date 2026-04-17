@@ -537,7 +537,7 @@ body.dispatch-page .topbar button {
 
 body.dispatch-page .topbar button:hover {
   background: var(--color-bg-hover, #f8fafc);
-  border-color: var(--color-border, var(--line-strong));
+  border-color: var(--color-border, var(--line-strong, #cdd4e0));
 }
 
 body.dispatch-page .topbar button.secondary {
@@ -555,13 +555,13 @@ body.dispatch-page .tabs {
   flex-wrap: wrap;
   gap: 6px;
   padding: 10px 18px 12px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--color-border, var(--line));
+  background: var(--color-bg-page, var(--bg));
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
 }
 
 body.dispatch-page .tabs button {
   padding: 7px 14px;
-  border: 1px solid var(--color-border, var(--line));
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: 999px;
   background: var(--color-bg-card, var(--panel));
   cursor: pointer;
@@ -613,7 +613,7 @@ body.dispatch-page table.data {
   width: 100%;
   border-collapse: collapse;
   background: var(--color-bg-card, var(--panel));
-  border: 1px solid var(--color-border, var(--line));
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -624,7 +624,7 @@ body.dispatch-page table.data th,
 body.dispatch-page table.data td {
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--color-border, var(--line));
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   vertical-align: top;
 }
 
