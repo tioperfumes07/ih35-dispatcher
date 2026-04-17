@@ -1041,7 +1041,7 @@
                     </div>
                     <div class="maint-form-actions__meta">
                       <span class="mini-note" id="maintSaveHint" role="status" aria-live="polite" aria-atomic="true"></span>
-                      <span class="mini-note" id="maintEditRecordHint" style="color:#64748b"></span>
+                      <span class="mini-note" id="maintEditRecordHint" style="color:var(--color-text-label,#6b7385)"></span>
                     </div>
                   </div>
                 </div>
@@ -1749,7 +1749,7 @@
             </div>
             <div class="acct-dash-card">
               <div class="acct-dash-card__head">QuickBooks sync</div>
-              <p class="mini-note" style="margin:0;color:#5f6368;font-size:12px;line-height:1.45">Master lists, rollback, and connection.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-body,#3c4257);font-size:12px;line-height:1.45">Master lists, rollback, and connection.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
                 <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
@@ -1759,7 +1759,7 @@
                 type="button"
                 id="acctDashQboErrMore"
                 class="acct-dash-btn hidden"
-                style="margin-top:8px;border:none;padding:0;height:auto;color:#1967d2;background:transparent"
+                style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus,#1967d2);background:transparent"
                 onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})"
               >
                 View all errors
@@ -6648,7 +6648,7 @@
       const payload = __maintQboSyncPayloadCache;
       if (!payload || payload.ok === false) {
         fill('<span class="mini-note">Sync unavailable.</span>');
-        if (top) top.innerHTML = '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:#5f6368">QBO issues: —</span>';
+        if (top) top.innerHTML = '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body,#3c4257)">QBO issues: —</span>';
         return;
       }
       const alerts = payload.alerts || [];
@@ -6656,7 +6656,7 @@
         fill('<span class="mini-note">No open issues.</span>');
         if (top) {
           top.innerHTML =
-            '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:#5f6368">QBO: no open issues</span>';
+            '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body,#3c4257)">QBO: no open issues</span>';
         }
         return;
       }
