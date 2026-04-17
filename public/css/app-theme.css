@@ -3279,6 +3279,18 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
   body.erp-maintenance .safety-active-grid {
     grid-template-columns: 1fr;
   }
+
+  /* Rule 1 — Lists & catalogs: tighter sub-tab pills so the panel fits small laptops. */
+  body.erp-maintenance #section-catalog .panel-body > .subtabs {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  body.erp-maintenance #section-catalog .panel-body > .subtabs > .subtab {
+    min-width: min(100%, 132px);
+    padding: 6px 11px;
+    font-size: 12px;
+  }
 }
 
 @media (max-width: 800px) {

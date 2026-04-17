@@ -841,6 +841,13 @@ body.erp-maintenance .mr-upload-help summary:focus-visible {
   border-radius: 4px;
 }
 
+body.erp-maintenance .mr-upload-panel-card .mini-note,
+body.erp-maintenance .mr-upload-help .mini-note {
+  color: var(--color-text-label, #5f6368);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 body.erp-maintenance .mr-upload-pickline {
   display: flex;
   align-items: center;
@@ -1327,5 +1334,104 @@ body.erp-maintenance .ap-wo-lines-root {
 
   body.erp-maintenance .mr-upload-drop {
     padding: 24px 14px;
+  }
+
+  /* Rule 1 — Accounting AP / manual fuel doc shells: trim QB-style chrome on tablets. */
+  body.erp-maintenance #section-accounting .qb-doc-head {
+    padding: 10px 12px 8px;
+  }
+
+  body.erp-maintenance #section-accounting .qb-doc-body {
+    padding: 10px 12px 12px;
+  }
+
+  body.erp-maintenance #section-accounting .qb-doc-title-row {
+    gap: 10px;
+  }
+
+  body.erp-maintenance #section-accounting .qb-doc-h2 {
+    font-size: 18px;
+  }
+
+  body.erp-maintenance #section-accounting .qb-doc-total-amt {
+    font-size: 22px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-transactions .qb-doc-topbar,
+  body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-topbar--fuel {
+    padding: 6px 10px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-transactions .qb-doc-footer--ap,
+  body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-footer--fuel {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-panel-head {
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-submitrow {
+    margin-top: 10px;
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-accounting .acct-fuel-relay-import-panel {
+    padding: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Rule 1 — Expense history + QBO rollback: tighter panel chrome (qb-panel stacks). */
+  body.erp-maintenance #section-accounting #acct-expense-history > .qb-panel > .panel-head,
+  body.erp-maintenance #section-accounting #acct-qbo-rollback > .qb-panel > .panel-head {
+    padding: 8px 12px 10px;
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-expense-history > .qb-panel > .panel-body,
+  body.erp-maintenance #section-accounting #acct-qbo-rollback > .qb-panel > .panel-body {
+    padding: 10px 12px 12px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-expense-history .mr-filter-bar {
+    margin-bottom: 8px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-expense-history #expHistQboBanner {
+    padding: 6px 10px !important;
+    margin-bottom: 8px !important;
+  }
+
+  body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-body > .panel-head {
+    padding: 6px 0 !important;
+  }
+
+  /* Rule 1 — QuickBooks Live Master: trim shell; stack vendor/item/account columns (keep KPI row 3-up). */
+  body.erp-maintenance #section-accounting #acct-qbo > .panel > .panel-head {
+    padding: 8px 12px 10px;
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-qbo > .panel > .panel-body {
+    padding: 10px 12px 12px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-qbo .panel-body > .grid.grid-3:has(> .metric) {
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-qbo .panel-body > .grid.grid-3:has(> .metric) .metric {
+    padding: 10px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-qbo .panel-body > .grid.grid-3:has(> .panel) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  body.erp-maintenance #section-accounting #acct-qbo .search-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }

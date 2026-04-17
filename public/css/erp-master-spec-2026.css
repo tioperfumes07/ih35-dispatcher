@@ -526,6 +526,13 @@ body.erp-maintenance .erp-reports-main > .reports-tab:not(.hidden) {
   overflow: auto;
 }
 
+/* Rule 0 — Reports hub: helper / status lines use label token (inline color still wins). */
+body.erp-maintenance .erp-reports-shell .mini-note:not(.erp-reports-roadmap) {
+  color: var(--color-text-label, #6b7385);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 /* =============================================================================
    Rules 10–12 — Safety / Tracking / shop ops: Samsara-like density (tables + frames)
    ============================================================================= */
@@ -1477,6 +1484,33 @@ body.erp-maintenance .erp-reports-roadmap {
 
   body.erp-maintenance .erp-module-sidebar__footer {
     padding: 9px 10px 10px;
+  }
+
+  /* Rule 1 — Accounting board: denser KPI strip + dash cards on tablets (matches reports hub trim). */
+  body.erp-maintenance #section-accounting .acct-dash-kpis {
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  body.erp-maintenance #section-accounting .acct-dash-kpi {
+    padding: 10px 12px;
+  }
+
+  body.erp-maintenance #section-accounting .acct-dash-cards {
+    gap: 12px;
+  }
+
+  body.erp-maintenance #section-accounting .acct-dash-card {
+    padding: 12px 14px;
+  }
+
+  body.erp-maintenance #section-accounting .acct-dash-card__head {
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+
+  body.erp-maintenance #section-accounting .acct-dash-tools-grid {
+    gap: 6px 12px;
   }
 }
 
