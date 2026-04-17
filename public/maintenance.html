@@ -958,14 +958,54 @@
                       <option value="save_post">Save &amp; post to QuickBooks</option>
                     </select>
                     <div class="maint-form-actions__row">
-                      <button
-                        type="button"
-                        id="maintBtnSaveRecord"
-                        class="btn btn--primary"
-                        onclick="maintCloseSplitMenus(); maintSaveRecordWithActionBusy('save', event)"
-                      >
-                        Save
-                      </button>
+                      <div class="maint-save-toolbar--qb maint-wo-save-split-wrap" aria-label="Save options">
+                        <div class="qb-split qb-split--primary">
+                          <button
+                            type="button"
+                            id="maintBtnSaveRecord"
+                            class="qb-split__main"
+                            onclick="maintCloseSplitMenus(); maintSaveRecordWithActionBusy('save', event)"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            class="qb-split__caret"
+                            onclick="maintToggleSplitMenu(event, this)"
+                            aria-expanded="false"
+                            aria-label="More save options"
+                            title="Save and close, open Accounting, or print"
+                          >
+                            ▾
+                          </button>
+                          <div class="qb-split__menu" hidden role="menu">
+                            <button
+                              type="button"
+                              class="qb-split__menu-item"
+                              role="menuitem"
+                              onclick="maintSaveFromSplitMenu(event, 'save_close')"
+                            >
+                              Save &amp; close
+                            </button>
+                            <button
+                              type="button"
+                              class="qb-split__menu-item"
+                              role="menuitem"
+                              onclick="maintSaveFromSplitMenu(event, 'save_to_ap')"
+                            >
+                              Save &amp; open Accounting draft
+                            </button>
+                            <button
+                              type="button"
+                              class="qb-split__menu-item"
+                              role="menuitem"
+                              onclick="maintSaveFromSplitMenu(event, 'save_print')"
+                            >
+                              Save &amp; print
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                       <button
                         type="button"
                         id="maintBtnSavePostQbo"
@@ -13882,6 +13922,14 @@
       return run();
     }
 
+    async function maintSaveFromSplitMenu(ev, action) {
+      const btn = ev && ev.currentTarget instanceof HTMLElement ? ev.currentTarget : null;
+      maintCloseSplitMenus();
+      const run = async () => saveRecordWithAction(action);
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
+    }
+
     async function saveRecordWithAction(actionOverride) {
       maintCloseSplitMenus();
       if (!selectedUnit) {
@@ -13917,6 +13965,8 @@
         if (hint) {
           if (post) hint.textContent = 'Saved and posted to QuickBooks.';
           else if (toPrint) hint.textContent = 'Saved — print dialog opened.';
+          else if (toAp) hint.textContent = 'Saved — Accounting draft opened.';
+          else if (close) hint.textContent = 'Saved — form cleared for next entry.';
           else hint.textContent = 'Saved.';
         }
       } catch (e) {
