@@ -12,7 +12,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~58%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.584** → **58.4%**; rounded headline **~58%**.)
+**Overall completion: ~59%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.586** → **58.6%**; rounded headline **~59%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
@@ -20,9 +20,9 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 |------|--------|-------------------------|--------|
 | 0 | Design tokens | 0.72 | **`board-nav.css`** bridges dropdown/hover to **`var(--color-*|pill-*|shadow-dropdown)`**; **`banking.html`** / **`settings.html`** / **`dispatch.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
 | 1 | Responsive | 0.45 | Shell patterns; full viewport audit deferred |
-| 2 | App shell | 0.47 | **`erp-master`** + **Lists** (**▤**) icon opens **`#catalog`**; dispatch nav link to same; spec dimensions/copy deferred |
+| 2 | App shell | 0.49 | **`erp-master`** + **Lists** (**▤**) icon opens **`#catalog`**; dispatch + **settings** + hub **`board-nav`** strip; spec dimensions/copy deferred |
 | 3 | Collapsible sidebar | 1.0 | Pattern shipped (`ih35_sb_*`) |
-| 4 | + New menu | 0.40 | Exists; spec matrix / new modals deferred or blocked |
+| 4 | + New menu | 0.42 | **+ New** three-column menu: items **A–Z** within each column; spec width/matrix / new modals deferred or blocked |
 | 5–9 | Modal shells | 0.45 each (avg) | QB-style modals; parity not verified rule-by-rule |
 | 10 | StandardExpenseLines | 0.15 | No React tree; documented blocked / future |
 | 11 | Pay bills | 0.45 | Flows exist; driver variant + open-bills pager deferred |
@@ -40,7 +40,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 23 | Pagination | 0.86 | Broad `erpPagerRender` coverage; **Lists & catalogs → Service types (DB)** (**`serviceCatalogAdminPager`**); **Reports** spend-by-unit + maint detailed (prior); not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.584** (**58.4%**; headline **~58%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.586** (**58.6%**; headline **~59%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -74,7 +74,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 2 — App shell
 
-- **Partial:** Maintenance uses `erp-master` shell (icon nav, sidebars, top bar patterns in HTML/CSS). **Lists & catalogs** is a first-class **Lists** (**▤**) target in icon nav (and **`/maintenance.html#catalog`**); dispatch nav includes the same deep link. Labels and module order still differ from the spec’s canonical list in places (e.g. “Fuel Plan” naming).
+- **Partial:** Maintenance uses `erp-master` shell (icon nav, sidebars, top bar patterns in HTML/CSS). **Lists & catalogs** is a first-class **Lists** (**▤**) target in icon nav (and **`/maintenance.html#catalog`** + **`#catalog-*`** sub-tabs); dispatch nav includes the same deep link. **Settings** uses the shared **`board-nav.js`** workspace strip (**`board-nav.css`**) like banking, fuel, dispatch, maintenance, and **company hub**. Labels and module order still differ from the spec’s canonical list in places (e.g. “Fuel Plan” naming).
 - **Future:** Align copy, dimensions (68px / 216px / 48px), and tab set exactly to spec.
 
 ### Rule 3 — Collapsible sidebar
@@ -83,7 +83,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 4 — “+ New” menu
 
-- **Partial:** Maintenance has a **+ New** menu; width/columns/custom fleet rows may not match the full 680px / three-column / custom-type matrix in the spec.
+- **Partial:** Maintenance has a **+ New** menu; within each column (**Expenses & bills**, **Maintenance**, **Other**) menu rows are ordered **alphabetically** by label (same handlers). Width/columns/custom fleet rows may not match the full 680px / three-column / custom-type matrix in the spec.
 - **Blocked:** Implementing **new** modal types that change save endpoints would violate “no new backend unless instructed”; **UI-only** presets that reuse existing save paths are allowed in principle but were not expanded in this pass.
 
 ### Rules 5–9 — Modal shells (Expense, Bill, WO, etc.)
@@ -193,6 +193,8 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 37. **Discoverability (Rule 2 / shell):** **`maintenance.html`** — new **Lists** (**▤**) icon in **`#erpIconNav`** (between **Accounting** and **Reports**) opens **`#catalog`**; duplicate hidden ghost **`catalog`** nav control removed. Sidebar block title **`Lists, imports & admin`** → **`Lists & catalogs`** plus one-line pointer to the **Lists** icon. **`dispatch.html`** — same **Lists** link to **`/maintenance.html#catalog`** for parity.
 38. **Naming + A–Z sub-tabs (Rule 2 / polish):** **`maintenance.html`** — remaining copy and **`erpSbGroup`** titles use **Lists & catalogs** (replacing **Lists & admin** / **Catalogs →** phrasing where user-facing); catalog sidebar browse group titled **Sub-tabs** with links ordered A–Z. **Safety**, **Tracking**, **Shop board**, **Lists & catalogs** main subtabs, **Reports** top row (**Overview** first, then **Accounting** / **Maintenance** / **Operations**), dropdown items (**Accounting**, **Maintenance**, **Operations**), and hidden **accounting** tab stubs reordered **alphabetically** while preserving default **active** tabs (HOS, map, internal shop, service types, overview, maintenance expenses, fuel upload).
 39. **Lists deep links + hub strip (Rule 2):** **`maintenance.html`** — **`applyNavHash`** handles **`#catalog`**, **`#catalog-service`**, **`#catalog-qbo`**, **`#catalog-vendors`**, **`#catalog-operational`**, **`#catalog-fleet`** so the matching **Lists & catalogs** sub-tab opens (not only the section). **`board-nav.js`** — new **Lists & catalogs** workspace item (dropdown links A–Z + **Upload center**) for **`index`**, **`dispatch`**, **`fuel`**, **`banking`**, and **`maintenance`** strips. **`index.html`** — hub card + strip copy mention **Lists & catalogs**.
+40. **Settings workspace strip (Rule 2):** **`settings.html`** — link **`board-nav.css`**, add **`#boardNavMount`** + **`board-nav.js`** (defer) so **Settings & users** matches banking/fuel/dispatch hub navigation to ERP workspaces (**Lists & catalogs**, reports, etc.).
+41. **+ New menu A–Z (Rule 4):** **`maintenance.html`** — **`#erpNewMenu`** column items reordered **alphabetically** by label within **Expenses & bills**, **Maintenance**, and **Other** (handlers unchanged).
 
 ---
 
