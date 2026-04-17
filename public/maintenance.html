@@ -3037,64 +3037,237 @@
           <div class="panel-head">
             <div class="panel-title">Upload center</div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
-              <span class="mini-note" style="margin:0">One workspace for spreadsheet imports.</span>
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About uploads">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Use the category pills below, then the form in each panel. The module sidebar <strong>Upload center</strong> link jumps here; <strong>Connections</strong> covers QuickBooks list refresh notes and Samsara write scopes.
+                  Pick a category tab, upload CSV or Excel where supported, then finish confirmation in <strong>Accounting</strong> when the flow requires it (fuel/Relay).
                 </span>
               </span>
             </div>
           </div>
           <div class="panel-body">
-            <div class="subtabs mr-upload-pills" style="margin-bottom:14px;flex-wrap:wrap">
-              <button type="button" class="subtab active" data-up-sub="fuel" onclick="openUploadSubpanel('fuel', this)">Fuel / DEF</button>
-              <button type="button" class="subtab" data-up-sub="maint" onclick="openUploadSubpanel('maint', this)">Maintenance history</button>
-              <button type="button" class="subtab" data-up-sub="ap" onclick="openUploadSubpanel('ap', this)">Maintenance AP</button>
-              <button type="button" class="subtab" data-up-sub="comdata" onclick="openUploadSubpanel('comdata', this)">Comdata / Relay</button>
-              <button type="button" class="subtab" data-up-sub="bank" onclick="openUploadSubpanel('bank', this)">Bank CSV</button>
-              <button type="button" class="subtab" data-up-sub="sync" onclick="openUploadSubpanel('sync', this)">Connections</button>
-              <button type="button" class="subtab" data-up-sub="other" onclick="openUploadSubpanel('other', this)">Other</button>
+            <div class="subtabs mr-upload-tabbar mr-upload-pills" role="tablist">
+              <button type="button" class="subtab" data-up-sub="bank" onclick="openUploadSubpanel('bank', this)" role="tab">Bank CSV</button>
+              <button type="button" class="subtab" data-up-sub="comdata" onclick="openUploadSubpanel('comdata', this)" role="tab">Comdata / Relay</button>
+              <button type="button" class="subtab" data-up-sub="sync" onclick="openUploadSubpanel('sync', this)" role="tab">Connections</button>
+              <button type="button" class="subtab active" data-up-sub="fuel" onclick="openUploadSubpanel('fuel', this)" role="tab" aria-selected="true">Fuel / DEF</button>
+              <button type="button" class="subtab" data-up-sub="ap" onclick="openUploadSubpanel('ap', this)" role="tab">Maintenance AP</button>
+              <button type="button" class="subtab" data-up-sub="maint" onclick="openUploadSubpanel('maint', this)" role="tab">Maintenance history</button>
+              <button type="button" class="subtab" data-up-sub="other" onclick="openUploadSubpanel('other', this)" role="tab">Other</button>
             </div>
-            <div id="upload-panel-fuel" class="upload-subpanel active">
-              <p class="mini-note" style="margin:0 0 10px">
-                Love’s and Relay “All Transactions” exports are <strong>previewed and confirmed</strong> under <strong>Accounting → Fuel expenses</strong> (next to posting), not on the route-planning Fuel board. Comdata-style exports often match the same Relay parser when columns align.
-              </p>
-              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/maintenance.html#accounting-fuel">Open Accounting → Fuel expenses → import</a>
-            </div>
-            <div id="upload-panel-maint" class="upload-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">Prior maintenance history (CSV / Excel) posts into this app’s maintenance records.</p>
-              <input id="maintenanceImportFile" type="file" accept=".csv,.xlsx,.xls">
-              <button type="button" onclick="uploadMaintenanceFile()">Upload maintenance file</button>
-            </div>
-            <div id="upload-panel-ap" class="upload-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">Bulk maintenance <strong>expense transactions</strong> (AP-style rows) for QuickBooks workflow.</p>
-              <input id="apImportFile" type="file" accept=".csv,.xlsx,.xls">
-              <button type="button" onclick="uploadApFile()">Upload expense file</button>
-            </div>
-            <div id="upload-panel-comdata" class="upload-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">
-                If your Comdata export matches the same columns as Relay / fuel card templates, use <strong>Fuel / DEF</strong> above. Otherwise export to CSV and ask your admin to map columns to the fuel import format.
-              </p>
-              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/maintenance.html#accounting-fuel">Open Accounting → Fuel expenses → import</a>
-            </div>
+
             <div id="upload-panel-bank" class="upload-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">Bank statement and CSV matching runs in the dedicated banking workspace (same rules as QuickBooks bank feeds).</p>
-              <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/banking.html">Open bank CSV matching</a>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-panel-title">Bank CSV import</div>
+                <p class="mr-upload-panel-desc">
+                  Import bank transaction CSV files for matching and reconciliation. Supported formats: Wells Fargo, Bank of America, Chase, and generic CSV.
+                </p>
+                <details class="mr-upload-help">
+                  <summary>Supported bank formats</summary>
+                  <p class="mini-note" style="margin:8px 0 0">
+                    Matching and reconciliation run in the <strong>Bank CSV matching</strong> workspace (same rules as QuickBooks bank feeds). Export from your bank as CSV and upload there.
+                  </p>
+                </details>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Open workspace</div>
+                <p class="mini-note" style="margin:0 0 10px">Bank CSV import is <strong>CSV-only</strong> in the banking app.</p>
+                <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/banking.html">Open bank CSV matching</a>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Recent imports</div>
+                <div id="upRecent-bank" class="mr-upload-recent"></div>
+              </div>
             </div>
-            <div id="upload-panel-other" class="upload-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">Use <strong>Other</strong> for one-off files or procedures that do not fit the standard import categories. Prefer the specific tabs when possible so validation and batch ids stay consistent.</p>
+
+            <div id="upload-panel-comdata" class="upload-subpanel">
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-panel-title">Comdata / Relay import</div>
+                <p class="mr-upload-panel-desc">
+                  Import Comdata or Relay “All Transactions” exports. These match the same parser as the Fuel / DEF importer.
+                </p>
+                <details class="mr-upload-help">
+                  <summary>How to export from Comdata</summary>
+                  <p class="mini-note" style="margin:8px 0 0">
+                    Use the Fuel / DEF tab to upload your export; preview and confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong>.
+                  </p>
+                </details>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Upload file</div>
+                <p class="mini-note" style="margin:0 0 8px">CSV or Excel accepted — same flow as Fuel / DEF.</p>
+                <div class="mr-upload-drop" data-up-bind="comdata" onclick="document.getElementById('upCenterComdataFile').click()">
+                  <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
+                  <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
+                  <div class="mr-upload-drop__sub">CSV or Excel files accepted</div>
+                </div>
+                <input id="upCenterComdataFile" type="file" accept=".csv,.xlsx,.xls" class="mr-upload-file-hidden" aria-label="Comdata file" />
+                <div id="upComdataPick" class="mr-upload-pickline hidden"></div>
+                <button type="button" class="btn btn--primary mr-upload-importbtn" id="upComdataImportBtn" disabled onclick="uploadCenterFuelPreview('upCenterComdataFile', 'comdata')">Import</button>
+                <div id="upComdataProgress" class="mr-upload-progress hidden" aria-hidden="true"><div class="mr-upload-progress__bar"></div></div>
+                <div id="upComdataResult" class="mr-upload-result" aria-live="polite"></div>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Recent imports</div>
+                <div id="upRecent-comdata" class="mr-upload-recent"></div>
+              </div>
             </div>
+
             <div id="upload-panel-sync" class="upload-subpanel">
-              <p class="mini-note" style="margin:0 0 10px">
-                <strong>QuickBooks</strong> master data (vendors, items, accounts) refreshes with <em>Refresh QuickBooks Master</em>; posting pushes bills/expenses to QBO. <strong>Samsara</strong> fleet/HOS in this app is read-only unless your API token includes write scopes (see below).
-              </p>
-              <ul class="mini-note" style="margin:0;padding-left:1.2rem;line-height:1.5">
-                <li>To <strong>edit vehicles or drivers from this app</strong>, set <code>SAMSARA_WRITE_API_TOKEN</code> (or a single token with write scopes), then use <strong>Catalogs → Fleet &amp; Samsara</strong> (POST <code>/api/integrations/samsara/vehicle/:id</code> and <code>…/driver/:id</code>) with admin login or the same ERP write secret as fuel imports. Samsara docs: <a href="https://developers.samsara.com/reference/updatevehicle" target="_blank" rel="noopener">Update vehicle</a>, <a href="https://developers.samsara.com/reference/updatedriver" target="_blank" rel="noopener">Update driver</a>.</li>
-                <li>Tokens must be re-issued after adding scopes; read-only tokens return 403 from Samsara.</li>
-              </ul>
-              <button type="button" style="margin-top:10px" onclick="loadQboStatus(); testQuickBooks();">Re-check QuickBooks</button>
-              <button type="button" style="margin-left:8px" onclick="loadAll()">Refresh fleet / Samsara snapshot</button>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-panel-title">Connections</div>
+                <p class="mr-upload-panel-desc">
+                  Manage sync connections to Samsara and QuickBooks. These are not file imports — use the cards below to test status and jump to configuration.
+                </p>
+              </div>
+              <div class="mr-upload-conn-grid">
+                <div class="mr-upload-conn-card">
+                  <div class="mr-upload-conn-card__title">Samsara Cloud</div>
+                  <p class="mini-note" id="upConnSamsaraStatus" style="margin:0 0 8px">Status: —</p>
+                  <p class="mini-note" id="upConnSamsaraMeta" style="margin:0 0 10px;color:#9aa0a6;font-size:12px">—</p>
+                  <div class="mr-upload-conn-card__actions">
+                    <button type="button" class="btn" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Configure</button>
+                    <button type="button" class="btn" onclick="loadAll()">Refresh data</button>
+                  </div>
+                </div>
+                <div class="mr-upload-conn-card">
+                  <div class="mr-upload-conn-card__title">QuickBooks</div>
+                  <p class="mini-note" id="upConnQboStatus" style="margin:0 0 8px">Status: —</p>
+                  <div class="mr-upload-conn-card__actions">
+                    <button type="button" class="btn" onclick="connectQuickBooks()">Connect</button>
+                    <button type="button" class="btn" onclick="testQuickBooks()">Test connection</button>
+                    <button type="button" class="btn" onclick="refreshQboMaster()">Refresh lists</button>
+                  </div>
+                </div>
+              </div>
+              <details class="mr-upload-help" style="margin-top:12px">
+                <summary>Samsara write scopes (advanced)</summary>
+                <ul class="mini-note" style="margin:8px 0 0;padding-left:1.2rem;line-height:1.5">
+                  <li>Fleet/HOS in this app is read-only unless your API token includes write scopes. Use <strong>Catalogs → Fleet &amp; Samsara writes</strong> for POSTs when configured.</li>
+                  <li>Tokens must be re-issued after adding scopes; read-only tokens return 403 from Samsara.</li>
+                </ul>
+              </details>
+            </div>
+
+            <div id="upload-panel-fuel" class="upload-subpanel active">
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-panel-title">Fuel / DEF import</div>
+                <p class="mr-upload-panel-desc">
+                  Import Comdata, Relay, or manual fuel transactions. Rows are previewed and confirmed under <strong>Accounting → Fuel &amp; DEF entry</strong> before posting to QuickBooks.
+                </p>
+                <details class="mr-upload-help">
+                  <summary>How to export from Comdata / Relay</summary>
+                  <p class="mini-note" style="margin:8px 0 0">
+                    Export “All Transactions” or equivalent CSV/Excel. After <strong>Import</strong> here, you are taken to the fuel workspace with the preview loaded.
+                  </p>
+                </details>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Upload file</div>
+                <div class="mr-upload-drop" data-up-bind="fuel" onclick="document.getElementById('upCenterFuelFile').click()">
+                  <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
+                  <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
+                  <div class="mr-upload-drop__sub">CSV or Excel files accepted</div>
+                </div>
+                <input id="upCenterFuelFile" type="file" accept=".csv,.xlsx,.xls" class="mr-upload-file-hidden" aria-label="Fuel file" />
+                <div id="upFuelPick" class="mr-upload-pickline hidden"></div>
+                <button type="button" class="btn btn--primary mr-upload-importbtn" id="upFuelImportBtn" disabled onclick="uploadCenterFuelPreview('upCenterFuelFile', 'fuel')">Import</button>
+                <div id="upFuelProgress" class="mr-upload-progress hidden" aria-hidden="true"><div class="mr-upload-progress__bar"></div></div>
+                <div id="upFuelResult" class="mr-upload-result" aria-live="polite"></div>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Recent imports</div>
+                <div id="upRecent-fuel" class="mr-upload-recent"></div>
+              </div>
+            </div>
+
+            <div id="upload-panel-ap" class="upload-subpanel">
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-panel-title">Maintenance AP import</div>
+                <p class="mr-upload-panel-desc">
+                  Import accounts payable records for maintenance expenses. These are matched to existing work orders where possible.
+                </p>
+                <details class="mr-upload-help">
+                  <summary>Download import template</summary>
+                  <p class="mini-note" style="margin:8px 0 0">
+                    Use a CSV/Excel layout compatible with your maintenance AP export; columns should align with your prior successful imports.
+                  </p>
+                  <button type="button" class="btn btn--small" style="margin-top:8px" onclick="uploadCenterDownloadTemplate('ap')">Download blank CSV template</button>
+                </details>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Upload file</div>
+                <div class="mr-upload-drop" data-up-bind="ap" onclick="document.getElementById('apImportFile').click()">
+                  <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
+                  <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
+                  <div class="mr-upload-drop__sub">CSV or Excel files accepted</div>
+                </div>
+                <input id="apImportFile" type="file" accept=".csv,.xlsx,.xls" class="mr-upload-file-hidden" aria-label="Maintenance AP file" />
+                <div id="upApPick" class="mr-upload-pickline hidden"></div>
+                <button type="button" class="btn btn--primary mr-upload-importbtn" id="upApImportBtn" disabled onclick="uploadCenterRunApImport()">Import</button>
+                <div id="upApProgress" class="mr-upload-progress hidden" aria-hidden="true"><div class="mr-upload-progress__bar"></div></div>
+                <div id="upApResult" class="mr-upload-result" aria-live="polite"></div>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Recent imports</div>
+                <div id="upRecent-ap" class="mr-upload-recent"></div>
+              </div>
+            </div>
+
+            <div id="upload-panel-maint" class="upload-subpanel">
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-panel-title">Maintenance history import</div>
+                <p class="mr-upload-panel-desc">
+                  Import historical maintenance records in bulk. Use the provided template to format your data before uploading.
+                </p>
+                <details class="mr-upload-help">
+                  <summary>Download import template</summary>
+                  <p class="mini-note" style="margin:8px 0 0">Blank CSV for column headers used by this app’s maintenance import.</p>
+                  <button type="button" class="btn btn--small" style="margin-top:8px" onclick="uploadCenterDownloadTemplate('maint')">Download blank CSV template</button>
+                </details>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Upload file</div>
+                <div class="mr-upload-drop" data-up-bind="maint" onclick="document.getElementById('maintenanceImportFile').click()">
+                  <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
+                  <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
+                  <div class="mr-upload-drop__sub">CSV or Excel files accepted</div>
+                </div>
+                <input id="maintenanceImportFile" type="file" accept=".csv,.xlsx,.xls" class="mr-upload-file-hidden" aria-label="Maintenance history file" />
+                <div id="upMaintPick" class="mr-upload-pickline hidden"></div>
+                <button type="button" class="btn btn--primary mr-upload-importbtn" id="upMaintImportBtn" disabled onclick="uploadCenterRunMaintImport()">Import</button>
+                <div id="upMaintProgress" class="mr-upload-progress hidden" aria-hidden="true"><div class="mr-upload-progress__bar"></div></div>
+                <div id="upMaintResult" class="mr-upload-result" aria-live="polite"></div>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Recent imports</div>
+                <div id="upRecent-maint" class="mr-upload-recent"></div>
+              </div>
+            </div>
+
+            <div id="upload-panel-other" class="upload-subpanel">
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-panel-title">Other import</div>
+                <p class="mr-upload-panel-desc">
+                  Upload other file types not covered by the tabs above. Generic import — file is noted for manual follow-up (no automatic parser).
+                </p>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Upload file</div>
+                <div class="mr-upload-drop" data-up-bind="other" onclick="document.getElementById('upOtherFile').click()">
+                  <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
+                  <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
+                  <div class="mr-upload-drop__sub">CSV, Excel, or PDF</div>
+                </div>
+                <input id="upOtherFile" type="file" accept=".csv,.xlsx,.xls,.pdf" class="mr-upload-file-hidden" aria-label="Other file" />
+                <div id="upOtherPick" class="mr-upload-pickline hidden"></div>
+                <button type="button" class="btn btn--primary mr-upload-importbtn" id="upOtherImportBtn" disabled onclick="uploadCenterRunOtherStub()">Import</button>
+                <div id="upOtherResult" class="mr-upload-result" aria-live="polite"></div>
+              </div>
+              <div class="mr-upload-panel-card">
+                <div class="mr-upload-section-h">Recent imports</div>
+                <div id="upRecent-other" class="mr-upload-recent"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -11241,16 +11414,301 @@
       }
     }
 
+    const UP_IMPORT_LOG_KEY = 'ih35_upload_import_log_v1';
+
+    function upImportLogRead() {
+      try {
+        const raw = localStorage.getItem(UP_IMPORT_LOG_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function upImportLogAdd(entry) {
+      const arr = upImportLogRead();
+      arr.unshift({
+        t: Date.now(),
+        date: new Date().toISOString(),
+        cat: entry.cat,
+        fileName: entry.fileName || '',
+        records: entry.records != null ? entry.records : '—',
+        status: entry.status || 'Imported',
+        detail: entry.detail || ''
+      });
+      while (arr.length > 80) arr.pop();
+      try {
+        localStorage.setItem(UP_IMPORT_LOG_KEY, JSON.stringify(arr));
+      } catch (_) {
+        /* ignore */
+      }
+      upImportLogRender(entry.cat);
+    }
+
+    function upImportStatusPill(status) {
+      const s = String(status || '').toLowerCase();
+      let cls = 'mr-upload-pill mr-upload-pill--gray';
+      let label = status || '—';
+      if (s === 'imported' || s === 'previewed' || s === 'logged') {
+        cls =
+          s === 'imported'
+            ? 'mr-upload-pill mr-upload-pill--green'
+            : s === 'previewed'
+              ? 'mr-upload-pill mr-upload-pill--yellow'
+              : 'mr-upload-pill mr-upload-pill--gray';
+      }
+      if (s === 'failed' || s === 'error') cls = 'mr-upload-pill mr-upload-pill--red';
+      if (s === 'processing') cls = 'mr-upload-pill mr-upload-pill--yellow';
+      return `<span class="${cls}">${escapeHtml(label)}</span>`;
+    }
+
+    function upImportLogRender(cat) {
+      const host = document.getElementById('upRecent-' + cat);
+      if (!host) return;
+      const rows = upImportLogRead()
+        .filter(e => e.cat === cat)
+        .slice(0, 10);
+      if (!rows.length) {
+        host.innerHTML = '<div class="mr-upload-recent-empty">No imports yet for this category.</div>';
+        return;
+      }
+      host.innerHTML =
+        '<table class="mr-upload-recent-table"><thead><tr><th style="width:100px">Date</th><th>File name</th><th style="width:80px;text-align:right">Records</th><th style="width:100px">Status</th><th style="width:120px">Actions</th></tr></thead><tbody>' +
+        rows
+          .map((r, i) => {
+            const dt = new Date(r.t || r.date);
+            const ds = Number.isFinite(dt.getTime())
+              ? `${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')}/${dt.getFullYear()} ${String(
+                  dt.getHours()
+                ).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+              : '—';
+            const fn = String(r.fileName || '');
+            const fshort = fn.length > 48 ? fn.slice(0, 45) + '…' : fn;
+            const det = escapeHtml(String(r.detail || '').replace(/"/g, '&quot;'));
+            return (
+              `<tr><td>${escapeHtml(ds)}</td><td title="${escapeHtml(fn)}">${escapeHtml(fshort)}</td>` +
+              `<td style="text-align:right">${escapeHtml(String(r.records))}</td><td>${upImportStatusPill(r.status)}</td>` +
+              `<td><button type="button" class="mr-upload-linkbtn" onclick="uploadCenterViewImportDetail('${escapeHtml(String(cat).replace(/'/g, "\\'"))}',${i})">View</button></td></tr>`
+            );
+          })
+          .join('') +
+        '</tbody></table>';
+    }
+
+    function upImportLogRenderAll() {
+      ['bank', 'comdata', 'sync', 'fuel', 'ap', 'maint', 'other'].forEach(upImportLogRender);
+    }
+
+    function uploadCenterViewImportDetail(cat, idx) {
+      const rows = upImportLogRead()
+        .filter(e => e.cat === cat)
+        .slice(0, 10);
+      const r = rows[idx];
+      if (!r) return;
+      const msg = [r.fileName, r.detail, 'Records: ' + r.records, 'Status: ' + r.status].filter(Boolean).join('\n');
+      showErpToast(msg.slice(0, 380), r.status === 'Failed' ? 'error' : 'success');
+    }
+
+    function uploadCenterPaintConnectionCards() {
+      const sEl = document.getElementById('upConnSamsaraStatus');
+      const sM = document.getElementById('upConnSamsaraMeta');
+      const qEl = document.getElementById('upConnQboStatus');
+      const rawS = document.getElementById('sidebarFleetStatus')?.textContent || '';
+      const rawL = document.getElementById('sidebarLastUpdated')?.textContent || '';
+      if (sEl) {
+        const ok = rawS && !rawS.toLowerCase().includes('fail') && !rawS.toLowerCase().includes('not set');
+        sEl.textContent = ok ? 'Status: Connected' : 'Status: Check token';
+      }
+      if (sM) sM.textContent = rawS || rawL || '—';
+      const qbo = typeof __erpLastQboStatusJson !== 'undefined' ? __erpLastQboStatusJson : null;
+      if (qEl) {
+        const ok = qbo && qbo.configured && qbo.connected;
+        qEl.textContent = ok ? 'Status: Connected' : qbo && qbo.configured ? 'Status: Disconnected' : 'Status: Not configured';
+      }
+    }
+
+    function uploadCenterBindUploadUiOnce() {
+      if (window.__uploadCenterUiBound) return;
+      window.__uploadCenterUiBound = true;
+      const bindPick = (inputId, pickId, btnId) => {
+        const inp = document.getElementById(inputId);
+        const pick = document.getElementById(pickId);
+        const btn = document.getElementById(btnId);
+        if (!inp || !pick || !btn) return;
+        const sync = () => {
+          const f = inp.files && inp.files[0];
+          btn.disabled = !f;
+          if (!f) {
+            pick.classList.add('hidden');
+            pick.innerHTML = '';
+            return;
+          }
+          pick.classList.remove('hidden');
+          const sz = f.size != null ? (f.size / 1024).toFixed(1) + ' KB' : '';
+          pick.innerHTML = `<span class="mr-upload-pickline__name">${escapeHtml(f.name)}</span><span class="mr-upload-pickline__meta">${escapeHtml(
+            sz
+          )}</span><button type="button" class="mr-upload-pickline__x" aria-label="Remove" onclick="uploadCenterClearFile('${inputId}','${pickId}','${btnId}')">×</button>`;
+        };
+        inp.addEventListener('change', sync);
+        sync();
+      };
+      bindPick('upCenterFuelFile', 'upFuelPick', 'upFuelImportBtn');
+      bindPick('upCenterComdataFile', 'upComdataPick', 'upComdataImportBtn');
+      bindPick('maintenanceImportFile', 'upMaintPick', 'upMaintImportBtn');
+      bindPick('apImportFile', 'upApPick', 'upApImportBtn');
+      bindPick('upOtherFile', 'upOtherPick', 'upOtherImportBtn');
+
+      document.querySelectorAll('#section-uploads .mr-upload-drop[data-up-bind]').forEach(zone => {
+        const key = zone.getAttribute('data-up-bind');
+        const map = { fuel: 'upCenterFuelFile', comdata: 'upCenterComdataFile', maint: 'maintenanceImportFile', ap: 'apImportFile', other: 'upOtherFile' };
+        const id = map[key];
+        if (!id) return;
+        zone.addEventListener('dragover', ev => {
+          ev.preventDefault();
+          zone.classList.add('mr-upload-drop--drag');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('mr-upload-drop--drag'));
+        zone.addEventListener('drop', ev => {
+          ev.preventDefault();
+          zone.classList.remove('mr-upload-drop--drag');
+          const inp = document.getElementById(id);
+          if (!inp || !ev.dataTransfer?.files?.length) return;
+          inp.files = ev.dataTransfer.files;
+          inp.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      });
+    }
+
+    function uploadCenterClearFile(inputId, pickId, btnId) {
+      const inp = document.getElementById(inputId);
+      if (inp) inp.value = '';
+      document.getElementById(pickId)?.classList.add('hidden');
+      const b = document.getElementById(btnId);
+      if (b) b.disabled = true;
+    }
+
+    function uploadCenterDownloadTemplate(kind) {
+      const headers =
+        kind === 'maint'
+          ? 'unit,serviceDate,serviceType,vendor,cost,notes'
+          : 'txnDate,vendor,amount,description,assetUnit,docNumber';
+      const blob = new Blob([headers + '\n'], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = kind === 'maint' ? 'maintenance-history-import-template.csv' : 'maintenance-ap-import-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function uploadCenterFuelPreview(inputId, cat) {
+      const input = document.getElementById(inputId);
+      const file = input?.files?.[0];
+      if (!file) return showErpToast('Choose a file first.', 'error');
+      const progressEl = document.getElementById(cat === 'comdata' ? 'upComdataProgress' : 'upFuelProgress');
+      const resultEl = document.getElementById(cat === 'comdata' ? 'upComdataResult' : 'upFuelResult');
+      const btn = document.getElementById(cat === 'comdata' ? 'upComdataImportBtn' : 'upFuelImportBtn');
+      if (progressEl) progressEl.classList.remove('hidden');
+      if (resultEl) resultEl.innerHTML = '';
+      if (btn) btn.disabled = true;
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const r = await fetch('/api/import/fuel', { method: 'POST', body: fd, headers: erpWriteHeaders() });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        acctPendingRelayFuelImportPreview = data;
+        const nF = (data.fuelPurchases || []).length;
+        const nR = (data.relayExpenses || []).length;
+        upImportLogAdd({
+          cat,
+          fileName: file.name,
+          records: nF + nR,
+          status: 'Previewed',
+          detail: `${nF} fuel line(s), ${nR} Relay line(s) — open Accounting to confirm`
+        });
+        if (resultEl) {
+          resultEl.innerHTML =
+            `<span class="mr-upload-pill mr-upload-pill--green">Parsed ${nF + nR} row(s)</span> ` +
+            `<button type="button" class="mr-upload-linkbtn" onclick="openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section=accounting]')); openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger')); acctRenderRelayFuelImportPreview(acctPendingRelayFuelImportPreview); document.getElementById('acct-fuel-expense')?.scrollIntoView({behavior:'smooth',block:'start'})">Open Fuel &amp; DEF to confirm</button>`;
+        }
+        openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
+        openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'));
+        acctRenderRelayFuelImportPreview(data);
+        showErpToast(`Fuel import preview: ${nF} fuel / ${nR} Relay lines — confirm in Accounting.`, 'success');
+      } catch (e) {
+        upImportLogAdd({
+          cat,
+          fileName: file.name,
+          records: 0,
+          status: 'Failed',
+          detail: e.message || String(e)
+        });
+        if (resultEl) {
+          resultEl.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:#d93025">${escapeHtml(
+            e.message || String(e)
+          )}</span>`;
+        }
+        showErpToast('Fuel preview failed: ' + (e.message || String(e)), 'error');
+      } finally {
+        if (progressEl) progressEl.classList.add('hidden');
+        if (btn) btn.disabled = !input?.files?.[0];
+      }
+    }
+
+    function uploadCenterRunMaintImport() {
+      uploadMaintenanceFile();
+    }
+
+    function uploadCenterRunApImport() {
+      uploadApFile();
+    }
+
+    function uploadCenterRunOtherStub() {
+      const input = document.getElementById('upOtherFile');
+      const f = input?.files?.[0];
+      if (!f) return showErpToast('Choose a file first.', 'error');
+      upImportLogAdd({
+        cat: 'other',
+        fileName: f.name,
+        records: '—',
+        status: 'Logged',
+        detail: 'No automatic parser — keep file for manual review'
+      });
+      const res = document.getElementById('upOtherResult');
+      if (res) res.innerHTML = '<span class="mr-upload-pill mr-upload-pill--green">File noted</span>';
+      showErpToast('File logged for manual review.', 'success');
+      input.value = '';
+      uploadCenterClearFile('upOtherFile', 'upOtherPick', 'upOtherImportBtn');
+    }
+
     function openUploadSubpanel(which, btn) {
+      try {
+        localStorage.setItem('ih35_upload_tab', which);
+      } catch (_) {
+        /* ignore */
+      }
       document.querySelectorAll('#section-uploads .upload-subpanel').forEach(el => el.classList.remove('active'));
       const p = document.getElementById('upload-panel-' + which);
       if (p) p.classList.add('active');
-      document.querySelectorAll('#section-uploads .subtabs .subtab').forEach(el => el.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      else {
+      document.querySelectorAll('#section-uploads .subtabs .subtab').forEach(el => {
+        el.classList.remove('active');
+        el.setAttribute('aria-selected', 'false');
+      });
+      if (btn) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+      } else {
         const b = document.querySelector(`#section-uploads .subtab[data-up-sub="${which}"]`);
-        if (b) b.classList.add('active');
+        if (b) {
+          b.classList.add('active');
+          b.setAttribute('aria-selected', 'true');
+        }
       }
+      uploadCenterPaintConnectionCards();
+      upImportLogRender(which);
     }
 
     async function addCatalogServiceType() {
@@ -13352,8 +13810,11 @@
 
     async function uploadMaintenanceFile() {
       const input = document.getElementById('maintenanceImportFile');
-      if (!input.files || !input.files[0]) return alert('Choose a maintenance CSV or Excel file first.');
-
+      if (!input.files || !input.files[0]) {
+        showErpToast('Choose a maintenance CSV or Excel file first.', 'error');
+        return;
+      }
+      const fn = input.files[0].name;
       const fd = new FormData();
       fd.append('file', input.files[0]);
 
@@ -13361,21 +13822,49 @@
         const r = await fetch('/api/import/maintenance', { method: 'POST', body: fd });
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Import failed');
-        alert(
-          `Maintenance work orders imported: ${data.imported}` +
-            (data.importBatchId ? `\nImport batch id (undo in Accounting → QBO rollback): ${data.importBatchId}` : '')
-        );
+        const n = Number(data.imported) || 0;
+        const detail =
+          (data.importBatchId ? 'Batch id: ' + data.importBatchId + ' (undo in Accounting → QBO rollback).' : '') || '';
+        upImportLogAdd({
+          cat: 'maint',
+          fileName: fn,
+          records: n,
+          status: 'Imported',
+          detail
+        });
+        const res = document.getElementById('upMaintResult');
+        if (res) {
+          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--green">Imported ${n} records</span> <button type="button" class="mr-upload-linkbtn" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">View rollback</button>`;
+        }
+        showErpToast(`Maintenance import saved: ${n} record(s).`, 'success');
         input.value = '';
+        uploadCenterClearFile('maintenanceImportFile', 'upMaintPick', 'upMaintImportBtn');
         await loadAll();
       } catch (e) {
-        alert('Maintenance import failed: ' + e.message);
+        upImportLogAdd({
+          cat: 'maint',
+          fileName: fn,
+          records: 0,
+          status: 'Failed',
+          detail: e.message || String(e)
+        });
+        const res = document.getElementById('upMaintResult');
+        if (res) {
+          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:#d93025">${escapeHtml(
+            e.message || String(e)
+          )}</span>`;
+        }
+        showErpToast('Maintenance import failed: ' + (e.message || String(e)), 'error');
       }
     }
 
     async function uploadApFile() {
       const input = document.getElementById('apImportFile');
-      if (!input.files || !input.files[0]) return alert('Choose an expense CSV or Excel file first.');
-
+      if (!input.files || !input.files[0]) {
+        showErpToast('Choose an expense CSV or Excel file first.', 'error');
+        return;
+      }
+      const fn = input.files[0].name;
       const fd = new FormData();
       fd.append('file', input.files[0]);
 
@@ -13383,14 +13872,39 @@
         const r = await fetch('/api/import/ap', { method: 'POST', body: fd });
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Import failed');
-        alert(
-          `Expense transactions imported: ${data.imported}` +
-            (data.importBatchId ? `\nImport batch id (undo in Accounting → QBO rollback): ${data.importBatchId}` : '')
-        );
+        const n = Number(data.imported) || 0;
+        const detail =
+          (data.importBatchId ? 'Batch id: ' + data.importBatchId + ' (undo in Accounting → QBO rollback).' : '') || '';
+        upImportLogAdd({
+          cat: 'ap',
+          fileName: fn,
+          records: n,
+          status: 'Imported',
+          detail
+        });
+        const res = document.getElementById('upApResult');
+        if (res) {
+          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--green">Imported ${n} records</span> <button type="button" class="mr-upload-linkbtn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">View expenses</button>`;
+        }
+        showErpToast(`AP / expense import saved: ${n} record(s).`, 'success');
         input.value = '';
+        uploadCenterClearFile('apImportFile', 'upApPick', 'upApImportBtn');
         await loadAll();
       } catch (e) {
-        alert('Expense import failed: ' + e.message);
+        upImportLogAdd({
+          cat: 'ap',
+          fileName: fn,
+          records: 0,
+          status: 'Failed',
+          detail: e.message || String(e)
+        });
+        const res = document.getElementById('upApResult');
+        if (res) {
+          res.innerHTML = `<span class="mr-upload-pill mr-upload-pill--red">Import failed</span> <span class="mini-note" style="color:#d93025">${escapeHtml(
+            e.message || String(e)
+          )}</span>`;
+        }
+        showErpToast('Expense import failed: ' + (e.message || String(e)), 'error');
       }
     }
 
