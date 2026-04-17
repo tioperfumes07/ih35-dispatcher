@@ -108,7 +108,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 14 — Upload center
 
-- **Partial:** Tabs and import flows exist; panel-head **?** tip on **Upload center**; **Connections** subpanel uses compact copy + **?** tip (Rule 22). Alphabetical tab order and “every tab fully functional” should be verified with manual tests and real files.
+- **Partial:** Tabs and import flows exist; panel-head **?** on **Upload center**; **?** + one-line intro on **every** upload subpanel (**Bank**, **Comdata**, **Fuel**, **AP**, **Maint history**, **Other**, **Connections**). Alphabetical tab order and “every tab fully functional” should be verified with manual tests and real files.
 
 ### Rule 15 — Samsara-style filter bar
 
