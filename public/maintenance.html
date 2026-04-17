@@ -326,11 +326,11 @@
 
       <section id="section-safety" class="section erp-ops-section">
         <div class="subtabs erp-ops-subtabs-bar" style="margin-bottom:12px">
-          <button type="button" class="subtab active" onclick="openSafetyTab('safe-hos', this)">HOS clocks</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-active', this)">Active / in service</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-assign', this)">Assignments</button>
-          <button type="button" class="subtab" onclick="openSafetyTab('safe-fleet', this)">Fleet snapshot</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-files', this)">Driver files</button>
+          <button type="button" class="subtab" onclick="openSafetyTab('safe-fleet', this)">Fleet snapshot</button>
+          <button type="button" class="subtab active" onclick="openSafetyTab('safe-hos', this)">HOS clocks</button>
         </div>
         <div id="safe-hos" class="tracking-sub">
           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 4px">
@@ -969,7 +969,7 @@
                       </span>
                     </p>
                     <p class="mini-note" style="margin:4px 0 0">
-                      <button type="button" class="qb-btn-add" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Catalogs → Service types</button>
+                      <button type="button" class="qb-btn-add" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Lists &amp; catalogs → Service types</button>
                       <button type="button" class="qb-btn-add" style="margin-left:8px" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
                     </p>
                   </div>
@@ -1072,7 +1072,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Where to import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      CSV and Excel imports live under <strong>Upload center</strong> in the lists column (see <strong>Lists, imports &amp; admin</strong> at the bottom of the sidebar) — maintenance history, AP expenses, fuel / Relay, and connection notes.
+                      CSV and Excel imports live under <strong>Upload center</strong> in the lists column (see <strong>Lists &amp; catalogs</strong> at the bottom of the sidebar) — maintenance history, AP expenses, fuel / Relay, and connection notes.
                     </span>
                   </span>
                 </div>
@@ -1225,10 +1225,10 @@
         </div>
 
         <div class="subtabs erp-ops-subtabs-bar" style="margin-top:12px">
-          <button type="button" class="subtab" onclick="openTrackingTab('tr-maint-shop', this)">Shop &amp; maintenance</button>
-          <button type="button" class="subtab active" onclick="openTrackingTab('tr-map', this)">Map</button>
           <button type="button" class="subtab" onclick="openTrackingTab('tr-assets', this)">Assets</button>
           <button type="button" class="subtab" onclick="openTrackingTab('tr-drivers', this)">Drivers</button>
+          <button type="button" class="subtab active" onclick="openTrackingTab('tr-map', this)">Map</button>
+          <button type="button" class="subtab" onclick="openTrackingTab('tr-maint-shop', this)">Shop &amp; maintenance</button>
           <button type="button" class="subtab" onclick="openTrackingTab('tr-idle', this)">Yard &amp; idle (T120–T178)</button>
         </div>
 
@@ -1275,11 +1275,11 @@
                 </span>
               </div>
               <div class="subtabs shop-subtabs erp-ops-shop-subtabs" id="shopBoardSubtabs">
-                <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
                 <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External shop</button>
-                <button type="button" class="subtab" data-shop-tab="roadside" onclick="openShopBoardTab('roadside', this)">Roadside service</button>
-                <button type="button" class="subtab" data-shop-tab="parts" onclick="openShopBoardTab('parts', this)">Parts purchase</button>
+                <button type="button" class="subtab active" data-shop-tab="internal" onclick="openShopBoardTab('internal', this)">Internal shop</button>
                 <button type="button" class="subtab" data-shop-tab="oos" onclick="openShopBoardTab('oos', this)">Out of service</button>
+                <button type="button" class="subtab" data-shop-tab="parts" onclick="openShopBoardTab('parts', this)">Parts purchase</button>
+                <button type="button" class="subtab" data-shop-tab="roadside" onclick="openShopBoardTab('roadside', this)">Roadside service</button>
               </div>
               <div id="shopTabInternal" class="shop-tab-panel active">
                 <div class="toolbar erp-ops-toolbar erp-ops-toolbar--dense">
@@ -1707,12 +1707,12 @@
 
       <section id="section-accounting" class="section">
         <div id="acctNavTabStubs" class="erp-sr-tab-anchor" aria-hidden="true">
-          <button type="button" class="subtab active" id="acctStubTrans" onclick="openAccountingTab('acct-transactions', this)">Maintenance expenses</button>
-          <button type="button" class="subtab" id="acctFuelDdTrigger" onclick="openAccountingTab('acct-fuel-expense', this)">Fuel &amp; DEF</button>
-          <button type="button" class="subtab" id="acctQbDdTrigger" onclick="openAccountingTab('acct-qbo', this)">QuickBooks live master</button>
-          <button type="button" class="subtab" id="acctBillPayStub" onclick="openAccountingTab('acct-bill-pay', this)">Pay bills</button>
           <button type="button" class="subtab" id="acctLogsDdTrigger" onclick="openAccountingTab('acct-expense-history', this)">Expense history</button>
+          <button type="button" class="subtab" id="acctFuelDdTrigger" onclick="openAccountingTab('acct-fuel-expense', this)">Fuel &amp; DEF</button>
+          <button type="button" class="subtab active" id="acctStubTrans" onclick="openAccountingTab('acct-transactions', this)">Maintenance expenses</button>
+          <button type="button" class="subtab" id="acctBillPayStub" onclick="openAccountingTab('acct-bill-pay', this)">Pay bills</button>
           <button type="button" class="subtab" id="acctQboRollbackStub" onclick="openAccountingTab('acct-qbo-rollback', this)">QBO rollback</button>
+          <button type="button" class="subtab" id="acctQbDdTrigger" onclick="openAccountingTab('acct-qbo', this)">QuickBooks live master</button>
         </div>
 
         <div id="acctBoardStrip" class="mr-acct-board maint-section-card" aria-label="Accounting overview">
@@ -2846,25 +2846,25 @@
           <button type="button" class="subtab active" data-rep-k="overview executive dashboard metrics board refresh" onclick="openReportsTab('rep-overview', this)">Overview</button>
 
           <div class="nav-dropdown" style="display:inline-block">
-            <button type="button" class="subtab nav-dropdown-trigger" id="repMaintDdTrigger" onclick="event.stopPropagation()">Maintenance ▾</button>
+            <button type="button" class="subtab nav-dropdown-trigger" id="repAcctDdTrigger" onclick="event.stopPropagation()">Accounting ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" data-rep-k="spend unit maintenance cost work order" onclick="openReportsTab('rep-maint', document.getElementById('repMaintDdTrigger'))">Spend by unit</button>
-              <button type="button" class="nav-dd-item" data-rep-k="parts positions tires detailed breakdown" onclick="openReportsTab('rep-maint-detail', document.getElementById('repMaintDdTrigger'))">Detailed maintenance (parts/positions)</button>
+              <button type="button" class="nav-dd-item" data-rep-k="erp sync qbo quickbooks reconcile" onclick="openReportsTab('rep-sync', document.getElementById('repAcctDdTrigger'))">ERP ↔ QBO sync</button>
+              <button type="button" class="nav-dd-item" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTab('rep-qbo', document.getElementById('repAcctDdTrigger'))">QuickBooks activity</button>
             </div>
           </div>
 
           <div class="nav-dropdown" style="display:inline-block">
-            <button type="button" class="subtab nav-dropdown-trigger" id="repAcctDdTrigger" onclick="event.stopPropagation()">Accounting ▾</button>
+            <button type="button" class="subtab nav-dropdown-trigger" id="repMaintDdTrigger" onclick="event.stopPropagation()">Maintenance ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTab('rep-qbo', document.getElementById('repAcctDdTrigger'))">QuickBooks activity</button>
-              <button type="button" class="nav-dd-item" data-rep-k="erp sync qbo quickbooks reconcile" onclick="openReportsTab('rep-sync', document.getElementById('repAcctDdTrigger'))">ERP ↔ QBO sync</button>
+              <button type="button" class="nav-dd-item" data-rep-k="parts positions tires detailed breakdown" onclick="openReportsTab('rep-maint-detail', document.getElementById('repMaintDdTrigger'))">Detailed maintenance (parts/positions)</button>
+              <button type="button" class="nav-dd-item" data-rep-k="spend unit maintenance cost work order" onclick="openReportsTab('rep-maint', document.getElementById('repMaintDdTrigger'))">Spend by unit</button>
             </div>
           </div>
 
           <div class="nav-dropdown" style="display:inline-block">
             <button type="button" class="subtab nav-dropdown-trigger" id="repOpsDdTrigger" onclick="event.stopPropagation()">Operations ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
-              <button type="button" class="nav-dd-item" data-rep-k="tms loads pipeline postgres trips" onclick="openReportsTab('rep-tms', document.getElementById('repOpsDdTrigger'))">TMS loads</button>
+              <button type="button" class="nav-dd-item" data-rep-k="ifta miles fuel tax jurisdiction compliance" onclick="openReportsTab('rep-ifta', document.getElementById('repOpsDdTrigger'))">IFTA &amp; compliance</button>
               <button
                 type="button"
                 class="nav-dd-item"
@@ -2875,7 +2875,7 @@
                 Settlement / P&amp;L by load
               </button>
               <button type="button" class="nav-dd-item" data-rep-k="team security users roles audit" onclick="openReportsTab('rep-team', document.getElementById('repOpsDdTrigger'))">Team &amp; security</button>
-              <button type="button" class="nav-dd-item" data-rep-k="ifta miles fuel tax jurisdiction compliance" onclick="openReportsTab('rep-ifta', document.getElementById('repOpsDdTrigger'))">IFTA &amp; compliance</button>
+              <button type="button" class="nav-dd-item" data-rep-k="tms loads pipeline postgres trips" onclick="openReportsTab('rep-tms', document.getElementById('repOpsDdTrigger'))">TMS loads</button>
             </div>
           </div>
         </div>
@@ -3181,11 +3181,11 @@
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
-              <button type="button" class="subtab active" data-cat-sub="service" onclick="openCatalogSubpanel('service', this)">Service types (DB)</button>
-              <button type="button" class="subtab" data-cat-sub="qbo" onclick="openCatalogSubpanel('qbo', this)">QuickBooks items &amp; accounts</button>
-              <button type="button" class="subtab" data-cat-sub="vendors" onclick="openCatalogSubpanel('vendors', this)">Vendors &amp; drivers</button>
-              <button type="button" class="subtab" data-cat-sub="operational" onclick="openCatalogSubpanel('operational', this)">Operational status</button>
               <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; Samsara</button>
+              <button type="button" class="subtab" data-cat-sub="operational" onclick="openCatalogSubpanel('operational', this)">Operational status</button>
+              <button type="button" class="subtab" data-cat-sub="qbo" onclick="openCatalogSubpanel('qbo', this)">QuickBooks items &amp; accounts</button>
+              <button type="button" class="subtab active" data-cat-sub="service" onclick="openCatalogSubpanel('service', this)">Service types (DB)</button>
+              <button type="button" class="subtab" data-cat-sub="vendors" onclick="openCatalogSubpanel('vendors', this)">Vendors &amp; drivers</button>
             </div>
             <div id="catalog-panel-service" class="catalog-subpanel active">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
@@ -3455,7 +3455,7 @@
               <details class="mr-upload-help" style="margin-top:12px">
                 <summary>Samsara write scopes (advanced)</summary>
                 <ul class="mini-note" style="margin:8px 0 0;padding-left:1.2rem;line-height:1.5">
-                  <li>Fleet/HOS in this app is read-only unless your API token includes write scopes. Use <strong>Catalogs → Fleet &amp; Samsara writes</strong> for POSTs when configured.</li>
+                  <li>Fleet/HOS in this app is read-only unless your API token includes write scopes. Use <strong>Lists &amp; catalogs → Fleet &amp; Samsara writes</strong> for POSTs when configured.</li>
                   <li>Tokens must be re-issued after adding scopes; read-only tokens return 403 from Samsara.</li>
                 </ul>
               </details>
@@ -5421,11 +5421,11 @@
 
     function erpSbToolsDataBlock(includeBankCsv) {
       let s =
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'service\');">Service types (database)</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'vendors\');">Vendors &amp; driver payees</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
         '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
-        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>';
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'service\');">Service types (database)</button>' +
+        '<button type="button" class="erp-sb-link" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'vendors\');">Vendors &amp; driver payees</button>';
       if (includeBankCsv) {
         s +=
           '<button type="button" class="erp-sb-link" onclick="location.href=\'/banking.html\'">Bank CSV (matching)</button>';
@@ -5559,7 +5559,7 @@
             false,
             '<p class="mini-note" style="margin:0;line-height:1.45">Open the <strong>Reports</strong> icon (≡) in company navigation for financial and operational reports.</p>'
           ) +
-          erpSbGroup('dashboard', 'admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
+          erpSbGroup('dashboard', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'fuel') {
@@ -5572,16 +5572,16 @@
             '<a class="erp-sb-link" href="/fuel.html" target="_blank" rel="noopener" style="display:inline-block">Open fuel planner (full screen)</a>' +
               '<p class="mini-note" style="margin:8px 0 0">Embedded planner runs below; full screen opens a dedicated tab.</p>'
           ) +
-          erpSbGroup('fuel', 'admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
+          erpSbGroup('fuel', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'safety') {
         const safetyViewsBody =
-          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-hos&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-hos\\\']&quot;));">HOS clocks</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-active&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-active\\\']&quot;));">Active / in service</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-assign&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-assign\\\']&quot;));">Assignments</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-files\\\']&quot;));">Driver files</button>' +
           '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-fleet&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-fleet\\\']&quot;));">Fleet snapshot</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-files\\\']&quot;));">Driver files</button>';
+          '<button type="button" class="erp-sb-link" onclick="openSafetyTab(&quot;safe-hos&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-hos\\\']&quot;));">HOS clocks</button>';
         const safetyToolsBody =
           '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="window.open(&quot;https://cloud.samsara.com&quot;,&quot;_blank&quot;,&quot;noopener&quot;);">Video library (Samsara)</button>' +
           '<button type="button" class="erp-sb-link erp-sb-link--muted" onclick="window.open(&quot;https://www.samsara.com/products/cm31&quot;,&quot;_blank&quot;,&quot;noopener&quot;);">Cameras (product info)</button>';
@@ -5593,9 +5593,9 @@
       }
       if (name === 'tracking') {
         const trackLiveBody =
-          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-map\\\']&quot;));">Live map</button>' +
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Vehicles</button>' +
           '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-drivers&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-drivers\\\']&quot;));">Drivers</button>' +
-          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Vehicles</button>';
+          '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-map\\\']&quot;));">Live map</button>';
         const trackOpsBody =
           '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance</button>' +
           '<button type="button" class="erp-sb-link" onclick="openTrackingTab(&quot;tr-idle&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-idle\\\']&quot;));">Yard &amp; idle</button>';
@@ -5636,7 +5636,7 @@
             true,
             '<p class="mini-note" style="margin:0;line-height:1.45">Use the <strong>Browse</strong> column on the left of the reports board or the tabs across the top. TMS and settlement reports use your live database connection.</p>'
           ) +
-          erpSbGroup('reports', 'module-admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
+          erpSbGroup('reports', 'module-admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'catalog') {
@@ -5644,15 +5644,15 @@
           erpSbGroup(
             'catalog',
             'lists',
-            'Catalogs',
+            'Sub-tabs',
             true,
-            '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
-              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
-              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>' +
+            '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;fleet&quot;);">Fleet &amp; Samsara writes</button>' +
               '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;operational&quot;);">Operational labels</button>' +
-              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;fleet&quot;);">Fleet &amp; Samsara writes</button>'
+              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
+              '<button type="button" class="erp-sb-link" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>'
           ) +
-          erpSbGroup('catalog', 'module-admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
+          erpSbGroup('catalog', 'module-admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'uploads') {
@@ -5667,7 +5667,7 @@
             true,
             '<button type="button" class="erp-sb-link" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>'
           ) +
-          erpSbGroup('erp', 'fallback-admin', 'Lists &amp; admin', false, erpSbAdminBody(admOpts));
+          erpSbGroup('erp', 'fallback-admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
     }
 
     function erpCloseNewMenu() {
