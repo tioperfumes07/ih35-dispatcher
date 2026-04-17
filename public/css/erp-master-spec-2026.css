@@ -264,8 +264,8 @@ body.erp-maintenance .erp-new-menu__col-title {
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #5f6368;
-  border-bottom: 1px solid #e8eaed;
+  color: var(--color-text-label, #5f6368);
+  border-bottom: 1px solid var(--color-border, #e8eaed);
   padding-bottom: 6px;
   margin-bottom: 6px;
 }
@@ -296,8 +296,8 @@ body.erp-maintenance .erp-new-menu__col-title {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: #fce8e6;
-  color: #c5221f;
+  background: var(--pill-red-bg, #fce8e6);
+  color: var(--pill-red-text, #c5221f);
   font-weight: 500;
   font-size: 13px;
   display: flex;
@@ -309,14 +309,14 @@ body.erp-maintenance .erp-new-menu__col-title {
 .mr-qbo-banner__title {
   font-weight: 500;
   font-size: 14px;
-  color: #c5221f;
+  color: var(--pill-red-text, #c5221f);
   margin: 0 0 4px;
 }
 
 .mr-qbo-banner__meta {
   margin: 0 0 8px;
   font-size: 12px;
-  color: #5f6368;
+  color: var(--color-text-label, #5f6368);
 }
 
 .mr-qbo-banner__list {
@@ -329,12 +329,12 @@ body.erp-maintenance .erp-new-menu__col-title {
 .mr-qbo-banner__list li {
   margin: 2px 0;
   font-size: 13px;
-  color: #3c4043;
+  color: var(--color-text-body, #3c4043);
 }
 
 .mr-qbo-banner__sev {
   font-weight: 500;
-  color: #202124;
+  color: var(--color-text-primary, #202124);
 }
 
 .mr-qbo-banner__right {
@@ -347,7 +347,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 .mr-qbo-banner__linkbtn {
   border: none;
   background: transparent;
-  color: #1967d2;
+  color: var(--color-border-focus, #1967d2);
   font-size: 13px;
   font-weight: 500;
   padding: 4px 8px;
@@ -360,10 +360,10 @@ body.erp-maintenance .erp-new-menu__col-title {
 }
 
 .mr-qbo-banner__ghost {
-  border: 1px solid #dadce0;
+  border: 1px solid var(--color-border, #dadce0);
   border-radius: 4px;
-  background: #fff;
-  color: #3c4043;
+  background: var(--color-bg-card, #fff);
+  color: var(--color-text-body, #3c4043);
   font-size: 13px;
   font-weight: 500;
   height: 32px;
@@ -372,10 +372,10 @@ body.erp-maintenance .erp-new-menu__col-title {
 }
 
 .mr-qbo-banner__dismiss {
-  border: 1px solid #dadce0;
+  border: 1px solid var(--color-border, #dadce0);
   border-radius: 4px;
-  background: #fff;
-  color: #5f6368;
+  background: var(--color-bg-card, #fff);
+  color: var(--color-text-label, #5f6368);
   font-size: 13px;
   font-weight: 500;
   height: 32px;
@@ -384,12 +384,12 @@ body.erp-maintenance .erp-new-menu__col-title {
 }
 
 .mr-qbo-banner--degraded .mr-qbo-banner__title {
-  color: #202124;
+  color: var(--color-text-primary, #202124);
 }
 
 .mr-qbo-banner--degraded .mr-qbo-banner__icon {
-  background: #f1f3f4;
-  color: #5f6368;
+  background: var(--color-bg-header, #f1f3f4);
+  color: var(--color-text-label, #5f6368);
 }
 
 /* --- Rule 16: KPI strip --- */
