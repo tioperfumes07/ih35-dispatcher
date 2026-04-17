@@ -108,7 +108,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 23 — Pagination
 
-- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**); **maintenance → Maintenance Table** (**`maintDashboardTablePager`**); **tracking → Units** card list (**`trackingListPager`**)). Not literally every table >10 rows.
+- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **accounting → Pay bills → Recent bill payments** log (**`bpLogPager`**, **`__bpBillPaymentLogAllRows`** + client filter); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**); **maintenance → Maintenance Table** (**`maintDashboardTablePager`**); **tracking → Map → Units** cards (**`trackingListPager`**); **tracking → All tracked assets** + **Drivers (HOS)** tables (**`trackingAssetsTablePager`**, **`trackingDriversPager`**)). Not literally every table >10 rows.
 
 ### Rule 24 — Connection verification on load
 
@@ -138,6 +138,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 18. **Rule 22 (settlement report copy):** **`maintenance.html`** — **Reports → Settlement / P&L** page intro and trip rollup panel: long paragraphs replaced with short **`mini-note`** lines plus **`erp-help-tip`** panels.
 19. **Rule 23 (maintenance fleet table):** **`maintenance.html`** — **`#maintTablePagerHost`** + **`maintDashboardTablePager`** paginate the **Maintenance Table** (filter key = fleet category + service filter string).
 20. **Rule 23 (tracking unit cards):** **`maintenance.html`** — **`#trackingListPagerHost`** + **`trackingListPager`** paginate **Tracking → Map → Units** cards (filter key = search text).
+21. **Rule 23 (tracking assets + drivers + bill pay log):** **`maintenance.html`** — **`#trackingAssetsPagerHost`** / **`#trackingDriversPagerHost`**; **Pay bills** payment log uses **`window.__bpBillPaymentLogAllRows`** so clearing the log search shows all loaded payments again, with **`#bpLogPagerHost`** + **`bpLogPager`** slicing the filtered list.
 
 ---
 
