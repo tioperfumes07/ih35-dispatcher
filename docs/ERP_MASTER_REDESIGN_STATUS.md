@@ -12,13 +12,13 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~58%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.580** → **58.0%**; rounded headline **~58%**.)
+**Overall completion: ~58%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.583** → **58.3%**; rounded headline **~58%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
 | Rule | Theme | Fraction (this revision) | Notes |
 |------|--------|-------------------------|--------|
-| 0 | Design tokens | 0.71 | **`banking.html`** / **`settings.html`** / **`dispatch.html`** page CSS + JS strings use **`var(--color-*|pill-*|btn-danger-*|focus-ring)`** where updated; **`fuel.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
+| 0 | Design tokens | 0.72 | **`board-nav.css`** bridges dropdown/hover to **`var(--color-*|pill-*|shadow-dropdown)`**; **`banking.html`** / **`settings.html`** / **`dispatch.html`** + **maintenance** prior passes; full **`app-theme`** migration still deferred |
 | 1 | Responsive | 0.45 | Shell patterns; full viewport audit deferred |
 | 2 | App shell | 0.45 | `erp-master` present; spec dimensions/copy deferred |
 | 3 | Collapsible sidebar | 1.0 | Pattern shipped (`ih35_sb_*`) |
@@ -26,10 +26,10 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 5–9 | Modal shells | 0.45 each (avg) | QB-style modals; parity not verified rule-by-rule |
 | 10 | StandardExpenseLines | 0.15 | No React tree; documented blocked / future |
 | 11 | Pay bills | 0.45 | Flows exist; driver variant + open-bills pager deferred |
-| 12 | Maintenance layout | 0.46 | **Lists & catalogs** sub-tab intros aligned with Rule 22; full spec QA deferred |
+| 12 | Maintenance layout | 0.48 | **Lists & catalogs** sub-tab intros (**Rule 22**) + **Service types (DB)** filter/pager (**Rules 15/23**); full spec QA deferred |
 | 13 | Accounting board | 0.46 | KPIs + dash cards; card subcopy uses **token** text colors; dark-panel cleanup partial |
 | 14 | Upload center | 0.54 | Tabs + flows; **?** tips on every upload subpanel intro (Bank, Comdata, Fuel, AP, Maint, Other, Connections); alphabetical / full QA deferred |
-| 15 | Filter bar | 0.52 | Several tables + **Maintenance → Security alerts** toolbar wrapped in **`mr-filter-bar`**; not universal |
+| 15 | Filter bar | 0.54 | Several tables + **Security alerts** + **Lists & catalogs → Service types (DB)** search use **`mr-filter-bar`** / filter row; not universal |
 | 16 | Safety / HOS | 0.55 | Tables + **Rule 23** pagers on Safety + idle snapshot |
 | 17 | Reports | 0.56 | Hub + settlement; **TMS**, **QBO**, **sync**, **IFTA**, **Maintenance spend by unit**, **Team & security**, **Maint detailed** tab titles + **`erp-help-tip`**; **Maint spend by unit** + **Maint detailed** bodies paginated (**Rule 23**); “all on one page” partial |
 | 18 | QBO GET aliases | 0.90 | Skipped — existing catalog/status routes |
@@ -37,10 +37,10 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 20 | Button loading | 1.0 | `erpWithBusy` pattern |
 | 21 | QBO error banner | 0.45 | Maintenance messaging; sticky spec deferred |
 | 22 | “?” tips | 0.87 | **Lists & catalogs** — every sub-tab (**Service**, **QBO**, **Vendors**, **Operational**, **Fleet**) has short intro + **?**; + **Team** dynamic intro + prior report/upload/shop; **dispatch** sidebar **Tips** line + **?**; many `mini-note` blocks remain |
-| 23 | Pagination | 0.84 | Broad `erpPagerRender` coverage; **Reports → Maintenance spend by unit** (**`repMaintByUnitPager`**) + **Maintenance detailed** record cards (**`repMaintDetailPager`**); not every long table |
+| 23 | Pagination | 0.86 | Broad `erpPagerRender` coverage; **Lists & catalogs → Service types (DB)** (**`serviceCatalogAdminPager`**); **Reports** spend-by-unit + maint detailed (prior); not every long table |
 | 24 | Connection strip | 0.50 | Satellites + hub; universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.580** (**58.0%**; headline **~58%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.583** (**58.3%**; headline **~58%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
@@ -100,7 +100,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 12 — Maintenance page layout
 
-- **Partial / evolving:** Layout has been iterated (action bar, two-column patterns). **Lists & catalogs** sub-tabs use compact copy + **`erp-help-tip`** on each intro (Rule 22). Spec’s “remove views/QBO panels” list may not be 100% applied — needs visual QA against spec.
+- **Partial / evolving:** Layout has been iterated (action bar, two-column patterns). **Lists & catalogs** sub-tabs use compact copy + **`erp-help-tip`** on each intro (Rule 22); **Service types (DB)** admin grid uses name filter + pager (**Rules 15/23**). Spec’s “remove views/QBO panels” list may not be 100% applied — needs visual QA against spec.
 
 ### Rule 13 — Accounting board
 
@@ -112,7 +112,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 15 — Samsara-style filter bar
 
-- **Partial:** Filter patterns exist on several tables (see spec comments in `erp-master-spec-2026.css`). **Maintenance → Security alerts** uses **`mr-filter-bar`** + **`mr-filter-bar__grow`** / **`__right`** for search, window, severity, and **Refresh alerts**. Not every table has full chip + pager parity.
+- **Partial:** Filter patterns exist on several tables (see spec comments in `erp-master-spec-2026.css`). **Maintenance → Security alerts** uses **`mr-filter-bar`** + **`mr-filter-bar__grow`** / **`__right`** for search, window, severity, and **Refresh alerts**. **Lists & catalogs → Service types (DB)** adds **`mr-filter-bar`** + live name filter for the Postgres catalog admin table. Not every table has full chip + pager parity.
 
 ### Rule 16 — Safety / HOS
 
@@ -144,7 +144,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 23 — Pagination
 
-- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **accounting → Pay bills → Recent bill payments** log (**`bpLogPager`**, **`__bpBillPaymentLogAllRows`** + client filter); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**); **reports → Maintenance spend by unit** rollup table (**`repMaintByUnitPager`**, **`#repMaintByUnitPagerHost`**); **reports → Maintenance detailed report** filtered record cards (**`repMaintDetailPager`**, **`#repMaintDetailPagerHost`**); **maintenance → Maintenance Table** (**`maintDashboardTablePager`**); **maintenance → Safety / HOS** tab: **HOS clocks** (**`safetyHosPager`**), **Active** / **In service** panels (**`safetyActivePager`**, **`safetyInServicePager`**), **Assignments** (**`safetyAssignPager`**); **tracking → Map → Units** cards (**`trackingListPager`**); **tracking → All tracked assets** + **Drivers (HOS)** tables (**`trackingAssetsTablePager`**, **`trackingDriversPager`**); **tracking → Idle snapshot** vehicles table (**`idleSnapshotPager`**, rows cached on **`idleSnapshotPager._rows`** for page changes without refetch). Not literally every table >10 rows.
+- **Partial:** **`erpPagerRender`** / **`erpPagerSliceRange`** for tables that were wired (**banking** suggestions, **settings** employees, **maintenance shop board** internal / external / roadside / parts queue tables with per-tab page state; **maintenance accounting → Fuel expense** grid with **`fuelExpensePager`**; **maintenance accounting → Expense history** with **`expHistPager`**; **maintenance accounting → Saved Maintenance Expense Transactions** card list (**`apTxnListPager`**); **accounting → Pay bills → Recent bill payments** log (**`bpLogPager`**, **`__bpBillPaymentLogAllRows`** + client filter); **reports → Settlement / P&L** load index + per-load line items (**`settlementIndexPager`**, **`settlementLinesPager`**); **reports → Maintenance spend by unit** rollup table (**`repMaintByUnitPager`**, **`#repMaintByUnitPagerHost`**); **reports → Maintenance detailed report** filtered record cards (**`repMaintDetailPager`**, **`#repMaintDetailPagerHost`**); **Lists & catalogs → Service types (DB)** (**`serviceCatalogAdminPager`**, **`#serviceCatalogAdminPagerHost`**, client-side name filter); **maintenance → Maintenance Table** (**`maintDashboardTablePager`**); **maintenance → Safety / HOS** tab: **HOS clocks** (**`safetyHosPager`**), **Active** / **In service** panels (**`safetyActivePager`**, **`safetyInServicePager`**), **Assignments** (**`safetyAssignPager`**); **tracking → Map → Units** cards (**`trackingListPager`**); **tracking → All tracked assets** + **Drivers (HOS)** tables (**`trackingAssetsTablePager`**, **`trackingDriversPager`**); **tracking → Idle snapshot** vehicles table (**`idleSnapshotPager`**, rows cached on **`idleSnapshotPager._rows`** for page changes without refetch). Not literally every table >10 rows.
 
 ### Rule 24 — Connection verification on load
 
@@ -189,6 +189,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 33. **Rule 0:** **`banking.html`** — metrics + table header + **`#authBanner`** + suggest-card inline styles use **`var(--color-bg-header|border|card|pill-red|btn-danger-*)`**. **`settings.html`** — **`input:focus`** + **`.err`** use **`var(--color-border-focus|focus-ring|semantic-error)`**. **`dispatch.html`** — modal/stop/embed/chrome backgrounds and miles table borders use **`var(--color-bg-header|bg-hover|bg-card|color-border)`**.
 34. **Rules 23 + 22 + hub polish:** **`maintenance.html`** — **Reports → Maintenance detailed report**: **`#repMaintDetailPagerHost`** + **`repMaintDetailPager`** paginate filtered record cards (default 10/page; filters reset page). **`index.html`** — **Safety** / **Tracking** hub card tags use **`.tag-safety`** / **`.tag-tracking`** (no inline colors). **`dispatch.html`** — sidebar **Tips**: one-line summary + **`erp-help-tip`** behind **?** (**`erpHelpTipToggle`**).
 35. **Rule 23:** **`maintenance.html`** — **Reports → Maintenance spend by unit**: **`#repMaintByUnitPagerHost`** + **`repMaintByUnitPager`** + **`renderRepMaintSpendByUnitTable`** paginate the rollup table after **Refresh reports** (default 15/page; full refresh resets page). **CSV export** unchanged (server route).
+36. **Rules 0 + 12 + 15 + 23 (lists, not reports):** **`public/css/board-nav.css`** — company hub strip dropdown borders/shadow/hover use **`var(--color-border|shadow-dropdown|pill-blue-*|color-bg-card)`** with legacy fallbacks. **`maintenance.html`** — **Lists & catalogs → Service types (DB)**: **`mr-filter-bar`** + **`#serviceCatalogAdminSearch`**, **`#serviceCatalogAdminPagerHost`** + **`serviceCatalogAdminPager`**, **`renderServiceCatalogAdmin`** (filter slices rows then **`erpPagerRender`**); **`toggleCatalogActiveFromBtn`** calls **`loadServiceCatalogAdminOnly`** after **`loadAll`** so the grid refreshes.
 
 ---
 
