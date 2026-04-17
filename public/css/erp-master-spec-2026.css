@@ -1624,8 +1624,9 @@ body.hub-page .erp-connection-strip {
   color: var(--color-text-label, #6b7385);
 }
 
-/* Rule 0 / 13 — login-required banner (maintenance) */
-body.erp-maintenance #authBanner.erp-auth-banner {
+/* Rule 0 / 13 — login-required banner (maintenance + banking) */
+body.erp-maintenance #authBanner.erp-auth-banner,
+body.banking-page #authBanner.erp-auth-banner {
   margin-bottom: 10px;
   padding: 10px 14px;
   border-radius: 10px;
@@ -1635,4 +1636,8 @@ body.erp-maintenance #authBanner.erp-auth-banner {
   background: var(--pill-yellow-bg, #fff7ed);
   border: 1px solid var(--color-border, #fed7aa);
   color: var(--color-semantic-warning, #92400e);
+}
+
+body.banking-page #authBanner.erp-auth-banner {
+  margin-bottom: 16px;
 }

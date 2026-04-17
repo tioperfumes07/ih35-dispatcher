@@ -2720,20 +2720,27 @@
         <div id="acct-qbo-rollback" class="accounting-tab hidden">
           <div class="panel qb-panel">
             <div class="panel-head">
-              <div class="panel-title">QuickBooks rollback &amp; import safety</div>
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+                <span>QuickBooks rollback &amp; import safety</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Revert vs undo import">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <strong>Revert in QBO</strong> deletes the Purchase or Bill in QuickBooks and clears posting flags here for that row.
+                    <strong>Undo spreadsheet import</strong> removes rows created by a file import in this app only — it does not change QuickBooks. If rows were already posted to QBO, use <strong>Revert in QBO</strong> first so both systems stay aligned.
+                  </span>
+                </span>
+              </div>
               <div><button type="button" class="qb-btn-add" onclick="loadErpImportBatchesUi()">Refresh</button></div>
             </div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 10px">
-                <strong>Revert in QBO</strong> deletes the Purchase or Bill in QuickBooks and clears posting flags here for that row.
-                <strong>Undo spreadsheet import</strong> removes rows created by a file import in this app only — it does not change QuickBooks (use Revert first if those rows were already posted).
-              </p>
-              <div id="erpRollbackPostedSection" class="mini-note" style="margin-bottom:12px">Open <strong>Refresh</strong> after loading data.</div>
-              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid #edf1f7;margin-top:4px">
+              <p class="mini-note" style="margin:0 0 6px">Choose <strong>Revert in QBO</strong> vs <strong>Undo spreadsheet import</strong> based on whether QuickBooks should change — see <strong>?</strong>.</p>
+              <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label,#6b7385)">Posted-row checklist and batch tables below load when you click <strong>Refresh</strong>.</p>
+              <div id="erpRollbackPostedSection" class="mini-note" style="margin-bottom:12px;color:var(--color-text-label,#6b7385)">Click <strong>Refresh</strong> to list rows posted to QuickBooks and import batches.</div>
+              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border,#edf1f7);margin-top:4px">
                 <div class="panel-title" style="font-size:14px">ERP import batches (maintenance &amp; AP files)</div>
               </div>
               <div id="erpImportBatchesBody" class="mini-note" style="margin-top:8px">—</div>
-              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid #edf1f7;margin-top:16px">
+              <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border,#edf1f7);margin-top:16px">
                 <div class="panel-title" style="font-size:14px">Fuel / Relay import batches</div>
               </div>
               <div id="fuelImportBatchesBody" class="mini-note" style="margin-top:8px">—</div>
@@ -2955,7 +2962,7 @@
                 </div>
               </div>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
-              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid #d8deea;border-radius:8px;background:#fafcff"></div>
+              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid var(--color-border,#d8deea);border-radius:8px;background:var(--color-bg-card,#fafcff)"></div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:720px">
                   <thead>
@@ -2976,12 +2983,21 @@
             </div>
           </div>
           <div class="panel" style="margin-top:12px">
-            <div class="panel-head"><div class="panel-title">Driver pay settlements</div></div>
+            <div class="panel-head">
+              <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+                <span>Driver pay settlements</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About driver pay settlements">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Loads grouped by <strong>QuickBooks driver vendor</strong>: trip revenue, rolled-up expenses (same logic as trip lookup above), and company net.
+                    Set <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) to show suggested driver pay as a percent of linehaul revenue.
+                  </span>
+                </span>
+              </div>
+            </div>
             <div class="panel-body">
-              <p class="mini-note" style="margin:0 0 8px">
-                Loads per <strong>QuickBooks driver vendor</strong>: trip revenue, rolled-up expenses (same as trip lookup), and company net.
-                Set <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) to show a suggested driver pay as a percent of linehaul revenue.
-              </p>
+              <p class="mini-note" style="margin:0 0 8px">Per-driver load rollups from QBO vendors — details in <strong>?</strong>.</p>
+              <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label,#6b7385)">Optional: <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) for a suggested pay line.</p>
               <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
               <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Open and refresh.</div>
             </div>
