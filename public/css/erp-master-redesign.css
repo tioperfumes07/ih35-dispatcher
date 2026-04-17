@@ -377,8 +377,8 @@ body.erp-maintenance .erp-new-menu {
   right: 0;
   top: calc(100% + 6px);
   z-index: 80;
-  width: min(100vw - 24px, 860px);
-  max-width: calc(100vw - 24px);
+  width: min(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px), 860px);
+  max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
   background: var(--qb-panel);
   border: 1px solid var(--qb-line);
   border-radius: var(--qb-radius-card);
@@ -453,7 +453,10 @@ body.erp-maintenance #qboSyncAlertBar:not(.hidden) {
   background: var(--pill-red-bg, #fce8e6);
   border-bottom: 1px solid var(--btn-danger-border, #f5c6c2);
   color: var(--color-text-primary, var(--qb-text));
-  padding: 10px 1.25rem;
+  position: sticky;
+  top: max(0px, env(safe-area-inset-top, 0px));
+  z-index: 40;
+  padding: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 10px max(1.25rem, env(safe-area-inset-left, 0px));
 }
 
 body.erp-maintenance #qboSyncAlertBar .qbo-sync-head {
@@ -1066,7 +1069,8 @@ body.erp-maintenance .erp-main-body textarea:focus {
   body.erp-maintenance .erp-new-menu {
     right: auto;
     left: 0;
-    width: min(calc(100vw - 24px), 860px);
+    width: min(calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)), 860px);
+    max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
   }
 }
 
@@ -2108,7 +2112,8 @@ body.banking-page {
 
 body.banking-page .wrap {
   max-width: min(1120px, 100%);
-  padding: 16px max(18px, env(safe-area-inset-right, 0px)) 40px max(18px, env(safe-area-inset-left, 0px));
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))
+    max(40px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
 }
 
 body.banking-page h1 {
@@ -2198,7 +2203,8 @@ body.settings-page {
 
 body.settings-page .wrap {
   max-width: min(640px, 100%);
-  padding: 20px max(18px, env(safe-area-inset-right, 0px)) 40px max(18px, env(safe-area-inset-left, 0px));
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))
+    max(40px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
 }
 
 body.settings-page h1 {

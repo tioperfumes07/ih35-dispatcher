@@ -1,7 +1,7 @@
 /* Persistent operations bar — aligns with app-theme tokens; company hub uses --color-hub-* (body.hub-page) */
 .board-nav-wrap {
   position: sticky;
-  top: 0;
+  top: max(0px, env(safe-area-inset-top, 0px));
   z-index: 9000;
   background: var(--nav-bg, #0f172a);
   color: var(--nav-text, #e2e8f0);
@@ -17,7 +17,7 @@
   gap: 0;
   max-width: min(1560px, 100%);
   margin: 0 auto;
-  padding: 0 12px;
+  padding: 0 max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px));
   min-width: 0;
 }
 
@@ -58,7 +58,7 @@
 }
 
 .board-nav-wrap.board-nav-collapsed .board-nav-inner {
-  padding: 0 10px;
+  padding: 0 max(10px, env(safe-area-inset-right, 0px)) 0 max(10px, env(safe-area-inset-left, 0px));
   justify-content: flex-start;
 }
 .board-nav-item {

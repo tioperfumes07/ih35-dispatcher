@@ -643,8 +643,8 @@ body.erp-maintenance .erp-qb-cost-shell__label--with-tip {
 /* --- Toast --- */
 body.erp-maintenance .erp-toast-host {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: max(16px, env(safe-area-inset-top, 0px));
+  right: max(16px, env(safe-area-inset-right, 0px));
   z-index: 1000;
   display: flex;
   flex-direction: column;

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>IH35 ERP — Company home</title>
   <link rel="stylesheet" href="/css/design-tokens.css" />
   <style>
@@ -14,7 +14,8 @@
       color: var(--color-hub-text, #f1f5ff);
     }
     header {
-      padding: 28px 24px 8px; max-width: 1100px; margin: 0 auto;
+      padding: 28px max(24px, env(safe-area-inset-right, 0px)) 8px max(24px, env(safe-area-inset-left, 0px));
+      max-width: 1100px; margin: 0 auto;
     }
     .hub-header-row {
       display: flex;
@@ -35,7 +36,9 @@
     header p { margin: 0; color: var(--color-hub-text-muted, #9ca8d9); font-size: 15px; line-height: 1.5; max-width: 640px; }
     .grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px; padding: 24px; max-width: 1100px; margin: 0 auto;
+      gap: 20px;
+      padding: 24px max(24px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+      max-width: 1100px; margin: 0 auto;
     }
     a.card {
       display: block; text-decoration: none; color: inherit;
@@ -70,7 +73,8 @@
     a.card p { margin: 0; color: var(--color-hub-text-muted, #9ca8d9); font-size: 14px; line-height: 1.55; }
     .arrow { margin-top: 16px; font-weight: 700; color: var(--color-hub-accent, #3b82f6); font-size: 14px; }
     footer {
-      max-width: 1100px; margin: 0 auto; padding: 16px 24px 40px;
+      max-width: 1100px; margin: 0 auto;
+      padding: 16px max(24px, env(safe-area-inset-right, 0px)) max(40px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
       color: var(--color-hub-text-muted, #9ca8d9);
       font-size: 12px;
       line-height: 1.6;
@@ -98,10 +102,14 @@
       margin-top: 2px;
     }
     @media (max-width: 900px) {
-      header { padding: 20px 16px 6px; }
-      .grid { gap: 16px; padding: 16px; }
+      header {
+        padding: 20px max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+      }
+      .grid { gap: 16px; padding: 16px max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
       a.card { padding: 18px; min-height: 160px; }
-      footer { padding: 14px 16px 32px; }
+      footer {
+        padding: 14px max(16px, env(safe-area-inset-right, 0px)) max(32px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+      }
     }
   </style>
   <link rel="stylesheet" href="/css/app-theme.css" />

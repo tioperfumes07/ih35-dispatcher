@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>IH35 — Settings &amp; users</title>
   <link rel="stylesheet" href="/css/design-tokens.css" />
   <link rel="stylesheet" href="/css/app-theme.css" />
@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/css/board-nav.css" />
   <style>
     #boardNavMount { margin-bottom: 0; }
-    body { margin: 0; background: var(--color-bg-page, var(--bg)); color: var(--text); padding: 24px 18px 40px; }
+    body { margin: 0; min-height: 100vh; background: var(--color-bg-page, var(--bg)); color: var(--text); }
     .wrap { max-width: 640px; margin: 0 auto; }
     h1 { font-size: 1.35rem; margin: 0 0 8px; letter-spacing: -0.02em; font-weight: 700; }
     p { color: var(--muted); font-size: 14px; line-height: 1.55; }
@@ -31,7 +31,6 @@
     .err { color: var(--color-semantic-error, #b91c1c); font-size: 13px; margin-top: 8px; }
     #adminTabPanelEmployees .mr-filter-bar__grow input { margin-bottom: 0; }
     @media (max-width: 900px) {
-      body { padding: 16px 14px 32px; }
       .panel { padding: 14px; margin-bottom: 12px; }
     }
   </style>

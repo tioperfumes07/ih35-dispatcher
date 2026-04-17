@@ -160,7 +160,6 @@ main,
 /* QuickBooks sync banner (maintenance hub) — Rule 21 sticky + Rule 0 tokens */
 .qbo-sync-alert-bar {
   margin: 0 0 0;
-  padding: 12px 1.25rem;
   border-radius: 0;
   width: 100%;
   max-width: 100%;
@@ -173,8 +172,9 @@ main,
   font-size: 13px;
   line-height: 1.45;
   position: sticky;
-  top: 0;
+  top: max(0px, env(safe-area-inset-top, 0px));
   z-index: 40;
+  padding: 12px max(1.25rem, env(safe-area-inset-right, 0px)) 12px max(1.25rem, env(safe-area-inset-left, 0px));
 }
 
 .qbo-sync-alert-bar.qbo-sync-critical {
@@ -408,10 +408,10 @@ body.erp-maintenance .qb-picker-item__meta {
 /* Right-side “Add new” drawer (QBO-like) */
 .erp-drawer {
   position: fixed;
-  top: 0;
+  top: max(0px, env(safe-area-inset-top, 0px));
   right: 0;
   width: min(520px, calc(100vw - 44px));
-  height: 100vh;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   background: var(--color-bg-card, #fff);
   border-left: 1px solid var(--color-border, var(--line, #e2e6ee));
   box-shadow: -8px 0 28px rgba(15, 23, 42, 0.12);
@@ -432,7 +432,10 @@ body.erp-maintenance .qb-picker-item__meta {
   gap: 10px;
 }
 .erp-drawer__title { font-weight: 750; letter-spacing: -0.01em; }
-.erp-drawer__body { padding: 12px 14px 18px; overflow: auto; }
+.erp-drawer__body {
+  padding: 12px 14px max(18px, env(safe-area-inset-bottom, 0px));
+  overflow: auto;
+}
 .erp-drawer__close {
   border: 1px solid var(--color-border, var(--line, #e2e6ee));
   background: var(--color-bg-card, #fff);
@@ -3352,6 +3355,51 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
 
   body.erp-maintenance #section-safety .safety-active-grid {
     gap: 10px;
+  }
+
+  /* Rule 1 — Home dashboard: hero + KPI strip + summary columns on tablets. */
+  body.erp-maintenance #section-dashboard .hero-grid {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  body.erp-maintenance #section-dashboard .hero-card {
+    padding: 10px 12px;
+  }
+
+  body.erp-maintenance #section-dashboard .grid.grid-4.erp-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-dashboard .grid.grid-4.erp-kpi-grid .metric {
+    padding: 10px;
+  }
+
+  body.erp-maintenance #section-dashboard .grid.grid-2 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 10px !important;
+  }
+
+  /* Rule 1 — Embedded fuel planner: tighter panel head + slightly taller iframe on tablets. */
+  body.erp-maintenance #section-fuel > .panel > .panel-head {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-fuel .erp-iframe {
+    height: min(820px, calc(100vh - 112px));
+  }
+
+  /* Rule 1 — Upload center outer shell (inner cards use maint-accounting-ui ≤900px rules). */
+  body.erp-maintenance #section-uploads > .panel > .panel-head {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-uploads > .panel > .panel-body {
+    padding: 12px 14px 14px;
   }
 
   /* Rule 1 — Lists & catalogs: tighter sub-tab pills so the panel fits small laptops. */
