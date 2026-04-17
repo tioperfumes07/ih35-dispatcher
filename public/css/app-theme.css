@@ -864,7 +864,7 @@ body.erp-maintenance .btn,
 body.erp-maintenance
   button:not(.catalog-plus-btn):not(.catalog-search-hit):not(.linkish):not(.shop-col-add):not(.sidebar-collapse-btn):not(.nav-dd-item):not(.nav-btn) {
   border: 1px solid var(--color-border, var(--line, #e2e6ee));
-  background: var(--panel);
+  background: var(--color-bg-card, var(--panel));
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -885,7 +885,7 @@ body.erp-maintenance select,
 body.erp-maintenance textarea {
   width: 100%;
   border: 1px solid var(--color-border, var(--line, #e2e6ee));
-  background: var(--panel);
+  background: var(--color-bg-card, var(--panel));
   padding: 9px 11px;
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -2114,7 +2114,7 @@ body.erp-maintenance .maint-section-card {
   border: 1px solid var(--color-app-frame-border, var(--app-frame-border, #1e3a5a));
   box-shadow: var(--shadow-md);
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, var(--app-section-surface) 0%, var(--panel) 32%);
+  background: linear-gradient(180deg, var(--app-section-surface) 0%, var(--color-bg-card, var(--panel)) 32%);
 }
 
 .nav-badge {
