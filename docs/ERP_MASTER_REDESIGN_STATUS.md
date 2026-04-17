@@ -14,7 +14,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 
 ## Master checklist progress (revised)
 
-**Overall completion: ~65.7%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.6572** → **65.72%**; rounded headline **~65.7%**.)
+**Overall completion: ~65.8%** toward the **documented intent** of Rules **0–24** in this repo (not pixel-perfect spec parity). Figures are for **planning and continuity**; they are judgment-based, not a contract metric. (Average of the per-rule fractions in the table below ÷ 25 ≈ **0.6576** → **65.76%**; rounded headline **~65.8%**.)
 
 **Method:** Treat each rule **0–24** as **one equal unit** (4% of the bar each). Assign a **fraction complete** per rule from the status text below (Done ≈ 1.0, strong Partial ≈ 0.45–0.75, Blocked/Future without alternate path ≈ 0–0.2, Skipped-by-design ≈ 0.85–1.0). **Overall = average of those 25 fractions × 100%.**
 
@@ -42,7 +42,7 @@ This file maps the **consolidated master redesign** (Rules 0–24) to **this rep
 | 23 | Pagination | 0.88 | **`.erp-pager__btn` / `__size-sel`** default/hover surfaces use **`var(--color-bg-card|bg-header)`** (**changelog 94**); broad **`erpPagerRender`** coverage; **Lists & catalogs → Service types (DB)** (**`serviceCatalogAdminPager`**); **Reports** spend-by-unit + maint detailed (prior); **`.erp-pager`** token surface + **`erp-pager__btn` / `erp-pager__size-sel`** **`:focus-visible`** (**changelog 84**); not every long table |
 | 24 | Connection strip | 0.66 | **`erpMountConnectionStrip`** on **maintenance** + **dispatch** main columns (**`changelog 65`**, **`changelog 66`**) plus **banking**, **settings**, **fuel**, **hub**; **`system-smoke.mjs`** asserts **`erpConnectionStrip`** on **hub + ERP satellites** (**changelog 67**); **hub** neutral strip chrome matches **`--color-hub-*`** before tier classes (**changelog 69**); **dispatch** strip hidden in **`?embed=1`**; **`.erp-connection-strip--ok` / `--warn`** borders tokenized (**changelog 89**); universal Samsara+QBO banner deferred |
 
-**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.6572** (**65.72%**; headline **~65.7%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
+**Rolling average (above table):** sum of fractions ÷ 25 ≈ **0.6576** (**65.76%**; headline **~65.8%**). When reporting updates, **revise fractions** (not the formula) as work lands, then re-average.
 
 **Intentionally out of this % (until product agrees):** items in [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (e.g. open bills pager + selection model).
 
