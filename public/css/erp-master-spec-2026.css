@@ -1628,6 +1628,22 @@ body.hub-page
   border-color: var(--color-hub-border, #2d3558);
   color: var(--color-hub-text-muted, #9ca8d9);
 }
+
+/* Company hub — inline help "?" buttons match dark shell (Rules 0 + 22) */
+body.hub-page .erp-help-tip__btn {
+  border-color: var(--color-hub-border, #2d3558);
+  background: var(--color-hub-card, #1a2142);
+  color: var(--color-hub-text-muted, #9ca8d9);
+}
+body.hub-page .erp-help-tip__btn:hover {
+  background: var(--color-hub-bg-deep, #0f1428);
+  border-color: var(--color-hub-accent, #3b82f6);
+  color: var(--color-hub-text, #f1f5ff);
+}
+body.hub-page .erp-help-tip__btn:focus-visible {
+  outline-color: var(--color-hub-accent, #3b82f6);
+}
+
 body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connection-strip {
   margin: 10px 1.25rem 8px;
   flex-shrink: 0;

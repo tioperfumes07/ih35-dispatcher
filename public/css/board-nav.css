@@ -1,4 +1,4 @@
-/* Persistent operations bar — aligns with app-theme tokens */
+/* Persistent operations bar — aligns with app-theme tokens; company hub uses --color-hub-* (body.hub-page) */
 .board-nav-wrap {
   position: sticky;
   top: 0;
@@ -137,4 +137,60 @@
   .board-nav-inner {
     flex-wrap: wrap;
   }
+}
+
+/* Company hub — workspace strip + dropdowns use dark hub tokens (Rules 0 + 2) */
+body.hub-page .board-nav-wrap {
+  background: var(--color-hub-bg-deep, var(--nav-bg, #0f172a));
+  color: var(--color-hub-text, var(--nav-text, #e2e8f0));
+  border-bottom-color: var(--color-hub-border, var(--nav-line, #1e293b));
+  font-family: var(--font-spec-sans, var(--font-sans, system-ui, sans-serif));
+}
+body.hub-page .board-nav-strip-toggle {
+  border-right-color: var(--color-hub-border, var(--nav-line, #1e293b));
+  color: var(--color-hub-text-muted, var(--nav-text-muted, #94a3b8));
+}
+body.hub-page .board-nav-strip-toggle:hover {
+  color: var(--color-hub-text, #f1f5ff);
+  background: var(--color-hub-card, #1a2142);
+}
+body.hub-page .board-nav-item {
+  border-right-color: var(--color-hub-border, var(--nav-line, #1e293b));
+}
+body.hub-page .board-nav-item:first-child {
+  border-left-color: var(--color-hub-border, var(--nav-line, #1e293b));
+}
+body.hub-page .board-nav-trigger:hover,
+body.hub-page .board-nav-item.open .board-nav-trigger {
+  background: var(--color-hub-card, #1a2142);
+  color: var(--color-hub-text, #f1f5ff);
+}
+body.hub-page .board-nav-hint {
+  color: var(--color-hub-text-muted, #9ca8d9);
+}
+body.hub-page .board-nav-dd {
+  background: var(--color-hub-card, #1a2142);
+  color: var(--color-hub-text, #f1f5ff);
+  border-color: var(--color-hub-border, #2d3558);
+  box-shadow: var(--shadow-dropdown, 0 16px 40px rgba(0, 0, 0, 0.45));
+}
+body.hub-page .board-nav-dd a {
+  border-bottom-color: var(--color-hub-border, #2d3558);
+}
+body.hub-page .board-nav-dd a:hover {
+  background: var(--color-hub-bg-deep, #0f1428);
+  color: var(--color-hub-accent, #3b82f6);
+}
+
+/* Keyboard focus — workspace strip (Rule 0); hub ring matches --color-hub-accent */
+.board-nav-strip-toggle:focus-visible,
+.board-nav-trigger:focus-visible,
+.board-nav-dd a:focus-visible {
+  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline-offset: 2px;
+}
+body.hub-page .board-nav-strip-toggle:focus-visible,
+body.hub-page .board-nav-trigger:focus-visible,
+body.hub-page .board-nav-dd a:focus-visible {
+  outline-color: var(--color-hub-accent, #3b82f6);
 }
