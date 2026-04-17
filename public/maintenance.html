@@ -3212,9 +3212,17 @@
 
             <div id="upload-panel-bank" class="upload-subpanel">
               <div class="mr-upload-panel-card">
-                <div class="mr-upload-panel-title">Bank CSV import</div>
-                <p class="mr-upload-panel-desc">
-                  Import bank transaction CSV files for matching and reconciliation. Supported formats: Wells Fargo, Bank of America, Chase, and generic CSV.
+                <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span>Bank CSV import</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bank CSV">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Import bank transaction CSV files for matching and reconciliation. Supported formats: Wells Fargo, Bank of America, Chase, and generic CSV.
+                    </span>
+                  </span>
+                </div>
+                <p class="mr-upload-panel-desc" style="margin-top:6px">
+                  Use <strong>Open bank CSV matching</strong> below — uploads are handled in the banking app, not parsed here.
                 </p>
                 <details class="mr-upload-help">
                   <summary>Supported bank formats</summary>
@@ -3236,10 +3244,16 @@
 
             <div id="upload-panel-comdata" class="upload-subpanel">
               <div class="mr-upload-panel-card">
-                <div class="mr-upload-panel-title">Comdata / Relay import</div>
-                <p class="mr-upload-panel-desc">
-                  Import Comdata or Relay “All Transactions” exports. These match the same parser as the Fuel / DEF importer.
-                </p>
+                <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span>Comdata / Relay import</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Comdata / Relay">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Import Comdata or Relay “All Transactions” exports. They use the same parser as the <strong>Fuel / DEF</strong> importer; confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong>.
+                    </span>
+                  </span>
+                </div>
+                <p class="mr-upload-panel-desc" style="margin-top:6px">Upload export CSV or Excel — same flow as <strong>Fuel / DEF</strong>.</p>
                 <details class="mr-upload-help">
                   <summary>How to export from Comdata</summary>
                   <p class="mini-note" style="margin:8px 0 0">
@@ -3269,16 +3283,24 @@
 
             <div id="upload-panel-sync" class="upload-subpanel">
               <div class="mr-upload-panel-card">
-                <div class="mr-upload-panel-title">Connections</div>
-                <p class="mr-upload-panel-desc">
-                  Manage sync connections to Samsara and QuickBooks. These are not file imports — use the cards below to test status and jump to configuration.
+                <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span>Connections</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About connections">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      These cards are <strong>not</strong> file imports. Use them to check Samsara / QuickBooks status and open configuration or refresh fleet data where wired.
+                    </span>
+                  </span>
+                </div>
+                <p class="mr-upload-panel-desc" style="margin-top:6px">
+                  Test sync status and jump to Samsara or QuickBooks configuration — not CSV uploads.
                 </p>
               </div>
               <div class="mr-upload-conn-grid">
                 <div class="mr-upload-conn-card">
                   <div class="mr-upload-conn-card__title">Samsara Cloud</div>
                   <p class="mini-note" id="upConnSamsaraStatus" style="margin:0 0 8px">Status: —</p>
-                  <p class="mini-note" id="upConnSamsaraMeta" style="margin:0 0 10px;color:#9aa0a6;font-size:12px">—</p>
+                  <p class="mini-note" id="upConnSamsaraMeta" style="margin:0 0 10px;color:var(--color-text-label,#6b7385);font-size:12px">—</p>
                   <div class="mr-upload-conn-card__actions">
                     <button type="button" class="btn" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Configure</button>
                     <button type="button" class="btn" onclick="loadAll()">Refresh data</button>
@@ -3305,9 +3327,17 @@
 
             <div id="upload-panel-fuel" class="upload-subpanel active">
               <div class="mr-upload-panel-card">
-                <div class="mr-upload-panel-title">Fuel / DEF import</div>
-                <p class="mr-upload-panel-desc">
-                  Import Comdata, Relay, or manual fuel transactions. Rows are previewed and confirmed under <strong>Accounting → Fuel &amp; DEF entry</strong> before posting to QuickBooks.
+                <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span>Fuel / DEF import</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About fuel import">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Import Comdata, Relay, or manual fuel transactions. Rows are previewed and confirmed under <strong>Accounting → Fuel &amp; DEF entry</strong> before posting to QuickBooks.
+                    </span>
+                  </span>
+                </div>
+                <p class="mr-upload-panel-desc" style="margin-top:6px">
+                  Preview from this tab; confirm and post from <strong>Accounting → Fuel &amp; DEF entry</strong>.
                 </p>
                 <details class="mr-upload-help">
                   <summary>How to export from Comdata / Relay</summary>
@@ -3337,10 +3367,16 @@
 
             <div id="upload-panel-ap" class="upload-subpanel">
               <div class="mr-upload-panel-card">
-                <div class="mr-upload-panel-title">Maintenance AP import</div>
-                <p class="mr-upload-panel-desc">
-                  Import accounts payable records for maintenance expenses. These are matched to existing work orders where possible.
-                </p>
+                <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span>Maintenance AP import</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance AP import">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Import accounts payable records for maintenance expenses. Rows are matched to existing work orders where column data allows.
+                    </span>
+                  </span>
+                </div>
+                <p class="mr-upload-panel-desc" style="margin-top:6px">Upload CSV or Excel maintenance AP exports.</p>
                 <details class="mr-upload-help">
                   <summary>Download import template</summary>
                   <p class="mini-note" style="margin:8px 0 0">
@@ -3370,10 +3406,16 @@
 
             <div id="upload-panel-maint" class="upload-subpanel">
               <div class="mr-upload-panel-card">
-                <div class="mr-upload-panel-title">Maintenance history import</div>
-                <p class="mr-upload-panel-desc">
-                  Import historical maintenance records in bulk. Use the provided template to format your data before uploading.
-                </p>
+                <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span>Maintenance history import</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance history import">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Import historical maintenance records in bulk. Use the provided template so column headers match this app’s import.
+                    </span>
+                  </span>
+                </div>
+                <p class="mr-upload-panel-desc" style="margin-top:6px">Bulk history — download the template, then upload CSV or Excel.</p>
                 <details class="mr-upload-help">
                   <summary>Download import template</summary>
                   <p class="mini-note" style="margin:8px 0 0">Blank CSV for column headers used by this app’s maintenance import.</p>
@@ -3401,10 +3443,16 @@
 
             <div id="upload-panel-other" class="upload-subpanel">
               <div class="mr-upload-panel-card">
-                <div class="mr-upload-panel-title">Other import</div>
-                <p class="mr-upload-panel-desc">
-                  Upload other file types not covered by the tabs above. Generic import — file is noted for manual follow-up (no automatic parser).
-                </p>
+                <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span>Other import</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About other import">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      For file types not covered by the other tabs. The file is logged for <strong>manual</strong> follow-up — there is no automatic parser.
+                    </span>
+                  </span>
+                </div>
+                <p class="mr-upload-panel-desc" style="margin-top:6px">Generic upload — no automatic parsing.</p>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
