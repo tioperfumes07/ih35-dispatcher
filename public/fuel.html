@@ -19,14 +19,14 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:var(--font-sans);background:var(--color-bg-page,var(--bg));color:var(--text)}
     .topbar{
-      padding:12px 16px;background:var(--color-bg-card,#fff);border-bottom:1px solid var(--line);
+      padding:12px 16px;background:var(--color-bg-card,#fff);border-bottom:1px solid var(--color-border, var(--line));
       display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000
     }
     .topbar h1{margin:0 12px 0 0;font-size:20px}
     button,input{font:inherit}
-    button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--color-bg-card,#fff);cursor:pointer}
+    button{padding:8px 12px;border:1px solid var(--color-border, var(--line));border-radius:8px;background:var(--color-bg-card,#fff);cursor:pointer}
     button:hover{background:var(--color-bg-hover,#f3f4f6)}
-    input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--color-bg-card,#fff)}
+    input{padding:8px 10px;border:1px solid var(--color-border, var(--line));border-radius:8px;background:var(--color-bg-card,#fff)}
     .layout{
       display:grid;
       grid-template-columns:minmax(260px,1fr) minmax(0,2.2fr) minmax(260px,1fr);
@@ -36,12 +36,12 @@
       max-width:100%;
       box-sizing:border-box;
     }
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-    .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--line);background:var(--color-bg-card,#fff)}
+    .panel{background:var(--panel);border:1px solid var(--color-border, var(--line));border-radius:12px;overflow:hidden}
+    .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--color-border, var(--line));background:var(--color-bg-card,#fff)}
     .panel-body{padding:12px}
-    .fleet-summary{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);background:var(--color-bg-header,#fafafa)}
-    .fleet-columns{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line)}
-    .fleet-col{min-height:200px;border-right:1px solid var(--line)}
+    .fleet-summary{padding:10px 12px;border-bottom:1px solid var(--color-border, var(--line));font-size:13px;color:var(--muted);background:var(--color-bg-header,#fafafa)}
+    .fleet-columns{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--color-border, var(--line))}
+    .fleet-col{min-height:200px;border-right:1px solid var(--color-border, var(--line))}
     .fleet-col:last-child{border-right:none}
     .fleet-section-title{
       padding:10px 12px;
@@ -49,19 +49,19 @@
       font-weight:500;
       color:var(--muted);
       text-transform:uppercase;
-      border-bottom:1px solid var(--line);
+      border-bottom:1px solid var(--color-border, var(--line));
       background:var(--color-bg-header,#fafafa);
       position:sticky;
       top:0;
       z-index:2;
     }
     #fleetAssigned,#fleetUnassigned{max-height:clamp(220px,calc(100vh - 220px),560px);overflow:auto}
-    .fleet-item{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+    .fleet-item{padding:10px 12px;border-bottom:1px solid var(--color-border, var(--line));cursor:pointer}
     .fleet-item:hover{background:var(--color-bg-hover,#f9fafb)}
     .fleet-item.active{background:var(--color-bg-active,#eff6ff)}
     .fleet-title{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:500;margin-bottom:4px}
     .fleet-sub{font-size:12px;color:var(--muted);margin-bottom:4px}
-    .badge{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500;border:1px solid var(--line);white-space:nowrap}
+    .badge{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500;border:1px solid var(--color-border, var(--line));white-space:nowrap}
     .badge-red{background:var(--pill-red-bg,#fef2f2);color:var(--red)}
     .badge-yellow{background:var(--pill-yellow-bg,#fff7ed);color:var(--yellow)}
     .badge-green{background:var(--pill-green-bg,#f0fdf4);color:var(--green)}
@@ -101,7 +101,7 @@
       left:0;
       right:0;
       background:var(--color-bg-card,#fff);
-      border:1px solid var(--line);
+      border:1px solid var(--color-border, var(--line));
       border-top:none;
       z-index:3000;
       max-height:220px;
