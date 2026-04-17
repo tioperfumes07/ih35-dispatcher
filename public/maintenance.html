@@ -24,7 +24,17 @@
     <div class="erp-dedicated-form-modal__shell" role="dialog" aria-modal="true" aria-label="Dedicated expense form">
       <div class="erp-dedicated-form-modal__bar">
         <button type="button" class="erp-dedicated-form-modal__x" data-erp-ded-close="1" title="Close">×</button>
-        <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
+        <div class="erp-dedicated-form-modal__bar-center" aria-live="polite">
+          <div id="erpDedModalTitle" class="erp-dedicated-form-modal__title"></div>
+          <div class="erp-dedicated-form-modal__total-wrap">
+            <span class="erp-dedicated-form-modal__total-lbl" id="erpDedModalTotalLabel">Amount</span>
+            <span class="erp-dedicated-form-modal__total-amt" id="erpDedModalTotalAmt">$0.00</span>
+          </div>
+        </div>
+        <div class="erp-dedicated-form-modal__bar-actions">
+          <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
+          <button type="button" class="btn btn--small secondary" data-erp-ded-close="1">Cancel</button>
+        </div>
       </div>
       <div id="erpDedicatedFormModalBody" class="erp-dedicated-form-modal__body"></div>
     </div>
@@ -869,49 +879,104 @@
                     </div>
                   </div>
 
-                  <div class="maint-subcard maint-cost-panel-card erp-qb-cost-shell">
+                  <div id="maintCostLinesPanel" class="maint-subcard maint-cost-panel-card erp-qb-cost-shell">
                     <div class="maint-subcard__head maint-subcard__head--split erp-qb-cost-global-head">
                       <span class="erp-qb-cost-global-head__title">Cost breakdown</span>
                       <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new cost lines">
                         <span class="erp-qb-cost-global__label">New lines</span>
-                        <label class="erp-qb-cost-global__opt"
-                          ><input type="radio" name="maintCostGlobalMode" value="category" checked /> Category</label
-                        >
-                        <label class="erp-qb-cost-global__opt"
-                          ><input type="radio" name="maintCostGlobalMode" value="item" /> Item</label
-                        >
+                        <div class="erp-qb-seg" id="maintCostGlobalModeSeg" role="radiogroup" aria-label="Default line type">
+                          <button type="button" class="erp-qb-seg__btn erp-qb-seg__btn--active" data-mcg-mode="category" aria-pressed="true">Category</button>
+                          <button type="button" class="erp-qb-seg__btn" data-mcg-mode="item" aria-pressed="false">Item</button>
+                        </div>
+                        <input type="hidden" id="maintCostGlobalMode" name="maintCostGlobalMode" value="category" />
                         <span class="erp-help-tip erp-qb-cost-global__tip">
                           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Line type default">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
-                            Applies to <strong>new</strong> rows from + Add line. Each row still has its own Category / Item control (Expense form is unchanged).
+                            <strong>Category details</strong> and <strong>Item details</strong> are separate grids (like QuickBooks). Use <strong>+ Add category line</strong> or <strong>+ Add item line</strong>. This toggle sets the default when a single “add line” action is used elsewhere.
                           </span>
                         </span>
                       </div>
                     </div>
-                    <div class="maint-subcard__body maint-cost-table-wrap">
-                      <table class="maint-cost-table" aria-label="Cost lines">
-                        <thead>
-                          <tr>
-                            <th>Description</th>
-                            <th>QBO item / account</th>
-                            <th class="maint-cost-table__num">Qty</th>
-                            <th class="maint-cost-table__num">Unit $</th>
-                            <th class="maint-cost-table__num">Line $</th>
-                            <th class="maint-cost-table__del"></th>
-                          </tr>
-                        </thead>
-                        <tbody id="maintCostLinesHost"></tbody>
-                        <tfoot>
-                          <tr class="maint-cost-table__addrow">
-                            <td colspan="6"><button type="button" class="maint-cost-addline" onclick="addMaintCostLine()">+ Add line</button></td>
-                          </tr>
-                          <tr class="maint-cost-table__totalrow">
-                            <td colspan="4" class="maint-cost-table__total-label">Total</td>
-                            <td class="maint-cost-table__num" id="maintCostTableTotalDisplay">$0.00</td>
-                            <td></td>
-                          </tr>
-                        </tfoot>
-                      </table>
+                    <div class="maint-subcard__body maint-qb-cost-panels">
+                      <details class="maint-qb-cost-details" id="maintCostCatDetails" open>
+                        <summary class="maint-qb-cost-details__sum">
+                          <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
+                          <span class="maint-qb-cost-details__title">Category details</span>
+                          <span class="maint-qb-cost-details__badge" id="maintCostCatCount">0</span>
+                        </summary>
+                        <div class="maint-qb-lines-scroll">
+                          <table class="maint-qb-lines-table" aria-label="Category cost lines">
+                            <thead>
+                              <tr>
+                                <th class="maint-qb-th-num">#</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th class="maint-qb-th-num">Amount</th>
+                                <th class="maint-qb-th-bill">Billable</th>
+                                <th>Customer</th>
+                                <th>Class</th>
+                                <th>Position</th>
+                                <th>Part #</th>
+                                <th>Line memo</th>
+                                <th class="maint-qb-th-del"></th>
+                              </tr>
+                            </thead>
+                            <tbody id="maintCostCatHost"></tbody>
+                          </table>
+                        </div>
+                        <div class="maint-qb-cost-details__actions">
+                          <button type="button" class="maint-cost-addline" onclick="addMaintCategoryCostLine()">+ Add category line</button>
+                        </div>
+                      </details>
+                      <details class="maint-qb-cost-details" id="maintCostItemDetails">
+                        <summary class="maint-qb-cost-details__sum">
+                          <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
+                          <span class="maint-qb-cost-details__title">Item details (product / service)</span>
+                          <span class="maint-qb-cost-details__badge" id="maintCostItemCount">0</span>
+                        </summary>
+                        <div class="maint-qb-lines-scroll">
+                          <table class="maint-qb-lines-table maint-qb-lines-table--item" aria-label="Item cost lines">
+                            <thead>
+                              <tr>
+                                <th class="maint-qb-th-num">#</th>
+                                <th>Product / service</th>
+                                <th class="maint-qb-th-sku">SKU</th>
+                                <th>Description</th>
+                                <th class="maint-qb-th-num">Qty</th>
+                                <th class="maint-qb-th-num">Rate</th>
+                                <th class="maint-qb-th-num">Amount</th>
+                                <th class="maint-qb-th-bill">Billable</th>
+                                <th>Customer</th>
+                                <th>Class</th>
+                                <th>Position</th>
+                                <th>Part #</th>
+                                <th>Line memo</th>
+                                <th class="maint-qb-th-del"></th>
+                              </tr>
+                            </thead>
+                            <tbody id="maintCostItemHost"></tbody>
+                          </table>
+                        </div>
+                        <div class="maint-qb-cost-details__actions">
+                          <button type="button" class="maint-cost-addline" onclick="addMaintItemCostLine()">+ Add item line</button>
+                        </div>
+                      </details>
+                      <div class="maint-qb-cost-totals-bar" id="maintCostTotalsBar" aria-live="polite">
+                        <span class="maint-qb-cost-totals-bar__piece"
+                          ><span class="maint-qb-cost-totals-bar__lbl">Category lines:</span>
+                          <span class="maint-qb-cost-totals-bar__val" id="maintCostCatSumDisplay">$0.00</span></span
+                        >
+                        <span class="maint-qb-cost-totals-bar__sep" aria-hidden="true"></span>
+                        <span class="maint-qb-cost-totals-bar__piece"
+                          ><span class="maint-qb-cost-totals-bar__lbl">Item lines:</span>
+                          <span class="maint-qb-cost-totals-bar__val" id="maintCostItemSumDisplay">$0.00</span></span
+                        >
+                        <span class="maint-qb-cost-totals-bar__sep" aria-hidden="true"></span>
+                        <span class="maint-qb-cost-totals-bar__piece maint-qb-cost-totals-bar__piece--grand"
+                          ><span class="maint-qb-cost-totals-bar__lbl">Total:</span>
+                          <span class="maint-qb-cost-totals-bar__val" id="maintCostTableTotalDisplay">$0.00</span></span
+                        >
+                      </div>
                       <div class="mini-note maint-field-hint" id="maintCostLinesSubtotal"></div>
 
                       <div class="maint-print-hide-qbo-link maint-qbo-header-grid" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-border,var(--line))" title="Expense vs bill, bank, dates — vendor and line accounts are on the form above">
