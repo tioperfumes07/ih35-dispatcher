@@ -223,9 +223,9 @@ main,
 
 /* Catalogs (maintenance) — add rows, vendor / Samsara linking */
 .catalog-add-card {
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
+  background: var(--color-bg-card, var(--bg-elevated, #fff));
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -236,7 +236,7 @@ main,
   gap: 10px;
   padding: 10px 14px;
   background: linear-gradient(180deg, var(--color-bg-hover, #f8fafc) 0%, var(--color-bg-header, #f1f5f9) 100%);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
 }
 .catalog-add-card__title {
   font-weight: 650;
@@ -294,7 +294,7 @@ main,
   min-height: 120px;
   max-height: 220px;
   overflow: auto;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
   padding: 4px;
   background: var(--color-bg-header, #fafbfc);
@@ -340,10 +340,11 @@ main,
   max-width: 520px;
   max-height: 260px;
   overflow: auto;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--color-border, var(--line-strong, #cdd4e0));
   border-radius: 10px;
   background: var(--color-bg-card, #fff);
   box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-dropdown, var(--shadow-md));
   padding: 6px;
   transform-origin: top left;
 }
@@ -919,8 +920,8 @@ body.erp-maintenance .hero-card,
 body.erp-maintenance .panel,
 body.erp-maintenance .metric,
 body.erp-maintenance .record-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: var(--color-bg-card, var(--panel, #fff));
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
 }
@@ -1632,7 +1633,7 @@ body.erp-maintenance .qb-doc-actions {
   justify-content: space-between;
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-border, var(--line, #e2e6ee));
 }
 
 body.erp-maintenance .qb-doc-actions .qb-actions-left,
