@@ -74,7 +74,7 @@ Legend: **Done** (meets intent in this repo), **Partial**, **Skipped** (already 
 
 ### Rule 2 — App shell
 
-- **Partial:** Maintenance uses `erp-master` shell (icon nav, sidebars, top bar patterns in HTML/CSS). Labels and module order differ in places from the spec’s canonical list (e.g. “Fuel Plan” naming).
+- **Partial:** Maintenance uses `erp-master` shell (icon nav, sidebars, top bar patterns in HTML/CSS). **Lists & catalogs** is a first-class **Lists** (**▤**) target in icon nav (and **`/maintenance.html#catalog`**); dispatch nav includes the same deep link. Labels and module order still differ from the spec’s canonical list in places (e.g. “Fuel Plan” naming).
 - **Future:** Align copy, dimensions (68px / 216px / 48px), and tab set exactly to spec.
 
 ### Rule 3 — Collapsible sidebar
