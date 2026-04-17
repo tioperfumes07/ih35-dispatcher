@@ -1135,7 +1135,7 @@ body.erp-maintenance .unit-summary {
 
 body.erp-maintenance .unit-box {
   background: var(--color-bg-hover, #f8fafc);
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
   padding: 10px;
 }
@@ -1153,7 +1153,7 @@ body.erp-maintenance .unit-box .v {
 
 body.erp-maintenance .table-wrap {
   overflow: auto;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border, var(--line, #e2e6ee));
   border-radius: var(--radius-sm);
   background: var(--color-bg-card, #fff);
   -webkit-overflow-scrolling: touch;
@@ -1166,7 +1166,7 @@ body.erp-maintenance .table-wrap > table {
 body.erp-maintenance .table-wrap th,
 body.erp-maintenance .table-wrap td {
   padding: 9px 10px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   text-align: left;
   vertical-align: top;
 }
@@ -1191,7 +1191,7 @@ body.erp-maintenance table {
 body.erp-maintenance th,
 body.erp-maintenance td {
   padding: 9px 10px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   text-align: left;
   vertical-align: top;
 }
@@ -1207,7 +1207,7 @@ body.erp-maintenance th {
 }
 
 body.erp-maintenance .st-settlement-wrap {
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--color-border, var(--line-strong, #cdd4e0));
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--color-bg-card, #fff);
