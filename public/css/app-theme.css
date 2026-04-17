@@ -1273,7 +1273,7 @@ body.erp-maintenance .record-card {
 
 body.erp-maintenance .record-card:hover {
   box-shadow: var(--shadow);
-  border-color: var(--line-strong);
+  border-color: var(--color-border, var(--line-strong, #cdd4e0));
 }
 
 body.erp-maintenance .record-head {
@@ -1889,7 +1889,7 @@ body.erp-maintenance .maint-workorder-fullmodal__head {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--color-border, var(--line-strong, #cdd4e0));
   background: linear-gradient(
     180deg,
     var(--color-bg-header, #f1f5f9) 0%,
@@ -2420,7 +2420,7 @@ body.erp-maintenance .maint-cost-addline:hover {
 }
 body.erp-maintenance .maint-cost-table__totalrow td {
   font-weight: 800;
-  border-top: 1px solid var(--line-strong);
+  border-top: 1px solid var(--color-border, var(--line-strong, #cdd4e0));
   padding-top: 10px;
 }
 body.erp-maintenance .maint-cost-table__total-label {
@@ -2503,7 +2503,7 @@ body.erp-maintenance .maint-hidden-file {
 
 body.erp-maintenance .btn--ghost {
   background: transparent;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--color-border, var(--line-strong, #cdd4e0));
   color: var(--text-secondary);
 }
 body.erp-maintenance .btn--ghost:hover {
@@ -2623,7 +2623,7 @@ body.erp-maintenance .maint-cost-lines-head {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-label, #475569);
-  border-bottom: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--color-border, var(--line-strong, #cdd4e0));
   margin-bottom: 6px;
 }
 
@@ -2694,7 +2694,7 @@ body.erp-maintenance .maint-cost-lines-footer {
   justify-content: flex-end;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px dashed var(--line-strong);
+  border-top: 1px dashed var(--color-border, var(--line-strong, #cbd5e1));
 }
 
 body.erp-maintenance .maint-planned-row .qb-l {
@@ -2820,7 +2820,7 @@ body.erp-maintenance .maint-subcard__body {
 }
 
 body.erp-maintenance .maint-cost-panel-card {
-  border: 1px solid var(--line-strong) !important;
+  border: 1px solid var(--color-border, var(--line-strong, #cdd4e0)) !important;
   border-radius: 12px !important;
   overflow: hidden;
 }
@@ -2828,7 +2828,7 @@ body.erp-maintenance .maint-cost-panel-card {
 body.erp-maintenance .maint-save-toolbar {
   margin-top: 12px;
   padding: 6px 10px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--color-border, var(--line-strong, #cdd4e0));
   border-radius: 8px;
   background: linear-gradient(
     180deg,
@@ -3035,7 +3035,7 @@ body.erp-maintenance .maint-panel-head-center {
     var(--color-bg-header, #eef2f9) 0%,
     var(--color-bg-card, #fff) 100%
   );
-  border-bottom: 2px solid var(--line-strong);
+  border-bottom: 2px solid var(--color-border, var(--line-strong, #cdd4e0));
   padding: 14px 16px;
 }
 
