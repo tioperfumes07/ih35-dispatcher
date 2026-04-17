@@ -1,7 +1,7 @@
 # IH35 ERP — Master redesign: final report (living document)
 
 **Generated:** 2026-04-16 · **Repo:** `ih35_dispatch_v3_starter` (vanilla HTML + Express, no `/src` React tree)  
-**Companion:** [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md) (rule-by-rule checklist)
+**Companion:** [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md) (rule-by-rule checklist) · **Post-checklist backlog:** [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md)
 
 This report consolidates **what was built**, **how it maps to the master rules (0–24)**, **recommendations for the next increment**, and **how to verify** work without assuming QBO/Samsara credentials in CI.
 
@@ -99,27 +99,13 @@ Any future work that touches `server.js` persistence should re-state the protect
 
 ## 5. Recommendations (prioritized backlog)
 
-### P0 — Verify with a running server
+**After the master checklist is done**, revisit **[`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md)** for deferred pagination (e.g. **open bills** + cross-page selection state), remaining **Rule 22** copy, **Rule 24** strip depth, **P2/P3** spec and token sweep items, and post-release verification.
+
+### P0 — Verify with a running server (keep here)
 
 1. **`node scripts/system-smoke.mjs`** with server up and `localhost` reachable (sandbox often fails fetch — expected).
 2. **Sign-in flows:** settings → banking → maintenance with token; confirm **401** paths still show **`authBanner`** / toasts only where intended.
 3. **QBO:** with a connected realm, confirm **`erpMountConnectionStrip`** shows **connected + company**; disconnected shows warn styling.
-
-### P1 — UX consistency (no new APIs)
-
-1. **Maintenance `erpPagerRender`:** shop queues, **Fuel expense**, **Expense history**, **Saved Maintenance Expense** card list, **Maintenance Table**, **Tracking** (map unit cards, **All tracked assets**, **Drivers** HOS), **Pay bills → Recent bill payments** log, and **Reports → Settlement** (load index + trip line items) are wired. Upload center “recent imports” stays at 10 rows per category in localStorage; other long tables (e.g. driver-pay nested tables per vendor, **Pay bills open bills** with row selections) remain if needed.
-2. **More Rule 22:** convert remaining long **`mini-note`** blocks (**accounting fuel** grid area if any, **upload center** tab descriptions, other reports) using the same **`erp-help-tip`** pattern.
-3. **`erpMountConnectionStrip`:** optional second line **only if** a **cheap read-only** endpoint exists (avoid calling **`GET /api/board`** on every page load — it can fan out to Samsara; cache server-side or piggyback maintenance dashboard payload if product wants it).
-
-### P2 — Spec / product decisions
-
-1. **Rule 4:** define which **+ New** rows are **deep-links** vs new modals (no new save endpoints without approval).
-2. **Rule 18:** decide on thin **`GET /api/qbo/accounts`**-style aliases vs documentation-only mapping to existing catalog.
-3. **Rule 10:** decide whether a **build step** / shared ES module for cost lines is worth the migration cost.
-
-### P3 — Visual token sweep
-
-1. Gradually replace **`var(--bg)`** / **`--panel`** usage in dense components with **`--color-*`** where contrast is proven in light + dark contexts (hub stays dark — do not force **`--color-bg-page`** on **`index.html`** body).
 
 ---
 

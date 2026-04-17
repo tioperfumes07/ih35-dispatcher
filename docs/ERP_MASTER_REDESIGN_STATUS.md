@@ -1,6 +1,6 @@
 # IH35 ERP — Master redesign checklist vs codebase
 
-**Consolidated report:** For a single document with **changelog**, **recommendations**, and **verification**, see **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)**.
+**Consolidated report:** For a single document with **changelog**, **recommendations**, and **verification**, see **[`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md)**. **Post-checklist / deferred work** (e.g. open bills pager + selection model): **[`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md)**.
 
 This file maps the **consolidated master redesign** (Rules 0–24 + protection block) to **this repository** (`public/*.html`, `public/css/*`, `server.js`, no `/src` React tree). It is the durable checklist the assistant referenced when uploaded lists lived only in chat.
 

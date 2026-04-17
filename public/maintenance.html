@@ -395,6 +395,7 @@
               <tbody id="safetyHosBody"></tbody>
             </table>
           </div>
+          <div id="safetyHosPagerHost" hidden></div>
         </div>
         <div id="safe-active" class="tracking-sub hidden">
           <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
@@ -439,6 +440,7 @@
                   <tbody id="safetyActiveBody"></tbody>
                 </table>
               </div>
+              <div id="safetyActivePagerHost" hidden></div>
             </div>
             <div>
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
@@ -451,6 +453,7 @@
                   <tbody id="safetyInServiceBody"></tbody>
                 </table>
               </div>
+              <div id="safetyInServicePagerHost" hidden></div>
             </div>
           </div>
         </div>
@@ -492,6 +495,7 @@
               <tbody id="safetyAssignBody"></tbody>
             </table>
           </div>
+          <div id="safetyAssignPagerHost" hidden></div>
         </div>
         <div id="safe-fleet" class="tracking-sub hidden">
           <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
@@ -1670,6 +1674,7 @@
                   </tbody>
                 </table>
               </div>
+              <div id="idleSnapshotPagerHost" hidden></div>
             </div>
           </div>
         </div>
@@ -3734,6 +3739,14 @@
     let trackingDriversPager = { page: 1, pageSize: 15, filterKey: '' };
     /** Rule 23 — accounting bill payment log */
     let bpLogPager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — safety HOS main table */
+    let safetyHosPager = { page: 1, pageSize: 15, filterKey: '' };
+    let safetyActivePager = { page: 1, pageSize: 15, filterKey: '' };
+    let safetyInServicePager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — safety assignments */
+    let safetyAssignPager = { page: 1, pageSize: 15, filterKey: '' };
+    /** Rule 23 — tracking idle snapshot */
+    let idleSnapshotPager = { page: 1, pageSize: 15, filterKey: '' };
     let expenseSummaryCache = { d7: null, d30: null };
     let sessionUser = null;
     let __heartbeatTimer = null;
@@ -14765,9 +14778,73 @@
       if (id === 'tr-idle') loadIdleSnapshot();
     }
 
+    function renderIdleSnapshotTableBody() {
+      const tb = document.getElementById('idleSnapshotBody');
+      const pagerHost = document.getElementById('idleSnapshotPagerHost');
+      if (!tb) return;
+      const rows = idleSnapshotPager._rows || [];
+      const rowLine = v => {
+        const trip = v.tmsActiveLoad;
+        const tms =
+          trip && trip.load_number
+            ? `${escapeHtml(String(trip.load_number))} (${escapeHtml(String(trip.status || ''))})`
+            : '—';
+        return `<tr>
+                  <td>${escapeHtml(v.unit || '')}</td>
+                  <td>${escapeHtml(v.idleBand || '')}</td>
+                  <td>${v.inYard ? 'Yes' : 'No'}</td>
+                  <td>${v.distanceToYardM != null ? escapeHtml(String(v.distanceToYardM)) : '—'}</td>
+                  <td>${escapeHtml(String(v.engineState || ''))}</td>
+                  <td>${escapeHtml(String(v.driverName || '—'))}</td>
+                  <td>${escapeHtml(String(v.hosDutyType || '—'))}</td>
+                  <td>${tms}</td>
+                  <td>${v.daysSinceLastCompletedLoad != null ? escapeHtml(String(v.daysSinceLastCompletedLoad)) : '—'}</td>
+                  <td>${v.estimatedRevenueAtRisk != null ? Number(v.estimatedRevenueAtRisk).toFixed(0) : '—'}</td>
+                </tr>`;
+      };
+      const pState = idleSnapshotPager;
+      if (!rows.length) {
+        tb.innerHTML =
+          '<tr><td colspan="10" class="mini-note">No T120–T178 units in Samsara snapshot.</td></tr>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+        return;
+      }
+      const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+      const n = rows.length;
+      const pages = Math.max(1, Math.ceil(n / ps));
+      if (pState.page > pages) pState.page = pages;
+      if (pState.page < 1) pState.page = 1;
+      const start = (pState.page - 1) * ps;
+      tb.innerHTML = rows.slice(start, start + ps).map(rowLine).join('');
+      if (pagerHost && window.erpPagerRender) {
+        window.erpPagerRender(
+          pagerHost,
+          { page: pState.page, pageSize: ps, total: n },
+          (nextPage, newPageSize) => {
+            if (newPageSize) pState.pageSize = newPageSize;
+            pState.page = nextPage;
+            renderIdleSnapshotTableBody();
+          }
+        );
+        pagerHost.hidden = false;
+      } else if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
+    }
+
     async function loadIdleSnapshot() {
       const meta = document.getElementById('idleSnapshotMeta');
       const tb = document.getElementById('idleSnapshotBody');
+      const pagerHost = document.getElementById('idleSnapshotPagerHost');
+      idleSnapshotPager._rows = null;
+      if (pagerHost) {
+        pagerHost.innerHTML = '';
+        pagerHost.hidden = true;
+      }
       if (meta) meta.textContent = 'Loading…';
       try {
         const data = await j('/api/tracking/idle-snapshot');
@@ -14781,36 +14858,23 @@
         const notes = (data.notes || []).map(n => `<div class="mini-note" style="color:#b45309">${escapeHtml(n)}</div>`).join('');
         if (meta && notes) meta.innerHTML += notes;
         const rows = data.vehicles || [];
-        if (tb) {
-          tb.innerHTML =
-            rows
-              .map(v => {
-                const trip = v.tmsActiveLoad;
-                const tms =
-                  trip && trip.load_number
-                    ? `${escapeHtml(String(trip.load_number))} (${escapeHtml(String(trip.status || ''))})`
-                    : '—';
-                return `<tr>
-                  <td>${escapeHtml(v.unit || '')}</td>
-                  <td>${escapeHtml(v.idleBand || '')}</td>
-                  <td>${v.inYard ? 'Yes' : 'No'}</td>
-                  <td>${v.distanceToYardM != null ? escapeHtml(String(v.distanceToYardM)) : '—'}</td>
-                  <td>${escapeHtml(String(v.engineState || ''))}</td>
-                  <td>${escapeHtml(String(v.driverName || '—'))}</td>
-                  <td>${escapeHtml(String(v.hosDutyType || '—'))}</td>
-                  <td>${tms}</td>
-                  <td>${v.daysSinceLastCompletedLoad != null ? escapeHtml(String(v.daysSinceLastCompletedLoad)) : '—'}</td>
-                  <td>${v.estimatedRevenueAtRisk != null ? Number(v.estimatedRevenueAtRisk).toFixed(0) : '—'}</td>
-                </tr>`;
-              })
-              .join('') ||
-            '<tr><td colspan="10" class="mini-note">No T120–T178 units in Samsara snapshot.</td></tr>';
+        const fk = `${data.samsaraRefreshedAt || ''}|${rows.length}|${y.latitude}|${y.longitude}`;
+        if (idleSnapshotPager.filterKey !== fk) {
+          idleSnapshotPager.page = 1;
+          idleSnapshotPager.filterKey = fk;
         }
+        idleSnapshotPager._rows = rows;
+        renderIdleSnapshotTableBody();
       } catch (e) {
+        idleSnapshotPager._rows = null;
         if (meta) meta.textContent = 'Error: ' + (e.message || String(e));
         if (tb) {
           tb.innerHTML =
             '<tr><td colspan="10" class="mini-note" style="color:#b91c1c">Could not load idle snapshot. Check Samsara token and server logs.</td></tr>';
+        }
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
         }
       }
     }
@@ -14899,24 +14963,61 @@
     function renderSafetyActivePanels() {
       const tbA = document.getElementById('safetyActiveBody');
       const tbI = document.getElementById('safetyInServiceBody');
+      const pgA = document.getElementById('safetyActivePagerHost');
+      const pgI = document.getElementById('safetyInServicePagerHost');
       if (!tbA || !tbI) return;
       const mode = document.getElementById('safetyActiveDutyFilter')?.value || 'relevant';
       const raw = applySafetyHosDutyMode((board.hos || []).map(normalizeHosClock), mode);
       const active = raw.filter(r => r.dutyType && !isOffDutyOrSleeper(r.dutyType));
       const inService = raw.filter(r => isInServiceDuty(r.dutyType));
-      const fmt = rows =>
-        rows
-          .map(
-            r =>
-              `<tr><td>${escapeHtml(r.driver)}</td><td>${escapeHtml(r.dutyType)}</td><td>${escapeHtml(r.vehicle)}</td></tr>`
-          )
-          .join('') || '<tr><td colspan="3" class="mini-note" style="padding:12px">None</td></tr>';
-      tbA.innerHTML = fmt(active);
-      tbI.innerHTML = fmt(inService);
-      const ma = document.getElementById('safetyActiveMeta');
-      const mi = document.getElementById('safetyInServiceMeta');
-      if (ma) ma.textContent = `${active.length} active`;
-      if (mi) mi.textContent = `${inService.length} in service`;
+      const rowLine = r =>
+        `<tr><td>${escapeHtml(r.driver)}</td><td>${escapeHtml(r.dutyType)}</td><td>${escapeHtml(r.vehicle)}</td></tr>`;
+
+      const renderPanel = (tb, pagerHost, pState, rows, metaEl, metaLabel) => {
+        if (pState.filterKey !== mode) {
+          pState.page = 1;
+          pState.filterKey = mode;
+        }
+        if (!rows.length) {
+          tb.innerHTML = '<tr><td colspan="3" class="mini-note" style="padding:12px">None</td></tr>';
+          if (pagerHost) {
+            pagerHost.innerHTML = '';
+            pagerHost.hidden = true;
+          }
+        } else {
+          const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+          const n = rows.length;
+          const pages = Math.max(1, Math.ceil(n / ps));
+          if (pState.page > pages) pState.page = pages;
+          if (pState.page < 1) pState.page = 1;
+          const start = (pState.page - 1) * ps;
+          tb.innerHTML = rows.slice(start, start + ps).map(rowLine).join('');
+          if (pagerHost && window.erpPagerRender) {
+            window.erpPagerRender(
+              pagerHost,
+              { page: pState.page, pageSize: ps, total: n },
+              (nextPage, newPageSize) => {
+                if (newPageSize) pState.pageSize = newPageSize;
+                pState.page = nextPage;
+                renderSafetyActivePanels();
+              }
+            );
+            pagerHost.hidden = false;
+          } else if (pagerHost) {
+            pagerHost.innerHTML = '';
+            pagerHost.hidden = true;
+          }
+        }
+        if (metaEl) {
+          const ps0 = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+          const pages0 = Math.max(1, Math.ceil(rows.length / ps0));
+          const pNote = rows.length > ps0 ? ` · p ${pState.page}/${pages0}` : '';
+          metaEl.textContent = `${rows.length} ${metaLabel}${pNote}`;
+        }
+      };
+
+      renderPanel(tbA, pgA, safetyActivePager, active, document.getElementById('safetyActiveMeta'), 'active');
+      renderPanel(tbI, pgI, safetyInServicePager, inService, document.getElementById('safetyInServiceMeta'), 'in service');
     }
 
     function renderSafetyHos() {
@@ -14937,9 +15038,29 @@
               ? 'No HOS rows from Samsara.'
               : 'No drivers in this view (or no HOS data). Try “All Samsara rows” or adjust the filter.';
       const tb = document.getElementById('safetyHosBody');
+      const pagerHost = document.getElementById('safetyHosPagerHost');
+      const pState = safetyHosPager;
+      const fk = `${mode}|${q}`;
+      if (pState.filterKey !== fk) {
+        pState.page = 1;
+        pState.filterKey = fk;
+      }
       if (tb) {
-        tb.innerHTML =
-          rows
+        if (!rows.length) {
+          tb.innerHTML = `<tr><td colspan="8" class="mini-note" style="padding:16px">${escapeHtml(emptyMsg)}</td></tr>`;
+          if (pagerHost) {
+            pagerHost.innerHTML = '';
+            pagerHost.hidden = true;
+          }
+        } else {
+          const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+          const n = rows.length;
+          const pages = Math.max(1, Math.ceil(n / ps));
+          if (pState.page > pages) pState.page = pages;
+          if (pState.page < 1) pState.page = 1;
+          const start = (pState.page - 1) * ps;
+          const slice = rows.slice(start, start + ps);
+          tb.innerHTML = slice
             .map(
               r => `<tr>
           <td>${escapeHtml(r.driver)}</td>
@@ -14952,12 +15073,31 @@
           <td>${escapeHtml(r.vioText)}</td>
         </tr>`
             )
-            .join('') || `<tr><td colspan="8" class="mini-note" style="padding:16px">${escapeHtml(emptyMsg)}</td></tr>`;
+            .join('');
+          if (pagerHost && window.erpPagerRender) {
+            window.erpPagerRender(
+              pagerHost,
+              { page: pState.page, pageSize: ps, total: n },
+              (nextPage, newPageSize) => {
+                if (newPageSize) pState.pageSize = newPageSize;
+                pState.page = nextPage;
+                renderSafetyHos();
+              }
+            );
+            pagerHost.hidden = false;
+          } else if (pagerHost) {
+            pagerHost.innerHTML = '';
+            pagerHost.hidden = true;
+          }
+        }
       }
       const meta = document.getElementById('safetyHosMeta');
       if (meta) {
-        meta.textContent =
-          rows.length + ' shown' + (total ? ' · ' + total + ' from Samsara' : '');
+        const pageNote =
+          rows.length > (Number(safetyHosPager.pageSize) || 15)
+            ? ` · page ${safetyHosPager.page} / ${Math.max(1, Math.ceil(rows.length / (Number(safetyHosPager.pageSize) || 15)))}`
+            : '';
+        meta.textContent = `${rows.length} match filter` + (total ? ` · ${total} from Samsara` : '') + pageNote;
       }
     }
 
@@ -14984,6 +15124,7 @@
 
     function renderSafetyAssignments() {
       const tb = document.getElementById('safetyAssignBody');
+      const pagerHost = document.getElementById('safetyAssignPagerHost');
       if (!tb) return;
       const all = board.assignments || [];
       const q = (document.getElementById('safetyAssignSearch')?.value || '').trim().toLowerCase();
@@ -14995,8 +15136,27 @@
         const dname = String(a?.driver?.name || a?.driverName || '').toLowerCase();
         return vname.includes(q) || dname.includes(q);
       });
-      tb.innerHTML =
-        rows
+      const pState = safetyAssignPager;
+      const fk = `${mode}|${q}`;
+      if (pState.filterKey !== fk) {
+        pState.page = 1;
+        pState.filterKey = fk;
+      }
+      if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="4" class="mini-note">No assignments match this filter.</td></tr>';
+        if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+      } else {
+        const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
+        const n = rows.length;
+        const pages = Math.max(1, Math.ceil(n / ps));
+        if (pState.page > pages) pState.page = pages;
+        if (pState.page < 1) pState.page = 1;
+        const start = (pState.page - 1) * ps;
+        tb.innerHTML = rows
+          .slice(start, start + ps)
           .map(a => {
             const vname = a?.vehicle?.name || a?.vehicleName || '—';
             const dname = a?.driver?.name || a?.driverName || '—';
@@ -15004,10 +15164,25 @@
             const en = a?.endTime || a?.endAt || '';
             return `<tr><td>${escapeHtml(vname)}</td><td>${escapeHtml(dname)}</td><td>${escapeHtml(String(st))}</td><td>${escapeHtml(String(en))}</td></tr>`;
           })
-          .join('') ||
-        '<tr><td colspan="4" class="mini-note">No assignments match this filter.</td></tr>';
+          .join('');
+        if (pagerHost && window.erpPagerRender) {
+          window.erpPagerRender(
+            pagerHost,
+            { page: pState.page, pageSize: ps, total: n },
+            (nextPage, newPageSize) => {
+              if (newPageSize) pState.pageSize = newPageSize;
+              pState.page = nextPage;
+              renderSafetyAssignments();
+            }
+          );
+          pagerHost.hidden = false;
+        } else if (pagerHost) {
+          pagerHost.innerHTML = '';
+          pagerHost.hidden = true;
+        }
+      }
       const meta = document.getElementById('safetyAssignMeta');
-      if (meta) meta.textContent = rows.length + ' shown' + (all.length ? ' · ' + all.length + ' loaded' : '');
+      if (meta) meta.textContent = rows.length + ' match' + (all.length ? ' · ' + all.length + ' loaded' : '');
     }
 
     function renderSafetyFleet() {
