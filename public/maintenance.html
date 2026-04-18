@@ -990,6 +990,15 @@
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l">Planned work <span class="maint-label-optional">(optional)</span></span>
+                        <div class="mini-note" style="margin:4px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 180px">Repeatable free-text lines — the host below is cleared and re-seeded from a template when presets or record type reset the form.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Planned work lines">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <code>resetMaintPlannedServiceRows()</code> sets <code>#maintPlannedServicesHost</code> <code>innerHTML</code> to empty, then <code>addMaintPlannedServiceRow()</code> clones <code>#maintPlannedServiceTpl</code> rows. <code>addMaintPlannedServiceRow()</code> only appends. <code>collectMaintPlannedServiceLines()</code> reads <code>.maint-planned-desc</code> values for save payloads.
+                            </span>
+                          </span>
+                        </div>
                         <div id="maintPlannedServicesHost"></div>
                         <button type="button" class="maint-linkish" onclick="addMaintPlannedServiceRow()">+ Planned line</button>
                       </div>
@@ -3594,7 +3603,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How this hub works">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Use the <strong>left sidebar</strong> or <strong>tile hub</strong> below to open a report tab. The search box filters <strong>link labels</strong> in both places. Each tab’s own <strong>Refresh</strong> / QBO actions live in the report body — this header is navigation only.
+                  <strong>Sidebar</strong> or <strong>tile hub</strong> opens a report; search filters <strong>link labels</strong> in both. Per-tab <strong>Refresh</strong> / QBO actions sit in each report body — this row is navigation only.
                 </span>
               </span>
             </div>
@@ -3739,7 +3748,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About executive overview">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Connect <strong>QuickBooks</strong> when you need live bills and invoices. <strong>Refresh reports</strong> rebuilds metrics below from cached ERP + QBO data; <strong>Sync QuickBooks lists + activity</strong> reloads the catalog and recent transactions for the configured window first.
+                    Connect <strong>QuickBooks</strong> for live bills/invoices. <strong>Refresh reports</strong> rebuilds metrics from cached ERP+QBO; <strong>Sync QuickBooks lists + activity</strong> reloads catalog + recent QBO window first.
                   </span>
                 </span>
               </div>
@@ -3754,7 +3763,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Executive overview body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadReportsData()</code> fetches <code>GET /api/reports/summary</code> into <code>reportsSummaryCache</code>, then <code>renderReportsAll()</code> replaces <code>#repOverviewBody</code> <code>innerHTML</code> with timestamped QBO refresh hints and the ERP / QBO metric grids. Errors replace the host with a short error <code>&lt;p&gt;</code> only.
+                    <code>loadReportsData()</code> → <code>GET /api/reports/summary</code> → <code>reportsSummaryCache</code>; <code>renderReportsAll()</code> → <code>#repOverviewBody</code> (QBO hints + ERP/QBO metric grids). Errors → short <code>&lt;p&gt;</code> only.
                   </span>
                 </span>
               </div>
@@ -3772,7 +3781,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About TMS loads report">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Loads and trips from <strong>TMS / Postgres</strong> when configured. The summary row’s revenue total uses the TMS <code>revenue_amount</code> field. If this tab stays empty after setup, run <strong>Refresh reports</strong> on the overview.
+                    Loads/trips from <strong>TMS / Postgres</strong> when configured; revenue uses <code>revenue_amount</code>. Still empty after setup → <strong>Refresh reports</strong> on Overview.
                   </span>
                 </span>
               </div>
@@ -3783,7 +3792,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="TMS report body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderReportsAll()</code> reads <code>reportsSummaryCache.tms</code> and replaces <code>#repTmsBody</code> <code>innerHTML</code> with either a “not configured” note, an error string, or a mini summary plus a status × count table built from <code>tms.byStatus</code>.
+                    <code>renderReportsAll()</code> → <code>reportsSummaryCache.tms</code> → <code>#repTmsBody</code>: not-configured note, error string, or summary + status×count table (<code>tms.byStatus</code>).
                   </span>
                 </span>
               </div>
@@ -3798,7 +3807,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Merges <strong>work orders</strong>, <strong>AP</strong>, and <strong>unit maintenance</strong> lines that share the same load / invoice #. With TMS (Postgres), the trip header and stops show under the rollup. Lives here so <strong>Accounting</strong> stays focused on entry and QuickBooks.
+                Merges <strong>WO</strong>, <strong>AP</strong>, and <strong>unit maintenance</strong> on the same load/invoice #; TMS (Postgres) trip header/stops under the rollup when present. Keeps heavy P&amp;L out of <strong>Accounting</strong> entry screens.
               </span>
             </span>
           </div>
@@ -3809,7 +3818,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Rollup panel">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Same <strong>load / invoice #</strong> on WO, AP, and maintenance rolls costs into one trip. <strong>Run lookup</strong> fills the table; <strong>Download CSV</strong> exports it. TMS trip details appear below when Postgres has the load.
+                    Same <strong>load / invoice #</strong> rolls WO + AP + maint into one trip. <strong>Run lookup</strong> fills the grid; <strong>Download CSV</strong> exports. TMS block when Postgres has the load.
                   </span>
                 </span>
               </div>
@@ -3843,7 +3852,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement summary host">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>runSettlementLookup()</code> calls <code>GET /api/settlement/by-load/&lt;load&gt;</code>, then sets <code>#settlementSummary</code> <code>innerHTML</code> to the rolled-up totals, optional revenue / net, and PDF / QBO action links. <code>#settlementTmsBox</code> shows TMS trip + settlement miles (or hides), and <code>#settlementLinesBody</code> is rebuilt with paged line items (or a no-rows message).
+                    <code>runSettlementLookup()</code> → <code>GET /api/settlement/by-load/&lt;load&gt;</code> → <code>#settlementSummary</code> (totals, revenue/net, PDF/QBO links); <code>#settlementTmsBox</code> (trip + miles or hidden); paged <code>#settlementLinesBody</code> (or no-rows).
                   </span>
                 </span>
               </div>
@@ -3875,7 +3884,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About driver pay settlements">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    By <strong>QuickBooks driver vendor</strong>: trip revenue, rolled-up expenses (same rules as trip lookup), company net. Optional <code>DRIVER_SETTLEMENT_PAY_PCT</code> (0–1) on the server shows suggested pay as % of linehaul revenue.
+                    Per <strong>QBO driver vendor</strong>: revenue, rolled-up expenses (same rules as trip lookup), net. Optional server <code>DRIVER_SETTLEMENT_PAY_PCT</code> (0–1) → suggested % of linehaul.
                   </span>
                 </span>
               </div>
@@ -3892,7 +3901,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement index">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Loads that already have maintenance, AP, or unit-record costs. Use <strong>View</strong> to open the same # in <strong>Trip cost rollup</strong> for lines or CSV.
+                    Loads with maint / AP / unit-record costs already. <strong>View</strong> → same # in <strong>Trip cost rollup</strong> for lines or CSV.
                   </span>
                 </span>
               </div>
@@ -3929,7 +3938,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Rolls up <strong>saved maintenance expense</strong> rows from this ERP by unit (same universe as the Maintenance Table, filtered server-side for the report). Use <strong>Download CSV</strong> for a spreadsheet export.
+                    Server rollup of <strong>saved maintenance expense</strong> by unit (same universe as Maintenance Table). <strong>Download CSV</strong> for export.
                   </span>
                 </span>
               </div>
@@ -3939,6 +3948,15 @@
             </div>
             <div class="panel-body">
               <div id="repMaintByUnitPagerHost" hidden></div>
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Table or empty state below replaces after <strong>Refresh reports</strong> on Overview — pager row above appears when the unit list spans pages.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Spend by unit report body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderRepMaintSpendByUnitTable()</code> replaces <code>#repMaintBody</code> <code>innerHTML</code> with either a short empty-state note or a scroll-wrapped table built from <code>reportsSummaryCache.maintenanceCostByUnit</code> for the current page. <code>erpPagerRender</code> fills <code>#repMaintByUnitPagerHost</code> when the slice needs paging.
+                  </span>
+                </span>
+              </div>
               <div id="repMaintBody"></div>
             </div>
           </div>
@@ -3952,7 +3970,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Lists each maintenance record with its full <strong>cost breakdown</strong>. When lines include position-based parts (tires, batteries, etc.), the report includes the position and part reference columns.
+                    Each maint record + full <strong>cost breakdown</strong>. Position-based parts (tires, batteries, …) add position + part reference columns.
                   </span>
                 </span>
               </div>
@@ -4011,7 +4029,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Pulls recent <strong>QuickBooks</strong> bills, purchases, vendor credits, and invoices after you <strong>Refresh reports</strong> from the overview (same catalog window as the accounting board). Rows render here for read-only review.
+                    Recent <strong>QuickBooks</strong> bills, purchases, vendor credits, invoices after <strong>Refresh reports</strong> (same snapshot window as accounting board). Read-only tables here.
                   </span>
                 </span>
               </div>
@@ -4022,7 +4040,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO activity report body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderReportsAll()</code> reads <code>reportsSummaryCache.qboCache.transactionActivity</code> and replaces <code>#repQboBody</code> <code>innerHTML</code> with either a “no window yet” note (connect QBO + sync) or the window meta, Σ $ chips, and four <code>reportTxnTableHtml</code> sections (bills, purchases, vendor credits, invoices).
+                    <code>renderReportsAll()</code> → <code>reportsSummaryCache.qboCache.transactionActivity</code> → <code>#repQboBody</code>: connect/sync hint or window meta + Σ $ chips + four <code>reportTxnTableHtml</code> blocks (bills / purchases / vendor credits / invoices).
                   </span>
                 </span>
               </div>
@@ -4038,7 +4056,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About sync comparison">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Compares <strong>ERP maintenance / expense</strong> records already in this database with what has been posted to <strong>QuickBooks</strong>, so you can spot drift, duplicates, or missing posts. Use <strong>Refresh reports</strong> if the table is stale.
+                    <strong>ERP maint / expense</strong> rows vs <strong>QuickBooks</strong> posted state — drift, dupes, misses. Stale table → <strong>Refresh reports</strong>.
                   </span>
                 </span>
               </div>
@@ -4049,7 +4067,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP vs QBO sync body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderReportsAll()</code> uses <code>reportsSummaryCache.posting</code> and replaces <code>#repSyncBody</code> <code>innerHTML</code> with a short intro plus a table of totals / posted / local-only / error counts for maintenance records, work orders, and AP transactions.
+                    <code>renderReportsAll()</code> → <code>reportsSummaryCache.posting</code> → <code>#repSyncBody</code>: intro + table (totals / posted / local-only / errors) for maint records, WOs, AP.
                   </span>
                 </span>
               </div>
@@ -4065,7 +4083,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this panel">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Refresh panel</strong> loads sign-in posture, checks, and (for admins) ERP user activity. Overlaps <strong>Maintenance → Security alerts</strong> where the same APIs apply.
+                    <strong>Refresh panel</strong> → sign-in posture, checks, (admins) ERP activity. Same APIs as <strong>Maintenance → Security alerts</strong> where applicable.
                   </span>
                 </span>
               </div>
@@ -4077,7 +4095,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Team security panel body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadTeamSecurityPanel()</code> replaces <code>#repTeamBody</code> <code>innerHTML</code> with a loading line, then <code>GET /api/security/posture</code> results (or errors). Admins may see extra activity blocks; when auth is disabled the host gets a single explanatory paragraph.
+                    <code>loadTeamSecurityPanel()</code> → loading line → <code>GET /api/security/posture</code> → <code>#repTeamBody</code> (or error). Admins: extra activity blocks. Auth off → single explanatory paragraph.
                   </span>
                 </span>
               </div>
@@ -4095,11 +4113,9 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="IFTA roadmap">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>IFTA</strong> needs jurisdiction mileage, fuel by jurisdiction/type, and years of auditable source data. Typical inputs: <strong>Samsara</strong> ELD/GPS + <strong>QuickBooks</strong> fuel coding; this hub already ties revenue and rolls maintenance/AP into settlement views.
-                    <br /><br />
-                    <strong>Next steps (engineering):</strong> (1) persist Samsara <code>vehicleId</code> on <code>trucks</code>/<code>trailers</code>; (2) nightly miles-by-state; (3) fuel import from QBO or card CSV; (4) quarterly IFTA export; (5) driver compliance profile linked to <code>drivers.qbo_vendor_id</code>.
-                    <br /><br />
-                    <strong>Today:</strong> <a href="/fuel.html" target="_blank" rel="noopener">Fuel planner</a>, Samsara fleet/HOS, settlement + driver-pay rollup under <strong>Accounting → Settlement</strong>, QBO list sync. Run <code>npm run db:migrate</code> after pull (see <code>011_fleet_driver_compliance.sql</code>).
+                    <strong>IFTA</strong> needs auditable miles-by-state + fuel-by-jurisdiction — usually <strong>Samsara</strong> ELD/GPS + <strong>QBO</strong> fuel coding; settlement views already roll revenue/maint/AP.<br /><br />
+                    <strong>Roadmap:</strong> persist Samsara <code>vehicleId</code> on <code>trucks</code>/<code>trailers</code>; nightly miles-by-state; fuel import; quarterly export; driver profile ↔ <code>drivers.qbo_vendor_id</code>.<br /><br />
+                    <strong>Today:</strong> <a href="/fuel.html" target="_blank" rel="noopener">Fuel planner</a>, fleet/HOS, <strong>Accounting → Settlement</strong> + driver pay, QBO sync. Schema updates: <code>npm run db:migrate</code> (see <code>011_fleet_driver_compliance.sql</code>).
                   </span>
                 </span>
               </div>
