@@ -2531,7 +2531,15 @@
                   </span>
                 </span>
               </div>
-              <div id="bpSelectionTotal" class="mini-note" style="margin-bottom:6px;font-weight:500">Draft payment total: $0.00</div>
+              <div class="mini-note" style="margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;font-weight:500;line-height:1.45;color:var(--color-text-body)">
+                <span id="bpSelectionTotal" role="status" aria-live="polite" aria-atomic="true" style="min-width:0;flex:1 1 220px">Draft payment total: $0.00</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How the draft total is calculated">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Adds up <strong>Pay</strong> amounts for rows with the checkbox on. Each amount is capped at that bill's open balance when you tab away (<strong>Remaining</strong> updates with the row). Vendor and selection rules for this grid are in the <strong>?</strong> on the hint line above.
+                  </span>
+                </span>
+              </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap" style="min-width:0">
                 <table class="st-settlement erp-bp-open-table" style="min-width:1120px">
                   <thead>
