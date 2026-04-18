@@ -201,11 +201,11 @@
       </div>
       <div class="erp-module-sidebar__scroll">
         <div class="mini-note" style="margin:0 0 8px;padding:0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;line-height:1.45;font-size:11px;color:var(--color-text-body)">
-          <span style="min-width:0;flex:1 1 140px">Shortcut groups below refresh when you switch modules.</span>
+          <span style="min-width:0;flex:1 1 140px">Groups below refresh when you switch modules.</span>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Left rail list host">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
-              <code>renderErpModuleSidebar(name)</code> replaces <code>#erpModuleSidebarInner</code> <code>innerHTML</code> with stacked <code>erpSbGroup()</code> accordions per active section (<code>maintenance</code>, <code>dashboard</code>, <code>fuel</code>, etc.). Each group injects link rows built from template strings; <strong>Lists &amp; catalogs</strong> reuses <code>erpSbAdmin()</code> plus upload / settings shortcuts.
+              <code>renderErpModuleSidebar(name)</code> fills <code>#erpModuleSidebarInner</code> with stacked <code>erpSbGroup()</code> accordions (maintenance, dashboard, fuel, …). <strong>Lists &amp; catalogs</strong> reuses <code>erpSbAdmin()</code> + upload/settings shortcuts.
             </span>
           </span>
         </div>
@@ -229,11 +229,11 @@
         </div>
         <div class="erp-drawer__body" style="display:flex;flex-direction:column;min-height:0">
           <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;flex-shrink:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 200px">Vendor / item / account forms from <strong>+ New</strong> load in the scrollable area below — this line stays when the drawer opens.</span>
+            <span style="min-width:0;flex:1 1 200px"><strong>+ New</strong> forms load in the scrollable area below; this line stays pinned.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create drawer body">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>openErpDrawer(title, html, focusSelector)</code> sets <code>#erpDrawerTitle</code> and replaces <code>#erpDrawerBody</code> <code>innerHTML</code>. <code>openAddNewDrawer(kind, typed)</code> builds escaped vendor, product/service, or account markup (item flow also fills income/expense <code>&lt;select&gt;</code> options via <code>innerHTML</code>). <code>closeErpDrawer()</code> only toggles chrome — it does not clear the body until the next open.
+                <code>openErpDrawer()</code> sets titles and replaces <code>#erpDrawerBody</code> <code>innerHTML</code>. <code>openAddNewDrawer()</code> builds vendor/item/account markup (items also fill income/expense <code>&lt;select&gt;</code>s). <code>closeErpDrawer()</code> toggles chrome only; body clears on the next open.
               </span>
             </span>
           </div>
@@ -243,21 +243,21 @@
 
       <main class="main erp-main-surface">
         <div class="mini-note print-hide-actions" style="margin:0 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-          <span style="min-width:0;flex:1 1 220px">When the API returns <strong>401</strong> with <code>authRequired</code>, the red strip below shows a sign-in link; successful <code>loadAll()</code> hides it again.</span>
+          <span style="min-width:0;flex:1 1 220px"><strong>401</strong> + <code>authRequired</code> → red strip below with sign-in; good <code>loadAll()</code> hides it.</span>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Auth banner">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
-              Shared helper <code>j()</code> sets <code>#authBanner</code> <code>innerHTML</code> on 401 responses so users can jump to <strong>Settings</strong>. <code>loadAll()</code> clears the banner with <code>textContent</code> and adds <code>hidden</code> after a successful refresh batch.
+              <code>j()</code> paints <code>#authBanner</code> on 401 so users can open <strong>Settings</strong>. <code>loadAll()</code> clears it (<code>textContent</code> + <code>hidden</code>) after a successful refresh.
             </span>
           </span>
         </div>
         <div id="authBanner" class="hidden mini-note erp-auth-banner" aria-live="polite"></div>
         <div class="mini-note print-hide-actions" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-          <span style="min-width:0;flex:1 1 220px">Sticky QuickBooks banner below — shows posting / connection issues from the sync poll; <strong>Hide ×</strong> clears until the alert set changes.</span>
+          <span style="min-width:0;flex:1 1 220px">Sticky QBO banner — posting/connection issues from the sync poll; <strong>Hide ×</strong> until the alert set changes.</span>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO sync alert bar">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
-              <code>renderQboSyncAlerts(payload)</code> replaces <code>#qboSyncAlertBar</code> <code>innerHTML</code> with degraded, empty, or alert-row markup. <code>dismissQboSyncAlertBar()</code> adds <code>hidden</code>, clears <code>innerHTML</code>, and stores a session fingerprint so the same payload can stay dismissed.
+              <code>renderQboSyncAlerts()</code> fills <code>#qboSyncAlertBar</code> (degraded/empty/rows). <strong>Hide ×</strong> → <code>dismissQboSyncAlertBar()</code> (<code>hidden</code>, cleared <code>innerHTML</code>, session fingerprint so repeats stay dismissed).
             </span>
           </span>
         </div>
@@ -274,7 +274,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Global search menu">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>globalSearchRender()</code> calls <code>globalSearchCollect()</code> over in-memory vendors, units, loads, bills, and work orders. It replaces <code>#globalSearchMenu</code> <code>innerHTML</code> with <code>.qb-picker-item</code> rows (labels escaped), toggles <code>hidden</code> when the query is empty, and shows a single “No matches” stub when nothing hits. Arrow keys re-render to move <code>qb-picker-item-active</code>; <code>Enter</code> runs the row’s <code>run</code> callback.
+                    <code>globalSearchRender()</code> + <code>globalSearchCollect()</code> scan vendors, units, loads, bills, WOs — rebuild <code>#globalSearchMenu</code> with <code>.qb-picker-item</code> rows (escaped labels), hide when empty, stub when no hits. Arrows move <code>qb-picker-item-active</code>; <strong>Enter</strong> runs the row callback.
                   </span>
                 </span>
               </div>
@@ -286,7 +286,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How navigation works">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Use the <strong>left icon rail</strong> to switch modules (Maintenance, Accounting, Reports, and more). Global search spans vendors, units, loads, bills, and work orders. <strong>+ New</strong> opens the three-column create menu (expenses, bills, work orders, settlements, fuel records, and other shortcuts).
+                <strong>Left icon rail</strong> switches modules. Search covers vendors, units, loads, bills, WOs. <strong>+ New</strong> opens the three-column menu (expenses, bills, WOs, settlement, fuel, shortcuts).
               </span>
             </span>
           </div>
@@ -3533,6 +3533,15 @@
                   </span>
                 </span>
               </div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 240px">Table rows below replace when filters, search, or the pager change — the summary line above stays in sync.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Expense history table body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderExpenseHistory()</code> calls <code>buildExpenseHistoryRows()</code> then <code>filterExpenseHistoryRows()</code>, updates <code>#expHistSummary</code> <code>textContent</code>, replaces <code>#expHistBody</code> <code>innerHTML</code> with the current page slice (or a no-rows row), and wires <code>#expHistPagerHost</code> via <code>erpPagerRender</code> when <code>expHistPager</code> needs paging. <code>expHistSearchDebounce()</code> re-runs the same path after typing pauses.
+                  </span>
+                </span>
+              </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:1240px">
                   <thead>
@@ -3866,11 +3875,11 @@
                 </div>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Trip headline + PDF links below refresh on each <strong>Run lookup</strong>; the TMS card and cost table are filled in the same pass.</span>
+                <span style="min-width:0;flex:1 1 220px">Headline + PDFs refresh on <strong>Run lookup</strong>; TMS card + cost lines fill in the same pass.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement summary host">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>runSettlementLookup()</code> → <code>GET /api/settlement/by-load/&lt;load&gt;</code> → <code>#settlementSummary</code> (totals, revenue/net, PDF/QBO links); <code>#settlementTmsBox</code> (trip + miles or hidden); paged <code>#settlementLinesBody</code> (or no-rows).
+                    <code>runSettlementLookup()</code> → <code>GET /api/settlement/by-load/&lt;load&gt;</code> → <code>#settlementSummary</code> (totals, revenue/net, PDF/QBO); <code>#settlementTmsBox</code> (trip/miles or hidden); <code>#settlementLinesBody</code> (paged or empty).
                   </span>
                 </span>
               </div>
@@ -3910,11 +3919,11 @@
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
               <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 240px">Vendor sections and load tables below replace on each <strong>Refresh driver settlements</strong> — this line stays when the payload is loading or errors.</span>
+                <span style="min-width:0;flex:1 1 240px">Vendor blocks + load tables refresh on <strong>Refresh driver settlements</strong>; this line stays during load/errors.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Driver pay settlements body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadDriverPaySettlements()</code> sets <code>#driverPaySettlementsBox</code> <code>innerHTML</code> to a loading string, then calls <code>renderDriverPaySettlementsBox()</code> which replaces the whole host with per-vendor HTML (tables + optional <code>driverPaySettPager_*</code> hosts) or an empty/error message. Pager callbacks re-call <code>renderDriverPaySettlementsBox()</code> to rebuild <code>innerHTML</code> for the new slice.
+                    <code>loadDriverPaySettlements()</code> → loading <code>innerHTML</code> on <code>#driverPaySettlementsBox</code>, then <code>renderDriverPaySettlementsBox()</code> (per-vendor tables + optional <code>driverPaySettPager_*</code> or empty/error). Pagers re-call <code>renderDriverPaySettlementsBox()</code> for the slice.
                   </span>
                 </span>
               </div>
@@ -3936,11 +3945,11 @@
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
               <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 240px">Index rows in the table below replace on each <strong>Refresh index</strong>; the trip <strong>Load / invoice #</strong> field above pulls autocomplete options from the same API response (page-level datalist).</span>
+                <span style="min-width:0;flex:1 1 240px">Index rows refresh on <strong>Refresh index</strong>; <strong>Load / invoice #</strong> autocomplete comes from the same response (this page’s datalist).</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement cost index">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadSettlementIndex()</code> calls <code>GET /api/settlement/index</code>, replaces <code>#settlementIndexBody</code> <code>innerHTML</code> with paged rows (WO / AP / record counts, total, View + PDF) or an empty/error row, and rebuilds <code>#settlementLoadHints</code> <code>innerHTML</code> with up to 100 <code>&lt;option&gt;</code> labels for <code>#settlementLoadInput</code> (via its <code>list</code> attribute).
+                    <code>loadSettlementIndex()</code> → <code>GET /api/settlement/index</code> → paged rows in <code>#settlementIndexBody</code> (WO/AP/rec counts, total, View+PDF) or empty/error; rebuilds <code>#settlementLoadHints</code> (≤100 <code>&lt;option&gt;</code>s for <code>#settlementLoadInput</code> <code>list</code>).
                   </span>
                 </span>
               </div>
