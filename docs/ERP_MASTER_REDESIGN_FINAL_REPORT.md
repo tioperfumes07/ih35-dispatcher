@@ -115,6 +115,7 @@ PRs that change `server.js` persistence should still describe intent and risk br
 1. **`npm run rule0:check`** then **`npm run smoke`** (or **`npm run qa:automated`**, which runs both in order) with server up and `localhost` reachable (sandbox often fails fetch — expected). Smoke GETs **`/index.html`**, **`/maintenance.html`**, **`/dispatch.html`**, **`/fuel.html`**, **`/banking.html`**, **`/settings.html`**, **`/tracking.html`** and checks for stable substrings (including **`erpConnectionStrip`** on hub + ERP satellites and the **tracking** redirect target).
 2. **Sign-in flows:** settings → banking → maintenance with token; confirm **401** paths still show **`authBanner`** / toasts only where intended.
 3. **QBO:** with a connected realm, confirm **`erpMountConnectionStrip`** shows **connected + company**; disconnected shows warn styling.
+4. **CI:** **[`.github/workflows/rule0-check.yml`](../.github/workflows/rule0-check.yml)** runs **`npm ci`** + **`npm test`** (Rule 0 guard only on push/PR). HTTP smoke is **not** in CI — run **`npm run qa:automated`** locally before release.
 
 ---
 

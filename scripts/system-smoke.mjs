@@ -56,7 +56,8 @@ const HTML_PAGES = [
       'topbar-hint-wrap',
       'id="bpOpenBillsPagerHost"',
       'id="driverFilesPagerHost"',
-      'id="repairLocationChips"'
+      'id="repairLocationChips"',
+      'maint-cost-imports-shortcut'
     ]
   ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],

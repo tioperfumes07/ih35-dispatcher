@@ -1537,7 +1537,6 @@
         </div>
 
         </div>
-        </div>
 
         <div id="maintMainTabRm" class="maint-main-tab-panel">
           <div class="panel maint-section-card">
@@ -5821,9 +5820,13 @@
       modal.setAttribute('aria-hidden', 'false');
       window.__maintWoModalOpen = true;
       document.body.classList.add('maint-wo-modal-open');
-      try {
-        modal.querySelector('.maint-workorder-fullmodal__head .btn')?.focus();
-      } catch (_) {}
+      requestAnimationFrame(() => {
+        const mb = document.getElementById('maintWorkOrderModalBody');
+        if (mb) mb.scrollTop = 0;
+        try {
+          modal.querySelector('.maint-workorder-fullmodal__head .btn')?.focus();
+        } catch (_) {}
+      });
     }
 
     function closeMaintWorkOrderModal() {

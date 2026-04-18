@@ -2157,6 +2157,11 @@ body.erp-maintenance .maint-workorder-fullmodal__shell {
   min-width: 0;
   min-height: 0;
 }
+@supports (max-height: 100dvh) {
+  body.erp-maintenance .maint-workorder-fullmodal__shell {
+    max-height: 100dvh;
+  }
+}
 
 body.erp-maintenance .maint-workorder-fullmodal__head {
   flex-shrink: 0;

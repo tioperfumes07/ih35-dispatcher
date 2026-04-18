@@ -71,6 +71,12 @@ body.erp-maintenance .maint-workorder-fullmodal__shell {
   max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 }
+@supports (height: 100dvh) {
+  body.erp-maintenance .maint-workorder-fullmodal__shell {
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
 
 body.erp-maintenance .maint-workorder-fullmodal__head {
   padding-top: max(12px, env(safe-area-inset-top, 0px));

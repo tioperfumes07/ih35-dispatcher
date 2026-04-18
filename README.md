@@ -37,6 +37,8 @@ Use these before a release or when validating the ERP shell (see `docs/ERP_MASTE
 
 If the server is not on **3400**, set **`SMOKE_BASE`** for smoke (e.g. `SMOKE_BASE=http://127.0.0.1:3100 npm run smoke`). Set **`SMOKE_QUIET=1`** to hide the extra “Smoke target” line at the end of a successful smoke run.
 
+**CI:** [`.github/workflows/rule0-check.yml`](.github/workflows/rule0-check.yml) runs **`npm test`** (`rule0:check`) on push and pull requests. It does **not** start the server; run **`npm run qa:automated`** locally before release for Rule 0 + smoke.
+
 ## Useful endpoints
 
 - `GET /api/health` — Samsara probe + flags (`hasDatabaseUrl`, `hasPcmilerKey`, QBO config, …)
