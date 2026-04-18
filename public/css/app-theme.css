@@ -487,8 +487,8 @@ body.erp-maintenance .qb-picker-item__meta {
   transition: transform 0.18s ease;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  resize: horizontal;
+  overflow: auto;
+  resize: both;
 }
 .erp-drawer.is-open { transform: translateX(0); }
 .erp-drawer__head {

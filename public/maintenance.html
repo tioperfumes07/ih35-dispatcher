@@ -325,12 +325,29 @@
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Maintenance</div>
+                    <div class="erp-new-menu__tile-grid" role="group" aria-label="New maintenance record">
+                      <button type="button" class="erp-new-menu__tile" onclick="erpNewWorkOrder()">
+                        Work order<span class="erp-new-menu__tile-sub">Start here</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" onclick="erpNewWorkOrder('pm')">
+                        PM service<span class="erp-new-menu__tile-sub">Preventive</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" onclick="erpNewWorkOrder('repair')">
+                        Repair order<span class="erp-new-menu__tile-sub">External shop</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" onclick="erpNewWorkOrder('tire')">
+                        Tire record<span class="erp-new-menu__tile-sub">Positions &amp; line items</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile erp-new-menu__tile--wide" onclick="erpNewWorkOrder('accident')">
+                        Accident repair order<span class="erp-new-menu__tile-sub">Body / collision / glass</span>
+                      </button>
+                    </div>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">More</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
                     <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('air_bag')">Air bag record</button>
                     <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('battery')">Battery record</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('repair')">Fleet repair</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('pm')">PM service</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('tire')">Tire record</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder()">Work order</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Other</div>
@@ -5696,6 +5713,12 @@
           ['battery', 'alternator', 'starting', 'electrical', 'lighting']
         );
       }
+      if (p === 'accident') {
+        return maintPickServiceFromCatalog(
+          ['Body / paint / aesthetic', 'Repair', 'Glass'],
+          ['body /', 'collision', 'accident', 'glass', 'paint']
+        );
+      }
       return '';
     }
 
@@ -7166,6 +7189,11 @@
           if (rts) rts.value = 'maintenance';
           toggleRecordFields();
           setRepairLocationCode('in-house');
+          applyService();
+        } else if (p === 'accident') {
+          if (rts) rts.value = 'accident';
+          toggleRecordFields();
+          setRepairLocationCode('external');
           applyService();
         }
       } catch (_) {}
