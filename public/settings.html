@@ -14,35 +14,35 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--color-bg-page, var(--bg));
-      color: var(--color-text-body, var(--text));
+      background: var(--color-bg-page);
+      color: var(--color-text-body);
     }
     .wrap { max-width: 640px; margin: 0 auto; }
     h1 { font-size: 1.35rem; margin: 0 0 8px; letter-spacing: -0.02em; font-weight: 700; }
     p {
-      color: var(--color-text-label, var(--muted));
+      color: var(--color-text-label);
       font-size: 14px;
       line-height: 1.55;
     }
-    .panel { background: linear-gradient(180deg, var(--app-section-surface) 0%, var(--color-bg-card, var(--panel)) 40%); border: 1px solid var(--color-app-frame-border, var(--app-frame-border)); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+    .panel { background: linear-gradient(180deg, var(--app-section-surface) 0%, var(--color-bg-card) 40%); border: 1px solid var(--color-app-frame-border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
     label {
       display: block;
       font-size: 12px;
-      color: var(--color-text-label, var(--muted));
+      color: var(--color-text-label);
       margin-bottom: 4px;
     }
-    input { width: 100%; padding: 10px 12px; border: 1px solid var(--color-border, var(--line)); border-radius: var(--radius-sm); margin-bottom: 12px; box-sizing: border-box; font-family: var(--font-sans); }
+    input { width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: 12px; box-sizing: border-box; font-family: var(--font-sans); }
     input:focus { border-color: var(--color-border-focus, #1967d2); box-shadow: var(--focus-ring, 0 0 0 2px rgba(25, 103, 210, 0.1)); outline: none; }
-    button { padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid var(--color-border, var(--line)); background: var(--color-bg-card, var(--panel)); cursor: pointer; font-weight: 600; font-family: var(--font-sans); }
+    button { padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; font-weight: 600; font-family: var(--font-sans); }
     button.primary { background: var(--accent); color: var(--color-bg-card, #fff); border-color: var(--accent); }
     button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     .mini {
       font-size: 12px;
-      color: var(--color-text-label, var(--muted));
+      color: var(--color-text-label);
       margin-top: 8px;
     }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--color-border, var(--line)); }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--color-border); }
     a { color: var(--accent); font-weight: 600; text-decoration: none; }
     a:hover { text-decoration: underline; }
     .hidden { display: none !important; }
@@ -118,7 +118,7 @@
           <label>Password</label>
           <input id="newUserPass" type="password" />
           <label>Role</label>
-          <select id="newUserRole" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--color-border, var(--line))">
+          <select id="newUserRole" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--color-border)">
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
@@ -169,7 +169,7 @@
           <label>Department</label>
           <input id="newEmpDept" placeholder="Operations, Maintenance, Accounting…" />
           <label>Status</label>
-          <select id="newEmpStatus" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--color-border, var(--line))">
+          <select id="newEmpStatus" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--color-border)">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
@@ -310,7 +310,7 @@
           <td>${escapeHtml(e.phone || '')}</td>
           <td>${escapeHtml(e.title || '')}</td>
           <td>
-            <select onchange="setEmployeeStatus('${e.id}', this.value)" style="padding:6px;border-radius:10px;border:1px solid var(--color-border, var(--line))">
+            <select onchange="setEmployeeStatus('${e.id}', this.value)" style="padding:6px;border-radius:10px;border:1px solid var(--color-border)">
               <option value="active" ${e.status === 'active' ? 'selected' : ''}>Active</option>
               <option value="inactive" ${e.status === 'inactive' ? 'selected' : ''}>Inactive</option>
             </select>

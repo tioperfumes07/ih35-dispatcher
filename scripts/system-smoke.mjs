@@ -4,7 +4,7 @@
  * Run: `npm start` in another terminal, then `npm run smoke`.
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
- * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard).
+ * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). CSS bodies are reused from the static-asset GET when possible so the guard does not double-fetch those files.
  * Set SMOKE_BASE=http://host:port to target another environment.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
@@ -75,16 +75,22 @@ const STATIC_TEXT = [
 /** Agent B Rule 0: these exact substrings must not appear in Agent B surfaces (merge-regression guard). */
 const RULE0_FORBIDDEN_SUBSTRINGS = [
   'var(--color-border, var(--line))',
+  'var(--color-border,var(--line))',
   'var(--color-bg-card, var(--panel))',
   'var(--color-bg-card,var(--panel))',
   'var(--color-bg-page, var(--bg))',
+  'var(--color-bg-page,var(--bg))',
   'var(--color-text-label, var(--muted))',
+  'var(--color-text-label,var(--muted))',
   'var(--color-text-body, var(--text))',
   'var(--color-text-body,var(--text))',
   'var(--color-text-primary, var(--text))',
+  'var(--color-text-primary,var(--text))',
   'var(--color-text-body, var(--text-secondary))',
   'var(--color-border-focus, var(--accent))',
+  'var(--color-border-focus,var(--accent))',
   'var(--color-app-frame-border, var(--app-frame-border))',
+  'var(--color-app-frame-border,var(--app-frame-border))',
   'var(--color-nav-bg, #',
   'var(--color-bg-header, #',
   'var(--color-bg-hover, #',
@@ -158,30 +164,43 @@ async function oneStatic(path, needle, accept = 'text/css,*/*') {
     status: r.status,
     ok: r.ok && has,
     hint,
+    bodyText: text,
     jsonSnippet: r.ok ? `bytes=${text.length}` : text.slice(0, 80)
   };
 }
 
-async function oneRuleZeroGuard(path, accept) {
-  const url = base + path;
-  const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
-  const r = await fetch(url, { method: 'GET', headers: { Accept: accept }, signal: ctrl });
-  const text = await r.text();
-  const hits = RULE0_FORBIDDEN_SUBSTRINGS.filter(s => text.includes(s));
-  const pass = r.ok && hits.length === 0;
+function ruleZeroForbiddenHits(text) {
+  return RULE0_FORBIDDEN_SUBSTRINGS.filter(s => text.includes(s));
+}
+
+/** When **`cachedBody`** is set (same bytes as a successful **`STATIC_TEXT`** GET), skip a duplicate fetch. */
+async function oneRuleZeroGuard(path, accept, cachedBody = null) {
+  let text = cachedBody;
+  let status = 200;
+  if (text == null) {
+    const url = base + path;
+    const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
+    const r = await fetch(url, { method: 'GET', headers: { Accept: accept }, signal: ctrl });
+    status = r.status;
+    text = await r.text();
+  }
+  const hits = ruleZeroForbiddenHits(text);
+  const pass = status >= 200 && status < 300 && hits.length === 0;
   const hint = pass
-    ? 'Rule 0 stack guard OK'
+    ? cachedBody != null
+      ? 'Rule 0 stack guard OK (cached body)'
+      : 'Rule 0 stack guard OK'
     : hits.length
       ? `forbidden: ${hits.map(h => `"${h}"`).join(', ')}`
-      : r.ok
+      : status >= 200 && status < 300
         ? 'empty guard'
         : '';
   return {
     path,
-    status: r.status,
+    status,
     ok: pass,
     hint,
-    jsonSnippet: r.ok ? `bytes=${text.length}` : text.slice(0, 80)
+    jsonSnippet: `bytes=${text.length}`
   };
 }
 
@@ -209,6 +228,8 @@ function dbSoftFailure(row) {
 
 let criticalFailures = 0;
 let softWarnings = 0;
+/** Populated from successful **`STATIC_TEXT`** GETs so Rule 0 guard can reuse CSS bodies (one fewer round-trip per file). */
+const ruleZeroBodyCache = new Map();
 
 for (const [method, path] of CRITICAL) {
   try {
@@ -253,6 +274,7 @@ for (const entry of STATIC_TEXT) {
     if (!pass) criticalFailures++;
     console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${path} ${row.hint}`.trim());
     if (!pass) console.log('   ', row.jsonSnippet);
+    if (pass && typeof row.bodyText === 'string') ruleZeroBodyCache.set(path, row.bodyText);
   } catch (e) {
     criticalFailures++;
     console.log(`✗ FAIL GET ${path}: ${e.message || e}`);
@@ -261,7 +283,7 @@ for (const entry of STATIC_TEXT) {
 
 for (const [path, accept] of RULE0_GUARD_FETCHES) {
   try {
-    const row = await oneRuleZeroGuard(path, accept);
+    const row = await oneRuleZeroGuard(path, accept, ruleZeroBodyCache.get(path));
     const pass = row.ok;
     if (!pass) criticalFailures++;
     console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${path} ${row.hint}`.trim());

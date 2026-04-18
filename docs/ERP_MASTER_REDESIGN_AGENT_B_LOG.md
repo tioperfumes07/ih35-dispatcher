@@ -279,6 +279,15 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 ## 2026-05-15
 
 - **Rule 0 / hygiene:** **`app-theme.css`** — Header comment refreshed again: no embedded example legacy stacks, no Agent A doc pointer; references **`design-tokens.css`** and the smoke Rule 0 guard.
-- **Smoke:** **`scripts/system-smoke.mjs`** — After existing static CSS needle checks, **`oneStaticRuleZeroGuard`** GETs **`app-theme.css`** and **`maint-accounting-ui-2026.css`** and fails the run if a fixed list of forbidden substring regressions appears (common **`var(--color-*, var(...))`** merges).
+- **Smoke:** **`scripts/system-smoke.mjs`** — After static CSS needle checks, a Rule 0 guard GETs **`app-theme.css`** and **`maint-accounting-ui-2026.css`** and fails if forbidden substring regressions appear (common **`var(--color-*, var(...))`** merges).
 
 **Files:** `public/css/app-theme.css`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-16
+
+- **Rule 0:** **`maintenance.html`** — Token-only pass on inline / template / script strings (**`--color-text-*`**, **`--color-border`**, **`--color-bg-card`**, **`--color-bg-header`**, **`--color-bg-hover`**) and link / SVG accents (**`var(--color-border-focus)`** without **`var(--accent)`**).
+- **Smoke:** **`scripts/system-smoke.mjs`** — **`oneRuleZeroGuard(path, accept)`** runs after static needles; **`RULE0_GUARD_FETCHES`** includes **`/maintenance.html`**. **`RULE0_FORBIDDEN_SUBSTRINGS`** adds compact comma forms, common **`--color-*` + `#`** prefixes, **`var(--color-modal-backdrop, rgba`**, and the prior **`var(--color-*, var(...))`** list.
+
+**Files:** `public/maintenance.html`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

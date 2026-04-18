@@ -380,7 +380,7 @@
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About embedded planner">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
                   Same planner as the standalone page, without duplicate top navigation.
-                  <a href="/fuel.html" target="_blank" rel="noopener" style="color:var(--color-border-focus, var(--accent));font-weight:500">Open full screen</a>
+                  <a href="/fuel.html" target="_blank" rel="noopener" style="color:var(--color-border-focus);font-weight:500">Open full screen</a>
                 </span>
               </span>
             </div>
@@ -1478,8 +1478,8 @@
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tab meanings">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
                     Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
-                    <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:var(--color-border-focus, var(--accent));font-weight:500">Vehicle map</a>
-                    · <a href="#" onclick="openSectionByName('safety');return false;" style="color:var(--color-border-focus, var(--accent));font-weight:500">Safety / HOS</a>
+                    <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:var(--color-border-focus);font-weight:500">Vehicle map</a>
+                    · <a href="#" onclick="openSectionByName('safety');return false;" style="color:var(--color-border-focus);font-weight:500">Safety / HOS</a>
                   </span>
                 </span>
               </div>
@@ -2039,7 +2039,7 @@
                 type="button"
                 id="acctDashQboErrMore"
                 class="acct-dash-btn hidden"
-                style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus, var(--accent));background:transparent"
+                style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus);background:transparent"
                 onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})"
               >
                 View all errors
@@ -5562,7 +5562,7 @@
           if (bar) {
             bar.classList.remove('hidden');
             bar.innerHTML =
-              '<span>Login required — </span><a href="/settings.html" style="color:var(--color-border-focus, var(--accent));font-weight:500">Open Settings</a> to sign in.';
+              '<span>Login required — </span><a href="/settings.html" style="color:var(--color-border-focus);font-weight:500">Open Settings</a> to sign in.';
           }
         }
         throw new Error(data.error || data.message || text.slice(0, 200));
@@ -6420,7 +6420,7 @@
     const ERP_WRENCH_ICON =
       '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="var(--pill-green-text)" d="M22.7 19.3l-3-3a1 1 0 0 0-1.4 0l-.8.8-4.3-4.3a8 8 0 1 0-2.8 2.8l4.3 4.3.8-.8a1 1 0 0 0 0-1.4l3-3a1 1 0 0 0 0-1.4zM7 9a2 2 0 1 1 4 0 2 2 0 0 1-4 0z"/></svg>';
     const ERP_PUMP_ICON =
-      '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="var(--color-border-focus, var(--accent))" d="M5 22V10h4V6h6v4h4v12H5zm6-12V8H9v2h2zm-4 4h10v-2H7v2zm0 4h10v-2H7v2z"/></svg>';
+      '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill="var(--color-border-focus)" d="M5 22V10h4V6h6v4h4v12H5zm6-12V8H9v2h2zm-4 4h10v-2H7v2zm0 4h10v-2H7v2z"/></svg>';
 
     let __erpDriverPayeeVendorIdSet = null;
     let __erpDedicatedEscHandler = null;
@@ -8551,7 +8551,7 @@
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
         if (bar) {
           bar.classList.remove('hidden');
-          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:var(--color-border-focus, var(--accent));font-weight:500">Sign in</a>`;
+          bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:var(--color-border-focus);font-weight:500">Sign in</a>`;
         }
         try {
           applyNavHash();
