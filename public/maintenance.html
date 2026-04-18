@@ -1720,6 +1720,15 @@
                       <span>Out of service units</span>
                       <button type="button" class="shop-col-add" title="Log out-of-service on selected asset" onclick="event.stopPropagation();startMaintFlow('service-oos')">+</button>
                     </div>
+                    <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                      <span style="min-width:0;flex:1 1 200px">The list below is built from <strong>saved</strong> work orders whose service type reads as out of service — not live telematics flags.</span>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How out-of-service rows appear">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          <code>renderShopQueues()</code> scans <code>erp.records</code> for service types containing <code>out of service</code> / <code>out-of-service</code> or equal to <code>oos</code>, then shows one card per unit (latest match). Use <strong>+</strong> in the header to log a new out-of-service work order. For roster hide/show across the app, use <strong>Lists &amp; catalogs</strong> or the unit status sheet <strong>Active / Retired</strong> control.
+                        </span>
+                      </span>
+                    </div>
                     <div class="shop-col-body" id="shopOosBody"></div>
                   </div>
                 </div>
@@ -18040,37 +18049,107 @@
       }
     }
 
+    function __driverPaySettSafePagerId(vendorQboId) {
+      const v = String(vendorQboId || '').trim();
+      return v ? v.replace(/[^a-zA-Z0-9_-]/g, '_') : 'unknown';
+    }
+
+    function __driverPaySettPagerState(vendorQboId) {
+      const id = String(vendorQboId || '').trim();
+      if (!id) return { page: 1, pageSize: 15 };
+      if (!window.__driverPaySettPagerByVendor || !(window.__driverPaySettPagerByVendor instanceof Map)) {
+        window.__driverPaySettPagerByVendor = new Map();
+      }
+      const m = window.__driverPaySettPagerByVendor;
+      if (!m.has(id)) m.set(id, { page: 1, pageSize: 15 });
+      return m.get(id);
+    }
+
+    function __driverPaySettRowHtml(L) {
+      return `<tr><td>${escapeHtml(L.loadNumber)}</td><td>${escapeHtml(L.status || '')}</td><td>${Number(L.revenue).toFixed(2)}</td><td>${Number(L.expenseRollup).toFixed(2)}</td><td>${Number(L.companyNet).toFixed(2)}</td><td>${L.suggestedDriverPay != null ? Number(L.suggestedDriverPay).toFixed(2) : '—'}</td></tr>`;
+    }
+
+    function renderDriverPaySettlementsBox() {
+      const box = document.getElementById('driverPaySettlementsBox');
+      const pay = window.__driverPaySettlementsPayload;
+      if (!box || !pay) return;
+      const pct = pay.driverPayPct;
+      const pctTxt =
+        pct != null && Number.isFinite(Number(pct))
+          ? ` Suggested driver pay = <b>${(Number(pct) * 100).toFixed(0)}%</b> of trip revenue per load.`
+          : ' Set DRIVER_SETTLEMENT_PAY_PCT on the server (0–1) to show suggested pay.';
+      const drivers = Array.isArray(pay.drivers) ? pay.drivers : [];
+      if (!drivers.length) {
+        box.innerHTML = 'No loads with a QBO driver vendor yet.' + pctTxt;
+        return;
+      }
+      box.innerHTML =
+        pctTxt +
+        drivers
+          .map(dr => {
+            const vid = String(dr.qboVendorId || '').trim();
+            const sid = __driverPaySettSafePagerId(vid);
+            const loads = Array.isArray(dr.loads) ? dr.loads : [];
+            const st = __driverPaySettPagerState(vid);
+            const total = loads.length;
+            let slice = loads;
+            if (total && typeof erpPagerSliceRange === 'function') {
+              const range = erpPagerSliceRange(st.page, st.pageSize, total);
+              slice = loads.slice(range[0], range[1]);
+            }
+            const rows = slice.map(L => __driverPaySettRowHtml(L)).join('');
+            const tbodyHtml = rows || '<tr><td colspan="6" class="mini-note">No loads in this page range.</td></tr>';
+            const pagerHost =
+              total > 0
+                ? `<div id="driverPaySettPager_${sid}" class="erp-pager-host" style="margin-top:8px" data-driver-pay-vendor="${escapeHtml(vid)}"></div>`
+                : '';
+            return `<div class="driver-pay-sett-vendor" style="margin-bottom:18px" data-driver-pay-vendor="${escapeHtml(vid)}"><div style="font-weight:500;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><span>${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QuickBooks vendor ${escapeHtml(dr.qboVendorId)}</span>${total ? ` <span class="mini-note">(${total} load${total === 1 ? '' : 's'})</span>` : ''}</span><a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/driver-settlement/${encodeURIComponent(dr.qboVendorId)}" target="_blank" rel="noopener">Driver settlement PDF</a></div><div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0"><table class="st-settlement" style="min-width:520px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>${pagerHost}</div>`;
+          })
+          .join('');
+      drivers.forEach(dr => {
+        const vid = String(dr.qboVendorId || '').trim();
+        const loads = Array.isArray(dr.loads) ? dr.loads : [];
+        const st = __driverPaySettPagerState(vid);
+        const sid = __driverPaySettSafePagerId(vid);
+        const host = document.getElementById(`driverPaySettPager_${sid}`);
+        if (!host || typeof erpPagerRender !== 'function') return;
+        erpPagerRender(host, { page: st.page, pageSize: st.pageSize, total: loads.length }, (nextPage, newPageSize) => {
+          const s = __driverPaySettPagerState(vid);
+          s.page = nextPage;
+          if (newPageSize != null) s.pageSize = newPageSize;
+          renderDriverPaySettlementsBox();
+        });
+      });
+    }
+
     async function loadDriverPaySettlements() {
       const box = document.getElementById('driverPaySettlementsBox');
       if (!box) return;
       box.innerHTML = 'Loading…';
+      window.__driverPaySettlementsPayload = null;
       try {
         const r = await fetch('/api/settlements/driver-pay');
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.error || r.statusText);
-        const pct = d.driverPayPct;
-        const pctTxt =
-          pct != null && Number.isFinite(Number(pct))
-            ? ` Suggested driver pay = <b>${(Number(pct) * 100).toFixed(0)}%</b> of trip revenue per load.`
-            : ' Set DRIVER_SETTLEMENT_PAY_PCT on the server (0–1) to show suggested pay.';
-        if (!(d.drivers || []).length) {
-          box.innerHTML = 'No loads with a QBO driver vendor yet.' + pctTxt;
-          return;
+        window.__driverPaySettlementsPayload = {
+          drivers: Array.isArray(d.drivers) ? d.drivers : [],
+          driverPayPct: d.driverPayPct
+        };
+        const newIds = new Set(
+          (window.__driverPaySettlementsPayload.drivers || [])
+            .map(x => String(x.qboVendorId || '').trim())
+            .filter(Boolean)
+        );
+        if (!window.__driverPaySettPagerByVendor || !(window.__driverPaySettPagerByVendor instanceof Map)) {
+          window.__driverPaySettPagerByVendor = new Map();
+        } else {
+          for (const k of [...window.__driverPaySettPagerByVendor.keys()]) {
+            if (!newIds.has(k)) window.__driverPaySettPagerByVendor.delete(k);
+          }
         }
-        box.innerHTML =
-          pctTxt +
-          (d.drivers || [])
-            .map(dr => {
-              const rows = (dr.loads || [])
-                .map(
-                  L =>
-                    `<tr><td>${escapeHtml(L.loadNumber)}</td><td>${escapeHtml(L.status || '')}</td><td>${Number(L.revenue).toFixed(2)}</td><td>${Number(L.expenseRollup).toFixed(2)}</td><td>${Number(L.companyNet).toFixed(2)}</td><td>${L.suggestedDriverPay != null ? Number(L.suggestedDriverPay).toFixed(2) : '—'}</td></tr>`
-                )
-                .join('');
-              return `<div style="margin-bottom:18px"><div style="font-weight:500;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><span>${escapeHtml(dr.vendorName || dr.qboVendorId)} <span class="mini-note">QuickBooks vendor ${escapeHtml(dr.qboVendorId)}</span></span><a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/driver-settlement/${encodeURIComponent(dr.qboVendorId)}" target="_blank" rel="noopener">Driver settlement PDF</a></div><div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0"><table class="st-settlement" style="min-width:520px"><thead><tr><th>Load #</th><th>Status</th><th>Revenue</th><th>Exp roll-up</th><th>Company net</th><th>Suggested pay</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-            })
-            .join('');
+        renderDriverPaySettlementsBox();
       } catch (e) {
+        window.__driverPaySettlementsPayload = null;
         box.innerHTML = 'Error: ' + escapeHtml(e.message || String(e));
       }
     }
