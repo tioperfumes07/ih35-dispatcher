@@ -843,3 +843,20 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — WO search row / fields (`.maint-search-row`, `.maint-search-field`, `.maint-search-field--grow`), `.maint-wo-summary-bar`, accounting `.acct-dash-kpis` / `.acct-dash-kpi`, `#maintIntegrationStrip` and its direct child rows, and `.erp-topbar .title` each get `min-height: 0` where they already use flex or grid with `min-width: 0`, so maintenance and accounting chrome shrink reliably inside the page shell.
 
 **Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-14
+
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `min-height: 0` added on accounting dashboard cards (`.acct-dash-cards`, `.acct-dash-card`, `.acct-dash-card__btnrow`, `.acct-dash-tools-grid`), AP expense layout (`#acct-transactions` `.ap-expense-form`, `.ap-exp-row`, `.ap-exp-field`, `.ap-exp-field--pdf`, `.ap-lines-section-label`, `.ap-attach-head`), fuel / cost labels (`.fuel-manual-doc-title`, `.erp-qb-cost-shell__label--with-tip`), upload center (`.mr-upload-pickline`, `.mr-upload-conn-grid`, `.mr-upload-conn-card`, `.mr-upload-conn-card__actions`), `.acct-conn-sb__row`, `.erp-toast-host`, and QB cost chrome (`.maint-qb-cost-details`, `__sum`, `.maint-qb-cost-totals-bar`, `.erp-qb-seg`) so those flex/grid regions align with the rest of the maintenance Rule 1 pass.
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-15
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance` dedicated expense modal chrome (`.erp-dedicated-form-modal__shell`, `__bar`, `__bar-actions`, `__total-wrap`) gains `min-height: 0` next to `min-width: 0`.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `.maint-qb-bill-lbl`; upload `.mr-upload-tabbar` and `.mr-upload-panel-card`; toast `.erp-toast` and `.erp-toast__msg` each get `min-height: 0` where flex + `min-width: 0` already apply.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

@@ -690,6 +690,7 @@ body.erp-maintenance .acct-dash-tools-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px 16px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-dash-tools-grid a,
@@ -729,6 +730,7 @@ body.erp-maintenance #acct-transactions .ap-expense-form {
   gap: 0;
   width: 100%;
   min-width: 0;
+  min-height: 0;
   box-sizing: border-box;
 }
 
@@ -739,6 +741,7 @@ body.erp-maintenance #acct-transactions .ap-exp-row {
   gap: 12px 16px;
   margin-bottom: 16px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #acct-transactions .ap-exp-row--pdf {
@@ -751,6 +754,7 @@ body.erp-maintenance #acct-transactions .ap-exp-field {
   gap: 4px;
   flex: 1 1 auto;
   min-width: 120px;
+  min-height: 0;
   box-sizing: border-box;
 }
 
@@ -792,6 +796,7 @@ body.erp-maintenance #acct-transactions .ap-exp-field--bank {
 body.erp-maintenance #acct-transactions .ap-exp-field--pdf {
   flex: 1 1 100%;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #acct-transactions .ap-lines-section-label {
@@ -804,6 +809,7 @@ body.erp-maintenance #acct-transactions .ap-lines-section-label {
   font-size: 12px;
   color: var(--color-text-body);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #acct-transactions .ap-attach-head {
@@ -812,6 +818,7 @@ body.erp-maintenance #acct-transactions .ap-attach-head {
   gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .fuel-manual-doc-title {
@@ -820,6 +827,7 @@ body.erp-maintenance .fuel-manual-doc-title {
   gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-qb-cost-shell__label--with-tip {
@@ -828,6 +836,7 @@ body.erp-maintenance .erp-qb-cost-shell__label--with-tip {
   gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
+  min-height: 0;
 }
 
 /* --- Toast --- */
@@ -841,6 +850,7 @@ body.erp-maintenance .erp-toast-host {
   gap: 8px;
   pointer-events: none;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-toast {
@@ -856,6 +866,7 @@ body.erp-maintenance .erp-toast {
   gap: 10px;
   min-width: min(280px, calc(100vw - 32px));
   max-width: min(400px, calc(100vw - 32px));
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-toast__close {
@@ -871,6 +882,7 @@ body.erp-maintenance .erp-toast__close {
 body.erp-maintenance .erp-toast__msg {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   line-height: 1.45;
   color: var(--color-text-primary);
 }
@@ -911,6 +923,7 @@ body.erp-maintenance .mr-upload-tabbar {
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 16px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .mr-upload-tabbar .subtab {
@@ -942,6 +955,7 @@ body.erp-maintenance .mr-upload-panel-card {
   margin-bottom: 12px;
   box-sizing: border-box;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .mr-upload-drop {
@@ -1049,6 +1063,7 @@ body.erp-maintenance .mr-upload-pickline {
   margin: 10px 0;
   font-size: 13px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .mr-upload-pickline__name {
@@ -1200,6 +1215,7 @@ body.erp-maintenance .mr-upload-conn-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), minmax(0, 1fr)));
   gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .mr-upload-conn-card {
@@ -1208,6 +1224,7 @@ body.erp-maintenance .mr-upload-conn-card {
   padding: 14px 16px;
   background: var(--color-bg-card);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .mr-upload-conn-card__title {
@@ -1223,6 +1240,7 @@ body.erp-maintenance .mr-upload-conn-card__actions {
   gap: 8px;
   margin-top: 8px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .mr-upload-drop__sub {
@@ -1265,6 +1283,7 @@ body.erp-maintenance .acct-conn-sb__row {
   gap: 6px;
   margin-top: 4px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-conn-dot {
@@ -1294,6 +1313,7 @@ body.erp-maintenance .maint-qb-cost-details {
   overflow: hidden;
   background: var(--color-bg-card);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-qb-cost-details__sum {
@@ -1308,6 +1328,7 @@ body.erp-maintenance .maint-qb-cost-details__sum {
   font-weight: 500;
   color: var(--color-text-primary);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-qb-cost-details__sum::-webkit-details-marker {
@@ -1431,6 +1452,7 @@ body.erp-maintenance .maint-qb-bill-lbl {
   justify-content: center;
   margin: 0;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-qb-inline-select {
@@ -1459,6 +1481,7 @@ body.erp-maintenance .maint-qb-cost-totals-bar {
   border-top: 2px solid var(--color-border);
   background: var(--color-bg-card);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-qb-cost-totals-bar__lbl {
@@ -1493,6 +1516,7 @@ body.erp-maintenance .erp-qb-seg {
   width: fit-content;
   max-width: 100%;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-qb-seg__btn {
