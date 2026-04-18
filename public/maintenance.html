@@ -2570,6 +2570,7 @@
                   </tbody>
                 </table>
               </div>
+              <div id="bpOpenBillsPagerHost" class="mr-bp-open-pager" style="margin-top:8px" hidden></div>
               <div class="mr-bp-submitrow">
                 <button type="button" class="qb-btn-primary" onclick="submitAccountingBillPayment()">Create bill payment in QuickBooks</button>
                 <span class="mini-note" style="margin:0">Requires ERP write secret or admin (Settings).</span>
@@ -9512,6 +9513,130 @@
       if (!elIn || !elId) return;
       const match = findBestNameMatch(cacheBankAccounts(), elIn.value);
       elId.value = match ? match.qboId : '';
+    }
+
+    /** Open bills loaded from QBO (full set for current load). */
+    function bpGetOpenBillsList() {
+      return Array.isArray(window.__bpOpenBills) ? window.__bpOpenBills : [];
+    }
+
+    /** Client-side filter (search + min open $) — same predicate as legacy row filter, on bill objects. */
+    function bpGetFilteredOpenBills() {
+      const bills = bpGetOpenBillsList();
+      const q = String(document.getElementById('bpOpenBillsSearch')?.value || '').trim().toLowerCase();
+      const minRaw = String(document.getElementById('bpOpenBillsMin')?.value || '').trim();
+      const min = minRaw === '' ? null : Number(minRaw);
+      return bills.filter(b => {
+        const open = Number(b.balance) || 0;
+        const qboBillId = String(b.id || '');
+        const vendor = String(b.vendorName || '');
+        const doc = String(b.docNumber || '');
+        const txn = String(b.txnDate || '');
+        const due = String(b.dueDate || '');
+        const hay = `${vendor} ${doc} ${qboBillId} ${txn} ${due} ${open}`.toLowerCase();
+        const okQ = !q || hay.includes(q);
+        const okMin = min == null || (Number.isFinite(min) && open >= min);
+        return okQ && okMin;
+      });
+    }
+
+    function bpEnsureOpenBillsSelectionMap() {
+      if (!window.__bpOpenBillsSelection || !(window.__bpOpenBillsSelection instanceof Map)) {
+        window.__bpOpenBillsSelection = new Map();
+      }
+      return window.__bpOpenBillsSelection;
+    }
+
+    function bpOpenBillsSelectionWrite(billId, checked, payAmount) {
+      const id = String(billId || '').trim();
+      if (!id) return;
+      const map = bpEnsureOpenBillsSelectionMap();
+      if (!checked) {
+        map.delete(id);
+        return;
+      }
+      map.set(id, { checked: true, payAmount: payAmount == null ? '' : String(payAmount) });
+    }
+
+    function bpSyncVisibleOpenBillRowsFromMap() {
+      const map = bpEnsureOpenBillsSelectionMap();
+      document.querySelectorAll('#bpOpenBillsBody tr[data-bill-id]').forEach(tr => {
+        const billId = String(tr.getAttribute('data-bill-id') || '').trim();
+        const st = map.get(billId);
+        const chk = tr.querySelector('.bp-pay-chk');
+        const inp = tr.querySelector('.bp-pay-amt');
+        if (!chk || !inp) return;
+        if (st && st.checked) {
+          chk.checked = true;
+          inp.disabled = false;
+          if (st.payAmount != null && String(st.payAmount).trim() !== '') {
+            inp.value = String(st.payAmount).trim();
+          } else {
+            const open = Number(tr.dataset.openBalance || 0) || 0;
+            inp.value = (Math.round(open * 100) / 100).toFixed(2);
+          }
+          bpUpdateRowRemainder(tr, true);
+        } else {
+          chk.checked = false;
+          inp.value = '';
+          inp.disabled = true;
+          const cell = tr.querySelector('.bp-remain-cell');
+          const stEl = tr.querySelector('.bp-pay-status');
+          if (cell) cell.textContent = '—';
+          if (stEl) stEl.textContent = '—';
+        }
+      });
+    }
+
+    function bpRenderOpenBillsPage() {
+      const body = document.getElementById('bpOpenBillsBody');
+      const host = document.getElementById('bpOpenBillsPagerHost');
+      if (!body) return;
+      if (!window.__bpOpenBillsPager) window.__bpOpenBillsPager = { page: 1, pageSize: 25 };
+      const filtered = bpGetFilteredOpenBills();
+      const total = filtered.length;
+      const allN = bpGetOpenBillsList().length;
+      let { page, pageSize } = window.__bpOpenBillsPager;
+      pageSize = Math.max(1, Number(pageSize) || 25);
+      const pages = Math.max(1, Math.ceil(total / pageSize) || 1);
+      page = Math.max(1, Math.min(Math.max(1, Number(page) || 1), pages));
+      window.__bpOpenBillsPager.page = page;
+      window.__bpOpenBillsPager.pageSize = pageSize;
+      const sliceRange =
+        typeof erpPagerSliceRange === 'function'
+          ? erpPagerSliceRange(page, pageSize, total)
+          : [0, Math.min(total, pageSize)];
+      const start = sliceRange[0];
+      const end = sliceRange[1];
+      const pageRows = filtered.slice(start, end);
+      if (!total) {
+        body.innerHTML =
+          '<tr><td colspan="10" class="mini-note">' +
+          (allN ? 'No rows match the current search / min open $.' : 'No rows.') +
+          '</td></tr>';
+        if (typeof erpPagerRender === 'function') erpPagerRender(host, { page: 1, pageSize, total: 0 }, () => {});
+      } else {
+        body.innerHTML = bpHtmlForOpenBillRows(pageRows);
+        bpSyncVisibleOpenBillRowsFromMap();
+        if (typeof erpPagerRender === 'function') {
+          erpPagerRender(host, { page, pageSize, total }, (nextPage, newPageSize) => {
+            window.__bpOpenBillsPager.page = nextPage;
+            if (newPageSize != null) window.__bpOpenBillsPager.pageSize = newPageSize;
+            bpRenderOpenBillsPage();
+          });
+        }
+      }
+      const statusEl = document.getElementById('bpOpenBillsStatus');
+      if (statusEl) {
+        if (!allN) {
+          statusEl.textContent = 'No open bills for this filter.';
+        } else if (!total) {
+          statusEl.textContent = `0 match filter (${allN} loaded).`;
+        } else {
+          statusEl.textContent = `${total} match filter (${allN} loaded). Showing ${start + 1}–${end} in table.`;
+        }
+      }
+      bpRefreshSelectionTotal();
     }
 
     function bpRowTogglePay(chk) {
