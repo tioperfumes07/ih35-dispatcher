@@ -2651,8 +2651,8 @@
                       <input id="apTxnDate" class="qb-in" type="date">
                     </div>
                     <div class="ap-exp-field">
-                      <span class="qb-l">Load / inv # (settlement)</span>
-                      <input id="apLoadInvoiceNumber" class="qb-in" placeholder="Trip P&amp;L key (often load #)">
+                      <span class="qb-l">Load / invoice #</span>
+                      <input id="apLoadInvoiceNumber" class="qb-in" placeholder="P&amp;L key (often load #)">
                     </div>
                     <div class="ap-exp-field">
                       <span class="qb-l">Vendor invoice #</span>
@@ -3180,14 +3180,8 @@
                           <input type="hidden" id="fuelManualVendorQboId" />
                         </div>
                         <div class="ap-exp-field ap-exp-field--unit">
-                          <span class="qb-l">Truck / unit</span>
-                          <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit #" autocomplete="off" />
-                        </div>
-                        <div class="ap-exp-field">
-                          <span class="qb-l">QuickBooks class (optional)</span>
-                          <select id="fuelManualClassSel" class="qb-in">
-                            <option value="">— Match unit name —</option>
-                          </select>
+                          <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
+                          <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
                           <span class="qb-l">Payment method</span>
@@ -3199,10 +3193,21 @@
                           <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
                           <input type="hidden" id="fuelManualBankQboId" />
                         </div>
-                        <div class="ap-exp-field">
-                          <span class="qb-l">Location / site (optional)</span>
-                          <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
-                        </div>
+                        <details class="fuel-manual-header-more">
+                          <summary class="fuel-manual-header-more__sum">Optional: QBO class &amp; location</summary>
+                          <div class="fuel-manual-header-more__body">
+                            <div class="ap-exp-field">
+                              <span class="qb-l">QuickBooks class</span>
+                              <select id="fuelManualClassSel" class="qb-in">
+                                <option value="">— Match unit name —</option>
+                              </select>
+                            </div>
+                            <div class="ap-exp-field">
+                              <span class="qb-l">Location / site</span>
+                              <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
+                            </div>
+                          </div>
+                        </details>
                       </div>
                       <div class="ap-exp-col ap-exp-col--right">
                         <div class="ap-exp-field">
@@ -3210,8 +3215,8 @@
                           <input id="fuelManualDate" class="qb-in" type="date" />
                         </div>
                         <div class="ap-exp-field">
-                          <span class="qb-l">Load / inv # (settlement)</span>
-                          <input id="fuelManualLoadInvoice" class="qb-in" placeholder="Trip P&amp;L key (often load #)" autocomplete="off" />
+                          <span class="qb-l">Load / invoice #</span>
+                          <input id="fuelManualLoadInvoice" class="qb-in" placeholder="P&amp;L key (often load #)" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
                           <span class="qb-l">Vendor invoice #</span>
@@ -4964,7 +4969,13 @@
       </td>
       <td class="maint-qb-td-num">
         <span class="maint-qb-dollar" aria-hidden="true">$</span>
-        <input class="qb-in wo-line-total" type="number" step="0.01" placeholder="0.00" title="Line total (qty × unit, or edit to back-solve unit)" />
+        <input
+          class="qb-in wo-line-total"
+          type="number"
+          step="0.01"
+          placeholder="0.00"
+          title="Line total (qty × unit, or edit to back-solve unit)"
+        />
       </td>
       <td class="maint-qb-td-memo">
         <input class="qb-in wo-tire" placeholder="Tire / ref" autocomplete="off" />
@@ -7232,13 +7243,24 @@
       if (typeof applyNavHash === 'function') applyNavHash();
     }
 
+    function apWoItemLineAmount(row) {
+      if (!row) return 0;
+      const lineEl = row.querySelector('.wo-line-total');
+      const q = Math.max(0, Number(row.querySelector('.wo-qty')?.value) || 0);
+      const r = Number(row.querySelector('.wo-rate')?.value);
+      const fromLine = Number(lineEl?.value);
+      if (Number.isFinite(fromLine) && fromLine > 0) return Math.round(fromLine * 100) / 100;
+      if (q > 0 && Number.isFinite(r)) return Math.round(q * r * 100) / 100;
+      return 0;
+    }
+
     function sumApWoComposerAmounts() {
       let sum = 0;
       document.querySelectorAll('#apWoCatHost .wo-amt').forEach(inp => {
         sum += Number(inp.value) || 0;
       });
-      document.querySelectorAll('#apWoItemHost .wo-line-total').forEach(inp => {
-        sum += Number(inp.value) || 0;
+      document.querySelectorAll('#apWoItemHost .wo-line').forEach(row => {
+        sum += apWoItemLineAmount(row);
       });
       return sum;
     }
@@ -7252,11 +7274,7 @@
       }
       if (window.__erpDedicatedModalKind === 'ap') {
         const v = (document.getElementById('apVendorSearch')?.value || '').trim();
-        let itemHasRate = false;
-        document.querySelectorAll('#apWoItemHost .wo-rate').forEach(inp => {
-          if (Number(inp.value)) itemHasRate = true;
-        });
-        return !!(v || sumApWoComposerAmounts() > 0 || itemHasRate);
+        return !!(v || sumApWoComposerAmounts() > 0);
       }
       return false;
     }
@@ -14762,18 +14780,28 @@
       lineEl.value = q === 0 && r === 0 ? '' : String(t);
     }
 
+    function syncWoApItemLineFromTotal(row) {
+      if (!row || !row.classList.contains('wo-line-item')) return;
+      const q = Math.max(0, Number(row.querySelector('.wo-qty')?.value) || 0);
+      const rateEl = row.querySelector('.wo-rate');
+      const lineEl = row.querySelector('.wo-line-total');
+      if (!rateEl || !lineEl) return;
+      const raw = lineEl.value.trim() === '' ? NaN : Number(lineEl.value);
+      if (!(q > 0 && Number.isFinite(raw))) {
+        refreshApDocTotal();
+        return;
+      }
+      const r = Math.round((raw / q) * 100) / 100;
+      rateEl.value = r === 0 ? '' : String(r);
+      refreshApDocTotal();
+    }
+
     function refreshApDocTotal() {
       const host = document.getElementById('woLines');
       const out = document.getElementById('apDocTotalDisplay');
       const cnt = document.getElementById('woLineCount');
       if (!host || !out) return;
-      let sum = 0;
-      host.querySelectorAll('#apWoCatHost .wo-amt').forEach(inp => {
-        sum += Number(inp.value) || 0;
-      });
-      host.querySelectorAll('#apWoItemHost .wo-line-total').forEach(inp => {
-        sum += Number(inp.value) || 0;
-      });
+      const sum = sumApWoComposerAmounts();
       out.textContent =
         '$' +
         sum.toLocaleString(undefined, {
@@ -14892,18 +14920,7 @@
     function collectApFormWoLines() {
       const out = [];
       const push = (row, detailMode) => {
-        let amt = 0;
-        if (detailMode === 'item') {
-          const lineEl = row.querySelector('.wo-line-total');
-          amt = Number(lineEl?.value) || 0;
-          if (!(amt > 0)) {
-            const q = Number(row.querySelector('.wo-qty')?.value) || 0;
-            const r = Number(row.querySelector('.wo-rate')?.value) || 0;
-            amt = Math.round(q * r * 100) / 100;
-          }
-        } else {
-          amt = Number(row.querySelector('.wo-amt')?.value) || 0;
-        }
+        const amt = detailMode === 'item' ? apWoItemLineAmount(row) : Number(row.querySelector('.wo-amt')?.value) || 0;
         out.push({
           lineType: 'service',
           serviceType: (row.querySelector('.wo-svc')?.value || '').trim() || 'Line',
@@ -18076,7 +18093,7 @@
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
               <div class="mini-note"><strong>WO #</strong> ${escapeHtml(r.workOrderNumber || '—')} <span class="muted">(system)</span></div>
-              <div class="mini-note">Load / inv # (settlement): ${escapeHtml(r.loadNumber || '—')}</div>
+              <div class="mini-note">Load / invoice #: ${escapeHtml(r.loadNumber || '—')}</div>
               <div class="mini-note">Vendor invoice: ${escapeHtml(r.vendorInvoiceNumber || '—')} · Shop WO: ${escapeHtml(r.internalWorkOrderNumber || '—')}</div>
               ${voided && r.voidReason ? `<div class="mini-note">Void reason: ${escapeHtml(r.voidReason)}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
@@ -19333,7 +19350,7 @@
           'Voided',
           'Txn type',
           'Unit',
-          'Load / inv (settlement)',
+          'Load / invoice #',
           'Vendor invoice #',
           'Shop / internal WO #',
           'Vendor QBO ID',
@@ -19378,12 +19395,16 @@
       woLinesHostInit.addEventListener('input', e => {
         const t = e.target;
         if (!t || !t.classList) return;
-        if (t.classList.contains('wo-amt')) refreshApDocTotal();
-        if (t.classList.contains('wo-qty') || t.classList.contains('wo-rate')) {
-          const row = t.closest('.wo-line-item');
-          if (row) syncWoApItemLineTotal(row);
-          refreshApDocTotal();
+        const itemRow = t.closest('.wo-line-item');
+        if (itemRow) {
+          if (t.classList.contains('wo-line-total')) syncWoApItemLineFromTotal(itemRow);
+          else if (t.classList.contains('wo-qty') || t.classList.contains('wo-rate')) {
+            syncWoApItemLineTotal(itemRow);
+            refreshApDocTotal();
+          }
+          return;
         }
+        if (t.classList.contains('wo-amt')) refreshApDocTotal();
       });
     }
 

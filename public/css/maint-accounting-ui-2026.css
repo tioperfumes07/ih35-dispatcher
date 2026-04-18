@@ -811,6 +811,43 @@ body.erp-maintenance .qb-doc-shell .ap-expense-form .ap-exp-field--bank {
   min-width: 0;
 }
 
+/* Manual fuel header — optional class/location (matches AP column rhythm; keeps primary fields compact) */
+body.erp-maintenance .qb-doc-shell .fuel-manual-header-more {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-header);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .qb-doc-shell .fuel-manual-header-more__sum {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-label);
+  list-style: none;
+}
+
+body.erp-maintenance .qb-doc-shell .fuel-manual-header-more__sum::-webkit-details-marker {
+  display: none;
+}
+
+body.erp-maintenance .qb-doc-shell .fuel-manual-header-more__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+body.erp-maintenance .qb-doc-shell .fuel-manual-header-more__body .ap-exp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
 /* AP expense doc — flex header rows (FIX 3) */
 body.erp-maintenance #acct-transactions .ap-expense-form {
   display: flex;
@@ -1477,7 +1514,7 @@ body.erp-maintenance .maint-qb-lines-table {
 }
 
 body.erp-maintenance .maint-qb-lines-table--item {
-  min-width: 960px;
+  min-width: 1040px;
 }
 
 body.erp-maintenance .maint-qb-lines-table thead th {
