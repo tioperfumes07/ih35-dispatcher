@@ -78,6 +78,25 @@ body.erp-maintenance .maint-workorder-fullmodal__shell {
   }
 }
 
+/* Desktop: centered shell so resize grip can shrink/grow the WO modal (full-bleed stays on small viewports). */
+@media (min-width: 721px) {
+  body.erp-maintenance .maint-workorder-fullmodal.maint-modal-bg {
+    align-items: center;
+    justify-content: center;
+    padding: max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+      max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    box-sizing: border-box;
+  }
+  body.erp-maintenance .maint-workorder-fullmodal__shell {
+    width: min(96vw, 1680px);
+    max-width: min(96vw, 1680px);
+    height: min(88vh, calc(100dvh - 32px));
+    max-height: min(88vh, calc(100dvh - 32px));
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-dropdown);
+  }
+}
+
 body.erp-maintenance .maint-workorder-fullmodal__head {
   padding-top: max(12px, env(safe-area-inset-top, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -2016,7 +2035,7 @@ body.banking-page #authBanner.erp-auth-banner {
   box-shadow: var(--shadow-dropdown);
   border: 1px solid var(--color-border);
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: auto;
   resize: both;
 }
 .erp-dedicated-form-modal__bar {
