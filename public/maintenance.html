@@ -456,15 +456,6 @@
               <span class="mini-note" id="safetyHosMeta"></span>
             </div>
           </div>
-          <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">The clock grid below is rebuilt from the latest <strong>board.hos</strong> payload when you search or change <strong>Show</strong>; timers and violations are read-only mirrors of Samsara.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS clocks table behavior">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyHos()</code> normalizes each row (<code>normalizeHosClock</code>), applies <code>applySafetyHosDutyMode</code> for the <strong>Show</strong> filter, then replaces <code>#safetyHosBody</code> with the paged slice. <code>safetyHosPager</code> + <code>erpPagerRender</code> control pages; <code>#safetyHosMeta</code> summarizes match count vs total loaded rows. Does not write back to Samsara — refresh the board when clocks look stale.
-              </span>
-            </span>
-          </div>
           <div class="safety-table-wrap erp-ops-data-frame">
             <table>
               <thead>
@@ -514,15 +505,6 @@
                 </select>
               </div>
             </div>
-          </div>
-          <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">Both grids respect the <strong>List filter</strong> above and read from the latest normalized <strong>board.hos</strong> window (same source as <strong>HOS clocks</strong>).</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Active / in service grids">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyActivePanels()</code> applies <code>applySafetyHosDutyMode</code> with <code>#safetyActiveDutyFilter</code>, splits into active vs in-service rows, then replaces <code>#safetyActiveBody</code> and <code>#safetyInServiceBody</code> via <code>innerHTML</code> with paged slices. <code>safetyActivePager</code> / <code>safetyInServicePager</code> + <code>erpPagerRender</code>; <code>#safetyActiveMeta</code> / <code>#safetyInServiceMeta</code> show counts. Read-only Samsara mirror.
-              </span>
-            </span>
           </div>
           <div class="safety-active-grid">
             <div>
@@ -2573,7 +2555,6 @@
                   <span class="erp-help-tip__panel" role="tooltip">
                     Leave vendor blank to load up to <strong>150</strong> open bills (all vendors). Each payment is for <strong>one vendor</strong> — check rows that share the same vendor.
                     <strong>Partial pay:</strong> lower the pay amount; <strong>Remaining</strong> and <strong>Status</strong> update as you type (capped at open balance on blur).
-                    Use <strong>Select all matching filter</strong> to check every bill that matches search / min open $ (all pages); <strong>Clear checkboxes</strong> resets selections.
                   </span>
                 </span>
               </div>
@@ -2604,11 +2585,6 @@
                     Adds up <strong>Pay</strong> amounts for every checked bill in the loaded set (including other pages of the open-bills table). Each amount is capped at that bill's open balance when you tab away (<strong>Remaining</strong> updates with the row). Vendor and selection rules for this grid are in the <strong>?</strong> on the hint line above.
                   </span>
                 </span>
-              </div>
-              <div style="margin:0 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <button type="button" class="qb-btn-add" onclick="bpSelectAllFilteredOpenBills()">Select all matching filter</button>
-                <button type="button" class="qb-btn-add" onclick="bpClearOpenBillPaySelection()">Clear checkboxes</button>
-                <span class="mini-note" style="margin:0">Applies to bills matching search / min open $ (all pages).</span>
               </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap" style="min-width:0">
                 <table class="st-settlement erp-bp-open-table" style="min-width:1120px">
@@ -7311,10 +7287,7 @@
       let tabId = id;
       let tabBtn = btn;
       if (tabId === 'rep-settlement' && !tmsEnabled) {
-        erpNotify(
-          'Settlement / P&L by load needs the TMS database (Postgres). Configure DATABASE_URL and run migrations.',
-          'info'
-        );
+        erpNotify('Settlement / P&L by load needs the TMS database (Postgres). Configure DATABASE_URL and run migrations.');
         tabId = 'rep-overview';
         tabBtn = document.querySelector('#section-reports .subtab[onclick*="rep-overview"]');
       }
@@ -8328,7 +8301,7 @@
         renderDashboardHome();
         if (activeSection === 'reports') loadReportsData();
       } catch (e) {
-        erpNotify('QBO refresh failed: ' + e.message, 'error');
+        erpNotify('QBO refresh failed: ' + e.message);
       }
     }
 
@@ -8361,9 +8334,9 @@
           document.getElementById(id).value = '';
         });
 
-        erpNotify(result.created ? 'Vendor created in QuickBooks.' : 'Vendor already existed in QuickBooks.', 'success');
+        erpNotify(result.created ? 'Vendor created in QuickBooks.' : 'Vendor already existed in QuickBooks.');
       } catch (e) {
-        erpNotify('Create vendor failed: ' + e.message, 'error');
+        erpNotify('Create vendor failed: ' + e.message);
       }
     }
 
@@ -9986,35 +9959,6 @@
       bpRenderOpenBillsPage();
     }
 
-    function bpSelectAllFilteredOpenBills() {
-      const bills = bpGetFilteredOpenBills();
-      if (!bills.length) {
-        erpNotify('No bills match the current filter (search / min open $).', 'warning');
-        return;
-      }
-      const map = bpEnsureOpenBillsSelectionMap();
-      for (const b of bills) {
-        const id = String(b.id || '').trim();
-        if (!id) continue;
-        const open = Number(b.balance) || 0;
-        const amt = (Math.round(open * 100) / 100).toFixed(2);
-        map.set(id, { checked: true, payAmount: amt });
-      }
-      bpRenderOpenBillsPage();
-      bpRefreshSelectionTotal();
-      erpNotify(
-        `Selected ${bills.length} bill(s) at full open balance (all filter-matching pages). Each payment must still be for one QuickBooks vendor.`,
-        'info'
-      );
-    }
-
-    function bpClearOpenBillPaySelection() {
-      bpEnsureOpenBillsSelectionMap().clear();
-      bpRenderOpenBillsPage();
-      bpRefreshSelectionTotal();
-      erpNotify('Cleared open-bill pay checkboxes and amounts.', 'info');
-    }
-
     function resolveFuelExpBank() {
       const elIn = document.getElementById('fuelExpBankSearch');
       const elId = document.getElementById('fuelExpBankQboId');
@@ -10857,7 +10801,7 @@
         acctPendingRelayFuelImportPreview = data;
         acctRenderRelayFuelImportPreview(data);
       } catch (e) {
-        erpNotify('Preview failed: ' + (e.message || String(e)), 'error');
+        erpNotify('Preview failed: ' + (e.message || String(e)));
       }
     }
 
@@ -10898,7 +10842,7 @@
             (data.alreadyInQbo ? ' Marked as already in QuickBooks (staging).' : '')
         );
       } catch (e) {
-        erpNotify('Confirm import failed: ' + (e.message || String(e)), 'error');
+        erpNotify('Confirm import failed: ' + (e.message || String(e)));
       }
     }
 
@@ -10924,12 +10868,9 @@
         acctLastConfirmedRelayFuelImportBatchId = '';
         acctApplyRelayFuelImportMetaFromPayload({});
         await loadFuelExpenseTab();
-        erpNotify(
-          `Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`,
-          'success'
-        );
+        erpNotify(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`);
       } catch (e) {
-        erpNotify('Undo failed: ' + (e.message || String(e)), 'error');
+        erpNotify('Undo failed: ' + (e.message || String(e)));
       }
     }
 
@@ -11467,8 +11408,7 @@
               .slice(0, 12)
               .map(f => `${f.unit || f.id}: ${f.err}`)
               .join('\n') +
-            (failed.length > 12 ? `\n… and ${failed.length - 12} more` : ''),
-          'error'
+            (failed.length > 12 ? `\n… and ${failed.length - 12} more` : '')
         );
       }
     }

@@ -6,13 +6,11 @@
 
 ---
 
-## 1. Pagination — interaction model (§1 backlog)
-
-**Status (2026-04-18):** The three table/pager themes below are **implemented** in maintenance; this section remains as the **design paper trail** and for follow-on product asks (e.g. server-backed drafts, one global pager for driver settlements).
+## 1. Pagination — needs a new interaction model
 
 | Item | Why it was deferred |
 |------|---------------------|
-| **Pay bills → Open bills** (`#bpOpenBillsBody`) | **Shipped (2026-04-18):** pager + **`Map`** selection (**changelog 215**) + **Select all matching filter** / **Clear checkboxes** (**changelog 218**). Optional later: server-backed draft, different default page size. |
+| **Pay bills → Open bills** (`#bpOpenBillsBody`) | **Shipped (2026-04-18):** pager under the grid + **`window.__bpOpenBillsSelection`** **`Map<billId, { checked, payAmount }>`** + **`bpRenderOpenBillsPage`** / **`bpGetFilteredOpenBills`** — see **`ERP_MASTER_REDESIGN_STATUS.md` changelog 215**. Remaining product gaps (if any): explicit **“select all matching filter”** control, server-backed draft, or different default page size. |
 | **Driver pay settlements** (nested tables per QBO vendor in Reports → Settlement) | **Shipped (2026-04-18):** **per-vendor** **`erpPagerRender`** under each load table (**default 15** rows; shared **`erpPagerSliceRange`**), state in **`window.__driverPaySettPagerByVendor`** + cached **`window.__driverPaySettlementsPayload`** — **`ERP_MASTER_REDESIGN_STATUS.md` changelog 216**. A **flattened** virtual list remains a future alternative if product prefers one pager. |
 | **Safety → Driver files** | **Shipped (2026-04-18):** **`#driverFilesPagerHost`** + **`driverFilesPager`**; in-memory **`window.__driverFilesFieldDraft`** **`Map`** (key = driver name lowercased, same as **`mergeDriversForFiles`**) holds CDL / dates / notes until **Save** or cleared fields; **`renderDriverFiles`** merges draft for filter badges + row values. See **`ERP_MASTER_REDESIGN_STATUS.md` changelog 217**. Optional later: explicit **“unsaved”** banner or server autosave. |
 
@@ -55,9 +53,8 @@ When closing the master checklist, **append dated notes** under this file (or op
 
 ### Dated log
 
-- **2026-04-18 — Master checklist engineering closure:** [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md) **changelog 213** records **`npm run rule0:check`** + **`npm run smoke`** green and **`npm run report:erp`** RTF refresh; **§5 P0** audit row updated (automated checks done, sign-in / **401** / live **QBO** realm still manual). **`public/tracking.html`** gained **`viewport-fit=cover`**. **§1 pagination trio** (open bills, driver pay settlements, driver files) is **shipped** as of **changelogs 215–218**; **§3–4** (Rule **24** second-line strip, platform items) still product/architecture unless picked up.
+- **2026-04-18 — Master checklist engineering closure:** [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md) **changelog 213** records **`npm run rule0:check`** + **`npm run smoke`** green and **`npm run report:erp`** RTF refresh; **§5 P0** audit row updated (automated checks done, sign-in / **401** / live **QBO** realm still manual). **`public/tracking.html`** gained **`viewport-fit=cover`** for parity with other ERP shells. **§1–4 above unchanged** — open bills / nested settlement / driver files pagers and Rule **24** second-line strip still await product or architecture decisions.
 - **2026-04-18 — `erpNotify` hardening (partial vs §5):** **`public/maintenance.html`** — explicit toast **`type`** on fuel-expense **validation** path, generic **error** path, and shop-queue **PATCH** failure (`'warning'` / `'error'` / `'error'`) so messages are not left to inference alone.
 - **2026-04-18 — Pay bills open-bills pager + selection map:** Implements deferred **§1** first-row recommendation — **`#bpOpenBillsPagerHost`**, **`erpPagerRender`**, **`Map`**-backed selection, **`submitAccountingBillPayment`** reads full loaded set + map (**changelog 215**).
 - **2026-04-18 — Driver pay settlements per-vendor pagers:** **`loadDriverPaySettlements`** caches payload and **`renderDriverPaySettlementsBox`** renders each vendor’s load slice + pager (**changelog 216**).
 - **2026-04-18 — Safety → Driver files pager + draft map:** **`driverFilesPager`** + **`__driverFilesFieldDraft`** so paging does not discard unsaved row edits (**changelog 217**).
-- **2026-04-18 — Pay bills bulk actions + notify types:** **Select all matching filter** / **Clear checkboxes** + explicit **`erpNotify`** toast **`type`** on several paths (**changelog 218**).
