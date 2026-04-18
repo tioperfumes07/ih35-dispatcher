@@ -3908,6 +3908,15 @@
             </div>
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
+              <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 240px">Index rows in the table below replace on each <strong>Refresh index</strong>; the trip <strong>Load / invoice #</strong> field above pulls autocomplete options from the same API response (page-level datalist).</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement cost index">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadSettlementIndex()</code> calls <code>GET /api/settlement/index</code>, replaces <code>#settlementIndexBody</code> <code>innerHTML</code> with paged rows (WO / AP / record counts, total, View + PDF) or an empty/error row, and rebuilds <code>#settlementLoadHints</code> <code>innerHTML</code> with up to 100 <code>&lt;option&gt;</code> labels for <code>#settlementLoadInput</code> (via its <code>list</code> attribute).
+                  </span>
+                </span>
+              </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="margin-top:10px;min-width:0">
                 <table class="st-settlement" style="min-width:520px">
                   <thead>
