@@ -124,7 +124,7 @@ PRs that change `server.js` persistence should still describe intent and risk br
 |------------|------------|
 | **`erpNotify` inference** | Heuristic types can mis-classify edge strings; pass explicit **`type`** for new call sites when ambiguous. |
 | **Deferred `erp-ui.js` + inline script order** | Pages that call **`erpMountConnectionStrip`** on **`load`** are safe; **`index.html`** uses **sync** `erp-ui.js` at end of body for immediate mount. |
-| **Connection strip + unauthenticated users** | **`/api/qbo/status`** should remain non-secret; if it ever returns **401**, strip should degrade gracefully (today: muted “could not load status”). |
+| **Connection strip + unauthenticated users** | **`/api/qbo/status`** should remain non-secret. **`erpMountConnectionStrip`** treats **any non-2xx** response like a transport failure: muted **“QuickBooks: could not load status.”** (does not misread error bodies as “not configured”). |
 | **Maintenance size** | Large single file — refactors should stay **surgical**; prefer extracting **small** shared JS modules only when build pipeline is agreed. |
 
 ---
