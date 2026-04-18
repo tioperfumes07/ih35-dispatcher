@@ -20,10 +20,11 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 
 ## 2. Rule 22 — remaining `mini-note` / copy cleanup
 
-- **Upload center** — **partial (2026-04-18):** duplicate **`mr-upload-panel-desc`** removed (**219–220**); nested **`details.mr-upload-help`** collapsed except one **Connections → Samsara write scopes** accordion (**222**). Remaining: dense **`mini-note`** spot-checks outside upload.
+- **Upload center** — **partial (2026-04-18, changelogs 219–222 + 330):** duplicate **`mr-upload-panel-desc`** removed (**219–220**); nested **`details.mr-upload-help`** collapsed except **Connections → Samsara write scopes** (**222**); **330** shortens remaining **`erp-help-tip`** + a few **`mini-note`** lines across sub-tabs. Optional: **`innerHTML`** upload result strings only if product asks.
 - **Reports hub** — **partial (2026-04-18, changelogs 221 + 224–227 + 320):** **Settlement** static + tips + JS empty / no-match strings (**320**) alongside **overview** / **spend** / **driver pay** / **index** / **TMS** / **Team** / **sync** (**221**, **224**–**227**); optional polish on other dense **`innerHTML`** only if product asks.
 - **Accounting / settlement / fuel** — **partial (changelogs 223–224, Reports settlement 320):** accounting **dash** + **Fuel / DEF** tab tips trimmed; **Reports → Settlement / P&amp;L** copy pass aligned with deferred §2.
-- **Lists and catalogs** — **partial (changelog 224):** **Service types** sub-tab lead + admin grid intro shortened; other sub-panels unchanged in this pass.
+- **Lists and catalogs** — **partial (changelogs 224 + 321):** **Service types** (**224**); **QuickBooks**, **Vendors**, **Operational**, **Fleet** sub-panel `**mini-note**` / `**erp-help-tip**` trims (**321**); optional JS-rendered catalog strings if product asks.
+- **Home + Safety (HOS)** — **partial (changelog 331):** **Home** dashboard Reports hero + **System / Sync Summary** tips; **Safety → HOS clocks** + **Active / in service** static leads/tips shortened. Other Safety sub-tabs unchanged unless product asks.
 
 ---
 
@@ -72,3 +73,6 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — Reports TMS + CMMS details + sync lead:** **`renderReportsAll`** TMS strings; Team CMMS benchmark collapsed; sync tab **`mini-note`** trim (**changelog 226**).
 - **2026-04-18 — Reports overview + maint spend + settlement + audit:** **`renderReportsAll`** overview line; **`renderRepMaintSpendByUnitTable`** empty copy; settlement driver pay + index; security audit intro (**changelog 227**).
 - **2026-04-18 — Reports settlement remainder + Tracking idle:** **`rep-settlement`** tips + JS strings + **Yard & idle** lead (**changelog 320**).
+- **2026-04-18 — Lists &amp; catalogs copy:** **`#section-catalog`** Rule 22 pass across QBO / vendors / operational / fleet + service admin intro (**changelog 321**; headline log **327**).
+- **2026-04-18 — Upload center tips + short leads:** **`#section-uploads`** Rule 22 remainder (**changelog 330**).
+- **2026-04-18 — Home dashboard + Safety HOS copy:** **`#section-dashboard`** + **Safety → HOS / Active** static tips (**changelog 331**).

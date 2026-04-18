@@ -312,7 +312,7 @@
           <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting</h3><p>Expenses, bills, and QuickBooks sync</p></div>
           <div class="hero-card hero-card--hint" role="note">
             <h3>Reports</h3>
-            <p>Financial and operational reports live under <strong>Reports</strong> (≡ in company navigation). This home screen stays focused on working transactions.</p>
+            <p><strong>Reports</strong> lives in company navigation (≡). Home stays focused on day-to-day work.</p>
           </div>
         </div>
 
@@ -347,7 +347,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What fills these cards">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Cards summarize <strong>live ERP + Samsara</strong> signals (loads, maintenance, fuel health) after <strong>Refresh</strong>. They are not a full accounting close — open each workspace for detail.
+                    Live <strong>ERP + Samsara</strong> snapshot after <strong>Refresh</strong> (loads, maintenance, fuel health). Not a full close — open each workspace for detail.
                   </span>
                 </span>
               </div>
@@ -361,7 +361,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QuickBooks sync snapshot">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Uses the same <strong>QuickBooks catalog / activity</strong> window as <strong>Accounting</strong> — counts refresh when lists sync. Compare <strong>Reports → ERP ↔ QBO sync</strong> for posting health.
+                    Same QBO catalog/activity view as <strong>Accounting</strong>; counts follow list sync. For posting health see <strong>Reports → ERP ↔ QBO sync</strong>.
                   </span>
                 </span>
               </div>
@@ -408,12 +408,12 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this table">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Samsara HOS clocks: <strong>on duty, driving, sleeper berth, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle is hidden. Off duty <strong>with</strong> a vehicle is shown. The integration token needs <strong>Read ELD Compliance Settings (US)</strong>.
+                Samsara HOS: <strong>on duty, driving, sleeper, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle hidden; off duty <strong>with</strong> vehicle shown. Token needs <strong>Read ELD Compliance Settings (US)</strong>.
               </span>
             </span>
           </div>
           <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label);font-size:12px;max-width:76ch">
-            Live Samsara HOS clocks — use chips, search, and <strong>Show</strong>; open <strong>?</strong> for which duty rows appear and required token scopes.
+            Live Samsara HOS — chips, search, <strong>Show</strong>; <strong>?</strong> for duty rules and token scopes.
           </p>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
             <div class="mr-filter-bar__chips">
@@ -457,7 +457,7 @@
             </div>
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">The clock grid below is rebuilt from the latest <strong>board.hos</strong> payload when you search or change <strong>Show</strong>; timers and violations are read-only mirrors of Samsara.</span>
+            <span style="min-width:0;flex:1 1 220px">Grid rebuilds from <strong>board.hos</strong> when you search or change <strong>Show</strong> — read-only Samsara mirror.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS clocks table behavior">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
@@ -516,7 +516,7 @@
             </div>
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">Both grids respect the <strong>List filter</strong> above and read from the latest normalized <strong>board.hos</strong> window (same source as <strong>HOS clocks</strong>).</span>
+            <span style="min-width:0;flex:1 1 220px"><strong>List filter</strong> + same normalized <strong>board.hos</strong> window as <strong>HOS clocks</strong>.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Active / in service grids">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
@@ -532,7 +532,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Active column">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Drivers currently <strong>on duty</strong> (not off duty or sleeper). Uses the same Samsara window as <strong>HOS clocks</strong> and respects the <strong>List filter</strong> above.
+                      <strong>On duty</strong> (not off duty or sleeper). Same Samsara window as <strong>HOS clocks</strong> + <strong>List filter</strong> above.
                     </span>
                   </span>
                 </div>
@@ -1217,6 +1217,15 @@
                             </span>
                           </span>
                         </p>
+                        <div class="mini-note" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                          <span style="min-width:0;flex:1 1 200px">Extra wheel positions render in the box below — each row is a template clone, not typed into the first-tire fields.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tire extra lines host">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <code>addTireExtraLine()</code> clones <code>#tireExtraLineTpl</code> into <code>#tireExtraLinesHost</code> and fills each new <code>.tire-extra-pos</code> <code>innerHTML</code> from <code>TIRE_POSITION_CHOICES</code>. <code>clearTireExtraLines()</code> clears the host with <code>innerHTML = ''</code> when the tire block resets. <code>collectTireLineItems()</code> walks <code>#tireExtraLinesHost .tire-extra-row</code> and merges with the primary tire fields for save / PDF.
+                            </span>
+                          </span>
+                        </div>
                         <div id="tireExtraLinesHost"></div>
                         <button type="button" class="qb-btn-add" onclick="addTireExtraLine()">+ Add another tire (same total cost)</button>
                       </div>
@@ -3676,8 +3685,19 @@
                 <button type="button" class="secondary" title="Reload QuickBooks lists and recent transactions for reports" onclick="refreshQboMaster()">Sync QuickBooks lists + activity</button>
               </div>
             </div>
-            <div class="panel-body" id="repOverviewBody">
+            <div class="panel-body">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Metric cards below are replaced on each <strong>Refresh reports</strong> — this note stays fixed.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Executive overview body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadReportsData()</code> fetches <code>GET /api/reports/summary</code> into <code>reportsSummaryCache</code>, then <code>renderReportsAll()</code> replaces <code>#repOverviewBody</code> <code>innerHTML</code> with timestamped QBO refresh hints and the ERP / QBO metric grids. Errors replace the host with a short error <code>&lt;p&gt;</code> only.
+                  </span>
+                </span>
+              </div>
+              <div id="repOverviewBody">
               <p class="mini-note" style="margin:0;color:var(--color-text-label)">Run <strong>Refresh reports</strong> — title <strong>?</strong> for QBO + snapshot behavior.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -3694,7 +3714,18 @@
                 </span>
               </div>
             </div>
-            <div class="panel-body" id="repTmsBody"></div>
+            <div class="panel-body">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Pipeline counts below replace after <strong>Refresh reports</strong> on the overview — Postgres TMS only.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="TMS report body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderReportsAll()</code> reads <code>reportsSummaryCache.tms</code> and replaces <code>#repTmsBody</code> <code>innerHTML</code> with either a “not configured” note, an error string, or a mini summary plus a status × count table built from <code>tms.byStatus</code>.
+                  </span>
+                </span>
+              </div>
+              <div id="repTmsBody"></div>
+            </div>
           </div>
         </div>
 
@@ -3743,6 +3774,15 @@
                 </div>
                   </div>
                 </div>
+              </div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Trip headline + PDF links below refresh on each <strong>Run lookup</strong>; the TMS card and cost table are filled in the same pass.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement summary host">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>runSettlementLookup()</code> calls <code>GET /api/settlement/by-load/&lt;load&gt;</code>, then sets <code>#settlementSummary</code> <code>innerHTML</code> to the rolled-up totals, optional revenue / net, and PDF / QBO action links. <code>#settlementTmsBox</code> shows TMS trip + settlement miles (or hides), and <code>#settlementLinesBody</code> is rebuilt with paged line items (or a no-rows message).
+                  </span>
+                </span>
               </div>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
               <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card)"></div>
@@ -3913,7 +3953,18 @@
                 </span>
               </div>
             </div>
-            <div class="panel-body" id="repQboBody"></div>
+            <div class="panel-body">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Transaction tables below rebuild from the same reports snapshot as the overview.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO activity report body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderReportsAll()</code> reads <code>reportsSummaryCache.qboCache.transactionActivity</code> and replaces <code>#repQboBody</code> <code>innerHTML</code> with either a “no window yet” note (connect QBO + sync) or the window meta, Σ $ chips, and four <code>reportTxnTableHtml</code> sections (bills, purchases, vendor credits, invoices).
+                  </span>
+                </span>
+              </div>
+              <div id="repQboBody"></div>
+            </div>
           </div>
         </div>
         <div id="rep-sync" class="reports-tab hidden">
@@ -3929,7 +3980,18 @@
                 </span>
               </div>
             </div>
-            <div class="panel-body" id="repSyncBody"></div>
+            <div class="panel-body">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Posting mix table below swaps when the reports cache refreshes.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP vs QBO sync body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderReportsAll()</code> uses <code>reportsSummaryCache.posting</code> and replaces <code>#repSyncBody</code> <code>innerHTML</code> with a short intro plus a table of totals / posted / local-only / error counts for maintenance records, work orders, and AP transactions.
+                  </span>
+                </span>
+              </div>
+              <div id="repSyncBody"></div>
+            </div>
           </div>
         </div>
         <div id="rep-team" class="reports-tab hidden">
@@ -3946,8 +4008,19 @@
               </div>
               <button type="button" onclick="loadTeamSecurityPanel()">Refresh panel</button>
             </div>
-            <div class="panel-body form-stack" id="repTeamBody" style="max-width:min(960px,100%)">
+            <div class="panel-body form-stack" style="max-width:min(960px,100%)">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Panel content below reloads only when you press <strong>Refresh panel</strong> — not part of <strong>Refresh reports</strong>.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Team security panel body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadTeamSecurityPanel()</code> replaces <code>#repTeamBody</code> <code>innerHTML</code> with a loading line, then <code>GET /api/security/posture</code> results (or errors). Admins may see extra activity blocks; when auth is disabled the host gets a single explanatory paragraph.
+                  </span>
+                </span>
+              </div>
+              <div id="repTeamBody">
               <p class="mini-note" style="margin:0">Loading…</p>
+              </div>
             </div>
           </div>
         </div>
@@ -3986,11 +4059,11 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About lists">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Same data as the sidebar <strong>Lists &amp; catalogs</strong> shortcuts — pick a sub-tab for service types, QuickBooks items/accounts, vendors, operational labels, or fleet / Samsara write settings.
+                  Same data as sidebar <strong>Lists &amp; catalogs</strong> — sub-tabs: service types, QuickBooks lists, vendors &amp; drivers, operational labels, fleet / Samsara renames.
                 </span>
               </span>
             </div>
-            <div class="mini-note" style="margin:0;color:var(--color-text-label)">Sidebar shortcuts or tabs below.</div>
+            <div class="mini-note" style="margin:0;color:var(--color-text-label)">Sidebar or tabs below.</div>
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
@@ -4030,7 +4103,7 @@
                 </div>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Loads when you open <strong>Lists → Service types</strong> or when <strong>R&amp;M Status</strong> refresh runs; search narrows results — pager appears for long lists.</span>
+                <span style="min-width:0;flex:1 1 220px">Loads when you open this sub-tab or <strong>R&amp;M Status</strong> refresh runs; search + pager for long lists.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service catalog admin API">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4055,7 +4128,7 @@
             </div>
             <div id="catalog-panel-qbo" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0">QuickBooks lists drive bills and expense lines — <strong>Refresh lists</strong> below, then pick vendors/items/accounts on work orders and AP.</span>
+                <span class="mini-note" style="margin:0">QBO vendors/items/accounts power bills and expense lines — <strong>Refresh QuickBooks lists</strong> below, then pick on WO and AP.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About QuickBooks lists">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4064,7 +4137,7 @@
                 </span>
               </div>
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Click <strong>Refresh QuickBooks lists</strong> after you add payees in QBO or when pickers and grids look stale — it uses the same client refresh as the maintenance top bar and accounting tiles.</span>
+                <span style="min-width:0;flex:1 1 220px">Use <strong>Refresh QuickBooks lists</strong> after QBO changes or when pickers look stale — same refresh as the top bar / accounting tiles.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What Refresh QuickBooks lists does">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4097,7 +4170,7 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create vendor from Lists">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Calls the same <strong>QuickBooks vendor</strong> create API as Accounting → Live Master. <strong>Display name</strong> is required; company / phone / email help match bills and driver pay. After success, use <strong>Refresh QuickBooks lists</strong> (above) if the vendor list does not update immediately. Status text here shows validation, progress, and the returned QBO id.
+                        Same <strong>QuickBooks vendor</strong> create as Accounting → Live Master. <strong>Display name</strong> required; optional fields help match bills / driver pay. <strong>Refresh QuickBooks lists</strong> above if the grid lags. Status here shows validation, progress, and QBO id.
                       </span>
                     </span>
                   </div>
@@ -4106,7 +4179,7 @@
             </div>
             <div id="catalog-panel-vendors" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0">One list for <strong>QBO vendors</strong> and <strong>driver payees</strong> — refresh master lists from the top bar after you add vendors in QuickBooks.</span>
+                <span class="mini-note" style="margin:0"><strong>QBO vendors</strong> + <strong>driver payees</strong> — after new vendors in QBO, <strong>Refresh QuickBooks lists</strong> (top bar or QuickBooks sub-tab).</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About vendors & drivers">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4115,7 +4188,7 @@
                 </span>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Linking workspace loads when you open this sub-tab (brief <strong>Loading…</strong>), then shows driver payees, QBO search, and cached lists.</span>
+                <span style="min-width:0;flex:1 1 220px">Opens with a short <strong>Loading…</strong>, then driver payees, QBO search, and cached lists.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendors &amp; drivers workspace">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4127,16 +4200,16 @@
             </div>
             <div id="catalog-panel-operational" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0">Machine codes + labels for each unit’s <strong>Operational status</strong> picker — defaults ship with the ERP; add rows for your yard vocabulary.</span>
+                <span class="mini-note" style="margin:0">Codes + labels for each unit’s <strong>Operational status</strong> picker — defaults included; add rows for your yard vocabulary.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About operational status">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Codes used on each unit’s <strong>Operational status</strong> picker (maintenance board). Defaults ship with the ERP file; add custom rows for your vocabulary (yard hold, wash bay, etc.).
+                    Picker values on the maintenance board. Defaults ship in the ERP; add custom rows (yard hold, wash bay, etc.).
                   </span>
                 </span>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Current codes load when you open this sub-tab; add rows below, then <strong>Refresh data</strong> (sidebar) if pickers elsewhere look stale.</span>
+                <span style="min-width:0;flex:1 1 220px">Loads when you open this sub-tab; add below, then sidebar <strong>Refresh data</strong> if pickers look stale.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status catalog">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4161,7 +4234,7 @@
             </div>
             <div id="catalog-panel-fleet" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0"><strong>Samsara</strong> feeds assets and GPS — optional POST renames below need a write-scoped token + admin (or ERP write secret).</span>
+                <span class="mini-note" style="margin:0"><strong>Samsara</strong> assets + GPS — POST renames need a write-scoped token + admin (or ERP write secret).</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Fleet & Samsara">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4172,7 +4245,7 @@
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
               <div class="mini-note" style="margin:10px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Vehicle and driver renames below are <strong>POST</strong> calls through this ERP — they need a write-capable Samsara token on the server; outcomes use <strong>toasts</strong> and may refresh loaded lists.</span>
+                <span style="min-width:0;flex:1 1 220px">Renames are <strong>POST</strong> through this ERP (write-capable Samsara token); results in <strong>toasts</strong> and may refresh lists.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara rename API paths">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4190,7 +4263,7 @@
                     </span>
                   </span>
                 </div>
-                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Enter id + new display name, then POST.</p>
+                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Samsara vehicle id + new name, then POST.</p>
                 <input id="samsaraVehicleIdInput" class="qb-in maint-field" placeholder="Samsara vehicle id">
                 <input id="samsaraVehicleNameInput" class="qb-in maint-field" placeholder="New display name">
                 <button type="button" onclick="pushSamsaraVehicleName()">POST update to Samsara</button>
@@ -4203,7 +4276,7 @@
                     </span>
                   </span>
                 </div>
-                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Enter driver id + new name, then POST.</p>
+                <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Samsara driver id + new name, then POST.</p>
                 <input id="samsaraDriverIdInput" class="qb-in maint-field" placeholder="Samsara driver id">
                 <input id="samsaraDriverNameInput" class="qb-in maint-field" placeholder="New driver name">
                 <button type="button" onclick="pushSamsaraDriverName()">POST update to Samsara</button>
@@ -4221,7 +4294,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About uploads">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Pick a category tab, upload CSV or Excel where supported, then finish confirmation in <strong>Accounting</strong> when the flow requires it (fuel/Relay).
+                  Choose a tab, upload CSV/Excel where supported; confirm in <strong>Accounting</strong> for fuel/Relay before QBO.
                 </span>
               </span>
             </div>
@@ -4244,14 +4317,14 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bank CSV">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Bank CSV matching and uploads run in the <strong>Bank CSV matching</strong> workspace (this tab does not parse files). Supported formats there: Wells Fargo, Bank of America, Chase, and generic CSV — export from your bank and upload in the banking app (same idea as QuickBooks bank feeds).
+                      Matching lives in <strong>Bank CSV matching</strong> (banking app) — this tab is a shortcut only. Wells Fargo, BofA, Chase, or generic CSV from your bank.
                     </span>
                   </span>
                 </div>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Open workspace</div>
-                <p class="mini-note" style="margin:0 0 10px">Bank CSV import is <strong>CSV-only</strong> in the banking app.</p>
+                <p class="mini-note" style="margin:0 0 10px"><strong>CSV-only</strong> in the banking app.</p>
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block;padding:8px 14px" href="/banking.html">Open bank CSV matching</a>
               </div>
               <div class="mr-upload-panel-card">
@@ -4267,14 +4340,14 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Comdata / Relay">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Import Comdata or Relay <strong>All Transactions</strong> exports as <strong>CSV or Excel</strong> — same parser as <strong>Fuel / DEF</strong>. Use this tab’s drop zone or <strong>Fuel / DEF</strong>; after <strong>Import</strong>, confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong> before posting.
+                      Comdata/Relay <strong>All Transactions</strong> as CSV/Excel — same parser as <strong>Fuel / DEF</strong>. Import here or there, then confirm under <strong>Accounting → Fuel &amp; DEF entry</strong> before QBO.
                     </span>
                   </span>
                 </div>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
-                <p class="mini-note" style="margin:0 0 8px">CSV or Excel accepted — same flow as Fuel / DEF.</p>
+                <p class="mini-note" style="margin:0 0 8px">CSV/Excel — same flow as <strong>Fuel / DEF</strong>.</p>
                 <div class="mr-upload-drop" tabindex="0" role="button" aria-label="Choose file to upload" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" data-up-bind="comdata" onclick="document.getElementById('upCenterComdataFile').click()">
                   <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
                   <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
@@ -4299,7 +4372,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About connections">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Use the cards below to check Samsara / QuickBooks status — <strong>not</strong> CSV uploads. <strong>Configure</strong> opens Samsara Cloud; <strong>Refresh data</strong> reloads board data in this app where wired. <strong>Test connection</strong> / <strong>Refresh lists</strong> apply to QuickBooks.
+                      Status cards only (no CSV). <strong>Configure</strong> → Samsara Cloud; <strong>Refresh data</strong> → board reload here. QBO: <strong>Test connection</strong> / <strong>Refresh lists</strong>.
                     </span>
                   </span>
                 </div>
@@ -4327,7 +4400,7 @@
               <details class="mr-upload-help" style="margin-top:12px">
                 <summary>Samsara write scopes (advanced)</summary>
                 <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
-                  <span class="mini-note" style="margin:0">Rename POSTs need a write-scoped token — use <strong>Lists &amp; catalogs → Fleet &amp; Samsara writes</strong> when configured.</span>
+                  <span class="mini-note" style="margin:0">Rename POSTs need write scopes — <strong>Lists → Fleet &amp; Samsara</strong> when configured.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara API write scopes">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
@@ -4345,7 +4418,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About fuel import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Drop a file and <strong>Import</strong> on this tab to preview Comdata, Relay, or manual fuel rows. Export <strong>All Transactions</strong> (or equivalent) from Comdata or Relay as CSV/Excel. After import, confirm and post under <strong>Accounting → Fuel &amp; DEF entry</strong> before anything hits QuickBooks.
+                      Drop file → <strong>Import</strong> to preview Comdata, Relay, or manual fuel. Use carrier <strong>All Transactions</strong> (or equivalent) CSV/Excel. Confirm/post under <strong>Accounting → Fuel &amp; DEF entry</strong> before QBO.
                     </span>
                   </span>
                 </div>
@@ -4376,13 +4449,13 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance AP import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Upload <strong>CSV or Excel</strong> maintenance AP exports. Columns should mirror your real AP export so rows map to work orders and expense lines where the parser can match them.
+                      <strong>CSV or Excel</strong> AP export — columns should mirror your source so rows map to WOs / expense lines where the parser can match.
                     </span>
                   </span>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
                   <button type="button" class="btn btn--small" onclick="uploadCenterDownloadTemplate('ap')">Download blank CSV template</button>
-                  <span class="mini-note" style="margin:0;color:var(--color-text-label)">Headers match this import path.</span>
+                  <span class="mini-note" style="margin:0;color:var(--color-text-label)">Template matches this import.</span>
                 </div>
               </div>
               <div class="mr-upload-panel-card">
@@ -4411,13 +4484,13 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance history import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Bulk history import: fill rows under the template headers, then upload <strong>CSV or Excel</strong> in the drop zone. Validation follows those columns.
+                      Fill rows under template headers, then upload <strong>CSV or Excel</strong>. Validation follows those columns.
                     </span>
                   </span>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
                   <button type="button" class="btn btn--small" onclick="uploadCenterDownloadTemplate('maint')">Download blank CSV template</button>
-                  <span class="mini-note" style="margin:0;color:var(--color-text-label)">Headers match this app’s bulk import.</span>
+                  <span class="mini-note" style="margin:0;color:var(--color-text-label)">Template matches bulk import.</span>
                 </div>
               </div>
               <div class="mr-upload-panel-card">
@@ -4446,7 +4519,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About other import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      For file types not covered by the other tabs. The file is logged for <strong>manual</strong> follow-up — there is no automatic parser.
+                      Uncovered file types — logged for <strong>manual</strong> follow-up; no automatic parser.
                     </span>
                   </span>
                 </div>
