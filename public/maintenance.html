@@ -5736,6 +5736,8 @@
       'Out of service'
     ];
 
+    catalogServiceNames = [...DEFAULT_MAINT_SERVICE_TYPES];
+
     const REPAIR_LOCATION_DEFS = [
       { code: 'in-house', label: 'Internal shop' },
       { code: 'external', label: 'External shop' },
@@ -9665,6 +9667,12 @@
         } catch (e2) {
           console.error('applyNavHash after load failure', e2);
         }
+        try {
+          if (!catalogServiceNames.length) catalogServiceNames = [...DEFAULT_MAINT_SERVICE_TYPES];
+          fillDataLists();
+        } catch (e3) {
+          console.error('fillDataLists after load failure', e3);
+        }
       }
     }
 
@@ -10107,7 +10115,7 @@
       if (listId === 'serviceOptions') {
         return {
           rows: () =>
-            (catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES).map(n => ({
+            maintEffectiveServiceCatalog().map(n => ({
               label: String(n || ''),
               meta: 'Service'
             })),
@@ -19759,6 +19767,11 @@
     renderRepairLocationChips();
     const __mph = document.getElementById('maintPlannedServicesHost');
     if (__mph && !__mph.querySelector('.maint-planned-row')) resetMaintPlannedServiceRows();
+    try {
+      fillDataLists();
+    } catch (e) {
+      console.error('initial fillDataLists', e);
+    }
     loadAll();
     setInterval(loadAll, AUTO_REFRESH_MS);
     {

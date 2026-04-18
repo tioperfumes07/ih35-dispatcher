@@ -177,8 +177,8 @@ body.erp-maintenance .erp-module-sidebar {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--color-bg-card);
-  border-right: 1px solid var(--color-border);
+  background: linear-gradient(180deg, var(--erp-sidebar-group-body-bg, #f3f8fd) 0%, var(--color-bg-card) 72%);
+  border-right: 1px solid var(--erp-sidebar-group-edge, var(--color-border));
   transition: opacity 0.18s ease, width 0.18s ease, min-width 0.18s ease;
 }
 
@@ -1913,14 +1913,14 @@ body.dispatch-page #dispatchApp .erp-topbar.topbar {
   gap: 12px;
   padding: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 10px max(1.25rem, env(safe-area-inset-left, 0px));
   margin: 0;
-  background: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, var(--erp-shell-bar-bg) 0%, var(--erp-shell-bar-bg-deep) 100%);
+  border-bottom: 1px solid var(--erp-shell-bar-edge);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar .title {
   font-size: 16px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--erp-shell-bar-text);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -1958,26 +1958,35 @@ body.dispatch-page #dispatchApp .erp-topbar__actions {
 
 body.dispatch-page #dispatchApp .erp-topbar__link {
   font-weight: 500;
-  color: var(--color-border-focus);
+  color: var(--erp-shell-bar-muted);
   font-size: 13px;
   text-decoration: none;
 }
 
 body.dispatch-page #dispatchApp .erp-topbar__link:hover {
   text-decoration: underline;
+  color: var(--erp-shell-bar-text);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar .topbar-home-link {
   font-weight: 500;
-  color: var(--color-border-focus);
+  color: var(--erp-shell-bar-muted);
   font-size: 13px;
+  max-width: min(100%, 22rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.dispatch-page #dispatchApp .erp-topbar .topbar-home-link:hover {
+  color: var(--erp-shell-bar-text);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button {
   border-radius: var(--radius-input);
-  border: 1px solid var(--color-border-input);
-  background: var(--color-bg-card);
-  color: var(--color-text-body);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--erp-shell-bar-text);
   font-weight: 500;
   box-shadow: none;
   font-size: 13px;
@@ -1985,19 +1994,19 @@ body.dispatch-page #dispatchApp .erp-topbar button {
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button:hover {
-  background: var(--color-bg-header);
-  border-color: var(--color-text-label);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button.secondary {
-  background: var(--pill-blue-bg);
-  border-color: var(--btn-info-border);
-  color: var(--color-border-focus);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.42);
+  color: var(--erp-shell-bar-text);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button.secondary:hover {
-  background: var(--color-bg-active);
-  border-color: var(--color-border-focus);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.55);
 }
 
 body.dispatch-page #dispatchApp .erp-btn-primary {

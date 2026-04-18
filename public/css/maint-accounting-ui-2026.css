@@ -1464,6 +1464,27 @@ body.erp-maintenance .maint-qb-cost-panels {
   margin-top: 4px;
 }
 
+@media (min-width: 1100px) {
+  body.erp-maintenance .maint-qb-cost-panels {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px 12px;
+    align-items: start;
+  }
+
+  body.erp-maintenance .maint-qb-cost-panels > .maint-qb-cost-details {
+    margin-top: 0;
+  }
+
+  body.erp-maintenance .maint-qb-cost-panels > :not(.maint-qb-cost-details) {
+    grid-column: 1 / -1;
+  }
+
+  body.erp-maintenance .maint-qb-cost-panels > .maint-qb-cost-totals-bar {
+    margin-top: 8px;
+  }
+}
+
 body.erp-maintenance .maint-qb-cost-details {
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -1965,6 +1986,12 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-cost-panel-card {
 
 body.erp-maintenance #maintWorkOrderFormMount .maint-form-grid {
   width: 100%;
+  gap: 10px;
+  padding: 10px 12px 12px;
+}
+
+body.erp-maintenance #maintWorkOrderFormMount .maint-form-grid__row {
+  gap: 8px 12px;
 }
 
 body.erp-maintenance #maintWorkOrderFormMount .maint-field-cell .qb-in.maint-field,
@@ -1973,9 +2000,15 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-field-cell select.maint-fie
 }
 
 body.erp-maintenance #maintWorkOrderFormMount .maint-qb-lines-scroll {
-  max-height: min(42vh, 440px);
+  max-height: min(38vh, 360px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 1100px) {
+  body.erp-maintenance #maintWorkOrderFormMount .maint-qb-lines-scroll {
+    max-height: min(36vh, 320px);
+  }
 }
 
 body.erp-maintenance #maintWorkOrderFormMount textarea#notesInput.maint-notes {

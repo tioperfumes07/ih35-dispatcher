@@ -964,8 +964,11 @@ body.erp-maintenance .qb-doc-title-row {
    Rule 3 — Collapsible module sidebar groups (maintenance.html)
    ============================================================================= */
 body.erp-maintenance .erp-module-sidebar .erp-sb-group {
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--erp-sidebar-group-edge);
+  background: var(--erp-sidebar-group-body-bg);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
@@ -979,18 +982,18 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
   cursor: pointer;
   font-size: 11px;
   font-weight: 500;
-  color: var(--color-text-label);
+  color: var(--pill-blue-text);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: var(--color-bg-card);
+  background: var(--erp-sidebar-group-head-bg);
   border: none;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--erp-sidebar-group-edge);
   font-family: inherit;
   text-align: left;
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__head:hover {
-  background: var(--color-bg-hover);
+  background: var(--erp-sidebar-group-head-bg-hover);
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__chev {
@@ -1004,6 +1007,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__body {
   overflow: hidden;
   max-height: 0;
   transition: max-height 0.25s ease;
+  background: var(--erp-sidebar-group-body-bg);
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group.is-open .erp-sb-group__body {
@@ -1011,7 +1015,13 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group.is-open .erp-sb-group__bo
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__body .erp-sb-link {
-  border-bottom: 1px solid var(--color-bg-hover);
+  border-bottom: 1px solid var(--erp-sidebar-group-edge);
+  color: var(--color-text-body);
+  font-size: 13px;
+}
+
+body.erp-maintenance .erp-module-sidebar .erp-sb-group__body .erp-sb-link:hover {
+  background: color-mix(in srgb, var(--erp-shell-bar-bg) 8%, var(--erp-sidebar-group-body-bg));
 }
 
 /* --- Rule 3 (reports in-page sidebar): native <details> groups --- */

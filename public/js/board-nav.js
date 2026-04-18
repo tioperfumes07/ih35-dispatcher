@@ -7,7 +7,7 @@
       links: [
         { label: 'ERP — Fuel tab', href: '/maintenance.html#fuel' },
         { label: 'Full-screen fuel planner', href: '/fuel.html' },
-        { label: 'Company home', href: '/' }
+        { label: 'IH 35 Transportation LLC', href: '/' }
       ]
     },
     {
@@ -26,7 +26,7 @@
       links: [
         { label: 'Loads board (full screen)', href: '/dispatch.html' },
         { label: 'ERP — Maintenance', href: '/maintenance.html#maintenance' },
-        { label: 'Company home', href: '/' }
+        { label: 'IH 35 Transportation LLC', href: '/' }
       ]
     },
     {
@@ -35,7 +35,7 @@
       href: '/maintenance.html#safety',
       links: [
         { label: 'ERP — Safety (HOS)', href: '/maintenance.html#safety' },
-        { label: 'Company home', href: '/' }
+        { label: 'IH 35 Transportation LLC', href: '/' }
       ]
     },
     {
@@ -87,7 +87,7 @@
       links: [
         { label: 'Reports hub (TMS · maintenance · QuickBooks)', href: '/maintenance.html#reports' },
         { label: 'Accounting', href: '/maintenance.html#accounting' },
-        { label: 'Company home', href: '/' }
+        { label: 'IH 35 Transportation LLC', href: '/' }
       ]
     }
   ];
