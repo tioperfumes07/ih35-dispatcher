@@ -411,6 +411,7 @@ body.erp-maintenance .qb-picker-item__meta {
   top: max(0px, env(safe-area-inset-top, 0px));
   right: 0;
   width: min(520px, calc(100vw - 44px));
+  min-width: 0;
   height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   background: var(--color-bg-card);
   border-left: 1px solid var(--color-border);
@@ -429,11 +430,19 @@ body.erp-maintenance .qb-picker-item__meta {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
-.erp-drawer__title { font-weight: 750; letter-spacing: -0.01em; }
+.erp-drawer__title {
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .erp-drawer__body {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   padding: 12px 14px max(18px, env(safe-area-inset-bottom, 0px));
   overflow: auto;
 }
@@ -1008,6 +1017,7 @@ body.erp-maintenance .panel-title {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.02em;
+  min-width: 0;
 }
 
 body.erp-maintenance .panel-body {

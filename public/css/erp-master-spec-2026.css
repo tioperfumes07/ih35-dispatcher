@@ -1792,7 +1792,7 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
 
 /* Dispatch — align main column with shared design tokens (works with erp-master-redesign dispatch rules) */
 body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body {
-  background: var(--color-bg-page, var(--bg, #f5f6f8));
+  background: var(--color-bg-page);
 }
 body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
   padding: max(16px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))

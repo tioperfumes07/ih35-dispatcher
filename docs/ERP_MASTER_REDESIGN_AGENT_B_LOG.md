@@ -379,3 +379,21 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`erp-topbar .title`** and **`maint-wo-form-stack-inner`** get **`min-width: 0`** (compact accounting topbar + WO form stack shrink with the shell).
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-20
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`maint-wo-columns`** and **`maint-fleet-inline`** get **`min-width: 0`** so the WO workspace row and inline fleet controls can shrink inside the maintenance shell without forcing horizontal overflow.
+- **Rule 1:** **`public/css/app-theme.css`** — **`erp-drawer`** gets **`min-width: 0`**; **`erp-drawer__head`** gets **`min-width: 0`**; **`erp-drawer__title`** gets **`min-width: 0`** with ellipsis so long “Add new” titles stay inside the drawer chrome beside the close control.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-21
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`erp-drawer__body`** gets **`min-width: 0`** so the scrollable drawer column respects flex shrink; **`body.erp-maintenance .panel-title`** gets **`min-width: 0`** so long panel headings cooperate with **`panel-head`** flex / wrap instead of widening the row.
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`mr-upload-panel-card`** gets **`min-width: 0`** so upload-center cards stay within narrow viewports when stacked beside other columns.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
