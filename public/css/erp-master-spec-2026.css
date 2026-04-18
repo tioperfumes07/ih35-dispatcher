@@ -1997,13 +1997,14 @@ body.banking-page #authBanner.erp-auth-banner {
 }
 
 /* Dedicated accounting / fuel expense modals (teleport existing shells) */
+/* Grid: backdrop + shell share one cell so the shell is not a flex item (native resize is flaky on flex items). */
 .erp-dedicated-form-modal {
   position: fixed;
   inset: 0;
   z-index: 1900;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  display: grid;
+  grid-template: 1fr / 1fr;
+  place-items: start center;
   padding: max(16px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
     max(24px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
   box-sizing: border-box;
@@ -2013,6 +2014,7 @@ body.banking-page #authBanner.erp-auth-banner {
   display: none !important;
 }
 .erp-dedicated-form-modal__backdrop {
+  grid-area: 1 / 1;
   position: fixed;
   inset: 0;
   background: var(--color-modal-backdrop);
@@ -2020,8 +2022,11 @@ body.banking-page #authBanner.erp-auth-banner {
 }
 /* Shell is block-level so native resize works (resize is unreliable on flex containers). */
 .erp-dedicated-form-modal__shell {
+  grid-area: 1 / 1;
   position: relative;
   z-index: 1;
+  justify-self: center;
+  align-self: start;
   width: min(860px, 100%);
   min-width: 320px;
   max-width: min(98vw, 1200px);
@@ -2029,13 +2034,13 @@ body.banking-page #authBanner.erp-auth-banner {
   height: min(78vh, 720px);
   max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 48px);
   display: block;
-  margin: 0 auto;
+  margin: 0;
   background: var(--color-bg-page);
   border-radius: 12px;
   box-shadow: var(--shadow-dropdown);
   border: 1px solid var(--color-border);
   box-sizing: border-box;
-  overflow: auto;
+  overflow: hidden;
   resize: both;
 }
 .erp-dedicated-form-modal__inner {
@@ -2046,7 +2051,8 @@ body.banking-page #authBanner.erp-auth-banner {
   min-height: 0;
   box-sizing: border-box;
 }
-.erp-dedicated-form-modal__shell:fullscreen {
+.erp-dedicated-form-modal__shell:fullscreen,
+.erp-dedicated-form-modal__shell:-webkit-full-screen {
   width: 100%;
   height: 100%;
   max-width: none;
@@ -2055,7 +2061,8 @@ body.banking-page #authBanner.erp-auth-banner {
   resize: none;
   display: block;
 }
-.erp-dedicated-form-modal__shell:fullscreen .erp-dedicated-form-modal__inner {
+.erp-dedicated-form-modal__shell:fullscreen .erp-dedicated-form-modal__inner,
+.erp-dedicated-form-modal__shell:-webkit-full-screen .erp-dedicated-form-modal__inner {
   min-height: 100%;
   height: 100%;
 }
