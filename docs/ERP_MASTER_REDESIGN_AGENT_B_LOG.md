@@ -397,3 +397,20 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`mr-upload-panel-card`** gets **`min-width: 0`** so upload-center cards stay within narrow viewports when stacked beside other columns.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-22
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`maint-kpi-card`** (compact KPI grid cells), **`maint-aside-kv`** (WO aside key/value flex rows), and **`maint-form-actions__meta`** (footer meta flex row) so dense maintenance chrome can shrink inside **`minmax(0, 1fr)`** / flex parents without widening the viewport.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-23
+
+- **Rule 1 (grid tracks):** **`public/css/app-theme.css`** — Maintenance shell **`grid-template-columns: 260px 1fr`** → **`260px minmax(0, 1fr)`**; WO / QB line grids and header use **`minmax(0, 1.3fr)`** / **`minmax(0, 1.1fr)`** instead of bare **`fr`** so fractional columns respect **`min-width: 0`** semantics; **`qb-doc-memo-row`** uses **`minmax(0, 1fr)`** pair; large-viewport **`#woLines .wo-line-grid`** override and **print** **`.app`** column updated the same way.
+- **Rule 1 (flex + items):** **`qb-lines-actions`**, **`qb-doc-actions`** child flex groups, **`list`**, **`hero-card`**, and narrow (**`max-width: 800px`**) single-column dashboard grids use **`min-width: 0`** or **`minmax(0, 1fr)`** so list shells and doc chrome do not widen the main column.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

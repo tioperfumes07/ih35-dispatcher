@@ -699,7 +699,7 @@ body.erp-maintenance .app {
   min-height: 100vh;
   min-width: 0;
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 260px minmax(0, 1fr);
   transition: grid-template-columns 0.22s ease;
   position: relative;
 }
@@ -952,6 +952,7 @@ body.erp-maintenance .hero-card {
   padding: 12px 14px;
   cursor: pointer;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  min-width: 0;
 }
 
 body.erp-maintenance .hero-card:hover {
@@ -1075,6 +1076,7 @@ body.erp-maintenance .list {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-bg-card);
+  min-width: 0;
 }
 
 body.erp-maintenance .list-row {
@@ -1529,7 +1531,7 @@ body.erp-maintenance .wo-line:last-child {
 
 body.erp-maintenance .wo-line-grid {
   display: grid;
-  grid-template-columns: 36px 1.3fr 88px 1.1fr 1.1fr 48px 72px 90px 28px;
+  grid-template-columns: 36px minmax(0, 1.3fr) 88px minmax(0, 1.1fr) minmax(0, 1.1fr) 48px 72px 90px 28px;
   gap: 6px;
   align-items: end;
   min-width: 0;
@@ -1625,7 +1627,7 @@ body.erp-maintenance .qb-lines-wrap {
 
 body.erp-maintenance .qb-lines-header {
   display: grid;
-  grid-template-columns: 36px 1.3fr 88px 1.1fr 1.1fr 48px 72px 90px 28px;
+  grid-template-columns: 36px minmax(0, 1.3fr) 88px minmax(0, 1.1fr) minmax(0, 1.1fr) 48px 72px 90px 28px;
   gap: 6px;
   padding: 8px 10px;
   font-size: 10px;
@@ -1649,11 +1651,12 @@ body.erp-maintenance .qb-lines-actions {
   padding: 10px;
   border-top: 1px solid var(--color-border);
   background: var(--color-bg-hover);
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-doc-memo-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   margin-top: 12px;
   min-width: 0;
@@ -1685,6 +1688,7 @@ body.erp-maintenance .qb-doc-actions .qb-actions-right {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-btn-primary {
@@ -2239,6 +2243,7 @@ body.erp-maintenance .maint-kpi-card {
   border-radius: 10px;
   padding: 8px 10px;
   background: var(--color-bg-card);
+  min-width: 0;
 }
 body.erp-maintenance .maint-kpi-card__label {
   font-size: 11px;
@@ -2292,6 +2297,7 @@ body.erp-maintenance .maint-aside-kv {
   gap: 10px;
   padding: 4px 0;
   border-bottom: 1px solid var(--color-border);
+  min-width: 0;
 }
 body.erp-maintenance .maint-aside-kv span {
   color: var(--color-text-label);
@@ -2500,6 +2506,7 @@ body.erp-maintenance .maint-form-actions__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-form-grid {
@@ -3467,13 +3474,13 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
   body.erp-maintenance .toolbar,
   body.erp-maintenance .search-row,
   body.erp-maintenance .unit-summary {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (min-width: 1200px) {
   body.erp-maintenance #section-accounting #woLines .wo-line-grid {
-    grid-template-columns: 36px 1.3fr 88px 1.1fr 1.1fr 48px 72px 90px 28px !important;
+    grid-template-columns: 36px minmax(0, 1.3fr) 88px minmax(0, 1.1fr) minmax(0, 1.1fr) 48px 72px 90px 28px !important;
   }
 }
 
@@ -3486,7 +3493,7 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
   }
 
   body.erp-maintenance .app {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
   body.erp-maintenance .main {
