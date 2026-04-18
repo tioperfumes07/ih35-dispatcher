@@ -160,6 +160,7 @@ body.erp-maintenance .maint-search-row {
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-search-field {
@@ -212,6 +213,7 @@ body.erp-maintenance .maint-wo-col-units {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-wo-col-units .panel {
@@ -222,6 +224,7 @@ body.erp-maintenance .maint-wo-col-units .panel {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-wo-col-units .panel-head {
@@ -299,6 +302,7 @@ body.erp-maintenance .maint-wo-placeholder {
   align-items: center;
   justify-content: center;
   min-height: 200px;
+  min-width: 0;
   text-align: center;
   font-size: 14px;
   color: var(--color-text-label);
@@ -332,6 +336,7 @@ body.erp-maintenance .maint-wo-summary-bar {
   gap: 16px;
   align-items: center;
   margin-bottom: 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-wo-summary-bar .kv {
