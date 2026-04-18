@@ -7648,7 +7648,7 @@
       if (!keepPagerPage) repMaintByUnitPager.page = 1;
       if (!mb.length) {
         mbEl.innerHTML =
-          '<p class="mini-note" style="margin:0;color:var(--color-text-label)">No spend-by-unit rows yet — post or import maintenance expenses, then <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
+          '<p class="mini-note" style="margin:0;color:var(--color-text-label)">No rows yet — post/import maintenance expenses, then <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -7722,7 +7722,7 @@
       if (tb) {
         if (!tms.configured) {
           tb.innerHTML =
-            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">TMS not configured — set <code>DATABASE_URL</code>, run <code>npm run db:migrate</code>, then <strong>Refresh reports</strong> on the overview.</p>';
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">TMS off — set <code>DATABASE_URL</code>, run <code>npm run db:migrate</code>, then <strong>Refresh reports</strong> on Overview.</p>';
         } else if (!tms.ok) {
           tb.innerHTML =
             '<p class="mini-note" style="margin:0;color:var(--color-semantic-error)">Could not read TMS summary: ' +
