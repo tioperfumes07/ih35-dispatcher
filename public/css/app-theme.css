@@ -1399,6 +1399,7 @@ body.erp-maintenance .iframe-wrap {
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--color-bg-card);
+  min-width: 0;
 }
 
 body.erp-maintenance .iframe-wrap iframe {
@@ -1761,6 +1762,7 @@ body.erp-maintenance .shop-tab-panel {
 
 body.erp-maintenance .shop-tab-panel.active {
   display: block;
+  min-width: 0;
 }
 
 body.erp-maintenance .shop-col {
@@ -1769,6 +1771,7 @@ body.erp-maintenance .shop-col {
   background: var(--color-bg-card);
   overflow: hidden;
   min-height: 120px;
+  min-width: 0;
 }
 
 body.erp-maintenance .shop-col-head {
@@ -1868,6 +1871,7 @@ body.erp-maintenance .catalog-subpanel {
 
 body.erp-maintenance .catalog-subpanel.active {
   display: block;
+  min-width: 0;
 }
 
 body.erp-maintenance .upload-subpanel {
@@ -1876,6 +1880,7 @@ body.erp-maintenance .upload-subpanel {
 
 body.erp-maintenance .upload-subpanel.active {
   display: block;
+  min-width: 0;
 }
 
 body.erp-maintenance #section-accounting .accounting-tab {
@@ -2000,6 +2005,7 @@ body.erp-maintenance .asset-cat-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin: 14px 0;
+  min-width: 0;
 }
 
 body.erp-maintenance .asset-cat-tile {
@@ -2267,6 +2273,7 @@ body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+  min-width: 0;
 }
 body.erp-maintenance .maint-kpi-card {
   border: 1px solid var(--color-border);
@@ -2394,6 +2401,7 @@ body.erp-maintenance .maint-asset-header-card__ids {
   margin-top: 8px;
   font-size: 12px;
   color: var(--color-text-label);
+  min-width: 0;
 }
 body.erp-maintenance .maint-status-pill {
   display: inline-flex;
@@ -2807,6 +2815,7 @@ body.erp-maintenance .maint-main-tab-panel {
 }
 body.erp-maintenance .maint-main-tab-panel.active {
   display: block;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-main-subtabs {
