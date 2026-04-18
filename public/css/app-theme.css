@@ -2434,6 +2434,7 @@ body.erp-maintenance .maint-asset-status-panel__head {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
+  min-width: 0;
 }
 body.erp-maintenance .maint-asset-panel-block {
   margin-top: 0;
@@ -2485,6 +2486,7 @@ body.erp-maintenance .maint-cost-qbo-custclass {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
 }
 body.erp-maintenance .maint-cost-qbo-custclass__cell {
   flex: 1;
@@ -2664,6 +2666,7 @@ body.erp-maintenance .maint-wo-split {
   gap: 16px 18px;
   align-items: start;
   margin-top: 4px;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-wo-split__side {
@@ -2745,6 +2748,7 @@ body.erp-maintenance .maint-cost-line__acct {
   background: var(--color-bg-hover);
   border-radius: 6px;
   padding: 8px 10px;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-cost-line__extras {
@@ -2756,6 +2760,7 @@ body.erp-maintenance .maint-cost-line__extras {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px dashed var(--color-border);
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-cost-line__billable {
@@ -2863,6 +2868,7 @@ body.erp-maintenance .maint-wo-banner {
     var(--color-bg-card) 100%
   );
   box-shadow: 0 1px 0 color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+  min-width: 0;
 }
 body.erp-maintenance .maint-wo-banner__eyebrow {
   font-size: 11px;
@@ -2962,6 +2968,7 @@ body.erp-maintenance .maint-save-toolbar__actions {
   gap: 6px;
   flex: 0 0 auto;
   margin-left: auto;
+  min-width: 0;
 }
 @media (max-width: 720px) {
   body.erp-maintenance .maint-save-toolbar--qb {
