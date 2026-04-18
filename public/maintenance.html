@@ -3461,8 +3461,7 @@
               </div>
             </div>
             <div class="panel-body">
-              <p class="mini-note" style="margin:0 0 8px">Per-driver load rollups from QBO vendors — details in <strong>?</strong>.</p>
-              <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Optional: <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) for a suggested pay line.</p>
+              <p class="mini-note" style="margin:0 0 8px">Per-driver load rollups from QBO vendors — open <strong>?</strong> for pay % and field meanings.</p>
               <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
               <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Open and refresh.</div>
             </div>
@@ -3879,9 +3878,15 @@
                 </p>
                 <details class="mr-upload-help">
                   <summary>Supported bank formats</summary>
-                  <p class="mini-note" style="margin:8px 0 0">
-                    Matching and reconciliation run in the <strong>Bank CSV matching</strong> workspace (same rules as QuickBooks bank feeds). Export from your bank as CSV and upload there.
-                  </p>
+                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
+                    <span class="mini-note" style="margin:0">Matching runs in the <strong>Bank CSV matching</strong> workspace.</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How bank CSV matching works">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Same rules as QuickBooks bank feeds — export CSV from your bank and upload in the banking app.
+                      </span>
+                    </span>
+                  </div>
                 </details>
               </div>
               <div class="mr-upload-panel-card">
@@ -3909,9 +3914,15 @@
                 <p class="mr-upload-panel-desc" style="margin-top:6px">Upload export CSV or Excel — same flow as <strong>Fuel / DEF</strong>.</p>
                 <details class="mr-upload-help">
                   <summary>How to export from Comdata</summary>
-                  <p class="mini-note" style="margin:8px 0 0">
-                    Use the Fuel / DEF tab to upload your export; preview and confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong>.
-                  </p>
+                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
+                    <span class="mini-note" style="margin:0">Use the <strong>Fuel / DEF</strong> tab to drop your file; confirm rows in <strong>Accounting → Fuel &amp; DEF entry</strong>.</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Relay / Comdata export flow">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Comdata and Relay “All Transactions” exports use the same parser as Fuel / DEF — preview there, then finish confirmation under Accounting.
+                      </span>
+                    </span>
+                  </div>
                 </details>
               </div>
               <div class="mr-upload-panel-card">
@@ -3971,10 +3982,18 @@
               </div>
               <details class="mr-upload-help" style="margin-top:12px">
                 <summary>Samsara write scopes (advanced)</summary>
-                <ul class="mini-note" style="margin:8px 0 0;padding-left:1.2rem;line-height:1.5">
-                  <li>Fleet/HOS in this app is read-only unless your API token includes write scopes. Use <strong>Lists &amp; catalogs → Fleet &amp; Samsara writes</strong> for POSTs when configured.</li>
-                  <li>Tokens must be re-issued after adding scopes; read-only tokens return 403 from Samsara.</li>
-                </ul>
+                <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
+                  <span class="mini-note" style="margin:0">Fleet/HOS is read-only here unless your token has write scopes — use <strong>Lists &amp; catalogs → Fleet &amp; Samsara writes</strong> for POSTs when configured.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara API write scopes">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <ul style="margin:0;padding-left:1.2rem;line-height:1.5">
+                        <li>Fleet/HOS in this app is read-only unless your API token includes write scopes. Use <strong>Lists &amp; catalogs → Fleet &amp; Samsara writes</strong> for POSTs when configured.</li>
+                        <li>Tokens must be re-issued after adding scopes; read-only tokens return 403 from Samsara.</li>
+                      </ul>
+                    </span>
+                  </span>
+                </div>
               </details>
             </div>
 
@@ -3994,9 +4013,15 @@
                 </p>
                 <details class="mr-upload-help">
                   <summary>How to export from Comdata / Relay</summary>
-                  <p class="mini-note" style="margin:8px 0 0">
-                    Export “All Transactions” or equivalent CSV/Excel. After <strong>Import</strong> here, you are taken to the fuel workspace with the preview loaded.
-                  </p>
+                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
+                    <span class="mini-note" style="margin:0">Export <strong>All Transactions</strong> (or equivalent) as CSV/Excel, then <strong>Import</strong> here.</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="After you import">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        After <strong>Import</strong>, the fuel workspace opens with the preview loaded so you can confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong> before posting.
+                      </span>
+                    </span>
+                  </div>
                 </details>
               </div>
               <div class="mr-upload-panel-card">
