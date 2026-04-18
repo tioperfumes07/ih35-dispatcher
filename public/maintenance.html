@@ -2723,7 +2723,7 @@
                             <th class="maint-qb-th-num">#</th>
                             <th>Category</th>
                             <th>Description</th>
-                            <th class="maint-qb-th-num">Amount</th>
+                            <th class="maint-qb-th-num">Line</th>
                             <th>Tire / ref</th>
                             <th class="maint-qb-th-del"></th>
                           </tr>
@@ -4928,7 +4928,7 @@
       </td>
       <td class="maint-qb-td-num">
         <span class="maint-qb-dollar" aria-hidden="true">$</span>
-        <input class="qb-in wo-amt" type="number" step="0.01" placeholder="0" />
+        <input class="qb-in wo-amt" type="number" step="0.01" placeholder="0" title="Line amount" />
       </td>
       <td class="maint-qb-td-memo">
         <input class="qb-in wo-tire" placeholder="Tire / ref" autocomplete="off" />
@@ -7278,7 +7278,13 @@
       }
       if (window.__erpDedicatedModalKind === 'ap') {
         const v = (document.getElementById('apVendorSearch')?.value || '').trim();
-        return !!(v || sumApWoComposerAmounts() > 0);
+        const unit = (document.getElementById('apAssetUnit')?.value || '').trim();
+        const memo = (document.getElementById('apMemo')?.value || '').trim();
+        let itemHasRate = false;
+        document.querySelectorAll('#apWoItemHost .wo-rate').forEach(inp => {
+          if (Number(inp.value)) itemHasRate = true;
+        });
+        return !!(v || unit || memo || sumApWoComposerAmounts() > 0 || itemHasRate);
       }
       return false;
     }
