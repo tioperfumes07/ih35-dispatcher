@@ -4243,20 +4243,20 @@
             </div>
             <div id="catalog-panel-qbo" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0">QBO vendors/items/accounts power bills and expense lines — <strong>Refresh QuickBooks lists</strong> below, then pick on WO and AP.</span>
+                <span class="mini-note" style="margin:0"><strong>QBO</strong> vendors/items/accounts — <strong>Refresh QuickBooks lists</strong> below, then pick on WO/AP.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About QuickBooks lists">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Vendors / items / accounts live in <strong>QuickBooks Online</strong> — refresh cache here, then pick on bills / maint expenses. Link drivers in <strong>Vendors &amp; drivers</strong>.
+                    Cached from QBO — refresh here, then pick on bills/maint lines. Driver links: <strong>Vendors &amp; drivers</strong>.
                   </span>
                 </span>
               </div>
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Use <strong>Refresh QuickBooks lists</strong> after QBO changes or when pickers look stale — same refresh as the top bar / accounting tiles.</span>
+                <span style="min-width:0;flex:1 1 220px"><strong>Refresh QuickBooks lists</strong> after QBO changes or stale pickers — same as top bar / Accounting.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What Refresh QuickBooks lists does">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>refreshQboMaster()</code>: <code>GET /api/qbo/master</code> → <code>erp.qboCache</code> + <code>fillDataLists()</code> + <code>bootQbPickers()</code>; Live Master grid when open; home snapshot. Does not post bills/lines — full UI: <strong>Accounting → QuickBooks live master</strong>. Failures → toasts.
+                    <code>refreshQboMaster()</code> → <code>GET /api/qbo/master</code> → <code>erp.qboCache</code> + pickers; Live Master + home snapshot when open. Does not post bills — use <strong>Accounting → QuickBooks live master</strong>. Toasts on failure.
                   </span>
                 </span>
               </div>
@@ -4285,7 +4285,7 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create vendor from Lists">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Same QBO vendor create as <strong>Accounting → Live Master</strong>. <strong>Display name</strong> required; optional fields help bill/driver match. <strong>Refresh QuickBooks lists</strong> if pickers lag. Status = validation / progress / QBO id.
+                        Same create flow as <strong>Accounting → Live Master</strong>. <strong>Display name</strong> required. <strong>Refresh QuickBooks lists</strong> if pickers lag. Status shows validation / progress / QBO id.
                       </span>
                     </span>
                   </div>
@@ -4294,11 +4294,11 @@
             </div>
             <div id="catalog-panel-vendors" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0"><strong>QBO vendors</strong> + <strong>driver payees</strong> — after new vendors in QBO, <strong>Refresh QuickBooks lists</strong> (top bar or QuickBooks sub-tab).</span>
+                <span class="mini-note" style="margin:0"><strong>QBO vendors</strong> + <strong>driver payees</strong> — after new vendors in QBO, <strong>Refresh QuickBooks lists</strong> (top bar or Lists → QBO).</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About vendors & drivers">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>QBO vendors</strong> + <strong>TMS drivers</strong> as QBO payees — one grid for expense routing. After QBO adds, <strong>Refresh QuickBooks lists</strong> (top bar or QuickBooks tab).
+                    QBO vendors + TMS drivers as payees in one grid. After QBO adds vendors, <strong>Refresh QuickBooks lists</strong>.
                   </span>
                 </span>
               </div>
@@ -4307,7 +4307,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendors &amp; drivers workspace">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/maintenance/vendor-catalog</code> → QBO vendors + TMS payees + link toolbar / grids. QBO needs healthy connection; driver search read-only Samsara. Empty/errors → <strong>Refresh QuickBooks lists</strong> or connection strip.
+                    <code>GET /api/maintenance/vendor-catalog</code> → QBO vendors, TMS payees, link toolbar/grids. Needs healthy QBO; driver search is read-only Samsara. Empty/errors → <strong>Refresh QuickBooks lists</strong> or fix connection strip.
                   </span>
                 </span>
               </div>
@@ -4315,11 +4315,11 @@
             </div>
             <div id="catalog-panel-operational" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0">Codes + labels for each unit’s <strong>Operational status</strong> picker — defaults included; add rows for your yard vocabulary.</span>
+                <span class="mini-note" style="margin:0">Codes + labels for the unit <strong>Operational status</strong> picker — defaults included; add rows for your yard.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About operational status">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Picker values on the maintenance board. Defaults ship in the ERP; add custom rows (yard hold, wash bay, etc.).
+                    Values on the maintenance board. Defaults ship with the ERP; add rows (yard hold, wash bay, …).
                   </span>
                 </span>
               </div>
@@ -4328,7 +4328,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status catalog">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/maintenance/operational-status-catalog</code> → value/label rows for each unit’s <strong>Operational status</strong> picker. <strong>+ Add status to ERP</strong> POSTs here; workspace refresh reloads pickers. Errors in box below.
+                    <code>GET /api/maintenance/operational-status-catalog</code> → value/label rows for <strong>Operational status</strong>. <strong>+ Add status to ERP</strong> POSTs here; sidebar <strong>Refresh data</strong> reloads pickers. Errors below.
                   </span>
                 </span>
               </div>
@@ -4349,7 +4349,7 @@
             </div>
             <div id="catalog-panel-fleet" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0"><strong>Samsara</strong> assets + GPS — POST renames need a write-scoped token + admin (or ERP write secret).</span>
+                <span class="mini-note" style="margin:0"><strong>Samsara</strong> assets + GPS — POST renames need write token + admin (or ERP write secret).</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Fleet & Samsara">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -4360,7 +4360,7 @@
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
               <div class="mini-note" style="margin:10px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Renames are <strong>POST</strong> through this ERP (write-capable Samsara token); results in <strong>toasts</strong> and may refresh lists.</span>
+                <span style="min-width:0;flex:1 1 220px"><strong>POST</strong> through this ERP (write-capable Samsara token); <strong>toasts</strong> and list refresh may follow.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara rename API paths">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -6627,7 +6627,7 @@
       return (
         '<div class="erp-sb-sep"></div>' +
         '<div class="erp-sb-heading">Lists &amp; catalogs</div>' +
-        '<p class="mini-note" style="margin:0 0 8px;line-height:1.45">Same workspace as the <strong>Lists</strong> icon (▤) in company navigation — plus upload center and settings shortcuts below.</p>' +
+        '<p class="mini-note" style="margin:0 0 8px;line-height:1.45">Same workspace as the <strong>Lists</strong> (▤) nav icon — upload + settings shortcuts below.</p>' +
         erpSbAdminBody(opts)
       );
     }
