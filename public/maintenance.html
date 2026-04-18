@@ -252,6 +252,15 @@
           </span>
         </div>
         <div id="authBanner" class="hidden mini-note erp-auth-banner" aria-live="polite"></div>
+        <div class="mini-note print-hide-actions" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
+          <span style="min-width:0;flex:1 1 220px">Sticky QuickBooks banner below — shows posting / connection issues from the sync poll; <strong>Hide ×</strong> clears until the alert set changes.</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO sync alert bar">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              <code>renderQboSyncAlerts(payload)</code> replaces <code>#qboSyncAlertBar</code> <code>innerHTML</code> with degraded, empty, or alert-row markup. <code>dismissQboSyncAlertBar()</code> adds <code>hidden</code>, clears <code>innerHTML</code>, and stores a session fingerprint so the same payload can stay dismissed.
+            </span>
+          </span>
+        </div>
         <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
         <div id="erpConnectionStrip" class="erp-connection-strip print-hide-actions" aria-live="polite"></div>
         <header class="topbar erp-topbar">
@@ -2348,6 +2357,15 @@
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
                 <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
+              </div>
+              <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
+                <span style="min-width:0;flex:1 1 180px">Up to three error titles fill the list below when the QBO sync payload carries alerts.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accounting dash QBO errors">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>paintAcctDashQboErrors()</code> clears or replaces <code>#acctDashQboErrList</code> <code>innerHTML</code> with escaped one-line titles from the cached sync payload (max three); <strong>View all errors</strong> scrolls to the full <code>#qboSyncAlertBar</code>.
+                  </span>
+                </span>
               </div>
               <div id="acctDashQboErrList" class="acct-qbo-err-list" aria-live="polite"></div>
               <button

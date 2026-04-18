@@ -26,6 +26,7 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 - **Lists and catalogs** — **partial (changelogs 224 + 321):** **Service types** (**224**); **QuickBooks**, **Vendors**, **Operational**, **Fleet** sub-panel `**mini-note**` / `**erp-help-tip**` trims (**321**); optional JS-rendered catalog strings if product asks.
 - **Home + Safety** — **partial (changelogs 331 + 336):** **Home** dashboard + **Safety → HOS / Active** (**331**); **Assignments**, **Fleet snapshot**, **Driver files** (**336**). Optional: chip dropdown hints, other dense **`innerHTML`**.
 - **Tracking** — **partial (changelogs 338 + 341):** **Shop & maintenance** + **Yard & idle** title `**erp-help-tip**` / `**?**` (**338**); **Map** / **Assets** / **Drivers** / **Summary** `**?**` panels + **Shop → Integrity** alerts band tip (**341**). Optional: dense JS-built table strings if product asks.
+- **Maintenance → Shop stack + unit history** — **partial (changelog 344):** **Tracking → Shop & maintenance** — **External** / **Roadside** / **Parts** / **OOS** queue `**erp-help-tip**` + short table leads; **Parts** stages `**?**`; **Maintenance reports** export `**?**`; **Integrity · fuel · parts** title `**?**` + lead `**mini-note**`; **Maintenance** workspace **Unit history** `**?**` above **`#unitHistory`**.
 
 ---
 
@@ -80,3 +81,4 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — Safety Assignments + Fleet + Driver files:** **`safe-assign`** / **`safe-fleet`** / **`safe-files`** Rule 22 copy (**changelog 336**).
 - **2026-04-18 — Tracking shop-under-tracking + Yard & idle tips:** **`#tr-maint-shop`** nav + **Shop tabs** + **Internal shop** row; **`#tr-idle`** band / geofence / idle-snapshot title **`?`** panels — Rule 22 **`erp-help-tip`** trim (**changelog 338**).
 - **2026-04-18 — Tracking Map / Assets / Drivers / Summary + Shop integrity tips:** **`#tr-map`** list **`?`**; **`#tr-assets`** / **`#tr-drivers`** / **Summary** technical **`?`**; **Shop → Integrity** band before **`#securityAlertsBody`** — Rule 22 **`erp-help-tip`** trim (**changelog 341**).
+- **2026-04-18 — Shop queues remainder + unit history + integrity panel:** **External** / **Roadside** / **Parts** / **OOS** `**erp-help-tip**` + table leads; **Maint reports** + **Integrity** title **`?`** + integrity lead; **`#unitHistory`** technical **`?`** — Rule 22 (**changelog 344**).
