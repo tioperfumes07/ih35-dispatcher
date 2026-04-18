@@ -159,6 +159,16 @@ The ERP **Reports Board** (`maintenance.html`, section `reports`) renders these 
 - `npm run db:migrate` — apply SQL migrations
 - `npm run db:test` — verify DB connection
 
+## ERP shell verification (master redesign)
+
+Automated guards and pre-release QA for **`maintenance.html`**, shared CSS, and satellite pages are documented here:
+
+- **Local automated gate:** root [`README.md`](../README.md) — *Verification (automated)* — `npm run rule0:check`, `npm run smoke`, `npm run qa:automated` (server must be up for smoke), optional `SMOKE_BASE` / `SMOKE_QUIET`.
+- **Manual sign-off:** [`ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md`](./ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md).
+- **CI:** [`.github/workflows/rule0-check.yml`](../.github/workflows/rule0-check.yml) runs **`npm ci`** + **`npm test`** (Rule 0 stack guard only); HTTP smoke is not run in Actions.
+
+Rule mapping and narrative: [`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md), [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md).
+
 ## Suggested evolution (architecture)
 
 1. **Thin the monolith**: move QBO routes into `routes/qbo.mjs` and ERP routes into `routes/erp.mjs` without changing URLs.
