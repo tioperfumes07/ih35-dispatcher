@@ -574,7 +574,7 @@
             <span class="mini-note" style="margin:0">Assignments</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About assignments">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">Driver ↔ vehicle assignments from Samsara for the current window.</span>
+              <span class="erp-help-tip__panel" role="tooltip">Samsara driver ↔ vehicle assignments for the loaded board window.</span>
             </span>
           </div>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Assignment filters">
@@ -602,11 +602,11 @@
             </div>
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">Rows below refresh from the same <strong>board.assignments</strong> snapshot as the live board — search and <strong>Show</strong> filter client-side; paging slices the filtered list.</span>
+            <span style="min-width:0;flex:1 1 220px"><strong>board.assignments</strong> — search + <strong>Show</strong> filter here; pager slices the result.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Assignments table behavior">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyAssignments()</code> rebuilds <code>#safetyAssignBody</code> from <code>board.assignments</code> (vehicle/driver names and start/end times). <strong>Active</strong> means the assignment interval overlaps &quot;now&quot; per <code>assignmentIsActiveNow</code>; <strong>Inactive / ended</strong> is the complement. <code>safetyAssignPager</code> + <code>erpPagerRender</code> paginate after filters. <code>#safetyAssignMeta</code> uses <code>textContent</code> only. This view does not edit Samsara — it mirrors what was last loaded.
+                <code>renderSafetyAssignments()</code> fills <code>#safetyAssignBody</code> from <code>board.assignments</code>. <strong>Active</strong> = interval overlaps now (<code>assignmentIsActiveNow</code>); <strong>Inactive</strong> = complement. <code>safetyAssignPager</code> + <code>erpPagerRender</code> after filters; <code>#safetyAssignMeta</code> is counts only. Read-only mirror.
               </span>
             </span>
           </div>
@@ -623,15 +623,15 @@
             <span class="mini-note" style="margin:0">Fleet snapshot</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About fleet snapshot">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">Tracked fleet counts use the same asset filter family as Maintenance and Fuel.</span>
+              <span class="erp-help-tip__panel" role="tooltip">Headline counts use the same asset filters as Maintenance and Fuel.</span>
             </span>
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">The summary block below is replaced whenever the board refreshes or you open this tab — three headline counts only (no table pagination).</span>
+            <span style="min-width:0;flex:1 1 220px">Three headline counts below — refreshes with the board / opening this tab (no table pager).</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet snapshot counts">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyFleet()</code> replaces <code>#safetyFleetSummary</code> <code>innerHTML</code> with tracked <code>vehicles.length</code>, Samsara <code>(board.vehicles || []).length</code>, and <code>(board.hos || []).length</code> driver rows. Invoked from <code>renderSafetyAll()</code> after <code>loadAll()</code> and when opening this sub-tab. Read-only mirror of in-memory board + fleet payloads.
+                <code>renderSafetyFleet()</code> writes <code>#safetyFleetSummary</code>: tracked <code>vehicles.length</code>, Samsara <code>(board.vehicles || []).length</code>, <code>(board.hos || []).length</code>. Runs after <code>loadAll()</code> / opening this tab. Read-only.
               </span>
             </span>
           </div>
@@ -643,7 +643,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About driver files">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Driver compliance file basics stored locally in this app: CDL, med card, drug test, hire date, notes. This is intentionally separate from QuickBooks vendor PII.
+                Local compliance fields: CDL, med card, drug test, hire date, notes — not QuickBooks vendor PII.
               </span>
             </span>
           </div>
@@ -672,11 +672,11 @@
             </div>
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">The table is rebuilt when you search, change <strong>Show</strong>, or <strong>change pages</strong>; unsaved field edits stay in memory per driver until you <strong>Save</strong> (or clear those fields).</span>
+            <span style="min-width:0;flex:1 1 220px">Rebuilds on search, <strong>Show</strong>, or page change; unsaved edits stay in memory per driver until <strong>Save</strong> (or clear fields).</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Driver files table API">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderDriverFiles()</code> replaces <code>#driverFilesBody</code> with editable rows (paged when many drivers). Unsaved edits are merged from an in-memory draft map keyed by driver name until <strong>Save</strong> posts <code>POST /api/safety/driver-profiles</code>; the JSON response refreshes profiles and clears that row&apos;s draft. <code>#driverFilesMeta</code> shows match counts.
+                <code>renderDriverFiles()</code> → <code>#driverFilesBody</code> (paged). Draft map per driver until <strong>Save</strong> → <code>POST /api/safety/driver-profiles</code>; response refreshes profiles and clears that draft. <code>#driverFilesMeta</code> = match counts.
               </span>
             </span>
           </div>
@@ -1569,7 +1569,7 @@
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About these counts">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
-              Counts split <strong>tracked Samsara assets</strong> by fleet type (truck / reefer / flatbed / other). Use <strong>Assets</strong> for the full grid, <strong>Map</strong> for GPS, and <strong>Shop &amp; maintenance</strong> for queues — those views are separate from this strip.
+              Tracked Samsara assets by type (truck / reefer / flatbed / other). <strong>Assets</strong> = full grid; <strong>Map</strong> = GPS; <strong>Shop &amp; maintenance</strong> = queues — separate from this strip.
             </span>
           </span>
         </div>
@@ -1984,7 +1984,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit list">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Samsara-backed list for the <strong>map</strong> tab only — filter here, then pick a row to center the map and fill the detail box. This is separate from <strong>Maintenance → Units</strong>, which drives work orders.
+                      Map-tab list only — filter, pick a row to center the map and fill detail. Not <strong>Maintenance → Units</strong> (WO picker).
                     </span>
                   </span>
                 </div>
@@ -1992,11 +1992,11 @@
               <div class="panel-body">
                 <input id="trackingSearch" list="unitOptions" placeholder="Filter unit…" oninput="renderTrackingBoard()">
                 <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 200px">Unit cards below are rebuilt when you type in the filter or change pages — pick a card to drive the map and the detail line under the map.</span>
+                  <span style="min-width:0;flex:1 1 200px">Cards refresh on filter / pager — pick one to drive the map + detail under it.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit cards">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderTrackingBoard()</code> sorts <code>vehicles</code> by unit order, applies <code>#trackingSearch</code>, then replaces <code>#trackingList</code> with a page of <code>.track-card</code> markup via <code>innerHTML</code>. <code>trackingListPager</code> + <code>erpPagerRender</code> on <code>#trackingListPagerHost</code>. Clicks call <code>selectTrackingVehicle</code>; the same pass refreshes <code>#trackingDetailBox</code>, <code>#trackingSummaryText</code>, and map markers — see sibling <strong>?</strong> rows under the map and in <strong>Summary</strong>.
+                      <code>renderTrackingBoard()</code>: sort <code>vehicles</code>, apply <code>#trackingSearch</code>, page <code>#trackingList</code> (<code>trackingListPager</code>). Click → <code>selectTrackingVehicle</code> updates map, <code>#trackingDetailBox</code>, <code>#trackingSummaryText</code>. See <strong>?</strong> under map / <strong>Summary</strong>.
                     </span>
                   </span>
                 </div>
@@ -2011,7 +2011,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="GPS data">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Live positions from <strong>Samsara</strong>. Pan and zoom freely; choose a unit on the left to highlight it and show driver / last ping in the detail line below the map.
+                      <strong>Samsara</strong> positions — pan/zoom freely; pick a unit on the left to highlight and show driver / last ping below.
                     </span>
                   </span>
                 </div>
