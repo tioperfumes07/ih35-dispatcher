@@ -3076,7 +3076,7 @@
                         <span class="erp-help-tip">
                           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Manual fuel form">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
-                            Same shape as <strong>Maintenance expense</strong>: one vendor header (payment method, pay-from bank, expense #) plus <strong>product lines</strong>. <strong>Confirm &amp; record to QuickBooks</strong> saves each line and creates its Purchase in one step; <strong>Save to fuel ledger</strong> then post from the grid below.
+                            Same pattern as <strong>Maintenance expense</strong>: vendor header (payment, pay-from, expense #) + <strong>product lines</strong>. <strong>Confirm &amp; record to QuickBooks</strong> posts each line as a Purchase in one step; <strong>Save to fuel ledger</strong> first if you prefer posting from the grid.
                           </span>
                         </span>
                       </div>
@@ -3143,7 +3143,7 @@
                         <span class="erp-help-tip">
                           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
-                            Each row: <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product + gal × $/gal). Use the fuel catalog or free text. <strong>Lock line $</strong> when you enter a total and want gallons priced backward.
+                            <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product + gal × $/gal). Catalog or free text. <strong>Lock line $</strong> to back-calc gallons from a fixed total.
                           </span>
                         </span>
                       </div>
@@ -3195,7 +3195,7 @@
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Lines &amp; posting">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          Multiple lines share the header; each line is its own fuel ledger row. With an expense #, extra lines use <code>-L2</code>, <code>-L3</code>… so QuickBooks DocNumbers stay unique. Payment method and pay-from account are stored on each row for posting.
+                          Shared header; each line = one ledger row. Extra lines append <code>-L2</code>, <code>-L3</code>… to DocNumber when an expense # is set. Payment method + pay-from stored per row for posting.
                         </span>
                       </span>
                     </div>
