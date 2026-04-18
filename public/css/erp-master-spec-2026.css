@@ -131,13 +131,13 @@ body.erp-maintenance #erpApp.erp-master .erp-main-body button {
 
 body.erp-maintenance #erpApp.erp-master .erp-main-body .btn:focus,
 body.erp-maintenance #erpApp.erp-master .erp-main-body button:focus {
-  box-shadow: 0 0 0 2px var(--qb-focus-ring) !important;
+  box-shadow: var(--focus-ring) !important;
 }
 
 body.erp-maintenance #erpApp.erp-master .erp-main-body input:focus,
 body.erp-maintenance #erpApp.erp-master .erp-main-body select:focus,
 body.erp-maintenance #erpApp.erp-master .erp-main-body textarea:focus {
-  box-shadow: 0 0 0 2px var(--qb-focus-ring) !important;
+  box-shadow: var(--focus-ring) !important;
 }
 
 /* --- Rule 1: font weights (no 600/700 in main ERP chrome) --- */
@@ -637,7 +637,7 @@ body.banking-page textarea:focus,
 body.settings-page input:focus {
   outline: none;
   border-color: var(--qb-blue);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 /* =============================================================================

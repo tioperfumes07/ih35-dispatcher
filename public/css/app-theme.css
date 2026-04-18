@@ -159,6 +159,7 @@ main,
   border-radius: 0;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   border: none;
   border-bottom: 1px solid var(--btn-danger-border);
@@ -874,6 +875,11 @@ body.erp-maintenance .topbar-home-link:hover {
 body.erp-maintenance .topbar-hint {
   margin-left: 2px;
   opacity: 0.92;
+}
+
+/* Rule 1: hint + ? cluster sits in flex topbar; allow shrink next to title/search/actions. */
+body.erp-maintenance .erp-topbar .topbar-hint-wrap {
+  min-width: 0;
 }
 
 body.erp-maintenance .title {
@@ -3367,6 +3373,11 @@ body.erp-maintenance #section-reports #repMainSubtabs .nav-dropdown-trigger {
 
 body.erp-maintenance #section-reports .nav-dropdown-menu {
   max-width: min(100vw - 32px, 320px);
+}
+
+/* Rule 1: .erp-reports-main is a flex column inside .erp-reports-columns; min-height:0 completes the overflow chain for nested hubs/tabs. */
+body.erp-maintenance #section-reports .erp-reports-main {
+  min-height: 0;
 }
 
 body.erp-maintenance #section-dashboard .panel-head > div,

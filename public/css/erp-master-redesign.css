@@ -18,10 +18,10 @@
   --qb-amber: #f9ab00;
   --qb-icon-nav-bg: var(--color-nav-bg);
   --qb-icon-nav-muted: var(--color-nav-inactive);
-  --qb-focus-ring: rgba(25, 103, 210, 0.12);
+  --qb-focus-ring: rgba(25, 103, 210, 0.12); /* legacy; new rules use var(--focus-ring) */
   --qb-sidebar-active-bg: var(--pill-blue-bg);
-  --qb-radius-card: 8px;
-  --qb-radius-control: 4px;
+  --qb-radius-card: var(--radius-card);
+  --qb-radius-control: var(--radius-input);
 }
 
 /* --- App shell: full viewport, no horizontal bleed --- */
@@ -34,7 +34,7 @@ body.erp-maintenance {
   margin: 0;
   background: var(--color-bg-page);
   color: var(--color-text-body);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-spec-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-size: 13px;
   font-weight: 400;
   overflow: hidden;
@@ -525,7 +525,7 @@ body.erp-maintenance .erp-topbar .qb-in {
 body.erp-maintenance .erp-topbar .qb-in:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 body.erp-maintenance .erp-topbar .print-hide-actions button {
@@ -733,7 +733,7 @@ body.erp-maintenance .erp-qb-dialog .qb-memo:focus,
 body.erp-maintenance .erp-qb-dialog select.qb-in:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 /* Rule 7–8: full-sheet WO container + neutral close (same tokens as shell) */
@@ -980,7 +980,7 @@ body.erp-maintenance .erp-main-body select.qb-in:focus,
 body.erp-maintenance .erp-main-body textarea:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 /* --- Narrow / tablet: compact icon rail, hide tiny labels --- */
@@ -1270,7 +1270,7 @@ body.erp-maintenance .erp-main-body .erp-ops-toolbar .in:focus,
 body.erp-maintenance .erp-main-body .erp-ops-toolbar select:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 body.erp-maintenance .erp-main-body .erp-ops-shop-subtabs {
@@ -1312,7 +1312,7 @@ body.dispatch-page {
   background: var(--color-bg-page);
   color: var(--color-text-body);
   font-size: 13px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-spec-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-weight: 400;
 }
 
@@ -1415,7 +1415,7 @@ body.dispatch-page input.in:focus,
 body.dispatch-page select.in:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 body.dispatch-page table.data {
@@ -2039,7 +2039,7 @@ body.fuel-board {
   background: var(--color-bg-page);
   color: var(--color-text-body);
   font-size: 13px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-spec-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
 }
 
 body.fuel-board .topbar {
@@ -2104,7 +2104,7 @@ body.fuel-board input {
 body.fuel-board input:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 /* ========== Bank matching (banking.html) ========== */
@@ -2112,7 +2112,7 @@ body.banking-page {
   background: var(--color-bg-page);
   color: var(--color-text-body);
   font-size: 13px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-spec-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
 }
 
 body.banking-page .wrap {
@@ -2163,7 +2163,7 @@ body.banking-page select:focus,
 body.banking-page textarea:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 body.banking-page button {
@@ -2203,7 +2203,7 @@ body.settings-page {
   background: var(--color-bg-page);
   color: var(--color-text-body);
   font-size: 13px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-spec-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
 }
 
 body.settings-page .wrap {
@@ -2239,7 +2239,7 @@ body.settings-page input {
 body.settings-page input:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 body.settings-page button {

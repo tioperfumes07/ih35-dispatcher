@@ -1688,11 +1688,11 @@ body.erp-maintenance .mr-filter-bar__show {
   min-width: 0;
 }
 
-/* Rule 1: accounting board "Connections" strip — outer card + first inline-flex row (maintenance.html). */
+/* Rule 1: accounting board "Connections" strip — outer card + each direct row (connections flex + posting preflight). */
 body.erp-maintenance #maintIntegrationStrip {
   min-width: 0;
 }
 
-body.erp-maintenance #maintIntegrationStrip > div:first-of-type {
+body.erp-maintenance #maintIntegrationStrip > div {
   min-width: 0;
 }

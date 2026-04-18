@@ -98,6 +98,7 @@
   --shadow-menu-panel: 0 4px 16px rgba(0, 0, 0, 0.12);
   /** Dimmed overlay behind centered modals (maintenance + dispatch `.modal-bg`). */
   --color-modal-backdrop: rgba(15, 23, 42, 0.45);
-  --focus-ring: 0 0 0 2px rgba(25, 103, 210, 0.1);
+  /** ERP shell focus: same alpha as legacy `--qb-focus-ring` (0.12). */
+  --focus-ring: 0 0 0 2px rgba(25, 103, 210, 0.12);
   --transition-fast: 0.15s ease;
 }
