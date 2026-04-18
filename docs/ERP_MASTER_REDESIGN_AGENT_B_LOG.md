@@ -802,3 +802,19 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — inline flex Rule 1 selector extended with `[style*='display: flex']` (spaced spelling) alongside `display:flex` for future-proofing.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-09
+
+- **Rule 1:** `public/css/app-theme.css` — `.qbo-sync-alert-bar .qbo-sync-list` gains `min-width: 0` and `min-height: 0` at the shared rule (all ERP shells that show the expandable issue list); removed the duplicate `body.erp-maintenance`-only block. `body.erp-maintenance .section.active`, `.grid`, and `.split` each get `min-height: 0` next to existing `min-width: 0` so module roots and legacy two-column grids shrink inside flex-height chains instead of blocking nested scroll.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-10
+
+- **Rule 1:** `public/css/app-theme.css` — Shared `.qb-picker-menu` gets `min-height: 0` with `max-height` + `overflow: auto`. Under `body.erp-maintenance`, `.hero-grid`; `.hero-card` / `.panel` / `.metric` / `.record-card`; `.shop-tab-panel.active`; `.qb-doc-shell`, `.qb-doc-body`, and `.qb-lines-wrap` each gain `min-height: 0` alongside existing `min-width: 0` so dashboard grids, shop boards, and QuickBooks-style doc shells participate in flex/grid height shrink and nested scroll regions behave reliably.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

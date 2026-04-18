@@ -375,6 +375,7 @@ body.erp-maintenance .catalog-search-hit {
   min-width: 260px;
   max-width: 520px;
   max-height: 260px;
+  min-height: 0;
   overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -987,6 +988,7 @@ body.erp-maintenance .hero-grid {
   gap: 12px;
   margin-bottom: 16px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .hero-card,
@@ -998,6 +1000,7 @@ body.erp-maintenance .record-card {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .hero-card {
@@ -1034,12 +1037,14 @@ body.erp-maintenance .section {
 body.erp-maintenance .section.active {
   display: block;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .grid {
   display: grid;
   gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .grid-2 {
@@ -1121,6 +1126,7 @@ body.erp-maintenance .split {
   grid-template-columns: 340px minmax(0, 1fr);
   gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .list {
@@ -1627,6 +1633,7 @@ body.erp-maintenance .qb-doc-shell {
   );
   box-shadow: var(--shadow-sm);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-doc-head {
@@ -1673,6 +1680,7 @@ body.erp-maintenance .qb-doc-total-amt {
 body.erp-maintenance .qb-doc-body {
   padding: 14px 16px 16px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-logistics-bar {
@@ -1693,6 +1701,7 @@ body.erp-maintenance .qb-lines-wrap {
   background: var(--color-bg-card);
   margin-top: 10px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-lines-header {
@@ -1820,6 +1829,7 @@ body.erp-maintenance .shop-tab-panel {
 body.erp-maintenance .shop-tab-panel.active {
   display: block;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .shop-col {
