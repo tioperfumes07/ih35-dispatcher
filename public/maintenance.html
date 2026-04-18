@@ -626,6 +626,15 @@
               <span class="erp-help-tip__panel" role="tooltip">Tracked fleet counts use the same asset filter family as Maintenance and Fuel.</span>
             </span>
           </div>
+          <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+            <span style="min-width:0;flex:1 1 220px">The summary block below is replaced whenever the board refreshes or you open this tab — three headline counts only (no table pagination).</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet snapshot counts">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <code>renderSafetyFleet()</code> replaces <code>#safetyFleetSummary</code> <code>innerHTML</code> with tracked <code>vehicles.length</code>, Samsara <code>(board.vehicles || []).length</code>, and <code>(board.hos || []).length</code> driver rows. Invoked from <code>renderSafetyAll()</code> after <code>loadAll()</code> and when opening this sub-tab. Read-only mirror of in-memory board + fleet payloads.
+              </span>
+            </span>
+          </div>
           <div id="safetyFleetSummary" class="mini-note">—</div>
         </div>
         <div id="safe-files" class="tracking-sub hidden">
@@ -1422,6 +1431,15 @@
                       <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Compare <strong>Next due date / mileage</strong> with the KPI strip for PM and critical items.</p></div>
                     </details>
                   </div>
+                </div>
+                <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 220px">Rows below are a paged slice of <strong>dashboard</strong> work-order summaries for units in the active <strong>Fleet by type</strong> category, further narrowed by <strong>Filter by service</strong> in the bar above.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance fleet table">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderMaintenanceTable()</code> filters <code>dashboard</code> to units in <code>vehiclesByCategory()[activeAssetCategory]</code>, applies <code>#maintenanceServiceFilter</code>, then replaces <code>#maintenanceTableBody</code> via <code>innerHTML</code> with a paged slice. <code>maintDashboardTablePager</code> + <code>erpPagerRender</code> on <code>#maintTablePagerHost</code>; changing category or service text resets to page 1. Read-only grid — open a unit and use the form to edit underlying records.
+                    </span>
+                  </span>
                 </div>
                 <div class="table-wrap erp-table-scroll">
                   <table>
@@ -4156,22 +4174,10 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bank CSV">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Bank CSV matching and uploads run in the <strong>Bank CSV matching</strong> workspace (this tab does not parse files). Supported formats there: Wells Fargo, Bank of America, Chase, and generic CSV — export from your bank and upload in the banking app.
+                      Bank CSV matching and uploads run in the <strong>Bank CSV matching</strong> workspace (this tab does not parse files). Supported formats there: Wells Fargo, Bank of America, Chase, and generic CSV — export from your bank and upload in the banking app (same idea as QuickBooks bank feeds).
                     </span>
                   </span>
                 </div>
-                <details class="mr-upload-help">
-                  <summary>Supported bank formats</summary>
-                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
-                    <span class="mini-note" style="margin:0">Matching runs in the <strong>Bank CSV matching</strong> workspace.</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How bank CSV matching works">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        Same rules as QuickBooks bank feeds — export CSV from your bank and upload in the banking app.
-                      </span>
-                    </span>
-                  </div>
-                </details>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Open workspace</div>
@@ -4191,22 +4197,10 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Comdata / Relay">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Import Comdata or Relay <strong>All Transactions</strong> exports as <strong>CSV or Excel</strong> — same parser as <strong>Fuel / DEF</strong>. Use this tab’s drop zone or the <strong>Fuel / DEF</strong> tab; confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong>.
+                      Import Comdata or Relay <strong>All Transactions</strong> exports as <strong>CSV or Excel</strong> — same parser as <strong>Fuel / DEF</strong>. Use this tab’s drop zone or <strong>Fuel / DEF</strong>; after <strong>Import</strong>, confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong> before posting.
                     </span>
                   </span>
                 </div>
-                <details class="mr-upload-help">
-                  <summary>How to export from Comdata</summary>
-                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
-                    <span class="mini-note" style="margin:0">Use the <strong>Fuel / DEF</strong> tab to drop your file; confirm rows in <strong>Accounting → Fuel &amp; DEF entry</strong>.</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Relay / Comdata export flow">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        Comdata and Relay “All Transactions” exports use the same parser as Fuel / DEF — preview there, then finish confirmation under Accounting.
-                      </span>
-                    </span>
-                  </div>
-                </details>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
@@ -4263,14 +4257,11 @@
               <details class="mr-upload-help" style="margin-top:12px">
                 <summary>Samsara write scopes (advanced)</summary>
                 <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
-                  <span class="mini-note" style="margin:0">Fleet/HOS is read-only here unless your token has write scopes — use <strong>Lists &amp; catalogs → Fleet &amp; Samsara writes</strong> for POSTs when configured.</span>
+                  <span class="mini-note" style="margin:0">Rename POSTs need a write-scoped token — use <strong>Lists &amp; catalogs → Fleet &amp; Samsara writes</strong> when configured.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara API write scopes">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <ul style="margin:0;padding-left:1.2rem;line-height:1.5">
-                        <li>Fleet/HOS in this app is read-only unless your API token includes write scopes. Use <strong>Lists &amp; catalogs → Fleet &amp; Samsara writes</strong> for POSTs when configured.</li>
-                        <li>Tokens must be re-issued after adding scopes; read-only tokens return 403 from Samsara.</li>
-                      </ul>
+                      Fleet/HOS stays read-only until the token includes write scopes. Re-issue the token after scope changes; read-only tokens return <strong>403</strong> from Samsara.
                     </span>
                   </span>
                 </div>
@@ -4284,22 +4275,10 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About fuel import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Drop a file and <strong>Import</strong> on this tab to preview Comdata, Relay, or manual fuel rows. Confirm and post under <strong>Accounting → Fuel &amp; DEF entry</strong> before anything hits QuickBooks.
+                      Drop a file and <strong>Import</strong> on this tab to preview Comdata, Relay, or manual fuel rows. Export <strong>All Transactions</strong> (or equivalent) from Comdata or Relay as CSV/Excel. After import, confirm and post under <strong>Accounting → Fuel &amp; DEF entry</strong> before anything hits QuickBooks.
                     </span>
                   </span>
                 </div>
-                <details class="mr-upload-help">
-                  <summary>How to export from Comdata / Relay</summary>
-                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
-                    <span class="mini-note" style="margin:0">Export <strong>All Transactions</strong> (or equivalent) as CSV/Excel, then <strong>Import</strong> here.</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="After you import">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        After <strong>Import</strong>, the fuel workspace opens with the preview loaded so you can confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong> before posting.
-                      </span>
-                    </span>
-                  </div>
-                </details>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
@@ -4327,23 +4306,14 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance AP import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Upload <strong>CSV or Excel</strong> maintenance AP exports. Rows are matched to existing work orders where column data allows; use the template summary below if you need a blank layout.
+                      Upload <strong>CSV or Excel</strong> maintenance AP exports. Columns should mirror your real AP export so rows map to work orders and expense lines where the parser can match them.
                     </span>
                   </span>
                 </div>
-                <details class="mr-upload-help">
-                  <summary>Download import template</summary>
-                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
-                    <span class="mini-note" style="margin:0">Use a layout that matches your prior successful AP imports.</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="AP import columns">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        Columns should mirror your maintenance AP export so rows map to work orders and expense lines where the parser can match them.
-                      </span>
-                    </span>
-                  </div>
-                  <button type="button" class="btn btn--small" style="margin-top:8px" onclick="uploadCenterDownloadTemplate('ap')">Download blank CSV template</button>
-                </details>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
+                  <button type="button" class="btn btn--small" onclick="uploadCenterDownloadTemplate('ap')">Download blank CSV template</button>
+                  <span class="mini-note" style="margin:0;color:var(--color-text-label)">Headers match this import path.</span>
+                </div>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
@@ -4371,23 +4341,14 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance history import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Bulk history import: download the blank <strong>CSV</strong> template (headers match this app), fill rows, then upload <strong>CSV or Excel</strong> using the drop zone below.
+                      Bulk history import: fill rows under the template headers, then upload <strong>CSV or Excel</strong> in the drop zone. Validation follows those columns.
                     </span>
                   </span>
                 </div>
-                <details class="mr-upload-help">
-                  <summary>Download import template</summary>
-                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
-                    <span class="mini-note" style="margin:0">Blank CSV supplies the headers this bulk history import expects.</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance history template">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        Fill rows under those headers; validation follows the template columns wired in the import path.
-                      </span>
-                    </span>
-                  </div>
-                  <button type="button" class="btn btn--small" style="margin-top:8px" onclick="uploadCenterDownloadTemplate('maint')">Download blank CSV template</button>
-                </details>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
+                  <button type="button" class="btn btn--small" onclick="uploadCenterDownloadTemplate('maint')">Download blank CSV template</button>
+                  <span class="mini-note" style="margin:0;color:var(--color-text-label)">Headers match this app’s bulk import.</span>
+                </div>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
@@ -17175,6 +17136,7 @@
       if (btn) btn.classList.add('active');
       if (id === 'safe-active') renderSafetyActivePanels();
       if (id === 'safe-files') renderDriverFiles();
+      if (id === 'safe-fleet') renderSafetyFleet();
     }
 
     function dateDaysFromNow(iso) {
