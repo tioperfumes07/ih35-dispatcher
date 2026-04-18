@@ -877,3 +877,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .erp-main-body` gains `min-height: 0` next to `min-width: 0` so the redesign scroll column participates in vertical flex shrink like other nested scroll hosts. Ops/reports chrome (`.erp-ops-toolbar`, `.erp-reports-toolbar`, `.erp-ops-subtabs-bar`, `.erp-reports-toolbar__title`, `__search`, `__actions`) each get `min-height: 0`. `#acct-fuel-expense .qb-doc-shell` gets `min-height: 0` with existing width caps.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-18
+
+- **Rule 1:** `public/css/app-theme.css` — Surface chrome: `#authBanner.erp-auth-banner` and `.erp-main-surface > .erp-connection-strip` gain `min-height: 0`. Reports: `#section-reports .erp-reports-main` now includes `min-width: 0` with `min-height: 0`. Section-scoped flex rows (safety `.tracking-sub` / `.safety-active-grid` first cells, maintenance KPI strip + unit list `.panel-head`, `#maintTopQboIssuesInd`, tracking column roots + `.erp-ops-hero-head` + `.panel-head` clusters) each get `min-height: 0` next to `min-width: 0`. Mobile `.rep-maint-detail-filters.wo-line-grid` adds `min-height: 0`.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

@@ -1970,35 +1970,41 @@ body.erp-maintenance .upload-subpanel {
 body.erp-maintenance .upload-subpanel.active {
   display: block;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting .accounting-tab {
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting .qb-doc-shell {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: 0;
   box-sizing: border-box;
 }
 
 body.erp-maintenance #section-accounting .qb-doc-body {
   min-width: 0;
   max-width: 100%;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting #acct-transactions .qb-doc-body > .ap-expense-form {
   width: 100%;
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: accounting QBO doc chrome — flex top/bottom bars shrink with the shell. */
 body.erp-maintenance #section-accounting #acct-transactions .qb-doc-topbar,
 body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-topbar--fuel {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting #acct-transactions .qb-doc-footer--ap,
@@ -2008,6 +2014,7 @@ body.erp-maintenance #section-accounting #acct-transactions .qb-doc-footer__righ
 body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-footer__left,
 body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-footer__right {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting #woLines .wo-line-grid {
@@ -2024,6 +2031,7 @@ body.erp-maintenance .maint-modal-bg {
   justify-content: center;
   padding: 20px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-modal-bg.on {
@@ -3419,12 +3427,14 @@ body.erp-maintenance #section-catalog .panel-body > .subtabs {
   gap: 8px;
   align-items: center;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-catalog .panel-body > .subtabs > .subtab {
   flex: 1 1 auto;
   min-width: min(100%, 148px);
   max-width: 100%;
+  min-height: 0;
   white-space: normal;
   text-align: center;
   line-height: 1.25;
@@ -3432,6 +3442,7 @@ body.erp-maintenance #section-catalog .panel-body > .subtabs > .subtab {
 
 body.erp-maintenance .vendor-link-grid {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Tab row lives inside .erp-reports-main as #repMainSubtabs (not a direct child of #section-reports). */
@@ -3441,12 +3452,14 @@ body.erp-maintenance #section-reports #repMainSubtabs {
   gap: 8px;
   align-items: stretch;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-reports #repMainSubtabs > .subtab,
 body.erp-maintenance #section-reports #repMainSubtabs > .nav-dropdown {
   flex: 1 1 auto;
   min-width: min(100%, 168px);
+  min-height: 0;
 }
 
 body.erp-maintenance #section-reports #repMainSubtabs .nav-dropdown-trigger {
@@ -3459,10 +3472,13 @@ body.erp-maintenance #section-reports #repMainSubtabs .nav-dropdown-trigger {
 
 body.erp-maintenance #section-reports .nav-dropdown-menu {
   max-width: min(100vw - 32px, 320px);
+  min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: .erp-reports-main is a flex column inside .erp-reports-columns; min-height:0 completes the overflow chain for nested hubs/tabs. */
 body.erp-maintenance #section-reports .erp-reports-main {
+  min-width: 0;
   min-height: 0;
 }
 
@@ -3475,40 +3491,49 @@ body.erp-maintenance #section-maintenance .panel-head > div {
 
 body.erp-maintenance #section-safety .tracking-sub > div:first-child {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-safety .safety-active-grid > div > div:first-child {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-maintenance .maint-kpi-strip__body > div:first-child {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-maintenance .unit-list-panel .panel-head {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #maintTopQboIssuesInd {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-tracking > div:first-child {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-tracking .tracking-sub > div:first-child {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-tracking .erp-ops-hero-head,
 body.erp-maintenance #section-tracking .erp-ops-hero-head > div {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-tracking .panel-head,
 body.erp-maintenance #section-tracking .panel-head > div {
   min-width: 0;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
@@ -3518,6 +3543,7 @@ body.erp-maintenance #section-tracking .panel-head > div {
     align-items: stretch;
     gap: 10px;
     min-width: 0;
+    min-height: 0;
   }
 
   body.erp-maintenance .rep-maint-detail-filters.wo-line-grid > div {

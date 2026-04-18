@@ -1717,6 +1717,13 @@ body.dispatch-page #dispatchApp button.erp-btn-primary.erp-btn--busy::after {
   border-top-color: var(--color-bg-card);
 }
 
+/* Maintenance: green / QB primaries use `qb-btn-primary` or `erp-btn-primary`, not `button.primary`. */
+body.erp-maintenance button.qb-btn-primary.erp-btn--busy::after,
+body.erp-maintenance button.erp-btn-primary.erp-btn--busy::after {
+  border-color: var(--erp-btn-busy-on-solid-track);
+  border-top-color: var(--color-bg-card);
+}
+
 /* =============================================================================
    Rule 19 — Toasts (global; maintenance also uses maint-accounting rules when body.erp-maintenance)
    ============================================================================= */
