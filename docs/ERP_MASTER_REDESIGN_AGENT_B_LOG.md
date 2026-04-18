@@ -253,3 +253,23 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 0:** **`app-theme.css`** — Full Rule 0 pass on the shared sheet: **`var(--color-border, var(--line))`**, **`var(--color-bg-card, var(--panel))`**, **`var(--color-bg-page, var(--bg))`**, **`var(--color-bg-header|hover, #…)`**, text stacks (**`--muted` / `--text` / `--text-secondary`**), **`var(--color-nav-bg, #16213e)`**, and the WO banner **`color-mix`** hairline now resolve through **`design-tokens.css`** names only; file header comment updated to match (no redundant **`var(--color-foo, var(--legacy))`** guidance).
 
 **Files:** `public/maintenance.html`, `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-13
+
+- **Rule 0:** **`public/maintenance.html`** — Re-normalized inline / template / JS string styles after stack regressions: **`--color-text-*`**, **`--color-border`**, **`--color-bg-card`**, **`--color-bg-header`**, **`--color-bg-hover`** use token names only (no **`var(--muted)` / `var(--text)` / `var(--line)` / `var(--panel)`** or redundant hex).
+- **Rule 0:** **`public/css/maint-accounting-ui-2026.css`** — Accounting action strip, board chrome, QB panels, and related selectors now use **`var(--color-border)`**, **`var(--color-bg-card)`**, **`var(--color-bg-page)`**, **`var(--color-text-label|body|primary)`**, **`var(--color-bg-hover|header)`** only (same patterns as the shared theme sheet).
+- **Rule 0:** **`public/css/app-theme.css`** — **`var(--color-nav-bg, #16213e)`** → **`var(--color-nav-bg)`**; file comment no longer references Agent A status docs or recommends a hex fallback stack for nav.
+
+**Files:** `public/maintenance.html`, `public/css/maint-accounting-ui-2026.css`, `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-14
+
+- **Rule 0:** **`app-theme.css`** — Large regression sweep: removed **`var(--color-*, var(--line|panel|bg|text|muted|accent|app-frame-border))`** chains, **`--color-bg-header|hover` + hex**, **`--color-nav-bg` + hex**, hub (**`--color-hub-*` + hex**), semantic + soft-border (**`--color-semantic-*`**, **`--color-*-border-soft` + hex**), **`--color-modal-backdrop` + rgba**, and text stacks; **`maint-wo-banner`** hairline **`color-mix`** uses **`var(--color-text-primary)`** only. File header now states Rule 0 without referencing Agent A status docs.
+- **Rule 0:** **`maint-accounting-ui-2026.css`** — Same token-only treatment: borders, surfaces, page background, text, focus (**`--color-border-focus`**), and header/hover backgrounds align with **`design-tokens.css`** (no legacy **`--line` / `--panel` / `--bg` / `--accent`** hops).
+- **`maintenance.html`:** Verified clean (no **`var(--color-*, var(--…))`** regressions in the current tree).
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

@@ -1,8 +1,7 @@
 /**
  * IH35 — shared visual language: calm, precise, trustworthy.
  * Load before page-specific <style> blocks so local rules can override.
- * Color roles: use `var(--color-text-*)`, `var(--color-border)`, `var(--color-bg-*)` from `design-tokens.css` (loaded with ERP pages). Avoid redundant `var(--color-foo, var(--legacy))` stacks — Rule 0 token resolution lives in the token sheet.
- * Resilience: nav / shop active chrome chains `var(--color-nav-bg, #16213e)` (matches `design-tokens.css`) so gradients and sticky table headers do not wash out if the token sheet is absent — see `docs/ERP_MASTER_REDESIGN_STATUS.md` changelog 202.
+ * Color roles: use **`var(--color-*)`** from **`design-tokens.css`** (loaded with ERP pages). Rule 0: avoid redundant **`var(--color-foo, var(--legacy))`** / duplicate hex on **`--color-*`** — the token sheet is the single source of truth.
  */
 
 :root {
@@ -1237,7 +1236,7 @@ body.erp-maintenance table.st-settlement {
 }
 
 body.erp-maintenance table.st-settlement th {
-  background: linear-gradient(180deg, var(--color-nav-bg, #16213e) 0%, color-mix(in srgb, var(--color-nav-bg, #16213e) 78%, black) 100%);
+  background: linear-gradient(180deg, var(--color-nav-bg) 0%, color-mix(in srgb, var(--color-nav-bg) 78%, black) 100%);
   color: var(--color-bg-card);
   font-weight: 600;
   font-size: 11px;
@@ -1441,7 +1440,7 @@ body.erp-maintenance .maint-part-dot {
 
 body.erp-maintenance .maint-part-dot:hover,
 body.erp-maintenance .maint-part-dot.active {
-  fill: var(--color-nav-bg, #16213e);
+  fill: var(--color-nav-bg);
   stroke: var(--sidebar-bg);
 }
 
@@ -2208,9 +2207,9 @@ body.erp-maintenance .maint-board-nav__btn:hover {
   color: var(--color-text-body);
 }
 body.erp-maintenance .maint-board-nav__btn.active {
-  background: var(--color-nav-bg, #16213e);
+  background: var(--color-nav-bg);
   color: var(--sidebar-text);
-  border-color: var(--color-nav-bg, #16213e);
+  border-color: var(--color-nav-bg);
 }
 body.erp-maintenance .maint-board-stage {
   min-width: 0;
@@ -2645,7 +2644,7 @@ body.erp-maintenance .maint-repair-chip:hover {
 
 body.erp-maintenance .maint-repair-chip--active {
   border-color: var(--color-app-frame-border);
-  background: var(--color-nav-bg, #16213e);
+  background: var(--color-nav-bg);
   color: var(--sidebar-text);
   box-shadow: var(--shadow-sm);
 }
@@ -3628,7 +3627,7 @@ body.erp-maintenance .acct-fuel-import-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--color-nav-bg, #16213e);
+  background: var(--color-nav-bg);
   color: var(--sidebar-text);
   font-weight: 600;
 }
