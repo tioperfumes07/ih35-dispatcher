@@ -1413,6 +1413,18 @@ body.dispatch-page label.lbl {
   text-transform: uppercase;
 }
 
+body.dispatch-page .link {
+  color: var(--color-border-focus);
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+body.dispatch-page textarea.stop-addr {
+  border-color: var(--color-border-input);
+  border-radius: var(--radius-input);
+}
+
 body.dispatch-page .in,
 body.dispatch-page input.in,
 body.dispatch-page select.in {

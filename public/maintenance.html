@@ -3847,6 +3847,15 @@
                   </span>
                 </span>
               </div>
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Click <strong>Refresh QuickBooks lists</strong> after you add payees in QBO or when pickers and grids look stale — it uses the same client refresh as the maintenance top bar and accounting tiles.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What Refresh QuickBooks lists does">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>refreshQboMaster()</code> calls <code>GET /api/qbo/master</code>, then repacks in-memory <code>erp.qboCache</code> (vendors, items, accounts, customers, classes, bank accounts, employees, optional activity), runs <code>fillDataLists()</code> + <code>bootQbPickers()</code>, refreshes the Live Master grid when that panel is mounted, and touches the home dashboard snapshot. It does not post bills or expense lines by itself. Use <strong>Open Accounting → QuickBooks live master</strong> for the full column UI. Failures surface as toasts.
+                  </span>
+                </span>
+              </div>
               <button type="button" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
               <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-qbo', document.getElementById('acctQbDdTrigger'));">Open Accounting → QuickBooks live master</button>
               <div class="catalog-add-card" style="margin-top:16px;max-width:560px">
