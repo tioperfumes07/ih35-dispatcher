@@ -776,3 +776,29 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `.maint-wo-form-stack-inner` gets `min-height: 0` alongside `min-width: 0` so the work-order form stack participates in the `.maint-wo-col-form` scroll column flex chain.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-06
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .catalog-search-results` gets `min-height: 0` (split from the shared `min-width` rule with `.catalog-search-hit`). QBO sync alert expandable list (`.qbo-sync-alert-bar .qbo-sync-list`), legacy `.sidebar` scroll column, sidebar module `.nav-dropdown-menu`, compact `.qb-picker-menu`, WO `.maint-form-stack`, and fuel `.fuel-expense-stack` each get `min-height: 0` where they already scroll or sit in flex/grid chains so they can shrink instead of blocking ancestor layout.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `#section-accounting .maint-qb-lines-scroll` gains `min-height: 0` to match the global `.maint-qb-lines-scroll` scroll frame behavior inside accounting panels.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-07
+
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `body.erp-maintenance [style*='display:flex']` sets `min-width: 0` so inline flex toolbars / panel rows in `maintenance.html` participate in shrink like class-based flex rows (avoids bulk `style=` edits; explicit inline `min-width` on the same element still overrides).
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-08
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .main` gets `min-height: 0` next to `overflow: auto` and `min-width: 0` so the legacy grid main column can shrink inside height-constrained parents and scroll instead of forcing overflow past the shell.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — inline flex Rule 1 selector extended with `[style*='display: flex']` (spaced spelling) alongside `display:flex` for future-proofing.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

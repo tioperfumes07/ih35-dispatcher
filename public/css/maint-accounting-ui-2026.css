@@ -42,9 +42,9 @@ body.erp-maintenance .maint-action-strip__btn:hover {
 }
 
 body.erp-maintenance .maint-action-strip__btn--primary {
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
   color: var(--color-bg-card);
-  border-color: var(--qb-green);
+  border-color: var(--btn-primary-save-bg);
 }
 
 body.erp-maintenance .maint-action-strip__btn--primary:hover {
@@ -108,17 +108,17 @@ body.erp-maintenance .maint-qbo-dot {
   height: 8px;
   border-radius: 50%;
   display: inline-block;
-  background: var(--qb-red);
+  background: var(--color-semantic-error);
   flex-shrink: 0;
 }
 
 body.erp-maintenance .maint-qbo-dot--ok {
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
 }
 
 body.erp-maintenance .maint-qbo-issues-text {
   font-size: 12px;
-  color: var(--qb-red);
+  color: var(--color-semantic-error);
   font-weight: 500;
 }
 
@@ -279,11 +279,11 @@ body.erp-maintenance .maint-unit-pd {
 }
 
 body.erp-maintenance .maint-unit-pd--past {
-  color: var(--qb-red);
+  color: var(--color-semantic-error);
 }
 
 body.erp-maintenance .maint-unit-pd--soon {
-  color: var(--qb-amber);
+  color: var(--color-semantic-warn-accent);
 }
 
 body.erp-maintenance .maint-wo-col-form {
@@ -600,11 +600,11 @@ body.erp-maintenance .acct-dash-kpi__val {
 }
 
 body.erp-maintenance .acct-dash-kpi__val--danger {
-  color: var(--qb-red);
+  color: var(--color-semantic-error);
 }
 
 body.erp-maintenance .acct-dash-kpi__val--ok {
-  color: var(--qb-green);
+  color: var(--btn-primary-save-bg);
 }
 
 body.erp-maintenance .acct-dash-kpi__sub {
@@ -663,9 +663,9 @@ body.erp-maintenance .acct-dash-btn:hover {
 }
 
 body.erp-maintenance .acct-dash-btn--primary {
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
   color: var(--color-bg-card);
-  border-color: var(--qb-green);
+  border-color: var(--btn-primary-save-bg);
 }
 
 body.erp-maintenance .acct-dash-btn--primary:hover {
@@ -700,7 +700,7 @@ body.erp-maintenance .acct-dash-tools-grid button:hover {
 body.erp-maintenance .acct-qbo-err-list {
   margin-top: 10px;
   font-size: 12px;
-  color: var(--qb-red);
+  color: var(--color-semantic-error);
   line-height: 1.45;
 }
 
@@ -868,11 +868,11 @@ body.erp-maintenance .erp-toast__dot {
   border-radius: 50%;
   margin-top: 4px;
   flex-shrink: 0;
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
 }
 
 body.erp-maintenance .erp-toast__dot--err {
-  background: var(--qb-red);
+  background: var(--color-semantic-error);
 }
 
 body.erp-maintenance .erp-toast__x {
@@ -1071,9 +1071,9 @@ body.erp-maintenance .mr-upload-importbtn:disabled {
 }
 
 body.erp-maintenance .mr-upload-importbtn:not(:disabled) {
-  background: var(--qb-green) !important;
+  background: var(--btn-primary-save-bg) !important;
   color: var(--color-bg-card) !important;
-  border-color: var(--qb-green) !important;
+  border-color: var(--btn-primary-save-bg) !important;
 }
 
 body.erp-maintenance .mr-upload-progress {
@@ -1236,7 +1236,7 @@ body.erp-maintenance .mr-upload-import-btn:disabled {
 }
 
 body.erp-maintenance .mr-upload-import-btn:not(:disabled) {
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
   color: var(--color-bg-card);
 }
 
@@ -1262,11 +1262,11 @@ body.erp-maintenance .acct-conn-dot {
 }
 
 body.erp-maintenance .acct-conn-dot--ok {
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
 }
 
 body.erp-maintenance .acct-conn-dot--bad {
-  background: var(--qb-red);
+  background: var(--color-semantic-error);
 }
 
 /* --- Work order: split Category / Item cost lines (QuickBooks-style horizontal tables) --- */
@@ -1698,5 +1698,11 @@ body.erp-maintenance #maintIntegrationStrip {
 }
 
 body.erp-maintenance #maintIntegrationStrip > div {
+  min-width: 0;
+}
+
+/* Rule 1: maintenance.html — inline flex toolbars (`display:flex` or `display: flex`). Flex items default to min-width:auto; inline min-width on the same node still wins. */
+body.erp-maintenance [style*='display:flex'],
+body.erp-maintenance [style*='display: flex'] {
   min-width: 0;
 }

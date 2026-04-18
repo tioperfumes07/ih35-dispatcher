@@ -119,8 +119,8 @@ body.erp-maintenance .hero-card--hint {
 
 body.erp-maintenance .hero-card--hint:hover {
   transform: none;
-  border-color: var(--qb-line);
-  background: var(--qb-panel);
+  border-color: var(--color-border);
+  background: var(--color-bg-card);
 }
 
 /* Flat buttons in main column; keep QuickBooks-style focus ring (overrides app-theme elevation). */
@@ -636,7 +636,7 @@ body.banking-page select:focus,
 body.banking-page textarea:focus,
 body.settings-page input:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: var(--focus-ring);
 }
 
