@@ -7431,8 +7431,7 @@
       if (!keepPagerPage) repMaintByUnitPager.page = 1;
       if (!mb.length) {
         mbEl.innerHTML =
-          '<p class="mini-note" style="margin:0 0 6px">No maintenance expense rows in this rollup yet.</p>' +
-          '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Post or import maintenance expenses, then use <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
+          '<p class="mini-note" style="margin:0;color:var(--color-text-label)">No spend-by-unit rows yet — post or import maintenance expenses, then <strong>Refresh reports</strong> on <strong>Executive overview</strong>.</p>';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -7760,7 +7759,7 @@
                 </div>
               </div>
               <div class="panel-body">
-                <p class="mini-note" style="margin:0 0 8px">Server file <code>data/security-audit.log</code> (git-ignored <code>*.log</code>). Entries include logins and sensitive write actions.</p>
+                <p class="mini-note" style="margin:0 0 8px">Tail of <code>data/security-audit.log</code> — title <strong>?</strong> for scope.</p>
                 <div class="table-wrap erp-table-scroll" style="min-width:0;max-height:240px;overflow:auto">
                   <table class="catalog-admin-table" style="font-size:11px"><thead><tr><th>When</th><th>Summary</th></tr></thead><tbody>${
                     rows || '<tr><td colspan="2" class="mini-note">No entries yet.</td></tr>'
