@@ -7748,7 +7748,7 @@
       if (qbEl) {
         if (!ta || !ta.startDate) {
           qbEl.innerHTML =
-            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">No transaction window yet — connect QuickBooks, set <code>QBO_SYNC_TRANSACTION_DAYS</code> on the server if needed, then <strong>Sync QuickBooks lists + activity</strong> (overview) or <strong>Refresh QuickBooks lists</strong> (top bar).</p>';
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">No QBO activity window — connect QBO, set <code>QBO_SYNC_TRANSACTION_DAYS</code> if needed, then <strong>Sync QuickBooks lists + activity</strong> (overview) or top-bar <strong>Refresh QuickBooks lists</strong>.</p>';
         } else {
           const tot = ta.totals || {};
           qbEl.innerHTML = `
@@ -7781,7 +7781,7 @@
           { label: 'AP / expense transactions', p: post.apTransactions }
         ];
         syEl.innerHTML = `
-          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Posted vs local-only vs error by source — see panel title <strong>?</strong>.</p>
+          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Posted vs local-only vs errors — see title <strong>?</strong>.</p>
           <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:720px">
             <table style="font-size:12px">
               <thead><tr><th>Source</th><th>Total</th><th>Posted</th><th>Local only</th><th>Error</th></tr></thead>
