@@ -505,3 +505,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`.table-wrap`**, **`.safety-table-wrap`**, **`.safety-active-grid`**, and **`.shop-col-head-row`**; **`#erpTrackingMap`** gets **`min-width: 0`** + **`max-width: 100%`** so wide tables and the map host shrink inside the maintenance main column instead of widening the viewport.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-05
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`.shop-col-body`** and **`.nav-dropdown-menu`** (scroll regions); WO full-screen modal **`maint-workorder-fullmodal__shell`** / **`__head`** / **`__body`** get **`min-width: 0`** and **`__body`** gets **`min-height: 0`** so the flex column layout scrolls correctly on small viewports.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
