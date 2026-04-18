@@ -281,7 +281,7 @@ body.erp-maintenance .erp-new-menu__col-title {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-text-label);
-  border-bottom: 1px solid var(--color-border, #e8eaed);
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 6px;
   margin-bottom: 6px;
 }
@@ -345,12 +345,12 @@ body.erp-maintenance .erp-new-menu__col-title {
 .mr-qbo-banner__list li {
   margin: 2px 0;
   font-size: 13px;
-  color: var(--color-text-body, #3c4043);
+  color: var(--color-text-body);
 }
 
 .mr-qbo-banner__sev {
   font-weight: 500;
-  color: var(--color-text-primary, #202124);
+  color: var(--color-text-primary);
 }
 
 .mr-qbo-banner__right {
@@ -376,10 +376,10 @@ body.erp-maintenance .erp-new-menu__col-title {
 }
 
 .mr-qbo-banner__ghost {
-  border: 1px solid var(--color-border, #dadce0);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   background: var(--color-bg-card);
-  color: var(--color-text-body, #3c4043);
+  color: var(--color-text-body);
   font-size: 13px;
   font-weight: 500;
   height: 32px;
@@ -388,7 +388,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 }
 
 .mr-qbo-banner__dismiss {
-  border: 1px solid var(--color-border, #dadce0);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   background: var(--color-bg-card);
   color: var(--color-text-label);
@@ -400,7 +400,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 }
 
 .mr-qbo-banner--degraded .mr-qbo-banner__title {
-  color: var(--color-text-primary, #202124);
+  color: var(--color-text-primary);
 }
 
 .mr-qbo-banner--degraded .mr-qbo-banner__icon {
@@ -432,7 +432,7 @@ body.erp-maintenance .mr-kpi-card .metric-label {
 body.erp-maintenance .mr-kpi-card .metric-value {
   font-size: 24px;
   font-weight: 400;
-  color: var(--color-text-primary, #202124);
+  color: var(--color-text-primary);
   line-height: 1.2;
 }
 
@@ -448,7 +448,7 @@ body.erp-maintenance .mr-kpi-card--bad {
 }
 
 body.erp-maintenance .mr-kpi-card--ok {
-  border-color: var(--color-border, #e8eaed) !important;
+  border-color: var(--color-border) !important;
 }
 
 /* --- Dispatch board: same modal + no-shadow baseline (Rule 0 / 1) --- */
@@ -525,7 +525,7 @@ body.erp-maintenance .erp-main-body .maint-cost-table td {
 }
 
 body.erp-maintenance .erp-main-body .maint-cost-table thead th {
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   color: var(--color-text-label, var(--qb-muted));
   font-weight: 500;
   text-transform: none;
@@ -686,7 +686,7 @@ body.settings-page .mr-filter-bar {
   align-items: center;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--color-border, #e8eaed);
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 0;
 }
 
@@ -812,11 +812,11 @@ body.erp-maintenance .mr-filter-chipwrap > summary {
   gap: 4px;
   height: 28px;
   padding: 0 12px;
-  border: 1px solid var(--color-border, #dadce0);
+  border: 1px solid var(--color-border);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--color-text-primary, #3c4043);
+  color: var(--color-text-primary);
   background: var(--color-bg-card);
   font-family: inherit;
 }
@@ -843,7 +843,7 @@ body.erp-maintenance .mr-filter-drop {
   min-width: 200px;
   max-width: min(320px, 92vw);
   background: var(--color-bg-card);
-  border: 1px solid var(--color-border, #dadce0);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 8px 0;
   box-shadow: var(--shadow-dropdown, 0 2px 8px rgba(0, 0, 0, 0.08));
@@ -853,7 +853,7 @@ body.erp-maintenance .mr-filter-drop__hint {
   margin: 0;
   padding: 8px 16px;
   font-size: 12px;
-  color: var(--color-text-primary, #3c4043);
+  color: var(--color-text-primary);
   line-height: 1.5;
 }
 
@@ -871,7 +871,7 @@ body.erp-maintenance .mr-filter-drop__hint {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1px solid var(--color-border, #dadce0);
+  border: 1px solid var(--color-border);
   background: var(--color-bg-hover);
   color: var(--color-text-label);
   font-size: 10px;
@@ -902,11 +902,11 @@ body.erp-maintenance .mr-filter-drop__hint {
   top: calc(100% + 6px);
   z-index: 300;
   background: var(--color-bg-card);
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 10px 14px;
   font-size: 12px;
-  color: var(--color-text-primary, #3c4043);
+  color: var(--color-text-primary);
   line-height: 1.6;
   max-width: 320px;
   box-shadow: var(--shadow-dropdown, 0 2px 8px rgba(0, 0, 0, 0.1));
@@ -1022,7 +1022,7 @@ body.erp-maintenance .mr-acct-board {
 /* --- Rules 12 / 19: parts map container + tire dots (SVG keeps onclick ids) --- */
 body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
   background: var(--color-bg-hover);
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 16px;
   width: fit-content;
@@ -1037,7 +1037,7 @@ body.erp-maintenance .erp-main-body .erp-qb-parts-map-chrome .tire-svg rect {
 }
 
 body.erp-maintenance .erp-main-body .tire-dot {
-  fill: var(--color-border, #e8eaed);
+  fill: var(--color-border);
   stroke: var(--color-text-placeholder);
   stroke-width: 1;
   cursor: pointer;
@@ -1055,7 +1055,7 @@ body.erp-maintenance .erp-main-body .tire-dot.active {
 
 /* --- Rule 6: map panel chrome --- */
 body.erp-maintenance #erpTrackingMap {
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
   background: var(--color-bg-card);
@@ -1065,7 +1065,7 @@ body.erp-maintenance #erpTrackingMap {
    Rule 10 — Maintenance expense doc shell (Accounting → AP form)
    ============================================================================= */
 body.erp-maintenance #acct-transactions .qb-doc-shell--ap-spec {
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
@@ -1084,8 +1084,8 @@ body.erp-maintenance #acct-transactions .qb-doc-topbar {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--color-bg-header, #fafbfc);
-  border-bottom: 1px solid var(--color-border, #e8eaed);
+  background: var(--color-bg-header);
+  border-bottom: 1px solid var(--color-border);
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-backlink {
@@ -1128,8 +1128,8 @@ body.erp-maintenance #acct-transactions .qb-doc-footer--ap {
   justify-content: space-between;
   gap: 10px;
   padding: 12px 14px;
-  border-top: 1px solid var(--color-border, #e8eaed);
-  background: var(--color-bg-header, #fafbfc);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-footer__left,
@@ -1141,7 +1141,7 @@ body.erp-maintenance #acct-transactions .qb-doc-footer__right {
 }
 
 body.erp-maintenance #acct-fuel-expense .qb-doc-shell--fuel-spec {
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
@@ -1160,8 +1160,8 @@ body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--color-bg-header, #fafbfc);
-  border-bottom: 1px solid var(--color-border, #e8eaed);
+  background: var(--color-bg-header);
+  border-bottom: 1px solid var(--color-border);
 }
 
 body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-backlink {
@@ -1204,8 +1204,8 @@ body.erp-maintenance #acct-fuel-expense .qb-doc-footer--fuel {
   justify-content: space-between;
   gap: 10px;
   padding: 12px 14px;
-  border-top: 1px solid var(--color-border, #e8eaed);
-  background: var(--color-bg-header, #fafbfc);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance #acct-fuel-expense .qb-doc-footer--fuel .qb-doc-footer__left,
@@ -1243,7 +1243,7 @@ body.erp-maintenance .erp-qb-cost-global {
 
 body.erp-maintenance .erp-qb-cost-global__label {
   font-weight: 500;
-  color: var(--color-text-body, #3c4043);
+  color: var(--color-text-body);
   margin-right: 2px;
 }
 
@@ -1280,7 +1280,7 @@ body.erp-maintenance .erp-qb-cost-shell__headrow .erp-qb-cost-shell__label {
    Rule 15 — Pay bills (QBO) layout
    ============================================================================= */
 body.erp-maintenance #acct-bill-pay .qb-doc-shell--bill-pay {
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -1331,7 +1331,7 @@ body.erp-maintenance #acct-bill-pay .erp-bp-open-table {
 }
 
 body.erp-maintenance #acct-bill-pay .mr-bp-table-wrap {
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-bg-card);
 }
@@ -1341,7 +1341,7 @@ body.erp-maintenance #acct-bill-pay .erp-bp-log-table {
 }
 
 body.erp-maintenance #acct-bill-pay .mr-bp-log-wrap {
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-bg-card);
 }
@@ -1354,7 +1354,7 @@ body.erp-maintenance .erp-reports-hub {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   padding: 4px 2px 2px;
-  border-bottom: 1px solid var(--color-border, #e8eaed);
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 4px;
 }
 
@@ -1371,9 +1371,9 @@ body.erp-maintenance .erp-reports-hub {
 }
 
 body.erp-maintenance .erp-reports-hub__card {
-  border: 1px solid var(--color-border, #e8eaed);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   padding: 10px 10px 8px;
   min-width: 0;
 }
@@ -1432,7 +1432,7 @@ body.erp-maintenance .erp-reports-hub__tile-title {
   display: block;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-body, #3c4043);
+  color: var(--color-text-body);
 }
 
 body.erp-maintenance .erp-reports-hub__tile-meta {
