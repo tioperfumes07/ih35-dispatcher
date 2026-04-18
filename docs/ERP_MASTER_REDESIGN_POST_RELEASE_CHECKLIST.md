@@ -49,7 +49,7 @@
 - [ ] **QuickBooks Live Master:** **`erp-help-tip`** on title + **Vendors** / **Items** / **Accounts** column titles; **Create vendor** / refresh master still work.
 - [ ] **Fuel expenses:** Filter **`mr-filter-bar`** (dates, search, QBO fields) + grid; **Manual fuel / DEF expense** — document header fields in **`mr-filter-bar`**; **Refresh fuel purchases**; pager with **16+** rows; **Record filtered to QuickBooks** still includes rows **off the current page** (regression from Rule 23 wiring).
 - [ ] **Expense history:** Panel title **`?`** + body **`?`**; filters + pager (**16+** rows); **Export filtered CSV** = full filtered set, not current page only.
-- [ ] **Pay bills:** Load open bills (if QBO available); **Create bill payment** path; **Recent bill payments** — title **`?`** + **Refresh log**, filters (**`mr-filter-bar`**), pager (**16+**), clear search restores full loaded set; **Export CSV**.
+- [ ] **Pay bills:** Load open bills (if QBO available); **Select all matching filter** + **Clear checkboxes** vs manual picks (**changelog 218**); **Create bill payment** path; **Recent bill payments** — title **`?`** + **Refresh log**, filters (**`mr-filter-bar`**), pager (**16+**), clear search restores full loaded set; **Export CSV**.
 - [ ] **QuickBooks rollback:** **Refresh** loads batches + posted checklist; **ERP import batches** + **Fuel / Relay import batches** sub-head **`?`** tips; **Revert** / undo flows unchanged.
 - [ ] **Saved WO + AP cards:** Panel title **`?`**; pager when **11+** cards; exports still full dataset.
 
@@ -113,7 +113,7 @@
 
 Re-run targeted checks from [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md), for example:
 
-- [ ] **Pay bills → Open bills:** pager + **`Map`** selection across pages (**changelog 215** — load **25+** bills, check rows on page 1, page forward, confirm **draft total** still includes page 1; **Create bill payment** posts checked rows from **all** pages; clear filters resets pager to page **1**).
+- [ ] **Pay bills → Open bills:** pager + **`Map`** selection (**changelog 215**); **Select all matching filter** then confirm **single-vendor** submit rule (**changelog 218**); **Clear checkboxes**; load **25+** bills and verify **draft total** across pages.
 - [ ] **Driver pay settlements** — full sign-off on per-vendor pagers after **`Refresh driver settlements`** (**changelog 216**); re-open if product switches to a **single** flattened pager.
 - [ ] **Safety → Driver files** — pager + draft persistence (**changelog 217**); confirm **Save** clears draft and server round-trip.
 
