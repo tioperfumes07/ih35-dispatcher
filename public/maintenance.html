@@ -1303,7 +1303,16 @@
                   <button type="button" class="btn" onclick="loadSecurityCatalogUi()">Refresh alerts</button>
                 </div>
               </div>
-              <div id="maintSecurityAlertsBody" class="mini-note">Open this tab after load to refresh, or use Refresh alerts.</div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 200px">Use <strong>Refresh alerts</strong> after changing the window or when results look stale.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Refreshing integrity data">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Alerts use maintenance records already loaded for this workspace. Open <strong>Maintenance → R&amp;M Status</strong> after a full load, or use <strong>Refresh alerts</strong>, so the rule window matches your latest shop data. Set <strong>Window (days)</strong> before refreshing when you need a longer or shorter lookback.
+                  </span>
+                </span>
+              </div>
+              <div id="maintSecurityAlertsBody" class="mini-note">Loading…</div>
             </div>
           </div>
         </div>
@@ -3138,7 +3147,15 @@
                   </span>
                 </span>
               </div>
-              <div id="expHistSummary" class="mini-note" style="margin-bottom:8px">Open this tab and refresh data (sidebar) if counts look stale.</div>
+              <div class="mini-note" style="margin-bottom:8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0">
+                <span id="expHistSummary" style="min-width:0;flex:1 1 220px"></span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Stale counts and refresh">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Row counts and filtered totals reflect the data loaded for this tab. Open <strong>Accounting → Expense history</strong> and use <strong>Refresh data</strong> in the sidebar if numbers look stale after imports or QuickBooks changes.
+                  </span>
+                </span>
+              </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:1240px">
                   <thead>
@@ -17032,7 +17049,7 @@
         return `
             <div class="record-card"${voided ? ' style="opacity:0.88"' : ''}>
               <div class="record-head">
-                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:var(--color-semantic-error);font-weight:700">VOID</span>' : ''}</div>
+                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:var(--color-semantic-error);font-weight:500">VOID</span>' : ''}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
               <div class="mini-note"><strong>WO #</strong> ${escapeHtml(r.workOrderNumber || '—')} <span class="muted">(system)</span></div>
