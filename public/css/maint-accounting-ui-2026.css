@@ -1445,6 +1445,7 @@ body.erp-maintenance .maint-qb-lines-table tbody td {
 body.erp-maintenance .maint-qb-lines-table .qb-in {
   width: 100%;
   min-width: 0;
+  min-height: 0;
   box-sizing: border-box;
   border: none;
   background: transparent;
@@ -1693,31 +1694,37 @@ body.erp-maintenance .ap-wo-lines-root {
 /* Rule 1: main content column — defensive min-width for nested ERP flex (spec may also set). */
 body.erp-maintenance #erpApp.erp-master .erp-main-col {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #erpApp.erp-master .main.erp-main-surface,
 body.erp-maintenance #erpApp.erp-master .erp-main-body {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: global search host can shrink when topbar actions need horizontal space. */
 body.erp-maintenance #erpApp.erp-master .erp-topbar__search-inner {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: search flex slot may sit below a 12rem floor in redesign — allow shrink on very narrow main columns. */
 body.erp-maintenance #erpApp.erp-master .erp-topbar__search {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: action cluster can wrap without forcing the topbar row wider than the main column. */
 body.erp-maintenance #erpApp.erp-master .erp-topbar__actions {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: master-layout topbar row (flex in spec/redesign) — host may shrink inside .erp-main-col. */
 body.erp-maintenance #erpApp.erp-master .erp-topbar.topbar {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: + New menu columns — flex row can shrink inside the capped menu width. */

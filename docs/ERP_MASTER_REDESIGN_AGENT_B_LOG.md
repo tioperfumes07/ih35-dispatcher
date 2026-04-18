@@ -902,3 +902,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — Section-scoped overflow helpers that only declared `min-width: 0` now also declare `min-height: 0` for accounting, reports hub/tiles/nav, uploads/catalog panel heads, bill-pay rows, expense-history / QBO-rollback / QBO heads, and shop tab panels. `.maint-wo-col-units .panel-body` gains `min-width: 0` beside `min-height: 0` so the unit list scroll column cannot widen the WO split layout.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-21
+
+- **Rule 1:** `public/css/app-theme.css` — Additional maintenance-only shrink pairs: catalog card stack (`.catalog-add-card*` + `.catalog-search-hit`), topbar text cluster (`.title`, `.topbar-hint-wrap`, `.panel-title`), list/record chrome (`.record-head`, `.subtabs`), tire + iframe hosts (`.tire-layout-wrap`, `.tire-svg`, `.iframe-wrap`), QB doc chrome (`.qb-doc-head`, `.qb-doc-h2`, `.wo-line-grid`), active `.catalog-subpanel`, QB picker rows (`.qb-picker-item`), and `.erp-icon-nav` (`min-width: 0` added next to existing `min-height: 0`).
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — Master shell helpers `#erpApp.erp-master` (`.erp-main-col`, `.main.erp-main-surface`, `.erp-main-body`, `.erp-topbar__search-inner`, `.erp-topbar__search`, `.erp-topbar__actions`, `.erp-topbar.topbar`) now pair `min-width: 0` with `min-height: 0`. `.maint-qb-lines-table .qb-in` gains `min-height: 0` beside `min-width: 0` for dense grid line editors.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

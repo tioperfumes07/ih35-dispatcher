@@ -287,6 +287,7 @@ body.erp-maintenance .catalog-add-card__head,
 body.erp-maintenance .catalog-add-card__title,
 body.erp-maintenance .catalog-add-card__body {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1 — Lists & catalogs vendor search: scroll frame + flex hit rows shrink inside panel column. */
@@ -297,6 +298,7 @@ body.erp-maintenance .catalog-search-results {
 
 body.erp-maintenance .catalog-search-hit {
   min-width: 0;
+  min-height: 0;
 }
 
 .catalog-plus-btn {
@@ -441,6 +443,7 @@ body.erp-maintenance .qb-picker-item {
   border-radius: 6px;
   gap: 8px;
   min-width: 0;
+  min-height: 0;
 }
 body.erp-maintenance .qb-picker-item__label {
   font-size: 0.86rem;
@@ -919,6 +922,7 @@ body.erp-maintenance .topbar-hint {
 /* Rule 1: hint + ? cluster sits in flex topbar; allow shrink next to title/search/actions. */
 body.erp-maintenance .erp-topbar .topbar-hint-wrap {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .title {
@@ -928,6 +932,7 @@ body.erp-maintenance .title {
   letter-spacing: -0.03em;
   color: var(--color-text-primary);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .btn,
@@ -1082,6 +1087,7 @@ body.erp-maintenance .panel-title {
   font-weight: 600;
   letter-spacing: -0.02em;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .panel-body {
@@ -1391,6 +1397,7 @@ body.erp-maintenance .record-head {
   flex-wrap: wrap;
   margin-bottom: 8px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .subtabs {
@@ -1400,6 +1407,7 @@ body.erp-maintenance .subtabs {
   margin-bottom: 12px;
   align-items: center;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .subtab {
@@ -1438,6 +1446,7 @@ body.erp-maintenance .tire-layout-wrap {
   gap: 12px;
   align-items: start;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .tire-svg {
@@ -1448,6 +1457,7 @@ body.erp-maintenance .tire-svg {
   background: var(--color-bg-hover);
   padding: 10px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-line-part-map-host {
@@ -1469,6 +1479,7 @@ body.erp-maintenance .iframe-wrap {
   overflow: hidden;
   background: var(--color-bg-card);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .iframe-wrap iframe {
@@ -1620,6 +1631,7 @@ body.erp-maintenance .wo-line-grid {
   gap: 6px;
   align-items: end;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-btn-del {
@@ -1660,6 +1672,7 @@ body.erp-maintenance .qb-doc-head {
     var(--color-bg-card) 100%
   );
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-doc-title-row {
@@ -1679,6 +1692,7 @@ body.erp-maintenance .qb-doc-h2 {
   letter-spacing: -0.03em;
   color: var(--color-text-primary);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-doc-total-block {
@@ -1968,6 +1982,7 @@ body.erp-maintenance .catalog-subpanel {
 body.erp-maintenance .catalog-subpanel.active {
   display: block;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .upload-subpanel {
@@ -3940,6 +3955,7 @@ body.erp-maintenance .erp-main-body {
 }
 
 body.erp-maintenance .erp-icon-nav {
+  min-width: 0;
   min-height: 0;
 }
 
