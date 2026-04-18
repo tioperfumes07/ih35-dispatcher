@@ -131,13 +131,13 @@ body.erp-maintenance #erpApp.erp-master .erp-main-body button {
 
 body.erp-maintenance #erpApp.erp-master .erp-main-body .btn:focus,
 body.erp-maintenance #erpApp.erp-master .erp-main-body button:focus {
-  box-shadow: 0 0 0 2px var(--qb-focus-ring, rgba(25, 103, 210, 0.28)) !important;
+  box-shadow: 0 0 0 2px var(--qb-focus-ring) !important;
 }
 
 body.erp-maintenance #erpApp.erp-master .erp-main-body input:focus,
 body.erp-maintenance #erpApp.erp-master .erp-main-body select:focus,
 body.erp-maintenance #erpApp.erp-master .erp-main-body textarea:focus {
-  box-shadow: 0 0 0 2px var(--qb-focus-ring, rgba(25, 103, 210, 0.28)) !important;
+  box-shadow: 0 0 0 2px var(--qb-focus-ring) !important;
 }
 
 /* --- Rule 1: font weights (no 600/700 in main ERP chrome) --- */
@@ -444,7 +444,7 @@ body.erp-maintenance .mr-kpi-card .metric-sub {
 
 body.erp-maintenance .mr-kpi-card--bad {
   border-color: var(--btn-danger-border) !important;
-  background: var(--pill-red-bg, #fff8f7) !important;
+  background: var(--pill-red-bg) !important;
 }
 
 body.erp-maintenance .mr-kpi-card--ok {
