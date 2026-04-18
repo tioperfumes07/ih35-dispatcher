@@ -2858,6 +2858,15 @@
                   </span>
                 </span>
               </div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 240px">Checkboxes and pay cells below replace when QBO data loads, filters change, or you use the pager — draft total above stays in sync.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Open bills table body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadAccountingOpenBills()</code> → <code>bpMountOpenBillsInTable()</code> stores rows then <code>bpRenderOpenBillsPage()</code> replaces <code>#bpOpenBillsBody</code> <code>innerHTML</code> with <code>bpHtmlForOpenBillRows()</code> for the current filter slice (or a no-rows row), syncs selection from <code>__bpOpenBillsSelection</code>, and wires <code>#bpOpenBillsPagerHost</code> via <code>erpPagerRender</code>. <code>bpApplyOpenBillsFilter()</code> resets the page and re-renders the same path.
+                  </span>
+                </span>
+              </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap" style="min-width:0">
                 <table class="st-settlement erp-bp-open-table" style="min-width:1120px">
                   <thead>
@@ -7978,13 +7987,13 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Audit file">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Tail of the server-side <strong>security audit</strong> file (logins + sensitive writes). Full history stays on disk; this table is a quick sanity check for admins.
+                      Last lines of the server <strong>security audit</strong> (logins + sensitive writes). Full file stays on disk.
                     </span>
                   </span>
                 </div>
               </div>
               <div class="panel-body">
-                <p class="mini-note" style="margin:0 0 8px">Tail of <code>data/security-audit.log</code> — title <strong>?</strong> for scope.</p>
+                <p class="mini-note" style="margin:0 0 8px">Tail of <code>data/security-audit.log</code>. Title <strong>?</strong> explains scope.</p>
                 <div class="table-wrap erp-table-scroll" style="min-width:0;max-height:240px;overflow:auto">
                   <table class="catalog-admin-table" style="font-size:11px"><thead><tr><th>When</th><th>Summary</th></tr></thead><tbody>${
                     rows || '<tr><td colspan="2" class="mini-note">No entries yet.</td></tr>'
@@ -7998,15 +8007,15 @@
       } else {
         teamBlock = `<p class="mini-note" style="margin-top:12px;line-height:1.5">Signed in as <strong>${escapeHtml(
           sessionUser?.email || 'user'
-        )}</strong>. Team roster, vendor audit links, and the audit tail require an <strong>administrator</strong> account.</p>`;
+        )}</strong>. Roster, vendor audit links, and audit tail need <strong>admin</strong>.</p>`;
       }
       host.innerHTML = `
         <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 8px">
-          <span class="mini-note" style="margin:0;line-height:1.5">Fraud resistance + staff engagement — QBO and Samsara keep separate staff login histories.</span>
+          <span class="mini-note" style="margin:0;line-height:1.5">Fraud resistance and ERP usage — QBO and Samsara keep their own login histories.</span>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
-              Use this board for <strong>fraud resistance</strong> (who can change money data) and <strong>staff engagement</strong> with this ERP. QuickBooks and Samsara each maintain their own login history for accounting and ELD staff.
+              Use for <strong>fraud resistance</strong> (who can change money data) and <strong>ERP engagement</strong>. QBO and Samsara still hold accounting and ELD logins separately.
             </span>
           </span>
         </div>
@@ -8017,7 +8026,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posture checks">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Live <strong>server-side</strong> checks (auth required, write secret, TLS, etc.). <strong>OK / Fix</strong> rows come from the posture API — resolve “Fix” items before expanding ERP access.
+                  Live <strong>server-side</strong> checks (auth, write secret, TLS, etc.). <strong>OK / Fix</strong> from the posture API — clear Fix before widening access.
                 </span>
               </span>
             </div>
@@ -12829,7 +12838,7 @@
       const mi = v && v.odometerMiles != null ? Number(v.odometerMiles) : null;
       const src = rec && rec.source ? String(rec.source) : 'Samsara';
       if (mi != null && Number.isFinite(mi)) {
-        el.innerHTML = `${escapeHtml(src)}: <strong>${Math.round(mi).toLocaleString()} mi</strong> — suggested for this service. Edit if wrong; save may prompt if live fleet reading differs.`;
+        el.innerHTML = `${escapeHtml(src)}: <strong>${Math.round(mi).toLocaleString()} mi</strong> — default for this service. Edit if wrong; save may warn if live odometer differs.`;
       } else {
         el.textContent =
           'No odometer from Samsara or saved mileage — enter manually or refresh fleet data.';
@@ -14956,7 +14965,7 @@
         </div>
         <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border)">
           <span class="qb-l">Fleet roster</span>
-          <p class="mini-note" style="margin:4px 0 8px">Retired units are hidden from this list, the live board, fuel unit pickers, and dispatch maintenance alerts. History and imports for that unit name are unchanged.</p>
+          <p class="mini-note" style="margin:4px 0 8px">Retired: hidden from this list, board, fuel pickers, and maint. alerts. History and imports for that unit name stay.</p>
           <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px">
             <select id="assetFleetActiveSelect" class="qb-in maint-field">
               <option value="active" ${erp.assetActiveByUnit?.[v.name] === false ? '' : 'selected'}>Active — show in lists</option>
