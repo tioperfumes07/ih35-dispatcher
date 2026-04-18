@@ -2012,7 +2012,15 @@
           </div>
           <div class="acct-dash-cards">
             <div class="acct-dash-card">
-              <div class="acct-dash-card__head">Maintenance expenses</div>
+              <div class="acct-dash-card__head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>Maintenance expenses</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this card">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Totals below refresh when this workspace loads. <strong>View all</strong> opens the maintenance expenses tab; <strong>Post pending to QBO</strong> sends drafted expense lines already staged for QuickBooks.
+                  </span>
+                </span>
+              </div>
               <p class="mini-note" id="acctCardMaintSum" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">View all</button>
@@ -2020,16 +2028,32 @@
               </div>
             </div>
             <div class="acct-dash-card">
-              <div class="acct-dash-card__head">Fuel &amp; DEF</div>
-              <p class="mini-note" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">Fast entry, imports, and ledger.</p>
+              <div class="acct-dash-card__head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>Fuel &amp; DEF</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel &amp; DEF workspace">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Manual diesel/DEF lines, fuel imports from the <strong>Upload center</strong>, and preview-to-post before QuickBooks — all under the Fuel &amp; DEF accounting tab.
+                  </span>
+                </span>
+              </div>
+              <p class="mini-note" style="margin:4px 0 0;color:var(--color-text-label);font-size:12px;line-height:1.45">Entry, imports, and ledger.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">View all</button>
                 <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">New fuel entry</button>
               </div>
             </div>
             <div class="acct-dash-card">
-              <div class="acct-dash-card__head">QuickBooks sync</div>
-              <p class="mini-note" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">Master lists, rollback, and connection.</p>
+              <div class="acct-dash-card__head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>QuickBooks sync</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QuickBooks sync shortcuts">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <strong>Refresh lists</strong> pulls vendors/items/accounts. <strong>Test connection</strong> verifies OAuth. Use <strong>QBO rollback &amp; imports</strong> for import batches and safer rewinds — full panels live on their accounting tabs.
+                  </span>
+                </span>
+              </div>
+              <p class="mini-note" style="margin:4px 0 0;color:var(--color-text-label);font-size:12px;line-height:1.45">Lists, connection tests, and rollback tab.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
                 <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
@@ -2046,7 +2070,15 @@
               </button>
             </div>
             <div class="acct-dash-card">
-              <div class="acct-dash-card__head">Tools &amp; data</div>
+              <div class="acct-dash-card__head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>Tools &amp; data</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tools on this card">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Shortcuts to banking, QuickBooks connect, catalogs, settings, uploads, and external Samsara — same destinations as elsewhere in the ERP, grouped here for desk work.
+                  </span>
+                </span>
+              </div>
               <div class="acct-dash-tools-grid">
                 <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
                 <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
@@ -3155,9 +3187,9 @@
               <div><button type="button" class="qb-btn-add" onclick="loadErpImportBatchesUi()">Refresh</button></div>
             </div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 6px">Choose <strong>Revert in QBO</strong> vs <strong>Undo spreadsheet import</strong> based on whether QuickBooks should change — see <strong>?</strong>.</p>
-              <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">Posted-row checklist and batch tables below load when you click <strong>Refresh</strong>.</p>
-              <div id="erpRollbackPostedSection" class="mini-note" style="margin-bottom:12px;color:var(--color-text-label)">Click <strong>Refresh</strong> to list rows posted to QuickBooks and import batches.</div>
+              <div id="erpRollbackPostedSection" class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">
+                <strong>Refresh</strong> loads posted rows, bulk revert checkboxes, and import batch tables below. <strong>Revert in QBO</strong> vs <strong>Undo spreadsheet import</strong> — see title <strong>?</strong>.
+              </div>
               <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:4px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <div class="panel-title" style="font-size:14px;margin:0">ERP import batches (maintenance &amp; AP files)</div>
@@ -3350,7 +3382,7 @@
               </div>
             </div>
             <div class="panel-body" id="repOverviewBody">
-              <p class="mini-note" style="margin:0;color:var(--color-text-label)">Connect QuickBooks, then use the actions above to load data.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-label)">Use the toolbar actions after QuickBooks is connected — details in title <strong>?</strong>.</p>
             </div>
           </div>
         </div>
@@ -4057,9 +4089,15 @@
                 <p class="mr-upload-panel-desc" style="margin-top:6px">Upload CSV or Excel maintenance AP exports.</p>
                 <details class="mr-upload-help">
                   <summary>Download import template</summary>
-                  <p class="mini-note" style="margin:8px 0 0">
-                    Use a CSV/Excel layout compatible with your maintenance AP export; columns should align with your prior successful imports.
-                  </p>
+                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
+                    <span class="mini-note" style="margin:0">Use a layout that matches your prior successful AP imports.</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="AP import columns">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Columns should mirror your maintenance AP export so rows map to work orders and expense lines where the parser can match them.
+                      </span>
+                    </span>
+                  </div>
                   <button type="button" class="btn btn--small" style="margin-top:8px" onclick="uploadCenterDownloadTemplate('ap')">Download blank CSV template</button>
                 </details>
               </div>
@@ -4096,7 +4134,15 @@
                 <p class="mr-upload-panel-desc" style="margin-top:6px">Bulk history — download the template, then upload CSV or Excel.</p>
                 <details class="mr-upload-help">
                   <summary>Download import template</summary>
-                  <p class="mini-note" style="margin:8px 0 0">Blank CSV for column headers used by this app’s maintenance import.</p>
+                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
+                    <span class="mini-note" style="margin:0">Blank CSV supplies the headers this bulk history import expects.</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance history template">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Fill rows under those headers; validation follows the template columns wired in the import path.
+                      </span>
+                    </span>
+                  </div>
                   <button type="button" class="btn btn--small" style="margin-top:8px" onclick="uploadCenterDownloadTemplate('maint')">Download blank CSV template</button>
                 </details>
               </div>
