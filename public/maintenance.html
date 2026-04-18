@@ -1056,6 +1056,16 @@
                           <option value="over-the-road">Over the road</option>
                         </select>
                         <input type="hidden" id="repairLocationTypeInput" value="" />
+                        <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 200px">Quick presets mirror the dropdown; chips refresh when the hidden type code changes.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Repair location chips">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <code>renderRepairLocationChips()</code> replaces <code>#repairLocationChips</code> <code>innerHTML</code> with one pill per <code>REPAIR_LOCATION_DEFS</code> entry (active class when <code>#repairLocationTypeInput</code> matches). <code>setRepairLocationCode()</code> updates hidden + visible fields, calls <code>syncMaintWorkOrderHeader()</code>, then re-renders chips. <code>onRepairLocationSelectChange()</code> routes the native <code>&lt;select&gt;</code> through the same path. <code>fillStaticMaintDatalists()</code> separately fills <code>#repairLocationOptions</code> for the text field.
+                            </span>
+                          </span>
+                        </div>
+                        <div id="repairLocationChips" class="maint-repair-chip-row" aria-label="Repair location quick picks"></div>
                         <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Location detail" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Vendor, yard, notes" />
                       </div>
                     </div>
