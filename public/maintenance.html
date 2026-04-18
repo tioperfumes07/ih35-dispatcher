@@ -2749,7 +2749,8 @@
                             <th>Product / service</th>
                             <th>Description</th>
                             <th class="maint-qb-th-num">Qty</th>
-                            <th class="maint-qb-th-num">Amount</th>
+                            <th class="maint-qb-th-num">Rate</th>
+                            <th class="maint-qb-th-num">Line</th>
                             <th>Tire / ref</th>
                             <th class="maint-qb-th-del"></th>
                           </tr>
@@ -4959,7 +4960,11 @@
       </td>
       <td class="maint-qb-td-num">
         <span class="maint-qb-dollar" aria-hidden="true">$</span>
-        <input class="qb-in wo-amt" type="number" step="0.01" placeholder="0" />
+        <input class="qb-in wo-rate" type="number" step="0.01" placeholder="0" title="Unit price" />
+      </td>
+      <td class="maint-qb-td-num">
+        <span class="maint-qb-dollar" aria-hidden="true">$</span>
+        <input class="qb-in wo-line-total" type="number" step="0.01" placeholder="0.00" readonly tabindex="-1" title="Qty × rate (line total)" />
       </td>
       <td class="maint-qb-td-memo">
         <input class="qb-in wo-tire" placeholder="Tire / ref" autocomplete="off" />
@@ -7100,28 +7105,12 @@
 
     function erpNewExpense() {
       erpCloseNewMenu();
-      if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
-      window.__erpDedicatedApPreset = '';
-      const sel = document.getElementById('apTxnType');
-      if (sel) sel.disabled = false;
-      openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
-      const t = document.getElementById('acctStubTrans');
-      if (t) openAccountingTab('acct-transactions', t);
+      erpOpenDedicatedAccountingForm('maintenance-expense');
     }
 
     function erpNewBill() {
       erpCloseNewMenu();
-      if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
-      window.__erpDedicatedApPreset = '';
-      const sel = document.getElementById('apTxnType');
-      if (sel) sel.disabled = false;
-      openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
-      const t = document.getElementById('acctStubTrans');
-      if (t) openAccountingTab('acct-transactions', t);
-      if (sel) {
-        sel.value = 'bill';
-        if (typeof syncApDocTitle === 'function') syncApDocTitle();
-      }
+      erpOpenDedicatedAccountingForm('maintenance-bill');
     }
 
     function erpNewPayBills() {
@@ -7245,6 +7234,17 @@
       if (typeof applyNavHash === 'function') applyNavHash();
     }
 
+    function sumApWoComposerAmounts() {
+      let sum = 0;
+      document.querySelectorAll('#apWoCatHost .wo-amt').forEach(inp => {
+        sum += Number(inp.value) || 0;
+      });
+      document.querySelectorAll('#apWoItemHost .wo-line-total').forEach(inp => {
+        sum += Number(inp.value) || 0;
+      });
+      return sum;
+    }
+
     function erpDedicatedFormDirty() {
       if (window.__erpDedicatedModalKind === 'fuel') {
         return !!(
@@ -7254,11 +7254,11 @@
       }
       if (window.__erpDedicatedModalKind === 'ap') {
         const v = (document.getElementById('apVendorSearch')?.value || '').trim();
-        let apAmt = 0;
-        document.querySelectorAll('#woLines .wo-amt').forEach(inp => {
-          apAmt += Number(inp.value) || 0;
+        let itemHasRate = false;
+        document.querySelectorAll('#apWoItemHost .wo-rate').forEach(inp => {
+          if (Number(inp.value)) itemHasRate = true;
         });
-        return !!(v || apAmt > 0);
+        return !!(v || sumApWoComposerAmounts() > 0 || itemHasRate);
       }
       return false;
     }
@@ -14735,13 +14735,31 @@
       document.getElementById('apWrapTerms')?.classList.toggle('hidden', !isBill);
     }
 
+    function syncWoApItemLineTotal(row) {
+      if (!row || !row.classList.contains('wo-line-item')) return;
+      const q = Number(row.querySelector('.wo-qty')?.value) || 0;
+      const r = Number(row.querySelector('.wo-rate')?.value) || 0;
+      const lineEl = row.querySelector('.wo-line-total');
+      if (!lineEl) return;
+      const raw = q * r;
+      if (!Number.isFinite(raw)) {
+        lineEl.value = '';
+        return;
+      }
+      const t = Math.round(raw * 100) / 100;
+      lineEl.value = q === 0 && r === 0 ? '' : String(t);
+    }
+
     function refreshApDocTotal() {
       const host = document.getElementById('woLines');
       const out = document.getElementById('apDocTotalDisplay');
       const cnt = document.getElementById('woLineCount');
       if (!host || !out) return;
       let sum = 0;
-      host.querySelectorAll('.wo-amt').forEach(inp => {
+      host.querySelectorAll('#apWoCatHost .wo-amt').forEach(inp => {
+        sum += Number(inp.value) || 0;
+      });
+      host.querySelectorAll('#apWoItemHost .wo-line-total').forEach(inp => {
         sum += Number(inp.value) || 0;
       });
       out.textContent =
@@ -14807,11 +14825,15 @@
         const item = row.querySelector('.wo-item');
         const itemId = row.querySelectorAll('.wo-item-id');
         const qty = row.querySelector('.wo-qty');
+        const rate = row.querySelector('.wo-rate');
+        const lineTot = row.querySelector('.wo-line-total');
         if (svc) svc.value = '';
         if (amt) {
           amt.value = '';
           amt.readOnly = false;
         }
+        if (rate) rate.value = '';
+        if (lineTot) lineTot.value = '';
         if (tire) tire.value = '';
         if (acct) acct.value = '';
         acctId.forEach(el => {
@@ -14845,6 +14867,8 @@
       const host = document.getElementById('apWoItemHost');
       if (!tpl || !host) return;
       host.appendChild(tpl.content.cloneNode(true));
+      const last = host.querySelector('.wo-line-item:last-child');
+      if (last) syncWoApItemLineTotal(last);
       refreshWoLineIndices();
       refreshApDocTotal();
     }
@@ -14856,7 +14880,18 @@
     function collectApFormWoLines() {
       const out = [];
       const push = (row, detailMode) => {
-        const amt = Number(row.querySelector('.wo-amt')?.value) || 0;
+        let amt = 0;
+        if (detailMode === 'item') {
+          const lineEl = row.querySelector('.wo-line-total');
+          amt = Number(lineEl?.value) || 0;
+          if (!(amt > 0)) {
+            const q = Number(row.querySelector('.wo-qty')?.value) || 0;
+            const r = Number(row.querySelector('.wo-rate')?.value) || 0;
+            amt = Math.round(q * r * 100) / 100;
+          }
+        } else {
+          amt = Number(row.querySelector('.wo-amt')?.value) || 0;
+        }
         out.push({
           lineType: 'service',
           serviceType: (row.querySelector('.wo-svc')?.value || '').trim() || 'Line',
