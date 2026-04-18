@@ -1474,6 +1474,33 @@ body.erp-maintenance .erp-reports-roadmap {
     gap: 8px;
   }
 
+  /* Rule 1 — Reports hub ≤900px: shell stacks (sidebar above main in redesign); trim gutters + keep subtabs scrollable on notched phones. */
+  body.erp-maintenance #section-reports .erp-reports-columns {
+    gap: 8px;
+  }
+
+  body.erp-maintenance #section-reports .erp-reports-sidebar {
+    padding: 8px max(8px, env(safe-area-inset-left, 0px)) 10px max(8px, env(safe-area-inset-right, 0px));
+  }
+
+  body.erp-maintenance #section-reports .erp-reports-hub {
+    gap: 8px;
+    padding: 2px max(2px, env(safe-area-inset-left, 0px)) 0 max(2px, env(safe-area-inset-right, 0px));
+  }
+
+  body.erp-maintenance #section-reports .erp-reports-hub__card {
+    padding: 8px 8px 6px;
+  }
+
+  body.erp-maintenance #section-reports #repMainSubtabs.subtabs {
+    gap: 6px;
+    padding-left: max(0px, env(safe-area-inset-left, 0px));
+    padding-right: max(0px, env(safe-area-inset-right, 0px));
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+  }
+
   /* Rule 1 — tablet / narrow laptop: trim main column + top bar padding (icon rail already compacts ≤1100px); env() matches ≤720px shell. */
   body.erp-maintenance .erp-main-body {
     padding: 14px max(12px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px))
