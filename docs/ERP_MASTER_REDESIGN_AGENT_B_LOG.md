@@ -529,3 +529,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`section.active`** (maintenance section host), sidebar **`brand`**, maintenance **`qb-picker-menu`**, **`maint-modal-bg`** / **`maint-modal`**, and **`maint-workorder-fullmodal__title`** so modals, picker popovers, and WO full-modal titles respect narrow viewports and flex centering.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-08
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`min-width: 0`** on WO **`maint-search-row`**, **`maint-wo-summary-bar`**, units column / nested **`panel`**, **`maint-wo-placeholder`**, accounting dash **`acct-dash-card__btnrow`** / **`acct-dash-tools-grid`**, AP **`ap-exp-row`** / **`ap-lines-section-label`** / **`ap-attach-head`**, fuel manual title, QB cost label row, upload **`mr-upload-tabbar`** / **`mr-upload-pickline`** / **`mr-upload-conn-card__actions`**, and **`maint-qb-cost-totals-bar`**. **`maint-wo-col-form`** gets **`min-height: 0`** so the flex column scroll region can shrink inside **`maint-wo-columns`**.
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`iframe-wrap`**, **`catalog-subpanel.active`** / **`upload-subpanel.active`**, **`shop-tab-panel.active`** / **`shop-col`**, **`asset-cat-grid`**, compact KPI strip grid, asset header IDs row, status panel head, cost-line QB rows (**`maint-cost-line__acct`** / **`extras`** / **`maint-cost-qbo-custclass`**), **`maint-wo-split`**, **`maint-wo-banner`**, and **`maint-save-toolbar__actions`**; **`maint-main-tab-panel.active`** matches other visible tab hosts.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
