@@ -952,6 +952,15 @@
                 <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
 
                 <div class="maint-wo-form-shell">
+                <div class="mini-note" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
+                  <span style="min-width:0;flex:1 1 220px">Print header strip — unit line is <code>textContent</code> only; banner unhides when the form mounts.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="WO banner host">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>syncMaintWorkOrderHeader()</code> removes <code>hidden</code> from <code>#maintWoBanner</code> and sets <code>#maintWoBannerUnit</code> <code>textContent</code> to the selected unit, or a “Select an asset…” prompt when none; also retargets vendor / WO field labels and placeholders by <code>#repairLocationTypeInput</code> (internal vs external / parts / other). Called from unit selection, repair location, chips, and related form hooks; pairs with <code>renderMaintAsideWoSummary()</code>.
+                    </span>
+                  </span>
+                </div>
                 <div id="maintWoBanner" class="maint-wo-banner maint-wo-banner--inline hidden" aria-live="polite">
                   <div class="maint-wo-banner__eyebrow">Work order</div>
                   <div id="maintWoBannerUnit" class="maint-wo-banner__unit"></div>

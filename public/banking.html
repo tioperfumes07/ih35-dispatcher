@@ -69,15 +69,13 @@
     <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
     <h1>Bank transactions &amp; QuickBooks matching</h1>
     <p class="lead">
-      Pull <strong>Purchases, Bills, and Bill Payments</strong> from QuickBooks for a date window, paste a <strong>bank export CSV</strong> (Date, Amount, Description),
-      then run <strong>suggested matches</strong> by amount and date. Links you save here are an <strong>audit trail in this app</strong> only — they do not post to QuickBooks.
+      Pull <strong>Purchases, Bills, and Bill Payments</strong> from QuickBooks for a date window; paste <strong>bank CSV</strong> (Date, Amount, Description); run <strong>suggested matches</strong> by amount and date. Saved links = <strong>this app’s audit trail</strong> only — not posted to QuickBooks.
       <span class="erp-help-tip">
         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Audit trail vs QuickBooks">?</button>
         <span class="erp-help-tip__panel" role="tooltip">
-          Saved match links live in this app’s data store for traceability between bank lines and QBO documents. They are not QuickBooks journal entries or bank feeds. Use QuickBooks reconciliation for authoritative clearing.
+          Links here tie a bank line to a QBO document for traceability — not QBO journal lines or bank-feed posts. Authoritative bank clearing stays in <strong>QuickBooks reconciliation</strong>.
         </span>
       </span>
-      Use QuickBooks’ own reconciliation for final bank clearing.
     </p>
 
     <div class="panel">
@@ -117,7 +115,7 @@
           <span class="erp-help-tip" style="flex-shrink:0;margin-top:2px">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Import batch id">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
-              After <strong>Import rows</strong>, note the <strong>import batch id</strong> in the result text — paste it into <strong>step 3</strong> to run suggestions. Use <strong>YYYY-MM-DD</strong> dates when possible for reliable parsing.
+              After <strong>Import rows</strong>, copy the <strong>import batch id</strong> from the result into <strong>step 3</strong>. Prefer <strong>YYYY-MM-DD</strong> for reliable parsing.
             </span>
           </span>
         </div>
