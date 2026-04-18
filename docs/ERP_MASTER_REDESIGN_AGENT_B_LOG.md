@@ -250,6 +250,6 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 ## 2026-05-12
 
 - **Rule 0:** **`maintenance.html`** — Inline styles, template literals, and small JS style maps now use token-only **`var(--color-text-label)`**, **`var(--color-text-body)`**, **`var(--color-text-primary)`**, **`var(--color-border)`**, **`var(--color-bg-card)`**, **`var(--color-bg-header)`**, and **`var(--color-bg-hover)`** (removed **`var(--muted)` / `var(--text)` / `var(--line)` / `var(--panel)`** hops and redundant hex on **`--color-bg-header`** / **`--color-bg-hover`**).
-- **Rule 0:** **`app-theme.css`** — Re-applied the shared text stack cleanup where **`var(--color-text-*)`** had chained legacy **`--muted` / `--text` / `--text-secondary`** again (board nav, KPIs, QB doc hints, WO banner copy, tables, and related maintenance chrome).
+- **Rule 0:** **`app-theme.css`** — Full Rule 0 pass on the shared sheet: **`var(--color-border, var(--line))`**, **`var(--color-bg-card, var(--panel))`**, **`var(--color-bg-page, var(--bg))`**, **`var(--color-bg-header|hover, #…)`**, text stacks (**`--muted` / `--text` / `--text-secondary`**), **`var(--color-nav-bg, #16213e)`**, and the WO banner **`color-mix`** hairline now resolve through **`design-tokens.css`** names only; file header comment updated to match (no redundant **`var(--color-foo, var(--legacy))`** guidance).
 
 **Files:** `public/maintenance.html`, `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
