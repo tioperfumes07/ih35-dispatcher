@@ -21,8 +21,9 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 ## 2. Rule 22 — remaining `mini-note` / copy cleanup
 
 - **Upload center** — **partial (2026-04-18):** duplicate **`mr-upload-panel-desc`** removed (**219–220**); nested **`details.mr-upload-help`** collapsed except one **Connections → Samsara write scopes** accordion (**222**). Remaining: dense **`mini-note`** spot-checks outside upload.
-- **Reports hub** — **partial (2026-04-18, changelog 221):** **Settlement** strip, **QBO activity** empty state, **Maintenance detailed** filter lead; **`repMaintBody` / `repOverviewBody`** etc. still benefit from tip-first passes where copy is dense. Remaining: spot-check other tabs after sign-off.
-- **Accounting / settlement / fuel** — **partial (changelog 223):** accounting **dash** duplicate leads trimmed; settlement/fuel tabs still worth a quick pass before sign-off.
+- **Reports hub** — **partial (2026-04-18, changelogs 221 + 224–226):** **Settlement** strip + **trip rollup**, **QBO activity**, **Maintenance detailed**, **IFTA**, **TMS** summary (`renderReportsAll`), **Team** (CMMS in **`details`**), **ERP ↔ QBO sync** leads; **`repMaintBody` / `repOverviewBody`** still optional spot-check before sign-off.
+- **Accounting / settlement / fuel** — **partial (changelogs 223–224):** accounting **dash** + **Fuel / DEF** tab tips trimmed; settlement tab still worth a quick pass before sign-off.
+- **Lists and catalogs** — **partial (changelog 224):** **Service types** sub-tab lead + admin grid intro shortened; other sub-panels unchanged in this pass.
 
 ---
 
@@ -45,7 +46,7 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 
 - Full **manual regression** with server + QBO + Samsara credentials.
 - **`node scripts/system-smoke.mjs`** with server up.
-- Re-audit **`erpNotify`** call sites for explicit `type` where strings are ambiguous.
+- Re-audit **`erpNotify`** call sites for explicit `type` where strings are ambiguous. (**Large `maintenance.html` batch:** **changelog 224** + prior **219–223** passes.)
 
 ---
 
@@ -66,3 +67,6 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — Reports Rule 22 + maintenance QBO toasts:** Reports hub copy trim + explicit **`erpNotify`** types on maintenance save when QBO post fails or is skipped (**changelog 221**).
 - **2026-04-18 — Upload `details.mr-upload-help` collapse:** Bank / Comdata / Fuel accordions removed; AP + maint template downloads inline; Connections advanced block shortened (**changelog 222**).
 - **2026-04-18 — Accounting dash + `erpNotify` batch:** Dash card sublines removed; typed toasts on fuel import / QBO post / revert / undo / AP validation / Samsara mileage (**changelog 223**).
+- **2026-04-18 — Fuel tab + IFTA + lists copy + `erpNotify` sweep:** Rule **22** trims + explicit toast types on pay bills, manual fuel, settlement, Samsara, maintenance paths (**changelog 224**).
+- **2026-04-18 — Settlement rollup + Team + maintenance toasts:** Reports settlement second help row removed; Team panel tip shortened; maintenance save validation + partial manual fuel QBO post **`erpNotify`** typed (**changelog 225**).
+- **2026-04-18 — Reports TMS + CMMS details + sync lead:** **`renderReportsAll`** TMS strings; Team CMMS benchmark collapsed; sync tab **`mini-note`** trim (**changelog 226**).

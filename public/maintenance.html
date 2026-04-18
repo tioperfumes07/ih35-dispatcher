@@ -787,6 +787,15 @@
               <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse unit list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
             </div>
             <div class="panel-body">
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 200px">Clickable rows below follow <strong>Find unit</strong> search and the active <strong>Fleet by type</strong> pill; past-due / due-soon badges count matching <strong>dashboard</strong> rows per unit.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Units list behavior">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderMaintenanceUnitList()</code> reads <code>#maintenanceUnitSearch</code> and <code>vehiclesByCategory()[activeAssetCategory]</code>, then replaces <code>#maintenanceUnitList</code> with <code>innerHTML</code> as a stack of <code>.list-row</code> cards. <code>selectUnit()</code> re-renders this list to show the active row and also refreshes the WO form, <strong>Maintenance Table</strong>, and AP unit field. Does not hit the network by itself.
+                  </span>
+                </span>
+              </div>
               <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
               <div id="retiredAssetsWrap" class="mini-note" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--color-border)"></div>
             </div>
@@ -798,6 +807,15 @@
             <div id="maintWoFormArea" class="hidden maint-wo-form-stack-inner">
             <div class="maint-wo-main-aside">
             <div class="maint-wo-workspace maint-section-card">
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">The card below is the live unit header — it swaps entirely when you change units; the fuel / PM strip under it uses plain text boxes, not this card’s markup.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Asset header card">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderSelectedUnit()</code> finds the row in <code>vehicles</code>, shows <code>#maintWoFormArea</code>, then replaces <code>#maintAssetHeaderCard</code> <code>innerHTML</code> with name, YMM, operational status pill (from <strong>Lists → Operational</strong>), VIN / plate / odometer, and <strong>Edit status</strong>. It rebuilds <code>#maintAssetStatusPanelBody</code> on a sibling host, clears <code>#selectedUnitInfo</code>, updates <code>#maintUnitSummaryStrip</code> boxes via <code>textContent</code>, and chains <code>renderUnitHistory()</code>, <code>syncMaintWorkOrderHeader()</code>, and <code>renderMaintAsideWoSummary()</code>. With no unit, the placeholder template is restored here.
+                  </span>
+                </span>
+              </div>
               <div id="maintAssetHeaderCard" class="maint-asset-header-card" aria-live="polite">
                 <div class="maint-asset-header-card__placeholder">Select a unit from the list.</div>
               </div>
@@ -833,6 +851,15 @@
                 <div class="unit-box"><div class="k">Saved odo</div><div class="v" id="unitMileageBox">N/A</div></div>
               </div>
 
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Inline WO snapshot — same key/value row as the R&amp;M aside; hidden until a unit is selected.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="WO summary bar">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderMaintAsideWoSummary()</code> reads <code>selectedUnit</code>, <code>#recordWorkOrderInput</code>, <code>#costInput</code>, <code>#repairLocationSearch</code>, builds escaped HTML, assigns <code>#maintAsideWoSummary</code> <code>innerHTML</code>, and mirrors the same markup into <code>#maintWoSummaryBar</code> when a unit is selected (otherwise the bar stays <code>hidden</code>).
+                  </span>
+                </span>
+              </div>
                 <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
 
                 <div class="maint-wo-form-shell">
@@ -1367,6 +1394,15 @@
                   </span>
                 </span>
               </div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 200px">The alert stack below is replaced when you <strong>Refresh alerts</strong>, change <strong>Window (days)</strong>, or edit search / severity — same API payload as Tracking → Shop integrity when loaded.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="R&amp;M integrity alert host">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadSecurityCatalogUi()</code> fetches <code>GET /api/maintenance/security-alerts</code> (window from <code>#maintIntegrityDays</code>), then <code>renderSecurityAlerts</code> with <code>maintSecurityAlertRenderOpts</code> (<code>bodyId: maintSecurityAlertsBody</code>, <code>maintIntegritySearch</code>, <code>maintIntegritySeverity</code>) replaces <code>#maintSecurityAlertsBody</code> via <code>innerHTML</code> (summary header + alert cards + optional driver-risk block). Errors mirror the Tracking panel message into this host.
+                  </span>
+                </span>
+              </div>
               <div id="maintSecurityAlertsBody" class="mini-note">Loading…</div>
             </div>
           </div>
@@ -1389,6 +1425,15 @@
               </p>
             </div>
             <div class="panel-body">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">The host below is one HTML document built from the in-memory <strong>shop queue</strong> cache plus recent <strong>erp.records</strong> slices — open this tab after <strong>Refresh</strong> on the main maintenance load if counts look stale.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop / location board">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderMaintLocationBoard()</code> builds buckets for <code>internal</code> / <code>external</code> / <code>roadside</code> / <code>parts</code> from <code>shopQueueCache</code> (small tables), then appends “recent maintenance visits” lists grouped by <code>repairLocationType</code> from <code>erp.records</code>, and sets <code>#maintLocationBoardHost.innerHTML</code> in one pass. Invoked when the <strong>Shop / location</strong> tab is active after <code>loadAll()</code> / queue saves / tab switches.
+                  </span>
+                </span>
+              </div>
               <div id="maintLocationBoardHost" class="mini-note">Loading…</div>
             </div>
           </div>
@@ -2828,7 +2873,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel tab overview">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Each grid row is its own QuickBooks <strong>Purchase (Expense)</strong>. Default lines use an <strong>expense category</strong> (Diesel / DEF / Reefer → your chart) with <strong>Class</strong> = truck. Uncheck category on the grid to post as a QBO <strong>item</strong> (qty × rate). Pick vendor, optional driver and customer on the line. Edits save to ERP after a pause when the <strong>ERP write secret</strong> is set (same as posting).
+                    Each row is one QuickBooks <strong>Purchase</strong>. Default: <strong>expense category</strong> lines (Diesel / DEF / Reefer → your accounts) with <strong>Class</strong> = truck. Uncheck <strong>Post as expense category line</strong> below to use QBO <strong>items</strong> (gal × rate). Vendor plus optional driver/customer per line. Autosave to the ERP when the <strong>ERP write secret</strong> is configured.
                   </span>
                 </span>
               </div>
@@ -3064,8 +3109,8 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Relay import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Upload Relay “All Transactions” exports here. Requires <strong>ERP write secret</strong> in Settings. After import, rows appear in the grid — use <strong>Record to QuickBooks</strong> per line.
-                      <strong>Fuel ledger lines</strong> (from <code>volume_*</code> / <code>total_price_*</code>) store unit, gallons, totals, vendor, <code>work_date</code>, and a suggested QB expense path; each Record creates its own Purchase (DocNumber, Vendor, Class, bank, account line). <strong>Relay staging</strong> in the preview mirrors template labels (Diesel, DEF, Reefer, fees) for reconciliation only unless you use a separate sync. Dates like <code>4/15/26</code> normalize to ISO on import.
+                      Preview Love’s / Relay <strong>All Transactions</strong> (CSV/Excel). Requires <strong>ERP write secret</strong> in Settings. After <strong>Confirm import</strong>, rows land in the grid — <strong>Record to QuickBooks</strong> creates one Purchase per row.
+                      <span style="display:block;margin-top:8px">Parsed rows carry unit, gallons, totals, vendor, and dates (e.g. <code>4/15/26</code> → ISO). Category mode maps to your expense accounts; <strong>Already in QuickBooks</strong> in the preview keeps staging-only Relay lines.</span>
                     </span>
                   </span>
                 </div>
@@ -3604,7 +3649,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About TMS loads report">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Loads and trips from the <strong>TMS / Postgres</strong> pipeline when that database is configured. Refresh reports from the overview if the table is empty after setup.
+                    Loads and trips from <strong>TMS / Postgres</strong> when configured. The summary row’s revenue total uses the TMS <code>revenue_amount</code> field. If this tab stays empty after setup, run <strong>Refresh reports</strong> on the overview.
                   </span>
                 </span>
               </div>
@@ -3630,21 +3675,12 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Rollup panel">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    One load’s merged costs in the table below. Match <strong>load / invoice #</strong> across WOs, AP, and unit records; <strong>Run lookup</strong> rebuilds rows. Deeper rules and CSV behavior sit with the inline <strong>?</strong> under the filters.
+                    One load’s merged costs in the table below. Use the filters in this panel: enter the same <strong>load / invoice #</strong> on work orders, AP, and maintenance so costs roll into one trip. <strong>Run lookup</strong> rebuilds rows; <strong>Download CSV</strong> exports the current load. When Postgres has the trip, the TMS header and stops render under the rollup.
                   </span>
                 </span>
               </div>
             </div>
             <div class="panel-body form-stack">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px">
-                <span class="mini-note" style="margin:0">Match load # on WOs, AP, and unit records · TMS context when available · CSV export.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Rollup rules">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Enter the same <strong>load / invoice #</strong> you use on work orders, AP documents, and maintenance records so costs roll into one trip. <strong>Run lookup</strong> refreshes totals; <strong>Download CSV</strong> exports the current load for accounting.
-                  </span>
-                </span>
-              </div>
               <div
                 class="mr-filter-bar erp-ops-filter-bar"
                 role="group"
@@ -3866,7 +3902,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this panel">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Loads roster snippets, recent sign-ins, and security posture text when you click <strong>Refresh panel</strong>. Aligns with <strong>Maintenance → Security alerts</strong> data where the same APIs are used.
+                    <strong>Refresh panel</strong> loads sign-in posture, checks, and (for admins) ERP user activity. Overlaps <strong>Maintenance → Security alerts</strong> where the same APIs apply.
                   </span>
                 </span>
               </div>
@@ -3895,9 +3931,7 @@
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(820px,100%)">
-              <p class="mini-note" style="margin:0;color:var(--color-text-label)">
-                Roadmap tab — open <strong>?</strong> on the title for jurisdiction miles, fuel tax, driver compliance, and what already ships today.
-              </p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-label)">Roadmap — see title <strong>?</strong> for scope and what ships today.</p>
             </div>
           </div>
         </div>
@@ -3930,7 +3964,7 @@
             </div>
             <div id="catalog-panel-service" class="catalog-subpanel active">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="mini-note" style="margin:0">Service types live in Postgres when <code>DATABASE_URL</code> is set — the maintenance form list refreshes after you edit here.</span>
+                <span class="mini-note" style="margin:0">Stored in Postgres when <code>DATABASE_URL</code> is set.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About service types">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -3958,7 +3992,7 @@
                 </div>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">The paginated grid loads when you open <strong>Lists &amp; catalogs</strong> (or switch to this sub-tab) and again when <strong>R&amp;M Status</strong> runs its refresh (same code path); use the search bar to narrow names — the pager appears when there are enough rows.</span>
+                <span style="min-width:0;flex:1 1 220px">Loads when you open <strong>Lists → Service types</strong> or when <strong>R&amp;M Status</strong> refresh runs; search narrows results — pager appears for long lists.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service catalog admin API">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -5516,7 +5550,7 @@
 
     async function maintDraftWorkOrderPdf() {
       if (!selectedUnit) {
-        erpNotify('Select an asset first.');
+        erpNotify('Select an asset first.', 'warning');
         return;
       }
       const hint = document.getElementById('maintSaveHint');
@@ -7473,12 +7507,10 @@
       if (tb) {
         if (!tms.configured) {
           tb.innerHTML =
-            '<p class="mini-note" style="margin:0 0 6px">PostgreSQL / TMS not configured.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Set <code>DATABASE_URL</code> and run <code>npm run db:migrate</code>.</p>';
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">TMS not configured — set <code>DATABASE_URL</code>, run <code>npm run db:migrate</code>, then <strong>Refresh reports</strong> on the overview.</p>';
         } else if (!tms.ok) {
           tb.innerHTML =
-            '<p class="mini-note" style="margin:0 0 6px">Could not read the TMS summary.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-semantic-error)">' +
+            '<p class="mini-note" style="margin:0;color:var(--color-semantic-error)">Could not read TMS summary: ' +
             escapeHtml(tms.error || 'Unknown error') +
             '</p>';
         } else {
@@ -7486,7 +7518,7 @@
             .map(([status, c]) => `<tr><td>${escapeHtml(status)}</td><td>${c}</td></tr>`)
             .join('');
           tb.innerHTML = `
-            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Total loads: ${tms.totalLoads} · Revenue sum (TMS <code>revenue_amount</code>): $${Number(tms.revenueSum || 0).toFixed(2)}</p>
+            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">${tms.totalLoads} loads · revenue sum $${Number(tms.revenueSum || 0).toFixed(2)}</p>
             <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:560px">
               <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>${
                 rows || '<tr><td colspan="2">No loads</td></tr>'
@@ -7534,7 +7566,7 @@
           { label: 'AP / expense transactions', p: post.apTransactions }
         ];
         syEl.innerHTML = `
-          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Posted vs local-only vs error — by source (see <strong>?</strong> on the panel title for context).</p>
+          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Posted vs local-only vs error by source — see panel title <strong>?</strong>.</p>
           <div class="table-wrap erp-table-scroll" style="min-width:0;max-width:720px">
             <table style="font-size:12px">
               <thead><tr><th>Source</th><th>Total</th><th>Posted</th><th>Local only</th><th>Error</th></tr></thead>
@@ -7618,15 +7650,20 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How to read this">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  <strong>Reference</strong> themes common in fleet CMMS products — not a grade for this app. Use it to spot gaps (PM templates, parts stock, mobile workflows) you may want to prioritize later.
+                  <strong>Reference</strong> themes common in fleet CMMS products — not a grade for this app. Expand the section below for typical vendor themes vs what this ERP already covers.
                 </span>
               </span>
             </div>
           </div>
-          <div class="panel-body mini-note" style="line-height:1.55">
-            Leading fleet maintenance products stress <strong>preventive schedules</strong> (mileage, time, OEM), <strong>digital work orders</strong> with parts and labor,
-            <strong>inspections / DVIR</strong>, <strong>parts inventory</strong>, <strong>telematics</strong>, and <strong>mobile workflows</strong>.
-            This ERP already combines maintenance history, shop queue, Samsara mileage, QBO expenses, settlement, and integrity alerts — extend toward full CMMS parity with PM templates and parts stock when you are ready.
+          <div class="panel-body" style="padding-top:10px">
+            <details class="mr-upload-help" style="margin:0">
+              <summary>Industry CMMS themes (optional read)</summary>
+              <div class="mini-note" style="margin-top:8px;line-height:1.55">
+                Leading fleet maintenance products stress <strong>preventive schedules</strong> (mileage, time, OEM), <strong>digital work orders</strong> with parts and labor,
+                <strong>inspections / DVIR</strong>, <strong>parts inventory</strong>, <strong>telematics</strong>, and <strong>mobile workflows</strong>.
+                This ERP already combines maintenance history, shop queue, Samsara mileage, QBO expenses, settlement, and integrity alerts — extend toward full CMMS parity with PM templates and parts stock when you are ready.
+              </div>
+            </details>
           </div>
         </div>`;
       const isAdmin = sessionUser && sessionUser.role === 'admin';
@@ -9881,7 +9918,7 @@
       const statusEl = document.getElementById('bpOpenBillsStatus');
       const body = document.getElementById('bpOpenBillsBody');
       if (!billId) {
-        erpNotify('Enter a numeric QuickBooks bill id (digits only).');
+        erpNotify('Enter a numeric QuickBooks bill id (digits only).', 'warning');
         return;
       }
       if (statusEl) statusEl.textContent = 'Loading bill from QuickBooks…';
@@ -10375,7 +10412,7 @@
       if (!host || !row) return;
       const rows = host.querySelectorAll('tr.fuel-m-cost-line');
       if (rows.length <= 1) {
-        erpNotify('Keep at least one line.');
+        erpNotify('Keep at least one line.', 'warning');
         return;
       }
       row.remove();
@@ -10504,15 +10541,15 @@
       const host = document.getElementById('fuelManualLines');
       const lineRows = host ? Array.from(host.querySelectorAll('tr.fuel-m-cost-line')) : [];
       if (!unit) {
-        erpNotify('Enter truck / unit.');
+        erpNotify('Enter truck / unit.', 'warning');
         return;
       }
       if (!txnDate) {
-        erpNotify('Pick a date.');
+        erpNotify('Pick a date.', 'warning');
         return;
       }
       if (!lineRows.length) {
-        erpNotify('Add at least one fuel line.');
+        erpNotify('Add at least one fuel line.', 'warning');
         return;
       }
       const gBankIn = document.getElementById('fuelExpBankSearch');
@@ -10535,19 +10572,19 @@
         const itemId = String(row.querySelector('.fuel-m-line-item-id')?.value || '').trim();
         const acctId = String(row.querySelector('.fuel-m-line-acct-id')?.value || '').trim();
         if (mode === 'item' && !itemId) {
-          erpNotify('Each line in Item mode needs a matched QuickBooks product/service.');
+          erpNotify('Each line in Item mode needs a matched QuickBooks product/service.', 'warning');
           return;
         }
         if (mode === 'category' && !acctId) {
-          erpNotify('Each line in Category mode needs a matched QuickBooks expense account.');
+          erpNotify('Each line in Category mode needs a matched QuickBooks expense account.', 'warning');
           return;
         }
         if (!(Number.isFinite(gal) && gal > 0) && !(Number.isFinite(total) && total > 0)) {
-          erpNotify('Each line needs gallons and price, or a positive line total with Lock line $.');
+          erpNotify('Each line needs gallons and price, or a positive line total with Lock line $.', 'warning');
           return;
         }
         if (lock && !(Number.isFinite(total) && total > 0)) {
-          erpNotify('Locked lines need a positive line total.');
+          erpNotify('Locked lines need a positive line total.', 'warning');
           return;
         }
         lines.push({
@@ -10658,7 +10695,8 @@
           if (fails.length) {
             erpNotify(
               'Some lines did not post to QuickBooks:\n\n' +
-                fails.map(f => `${f.fid}: ${f.err}`).join('\n')
+                fails.map(f => `${f.fid}: ${f.err}`).join('\n'),
+              'warning'
             );
           }
         } else if (hint) {
@@ -11403,7 +11441,7 @@
       const filtered = filterFuelPurchasesForExpenseTab();
       const todo = filtered.filter(r => String(r.qboSyncStatus || '').trim() !== 'posted');
       if (!todo.length) {
-        erpNotify('No unposted fuel rows in the current date/search filter.');
+        erpNotify('No unposted fuel rows in the current date/search filter.', 'info');
         return;
       }
       if (
@@ -11463,7 +11501,7 @@
       const checkNum = (document.getElementById('bpCheckNum')?.value || '').trim();
       const privateNote = (document.getElementById('bpPrivateNote')?.value || '').trim();
       if (!bankId) {
-        erpNotify('Choose the pay-from account (QuickBooks bank or card).');
+        erpNotify('Choose the pay-from account (QuickBooks bank or card).', 'warning');
         return;
       }
       const bills = bpGetOpenBillsList();
@@ -11480,32 +11518,32 @@
         if (!Number.isFinite(amt)) amt = 0;
         amt = Math.max(0, Math.min(open, Math.round(amt * 100) / 100));
         if (!(amt > 0)) {
-          erpNotify('Enter a pay amount greater than zero for each selected bill.');
+          erpNotify('Enter a pay amount greater than zero for each selected bill.', 'warning');
           return;
         }
         if (amt - open > 0.01) {
-          erpNotify(`Pay amount cannot exceed open balance for bill ${billId}.`);
+          erpNotify(`Pay amount cannot exceed open balance for bill ${billId}.`, 'warning');
           return;
         }
         lines.push({ billId, amount: amt });
         vendors.add(vendorId);
       }
       if (!lines.length) {
-        erpNotify('Select at least one bill to pay.');
+        erpNotify('Select at least one bill to pay.', 'warning');
         return;
       }
       if (vendors.size !== 1) {
-        erpNotify('Select bills for a single vendor only (one Bill Payment per vendor in QuickBooks).');
+        erpNotify('Select bills for a single vendor only (one Bill Payment per vendor in QuickBooks).', 'warning');
         return;
       }
       const vendorQboId = [...vendors][0];
       if (!vendorQboId) {
-        erpNotify('Missing vendor on selected row.');
+        erpNotify('Missing vendor on selected row.', 'warning');
         return;
       }
       const hintVid = (document.getElementById('bpVendorQboId')?.value || '').trim();
       if (hintVid && hintVid !== vendorQboId) {
-        erpNotify('Selected bills do not match the vendor in the filter row. Clear the vendor filter or adjust your selection.');
+        erpNotify('Selected bills do not match the vendor in the filter row. Clear the vendor filter or adjust your selection.', 'warning');
         return;
       }
       if (resEl) resEl.textContent = 'Posting to QuickBooks…';
@@ -11672,8 +11710,8 @@
     async function revertBillPaymentFromLog(erpLogId, qboBillPaymentId) {
       const id = String(erpLogId || '').trim();
       const qboId = String(qboBillPaymentId || '').trim();
-      if (!id) return erpNotify('Missing ERP log id.');
-      if (!qboId) return erpNotify('Missing QuickBooks bill payment id.');
+      if (!id) return erpNotify('Missing ERP log id.', 'warning');
+      if (!qboId) return erpNotify('Missing QuickBooks bill payment id.', 'warning');
       if (
         !confirm(
           `Delete/void this Bill Payment in QuickBooks?\n\nQBO BillPayment Id: ${qboId}\nERP log: ${id}\n\nThis will reopen the bill balances in QBO.`
@@ -12172,7 +12210,7 @@
       const estimatedHoursRaw = document.getElementById('sqEstH').value.trim();
       const vendorHint = document.getElementById('sqVendor').value.trim();
       if (!unit) {
-        erpNotify('Unit is required');
+        erpNotify('Unit is required', 'warning');
         return;
       }
       try {
@@ -13678,7 +13716,7 @@
     async function pushSamsaraVehicleName() {
       const id = document.getElementById('samsaraVehicleIdInput')?.value?.trim();
       const name = document.getElementById('samsaraVehicleNameInput')?.value?.trim();
-      if (!id || !name) return erpNotify('Vehicle id and new name are required.');
+      if (!id || !name) return erpNotify('Vehicle id and new name are required.', 'warning');
       try {
         const r = await fetch('/api/integrations/samsara/vehicle/' + encodeURIComponent(id), {
           method: 'POST',
@@ -13697,7 +13735,7 @@
     async function pushSamsaraDriverName() {
       const id = document.getElementById('samsaraDriverIdInput')?.value?.trim();
       const name = document.getElementById('samsaraDriverNameInput')?.value?.trim();
-      if (!id || !name) return erpNotify('Driver id and new name are required.');
+      if (!id || !name) return erpNotify('Driver id and new name are required.', 'warning');
       try {
         const r = await fetch('/api/integrations/samsara/driver/' + encodeURIComponent(id), {
           method: 'POST',
@@ -15739,7 +15777,7 @@
       try {
         const targetUnit = String(r.unit || '').trim();
         if (!targetUnit) {
-          erpNotify('This record has no unit; cannot load into the form.');
+          erpNotify('This record has no unit; cannot load into the form.', 'warning');
           return;
         }
         if (targetUnit !== selectedUnit) {
@@ -15900,7 +15938,7 @@
         }
       }
       if (!r) {
-        erpNotify('Record not found.');
+        erpNotify('Record not found.', 'error');
         return;
       }
       hydrateMaintenanceRecordForm(r);
@@ -15923,7 +15961,8 @@
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
       if (!repairLoc) {
         erpNotify(
-          'Select where service is performed: choose a location type in Service & scheduling (Internal shop, External shop, Roadside, Parts purchase, or Over the road).'
+          'Select where service is performed: choose a location type in Service & scheduling (Internal shop, External shop, Roadside, Parts purchase, or Over the road).',
+          'warning'
         );
         document.getElementById('repairLocationSelect')?.focus();
         return false;
@@ -15932,7 +15971,7 @@
       let woNo = String(document.getElementById('recordWorkOrderInput')?.value || '').trim();
       if (repairLoc === 'external' || repairLoc === 'road-service' || repairLoc === 'parts-purchase') {
         if (!vendorInvNo && !woNo) {
-          erpNotify('External shop, roadside service, and parts purchases require a vendor invoice # or a reference / WO #.');
+          erpNotify('External shop, roadside service, and parts purchases require a vendor invoice # or a reference / WO #.', 'warning');
           document.getElementById('recordVendorInvoiceInput')?.focus();
           return false;
         }
@@ -15949,7 +15988,7 @@
       if (recordType === 'custom') {
         const c = document.getElementById('customServiceTypeInput').value.trim();
         if (!c) {
-          erpNotify('Enter a custom service type name.');
+          erpNotify('Enter a custom service type name.', 'warning');
           return false;
         }
         serviceType = c;
@@ -15961,7 +16000,7 @@
           if (withDesc) serviceType = withDesc.description;
         }
         if (!serviceType) {
-          erpNotify('Choose or type the service / maintenance performed (or enter a description on the first cost line).');
+          erpNotify('Choose or type the service / maintenance performed (or enter a description on the first cost line).', 'warning');
           return false;
         }
       }
@@ -15975,7 +16014,8 @@
         erpNotify(
           `Invoice total ($${invTotal.toFixed(2)}) must equal the sum of cost lines ($${lineSum.toFixed(
             2
-          )}). Adjust qty × unit $, line amounts, or the invoice total (uncheck “Lock invoice total” to auto-fill from lines).`
+          )}). Adjust qty × unit $, line amounts, or the invoice total (uncheck “Lock invoice total” to auto-fill from lines).`,
+          'warning'
         );
         return false;
       }
@@ -15995,7 +16035,8 @@
       }
       if (!Number.isFinite(smNum) || smNum <= 0) {
         erpNotify(
-          'Enter a valid service mileage (positive number). The field defaults to the Samsara odometer when available — use “Use Samsara” or refresh fleet data.'
+          'Enter a valid service mileage (positive number). The field defaults to the Samsara odometer when available — use “Use Samsara” or refresh fleet data.',
+          'warning'
         );
         smEl?.focus();
         return false;
@@ -16024,19 +16065,21 @@
         const qvIdPost = (document.getElementById('linkedVendorQboId')?.value || '').trim();
         if (!qvIdPost) {
           erpNotify(
-            'Match the vendor to a QuickBooks vendor (type in the vendor field until it matches your QBO vendor list), then save again.'
+            'Match the vendor to a QuickBooks vendor (type in the vendor field until it matches your QBO vendor list), then save again.',
+            'warning'
           );
           document.getElementById('vendorInput')?.focus();
           return false;
         }
         if (!(invTotal > 0)) {
-          erpNotify('Enter an invoice total greater than zero to post to QuickBooks.');
+          erpNotify('Enter an invoice total greater than zero to post to QuickBooks.', 'warning');
           document.getElementById('costInput')?.focus();
           return false;
         }
         if (!hasLineMoney) {
           erpNotify(
-            'Add at least one cost breakdown line with a line amount so QuickBooks receives the correct account or item on each line.'
+            'Add at least one cost breakdown line with a line amount so QuickBooks receives the correct account or item on each line.',
+            'warning'
           );
           return false;
         }
@@ -16049,7 +16092,8 @@
         });
         if (badQboLine) {
           erpNotify(
-            'Each cost line with a dollar amount needs a QuickBooks expense account or item on that row (QBO line under the row). Then try Save & post again.'
+            'Each cost line with a dollar amount needs a QuickBooks expense account or item on that row (QBO line under the row). Then try Save & post again.',
+            'warning'
           );
           return false;
         }
@@ -16300,7 +16344,7 @@
       maintCloseSplitMenus();
       const hint = document.getElementById('maintSaveHint');
       if (!selectedUnit) {
-        erpNotify('Select an asset first.');
+        erpNotify('Select an asset first.', 'warning');
         maintToneSaveHint(hint, 'Select a unit before saving.', 'caution');
         return;
       }
@@ -16383,7 +16427,7 @@
       const lines = collectMaintCostLines();
       const usable = Array.isArray(lines) ? lines.filter(l => (Number(l.amount) || 0) > 0 || String(l.description || '').trim()) : [];
       if (!usable.length) {
-        erpNotify('No cost breakdown lines to transfer. Add at least one cost line amount or description.');
+        erpNotify('No cost breakdown lines to transfer. Add at least one cost line amount or description.', 'warning');
         return;
       }
 
@@ -18213,7 +18257,10 @@
       const sm = window.__lastSettlementMiles;
       const loadId = window.__lastTmsLoadId;
       if (!loadId || !sm || !sm.ok) {
-        erpNotify('Run a settlement lookup with a TMS load that has at least two stops and addresses on first and last stop.');
+        erpNotify(
+          'Run a settlement lookup with a TMS load that has at least two stops and addresses on first and last stop.',
+          'warning'
+        );
         return;
       }
       try {
@@ -18342,7 +18389,7 @@
     function downloadSettlementCsv() {
       const raw = document.getElementById('settlementLoadInput').value.trim();
       if (!raw) {
-        erpNotify('Enter a load / invoice number first.');
+        erpNotify('Enter a load / invoice number first.', 'warning');
         return;
       }
       window.location.href = '/api/settlement/export?load=' + encodeURIComponent(raw);
@@ -18351,7 +18398,7 @@
     async function runSettlementLookup() {
       const raw = document.getElementById('settlementLoadInput').value.trim();
       if (!raw) {
-        erpNotify('Enter a load / invoice number.');
+        erpNotify('Enter a load / invoice number.', 'warning');
         return;
       }
       try {
