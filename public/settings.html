@@ -14,17 +14,13 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--color-bg-page);
-      color: var(--color-text-body);
     }
-    .wrap { max-width: 640px; margin: 0 auto; }
-    h1 { font-size: 1.35rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .wrap { margin: 0 auto; }
+    h1 { margin: 0 0 8px; }
     p {
-      color: var(--color-text-label);
-      font-size: 14px;
       line-height: 1.55;
     }
-    .panel { background: linear-gradient(180deg, var(--app-section-surface) 0%, var(--color-bg-card) 40%); border: 1px solid var(--color-app-frame-border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+    .panel { padding: 18px; margin-bottom: 16px; }
     label {
       display: block;
       font-size: 12px;
@@ -34,8 +30,6 @@
     input { width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: 12px; box-sizing: border-box; font-family: var(--font-spec-sans, var(--font-sans, system-ui, sans-serif)); }
     input:focus { border-color: var(--color-border-focus); box-shadow: var(--focus-ring); outline: none; }
     button { padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; font-weight: 500; font-family: var(--font-spec-sans, var(--font-sans, system-ui, sans-serif)); }
-    button.primary { background: var(--accent); color: var(--color-bg-card); border-color: var(--accent); }
-    button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     .mini {
       font-size: 12px;
       color: var(--color-text-label);
@@ -43,7 +37,7 @@
     }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--color-border); }
-    a { color: var(--accent); font-weight: 500; text-decoration: none; }
+    a { text-decoration: none; }
     a:hover { text-decoration: underline; }
     .hidden { display: none !important; }
     .err { color: var(--color-semantic-error); font-size: 13px; margin-top: 8px; }

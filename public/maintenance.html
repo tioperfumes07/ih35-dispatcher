@@ -3046,7 +3046,15 @@
                 </div>
                 <input id="newItemDescription" class="qb-in" placeholder="Description (optional)" autocomplete="off">
                 <button type="button" onclick="createQboItem()">Create Item in QuickBooks</button>
-                <p id="newItemHint" class="mini-note" style="margin:0"></p>
+                <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span id="newItemHint" role="status" aria-live="polite" aria-atomic="true" style="margin:0;min-width:0;flex:1 1 200px"></span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create item in QBO">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Posts a <strong>Product &amp; service</strong> row to QuickBooks. <strong>Income account</strong> is required by the QBO API; <strong>expense account</strong> is optional for purchase-side mapping. Pick <strong>Service</strong> vs <strong>Non-inventory</strong> to match how you buy/sell. Status text beside this button shows validation, progress, and the returned QBO id.
+                    </span>
+                  </span>
+                </div>
               </div>
 
               <div class="form-stack" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border)">
@@ -3064,7 +3072,15 @@
                 </div>
                 <input id="newAccountSubType" class="qb-in" placeholder="Account sub-type (optional)" autocomplete="off">
                 <button type="button" onclick="createQboAccount()">Create Account in QuickBooks</button>
-                <p id="newAccountHint" class="mini-note" style="margin:0"></p>
+                <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span id="newAccountHint" role="status" aria-live="polite" aria-atomic="true" style="margin:0;min-width:0;flex:1 1 200px"></span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create account in QBO">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      Creates a <strong>chart-of-accounts</strong> category in QuickBooks (type + optional sub-type). Most teams add complex account trees in QBO first, then <strong>Refresh Live QuickBooks Master</strong>. The line beside this button shows validation, posting progress, errors, and the new id when QBO returns one.
+                    </span>
+                  </span>
+                </div>
               </div>
 
               <div class="grid grid-3" style="margin-top:14px;">
