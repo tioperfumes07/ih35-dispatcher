@@ -3891,6 +3891,15 @@
             </div>
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
+              <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 240px">Vendor sections and load tables below replace on each <strong>Refresh driver settlements</strong> — this line stays when the payload is loading or errors.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Driver pay settlements body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadDriverPaySettlements()</code> sets <code>#driverPaySettlementsBox</code> <code>innerHTML</code> to a loading string, then calls <code>renderDriverPaySettlementsBox()</code> which replaces the whole host with per-vendor HTML (tables + optional <code>driverPaySettPager_*</code> hosts) or an empty/error message. Pager callbacks re-call <code>renderDriverPaySettlementsBox()</code> to rebuild <code>innerHTML</code> for the new slice.
+                  </span>
+                </span>
+              </div>
               <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Use <strong>Refresh driver settlements</strong> — title <strong>?</strong> for fields.</div>
             </div>
           </div>
@@ -12527,7 +12536,7 @@
         }
 
         if (!rows.length) {
-          host.innerHTML = `<tr><td colspan="9" class="mini-note" style="padding:10px">No rows for current filters.</td></tr>`;
+          host.innerHTML = `<tr><td colspan="9" class="mini-note" style="padding:10px">No rows match filters.</td></tr>`;
           if (pagerHost) {
             pagerHost.innerHTML = '';
             pagerHost.hidden = true;
@@ -12607,7 +12616,7 @@
               .slice(0, 8)
               .map(w => fmtWo(w, ''))
               .join('')
-          : '<div class="mini-note">No internal shop work orders yet.</div>';
+          : '<div class="mini-note">No internal shop WOs yet.</div>';
       }
       if (elEWo) {
         elEWo.innerHTML = externalWo.length
@@ -12615,7 +12624,7 @@
               .slice(0, 8)
               .map(w => fmtWo(w, ''))
               .join('')
-          : '<div class="mini-note">No external service work orders yet.</div>';
+          : '<div class="mini-note">No external WOs yet.</div>';
       }
       if (elRWo) {
         elRWo.innerHTML = roadsideWo.length
@@ -12630,7 +12639,7 @@
                 )
               )
               .join('')
-          : '<div class="mini-note">No road side / over-the-road work orders yet.</div>';
+          : '<div class="mini-note">No roadside / OTR WOs yet.</div>';
       }
       if (elPWo) {
         elPWo.innerHTML = partsWo.length
@@ -12638,7 +12647,7 @@
               .slice(0, 8)
               .map(w => fmtWo(w, '<span class="mini-note">Parts · </span>'))
               .join('')
-          : '<div class="mini-note">No parts-purchase work orders yet. Use repair location <strong>Parts purchase</strong> on a work order.</div>';
+          : '<div class="mini-note">No parts WOs yet. Set repair location to <strong>Parts purchase</strong> on a WO.</div>';
       }
 
       const recs = (erp.records || []).filter(r => {
@@ -12659,7 +12668,7 @@
                   )} · ${escapeHtml(r.serviceDate || '')}</span></div>`
               )
               .join('')
-          : '<div class="mini-note">No out-of-service unit records. Save a unit record with service type containing “out of service”.</div>';
+          : '<div class="mini-note">No OOS records. Save a unit service whose type includes “out of service”.</div>';
       }
       const sl = document.getElementById('maintMainTabShopLoc');
       if (sl && sl.classList.contains('active')) renderMaintLocationBoard();
@@ -12812,10 +12821,10 @@
       const mi = v && v.odometerMiles != null ? Number(v.odometerMiles) : null;
       const src = rec && rec.source ? String(rec.source) : 'Samsara';
       if (mi != null && Number.isFinite(mi)) {
-        el.innerHTML = `${escapeHtml(src)}: <strong>${Math.round(mi).toLocaleString()} mi</strong> — recommended for this service. Edit if the work was not at this odometer. When saving, you may be asked to confirm if it matches the live fleet reading.`;
+        el.innerHTML = `${escapeHtml(src)}: <strong>${Math.round(mi).toLocaleString()} mi</strong> — suggested for this service. Edit if wrong; save may prompt if live fleet reading differs.`;
       } else {
         el.textContent =
-          'No odometer from Samsara or saved mileage for this unit — enter service mileage manually (or refresh fleet data).';
+          'No odometer from Samsara or saved mileage — enter manually or refresh fleet data.';
       }
     }
 
@@ -12824,7 +12833,7 @@
       const mi = rec.miles;
       if (mi == null || !Number.isFinite(mi)) {
         erpNotify(
-          'No Samsara odometer (or saved fallback) for this unit yet. Choose Refresh in the top bar, or verify the asset in Samsara Cloud.',
+          'No odometer for this unit yet. Refresh the board or check the unit in Samsara Cloud.',
           'warning'
         );
         return;
@@ -17213,12 +17222,12 @@
       });
       const emptyMsg =
         mode === 'active'
-          ? 'No rows match “active duties” (or no HOS data).'
+          ? 'No active-duty rows (or no HOS).'
           : mode === 'inactive'
-            ? 'No off-duty / sleeper rows in the relevant set (or no HOS data).'
+            ? 'No off-duty / sleeper rows (or no HOS).'
             : mode === 'all'
-              ? 'No HOS rows from Samsara.'
-              : 'No drivers in this view (or no HOS data). Try “All Samsara rows” or adjust the filter.';
+              ? 'No HOS rows.'
+              : 'No rows for this filter. Try “All Samsara rows” or widen search.';
       const tb = document.getElementById('safetyHosBody');
       const pagerHost = document.getElementById('safetyHosPagerHost');
       const pState = safetyHosPager;
