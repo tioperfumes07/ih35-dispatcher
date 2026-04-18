@@ -1001,6 +1001,15 @@
                           <input id="serviceMileageInput" class="qb-in maint-field" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" />
                           <button type="button" class="btn btn--small" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
                         </div>
+                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 200px">Suggested miles line under odometer — updates when the unit or <strong>Samsara</strong> snapshot changes.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service mileage hint host">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <code>updateServiceMileageHint(v, rec)</code> sets <code>#serviceMileageHint</code> <code>innerHTML</code> (escaped source + bold miles) when a numeric odometer exists; otherwise <code>textContent</code> for the manual-entry prompt. <code>fillServiceMileageFromSamsara()</code> and <code>renderSelectedUnit()</code> call it with <code>resolvedServiceMileageRecommendation()</code> metadata.
+                            </span>
+                          </span>
+                        </div>
                         <div id="serviceMileageHint" class="mini-note maint-field-hint"></div>
                       </div>
                       <div class="maint-field-cell">
@@ -3353,7 +3362,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendors vs items vs accounts">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    New <strong>vendors</strong> can be created in this panel and sync immediately. New <strong>accounts (categories)</strong> and <strong>items</strong> are usually created in QuickBooks Online, then use <strong>Refresh Live QuickBooks Master</strong> so this app picks them up. Employees are managed in QBO payroll; refresh the master list after changes there.
+                    Create <strong>vendors</strong> here — syncs immediately. <strong>Accounts</strong> and <strong>items</strong>: usually add in QuickBooks Online, then <strong>Refresh Live QuickBooks Master</strong>. Payroll employees live in QBO — refresh after changes.
                   </span>
                 </span>
               </div>
@@ -3365,7 +3374,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What this summary shows">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    One-line snapshot from the in-memory QuickBooks cache. It updates after <strong>Refresh Live QuickBooks Master</strong> and after vendor / item / account creates above. <strong>Last refresh</strong> is the catalog pull time; <strong>classes</strong> and <strong>bank accounts</strong> are counts used elsewhere in the app. The three columns still cap at <strong>50</strong> visible rows each (search narrows within the loaded set).
+                    In-memory QBO cache line. Updates after <strong>Refresh Live QuickBooks Master</strong> and the creates above. <strong>Last refresh</strong> = catalog pull; <strong>classes</strong> / <strong>bank accounts</strong> = counts used elsewhere. Each column shows first <strong>50</strong> matches (search narrows).
                   </span>
                 </span>
               </div>
@@ -3382,7 +3391,7 @@
                 </div>
                 <input id="newVendorAddress" placeholder="Address">
                 <button onclick="createQboVendor()">Create Vendor in QuickBooks</button>
-                <p class="mini-note" style="margin:8px 0 4px">Vendors save from here; accounts, items, and payroll employees normally start in QBO — see <strong>?</strong>.</p>
+                <p class="mini-note" style="margin:8px 0 4px">Vendors from here; accounts, items, payroll usually in QBO — title <strong>?</strong>.</p>
                 <p class="mini-note" style="margin:0;color:var(--color-text-label)">After QBO changes, click <strong>Refresh Live QuickBooks Master</strong>.</p>
               </div>
 
@@ -3410,7 +3419,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create item in QBO">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Posts a <strong>Product &amp; service</strong> row to QuickBooks. <strong>Income account</strong> is required by the QBO API; <strong>expense account</strong> is optional for purchase-side mapping. Pick <strong>Service</strong> vs <strong>Non-inventory</strong> to match how you buy/sell. Status text beside this button shows validation, progress, and the returned QBO id.
+                      Posts <strong>Product &amp; service</strong> to QBO. <strong>Income account</strong> required by API; <strong>expense account</strong> optional for purchases. <strong>Service</strong> vs <strong>Non-inventory</strong> = how you buy/sell. Status = validation, progress, QBO id.
                     </span>
                   </span>
                 </div>
@@ -3436,7 +3445,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create account in QBO">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Creates a <strong>chart-of-accounts</strong> category in QuickBooks (type + optional sub-type). Most teams add complex account trees in QBO first, then <strong>Refresh Live QuickBooks Master</strong>. The line beside this button shows validation, posting progress, errors, and the new id when QBO returns one.
+                      New <strong>chart-of-accounts</strong> row (type + optional sub-type). Complex trees: build in QBO first, then <strong>Refresh Live QuickBooks Master</strong>. Status = validation, progress, errors, new id.
                     </span>
                   </span>
                 </div>
@@ -3462,18 +3471,18 @@
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor list">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          Live <strong>vendor</strong> list after <strong>Refresh Live QuickBooks Master</strong>. New vendors can be created in the form above; search narrows this column.
+                          <strong>Vendors</strong> from cache after <strong>Refresh Live QuickBooks Master</strong>. Create new in the form above; search narrows this column.
                         </span>
                       </span>
                     </div>
                   </div>
                   <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
                     <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
-                      <span style="min-width:0;flex:1 1 160px">Cards below refresh when you type in the vendor search — title <strong>?</strong> for QBO workflow.</span>
+                      <span style="min-width:0;flex:1 1 160px">Cards follow vendor search; title <strong>?</strong> for QBO workflow.</span>
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor list host">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          <code>renderQboMaster()</code> reads <code>cacheVendors()</code>, applies <code>#qboVendorFilter</code>, takes the first <strong>50</strong> matches, and replaces <code>#qboVendorList</code> <code>innerHTML</code> with <code>.record-card</code> markup (escaped fields) or the plain &quot;No QuickBooks vendors loaded.&quot; string when the cache is empty.
+                          <code>renderQboMaster()</code> → <code>cacheVendors()</code> + <code>#qboVendorFilter</code>, first <strong>50</strong> → <code>#qboVendorList</code> (<code>.record-card</code> or empty message).
                         </span>
                       </span>
                     </div>
@@ -3487,18 +3496,18 @@
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Item list">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          <strong>Products &amp; services</strong> from QuickBooks — add most new items in QBO, then refresh the master so they appear here.
+                          QBO <strong>Products &amp; services</strong> — add most in QBO, then refresh master.
                         </span>
                       </span>
                     </div>
                   </div>
                   <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
                     <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
-                      <span style="min-width:0;flex:1 1 160px">Cards below refresh from the item search field — title <strong>?</strong> for when to edit in QBO.</span>
+                      <span style="min-width:0;flex:1 1 160px">Cards follow item search; title <strong>?</strong> for QBO edits.</span>
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Item list host">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          <code>renderQboMaster()</code> reads <code>cacheItems()</code>, applies <code>#qboItemFilter</code>, first <strong>50</strong> matches, replaces <code>#qboItemList</code> <code>innerHTML</code> with <code>.record-card</code> rows (name, type/SKU, QBO id) or &quot;No QuickBooks items loaded.&quot;
+                          <code>renderQboMaster()</code> → <code>cacheItems()</code> + <code>#qboItemFilter</code>, first <strong>50</strong> → <code>#qboItemList</code> (<code>.record-card</code> or empty message).
                         </span>
                       </span>
                     </div>
@@ -3512,18 +3521,18 @@
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Account list">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          <strong>Chart of accounts</strong> snapshot for mapping expenses — new categories are usually created in QBO first, then refreshed here.
+                          <strong>Chart of accounts</strong> for expense mapping — new categories usually in QBO first, then refresh.
                         </span>
                       </span>
                     </div>
                   </div>
                   <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
                     <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
-                      <span style="min-width:0;flex:1 1 160px">Cards below refresh from the account filter — title <strong>?</strong> for mapping use.</span>
+                      <span style="min-width:0;flex:1 1 160px">Cards follow account filter; title <strong>?</strong> for mapping.</span>
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Account list host">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          <code>renderQboMaster()</code> reads <code>cacheAccounts()</code>, applies <code>#qboAccountFilter</code>, first <strong>50</strong> matches, replaces <code>#qboAccountList</code> <code>innerHTML</code> with <code>.record-card</code> rows (name, type/sub-type, QBO id) or &quot;No QuickBooks accounts loaded.&quot;
+                          <code>renderQboMaster()</code> → <code>cacheAccounts()</code> + <code>#qboAccountFilter</code>, first <strong>50</strong> → <code>#qboAccountList</code> (<code>.record-card</code> or empty message).
                         </span>
                       </span>
                     </div>
@@ -3544,7 +3553,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Log scope (title)">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Same combined sources as the intro <strong>?</strong> below — this title tip is a quick reminder: one grid for AP, WO lines, unit records, Relay staging, and bill payments. <strong>Export filtered CSV</strong> respects filters, not just the current page.
+                      One grid: AP, WO lines, unit records, Relay staging, bill payments (see intro <strong>?</strong> below). <strong>Export filtered CSV</strong> = all matching rows, not only this page.
                     </span>
                   </span>
                 </div>
@@ -3560,8 +3569,8 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What this log includes">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Combined view of <strong>maintenance AP transactions</strong>, <strong>work order lines</strong>, <strong>unit maintenance records</strong> (cost lines), <strong>Relay fuel-import staging</strong>, and <strong>QuickBooks bill payments</strong> recorded from this app.
-                    Filter by date (txn / service date) and source. QuickBooks columns reflect API posting status where applicable; Relay rows use the fuel import flags when expenses already exist in QBO.
+                    <strong>Maintenance AP</strong>, <strong>WO lines</strong>, <strong>unit records</strong> (cost lines), <strong>Relay staging</strong>, <strong>bill payments</strong> from this app.
+                    Filter by date + source. QBO columns = posting status where applicable; Relay rows use import flags when already in QBO.
                   </span>
                 </span>
               </div>
@@ -3614,7 +3623,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO verification">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    For posted maintenance AP, work orders, and unit records, <strong>Check QBO</strong> calls QuickBooks to confirm the Purchase/Bill still exists. Bill payments and Relay staging are not checked here.
+                    For posted AP, WO, and unit rows, <strong>Check QBO</strong> confirms Purchase/Bill still exists. Not for bill payments or Relay staging.
                   </span>
                 </span>
               </div>
@@ -3623,16 +3632,16 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Stale counts and refresh">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Row counts and filtered totals reflect the data loaded for this tab. Open <strong>Accounting → Expense history</strong> and use <strong>Refresh data</strong> in the sidebar if numbers look stale after imports or QuickBooks changes.
+                    Counts/totals = data loaded for this tab. Stale after imports or QBO changes? Open <strong>Accounting → Expense history</strong> + sidebar <strong>Refresh data</strong>.
                   </span>
                 </span>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 240px">Table rows below replace when filters, search, or the pager change — the summary line above stays in sync.</span>
+                <span style="min-width:0;flex:1 1 240px">Rows rebuild on filter/search/pager; summary stays in sync.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Expense history table body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderExpenseHistory()</code> calls <code>buildExpenseHistoryRows()</code> then <code>filterExpenseHistoryRows()</code>, updates <code>#expHistSummary</code> <code>textContent</code>, replaces <code>#expHistBody</code> <code>innerHTML</code> with the current page slice (or a no-rows row), and wires <code>#expHistPagerHost</code> via <code>erpPagerRender</code> when <code>expHistPager</code> needs paging. <code>expHistSearchDebounce()</code> re-runs the same path after typing pauses.
+                    <code>renderExpenseHistory()</code> → <code>buildExpenseHistoryRows()</code> → <code>filterExpenseHistoryRows()</code> → <code>#expHistSummary</code>, page slice → <code>#expHistBody</code>, <code>#expHistPagerHost</code> / <code>erpPagerRender</code>. <code>expHistSearchDebounce()</code> re-runs after typing pauses.
                   </span>
                 </span>
               </div>
@@ -3676,8 +3685,8 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Revert vs undo import">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Revert in QBO</strong> deletes the Purchase or Bill in QuickBooks and clears posting flags here for that row.
-                    <strong>Undo spreadsheet import</strong> removes rows created by a file import in this app only — it does not change QuickBooks. If rows were already posted to QBO, use <strong>Revert in QBO</strong> first so both systems stay aligned.
+                    <strong>Revert in QBO</strong> deletes Purchase/Bill in QBO and clears posting flags here.
+                    <strong>Undo spreadsheet import</strong> drops ERP import rows only — not QBO. Already posted? <strong>Revert in QBO</strong> first to stay aligned.
                   </span>
                 </span>
               </div>
@@ -3685,11 +3694,11 @@
             </div>
             <div class="panel-body form-stack">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-label)">
-                <span style="min-width:0;flex:1 1 220px"><strong>Refresh</strong> loads posted rows, bulk revert checkboxes, and import batch tables below. <strong>Revert in QBO</strong> vs <strong>Undo spreadsheet import</strong> — see panel title <strong>?</strong>.</span>
+                <span style="min-width:0;flex:1 1 220px"><strong>Refresh</strong> loads posted rows, bulk revert list, import tables. Revert vs undo — panel title <strong>?</strong>.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posted-to-QBO bulk revert host">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadErpImportBatchesUi()</code> scans <code>erp.workOrders</code>, <code>erp.apTransactions</code>, <code>erp.records</code>, and <code>erp.fuelPurchases</code> for rows where the <code>qboPosted*</code> helpers pass, then replaces <code>#erpRollbackPostedSection</code> <code>innerHTML</code> with either a none-found note or a checkbox list (first <strong>80</strong>) plus <code>revertQboPostedBatchClient()</code>.
+                    <code>loadErpImportBatchesUi()</code> scans <code>erp.workOrders</code>, <code>erp.apTransactions</code>, <code>erp.records</code>, <code>erp.fuelPurchases</code> for <code>qboPosted*</code> hits → <code>#erpRollbackPostedSection</code> (none note or checkbox list, first <strong>80</strong>) + <code>revertQboPostedBatchClient()</code>.
                   </span>
                 </span>
               </div>
@@ -3702,17 +3711,17 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP import batches">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Batches created by spreadsheet uploads in this app. <strong>Undo spreadsheet import</strong> (above) removes rows by batch id — it does not change QuickBooks until you also revert posted rows there.
+                      Spreadsheet upload batches. <strong>Undo spreadsheet import</strong> = ERP-only by batch id — QBO unchanged until you revert posted rows there.
                     </span>
                   </span>
                 </div>
               </div>
               <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 200px">Batch table below replaces when you click <strong>Refresh</strong> — subhead <strong>?</strong> explains undo vs QBO revert.</span>
+                <span style="min-width:0;flex:1 1 200px">Batch table updates on <strong>Refresh</strong> — subhead <strong>?</strong> for undo vs QBO revert.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP import batches table host">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadErpImportBatchesUi()</code> calls <code>GET /api/erp/import-batches</code> and replaces <code>#erpImportBatchesBody</code> <code>innerHTML</code> with an error line, a &quot;No maintenance/AP import batches…&quot; note, or a table of <code>erpImportBatches</code> (reverse-chronological) plus per-row <strong>Undo import</strong> → <code>undoErpImportBatch</code> when not already undone.
+                    <code>loadErpImportBatchesUi()</code> → <code>GET /api/erp/import-batches</code> → <code>#erpImportBatchesBody</code> (error / empty / reverse-chron table) + <strong>Undo import</strong> → <code>undoErpImportBatch</code> when active.
                   </span>
                 </span>
               </div>
@@ -3723,7 +3732,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel / Relay batches">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Fuel and Relay CSV staging batches. Undo here clears ERP staging; if lines were confirmed to QuickBooks, use <strong>Revert in QBO</strong> on those rows first.
+                      Fuel / Relay CSV staging. Undo clears ERP staging; if posted to QBO, <strong>Revert in QBO</strong> those rows first.
                     </span>
                   </span>
                 </div>
@@ -3733,7 +3742,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel import batches table host">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Same <code>loadErpImportBatchesUi()</code> pass: <code>#fuelImportBatchesBody</code> <code>innerHTML</code> clears on batch fetch error; otherwise empty-state link to <strong>Fuel Board</strong> or a <code>fuelImportBatches</code> table with <strong>Undo import</strong> → <code>undoFuelImportBatchFromMaint</code> for active rows.
+                    Same load: <code>#fuelImportBatchesBody</code> clears on fetch error; else empty-state → <strong>Fuel Board</strong> or <code>fuelImportBatches</code> table + <strong>Undo import</strong> → <code>undoFuelImportBatchFromMaint</code>.
                   </span>
                 </span>
               </div>
