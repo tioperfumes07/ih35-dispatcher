@@ -20,9 +20,9 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 
 ## 2. Rule 22 — remaining `mini-note` / copy cleanup
 
-- **Upload center** — **partial (2026-04-18):** duplicate **`mr-upload-panel-desc`** removed for **Connections**, **Fuel / DEF**, **Other** (**changelog 219**), then **Bank**, **Comdata / Relay**, **Maintenance AP**, **Maintenance history** (**changelog 220**); tips carry the leads. Remaining: some **`details.mr-upload-help`** bodies, **Reports** hub intros, dense **`mini-note`** spot-checks.
+- **Upload center** — **partial (2026-04-18):** duplicate **`mr-upload-panel-desc`** removed for **Connections**, **Fuel / DEF**, **Other** (**changelog 219**), then **Bank**, **Comdata / Relay**, **Maintenance AP**, **Maintenance history** (**changelog 220**); tips carry the leads. Remaining: some **`details.mr-upload-help`** bodies, further dense **`mini-note`** spot-checks.
+- **Reports hub** — **partial (2026-04-18, changelog 221):** **Settlement** strip, **QBO activity** empty state, **Maintenance detailed** filter lead, **Posting health** footer; **`repMaintBody` / `repOverviewBody`** etc. still benefit from tip-first passes where copy is dense. Remaining: spot-check other tabs after sign-off.
 - **Accounting / settlement / fuel** — any remaining dense **`mini-note`** blocks not yet converted (spot-check after checklist sign-off).
-- **Reports hub** bodies (`repMaintBody`, `repOverviewBody`, etc.) — tip pattern only where it reduces noise.
 
 ---
 
@@ -63,3 +63,4 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — Driver files `beforeunload` + smoke pager needles:** Unsaved draft triggers leave-page confirm; smoke asserts **`bpOpenBillsPagerHost`** / **`driverFilesPagerHost`** (**changelog 218**).
 - **2026-04-18 — Upload Rule 22 + `erpNotify` batch:** Connections / Fuel / Other desc dedupe + typed toasts on QBO / settlement / bulk fuel paths (**changelog 219**).
 - **2026-04-18 — Upload bank/AP/history + Samsara success toasts:** Remaining upload cards + **`erpNotify` `success`** on Samsara renames / TMS miles (**changelog 220**).
+- **2026-04-18 — Reports Rule 22 + maintenance QBO toasts:** Reports hub copy trim + explicit **`erpNotify`** types on maintenance save when QBO post fails or is skipped (**changelog 221**).
