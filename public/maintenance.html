@@ -3849,7 +3849,15 @@
                     </div>
                   </div>
                   <button type="button" class="catalog-plus-btn" onclick="createQboVendorFromCatalogForm()">+ Create vendor in QuickBooks</button>
-                  <p id="qboNewVendorCatalogHint" class="mini-note" style="margin:0"></p>
+                  <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                    <span id="qboNewVendorCatalogHint" role="status" aria-live="polite" aria-atomic="true" style="margin:0;min-width:0;flex:1 1 200px"></span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create vendor from Lists">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Calls the same <strong>QuickBooks vendor</strong> create API as Accounting → Live Master. <strong>Display name</strong> is required; company / phone / email help match bills and driver pay. After success, use <strong>Refresh QuickBooks lists</strong> (above) if the vendor list does not update immediately. Status text here shows validation, progress, and the returned QBO id.
+                      </span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
