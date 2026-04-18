@@ -92,7 +92,7 @@
       margin-bottom: 40px;
       box-sizing: border-box;
       resize: both;
-      overflow: hidden;
+      overflow: auto;
     }
     .modal.book-modal-wide {
       max-width: min(1180px, 98vw);
@@ -473,7 +473,7 @@
   </div>
 
   <div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeBookModal()">
-    <div class="modal book-modal-wide" onclick="event.stopPropagation()">
+    <div class="modal book-modal-wide" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle" onclick="event.stopPropagation()">
       <h2 id="bookModalTitle">Book new load</h2>
       <div class="modal-body">
         <div class="grid2">
@@ -652,7 +652,7 @@
   </div>
 
   <div id="docsModalBg" class="modal-bg" onclick="if(event.target===this)closeDocsModal()">
-    <div class="modal" onclick="event.stopPropagation()" style="max-width:640px">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="docsModalTitle" onclick="event.stopPropagation()" style="max-width:640px">
       <h2 id="docsModalTitle">Load documents</h2>
       <div class="modal-body">
         <p class="muted" style="margin-top:0">Rate confirmations, delivery paperwork, BOLs, etc. Files stay with the load # (same as invoice #) for settlement.</p>

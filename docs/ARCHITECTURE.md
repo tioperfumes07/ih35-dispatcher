@@ -167,6 +167,8 @@ Automated guards and pre-release QA for **`maintenance.html`**, shared CSS, and 
 - **Manual sign-off:** [`ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md`](./ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md).
 - **CI:** [`.github/workflows/rule0-check.yml`](../.github/workflows/rule0-check.yml) runs **`npm ci`** + **`npm test`** (Rule 0 stack guard only); HTTP smoke is not run in Actions.
 
+Parallel UI vs backend work: [`AGENT_COORDINATION.md`](./AGENT_COORDINATION.md) (split so two agents do not duplicate edits).
+
 Rule mapping and narrative: [`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md), [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md).
 
 ## Suggested evolution (architecture)
