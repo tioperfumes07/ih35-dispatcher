@@ -538,3 +538,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`iframe-wrap`**, **`catalog-subpanel.active`** / **`upload-subpanel.active`**, **`shop-tab-panel.active`** / **`shop-col`**, **`asset-cat-grid`**, compact KPI strip grid, asset header IDs row, status panel head, cost-line QB rows (**`maint-cost-line__acct`** / **`extras`** / **`maint-cost-qbo-custclass`**), **`maint-wo-split`**, **`maint-wo-banner`**, and **`maint-save-toolbar__actions`**; **`maint-main-tab-panel.active`** matches other visible tab hosts.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-09
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on cost coordination (**`maint-cost-coordination`** + **`.coord-row`**), accounting fuel relay preview (**`acct-fuel-import-preview`**), reports **`.rep-maint-detail-filters.wo-line-grid`** in the ≤768px column layout, and cost line **`maint-cost-line__billable`**.
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`min-width: 0`** on **`maint-qb-cost-details`**, horizontal scroll frame **`maint-qb-lines-scroll`**, toast column **`erp-toast-host`**, **`acct-conn-sb__row`**, table cell **`maint-qb-bill-lbl`**; segment control **`erp-qb-seg`** gets **`max-width: 100%`** with **`min-width: 0`** so **`width: fit-content`** cannot widen the doc column past the viewport.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
