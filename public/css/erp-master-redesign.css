@@ -4,20 +4,20 @@
  */
 
 :root {
-  --qb-page: var(--color-bg-page, #f4f6f8);
+  --qb-page: var(--color-bg-page);
   --qb-panel: var(--color-bg-card);
-  --qb-line: var(--color-border, #e8eaed);
-  --qb-line-input: var(--color-border-input, #dadce0);
-  --qb-text: var(--color-text-body, #3c4043);
-  --qb-text-strong: var(--color-text-primary, #202124);
+  --qb-line: var(--color-border);
+  --qb-line-input: var(--color-border-input);
+  --qb-text: var(--color-text-body);
+  --qb-text-strong: var(--color-text-primary);
   --qb-muted: var(--color-text-label);
   --qb-placeholder: var(--color-text-placeholder);
-  --qb-green: var(--btn-primary-save-bg, #1e8e3e);
+  --qb-green: var(--btn-primary-save-bg);
   --qb-blue: var(--color-border-focus);
   --qb-red: var(--color-semantic-error);
   --qb-amber: #f9ab00;
-  --qb-icon-nav-bg: var(--color-nav-bg, #1a1a2e);
-  --qb-icon-nav-muted: var(--color-nav-inactive, #8a8fa8);
+  --qb-icon-nav-bg: var(--color-nav-bg);
+  --qb-icon-nav-muted: var(--color-nav-inactive);
   --qb-focus-ring: rgba(25, 103, 210, 0.12);
   --qb-sidebar-active-bg: var(--pill-blue-bg);
   --qb-radius-card: 8px;
@@ -220,7 +220,7 @@ body.erp-maintenance .erp-module-sidebar__footer {
   flex-shrink: 0;
   padding: 10px 12px 12px;
   border-top: 1px solid var(--qb-line);
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance .erp-sb-heading {
@@ -708,7 +708,7 @@ body.erp-maintenance .erp-qb-dialog__foot {
   gap: 8px;
   padding: 12px 20px 14px;
   border-top: 1px solid var(--qb-line);
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance .erp-qb-dialog__btn-secondary,
@@ -791,12 +791,12 @@ body.erp-maintenance .erp-main-body .maint-section-card {
 body.erp-maintenance .erp-main-body .hero-card:hover {
   box-shadow: none;
   border-color: var(--qb-line-input);
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance .erp-main-body .panel-head {
   border-bottom: 1px solid var(--qb-line);
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance .erp-main-body .panel-title {
@@ -869,7 +869,7 @@ body.erp-maintenance .erp-main-body .erp-qb-cost-shell--embedded {
   padding: 12px 12px 14px;
   border: 1px solid var(--qb-line);
   border-radius: var(--qb-radius-card);
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance .erp-main-body .erp-qb-cost-shell__label {
@@ -1237,7 +1237,7 @@ body.erp-maintenance .erp-main-body .erp-ops-hero-head {
   gap: 12px;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--qb-line) !important;
-  background: var(--color-bg-header, #fafbfc) !important;
+  background: var(--color-bg-header) !important;
 }
 
 body.erp-maintenance .erp-main-body .erp-ops-table-frame {
@@ -1360,7 +1360,7 @@ body.dispatch-page .topbar button.secondary {
 }
 
 body.dispatch-page .topbar button.secondary:hover {
-  background: var(--color-bg-active, #d2e3fc);
+  background: var(--color-bg-active);
   border-color: var(--qb-blue);
 }
 
@@ -1425,7 +1425,7 @@ body.dispatch-page table.data {
 }
 
 body.dispatch-page table.data th {
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   color: var(--color-text-label, var(--qb-muted));
 }
 
@@ -1440,7 +1440,7 @@ body.dispatch-page .modal {
 }
 
 body.dispatch-page .modal h2 {
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   border-bottom-color: var(--qb-line);
   font-weight: 500;
   color: var(--color-text-primary, var(--qb-text-strong));
@@ -1624,7 +1624,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__footer {
   flex-shrink: 0;
   padding: 10px 12px 12px;
   border-top: 1px solid var(--qb-line);
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
 }
 
 body.dispatch-page #dispatchApp .dispatch-sidebar-footer__line {
@@ -1801,7 +1801,7 @@ body.dispatch-page #dispatchApp .erp-topbar button.secondary {
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button.secondary:hover {
-  background: var(--color-bg-active, #d2e3fc);
+  background: var(--color-bg-active);
   border-color: var(--qb-blue);
 }
 
@@ -1866,7 +1866,7 @@ html.dispatch-embed #dispatchApp .erp-main-body.dispatch-board-body {
 html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
   padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
   border-bottom-color: var(--qb-line);
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   color: var(--color-text-label, var(--qb-muted));
 }
 
@@ -2070,7 +2070,7 @@ body.fuel-board .panel {
 }
 
 body.fuel-board .panel h2 {
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   border-bottom: 1px solid var(--qb-line);
   font-weight: 500;
   color: var(--color-text-primary, var(--qb-text-strong));
@@ -2078,7 +2078,7 @@ body.fuel-board .panel h2 {
 
 body.fuel-board .fleet-summary,
 body.fuel-board .fleet-section-title {
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   border-color: var(--qb-line);
   color: var(--color-text-label, var(--qb-muted));
 }
@@ -2141,7 +2141,7 @@ body.banking-page .panel {
 }
 
 body.banking-page .ph {
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   border-bottom-color: var(--qb-line);
   color: var(--color-text-primary, var(--qb-text-strong));
   font-weight: 500;
@@ -2184,7 +2184,7 @@ body.banking-page button.primary:hover {
 }
 
 body.banking-page th {
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
   color: var(--color-text-label, var(--qb-muted));
 }
 
@@ -2260,7 +2260,7 @@ body.settings-page button.primary:hover {
 
 body.settings-page table th {
   color: var(--color-text-label, var(--qb-muted));
-  background: var(--color-bg-header, #fafbfc);
+  background: var(--color-bg-header);
 }
 
 body.settings-page a {

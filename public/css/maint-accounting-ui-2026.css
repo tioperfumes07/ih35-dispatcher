@@ -1550,3 +1550,11 @@ body.erp-maintenance .erp-reports-toolbar__actions.print-hide-actions,
 body.erp-maintenance .mr-qbo-banner__right.print-hide-actions {
   min-width: 0;
 }
+
+/* Rule 1: ops / accounting filter bars (flex rows in maintenance.html). */
+body.erp-maintenance .mr-filter-bar,
+body.erp-maintenance .mr-filter-bar__right,
+body.erp-maintenance .mr-filter-bar__chips,
+body.erp-maintenance .mr-filter-bar__show {
+  min-width: 0;
+}

@@ -472,3 +472,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`min-width: 0`** on **`maint-qbo-header-grid`**, **`#erpConnectionStrip`**, **`erp-topbar__actions`**, **`shop-wo-fallback`**, **`erp-reports-toolbar__actions`**, and **`mr-qbo-banner__right`** where they carry **`print-hide-actions`** (or the QBO header helper) so connection strip, shop fallbacks, and toolbar action clusters participate in flex/grid shrink on narrow viewports.
 
 **Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-01
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`mr-filter-bar`**, **`mr-filter-bar__right`**, **`mr-filter-bar__chips`**, and **`mr-filter-bar__show`** get **`min-width: 0`** so ops / fleet / security filter rows shrink beside **`mr-filter-bar__grow`** on narrow widths.
+- **Rule 1:** **`public/css/app-theme.css`** — **`qb-doc-h2`** gets **`min-width: 0`** inside **`qb-doc-title-row`** flex so long AP/Bill titles do not widen the doc header.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
