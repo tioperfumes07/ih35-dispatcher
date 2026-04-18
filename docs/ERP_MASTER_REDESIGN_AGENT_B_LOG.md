@@ -659,3 +659,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — **`body.erp-maintenance .shop-subtabs`** gets **`min-width: 0`** so the shop queue subtabs row can shrink inside the tracking embed column; **`body.erp-maintenance .vendor-link-grid`** gets **`min-width: 0`** so the catalog vendor link auto-fit grid respects the Lists & catalogs column; **`#section-tracking .panel-head`** and **`.panel-head > div`** get **`min-width: 0`** for map / assets / yard-idle / summary headers that use flex (including inline **`display:flex`** on **`tr-idle`** heads).
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-23
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`body.erp-maintenance .safety-active-grid > div`** gets **`min-width: 0`** so each two-column track can shrink with **`minmax(0, 1fr)`** tracks; **`#section-maintenance .panel-head > div`** joins dashboard/fuel so nested flex title rows in the maintenance workspace respect the main column.
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#section-accounting .panel-head > div`** and **`#section-catalog .panel-head > div`** get **`min-width: 0`** for AP/fuel/QBO/dash stacked panels and catalog panel wrappers (beyond tab-specific rules already present).
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

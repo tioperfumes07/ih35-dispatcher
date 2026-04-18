@@ -2096,6 +2096,10 @@ body.erp-maintenance .safety-active-grid {
   min-width: 0;
 }
 
+body.erp-maintenance .safety-active-grid > div {
+  min-width: 0;
+}
+
 body.erp-maintenance .shop-col-head-row {
   display: flex;
   align-items: center;
@@ -3383,7 +3387,8 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
 }
 
 body.erp-maintenance #section-dashboard .panel-head > div,
-body.erp-maintenance #section-fuel .panel-head > div {
+body.erp-maintenance #section-fuel .panel-head > div,
+body.erp-maintenance #section-maintenance .panel-head > div {
   min-width: 0;
 }
 

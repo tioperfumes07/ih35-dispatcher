@@ -423,6 +423,10 @@ body.erp-maintenance #section-accounting .acct-dash-cards {
   min-width: 0;
 }
 
+body.erp-maintenance #section-accounting .panel-head > div {
+  min-width: 0;
+}
+
 /* Rule 1: reports hub + upload center — flex descendants may shrink without widening the viewport. */
 body.erp-maintenance #section-reports.section.active,
 body.erp-maintenance #section-reports .erp-reports-shell,
@@ -447,6 +451,10 @@ body.erp-maintenance #section-uploads .mr-upload-panel-title {
 /* Rule 1: lists & catalogs — panel title + first-row intro strips (inline flex in maintenance.html). */
 body.erp-maintenance #section-catalog .panel-head,
 body.erp-maintenance #section-catalog .panel-head .panel-title {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-catalog .panel-head > div {
   min-width: 0;
 }
 
