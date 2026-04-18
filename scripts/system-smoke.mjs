@@ -55,7 +55,8 @@ const HTML_PAGES = [
       'erpConnectionStrip',
       'topbar-hint-wrap',
       'id="bpOpenBillsPagerHost"',
-      'id="driverFilesPagerHost"'
+      'id="driverFilesPagerHost"',
+      'id="repairLocationChips"'
     ]
   ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
