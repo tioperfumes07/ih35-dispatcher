@@ -290,6 +290,11 @@
     el.classList.remove('erp-connection-strip--ok', 'erp-connection-strip--warn', 'erp-connection-strip--muted');
     try {
       const r = await fetch('/api/qbo/status', { headers: { Accept: 'application/json' } });
+      if (!r.ok) {
+        el.classList.add('erp-connection-strip--muted');
+        el.textContent = 'QuickBooks: could not load status.';
+        return;
+      }
       const j = await r.json().catch(() => ({}));
       if (!j || typeof j !== 'object') {
         el.classList.add('erp-connection-strip--muted');
