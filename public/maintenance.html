@@ -2017,6 +2017,15 @@
                 </span>
               </div>
               <div id="idleSnapshotMeta" class="mini-note" style="margin-bottom:10px"></div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">The table below is filled after <strong>Refresh</strong> or when you open this tab — rows are the idle-band fleet slice returned from the server (Samsara + optional TMS fields).</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Yard &amp; idle grid">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadIdleSnapshot()</code> calls <code>GET /api/tracking/idle-snapshot</code>, stores vehicles on <code>idleSnapshotPager._rows</code>, updates <code>#idleSnapshotMeta</code> (yard center / radius + optional warning <code>notes</code>), then <code>renderIdleSnapshotTableBody()</code> replaces <code>#idleSnapshotBody</code> via <code>innerHTML</code> with a paged slice. <code>idleSnapshotPager</code> + <code>erpPagerRender</code> on <code>#idleSnapshotPagerHost</code>. Errors clear rows and show a single error row in the tbody.
+                  </span>
+                </span>
+              </div>
               <div class="table-wrap erp-table-scroll">
                 <table>
                   <thead>
@@ -7316,7 +7325,10 @@
       let tabId = id;
       let tabBtn = btn;
       if (tabId === 'rep-settlement' && !tmsEnabled) {
-        erpNotify('Settlement / P&L by load needs the TMS database (Postgres). Configure DATABASE_URL and run migrations.');
+        erpNotify(
+          'Settlement / P&L by load needs the TMS database (Postgres). Configure DATABASE_URL and run migrations.',
+          'warning'
+        );
         tabId = 'rep-overview';
         tabBtn = document.querySelector('#section-reports .subtab[onclick*="rep-overview"]');
       }
@@ -8330,7 +8342,7 @@
         renderDashboardHome();
         if (activeSection === 'reports') loadReportsData();
       } catch (e) {
-        erpNotify('QBO refresh failed: ' + e.message);
+        erpNotify('QBO refresh failed: ' + e.message, 'error');
       }
     }
 
@@ -8363,9 +8375,9 @@
           document.getElementById(id).value = '';
         });
 
-        erpNotify(result.created ? 'Vendor created in QuickBooks.' : 'Vendor already existed in QuickBooks.');
+        erpNotify(result.created ? 'Vendor created in QuickBooks.' : 'Vendor already existed in QuickBooks.', 'success');
       } catch (e) {
-        erpNotify('Create vendor failed: ' + e.message);
+        erpNotify('Create vendor failed: ' + e.message, 'error');
       }
     }
 
@@ -10897,9 +10909,9 @@
         acctLastConfirmedRelayFuelImportBatchId = '';
         acctApplyRelayFuelImportMetaFromPayload({});
         await loadFuelExpenseTab();
-        erpNotify(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`);
+        erpNotify(`Undone. Removed ${data.removedFuel ?? 0} fuel line(s) and ${data.removedRelay ?? 0} Relay line(s).`, 'success');
       } catch (e) {
-        erpNotify('Undo failed: ' + (e.message || String(e)));
+        erpNotify('Undo failed: ' + (e.message || String(e)), 'error');
       }
     }
 
@@ -11437,7 +11449,8 @@
               .slice(0, 12)
               .map(f => `${f.unit || f.id}: ${f.err}`)
               .join('\n') +
-            (failed.length > 12 ? `\n… and ${failed.length - 12} more` : '')
+            (failed.length > 12 ? `\n… and ${failed.length - 12} more` : ''),
+          'error'
         );
       }
     }
@@ -18480,7 +18493,7 @@
           linesPagerHost.hidden = true;
         }
       } catch (e) {
-        erpNotify('Settlement lookup failed: ' + e.message);
+        erpNotify('Settlement lookup failed: ' + e.message, 'error');
       }
     }
 

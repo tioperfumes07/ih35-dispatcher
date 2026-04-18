@@ -78,7 +78,7 @@
 
 ## 7. Maintenance — uploads and catalogs (Rules 14–15)
 
-- [ ] **Upload center:** Main **Upload center** panel — title + **`?`** on one row. Each sub-tab (Bank, Comdata, Connections, Fuel, AP, Maint history, Other) — title **?** + short intro; file pick / stub flows do not throw in console. **Maintenance → Imports & uploads** shortcut panel — title **`?`** (body no duplicate **`?`**).
+- [ ] **Upload center:** Main **Upload center** panel — title + **`?`** on one row. Each sub-tab (Bank, Comdata, Connections, Fuel, AP, Maint history, Other) — title **`?`** + intro (**Connections** / **Fuel** / **Other** lean on **`?`** panels after **changelog 219**); file pick / stub flows do not throw in console. **Maintenance → Imports & uploads** shortcut panel — title **`?`** (body no duplicate **`?`**).
 - [ ] **Lists & catalogs → Service types (DB):** Name filter + pager (**16+**); activate/deactivate refreshes grid.
 
 ---
