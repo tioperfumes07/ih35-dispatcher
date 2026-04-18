@@ -1780,6 +1780,18 @@ body.erp-maintenance .mr-filter-bar__show {
   min-height: 0;
 }
 
+/* Rule 1: filter bar actions column (spec flex column) + chip <summary> inline-flex hosts. */
+body.erp-maintenance .mr-filter-bar__actions {
+  min-width: 0;
+  min-height: 0;
+}
+
+body.erp-maintenance .mr-filter-chipwrap,
+body.erp-maintenance .mr-filter-chipwrap > summary {
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Rule 1: accounting board "Connections" strip — outer card + each direct row (connections flex + posting preflight). */
 body.erp-maintenance #maintIntegrationStrip {
   min-width: 0;

@@ -992,6 +992,8 @@ body.erp-maintenance textarea {
   border-radius: var(--radius-sm);
   color: var(--color-text-body);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance input:focus,
@@ -1022,6 +1024,12 @@ body.erp-maintenance .hero-grid {
 
 /* Rule 1 — Home KPI strip: spec grid (erp-master-spec) omits shrink mins on the container. */
 body.erp-maintenance .mr-kpi-strip {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Rule 1 — Vehicle tracking fleet-mix KPI grid (same shrink discipline as Home `.mr-kpi-strip`). */
+body.erp-maintenance #section-tracking .erp-ops-kpi-strip {
   min-width: 0;
   min-height: 0;
 }
@@ -1134,6 +1142,8 @@ body.erp-maintenance .metric-label {
 body.erp-maintenance .metric-value {
   font-size: 22px;
   font-weight: 700;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .chips {
@@ -1182,6 +1192,8 @@ body.erp-maintenance .list-row {
   padding: 12px 14px;
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .list-row:last-child {
@@ -1200,12 +1212,16 @@ body.erp-maintenance .list-title {
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 4px;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .list-sub {
   font-size: 12px;
   color: var(--color-text-label);
   line-height: 1.35;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .status {
@@ -1268,17 +1284,23 @@ body.erp-maintenance .unit-box {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 10px;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .unit-box .k {
   font-size: 11px;
   color: var(--color-text-label);
   margin-bottom: 4px;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .unit-box .v {
   font-size: 17px;
   font-weight: 700;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .table-wrap {
@@ -1395,6 +1417,8 @@ body.erp-maintenance .form-stack {
 body.erp-maintenance .mini-note {
   font-size: 12px;
   color: var(--color-text-label);
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .card-list {
@@ -1445,6 +1469,8 @@ body.erp-maintenance .subtab {
   font-weight: 500;
   letter-spacing: 0.01em;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance a.subtab {
@@ -1589,6 +1615,8 @@ body.erp-maintenance .qb-l {
   margin-bottom: 2px;
   text-transform: uppercase;
   font-weight: 600;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-in {
@@ -1600,12 +1628,14 @@ body.erp-maintenance .qb-in {
   width: auto;
   max-width: 100%;
   min-width: 10ch;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-field {
   width: auto;
   max-width: min(100%, 44ch);
   min-width: 12ch;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-form-stack {
@@ -1924,6 +1954,8 @@ body.erp-maintenance .shop-col-head {
   font-size: 13px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-hover);
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .shop-col-body {
@@ -1939,6 +1971,8 @@ body.erp-maintenance .shop-row {
   padding: 8px 0;
   border-bottom: 1px solid var(--color-border);
   line-height: 1.35;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .shop-row:last-child {
@@ -1948,11 +1982,15 @@ body.erp-maintenance .shop-row:last-child {
 body.erp-maintenance .nav-dropdown {
   position: relative;
   width: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .nav-dropdown-trigger {
   width: 100%;
   text-align: left;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .nav-dropdown-menu {
@@ -2359,6 +2397,8 @@ body.erp-maintenance .shop-queue-card {
   margin-bottom: 8px;
   background: var(--color-bg-card);
   font-size: 12px;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .shop-queue-card.overdue {
@@ -3667,24 +3707,37 @@ body.erp-maintenance #maintTopQboIssuesInd {
   min-height: 0;
 }
 
-body.erp-maintenance #section-tracking > div:first-child {
+body.erp-maintenance #section-tracking > div:first-child,
+body.erp-maintenance #section-safety > div:first-child {
   min-width: 0;
   min-height: 0;
 }
 
-body.erp-maintenance #section-tracking .tracking-sub > div:first-child {
+body.erp-maintenance #section-tracking .tracking-sub > div:first-child,
+body.erp-maintenance #section-safety .tracking-sub > div:first-child {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Rule 1 — HOS violation legend (spec flex row; shrink mins in Agent B layer). */
+body.erp-maintenance .mr-violation-legend,
+body.erp-maintenance .mr-violation-legend__item {
   min-width: 0;
   min-height: 0;
 }
 
 body.erp-maintenance #section-tracking .erp-ops-hero-head,
-body.erp-maintenance #section-tracking .erp-ops-hero-head > div {
+body.erp-maintenance #section-tracking .erp-ops-hero-head > div,
+body.erp-maintenance #section-safety .erp-ops-hero-head,
+body.erp-maintenance #section-safety .erp-ops-hero-head > div {
   min-width: 0;
   min-height: 0;
 }
 
 body.erp-maintenance #section-tracking .panel-head,
-body.erp-maintenance #section-tracking .panel-head > div {
+body.erp-maintenance #section-tracking .panel-head > div,
+body.erp-maintenance #section-safety .panel-head,
+body.erp-maintenance #section-safety .panel-head > div {
   min-width: 0;
   min-height: 0;
 }
@@ -3715,6 +3768,11 @@ body.erp-maintenance #section-tracking .panel-head > div {
   body.erp-maintenance .shop-board-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
+  }
+
+  /* Rule 1 — single-column shop board: drop the 120px grid row floor so kanban columns can shrink with the scroll host. */
+  body.erp-maintenance .shop-col {
+    min-height: 0;
   }
 
   body.erp-maintenance .qb-doc-memo-row {
@@ -4000,14 +4058,14 @@ body.erp-maintenance .acct-fuel-import-scroll-split {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   flex: 1 1 auto;
-  min-height: min(58vh, 620px);
+  min-height: 0;
   min-width: 0;
 }
 
 @media (max-width: 1100px) {
   body.erp-maintenance .acct-fuel-import-scroll-split {
     grid-template-columns: minmax(0, 1fr);
-    min-height: min(75vh, 820px);
+    min-height: 0;
   }
 }
 

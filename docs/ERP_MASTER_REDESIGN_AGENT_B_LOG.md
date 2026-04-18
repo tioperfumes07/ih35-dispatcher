@@ -996,3 +996,92 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/app-theme.css` — Flex grow slots that already set horizontal floors now pair `min-height: 0` so flex descendants can shrink vertically without fighting `min-height: auto`: `.maint-top-toolbar__grow`, `.maint-asset-header-card__ymm`, `.maint-cost-qbo-custclass__cell`, and `.maint-vendor-ref-row__field`.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-02
+
+- **Rule 1:** `public/css/app-theme.css` — Accounting fuel relay import: `.acct-fuel-import-scroll-split` drops the large viewport `min-height` floors in favor of `min-height: 0` (base and ≤1100px) so the `flex: 1 1 auto` grid can shrink inside `.acct-fuel-import-preview` and let `.acct-fuel-import-scroll` / `max-height` own vertical overflow instead of fighting flex `min-height: auto`.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-03
+
+- **Rule 1:** `public/css/app-theme.css` — At `max-width: 900px`, when `.shop-board-grid` collapses to a single column, `.shop-col` overrides the default `min-height: 120px` with `min-height: 0` so stacked shop / kanban columns participate in the same overflow-safe vertical chain as `.shop-col-body` (`max-height` + `overflow: auto`).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-04
+
+- **Rule 1:** `public/css/app-theme.css` — `.shop-col-head` gains `min-width: 0` / `min-height: 0` so column titles (including when combined with `.shop-col-head-row` flex layout) can shrink inside narrow shop / tracking columns without forcing min-content overflow.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-05
+
+- **Rule 1:** `public/css/app-theme.css` — Ops sections parity: `#section-safety > div:first-child` joins `#section-tracking` in the Rule 1 first-row strip. `#section-safety .erp-ops-hero-head` / `> div` and `#section-safety .panel-head` / `> div` match the existing tracking rules so safety panels and hero heads shrink inside the maintenance main column the same way as tracking.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-06
+
+- **Rule 1:** `public/css/app-theme.css` — `#section-safety .tracking-sub > div:first-child` joins the tracking rule for the top strip above HOS / shop embeds. `.mr-violation-legend` and `.mr-violation-legend__item` gain `min-width: 0` / `min-height: 0` so the spec-defined flex legend row wraps cleanly inside narrow ops columns (override lives in `app-theme.css`, not Agent A).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-07
+
+- **Rule 1:** `public/css/app-theme.css` — `.metric-value` gains `min-width: 0` / `min-height: 0` so large KPI numbers can shrink inside dense `.metric` / grid cells without widening the Home or ops KPI strips.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `.mr-filter-bar__actions` (spec flex column) and `.mr-filter-chipwrap` / `> summary` gain `min-width: 0` / `min-height: 0` next to the existing `.mr-filter-bar*` Rule 1 cluster.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-08
+
+- **Rule 1:** `public/css/app-theme.css` — `#section-tracking .erp-ops-kpi-strip` gains `min-width: 0` / `min-height: 0` (same intent as Home `.mr-kpi-strip`). `.list-title`, `.list-sub`, and `.shop-row` get the same pair so dense list / shop queue text participates in shrink-safe layout under flex or grid parents.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-09
+
+- **Rule 1:** `public/css/app-theme.css` — `.list-row`, `.unit-box` (WO split summary tiles), and `.shop-queue-card` gain `min-width: 0` / `min-height: 0` so those blocks shrink cleanly inside `.list`, `.unit-summary` / toolbar grids, and shop queue stacks beside flex rows like `.shop-queue-row`.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-10
+
+- **Rule 1:** `public/css/app-theme.css` — `.mini-note` gains `min-width: 0` / `min-height: 0` so helper copy in flex toolbars and panel stacks does not fight `min-content` width. `.unit-box .v` gets the same pair so summary values can shrink inside the four-column `.unit-summary` grid.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-11
+
+- **Rule 1:** `public/css/app-theme.css` — `.unit-box .k` gains `min-width: 0` / `min-height: 0` next to `.unit-box .v`. QuickBooks-style `.qb-l` and `.qb-in` add shrink-safe mins (`min-height: 0` on inputs; labels get both). `.nav-dropdown` and `.nav-dropdown-trigger` gain `min-width: 0` / `min-height: 0` so reports / catalog tab rows with embedded dropdowns stay inside the main column.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-12
+
+- **Rule 1:** `public/css/app-theme.css` — Global maintenance form controls (`input`, `select`, `textarea` under `body.erp-maintenance`) gain `min-width: 0` / `min-height: 0` so flex/grid parents can shrink fields; the existing `textarea { min-height: 84px; }` rule still sets the taller floor for text areas. `.subtab` pills get the same pair in flex tab rows. `.maint-field` adds `min-height: 0` beside its width caps.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

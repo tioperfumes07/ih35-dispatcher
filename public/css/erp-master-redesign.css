@@ -1934,8 +1934,8 @@ html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
   body.dispatch-page {
     overflow: visible !important;
     height: auto !important;
-    background: #fff !important;
-    color: #000 !important;
+    background: var(--color-bg-card) !important;
+    color: var(--color-text-primary) !important;
   }
 
   body.dispatch-page #boardNavMount,
@@ -1975,7 +1975,7 @@ html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
 
   body.dispatch-page #dispatchApp .erp-topbar .title {
     font-size: 14pt !important;
-    color: #000 !important;
+    color: var(--color-text-primary) !important;
   }
 
   body.dispatch-page #dispatchApp .erp-topbar .topbar-home-link {
@@ -2005,31 +2005,31 @@ html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
 
   body.dispatch-page #dispatchApp table.data th,
   body.dispatch-page #dispatchApp table.data td {
-    border: 1px solid #ccc !important;
+    border: 1px solid var(--color-border) !important;
     padding: 4px 6px !important;
     vertical-align: top !important;
-    color: #000 !important;
-    background: #fff !important;
+    color: var(--color-text-primary) !important;
+    background: var(--color-bg-card) !important;
   }
 
   body.dispatch-page #dispatchApp table.data th {
-    background: #f0f0f0 !important;
+    background: var(--color-bg-header) !important;
     font-weight: 500 !important;
   }
 
   body.dispatch-page #dispatchApp table.data a {
-    color: #000 !important;
+    color: var(--color-text-primary) !important;
     text-decoration: underline !important;
   }
 
   body.dispatch-page #dispatchApp .badge {
-    border: 1px solid #999 !important;
-    background: #fff !important;
-    color: #000 !important;
+    border: 1px solid var(--color-border-input) !important;
+    background: var(--color-bg-card) !important;
+    color: var(--color-text-primary) !important;
   }
 
   body.dispatch-page #dispatchApp select.sm {
-    border: 1px solid #999 !important;
+    border: 1px solid var(--color-border-input) !important;
     max-width: 100% !important;
   }
 }
