@@ -1,7 +1,7 @@
 /**
  * IH35 — shared visual language: calm, precise, trustworthy.
  * Load before page-specific <style> blocks so local rules can override.
- * Color roles: use **`var(--color-*)`** from **`design-tokens.css`** (loaded with ERP pages). Rule 0: avoid redundant **`var(--color-foo, var(--legacy))`** / duplicate hex on **`--color-*`** — the token sheet is the single source of truth.
+ * Color roles: use **`--color-*`** from **`design-tokens.css`**. Rule 0 (Agent B): one hop only — do not chain **`var(--color-… , var(--legacy))`**, duplicate hex on **`--color-*`**, or reintroduce removed patterns (CI smoke guards **`scripts/system-smoke.mjs`**).
  */
 
 :root {

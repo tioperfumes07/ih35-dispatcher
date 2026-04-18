@@ -273,3 +273,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **`maintenance.html`:** Verified clean (no **`var(--color-*, var(--…))`** regressions in the current tree).
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-15
+
+- **Rule 0 / hygiene:** **`app-theme.css`** — Header comment refreshed again: no embedded example legacy stacks, no Agent A doc pointer; references **`design-tokens.css`** and the smoke Rule 0 guard.
+- **Smoke:** **`scripts/system-smoke.mjs`** — After existing static CSS needle checks, **`oneStaticRuleZeroGuard`** GETs **`app-theme.css`** and **`maint-accounting-ui-2026.css`** and fails the run if a fixed list of forbidden substring regressions appears (common **`var(--color-*, var(...))`** merges).
+
+**Files:** `public/css/app-theme.css`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
