@@ -3627,7 +3627,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About executive overview">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Connect <strong>QuickBooks</strong> first when you need live bills and invoices. <strong>Refresh reports</strong> rebuilds this hub from cached ERP + QBO data; <strong>Sync QuickBooks lists + activity</strong> reloads the catalog and recent transactions for the configured time window before you refresh.
+                    Connect <strong>QuickBooks</strong> when you need live bills and invoices. <strong>Refresh reports</strong> rebuilds metrics below from cached ERP + QBO data; <strong>Sync QuickBooks lists + activity</strong> reloads the catalog and recent transactions for the configured window first.
                   </span>
                 </span>
               </div>
@@ -3637,7 +3637,7 @@
               </div>
             </div>
             <div class="panel-body" id="repOverviewBody">
-              <p class="mini-note" style="margin:0;color:var(--color-text-label)">Use the toolbar actions after QuickBooks is connected — details in title <strong>?</strong>.</p>
+              <p class="mini-note" style="margin:0;color:var(--color-text-label)">Run <strong>Refresh reports</strong> — title <strong>?</strong> for QBO + snapshot behavior.</p>
             </div>
           </div>
         </div>
@@ -3739,9 +3739,8 @@
               </div>
             </div>
             <div class="panel-body">
-              <p class="mini-note" style="margin:0 0 8px">Per-driver load rollups from QBO vendors — open <strong>?</strong> for pay % and field meanings.</p>
               <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
-              <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Open and refresh.</div>
+              <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Use <strong>Refresh driver settlements</strong> — title <strong>?</strong> for fields.</div>
             </div>
           </div>
           <div class="panel" style="margin-top:12px">
@@ -3771,7 +3770,7 @@
                     </tr>
                   </thead>
                   <tbody id="settlementIndexBody">
-                    <tr><td colspan="6" class="mini-note">Open this report and refresh.</td></tr>
+                    <tr><td colspan="6" class="mini-note">Use <strong>Refresh index</strong> above.</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -7484,7 +7483,7 @@
       const ov = document.getElementById('repOverviewBody');
       if (ov) {
         ov.innerHTML = `
-          <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">Generated: ${escapeHtml(d.generatedAt || '')} · QBO cache refreshed: ${
+          <p class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">${escapeHtml(d.generatedAt || '—')} · QBO lists ${
             qc.refreshedAt ? escapeHtml(new Date(qc.refreshedAt).toLocaleString()) : '—'
           }</p>
           <div class="grid grid-4" style="margin-top:12px">
