@@ -200,6 +200,15 @@
         <button type="button" class="erp-module-sidebar__collapse" onclick="toggleErpSidebar(true)" title="Hide lists column">«</button>
       </div>
       <div class="erp-module-sidebar__scroll">
+        <div class="mini-note" style="margin:0 0 8px;padding:0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;line-height:1.45;font-size:11px;color:var(--color-text-body)">
+          <span style="min-width:0;flex:1 1 140px">Shortcut groups below refresh when you switch modules.</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Left rail list host">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              <code>renderErpModuleSidebar(name)</code> replaces <code>#erpModuleSidebarInner</code> <code>innerHTML</code> with stacked <code>erpSbGroup()</code> accordions per active section (<code>maintenance</code>, <code>dashboard</code>, <code>fuel</code>, etc.). Each group injects link rows built from template strings; <strong>Lists &amp; catalogs</strong> reuses <code>erpSbAdmin()</code> plus upload / settings shortcuts.
+            </span>
+          </span>
+        </div>
         <div id="erpModuleSidebarInner" class="erp-module-sidebar__inner"></div>
       </div>
       <div class="erp-module-sidebar__footer">
@@ -231,6 +240,15 @@
           <div class="erp-topbar__search">
             <div class="erp-topbar__search-inner">
               <input id="globalSearchInput" class="qb-in" placeholder="Search vendors, units, loads, bills, and work orders…" autocomplete="off" oninput="globalSearchRender()" onkeydown="globalSearchKeydown(event)" />
+              <div class="mini-note" style="margin:4px 0 0;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label)">
+                <span style="min-width:0;flex:1 1 100px">Picker list below the field.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Global search menu">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>globalSearchRender()</code> calls <code>globalSearchCollect()</code> over in-memory vendors, units, loads, bills, and work orders. It replaces <code>#globalSearchMenu</code> <code>innerHTML</code> with <code>.qb-picker-item</code> rows (labels escaped), toggles <code>hidden</code> when the query is empty, and shows a single “No matches” stub when nothing hits. Arrow keys re-render to move <code>qb-picker-item-active</code>; <code>Enter</code> runs the row’s <code>run</code> callback.
+                  </span>
+                </span>
+              </div>
               <div id="globalSearchMenu" class="qb-picker-menu hidden" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"></div>
             </div>
           </div>
@@ -1594,7 +1612,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Navigation &amp; deep links">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Shop queue, expense rollups, exports, and R&amp;M health signals. Log service under <strong>Maintenance → Create work order</strong>; full grid under <strong>Maintenance → Fleet table</strong>; shop / location context under <strong>Maintenance → Shop / location</strong>. Deep links: <code>#tracking-shop</code> or <code>#maintenance-shop</code> (this tab), <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> (or legacy <code>#maintenance-alerts</code>), <code>#maintenance-shop-location</code>.
+                Queue, rollups, exports, R&amp;M flags — log WOs in <strong>Maintenance → Create work order</strong>; fleet grid <strong>Maintenance → Fleet table</strong>; yard <strong>Maintenance → Shop / location</strong>. Hashes: <code>#tracking-shop</code> / <code>#maintenance-shop</code>, <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> (or <code>#maintenance-alerts</code>), <code>#maintenance-shop-location</code>.
               </span>
             </span>
           </div>
@@ -1606,7 +1624,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Live shop queue (internal, external, roadside): status, time vs estimate, and delay reasons. Below: expense rollups by fleet type.
+                      Live internal / external / roadside queues — status, time vs est., delay reasons; expense rollups by fleet type below.
                     </span>
                   </span>
                 </div>
@@ -1624,7 +1642,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tab meanings">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Use the tabs to switch shop type. <strong>Parts purchase</strong> tracks vendor parts orders. <strong>Roadside</strong> is separate from external vendor repair. <strong>Out of service</strong> lists units from maintenance records. Est. hours drive overdue highlighting; past estimate requires a bottleneck reason.
+                    Tabs = queue type — <strong>Parts</strong> vendor POs; <strong>Roadside</strong> ≠ external repair; <strong>OOS</strong> from maint records. Est. hours → overdue tint; past est needs bottleneck reason.
                     <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:var(--color-border-focus);font-weight:500">Vehicle map</a>
                     · <a href="#" onclick="openSectionByName('safety');return false;" style="color:var(--color-border-focus);font-weight:500">Safety / HOS</a>
                   </span>
@@ -1663,11 +1681,11 @@
                   <button type="button" class="btn" title="Add to internal queue" onclick="openShopQueueModal('internal')">+ Add</button>
                 </div>
                 <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 200px"><strong>Internal shop</strong> rows below refresh when you change search, dates, status, or after queue saves — data comes from the in-memory shop queue cache.</span>
+                  <span style="min-width:0;flex:1 1 200px"><strong>Internal shop</strong> table re-renders on filter / date / status changes and after queue saves — from <code>shopQueueCache</code> (see <strong>?</strong>).</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> filters <code>shopQueueCache</code> for <code>shopType === &quot;internal&quot;</code>, applies toolbar filters, then replaces <code>#shopInternalTableBody</code> via <code>innerHTML</code> with a paged slice. <code>shopQueuePager.internal</code> + <code>erpPagerRender</code> on <code>#shopInternalPagerHost</code>. Cache is filled from <code>GET /api/maintenance/shop-queue</code> during <code>loadAll()</code> and after modal POSTs. Status dropdown edits use per-row handlers (same render pass).
+                      <code>renderShopQueues()</code> → filter <code>shopQueueCache</code> (<code>shopType === &quot;internal&quot;</code>) + toolbar filters → paged <code>#shopInternalTableBody</code> + <code>#shopInternalPagerHost</code>. Cache: <code>GET /api/maintenance/shop-queue</code> on <code>loadAll()</code> + after modal saves; row status handlers on same render pass.
                     </span>
                   </span>
                 </div>
@@ -2144,7 +2162,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Yard band &amp; columns">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Trucks in the <strong>yard / idle</strong> band (default T120–T178). <strong>Refresh</strong> pulls Samsara GPS + HOS and, when TMS DB is set, days since last completed load and revenue-at-risk hints. Geofence and env overrides are in the snapshot <strong>?</strong> below.
+                    Idle band default <strong>T120–T178</strong>. <strong>Refresh</strong> → Samsara GPS/HOS + optional TMS (days since completed load, $ risk). Geofence / env → lower <strong>?</strong>.
                   </span>
                 </span>
               </div>
@@ -2156,8 +2174,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Geofence &amp; columns">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Geofence for the truck yard (defaults: Mines Rd, Laredo — override <code>YARD_LAT</code>, <code>YARD_LON</code>,
-                    <code>YARD_RADIUS_M</code> in server env). Shows live GPS, yard vs away, Samsara HOS duty, and (when TMS DB is configured) days since the last <strong>completed</strong> load and a rough revenue-at-risk estimate (<code>IDLE_EST_DAILY_REVENUE</code>).
+                    Yard geofence (default Mines Rd, Laredo) — override <code>YARD_LAT</code> / <code>YARD_LON</code> / <code>YARD_RADIUS_M</code>. Columns: GPS, in/out of yard, HOS + optional TMS “since last completed load” and <code>IDLE_EST_DAILY_REVENUE</code> risk hint.
                   </span>
                 </span>
               </div>
@@ -2167,7 +2184,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Yard &amp; idle grid">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadIdleSnapshot()</code> calls <code>GET /api/tracking/idle-snapshot</code>, stores vehicles on <code>idleSnapshotPager._rows</code>, updates <code>#idleSnapshotMeta</code> (yard center / radius + optional warning <code>notes</code>), then <code>renderIdleSnapshotTableBody()</code> replaces <code>#idleSnapshotBody</code> via <code>innerHTML</code> with a paged slice. <code>idleSnapshotPager</code> + <code>erpPagerRender</code> on <code>#idleSnapshotPagerHost</code>. Errors clear rows and show a single error row in the tbody.
+                    <code>GET /api/tracking/idle-snapshot</code> → <code>idleSnapshotPager._rows</code>, <code>#idleSnapshotMeta</code> (yard + warnings), paged <code>#idleSnapshotBody</code> via <code>renderIdleSnapshotTableBody()</code> + <code>#idleSnapshotPagerHost</code>. Errors → one tbody error row.
                   </span>
                 </span>
               </div>

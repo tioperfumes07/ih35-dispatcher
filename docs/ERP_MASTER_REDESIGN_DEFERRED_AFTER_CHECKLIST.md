@@ -24,7 +24,8 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 - **Reports hub** — **partial (2026-04-18, changelogs 221 + 224–227 + 320):** **Settlement** static + tips + JS empty / no-match strings (**320**) alongside **overview** / **spend** / **driver pay** / **index** / **TMS** / **Team** / **sync** (**221**, **224**–**227**); optional polish on other dense **`innerHTML`** only if product asks.
 - **Accounting / settlement / fuel** — **partial (changelogs 223–224, Reports settlement 320):** accounting **dash** + **Fuel / DEF** tab tips trimmed; **Reports → Settlement / P&amp;L** copy pass aligned with deferred §2.
 - **Lists and catalogs** — **partial (changelogs 224 + 321):** **Service types** (**224**); **QuickBooks**, **Vendors**, **Operational**, **Fleet** sub-panel `**mini-note**` / `**erp-help-tip**` trims (**321**); optional JS-rendered catalog strings if product asks.
-- **Home + Safety** — **partial (changelogs 331 + 336):** **Home** dashboard + **Safety → HOS / Active** (**331**); **Assignments**, **Fleet snapshot**, **Driver files** (**336**). Optional: chip dropdown hints, Tracking map copy, other dense **`innerHTML`**.
+- **Home + Safety** — **partial (changelogs 331 + 336):** **Home** dashboard + **Safety → HOS / Active** (**331**); **Assignments**, **Fleet snapshot**, **Driver files** (**336**). Optional: chip dropdown hints, other dense **`innerHTML`**.
+- **Tracking** — **partial (changelog 338):** **Shop & maintenance** under **Tracking** + **Yard & idle** title `**erp-help-tip**` / `**?**` panels — Rule 22 trim (**338**). Optional: map / assets / drivers **`innerHTML`** polish if product asks.
 
 ---
 
@@ -77,3 +78,4 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — Upload center tips + short leads:** **`#section-uploads`** Rule 22 remainder (**changelog 330**).
 - **2026-04-18 — Home dashboard + Safety HOS copy:** **`#section-dashboard`** + **Safety → HOS / Active** static tips (**changelog 331**).
 - **2026-04-18 — Safety Assignments + Fleet + Driver files:** **`safe-assign`** / **`safe-fleet`** / **`safe-files`** Rule 22 copy (**changelog 336**).
+- **2026-04-18 — Tracking shop-under-tracking + Yard & idle tips:** **`#tr-maint-shop`** nav + **Shop tabs** + **Internal shop** row; **`#tr-idle`** band / geofence / idle-snapshot title **`?`** panels — Rule 22 **`erp-help-tip`** trim (**changelog 338**).
