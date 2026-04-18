@@ -448,7 +448,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About embedded planner">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Same planner as the standalone page, without duplicate top navigation.
+                  Embedded <code>/fuel.html?embed=1</code> — same planner as full page, no duplicate top nav.
                   <a href="/fuel.html" target="_blank" rel="noopener" style="color:var(--color-border-focus);font-weight:500">Open full screen</a>
                 </span>
               </span>
@@ -477,30 +477,30 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this table">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Live Samsara duties — off-duty <strong>without</strong> a truck hidden; off-duty <strong>with</strong> truck shown. Token: <strong>Read ELD Compliance Settings (US)</strong>.
+                Live Samsara duties: hide off-duty <strong>without</strong> truck; keep off-duty <strong>with</strong> truck. Token: <strong>Read ELD Compliance Settings (US)</strong>.
               </span>
             </span>
           </div>
           <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label);font-size:12px;max-width:76ch">
-            Live Samsara HOS — chips, search, <strong>Show</strong>; <strong>?</strong> for duty rules and token scopes.
+            HOS: chips, search, <strong>Show</strong>; <strong>?</strong> = duty rules + token scopes.
           </p>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Search (right) for driver/vehicle; tags when Samsara exposes them.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Search (right); tags when Samsara sends them.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Row values from live Samsara HOS (duty, vehicle, timers, violations).</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty, vehicle, timers, violations — live Samsara.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Duty status <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty states: use <strong>Show</strong> (relevant / active / off-duty / all).</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Show</strong> = relevant / active / off-duty / all.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Violations <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Active violations tint rows per legend above.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Violations tint rows (legend above).</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Active drivers <span aria-hidden="true">▾</span></summary>
@@ -508,7 +508,7 @@
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Vehicle assignment <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Relevant</strong> hides off-duty without truck; other modes show the full Samsara window.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Relevant</strong> hides off-duty + no truck; other modes show full window.</p></div>
               </details>
               <div class="mr-filter-bar__show">
                 <label class="mini-note" for="safetyHosDutyFilter" style="margin:0">Show</label>
@@ -526,7 +526,7 @@
             </div>
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">Grid rebuilds from <strong>board.hos</strong> when you search or change <strong>Show</strong> — read-only Samsara mirror.</span>
+            <span style="min-width:0;flex:1 1 220px"><strong>board.hos</strong> grid — search + <strong>Show</strong>; read-only mirror.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS clocks table behavior">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
@@ -3684,8 +3684,17 @@
               <div><button type="button" class="qb-btn-add" onclick="loadErpImportBatchesUi()">Refresh</button></div>
             </div>
             <div class="panel-body form-stack">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-label)">
+                <span style="min-width:0;flex:1 1 220px"><strong>Refresh</strong> loads posted rows, bulk revert checkboxes, and import batch tables below. <strong>Revert in QBO</strong> vs <strong>Undo spreadsheet import</strong> — see panel title <strong>?</strong>.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posted-to-QBO bulk revert host">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadErpImportBatchesUi()</code> scans <code>erp.workOrders</code>, <code>erp.apTransactions</code>, <code>erp.records</code>, and <code>erp.fuelPurchases</code> for rows where the <code>qboPosted*</code> helpers pass, then replaces <code>#erpRollbackPostedSection</code> <code>innerHTML</code> with either a none-found note or a checkbox list (first <strong>80</strong>) plus <code>revertQboPostedBatchClient()</code>.
+                  </span>
+                </span>
+              </div>
               <div id="erpRollbackPostedSection" class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">
-                <strong>Refresh</strong> loads posted rows, bulk revert checkboxes, and import batch tables below. <strong>Revert in QBO</strong> vs <strong>Undo spreadsheet import</strong> — see title <strong>?</strong>.
+                <p class="mini-note" style="margin:0">Click <strong>Refresh</strong> to load posted QuickBooks rows and batch lists.</p>
               </div>
               <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:4px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -3698,7 +3707,16 @@
                   </span>
                 </div>
               </div>
-              <div id="erpImportBatchesBody" class="mini-note" style="margin-top:8px">—</div>
+              <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 200px">Batch table below replaces when you click <strong>Refresh</strong> — subhead <strong>?</strong> explains undo vs QBO revert.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP import batches table host">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>loadErpImportBatchesUi()</code> calls <code>GET /api/erp/import-batches</code> and replaces <code>#erpImportBatchesBody</code> <code>innerHTML</code> with an error line, a &quot;No maintenance/AP import batches…&quot; note, or a table of <code>erpImportBatches</code> (reverse-chronological) plus per-row <strong>Undo import</strong> → <code>undoErpImportBatch</code> when not already undone.
+                  </span>
+                </span>
+              </div>
+              <div id="erpImportBatchesBody" style="margin-top:4px"><span class="mini-note">—</span></div>
               <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:16px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <div class="panel-title" style="font-size:14px;margin:0">Fuel / Relay import batches</div>
@@ -3710,7 +3728,16 @@
                   </span>
                 </div>
               </div>
-              <div id="fuelImportBatchesBody" class="mini-note" style="margin-top:8px">—</div>
+              <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 200px">Fuel / Relay staging batches — same <strong>Refresh</strong> as ERP batches above.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel import batches table host">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Same <code>loadErpImportBatchesUi()</code> pass: <code>#fuelImportBatchesBody</code> <code>innerHTML</code> clears on batch fetch error; otherwise empty-state link to <strong>Fuel Board</strong> or a <code>fuelImportBatches</code> table with <strong>Undo import</strong> → <code>undoFuelImportBatchFromMaint</code> for active rows.
+                  </span>
+                </span>
+              </div>
+              <div id="fuelImportBatchesBody" style="margin-top:4px"><span class="mini-note">—</span></div>
             </div>
           </div>
         </div>
