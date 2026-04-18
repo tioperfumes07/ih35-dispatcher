@@ -2019,11 +2019,11 @@
               <div class="panel-body">
                 <div id="erpTrackingMap"></div>
                 <div class="mini-note" style="margin:10px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 200px">Selected-unit snapshot under the map — rebuilt whenever <code>renderTrackingBoard()</code> runs (filter, pager, or card click).</span>
+                  <span style="min-width:0;flex:1 1 200px">Selected unit under the map — updates with <code>renderTrackingBoard()</code> (filter, pager, click).</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map detail box">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderTrackingBoard()</code> sets <code>#trackingDetailBox</code> <code>innerHTML</code> from the current <code>selectedTrackingVehicle</code> row in <code>vehicles</code> (name, MMY, VIN, category, mileage, fuel %, engine, lat/long) or the plain <strong>Select a vehicle.</strong> prompt when nothing matches.
+                      <code>#trackingDetailBox</code> from <code>selectedTrackingVehicle</code> in <code>vehicles</code> (name, MMY, VIN, category, mileage, fuel, engine, lat/long) or <strong>Select a vehicle.</strong>
                     </span>
                   </span>
                 </div>
@@ -2041,9 +2041,9 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Data sources">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Vehicle names, VIN, and GPS come from <strong>Samsara</strong>. Editing or adding assets in Samsara is done in
-                    <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> (this app uses read-only fleet APIs).
-                    Local TMS trucks/trailers in Postgres (when <code>DATABASE_URL</code> is set) are managed from the dispatch / TMS screens; use the same unit codes (e.g. T160) for consistency.
+                    Names, VIN, GPS from <strong>Samsara</strong> — edits in
+                    <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> (read-only APIs here).
+                    TMS units in Postgres (<code>DATABASE_URL</code>) live in dispatch/TMS; match unit codes (e.g. T160).
                   </span>
                 </span>
               </div>
@@ -2065,11 +2065,11 @@
                 </div>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Rows below are a paged slice of the in-memory <strong>vehicles</strong> list filtered by the search box; mileage, fuel, engine, and GPS columns blend Samsara telemetry with ERP fields where linked.</span>
+                <span style="min-width:0;flex:1 1 220px">Paged <strong>vehicles</strong> + search — columns mix Samsara telemetry with ERP where linked.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="All tracked assets grid">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderTrackingAssetsTable()</code> sorts <code>vehicles</code> by unit order, applies <code>#trackingAssetFilter</code>, then replaces <code>#trackingAssetsTableBody</code> via <code>innerHTML</code> for the current page. <code>trackingAssetsTablePager</code> + <code>erpPagerRender</code> handle paging; changing the filter resets to page 1. Read-only vs Samsara Cloud for fleet edits.
+                    <code>renderTrackingAssetsTable()</code>: sort <code>vehicles</code>, <code>#trackingAssetFilter</code>, paged <code>#trackingAssetsTableBody</code> (<code>trackingAssetsTablePager</code>); filter change → page 1. Read-only; edit fleet in Samsara Cloud.
                   </span>
                 </span>
               </div>
@@ -2092,9 +2092,8 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About drivers list">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Drivers from Samsara HOS clocks (same as Safety → HOS). To add or rename drivers, use
-                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> — this dashboard is read-only for ELD data.
-                Local driver records for settlements live in Postgres / TMS when configured.
+                Same Samsara HOS source as <strong>Safety → HOS</strong>. Add/rename in
+                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> — read-only ELD here. Settlement driver data: Postgres/TMS when configured.
               </span>
             </span>
           </div>
@@ -2120,7 +2119,7 @@
             </div>
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">Driver rows follow the same normalized <strong>board.hos</strong> window as <strong>Safety → HOS</strong>, using the <strong>Duty filter</strong> in the bar above.</span>
+            <span style="min-width:0;flex:1 1 220px">Same <strong>board.hos</strong> window as <strong>Safety → HOS</strong> + <strong>Duty filter</strong> above.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking drivers table">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
