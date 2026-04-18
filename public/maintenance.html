@@ -6570,10 +6570,20 @@
       return 'Completed';
     }
 
+    function syncGlobalSearchAria() {
+      const m = document.getElementById('globalSearchMenu');
+      const inp = document.getElementById('globalSearchInput');
+      if (!m || !inp) return;
+      const open = !m.classList.contains('hidden');
+      inp.setAttribute('aria-expanded', open ? 'true' : 'false');
+      m.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
     function globalSearchClose() {
       const m = document.getElementById('globalSearchMenu');
       if (m) m.classList.add('hidden');
       __globalSearchActiveIx = -1;
+      syncGlobalSearchAria();
     }
 
     function globalSearchRender() {
@@ -6587,20 +6597,23 @@
         m.classList.add('hidden');
         __globalSearchActiveIx = -1;
         window.__globalSearchRows = [];
+        syncGlobalSearchAria();
         return;
       }
       if (!rows.length) {
-        m.innerHTML = `<div class="qb-picker-item"><div class="qb-picker-label">No matches</div><div class="qb-picker-meta">Try a different term</div></div>`;
+        m.innerHTML = `<div role="option" class="qb-picker-item" aria-selected="true"><div class="qb-picker-label">No matches</div><div class="qb-picker-meta">Try a different term</div></div>`;
         m.classList.remove('hidden');
         __globalSearchActiveIx = -1;
         window.__globalSearchRows = [];
+        syncGlobalSearchAria();
         return;
       }
       __globalSearchActiveIx = Math.min(__globalSearchActiveIx, rows.length - 1);
       m.innerHTML = rows
         .map((r, i) => {
           const active = i === __globalSearchActiveIx ? ' qb-picker-item-active' : '';
-          return `<div class="qb-picker-item${active}" data-gs-ix="${i}" onclick="globalSearchPick(${i})">
+          const sel = i === __globalSearchActiveIx ? 'true' : 'false';
+          return `<div role="option" class="qb-picker-item${active}" aria-selected="${sel}" data-gs-ix="${i}" onclick="globalSearchPick(${i})">
             <div class="qb-picker-label">${escapeHtml(r.label)}</div>
             <div class="qb-picker-meta">${escapeHtml(r.kind)} · ${escapeHtml(r.meta)}</div>
           </div>`;
@@ -6608,6 +6621,7 @@
         .join('');
       m.classList.remove('hidden');
       window.__globalSearchRows = rows;
+      syncGlobalSearchAria();
     }
 
     function globalSearchPick(ix) {
@@ -9729,7 +9743,11 @@
     function qbPickerEnsureMenu() {
       if (__qbPickerMenu) return __qbPickerMenu;
       const el = document.createElement('div');
+      el.id = 'qbPickerMenuHost';
       el.className = 'qb-picker-menu hidden';
+      el.setAttribute('role', 'listbox');
+      el.setAttribute('aria-label', 'Suggestions');
+      el.setAttribute('aria-hidden', 'true');
       document.body.appendChild(el);
       __qbPickerMenu = el;
 
@@ -9749,11 +9767,30 @@
       return el;
     }
 
+    function syncQbPickerAria() {
+      const menu = __qbPickerMenu;
+      const act = __qbPickerActive;
+      if (!menu) return;
+      const open = !menu.classList.contains('hidden');
+      const inp = act && act.input;
+      if (inp) {
+        inp.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) inp.setAttribute('aria-controls', 'qbPickerMenuHost');
+      }
+      menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
     function qbPickerClose() {
+      const prevInp = __qbPickerActive && __qbPickerActive.input;
+      if (prevInp) {
+        prevInp.setAttribute('aria-expanded', 'false');
+        prevInp.removeAttribute('aria-controls');
+      }
       __qbPickerActive = null;
       if (__qbPickerMenu) {
         __qbPickerMenu.classList.add('hidden');
         __qbPickerMenu.innerHTML = '';
+        __qbPickerMenu.setAttribute('aria-hidden', 'true');
       }
     }
 
@@ -9803,6 +9840,7 @@
         menu.innerHTML = '<div class="mini-note" style="padding:8px 10px">No matches.</div>';
         menu.classList.remove('hidden');
         qbPickerPosition();
+        syncQbPickerAria();
         return;
       }
       // Keep a stable “active item” as filter changes.
@@ -9826,7 +9864,7 @@
           const active = idx === __qbPickerActive.activeIdx ? 'is-active' : '';
           const addCls = it.kind === 'add_new' ? 'qb-picker-addnew' : '';
           const metaHtml = it.meta ? `<span class="qb-picker-item__meta">${escapeHtml(it.meta)}</span>` : '';
-          return `<button type="button" class="qb-picker-item ${active}" data-idx="${idx}">
+          return `<button type="button" role="option" class="qb-picker-item ${active}" data-idx="${idx}">
             <span class="qb-picker-item__label ${addCls}">${escapeHtml(it.label || '')}</span>
             ${metaHtml}
           </button>`;
@@ -9857,6 +9895,7 @@
       if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
         activeBtn.scrollIntoView({ block: 'nearest' });
       }
+      syncQbPickerAria();
     }
 
     function qbPickerChoose(idx, items) {
@@ -9891,6 +9930,9 @@
       if (!input) return;
       if (input.dataset.qbPickerAttached === '1') return;
       input.dataset.qbPickerAttached = '1';
+      if (!input.hasAttribute('aria-expanded')) input.setAttribute('aria-expanded', 'false');
+      if (!input.getAttribute('role')) input.setAttribute('role', 'combobox');
+      if (!input.getAttribute('aria-autocomplete')) input.setAttribute('aria-autocomplete', 'list');
 
       const lid = (input.getAttribute('list') || '').trim();
       if (lid) {

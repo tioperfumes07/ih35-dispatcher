@@ -22,6 +22,8 @@
   --qb-sidebar-active-bg: var(--pill-blue-bg);
   --qb-radius-card: var(--radius-card);
   --qb-radius-control: var(--radius-input);
+  /** Wider left rail so module names (e.g. Accounting, Fuel planner) stay readable */
+  --erp-icon-rail-width: 118px;
 }
 
 /* --- App shell: full viewport, no horizontal bleed --- */
@@ -71,15 +73,15 @@ body.erp-maintenance #erpApp.erp-master.sidebar-collapsed .erp-module-sidebar {
 
 body.erp-maintenance #erpApp.erp-master.sidebar-collapsed .sidebar-expand-fab {
   display: flex;
-  left: 52px;
+  left: var(--erp-icon-rail-width);
 }
 
-/* --- Icon rail (52px) --- */
+/* --- Icon rail (module labels visible) --- */
 body.erp-maintenance .erp-icon-nav {
-  flex: 0 0 52px;
-  width: 52px;
-  min-width: 52px;
-  max-width: 52px;
+  flex: 0 0 var(--erp-icon-rail-width);
+  width: var(--erp-icon-rail-width);
+  min-width: var(--erp-icon-rail-width);
+  max-width: var(--erp-icon-rail-width);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -133,10 +135,13 @@ body.erp-maintenance .erp-icon-nav__glyph {
 body.erp-maintenance .erp-icon-nav__lbl {
   font-size: 10px;
   letter-spacing: 0.02em;
-  max-width: 48px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 100%;
+  padding: 0 2px;
+  line-height: 1.25;
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 body.erp-maintenance .erp-icon-nav__btn {
@@ -185,6 +190,9 @@ body.erp-maintenance .erp-module-sidebar__brand-title {
   font-size: 15px;
   font-weight: 500;
   color: var(--color-text-primary);
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
 }
 
 body.erp-maintenance .erp-module-sidebar__collapse {
@@ -1036,17 +1044,17 @@ body.erp-maintenance .erp-main-body textarea:focus {
   box-shadow: var(--focus-ring);
 }
 
-/* --- Narrow / tablet: compact icon rail, hide tiny labels --- */
-@media (max-width: 1100px) {
+/* --- Phone: icon-only rail; desktop/tablet keep full labels + wide rail --- */
+@media (max-width: 720px) {
   body.erp-maintenance .erp-icon-nav__lbl {
     display: none;
   }
 
   body.erp-maintenance .erp-icon-nav {
-    flex: 0 0 48px;
-    width: 48px;
-    min-width: 48px;
-    max-width: 48px;
+    flex: 0 0 52px;
+    width: 52px;
+    min-width: 52px;
+    max-width: 52px;
     padding-top: 6px;
   }
 
@@ -1057,12 +1065,9 @@ body.erp-maintenance .erp-main-body textarea:focus {
   }
 
   body.erp-maintenance #erpApp.erp-master.sidebar-collapsed .sidebar-expand-fab {
-    left: 48px;
+    left: 52px;
   }
-}
 
-/* --- Phone: trim chrome, safe areas, slightly narrower module column --- */
-@media (max-width: 720px) {
   body.erp-maintenance .erp-topbar__hint {
     display: none;
   }
@@ -1554,7 +1559,7 @@ body.dispatch-page #dispatchApp.erp-master.sidebar-collapsed .erp-module-sidebar
 
 body.dispatch-page #dispatchApp.erp-master.sidebar-collapsed .sidebar-expand-fab {
   display: flex;
-  left: 52px;
+  left: var(--erp-icon-rail-width);
 }
 
 body.dispatch-page #dispatchApp .sidebar-expand-fab {
@@ -1578,10 +1583,10 @@ body.dispatch-page #dispatchApp .sidebar-expand-fab {
 }
 
 body.dispatch-page #dispatchApp .erp-icon-nav {
-  flex: 0 0 52px;
-  width: 52px;
-  min-width: 52px;
-  max-width: 52px;
+  flex: 0 0 var(--erp-icon-rail-width);
+  width: var(--erp-icon-rail-width);
+  min-width: var(--erp-icon-rail-width);
+  max-width: var(--erp-icon-rail-width);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1633,10 +1638,13 @@ body.dispatch-page #dispatchApp .erp-icon-nav__glyph {
 body.dispatch-page #dispatchApp .erp-icon-nav__lbl {
   font-size: 10px;
   letter-spacing: 0.02em;
-  max-width: 48px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 100%;
+  padding: 0 2px;
+  line-height: 1.25;
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 body.dispatch-page #dispatchApp .erp-module-sidebar {
@@ -1947,16 +1955,16 @@ html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
   color: var(--color-text-label);
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 720px) {
   body.dispatch-page #dispatchApp .erp-icon-nav__lbl {
     display: none;
   }
 
   body.dispatch-page #dispatchApp .erp-icon-nav {
-    flex: 0 0 48px;
-    width: 48px;
-    min-width: 48px;
-    max-width: 48px;
+    flex: 0 0 52px;
+    width: 52px;
+    min-width: 52px;
+    max-width: 52px;
     padding-top: 6px;
   }
 
@@ -1966,11 +1974,9 @@ html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
   }
 
   body.dispatch-page #dispatchApp.erp-master.sidebar-collapsed .sidebar-expand-fab {
-    left: 48px;
+    left: 52px;
   }
-}
 
-@media (max-width: 720px) {
   body.dispatch-page #dispatchApp .erp-topbar.topbar {
     padding-left: max(10px, env(safe-area-inset-left, 0px));
     padding-right: max(10px, env(safe-area-inset-right, 0px));
