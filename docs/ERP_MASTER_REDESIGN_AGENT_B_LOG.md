@@ -376,7 +376,6 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 ## 2026-04-19
 
 - **Rule 1:** **`public/css/app-theme.css`** — **`qb-picker-item__label`** gets **`min-width: 0`** plus **`overflow: hidden`** / **`text-overflow: ellipsis`** so long vendor or account names do not widen the QB combobox row past the menu; **`body.erp-maintenance .title`** gets **`min-width: 0`** so the topbar flex row can shrink on narrow widths.
-- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`erp-topbar .title`** gets **`min-width: 0`** (compact accounting topbar variant).
-- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`maint-wo-form-stack-inner`** gets **`min-width: 0`** so the WO form column participates in flex/grid shrink the same way as other full-width stacks.
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`erp-topbar .title`** and **`maint-wo-form-stack-inner`** get **`min-width: 0`** (compact accounting topbar + WO form stack shrink with the shell).
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
