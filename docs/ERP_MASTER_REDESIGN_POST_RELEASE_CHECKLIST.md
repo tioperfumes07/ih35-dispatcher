@@ -113,7 +113,7 @@
 
 Re-run targeted checks from [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md), for example:
 
-- [ ] **Pay bills → Open bills** pagination + **selection / pay amount** state across pages (if a `Map<billId, …>` model ships).
+- [ ] **Pay bills → Open bills:** pager + **`Map`** selection across pages (**changelog 215** — load **25+** bills, check rows on page 1, page forward, confirm **draft total** still includes page 1; **Create bill payment** posts checked rows from **all** pages; clear filters resets pager to page **1**).
 - [ ] **Driver pay settlements** nested pagination (if UX is specified).
 - [ ] **Safety → Driver files** pager without losing per-row edits (if draft store or warnings ship).
 
