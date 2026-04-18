@@ -4053,6 +4053,15 @@
               </div>
               <div id="repMaintDetailStatus" class="mini-note" style="margin-bottom:8px">Open this report to load.</div>
               <div id="repMaintDetailPagerHost" hidden></div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 240px">Record cards below rebuild when filters change or the pager moves — the status line above shows the filtered count.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance detailed report body">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderMaintDetailedReport()</code> filters <code>erp.records</code> by unit / dates / type / search, updates <code>#repMaintDetailStatus</code> <code>textContent</code>, then replaces <code>#repMaintDetailBody</code> <code>innerHTML</code> with paged card markup (or a no-rows line). <code>erpPagerRender</code> on <code>#repMaintDetailPagerHost</code> re-calls with <code>keepPagerPage</code> when only the slice changes.
+                  </span>
+                </span>
+              </div>
               <div id="repMaintDetailBody" class="mini-note">—</div>
             </div>
           </div>
