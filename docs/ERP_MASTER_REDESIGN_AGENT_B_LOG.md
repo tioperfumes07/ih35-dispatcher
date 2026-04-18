@@ -481,3 +481,27 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — **`qb-doc-h2`** gets **`min-width: 0`** inside **`qb-doc-title-row`** flex so long AP/Bill titles do not widen the doc header.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-02
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`qb-doc-shell`**, **`qb-doc-head`**, **`qb-doc-body`**, **`qb-doc-total-block`**, and **`qb-lines-wrap`** so QB-style expense/bill shells and line tables participate in the accounting column’s shrink chain (with **`qb-doc-title-row`** / **`qb-doc-h2`**).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-03
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`qb-panel`** and **`qb-attach-box`** get **`min-width: 0`**; **`erp-iframe`** gets **`min-width: 0`** + **`max-width: 100%`** (embedded tracking / fuel views); **`fuel-exp-table-wrap`** gets **`min-width: 0`** so scroll regions sit correctly inside flex/grid parents.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-04
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`.table-wrap`**, **`.safety-table-wrap`**, **`.safety-active-grid`**, and **`.shop-col-head-row`**; **`#erpTrackingMap`** gets **`min-width: 0`** + **`max-width: 100%`** so wide tables and the map host shrink inside the maintenance main column instead of widening the viewport.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

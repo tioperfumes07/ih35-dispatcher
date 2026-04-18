@@ -1187,6 +1187,7 @@ body.erp-maintenance .table-wrap {
   border-radius: var(--radius-sm);
   background: var(--color-bg-card);
   -webkit-overflow-scrolling: touch;
+  min-width: 0;
 }
 
 body.erp-maintenance .table-wrap > table {
@@ -1462,6 +1463,7 @@ body.erp-maintenance .maint-part-dot.active {
 
 body.erp-maintenance .qb-panel {
   font-size: 12px;
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-l {
@@ -1562,6 +1564,7 @@ body.erp-maintenance .qb-doc-shell {
     var(--color-bg-card) 28%
   );
   box-shadow: var(--shadow-sm);
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-doc-head {
@@ -1572,6 +1575,7 @@ body.erp-maintenance .qb-doc-head {
     var(--color-bg-header) 0%,
     var(--color-bg-card) 100%
   );
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-doc-title-row {
@@ -1594,6 +1598,7 @@ body.erp-maintenance .qb-doc-h2 {
 
 body.erp-maintenance .qb-doc-total-block {
   text-align: right;
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-doc-total-amt {
@@ -1605,6 +1610,7 @@ body.erp-maintenance .qb-doc-total-amt {
 
 body.erp-maintenance .qb-doc-body {
   padding: 14px 16px 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-logistics-bar {
@@ -1624,6 +1630,7 @@ body.erp-maintenance .qb-lines-wrap {
   border-radius: var(--radius-sm);
   background: var(--color-bg-card);
   margin-top: 10px;
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-lines-header {
@@ -1669,6 +1676,7 @@ body.erp-maintenance .qb-attach-box {
   padding: 12px;
   background: var(--color-bg-header);
   min-height: 96px;
+  min-width: 0;
 }
 
 body.erp-maintenance .qb-doc-actions {
@@ -1998,6 +2006,8 @@ body.erp-maintenance .asset-cat-tile:hover {
 
 body.erp-maintenance .erp-iframe {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: min(920px, calc(100vh - 140px));
   border: 0;
   background: var(--color-bg-card);
@@ -2011,6 +2021,8 @@ body.erp-maintenance .tracking-sub.hidden {
 body.erp-maintenance #erpTrackingMap {
   height: min(560px, calc(100vh - 220px));
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
 }
@@ -2021,6 +2033,7 @@ body.erp-maintenance .safety-table-wrap {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-bg-card);
+  min-width: 0;
 }
 
 body.erp-maintenance .safety-table-wrap table {
@@ -2033,6 +2046,7 @@ body.erp-maintenance .safety-active-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   align-items: start;
+  min-width: 0;
 }
 
 body.erp-maintenance .shop-col-head-row {
@@ -2040,6 +2054,7 @@ body.erp-maintenance .shop-col-head-row {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 body.erp-maintenance .shop-col-add {
@@ -3658,6 +3673,7 @@ body.erp-maintenance .fuel-exp-table-wrap {
   max-height: min(72vh, 780px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  min-width: 0;
 }
 
 body.erp-maintenance .fuel-expense-stack {

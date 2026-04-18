@@ -180,7 +180,7 @@ body.erp-maintenance .modal-bg {
   justify-content: center;
   padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
     max(20px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
-  background: var(--color-modal-backdrop, rgba(0, 0, 0, 0.45)) !important;
+  background: var(--color-modal-backdrop) !important;
 }
 
 body.erp-maintenance .modal {
@@ -457,7 +457,7 @@ body.dispatch-page .modal-bg {
   justify-content: center;
   padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
     max(20px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
-  background: var(--color-modal-backdrop, rgba(0, 0, 0, 0.45)) !important;
+  background: var(--color-modal-backdrop) !important;
 }
 
 body.dispatch-page .modal {
@@ -887,7 +887,7 @@ body.erp-maintenance .mr-filter-drop__hint {
 
 .erp-help-tip__btn:hover {
   background: var(--color-bg-card);
-  border-color: var(--color-border-input, #c4c7c5);
+  border-color: var(--color-border-input);
 }
 
 .erp-help-tip__btn:focus-visible {
@@ -925,7 +925,7 @@ body.erp-maintenance .qb-doc-title-row {
    Rule 3 — Collapsible module sidebar groups (maintenance.html)
    ============================================================================= */
 body.erp-maintenance .erp-module-sidebar .erp-sb-group {
-  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
+  border-bottom: 1px solid var(--color-border, var(--line));
   background: var(--color-bg-card);
 }
 
@@ -945,7 +945,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
   letter-spacing: 0.08em;
   background: var(--color-bg-card);
   border: none;
-  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
+  border-bottom: 1px solid var(--color-border, var(--line));
   font-family: inherit;
   text-align: left;
 }
@@ -977,7 +977,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__body .erp-sb-link {
 
 /* --- Rule 3 (reports in-page sidebar): native <details> groups --- */
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group {
-  border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
+  border-bottom: 1px solid var(--color-border, var(--line));
 }
 
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head {
@@ -1383,7 +1383,7 @@ body.erp-maintenance .erp-reports-hub__label {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-label, #80868b);
+  color: var(--color-text-label);
   margin-bottom: 8px;
 }
 
@@ -1419,7 +1419,7 @@ body.erp-maintenance .erp-reports-hub__tile {
 
 body.erp-maintenance .erp-reports-hub__tile:hover {
   background: var(--color-bg-header);
-  border-color: var(--color-border-input, #c4c7c5);
+  border-color: var(--color-border-input);
 }
 
 body.erp-maintenance .erp-reports-hub__tile--active {
@@ -1438,7 +1438,7 @@ body.erp-maintenance .erp-reports-hub__tile-title {
 body.erp-maintenance .erp-reports-hub__tile-meta {
   display: block;
   font-size: 11px;
-  color: var(--color-text-label, #80868b);
+  color: var(--color-text-label);
   margin-top: 2px;
 }
 
@@ -1599,11 +1599,11 @@ body.erp-maintenance .erp-reports-roadmap {
   gap: 10px 14px;
   margin-top: 12px;
   padding: 10px 12px;
-  border: 1px solid var(--color-border, var(--line, #e2e8f0));
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 10px;
-  background: var(--color-bg-header, #f8fafc);
+  background: var(--color-bg-header);
   font-size: 13px;
-  color: var(--text, #0f172a);
+  color: var(--color-text-primary, var(--text));
   box-sizing: border-box;
 }
 
@@ -1615,30 +1615,30 @@ body.erp-maintenance .erp-reports-roadmap {
 }
 
 .erp-pager__meta {
-  color: var(--muted, #64748b);
+  color: var(--color-text-label, var(--muted));
   font-weight: 500;
 }
 
 .erp-pager__page {
   font-variant-numeric: tabular-nums;
-  color: var(--muted, #64748b);
+  color: var(--color-text-label, var(--muted));
   font-size: 12px;
 }
 
 .erp-pager__btn {
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid var(--color-border, var(--line, #cbd5e1));
+  border: 1px solid var(--color-border, var(--line));
   background: var(--color-bg-card);
   font: inherit;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  color: var(--text, #0f172a);
+  color: var(--color-text-primary, var(--text));
 }
 
 .erp-pager__btn:hover:not(:disabled) {
-  background: var(--color-bg-header, #f1f5f9);
+  background: var(--color-bg-header);
 }
 
 .erp-pager__btn:disabled {
@@ -1657,7 +1657,7 @@ body.erp-maintenance .erp-reports-roadmap {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--muted, #64748b);
+  color: var(--color-text-label, var(--muted));
 }
 
 .erp-pager__size-sel {
@@ -1665,7 +1665,7 @@ body.erp-maintenance .erp-reports-roadmap {
   font-size: 13px;
   padding: 5px 8px;
   border-radius: 8px;
-  border: 1px solid var(--color-border, var(--line, #cbd5e1));
+  border: 1px solid var(--color-border, var(--line));
   background: var(--color-bg-card);
 }
 
@@ -1689,9 +1689,9 @@ button.erp-btn--busy::after {
   margin-left: 8px;
   vertical-align: -2px;
   border: 2px solid rgba(15, 23, 42, 0.2);
-  border: 2px solid color-mix(in srgb, var(--color-text-primary, #0f172a) 20%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-text-primary) 20%, transparent);
   border-top-color: rgba(15, 23, 42, 0.85);
-  border-top-color: color-mix(in srgb, var(--color-text-primary, #0f172a) 86%, transparent);
+  border-top-color: color-mix(in srgb, var(--color-text-primary) 86%, transparent);
   border-radius: 50%;
   animation: erp-ui-spin 0.65s linear infinite;
 }
@@ -1861,9 +1861,9 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   padding: 8px max(14px, env(safe-area-inset-right, 0px)) 8px max(14px, env(safe-area-inset-left, 0px));
   margin: 0 0 12px;
   border-radius: var(--radius-card, 8px);
-  border: 1px solid var(--color-border, var(--line, #e5e7eb));
+  border: 1px solid var(--color-border, var(--line));
   background: var(--color-bg-card);
-  color: var(--color-text-body, var(--text, #334155));
+  color: var(--color-text-body, var(--text));
   box-sizing: border-box;
 }
 body.banking-page .wrap > .erp-connection-strip {
@@ -1973,10 +1973,10 @@ body.banking-page #authBanner.erp-auth-banner {
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  background: var(--color-bg-page, #f1f5f9);
+  background: var(--color-bg-page);
   border-radius: 12px;
   box-shadow: var(--shadow-dropdown, 0 18px 48px rgba(0, 0, 0, 0.18));
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border);
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -1987,7 +1987,7 @@ body.banking-page #authBanner.erp-auth-banner {
   gap: 12px;
   flex-wrap: wrap;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-card);
 }
 .erp-dedicated-form-modal__bar-center {
@@ -2002,7 +2002,7 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-dedicated-form-modal__title {
   font-size: 15px;
   font-weight: 600;
-  color: var(--color-text-primary, #0f172a);
+  color: var(--color-text-primary);
   max-width: 48%;
   white-space: nowrap;
   overflow: hidden;
@@ -2018,12 +2018,12 @@ body.banking-page #authBanner.erp-auth-banner {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-text-label, #64748b);
+  color: var(--color-text-label);
 }
 .erp-dedicated-form-modal__total-amt {
   font-size: 18px;
   font-weight: 600;
-  color: var(--color-text-primary, #0f172a);
+  color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
 }
 .erp-dedicated-form-modal__bar-actions {
@@ -2039,13 +2039,13 @@ body.banking-page #authBanner.erp-auth-banner {
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
-  color: var(--color-text-label, #64748b);
+  color: var(--color-text-label);
   padding: 4px 8px;
   border-radius: 8px;
 }
 .erp-dedicated-form-modal__x:hover {
-  background: var(--color-bg-header, #f1f5f9);
-  color: var(--text, #0f172a);
+  background: var(--color-bg-header);
+  color: var(--color-text-primary, var(--text));
 }
 .erp-dedicated-form-modal__body {
   flex: 1;
@@ -2067,7 +2067,7 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-new-menu__sep-line {
   flex: 1;
   height: 1px;
-  background: var(--color-bg-header, #eef0f5);
+  background: var(--color-bg-header);
 }
 .erp-new-menu__sep-label {
   font-size: 9px;
@@ -2087,7 +2087,7 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-sb-sep__line {
   flex: 1;
   height: 1px;
-  background: var(--color-bg-header, #eef0f5);
+  background: var(--color-bg-header);
 }
 .erp-sb-sep__label {
   font-size: 9px;
