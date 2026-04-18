@@ -2009,7 +2009,16 @@
               </div>
               <div class="panel-body">
                 <div id="erpTrackingMap"></div>
-                <div id="trackingDetailBox" class="mini-note" style="margin-top:10px">Select a vehicle.</div>
+                <div class="mini-note" style="margin:10px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 200px">Selected-unit snapshot under the map — rebuilt whenever <code>renderTrackingBoard()</code> runs (filter, pager, or card click).</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map detail box">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderTrackingBoard()</code> sets <code>#trackingDetailBox</code> <code>innerHTML</code> from the current <code>selectedTrackingVehicle</code> row in <code>vehicles</code> (name, MMY, VIN, category, mileage, fuel %, engine, lat/long) or the plain <strong>Select a vehicle.</strong> prompt when nothing matches.
+                    </span>
+                  </span>
+                </div>
+                <div id="trackingDetailBox" class="mini-note" style="margin-top:8px">Select a vehicle.</div>
               </div>
             </div>
           </div>
@@ -2192,7 +2201,18 @@
               </span>
             </div>
           </div>
-          <div class="panel-body" id="trackingSummaryText">No tracking data loaded yet.</div>
+          <div class="panel-body">
+            <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+              <span style="min-width:0;flex:1 1 220px">Live counts for in-memory <code>vehicles</code> and <code>board</code> slices — same refresh cadence as the map tab.</span>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking summary block">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">
+                  <code>renderTrackingBoard()</code> replaces <code>#trackingSummaryText</code> <code>innerHTML</code> with five labeled counts: <code>vehicles.length</code>, <code>(board.vehicles || []).length</code>, <code>(board.live || []).length</code>, <code>(board.assignments || []).length</code>, and <code>(board.hos || []).length</code>, joined with HTML line breaks.
+                </span>
+              </span>
+            </div>
+            <div id="trackingSummaryText">No tracking data loaded yet.</div>
+          </div>
         </div>
       </section>
 

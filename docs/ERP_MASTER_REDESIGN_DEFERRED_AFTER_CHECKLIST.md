@@ -21,8 +21,8 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 ## 2. Rule 22 — remaining `mini-note` / copy cleanup
 
 - **Upload center** — **partial (2026-04-18):** duplicate **`mr-upload-panel-desc`** removed (**219–220**); nested **`details.mr-upload-help`** collapsed except one **Connections → Samsara write scopes** accordion (**222**). Remaining: dense **`mini-note`** spot-checks outside upload.
-- **Reports hub** — **partial (2026-04-18, changelogs 221 + 224–227):** **Overview** snapshot + static lead, **spend-by-unit** empty state, **settlement** driver pay + index placeholder, **TMS** / **Team** / **sync** (**224**–**226**), plus earlier **221** strips / QBO empty / maint detail; optional polish on edge-case **`innerHTML`** strings only if product asks.
-- **Accounting / settlement / fuel** — **partial (changelogs 223–224):** accounting **dash** + **Fuel / DEF** tab tips trimmed; settlement tab still worth a quick pass before sign-off.
+- **Reports hub** — **partial (2026-04-18, changelogs 221 + 224–227 + 320):** **Settlement** static + tips + JS empty / no-match strings (**320**) alongside **overview** / **spend** / **driver pay** / **index** / **TMS** / **Team** / **sync** (**221**, **224**–**227**); optional polish on other dense **`innerHTML`** only if product asks.
+- **Accounting / settlement / fuel** — **partial (changelogs 223–224, Reports settlement 320):** accounting **dash** + **Fuel / DEF** tab tips trimmed; **Reports → Settlement / P&amp;L** copy pass aligned with deferred §2.
 - **Lists and catalogs** — **partial (changelog 224):** **Service types** sub-tab lead + admin grid intro shortened; other sub-panels unchanged in this pass.
 
 ---
@@ -71,3 +71,4 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — Settlement rollup + Team + maintenance toasts:** Reports settlement second help row removed; Team panel tip shortened; maintenance save validation + partial manual fuel QBO post **`erpNotify`** typed (**changelog 225**).
 - **2026-04-18 — Reports TMS + CMMS details + sync lead:** **`renderReportsAll`** TMS strings; Team CMMS benchmark collapsed; sync tab **`mini-note`** trim (**changelog 226**).
 - **2026-04-18 — Reports overview + maint spend + settlement + audit:** **`renderReportsAll`** overview line; **`renderRepMaintSpendByUnitTable`** empty copy; settlement driver pay + index; security audit intro (**changelog 227**).
+- **2026-04-18 — Reports settlement remainder + Tracking idle:** **`rep-settlement`** tips + JS strings + **Yard & idle** lead (**changelog 320**).
