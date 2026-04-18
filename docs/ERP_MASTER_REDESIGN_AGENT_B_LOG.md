@@ -742,3 +742,19 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .catalog-search-results` and `.catalog-search-hit` get `min-width: 0` so the vendor search scroll frame and flex column hit buttons respect the Lists & catalogs panel width instead of widening the column.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-02
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .list` (WO unit picker column) and `.track-list` (tracking map unit list) get `min-height: 0` alongside existing `overflow: auto` / `min-width: 0` so they can shrink inside flex/grid parents and scroll instead of forcing the ancestor height.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-03
+
+- **Rule 1:** `public/css/app-theme.css` — `min-height: 0` added on scroll hosts that already used `overflow: auto` + `min-width: 0`: `.table-wrap`, `.shop-col-body`, `.safety-table-wrap`, `.acct-fuel-import-scroll`, and `.fuel-exp-table-wrap` so nested maintenance / safety / fuel / accounting table viewports can shrink in flex or grid columns and scroll reliably.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
