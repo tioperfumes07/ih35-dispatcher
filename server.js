@@ -477,6 +477,12 @@ function sanitizeFuelPurchase(raw) {
     .trim();
   if (expNo.length > 21) expNo = expNo.slice(0, 21);
   if (expNo) out.expenseDocNumber = expNo;
+  const loadInv = String(raw.loadInvoiceNumber || raw.loadNumber || '').trim().slice(0, 80);
+  if (loadInv) out.loadInvoiceNumber = loadInv;
+  const vendInv = String(raw.vendorInvoiceNumber || '').trim().slice(0, 80);
+  if (vendInv) out.vendorInvoiceNumber = vendInv;
+  const iwo = String(raw.internalWorkOrderNumber || raw.workOrderNumber || '').trim().slice(0, 80);
+  if (iwo) out.internalWorkOrderNumber = iwo;
   return out;
 }
 

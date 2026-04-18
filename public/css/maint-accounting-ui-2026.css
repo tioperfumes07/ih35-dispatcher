@@ -749,6 +749,68 @@ body.erp-maintenance .acct-expense-form-wrap {
   box-sizing: border-box;
 }
 
+/* AP + manual fuel — compact two-column header (matches dedicated modal + tab) */
+body.erp-maintenance .qb-doc-shell .ap-expense-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: 720px;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .qb-doc-shell .ap-exp-grid,
+body.erp-maintenance .qb-doc-shell .fuel-manual-exp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 18px;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  body.erp-maintenance .qb-doc-shell .ap-exp-grid,
+  body.erp-maintenance .qb-doc-shell .fuel-manual-exp-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+body.erp-maintenance .qb-doc-shell .ap-exp-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+body.erp-maintenance .qb-doc-shell .ap-expense-form .ap-exp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .qb-doc-shell .ap-expense-form .ap-exp-field--type {
+  max-width: 100%;
+}
+
+body.erp-maintenance .qb-doc-shell .ap-expense-form .ap-exp-field--vendor {
+  min-width: 0;
+}
+
+body.erp-maintenance .qb-doc-shell .ap-expense-form .ap-exp-field--unit {
+  min-width: 0;
+}
+
+body.erp-maintenance .qb-doc-shell .ap-expense-form .ap-exp-field--bank {
+  min-width: 0;
+}
+
 /* AP expense doc — flex header rows (FIX 3) */
 body.erp-maintenance #acct-transactions .ap-expense-form {
   display: flex;

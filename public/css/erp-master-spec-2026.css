@@ -1995,8 +1995,8 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-dedicated-form-modal__shell {
   position: relative;
   z-index: 1;
-  width: min(1000px, 100%);
-  min-height: 78vh;
+  width: min(860px, 100%);
+  min-height: min(78vh, 720px);
   max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 48px);
   display: flex;
   flex-direction: column;

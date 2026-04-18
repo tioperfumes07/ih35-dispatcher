@@ -2610,96 +2610,65 @@
             </div>
             <div class="panel-body form-stack qb-doc-body">
               <div class="ap-expense-form">
-                <div class="ap-exp-row">
-                  <div class="ap-exp-field ap-exp-field--type">
-                    <span class="qb-l">Type</span>
-                    <select id="apTxnType" class="qb-in" onchange="syncApDocTitle()">
-                      <option value="expense">Expense</option>
-                      <option value="bill">Bill</option>
-                    </select>
+                <div class="ap-exp-grid">
+                  <div class="ap-exp-col ap-exp-col--left">
+                    <div class="ap-exp-field ap-exp-field--type">
+                      <span class="qb-l">Type</span>
+                      <select id="apTxnType" class="qb-in" onchange="syncApDocTitle()">
+                        <option value="expense">Expense</option>
+                        <option value="bill">Bill</option>
+                      </select>
+                    </div>
+                    <div class="ap-exp-field ap-exp-field--vendor">
+                      <span class="qb-l">Vendor (QuickBooks)</span>
+                      <input id="apVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor" oninput="resolveApVendorSearch()" onblur="resolveApVendorSearch()">
+                      <input id="apVendorQboId" type="hidden">
+                    </div>
+                    <div class="ap-exp-field ap-exp-field--unit">
+                      <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
+                      <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
+                    </div>
+                    <div class="ap-exp-field">
+                      <span class="qb-l">Payment method</span>
+                      <input id="apPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Payment" oninput="resolveApPaymentMethodSearch()" onblur="resolveApPaymentMethodSearch()">
+                      <input id="apPaymentMethodId" type="hidden">
+                    </div>
+                    <div class="ap-exp-field ap-exp-field--bank">
+                      <span class="qb-l">Pay from bank account (QuickBooks)</span>
+                      <input id="apBankAccountSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card (for Purchase + bank feed match)" oninput="resolveApBankSearch()" onblur="resolveApBankSearch()">
+                      <input id="apBankAccountQboId" type="hidden">
+                    </div>
+                    <div class="ap-exp-field hidden" id="apWrapTerms">
+                      <span class="qb-l">Payment terms (QuickBooks — bills)</span>
+                      <select id="apQboTermId" class="qb-in">
+                        <option value="">— None —</option>
+                      </select>
+                    </div>
                   </div>
-                  <div class="ap-exp-field ap-exp-field--vendor">
-                    <span class="qb-l">Vendor (QuickBooks)</span>
-                    <input id="apVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor" oninput="resolveApVendorSearch()" onblur="resolveApVendorSearch()">
-                    <input id="apVendorQboId" type="hidden">
-                  </div>
-                  <div class="ap-exp-field ap-exp-field--unit">
-                    <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
-                    <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
-                  </div>
-                </div>
-                <div class="ap-exp-row">
-                  <div class="ap-exp-field ap-exp-field--160">
-                    <span class="qb-l">Load / inv # (settlement)</span>
-                    <input id="apLoadInvoiceNumber" class="qb-in" placeholder="Trip P&amp;L key (often load #)">
-                  </div>
-                  <div class="ap-exp-field ap-exp-field--150">
-                    <span class="qb-l">Vendor invoice #</span>
-                    <input id="apVendorInvoiceNumber" class="qb-in" placeholder="Supplier invoice no.">
-                  </div>
-                  <div class="ap-exp-field ap-exp-field--150">
-                    <span class="qb-l">Shop / internal WO #</span>
-                    <input id="apInternalWorkOrderNumber" class="qb-in" placeholder="Your work order ref">
-                  </div>
-                  <div class="ap-exp-field ap-exp-field--130">
-                    <span class="qb-l">Txn date</span>
-                    <input id="apTxnDate" class="qb-in" type="date">
-                  </div>
-                  <div class="ap-exp-field ap-exp-field--130 hidden" id="apWrapDue">
-                    <span class="qb-l">Due</span>
-                    <input id="apDueDate" class="qb-in" type="date">
-                  </div>
-                </div>
-                <div class="ap-exp-row">
-                  <div class="ap-exp-field ap-exp-field--160 hidden" id="apWrapTerms">
-                    <span class="qb-l">Payment terms (QuickBooks — bills)</span>
-                    <select id="apQboTermId" class="qb-in">
-                      <option value="">— None —</option>
-                    </select>
-                  </div>
-                  <div class="ap-exp-field ap-exp-field--150">
-                    <span class="qb-l">Payment method</span>
-                    <input id="apPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Payment" oninput="resolveApPaymentMethodSearch()" onblur="resolveApPaymentMethodSearch()">
-                    <input id="apPaymentMethodId" type="hidden">
-                  </div>
-                  <div class="ap-exp-field ap-exp-field--bank">
-                    <span class="qb-l">Pay from bank account (QuickBooks)</span>
-                    <input id="apBankAccountSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card (for Purchase + bank feed match)" oninput="resolveApBankSearch()" onblur="resolveApBankSearch()">
-                    <input id="apBankAccountQboId" type="hidden">
+                  <div class="ap-exp-col ap-exp-col--right">
+                    <div class="ap-exp-field">
+                      <span class="qb-l">Txn date</span>
+                      <input id="apTxnDate" class="qb-in" type="date">
+                    </div>
+                    <div class="ap-exp-field">
+                      <span class="qb-l">Load / inv # (settlement)</span>
+                      <input id="apLoadInvoiceNumber" class="qb-in" placeholder="Trip P&amp;L key (often load #)">
+                    </div>
+                    <div class="ap-exp-field">
+                      <span class="qb-l">Vendor invoice #</span>
+                      <input id="apVendorInvoiceNumber" class="qb-in" placeholder="Supplier invoice no.">
+                    </div>
+                    <div class="ap-exp-field">
+                      <span class="qb-l">Shop / internal WO #</span>
+                      <input id="apInternalWorkOrderNumber" class="qb-in" placeholder="Your work order ref">
+                    </div>
+                    <div class="ap-exp-field hidden" id="apWrapDue">
+                      <span class="qb-l">Due</span>
+                      <input id="apDueDate" class="qb-in" type="date">
+                    </div>
                   </div>
                 </div>
                 <input type="hidden" id="woRepairLocationType" value="" />
-              </div>
-
-              <div class="qb-logistics-bar">
-                <div>
-                  <span class="qb-l">Settlement no.</span>
-                  <input id="apSettlementNo" class="qb-in" placeholder="Optional" autocomplete="off">
-                </div>
-                <div>
-                  <span class="qb-l">Pick up date</span>
-                  <input id="apPickupDate" class="qb-in" type="date">
-                </div>
-                <div>
-                  <span class="qb-l">Delivery date</span>
-                  <input id="apDeliveryDate" class="qb-in" type="date">
-                </div>
-                <div>
-                  <span class="qb-l">Empty mi</span>
-                  <input id="apEmptyMiles" class="qb-in" type="number" step="1" placeholder="0">
-                </div>
-                <div>
-                  <span class="qb-l">Loaded mi</span>
-                  <input id="apLoadedMiles" class="qb-in" type="number" step="1" placeholder="0">
-                </div>
-                <div>
-                  <span class="qb-l">1 — Origin</span>
-                  <input id="apOrigin" class="qb-in" placeholder="City, ST" autocomplete="off">
-                </div>
-                <div>
-                  <span class="qb-l">2 — Destination</span>
-                  <input id="apDestination" class="qb-in" placeholder="City, ST" autocomplete="off">
-                </div>
               </div>
 
                   <div class="ap-exp-row ap-exp-row--pdf">
@@ -3193,50 +3162,68 @@
                 </div>
                 <div class="panel-body form-stack qb-doc-body">
                   <div
-                    class="mr-filter-bar erp-ops-filter-bar"
+                    class="mr-filter-bar erp-ops-filter-bar fuel-manual-header-bar"
                     role="group"
                     aria-label="Manual fuel expense header"
-                    style="margin-bottom:12px;align-items:flex-start"
+                    style="margin-bottom:12px;align-items:flex-start;border:0;padding:0;background:transparent"
                   >
-                    <div class="mr-filter-bar__grow" style="min-width:0;width:100%">
-                      <div class="wo-line-grid" style="margin-bottom:0">
-                    <div style="grid-column:span 2">
-                      <span class="qb-l">Vendor (QuickBooks)</span>
-                      <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
-                      <input type="hidden" id="fuelManualVendorQboId" />
-                    </div>
-                    <div>
-                      <span class="qb-l">Expense # (QBO DocNumber)</span>
-                      <input id="fuelManualExpenseDoc" class="qb-in" maxlength="24" placeholder="e.g. 4821-0415" autocomplete="off" />
-                    </div>
-                    <div>
-                      <span class="qb-l">Txn date</span>
-                      <input id="fuelManualDate" class="qb-in" type="date" />
-                    </div>
-                    <div style="grid-column:span 2">
-                      <span class="qb-l">Truck / unit</span>
-                      <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit #" autocomplete="off" />
-                    </div>
-                    <div style="grid-column:span 2">
-                      <span class="qb-l">QuickBooks class (optional)</span>
-                      <select id="fuelManualClassSel" class="qb-in">
-                        <option value="">— Match unit name —</option>
-                      </select>
-                    </div>
-                    <div style="grid-column:span 2">
-                      <span class="qb-l">Payment method</span>
-                      <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
-                      <input type="hidden" id="fuelManualPaymentMethodId" />
-                    </div>
-                    <div style="grid-column:span 2">
-                      <span class="qb-l">Pay from bank account (QuickBooks)</span>
-                      <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
-                      <input type="hidden" id="fuelManualBankQboId" />
-                    </div>
-                    <div style="grid-column:span 2">
-                      <span class="qb-l">Location / site (optional)</span>
-                      <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
-                    </div>
+                    <div class="mr-filter-bar__grow ap-exp-grid fuel-manual-exp-grid" style="min-width:0;width:100%">
+                      <div class="ap-exp-col ap-exp-col--left">
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Type</span>
+                          <input class="qb-in" type="text" readonly value="Fuel expense" aria-readonly="true" tabindex="0" />
+                        </div>
+                        <div class="ap-exp-field ap-exp-field--vendor">
+                          <span class="qb-l">Vendor (QuickBooks)</span>
+                          <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
+                          <input type="hidden" id="fuelManualVendorQboId" />
+                        </div>
+                        <div class="ap-exp-field ap-exp-field--unit">
+                          <span class="qb-l">Truck / unit</span>
+                          <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit #" autocomplete="off" />
+                        </div>
+                        <div class="ap-exp-field">
+                          <span class="qb-l">QuickBooks class (optional)</span>
+                          <select id="fuelManualClassSel" class="qb-in">
+                            <option value="">— Match unit name —</option>
+                          </select>
+                        </div>
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Payment method</span>
+                          <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
+                          <input type="hidden" id="fuelManualPaymentMethodId" />
+                        </div>
+                        <div class="ap-exp-field ap-exp-field--bank">
+                          <span class="qb-l">Pay from bank account (QuickBooks)</span>
+                          <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
+                          <input type="hidden" id="fuelManualBankQboId" />
+                        </div>
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Location / site (optional)</span>
+                          <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
+                        </div>
+                      </div>
+                      <div class="ap-exp-col ap-exp-col--right">
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Txn date</span>
+                          <input id="fuelManualDate" class="qb-in" type="date" />
+                        </div>
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Load / inv # (settlement)</span>
+                          <input id="fuelManualLoadInvoice" class="qb-in" placeholder="Trip P&amp;L key (often load #)" autocomplete="off" />
+                        </div>
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Vendor invoice #</span>
+                          <input id="fuelManualVendorInvoice" class="qb-in" placeholder="Supplier invoice no." autocomplete="off" />
+                        </div>
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Shop / internal WO #</span>
+                          <input id="fuelManualInternalWo" class="qb-in" placeholder="Your work order ref" autocomplete="off" />
+                        </div>
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Expense # (QBO DocNumber)</span>
+                          <input id="fuelManualExpenseDoc" class="qb-in" maxlength="24" placeholder="e.g. 4821-0415" autocomplete="off" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -10936,6 +10923,9 @@
         'fuelManualVendorSearch',
         'fuelManualVendorQboId',
         'fuelManualExpenseDoc',
+        'fuelManualLoadInvoice',
+        'fuelManualVendorInvoice',
+        'fuelManualInternalWo',
         'fuelManualPaymentMethodSearch',
         'fuelManualPaymentMethodId',
         'fuelManualBankSearch',
@@ -11106,6 +11096,12 @@
             memo,
             location: loc
           };
+          const loadInvH = String(document.getElementById('fuelManualLoadInvoice')?.value || '').trim();
+          const fvInvH = String(document.getElementById('fuelManualVendorInvoice')?.value || '').trim();
+          const intWoH = String(document.getElementById('fuelManualInternalWo')?.value || '').trim();
+          if (loadInvH) payload.loadInvoiceNumber = loadInvH;
+          if (fvInvH) payload.vendorInvoiceNumber = fvInvH;
+          if (intWoH) payload.internalWorkOrderNumber = intWoH;
           if (vendorText) payload.vendor = vendorText;
           if (docForLine) payload.expenseDocNumber = docForLine;
           if (Number.isFinite(gal) && gal > 0) payload.gallons = gal;
@@ -14795,20 +14791,6 @@
     function resetWoFormPartial() {
       clearWoLines();
       document.getElementById('apMemo').value = '';
-      const sn = document.getElementById('apSettlementNo');
-      const pu = document.getElementById('apPickupDate');
-      const de = document.getElementById('apDeliveryDate');
-      const em = document.getElementById('apEmptyMiles');
-      const lm = document.getElementById('apLoadedMiles');
-      const o = document.getElementById('apOrigin');
-      const d = document.getElementById('apDestination');
-      if (sn) sn.value = '';
-      if (pu) pu.value = '';
-      if (de) de.value = '';
-      if (em) em.value = '';
-      if (lm) lm.value = '';
-      if (o) o.value = '';
-      if (d) d.value = '';
       refreshApDocTotal();
     }
 
@@ -14959,7 +14941,7 @@
           memo.value = memo.value.trim() ? memo.value.trim() + '\n' + line : line;
         }
       }
-      const apRoot = document.getElementById('woLines');
+      const apRoot = document.getElementById('apWoCatHost');
       if (p.amount != null && apRoot) {
         if (!apRoot.querySelector('.wo-line')) addWoCategoryLine();
         const first = apRoot.querySelector('.wo-line');
@@ -15032,20 +15014,6 @@
       const abid = document.getElementById('apBankAccountQboId');
       if (abs) abs.value = '';
       if (abid) abid.value = '';
-      const sn = document.getElementById('apSettlementNo');
-      const pu = document.getElementById('apPickupDate');
-      const de = document.getElementById('apDeliveryDate');
-      const em = document.getElementById('apEmptyMiles');
-      const lm = document.getElementById('apLoadedMiles');
-      const o = document.getElementById('apOrigin');
-      const d = document.getElementById('apDestination');
-      if (sn) sn.value = '';
-      if (pu) pu.value = '';
-      if (de) de.value = '';
-      if (em) em.value = '';
-      if (lm) lm.value = '';
-      if (o) o.value = '';
-      if (d) d.value = '';
       clearWoLines();
       syncApDocTitle();
       refreshApDocTotal();

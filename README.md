@@ -2,7 +2,7 @@
 
 Operations hub for **dispatch / TMS**, **fuel & route planning**, **maintenance & accounting**, and **Samsara**-backed fleet data. The app is one **Express** server (`server.js`) with static UI under `public/` and APIs for loads, ERP JSON, QuickBooks, PDFs, and integrations.
 
-**Architecture overview:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+**Architecture overview:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — includes **ERP shell verification (master redesign)** (how `rule0:check`, smoke, `qa:automated`, post-release checklist, and CI fit together).
 
 ## What is included
 
