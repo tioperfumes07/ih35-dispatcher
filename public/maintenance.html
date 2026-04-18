@@ -7483,7 +7483,7 @@
           const modal = document.getElementById('erpDedicatedFormModal');
           if (!modal || modal.classList.contains('hidden')) return;
           const shell = modal.querySelector('.erp-dedicated-form-modal__shell');
-          if (shell && document.fullscreenElement === shell) {
+          if (shell && erpGetFullscreenElement() === shell) {
             return;
           }
           erpCloseDedicatedFormModal();
@@ -7495,13 +7495,28 @@
       }
     }
 
+    function erpGetFullscreenElement() {
+      return (
+        document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || null
+      );
+    }
+    function erpRequestElementFullscreen(el) {
+      if (!el) return Promise.reject(new Error('no element'));
+      const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+      return fn ? fn.call(el) : Promise.reject(new Error('no fullscreen API'));
+    }
+    function erpExitDocumentFullscreen() {
+      const fn = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+      return fn ? fn.call(document) : Promise.reject(new Error('no exit fullscreen'));
+    }
+
     function erpSyncDedicatedModalFullscreenUi() {
       const modal = document.getElementById('erpDedicatedFormModal');
       const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
       const fsBtn = document.getElementById('erpDedModalFsBtn');
       if (!fsBtn || !shell) return;
       if (!modal || modal.classList.contains('hidden')) return;
-      const inFs = document.fullscreenElement === shell;
+      const inFs = erpGetFullscreenElement() === shell;
       fsBtn.textContent = inFs ? 'Exit full screen' : 'Full screen';
       fsBtn.setAttribute('aria-pressed', inFs ? 'true' : 'false');
     }
@@ -7510,20 +7525,15 @@
       const modal = document.getElementById('erpDedicatedFormModal');
       const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
       if (!modal || modal.classList.contains('hidden') || !shell) return;
-      if (document.fullscreenElement === shell) {
-        void document.exitFullscreen();
+      if (erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
         return;
       }
-      const p = shell.requestFullscreen?.();
-      if (p) {
-        void p.catch(() => {
-          if (typeof erpNotify === 'function') {
-            erpNotify('Full screen is not available in this browser or was blocked.', 'info');
-          }
-        });
-      } else if (typeof erpNotify === 'function') {
-        erpNotify('Full screen is not available in this browser.', 'info');
-      }
+      void erpRequestElementFullscreen(shell).catch(() => {
+        if (typeof erpNotify === 'function') {
+          erpNotify('Full screen is not available in this browser or was blocked.', 'info');
+        }
+      });
     }
 
     function erpToggleDedicatedModalMaximize() {
@@ -7538,8 +7548,8 @@
         btn.textContent = on ? 'Restore' : 'Maximize';
         btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       }
-      if (on && document.fullscreenElement === shell) {
-        void document.exitFullscreen().catch(() => {});
+      if (on && erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
       }
     }
 
@@ -7558,8 +7568,8 @@
         fsBtn.textContent = 'Full screen';
         fsBtn.setAttribute('aria-pressed', 'false');
       }
-      if (shell && document.fullscreenElement === shell) {
-        void document.exitFullscreen().catch(() => {});
+      if (shell && erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
       }
     }
 
@@ -7746,7 +7756,7 @@
         safety: 'Safety',
         tracking: 'Tracking',
         accounting: 'Accounting',
-        catalog: 'Lists',
+        catalog: 'Lists & catalogs',
         reports: 'Reports',
         uploads: 'Uploads'
       };
@@ -7755,6 +7765,7 @@
       if (pt) pt.textContent = t;
       const brandEl = document.getElementById('erpModuleBrandTitle');
       if (brandEl) brandEl.textContent = t;
+      document.title = `${t} — IH35 ERP`;
       if (name === 'maintenance') {
         const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
         openMaintMainTab('record', rb, { skipModal: true });
@@ -19718,7 +19729,9 @@
     }
     if (!window.__erpDedFsUiBound) {
       window.__erpDedFsUiBound = true;
-      document.addEventListener('fullscreenchange', erpSyncDedicatedModalFullscreenUi);
+      ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange'].forEach(ev => {
+        document.addEventListener(ev, erpSyncDedicatedModalFullscreenUi);
+      });
     }
     renderErpModuleSidebar(activeSection || 'maintenance');
     loadUnitListPreference();

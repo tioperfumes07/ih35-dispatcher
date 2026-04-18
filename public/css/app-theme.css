@@ -2196,6 +2196,17 @@ body.maint-wo-modal-open #maintWorkOrderModalBody {
   container-name: maint-wo-modal;
 }
 
+body.maint-wo-modal-open #maintWorkOrderModalBody > #maintWorkOrderFormMount {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
 @container maint-wo-modal (max-width: 900px) {
   body.erp-maintenance .maint-wo-columns {
     flex-direction: column;
@@ -2213,9 +2224,39 @@ body.maint-wo-modal-open #maintWorkOrderModalBody {
   }
 }
 
+@container maint-wo-modal (max-width: 1100px) {
+  body.erp-maintenance .maint-wo-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body.erp-maintenance .maint-wo-aside {
+    position: relative;
+    top: auto;
+  }
+  body.erp-maintenance .maint-wo-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body.erp-maintenance .maint-wo-split__side {
+    position: relative;
+    top: auto;
+  }
+}
+
 @container maint-wo-modal (min-width: 0) {
   body.erp-maintenance .maint-form-grid__row--3 {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
+  body.erp-maintenance .unit-summary {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
+  }
+  body.erp-maintenance .search-row {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
+  body.erp-maintenance .maint-vendor-ref-row__field {
+    max-width: none;
+    flex: 1 1 200px;
+  }
+  body.erp-maintenance .maint-vendor-ref-input {
+    max-width: 100%;
   }
 }
 
