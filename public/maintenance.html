@@ -5375,6 +5375,18 @@
     let tireAlerts = [];
     let selectedUnit = '';
     let activeSection = 'maintenance';
+    /** Top bar, sidebar brand, and `document.title` (see `openSection`). */
+    const ERP_MODULE_TITLE_BY_SECTION = {
+      dashboard: 'Home',
+      maintenance: 'Maintenance',
+      fuel: 'Fuel planner',
+      safety: 'Safety',
+      tracking: 'Tracking',
+      accounting: 'Accounting',
+      catalog: 'Lists & catalogs',
+      reports: 'Reports',
+      uploads: 'Uploads'
+    };
     let activeAssetCategory = 'Trucks';
     let pendingMaintFlow = null;
     let selectedTrackingVehicle = '';
@@ -7749,18 +7761,7 @@
         navBtn.setAttribute('aria-current', 'true');
       }
 
-      const moduleTitleMap = {
-        dashboard: 'Home',
-        maintenance: 'Maintenance',
-        fuel: 'Fuel planner',
-        safety: 'Safety',
-        tracking: 'Tracking',
-        accounting: 'Accounting',
-        catalog: 'Lists & catalogs',
-        reports: 'Reports',
-        uploads: 'Uploads'
-      };
-      const t = moduleTitleMap[name] || 'IH35 ERP';
+      const t = ERP_MODULE_TITLE_BY_SECTION[name] || 'IH35 ERP';
       const pt = document.getElementById('pageTitle');
       if (pt) pt.textContent = t;
       const brandEl = document.getElementById('erpModuleBrandTitle');
