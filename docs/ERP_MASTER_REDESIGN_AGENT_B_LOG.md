@@ -244,3 +244,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`body.erp-maintenance .maint-form-grid__row`** — **`min-width: 0`** on the row grid so **`minmax(0, 1fr)`** columns in **`maint-form-grid__row--3`** can shrink inside narrow shells.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-12
+
+- **Rule 0:** **`maintenance.html`** — Inline styles, template literals, and small JS style maps now use token-only **`var(--color-text-label)`**, **`var(--color-text-body)`**, **`var(--color-text-primary)`**, **`var(--color-border)`**, **`var(--color-bg-card)`**, **`var(--color-bg-header)`**, and **`var(--color-bg-hover)`** (removed **`var(--muted)` / `var(--text)` / `var(--line)` / `var(--panel)`** hops and redundant hex on **`--color-bg-header`** / **`--color-bg-hover`**).
+- **Rule 0:** **`app-theme.css`** — Re-applied the shared text stack cleanup where **`var(--color-text-*)`** had chained legacy **`--muted` / `--text` / `--text-secondary`** again (board nav, KPIs, QB doc hints, WO banner copy, tables, and related maintenance chrome).
+
+**Files:** `public/maintenance.html`, `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

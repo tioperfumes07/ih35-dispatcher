@@ -18,8 +18,8 @@ body.erp-maintenance .maint-action-strip {
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--panel));
+  border-bottom: 1px solid var(--color-border, var(--line));
   flex-shrink: 0;
   min-width: 0;
 }
@@ -33,17 +33,17 @@ body.erp-maintenance .maint-action-strip__btn {
   border: 1px solid var(--color-border-input);
   cursor: pointer;
   font-family: inherit;
-  background: var(--color-bg-card);
+  background: var(--color-bg-card, var(--panel));
   color: var(--color-text-body, var(--text));
 }
 
 body.erp-maintenance .maint-action-strip__btn:hover {
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.erp-maintenance .maint-action-strip__btn--primary {
   background: var(--qb-green);
-  color: var(--color-bg-card);
+  color: var(--color-bg-card, var(--panel));
   border-color: var(--qb-green);
 }
 
@@ -77,14 +77,14 @@ body.erp-maintenance .maint-fleet-pill {
   font-weight: 500;
   border: 1px solid var(--color-border-input);
   border-radius: 20px;
-  background: var(--color-bg-card);
+  background: var(--color-bg-card, var(--panel));
   color: var(--color-text-body, var(--text));
   cursor: pointer;
   font-family: inherit;
 }
 
 body.erp-maintenance .maint-fleet-pill:hover {
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.erp-maintenance .maint-fleet-pill.active {
@@ -155,8 +155,8 @@ body.erp-maintenance .maint-search-row {
   align-items: center;
   gap: 12px;
   padding: 12px 20px;
-  background: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--panel));
+  border-bottom: 1px solid var(--color-border, var(--line));
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -204,9 +204,9 @@ body.erp-maintenance .maint-wo-columns {
 body.erp-maintenance .maint-wo-col-units {
   width: 280px;
   flex-shrink: 0;
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border, var(--line));
   overflow-y: auto;
-  background: var(--color-bg-card);
+  background: var(--color-bg-card, var(--panel));
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -223,7 +223,7 @@ body.erp-maintenance .maint-wo-col-units .panel {
 }
 
 body.erp-maintenance .maint-wo-col-units .panel-head {
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, var(--line));
   padding: 10px 14px;
 }
 
@@ -242,12 +242,12 @@ body.erp-maintenance .maint-wo-col-units .panel-body {
 
 body.erp-maintenance .maint-unit-list-row {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, var(--line));
   cursor: pointer;
 }
 
 body.erp-maintenance .maint-unit-list-row:hover {
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.erp-maintenance .maint-unit-list-row.active {
@@ -285,7 +285,7 @@ body.erp-maintenance .maint-wo-col-form {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  background: var(--color-bg-page);
+  background: var(--color-bg-page, var(--bg));
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -300,8 +300,8 @@ body.erp-maintenance .maint-wo-placeholder {
   text-align: center;
   font-size: 14px;
   color: var(--color-text-label, var(--muted));
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--panel));
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 8px;
   padding: 40px;
   box-sizing: border-box;
@@ -321,8 +321,8 @@ body.erp-maintenance .maint-wo-form-animate {
 }
 
 body.erp-maintenance .maint-wo-summary-bar {
-  background: var(--color-bg-hover);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-hover, #f8f9fa);
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 8px;
   padding: 10px 16px;
   display: flex;
@@ -361,8 +361,8 @@ body.erp-maintenance .maint-form-actions--sticky {
   position: sticky;
   bottom: 0;
   z-index: 100;
-  background: var(--color-bg-card);
-  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--panel));
+  border-top: 1px solid var(--color-border, var(--line));
   padding: 12px 20px;
   margin: 16px -16px -16px;
   box-shadow: 0 -2px 8px color-mix(in srgb, var(--color-text-primary, var(--text)) 5%, transparent);
@@ -462,8 +462,8 @@ body.erp-maintenance .acct-dash-kpis {
 }
 
 body.erp-maintenance .acct-dash-kpi {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--panel));
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 8px;
   padding: 14px 16px;
   box-sizing: border-box;
@@ -505,8 +505,8 @@ body.erp-maintenance .acct-dash-cards {
 }
 
 body.erp-maintenance .acct-dash-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--panel));
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 8px;
   padding: 16px 20px;
   box-sizing: border-box;
@@ -517,7 +517,7 @@ body.erp-maintenance .acct-dash-card__head {
   font-weight: 500;
   color: var(--color-text-primary, var(--text));
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, var(--line));
   margin-bottom: 12px;
 }
 
@@ -534,19 +534,19 @@ body.erp-maintenance .acct-dash-btn {
   font-size: 12px;
   border: 1px solid var(--color-border-input);
   border-radius: 4px;
-  background: var(--color-bg-card);
+  background: var(--color-bg-card, var(--panel));
   color: var(--color-text-body, var(--text));
   cursor: pointer;
   font-family: inherit;
 }
 
 body.erp-maintenance .acct-dash-btn:hover {
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.erp-maintenance .acct-dash-btn--primary {
   background: var(--qb-green);
-  color: var(--color-bg-card);
+  color: var(--color-bg-card, var(--panel));
   border-color: var(--qb-green);
 }
 
@@ -707,8 +707,8 @@ body.erp-maintenance .erp-toast-host {
 
 body.erp-maintenance .erp-toast {
   pointer-events: auto;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--panel));
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 13px;
@@ -770,7 +770,7 @@ body.erp-maintenance .mr-upload-tabbar {
   display: flex;
   flex-wrap: wrap;
   gap: 0;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, var(--line));
   margin-bottom: 16px;
 }
 
@@ -796,8 +796,8 @@ body.erp-maintenance .mr-upload-tabbar .subtab.active {
 }
 
 body.erp-maintenance .mr-upload-panel-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--panel));
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 8px;
   padding: 16px 18px;
   margin-bottom: 12px;
@@ -809,7 +809,7 @@ body.erp-maintenance .mr-upload-drop {
   border-radius: 8px;
   padding: 32px 20px;
   text-align: center;
-  background: var(--color-bg-header);
+  background: var(--color-bg-header, #f1f3f4);
   cursor: pointer;
   box-sizing: border-box;
 }
@@ -922,7 +922,7 @@ body.erp-maintenance .mr-upload-pickline__meta {
 
 body.erp-maintenance .mr-upload-pickline__x {
   border: none;
-  background: var(--color-bg-header);
+  background: var(--color-bg-header, #f1f3f4);
   border-radius: 4px;
   width: 28px;
   height: 28px;
@@ -933,25 +933,25 @@ body.erp-maintenance .mr-upload-pickline__x {
 }
 
 body.erp-maintenance .mr-upload-pickline__x:hover {
-  background: var(--color-border);
+  background: var(--color-border, var(--line));
 }
 
 body.erp-maintenance .mr-upload-importbtn:disabled {
-  background: var(--color-border) !important;
+  background: var(--color-border, var(--line)) !important;
   color: var(--color-text-label, var(--muted)) !important;
   cursor: not-allowed;
 }
 
 body.erp-maintenance .mr-upload-importbtn:not(:disabled) {
   background: var(--qb-green) !important;
-  color: var(--color-bg-card) !important;
+  color: var(--color-bg-card, var(--panel)) !important;
   border-color: var(--qb-green) !important;
 }
 
 body.erp-maintenance .mr-upload-progress {
   margin-top: 12px;
   height: 4px;
-  background: var(--color-border);
+  background: var(--color-border, var(--line));
   border-radius: 2px;
   overflow: hidden;
 }
@@ -998,7 +998,7 @@ body.erp-maintenance .mr-upload-recent-table {
 body.erp-maintenance .mr-upload-recent-table th,
 body.erp-maintenance .mr-upload-recent-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, var(--line));
   text-align: left;
   vertical-align: middle;
 }
@@ -1009,7 +1009,7 @@ body.erp-maintenance .mr-upload-recent-table th {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-label, var(--muted));
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.erp-maintenance .mr-upload-linkbtn {
@@ -1061,10 +1061,10 @@ body.erp-maintenance .mr-upload-conn-grid {
 }
 
 body.erp-maintenance .mr-upload-conn-card {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 8px;
   padding: 14px 16px;
-  background: var(--color-bg-card);
+  background: var(--color-bg-card, var(--panel));
 }
 
 body.erp-maintenance .mr-upload-conn-card__title {
@@ -1099,14 +1099,14 @@ body.erp-maintenance .mr-upload-import-btn {
 }
 
 body.erp-maintenance .mr-upload-import-btn:disabled {
-  background: var(--color-border);
+  background: var(--color-border, var(--line));
   color: var(--color-text-label, var(--muted));
   cursor: not-allowed;
 }
 
 body.erp-maintenance .mr-upload-import-btn:not(:disabled) {
   background: var(--qb-green);
-  color: var(--color-bg-card);
+  color: var(--color-bg-card, var(--panel));
 }
 
 body.erp-maintenance .acct-conn-sb {
@@ -1143,11 +1143,11 @@ body.erp-maintenance .maint-qb-cost-panels {
 }
 
 body.erp-maintenance .maint-qb-cost-details {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border, var(--line));
   border-radius: 8px;
   margin-top: 10px;
   overflow: hidden;
-  background: var(--color-bg-card);
+  background: var(--color-bg-card, var(--panel));
 }
 
 body.erp-maintenance .maint-qb-cost-details__sum {
@@ -1155,7 +1155,7 @@ body.erp-maintenance .maint-qb-cost-details__sum {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover, #f8f9fa);
   cursor: pointer;
   list-style: none;
   font-size: 13px;
@@ -1193,8 +1193,8 @@ body.erp-maintenance .maint-qb-cost-details__badge {
 body.erp-maintenance .maint-qb-lines-scroll {
   width: 100%;
   overflow-x: auto;
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border, var(--line));
+  border-bottom: 1px solid var(--color-border, var(--line));
 }
 
 body.erp-maintenance .maint-qb-lines-table {
@@ -1210,14 +1210,14 @@ body.erp-maintenance .maint-qb-lines-table--item {
 }
 
 body.erp-maintenance .maint-qb-lines-table thead th {
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover, #f8f9fa);
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--color-text-label, var(--muted));
   padding: 6px 10px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, var(--line));
   text-align: left;
   white-space: nowrap;
 }
@@ -1239,12 +1239,12 @@ body.erp-maintenance .maint-qb-td-del {
 }
 
 body.erp-maintenance .maint-qb-lines-table tbody tr.maint-cost-line:hover {
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover, #f8f9fa);
 }
 
 body.erp-maintenance .maint-qb-lines-table tbody td {
   padding: 4px 8px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, var(--line));
   vertical-align: middle;
 }
 
@@ -1295,7 +1295,7 @@ body.erp-maintenance .maint-line-part-map-host--inline {
 
 body.erp-maintenance .maint-qb-cost-details__actions {
   padding: 6px 10px 8px;
-  background: var(--color-bg-card);
+  background: var(--color-bg-card, var(--panel));
 }
 
 body.erp-maintenance .maint-qb-cost-totals-bar {
@@ -1306,8 +1306,8 @@ body.erp-maintenance .maint-qb-cost-totals-bar {
   gap: 16px;
   padding: 10px 12px;
   margin-top: 10px;
-  border-top: 2px solid var(--color-border);
-  background: var(--color-bg-card);
+  border-top: 2px solid var(--color-border, var(--line));
+  background: var(--color-bg-card, var(--panel));
 }
 
 body.erp-maintenance .maint-qb-cost-totals-bar__lbl {
@@ -1331,7 +1331,7 @@ body.erp-maintenance .maint-qb-cost-totals-bar__piece--grand .maint-qb-cost-tota
 body.erp-maintenance .maint-qb-cost-totals-bar__sep {
   width: 1px;
   height: 16px;
-  background: var(--color-border);
+  background: var(--color-border, var(--line));
 }
 
 body.erp-maintenance .erp-qb-seg {
@@ -1350,7 +1350,7 @@ body.erp-maintenance .erp-qb-seg__btn {
   cursor: pointer;
   font-family: inherit;
   height: 26px;
-  background: var(--color-bg-card);
+  background: var(--color-bg-card, var(--panel));
   color: var(--color-text-label, var(--muted));
 }
 
