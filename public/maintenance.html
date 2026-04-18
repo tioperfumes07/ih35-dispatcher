@@ -3955,6 +3955,15 @@
               </div>
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
+              <div class="mini-note" style="margin:10px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Vehicle and driver renames below are <strong>POST</strong> calls through this ERP — they need a write-capable Samsara token on the server; outcomes use <strong>toasts</strong> and may refresh loaded lists.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara rename API paths">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>pushSamsaraVehicleName</code> → <code>POST /api/integrations/samsara/vehicle/&lt;id&gt;</code> with JSON <code>{&quot;name&quot;:&quot;…&quot;}</code>; <code>pushSamsaraDriverName</code> → <code>POST /api/integrations/samsara/driver/&lt;id&gt;</code> the same way. Both send auth headers plus <code>erpWriteHeaders()</code> for deployments that require an extra write secret. On success the UI calls <code>loadAll()</code> so board data matches Samsara; errors show the server message.
+                  </span>
+                </span>
+              </div>
               <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border);max-width:560px" class="form-stack">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span class="qb-l" style="margin:0">Rename vehicle in Samsara</span>
@@ -11151,12 +11160,12 @@
       const r = await postFuelExpenseToQbo(fuelId);
       if (r.ok) return;
       if (r.validationError) {
-        erpNotify(r.validationError);
+        erpNotify(r.validationError, 'warning');
         return;
       }
       const tr2 = document.querySelector('#fuelExpBody tr[data-fuel-id="' + fid + '"]');
       const st2 = tr2 ? tr2.querySelector('.fuel-post-status') : null;
-      if (r.error && !st2) erpNotify(r.error);
+      if (r.error && !st2) erpNotify(r.error, 'error');
     }
 
     /** Queue one QBO Purchase per filtered unposted row (all pages; same rules as row Post). ~400ms between calls to ease rate limits. */
@@ -11858,7 +11867,7 @@
           document.getElementById('shopDelayModal').classList.add('on');
           return false;
         }
-        erpNotify(data.error || 'Update failed');
+        erpNotify(data.error || 'Update failed', 'error');
         return false;
       }
       if (data.entry) {
