@@ -4,7 +4,7 @@
  * Run: `npm start` in another terminal, then `npm run smoke`.
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
- * After CSS fetches, **`app-theme.css`** and **`maint-accounting-ui-2026.css`** are checked for forbidden legacy **`var(--color-*, var(...))`** substrings (Agent B Rule 0 regression guard).
+ * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard).
  * Set SMOKE_BASE=http://host:port to target another environment.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
@@ -72,19 +72,31 @@ const STATIC_TEXT = [
   ['/js/board-nav.js', 'Fuel & route planning', '*/*']
 ];
 
-/** Agent B Rule 0: these exact substrings must not appear in shared maintenance CSS (merge-regression guard). */
-const RULE0_FORBIDDEN_IN_CSS = [
+/** Agent B Rule 0: these exact substrings must not appear in Agent B surfaces (merge-regression guard). */
+const RULE0_FORBIDDEN_SUBSTRINGS = [
   'var(--color-border, var(--line))',
   'var(--color-bg-card, var(--panel))',
+  'var(--color-bg-card,var(--panel))',
   'var(--color-bg-page, var(--bg))',
   'var(--color-text-label, var(--muted))',
   'var(--color-text-body, var(--text))',
+  'var(--color-text-body,var(--text))',
   'var(--color-text-primary, var(--text))',
   'var(--color-text-body, var(--text-secondary))',
   'var(--color-border-focus, var(--accent))',
-  'var(--color-app-frame-border, var(--app-frame-border))'
+  'var(--color-app-frame-border, var(--app-frame-border))',
+  'var(--color-nav-bg, #',
+  'var(--color-bg-header, #',
+  'var(--color-bg-hover, #',
+  'var(--color-modal-backdrop, rgba'
 ];
-const RULE0_GUARD_CSS_PATHS = ['/css/app-theme.css', '/css/maint-accounting-ui-2026.css'];
+
+/** `[path, Accept header]` — GET body checked against **`RULE0_FORBIDDEN_SUBSTRINGS`**. */
+const RULE0_GUARD_FETCHES = [
+  ['/css/app-theme.css', 'text/css,*/*'],
+  ['/css/maint-accounting-ui-2026.css', 'text/css,*/*'],
+  ['/maintenance.html', 'text/html']
+];
 
 const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 8000));
 
@@ -150,12 +162,12 @@ async function oneStatic(path, needle, accept = 'text/css,*/*') {
   };
 }
 
-async function oneStaticRuleZeroGuard(path) {
+async function oneRuleZeroGuard(path, accept) {
   const url = base + path;
   const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
-  const r = await fetch(url, { method: 'GET', headers: { Accept: 'text/css,*/*' }, signal: ctrl });
+  const r = await fetch(url, { method: 'GET', headers: { Accept: accept }, signal: ctrl });
   const text = await r.text();
-  const hits = RULE0_FORBIDDEN_IN_CSS.filter(s => text.includes(s));
+  const hits = RULE0_FORBIDDEN_SUBSTRINGS.filter(s => text.includes(s));
   const pass = r.ok && hits.length === 0;
   const hint = pass
     ? 'Rule 0 stack guard OK'
@@ -247,9 +259,9 @@ for (const entry of STATIC_TEXT) {
   }
 }
 
-for (const path of RULE0_GUARD_CSS_PATHS) {
+for (const [path, accept] of RULE0_GUARD_FETCHES) {
   try {
-    const row = await oneStaticRuleZeroGuard(path);
+    const row = await oneRuleZeroGuard(path, accept);
     const pass = row.ok;
     if (!pass) criticalFailures++;
     console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${path} ${row.hint}`.trim());

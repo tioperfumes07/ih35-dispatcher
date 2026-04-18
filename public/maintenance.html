@@ -5841,7 +5841,7 @@
         const part = escapeHtml(String(l.partRef || ''));
         const extra = [pos ? `Pos: ${pos}` : '', part ? `Part: ${part}` : ''].filter(Boolean).join(' · ');
         const extraHtml = extra ? `<div class="mini-note" style="margin-top:4px">${extra}</div>` : '';
-        return `<div style="padding:8px 10px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-hover, #f8f9fa)">
+        return `<div style="padding:8px 10px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-hover)">
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
             <div style="min-width:0;flex:1"><strong>${desc}</strong>${extraHtml}</div>
             <div style="white-space:nowrap;font-weight:500">${escapeHtml(amt)}</div>
@@ -14595,7 +14595,7 @@
     function paintQboStatusBanner(el, text, tier) {
       if (!el) return;
       const colors = {
-        info: { bg: 'var(--color-bg-hover, #f8f9fa)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
+        info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
         success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft, #bce3c9)', fg: 'var(--color-semantic-success, #065f46)' },
         warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning, #92400e)' },
         error: { bg: 'var(--pill-red-bg)', border: 'var(--btn-danger-border)', fg: 'var(--btn-danger-text)' }
@@ -14624,7 +14624,7 @@
         return;
       }
       const colors = {
-        info: { bg: 'var(--color-bg-hover, #f8f9fa)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
+        info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
         success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft, #bce3c9)', fg: 'var(--color-semantic-success, #065f46)' },
         warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning, #92400e)' },
         error: { bg: 'var(--pill-red-bg)', border: 'var(--btn-danger-border)', fg: 'var(--btn-danger-text)' }
