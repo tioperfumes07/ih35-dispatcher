@@ -643,3 +643,19 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — **`body.erp-maintenance`** **`.catalog-add-card`** / **`__head`** / **`__title`** / **`__body`** get **`min-width: 0`** for flex heads and form bodies in Lists & catalogs; **`#section-dashboard`** and **`#section-fuel`** **`.panel-head > div`** for inline-flex panel titles; **`#section-safety`** **`.tracking-sub > div:first-child`** (tab intro rows) and **`.safety-active-grid > div > div:first-child`** (per-column title rows).
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-21
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`#section-maintenance`** **`.maint-kpi-strip__body > div:first-child`** (workspace snapshot row), **`.unit-list-panel .panel-head`**, and **`#maintTopQboIssuesInd`**; **`#section-tracking`** **`> div:first-child`** (fleet mix strip intro), **`.tracking-sub > div:first-child`** (e.g. shop tab intros), and **`.erp-ops-hero-head`** / **`> div`** (shop board hero head).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-22
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`body.erp-maintenance .shop-subtabs`** gets **`min-width: 0`** so the shop queue subtabs row can shrink inside the tracking embed column; **`body.erp-maintenance .vendor-link-grid`** gets **`min-width: 0`** so the catalog vendor link auto-fit grid respects the Lists & catalogs column; **`#section-tracking .panel-head`** and **`.panel-head > div`** get **`min-width: 0`** for map / assets / yard-idle / summary headers that use flex (including inline **`display:flex`** on **`tr-idle`** heads).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

@@ -1765,6 +1765,7 @@ body.erp-maintenance .shop-board-grid {
 
 body.erp-maintenance .shop-subtabs {
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 body.erp-maintenance .shop-tab-panel {
@@ -3351,6 +3352,10 @@ body.erp-maintenance #section-catalog .panel-body > .subtabs > .subtab {
   line-height: 1.25;
 }
 
+body.erp-maintenance .vendor-link-grid {
+  min-width: 0;
+}
+
 body.erp-maintenance #section-reports > .subtabs {
   display: flex;
   flex-wrap: wrap;
@@ -3387,6 +3392,36 @@ body.erp-maintenance #section-safety .tracking-sub > div:first-child {
 }
 
 body.erp-maintenance #section-safety .safety-active-grid > div > div:first-child {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-maintenance .maint-kpi-strip__body > div:first-child {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-maintenance .unit-list-panel .panel-head {
+  min-width: 0;
+}
+
+body.erp-maintenance #maintTopQboIssuesInd {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-tracking > div:first-child {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-tracking .tracking-sub > div:first-child {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-tracking .erp-ops-hero-head,
+body.erp-maintenance #section-tracking .erp-ops-hero-head > div {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-tracking .panel-head,
+body.erp-maintenance #section-tracking .panel-head > div {
   min-width: 0;
 }
 

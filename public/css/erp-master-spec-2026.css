@@ -190,7 +190,7 @@ body.erp-maintenance .modal {
   overflow-y: auto;
   border-radius: 8px;
   box-shadow: none;
-  border: 1px solid var(--color-border, var(--qb-line));
+  border: 1px solid var(--color-border);
 }
 
 /* Rule 2 / 22 — topbar short hint + ? (markup in maintenance.html `.topbar-hint-wrap`). */
@@ -467,7 +467,7 @@ body.dispatch-page .modal {
   overflow-y: auto;
   border-radius: 8px;
   box-shadow: none;
-  border: 1px solid var(--color-border, var(--qb-line));
+  border: 1px solid var(--color-border);
 }
 
 body.dispatch-page #dispatchApp .modal,
@@ -525,7 +525,7 @@ body.erp-maintenance .erp-main-body .maint-cost-table td {
 
 body.erp-maintenance .erp-main-body .maint-cost-table thead th {
   background: var(--color-bg-header);
-  color: var(--color-text-label, var(--qb-muted));
+  color: var(--color-text-label);
   font-weight: 500;
   text-transform: none;
 }
@@ -560,7 +560,7 @@ body.erp-maintenance .erp-main-body .erp-ops-data-frame table th {
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--color-text-label, var(--qb-muted));
+  color: var(--color-text-label);
   padding: 6px 8px;
 }
 
@@ -924,7 +924,7 @@ body.erp-maintenance .qb-doc-title-row {
    Rule 3 — Collapsible module sidebar groups (maintenance.html)
    ============================================================================= */
 body.erp-maintenance .erp-module-sidebar .erp-sb-group {
-  border-bottom: 1px solid var(--color-border, var(--line));
+  border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-card);
 }
 
@@ -944,7 +944,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
   letter-spacing: 0.08em;
   background: var(--color-bg-card);
   border: none;
-  border-bottom: 1px solid var(--color-border, var(--line));
+  border-bottom: 1px solid var(--color-border);
   font-family: inherit;
   text-align: left;
 }
@@ -976,7 +976,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__body .erp-sb-link {
 
 /* --- Rule 3 (reports in-page sidebar): native <details> groups --- */
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group {
-  border-bottom: 1px solid var(--color-border, var(--line));
+  border-bottom: 1px solid var(--color-border);
 }
 
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head {
@@ -1598,11 +1598,11 @@ body.erp-maintenance .erp-reports-roadmap {
   gap: 10px 14px;
   margin-top: 12px;
   padding: 10px 12px;
-  border: 1px solid var(--color-border, var(--line));
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-bg-header);
   font-size: 13px;
-  color: var(--color-text-primary, var(--text));
+  color: var(--color-text-primary);
   box-sizing: border-box;
 }
 
@@ -1614,26 +1614,26 @@ body.erp-maintenance .erp-reports-roadmap {
 }
 
 .erp-pager__meta {
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
   font-weight: 500;
 }
 
 .erp-pager__page {
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
   font-size: 12px;
 }
 
 .erp-pager__btn {
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid var(--color-border, var(--line));
+  border: 1px solid var(--color-border);
   background: var(--color-bg-card);
   font: inherit;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  color: var(--color-text-primary, var(--text));
+  color: var(--color-text-primary);
 }
 
 .erp-pager__btn:hover:not(:disabled) {
@@ -1656,7 +1656,7 @@ body.erp-maintenance .erp-reports-roadmap {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--color-text-label, var(--muted));
+  color: var(--color-text-label);
 }
 
 .erp-pager__size-sel {
@@ -1664,7 +1664,7 @@ body.erp-maintenance .erp-reports-roadmap {
   font-size: 13px;
   padding: 5px 8px;
   border-radius: 8px;
-  border: 1px solid var(--color-border, var(--line));
+  border: 1px solid var(--color-border);
   background: var(--color-bg-card);
 }
 
@@ -1860,9 +1860,9 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   padding: 8px max(14px, env(safe-area-inset-right, 0px)) 8px max(14px, env(safe-area-inset-left, 0px));
   margin: 0 0 12px;
   border-radius: var(--radius-card, 8px);
-  border: 1px solid var(--color-border, var(--line));
+  border: 1px solid var(--color-border);
   background: var(--color-bg-card);
-  color: var(--color-text-body, var(--text));
+  color: var(--color-text-body);
   box-sizing: border-box;
 }
 body.banking-page .wrap > .erp-connection-strip {
@@ -2044,7 +2044,7 @@ body.banking-page #authBanner.erp-auth-banner {
 }
 .erp-dedicated-form-modal__x:hover {
   background: var(--color-bg-header);
-  color: var(--color-text-primary, var(--text));
+  color: var(--color-text-primary);
 }
 .erp-dedicated-form-modal__body {
   flex: 1;
