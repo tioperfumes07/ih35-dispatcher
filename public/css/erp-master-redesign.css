@@ -645,7 +645,7 @@ body.erp-maintenance .erp-main-body .maint-board-nav__title {
 
 /* --- Standard modals (not full-screen WO) --- */
 body.erp-maintenance .maint-modal-bg:not(.maint-workorder-fullmodal) {
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--color-modal-backdrop);
   padding: 20px;
 }
 
@@ -752,7 +752,7 @@ body.erp-maintenance .maint-workorder-fullmodal__shell.erp-qb-fullsheet {
 
 /* --- Full-screen work order modal: flat header, same dimmer --- */
 body.erp-maintenance .maint-workorder-fullmodal.maint-modal-bg {
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--color-modal-backdrop);
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__head {

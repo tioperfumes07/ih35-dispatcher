@@ -257,6 +257,14 @@ main,
 .catalog-add-card__body {
   padding: 12px 14px 14px;
 }
+
+body.erp-maintenance .catalog-add-card,
+body.erp-maintenance .catalog-add-card__head,
+body.erp-maintenance .catalog-add-card__title,
+body.erp-maintenance .catalog-add-card__body {
+  min-width: 0;
+}
+
 .catalog-plus-btn {
   align-self: flex-start;
   margin-top: 4px;
@@ -3367,6 +3375,19 @@ body.erp-maintenance #section-reports > .subtabs .nav-dropdown-trigger {
 
 body.erp-maintenance #section-reports .nav-dropdown-menu {
   max-width: min(100vw - 32px, 320px);
+}
+
+body.erp-maintenance #section-dashboard .panel-head > div,
+body.erp-maintenance #section-fuel .panel-head > div {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-safety .tracking-sub > div:first-child {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-safety .safety-active-grid > div > div:first-child {
+  min-width: 0;
 }
 
 @media (max-width: 768px) {

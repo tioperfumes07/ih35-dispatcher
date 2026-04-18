@@ -626,3 +626,20 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — Tracking **`.track-card`** gets **`min-width: 0`** inside **`track-grid`**; **`.erp-reports-toolbar__actions`** gets **`min-width: 0`** so the action cluster wraps inside the reports toolbar row.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-19
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#section-catalog`** **`.panel-head`** / **`.panel-head .panel-title`** and **`.catalog-subpanel > div:first-child`** (**mini-note** + help intro rows) get **`min-width: 0`** so Lists & catalogs chrome matches upload/accounting overflow-safe patterns.
+- **Rule 1:** **`public/css/app-theme.css`** — Maintenance tire diagram **`.tire-svg`** gets **`min-width: 0`** inside **`tire-layout-wrap`**.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-20
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`body.erp-maintenance`** **`.catalog-add-card`** / **`__head`** / **`__title`** / **`__body`** get **`min-width: 0`** for flex heads and form bodies in Lists & catalogs; **`#section-dashboard`** and **`#section-fuel`** **`.panel-head > div`** for inline-flex panel titles; **`#section-safety`** **`.tracking-sub > div:first-child`** (tab intro rows) and **`.safety-active-grid > div > div:first-child`** (per-column title rows).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
