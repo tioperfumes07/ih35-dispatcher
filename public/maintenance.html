@@ -4373,7 +4373,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About uploads">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Choose a tab, upload CSV/Excel where supported; confirm in <strong>Accounting</strong> for fuel/Relay before QBO.
+                  Pick a tab; upload CSV/Excel where supported. Fuel/Relay: confirm under <strong>Accounting</strong> before QBO.
                 </span>
               </span>
             </div>
@@ -4396,7 +4396,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bank CSV">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Matching lives in <strong>Bank CSV matching</strong> (banking app) — this tab is a shortcut only. Wells Fargo, BofA, Chase, or generic CSV from your bank.
+                      Matching runs in the banking app (<strong>Bank CSV matching</strong>). This tab opens that workspace; any standard bank CSV works.
                     </span>
                   </span>
                 </div>
@@ -4419,14 +4419,14 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Comdata / Relay">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Comdata/Relay <strong>All Transactions</strong> as CSV/Excel — same parser as <strong>Fuel / DEF</strong>. Import here or there, then confirm under <strong>Accounting → Fuel &amp; DEF entry</strong> before QBO.
+                      Comdata/Relay <strong>All Transactions</strong> CSV/Excel — same parser as <strong>Fuel / DEF</strong>. Confirm under <strong>Accounting → Fuel &amp; DEF</strong> before QBO.
                     </span>
                   </span>
                 </div>
               </div>
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-section-h">Upload file</div>
-                <p class="mini-note" style="margin:0 0 8px">CSV/Excel — same flow as <strong>Fuel / DEF</strong>.</p>
+                <p class="mini-note" style="margin:0 0 8px">Same parser as <strong>Fuel / DEF</strong> (CSV/Excel).</p>
                 <div class="mr-upload-drop" tabindex="0" role="button" aria-label="Choose file to upload" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" data-up-bind="comdata" onclick="document.getElementById('upCenterComdataFile').click()">
                   <span class="mr-upload-drop__icon" aria-hidden="true">↑</span>
                   <div><span class="mr-upload-drop__primary">Choose file or drag &amp; drop</span></div>
@@ -4451,7 +4451,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About connections">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Status cards only (no CSV). <strong>Configure</strong> → Samsara Cloud; <strong>Refresh data</strong> → board reload here. QBO: <strong>Test connection</strong> / <strong>Refresh lists</strong>.
+                      Status only (no CSV). Samsara: <strong>Configure</strong> / <strong>Refresh data</strong> (reloads board here). QBO: <strong>Connect</strong>, <strong>Test connection</strong>, <strong>Refresh lists</strong>.
                     </span>
                   </span>
                 </div>
@@ -4479,11 +4479,11 @@
               <details class="mr-upload-help" style="margin-top:12px">
                 <summary>Samsara write scopes (advanced)</summary>
                 <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
-                  <span class="mini-note" style="margin:0">Rename POSTs need write scopes — <strong>Lists → Fleet &amp; Samsara</strong> when configured.</span>
+                  <span class="mini-note" style="margin:0">Renames need write scopes — <strong>Lists → Fleet &amp; Samsara</strong>.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara API write scopes">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Fleet/HOS stays read-only until the token includes write scopes. Re-issue the token after scope changes; read-only tokens return <strong>403</strong> from Samsara.
+                      Without write scopes, renames stay read-only. After scope changes, re-issue the token — otherwise Samsara returns <strong>403</strong>.
                     </span>
                   </span>
                 </div>
@@ -4497,7 +4497,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About fuel import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Drop file → <strong>Import</strong> to preview Comdata, Relay, or manual fuel. Use carrier <strong>All Transactions</strong> (or equivalent) CSV/Excel. Confirm/post under <strong>Accounting → Fuel &amp; DEF entry</strong> before QBO.
+                      <strong>Import</strong> previews Comdata, Relay, or manual fuel. Use carrier <strong>All Transactions</strong> (or similar) CSV/Excel. Post from <strong>Accounting → Fuel &amp; DEF</strong> before QBO.
                     </span>
                   </span>
                 </div>
@@ -4528,7 +4528,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance AP import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>CSV or Excel</strong> AP export — columns should mirror your source so rows map to WOs / expense lines where the parser can match.
+                      <strong>CSV or Excel</strong> AP export — align columns with your source so rows map to WOs / expense lines when the parser can match.
                     </span>
                   </span>
                 </div>
@@ -4563,7 +4563,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance history import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Fill rows under template headers, then upload <strong>CSV or Excel</strong>. Validation follows those columns.
+                      Use the template headers, then upload <strong>CSV or Excel</strong>. Validation follows those columns.
                     </span>
                   </span>
                 </div>
@@ -4598,7 +4598,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About other import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Uncovered file types — logged for <strong>manual</strong> follow-up; no automatic parser.
+                      No automatic parser — file is logged for <strong>manual</strong> follow-up.
                     </span>
                   </span>
                 </div>
@@ -14004,7 +14004,7 @@
         .filter(e => e.cat === cat)
         .slice(0, 10);
       if (!rows.length) {
-        host.innerHTML = '<div class="mr-upload-recent-empty">No imports yet for this category.</div>';
+        host.innerHTML = '<div class="mr-upload-recent-empty">No imports here yet.</div>';
         return;
       }
       host.innerHTML =
@@ -14158,15 +14158,15 @@
           fileName: file.name,
           records: nF + nR,
           status: 'Previewed',
-          detail: `${nF} fuel line(s), ${nR} Relay line(s) — open Accounting to confirm`
+          detail: `${nF} fuel / ${nR} Relay — confirm in Accounting`
         });
         if (resultEl) {
-          resultEl.innerHTML = `<span class="mr-upload-pill mr-upload-pill--green">Parsed ${nF + nR} row(s)</span> <span class="mini-note">Opened <strong>Accounting → Fuel &amp; DEF</strong> to confirm.</span>`;
+          resultEl.innerHTML = `<span class="mr-upload-pill mr-upload-pill--green">Parsed ${nF + nR} row(s)</span> <span class="mini-note">Confirm in <strong>Accounting → Fuel &amp; DEF</strong>.</span>`;
         }
         openSection('accounting', document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]'));
         openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'));
         acctRenderRelayFuelImportPreview(data);
-        showErpToast(`Fuel import preview: ${nF} fuel / ${nR} Relay lines — confirm in Accounting.`, 'success');
+        showErpToast(`Fuel preview: ${nF} fuel / ${nR} Relay — confirm in Accounting.`, 'success');
       } catch (e) {
         upImportLogAdd({
           cat,
@@ -14216,10 +14216,10 @@
         fileName: f.name,
         records: '—',
         status: 'Logged',
-        detail: 'No automatic parser — keep file for manual review'
+        detail: 'No parser — manual review'
       });
       const res = document.getElementById('upOtherResult');
-      if (res) res.innerHTML = '<span class="mr-upload-pill mr-upload-pill--green">File noted</span>';
+      if (res) res.innerHTML = '<span class="mr-upload-pill mr-upload-pill--green">File noted</span> <span class="mini-note">For manual review only.</span>';
       showErpToast('File logged for manual review.', 'success');
       input.value = '';
       uploadCenterClearFile('upOtherFile', 'upOtherPick', 'upOtherImportBtn');
@@ -16712,7 +16712,7 @@
         if (!r.ok) throw new Error(data.error || 'Import failed');
         const n = Number(data.imported) || 0;
         const detail =
-          (data.importBatchId ? 'Batch id: ' + data.importBatchId + ' (undo in Accounting → QBO rollback).' : '') || '';
+          (data.importBatchId ? 'Batch ' + data.importBatchId + ' · Undo: Accounting → QBO rollback' : '') || '';
         upImportLogAdd({
           cat: 'maint',
           fileName: fn,
@@ -16762,7 +16762,7 @@
         if (!r.ok) throw new Error(data.error || 'Import failed');
         const n = Number(data.imported) || 0;
         const detail =
-          (data.importBatchId ? 'Batch id: ' + data.importBatchId + ' (undo in Accounting → QBO rollback).' : '') || '';
+          (data.importBatchId ? 'Batch ' + data.importBatchId + ' · Undo: Accounting → QBO rollback' : '') || '';
         upImportLogAdd({
           cat: 'ap',
           fileName: fn,
