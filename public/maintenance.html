@@ -3871,7 +3871,16 @@
                   </span>
                 </span>
               </div>
-              <div id="vendorCatalogBody" class="mini-note">Open this tab to load.</div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Linking workspace loads when you open this sub-tab (brief <strong>Loading…</strong>), then shows driver payees, QBO search, and cached lists.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendors &amp; drivers workspace">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Calls <code>GET /api/maintenance/vendor-catalog</code> for QuickBooks vendors and TMS driver payees, then builds the link toolbar and search grids. Live QBO vendor lookup needs a healthy connection; Samsara driver search uses read-only credentials. If the area below errors or stays empty, use <strong>Refresh QuickBooks lists</strong> on the QuickBooks sub-tab or check the sidebar sync strip.
+                  </span>
+                </span>
+              </div>
+              <div id="vendorCatalogBody" class="mini-note">Not loaded yet.</div>
             </div>
             <div id="catalog-panel-operational" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
@@ -3883,7 +3892,16 @@
                   </span>
                 </span>
               </div>
-              <div id="operationalCatalogBody" class="mini-note">Open this tab to load.</div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Current codes load when you open this sub-tab; add rows below, then <strong>Refresh data</strong> (sidebar) if pickers elsewhere look stale.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status catalog">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Reads <code>GET /api/maintenance/operational-status-catalog</code> and renders the list of <code>value</code> + label pairs used on each unit's <strong>Operational status</strong> picker. <strong>+ Add status to ERP</strong> posts a new row to the same API; after saves, a full workspace refresh reloads maintenance pickers. Errors appear in the box below.
+                  </span>
+                </span>
+              </div>
+              <div id="operationalCatalogBody" class="mini-note">Not loaded yet.</div>
               <div class="catalog-add-card" style="margin-top:14px;max-width:520px">
                 <div class="catalog-add-card__head">
                   <span class="catalog-add-card__title">New operational code</span>
