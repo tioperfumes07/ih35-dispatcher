@@ -390,6 +390,7 @@ body.erp-maintenance .qb-picker-menu {
   padding: 4px 5px;
   border-radius: 8px;
   font-size: 13px;
+  min-width: 0;
 }
 body.erp-maintenance .qb-picker-item {
   padding: 5px 8px;
@@ -786,6 +787,7 @@ body.erp-maintenance .brand {
   font-weight: 700;
   margin-bottom: 12px;
   letter-spacing: -0.02em;
+  min-width: 0;
 }
 
 body.erp-maintenance .brand-sub {
@@ -793,6 +795,7 @@ body.erp-maintenance .brand-sub {
   color: var(--sidebar-muted);
   margin-bottom: 16px;
   line-height: 1.45;
+  min-width: 0;
 }
 
 body.erp-maintenance .nav-title {
@@ -946,13 +949,13 @@ body.erp-maintenance .record-card {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
+  min-width: 0;
 }
 
 body.erp-maintenance .hero-card {
   padding: 12px 14px;
   cursor: pointer;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-  min-width: 0;
 }
 
 body.erp-maintenance .hero-card:hover {
@@ -982,6 +985,7 @@ body.erp-maintenance .section {
 
 body.erp-maintenance .section.active {
   display: block;
+  min-width: 0;
 }
 
 body.erp-maintenance .grid {
@@ -1023,6 +1027,7 @@ body.erp-maintenance .panel-title {
 
 body.erp-maintenance .panel-body {
   padding: 14px 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance .metric {
@@ -1909,6 +1914,7 @@ body.erp-maintenance .maint-modal-bg {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-modal-bg.on {
@@ -1958,6 +1964,7 @@ body.erp-maintenance .maint-workorder-fullmodal__title {
   font-size: 16px;
   font-weight: 800;
   color: var(--color-text-primary);
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__body {
@@ -1974,6 +1981,7 @@ body.erp-maintenance .maint-modal {
   border-radius: var(--radius);
   max-width: 480px;
   width: 100%;
+  min-width: 0;
   padding: 20px;
   box-shadow: var(--shadow);
 }

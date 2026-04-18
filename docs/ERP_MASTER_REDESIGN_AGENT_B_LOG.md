@@ -513,3 +513,19 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`.shop-col-body`** and **`.nav-dropdown-menu`** (scroll regions); WO full-screen modal **`maint-workorder-fullmodal__shell`** / **`__head`** / **`__body`** get **`min-width: 0`** and **`__body`** gets **`min-height: 0`** so the flex column layout scrolls correctly on small viewports.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-06
+
+- **Rule 1:** **`public/css/app-theme.css`** — Shared **`hero-card` / `panel` / `metric` / `record-card`** surface rule now includes **`min-width: 0`** (duplicate removed from **`hero-card`** only); **`panel-body`** and sidebar **`brand-sub`** get **`min-width: 0`** so default maintenance panels and sidebar copy shrink inside the shell grid.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-07
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`section.active`** (maintenance section host), sidebar **`brand`**, maintenance **`qb-picker-menu`**, **`maint-modal-bg`** / **`maint-modal`**, and **`maint-workorder-fullmodal__title`** so modals, picker popovers, and WO full-modal titles respect narrow viewports and flex centering.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
