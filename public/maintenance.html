@@ -1527,6 +1527,15 @@
                 <button type="button" class="qb-btn-add" onclick="clearMaintenanceFormNewEntry()">New work order</button>
               </div>
               <div class="panel-body">
+                <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 220px">Cards below are rebuilt from in-memory maintenance rows whenever the selected unit or <code>erp.records</code> changes.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Unit history list">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderUnitHistory()</code> filters <code>erp.records</code> to <code>selectedUnit</code>, sorts by <code>serviceDate</code> descending, then replaces <code>#unitHistory</code> <code>innerHTML</code> with escaped <code>.record-card</code> markup (service line, QB sync badge, cost breakdown / tire lists, actions). Empty selection or no rows shows the plain <strong>No records yet.</strong> string. Invoked from <code>renderSelectedUnit()</code> and after saves via <code>loadAll()</code>.
+                    </span>
+                  </span>
+                </div>
                 <div id="unitHistory" class="card-list">No records yet.</div>
               </div>
             </div>
