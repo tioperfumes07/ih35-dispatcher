@@ -976,7 +976,7 @@ router.get('/api/pdf/work-order/:id', (req, res) => {
       doc.text(`Vendor invoice #: ${wo.vendorInvoiceNumber || '—'}`);
       doc.text(`Shop / internal WO #: ${wo.internalWorkOrderNumber || '—'}`);
       doc.text(`Vendor WO #: ${wo.vendorWorkOrderNumber || '—'}`);
-      doc.text(`Load / inv (settlement): ${wo.loadNumber || '—'}`);
+      doc.text(`Load / invoice #: ${wo.loadNumber || '—'}`);
       doc.text(`Due: ${wo.dueDate || '—'}`);
       doc.text(`Payment: ${paymentMethodLabel(erp, wo.paymentMethodId)}`);
       if (wo.qboBankAccountId) doc.text(`Pay-from bank (QBO): ${bankAccountLabel(erp, wo.qboBankAccountId) || wo.qboBankAccountId}`);
