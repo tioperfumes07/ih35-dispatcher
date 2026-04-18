@@ -359,7 +359,7 @@
           <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting</h3><p>Expenses, bills, and QuickBooks sync</p></div>
           <div class="hero-card hero-card--hint" role="note">
             <h3>Reports</h3>
-            <p><strong>Reports</strong> lives in company navigation (≡). Home stays focused on day-to-day work.</p>
+            <p><strong>Reports</strong> is on the <strong>≡</strong> icon — Home stays day-to-day.</p>
           </div>
         </div>
 
@@ -394,7 +394,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What fills these cards">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Live <strong>ERP + Samsara</strong> snapshot after <strong>Refresh</strong> (loads, maintenance, fuel health). Not a full close — open each workspace for detail.
+                    Live <strong>ERP + Samsara</strong> after <strong>Refresh</strong> (loads, maint, fuel). Open each workspace for detail.
                   </span>
                 </span>
               </div>
@@ -408,7 +408,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QuickBooks sync snapshot">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Same QBO catalog/activity view as <strong>Accounting</strong>; counts follow list sync. For posting health see <strong>Reports → ERP ↔ QBO sync</strong>.
+                    Same QBO catalog view as <strong>Accounting</strong>; counts follow list sync. Posting health: <strong>Reports → ERP ↔ QBO sync</strong>.
                   </span>
                 </span>
               </div>
@@ -455,7 +455,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this table">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Live Samsara duties — off-duty <strong>without</strong> a truck hidden; off-duty <strong>with</strong> truck shown. Token scope: <strong>Read ELD Compliance Settings (US)</strong>.
+                Live Samsara duties — off-duty <strong>without</strong> a truck hidden; off-duty <strong>with</strong> truck shown. Token: <strong>Read ELD Compliance Settings (US)</strong>.
               </span>
             </span>
           </div>
@@ -466,27 +466,27 @@
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Search (right) for driver/vehicle; tag chips when Samsara exposes them.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Search (right) for driver/vehicle; tags when Samsara exposes them.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Row values from live Samsara HOS payload (duty, vehicle, timers, violations).</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Row values from live Samsara HOS (duty, vehicle, timers, violations).</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Duty status <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty states: use <strong>Show</strong> beside this row (relevant / active / off-duty / all).</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty states: use <strong>Show</strong> (relevant / active / off-duty / all).</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Violations <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Active violations → row tint matches legend above.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Active violations tint rows per legend above.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Active drivers <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Same lens as <strong>Show → Active duties only</strong>.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Same as <strong>Show → Active duties only</strong>.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Vehicle assignment <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Relevant</strong> hides off-duty without truck; other modes show full Samsara window.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Relevant</strong> hides off-duty without truck; other modes show the full Samsara window.</p></div>
               </details>
               <div class="mr-filter-bar__show">
                 <label class="mini-note" for="safetyHosDutyFilter" style="margin:0">Show</label>
@@ -508,7 +508,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS clocks table behavior">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyHos()</code>: <code>normalizeHosClock</code> → <code>applySafetyHosDutyMode</code> (<strong>Show</strong>) → paged <code>#safetyHosBody</code>; <code>safetyHosPager</code> + <code>#safetyHosMeta</code>. Read-only — refresh board if clocks look stale.
+                <code>renderSafetyHos()</code>: <code>normalizeHosClock</code> → <code>applySafetyHosDutyMode</code> (<strong>Show</strong>) → paged <code>#safetyHosBody</code>; <code>safetyHosPager</code> + <code>#safetyHosMeta</code>. Read-only — refresh board if stale.
               </span>
             </span>
           </div>
@@ -2686,7 +2686,7 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Attachments">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Use <strong>Repair / vendor invoice PDF</strong> above to extract lines into the grid. Full attachment sync to QuickBooks follows your normal posting flow from this screen.
+                        Use <strong>Repair / vendor invoice PDF</strong> above to extract lines. QBO attachment sync follows your normal post flow from this screen.
                       </span>
                     </span>
                   </div>
@@ -2726,7 +2726,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="AP card list">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Saved <strong>maintenance AP</strong> documents (card layout). Open a card to edit the full QuickBooks-style form; exports below include work orders and AP rows for analysis outside the ERP.
+                      Saved <strong>maintenance AP</strong> cards — open one for the full QBO-style form. Exports: work orders + AP rows for offline analysis.
                     </span>
                   </span>
                 </div>
@@ -2754,9 +2754,9 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bill pay">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Pays open <strong>Bills</strong> in QuickBooks via a <strong>Bill Payment</strong> from the bank or card you select (what bank feeds match to).
-                    <strong>Load from QuickBooks</strong> is a live query (not cached). Narrow with the search box, or use <strong>Bill Id</strong> + <strong>Load bill by Id</strong> for one bill.
-                    Post shop work as a <strong>Bill</strong> from <strong>Maintenance expenses</strong> first; one-off <strong>Purchase</strong> card expenses are handled differently in QBO.
+                    Pays open QBO <strong>Bills</strong> with a <strong>Bill Payment</strong> from the bank/card you pick (what feeds reconcile to).
+                    <strong>Load from QuickBooks</strong> is live (not cached) — narrow with search or <strong>Bill Id</strong> + <strong>Load bill by Id</strong>.
+                    Shop work: post as a <strong>Bill</strong> from <strong>Maintenance expenses</strong> first; one-off <strong>Purchase</strong> cards differ in QBO.
                   </span>
                 </span>
               </div>
@@ -2825,8 +2825,8 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Selection rules">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Leave vendor blank to load up to <strong>150</strong> open bills (all vendors). Each payment is for <strong>one vendor</strong> — check rows that share the same vendor.
-                    <strong>Partial pay:</strong> lower the pay amount; <strong>Remaining</strong> and <strong>Status</strong> update as you type (capped at open balance on blur).
+                    Blank vendor → up to <strong>150</strong> open bills (all vendors). One payment = <strong>one vendor</strong> — checked rows must match.
+                    <strong>Partial pay:</strong> edit <strong>Pay</strong>; <strong>Remaining</strong> / <strong>Status</strong> follow (capped at open balance on blur).
                   </span>
                 </span>
               </div>
@@ -2845,7 +2845,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Open bills data source">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Rows load from <strong>QuickBooks</strong> when the connection is healthy. Use <strong>Refresh data</strong> in the sidebar if the grid is empty or looks stale after posting in QBO. Vendor filter, search, min open $, and bill-id lookup all re-query or narrow what is already loaded.
+                    Rows from <strong>QuickBooks</strong> when connected. Empty/stale after QBO changes → sidebar <strong>Refresh data</strong>. Vendor filter, search, min $, and bill-id narrow the loaded set.
                   </span>
                 </span>
               </div>
@@ -2854,7 +2854,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How the draft total is calculated">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Adds up <strong>Pay</strong> amounts for every checked bill in the loaded set (including other pages of the open-bills table). Each amount is capped at that bill's open balance when you tab away (<strong>Remaining</strong> updates with the row). Vendor and selection rules for this grid are in the <strong>?</strong> on the hint line above.
+                    Sums <strong>Pay</strong> for all checked bills in the loaded set (other pages too). Amounts cap at open balance on blur (<strong>Remaining</strong> follows). Selection rules: <strong>?</strong> on the hint line above.
                   </span>
                 </span>
               </div>
@@ -2863,7 +2863,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Open bills table body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadAccountingOpenBills()</code> → <code>bpMountOpenBillsInTable()</code> stores rows then <code>bpRenderOpenBillsPage()</code> replaces <code>#bpOpenBillsBody</code> <code>innerHTML</code> with <code>bpHtmlForOpenBillRows()</code> for the current filter slice (or a no-rows row), syncs selection from <code>__bpOpenBillsSelection</code>, and wires <code>#bpOpenBillsPagerHost</code> via <code>erpPagerRender</code>. <code>bpApplyOpenBillsFilter()</code> resets the page and re-renders the same path.
+                    <code>loadAccountingOpenBills()</code> → <code>bpMountOpenBillsInTable()</code> → <code>bpRenderOpenBillsPage()</code> fills <code>#bpOpenBillsBody</code> from <code>bpHtmlForOpenBillRows()</code> (slice or empty), syncs <code>__bpOpenBillsSelection</code>, pager on <code>#bpOpenBillsPagerHost</code> via <code>erpPagerRender</code>. <code>bpApplyOpenBillsFilter()</code> resets page + same path.
                   </span>
                 </span>
               </div>
@@ -3433,9 +3433,81 @@
               <input id="qboAccountFilter" placeholder="Search QuickBooks accounts" oninput="renderQboMaster()" style="margin-top:10px;">
 
               <div class="grid grid-3" style="margin-top:14px;">
-                <div class="panel"><div class="panel-head"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><div class="panel-title" style="margin:0">Vendors</div><span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor list">?</button><span class="erp-help-tip__panel" role="tooltip">Live <strong>vendor</strong> list after <strong>Refresh Live QuickBooks Master</strong>. New vendors can be created in the form above; search narrows this column.</span></span></div></div><div class="panel-body" id="qboVendorList"></div></div>
-                <div class="panel"><div class="panel-head"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><div class="panel-title" style="margin:0">Items</div><span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Item list">?</button><span class="erp-help-tip__panel" role="tooltip"><strong>Products &amp; services</strong> from QuickBooks — add most new items in QBO, then refresh the master so they appear here.</span></span></div></div><div class="panel-body" id="qboItemList"></div></div>
-                <div class="panel"><div class="panel-head"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><div class="panel-title" style="margin:0">Accounts</div><span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Account list">?</button><span class="erp-help-tip__panel" role="tooltip"><strong>Chart of accounts</strong> snapshot for mapping expenses — new categories are usually created in QBO first, then refreshed here.</span></span></div></div><div class="panel-body" id="qboAccountList"></div></div>
+                <div class="panel">
+                  <div class="panel-head">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                      <div class="panel-title" style="margin:0">Vendors</div>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor list">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          Live <strong>vendor</strong> list after <strong>Refresh Live QuickBooks Master</strong>. New vendors can be created in the form above; search narrows this column.
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
+                    <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
+                      <span style="min-width:0;flex:1 1 160px">Cards below refresh when you type in the vendor search — title <strong>?</strong> for QBO workflow.</span>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor list host">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          <code>renderQboMaster()</code> reads <code>cacheVendors()</code>, applies <code>#qboVendorFilter</code>, takes the first <strong>50</strong> matches, and replaces <code>#qboVendorList</code> <code>innerHTML</code> with <code>.record-card</code> markup (escaped fields) or the plain &quot;No QuickBooks vendors loaded.&quot; string when the cache is empty.
+                        </span>
+                      </span>
+                    </div>
+                    <div id="qboVendorList"></div>
+                  </div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                      <div class="panel-title" style="margin:0">Items</div>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Item list">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          <strong>Products &amp; services</strong> from QuickBooks — add most new items in QBO, then refresh the master so they appear here.
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
+                    <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
+                      <span style="min-width:0;flex:1 1 160px">Cards below refresh from the item search field — title <strong>?</strong> for when to edit in QBO.</span>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Item list host">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          <code>renderQboMaster()</code> reads <code>cacheItems()</code>, applies <code>#qboItemFilter</code>, first <strong>50</strong> matches, replaces <code>#qboItemList</code> <code>innerHTML</code> with <code>.record-card</code> rows (name, type/SKU, QBO id) or &quot;No QuickBooks items loaded.&quot;
+                        </span>
+                      </span>
+                    </div>
+                    <div id="qboItemList"></div>
+                  </div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                      <div class="panel-title" style="margin:0">Accounts</div>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Account list">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          <strong>Chart of accounts</strong> snapshot for mapping expenses — new categories are usually created in QBO first, then refreshed here.
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
+                    <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
+                      <span style="min-width:0;flex:1 1 160px">Cards below refresh from the account filter — title <strong>?</strong> for mapping use.</span>
+                      <span class="erp-help-tip">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Account list host">?</button>
+                        <span class="erp-help-tip__panel" role="tooltip">
+                          <code>renderQboMaster()</code> reads <code>cacheAccounts()</code>, applies <code>#qboAccountFilter</code>, first <strong>50</strong> matches, replaces <code>#qboAccountList</code> <code>innerHTML</code> with <code>.record-card</code> rows (name, type/sub-type, QBO id) or &quot;No QuickBooks accounts loaded.&quot;
+                        </span>
+                      </span>
+                    </div>
+                    <div id="qboAccountList"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
