@@ -2190,6 +2190,35 @@ body.erp-maintenance .maint-workorder-fullmodal__body {
   min-height: 0;
 }
 
+/* Full-window WO form: layout follows modal width (resize), not viewport — container queries on modal body. */
+body.maint-wo-modal-open #maintWorkOrderModalBody {
+  container-type: inline-size;
+  container-name: maint-wo-modal;
+}
+
+@container maint-wo-modal (max-width: 900px) {
+  body.erp-maintenance .maint-wo-columns {
+    flex-direction: column;
+  }
+  body.erp-maintenance .maint-wo-col-units {
+    width: 100%;
+    max-height: min(40vh, 320px);
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+  body.erp-maintenance .maint-wo-col-form {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+@container maint-wo-modal (min-width: 0) {
+  body.erp-maintenance .maint-form-grid__row--3 {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
+}
+
 body.erp-maintenance .maint-modal {
   background: var(--color-bg-card);
   border-radius: var(--radius);
