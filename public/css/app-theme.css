@@ -474,9 +474,11 @@ body.erp-maintenance .qb-picker-item__meta {
   top: max(0px, env(safe-area-inset-top, 0px));
   right: 0;
   width: min(520px, calc(100vw - 44px));
-  min-width: 0;
+  min-width: 280px;
+  max-width: min(920px, calc(100vw - 24px));
   min-height: 0;
   height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   background: var(--color-bg-card);
   border-left: 1px solid var(--color-border);
   box-shadow: var(--shadow-drawer);
@@ -485,6 +487,8 @@ body.erp-maintenance .qb-picker-item__meta {
   transition: transform 0.18s ease;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  resize: horizontal;
 }
 .erp-drawer.is-open { transform: translateX(0); }
 .erp-drawer__head {
@@ -2141,8 +2145,10 @@ body.erp-maintenance .maint-workorder-fullmodal__shell {
   display: flex;
   flex-direction: column;
   padding: 0;
-  min-width: 0;
-  min-height: 0;
+  min-width: 320px;
+  min-height: 260px;
+  overflow: hidden;
+  resize: both;
 }
 @supports (max-height: 100dvh) {
   body.erp-maintenance .maint-workorder-fullmodal__shell {

@@ -652,12 +652,15 @@ body.erp-maintenance .maint-modal-bg:not(.maint-workorder-fullmodal) {
 body.erp-maintenance .maint-modal-bg:not(.maint-workorder-fullmodal) .maint-modal {
   max-width: 860px;
   width: calc(100% - 40px);
+  min-width: 280px;
+  min-height: 160px;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
   border-radius: var(--radius-card);
   border: 1px solid var(--color-border);
   box-shadow: none;
   padding: 1.25rem 1.25rem 1.5rem;
+  resize: both;
 }
 
 /* Rules 4–6: QuickBooks-style dialog shell (category, shop queue, delay) */
@@ -666,6 +669,8 @@ body.erp-maintenance .maint-modal-bg:not(.maint-workorder-fullmodal) .maint-moda
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+  min-height: 180px;
+  max-height: min(92vh, 900px);
 }
 
 body.erp-maintenance .erp-qb-dialog__head {

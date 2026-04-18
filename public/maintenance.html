@@ -7300,11 +7300,29 @@
             if ((row.querySelector('.wo-svc')?.value || '').trim()) lineDraft = true;
             if ((row.querySelector('.wo-acct')?.value || '').trim()) lineDraft = true;
             if ((row.querySelector('.wo-item')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.wo-tire')?.value || '').trim()) lineDraft = true;
             const qEl = row.querySelector('.wo-qty');
             const qRaw = qEl ? String(qEl.value || '').trim() : '';
             if (qRaw && qRaw !== '1') lineDraft = true;
+            if (row.classList.contains('wo-line-item')) {
+              const lt = row.querySelector('.wo-line-total');
+              if (lt && String(lt.value || '').trim() !== '') lineDraft = true;
+            }
           });
         }
+        const pdfIn = document.getElementById('apInvoicePdfInput');
+        const pdfPicked = !!(pdfIn && pdfIn.files && pdfIn.files.length > 0);
+        const termSel = document.getElementById('apQboTermId');
+        const termsWrap = document.getElementById('apWrapTerms');
+        const termPicked =
+          !!(
+            termsWrap &&
+            !termsWrap.classList.contains('hidden') &&
+            termSel &&
+            String(termSel.value || '').trim()
+          );
+        const dueWrap = document.getElementById('apWrapDue');
+        const dueDirty = !!(dueWrap && !dueWrap.classList.contains('hidden') && apHdr('apDueDate'));
         return !!(
           v ||
           unit ||
@@ -7314,9 +7332,12 @@
           apHdr('apInternalWorkOrderNumber') ||
           apHdr('apPaymentMethodSearch') ||
           apHdr('apBankAccountSearch') ||
+          dueDirty ||
           sumApWoComposerAmounts() > 0 ||
           itemHasRate ||
-          lineDraft
+          lineDraft ||
+          pdfPicked ||
+          termPicked
         );
       }
       return false;
@@ -15121,6 +15142,10 @@
       const abid = document.getElementById('apBankAccountQboId');
       if (abs) abs.value = '';
       if (abid) abid.value = '';
+      const apPdfIn = document.getElementById('apInvoicePdfInput');
+      if (apPdfIn) apPdfIn.value = '';
+      const apPdfSt = document.getElementById('apInvoicePdfStatus');
+      if (apPdfSt) apPdfSt.textContent = '';
       clearWoLines();
       syncApDocTitle();
       refreshApDocTotal();

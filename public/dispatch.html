@@ -80,11 +80,19 @@
     }
     .modal-bg.on { display: flex; }
     .modal {
+      display: flex;
+      flex-direction: column;
       background: var(--color-bg-card);
       max-width: 920px;
       width: 100%;
+      min-width: 280px;
+      min-height: 200px;
+      max-height: min(92vh, 1200px);
       border: 1px solid var(--color-border);
       margin-bottom: 40px;
+      box-sizing: border-box;
+      resize: both;
+      overflow: hidden;
     }
     .modal.book-modal-wide {
       max-width: min(1180px, 98vw);
@@ -94,8 +102,14 @@
       margin: 0;
       padding: 14px 18px;
       border-bottom: 1px solid var(--color-border);
+      flex-shrink: 0;
     }
-    .modal-body { padding: 16px 20px; max-height: calc(100vh - 180px); overflow: auto; }
+    .modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 16px 20px;
+      overflow: auto;
+    }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
     .row { margin-bottom: 12px; }
@@ -182,6 +196,7 @@
     }
     .stop-miles-summary td:first-child { text-align: left; font-weight: 500; }
     .modal-actions {
+      flex-shrink: 0;
       padding: 14px 20px;
       border-top: 1px solid var(--color-border);
       display: flex;
