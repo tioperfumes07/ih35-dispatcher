@@ -1466,7 +1466,7 @@
               </div>
               <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
                 <button type="button" onclick="window.print()">Print</button>
-                <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg-card, var(--panel));color:var(--color-text-body);font-size:13px">PDF</a>
+                <a class="btn" href="/api/pdf/shop-queue" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;line-height:1.25;padding:6px 12px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg-card);color:var(--color-text-body);font-size:13px">PDF</a>
                 <button type="button" title="Reload fleet, shop, and accounting data" onclick="loadAll()">Refresh</button>
               </div>
             </div>
@@ -2065,7 +2065,7 @@
           <div
             id="maintIntegrationStrip"
             class="mini-note"
-            style="margin-top:14px;padding:10px 12px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card, var(--panel));line-height:1.55;font-size:13px;color:var(--color-text-body)"
+            style="margin-top:14px;padding:10px 12px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card);line-height:1.55;font-size:13px;color:var(--color-text-body)"
           >
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px">
               <strong>Connections</strong>
@@ -2130,7 +2130,7 @@
             <div
               id="apTxnQboBanner"
               class="mini-note qb-doc-banner qb-doc-banner--ap"
-              style="display:none;margin:0;padding:8px 14px;border-top:1px solid var(--color-border);background:var(--color-bg-header, #f1f3f4);line-height:1.45;font-size:13px;color:var(--color-text-body);align-items:center;gap:8px;flex-wrap:wrap"
+              style="display:none;margin:0;padding:8px 14px;border-top:1px solid var(--color-border);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);align-items:center;gap:8px;flex-wrap:wrap"
             >
               <span id="apTxnQboBannerText"></span>
             </div>
@@ -2848,7 +2848,7 @@
                   </div>
                 </div>
               </div>
-              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-card, var(--panel))">
+              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-card)">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
                   <div class="qb-l" style="margin:0">Relay / Love’s fuel file (CSV or Excel)</div>
                   <span class="erp-help-tip">
@@ -3096,7 +3096,7 @@
               <div
                 id="expHistQboBanner"
                 class="mini-note"
-                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border-input);background:var(--color-bg-header, #f1f3f4);line-height:1.45;font-size:13px;color:var(--color-text-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap"
+                style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border-input);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap"
               >
                 <span>Use <strong>Check QBO</strong> on posted rows to verify Purchase/Bill still exists.</span>
                 <span class="erp-help-tip">
@@ -3427,7 +3427,7 @@
                 </div>
               </div>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
-              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card, var(--panel))"></div>
+              <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card)"></div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:720px">
                   <thead>
@@ -4478,7 +4478,7 @@
   </template>
 
   <template id="tireExtraLineTpl">
-    <div class="tire-extra-row" style="border:1px solid var(--color-border);border-radius:8px;padding:10px;margin-top:8px;background:var(--color-bg-header, #f1f3f4)">
+    <div class="tire-extra-row" style="border:1px solid var(--color-border);border-radius:8px;padding:10px;margin-top:8px;background:var(--color-bg-header)">
       <div class="search-row" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
         <div>
           <span class="qb-l">Position</span>
@@ -5871,7 +5871,7 @@
           ? `<div style="display:grid;gap:8px;margin-top:10px">${lines.map(lineHtml).join('')}</div>`
           : `<div class="mini-note" style="margin-top:8px">No cost breakdown lines saved on this record.</div>`;
         const plannedBlock = formatPlannedWorkHtmlCard(r);
-        return `<div style="border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card, var(--panel));padding:12px;margin-bottom:10px">
+        return `<div style="border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card);padding:12px;margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
               <div style="min-width:260px;flex:1">
                 <div style="font-weight:500">${u} · ${d}</div>
@@ -14966,7 +14966,7 @@
         postedEl.innerHTML =
           `<div style="margin-bottom:8px"><strong>Posted to QuickBooks — bulk revert</strong></div>
           <p class="mini-note" style="margin:0 0 8px">Includes fuel expense posts. Requires admin login or ERP write secret (same as posting).</p>
-          <div style="max-height:240px;overflow:auto;border:1px solid var(--color-border);border-radius:10px;padding:8px;background:var(--color-bg-card, var(--panel))">${rows}</div>
+          <div style="max-height:240px;overflow:auto;border:1px solid var(--color-border);border-radius:10px;padding:8px;background:var(--color-bg-card)">${rows}</div>
           ${more}
           <button type="button" class="qb-btn-add" style="margin-top:10px" onclick="revertQboPostedBatchClient()">Revert selected in QuickBooks</button>`;
       }
