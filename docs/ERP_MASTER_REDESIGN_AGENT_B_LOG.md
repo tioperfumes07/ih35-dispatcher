@@ -911,3 +911,88 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — Master shell helpers `#erpApp.erp-master` (`.erp-main-col`, `.main.erp-main-surface`, `.erp-main-body`, `.erp-topbar__search-inner`, `.erp-topbar__search`, `.erp-topbar__actions`, `.erp-topbar.topbar`) now pair `min-width: 0` with `min-height: 0`. `.maint-qb-lines-table .qb-in` gains `min-height: 0` beside `min-width: 0` for dense grid line editors.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-22
+
+- **Rule 1:** `public/css/app-theme.css` — WO / board / cost UI band: `min-height: 0` added alongside `min-width: 0` (or introduced where only width was set) on flex/grid hosts including `.maint-expense-strip`, `.shop-queue-row`, `.maint-board-layout`, `.maint-board-nav`, `.maint-board-stage`, KPI strip/cards, `.maint-wo-workspace-grid`, `.maint-wo-workspace`, `.maint-wo-aside`, `.maint-aside-kv`, asset header/status rows, `.maint-cost-qbo-stack` / `.maint-cost-qbo-custclass`, form actions/split/grid rows, `.maint-field-cell` inputs, cost line head/primary/acct/extras/billable/footer, `.maint-main-tab-panel.active`, `.maint-top-toolbar__inner`, WO banner/refs/inputs, `.maint-subcard` / `__body`, `.maint-panel-head-center`, and `.maint-cost-coordination` (+ `.coord-row`, `.coord-total`).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-23
+
+- **Rule 1:** `public/css/app-theme.css` — Sidebar title stack (`.brand`, `.brand-sub`) gets `min-height: 0` next to `min-width: 0`. Catalog vendor grid (global `.vendor-link-grid`), vendor search scroller (global `.catalog-search-results` + `min-width: 0`), and combobox rows (global `.qb-picker-item`) complete horizontal/vertical shrink for maintenance Lists & catalogs + QB picker. Right drawer (global `.erp-drawer`, `__head`, `__title`; `__body` already had `min-height: 0`) aligns flex column overflow with the maintenance-only `erp-drawer` markup.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-24
+
+- **Rule 1:** `public/css/app-theme.css` — QBO sync strip `.qbo-sync-actions` gets `min-height: 0` with `min-width: 0`. Global catalog rows (`.catalog-add-card__head`, `.catalog-search-hit`) and QB picker text cells (`.qb-picker-item__label`, `.qb-picker-item__meta`) gain matching mins so flex descendants stay overflow-safe without relying only on `body.erp-maintenance` overrides. Maintenance HOS grid `.safety-active-grid` and direct column children, plus shop `.shop-col-head-row`, add `min-height: 0` beside existing width caps.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-25
+
+- **Rule 1:** `public/css/app-theme.css` — Base (all breakpoints) rules for reports `.rep-maint-detail-filters.wo-line-grid` and direct grid children so the maintenance WO-style filter row shrinks inside the reports column; `#section-maintenance .shop-kanban` gets `min-width` / `min-height` `0` to align with the existing ≤960px column override from spec layouts.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — WO summary inline key/value clusters (`.maint-wo-summary-bar .kv`) gain `min-width: 0` and `min-height: 0` next to `display: inline-flex`.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-26
+
+- **Rule 1:** `public/css/app-theme.css` — `#section-safety .tracking-sub` and `#section-tracking .tracking-sub` gain `min-width: 0` / `min-height: 0` so embed shells participate in the section flex column. `#section-maintenance .unit-list-panel` and `.unit-list-scroll` get the same pair beside the existing `.panel-head` rule for the WO split layout.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `.mr-upload-result` adds `min-width: 0` next to `min-height: 0` for upload result blocks under flex parents.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-27
+
+- **Rule 1:** `public/css/app-theme.css` — `#section-fuel` and `#section-catalog` outer `> .panel` / `> .panel > .panel-body` chains get `min-width: 0` / `min-height: 0` so those modules align with the reports/accounting overflow discipline under the maintenance main column.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — Upload drop zone `.mr-upload-drop` gains `min-width: 0` / `min-height: 0`; `.mr-upload-recent` adds `min-width: 0` beside the existing `min-height: 48px` floor.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-28
+
+- **Rule 1:** `public/css/app-theme.css` — `#section-reports > .erp-reports-shell` gains `min-width: 0` / `min-height: 0` next to the existing `.erp-reports-main` rule. Upload center joins fuel/catalog in the shared outer `> .panel` / `> .panel > .panel-body` Rule 1 block.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `.mr-upload-recent-table` adds `min-width: 0` so wide recent-upload tables can shrink inside flex parents without forcing horizontal overflow.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-29
+
+- **Rule 1:** `public/css/app-theme.css` — `.maint-section-card` (KPI strip and other section cards) gains `min-width: 0` / `min-height: 0` so those surfaces participate cleanly in any flex/grid ancestor chain. `.mr-kpi-strip` adds the same pair so the Home dashboard KPI grid from `erp-master-spec-2026.css` still shrinks inside the main column when the spec layer omits container mins.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-30
+
+- **Rule 1:** `public/css/app-theme.css` — `.qbo-sync-alert-bar` gains `min-height: 0` next to the existing `min-width: 0` so the sticky QBO strip participates in vertical flex shrink the same way as `.qbo-sync-list` / `.qbo-sync-actions`.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — Upload center file pick row: `.mr-upload-pickline__name` gets `flex: 1 1 auto`, `min-width` / `min-height` `0`, and single-line ellipsis so long filenames do not widen the flex row beside the remove control; `.mr-upload-pickline__meta` sets `flex-shrink: 0` so byte-size text stays visible; `.mr-upload-pickline__x` sets `flex-shrink: 0` so the remove control keeps a stable hit target.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-01
+
+- **Rule 1:** `public/css/app-theme.css` — Flex grow slots that already set horizontal floors now pair `min-height: 0` so flex descendants can shrink vertically without fighting `min-height: auto`: `.maint-top-toolbar__grow`, `.maint-asset-header-card__ymm`, `.maint-cost-qbo-custclass__cell`, and `.maint-vendor-ref-row__field`.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
