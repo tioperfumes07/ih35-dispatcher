@@ -126,7 +126,7 @@ main,
 
 .hub-page .grid a.card:hover {
   border-color: color-mix(in srgb, var(--color-hub-accent) 45%, transparent);
-  box-shadow: var(--shadow-dropdown, 0 16px 48px rgba(0, 0, 0, 0.35));
+  box-shadow: var(--shadow-dropdown);
 }
 
 /* Banking tool (banking.html) */
@@ -340,7 +340,7 @@ main,
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-bg-card);
-  box-shadow: var(--shadow-dropdown, var(--shadow-md));
+  box-shadow: var(--shadow-dropdown);
   padding: 6px;
   transform-origin: top left;
 }
@@ -1823,7 +1823,7 @@ body.erp-maintenance .nav-dropdown-menu {
   border: 1px solid var(--sidebar-border);
   border-radius: 10px;
   z-index: 100;
-  box-shadow: var(--shadow-dropdown, 0 8px 24px rgba(0, 0, 0, 0.25));
+  box-shadow: var(--shadow-dropdown);
   max-height: min(70vh, 420px);
   overflow: auto;
   min-width: 0;
@@ -3106,7 +3106,7 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-input);
   border-radius: 6px;
-  box-shadow: var(--shadow-dropdown, 0 8px 24px rgba(15, 23, 42, 0.12));
+  box-shadow: var(--shadow-dropdown);
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split__menu-item {
   display: block;

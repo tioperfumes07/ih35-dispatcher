@@ -583,3 +583,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — WO **`.maint-wo-save-split-wrap`** (**`inline-flex`**) gets **`min-width: 0`** + **`max-width: 100%`** so split save controls align with **`.maint-save-toolbar--qb .qb-split`**.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-14
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#acct-bill-pay .mr-bp-panel-head__title`** gets **`min-width: 0`**; **`#acct-expense-history`** **`.panel-head`** and its direct child flex row get **`min-width: 0`**; **`#acct-qbo-rollback`** **`.panel-head`** and **`.panel-title`** get **`min-width: 0`** so expense history and rollback tab chrome matches other accounting overflow-safe patterns.
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

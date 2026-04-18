@@ -442,6 +442,21 @@ body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-submitrow {
   min-width: 0;
 }
 
+body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-panel-head__title {
+  min-width: 0;
+}
+
+/* Rule 1: expense history + QBO rollback — stacked panel heads and title rows (inline flex in maintenance.html). */
+body.erp-maintenance #section-accounting #acct-expense-history .panel-head,
+body.erp-maintenance #section-accounting #acct-expense-history .panel-head > div {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-head,
+body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-title {
+  min-width: 0;
+}
+
 /* Rule 1: remaining maintenance modules — panels inherit min-width from shell flex. */
 body.erp-maintenance
   :is(
