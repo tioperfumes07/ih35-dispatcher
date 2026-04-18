@@ -98,7 +98,9 @@
   --shadow-menu-panel: 0 4px 16px rgba(0, 0, 0, 0.12);
   /** Dimmed overlay behind centered modals (maintenance + dispatch `.modal-bg`). */
   --color-modal-backdrop: rgba(15, 23, 42, 0.45);
-  /** ERP shell focus: same alpha as legacy `--qb-focus-ring` (0.12). */
-  --focus-ring: 0 0 0 2px rgba(25, 103, 210, 0.12);
+  /** Shared focus ring tint (QB-style blue, 0.12 alpha). */
+  --focus-ring-color: rgba(25, 103, 210, 0.12);
+  /** Full `box-shadow` stack for control focus (pairs with `outline: none`). */
+  --focus-ring: 0 0 0 2px var(--focus-ring-color);
   --transition-fast: 0.15s ease;
 }

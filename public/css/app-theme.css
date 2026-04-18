@@ -219,6 +219,24 @@ main,
   outline-offset: 2px;
 }
 
+/* Rule 1 — maintenance surface: auth banner + connection strip sit in flex main column (spec width rules; prevent min-content overflow). */
+body.erp-maintenance #authBanner.erp-auth-banner {
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-main-surface > .erp-connection-strip {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Rule 1 — dedicated accounting/fuel modal (spec): shell + bar flex rows avoid min-content width blowout beside min(1000px,100%). */
+body.erp-maintenance .erp-dedicated-form-modal__shell,
+body.erp-maintenance .erp-dedicated-form-modal__bar,
+body.erp-maintenance .erp-dedicated-form-modal__bar-actions,
+body.erp-maintenance .erp-dedicated-form-modal__total-wrap {
+  min-width: 0;
+}
+
 /* Catalogs (maintenance) — add rows, vendor / Samsara linking */
 .catalog-add-card {
   border: 1px solid var(--color-border);

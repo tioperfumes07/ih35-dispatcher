@@ -710,3 +710,19 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/app-theme.css` — `.qbo-sync-alert-bar` gets `min-width: 0` so the sticky QuickBooks banner does not force the main column wider than the flex/grid host; `body.erp-maintenance .erp-topbar .topbar-hint-wrap` gets `min-width: 0` so the tip + help cluster can shrink beside title, search, and actions on narrow widths.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-29
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance #authBanner.erp-auth-banner` gets `min-width: 0` (with existing `width` / `max-width` from spec); `body.erp-maintenance .erp-main-surface > .erp-connection-strip` gets `min-width: 0` and `max-width: 100%` so the QuickBooks connection line cannot widen the main column past its host.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-30
+
+- **Rule 1:** `public/css/app-theme.css` — `#erpDedicatedFormModal` shell and bar chrome: `body.erp-maintenance .erp-dedicated-form-modal__shell`, `__bar`, `__bar-actions`, and `__total-wrap` get `min-width: 0` so flex rows in the dedicated expense modal (spec layout) stay within `width: min(1000px, 100%)` on narrow viewports.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
