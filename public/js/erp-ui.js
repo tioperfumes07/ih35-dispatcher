@@ -280,6 +280,7 @@
    * @param {string | HTMLElement} hostIdOrEl
    */
   async function erpMountConnectionStrip(hostIdOrEl) {
+    const stripLoadFailed = 'QuickBooks: could not load status.';
     const el =
       typeof hostIdOrEl === 'string' ? document.getElementById(hostIdOrEl) : hostIdOrEl;
     if (!el || !(el instanceof HTMLElement)) return;
@@ -292,7 +293,7 @@
       const r = await fetch('/api/qbo/status', { headers: { Accept: 'application/json' } });
       if (!r.ok) {
         el.classList.add('erp-connection-strip--muted');
-        el.textContent = 'QuickBooks: could not load status.';
+        el.textContent = stripLoadFailed;
         return;
       }
       const j = await r.json().catch(() => ({}));
@@ -316,7 +317,7 @@
       el.textContent = 'QuickBooks: not connected — open Settings to authorize.';
     } catch (_) {
       el.classList.add('erp-connection-strip--muted');
-      el.textContent = 'QuickBooks: could not load status.';
+      el.textContent = stripLoadFailed;
     }
   }
 

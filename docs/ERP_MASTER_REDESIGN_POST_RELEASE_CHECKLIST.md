@@ -14,7 +14,7 @@
 - [ ] **Config:** `.env` present (from `.env.example`); required secrets for your test (e.g. `IH35_TOKEN`, QBO, `DATABASE_URL`) documented for whoever runs QA.
 - [ ] **Server:** `npm start` (or `npm run dev`); note **`PORT`** (default **3400** in `server.js` if unset).
 - [ ] **Rule 0 guard:** `npm run rule0:check` passes (Agent B stack guard on **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, **`maintenance.html`**).
-- [ ] **Automated smoke:** With server up, `npm run smoke` → **`node scripts/system-smoke.mjs`** completes without failures (expects `localhost` reachable).
+- [ ] **Automated smoke:** With server up, `npm run smoke` → **`node scripts/system-smoke.mjs`** completes without failures (expects `localhost` reachable). Shortcut when **`PORT`** is default: `npm run qa:automated` runs **rule0** then **smoke** in one step (requires server already listening).
 
 ---
 
