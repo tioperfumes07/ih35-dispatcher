@@ -17,12 +17,12 @@
       --green: var(--pill-green-text);
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:var(--font-spec-sans, var(--font-sans, system-ui, sans-serif));background:var(--color-bg-page);color:var(--color-text-body)}
+    body{margin:0}
     .topbar{
-      padding:max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));background:var(--color-bg-card);border-bottom:1px solid var(--color-border);
+      padding:max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
       display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:max(0px, env(safe-area-inset-top, 0px));z-index:1000
     }
-    .topbar h1{margin:0 12px 0 0;font-size:20px}
+    .topbar h1{margin:0 12px 0 0}
     button,input{font:inherit}
     button{padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card);cursor:pointer}
     button:hover{background:var(--color-bg-hover)}
@@ -36,10 +36,10 @@
       max-width:100%;
       box-sizing:border-box;
     }
-    .panel{background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:12px;overflow:hidden}
-    .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--color-border);background:var(--color-bg-card)}
+    .panel{overflow:hidden}
+    .panel h2{margin:0;padding:12px 14px;font-size:16px}
     .panel-body{padding:12px}
-    .fleet-summary{padding:10px 12px;border-bottom:1px solid var(--color-border);font-size:13px;color:var(--color-text-label);background:var(--color-bg-header)}
+    .fleet-summary{padding:10px 12px;border-bottom:1px solid var(--color-border);font-size:13px}
     .fleet-columns{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--color-border)}
     .fleet-col{min-height:200px;border-right:1px solid var(--color-border)}
     .fleet-col:last-child{border-right:none}
@@ -47,10 +47,8 @@
       padding:10px 12px;
       font-size:12px;
       font-weight:500;
-      color:var(--color-text-label);
       text-transform:uppercase;
       border-bottom:1px solid var(--color-border);
-      background:var(--color-bg-header);
       position:sticky;
       top:0;
       z-index:2;

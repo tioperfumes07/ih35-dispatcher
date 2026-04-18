@@ -2522,7 +2522,15 @@
                   <input id="bpOpenBillsMin" class="qb-in" type="number" step="0.01" placeholder="0" oninput="bpApplyOpenBillsFilter()" />
                 </div>
               </div>
-              <div id="bpOpenBillsStatus" class="mini-note" style="margin-bottom:8px">Load after QuickBooks is connected (sidebar refresh).</div>
+              <div class="mini-note" style="margin-bottom:8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span id="bpOpenBillsStatus" role="status" aria-live="polite" aria-atomic="true" style="min-width:0;flex:1 1 240px"></span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Open bills data source">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Rows load from <strong>QuickBooks</strong> when the connection is healthy. Use <strong>Refresh data</strong> in the sidebar if the grid is empty or looks stale after posting in QBO. Vendor filter, search, min open $, and bill-id lookup all re-query or narrow what is already loaded.
+                  </span>
+                </span>
+              </div>
               <div id="bpSelectionTotal" class="mini-note" style="margin-bottom:6px;font-weight:500">Draft payment total: $0.00</div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap" style="min-width:0">
                 <table class="st-settlement erp-bp-open-table" style="min-width:1120px">
@@ -2985,7 +2993,15 @@
               <div><button onclick="refreshQboMaster()">Refresh Live QuickBooks Master</button></div>
             </div>
             <div class="panel-body">
-              <div id="qboMasterStatus" class="mini-note">Not refreshed yet.</div>
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span id="qboMasterStatus" role="status" aria-live="polite" style="margin:0;min-width:0;flex:1 1 280px"></span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What this summary shows">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    One-line snapshot from the in-memory QuickBooks cache. It updates after <strong>Refresh Live QuickBooks Master</strong> and after vendor / item / account creates above. <strong>Last refresh</strong> is the catalog pull time; <strong>classes</strong> and <strong>bank accounts</strong> are counts used elsewhere in the app. The three columns still cap at <strong>50</strong> visible rows each (search narrows within the loaded set).
+                  </span>
+                </span>
+              </div>
 
               <div class="form-stack" style="margin-top:12px;">
                 <div class="mini-note">Create Vendor Directly in QuickBooks</div>
@@ -3753,7 +3769,15 @@
                 <div class="catalog-add-card__body form-stack">
                   <input id="catalogSectionNewServiceName" class="qb-in maint-field" placeholder="e.g. DOT annual inspection" autocomplete="off">
                   <button type="button" class="catalog-plus-btn" onclick="addCatalogServiceFromCatalogsSection()">Add to Postgres catalog</button>
-                  <p id="catalogSectionServiceHint" class="mini-note" style="margin:0">Same API as the maintenance form — requires database + signed-in admin where applicable.</p>
+                  <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0">
+                    <span id="catalogSectionServiceHint" role="status" aria-live="polite" aria-atomic="true" style="margin:0;min-width:0;flex:1 1 200px"></span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="API and permissions">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        Adds a row via the same <code>POST /api/maintenance/service-types</code> path as the maintenance work-order form. Requires <code>DATABASE_URL</code> and admin sign-in (or your server's equivalent write policy) where applicable.
+                      </span>
+                    </span>
+                  </div>
                 </div>
               </div>
               <div id="serviceCatalogAdminToolbar" class="mr-filter-bar" style="margin-bottom:0;display:none">
@@ -6981,6 +7005,7 @@
         renderExpenseHistory();
       }
       if (id === 'acct-qbo-rollback') loadErpImportBatchesUi();
+      if (id === 'acct-qbo') renderQboMaster();
       if (id === 'acct-bill-pay') {
         erpRefreshBillPayChrome();
         const d = document.getElementById('bpTxnDate');
