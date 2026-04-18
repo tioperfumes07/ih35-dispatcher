@@ -460,9 +460,10 @@ body.erp-maintenance #section-accounting .maint-qb-lines-scroll {
 
 body.erp-maintenance .acct-dash-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), minmax(0, 1fr)));
   gap: 12px;
   margin-bottom: 20px;
+  min-width: 0;
 }
 
 body.erp-maintenance .acct-dash-kpi {
@@ -505,8 +506,9 @@ body.erp-maintenance .acct-dash-kpi__sub {
 
 body.erp-maintenance .acct-dash-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), minmax(0, 1fr)));
   gap: 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance .acct-dash-card {
@@ -1063,8 +1065,9 @@ body.erp-maintenance .mr-upload-pill--red {
 
 body.erp-maintenance .mr-upload-conn-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), minmax(0, 1fr)));
   gap: 12px;
+  min-width: 0;
 }
 
 body.erp-maintenance .mr-upload-conn-card {
@@ -1488,12 +1491,12 @@ body.erp-maintenance .ap-wo-lines-root {
   }
 
   body.erp-maintenance #section-accounting #acct-qbo .panel-body > .grid.grid-3:has(> .panel) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
   }
 
   body.erp-maintenance #section-accounting #acct-qbo .search-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
   }
 }

@@ -422,3 +422,20 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1 (responsive / print grids):** **`public/css/app-theme.css`** — Normalized remaining maintenance **`grid-template-columns: 1fr`**, **`1fr 1fr`**, and **`1fr !important`** declarations inside **`@media`** and **print** rules to **`minmax(0, 1fr)`** (or paired **`minmax(0, 1fr) minmax(0, 1fr)`**) so collapsed layouts (WO form rows, board layout, shop kanban, fuel import split, print WO, etc.) inherit the same minimum track semantics as the primary **`minmax(0, …)`** grids.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-25
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — In the **`max-width: 900px`** accounting block (includes QBO Live Master **`#acct-qbo`** stack rules), **`grid-template-columns: 1fr`** for the stacked **`.grid-3`** (panels) and **`.search-row`** now uses **`minmax(0, 1fr)`**, matching the **`app-theme.css`** responsive grid convention.
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-26
+
+- **Rule 1 (auto-fit / auto-fill grids):** Replaced **`minmax(<px>, 1fr)`** with **`minmax(min(100%, <px>), minmax(0, 1fr))`** on maintenance accounting KPI/cards grids, upload connection grid, maintenance hero and expense strips, QB logistics bar, and global **`.vendor-link-grid`** so track minimums cap at the container width and **`fr`** tracks can shrink without forcing horizontal overflow.
+- **`public/css/maint-accounting-ui-2026.css`** — **`acct-dash-kpis`**, **`acct-dash-cards`**, and **`mr-upload-conn-grid`** also get **`min-width: 0`** on the grid host where missing.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

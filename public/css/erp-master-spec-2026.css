@@ -249,7 +249,7 @@ body.erp-maintenance .mr-table-scroll > table {
 }
 .mr-pill--yellow {
   background: var(--pill-yellow-bg);
-  color: var(--pill-yellow-text, #b06000);
+  color: var(--pill-yellow-text);
 }
 .mr-pill--gray {
   background: var(--pill-gray-bg);
@@ -257,7 +257,7 @@ body.erp-maintenance .mr-table-scroll > table {
 }
 .mr-pill--blue {
   background: var(--pill-blue-bg);
-  color: var(--pill-blue-text, #1967d2);
+  color: var(--pill-blue-text);
 }
 
 /* --- Rule 3: + New menu items as blue text links --- */
@@ -267,7 +267,7 @@ body.erp-maintenance .erp-new-menu__item {
   text-align: left;
   border: none;
   background: transparent;
-  color: var(--pill-blue-text, #1967d2);
+  color: var(--pill-blue-text);
   font-size: 13px;
   font-weight: 400;
   padding: 6px 0;
@@ -674,7 +674,7 @@ body.erp-maintenance .mr-violation-legend__dot--pink {
 
 body.erp-maintenance .mr-violation-legend__dot--yellow {
   background: var(--pill-yellow-bg);
-  border: 1px solid var(--pill-yellow-text, #b06000);
+  border: 1px solid var(--pill-yellow-text);
 }
 
 body.erp-maintenance .mr-filter-bar,
@@ -833,7 +833,7 @@ body.erp-maintenance .mr-filter-chipwrap > summary:focus-visible {
 body.erp-maintenance .mr-filter-chipwrap[open] > summary {
   border-color: var(--color-border-focus);
   background: var(--pill-blue-bg);
-  color: var(--pill-blue-text, #1967d2);
+  color: var(--pill-blue-text);
 }
 
 body.erp-maintenance .mr-filter-drop {
@@ -1091,7 +1091,7 @@ body.erp-maintenance #acct-transactions .qb-doc-topbar {
 body.erp-maintenance #acct-transactions .qb-doc-backlink {
   border: none;
   background: transparent;
-  color: var(--pill-blue-text, #1967d2);
+  color: var(--pill-blue-text);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -1167,7 +1167,7 @@ body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel {
 body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-backlink {
   border: none;
   background: transparent;
-  color: var(--pill-blue-text, #1967d2);
+  color: var(--pill-blue-text);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -1452,7 +1452,7 @@ body.erp-maintenance .erp-reports-roadmap {
   border-radius: 8px;
   border: 1px solid var(--color-semantic-warning, #fde68a);
   background: var(--pill-yellow-bg, #fffbeb);
-  color: var(--pill-yellow-text, #92400e);
+  color: var(--pill-yellow-text);
   max-width: min(96ch, 100%);
   line-height: 1.55;
   font-size: 13px;
@@ -2106,8 +2106,8 @@ body.banking-page #authBanner.erp-auth-banner {
   font-size: 11px;
   font-weight: 600;
   background: var(--pill-blue-bg);
-  color: var(--pill-blue-text, #1967d2);
-  border: 1px solid var(--btn-info-border, #c6dafc);
+  color: var(--pill-blue-text);
+  border: 1px solid var(--btn-info-border);
 }
 .erp-ap-doc-accent svg {
   display: block;
