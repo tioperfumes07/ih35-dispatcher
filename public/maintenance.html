@@ -600,7 +600,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="In service column">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>Driving</strong>, <strong>yard move</strong>, or <strong>on duty</strong> with vehicle — subset of left column. Tab intro <strong>?</strong> for full duty defs.
+                      <strong>Driving</strong>, <strong>yard move</strong>, or <strong>on duty</strong> with vehicle — subset of left column. Tab intro <strong>?</strong> for full duty definitions.
                     </span>
                   </span>
                 </div>
@@ -793,6 +793,15 @@
               </div>
             </div>
             <div class="maint-action-strip__qbo" id="maintTopQboIssuesWrap" aria-live="polite">
+              <div class="mini-note" style="margin:0;width:100%;flex-basis:100%;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label)">
+                <span style="min-width:0;flex:1 1 140px">Compact QBO posting line beside fleet pills — the row below is replaced when sync alerts change.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance strip QBO indicator">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderMaintAsideQbIssues()</code> replaces <code>#maintTopQboIssuesInd</code> <code>innerHTML</code> with a severity dot plus short status (and may add a <strong>View</strong> control that scrolls to <code>#qboSyncAlertBar</code>). The clipped <code>#maintAsideQbIssues</code> anchor gets the same HTML for assistive tab routing.
+                  </span>
+                </span>
+              </div>
               <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0"></span>
             </div>
           </div>
@@ -4113,7 +4122,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About lists">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Same data as sidebar <strong>Lists &amp; catalogs</strong> — sub-tabs: service types, QuickBooks lists, vendors &amp; drivers, operational labels, fleet / Samsara renames.
+                  Same sidebar hub — sub-tabs: <strong>Service types</strong>, <strong>QuickBooks</strong>, <strong>Vendors &amp; drivers</strong>, <strong>Operational status</strong>, <strong>Fleet &amp; Samsara</strong> renames.
                 </span>
               </span>
             </div>
@@ -4133,7 +4142,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About service types">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    When <code>DATABASE_URL</code> is set, service-type names come from Postgres <code>maintenance_service_catalog</code>. Lists on the maintenance form refresh after changes.
+                    With <code>DATABASE_URL</code>, names load from Postgres <code>maintenance_service_catalog</code>; WO pickers refresh after edits.
                   </span>
                 </span>
               </div>
@@ -4150,7 +4159,7 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="API and permissions">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Adds a row via the same <code>POST /api/maintenance/service-types</code> path as the maintenance work-order form. Requires <code>DATABASE_URL</code> and admin sign-in (or your server's equivalent write policy) where applicable.
+                        <code>POST /api/maintenance/service-types</code> (same as WO form). Needs <code>DATABASE_URL</code> + admin / server write policy.
                       </span>
                     </span>
                   </div>
@@ -4161,7 +4170,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service catalog admin API">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Fetches <code>GET /api/maintenance/service-catalog-admin</code>; <code>renderServiceCatalogAdmin</code> replaces <code>#serviceCatalogAdminBody</code> with the table, empty states, or errors. Needs PostgreSQL (<code>DATABASE_URL</code>) and the <code>maintenance_service_catalog</code> table. Adding a type above uses <code>POST /api/maintenance/service-types</code>; after edits elsewhere, <strong>Refresh data</strong> in the sidebar reloads pickers.
+                    <code>GET /api/maintenance/service-catalog-admin</code> → <code>renderServiceCatalogAdmin</code> → <code>#serviceCatalogAdminBody</code> (table / empty / errors). Postgres + <code>maintenance_service_catalog</code> required. Adds use <code>POST …/service-types</code>; sidebar <strong>Refresh data</strong> reloads pickers.
                   </span>
                 </span>
               </div>
@@ -4186,7 +4195,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About QuickBooks lists">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Vendors, items, and expense accounts are mastered in <strong>QuickBooks Online</strong>. Refresh the live cache here, then pick them on bills and maintenance expense lines. Use <strong>Vendors &amp; drivers</strong> to search and link Samsara drivers to QuickBooks payees.
+                    Vendors / items / accounts live in <strong>QuickBooks Online</strong> — refresh cache here, then pick on bills / maint expenses. Link drivers in <strong>Vendors &amp; drivers</strong>.
                   </span>
                 </span>
               </div>
@@ -4195,7 +4204,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What Refresh QuickBooks lists does">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>refreshQboMaster()</code> calls <code>GET /api/qbo/master</code>, then repacks in-memory <code>erp.qboCache</code> (vendors, items, accounts, customers, classes, bank accounts, employees, optional activity), runs <code>fillDataLists()</code> + <code>bootQbPickers()</code>, refreshes the Live Master grid when that panel is mounted, and touches the home dashboard snapshot. It does not post bills or expense lines by itself. Use <strong>Open Accounting → QuickBooks live master</strong> for the full column UI. Failures surface as toasts.
+                    <code>refreshQboMaster()</code>: <code>GET /api/qbo/master</code> → <code>erp.qboCache</code> + <code>fillDataLists()</code> + <code>bootQbPickers()</code>; Live Master grid when open; home snapshot. Does not post bills/lines — full UI: <strong>Accounting → QuickBooks live master</strong>. Failures → toasts.
                   </span>
                 </span>
               </div>
@@ -4224,7 +4233,7 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create vendor from Lists">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Same <strong>QuickBooks vendor</strong> create as Accounting → Live Master. <strong>Display name</strong> required; optional fields help match bills / driver pay. <strong>Refresh QuickBooks lists</strong> above if the grid lags. Status here shows validation, progress, and QBO id.
+                        Same QBO vendor create as <strong>Accounting → Live Master</strong>. <strong>Display name</strong> required; optional fields help bill/driver match. <strong>Refresh QuickBooks lists</strong> if pickers lag. Status = validation / progress / QBO id.
                       </span>
                     </span>
                   </div>
@@ -4237,7 +4246,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About vendors & drivers">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>QuickBooks vendors</strong> (shops, fuel, and so on) and <strong>TMS drivers</strong> linked as QuickBooks vendors for pay — one list for expense routing. After you add vendors in QuickBooks, use <strong>Refresh QuickBooks lists</strong> in the top bar.
+                    <strong>QBO vendors</strong> + <strong>TMS drivers</strong> as QBO payees — one grid for expense routing. After QBO adds, <strong>Refresh QuickBooks lists</strong> (top bar or QuickBooks tab).
                   </span>
                 </span>
               </div>
@@ -4246,7 +4255,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendors &amp; drivers workspace">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Calls <code>GET /api/maintenance/vendor-catalog</code> for QuickBooks vendors and TMS driver payees, then builds the link toolbar and search grids. Live QBO vendor lookup needs a healthy connection; Samsara driver search uses read-only credentials. If the area below errors or stays empty, use <strong>Refresh QuickBooks lists</strong> on the QuickBooks sub-tab or check the sidebar sync strip.
+                    <code>GET /api/maintenance/vendor-catalog</code> → QBO vendors + TMS payees + link toolbar / grids. QBO needs healthy connection; driver search read-only Samsara. Empty/errors → <strong>Refresh QuickBooks lists</strong> or connection strip.
                   </span>
                 </span>
               </div>
@@ -4267,7 +4276,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status catalog">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Reads <code>GET /api/maintenance/operational-status-catalog</code> and renders the list of <code>value</code> + label pairs used on each unit's <strong>Operational status</strong> picker. <strong>+ Add status to ERP</strong> posts a new row to the same API; after saves, a full workspace refresh reloads maintenance pickers. Errors appear in the box below.
+                    <code>GET /api/maintenance/operational-status-catalog</code> → value/label rows for each unit’s <strong>Operational status</strong> picker. <strong>+ Add status to ERP</strong> POSTs here; workspace refresh reloads pickers. Errors in box below.
                   </span>
                 </span>
               </div>
@@ -4292,7 +4301,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Fleet & Samsara">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Assets</strong> and live GPS come from <strong>Samsara</strong>. With a write-scoped token and admin (or ERP write secret), you can push vehicle/driver name updates from here; otherwise use Samsara Cloud.
+                    <strong>Samsara</strong> assets + GPS. Write-scoped token + admin (or ERP write secret) → POST renames here; else edit in Samsara Cloud.
                   </span>
                 </span>
               </div>
@@ -4303,7 +4312,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara rename API paths">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>pushSamsaraVehicleName</code> → <code>POST /api/integrations/samsara/vehicle/&lt;id&gt;</code> with JSON <code>{&quot;name&quot;:&quot;…&quot;}</code>; <code>pushSamsaraDriverName</code> → <code>POST /api/integrations/samsara/driver/&lt;id&gt;</code> the same way. Both send auth headers plus <code>erpWriteHeaders()</code> for deployments that require an extra write secret. On success the UI calls <code>loadAll()</code> so board data matches Samsara; errors show the server message.
+                    <code>pushSamsaraVehicleName</code> / <code>pushSamsaraDriverName</code> → <code>POST …/samsara/vehicle|driver/&lt;id&gt;</code> JSON <code>{&quot;name&quot;}</code> + auth + <code>erpWriteHeaders()</code> when required. Success → <code>loadAll()</code>; errors = server text.
                   </span>
                 </span>
               </div>
@@ -4313,7 +4322,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara id and API token">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Use the vehicle’s Samsara id (from the API or board JSON). Requires <code>SAMSARA_WRITE_API_TOKEN</code> or a read token upgraded with write scopes; re-issue the token after adding scopes (read-only tokens return 403 from Samsara).
+                      Vehicle Samsara id (API/board). Needs <code>SAMSARA_WRITE_API_TOKEN</code> or read token with write scopes — re-issue after scope changes (read-only → 403).
                     </span>
                   </span>
                 </div>
@@ -4326,7 +4335,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara driver id and API token">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Use the driver’s Samsara id (from the API, HOS payloads, or Samsara Cloud). Same write requirements as vehicle rename: <code>SAMSARA_WRITE_API_TOKEN</code> or a read token upgraded with write scopes; re-issue after scope changes (read-only returns 403).
+                      Driver Samsara id (API/HOS/Cloud). Same write-token rules as vehicle rename (<code>SAMSARA_WRITE_API_TOKEN</code> or scoped read token → re-issue if 403).
                     </span>
                   </span>
                 </div>
@@ -6715,7 +6724,15 @@
           '<button type="button" class="erp-sb-link" onclick="testQuickBooks()">Test QuickBooks connection</button>';
         const uploadsBody = erpSbUploadCenterLink();
         const acctToolsBody = erpSbAccountingToolsDataBody();
-        const connBody = '<div id="erpAcctSbConnectionsBody" class="erp-acct-sb-conn"></div>';
+        const connLead =
+          '<div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">' +
+          '<span style="min-width:0;flex:1 1 160px">QuickBooks + refresh snapshot — only the bordered box below is replaced on each poll.</span>' +
+          '<span class="erp-help-tip">' +
+          '<button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accounting sidebar Connections">?</button>' +
+          '<span class="erp-help-tip__panel" role="tooltip">' +
+          '<code>paintAcctSidebarConnections()</code> replaces <code>#erpAcctSbConnectionsBody</code> <code>innerHTML</code> with QBO status, last refresh, fleet line, and posting-alert counts from cached responses. This is separate from the main-column <code>#erpConnectionStrip</code> in <code>erp-ui.js</code> (<code>textContent</code>).' +
+          '</span></span></div>';
+        const connBody = connLead + '<div id="erpAcctSbConnectionsBody" class="erp-acct-sb-conn"></div>';
         inner.innerHTML =
           erpSbGroup('accounting', 'expenses', 'Expenses', true, expensesBody) +
           erpSbGroup('accounting', 'quickbooks', 'QuickBooks', false, qbBody) +
