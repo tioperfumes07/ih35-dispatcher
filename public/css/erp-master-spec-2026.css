@@ -638,7 +638,7 @@ body.banking-page textarea:focus,
 body.settings-page input:focus {
   outline: none;
   border-color: var(--qb-blue);
-  box-shadow: 0 0 0 2px var(--qb-focus-ring, rgba(26, 115, 232, 0.22));
+  box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
 /* =============================================================================
@@ -1450,8 +1450,8 @@ body.erp-maintenance .erp-reports-roadmap {
   margin: 0 16px 12px;
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid var(--color-semantic-warning, #fde68a);
-  background: var(--pill-yellow-bg, #fffbeb);
+  border: 1px solid var(--color-warning-border-soft);
+  background: var(--pill-yellow-bg);
   color: var(--pill-yellow-text);
   max-width: min(96ch, 100%);
   line-height: 1.55;
