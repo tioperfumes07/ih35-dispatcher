@@ -95,7 +95,7 @@ Do **not** inflate percentages without real scope; figures are planning aids, no
 | Slice | Status | How to verify |
 |------|--------|----------------|
 | **Accounting:** AP + manual fuel **Load / invoice #** labels/placeholders; fuel header **column order** (vendor → unit → payment → bank); **optional QBO class & location** (`fuel-manual-header-more` details); matching **CSS** in `maint-accounting-ui-2026.css`; WO/AP **saved card** line + PDF copy | **Done (2026-04)** — search `fuel-manual-header-more` or `Load / invoice #` in `maintenance.html` | If present, **do not redo** — extend elsewhere only. |
-| **`erpDedicatedFormDirty()`** for **fuel** dedicated modal (header refs + memo + lines total) | **Owned by maintenance track** — extend only if you add new fuel fields | Grep `erpDedicatedFormDirty` in `maintenance.html`. |
+| **`erpDedicatedFormDirty()`** for **fuel** dedicated modal (vendor/unit/memo, load + invoice refs, optional class/location, payment/bank, lines **total**) | **Owned by maintenance track** — extend only if you add new fuel fields | Grep `erpDedicatedFormDirty` in `maintenance.html`. |
 | **Rule 22** (`mini-note` → `erp-help-tip`) | **Deferred** on fast path — see [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) §2 | Claim **file families** in your PR message (e.g. “Rule 22: banking only”). |
 | **`npm run smoke` / `npm run qa:automated`** | **Whoever has the server** — not duplicated in CI | Document port via `SMOKE_BASE` if not **3400**. |
 | **Rule 10** (shared expense-line module) | **Deferred** until product | See deferred checklist §6. |

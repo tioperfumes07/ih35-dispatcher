@@ -7269,10 +7269,19 @@
       if (window.__erpDedicatedModalKind === 'fuel') {
         const totalTxt = document.getElementById('fuelManualHeaderTotal')?.textContent || '$0.00';
         const totalNum = Number(String(totalTxt).replace(/[^0-9.-]/g, '')) || 0;
+        const ft = id => (document.getElementById(id)?.value || '').trim();
         return !!(
-          (document.getElementById('fuelManualVendorSearch')?.value || '').trim() ||
-          (document.getElementById('fuelManualUnit')?.value || '').trim() ||
-          (document.getElementById('fuelManualMemo')?.value || '').trim() ||
+          ft('fuelManualVendorSearch') ||
+          ft('fuelManualUnit') ||
+          ft('fuelManualMemo') ||
+          ft('fuelManualLoadInvoice') ||
+          ft('fuelManualVendorInvoice') ||
+          ft('fuelManualInternalWo') ||
+          ft('fuelManualExpenseDoc') ||
+          ft('fuelManualLocation') ||
+          ft('fuelManualPaymentMethodSearch') ||
+          ft('fuelManualBankSearch') ||
+          (document.getElementById('fuelManualClassSel')?.value || '').trim() ||
           totalNum > 0.005
         );
       }
@@ -7280,11 +7289,35 @@
         const v = (document.getElementById('apVendorSearch')?.value || '').trim();
         const unit = (document.getElementById('apAssetUnit')?.value || '').trim();
         const memo = (document.getElementById('apMemo')?.value || '').trim();
+        const apHdr = id => (document.getElementById(id)?.value || '').trim();
         let itemHasRate = false;
         document.querySelectorAll('#apWoItemHost .wo-rate').forEach(inp => {
           if (Number(inp.value)) itemHasRate = true;
         });
-        return !!(v || unit || memo || sumApWoComposerAmounts() > 0 || itemHasRate);
+        let lineDraft = false;
+        if (typeof woApAllRows === 'function') {
+          woApAllRows().forEach(row => {
+            if ((row.querySelector('.wo-svc')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.wo-acct')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.wo-item')?.value || '').trim()) lineDraft = true;
+            const qEl = row.querySelector('.wo-qty');
+            const qRaw = qEl ? String(qEl.value || '').trim() : '';
+            if (qRaw && qRaw !== '1') lineDraft = true;
+          });
+        }
+        return !!(
+          v ||
+          unit ||
+          memo ||
+          apHdr('apLoadInvoiceNumber') ||
+          apHdr('apVendorInvoiceNumber') ||
+          apHdr('apInternalWorkOrderNumber') ||
+          apHdr('apPaymentMethodSearch') ||
+          apHdr('apBankAccountSearch') ||
+          sumApWoComposerAmounts() > 0 ||
+          itemHasRate ||
+          lineDraft
+        );
       }
       return false;
     }
