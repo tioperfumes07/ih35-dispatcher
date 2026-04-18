@@ -919,11 +919,11 @@
               </div>
 
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Inline WO snapshot — same key/value row as the R&amp;M aside; hidden until a unit is selected.</span>
+                <span style="min-width:0;flex:1 1 220px">Inline WO snapshot — same KV row as the R&amp;M aside; hidden until a unit is selected.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="WO summary bar">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintAsideWoSummary()</code> reads <code>selectedUnit</code>, <code>#recordWorkOrderInput</code>, <code>#costInput</code>, <code>#repairLocationSearch</code>, builds escaped HTML, assigns <code>#maintAsideWoSummary</code> <code>innerHTML</code>, and mirrors the same markup into <code>#maintWoSummaryBar</code> when a unit is selected (otherwise the bar stays <code>hidden</code>).
+                    <code>renderMaintAsideWoSummary()</code> fills <code>#maintAsideWoSummary</code> and mirrors here from <code>selectedUnit</code>, WO #, cost, and location fields (bar stays <code>hidden</code> without a unit).
                   </span>
                 </span>
               </div>
@@ -938,11 +938,11 @@
                   <button type="button" class="maint-form-help-btn" onclick="document.getElementById('maintFormHelpDrawer').classList.toggle('hidden')" title="Field help">?</button>
                   <div id="maintFormHelpDrawer" class="maint-form-help-drawer hidden" role="region" aria-label="Form help">
                     <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 8px">
-                      <p class="mini-note" style="margin:0;color:var(--color-text-label);max-width:44ch">Service field merges catalog, history, and presets.</p>
+                      <p class="mini-note" style="margin:0;color:var(--color-text-label);max-width:44ch">Service field: catalog + history + presets.</p>
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines & invoice total">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          Each cost line posts to <strong>QuickBooks</strong> from that row’s account or item. Use <strong>Lock invoice total</strong> only when you typed the header total yourself and do not want line items to re-total it.
+                          Each line posts to <strong>QuickBooks</strong> from that row’s account or item. <strong>Lock invoice total</strong> only if you set the header total manually and do not want lines to retotal it.
                         </span>
                       </span>
                     </div>
