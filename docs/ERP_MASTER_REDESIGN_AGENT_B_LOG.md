@@ -869,3 +869,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `#erpApp .erp-new-menu__cols`, `#acctBoardStrip` / `.mr-acct-board`, `.mr-filter-bar__grow`, QBO/print action strip selectors (with `.maint-qbo-header-grid` etc.), and `.mr-filter-bar` group gain `min-height: 0`. Inline style helper adds `display:inline-flex` / `display: inline-flex` attribute matches next to existing flex/grid selectors.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-17
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .erp-main-body` gains `min-height: 0` next to `min-width: 0` so the redesign scroll column participates in vertical flex shrink like other nested scroll hosts. Ops/reports chrome (`.erp-ops-toolbar`, `.erp-reports-toolbar`, `.erp-ops-subtabs-bar`, `.erp-reports-toolbar__title`, `__search`, `__actions`) each get `min-height: 0`. `#acct-fuel-expense .qb-doc-shell` gets `min-height: 0` with existing width caps.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

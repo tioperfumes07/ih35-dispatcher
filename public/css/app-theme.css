@@ -224,11 +224,13 @@ main,
 /* Rule 1 — maintenance surface: auth banner + connection strip sit in flex main column (spec width rules; prevent min-content overflow). */
 body.erp-maintenance #authBanner.erp-auth-banner {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   min-width: 0;
   max-width: 100%;
+  min-height: 0;
 }
 
 /* Rule 1 — dedicated accounting/fuel modal (spec): shell + bar flex rows avoid min-content width blowout beside min(1000px,100%). */
@@ -3889,11 +3891,13 @@ body.erp-maintenance .acct-board-subtabs .nav-dd-item {
 body.erp-maintenance #acct-fuel-expense .qb-doc-shell {
   min-width: 0;
   max-width: 100%;
+  min-height: 0;
 }
 
 /* Rule 1: redesign scroll column + icon rail — min sizes so wide content / many icons scroll inside 100vh shell. */
 body.erp-maintenance .erp-main-body {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-icon-nav {
@@ -3903,21 +3907,26 @@ body.erp-maintenance .erp-icon-nav {
 /* Rule 1: ops + reports toolbars live in the maintenance main column; allow shrink under spec/redesign flex. */
 body.erp-maintenance .erp-main-body .erp-ops-toolbar {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-reports-toolbar {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-ops-subtabs-bar {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-reports-toolbar__title,
 body.erp-maintenance .erp-reports-toolbar__search {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-reports-toolbar__actions {
   min-width: 0;
+  min-height: 0;
 }

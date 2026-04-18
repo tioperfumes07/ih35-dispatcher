@@ -1710,6 +1710,13 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
   border-top-color: var(--color-bg-card);
 }
 
+/* Dispatch load board: `.btn-primary` / `.erp-btn-primary` are accent fills — not `button.primary`. */
+body.dispatch-page #dispatchApp button.btn-primary.erp-btn--busy::after,
+body.dispatch-page #dispatchApp button.erp-btn-primary.erp-btn--busy::after {
+  border-color: var(--erp-btn-busy-on-solid-track);
+  border-top-color: var(--color-bg-card);
+}
+
 /* =============================================================================
    Rule 19 — Toasts (global; maintenance also uses maint-accounting rules when body.erp-maintenance)
    ============================================================================= */
