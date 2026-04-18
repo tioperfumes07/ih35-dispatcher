@@ -20,7 +20,7 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 
 ## 2. Rule 22 — remaining `mini-note` / copy cleanup
 
-- **Upload center** — **partial (2026-04-18):** removed duplicate **`mr-upload-panel-desc`** under **Connections**, **Fuel / DEF**, and **Other** where **`erp-help-tip`** already carried the meaning; expanded tip copy where needed (**`ERP_MASTER_REDESIGN_STATUS.md` changelog 219**). Remaining: other tabs’ **`details.mr-upload-help`** long bodies, **Reports** hub intros, dense **`mini-note`** spot-checks.
+- **Upload center** — **partial (2026-04-18):** duplicate **`mr-upload-panel-desc`** removed for **Connections**, **Fuel / DEF**, **Other** (**changelog 219**), then **Bank**, **Comdata / Relay**, **Maintenance AP**, **Maintenance history** (**changelog 220**); tips carry the leads. Remaining: some **`details.mr-upload-help`** bodies, **Reports** hub intros, dense **`mini-note`** spot-checks.
 - **Accounting / settlement / fuel** — any remaining dense **`mini-note`** blocks not yet converted (spot-check after checklist sign-off).
 - **Reports hub** bodies (`repMaintBody`, `repOverviewBody`, etc.) — tip pattern only where it reduces noise.
 
@@ -62,3 +62,4 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — Safety → Driver files pager + draft map:** **`driverFilesPager`** + **`__driverFilesFieldDraft`** so paging does not discard unsaved row edits (**changelog 217**).
 - **2026-04-18 — Driver files `beforeunload` + smoke pager needles:** Unsaved draft triggers leave-page confirm; smoke asserts **`bpOpenBillsPagerHost`** / **`driverFilesPagerHost`** (**changelog 218**).
 - **2026-04-18 — Upload Rule 22 + `erpNotify` batch:** Connections / Fuel / Other desc dedupe + typed toasts on QBO / settlement / bulk fuel paths (**changelog 219**).
+- **2026-04-18 — Upload bank/AP/history + Samsara success toasts:** Remaining upload cards + **`erpNotify` `success`** on Samsara renames / TMS miles (**changelog 220**).

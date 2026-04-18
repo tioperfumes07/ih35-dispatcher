@@ -1570,6 +1570,15 @@
                   </div>
                   <button type="button" class="btn" title="Add to internal queue" onclick="openShopQueueModal('internal')">+ Add</button>
                 </div>
+                <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 200px"><strong>Internal shop</strong> rows below refresh when you change search, dates, status, or after queue saves — data comes from the in-memory shop queue cache.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderShopQueues()</code> filters <code>shopQueueCache</code> for <code>shopType === &quot;internal&quot;</code>, applies toolbar filters, then replaces <code>#shopInternalTableBody</code> via <code>innerHTML</code> with a paged slice. <code>shopQueuePager.internal</code> + <code>erpPagerRender</code> on <code>#shopInternalPagerHost</code>. Cache is filled from <code>GET /api/maintenance/shop-queue</code> during <code>loadAll()</code> and after modal POSTs. Status dropdown edits use per-row handlers (same render pass).
+                    </span>
+                  </span>
+                </div>
                 <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
@@ -1619,6 +1628,15 @@
                   </div>
                   <button type="button" class="btn" title="Add to external queue" onclick="openShopQueueModal('external')">+ Add</button>
                 </div>
+                <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 200px"><strong>External shop</strong> queue uses the same filter + pager pattern as internal; rows are the <code>external</code> slice of <code>shopQueueCache</code>.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderShopQueues()</code> filters <code>shopQueueCache</code> for <code>shopType === &quot;external&quot;</code>, applies toolbar filters, then replaces <code>#shopExternalTableBody</code> via <code>innerHTML</code> with a paged slice. <code>shopQueuePager.external</code> + <code>erpPagerRender</code> on <code>#shopExternalPagerHost</code>. Cache is filled from <code>GET /api/maintenance/shop-queue</code> during <code>loadAll()</code> and after modal POSTs.
+                    </span>
+                  </span>
+                </div>
                 <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
                     <thead>
@@ -1667,6 +1685,15 @@
                     </select>
                   </div>
                   <button type="button" class="btn" title="Add to roadside queue" onclick="openShopQueueModal('roadside')">+ Add</button>
+                </div>
+                <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 200px"><strong>Roadside</strong> queue lists <code>roadside</code> shop-type rows from the same cache and filter stack.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderShopQueues()</code> filters <code>shopQueueCache</code> for <code>shopType === &quot;roadside&quot;</code>, applies toolbar filters, then replaces <code>#shopRoadsideTableBody</code> via <code>innerHTML</code> with a paged slice. <code>shopQueuePager.roadside</code> + <code>erpPagerRender</code> on <code>#shopRoadsidePagerHost</code>. Cache is filled from <code>GET /api/maintenance/shop-queue</code> during <code>loadAll()</code> and after modal POSTs.
+                    </span>
+                  </span>
                 </div>
                 <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
@@ -1725,6 +1752,15 @@
                     </select>
                   </div>
                   <button type="button" class="btn" title="Add to parts queue" onclick="openShopQueueModal('parts')">+ Add</button>
+                </div>
+                <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 200px"><strong>Parts purchase</strong> queue uses the same engine with column labels tuned for PO / supplier language.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderShopQueues()</code> filters <code>shopQueueCache</code> for <code>shopType === &quot;parts&quot;</code>, applies toolbar filters, then replaces <code>#shopPartsTableBody</code> via <code>innerHTML</code> with a paged slice. <code>shopQueuePager.parts</code> + <code>erpPagerRender</code> on <code>#shopPartsPagerHost</code>. Cache is filled from <code>GET /api/maintenance/shop-queue</code> during <code>loadAll()</code> and after modal POSTs.
+                    </span>
+                  </span>
                 </div>
                 <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
@@ -1863,6 +1899,15 @@
               </div>
               <div class="panel-body">
                 <input id="trackingSearch" list="unitOptions" placeholder="Filter unit…" oninput="renderTrackingBoard()">
+                <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 200px">Unit cards below are rebuilt when you type in the filter or change pages — pick a card to drive the map and the detail line under the map.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit cards">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderTrackingBoard()</code> sorts <code>vehicles</code> by unit order, applies <code>#trackingSearch</code>, then replaces <code>#trackingList</code> with a page of <code>.track-card</code> markup via <code>innerHTML</code>. <code>trackingListPager</code> + <code>erpPagerRender</code> on <code>#trackingListPagerHost</code>. Clicks call <code>selectTrackingVehicle</code>; the same function refreshes <code>#trackingDetailBox</code> and the fleet-metric strip from <code>vehiclesByCategory()</code>.
+                    </span>
+                  </span>
+                </div>
                 <div class="track-list" id="trackingList" style="margin-top:10px;"></div>
                 <div id="trackingListPagerHost" hidden></div>
               </div>
@@ -3554,7 +3599,7 @@
 
         <div id="rep-settlement" class="reports-tab hidden">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;max-width:90ch">
-            <span class="mini-note" style="margin:0"><strong>TMS report</strong> — trip revenue vs rolled-up expenses by load / invoice #.</span>
+            <span class="mini-note" style="margin:0">Revenue vs rolled-up costs by load / invoice #.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
@@ -3720,7 +3765,7 @@
               </div>
             </div>
             <div class="panel-body form-stack">
-              <p class="mini-note" style="margin:0 0 10px">Filter the grid by unit, dates, record type, and search — open <strong>?</strong> for column semantics.</p>
+              <p class="mini-note" style="margin:0 0 10px">Filters + search below — <strong>?</strong> explains columns.</p>
               <div
                 class="mr-filter-bar erp-ops-filter-bar"
                 role="group"
@@ -4111,13 +4156,10 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bank CSV">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Import bank transaction CSV files for matching and reconciliation. Supported formats: Wells Fargo, Bank of America, Chase, and generic CSV.
+                      Bank CSV matching and uploads run in the <strong>Bank CSV matching</strong> workspace (this tab does not parse files). Supported formats there: Wells Fargo, Bank of America, Chase, and generic CSV — export from your bank and upload in the banking app.
                     </span>
                   </span>
                 </div>
-                <p class="mr-upload-panel-desc" style="margin-top:6px">
-                  Use <strong>Open bank CSV matching</strong> below — uploads are handled in the banking app, not parsed here.
-                </p>
                 <details class="mr-upload-help">
                   <summary>Supported bank formats</summary>
                   <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
@@ -4149,11 +4191,10 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Comdata / Relay">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Import Comdata or Relay “All Transactions” exports. They use the same parser as the <strong>Fuel / DEF</strong> importer; confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong>.
+                      Import Comdata or Relay <strong>All Transactions</strong> exports as <strong>CSV or Excel</strong> — same parser as <strong>Fuel / DEF</strong>. Use this tab’s drop zone or the <strong>Fuel / DEF</strong> tab; confirm rows under <strong>Accounting → Fuel &amp; DEF entry</strong>.
                     </span>
                   </span>
                 </div>
-                <p class="mr-upload-panel-desc" style="margin-top:6px">Upload export CSV or Excel — same flow as <strong>Fuel / DEF</strong>.</p>
                 <details class="mr-upload-help">
                   <summary>How to export from Comdata</summary>
                   <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
@@ -4286,11 +4327,10 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance AP import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Import accounts payable records for maintenance expenses. Rows are matched to existing work orders where column data allows.
+                      Upload <strong>CSV or Excel</strong> maintenance AP exports. Rows are matched to existing work orders where column data allows; use the template summary below if you need a blank layout.
                     </span>
                   </span>
                 </div>
-                <p class="mr-upload-panel-desc" style="margin-top:6px">Upload CSV or Excel maintenance AP exports.</p>
                 <details class="mr-upload-help">
                   <summary>Download import template</summary>
                   <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
@@ -4331,11 +4371,10 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance history import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Import historical maintenance records in bulk. Use the provided template so column headers match this app’s import.
+                      Bulk history import: download the blank <strong>CSV</strong> template (headers match this app), fill rows, then upload <strong>CSV or Excel</strong> using the drop zone below.
                     </span>
                   </span>
                 </div>
-                <p class="mr-upload-panel-desc" style="margin-top:6px">Bulk history — download the template, then upload CSV or Excel.</p>
                 <details class="mr-upload-help">
                   <summary>Download import template</summary>
                   <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
@@ -7503,8 +7542,7 @@
       if (qbEl) {
         if (!ta || !ta.startDate) {
           qbEl.innerHTML =
-            '<p class="mini-note" style="margin:0 0 6px">No QuickBooks transaction window loaded yet.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">Connect QuickBooks, set <code>QBO_SYNC_TRANSACTION_DAYS</code> on the server if needed (e.g. 90), then run <strong>Sync QuickBooks lists + activity</strong> from the overview or <strong>Refresh QuickBooks lists</strong> in the top bar.</p>';
+            '<p class="mini-note" style="margin:0;color:var(--color-text-label)">No transaction window yet — connect QuickBooks, set <code>QBO_SYNC_TRANSACTION_DAYS</code> on the server if needed, then <strong>Sync QuickBooks lists + activity</strong> (overview) or <strong>Refresh QuickBooks lists</strong> (top bar).</p>';
         } else {
           const tot = ta.totals || {};
           qbEl.innerHTML = `
@@ -7551,7 +7589,7 @@
               </tbody>
             </table>
           </div>
-          <p class="mini-note" style="margin-top:12px;color:var(--color-text-label)">Post from <strong>Maintenance</strong> / <strong>Accounting</strong>; refresh master lists via QuickBooks sync.</p>
+          <p class="mini-note" style="margin-top:12px;color:var(--color-text-label)">Post from <strong>Maintenance</strong> / <strong>Accounting</strong>; refresh QB lists via sync.</p>
         `;
       }
     }
@@ -13686,7 +13724,7 @@
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
-        erpNotify('Samsara vehicle updated.');
+        erpNotify('Samsara vehicle updated.', 'success');
         await loadAll();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
@@ -13705,7 +13743,7 @@
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || r.statusText);
-        erpNotify('Samsara driver updated.');
+        erpNotify('Samsara driver updated.', 'success');
         await loadAll();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
@@ -16107,11 +16145,11 @@
 
       const qbo = saveOut && saveOut.qbo;
       if (postToQbo && qbo && !qbo.ok && !qbo.skipped) {
-        erpNotify('Record saved, but QuickBooks posting failed:\n' + (qbo.error || 'Unknown error'));
+        erpNotify('Record saved, but QuickBooks posting failed:\n' + (qbo.error || 'Unknown error'), 'error');
       } else if (postToQbo && qbo && qbo.skipped && qbo.reason === 'quickbooks_not_connected') {
         const cst = Number(document.getElementById('costInput').value || 0);
         if (cst > 0) {
-          erpNotify('Record saved locally. Connect QuickBooks in Settings to post this expense automatically.');
+          erpNotify('Record saved locally. Connect QuickBooks in Settings to post this expense automatically.', 'warning');
         }
       }
 
@@ -18224,7 +18262,7 @@
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || r.statusText);
-        erpNotify('TMS load miles updated from settlement calculation.');
+        erpNotify('TMS load miles updated from settlement calculation.', 'success');
         await runSettlementLookup();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
