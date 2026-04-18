@@ -947,6 +947,14 @@ body.erp-maintenance .mr-filter-drop__hint {
   display: block;
 }
 
+/* QB-style dialog shells use overflow:hidden; open help above the button so panels stay visible. */
+body.erp-maintenance .maint-modal.erp-qb-dialog .erp-help-tip__panel {
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: auto;
+  right: 0;
+}
+
 body.erp-maintenance .panel-head,
 body.erp-maintenance .qb-doc-title-row {
   overflow: visible;
@@ -2116,6 +2124,21 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-dedicated-form-modal__shell--maximized .erp-dedicated-form-modal__inner {
   height: 100%;
   min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .erp-dedicated-form-modal {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+  .erp-dedicated-form-modal__shell {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 200px;
+    height: min(72vh, 680px);
+    max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px);
+  }
 }
 .erp-dedicated-form-modal__bar {
   display: flex;

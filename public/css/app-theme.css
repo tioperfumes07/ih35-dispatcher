@@ -2290,6 +2290,28 @@ body.maint-wo-modal-open #maintWorkOrderModalBody > #maintWorkOrderFormMount {
   body.erp-maintenance .maint-wo-input {
     max-width: 100%;
   }
+  body.erp-maintenance .maint-cost-qbo-stack {
+    min-width: 0;
+  }
+  body.erp-maintenance .maint-cost-td-desc .qb-in {
+    min-width: 0;
+  }
+  body.erp-maintenance .maint-wo-summary-bar .kv-v {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+@container maint-wo-modal (max-width: 640px) {
+  body.erp-maintenance .maint-subcard__head--split {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  body.erp-maintenance .maint-qb-cost-details__sum {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
 }
 
 body.erp-maintenance .maint-modal {

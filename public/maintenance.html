@@ -67,8 +67,13 @@
       <div id="maintModalFlowTitle" class="hidden"></div>
       <header class="erp-qb-dialog__head">
         <h3 id="maintCatModalTitle" class="erp-qb-dialog__title">Vehicle type</h3>
+        <span class="erp-help-tip" aria-label="Help for vehicle categories">
+          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About categories">?</button>
+          <span class="erp-help-tip__panel" role="tooltip">
+            Pick the category, then complete the service or purchase form. Matches Samsara / Maintenance asset groups.
+          </span>
+        </span>
       </header>
-      <p class="mini-note erp-qb-dialog__sub">Pick the category, then complete the service or purchase form. Matches Samsara / Maintenance asset groups.</p>
       <div class="erp-qb-dialog__body">
         <div class="asset-cat-grid">
           <div class="asset-cat-tile" onclick="completeMaintCategory('Trucks')">Truck</div>
@@ -87,8 +92,13 @@
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="shopQueueAddModalTitle" onclick="event.stopPropagation()" style="max-width:520px">
       <header class="erp-qb-dialog__head">
         <h3 id="shopQueueAddModalTitle" class="erp-qb-dialog__title">Add to shop queue</h3>
+        <span class="erp-help-tip" aria-label="Help for shop queues">
+          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About shop queues">?</button>
+          <span class="erp-help-tip__panel" role="tooltip">
+            Track units through internal, external, roadside, or parts-purchase queues. Status and bottlenecks are saved in the ERP.
+          </span>
+        </span>
       </header>
-      <p class="mini-note erp-qb-dialog__sub">Track units through internal, external, roadside, or parts-purchase queues. Status and bottlenecks are saved in the ERP.</p>
       <div class="erp-qb-dialog__body">
         <input type="hidden" id="sqShopType" value="internal" />
         <label class="qb-l">Unit</label>
@@ -117,9 +127,14 @@
   <div id="maintWorkOrderModal" class="maint-modal-bg maint-workorder-fullmodal" onclick="if(event.target===this)closeMaintWorkOrderModal()" aria-hidden="true">
     <div class="maint-modal maint-workorder-fullmodal__shell erp-qb-fullsheet" role="dialog" aria-modal="true" aria-labelledby="maintWoFullModalTitle" onclick="event.stopPropagation()">
       <div class="maint-workorder-fullmodal__head">
-        <div>
+        <div class="maint-workorder-fullmodal__head-main">
           <div id="maintWoFullModalTitle" class="maint-workorder-fullmodal__title">Create work order</div>
-          <div class="mini-note" style="margin:2px 0 0;max-width:56ch">Full-window form (QuickBooks-style). Close when you need the fleet tabs underneath.</div>
+          <span class="erp-help-tip maint-workorder-fullmodal__title-tip" aria-label="Help for full-window work order">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Full-window work order">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              Full-window form (QuickBooks-style). Close when you need the fleet tabs underneath.
+            </span>
+          </span>
         </div>
         <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
       </div>
@@ -130,8 +145,13 @@
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="shopDelayModalTitle" onclick="event.stopPropagation()" style="max-width:480px">
       <header class="erp-qb-dialog__head">
         <h3 id="shopDelayModalTitle" class="erp-qb-dialog__title">Past estimated time — bottleneck</h3>
+        <span class="erp-help-tip" aria-label="Help for delay reasons">
+          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Why log a reason">?</button>
+          <span class="erp-help-tip__panel" role="tooltip">
+            Pick a reason so we can see delays (parts, queue, payment, etc.).
+          </span>
+        </span>
       </header>
-      <p class="mini-note erp-qb-dialog__sub">Pick a reason so we can see delays (parts, queue, payment, etc.).</p>
       <div class="erp-qb-dialog__body">
         <label class="qb-l">Reason</label>
         <select id="sqDelayCode" class="qb-in" style="width:100%;margin-bottom:10px">
@@ -1151,16 +1171,16 @@
                         </select>
                         <input type="hidden" id="repairLocationTypeInput" value="" />
                         <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">Quick presets mirror the dropdown; chips refresh when the hidden type code changes.</span>
+                          <span style="min-width:0;flex:1 1 200px">Choose a type above, then enter where work happened (required). The datalist suggests prior labels.</span>
                           <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Repair location chips">?</button>
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop / location detail">?</button>
                             <span class="erp-help-tip__panel" role="tooltip">
-                              <code>renderRepairLocationChips()</code> replaces <code>#repairLocationChips</code> <code>innerHTML</code> with one pill per <code>REPAIR_LOCATION_DEFS</code> entry (active class when <code>#repairLocationTypeInput</code> matches). <code>setRepairLocationCode()</code> updates hidden + visible fields, calls <code>syncMaintWorkOrderHeader()</code>, then re-renders chips. <code>onRepairLocationSelectChange()</code> routes the native <code>&lt;select&gt;</code> through the same path. <code>fillStaticMaintDatalists()</code> separately fills <code>#repairLocationOptions</code> for the text field.
+                              <strong>Location detail</strong> is saved with the record (yard, vendor site, bay, shop name, or short notes). <code>setRepairLocationCode()</code> keeps the dropdown, hidden type, and this field in sync. <code>fillStaticMaintDatalists()</code> fills <code>#repairLocationOptions</code> for suggestions.
                             </span>
                           </span>
                         </div>
-                        <div id="repairLocationChips" class="maint-repair-chip-row" aria-label="Repair location quick picks"></div>
-                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="Location detail" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Vendor, yard, notes" />
+                        <span class="qb-l">Location detail <span class="maint-label-req" aria-hidden="true">*</span></span>
+                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Shop / location detail (required)" aria-required="true" />
                       </div>
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
@@ -5875,14 +5895,7 @@
     }
 
     function renderRepairLocationChips() {
-      const wrap = document.getElementById('repairLocationChips');
-      if (!wrap) return;
-      const cur = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
-      wrap.innerHTML = REPAIR_LOCATION_DEFS.map(d => {
-        const active = cur === d.code ? ' maint-repair-chip--active' : '';
-        const codeJs = String(d.code).replace(/'/g, "\\'");
-        return `<button type="button" class="maint-repair-chip${active}" data-loc-code="${escapeHtml(d.code)}" onclick="setRepairLocationCode('${codeJs}')">${escapeHtml(d.label)}</button>`;
-      }).join('');
+      /* Chip row removed — location type uses the dropdown only; detail uses #repairLocationSearch. */
     }
 
     function getMaintWorkOrderFormMount() {
@@ -16789,10 +16802,16 @@
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
       if (!repairLoc) {
         erpNotify(
-          'Select where service is performed: choose a location type in Service & scheduling (Internal shop, External shop, Roadside, Parts purchase, or Over the road).',
+          'Select where service is performed: choose a location type (Internal shop, External shop, Roadside, Parts purchase, or Over the road).',
           'warning'
         );
         document.getElementById('repairLocationSelect')?.focus();
+        return false;
+      }
+      const repairLocDetail = String(document.getElementById('repairLocationSearch')?.value || '').trim();
+      if (!repairLocDetail) {
+        erpNotify('Enter shop / location detail (yard, vendor site, bay, or notes).', 'warning');
+        document.getElementById('repairLocationSearch')?.focus();
         return false;
       }
       const vendorInvNo = String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
