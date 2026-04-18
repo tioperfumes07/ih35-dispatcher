@@ -7267,9 +7267,13 @@
 
     function erpDedicatedFormDirty() {
       if (window.__erpDedicatedModalKind === 'fuel') {
+        const totalTxt = document.getElementById('fuelManualHeaderTotal')?.textContent || '$0.00';
+        const totalNum = Number(String(totalTxt).replace(/[^0-9.-]/g, '')) || 0;
         return !!(
           (document.getElementById('fuelManualVendorSearch')?.value || '').trim() ||
-          (document.getElementById('fuelManualUnit')?.value || '').trim()
+          (document.getElementById('fuelManualUnit')?.value || '').trim() ||
+          (document.getElementById('fuelManualMemo')?.value || '').trim() ||
+          totalNum > 0.005
         );
       }
       if (window.__erpDedicatedModalKind === 'ap') {
@@ -15712,7 +15716,7 @@
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
               <div class="mini-note">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
-              ${r.loadNumber ? `<div class="mini-note">Load / inv #: ${escapeHtml(r.loadNumber)}</div>` : ''}
+              ${r.loadNumber ? `<div class="mini-note">Load / invoice #: ${escapeHtml(r.loadNumber)}</div>` : ''}
               ${r.vendorInvoiceNumber || r.workOrderNumber ? `<div class="mini-note">Vendor inv: ${escapeHtml(r.vendorInvoiceNumber || '')} · WO: ${escapeHtml(r.workOrderNumber || '')}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
               ${

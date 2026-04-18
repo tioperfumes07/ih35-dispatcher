@@ -843,7 +843,7 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
       if (vendorQ) doc.text(`QuickBooks vendor (matched): ${vendorQ}`);
       doc.text(`Vendor invoice #: ${rec.vendorInvoiceNumber || '—'}`);
       doc.text(`Work order #: ${rec.workOrderNumber || '—'}`);
-      doc.text(`Load / inv #: ${rec.loadNumber || '—'}`);
+      doc.text(`Load / invoice #: ${rec.loadNumber || '—'}`);
       doc.text(`Detail mode: ${rec.detailMode || 'category'}   Payment: ${paymentMethodLabel(erp, rec.paymentMethodId)}`);
       if (rec.qboBankAccountId) doc.text(`Pay-from bank (QBO): ${bankAccountLabel(erp, rec.qboBankAccountId) || rec.qboBankAccountId}`);
       doc.text(`Total cost: ${money(rec.cost)}`);
@@ -1082,7 +1082,7 @@ router.post('/api/pdf/fleet-maintenance-draft', (req, res) => {
       doc.text(`Invoice total: ${cost}`);
       doc.text(`Vendor invoice #: ${vendorInv || '—'}`);
       doc.text(`Work order / ref #: ${wo || '—'}`);
-      doc.text(`Load / inv #: ${loadNo || '—'}`);
+      doc.text(`Load / invoice #: ${loadNo || '—'}`);
       doc.moveDown(0.5);
       if (costLines.length) {
         doc.font('Helvetica-Bold').fontSize(10).text('Cost lines (draft)');
