@@ -778,7 +778,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Strip counts">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Quick counts for <strong>this maintenance tab</strong> (tracked assets, assigned units, past-due PM, QBO vendor cache). <strong>Full overview</strong> opens <strong>Home</strong> for dashboard cards and sync summary.
+                  Counts for this Maintenance workspace (assets, assignments, PM, QBO vendors). <strong>Full overview</strong> → <strong>Home</strong> for dashboard + sync.
                 </span>
               </span>
             </div>
@@ -803,11 +803,11 @@
               <span class="maint-fleet-inline__label">Fleet:</span>
               <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;flex:1 1 min(320px,46vw)">
                 <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;line-height:1.45;color:var(--color-text-body);width:100%">
-                  <span style="min-width:0;flex:1 1 180px">Fleet-type chips scope the unit list, fleet table, and WO column — local ERP categories, not a Samsara control.</span>
+                  <span style="min-width:0;flex:1 1 180px">Fleet chips scope unit list, fleet table, and WO column — ERP categories only (not Samsara).</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet category pills">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderMaintenanceCategoryChips()</code> replaces <code>#maintActionFleetPills</code> <code>innerHTML</code> with pill buttons (Trucks, Ref.&nbsp;Vans, Flatbeds, Dry Vans, Company). <code>setAssetCategory()</code> updates <code>activeAssetCategory</code>, re-renders <code>renderMaintenanceUnitList()</code>, may clear <code>selectedUnit</code> if it falls outside the category, then <code>renderSelectedUnit()</code> and <code>renderMaintenanceTable()</code>. If the strip host is missing, the same markup targets the off-screen <code>#assetCategoryChips</code> anchor for accessibility only.
+                      <code>renderMaintenanceCategoryChips()</code> → <code>#maintActionFleetPills</code> pills. <code>setAssetCategory()</code> updates <code>activeAssetCategory</code>, re-renders <code>renderMaintenanceUnitList()</code>, may clear <code>selectedUnit</code> if out of category, then <code>renderSelectedUnit()</code> + <code>renderMaintenanceTable()</code>. Missing strip → same markup on off-screen <code>#assetCategoryChips</code>.
                     </span>
                   </span>
                 </div>
@@ -816,11 +816,11 @@
             </div>
             <div class="maint-action-strip__qbo" id="maintTopQboIssuesWrap" aria-live="polite">
               <div class="mini-note" style="margin:0;width:100%;flex-basis:100%;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label)">
-                <span style="min-width:0;flex:1 1 140px">Compact QBO posting line beside fleet pills — the row below is replaced when sync alerts change.</span>
+                <span style="min-width:0;flex:1 1 140px">QBO posting hint beside fleet pills — updates when sync alerts change.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance strip QBO indicator">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintAsideQbIssues()</code> replaces <code>#maintTopQboIssuesInd</code> <code>innerHTML</code> with a severity dot plus short status (and may add a <strong>View</strong> control that scrolls to <code>#qboSyncAlertBar</code>). The clipped <code>#maintAsideQbIssues</code> anchor gets the same HTML for assistive tab routing.
+                    <code>renderMaintAsideQbIssues()</code> → <code>#maintTopQboIssuesInd</code> (severity dot + short status; optional <strong>View</strong> → <code>#qboSyncAlertBar</code>). <code>#maintAsideQbIssues</code> gets the same HTML for focus routing.
                   </span>
                 </span>
               </div>
@@ -869,7 +869,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Unit list for work orders">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Pick a <strong>truck or trailer</strong> to load the work-order form. <strong>Search</strong> and <strong>Maintenance Table</strong> filters above narrow this list. Use <strong>▼</strong> to collapse the column when you need more horizontal room.
+                    Pick a unit to load the WO form. <strong>Find unit</strong>, service filter, and <strong>Maintenance Table</strong> narrow rows. <strong>▼</strong> collapses the column.
                   </span>
                 </span>
               </div>
@@ -877,11 +877,11 @@
             </div>
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 200px">Clickable rows below follow <strong>Find unit</strong> search and the active <strong>Fleet by type</strong> pill; past-due / due-soon badges count matching <strong>dashboard</strong> rows per unit.</span>
+                <span style="min-width:0;flex:1 1 200px">Rows follow <strong>Find unit</strong> + active <strong>Fleet by type</strong>; past-due / due-soon badges use matching <strong>dashboard</strong> rows per unit.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Units list behavior">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintenanceUnitList()</code> reads <code>#maintenanceUnitSearch</code> and <code>vehiclesByCategory()[activeAssetCategory]</code>, then replaces <code>#maintenanceUnitList</code> with <code>innerHTML</code> as a stack of <code>.list-row</code> cards. <code>selectUnit()</code> re-renders this list to show the active row and also refreshes the WO form, <strong>Maintenance Table</strong>, and AP unit field. Does not hit the network by itself.
+                    <code>renderMaintenanceUnitList()</code>: <code>#maintenanceUnitSearch</code> + <code>vehiclesByCategory()[activeAssetCategory]</code> → <code>#maintenanceUnitList</code> <code>.list-row</code> cards. <code>selectUnit()</code> highlights row + refreshes WO form, <strong>Maintenance Table</strong>, AP unit field. No network by itself.
                   </span>
                 </span>
               </div>
@@ -897,11 +897,11 @@
             <div class="maint-wo-main-aside">
             <div class="maint-wo-workspace maint-section-card">
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">The card below is the live unit header — it swaps entirely when you change units; the fuel / PM strip under it uses plain text boxes, not this card’s markup.</span>
+                <span style="min-width:0;flex:1 1 220px">Live unit header — full swap on unit change. Fuel / PM strip below uses its own fields, not this card.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Asset header card">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderSelectedUnit()</code> finds the row in <code>vehicles</code>, shows <code>#maintWoFormArea</code>, then replaces <code>#maintAssetHeaderCard</code> <code>innerHTML</code> with name, YMM, operational status pill (from <strong>Lists → Operational</strong>), VIN / plate / odometer, and <strong>Edit status</strong>. It rebuilds <code>#maintAssetStatusPanelBody</code> on a sibling host, clears <code>#selectedUnitInfo</code>, updates <code>#maintUnitSummaryStrip</code> boxes via <code>textContent</code>, and chains <code>renderUnitHistory()</code>, <code>syncMaintWorkOrderHeader()</code>, and <code>renderMaintAsideWoSummary()</code>. With no unit, the placeholder template is restored here.
+                    <code>renderSelectedUnit()</code>: row in <code>vehicles</code> → show <code>#maintWoFormArea</code>, fill <code>#maintAssetHeaderCard</code> (name, YMM, status from <strong>Lists → Operational</strong>, VIN/plate/odo, <strong>Edit status</strong>), rebuild <code>#maintAssetStatusPanelBody</code>, clear <code>#selectedUnitInfo</code>, <code>textContent</code> on <code>#maintUnitSummaryStrip</code>, then <code>renderUnitHistory()</code>, <code>syncMaintWorkOrderHeader()</code>, <code>renderMaintAsideWoSummary()</code>. No unit → placeholder.
                   </span>
                 </span>
               </div>
@@ -915,18 +915,18 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Status codes">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Codes come from <strong>Lists &amp; catalogs → Operational</strong> and saved work orders. Pick a status for the selected unit; <strong>Done</strong> closes this sheet without losing the work order.
+                        Codes from <strong>Lists → Operational</strong> + saved WOs. <strong>Done</strong> closes the sheet only — does not discard the WO.
                       </span>
                     </span>
                   </div>
                   <button type="button" class="btn btn--small" onclick="closeMaintAssetStatusPanel()">Done</button>
                 </div>
                 <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 200px">The form below is rebuilt when you pick a unit; <strong>Save status</strong> / <strong>Save roster</strong> persist to the server — <strong>Done</strong> only closes this sheet.</span>
+                  <span style="min-width:0;flex:1 1 200px"><strong>Save status</strong> / <strong>Save roster</strong> hit the server; <strong>Done</strong> only closes.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status sheet APIs">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderSelectedUnit()</code> replaces <code>#maintAssetStatusPanelBody</code> with the status picker, optional note, and active/retired roster row. <code>saveAssetStatus()</code> → <code>POST /api/maintenance/asset-status</code> (<code>unit</code>, <code>status</code>, <code>note</code>). <code>saveAssetFleetActive()</code> → <code>POST /api/maintenance/asset-active</code> with <code>active</code> plus <code>erpWriteHeaders()</code> where configured. Options follow <strong>Lists &amp; catalogs → Operational status</strong>. Successful saves call <code>loadAll()</code> and status save closes the panel.
+                      <code>renderSelectedUnit()</code> → <code>#maintAssetStatusPanelBody</code> (picker, note, active/retired row). <code>saveAssetStatus()</code> → <code>POST /api/maintenance/asset-status</code> (<code>unit</code>, <code>status</code>, <code>note</code>). <code>saveAssetFleetActive()</code> → <code>POST /api/maintenance/asset-active</code> (<code>active</code> + <code>erpWriteHeaders()</code> when set). Options from <strong>Lists → Operational</strong>. Success → <code>loadAll()</code>; status save closes panel.
                     </span>
                   </span>
                 </div>
@@ -941,11 +941,11 @@
               </div>
 
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Inline WO snapshot — same KV row as the R&amp;M aside; hidden until a unit is selected.</span>
+                <span style="min-width:0;flex:1 1 220px">WO snapshot bar — mirrors R&amp;M aside KV; hidden until a unit is selected.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="WO summary bar">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintAsideWoSummary()</code> fills <code>#maintAsideWoSummary</code> and mirrors here from <code>selectedUnit</code>, WO #, cost, and location fields (bar stays <code>hidden</code> without a unit).
+                    <code>renderMaintAsideWoSummary()</code> → <code>#maintAsideWoSummary</code> + this bar: <code>selectedUnit</code>, WO #, cost, location (<code>hidden</code> without unit).
                   </span>
                 </span>
               </div>
@@ -1013,11 +1013,11 @@
                       <div class="maint-field-cell">
                         <span class="qb-l">Planned work <span class="maint-label-optional">(optional)</span></span>
                         <div class="mini-note" style="margin:4px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 180px">Repeatable free-text lines — the host below is cleared and re-seeded from a template when presets or record type reset the form.</span>
+                          <span style="min-width:0;flex:1 1 180px">Free-text lines; host resets from template when presets / record type clear the form.</span>
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Planned work lines">?</button>
                             <span class="erp-help-tip__panel" role="tooltip">
-                              <code>resetMaintPlannedServiceRows()</code> sets <code>#maintPlannedServicesHost</code> <code>innerHTML</code> to empty, then <code>addMaintPlannedServiceRow()</code> clones <code>#maintPlannedServiceTpl</code> rows. <code>addMaintPlannedServiceRow()</code> only appends. <code>collectMaintPlannedServiceLines()</code> reads <code>.maint-planned-desc</code> values for save payloads.
+                              <code>resetMaintPlannedServiceRows()</code> clears <code>#maintPlannedServicesHost</code>, then <code>addMaintPlannedServiceRow()</code> clones <code>#maintPlannedServiceTpl</code>. <code>collectMaintPlannedServiceLines()</code> reads <code>.maint-planned-desc</code> for save.
                             </span>
                           </span>
                         </div>
@@ -1092,7 +1092,7 @@
                         <span class="erp-help-tip erp-qb-cost-global__tip">
                           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Line type default">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
-                            <strong>Category details</strong> and <strong>Item details</strong> are separate grids (like QuickBooks). Use <strong>+ Add category line</strong> or <strong>+ Add item line</strong>. This toggle sets the default when a single “add line” action is used elsewhere.
+                            <strong>Category</strong> vs <strong>Item</strong> grids (QuickBooks-style). Use <strong>+ Add … line</strong> per grid. This toggle is the default for single “add line” shortcuts elsewhere.
                           </span>
                         </span>
                       </div>
@@ -1185,7 +1185,7 @@
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Expense vs bill">?</button>
                             <span class="erp-help-tip__panel" role="tooltip">
-                              <strong>Txn type</strong> chooses QuickBooks <strong>Expense</strong> vs <strong>Bill</strong>; doc # syncs with cost lines when posting is enabled. Primary vendor and line accounts stay on the main form above this block.
+                              <strong>Txn type</strong>: QuickBooks <strong>Expense</strong> vs <strong>Bill</strong>; doc # follows posting. Vendor + line accounts stay on the form above.
                             </span>
                           </span>
                         </div>
@@ -1300,7 +1300,7 @@
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Same invoice, multiple tires">?</button>
                             <span class="erp-help-tip__panel" role="tooltip">
-                              Each extra row shares one vendor invoice and one QuickBooks expense or bill header. Use <strong>+ Add another tire (same total cost)</strong> for additional positions on that invoice.
+                              Extra rows share one vendor invoice + one QBO expense/bill header. <strong>+ Add another tire</strong> adds wheel positions on that invoice.
                             </span>
                           </span>
                         </p>
@@ -1309,7 +1309,7 @@
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tire extra lines host">?</button>
                             <span class="erp-help-tip__panel" role="tooltip">
-                              <code>addTireExtraLine()</code> clones <code>#tireExtraLineTpl</code> into <code>#tireExtraLinesHost</code> and fills each new <code>.tire-extra-pos</code> <code>innerHTML</code> from <code>TIRE_POSITION_CHOICES</code>. <code>clearTireExtraLines()</code> clears the host with <code>innerHTML = ''</code> when the tire block resets. <code>collectTireLineItems()</code> walks <code>#tireExtraLinesHost .tire-extra-row</code> and merges with the primary tire fields for save / PDF.
+                              <code>addTireExtraLine()</code> clones <code>#tireExtraLineTpl</code> → <code>#tireExtraLinesHost</code> (<code>.tire-extra-pos</code> from <code>TIRE_POSITION_CHOICES</code>). <code>clearTireExtraLines()</code> on reset. <code>collectTireLineItems()</code> merges <code>#tireExtraLinesHost .tire-extra-row</code> with primary tire for save/PDF.
                             </span>
                           </span>
                         </div>
@@ -1335,7 +1335,7 @@
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accident costing &amp; QuickBooks lines">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          This visit is still saved as an <strong>accident</strong> record. Add each part, tire, fluid, and labor line under <strong>Cost breakdown</strong> below — each row uses the same <strong>maintenance / repair service catalog</strong> (datalist), optional <strong>multi-position part</strong> (tires, batteries, brakes, etc.), and per-line QuickBooks account or item. The “Service / maintenance” fields above stay the summary label for the visit (default <em>Accident Report</em>); line descriptions are what you want on the invoice (e.g. radiator, steer tires, body labor).
+                          Still an <strong>accident</strong> record. Add part/labor under <strong>Cost breakdown</strong> — catalog datalist, optional multi-position, per-line QBO account/item. Top <strong>Service</strong> fields stay the visit label (default <em>Accident Report</em>); line text is what prints.
                         </span>
                       </span>
                     </p>
@@ -1440,13 +1440,13 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Where to import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      CSV and Excel imports live under <strong>Upload center</strong> in the lists column (see <strong>Lists &amp; catalogs</strong> at the bottom of the sidebar) — maintenance history, AP expenses, fuel / Relay, and connection notes.
+                      CSV/Excel → <strong>Upload center</strong> (sidebar). Maint history, AP, fuel/Relay, connections — same flows as Lists column.
                     </span>
                   </span>
                 </div>
               </div>
               <div class="panel-body form-stack">
-                <p class="mini-note" style="margin:0 0 8px">Shortcut below opens the same <strong>Upload center</strong> flows (no duplicate file pickers here).</p>
+                <p class="mini-note" style="margin:0 0 8px">Button opens <strong>Upload center</strong> — no duplicate pickers here.</p>
                 <button type="button" class="qb-btn-add" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to upload center</button>
               </div>
             </div>
@@ -1462,7 +1462,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About R&amp;M status">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Repair &amp; maintenance health signals (same family as Tracking → Shop &amp; maintenance). Flags unusual repair frequency, high invoices, short tire intervals, and diesel vs miles. Filter by severity or search.
+                    Same signal family as <strong>Tracking → Shop</strong>. Flags odd repair cadence, large invoices, short tire life, diesel vs miles. Filter severity + search.
                   </span>
                 </span>
               </div>
@@ -1493,20 +1493,20 @@
                 </div>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 200px">Use <strong>Refresh alerts</strong> after changing the window or when results look stale.</span>
+                <span style="min-width:0;flex:1 1 200px"><strong>Refresh alerts</strong> after window changes or stale results.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Refreshing integrity data">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Alerts use maintenance records already loaded for this workspace. Open <strong>Maintenance → R&amp;M Status</strong> after a full load, or use <strong>Refresh alerts</strong>, so the rule window matches your latest shop data. Set <strong>Window (days)</strong> before refreshing when you need a longer or shorter lookback.
+                    Uses in-memory maint records. Open tab after full <strong>load</strong> or press <strong>Refresh alerts</strong>; set <strong>Window (days)</strong> first when you change lookback.
                   </span>
                 </span>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 200px">The alert stack below is replaced when you <strong>Refresh alerts</strong>, change <strong>Window (days)</strong>, or edit search / severity — same API payload as Tracking → Shop integrity when loaded.</span>
+                <span style="min-width:0;flex:1 1 200px">Stack updates on <strong>Refresh alerts</strong>, window, search, or severity — same API family as Tracking shop integrity.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="R&amp;M integrity alert host">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadSecurityCatalogUi()</code> fetches <code>GET /api/maintenance/security-alerts</code> (window from <code>#maintIntegrityDays</code>), then <code>renderSecurityAlerts</code> with <code>maintSecurityAlertRenderOpts</code> (<code>bodyId: maintSecurityAlertsBody</code>, <code>maintIntegritySearch</code>, <code>maintIntegritySeverity</code>) replaces <code>#maintSecurityAlertsBody</code> via <code>innerHTML</code> (summary header + alert cards + optional driver-risk block). Errors mirror the Tracking panel message into this host.
+                    <code>loadSecurityCatalogUi()</code> → <code>GET /api/maintenance/security-alerts</code> (<code>#maintIntegrityDays</code>). <code>renderSecurityAlerts(..., maintSecurityAlertRenderOpts)</code> → <code>#maintSecurityAlertsBody</code> (header + cards + optional driver-risk). Errors align with Tracking integrity messaging.
                   </span>
                 </span>
               </div>
@@ -1523,7 +1523,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Shop queue rows (ERP) grouped by queue type, plus recent saved work orders by <strong>repair location type</strong> from maintenance records. Use this view to see which units are in internal shop, external shop, roadside, or out of service — status comes from the queue or QuickBooks sync on the work order.
+                    ERP shop queues by type + recent WOs by <strong>repair location type</strong>. Status from queue rows or QBO sync on the WO.
                   </span>
                 </span>
               </div>
@@ -1533,11 +1533,11 @@
             </div>
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">The host below is one HTML document built from the in-memory <strong>shop queue</strong> cache plus recent <strong>erp.records</strong> slices — open this tab after <strong>Refresh</strong> on the main maintenance load if counts look stale.</span>
+                <span style="min-width:0;flex:1 1 220px">Built from <code>shopQueueCache</code> + recent <code>erp.records</code> — open tab after a full maint <strong>Refresh</strong> if stale.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop / location board">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintLocationBoard()</code> builds buckets for <code>internal</code> / <code>external</code> / <code>roadside</code> / <code>parts</code> from <code>shopQueueCache</code> (small tables), then appends “recent maintenance visits” lists grouped by <code>repairLocationType</code> from <code>erp.records</code>, and sets <code>#maintLocationBoardHost.innerHTML</code> in one pass. Invoked when the <strong>Shop / location</strong> tab is active after <code>loadAll()</code> / queue saves / tab switches.
+                    <code>renderMaintLocationBoard()</code>: <code>internal</code>/<code>external</code>/<code>roadside</code>/<code>parts</code> from <code>shopQueueCache</code>, then visits by <code>repairLocationType</code> from <code>erp.records</code> → <code>#maintLocationBoardHost</code>. Runs when <strong>Shop / location</strong> is active after <code>loadAll()</code> / queue saves / tab switch.
                   </span>
                 </span>
               </div>
@@ -1554,7 +1554,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this grid">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Saved work-order rows across the fleet (service, status, mileage, vendor, QBO sync). Pick a unit in <strong>Units</strong> (left) to load the form; use <strong>Find unit</strong> and the filter chips to narrow columns. Long lists paginate at the bottom.
+                      Fleet WO grid (service, status, mileage, vendor, QBO). Pick unit in <strong>Units</strong>; <strong>Find unit</strong> + chips narrow rows. Pager at bottom.
                     </span>
                   </span>
                 </div>
@@ -1564,32 +1564,32 @@
                   <div class="mr-filter-bar__chips">
                     <details class="mr-filter-chipwrap">
                       <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
-                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use <strong>Find unit</strong> above and column sort in the grid to narrow rows.</p></div>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Find unit</strong> + column sort narrow rows.</p></div>
                     </details>
                     <details class="mr-filter-chipwrap">
                       <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
-                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Service, status, and mileage fields come from maintenance records and Samsara where linked.</p></div>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Service, status, mileage from maint records + Samsara when linked.</p></div>
                     </details>
                     <details class="mr-filter-chipwrap">
                       <summary class="mr-filter-chip">Fleet type <span aria-hidden="true">▾</span></summary>
-                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use the <strong>Fleet by type</strong> shortcuts in the sidebar to focus trucks, vans, flatbeds, and other groups.</p></div>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Fleet by type</strong> shortcuts focus trucks, vans, flatbeds, etc.</p></div>
                     </details>
                     <details class="mr-filter-chipwrap">
                       <summary class="mr-filter-chip">Service status <span aria-hidden="true">▾</span></summary>
-                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Status and QuickBooks sync columns reflect each saved work order row.</p></div>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Status + QBO columns follow each saved WO row.</p></div>
                     </details>
                     <details class="mr-filter-chipwrap">
                       <summary class="mr-filter-chip">Past due <span aria-hidden="true">▾</span></summary>
-                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Compare <strong>Next due date / mileage</strong> with the KPI strip for PM and critical items.</p></div>
+                      <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Compare <strong>Next due</strong> with KPI strip for PM.</p></div>
                     </details>
                   </div>
                 </div>
                 <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 220px">Rows below are a paged slice of <strong>dashboard</strong> work-order summaries for units in the active <strong>Fleet by type</strong> category, further narrowed by <strong>Filter by service</strong> in the bar above.</span>
+                  <span style="min-width:0;flex:1 1 220px">Paged <strong>dashboard</strong> WOs for active <strong>Fleet by type</strong> + <strong>Filter by service</strong>.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance fleet table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderMaintenanceTable()</code> filters <code>dashboard</code> to units in <code>vehiclesByCategory()[activeAssetCategory]</code>, applies <code>#maintenanceServiceFilter</code>, then replaces <code>#maintenanceTableBody</code> via <code>innerHTML</code> with a paged slice. <code>maintDashboardTablePager</code> + <code>erpPagerRender</code> on <code>#maintTablePagerHost</code>; changing category or service text resets to page 1. Read-only grid — open a unit and use the form to edit underlying records.
+                      <code>renderMaintenanceTable()</code>: <code>dashboard</code> filtered by <code>vehiclesByCategory()[activeAssetCategory]</code> + <code>#maintenanceServiceFilter</code> → paged <code>#maintenanceTableBody</code>. <code>maintDashboardTablePager</code> + <code>erpPagerRender</code> on <code>#maintTablePagerHost</code>; category/service change → page 1. Read-only — edit via WO form.
                     </span>
                   </span>
                 </div>
@@ -1627,7 +1627,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="History vs new WO">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Work orders and expenses for the <strong>selected unit</strong> (left column). Click a row to edit it, or use <strong>New work order</strong> for a blank form on the same unit.
+                      History for <strong>selected unit</strong>. Click row to edit; <strong>New work order</strong> blanks the form on same unit.
                     </span>
                   </span>
                 </div>
@@ -1635,11 +1635,11 @@
               </div>
               <div class="panel-body">
                 <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 220px">Cards below are rebuilt from in-memory maintenance rows whenever the selected unit or <code>erp.records</code> changes.</span>
+                  <span style="min-width:0;flex:1 1 220px">Cards rebuild when unit or <code>erp.records</code> changes.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Unit history list">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderUnitHistory()</code>: <code>erp.records</code> filtered to <code>selectedUnit</code>, <code>serviceDate</code> desc → <code>#unitHistory</code> cards (service line, QB badge, costs/tires, actions). Empty → <strong>No records yet.</strong> Runs from <code>renderSelectedUnit()</code> / <code>loadAll()</code>.
+                      <code>renderUnitHistory()</code>: <code>erp.records</code> for <code>selectedUnit</code>, <code>serviceDate</code> desc → <code>#unitHistory</code> cards (service, QB, costs/tires, actions). Empty → <strong>No records yet.</strong> From <code>renderSelectedUnit()</code> / <code>loadAll()</code>.
                     </span>
                   </span>
                 </div>
