@@ -28,7 +28,17 @@ export const RULE0_FORBIDDEN_SUBSTRINGS = [
   'var(--color-nav-bg, #',
   'var(--color-bg-header, #',
   'var(--color-bg-hover, #',
-  'var(--color-modal-backdrop, rgba'
+  'var(--color-modal-backdrop, rgba',
+  'var(--color-semantic-success, #',
+  'var(--color-semantic-error, #',
+  'var(--color-semantic-warning, #',
+  'var(--color-semantic-warn-accent, #',
+  'var(--color-success-border-soft, #',
+  'var(--color-warning-border-soft, #',
+  'var(--color-hub-accent, #',
+  'var(--color-hub-bg-deep, #',
+  'var(--color-hub-text, #',
+  'var(--color-hub-card, #'
 ];
 
 export function ruleZeroForbiddenHits(text) {

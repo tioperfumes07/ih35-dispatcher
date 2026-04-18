@@ -321,7 +321,25 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 
 ## 2026-05-20
 
-- **CI:** **`.github/workflows/rule0-check.yml`** — Runs **`npm run rule0:check`** on **`push` / `pull_request`** to **`main`** or **`master`** (Ubuntu, Node 20); no **`npm ci`** so the job stays fast and dependency-free.
+- **CI:** **`.github/workflows/rule0-check.yml`** — Runs **`npm run rule0:check`** on **`push` / `pull_request`** (Ubuntu, Node 20); no **`npm ci`** so the job stays fast and dependency-free. *(Push trigger broadened to all branches on 2026-05-21.)*
 - **Docs in CSS:** **`app-theme.css`** file header now points maintainers at **`rule0:check`**, HTTP smoke, and **`scripts/rule-zero-agent-b.mjs`** as the shared forbidden list.
 
 **Files:** `.github/workflows/rule0-check.yml`, `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-21
+
+- **CI:** **`.github/workflows/rule0-check.yml`** — **`push`** now runs on **all branches** (not only **`main` / `master`**), so feature-branch commits get the same Rule 0 scan; **`pull_request`** unchanged.
+- **Rule 0 list:** **`scripts/rule-zero-agent-b.mjs`** — Forbid **`var(--color-semantic-{success,error,warning,warn-accent}, #`** prefixes (duplicate hex after semantic tokens; values belong in **`design-tokens.css`** only).
+
+**Files:** `.github/workflows/rule0-check.yml`, `scripts/rule-zero-agent-b.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-22
+
+- **Rule 0 list:** **`scripts/rule-zero-agent-b.mjs`** — Forbid **`var(--color-success-border-soft, #`** / **`var(--color-warning-border-soft, #`** and hub token **`var(--color-hub-{accent,bg-deep,text,card}, #`** (duplicate hex; hub + soft borders live in **`design-tokens.css`** only).
+- **Log hygiene:** **`## 2026-05-20`** CI bullet clarified (push filter note points at **2026-05-21**).
+
+**Files:** `scripts/rule-zero-agent-b.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

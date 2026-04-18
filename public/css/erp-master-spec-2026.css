@@ -363,7 +363,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 .mr-qbo-banner__linkbtn {
   border: none;
   background: transparent;
-  color: var(--color-border-focus, #1967d2);
+  color: var(--color-border-focus);
   font-size: 13px;
   font-weight: 500;
   padding: 4px 8px;
@@ -378,7 +378,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 .mr-qbo-banner__ghost {
   border: 1px solid var(--color-border, #dadce0);
   border-radius: 4px;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   color: var(--color-text-body, #3c4043);
   font-size: 13px;
   font-weight: 500;
@@ -390,7 +390,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 .mr-qbo-banner__dismiss {
   border: 1px solid var(--color-border, #dadce0);
   border-radius: 4px;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   color: var(--color-text-label, #5f6368);
   font-size: 13px;
   font-weight: 500;
@@ -404,7 +404,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 }
 
 .mr-qbo-banner--degraded .mr-qbo-banner__icon {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   color: var(--color-text-label, #5f6368);
 }
 
@@ -546,7 +546,7 @@ body.erp-maintenance .erp-reports-main > .reports-tab:not(.hidden) {
 
 /* Rule 0 — Reports hub: helper / status lines use label token (inline color still wins). */
 body.erp-maintenance .erp-reports-shell .mini-note:not(.erp-reports-roadmap) {
-  color: var(--color-text-label, #6b7385);
+  color: var(--color-text-label);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -736,7 +736,7 @@ body.erp-maintenance .mr-filter-inline-select {
 }
 
 body.erp-maintenance .mr-filter-inline-select:focus-visible {
-  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
@@ -747,12 +747,12 @@ body.erp-maintenance .mr-filter-search {
   border-radius: 20px;
   padding: 0 12px;
   font-size: 12px;
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   border: 1px solid transparent;
 }
 
 body.erp-maintenance .mr-filter-search:focus-visible {
-  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
@@ -768,7 +768,7 @@ body.banking-page .mr-filter-bar select.in:focus-visible,
 body.settings-page .mr-filter-bar .qb-in:focus-visible,
 body.settings-page .mr-filter-bar .in:focus-visible,
 body.settings-page .mr-filter-bar select.in:focus-visible {
-  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
@@ -780,7 +780,7 @@ body.banking-page .mr-filter-bar .btn:focus-visible,
 body.banking-page .mr-filter-bar button:focus-visible,
 body.settings-page .mr-filter-bar .btn:focus-visible,
 body.settings-page .mr-filter-bar button:focus-visible {
-  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
@@ -817,7 +817,7 @@ body.erp-maintenance .mr-filter-chipwrap > summary {
   font-size: 12px;
   font-weight: 500;
   color: var(--color-text-primary, #3c4043);
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   font-family: inherit;
 }
 
@@ -826,12 +826,12 @@ body.erp-maintenance .mr-filter-chipwrap > summary::-webkit-details-marker {
 }
 
 body.erp-maintenance .mr-filter-chipwrap > summary:focus-visible {
-  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
 body.erp-maintenance .mr-filter-chipwrap[open] > summary {
-  border-color: var(--color-border-focus, #1967d2);
+  border-color: var(--color-border-focus);
   background: var(--pill-blue-bg, #e8f0fe);
   color: var(--pill-blue-text, #1967d2);
 }
@@ -842,7 +842,7 @@ body.erp-maintenance .mr-filter-drop {
   margin-top: 4px;
   min-width: 200px;
   max-width: min(320px, 92vw);
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border, #dadce0);
   border-radius: 8px;
   padding: 8px 0;
@@ -886,12 +886,12 @@ body.erp-maintenance .mr-filter-drop__hint {
 }
 
 .erp-help-tip__btn:hover {
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   border-color: var(--color-border-input, #c4c7c5);
 }
 
 .erp-help-tip__btn:focus-visible {
-  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
@@ -901,7 +901,7 @@ body.erp-maintenance .mr-filter-drop__hint {
   left: 0;
   top: calc(100% + 6px);
   z-index: 300;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border, #e8eaed);
   border-radius: 6px;
   padding: 10px 14px;
@@ -926,7 +926,7 @@ body.erp-maintenance .qb-doc-title-row {
    ============================================================================= */
 body.erp-maintenance .erp-module-sidebar .erp-sb-group {
   border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
@@ -943,7 +943,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
   color: var(--color-text-label, #5f6368);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   border: none;
   border-bottom: 1px solid var(--color-border, var(--line, #e2e6ee));
   font-family: inherit;
@@ -951,7 +951,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__head:hover {
-  background: var(--color-bg-hover, #f8f9fa);
+  background: var(--color-bg-hover);
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__chev {
@@ -972,7 +972,7 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group.is-open .erp-sb-group__bo
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__body .erp-sb-link {
-  border-bottom: 1px solid var(--color-bg-hover, #f8f9fa);
+  border-bottom: 1px solid var(--color-bg-hover);
 }
 
 /* --- Rule 3 (reports in-page sidebar): native <details> groups --- */
@@ -1010,8 +1010,8 @@ body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__chev {
 
 /* --- Rule 16: upload center pill row --- */
 body.erp-maintenance .mr-upload-pills .subtab.active {
-  color: var(--color-border-focus, #1967d2);
-  border-bottom: 2px solid var(--color-border-focus, #1967d2);
+  color: var(--color-border-focus);
+  border-bottom: 2px solid var(--color-border-focus);
 }
 
 /* --- Rule 17: accounting board strip --- */
@@ -1021,7 +1021,7 @@ body.erp-maintenance .mr-acct-board {
 
 /* --- Rules 12 / 19: parts map container + tire dots (SVG keeps onclick ids) --- */
 body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
-  background: var(--color-bg-hover, #f8f9fa);
+  background: var(--color-bg-hover);
   border: 1px solid var(--color-border, #e8eaed);
   border-radius: 8px;
   padding: 16px;
@@ -1031,7 +1031,7 @@ body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
 }
 
 body.erp-maintenance .erp-main-body .erp-qb-parts-map-chrome .tire-svg rect {
-  fill: var(--color-bg-hover, #f8f9fa) !important;
+  fill: var(--color-bg-hover) !important;
   stroke: var(--color-border-input, #dadce0) !important;
   stroke-width: 1.5px !important;
 }
@@ -1045,11 +1045,11 @@ body.erp-maintenance .erp-main-body .tire-dot {
 
 body.erp-maintenance .erp-main-body .tire-dot:hover {
   fill: var(--pill-blue-bg, #e8f0fe);
-  stroke: var(--color-border-focus, #1967d2);
+  stroke: var(--color-border-focus);
 }
 
 body.erp-maintenance .erp-main-body .tire-dot.active {
-  fill: var(--color-border-focus, #1967d2);
+  fill: var(--color-border-focus);
   stroke: none;
 }
 
@@ -1058,7 +1058,7 @@ body.erp-maintenance #erpTrackingMap {
   border: 1px solid var(--color-border, #e8eaed);
   border-radius: 8px;
   overflow: hidden;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
 }
 
 /* =============================================================================
@@ -1109,7 +1109,7 @@ body.erp-maintenance #acct-transactions .qb-doc-closebtn {
   height: 32px;
   border: 1px solid var(--color-border-input, #dadce0);
   border-radius: 8px;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   color: var(--color-text-label, #5f6368);
   font-size: 18px;
   line-height: 1;
@@ -1118,7 +1118,7 @@ body.erp-maintenance #acct-transactions .qb-doc-closebtn {
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-closebtn:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-footer--ap {
@@ -1185,7 +1185,7 @@ body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-closebtn {
   height: 32px;
   border: 1px solid var(--color-border-input, #dadce0);
   border-radius: 8px;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   color: var(--color-text-label, #5f6368);
   font-size: 18px;
   line-height: 1;
@@ -1194,7 +1194,7 @@ body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-closebtn {
 }
 
 body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-closebtn:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance #acct-fuel-expense .qb-doc-footer--fuel {
@@ -1333,7 +1333,7 @@ body.erp-maintenance #acct-bill-pay .erp-bp-open-table {
 body.erp-maintenance #acct-bill-pay .mr-bp-table-wrap {
   border: 1px solid var(--color-border, #e8eaed);
   border-radius: 8px;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
 }
 
 body.erp-maintenance #acct-bill-pay .erp-bp-log-table {
@@ -1343,7 +1343,7 @@ body.erp-maintenance #acct-bill-pay .erp-bp-log-table {
 body.erp-maintenance #acct-bill-pay .mr-bp-log-wrap {
   border: 1px solid var(--color-border, #e8eaed);
   border-radius: 8px;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
 }
 
 /* =============================================================================
@@ -1410,7 +1410,7 @@ body.erp-maintenance .erp-reports-hub__tile {
   text-align: left;
   border: 1px solid var(--color-border-input, #dadce0);
   border-radius: 8px;
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   padding: 8px 10px;
   cursor: pointer;
   font-family: inherit;
@@ -1418,12 +1418,12 @@ body.erp-maintenance .erp-reports-hub__tile {
 }
 
 body.erp-maintenance .erp-reports-hub__tile:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   border-color: var(--color-border-input, #c4c7c5);
 }
 
 body.erp-maintenance .erp-reports-hub__tile--active {
-  border-color: var(--color-border-focus, #1967d2);
+  border-color: var(--color-border-focus);
   background: var(--pill-blue-bg, #e8f0fe);
   box-shadow: none;
 }
@@ -1629,7 +1629,7 @@ body.erp-maintenance .erp-reports-roadmap {
   padding: 6px 12px;
   border-radius: 8px;
   border: 1px solid var(--color-border, var(--line, #cbd5e1));
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   font: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -1648,7 +1648,7 @@ body.erp-maintenance .erp-reports-roadmap {
 
 .erp-pager__btn:focus-visible,
 .erp-pager__size-sel:focus-visible {
-  outline: 2px solid var(--color-border-focus, #1967d2);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
@@ -1666,7 +1666,7 @@ body.erp-maintenance .erp-reports-roadmap {
   padding: 5px 8px;
   border-radius: 8px;
   border: 1px solid var(--color-border, var(--line, #cbd5e1));
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
 }
 
 @keyframes erp-ui-spin {
@@ -1700,20 +1700,20 @@ button.primary.erp-btn--busy::after,
 .banking-page button.primary.erp-btn--busy::after,
 body.erp-maintenance button.btn--primary.erp-btn--busy::after {
   border-color: rgba(255, 255, 255, 0.35);
-  border-color: color-mix(in srgb, var(--color-bg-card, #fff) 35%, transparent);
-  border-top-color: var(--color-bg-card, #fff);
+  border-color: color-mix(in srgb, var(--color-bg-card) 35%, transparent);
+  border-top-color: var(--color-bg-card);
 }
 
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.erp-btn--busy::after {
   border-color: rgba(255, 255, 255, 0.35);
-  border-color: color-mix(in srgb, var(--color-bg-card, #fff) 35%, transparent);
-  border-top-color: var(--color-bg-card, #fff);
+  border-color: color-mix(in srgb, var(--color-bg-card) 35%, transparent);
+  border-top-color: var(--color-bg-card);
 }
 
 .settings-page button.primary.erp-btn--busy::after {
   border-color: rgba(255, 255, 255, 0.35);
-  border-color: color-mix(in srgb, var(--color-bg-card, #fff) 35%, transparent);
-  border-top-color: var(--color-bg-card, #fff);
+  border-color: color-mix(in srgb, var(--color-bg-card) 35%, transparent);
+  border-top-color: var(--color-bg-card);
 }
 
 /* =============================================================================
@@ -1733,8 +1733,8 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
 
 .erp-toast {
   pointer-events: auto;
-  background: var(--color-bg-card, #fff);
-  border: 1px solid var(--color-border, #e0e3e8);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 7px;
   padding: 10px 14px;
   font-size: 12px;
@@ -1781,7 +1781,7 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
   cursor: pointer;
   font-size: 15px;
   line-height: 1;
-  color: var(--color-text-label, #6b7385);
+  color: var(--color-text-label);
   flex-shrink: 0;
   padding: 0 2px;
 }
@@ -1862,7 +1862,7 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   margin: 0 0 12px;
   border-radius: var(--radius-card, 8px);
   border: 1px solid var(--color-border, var(--line, #e5e7eb));
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
   color: var(--color-text-body, var(--text, #334155));
   box-sizing: border-box;
 }
@@ -1920,8 +1920,8 @@ body.hub-page .erp-help-tip__btn:focus-visible {
   color: var(--pill-yellow-text, #8a5200);
 }
 .erp-connection-strip--muted {
-  background: var(--color-bg-header, #f1f3f4);
-  color: var(--color-text-label, #6b7385);
+  background: var(--color-bg-header);
+  color: var(--color-text-label);
 }
 
 /* Rule 0 / 13 — login-required banner (maintenance + banking) */
@@ -1988,7 +1988,7 @@ body.banking-page #authBanner.erp-auth-banner {
   flex-wrap: wrap;
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border, #e2e8f0);
-  background: var(--color-bg-card, #fff);
+  background: var(--color-bg-card);
 }
 .erp-dedicated-form-modal__bar-center {
   flex: 1;
