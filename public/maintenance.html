@@ -1101,6 +1101,15 @@
                           </span>
                         </div>
                         <div id="maintCostTotalMatch" class="mini-note maint-field-hint"></div>
+                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 200px">Reserved coordination strip under invoice total — host stays hidden while logic is stubbed.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Invoice / cost coordination host">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <code>updateMaintInvoiceCostCoordination(lines, rounded, hasAmt)</code> runs from <code>recalcMaintCostTotalFromLines()</code>; currently sets <code>#maintInvoiceCostSummary</code> <code>display:none</code> and clears <code>innerHTML</code> every pass (placeholder for future linked-txn / split guidance).
+                            </span>
+                          </span>
+                        </div>
                         <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
                       </div>
                     </div>
@@ -1223,6 +1232,15 @@
                           <span class="maint-qb-cost-totals-bar__val" id="maintCostTableTotalDisplay">$0.00</span></span
                         >
                       </div>
+                      <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
+                        <span style="min-width:0;flex:1 1 220px">Live reminder under the totals bar when cost lines carry dollars — copy is <code>textContent</code> only.</span>
+                        <span class="erp-help-tip">
+                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines subtotal hint">?</button>
+                          <span class="erp-help-tip__panel" role="tooltip">
+                            <code>recalcMaintCostTotalFromLines()</code> sets <code>#maintCostLinesSubtotal</code> <code>textContent</code> to the “Totals update live…” line when any line has amount; clears when empty. Also cleared in <code>resetMaintCostLines()</code> / <code>fillMaintCostLinesFromRecord()</code>.
+                          </span>
+                        </span>
+                      </div>
                       <div class="mini-note maint-field-hint" id="maintCostLinesSubtotal"></div>
 
                       <div class="maint-print-hide-qbo-link maint-qbo-header-grid" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-border)" title="Expense vs bill, bank, dates — vendor and line accounts are on the form above">
@@ -1268,6 +1286,15 @@
                     <div class="maint-subcard__head">Notes</div>
                     <div class="maint-subcard__body">
                   <input id="maintInvoicePdfInput" type="file" accept="application/pdf" class="maint-hidden-file" tabindex="-1" aria-hidden="true" />
+                  <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
+                    <span style="min-width:0;flex:1 1 220px">Parse status for maintenance PDF import — uses <strong>Parse PDF to lines</strong> / <code>parseMaintRecordInvoicePdf()</code>.</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance PDF parse status">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        <code>parseMaintRecordInvoicePdf()</code> sets <code>#maintInvoicePdfStatus</code> <code>textContent</code> (“Choose a PDF first.”, “Reading PDF…”, success line with hints, or cleared on error toast). <code>applyParsedExpenseInvoicePdf(..., 'maint')</code> mutates the form. <code>resetMaintenanceWorkOrderFormFields()</code> clears the status.
+                      </span>
+                    </span>
+                  </div>
                   <div id="maintInvoicePdfStatus" class="mini-note maint-field-hint"></div>
                   <textarea id="notesInput" class="qb-memo maint-notes" placeholder="Notes"></textarea>
                     </div>
@@ -2504,6 +2531,15 @@
               <label style="cursor:pointer;font-weight:500;margin-left:4px;white-space:nowrap"
                 ><input type="checkbox" id="maintAutoQboMasterRefresh" /> Refresh QBO master lists on each timer tick</label
               >
+            </div>
+            <div class="mini-note" style="margin:8px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+              <span style="min-width:0;flex:1 1 240px">Cross-WO/AP posting checks before QBO — warning line is plain <code>textContent</code> (first 8 issues).</span>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posting preflight host">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">
+                  <code>runPostingPreflight()</code> scans <code>erp.workOrders</code> and <code>erp.apTransactions</code> for money rows missing vendor / QBO item or account; sets <code>#maintPostingPreflight</code> <code>textContent</code> with a truncated list, <code>display:block</code>, or hides and clears when clean. Called from <code>loadAll()</code> after QBO status + sync alerts (same refresh tick as connection strip paint).
+                </span>
+              </span>
             </div>
             <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:var(--color-semantic-warning)"></div>
           </div>
