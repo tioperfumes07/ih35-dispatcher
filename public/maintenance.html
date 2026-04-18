@@ -2200,7 +2200,6 @@
                   </span>
                 </span>
               </div>
-              <p class="mini-note" style="margin:4px 0 0;color:var(--color-text-label);font-size:12px;line-height:1.45">Entry, imports, and ledger.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">View all</button>
                 <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">New fuel entry</button>
@@ -2216,7 +2215,6 @@
                   </span>
                 </span>
               </div>
-              <p class="mini-note" style="margin:4px 0 0;color:var(--color-text-label);font-size:12px;line-height:1.45">Lists, connection tests, and rollback tab.</p>
               <div class="acct-dash-card__btnrow">
                 <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
                 <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
@@ -10831,7 +10829,7 @@
 
     async function acctPreviewRelayFuelImport() {
       const input = document.getElementById('acctFuelRelayImportFile');
-      if (!input?.files?.[0]) return erpNotify('Choose a Relay CSV or Excel file first.');
+      if (!input?.files?.[0]) return erpNotify('Choose a Relay CSV or Excel file first.', 'warning');
       const fd = new FormData();
       fd.append('file', input.files[0]);
       try {
@@ -10841,12 +10839,12 @@
         acctPendingRelayFuelImportPreview = data;
         acctRenderRelayFuelImportPreview(data);
       } catch (e) {
-        erpNotify('Preview failed: ' + (e.message || String(e)));
+        erpNotify('Preview failed: ' + (e.message || String(e)), 'error');
       }
     }
 
     async function acctConfirmRelayFuelImport() {
-      if (!acctPendingRelayFuelImportPreview) return erpNotify('Run preview on a file first.');
+      if (!acctPendingRelayFuelImportPreview) return erpNotify('Run preview on a file first.', 'warning');
       const fuels = acctPendingRelayFuelImportPreview.fuelPurchases || [];
       const relays = acctPendingRelayFuelImportPreview.relayExpenses || [];
       const fuelPick = new Set(
@@ -10858,7 +10856,7 @@
       const fuelPayload = fuels.filter((_, i) => fuelPick.has(i));
       const relayPayload = relays.filter((_, i) => relayPick.has(i));
       if (!fuelPayload.length && !relayPayload.length) {
-        return erpNotify('Select at least one row to import.');
+        return erpNotify('Select at least one row to import.', 'warning');
       }
       const alreadyInQbo = !!document.getElementById('acctFuelRelayImportAlreadyQbo')?.checked;
       try {
@@ -10879,10 +10877,11 @@
         await loadFuelExpenseTab();
         erpNotify(
           `Saved ${data.savedFuel ?? 0} fuel line(s) and ${data.savedRelay ?? 0} Relay line(s).` +
-            (data.alreadyInQbo ? ' Marked as already in QuickBooks (staging).' : '')
+            (data.alreadyInQbo ? ' Marked as already in QuickBooks (staging).' : ''),
+          'success'
         );
       } catch (e) {
-        erpNotify('Confirm import failed: ' + (e.message || String(e)));
+        erpNotify('Confirm import failed: ' + (e.message || String(e)), 'error');
       }
     }
 
@@ -10895,7 +10894,7 @@
           /* ignore */
         }
       }
-      if (!acctLastConfirmedRelayFuelImportBatchId) return erpNotify('No confirmed import batch to undo yet.');
+      if (!acctLastConfirmedRelayFuelImportBatchId) return erpNotify('No confirmed import batch to undo yet.', 'warning');
       if (!confirm('Undo the last confirmed Relay/fuel import batch?')) return;
       try {
         const r = await fetch('/api/import/fuel/undo', {
@@ -12580,7 +12579,10 @@
       const rec = resolvedServiceMileageRecommendation(selectedUnit);
       const mi = rec.miles;
       if (mi == null || !Number.isFinite(mi)) {
-        erpNotify('No Samsara odometer (or saved fallback) for this unit yet. Choose Refresh in the top bar, or verify the asset in Samsara Cloud.');
+        erpNotify(
+          'No Samsara odometer (or saved fallback) for this unit yet. Choose Refresh in the top bar, or verify the asset in Samsara Cloud.',
+          'warning'
+        );
         return;
       }
       const el = document.getElementById('serviceMileageInput');
@@ -15225,14 +15227,14 @@
         const r = await fetch(`/api/qbo/post-record/${recordId}`, { method: 'POST' });
         const result = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(result.error || r.statusText);
-        erpNotify(`Posted to QuickBooks. Purchase ID: ${result.record?.qboPurchaseId || ''}`);
+        erpNotify(`Posted to QuickBooks. Purchase ID: ${result.record?.qboPurchaseId || ''}`, 'success');
         paintApTxnQboBanner(
           `Recorded in QuickBooks: Purchase ${escapeHtml(String(result.record?.qboPurchaseId || result.record?.qboEntityId || ''))}. Open Accounting → Maintenance expense transactions to verify online if needed.`,
           'success'
         );
         await loadAll();
       } catch (e) {
-        erpNotify(`QuickBooks posting failed: ${e.message}`);
+        erpNotify(`QuickBooks posting failed: ${e.message}`, 'error');
         await loadAll();
       }
     }
@@ -15264,7 +15266,7 @@
       const boxes = document.querySelectorAll('.erp-revert-cb:checked');
       const items = Array.from(boxes).map(cb => ({ kind: cb.dataset.kind, id: cb.dataset.id }));
       if (!items.length) {
-        erpNotify('Select at least one posted row.');
+        erpNotify('Select at least one posted row.', 'warning');
         return;
       }
       if (!confirm(`Delete ${items.length} transaction(s) in QuickBooks and clear posting here?`)) return;
@@ -15278,7 +15280,8 @@
         if (bad.length) {
           erpNotify(
             'Some reverts failed:\n' +
-              bad.slice(0, 8).map(b => `${b.kind} ${b.id}: ${b.error || ''}`).join('\n')
+              bad.slice(0, 8).map(b => `${b.kind} ${b.id}: ${b.error || ''}`).join('\n'),
+            'warning'
           );
         }
         await loadAll();
@@ -15300,7 +15303,7 @@
           kind === 'maintenance'
             ? `Removed ${out.removedWo || 0} work order(s).`
             : `Removed ${out.removedAp || 0} AP transaction row(s).`;
-        erpNotify(msg);
+        erpNotify(msg, 'success');
         await loadAll();
         loadErpImportBatchesUi();
       } catch (e) {
@@ -15316,7 +15319,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ importBatchId })
         });
-        erpNotify(`Removed ${out.removedFuel || 0} fuel + ${out.removedRelay || 0} relay row(s).`);
+        erpNotify(`Removed ${out.removedFuel || 0} fuel + ${out.removedRelay || 0} relay row(s).`, 'success');
         await loadAll();
         loadErpImportBatchesUi();
       } catch (e) {
@@ -18536,14 +18539,14 @@
     async function postApToQbo(apId) {
       try {
         const result = await j(`/api/qbo/post-ap/${apId}`, { method: 'POST' });
-        erpNotify(`Posted to QuickBooks. ${result.ap.qboEntityType} ID: ${result.ap.qboEntityId || ''}`);
+        erpNotify(`Posted to QuickBooks. ${result.ap.qboEntityType} ID: ${result.ap.qboEntityId || ''}`, 'success');
         paintApTxnQboBanner(
           `Recorded in QuickBooks: ${escapeHtml(String(result.ap?.qboEntityType || ''))} ${escapeHtml(String(result.ap?.qboEntityId || ''))}. Use Verify in QuickBooks on the card to confirm it still exists online.`,
           'success'
         );
         await loadAll();
       } catch (e) {
-        erpNotify(`QuickBooks posting failed: ${e.message}`);
+        erpNotify(`QuickBooks posting failed: ${e.message}`, 'error');
         await loadAll();
       }
     }
@@ -18552,12 +18555,12 @@
       const close = !opts || opts.close !== false;
       const vendorId = document.getElementById('apVendorQboId').value;
       if (!vendorId) {
-        erpNotify('Choose a QuickBooks vendor (type to match the list, then save).');
+        erpNotify('Choose a QuickBooks vendor (type to match the list, then save).', 'warning');
         return;
       }
       const unit = document.getElementById('apAssetUnit').value.trim();
       if (!unit) {
-        erpNotify('Unit / asset is required.');
+        erpNotify('Unit / asset is required.', 'warning');
         return;
       }
       const loadInv = document.getElementById('apLoadInvoiceNumber').value.trim();
@@ -18566,17 +18569,17 @@
       const lines = collectApFormWoLines();
 
       if (!lines.length) {
-        erpNotify('Add at least one line with an amount greater than zero.');
+        erpNotify('Add at least one line with an amount greater than zero.', 'warning');
         return;
       }
 
       for (const l of lines) {
         if (l.detailMode === 'category' && !l.qboAccountId) {
-          erpNotify('Each category line needs a resolved QuickBooks account (pick from list).');
+          erpNotify('Each category line needs a resolved QuickBooks account (pick from list).', 'warning');
           return;
         }
         if (l.detailMode === 'item' && !l.qboItemId) {
-          erpNotify('Each item line needs a resolved QuickBooks item.');
+          erpNotify('Each item line needs a resolved QuickBooks item.', 'warning');
           return;
         }
       }
@@ -18636,14 +18639,14 @@
           method: 'POST',
           headers: { ...erpWriteHeaders() }
         });
-        erpNotify(`Posted to QuickBooks. ${result.workOrder?.qboEntityType || ''} ID: ${result.workOrder?.qboEntityId || ''}`);
+        erpNotify(`Posted to QuickBooks. ${result.workOrder?.qboEntityType || ''} ID: ${result.workOrder?.qboEntityId || ''}`, 'success');
         paintApTxnQboBanner(
           `Recorded in QuickBooks: ${escapeHtml(String(result.workOrder?.qboEntityType || ''))} ${escapeHtml(String(result.workOrder?.qboEntityId || ''))}. Use Verify in QuickBooks on the card to confirm it still exists online.`,
           'success'
         );
         await loadAll();
       } catch (e) {
-        erpNotify(`QuickBooks posting failed: ${e.message}`);
+        erpNotify(`QuickBooks posting failed: ${e.message}`, 'error');
         await loadAll();
       }
     }

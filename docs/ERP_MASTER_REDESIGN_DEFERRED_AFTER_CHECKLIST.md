@@ -22,7 +22,7 @@ The three **large-table** themes below shipped in **`public/maintenance.html`** 
 
 - **Upload center** — **partial (2026-04-18):** duplicate **`mr-upload-panel-desc`** removed (**219–220**); nested **`details.mr-upload-help`** collapsed except one **Connections → Samsara write scopes** accordion (**222**). Remaining: dense **`mini-note`** spot-checks outside upload.
 - **Reports hub** — **partial (2026-04-18, changelog 221):** **Settlement** strip, **QBO activity** empty state, **Maintenance detailed** filter lead; **`repMaintBody` / `repOverviewBody`** etc. still benefit from tip-first passes where copy is dense. Remaining: spot-check other tabs after sign-off.
-- **Accounting / settlement / fuel** — any remaining dense **`mini-note`** blocks not yet converted (spot-check after checklist sign-off).
+- **Accounting / settlement / fuel** — **partial (changelog 223):** accounting **dash** duplicate leads trimmed; settlement/fuel tabs still worth a quick pass before sign-off.
 
 ---
 
@@ -65,3 +65,4 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — Upload bank/AP/history + Samsara success toasts:** Remaining upload cards + **`erpNotify` `success`** on Samsara renames / TMS miles (**changelog 220**).
 - **2026-04-18 — Reports Rule 22 + maintenance QBO toasts:** Reports hub copy trim + explicit **`erpNotify`** types on maintenance save when QBO post fails or is skipped (**changelog 221**).
 - **2026-04-18 — Upload `details.mr-upload-help` collapse:** Bank / Comdata / Fuel accordions removed; AP + maint template downloads inline; Connections advanced block shortened (**changelog 222**).
+- **2026-04-18 — Accounting dash + `erpNotify` batch:** Dash card sublines removed; typed toasts on fuel import / QBO post / revert / undo / AP validation / Samsara mileage (**changelog 223**).
