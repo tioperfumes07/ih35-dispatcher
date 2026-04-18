@@ -1043,6 +1043,15 @@
                       <div class="maint-field-cell">
                         <span class="qb-l">Load #</span>
                         <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / settlement #" autocomplete="off" />
+                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 200px">TMS suggestion or PDF unit note — line under the field clears when you type a load #.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Load # hint host">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <code>applyLoadNumberSuggestion()</code> sets <code>#recordLoadNumberHint</code> <code>textContent</code> from <code>computeSuggestedLoadNumber()</code> (open TMS load for <code>selectedUnit</code>, else delivered / first row) only when the input is empty; clears when no match. <code>applyParsedExpenseInvoicePdf(..., 'maint')</code> may set <code>textContent</code> for PDF unit vs current unit. <code>resetMaintenanceWorkOrderFormFields()</code> clears the host.
+                            </span>
+                          </span>
+                        </div>
                         <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
                       </div>
                       <div class="maint-field-cell">
@@ -1082,6 +1091,15 @@
                         <span class="qb-l">Invoice total</span>
                         <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Sum of line amounts" oninput="renderMaintAsideWoSummary()" />
                         <label class="maint-lock-inline"><input type="checkbox" id="costTotalLock" /> Lock total</label>
+                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 200px">Compares category + item line sums to invoice total; uses <code>innerHTML</code> when ✓/✗ markup is shown.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Invoice total vs lines">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <code>updateMaintCostTotalMatchUi(lineSum, hasLineMoney)</code> drives <code>#maintCostTotalMatch</code>: empty <code>textContent</code> when no line money; prompt when total missing; <code>innerHTML</code> with green ✓ or red ✗ when <code>#costInput</code> is within <strong>$0.02</strong> of <code>sumMaintCostLineAmounts()</code>. Called from <code>recalcMaintCostTotalFromLines()</code>. Cleared in <code>resetMaintCostLines()</code> / <code>fillMaintCostLinesFromRecord()</code>.
+                            </span>
+                          </span>
+                        </div>
                         <div id="maintCostTotalMatch" class="mini-note maint-field-hint"></div>
                         <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
                       </div>
@@ -1092,6 +1110,15 @@
                         <div class="maint-field-cell__row">
                           <input id="maintNewCatalogServiceName" class="qb-in maint-field" placeholder="New catalog name" autocomplete="off" />
                           <button type="button" class="btn btn--small" onclick="addCatalogServiceType()">Add</button>
+                        </div>
+                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 200px">Feedback for <strong>Add</strong> on new catalog names — all <code>textContent</code> on the host below.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Catalog admin hint">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <code>addCatalogServiceType()</code> sets <code>#maintCatalogServiceHint</code> <code>textContent</code> for validation (<strong>Enter a name first.</strong>), success after <code>POST /api/maintenance/service-types</code>, or caught errors; clears at start. <code>resetMaintenanceWorkOrderFormFields()</code> clears on new form.
+                            </span>
+                          </span>
                         </div>
                         <div id="maintCatalogServiceHint" class="mini-note maint-field-hint"></div>
                       </div>
