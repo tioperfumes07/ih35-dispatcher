@@ -447,3 +447,20 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/app-theme.css`** — **`#woLines .wo-line-grid`** auto-fill override now ends with **`minmax(0, 1fr)`** (was trailing **`1fr`**). **`maint-cost-lines-head`**, **`maint-cost-line__primary`**, and the **`max-width: 1100px`** shared override use **`minmax(min(100%, …), minmax(0, 1fr))`** (and **`minmax(0, 2.2fr)`** for the description column) so cost-line grids behave like the other hardened maintenance tracks on narrow widths.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-28
+
+- **Rule 1:** **`public/maintenance.html`** — Inline flex hosts (**`#acctBoardStrip`** header row, **`#apTxnQboBanner`**, **`#expHistQboBanner`**) get **`min-width:0`** so title + help tips / banner rows shrink inside the accounting column.
+- **`paintQboStatusBanner`** / **`paintApTxnQboBanner`** set **`el.style.minWidth = '0'`** when showing a banner so scripted **`display`** toggles keep the same shrink behavior as CSS.
+
+**Files:** `public/maintenance.html`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-29
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#acctBoardStrip`** / **`.mr-acct-board`** and **`.mr-filter-bar__grow`** get **`min-width: 0`** so accounting board chrome and filter rows (including inline **`display:flex`** blocks) shrink inside the main column without relying on each inline style.
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
