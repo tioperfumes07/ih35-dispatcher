@@ -768,6 +768,15 @@
                   </div>
                   <button type="button" class="btn btn--small" onclick="closeMaintAssetStatusPanel()">Done</button>
                 </div>
+                <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                  <span style="min-width:0;flex:1 1 200px">The form below is rebuilt when you pick a unit; <strong>Save status</strong> / <strong>Save roster</strong> persist to the server — <strong>Done</strong> only closes this sheet.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status sheet APIs">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderSelectedUnit()</code> replaces <code>#maintAssetStatusPanelBody</code> with the status picker, optional note, and active/retired roster row. <code>saveAssetStatus()</code> → <code>POST /api/maintenance/asset-status</code> (<code>unit</code>, <code>status</code>, <code>note</code>). <code>saveAssetFleetActive()</code> → <code>POST /api/maintenance/asset-active</code> with <code>active</code> plus <code>erpWriteHeaders()</code> where configured. Options follow <strong>Lists &amp; catalogs → Operational status</strong>. Successful saves call <code>loadAll()</code> and status save closes the panel.
+                    </span>
+                  </span>
+                </div>
                 <div id="maintAssetStatusPanelBody"></div>
               </div>
               <div id="selectedUnitInfo" class="hidden" aria-hidden="true"></div>
@@ -2545,7 +2554,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How the draft total is calculated">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Adds up <strong>Pay</strong> amounts for rows with the checkbox on. Each amount is capped at that bill's open balance when you tab away (<strong>Remaining</strong> updates with the row). Vendor and selection rules for this grid are in the <strong>?</strong> on the hint line above.
+                    Adds up <strong>Pay</strong> amounts for every checked bill in the loaded set (including other pages of the open-bills table). Each amount is capped at that bill's open balance when you tab away (<strong>Remaining</strong> updates with the row). Vendor and selection rules for this grid are in the <strong>?</strong> on the hint line above.
                   </span>
                 </span>
               </div>
@@ -9629,7 +9638,8 @@
       const statusEl = document.getElementById('bpOpenBillsStatus');
       if (statusEl) {
         if (!allN) {
-          statusEl.textContent = 'No open bills for this filter.';
+          const hint = String(window.__bpOpenBillsEmptyHint || '').trim();
+          statusEl.textContent = hint || 'No open bills for this filter.';
         } else if (!total) {
           statusEl.textContent = `0 match filter (${allN} loaded).`;
         } else {
@@ -9642,6 +9652,7 @@
     function bpRowTogglePay(chk) {
       const tr = chk.closest('tr');
       if (!tr) return;
+      const billId = String(tr.getAttribute('data-bill-id') || '').trim();
       const inp = tr.querySelector('.bp-pay-amt');
       const open = Number(tr.dataset.openBalance || tr.dataset.balance || '0') || 0;
       if (!inp) return;
@@ -9649,6 +9660,7 @@
         inp.disabled = false;
         inp.value = (Math.round(open * 100) / 100).toFixed(2);
         bpUpdateRowRemainder(tr, true);
+        bpOpenBillsSelectionWrite(billId, true, inp.value);
       } else {
         inp.value = '';
         inp.disabled = true;
@@ -9656,6 +9668,7 @@
         const st = tr.querySelector('.bp-pay-status');
         if (cell) cell.textContent = '—';
         if (st) st.textContent = '—';
+        bpOpenBillsSelectionWrite(billId, false, '');
       }
       bpRefreshSelectionTotal();
     }
@@ -9663,6 +9676,7 @@
     function bpFillMax(btn) {
       const tr = btn && btn.closest ? btn.closest('tr') : null;
       if (!tr) return;
+      const billId = String(tr.getAttribute('data-bill-id') || '').trim();
       const chk = tr.querySelector('.bp-pay-chk');
       const open = Number(tr.dataset.openBalance || 0) || 0;
       const inp = tr.querySelector('.bp-pay-amt');
@@ -9672,6 +9686,7 @@
         inp.value = (Math.round(open * 100) / 100).toFixed(2);
       }
       bpUpdateRowRemainder(tr, true);
+      bpOpenBillsSelectionWrite(billId, true, inp ? inp.value : '');
       bpRefreshSelectionTotal();
     }
 
@@ -9706,29 +9721,47 @@
 
     function bpOnPayAmtInput(inp) {
       const tr = inp.closest('tr');
-      if (tr) bpUpdateRowRemainder(tr, false);
+      if (tr) {
+        const billId = String(tr.getAttribute('data-bill-id') || '').trim();
+        const chk = tr.querySelector('.bp-pay-chk');
+        if (chk && chk.checked && billId) {
+          bpOpenBillsSelectionWrite(billId, true, String(inp.value || ''));
+        }
+        bpUpdateRowRemainder(tr, false);
+      }
       bpRefreshSelectionTotal();
     }
 
     function bpOnPayAmtBlur(inp) {
       const tr = inp.closest('tr');
-      if (tr) bpUpdateRowRemainder(tr, true);
+      if (tr) {
+        bpUpdateRowRemainder(tr, true);
+        const billId = String(tr.getAttribute('data-bill-id') || '').trim();
+        const chk = tr.querySelector('.bp-pay-chk');
+        const inpEl = tr.querySelector('.bp-pay-amt');
+        if (chk && chk.checked && billId && inpEl) {
+          bpOpenBillsSelectionWrite(billId, true, inpEl.value);
+        }
+      }
       bpRefreshSelectionTotal();
     }
 
     function bpRefreshSelectionTotal() {
       const el = document.getElementById('bpSelectionTotal');
       if (!el) return;
+      const bills = bpGetOpenBillsList();
+      const map = bpEnsureOpenBillsSelectionMap();
       let t = 0;
-      document.querySelectorAll('#bpOpenBillsBody tr[data-bill-id]').forEach(tr => {
-        const chk = tr.querySelector('.bp-pay-chk');
-        if (!chk || !chk.checked) return;
-        const open = Number(tr.dataset.openBalance || 0) || 0;
-        let pay = Number(String(tr.querySelector('.bp-pay-amt')?.value || '').trim());
+      for (const b of bills) {
+        const billId = String(b.id || '').trim();
+        const st = map.get(billId);
+        if (!st || !st.checked) continue;
+        const open = Number(b.balance) || 0;
+        let pay = Number(String(st.payAmount || '').trim());
         if (!Number.isFinite(pay)) pay = 0;
         pay = Math.max(0, Math.min(open, Math.round(pay * 100) / 100));
         t += pay;
-      });
+      }
       el.textContent = `Draft payment total: $${(Math.round(t * 100) / 100).toFixed(2)}`;
     }
 
@@ -9763,10 +9796,16 @@
     }
 
     function bpMountOpenBillsInTable(bills) {
-      const body = document.getElementById('bpOpenBillsBody');
-      if (!body) return;
-      body.innerHTML = bpHtmlForOpenBillRows(bills);
-      bpRefreshSelectionTotal();
+      const list = Array.isArray(bills) ? bills : [];
+      window.__bpOpenBills = list;
+      const map = bpEnsureOpenBillsSelectionMap();
+      const alive = new Set(list.map(b => String(b.id || '').trim()).filter(Boolean));
+      for (const id of [...map.keys()]) {
+        if (!alive.has(id)) map.delete(id);
+      }
+      if (!window.__bpOpenBillsPager) window.__bpOpenBillsPager = { page: 1, pageSize: 25 };
+      window.__bpOpenBillsPager.page = 1;
+      bpRenderOpenBillsPage();
     }
 
     async function bpLoadOpenBillByQuickId() {
@@ -9779,10 +9818,10 @@
         return;
       }
       if (statusEl) statusEl.textContent = 'Loading bill from QuickBooks…';
+      window.__bpOpenBillsEmptyHint = '';
       try {
         const data = await j('/api/qbo/open-bills?billId=' + encodeURIComponent(billId));
         const bills = data.bills || [];
-        window.__bpOpenBills = bills;
         const s = document.getElementById('bpOpenBillsSearch');
         const m = document.getElementById('bpOpenBillsMin');
         const live = document.getElementById('bpQbLiveSearch');
@@ -9806,6 +9845,7 @@
           msg = `Loaded ${bills.length} bill row(s).`;
         }
         if (statusEl) statusEl.textContent = msg;
+        window.__bpOpenBillsEmptyHint = bills.length ? '' : msg;
         bpMountOpenBillsInTable(bills);
         if (bills.length === 1 && body) {
           const tr = body.querySelector('tr[data-bill-id]');
@@ -9814,7 +9854,16 @@
         }
       } catch (e) {
         if (statusEl) statusEl.textContent = e.message || String(e);
+        window.__bpOpenBills = [];
+        bpEnsureOpenBillsSelectionMap().clear();
+        const host = document.getElementById('bpOpenBillsPagerHost');
         if (body) body.innerHTML = '<tr><td colspan="10" class="mini-note">Load failed.</td></tr>';
+        if (host && typeof erpPagerRender === 'function') {
+          erpPagerRender(host, { page: 1, pageSize: window.__bpOpenBillsPager?.pageSize || 25, total: 0 }, () => {});
+        } else if (host) {
+          host.hidden = true;
+          host.innerHTML = '';
+        }
         bpRefreshSelectionTotal();
       }
     }
@@ -9840,7 +9889,6 @@
           const idSet = await erpEnsureDriverPayeeVendorIds();
           bills = bills.filter(b => idSet.has(String(b.vendorId || '').trim()));
         }
-        window.__bpOpenBills = bills;
         // Reset client-side filters after reload.
         const s = document.getElementById('bpOpenBillsSearch');
         const m = document.getElementById('bpOpenBillsMin');
@@ -9851,7 +9899,9 @@
             statusEl.textContent = window.__accountingDriverBillPayMode
               ? 'No open bills matched linked driver payee QuickBooks vendors. Use Lists → Vendors & driver payees to link drivers.'
               : 'No open bills for this filter.';
+            window.__bpOpenBillsEmptyHint = statusEl.textContent;
           } else {
+            window.__bpOpenBillsEmptyHint = '';
             statusEl.textContent = `${bills.length} open bill(s) from QuickBooks${vendorId ? ' (vendor filter)' : ''}${liveQ ? ' (search applied)' : ''}${window.__accountingDriverBillPayMode ? ' — driver payees only' : ''}.`;
           }
         }
@@ -9859,39 +9909,25 @@
         bpMountOpenBillsInTable(bills);
       } catch (e) {
         if (statusEl) statusEl.textContent = e.message || String(e);
+        window.__bpOpenBills = [];
+        window.__bpOpenBillsEmptyHint = '';
+        bpEnsureOpenBillsSelectionMap().clear();
+        const host = document.getElementById('bpOpenBillsPagerHost');
         if (body) body.innerHTML = '<tr><td colspan="10" class="mini-note">Load failed.</td></tr>';
+        if (host && typeof erpPagerRender === 'function') {
+          erpPagerRender(host, { page: 1, pageSize: window.__bpOpenBillsPager?.pageSize || 25, total: 0 }, () => {});
+        } else if (host) {
+          host.hidden = true;
+          host.innerHTML = '';
+        }
         bpRefreshSelectionTotal();
       }
     }
 
     function bpApplyOpenBillsFilter() {
-      const rows = Array.from(document.querySelectorAll('#bpOpenBillsBody tr[data-bill-id]'));
-      const q = String(document.getElementById('bpOpenBillsSearch')?.value || '').trim().toLowerCase();
-      const minRaw = String(document.getElementById('bpOpenBillsMin')?.value || '').trim();
-      const min = minRaw === '' ? null : Number(minRaw);
-      let shown = 0;
-      for (const tr of rows) {
-        const open = Number(tr.dataset.openBalance || 0) || 0;
-        const qboBillId = String(tr.getAttribute('data-bill-id') || '');
-        const vendor = String(tr.children?.[1]?.textContent || '');
-        const doc = String(tr.children?.[2]?.textContent || '');
-        const txn = String(tr.children?.[4]?.textContent || '');
-        const due = String(tr.children?.[5]?.textContent || '');
-        const hay = `${vendor} ${doc} ${qboBillId} ${txn} ${due} ${open}`.toLowerCase();
-        const okQ = !q || hay.includes(q);
-        const okMin = min == null || (Number.isFinite(min) && open >= min);
-        const ok = okQ && okMin;
-        tr.style.display = ok ? '' : 'none';
-        if (ok) shown++;
-      }
-      const statusEl = document.getElementById('bpOpenBillsStatus');
-      if (statusEl && Array.isArray(window.__bpOpenBills)) {
-        const total = window.__bpOpenBills.length;
-        statusEl.textContent = total
-          ? `${shown} shown of ${total} open bill(s).`
-          : 'No open bills for this filter.';
-      }
-      bpRefreshSelectionTotal();
+      if (!window.__bpOpenBillsPager) window.__bpOpenBillsPager = { page: 1, pageSize: 25 };
+      window.__bpOpenBillsPager.page = 1;
+      bpRenderOpenBillsPage();
     }
 
     function resolveFuelExpBank() {
@@ -11361,18 +11397,17 @@
         erpNotify('Choose the pay-from account (QuickBooks bank or card).');
         return;
       }
-      const rows = Array.from(document.querySelectorAll('#bpOpenBillsBody tr[data-bill-id]'));
+      const bills = bpGetOpenBillsList();
+      const map = bpEnsureOpenBillsSelectionMap();
       const lines = [];
       const vendors = new Set();
-      for (const tr of rows) {
-        const chk = tr.querySelector('.bp-pay-chk');
-        if (!chk || !chk.checked) continue;
-        bpUpdateRowRemainder(tr, true);
-        const billId = tr.getAttribute('data-bill-id');
-        const vendorId = tr.getAttribute('data-vendor-id');
-        const open = Number(tr.dataset.openBalance || 0) || 0;
-        const raw = String(tr.querySelector('.bp-pay-amt')?.value || '').trim();
-        let amt = Number(raw);
+      for (const b of bills) {
+        const billId = String(b.id || '').trim();
+        const st = map.get(billId);
+        if (!st || !st.checked) continue;
+        const vendorId = String(b.vendorId || '').trim();
+        const open = Number(b.balance) || 0;
+        let amt = Number(String(st.payAmount || '').trim());
         if (!Number.isFinite(amt)) amt = 0;
         amt = Math.max(0, Math.min(open, Math.round(amt * 100) / 100));
         if (!(amt > 0)) {
