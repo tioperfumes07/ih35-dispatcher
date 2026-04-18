@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 /**
  * Offline Rule 0 check (no server): reads Agent B files from disk and exits 1 if forbidden substrings appear.
- * Run: `npm run rule0:check`
+ * Run: `npm run rule0:check`. Full gate with HTTP smoke (server must listen): `npm run qa:automated`.
+ * In CI (`CI=true`), success logs stay minimal. Locally, set `RULE0_QUIET=1` to hide the release tip.
+ * `npm run qa:automated` invokes this script with `--skip-release-tip` so the tip is not printed twice.
  */
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ruleZeroForbiddenHits } from './rule-zero-agent-b.mjs';
+
+const skipReleaseTip = process.argv.includes('--skip-release-tip');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FILES = [
@@ -34,6 +38,17 @@ for (const file of FILES) {
   } else {
     console.log(`rule0:check OK ${rel}`);
   }
+}
+
+if (
+  !failed &&
+  !skipReleaseTip &&
+  process.env.CI !== 'true' &&
+  process.env.RULE0_QUIET !== '1'
+) {
+  console.log(
+    'rule0:check: OK — with the server up, run `npm run smoke` or `npm run qa:automated` (Rule 0 + smoke) before release.'
+  );
 }
 
 process.exit(failed ? 1 : 0);

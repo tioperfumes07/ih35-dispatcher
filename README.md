@@ -31,7 +31,7 @@ Operations hub for **dispatch / TMS**, **fuel & route planning**, **maintenance 
 
 Use these before a release or when validating the ERP shell (see `docs/ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md` for full manual QA).
 
-1. **`npm run rule0:check`** — Agent B Rule 0 guard on `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, and `public/maintenance.html`.
+1. **`npm run rule0:check`** — Agent B Rule 0 guard on `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, and `public/maintenance.html`. After success (outside CI), the script prints a one-line reminder to run smoke; set **`RULE0_QUIET=1`** to hide it. **`npm run qa:automated`** runs the same check with a flag so that reminder is not duplicated before smoke.
 2. **Start the server** — `npm start` or `npm run dev`. Listen port is **`process.env.PORT` or `3400`** unless your `.env` sets otherwise.
 3. **`npm run smoke`** — `scripts/system-smoke.mjs` hits health APIs and static ERP pages (expects `127.0.0.1` on the same port). **`npm run qa:automated`** runs steps **1** then **3** in one command.
 
