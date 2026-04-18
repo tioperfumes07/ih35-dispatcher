@@ -455,7 +455,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this table">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Samsara HOS: <strong>on duty, driving, sleeper, yard move</strong>, etc. Off duty <strong>without</strong> a vehicle hidden; off duty <strong>with</strong> vehicle shown. Token needs <strong>Read ELD Compliance Settings (US)</strong>.
+                Live Samsara duties — off-duty <strong>without</strong> a truck hidden; off-duty <strong>with</strong> truck shown. Token scope: <strong>Read ELD Compliance Settings (US)</strong>.
               </span>
             </span>
           </div>
@@ -466,27 +466,27 @@
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use search (right) to narrow by driver or vehicle. Saved tag chips will mirror Samsara when enabled.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Search (right) for driver/vehicle; tag chips when Samsara exposes them.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Row values follow the live Samsara HOS clock payload (duty, vehicle, timers, violations).</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Row values from live Samsara HOS payload (duty, vehicle, timers, violations).</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Duty status <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Use the <strong>Show</strong> list beside this row to filter duty states (relevant, active only, off duty / sleeper, or all rows).</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty states: use <strong>Show</strong> beside this row (relevant / active / off-duty / all).</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Violations <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Rows with active violations use the table tint from the legend above.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Active violations → row tint matches legend above.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Active drivers <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Choose <strong>Show → Active duties only</strong> to match that lens.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Same lens as <strong>Show → Active duties only</strong>.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Vehicle assignment <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Relevant</strong> hides off-duty rows without a truck; other modes show the full Samsara window.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Relevant</strong> hides off-duty without truck; other modes show full Samsara window.</p></div>
               </details>
               <div class="mr-filter-bar__show">
                 <label class="mini-note" for="safetyHosDutyFilter" style="margin:0">Show</label>
@@ -508,7 +508,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS clocks table behavior">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyHos()</code> normalizes each row (<code>normalizeHosClock</code>), applies <code>applySafetyHosDutyMode</code> for the <strong>Show</strong> filter, then replaces <code>#safetyHosBody</code> with the paged slice. <code>safetyHosPager</code> + <code>erpPagerRender</code> control pages; <code>#safetyHosMeta</code> summarizes match count vs total loaded rows. Does not write back to Samsara — refresh the board when clocks look stale.
+                <code>renderSafetyHos()</code>: <code>normalizeHosClock</code> → <code>applySafetyHosDutyMode</code> (<strong>Show</strong>) → paged <code>#safetyHosBody</code>; <code>safetyHosPager</code> + <code>#safetyHosMeta</code>. Read-only — refresh board if clocks look stale.
               </span>
             </span>
           </div>
@@ -567,7 +567,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Active / in service grids">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyActivePanels()</code> applies <code>applySafetyHosDutyMode</code> with <code>#safetyActiveDutyFilter</code>, splits into active vs in-service rows, then replaces <code>#safetyActiveBody</code> and <code>#safetyInServiceBody</code> via <code>innerHTML</code> with paged slices. <code>safetyActivePager</code> / <code>safetyInServicePager</code> + <code>erpPagerRender</code>; <code>#safetyActiveMeta</code> / <code>#safetyInServiceMeta</code> show counts. Read-only Samsara mirror.
+                <code>renderSafetyActivePanels()</code>: <code>applySafetyHosDutyMode</code> + <code>#safetyActiveDutyFilter</code> → split active vs in-service → paged <code>#safetyActiveBody</code> / <code>#safetyInServiceBody</code> + pagers + <code>#safetyActiveMeta</code> / <code>#safetyInServiceMeta</code>. Read-only.
               </span>
             </span>
           </div>
@@ -600,7 +600,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="In service column">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>Driving</strong>, <strong>yard move</strong>, or <strong>on duty</strong> with a vehicle per Samsara HOS — narrower than the left column. See the tab intro <strong>?</strong> for full duty definitions.
+                      <strong>Driving</strong>, <strong>yard move</strong>, or <strong>on duty</strong> with vehicle — subset of left column. Tab intro <strong>?</strong> for full duty defs.
                     </span>
                   </span>
                 </div>
