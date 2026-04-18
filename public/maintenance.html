@@ -181,7 +181,7 @@
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Home overview" onclick="openSection('dashboard', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Home</span>
       </button>
-      <button type="button" class="erp-icon-nav__btn nav-btn active" data-section="maintenance" title="Maintenance — work orders, fleet, shop" onclick="openSection('maintenance', this)">
+      <button type="button" class="erp-icon-nav__btn nav-btn active" data-section="maintenance" title="Maintenance — work orders, fleet, shop" aria-current="true" onclick="openSection('maintenance', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maintenance</span>
       </button>
       <a class="erp-icon-nav__link" href="/dispatch.html" title="Loads &amp; dispatch (TMS board)">
@@ -4053,7 +4053,7 @@
           </div>
 
           <div class="nav-dropdown" style="display:inline-block">
-            <button type="button" class="subtab nav-dropdown-trigger" id="repOpsDdTrigger" onclick="event.stopPropagation()">Operations ▾</button>
+            <button type="button" class="subtab nav-dropdown-trigger" id="repOpsDdTrigger" onclick="event.stopPropagation()" aria-haspopup="true">Operations ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
               <button type="button" class="nav-dd-item" data-rep-k="ifta miles fuel tax jurisdiction compliance" onclick="openReportsTab('rep-ifta', document.getElementById('repOpsDdTrigger'))">IFTA &amp; compliance</button>
               <button
