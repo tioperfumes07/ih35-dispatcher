@@ -539,6 +539,7 @@ body.erp-maintenance .acct-dash-card__btnrow {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+  min-width: 0;
 }
 
 body.erp-maintenance .acct-dash-btn {
@@ -571,6 +572,7 @@ body.erp-maintenance .acct-dash-tools-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance .acct-dash-tools-grid a,
@@ -619,6 +621,7 @@ body.erp-maintenance #acct-transactions .ap-exp-row {
   align-items: flex-end;
   gap: 12px 16px;
   margin-bottom: 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance #acct-transactions .ap-exp-row--pdf {
@@ -683,6 +686,7 @@ body.erp-maintenance #acct-transactions .ap-lines-section-label {
   font-weight: 500;
   font-size: 12px;
   color: var(--color-text-body);
+  min-width: 0;
 }
 
 body.erp-maintenance #acct-transactions .ap-attach-head {
@@ -690,6 +694,7 @@ body.erp-maintenance #acct-transactions .ap-attach-head {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 body.erp-maintenance .fuel-manual-doc-title {
@@ -697,6 +702,7 @@ body.erp-maintenance .fuel-manual-doc-title {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 body.erp-maintenance .erp-qb-cost-shell__label--with-tip {
@@ -704,6 +710,7 @@ body.erp-maintenance .erp-qb-cost-shell__label--with-tip {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 /* --- Toast --- */
@@ -785,6 +792,7 @@ body.erp-maintenance .mr-upload-tabbar {
   gap: 0;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance .mr-upload-tabbar .subtab {
@@ -922,6 +930,7 @@ body.erp-maintenance .mr-upload-pickline {
   flex-wrap: wrap;
   margin: 10px 0;
   font-size: 13px;
+  min-width: 0;
 }
 
 body.erp-maintenance .mr-upload-pickline__name {
