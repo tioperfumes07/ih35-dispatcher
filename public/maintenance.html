@@ -1778,6 +1778,15 @@
                 </div>
                 <button type="button" class="btn" onclick="loadSecurityCatalogUi()">Refresh alerts</button>
               </div>
+              <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 200px">Use <strong>Refresh alerts</strong> after changing the window or when the card below looks stale — same feed as <strong>Maintenance → R&amp;M Status</strong>.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop integrity alerts">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Calls <code>GET /api/maintenance/security-alerts</code> with your <strong>Window (days)</strong> query; <code>loadSecurityCatalogUi</code> runs <code>renderSecurityAlerts</code> for both <code>#securityAlertsBody</code> (this panel) and <code>#maintSecurityAlertsBody</code> (R&amp;M tab) so filters stay aligned. This panel uses <code>integritySearch</code> / <code>integritySeverity</code>; errors replace the box below with a short message.
+                  </span>
+                </span>
+              </div>
               <div id="securityAlertsBody" class="mini-note">Loading alerts…</div>
             </div>
           </div>
@@ -3932,15 +3941,6 @@
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Fleet & Samsara">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
                     <strong>Assets</strong> and live GPS come from <strong>Samsara</strong>. With a write-scoped token and admin (or ERP write secret), you can push vehicle/driver name updates from here; otherwise use Samsara Cloud.
-                  </span>
-                </span>
-              </div>
-              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Rename forms call the server with your session + write headers; use <strong>Open Vehicle Tracking → Assets</strong> to copy ids from live data before POSTing.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara rename API paths">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Vehicle: <code>POST /api/integrations/samsara/vehicle/&lt;id&gt;</code> with JSON <code>{"name":"…"}</code>. Driver: <code>POST /api/integrations/samsara/driver/&lt;id&gt;</code> with the same body shape. Both require a write-capable Samsara token (see intro above); on success the workspace runs a light <strong>reload</strong> so boards pick up new labels.
                   </span>
                 </span>
               </div>
