@@ -370,6 +370,9 @@ main,
   font-weight: 650;
   font-size: 0.92rem;
   letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .qb-picker-item__meta {
   font-size: 0.78rem;
@@ -858,6 +861,7 @@ body.erp-maintenance .title {
   margin-right: auto;
   letter-spacing: -0.03em;
   color: var(--color-text-primary);
+  min-width: 0;
 }
 
 body.erp-maintenance .btn,
