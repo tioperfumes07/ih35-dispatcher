@@ -4,6 +4,8 @@
 
 **Companion docs:** [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md) (rule mapping + changelog) · [`ERP_MASTER_REDESIGN_FINAL_REPORT.md`](./ERP_MASTER_REDESIGN_FINAL_REPORT.md) (risks, §7 pointer) · [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) (items **not** required for “checklist done” until product picks them up).
 
+**Fast path (2026-04-18):** **Rule 10** (shared expense-line module) and **optional DEFERRED §2** Rule 22 copy/`innerHTML` cleanup are **deferred** until after go-live — see deferred checklist **§6** dated log. Dispatch parity is **out of scope** until product needs it.
+
 ---
 
 ## 0. Environment
