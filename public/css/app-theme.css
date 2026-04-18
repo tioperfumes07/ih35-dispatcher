@@ -284,6 +284,12 @@ body.erp-maintenance .catalog-add-card__body {
   min-width: 0;
 }
 
+/* Rule 1 — Lists & catalogs vendor search: scroll frame + flex hit rows shrink inside panel column. */
+body.erp-maintenance .catalog-search-results,
+body.erp-maintenance .catalog-search-hit {
+  min-width: 0;
+}
+
 .catalog-plus-btn {
   align-self: flex-start;
   margin-top: 4px;
@@ -2040,6 +2046,12 @@ body.erp-maintenance .maint-modal {
   min-width: 0;
   padding: 20px;
   box-shadow: var(--shadow);
+}
+
+/* Rule 1 — QB-style dialogs (category / shop / delay): flex body + foot rows shrink inside .maint-modal. */
+body.erp-maintenance .erp-qb-dialog__body,
+body.erp-maintenance .erp-qb-dialog__foot {
+  min-width: 0;
 }
 
 body.erp-maintenance #maintModalFlowTitle {

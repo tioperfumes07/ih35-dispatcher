@@ -726,3 +726,19 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/app-theme.css` — `#erpDedicatedFormModal` shell and bar chrome: `body.erp-maintenance .erp-dedicated-form-modal__shell`, `__bar`, `__bar-actions`, and `__total-wrap` get `min-width: 0` so flex rows in the dedicated expense modal (spec layout) stay within `width: min(1000px, 100%)` on narrow viewports.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-31
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .erp-qb-dialog__body` and `.erp-qb-dialog__foot` get `min-width: 0` so the scrollable body and the flex-wrap footer in category / shop-queue / delay modals stay inside the `maint-modal` width (redesign already sets `min-height: 0` on the body).
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-01
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .catalog-search-results` and `.catalog-search-hit` get `min-width: 0` so the vendor search scroll frame and flex column hit buttons respect the Lists & catalogs panel width instead of widening the column.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
