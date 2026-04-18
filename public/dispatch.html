@@ -11,8 +11,8 @@
     :root {
       --dispatch-open: var(--green-soft);
       --dispatch-open-fg: var(--green);
-      --dispatch-delivered: var(--pill-purple-bg, #fce7f3);
-      --dispatch-delivered-fg: var(--pill-purple-text, #9d174d);
+      --dispatch-delivered: var(--pill-purple-bg);
+      --dispatch-delivered-fg: var(--pill-purple-text);
     }
     * {
       box-sizing: border-box;
@@ -32,21 +32,21 @@
       display: none !important;
     }
     .maint-banner.critical {
-      background: var(--pill-red-bg, #ffebee);
-      border: 1px solid var(--btn-danger-border, #c62828);
-      color: var(--btn-danger-text, #4a1515);
+      background: var(--pill-red-bg);
+      border: 1px solid var(--btn-danger-border);
+      color: var(--btn-danger-text);
       border-radius: var(--radius-sm);
       padding: 8px 12px;
     }
     .maint-banner.high {
-      background: var(--pill-yellow-bg, #fff3e0);
-      border: 1px solid var(--pill-yellow-text, #ef6c00);
+      background: var(--pill-yellow-bg);
+      border: 1px solid var(--color-warning-border-soft);
       color: var(--color-semantic-warning);
       border-radius: var(--radius-sm);
       padding: 8px 12px;
     }
     .maint-banner.medium {
-      background: var(--pill-yellow-bg, #fffde7);
+      background: var(--pill-yellow-bg);
       border: 1px solid var(--color-semantic-warn-accent);
       color: var(--color-semantic-warning);
       border-radius: var(--radius-sm);
@@ -77,7 +77,7 @@
       max-width: 140px;
     }
     .modal-bg {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 5000;
+      display: none; position: fixed; inset: 0; background: var(--color-modal-backdrop); z-index: 5000;
       align-items: flex-start; justify-content: center; padding: 24px; overflow: auto;
     }
     .modal-bg.on { display: flex; }

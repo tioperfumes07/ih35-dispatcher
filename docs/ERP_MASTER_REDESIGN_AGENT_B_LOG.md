@@ -565,3 +565,21 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — global **`body.erp-maintenance .erp-table-scroll { min-width: 0 }`** so wide-data tables (shop + any other module using the shared scroll frame) shrink inside flex/grid parents, not only under **`#section-maintenance .shop-tab-panel`**.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-12
+
+- **Rule 1:** **`public/css/app-theme.css`** — Accounting **`.qb-doc-topbar`** / **`.qb-doc-topbar--fuel`**, AP/fuel **`.qb-doc-footer--ap`** / **`--fuel`**, and **`.qb-doc-footer__left`** / **`__right`** get **`min-width: 0`** so doc chrome stays within **`#section-accounting`** width; maintenance **`.qb-picker-item`** rows get **`min-width: 0`** next to the existing ellipsis on **`.qb-picker-item__label`**.
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#erpApp.erp-master .erp-topbar.topbar`** gets **`min-width: 0`** so the master-layout topbar flex row respects the main column when spec/redesign set **`display: flex`**.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-13
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#section-reports .erp-reports-sidebar`** joins shell/columns/main on **`min-width: 0`** so the two-column reports layout can shrink on narrow main columns; **`#acct-bill-pay`** **`.mr-bp-panel-head`**, **`.mr-bp-hintrow`**, and **`.mr-bp-submitrow`** get **`min-width: 0`** at all breakpoints (not only the ≤900px padding tweaks).
+- **Rule 1:** **`public/css/app-theme.css`** — WO **`.maint-wo-save-split-wrap`** (**`inline-flex`**) gets **`min-width: 0`** + **`max-width: 100%`** so split save controls align with **`.maint-save-toolbar--qb .qb-split`**.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

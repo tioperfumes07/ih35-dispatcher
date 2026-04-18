@@ -428,9 +428,17 @@ body.erp-maintenance #section-reports.section.active,
 body.erp-maintenance #section-reports .erp-reports-shell,
 body.erp-maintenance #section-reports .erp-reports-columns,
 body.erp-maintenance #section-reports .erp-reports-main,
+body.erp-maintenance #section-reports .erp-reports-sidebar,
 body.erp-maintenance #section-uploads.section.active,
 body.erp-maintenance #section-uploads .panel,
 body.erp-maintenance #section-uploads .panel-body {
+  min-width: 0;
+}
+
+/* Rule 1: bill pay tab — flex rows from spec layout (all breakpoints). */
+body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-panel-head,
+body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-hintrow,
+body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-submitrow {
   min-width: 0;
 }
 
@@ -1552,6 +1560,11 @@ body.erp-maintenance #erpApp.erp-master .erp-topbar__search {
 
 /* Rule 1: action cluster can wrap without forcing the topbar row wider than the main column. */
 body.erp-maintenance #erpApp.erp-master .erp-topbar__actions {
+  min-width: 0;
+}
+
+/* Rule 1: master-layout topbar row (flex in spec/redesign) — host may shrink inside .erp-main-col. */
+body.erp-maintenance #erpApp.erp-master .erp-topbar.topbar {
   min-width: 0;
 }
 

@@ -396,6 +396,7 @@ body.erp-maintenance .qb-picker-item {
   padding: 5px 8px;
   border-radius: 6px;
   gap: 8px;
+  min-width: 0;
 }
 body.erp-maintenance .qb-picker-item__label {
   font-size: 0.86rem;
@@ -1906,6 +1907,21 @@ body.erp-maintenance #section-accounting #acct-transactions .qb-doc-body > .ap-e
   min-width: 0;
 }
 
+/* Rule 1: accounting QBO doc chrome — flex top/bottom bars shrink with the shell. */
+body.erp-maintenance #section-accounting #acct-transactions .qb-doc-topbar,
+body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-topbar--fuel {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-accounting #acct-transactions .qb-doc-footer--ap,
+body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-footer--fuel,
+body.erp-maintenance #section-accounting #acct-transactions .qb-doc-footer__left,
+body.erp-maintenance #section-accounting #acct-transactions .qb-doc-footer__right,
+body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-footer__left,
+body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-footer__right {
+  min-width: 0;
+}
+
 body.erp-maintenance #section-accounting #woLines .wo-line-grid {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), minmax(0, 1fr))) !important;
 }
@@ -2540,6 +2556,8 @@ body.erp-maintenance .maint-wo-save-split-wrap {
   box-shadow: none;
   padding: 0;
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 body.erp-maintenance .maint-form-actions__meta {
   margin-top: 8px;

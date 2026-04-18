@@ -62,21 +62,21 @@
     .fleet-title{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:500;margin-bottom:4px}
     .fleet-sub{font-size:12px;color:var(--color-text-label);margin-bottom:4px}
     .badge{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500;border:1px solid var(--color-border);white-space:nowrap}
-    .badge-red{background:var(--pill-red-bg,#fef2f2);color:var(--red)}
-    .badge-yellow{background:var(--pill-yellow-bg,#fff7ed);color:var(--yellow)}
-    .badge-green{background:var(--pill-green-bg,#f0fdf4);color:var(--green)}
+    .badge-red{background:var(--pill-red-bg);color:var(--red)}
+    .badge-yellow{background:var(--pill-yellow-bg);color:var(--yellow)}
+    .badge-green{background:var(--pill-green-bg);color:var(--green)}
     .roadmap-note{
       margin:0 12px 10px;padding:10px 14px;
-      background:var(--pill-blue-bg,#eff6ff);
-      border:1px solid var(--btn-info-border,#bfdbfe);
+      background:var(--pill-blue-bg);
+      border:1px solid var(--btn-info-border);
       border-radius:10px;font-size:12px;
-      color:var(--btn-info-text,#1e3a5f);
+      color:var(--btn-info-text);
       max-width:1100px;
     }
     .fuel-erp-write-banner{
       margin:0 12px 10px;padding:10px 14px;border-radius:10px;font-size:12px;max-width:1100px;
-      border:1px solid var(--pill-yellow-text,#b45309);
-      background:var(--pill-yellow-bg,#fffbeb);
+      border:1px solid var(--color-warning-border-soft);
+      background:var(--pill-yellow-bg);
       color:var(--color-semantic-warning);
     }
     .fuel-erp-write-banner input[type="password"]{
@@ -86,8 +86,8 @@
     }
     .fuel-relay-info{
       margin:0 0 10px;padding:10px 12px;line-height:1.45;
-      background:var(--pill-blue-bg,#eff6ff);
-      border:1px solid var(--btn-info-border,#bfdbfe);
+      background:var(--pill-blue-bg);
+      border:1px solid var(--btn-info-border);
       border-radius:10px;
     }
     #map{width:100%;height:clamp(320px,calc(100vh - 200px),min(92vh,980px));min-height:320px}
@@ -106,7 +106,7 @@
       z-index:3000;
       max-height:220px;
       overflow:auto;
-      box-shadow:var(--shadow-dropdown,0 6px 18px rgba(0,0,0,0.08));
+      box-shadow:var(--shadow-dropdown);
       display:none;
     }
     .auto-item{
@@ -155,8 +155,8 @@
   <div class="topbar">
     <h1>Fuel &amp; route planning</h1>
     <a href="/" style="margin-right:8px;font-weight:700;color:var(--color-border-focus)">Home</a>
-    <a href="/dispatch.html" style="margin-right:10px;font-weight:600;color:var(--pill-green-text,#15803d)">Loads &amp; TMS</a>
-    <a href="/maintenance.html" style="margin-right:10px;font-weight:600;color:var(--pill-purple-text,#6b21a8)">Maintenance</a>
+    <a href="/dispatch.html" style="margin-right:10px;font-weight:600;color:var(--pill-green-text)">Loads &amp; TMS</a>
+    <a href="/maintenance.html" style="margin-right:10px;font-weight:600;color:var(--pill-purple-text)">Maintenance</a>
     <button type="button" id="fuelBtnRefreshBoard" onclick="refreshFuelBoardNow()" title="Fetch latest Samsara fleet data now">Refresh now</button>
     <button type="button" id="fuelBtnRecommend" onclick="recommendForSelected()">Recommend Stops</button>
     <input id="unitSearch" placeholder="Search unit e.g. T148" oninput="renderFleet()" />
