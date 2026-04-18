@@ -547,3 +547,21 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`min-width: 0`** on **`maint-qb-cost-details`**, horizontal scroll frame **`maint-qb-lines-scroll`**, toast column **`erp-toast-host`**, **`acct-conn-sb__row`**, table cell **`maint-qb-bill-lbl`**; segment control **`erp-qb-seg`** gets **`max-width: 100%`** with **`min-width: 0`** so **`width: fit-content`** cannot widen the doc column past the viewport.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-10
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#maintIntegrationStrip`** and its first child row (**Connections** inline flex in **`maintenance.html`**) get **`min-width: 0`** so the accounting board card does not widen the viewport when status text and the checkbox label wrap together.
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`.erp-main-body .erp-ops-toolbar`** and **`.erp-reports-toolbar`** so dense maintenance / tracking / safety ops bars and the reports hub toolbar respect the capped main column next to spec/redesign flex rules.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-11
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`min-width: 0`** on **`.erp-ops-subtabs-bar`**, **`.erp-reports-toolbar__title`**, and **`.erp-reports-toolbar__search`**; WO **`.maint-panel-head-center`** (inherits flex from **`.panel-head`**); save toolbar split **`.maint-save-toolbar--qb .qb-split`** gets **`min-width: 0`** + **`max-width: 100%`** so the primary/caret control does not force the sticky save row wider than the form column.
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — global **`body.erp-maintenance .erp-table-scroll { min-width: 0 }`** so wide-data tables (shop + any other module using the shared scroll frame) shrink inside flex/grid parents, not only under **`#section-maintenance .shop-tab-panel`**.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

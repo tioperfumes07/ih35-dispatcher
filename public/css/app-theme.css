@@ -2994,6 +2994,8 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split {
   font-size: 11px;
   line-height: 1.2;
   box-shadow: var(--shadow-sm);
+  min-width: 0;
+  max-width: 100%;
 }
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary {
   border: 1px solid var(--btn-primary-save-bg);
@@ -3145,6 +3147,7 @@ body.erp-maintenance .maint-panel-head-center {
   );
   border-bottom: 2px solid var(--color-border);
   padding: 14px 16px;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-panel-head-center .panel-title {
@@ -3727,4 +3730,22 @@ body.erp-maintenance .acct-board-subtabs .nav-dd-item {
 body.erp-maintenance #acct-fuel-expense .qb-doc-shell {
   min-width: 0;
   max-width: 100%;
+}
+
+/* Rule 1: ops + reports toolbars live in the maintenance main column; allow shrink under spec/redesign flex. */
+body.erp-maintenance .erp-main-body .erp-ops-toolbar {
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-reports-toolbar {
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-ops-subtabs-bar {
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-reports-toolbar__title,
+body.erp-maintenance .erp-reports-toolbar__search {
+  min-width: 0;
 }
