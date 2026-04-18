@@ -1251,6 +1251,18 @@
                         </span>
                       </div>
                       <div class="mini-note maint-field-hint" id="maintCostLinesSubtotal"></div>
+                      <div class="maint-cost-imports-shortcut" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--color-border)">
+                        <div class="mini-note" style="margin:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                          <span style="min-width:0;flex:1 1 12rem">Imports &amp; uploads (maint history, AP, fuel) — <strong>Upload center</strong></span>
+                          <button
+                            type="button"
+                            class="btn btn--small"
+                            onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');"
+                          >
+                            Open upload center
+                          </button>
+                        </div>
+                      </div>
 
                       <div class="maint-print-hide-qbo-link maint-qbo-header-grid" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-border)" title="Expense vs bill, bank, dates — vendor and line accounts are on the form above">
                         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
@@ -1523,24 +1535,6 @@
             </div>
             </div>
         </div>
-
-            <div class="panel">
-              <div class="panel-head">
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                  <div class="panel-title" style="margin:0">Imports &amp; uploads</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Where to import">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      CSV/Excel → <strong>Upload center</strong> (sidebar). Maint history, AP, fuel/Relay, connections — same flows as Lists column.
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <div class="panel-body form-stack">
-                <p class="mini-note" style="margin:0 0 8px">Button opens <strong>Upload center</strong> — no duplicate pickers here.</p>
-                <button type="button" class="qb-btn-add" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('maint');">Go to upload center</button>
-              </div>
-            </div>
 
         </div>
         </div>
