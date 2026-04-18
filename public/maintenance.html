@@ -1590,7 +1590,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Unit history list">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderUnitHistory()</code> filters <code>erp.records</code> to <code>selectedUnit</code>, sorts by <code>serviceDate</code> descending, then replaces <code>#unitHistory</code> <code>innerHTML</code> with escaped <code>.record-card</code> markup (service line, QB sync badge, cost breakdown / tire lists, actions). Empty selection or no rows shows the plain <strong>No records yet.</strong> string. Invoked from <code>renderSelectedUnit()</code> and after saves via <code>loadAll()</code>.
+                      <code>renderUnitHistory()</code>: <code>erp.records</code> filtered to <code>selectedUnit</code>, <code>serviceDate</code> desc → <code>#unitHistory</code> cards (service line, QB badge, costs/tires, actions). Empty → <strong>No records yet.</strong> Runs from <code>renderSelectedUnit()</code> / <code>loadAll()</code>.
                     </span>
                   </span>
                 </div>
@@ -1759,11 +1759,11 @@
                   <button type="button" class="btn" title="Add to external queue" onclick="openShopQueueModal('external')">+ Add</button>
                 </div>
                 <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 200px"><strong>External shop</strong> queue uses the same filter + pager pattern as internal; rows are the <code>external</code> slice of <code>shopQueueCache</code>.</span>
+                  <span style="min-width:0;flex:1 1 200px"><strong>External shop</strong> — same filter/pager as internal; <code>external</code> slice of <code>shopQueueCache</code>.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> filters <code>shopQueueCache</code> for <code>shopType === &quot;external&quot;</code>, applies toolbar filters, then replaces <code>#shopExternalTableBody</code> via <code>innerHTML</code> with a paged slice. <code>shopQueuePager.external</code> + <code>erpPagerRender</code> on <code>#shopExternalPagerHost</code>. Cache is filled from <code>GET /api/maintenance/shop-queue</code> during <code>loadAll()</code> and after modal POSTs.
+                      <code>renderShopQueues()</code> → <code>shopType === &quot;external&quot;</code> + toolbar → paged <code>#shopExternalTableBody</code> + <code>#shopExternalPagerHost</code>. Cache: <code>GET /api/maintenance/shop-queue</code> on <code>loadAll()</code> + after queue saves.
                     </span>
                   </span>
                 </div>
@@ -1817,11 +1817,11 @@
                   <button type="button" class="btn" title="Add to roadside queue" onclick="openShopQueueModal('roadside')">+ Add</button>
                 </div>
                 <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 200px"><strong>Roadside</strong> queue lists <code>roadside</code> shop-type rows from the same cache and filter stack.</span>
+                  <span style="min-width:0;flex:1 1 200px"><strong>Roadside</strong> — <code>roadside</code> rows; same cache + filters as other shop tabs.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> filters <code>shopQueueCache</code> for <code>shopType === &quot;roadside&quot;</code>, applies toolbar filters, then replaces <code>#shopRoadsideTableBody</code> via <code>innerHTML</code> with a paged slice. <code>shopQueuePager.roadside</code> + <code>erpPagerRender</code> on <code>#shopRoadsidePagerHost</code>. Cache is filled from <code>GET /api/maintenance/shop-queue</code> during <code>loadAll()</code> and after modal POSTs.
+                      <code>renderShopQueues()</code> → <code>shopType === &quot;roadside&quot;</code> + toolbar → paged <code>#shopRoadsideTableBody</code> + <code>#shopRoadsidePagerHost</code>. Same shop-queue cache load as internal.
                     </span>
                   </span>
                 </div>
@@ -1855,7 +1855,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Parts queue stages">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Track vendor parts orders the same way as shop jobs: <strong>Queued</strong> = waiting on supplier, <strong>In progress</strong> = partial / in transit, <strong>Completed</strong> = received and closed.
+                      Vendor parts: <strong>Queued</strong> = waiting on supplier · <strong>In progress</strong> = partial / in transit · <strong>Completed</strong> = received / closed.
                     </span>
                   </span>
                 </p>
@@ -1884,11 +1884,11 @@
                   <button type="button" class="btn" title="Add to parts queue" onclick="openShopQueueModal('parts')">+ Add</button>
                 </div>
                 <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 200px"><strong>Parts purchase</strong> queue uses the same engine with column labels tuned for PO / supplier language.</span>
+                  <span style="min-width:0;flex:1 1 200px"><strong>Parts purchase</strong> — same renderer; columns use PO / supplier wording.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> filters <code>shopQueueCache</code> for <code>shopType === &quot;parts&quot;</code>, applies toolbar filters, then replaces <code>#shopPartsTableBody</code> via <code>innerHTML</code> with a paged slice. <code>shopQueuePager.parts</code> + <code>erpPagerRender</code> on <code>#shopPartsPagerHost</code>. Cache is filled from <code>GET /api/maintenance/shop-queue</code> during <code>loadAll()</code> and after modal POSTs.
+                      <code>renderShopQueues()</code> → <code>shopType === &quot;parts&quot;</code> + toolbar → paged <code>#shopPartsTableBody</code> + <code>#shopPartsPagerHost</code>. Same <code>shop-queue</code> cache refresh as other tabs.
                     </span>
                   </span>
                 </div>
@@ -1928,7 +1928,7 @@
                       <span class="erp-help-tip">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How out-of-service rows appear">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          <code>renderShopQueues()</code> scans <code>erp.records</code> for service types containing <code>out of service</code> / <code>out-of-service</code> or equal to <code>oos</code>, then shows one card per unit (latest match). Use <strong>+</strong> in the header to log a new out-of-service work order. For roster hide/show across the app, use <strong>Lists &amp; catalogs</strong> or the unit status sheet <strong>Active / Retired</strong> control.
+                          <code>renderShopQueues()</code>: from <code>erp.records</code>, service types matching out-of-service / <code>oos</code> → one card per unit (latest). Header <strong>+</strong> = new OOS WO. Fleet roster: <strong>Lists &amp; catalogs</strong> or unit <strong>Active / Retired</strong>.
                         </span>
                       </span>
                     </div>
@@ -1946,7 +1946,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop exports">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Quick <strong>CSV / report</strong> downloads from the shop workspace. For full rollups and QBO cross-checks, use <strong>Reports</strong> in the sidebar (e.g. maintenance spend, detailed, sync).
+                    Shop <strong>CSV</strong> exports here — full rollups / QBO cross-checks in sidebar <strong>Reports</strong> (maint spend, detail, sync).
                   </span>
                 </span>
               </div>
@@ -1970,12 +1970,12 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Alert signals">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Same <strong>integrity</strong> engine as <strong>R&amp;M Status</strong> — heuristic flags (repair frequency, invoice size, tire interval, diesel vs miles). Not a substitute for PM programs; pair with dates and shop context.
+                    Same heuristics as <strong>R&amp;M Status</strong> — repair frequency, big invoices, tire interval, diesel vs miles. Use with PM dates + shop context, not alone.
                   </span>
                 </span>
               </div>
               <div class="mini-note" style="margin:6px 0 0;max-width:56ch">
-                Flags unusual repair frequency, high single invoices, short tire intervals, and diesel gallons vs miles (expected MPG). Operational status (in shop / OOS) is shown when relevant — use it with dates for context, not as the only signal.
+                Surfaces frequency, invoice spikes, tire cycles, fuel vs miles; cross-check <strong>Operational status</strong> + dates — not a single source of truth.
               </div>
             </div>
             <div class="panel-body">
