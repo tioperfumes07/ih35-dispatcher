@@ -11079,6 +11079,9 @@
       }
 
       const nLines = lines.length;
+      const loadInvH = String(document.getElementById('fuelManualLoadInvoice')?.value || '').trim();
+      const fvInvH = String(document.getElementById('fuelManualVendorInvoice')?.value || '').trim();
+      const intWoH = String(document.getElementById('fuelManualInternalWo')?.value || '').trim();
       try {
         if (hint) hint.textContent = postToQbo ? 'Saving…' : 'Saving…';
         const savedIds = [];
@@ -11096,9 +11099,6 @@
             memo,
             location: loc
           };
-          const loadInvH = String(document.getElementById('fuelManualLoadInvoice')?.value || '').trim();
-          const fvInvH = String(document.getElementById('fuelManualVendorInvoice')?.value || '').trim();
-          const intWoH = String(document.getElementById('fuelManualInternalWo')?.value || '').trim();
           if (loadInvH) payload.loadInvoiceNumber = loadInvH;
           if (fvInvH) payload.vendorInvoiceNumber = fvInvH;
           if (intWoH) payload.internalWorkOrderNumber = intWoH;
@@ -19106,13 +19106,6 @@
           internalWorkOrderNumber: internalWo,
           vendorInvoiceNumber: vendorInv,
           notes: document.getElementById('apMemo').value,
-          settlementNo: document.getElementById('apSettlementNo')?.value?.trim() || '',
-          pickupDate: document.getElementById('apPickupDate')?.value || '',
-          deliveryDate: document.getElementById('apDeliveryDate')?.value || '',
-          emptyMiles: document.getElementById('apEmptyMiles')?.value ?? '',
-          loadedMiles: document.getElementById('apLoadedMiles')?.value ?? '',
-          origin: document.getElementById('apOrigin')?.value?.trim() || '',
-          destination: document.getElementById('apDestination')?.value?.trim() || '',
           lines
         })
       });
