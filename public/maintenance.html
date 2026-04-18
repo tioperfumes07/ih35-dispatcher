@@ -732,7 +732,18 @@
             <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
             <div class="maint-fleet-inline">
               <span class="maint-fleet-inline__label">Fleet:</span>
-              <span id="maintActionFleetPills"></span>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;flex:1 1 min(320px,46vw)">
+                <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;line-height:1.45;color:var(--color-text-body);width:100%">
+                  <span style="min-width:0;flex:1 1 180px">Fleet-type chips scope the unit list, fleet table, and WO column — local ERP categories, not a Samsara control.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet category pills">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderMaintenanceCategoryChips()</code> replaces <code>#maintActionFleetPills</code> <code>innerHTML</code> with pill buttons (Trucks, Ref.&nbsp;Vans, Flatbeds, Dry Vans, Company). <code>setAssetCategory()</code> updates <code>activeAssetCategory</code>, re-renders <code>renderMaintenanceUnitList()</code>, may clear <code>selectedUnit</code> if it falls outside the category, then <code>renderSelectedUnit()</code> and <code>renderMaintenanceTable()</code>. If the strip host is missing, the same markup targets the off-screen <code>#assetCategoryChips</code> anchor for accessibility only.
+                    </span>
+                  </span>
+                </div>
+                <span id="maintActionFleetPills" style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center"></span>
+              </div>
             </div>
             <div class="maint-action-strip__qbo" id="maintTopQboIssuesWrap" aria-live="polite">
               <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0"></span>
@@ -1976,7 +1987,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit cards">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderTrackingBoard()</code> sorts <code>vehicles</code> by unit order, applies <code>#trackingSearch</code>, then replaces <code>#trackingList</code> with a page of <code>.track-card</code> markup via <code>innerHTML</code>. <code>trackingListPager</code> + <code>erpPagerRender</code> on <code>#trackingListPagerHost</code>. Clicks call <code>selectTrackingVehicle</code>; the same function refreshes <code>#trackingDetailBox</code> and the fleet-metric strip from <code>vehiclesByCategory()</code>.
+                      <code>renderTrackingBoard()</code> sorts <code>vehicles</code> by unit order, applies <code>#trackingSearch</code>, then replaces <code>#trackingList</code> with a page of <code>.track-card</code> markup via <code>innerHTML</code>. <code>trackingListPager</code> + <code>erpPagerRender</code> on <code>#trackingListPagerHost</code>. Clicks call <code>selectTrackingVehicle</code>; the same pass refreshes <code>#trackingDetailBox</code>, <code>#trackingSummaryText</code>, and map markers — see sibling <strong>?</strong> rows under the map and in <strong>Summary</strong>.
                     </span>
                   </span>
                 </div>
