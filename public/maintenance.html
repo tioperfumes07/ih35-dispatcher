@@ -2326,7 +2326,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="KPIs vs tabs">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Top <strong>KPIs</strong> summarize expenses, bills, sync alerts, and items needing review. <strong>Dash cards</strong> jump into the matching accounting tab; <strong>Connections</strong> below shows live Samsara / QuickBooks / API status for this workspace.
+                <strong>KPIs</strong> = expenses, bills, sync alerts, review queue. Cards open the matching tab; <strong>Connections</strong> = live Samsara / QBO / API.
               </span>
             </span>
           </div>
@@ -2359,7 +2359,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this card">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Totals below refresh when this workspace loads. <strong>View all</strong> opens the maintenance expenses tab; <strong>Post pending to QBO</strong> sends drafted expense lines already staged for QuickBooks.
+                    Totals refresh on load. <strong>View all</strong> → maint expenses tab; <strong>Post pending to QBO</strong> → staged lines already in QuickBooks.
                   </span>
                 </span>
               </div>
@@ -2375,7 +2375,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel &amp; DEF workspace">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Manual diesel/DEF lines, fuel imports from the <strong>Upload center</strong>, and preview-to-post before QuickBooks — all under the Fuel &amp; DEF accounting tab.
+                    Manual diesel/DEF, <strong>Upload center</strong> imports, preview → post — all on <strong>Fuel &amp; DEF</strong>.
                   </span>
                 </span>
               </div>
@@ -2390,7 +2390,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QuickBooks sync shortcuts">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Refresh lists</strong> pulls vendors/items/accounts. <strong>Test connection</strong> verifies OAuth. Use <strong>QBO rollback &amp; imports</strong> for import batches and safer rewinds — full panels live on their accounting tabs.
+                    <strong>Refresh lists</strong> → vendors/items/accounts. <strong>Test connection</strong> → OAuth. <strong>QBO rollback &amp; imports</strong> → batches + rewinds (full panels on those tabs).
                   </span>
                 </span>
               </div>
@@ -2399,11 +2399,11 @@
                 <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
               </div>
               <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-                <span style="min-width:0;flex:1 1 180px">Up to three error titles fill the list below when the QBO sync payload carries alerts.</span>
+                <span style="min-width:0;flex:1 1 180px">Up to three QBO sync error titles show below when the payload has alerts.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accounting dash QBO errors">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>paintAcctDashQboErrors()</code> clears or replaces <code>#acctDashQboErrList</code> <code>innerHTML</code> with escaped one-line titles from the cached sync payload (max three); <strong>View all errors</strong> scrolls to the full <code>#qboSyncAlertBar</code>.
+                    <code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>: up to three escaped titles from sync cache. <strong>View all errors</strong> → <code>#qboSyncAlertBar</code>.
                   </span>
                 </span>
               </div>
@@ -2424,7 +2424,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tools on this card">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Shortcuts to banking, QuickBooks connect, catalogs, settings, uploads, and external Samsara — same destinations as elsewhere in the ERP, grouped here for desk work.
+                    Shortcuts to banking, QBO connect, catalogs, settings, uploads, Samsara — same destinations as elsewhere, grouped for desk work.
                   </span>
                 </span>
               </div>
@@ -2495,9 +2495,9 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this form">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        QuickBooks-style header: one vendor, multiple lines. Use the same <strong>load / invoice #</strong> for trip P&amp;L. Post from the saved list below after you save rows in this app.
+                        QBO-style header: one vendor, many lines. Reuse <strong>load / invoice #</strong> for trip P&amp;L. Save here, then post from the saved list.
                         <span style="display:block;margin-top:8px"
-                          ><strong>Posting:</strong> rows save here first; use <strong>Record to QuickBooks</strong> then <strong>Verify in QuickBooks</strong> when posting.</span>
+                          ><strong>Posting:</strong> save in ERP first → <strong>Record to QuickBooks</strong> → <strong>Verify in QuickBooks</strong>.</span>
                       </span>
                     </span>
                   </div>
@@ -2619,7 +2619,7 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="PDF extract">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Fills invoice #, date, unit, and total into the first expense line when possible. Use digital PDFs with selectable text; scanned images without OCR usually will not parse.
+                        Fills invoice #, date, unit, first-line total when possible. Needs selectable text; scans without OCR usually fail.
                       </span>
                     </span>
                   </div>
@@ -2631,7 +2631,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Category lines">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Category</strong> and <strong>Item</strong> lines are separate grids (QuickBooks-style). Use <strong>+ Add category line</strong> or <strong>+ Add item line</strong> in each section. Amounts roll into the document total.
+                    <strong>Category</strong> vs <strong>Item</strong> grids (QBO-style). <strong>+ Add …</strong> per section. Amounts sum to the doc total.
                   </span>
                 </span>
               </div>
@@ -2708,7 +2708,7 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Attachments">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Use <strong>Repair / vendor invoice PDF</strong> above to extract lines. QBO attachment sync follows your normal post flow from this screen.
+                        PDF extract lives above. QBO attachments follow your usual post flow from here.
                       </span>
                     </span>
                   </div>
@@ -2748,7 +2748,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="AP card list">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Saved <strong>maintenance AP</strong> cards — open one for the full QBO-style form. Exports: work orders + AP rows for offline analysis.
+                      Saved <strong>maintenance AP</strong> cards → full form. Exports: WO + AP CSVs.
                     </span>
                   </span>
                 </div>
@@ -2776,9 +2776,9 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bill pay">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Pays open QBO <strong>Bills</strong> with a <strong>Bill Payment</strong> from the bank/card you pick (what feeds reconcile to).
-                    <strong>Load from QuickBooks</strong> is live (not cached) — narrow with search or <strong>Bill Id</strong> + <strong>Load bill by Id</strong>.
-                    Shop work: post as a <strong>Bill</strong> from <strong>Maintenance expenses</strong> first; one-off <strong>Purchase</strong> cards differ in QBO.
+                    Pays open QBO <strong>Bills</strong> via <strong>Bill Payment</strong> from the bank/card you pick (reconciliation feed).
+                    <strong>Load from QuickBooks</strong> is live — filter with search or <strong>Bill Id</strong> + <strong>Load bill by Id</strong>.
+                    Shop work: post a <strong>Bill</strong> from <strong>Maintenance expenses</strong> first; ad-hoc <strong>Purchase</strong> cards differ in QBO.
                   </span>
                 </span>
               </div>
@@ -2847,7 +2847,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Selection rules">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Blank vendor → up to <strong>150</strong> open bills (all vendors). One payment = <strong>one vendor</strong> — checked rows must match.
+                    Blank vendor → up to <strong>150</strong> open bills. One payment = <strong>one vendor</strong> (checked rows must match).
                     <strong>Partial pay:</strong> edit <strong>Pay</strong>; <strong>Remaining</strong> / <strong>Status</strong> follow (capped at open balance on blur).
                   </span>
                 </span>
@@ -2867,7 +2867,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Open bills data source">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Rows from <strong>QuickBooks</strong> when connected. Empty/stale after QBO changes → sidebar <strong>Refresh data</strong>. Vendor filter, search, min $, and bill-id narrow the loaded set.
+                    Live <strong>QuickBooks</strong> rows when connected. Stale? Sidebar <strong>Refresh data</strong>. Vendor, search, min $, bill-id narrow the load.
                   </span>
                 </span>
               </div>
@@ -2876,16 +2876,16 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How the draft total is calculated">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Sums <strong>Pay</strong> for all checked bills in the loaded set (other pages too). Amounts cap at open balance on blur (<strong>Remaining</strong> follows). Selection rules: <strong>?</strong> on the hint line above.
+                    Sums <strong>Pay</strong> for checked bills across the full loaded set (all pages). Caps at open balance on blur. Rules: hint row <strong>?</strong> above.
                   </span>
                 </span>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 240px">Checkboxes and pay cells below replace when QBO data loads, filters change, or you use the pager — draft total above stays in sync.</span>
+                <span style="min-width:0;flex:1 1 240px">Grid resets on QBO load, filters, or pager — draft total stays in sync.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Open bills table body">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadAccountingOpenBills()</code> → <code>bpMountOpenBillsInTable()</code> → <code>bpRenderOpenBillsPage()</code> fills <code>#bpOpenBillsBody</code> from <code>bpHtmlForOpenBillRows()</code> (slice or empty), syncs <code>__bpOpenBillsSelection</code>, pager on <code>#bpOpenBillsPagerHost</code> via <code>erpPagerRender</code>. <code>bpApplyOpenBillsFilter()</code> resets page + same path.
+                    <code>loadAccountingOpenBills()</code> → <code>bpMountOpenBillsInTable()</code> → <code>bpRenderOpenBillsPage()</code> → <code>#bpOpenBillsBody</code> (<code>bpHtmlForOpenBillRows</code>), <code>__bpOpenBillsSelection</code>, pager <code>#bpOpenBillsPagerHost</code> / <code>erpPagerRender</code>. <code>bpApplyOpenBillsFilter()</code> resets page.
                   </span>
                 </span>
               </div>
@@ -2927,7 +2927,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Local payment log">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      ERP-local log of <strong>Bill Payment</strong> posts created from <strong>Pay bills</strong> above (not a full QBO audit trail). Use filters + export for reconciliation; see body <strong>?</strong> for date presets vs export scope.
+                      ERP log of <strong>Bill Payment</strong> posts from <strong>Pay bills</strong> (not full QBO audit). Filter + export for recon; body <strong>?</strong> for date presets vs export scope.
                     </span>
                   </span>
                 </div>
@@ -2943,7 +2943,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Payment log">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Audit trail written when you create a bill payment. Filter by payment date (or leave blank for newest). <strong>Export CSV</strong> uses the same filters.
+                    Written on each bill payment post. Filter by payment date (blank = newest). <strong>Export CSV</strong> uses the same filters.
                   </span>
                 </span>
               </div>
@@ -2994,11 +2994,11 @@
               </div>
               <div id="bpLogStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 240px">Rows below rebuild when filters or the pager change; the status line above shows counts.</span>
+                <span style="min-width:0;flex:1 1 240px">Rows rebuild on filter/pager changes; status line shows counts.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Bill payment log table">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderBpBillPaymentLogTable()</code> stores fetched entries, then <code>bpRenderBillPaymentLogPage()</code> replaces <code>#bpLogBody</code> <code>innerHTML</code> with <code>bpHtmlForBillPaymentLogRow()</code> markup (or a no-rows row) and wires <code>#bpLogPagerHost</code> via <code>erpPagerRender</code> when the filtered list exceeds the page size.
+                    <code>renderBpBillPaymentLogTable()</code> → <code>bpRenderBillPaymentLogPage()</code> → <code>#bpLogBody</code> (<code>bpHtmlForBillPaymentLogRow</code>) + <code>#bpLogPagerHost</code> / <code>erpPagerRender</code> when filtered list &gt; page size.
                   </span>
                 </span>
               </div>
@@ -3034,7 +3034,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel tab overview">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Each row is one QuickBooks <strong>Purchase</strong>. Default: <strong>expense category</strong> lines (Diesel / DEF / Reefer → your accounts) with <strong>Class</strong> = truck. Uncheck <strong>Post as expense category line</strong> below to use QBO <strong>items</strong> (gal × rate). Vendor plus optional driver/customer per line. Autosave to the ERP when the <strong>ERP write secret</strong> is configured.
+                    One row = one QBO <strong>Purchase</strong>. Default <strong>expense category</strong> lines (Diesel / DEF / Reefer → your accounts) with <strong>Class</strong> = truck. Uncheck <strong>Post as expense category line</strong> for QBO <strong>items</strong> (gal × rate). Vendor + optional driver/customer. Autosaves when <strong>ERP write secret</strong> is set.
                   </span>
                 </span>
               </div>
@@ -3769,6 +3769,15 @@
               <button type="button" class="btn" onclick="repReportsRoadmapMsg('scheduled')">Scheduled reports</button>
             </div>
           </header>
+          <div class="mini-note print-hide-actions" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-label)">
+            <span style="min-width:0;flex:1 1 220px">Yellow roadmap strip below appears when <strong>+ New custom report</strong> or <strong>Scheduled reports</strong> is used; opening <strong>Reports</strong> from the rail clears it.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Reports roadmap banner">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <code>repReportsRoadmapMsg(kind)</code> sets <code>#repRoadmapBanner</code> <code>textContent</code> (stub copy for custom vs scheduled), removes <code>hidden</code>, and scrolls into view. <code>openSection('reports', …)</code> clears <code>textContent</code> and hides the banner again.
+              </span>
+            </span>
+          </div>
           <div id="repRoadmapBanner" class="mini-note erp-reports-roadmap hidden" role="status" aria-live="polite"></div>
           <div class="erp-reports-columns">
             <aside class="erp-reports-sidebar" aria-label="Report categories">
