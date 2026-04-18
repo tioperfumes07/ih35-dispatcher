@@ -1590,20 +1590,36 @@ body.erp-maintenance .ap-wo-lines-root {
 @media (max-width: 900px) {
   body.erp-maintenance .mr-upload-tabbar {
     margin-bottom: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+    flex-wrap: nowrap;
+    gap: 0;
+    padding-bottom: 2px;
   }
 
   body.erp-maintenance .mr-upload-tabbar .subtab {
     padding: 8px 10px;
     font-size: 12px;
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   body.erp-maintenance .mr-upload-panel-card {
-    padding: 12px 14px;
+    padding: 10px 12px;
     margin-bottom: 10px;
   }
 
   body.erp-maintenance .mr-upload-drop {
-    padding: 24px 14px;
+    padding: 18px 12px;
+  }
+
+  body.erp-maintenance .mr-upload-conn-grid {
+    gap: 10px;
+  }
+
+  body.erp-maintenance .mr-upload-conn-card {
+    padding: 12px 12px;
   }
 
   /* Rule 1 — Accounting AP / manual fuel doc shells: trim QB-style chrome on tablets. */
