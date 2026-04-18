@@ -2179,8 +2179,8 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About drivers list">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Same HOS feed as <strong>Safety → HOS</strong>. Add/rename drivers in
-                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> (read-only here). Settlement may pull driver context from TMS/Postgres when configured.
+                Same HOS feed as <strong>Safety → HOS</strong>. Edit drivers in
+                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a>; read-only here. Settlement can still use TMS/Postgres when wired.
               </span>
             </span>
           </div>
@@ -2188,11 +2188,11 @@
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty filter controls which Samsara rows appear.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty filter limits which Samsara rows show.</p></div>
               </details>
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Attributes <span aria-hidden="true">▾</span></summary>
-                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Drive-left column follows the same clock math as Safety.</p></div>
+                <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Drive-left uses the same clock math as Safety.</p></div>
               </details>
               <div class="mr-filter-bar__show">
                 <label class="mini-note" for="trackingDriversDutyFilter" style="margin:0">Duty filter</label>
@@ -2206,11 +2206,11 @@
             </div>
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-            <span style="min-width:0;flex:1 1 220px">Same <strong>board.hos</strong> window as <strong>Safety → HOS</strong> + <strong>Duty filter</strong> above.</span>
+            <span style="min-width:0;flex:1 1 220px"><strong>board.hos</strong> + <strong>Duty filter</strong> — same window as <strong>Safety → HOS</strong>.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking drivers table">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderTrackingDrivers()</code>: normalize <code>board.hos</code> → <code>applySafetyHosDutyMode</code> via <code>#trackingDriversDutyFilter</code> → paged <code>#trackingDriversBody</code> + <code>trackingDriversPager</code> / <code>erpPagerRender</code>. Read-only ELD mirror.
+                <code>renderTrackingDrivers()</code>: <code>board.hos</code> → <code>applySafetyHosDutyMode</code> (<code>#trackingDriversDutyFilter</code>) → paged <code>#trackingDriversBody</code> + <code>trackingDriversPager</code> / <code>erpPagerRender</code>. Read-only.
               </span>
             </span>
           </div>
@@ -2231,7 +2231,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Yard band &amp; columns">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Idle band default <strong>T120–T178</strong>. <strong>Refresh</strong> → Samsara GPS/HOS + optional TMS (days since completed load, $ risk). Geofence / env → lower <strong>?</strong>.
+                    Default idle band <strong>T120–T178</strong>. <strong>Refresh</strong>: Samsara GPS/HOS + optional TMS idle fields. Geofence / env vars → lower <strong>?</strong>.
                   </span>
                 </span>
               </div>
@@ -2243,17 +2243,17 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Geofence &amp; columns">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Yard geofence (default Mines Rd, Laredo) — override <code>YARD_LAT</code> / <code>YARD_LON</code> / <code>YARD_RADIUS_M</code>. Columns: GPS, in/out of yard, HOS + optional TMS “since last completed load” and <code>IDLE_EST_DAILY_REVENUE</code> risk hint.
+                    Default yard fence (Mines Rd, Laredo). Override <code>YARD_LAT</code> / <code>YARD_LON</code> / <code>YARD_RADIUS_M</code>. Columns: GPS, yard in/out, HOS, optional TMS “since last load”, <code>IDLE_EST_DAILY_REVENUE</code> hint.
                   </span>
                 </span>
               </div>
               <div id="idleSnapshotMeta" class="mini-note" style="margin-bottom:10px"></div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Rows load after <strong>Refresh</strong> or opening this tab — idle-band fleet slice from the server (Samsara + optional TMS).</span>
+                <span style="min-width:0;flex:1 1 220px"><strong>Refresh</strong> or open tab loads the idle-band slice (Samsara + optional TMS).</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Yard &amp; idle grid">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/tracking/idle-snapshot</code> → <code>idleSnapshotPager._rows</code>, <code>#idleSnapshotMeta</code> (yard + warnings), paged <code>#idleSnapshotBody</code> via <code>renderIdleSnapshotTableBody()</code> + <code>#idleSnapshotPagerHost</code>. Errors → one tbody error row.
+                    <code>GET /api/tracking/idle-snapshot</code> → <code>idleSnapshotPager</code> (<code>_rows</code>), <code>#idleSnapshotMeta</code>, paged <code>#idleSnapshotBody</code> via <code>renderIdleSnapshotTableBody()</code> + <code>#idleSnapshotPagerHost</code>. Errors → one tbody row.
                   </span>
                 </span>
               </div>
@@ -2274,7 +2274,7 @@
                     </tr>
                   </thead>
                   <tbody id="idleSnapshotBody">
-                    <tr><td colspan="10" class="mini-note">Open this tab and refresh.</td></tr>
+                    <tr><td colspan="10" class="mini-note">Open tab or press Refresh.</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -2290,18 +2290,18 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking summary">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  Plain-language counts for the <strong>Tracking</strong> section (assets, drivers, map context). Refreshes when you load tracking tabs; not the same as <strong>Home → System Summary</strong>.
+                  Tracking-only counts (assets, drivers, map). Refreshes with tracking tabs — not <strong>Home → System Summary</strong>.
                 </span>
               </span>
             </div>
           </div>
           <div class="panel-body">
             <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-              <span style="min-width:0;flex:1 1 220px">Live counts for in-memory <code>vehicles</code> and <code>board</code> slices — same refresh cadence as the map tab.</span>
+              <span style="min-width:0;flex:1 1 220px">In-memory <code>vehicles</code> + <code>board</code> — same refresh cadence as Map.</span>
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking summary block">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  <code>renderTrackingBoard()</code> refreshes <code>#trackingSummaryText</code> with five labeled counts: <code>vehicles</code>, <code>board.vehicles</code>, <code>board.live</code>, <code>board.assignments</code>, <code>board.hos</code> lengths (line breaks in markup).
+                  <code>renderTrackingBoard()</code> → <code>#trackingSummaryText</code>: five counts — <code>vehicles</code>, <code>board.vehicles</code>, <code>board.live</code>, <code>board.assignments</code>, <code>board.hos</code> lengths (line breaks in markup).
                 </span>
               </span>
             </div>
