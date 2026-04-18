@@ -2078,7 +2078,7 @@
                 ><input type="checkbox" id="maintAutoQboMasterRefresh" /> Refresh QBO master lists on each timer tick</label
               >
             </div>
-            <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:var(--color-semantic-warning, #92400e)"></div>
+            <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:var(--color-semantic-warning)"></div>
           </div>
         </div>
 
@@ -5081,7 +5081,7 @@
           rows
             .map(e => {
               const st = String(e.status || 'queued');
-              const overdue = e.overdue ? ' <span style="color:var(--color-semantic-warn-accent, #b45309);font-weight:500">(past est.)</span>' : '';
+              const overdue = e.overdue ? ' <span style="color:var(--color-semantic-warn-accent);font-weight:500">(past est.)</span>' : '';
               return `<tr><td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(
                 e.assetCategory || ''
               )}</div></td><td>${escapeHtml(e.title || '')}${overdue}</td><td>${escapeHtml(statusLabel(st))}</td><td>${escapeHtml(
@@ -7201,7 +7201,7 @@
         } else if (!tms.ok) {
           tb.innerHTML =
             '<p class="mini-note" style="margin:0 0 6px">Could not read the TMS summary.</p>' +
-            '<p class="mini-note" style="margin:0;color:var(--color-semantic-error, #b91c1c)">' +
+            '<p class="mini-note" style="margin:0;color:var(--color-semantic-error)">' +
             escapeHtml(tms.error || 'Unknown error') +
             '</p>';
         } else {
@@ -7284,7 +7284,7 @@
         reportsSummaryCache = await j('/api/reports/summary');
         renderReportsAll();
       } catch (e) {
-        if (ob) ob.innerHTML = '<p class="mini-note" style="color:var(--color-semantic-error, #b91c1c)">Failed: ' + escapeHtml(e.message || String(e)) + '</p>';
+        if (ob) ob.innerHTML = '<p class="mini-note" style="color:var(--color-semantic-error)">Failed: ' + escapeHtml(e.message || String(e)) + '</p>';
       }
     }
 
@@ -7310,7 +7310,7 @@
       try {
         posture = await j('/api/security/posture');
       } catch (e) {
-        host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error, #b91c1c)">${escapeHtml(e.message || String(e))}</p>`;
+        host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</p>`;
         return;
       }
       if (posture.authDisabled) {
@@ -7397,9 +7397,9 @@
                             : '—';
                         const cl =
                           r.alert === 'critical'
-                            ? 'var(--color-semantic-error, #b91c1c)'
+                            ? 'var(--color-semantic-error)'
                             : r.alert === 'warn'
-                              ? 'var(--color-semantic-warn-accent, #b45309)'
+                              ? 'var(--color-semantic-warn-accent)'
                               : 'var(--color-text-label)';
                         return `<tr>
                           <td>${escapeHtml(r.name || '')}<div class="mini-note">${escapeHtml(r.email || '')}</div></td>
@@ -7419,7 +7419,7 @@
               )}</strong> days · critical ≥ <strong>${escapeHtml(String(team.criticalDays ?? ''))}</strong> days. Override with <code>TEAM_ACTIVITY_WARN_DAYS</code> / <code>TEAM_ACTIVITY_CRITICAL_DAYS</code>.</p>
             </div>`;
         } catch (e) {
-          teamBlock = `<p class="mini-note" style="color:var(--color-semantic-error, #b91c1c);margin-top:12px">Team roster: ${escapeHtml(e.message || String(e))}</p>`;
+          teamBlock = `<p class="mini-note" style="color:var(--color-semantic-error);margin-top:12px">Team roster: ${escapeHtml(e.message || String(e))}</p>`;
         }
         try {
           const aud = await j('/api/security/audit-recent?limit=30');
@@ -7457,7 +7457,7 @@
               </div>
             </div>`;
         } catch (e) {
-          auditBlock = `<p class="mini-note" style="color:var(--color-semantic-error, #b91c1c);margin-top:12px">Audit log: ${escapeHtml(e.message || String(e))}</p>`;
+          auditBlock = `<p class="mini-note" style="color:var(--color-semantic-error);margin-top:12px">Audit log: ${escapeHtml(e.message || String(e))}</p>`;
         }
       } else {
         teamBlock = `<p class="mini-note" style="margin-top:12px;line-height:1.5">Signed in as <strong>${escapeHtml(
@@ -7520,37 +7520,37 @@
         if (health && health.ok && health.hasSamsaraToken) {
           const n = health.samsaraVehicles != null ? String(health.samsaraVehicles) : '?';
           sEl.textContent = `Samsara: OK · ${n} vehicles (stats rows ${health.samsaraStatsRows ?? '—'})`;
-          sEl.style.color = 'var(--color-semantic-success, #065f46)';
+          sEl.style.color = 'var(--color-semantic-success)';
         } else if (health && !health.hasSamsaraToken) {
           sEl.textContent = 'Samsara: API token not set on server';
-          sEl.style.color = 'var(--color-semantic-warning, #92400e)';
+          sEl.style.color = 'var(--color-semantic-warning)';
         } else {
           sEl.textContent = 'Samsara: check failed';
-          sEl.style.color = 'var(--color-semantic-error, #b91c1c)';
+          sEl.style.color = 'var(--color-semantic-error)';
         }
       }
       if (qEl) {
         if (qboSt && qboSt.configured && qboSt.connected) {
           qEl.textContent = `QuickBooks: connected${qboSt.companyName ? ' — ' + qboSt.companyName : ''}`;
-          qEl.style.color = 'var(--color-semantic-success, #065f46)';
+          qEl.style.color = 'var(--color-semantic-success)';
         } else if (qboSt && qboSt.configured) {
           qEl.textContent = 'QuickBooks: configured · not connected';
-          qEl.style.color = 'var(--color-semantic-warning, #92400e)';
+          qEl.style.color = 'var(--color-semantic-warning)';
         } else if (qboSt) {
           qEl.textContent = 'QuickBooks: not configured';
           qEl.style.color = 'var(--color-text-label)';
         } else {
           qEl.textContent = 'QuickBooks: status unavailable';
-          qEl.style.color = 'var(--color-semantic-error, #b91c1c)';
+          qEl.style.color = 'var(--color-semantic-error)';
         }
       }
       if (aEl) {
         if (health && health.ok) {
           aEl.textContent = 'API health: OK';
-          aEl.style.color = 'var(--color-semantic-success, #065f46)';
+          aEl.style.color = 'var(--color-semantic-success)';
         } else {
           aEl.textContent = 'API health: ' + (health && health.error ? String(health.error).slice(0, 80) : 'failed');
-          aEl.style.color = 'var(--color-semantic-error, #b91c1c)';
+          aEl.style.color = 'var(--color-semantic-error)';
         }
       }
     }
@@ -7619,7 +7619,7 @@
         const side = document.getElementById('sidebarQboAlertBrief');
         if (p === 'granted' && side) {
           side.textContent = 'Desktop notifications on for QuickBooks errors.';
-          side.style.color = 'var(--color-success-border-soft, #bce3c9)';
+          side.style.color = 'var(--color-success-border-soft)';
         } else if (p === 'denied' && side) {
           side.textContent = 'Notifications blocked in browser settings.';
           side.style.color = 'var(--pill-red-text)';
@@ -9051,7 +9051,7 @@
         const el = document.getElementById('serviceCatalogAdminBody');
         if (el) {
           el.innerHTML =
-            '<span style="color:var(--color-semantic-error, #b91c1c)">Catalog admin needs DATABASE_URL: ' +
+            '<span style="color:var(--color-semantic-error)">Catalog admin needs DATABASE_URL: ' +
             escapeHtml(e.message || String(e)) +
             '</span>';
         }
@@ -9076,7 +9076,7 @@
         renderSecurityAlerts(sec);
         renderSecurityAlerts(sec, maintSecurityAlertRenderOpts);
       } catch (e) {
-        const msg = '<span style="color:var(--color-semantic-error, #b91c1c)">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
+        const msg = '<span style="color:var(--color-semantic-error)">Could not load alerts: ' + escapeHtml(e.message || String(e)) + '</span>';
         const el = document.getElementById('securityAlertsBody');
         if (el) el.innerHTML = msg;
         const el2 = document.getElementById('maintSecurityAlertsBody');
@@ -9094,7 +9094,7 @@
       if (!el) return;
       const payload = sec && sec.ok ? sec : window.__lastSecurityAlerts;
       if (!payload || !payload.ok) {
-        el.innerHTML = '<span style="color:var(--color-semantic-error, #b91c1c)">No alert data.</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error)">No alert data.</span>';
         return;
       }
       window.__lastSecurityAlerts = payload;
@@ -10331,7 +10331,7 @@
       }
       if (data.duplicates?.duplicateCount) {
         parts.push(
-          `<span style="color:var(--color-semantic-warn-accent, #b45309);font-weight:500">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
+          `<span style="color:var(--color-semantic-warn-accent);font-weight:500">Warning: ${data.duplicates.duplicateCount} Relay line(s) match existing staging.</span>`
         );
       }
       sum.innerHTML = parts.join('<br>');
@@ -11634,7 +11634,7 @@
               </div>
               ${
                 delayTxt
-                  ? `<div class="mini-note" style="color:var(--color-semantic-warn-accent, #b45309);margin-top:4px">Bottleneck: ${delayTxt}</div>`
+                  ? `<div class="mini-note" style="color:var(--color-semantic-warn-accent);margin-top:4px">Bottleneck: ${delayTxt}</div>`
                   : ''
               }
             </div>
@@ -11881,14 +11881,14 @@
             return `
               <tr>
                 <td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(e.assetCategory || '')}</div></td>
-                <td>${escapeHtml(e.title || '')}${overdue ? '<div class="mini-note" style="color:var(--color-semantic-warn-accent, #b45309);margin-top:4px"><strong>Past estimate</strong></div>' : ''}</td>
+                <td>${escapeHtml(e.title || '')}${overdue ? '<div class="mini-note" style="color:var(--color-semantic-warn-accent);margin-top:4px"><strong>Past estimate</strong></div>' : ''}</td>
                 <td>${vendor ? escapeHtml(vendor) : '—'}</td>
                 <td style="text-align:center">${est != null && Number.isFinite(est) ? escapeHtml(String(est)) : '—'}</td>
                 <td>${escapeHtml(fmtIso(e.queuedAt))}</td>
                 <td>${escapeHtml(fmtIso(e.startedAt))}</td>
                 <td>${escapeHtml(fmtIso(e.finishedAt))}</td>
                 <td>
-                  <select class="qb-in" style="font-size:12px;max-width:200px;${overdue ? 'border-color:var(--color-semantic-warn-accent, #b45309)' : ''}" data-shop-id="${id}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
+                  <select class="qb-in" style="font-size:12px;max-width:200px;${overdue ? 'border-color:var(--color-semantic-warn-accent)' : ''}" data-shop-id="${id}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
                     <option value="queued" ${status === 'queued' ? 'selected' : ''}>${statusLabel('queued')}</option>
                     <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>${statusLabel('in_progress')}</option>
                     <option value="finished" ${status === 'finished' ? 'selected' : ''}>${statusLabel('finished')}</option>
@@ -12568,7 +12568,7 @@
         costEl.classList.remove('cost-total-bad');
       } else {
         matchEl.innerHTML =
-          '<span style="color:var(--color-semantic-error, #b91c1c);font-weight:500">✗</span> Invoice total $' +
+          '<span style="color:var(--color-semantic-error);font-weight:500">✗</span> Invoice total $' +
           inv.toFixed(2) +
           ' ≠ line sum $' +
           lineSum.toFixed(2) +
@@ -12953,7 +12953,7 @@
           )
           .join('');
       } catch (e) {
-        box.innerHTML = '<span style="color:var(--color-semantic-error, #b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
+        box.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -12985,7 +12985,7 @@
           )
           .join('');
       } catch (e) {
-        box.innerHTML = '<span style="color:var(--color-semantic-error, #b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
+        box.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -13201,7 +13201,7 @@
         await runQbVendorSearch();
         await runSamDriverSearch();
       } catch (e) {
-        el.innerHTML = '<span style="color:var(--color-semantic-error, #b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -13222,7 +13222,7 @@
             .join('') +
           '</ul>';
       } catch (e) {
-        el.innerHTML = '<span style="color:var(--color-semantic-error, #b91c1c)">' + escapeHtml(e.message || String(e)) + '</span>';
+        el.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 
@@ -14596,8 +14596,8 @@
       if (!el) return;
       const colors = {
         info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
-        success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft, #bce3c9)', fg: 'var(--color-semantic-success, #065f46)' },
-        warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning, #92400e)' },
+        success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft)', fg: 'var(--color-semantic-success)' },
+        warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning)' },
         error: { bg: 'var(--pill-red-bg)', border: 'var(--btn-danger-border)', fg: 'var(--btn-danger-text)' }
       };
       const c = colors[tier] || colors.info;
@@ -14625,8 +14625,8 @@
       }
       const colors = {
         info: { bg: 'var(--color-bg-hover)', border: 'var(--color-border-input)', fg: 'var(--color-text-body)' },
-        success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft, #bce3c9)', fg: 'var(--color-semantic-success, #065f46)' },
-        warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning, #92400e)' },
+        success: { bg: 'var(--pill-green-bg)', border: 'var(--color-success-border-soft)', fg: 'var(--color-semantic-success)' },
+        warn: { bg: 'var(--pill-yellow-bg)', border: 'var(--color-warning-border-soft)', fg: 'var(--color-semantic-warning)' },
         error: { bg: 'var(--pill-red-bg)', border: 'var(--btn-danger-border)', fg: 'var(--btn-danger-text)' }
       };
       const c = colors[tier] || colors.info;
@@ -14765,7 +14765,7 @@
               ${r.repairLocationType ? `<div class="mini-note">Repair type: ${escapeHtml(r.repairLocationType)}</div>` : ''}
               ${r.accidentAtFault ? `<div class="mini-note">Accident: ${escapeHtml(r.accidentAtFault)} | ${escapeHtml(r.accidentLocation || '')}</div>` : ''}
               ${r.qboPurchaseId ? `<div class="mini-note">QB Purchase ID: ${escapeHtml(r.qboPurchaseId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error, #b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               ${formatPlannedWorkHtmlCard(r)}
               <div class="mini-note">${escapeHtml(r.notes || '')}</div>
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
@@ -16353,7 +16353,7 @@
             data.samsaraRefreshedAt || ''
           )}`;
         }
-        const notes = (data.notes || []).map(n => `<div class="mini-note" style="color:var(--color-semantic-warn-accent, #b45309)">${escapeHtml(n)}</div>`).join('');
+        const notes = (data.notes || []).map(n => `<div class="mini-note" style="color:var(--color-semantic-warn-accent)">${escapeHtml(n)}</div>`).join('');
         if (meta && notes) meta.innerHTML += notes;
         const rows = data.vehicles || [];
         const fk = `${data.samsaraRefreshedAt || ''}|${rows.length}|${y.latitude}|${y.longitude}`;
@@ -16368,7 +16368,7 @@
         if (meta) meta.textContent = 'Error: ' + (e.message || String(e));
         if (tb) {
           tb.innerHTML =
-            '<tr><td colspan="10" class="mini-note" style="color:var(--color-semantic-error, #b91c1c)">Could not load idle snapshot. Check Samsara token and server logs.</td></tr>';
+            '<tr><td colspan="10" class="mini-note" style="color:var(--color-semantic-error)">Could not load idle snapshot. Check Samsara token and server logs.</td></tr>';
         }
         if (pagerHost) {
           pagerHost.innerHTML = '';
@@ -16959,7 +16959,7 @@
         return `
             <div class="record-card"${voided ? ' style="opacity:0.88"' : ''}>
               <div class="record-head">
-                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:var(--color-semantic-error, #b91c1c);font-weight:700">VOID</span>' : ''}</div>
+                <div><b>WORK ORDER</b> — ${escapeHtml(r.txnType || 'expense')}${voided ? ' <span style="color:var(--color-semantic-error);font-weight:700">VOID</span>' : ''}</div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
               </div>
               <div class="mini-note"><strong>WO #</strong> ${escapeHtml(r.workOrderNumber || '—')} <span class="muted">(system)</span></div>
@@ -16974,7 +16974,7 @@
               <div class="mini-note">${lineSumm}</div>
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
               ${r.importBatchId ? `<div class="mini-note">Import batch: ${escapeHtml(r.importBatchId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error, #b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/work-order/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 ${postBtn}
@@ -17008,7 +17008,7 @@
               ${r.detailMode === 'category' ? `<div class="mini-note">Category: ${escapeHtml(accountName(r.qboAccountId))}</div>` : ''}
               ${r.qboEntityType ? `<div class="mini-note">QB ${escapeHtml(r.qboEntityType)} ID: ${escapeHtml(r.qboEntityId || '')}</div>` : ''}
               ${r.importBatchId ? `<div class="mini-note">Import batch: ${escapeHtml(r.importBatchId)}</div>` : ''}
-              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error, #b91c1c)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
+              ${r.qboError ? `<div class="mini-note" style="color:var(--color-semantic-error)">QB Error: ${escapeHtml(r.qboError)}</div>` : ''}
               <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/pdf/ap-transaction/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">PDF / print</a>
                 <button onclick="recordApToQboWithConfirm('${r.id}')">Record to QuickBooks</button>
@@ -17645,7 +17645,7 @@
       } catch (e) {
         const tb = document.getElementById('settlementIndexBody');
         if (tb) {
-          tb.innerHTML = `<tr><td colspan="6" class="mini-note" style="color:var(--color-semantic-error, #b91c1c)">${escapeHtml(e.message)}</td></tr>`;
+          tb.innerHTML = `<tr><td colspan="6" class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(e.message)}</td></tr>`;
         }
         if (pagerHost) {
           pagerHost.innerHTML = '';

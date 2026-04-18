@@ -4,12 +4,13 @@
  * Run: `npm start` in another terminal, then `npm run smoke`.
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
- * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). CSS bodies are reused from the static-asset GET when possible so the guard does not double-fetch those files.
+ * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). Bodies are reused from earlier successful GETs (**`STATIC_TEXT`** for CSS, HTML needles for **`/maintenance.html`**) so the guard avoids duplicate fetches when those steps pass.
  * Set SMOKE_BASE=http://host:port to target another environment.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
  */
 import process from 'process';
+import { ruleZeroForbiddenHits } from './rule-zero-agent-b.mjs';
 
 const base = String(process.env.SMOKE_BASE || `http://127.0.0.1:${process.env.PORT || 3400}`).replace(/\/$/, '');
 
@@ -72,32 +73,7 @@ const STATIC_TEXT = [
   ['/js/board-nav.js', 'Fuel & route planning', '*/*']
 ];
 
-/** Agent B Rule 0: these exact substrings must not appear in Agent B surfaces (merge-regression guard). */
-const RULE0_FORBIDDEN_SUBSTRINGS = [
-  'var(--color-border, var(--line))',
-  'var(--color-border,var(--line))',
-  'var(--color-bg-card, var(--panel))',
-  'var(--color-bg-card,var(--panel))',
-  'var(--color-bg-page, var(--bg))',
-  'var(--color-bg-page,var(--bg))',
-  'var(--color-text-label, var(--muted))',
-  'var(--color-text-label,var(--muted))',
-  'var(--color-text-body, var(--text))',
-  'var(--color-text-body,var(--text))',
-  'var(--color-text-primary, var(--text))',
-  'var(--color-text-primary,var(--text))',
-  'var(--color-text-body, var(--text-secondary))',
-  'var(--color-border-focus, var(--accent))',
-  'var(--color-border-focus,var(--accent))',
-  'var(--color-app-frame-border, var(--app-frame-border))',
-  'var(--color-app-frame-border,var(--app-frame-border))',
-  'var(--color-nav-bg, #',
-  'var(--color-bg-header, #',
-  'var(--color-bg-hover, #',
-  'var(--color-modal-backdrop, rgba'
-];
-
-/** `[path, Accept header]` — GET body checked against **`RULE0_FORBIDDEN_SUBSTRINGS`**. */
+/** `[path, Accept header]` — GET body checked against **`rule-zero-agent-b.mjs`** forbidden list. */
 const RULE0_GUARD_FETCHES = [
   ['/css/app-theme.css', 'text/css,*/*'],
   ['/css/maint-accounting-ui-2026.css', 'text/css,*/*'],
@@ -144,6 +120,7 @@ async function oneHtml(path, needleOrList) {
     status: r.status,
     ok: r.ok && has,
     hint,
+    bodyText: text,
     jsonSnippet: r.ok ? `bytes=${text.length}` : text.slice(0, 80)
   };
 }
@@ -167,10 +144,6 @@ async function oneStatic(path, needle, accept = 'text/css,*/*') {
     bodyText: text,
     jsonSnippet: r.ok ? `bytes=${text.length}` : text.slice(0, 80)
   };
-}
-
-function ruleZeroForbiddenHits(text) {
-  return RULE0_FORBIDDEN_SUBSTRINGS.filter(s => text.includes(s));
 }
 
 /** When **`cachedBody`** is set (same bytes as a successful **`STATIC_TEXT`** GET), skip a duplicate fetch. */
@@ -258,6 +231,9 @@ for (const [path, needle] of HTML_PAGES) {
     if (!pass) criticalFailures++;
     console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${path} ${row.hint}`.trim());
     if (!pass) console.log('   ', row.jsonSnippet);
+    if (pass && path === '/maintenance.html' && typeof row.bodyText === 'string') {
+      ruleZeroBodyCache.set(path, row.bodyText);
+    }
   } catch (e) {
     criticalFailures++;
     console.log(`✗ FAIL GET ${path}: ${e.message || e}`);

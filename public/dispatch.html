@@ -41,14 +41,14 @@
     .maint-banner.high {
       background: var(--pill-yellow-bg, #fff3e0);
       border: 1px solid var(--pill-yellow-text, #ef6c00);
-      color: var(--color-semantic-warning, #5d3800);
+      color: var(--color-semantic-warning);
       border-radius: var(--radius-sm);
       padding: 8px 12px;
     }
     .maint-banner.medium {
       background: var(--pill-yellow-bg, #fffde7);
-      border: 1px solid var(--color-semantic-warn-accent, #f9a825);
-      color: var(--color-semantic-warning, #5c4a00);
+      border: 1px solid var(--color-semantic-warn-accent);
+      color: var(--color-semantic-warning);
       border-radius: var(--radius-sm);
       padding: 8px 12px;
     }
@@ -65,8 +65,8 @@
       color: var(--accent);
     }
     .st-default {
-      background: var(--color-bg-header, #f1f5f9);
-      color: var(--color-text-body, var(--text-secondary));
+      background: var(--color-bg-header);
+      color: var(--color-text-body);
     }
     select.sm,
     input.sm {
@@ -101,7 +101,7 @@
       font-size: 1.05rem;
       font-weight: 700;
       letter-spacing: -0.02em;
-      background: linear-gradient(180deg, var(--color-bg-header, #f8fafc) 0%, var(--color-bg-card, #fff) 100%);
+      background: linear-gradient(180deg, var(--color-bg-header) 0%, var(--color-bg-card) 100%);
     }
     .modal-body { padding: 16px 20px; max-height: calc(100vh - 180px); overflow: auto; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -119,7 +119,7 @@
     .stops-head { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 8px; }
     .stop-block {
       margin-bottom: 12px;
-      background: var(--color-bg-header, #f8fafc);
+      background: var(--color-bg-header);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-sm);
       padding: 12px 14px;
@@ -172,7 +172,7 @@
     .stop-miles-summary {
       margin-top: 14px;
       padding: 12px 14px;
-      background: var(--color-bg-card, #fff);
+      background: var(--color-bg-card);
       border: 1px solid var(--color-border);
       border-radius: 10px;
       display: flex;
@@ -187,12 +187,12 @@
     }
     .stop-miles-summary th,
     .stop-miles-summary td {
-      border: 1px solid var(--color-border, #e2e8f0);
+      border: 1px solid var(--color-border);
       padding: 6px 12px;
       text-align: right;
     }
     .stop-miles-summary th {
-      background: var(--color-bg-header, #f1f5f9);
+      background: var(--color-bg-header);
       text-align: center;
       font-size: 11px;
       text-transform: uppercase;
@@ -218,12 +218,12 @@
       transition: background 0.15s ease, border-color 0.15s ease;
     }
     .btn:hover {
-      background: var(--color-bg-hover, #f8fafc);
-      border-color: var(--color-border, var(--line-strong));
+      background: var(--color-bg-hover);
+      border-color: var(--color-border);
     }
     .btn-primary {
       background: var(--accent);
-      color: var(--color-bg-card, #fff);
+      color: var(--color-bg-card);
       border-color: var(--accent);
     }
     .btn-primary:hover {
@@ -231,7 +231,7 @@
       border-color: var(--accent-hover);
     }
     .btn-ghost {
-      background: var(--color-bg-header, #f1f5f9);
+      background: var(--color-bg-header);
       color: var(--color-text-body);
       border-color: var(--color-border);
     }
@@ -243,7 +243,7 @@
     .ac-wrap { position: relative; }
     .ac-list {
       display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 6000;
-      background: var(--color-bg-card, #fff);
+      background: var(--color-bg-card);
       border: 1px solid var(--color-border);
       border-radius: 8px;
       max-height: 200px;
@@ -251,7 +251,7 @@
       box-shadow: var(--shadow-dropdown, 0 8px 24px rgba(0, 0, 0, 0.12));
     }
     .ac-list.on { display: block; }
-    .ac-item { padding: 8px 10px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--color-border, #f0f0f0); }
+    .ac-item { padding: 8px 10px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--color-border); }
     .ac-item:hover {
       background: var(--accent-soft);
     }
@@ -262,7 +262,7 @@
     html.dispatch-embed .dispatch-embed-status-bar {
       flex-shrink: 0;
       border-bottom: 1px solid var(--color-border);
-      background: var(--color-bg-header, #f8fafc);
+      background: var(--color-bg-header);
       font-size: 12px;
       line-height: 1.45;
       color: var(--color-text-label);
@@ -279,7 +279,7 @@
       min-width: min(100%, 160px);
     }
     html.dispatch-embed .dispatch-embed-status-bar__sep {
-      color: var(--color-text-placeholder, #cbd5e1);
+      color: var(--color-text-placeholder);
       user-select: none;
     }
     html.dispatch-embed #boardNavMount,
@@ -366,7 +366,7 @@
             </span>
           </span>
         </div>
-        <p class="mini-note dispatch-sidebar-footer__line" style="margin:6px 0 0;line-height:1.45;font-size:12px;color:var(--color-text-label,#6b7385)">
+        <p class="mini-note dispatch-sidebar-footer__line" style="margin:6px 0 0;line-height:1.45;font-size:12px;color:var(--color-text-label)">
           Load # = QuickBooks invoice #; row actions drive status, invoice, and documents.
         </p>
       </div>
@@ -1977,7 +1977,7 @@
                 ? ' · ' + Math.round(Number(doc.byte_size) / 1024) + ' KB'
                 : '';
             return (
-              '<li style="padding:10px 0;border-bottom:1px solid var(--color-border,#e0e3e8)">' +
+              '<li style="padding:10px 0;border-bottom:1px solid var(--color-border)">' +
               '<div><strong>' +
               escapeHtml(doc.doc_type || 'other') +
               '</strong> · ' +
@@ -2085,7 +2085,7 @@
         let briefText = '';
         let briefColor = '';
         if (!qSync || qSync.ok === false) {
-          briefColor = 'var(--color-semantic-error,#b91c1c)';
+          briefColor = 'var(--color-semantic-error)';
           briefText = 'Could not load posting alerts.';
         } else {
           const c = qSync.counts || {};
@@ -2096,7 +2096,7 @@
           if (!hi && !med && !low && !nAlert) {
             briefText = 'No open posting issues.';
           } else {
-            briefColor = hi ? 'var(--color-semantic-warn-accent,#b45309)' : '';
+            briefColor = hi ? 'var(--color-semantic-warn-accent)' : '';
             briefText =
               'Posting alerts: ' + hi + ' high · ' + med + ' med · ' + low + ' low' + (nAlert ? ' · details on ERP Accounting' : '');
           }
@@ -2133,7 +2133,7 @@
         applyDispatchStatusToTargets(targets, {
           qText: 'QuickBooks: status check failed',
           briefText: e.message || String(e),
-          briefColor: 'var(--color-semantic-error,#b91c1c)',
+          briefColor: 'var(--color-semantic-error)',
           fText: 'Samsara: status unavailable',
           luText: 'Last refresh: waiting…'
         });

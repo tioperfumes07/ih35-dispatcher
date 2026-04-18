@@ -291,3 +291,37 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Smoke:** **`scripts/system-smoke.mjs`** — **`oneRuleZeroGuard(path, accept)`** runs after static needles; **`RULE0_GUARD_FETCHES`** includes **`/maintenance.html`**. **`RULE0_FORBIDDEN_SUBSTRINGS`** adds compact comma forms, common **`--color-*` + `#`** prefixes, **`var(--color-modal-backdrop, rgba`**, and the prior **`var(--color-*, var(...))`** list.
 
 **Files:** `public/maintenance.html`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-17
+
+- **Smoke:** **`scripts/system-smoke.mjs`** — **`RULE0_FORBIDDEN_SUBSTRINGS`** adds compact forms without spaces after commas (**`var(--color-border,var(--line))`**, **`var(--color-text-primary,var(--text))`**, etc.). Successful **`STATIC_TEXT`** responses cache **`bodyText`** so **`oneRuleZeroGuard`** reuses bytes for **`app-theme.css`** and **`maint-accounting-ui-2026.css`** (one fewer HTTP GET each). Extracted **`ruleZeroForbiddenHits(text)`** for clarity.
+
+**Files:** `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-18
+
+- **Smoke:** **`scripts/system-smoke.mjs`** — **`oneHtml`** now returns **`bodyText`**; when **`/maintenance.html`** passes its needle list, that body is stored in **`ruleZeroBodyCache`** so **`oneRuleZeroGuard`** does not fetch maintenance again (third cached guard line). **`RULE0_FORBIDDEN_SUBSTRINGS`** adds **`var(--color-text-body,var(--text-secondary))`**.
+
+**Files:** `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-19
+
+- **Smoke / tooling:** Shared list **`scripts/rule-zero-agent-b.mjs`** exports **`RULE0_FORBIDDEN_SUBSTRINGS`** and **`ruleZeroForbiddenHits`**, imported by **`system-smoke.mjs`** so HTTP and disk checks stay aligned. New forbidden entries: **`var(--color-bg-card, var(--bg-elevated))`** (compact + spaced) and **`var(--color-nav-bg, var(--sidebar-bg))`** (compact + spaced).
+- **Offline CI:** **`scripts/rule-zero-agent-b-check.mjs`** reads **`public/css/app-theme.css`**, **`public/css/maint-accounting-ui-2026.css`**, and **`public/maintenance.html`** from the repo and exits **`1`** on any hit — run via **`npm run rule0:check`** without **`npm start`**.
+
+**Files:** `scripts/rule-zero-agent-b.mjs`, `scripts/rule-zero-agent-b-check.mjs`, `scripts/system-smoke.mjs`, `package.json`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-20
+
+- **CI:** **`.github/workflows/rule0-check.yml`** — Runs **`npm run rule0:check`** on **`push` / `pull_request`** to **`main`** or **`master`** (Ubuntu, Node 20); no **`npm ci`** so the job stays fast and dependency-free.
+- **Docs in CSS:** **`app-theme.css`** file header now points maintainers at **`rule0:check`**, HTTP smoke, and **`scripts/rule-zero-agent-b.mjs`** as the shared forbidden list.
+
+**Files:** `.github/workflows/rule0-check.yml`, `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

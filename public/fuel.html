@@ -19,14 +19,14 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:var(--font-sans);background:var(--color-bg-page);color:var(--color-text-body)}
     .topbar{
-      padding:max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));background:var(--color-bg-card,#fff);border-bottom:1px solid var(--color-border);
+      padding:max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));background:var(--color-bg-card);border-bottom:1px solid var(--color-border);
       display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:max(0px, env(safe-area-inset-top, 0px));z-index:1000
     }
     .topbar h1{margin:0 12px 0 0;font-size:20px}
     button,input{font:inherit}
-    button{padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card,#fff);cursor:pointer}
-    button:hover{background:var(--color-bg-hover,#f3f4f6)}
-    input{padding:8px 10px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card,#fff)}
+    button{padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card);cursor:pointer}
+    button:hover{background:var(--color-bg-hover)}
+    input{padding:8px 10px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card)}
     .layout{
       display:grid;
       grid-template-columns:minmax(260px,1fr) minmax(0,2.2fr) minmax(260px,1fr);
@@ -37,9 +37,9 @@
       box-sizing:border-box;
     }
     .panel{background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:12px;overflow:hidden}
-    .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--color-border);background:var(--color-bg-card,#fff)}
+    .panel h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid var(--color-border);background:var(--color-bg-card)}
     .panel-body{padding:12px}
-    .fleet-summary{padding:10px 12px;border-bottom:1px solid var(--color-border);font-size:13px;color:var(--color-text-label);background:var(--color-bg-header,#fafafa)}
+    .fleet-summary{padding:10px 12px;border-bottom:1px solid var(--color-border);font-size:13px;color:var(--color-text-label);background:var(--color-bg-header)}
     .fleet-columns{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--color-border)}
     .fleet-col{min-height:200px;border-right:1px solid var(--color-border)}
     .fleet-col:last-child{border-right:none}
@@ -50,15 +50,15 @@
       color:var(--color-text-label);
       text-transform:uppercase;
       border-bottom:1px solid var(--color-border);
-      background:var(--color-bg-header,#fafafa);
+      background:var(--color-bg-header);
       position:sticky;
       top:0;
       z-index:2;
     }
     #fleetAssigned,#fleetUnassigned{max-height:clamp(220px,calc(100vh - 220px),560px);overflow:auto}
     .fleet-item{padding:10px 12px;border-bottom:1px solid var(--color-border);cursor:pointer}
-    .fleet-item:hover{background:var(--color-bg-hover,#f9fafb)}
-    .fleet-item.active{background:var(--color-bg-active,#eff6ff)}
+    .fleet-item:hover{background:var(--color-bg-hover)}
+    .fleet-item.active{background:var(--color-bg-active)}
     .fleet-title{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:500;margin-bottom:4px}
     .fleet-sub{font-size:12px;color:var(--color-text-label);margin-bottom:4px}
     .badge{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500;border:1px solid var(--color-border);white-space:nowrap}
@@ -77,12 +77,12 @@
       margin:0 12px 10px;padding:10px 14px;border-radius:10px;font-size:12px;max-width:1100px;
       border:1px solid var(--pill-yellow-text,#b45309);
       background:var(--pill-yellow-bg,#fffbeb);
-      color:var(--color-semantic-warning,#92400e);
+      color:var(--color-semantic-warning);
     }
     .fuel-erp-write-banner input[type="password"]{
       margin:6px 8px 0 0;max-width:240px;padding:6px 8px;
-      border:1px solid var(--color-border-input,#d9dde7);border-radius:8px;
-      background:var(--color-bg-card,#fff);
+      border:1px solid var(--color-border-input);border-radius:8px;
+      background:var(--color-bg-card);
     }
     .fuel-relay-info{
       margin:0 0 10px;padding:10px 12px;line-height:1.45;
@@ -100,7 +100,7 @@
       top:100%;
       left:0;
       right:0;
-      background:var(--color-bg-card,#fff);
+      background:var(--color-bg-card);
       border:1px solid var(--color-border);
       border-top:none;
       z-index:3000;
@@ -112,16 +112,16 @@
     .auto-item{
       padding:8px 10px;
       cursor:pointer;
-      border-top:1px solid var(--color-border,#f1f5f9);
+      border-top:1px solid var(--color-border);
       font-size:13px;
     }
-    .auto-item:hover{background:var(--color-bg-hover,#f8fafc)}
+    .auto-item:hover{background:var(--color-bg-hover)}
     .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:13px}
-    .detail-card{border:1px solid var(--color-border,#eef1f5);border-radius:10px;padding:8px 10px;background:var(--color-bg-header,#fafafa)}
+    .detail-card{border:1px solid var(--color-border);border-radius:10px;padding:8px 10px;background:var(--color-bg-header)}
     .detail-wide{grid-column:1 / -1}
     .label{color:var(--color-text-label);font-size:12px;margin-bottom:2px}
     .section-title{margin:14px 0 8px;font-size:13px;font-weight:700;color:var(--color-text-label);text-transform:uppercase}
-    .stop-card{border:1px solid var(--color-border,#e5e7eb);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--color-bg-card,#fff)}
+    .stop-card{border:1px solid var(--color-border);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--color-bg-card)}
     .small{font-size:12px;color:var(--color-text-label)}
     @media (max-width:1450px){
       .layout{grid-template-columns:1fr}
@@ -154,7 +154,7 @@
   <script src="/js/erp-ui.js" defer></script>
   <div class="topbar">
     <h1>Fuel &amp; route planning</h1>
-    <a href="/" style="margin-right:8px;font-weight:700;color:var(--color-border-focus,#1967d2)">Home</a>
+    <a href="/" style="margin-right:8px;font-weight:700;color:var(--color-border-focus)">Home</a>
     <a href="/dispatch.html" style="margin-right:10px;font-weight:600;color:var(--pill-green-text,#15803d)">Loads &amp; TMS</a>
     <a href="/maintenance.html" style="margin-right:10px;font-weight:600;color:var(--pill-purple-text,#6b21a8)">Maintenance</a>
     <button type="button" id="fuelBtnRefreshBoard" onclick="refreshFuelBoardNow()" title="Fetch latest Samsara fleet data now">Refresh now</button>
@@ -273,7 +273,7 @@
         <span id="fuelLedgerMeta" class="small"></span>
       </div>
       <p class="small fuel-relay-info">
-        <strong>Relay / Love’s CSV imports</strong> moved to <a href="/maintenance.html#accounting-fuel" style="font-weight:700;color:var(--color-border-focus,#1967d2)">Maintenance → Accounting → Fuel expenses</a> so imports sit next to QuickBooks posting and are not mixed with route planning.
+        <strong>Relay / Love’s CSV imports</strong> moved to <a href="/maintenance.html#accounting-fuel" style="font-weight:700;color:var(--color-border-focus)">Maintenance → Accounting → Fuel expenses</a> so imports sit next to QuickBooks posting and are not mixed with route planning.
       </p>
       <div id="fuelLedger" class="small">No fuel purchases yet.</div>
         <div class="section-title">Recommended Stops</div>

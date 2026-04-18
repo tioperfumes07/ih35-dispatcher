@@ -1,7 +1,7 @@
 /**
  * IH35 — shared visual language: calm, precise, trustworthy.
  * Load before page-specific <style> blocks so local rules can override.
- * Color roles: use **`--color-*`** from **`design-tokens.css`**. Rule 0 (Agent B): one hop only — do not chain **`var(--color-… , var(--legacy))`**, duplicate hex on **`--color-*`**, or reintroduce removed patterns (CI smoke guards **`scripts/system-smoke.mjs`**).
+ * Color roles: use **`--color-*`** from **`design-tokens.css`**. Rule 0 (Agent B): one hop only — do not chain **`var(--color-… , var(--legacy))`**, duplicate hex on **`--color-*`**, or reintroduce removed patterns. Guards: **`npm run rule0:check`** (disk) + **`scripts/system-smoke.mjs`** (HTTP); list lives in **`scripts/rule-zero-agent-b.mjs`**.
  */
 
 :root {

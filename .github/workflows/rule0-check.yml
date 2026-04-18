@@ -1,0 +1,18 @@
+# Agent B — Rule 0 token stacks (no server; no npm install required for this job).
+name: Rule 0 (Agent B)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  rule0-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Forbidden var(--color-*…) stacks
+        run: npm run rule0:check
