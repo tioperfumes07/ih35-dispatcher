@@ -435,6 +435,49 @@ body.erp-maintenance #section-uploads .panel-body {
   min-width: 0;
 }
 
+body.erp-maintenance #section-uploads .panel-head,
+body.erp-maintenance #section-uploads .panel-head > div {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-uploads .mr-upload-panel-title {
+  min-width: 0;
+}
+
+/* Rule 1: lists & catalogs — panel title + first-row intro strips (inline flex in maintenance.html). */
+body.erp-maintenance #section-catalog .panel-head,
+body.erp-maintenance #section-catalog .panel-head .panel-title {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-catalog .catalog-subpanel > div:first-child {
+  min-width: 0;
+}
+
+/* Rule 1: reports tile hub (spec flex/grid) — shrink inside .erp-reports-main. */
+body.erp-maintenance #section-reports .erp-reports-hub,
+body.erp-maintenance #section-reports .erp-reports-hub__tiles,
+body.erp-maintenance #section-reports .erp-reports-hub__tiles--dense,
+body.erp-maintenance #section-reports .erp-reports-hub__card,
+body.erp-maintenance #section-reports .erp-reports-hub__tile {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-reports .erp-reports-hub__tile-title,
+body.erp-maintenance #section-reports .erp-reports-hub__tile-meta {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-reports .mr-rep-nav-group,
+body.erp-maintenance #section-reports .mr-rep-nav-group__head,
+body.erp-maintenance #section-reports .mr-rep-nav-group__body {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-reports .reports-tab {
+  min-width: 0;
+}
+
 /* Rule 1: bill pay tab — flex rows from spec layout (all breakpoints). */
 body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-panel-head,
 body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-hintrow,
@@ -454,6 +497,18 @@ body.erp-maintenance #section-accounting #acct-expense-history .panel-head > div
 
 body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-head,
 body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-title {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-accounting #acct-expense-history .panel-head > div > div:last-child {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-body .panel-head > div {
+  min-width: 0;
+}
+
+body.erp-maintenance #section-accounting #acct-qbo .panel-head {
   min-width: 0;
 }
 

@@ -417,7 +417,7 @@ body.erp-maintenance .qb-picker-item__meta {
   height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   background: var(--color-bg-card);
   border-left: 1px solid var(--color-border);
-  box-shadow: var(--shadow-drawer, -8px 0 28px rgba(15, 23, 42, 0.12));
+  box-shadow: var(--shadow-drawer);
   z-index: 3000;
   transform: translateX(100%);
   transition: transform 0.18s ease;
@@ -1380,6 +1380,7 @@ body.erp-maintenance .tire-svg {
   border-radius: var(--radius-sm);
   background: var(--color-bg-hover);
   padding: 10px;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-line-part-map-host {
@@ -1423,6 +1424,7 @@ body.erp-maintenance .track-card {
   border-radius: var(--radius-sm);
   background: var(--color-bg-hover);
   cursor: pointer;
+  min-width: 0;
 }
 
 body.erp-maintenance .track-card.active {
@@ -2930,6 +2932,7 @@ body.erp-maintenance .maint-subcard {
   background: var(--app-section-surface);
   margin-bottom: 14px;
   box-shadow: var(--shadow-sm);
+  min-width: 0;
 }
 body.erp-maintenance .maint-subcard__head {
   font-size: 12px;
@@ -2943,6 +2946,7 @@ body.erp-maintenance .maint-subcard__body {
   padding: 10px 14px 14px;
   background: var(--color-bg-card);
   border-radius: 0 0 11px 11px;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-cost-panel-card {
@@ -3202,6 +3206,7 @@ body.erp-maintenance .maint-cost-coordination .coord-total {
   font-size: 18px;
   font-weight: 800;
   color: var(--color-text-primary);
+  min-width: 0;
 }
 
 body.erp-maintenance .sec-alert-high {
@@ -3765,5 +3770,9 @@ body.erp-maintenance .erp-ops-subtabs-bar {
 
 body.erp-maintenance .erp-reports-toolbar__title,
 body.erp-maintenance .erp-reports-toolbar__search {
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-reports-toolbar__actions {
   min-width: 0;
 }

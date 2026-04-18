@@ -591,3 +591,38 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#acct-bill-pay .mr-bp-panel-head__title`** gets **`min-width: 0`**; **`#acct-expense-history`** **`.panel-head`** and its direct child flex row get **`min-width: 0`**; **`#acct-qbo-rollback`** **`.panel-head`** and **`.panel-title`** get **`min-width: 0`** so expense history and rollback tab chrome matches other accounting overflow-safe patterns.
 
 **Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-15
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#acct-expense-history .panel-head > div > div:last-child`** (**Apply filters** / **Export** column) gets **`min-width: 0`**; **`#acct-qbo-rollback .panel-body .panel-head > div`** for subsection import-batch headers; **`#acct-qbo .panel-head`** for Live Master outer head and **Vendors / Items / Accounts** column mini-heads.
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-16
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — Reports hub **`.erp-reports-hub`**, **`.erp-reports-hub__tiles`** / **`__tiles--dense`**, **`.erp-reports-hub__card`**, and **`.erp-reports-hub__tile`** under **`#section-reports`** get **`min-width: 0`** so the tile grid respects **`erp-reports-main`** width.
+- **Rule 1:** **`public/css/app-theme.css`** — WO **`.maint-subcard`** and **`.maint-subcard__body`** get **`min-width: 0`** so nested form blocks stay inside the main column.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-17
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — Reports **`.erp-reports-hub__tile-title`** / **`__tile-meta`**, sidebar **`.mr-rep-nav-group`** (with **`__head`** / **`__body`**), and each **`.reports-tab`** panel get **`min-width: 0`** under **`#section-reports`**.
+- **Rule 1:** **`public/css/app-theme.css`** — Cost coordination **`.coord-total`** gets **`min-width: 0`** so large totals wrap inside **`.coord-row`**.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-18
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#section-uploads`** **`.panel-head`** / **`.panel-head > div`** and **`.mr-upload-panel-title`** get **`min-width: 0`** for inline-flex upload headers in **`maintenance.html`**.
+- **Rule 1:** **`public/css/app-theme.css`** — Tracking **`.track-card`** gets **`min-width: 0`** inside **`track-grid`**; **`.erp-reports-toolbar__actions`** gets **`min-width: 0`** so the action cluster wraps inside the reports toolbar row.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
