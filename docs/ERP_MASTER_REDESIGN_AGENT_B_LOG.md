@@ -758,3 +758,21 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/app-theme.css` — `min-height: 0` added on scroll hosts that already used `overflow: auto` + `min-width: 0`: `.table-wrap`, `.shop-col-body`, `.safety-table-wrap`, `.acct-fuel-import-scroll`, and `.fuel-exp-table-wrap` so nested maintenance / safety / fuel / accounting table viewports can shrink in flex or grid columns and scroll reliably.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-04
+
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `body.erp-maintenance .erp-table-scroll` gets `min-height: 0` (with existing `min-width: 0`); `.maint-qb-lines-scroll` gets `min-height: 0` so horizontal QB line table frames participate in flex height shrink like other scroll wrappers.
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .form-stack` and `.card-list` get `min-height: 0` alongside `min-width: 0` so dense form stacks and dashboard card grids can shrink inside column flex layouts.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-05
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance .erp-main-body` gets `min-width: 0` so the redesign’s vertical scroll region does not inherit a flex min-content width from wide tables or QB docs inside the main column. `body.erp-maintenance .erp-icon-nav` gets `min-height: 0` so the left icon rail can shrink inside `#erpApp`’s `100vh` flex row and use its own `overflow-y: auto` when many shortcuts are present.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `.maint-wo-form-stack-inner` gets `min-height: 0` alongside `min-width: 0` so the work-order form stack participates in the `.maint-wo-col-form` scroll column flex chain.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

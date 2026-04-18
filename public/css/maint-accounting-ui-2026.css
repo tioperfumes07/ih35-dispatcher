@@ -364,6 +364,7 @@ body.erp-maintenance .maint-wo-form-stack-inner {
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-form-actions--sticky {
@@ -557,11 +558,13 @@ body.erp-maintenance #section-maintenance .shop-tab-panel .erp-table-scroll {
 /* Rule 1: horizontal table scroll — any maintenance module using .erp-table-scroll (redesign + JS tables). */
 body.erp-maintenance .erp-table-scroll {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: QB cost / line tables — scroll frame participates in flex shrink inside accounting docs. */
 body.erp-maintenance #section-accounting .maint-qb-lines-scroll {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-dash-kpis {
@@ -1327,6 +1330,7 @@ body.erp-maintenance .maint-qb-lines-scroll {
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-qb-lines-table {

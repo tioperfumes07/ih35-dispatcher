@@ -76,7 +76,7 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-spec-sans, var(--font-sans, system-ui, sans-serif));
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
@@ -131,7 +131,7 @@ main,
 
 /* Banking tool (banking.html) */
 .banking-page .wrap {
-  font-family: var(--font-sans);
+  font-family: var(--font-spec-sans, var(--font-sans, system-ui, sans-serif));
 }
 
 .banking-page .panel {
@@ -229,6 +229,11 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   max-width: 100%;
 }
 
+body.erp-maintenance .qbo-sync-alert-bar .qbo-sync-list {
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Rule 1 — dedicated accounting/fuel modal (spec): shell + bar flex rows avoid min-content width blowout beside min(1000px,100%). */
 body.erp-maintenance .erp-dedicated-form-modal__shell,
 body.erp-maintenance .erp-dedicated-form-modal__bar,
@@ -285,7 +290,11 @@ body.erp-maintenance .catalog-add-card__body {
 }
 
 /* Rule 1 — Lists & catalogs vendor search: scroll frame + flex hit rows shrink inside panel column. */
-body.erp-maintenance .catalog-search-results,
+body.erp-maintenance .catalog-search-results {
+  min-width: 0;
+  min-height: 0;
+}
+
 body.erp-maintenance .catalog-search-hit {
   min-width: 0;
 }
@@ -424,6 +433,7 @@ body.erp-maintenance .qb-picker-menu {
   border-radius: 8px;
   font-size: 13px;
   min-width: 0;
+  min-height: 0;
 }
 body.erp-maintenance .qb-picker-item {
   padding: 5px 8px;
@@ -522,7 +532,7 @@ button.linkish:hover {
 
 body.dispatch-page,
 body.fuel-board {
-  font-family: var(--font-sans);
+  font-family: var(--font-spec-sans, var(--font-sans, system-ui, sans-serif));
   color: var(--color-text-body);
   -webkit-font-smoothing: antialiased;
 }
@@ -752,6 +762,7 @@ body.erp-maintenance .sidebar {
   height: 100vh;
   overflow: auto;
   min-width: 0;
+  min-height: 0;
   transition: opacity 0.15s ease, padding 0.15s ease;
   border-right: 1px solid var(--sidebar-border);
 }
@@ -1333,6 +1344,7 @@ body.erp-maintenance .form-stack {
   display: grid;
   gap: 10px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .mini-note {
@@ -1344,6 +1356,7 @@ body.erp-maintenance .card-list {
   display: grid;
   gap: 10px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .record-card {
@@ -1547,6 +1560,7 @@ body.erp-maintenance .maint-form-stack {
   gap: 10px;
   max-width: min(720px, 100%);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-form-stack .search-row {
@@ -1872,6 +1886,7 @@ body.erp-maintenance .nav-dropdown-menu {
   max-height: min(70vh, 420px);
   overflow: auto;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .nav-dropdown:hover .nav-dropdown-menu {
@@ -3824,6 +3839,7 @@ body.erp-maintenance .fuel-exp-table-wrap {
 
 body.erp-maintenance .fuel-expense-stack {
   min-width: 0;
+  min-height: 0;
   overflow-x: auto;
 }
 
@@ -3838,6 +3854,15 @@ body.erp-maintenance .acct-board-subtabs .nav-dd-item {
 body.erp-maintenance #acct-fuel-expense .qb-doc-shell {
   min-width: 0;
   max-width: 100%;
+}
+
+/* Rule 1: redesign scroll column + icon rail — min sizes so wide content / many icons scroll inside 100vh shell. */
+body.erp-maintenance .erp-main-body {
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-icon-nav {
+  min-height: 0;
 }
 
 /* Rule 1: ops + reports toolbars live in the maintenance main column; allow shrink under spec/redesign flex. */
