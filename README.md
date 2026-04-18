@@ -35,7 +35,7 @@ Use these before a release or when validating the ERP shell (see `docs/ERP_MASTE
 2. **Start the server** — `npm start` or `npm run dev`. Listen port is **`process.env.PORT` or `3400`** unless your `.env` sets otherwise.
 3. **`npm run smoke`** — `scripts/system-smoke.mjs` hits health APIs and static ERP pages (expects `127.0.0.1` on the same port). **`npm run qa:automated`** runs steps **1** then **3** in one command.
 
-If the server is not on **3400**, set **`SMOKE_BASE`** for smoke (e.g. `SMOKE_BASE=http://127.0.0.1:3100 npm run smoke`).
+If the server is not on **3400**, set **`SMOKE_BASE`** for smoke (e.g. `SMOKE_BASE=http://127.0.0.1:3100 npm run smoke`). Set **`SMOKE_QUIET=1`** to hide the extra “Smoke target” line at the end of a successful smoke run.
 
 ## Useful endpoints
 
