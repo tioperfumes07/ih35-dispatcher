@@ -227,10 +227,30 @@
           <div class="erp-drawer__title" id="erpDrawerTitle">Create</div>
           <button type="button" class="erp-drawer__close" onclick="closeErpDrawer()">Close</button>
         </div>
-        <div class="erp-drawer__body" id="erpDrawerBody"></div>
+        <div class="erp-drawer__body" style="display:flex;flex-direction:column;min-height:0">
+          <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;flex-shrink:0;line-height:1.45;color:var(--color-text-body)">
+            <span style="min-width:0;flex:1 1 200px">Vendor / item / account forms from <strong>+ New</strong> load in the scrollable area below — this line stays when the drawer opens.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create drawer body">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <code>openErpDrawer(title, html, focusSelector)</code> sets <code>#erpDrawerTitle</code> and replaces <code>#erpDrawerBody</code> <code>innerHTML</code>. <code>openAddNewDrawer(kind, typed)</code> builds escaped vendor, product/service, or account markup (item flow also fills income/expense <code>&lt;select&gt;</code> options via <code>innerHTML</code>). <code>closeErpDrawer()</code> only toggles chrome — it does not clear the body until the next open.
+              </span>
+            </span>
+          </div>
+          <div id="erpDrawerBody" style="flex:1 1 auto;min-height:0;overflow:auto"></div>
+        </div>
       </aside>
 
       <main class="main erp-main-surface">
+        <div class="mini-note print-hide-actions" style="margin:0 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
+          <span style="min-width:0;flex:1 1 220px">When the API returns <strong>401</strong> with <code>authRequired</code>, the red strip below shows a sign-in link; successful <code>loadAll()</code> hides it again.</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Auth banner">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              Shared helper <code>j()</code> sets <code>#authBanner</code> <code>innerHTML</code> on 401 responses so users can jump to <strong>Settings</strong>. <code>loadAll()</code> clears the banner with <code>textContent</code> and adds <code>hidden</code> after a successful refresh batch.
+            </span>
+          </span>
+        </div>
         <div id="authBanner" class="hidden mini-note erp-auth-banner" aria-live="polite"></div>
         <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
         <div id="erpConnectionStrip" class="erp-connection-strip print-hide-actions" aria-live="polite"></div>
@@ -1984,7 +2004,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop integrity alerts">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Calls <code>GET /api/maintenance/security-alerts</code> with your <strong>Window (days)</strong> query; <code>loadSecurityCatalogUi</code> runs <code>renderSecurityAlerts</code> for both <code>#securityAlertsBody</code> (this panel) and <code>#maintSecurityAlertsBody</code> (R&amp;M tab) so filters stay aligned. This panel uses <code>integritySearch</code> / <code>integritySeverity</code>; errors replace the box below with a short message.
+                    <code>GET /api/maintenance/security-alerts</code> (days from toolbar) → <code>renderSecurityAlerts</code> on <code>#securityAlertsBody</code> + <code>#maintSecurityAlertsBody</code> (same feed as <strong>R&amp;M Status</strong>). Here: <code>integritySearch</code> / <code>integritySeverity</code>. Errors → short message in the box below.
                   </span>
                 </span>
               </div>
@@ -2014,7 +2034,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit cards">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderTrackingBoard()</code>: sort <code>vehicles</code>, apply <code>#trackingSearch</code>, page <code>#trackingList</code> (<code>trackingListPager</code>). Click → <code>selectTrackingVehicle</code> updates map, <code>#trackingDetailBox</code>, <code>#trackingSummaryText</code>. See <strong>?</strong> under map / <strong>Summary</strong>.
+                      <code>renderTrackingBoard()</code>: sort + filter <code>vehicles</code> (<code>#trackingSearch</code>) → paged <code>#trackingList</code> (<code>trackingListPager</code>). Row click → <code>selectTrackingVehicle</code> → map, <code>#trackingDetailBox</code>, <code>#trackingSummaryText</code>.
                     </span>
                   </span>
                 </div>
@@ -2059,9 +2079,9 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Data sources">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Names, VIN, GPS from <strong>Samsara</strong> — edits in
-                    <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> (read-only APIs here).
-                    TMS units in Postgres (<code>DATABASE_URL</code>) live in dispatch/TMS; match unit codes (e.g. T160).
+                    Names / VIN / GPS from <strong>Samsara</strong> (read-only here) — edit in
+                    <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a>.
+                    TMS-linked units use Postgres when <code>DATABASE_URL</code> is set; align unit codes (e.g. T160).
                   </span>
                 </span>
               </div>
@@ -2087,7 +2107,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="All tracked assets grid">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderTrackingAssetsTable()</code>: sort <code>vehicles</code>, <code>#trackingAssetFilter</code>, paged <code>#trackingAssetsTableBody</code> (<code>trackingAssetsTablePager</code>); filter change → page 1. Read-only; edit fleet in Samsara Cloud.
+                    <code>renderTrackingAssetsTable()</code>: sorted <code>vehicles</code> + <code>#trackingAssetFilter</code> → paged <code>#trackingAssetsTableBody</code> (<code>trackingAssetsTablePager</code>); new filter → page **1**. Read-only — fleet edits in Samsara Cloud.
                   </span>
                 </span>
               </div>
@@ -2110,8 +2130,8 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About drivers list">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Same Samsara HOS source as <strong>Safety → HOS</strong>. Add/rename in
-                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> — read-only ELD here. Settlement driver data: Postgres/TMS when configured.
+                Same HOS feed as <strong>Safety → HOS</strong>. Add/rename drivers in
+                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a> (read-only here). Settlement may pull driver context from TMS/Postgres when configured.
               </span>
             </span>
           </div>
@@ -2141,7 +2161,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking drivers table">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderTrackingDrivers()</code> runs <code>applySafetyHosDutyMode</code> on <code>(board.hos || []).map(normalizeHosClock)</code> using <code>#trackingDriversDutyFilter</code>, then replaces <code>#trackingDriversBody</code> via <code>innerHTML</code> with a paged slice. <code>trackingDriversPager</code> + <code>erpPagerRender</code>; read-only ELD mirror (edit drivers in Samsara Cloud).
+                <code>renderTrackingDrivers()</code>: normalize <code>board.hos</code> → <code>applySafetyHosDutyMode</code> via <code>#trackingDriversDutyFilter</code> → paged <code>#trackingDriversBody</code> + <code>trackingDriversPager</code> / <code>erpPagerRender</code>. Read-only ELD mirror.
               </span>
             </span>
           </div>
@@ -2232,7 +2252,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking summary block">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  <code>renderTrackingBoard()</code> replaces <code>#trackingSummaryText</code> <code>innerHTML</code> with five labeled counts: <code>vehicles.length</code>, <code>(board.vehicles || []).length</code>, <code>(board.live || []).length</code>, <code>(board.assignments || []).length</code>, and <code>(board.hos || []).length</code>, joined with HTML line breaks.
+                  <code>renderTrackingBoard()</code> refreshes <code>#trackingSummaryText</code> with five labeled counts: <code>vehicles</code>, <code>board.vehicles</code>, <code>board.live</code>, <code>board.assignments</code>, <code>board.hos</code> lengths (line breaks in markup).
                 </span>
               </span>
             </div>
