@@ -32,7 +32,7 @@ body.erp-maintenance {
 
 body.erp-maintenance {
   margin: 0;
-  background: var(--qb-page);
+  background: var(--color-bg-page);
   color: var(--color-text-body);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
@@ -85,8 +85,8 @@ body.erp-maintenance .erp-icon-nav {
   align-items: stretch;
   gap: 4px;
   padding: 8px 0 12px;
-  background: var(--qb-icon-nav-bg);
-  border-right: 1px solid var(--qb-line);
+  background: var(--color-nav-bg);
+  border-right: 1px solid var(--color-border);
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -103,7 +103,7 @@ body.erp-maintenance .erp-icon-nav__link {
   padding: 6px 4px;
   margin: 0;
   border: none;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   background: transparent;
   color: var(--color-nav-inactive);
   font-size: 11px;
@@ -166,8 +166,8 @@ body.erp-maintenance .erp-module-sidebar {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--qb-panel);
-  border-right: 1px solid var(--qb-line);
+  background: var(--color-bg-card);
+  border-right: 1px solid var(--color-border);
   transition: opacity 0.18s ease, width 0.18s ease, min-width 0.18s ease;
 }
 
@@ -177,7 +177,7 @@ body.erp-maintenance .erp-module-sidebar__head {
   justify-content: space-between;
   gap: 8px;
   padding: 12px 12px 10px;
-  border-bottom: 1px solid var(--qb-line);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -191,9 +191,9 @@ body.erp-maintenance .erp-module-sidebar__collapse {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
-  background: var(--qb-panel);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg-card);
   color: var(--color-text-label);
   cursor: pointer;
   font-size: 14px;
@@ -219,7 +219,7 @@ body.erp-maintenance .erp-module-sidebar__inner {
 body.erp-maintenance .erp-module-sidebar__footer {
   flex-shrink: 0;
   padding: 10px 12px 12px;
-  border-top: 1px solid var(--qb-line);
+  border-top: 1px solid var(--color-border);
   background: var(--color-bg-header);
 }
 
@@ -241,9 +241,9 @@ body.erp-maintenance .erp-sb-link {
   width: 100%;
   text-align: left;
   border: none;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   background: transparent;
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-size: 13px;
   font-weight: 400;
   padding: 8px 10px;
@@ -254,7 +254,7 @@ body.erp-maintenance .erp-sb-link {
 
 body.erp-maintenance .erp-sb-link:hover {
   background: var(--color-bg-header);
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
 }
 
 body.erp-maintenance .erp-sb-link--muted {
@@ -263,7 +263,7 @@ body.erp-maintenance .erp-sb-link--muted {
 
 body.erp-maintenance .erp-sb-sep {
   height: 1px;
-  background: var(--qb-line);
+  background: var(--color-border);
   margin: 10px 0;
 }
 
@@ -311,8 +311,8 @@ body.erp-maintenance .erp-topbar.topbar {
   gap: 12px;
   padding: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 10px 1.25rem;
   margin: 0;
-  background: var(--qb-panel);
-  border-bottom: 1px solid var(--qb-line);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
 }
 
 body.erp-maintenance .erp-topbar .title {
@@ -344,7 +344,7 @@ body.erp-maintenance .erp-topbar__actions {
 
 body.erp-maintenance .erp-topbar .topbar-home-link {
   font-weight: 500;
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-size: 13px;
 }
 
@@ -356,9 +356,9 @@ body.erp-maintenance .erp-topbar .topbar-hint {
 body.erp-maintenance .erp-btn-primary {
   height: 32px;
   padding: 0 16px;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   border: none;
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
   color: var(--color-bg-card);
   font-size: 13px;
   font-weight: 500;
@@ -380,9 +380,9 @@ body.erp-maintenance .erp-new-menu {
   z-index: 80;
   width: min(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px), 860px);
   max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
-  background: var(--qb-panel);
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   padding: 12px 14px 14px;
   box-shadow: none;
 }
@@ -406,7 +406,7 @@ body.erp-maintenance .erp-new-menu__col-title {
   font-weight: 500;
   padding-bottom: 6px;
   margin-bottom: 8px;
-  border-bottom: 1px solid var(--qb-line);
+  border-bottom: 1px solid var(--color-border);
 }
 
 body.erp-maintenance .erp-new-menu__item {
@@ -415,12 +415,12 @@ body.erp-maintenance .erp-new-menu__item {
   text-align: left;
   border: none;
   background: none;
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-size: 13px;
   font-weight: 400;
   padding: 6px 2px;
   cursor: pointer;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
 }
 
 body.erp-maintenance .erp-new-menu__item:hover {
@@ -461,7 +461,7 @@ body.erp-maintenance #qboSyncAlertBar:not(.hidden) {
 }
 
 body.erp-maintenance #qboSyncAlertBar .qbo-sync-head {
-  color: var(--pill-red-text, var(--qb-red));
+  color: var(--pill-red-text);
   font-weight: 500;
   font-size: 14px;
 }
@@ -479,9 +479,9 @@ body.erp-maintenance .maint-kpi-cards {
 }
 
 body.erp-maintenance .maint-kpi-card {
-  background: var(--qb-panel);
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   padding: 14px 16px;
 }
 
@@ -517,23 +517,23 @@ body.erp-maintenance .erp-topbar .qb-in {
   width: 100%;
   max-width: 100%;
   height: 32px;
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
   font-size: 13px;
 }
 
 body.erp-maintenance .erp-topbar .qb-in:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
 body.erp-maintenance .erp-topbar .print-hide-actions button {
   height: 32px;
   padding: 0 12px;
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
-  background: var(--qb-panel);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg-card);
   font-size: 13px;
   font-weight: 500;
   box-shadow: none;
@@ -584,8 +584,8 @@ body.erp-maintenance .erp-main-body .subtabs {
   gap: 0;
   margin: 0 0 14px;
   padding: 0;
-  border-bottom: 1px solid var(--qb-line);
-  background: var(--qb-panel);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-card);
 }
 
 body.erp-maintenance .erp-main-body .subtab {
@@ -608,9 +608,9 @@ body.erp-maintenance .erp-main-body .subtab:hover {
 }
 
 body.erp-maintenance .erp-main-body .subtab.active {
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   background: transparent;
-  border-bottom-color: var(--qb-blue);
+  border-bottom-color: var(--color-border-focus);
   font-weight: 500;
   box-shadow: none;
 }
@@ -623,7 +623,7 @@ body.erp-maintenance .erp-main-body a.subtab {
 body.erp-maintenance .erp-main-body .maint-board-nav__btn {
   font-weight: 500;
   border: 1px solid transparent;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
 }
 
 body.erp-maintenance .erp-main-body .maint-board-nav__btn:hover {
@@ -632,9 +632,9 @@ body.erp-maintenance .erp-main-body .maint-board-nav__btn:hover {
 }
 
 body.erp-maintenance .erp-main-body .maint-board-nav__btn.active {
-  background: var(--qb-sidebar-active-bg);
-  color: var(--qb-blue);
-  border-color: var(--qb-line);
+  background: var(--pill-blue-bg);
+  color: var(--color-border-focus);
+  border-color: var(--color-border);
   font-weight: 500;
 }
 
@@ -654,8 +654,8 @@ body.erp-maintenance .maint-modal-bg:not(.maint-workorder-fullmodal) .maint-moda
   width: calc(100% - 40px);
   max-height: calc(100vh - 40px);
   overflow-y: auto;
-  border-radius: var(--qb-radius-card);
-  border: 1px solid var(--qb-line);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
   box-shadow: none;
   padding: 1.25rem 1.25rem 1.5rem;
 }
@@ -707,7 +707,7 @@ body.erp-maintenance .erp-qb-dialog__foot {
   align-items: center;
   gap: 8px;
   padding: 12px 20px 14px;
-  border-top: 1px solid var(--qb-line);
+  border-top: 1px solid var(--color-border);
   background: var(--color-bg-header);
 }
 
@@ -715,9 +715,9 @@ body.erp-maintenance .erp-qb-dialog__btn-secondary,
 body.erp-maintenance .erp-qb-sheet-close {
   height: 32px;
   font-weight: 500;
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
-  background: var(--qb-panel);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg-card);
   color: var(--color-text-body);
   box-shadow: none;
 }
@@ -732,13 +732,13 @@ body.erp-maintenance .erp-qb-dialog .qb-in:focus,
 body.erp-maintenance .erp-qb-dialog .qb-memo:focus,
 body.erp-maintenance .erp-qb-dialog select.qb-in:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
 /* Rule 7–8: full-sheet WO container + neutral close (same tokens as shell) */
 body.erp-maintenance .maint-workorder-fullmodal__shell.erp-qb-fullsheet {
-  border-radius: var(--qb-radius-card);
+  border-radius: var(--radius-card);
   overflow: hidden;
   box-shadow: none;
 }
@@ -756,8 +756,8 @@ body.erp-maintenance .maint-workorder-fullmodal.maint-modal-bg {
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__head {
-  background: var(--qb-panel);
-  border-bottom: 1px solid var(--qb-line);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__title {
@@ -767,14 +767,14 @@ body.erp-maintenance .maint-workorder-fullmodal__title {
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__body {
-  background: var(--qb-page);
+  background: var(--color-bg-page);
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__head .btn {
   height: 32px;
   font-weight: 500;
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
   box-shadow: none;
 }
 
@@ -783,19 +783,19 @@ body.erp-maintenance .erp-main-body .panel,
 body.erp-maintenance .erp-main-body .hero-card,
 body.erp-maintenance .erp-main-body .metric,
 body.erp-maintenance .erp-main-body .maint-section-card {
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   box-shadow: none;
 }
 
 body.erp-maintenance .erp-main-body .hero-card:hover {
   box-shadow: none;
-  border-color: var(--qb-line-input);
+  border-color: var(--color-border-input);
   background: var(--color-bg-header);
 }
 
 body.erp-maintenance .erp-main-body .panel-head {
-  border-bottom: 1px solid var(--qb-line);
+  border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-header);
 }
 
@@ -824,10 +824,10 @@ body.erp-maintenance .erp-main-body .mini-note {
 /* --- Primary / green actions in content --- */
 body.erp-maintenance .erp-main-body .qb-btn-primary,
 body.erp-maintenance .erp-main-body button.qb-btn-primary {
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
   color: var(--color-bg-card);
   border: none;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   font-weight: 500;
   box-shadow: none;
   height: auto;
@@ -842,7 +842,7 @@ body.erp-maintenance .erp-main-body .qb-btn-primary:hover {
 /* --- Default buttons in content area --- */
 body.erp-maintenance .erp-main-body .btn,
 body.erp-maintenance .erp-main-body .print-hide-actions button {
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   font-weight: 500;
 }
 
@@ -859,16 +859,16 @@ body.erp-maintenance .erp-main-body .qb-doc-total-amt {
 
 /* Rules 10–12: shared cost-lines shell (maintenance WO + fuel manual) */
 body.erp-maintenance .erp-main-body .maint-subcard.maint-cost-panel-card.erp-qb-cost-shell {
-  border-color: var(--qb-line) !important;
-  border-radius: var(--qb-radius-card) !important;
+  border-color: var(--color-border) !important;
+  border-radius: var(--radius-card) !important;
   box-shadow: none;
 }
 
 body.erp-maintenance .erp-main-body .erp-qb-cost-shell--embedded {
   margin-top: 10px;
   padding: 12px 12px 14px;
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   background: var(--color-bg-header);
 }
 
@@ -887,10 +887,10 @@ body.erp-maintenance .erp-main-body .erp-qb-cost-shell__hint {
 
 /* Rule 13: vehicle parts map — chrome only (SVG / hotspots unchanged) */
 body.erp-maintenance .erp-main-body .tire-layout-wrap {
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   padding: 12px;
-  background: var(--qb-panel);
+  background: var(--color-bg-card);
 }
 
 body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
@@ -898,7 +898,7 @@ body.erp-maintenance .erp-main-body .tire-layout-wrap.erp-qb-parts-map-chrome {
 }
 
 body.erp-maintenance .erp-main-body .tire-svg {
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
 }
 
 /* --- List rows --- */
@@ -907,30 +907,30 @@ body.erp-maintenance .erp-main-body .list-row:hover {
 }
 
 body.erp-maintenance .erp-main-body .list-row.active {
-  background: var(--qb-sidebar-active-bg);
-  border-color: var(--qb-line);
+  background: var(--pill-blue-bg);
+  border-color: var(--color-border);
 }
 
 /* --- Chips (asset category) --- */
 body.erp-maintenance .erp-main-body .chip {
   font-weight: 500;
   border-radius: 999px;
-  border: 1px solid var(--qb-line-input);
+  border: 1px solid var(--color-border-input);
 }
 
 body.erp-maintenance .erp-main-body .chip.active {
-  background: var(--qb-sidebar-active-bg);
-  color: var(--qb-blue);
-  border-color: var(--qb-blue);
+  background: var(--pill-blue-bg);
+  color: var(--color-border-focus);
+  border-color: var(--color-border-focus);
   font-weight: 500;
 }
 
 /* --- Global search menu under top bar --- */
 body.erp-maintenance .erp-topbar .qb-picker-menu {
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   box-shadow: none;
-  background: var(--qb-panel);
+  background: var(--color-bg-card);
 }
 
 /* --- Status pills (lighter weight per design system) --- */
@@ -951,8 +951,8 @@ body.erp-maintenance .erp-main-body .fuel-exp-table-wrap {
   min-width: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border-color: var(--qb-line);
-  border-radius: var(--qb-radius-control);
+  border-color: var(--color-border);
+  border-radius: var(--radius-input);
 }
 
 body.erp-maintenance .erp-main-body .table-wrap > table,
@@ -979,7 +979,7 @@ body.erp-maintenance .erp-main-body .qb-memo:focus,
 body.erp-maintenance .erp-main-body select.qb-in:focus,
 body.erp-maintenance .erp-main-body textarea:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
@@ -1091,9 +1091,9 @@ body.erp-maintenance .erp-reports-toolbar {
   gap: 10px 12px;
   padding: 10px 12px 12px;
   margin: 0 0 12px;
-  background: var(--qb-panel);
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   box-shadow: none;
 }
 
@@ -1139,9 +1139,9 @@ body.erp-maintenance .erp-reports-sidebar {
   width: 200px;
   max-width: 100%;
   padding: 10px 10px 12px;
-  background: var(--qb-panel);
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   align-self: flex-start;
   max-height: min(70vh, 640px);
   overflow-y: auto;
@@ -1162,7 +1162,7 @@ body.erp-maintenance .erp-reports-sblink {
   margin: 2px 0;
   padding: 8px 10px;
   border: none;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   background: transparent;
   color: var(--color-text-body);
   font: inherit;
@@ -1176,8 +1176,8 @@ body.erp-maintenance .erp-reports-sblink:hover {
 }
 
 body.erp-maintenance .erp-reports-sblink--active {
-  background: var(--qb-sidebar-active-bg);
-  color: var(--qb-blue);
+  background: var(--pill-blue-bg);
+  color: var(--color-border-focus);
   font-weight: 500;
 }
 
@@ -1190,9 +1190,9 @@ body.erp-maintenance .erp-reports-main {
 }
 
 body.erp-maintenance .erp-kpi-grid .metric {
-  background: var(--qb-panel);
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   padding: 12px 14px;
   box-shadow: none;
 }
@@ -1227,7 +1227,7 @@ body.erp-maintenance .erp-main-body .erp-ops-subtabs-bar {
   flex-wrap: wrap;
   gap: 6px;
   padding-bottom: 2px;
-  border-bottom: 1px solid var(--qb-line);
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 2px;
 }
 
@@ -1236,14 +1236,14 @@ body.erp-maintenance .erp-main-body .erp-ops-hero-head {
   align-items: flex-start;
   gap: 12px;
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--qb-line) !important;
+  border-bottom: 1px solid var(--color-border) !important;
   background: var(--color-bg-header) !important;
 }
 
 body.erp-maintenance .erp-main-body .erp-ops-table-frame {
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
-  background: var(--qb-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-card);
 }
 
 body.erp-maintenance .erp-main-body .erp-ops-toolbar {
@@ -1261,22 +1261,22 @@ body.erp-maintenance .erp-main-body .erp-ops-toolbar--dense {
 
 body.erp-maintenance .erp-main-body .erp-ops-toolbar .qb-in,
 body.erp-maintenance .erp-main-body .erp-ops-toolbar .in {
-  border-color: var(--qb-line-input);
-  border-radius: var(--qb-radius-control);
+  border-color: var(--color-border-input);
+  border-radius: var(--radius-input);
 }
 
 body.erp-maintenance .erp-main-body .erp-ops-toolbar .qb-in:focus,
 body.erp-maintenance .erp-main-body .erp-ops-toolbar .in:focus,
 body.erp-maintenance .erp-main-body .erp-ops-toolbar select:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
 body.erp-maintenance .erp-main-body .erp-ops-shop-subtabs {
   margin-top: 4px;
   padding: 8px 0 10px;
-  border-bottom: 1px solid var(--qb-line);
+  border-bottom: 1px solid var(--color-border);
 }
 
 body.erp-maintenance .erp-main-body .track-grid.erp-ops-split {
@@ -1284,9 +1284,9 @@ body.erp-maintenance .erp-main-body .track-grid.erp-ops-split {
 }
 
 body.erp-maintenance .erp-main-body .safety-table-wrap.erp-ops-data-frame {
-  border-color: var(--qb-line);
-  border-radius: var(--qb-radius-card);
-  background: var(--qb-panel);
+  border-color: var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-card);
   box-shadow: none;
 }
 
@@ -1309,7 +1309,7 @@ body.dispatch-page {
 body.dispatch-page {
   margin: 0;
   overflow: hidden;
-  background: var(--qb-page);
+  background: var(--color-bg-page);
   color: var(--color-text-body);
   font-size: 13px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -1317,8 +1317,8 @@ body.dispatch-page {
 }
 
 body.dispatch-page .topbar {
-  background: var(--qb-panel);
-  border-bottom: 1px solid var(--qb-line);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
   box-shadow: none;
   color: var(--color-text-body);
   padding-left: max(14px, env(safe-area-inset-left, 0px));
@@ -1333,15 +1333,15 @@ body.dispatch-page .topbar h1 {
 }
 
 body.dispatch-page .topbar a {
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-weight: 500;
   font-size: 13px;
 }
 
 body.dispatch-page .topbar button {
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
-  background: var(--qb-panel);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg-card);
   color: var(--color-text-body);
   font-weight: 500;
   box-shadow: none;
@@ -1356,25 +1356,25 @@ body.dispatch-page .topbar button:hover {
 body.dispatch-page .topbar button.secondary {
   background: var(--pill-blue-bg);
   border-color: var(--btn-info-border);
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
 }
 
 body.dispatch-page .topbar button.secondary:hover {
   background: var(--color-bg-active);
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
 }
 
 body.dispatch-page .tabs {
-  background: var(--qb-page);
-  border-bottom: 1px solid var(--qb-line);
+  background: var(--color-bg-page);
+  border-bottom: 1px solid var(--color-border);
   padding-left: max(14px, env(safe-area-inset-left, 0px));
   padding-right: max(14px, env(safe-area-inset-right, 0px));
 }
 
 body.dispatch-page .tabs button {
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
-  background: var(--qb-panel);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg-card);
   color: var(--color-text-label);
   font-weight: 500;
   font-size: 13px;
@@ -1382,14 +1382,14 @@ body.dispatch-page .tabs button {
 
 body.dispatch-page .tabs button:hover {
   background: var(--color-bg-header);
-  border-color: var(--qb-line-input);
+  border-color: var(--color-border-input);
   color: var(--color-text-body);
 }
 
 body.dispatch-page .tabs button.active {
-  background: var(--qb-sidebar-active-bg);
-  border-color: var(--qb-blue);
-  color: var(--qb-blue);
+  background: var(--pill-blue-bg);
+  border-color: var(--color-border-focus);
+  color: var(--color-border-focus);
   font-weight: 500;
   box-shadow: none;
 }
@@ -1406,21 +1406,21 @@ body.dispatch-page .muted {
 body.dispatch-page .in,
 body.dispatch-page input.in,
 body.dispatch-page select.in {
-  border-color: var(--qb-line-input);
-  border-radius: var(--qb-radius-control);
+  border-color: var(--color-border-input);
+  border-radius: var(--radius-input);
 }
 
 body.dispatch-page .in:focus,
 body.dispatch-page input.in:focus,
 body.dispatch-page select.in:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
 body.dispatch-page table.data {
-  border-color: var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  border-color: var(--color-border);
+  border-radius: var(--radius-card);
   box-shadow: none;
 }
 
@@ -1434,14 +1434,14 @@ body.dispatch-page table.data tr:hover {
 }
 
 body.dispatch-page .modal {
-  border-radius: var(--qb-radius-card);
-  border-color: var(--qb-line);
+  border-radius: var(--radius-card);
+  border-color: var(--color-border);
   box-shadow: none;
 }
 
 body.dispatch-page .modal h2 {
   background: var(--color-bg-header);
-  border-bottom-color: var(--qb-line);
+  border-bottom-color: var(--color-border);
   font-weight: 500;
   color: var(--color-text-primary);
 }
@@ -1489,15 +1489,15 @@ body.dispatch-page #dispatchApp .sidebar-expand-fab {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  border: 1px solid var(--qb-line-input);
-  background: var(--qb-panel);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg-card);
   box-shadow: none;
   cursor: pointer;
   font-size: 20px;
   font-weight: 500;
   align-items: center;
   justify-content: center;
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
 }
 
 body.dispatch-page #dispatchApp .erp-icon-nav {
@@ -1510,8 +1510,8 @@ body.dispatch-page #dispatchApp .erp-icon-nav {
   align-items: stretch;
   gap: 4px;
   padding: 8px 0 12px;
-  background: var(--qb-icon-nav-bg);
-  border-right: 1px solid var(--qb-line);
+  background: var(--color-nav-bg);
+  border-right: 1px solid var(--color-border);
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -1527,7 +1527,7 @@ body.dispatch-page #dispatchApp .erp-icon-nav__link {
   padding: 6px 4px;
   margin: 0;
   border: none;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   background: transparent;
   color: var(--color-nav-inactive);
   font-size: 11px;
@@ -1570,8 +1570,8 @@ body.dispatch-page #dispatchApp .erp-module-sidebar {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--qb-panel);
-  border-right: 1px solid var(--qb-line);
+  background: var(--color-bg-card);
+  border-right: 1px solid var(--color-border);
   transition: opacity 0.18s ease, width 0.18s ease, min-width 0.18s ease;
 }
 
@@ -1581,7 +1581,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__head {
   justify-content: space-between;
   gap: 8px;
   padding: 12px 12px 10px;
-  border-bottom: 1px solid var(--qb-line);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -1595,9 +1595,9 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__collapse {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
-  background: var(--qb-panel);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg-card);
   color: var(--color-text-label);
   cursor: pointer;
   font-size: 14px;
@@ -1623,7 +1623,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__inner {
 body.dispatch-page #dispatchApp .erp-module-sidebar__footer {
   flex-shrink: 0;
   padding: 10px 12px 12px;
-  border-top: 1px solid var(--qb-line);
+  border-top: 1px solid var(--color-border);
   background: var(--color-bg-header);
 }
 
@@ -1651,9 +1651,9 @@ body.dispatch-page #dispatchApp .erp-sb-link {
   width: 100%;
   text-align: left;
   border: none;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   background: transparent;
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-size: 13px;
   font-weight: 400;
   padding: 8px 10px;
@@ -1666,12 +1666,12 @@ body.dispatch-page #dispatchApp .erp-sb-link {
 
 body.dispatch-page #dispatchApp .erp-sb-link:hover {
   background: var(--color-bg-header);
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
 }
 
 body.dispatch-page #dispatchApp .erp-sb-link.erp-sb-link--active {
-  background: var(--qb-sidebar-active-bg);
-  color: var(--qb-blue);
+  background: var(--pill-blue-bg);
+  color: var(--color-border-focus);
   font-weight: 500;
 }
 
@@ -1718,8 +1718,8 @@ body.dispatch-page #dispatchApp .erp-topbar.topbar {
   gap: 12px;
   padding: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 10px max(1.25rem, env(safe-area-inset-left, 0px));
   margin: 0;
-  background: var(--qb-panel);
-  border-bottom: 1px solid var(--qb-line);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar .title {
@@ -1763,7 +1763,7 @@ body.dispatch-page #dispatchApp .erp-topbar__actions {
 
 body.dispatch-page #dispatchApp .erp-topbar__link {
   font-weight: 500;
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-size: 13px;
   text-decoration: none;
 }
@@ -1774,14 +1774,14 @@ body.dispatch-page #dispatchApp .erp-topbar__link:hover {
 
 body.dispatch-page #dispatchApp .erp-topbar .topbar-home-link {
   font-weight: 500;
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-size: 13px;
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button {
-  border-radius: var(--qb-radius-control);
-  border: 1px solid var(--qb-line-input);
-  background: var(--qb-panel);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg-card);
   color: var(--color-text-body);
   font-weight: 500;
   box-shadow: none;
@@ -1797,20 +1797,20 @@ body.dispatch-page #dispatchApp .erp-topbar button:hover {
 body.dispatch-page #dispatchApp .erp-topbar button.secondary {
   background: var(--pill-blue-bg);
   border-color: var(--btn-info-border);
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button.secondary:hover {
   background: var(--color-bg-active);
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
 }
 
 body.dispatch-page #dispatchApp .erp-btn-primary {
   height: 32px;
   padding: 0 16px;
-  border-radius: var(--qb-radius-control);
+  border-radius: var(--radius-input);
   border: none;
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
   color: var(--color-bg-card);
   font-size: 13px;
   font-weight: 500;
@@ -1865,7 +1865,7 @@ html.dispatch-embed #dispatchApp .erp-main-body.dispatch-board-body {
 
 html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
   padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
-  border-bottom-color: var(--qb-line);
+  border-bottom-color: var(--color-border);
   background: var(--color-bg-header);
   color: var(--color-text-label);
 }
@@ -2036,15 +2036,15 @@ html.dispatch-embed body.dispatch-page #dispatchApp .dispatch-embed-status-bar {
 
 /* ========== Standalone fuel board (fuel.html) ========== */
 body.fuel-board {
-  background: var(--qb-page);
+  background: var(--color-bg-page);
   color: var(--color-text-body);
   font-size: 13px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 body.fuel-board .topbar {
-  background: var(--qb-panel);
-  border-bottom: 1px solid var(--qb-line);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
   box-shadow: none;
   color: var(--color-text-body);
 }
@@ -2057,21 +2057,21 @@ body.fuel-board .topbar h1 {
 }
 
 body.fuel-board .topbar a {
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-weight: 500;
   font-size: 13px;
 }
 
 body.fuel-board .panel {
-  border-color: var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  border-color: var(--color-border);
+  border-radius: var(--radius-card);
   box-shadow: none;
-  background: var(--qb-panel);
+  background: var(--color-bg-card);
 }
 
 body.fuel-board .panel h2 {
   background: var(--color-bg-header);
-  border-bottom: 1px solid var(--qb-line);
+  border-bottom: 1px solid var(--color-border);
   font-weight: 500;
   color: var(--color-text-primary);
 }
@@ -2079,12 +2079,12 @@ body.fuel-board .panel h2 {
 body.fuel-board .fleet-summary,
 body.fuel-board .fleet-section-title {
   background: var(--color-bg-header);
-  border-color: var(--qb-line);
+  border-color: var(--color-border);
   color: var(--color-text-label);
 }
 
 body.fuel-board .fleet-item {
-  border-color: var(--qb-line);
+  border-color: var(--color-border);
 }
 
 body.fuel-board .fleet-item:hover {
@@ -2092,24 +2092,24 @@ body.fuel-board .fleet-item:hover {
 }
 
 body.fuel-board .fleet-item.active {
-  background: var(--qb-sidebar-active-bg);
+  background: var(--pill-blue-bg);
 }
 
 body.fuel-board button,
 body.fuel-board input {
-  border-radius: var(--qb-radius-control);
-  border-color: var(--qb-line-input);
+  border-radius: var(--radius-input);
+  border-color: var(--color-border-input);
 }
 
 body.fuel-board input:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
 /* ========== Bank matching (banking.html) ========== */
 body.banking-page {
-  background: var(--qb-page);
+  background: var(--color-bg-page);
   color: var(--color-text-body);
   font-size: 13px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -2134,15 +2134,15 @@ body.banking-page p.lead {
 }
 
 body.banking-page .panel {
-  border-color: var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  border-color: var(--color-border);
+  border-radius: var(--radius-card);
   box-shadow: none;
-  background: var(--qb-panel);
+  background: var(--color-bg-card);
 }
 
 body.banking-page .ph {
   background: var(--color-bg-header);
-  border-bottom-color: var(--qb-line);
+  border-bottom-color: var(--color-border);
   color: var(--color-text-primary);
   font-weight: 500;
 }
@@ -2154,29 +2154,29 @@ body.banking-page .pb {
 body.banking-page input,
 body.banking-page select,
 body.banking-page textarea {
-  border-color: var(--qb-line-input);
-  border-radius: var(--qb-radius-control);
+  border-color: var(--color-border-input);
+  border-radius: var(--radius-input);
 }
 
 body.banking-page input:focus,
 body.banking-page select:focus,
 body.banking-page textarea:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
 body.banking-page button {
-  border-color: var(--qb-line-input);
-  border-radius: var(--qb-radius-control);
-  background: var(--qb-panel);
+  border-color: var(--color-border-input);
+  border-radius: var(--radius-input);
+  background: var(--color-bg-card);
   font-weight: 500;
 }
 
 body.banking-page button.primary {
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
   color: var(--color-bg-card);
-  border-color: var(--qb-green);
+  border-color: var(--btn-primary-save-bg);
 }
 
 body.banking-page button.primary:hover {
@@ -2193,14 +2193,14 @@ body.banking-page tr:hover td {
 }
 
 body.banking-page .metric {
-  background: var(--qb-panel);
-  border-color: var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  background: var(--color-bg-card);
+  border-color: var(--color-border);
+  border-radius: var(--radius-card);
 }
 
 /* ========== Settings & users (settings.html) ========== */
 body.settings-page {
-  background: var(--qb-page);
+  background: var(--color-bg-page);
   color: var(--color-text-body);
   font-size: 13px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -2225,33 +2225,33 @@ body.settings-page p {
 }
 
 body.settings-page .panel {
-  background: var(--qb-panel);
-  border: 1px solid var(--qb-line);
-  border-radius: var(--qb-radius-card);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   box-shadow: none;
 }
 
 body.settings-page input {
-  border-color: var(--qb-line-input);
-  border-radius: var(--qb-radius-control);
+  border-color: var(--color-border-input);
+  border-radius: var(--radius-input);
 }
 
 body.settings-page input:focus {
   outline: none;
-  border-color: var(--qb-blue);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px var(--qb-focus-ring);
 }
 
 body.settings-page button {
-  border-color: var(--qb-line-input);
-  border-radius: var(--qb-radius-control);
+  border-color: var(--color-border-input);
+  border-radius: var(--radius-input);
   font-weight: 500;
 }
 
 body.settings-page button.primary {
-  background: var(--qb-green);
+  background: var(--btn-primary-save-bg);
   color: var(--color-bg-card);
-  border-color: var(--qb-green);
+  border-color: var(--btn-primary-save-bg);
 }
 
 body.settings-page button.primary:hover {
@@ -2264,6 +2264,6 @@ body.settings-page table th {
 }
 
 body.settings-page a {
-  color: var(--qb-blue);
+  color: var(--color-border-focus);
   font-weight: 500;
 }

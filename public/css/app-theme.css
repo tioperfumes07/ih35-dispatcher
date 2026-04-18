@@ -3320,25 +3320,7 @@ body.erp-maintenance .catalog-admin-table td {
   }
 }
 
-/* Accounting, Catalogs, Reports — subtabs and filters reflow on small screens */
-body.erp-maintenance #section-accounting > .subtabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  min-width: 0;
-}
-
-body.erp-maintenance #section-accounting > .subtabs > button.subtab,
-body.erp-maintenance #section-accounting > .subtabs > a.subtab {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  white-space: normal;
-  text-align: center;
-  line-height: 1.25;
-}
-
+/* Catalog + Reports — subtabs reflow (Accounting has no direct .subtabs under #section-accounting; tabs are board + top patterns). */
 body.erp-maintenance #section-catalog .panel-body > .subtabs {
   display: flex;
   flex-wrap: wrap;
@@ -3443,13 +3425,6 @@ body.erp-maintenance #section-tracking .panel-head > div {
   body.erp-maintenance .rep-maint-detail-filters.wo-line-grid > div {
     width: 100% !important;
     max-width: 100% !important;
-  }
-}
-
-@media (max-width: 640px) {
-  body.erp-maintenance #section-accounting > .subtabs > button.subtab,
-  body.erp-maintenance #section-accounting > .subtabs > a.subtab {
-    flex: 1 1 calc(50% - 6px);
   }
 }
 
