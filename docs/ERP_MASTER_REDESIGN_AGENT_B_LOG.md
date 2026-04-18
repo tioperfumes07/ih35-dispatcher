@@ -860,3 +860,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `.maint-qb-bill-lbl`; upload `.mr-upload-tabbar` and `.mr-upload-panel-card`; toast `.erp-toast` and `.erp-toast__msg` each get `min-height: 0` where flex + `min-width: 0` already apply.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-16
+
+- **Rule 1:** `public/css/app-theme.css` — QB dialogs `.erp-qb-dialog__body` / `__foot`, category modal `.asset-cat-grid`, `.maint-cost-panel-card` (with `overflow: hidden`), WO save toolbar (`.maint-save-toolbar--qb`, `__hint`, `__actions`, `.qb-split`), and dashboard/fuel/maintenance `.panel-head > div` flex title clusters get `min-height: 0` (and `min-width` on the cost card) for nested flex overflow chains.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — `#erpApp .erp-new-menu__cols`, `#acctBoardStrip` / `.mr-acct-board`, `.mr-filter-bar__grow`, QBO/print action strip selectors (with `.maint-qbo-header-grid` etc.), and `.mr-filter-bar` group gain `min-height: 0`. Inline style helper adds `display:inline-flex` / `display: inline-flex` attribute matches next to existing flex/grid selectors.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

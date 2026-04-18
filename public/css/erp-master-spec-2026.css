@@ -1687,8 +1687,8 @@ button.erp-btn--busy::after {
   height: 13px;
   margin-left: 8px;
   vertical-align: -2px;
-  border: 2px solid color-mix(in srgb, var(--color-text-primary) 20%, transparent);
-  border-top-color: color-mix(in srgb, var(--color-text-primary) 86%, transparent);
+  border: 2px solid var(--erp-btn-busy-track);
+  border-top-color: var(--erp-btn-busy-leading);
   border-radius: 50%;
   animation: erp-ui-spin 0.65s linear infinite;
 }
@@ -1696,17 +1696,17 @@ button.erp-btn--busy::after {
 button.primary.erp-btn--busy::after,
 .banking-page button.primary.erp-btn--busy::after,
 body.erp-maintenance button.btn--primary.erp-btn--busy::after {
-  border-color: color-mix(in srgb, var(--color-bg-card) 35%, transparent);
+  border-color: var(--erp-btn-busy-on-solid-track);
   border-top-color: var(--color-bg-card);
 }
 
 body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.erp-btn--busy::after {
-  border-color: color-mix(in srgb, var(--color-bg-card) 35%, transparent);
+  border-color: var(--erp-btn-busy-on-solid-track);
   border-top-color: var(--color-bg-card);
 }
 
 .settings-page button.primary.erp-btn--busy::after {
-  border-color: color-mix(in srgb, var(--color-bg-card) 35%, transparent);
+  border-color: var(--erp-btn-busy-on-solid-track);
   border-top-color: var(--color-bg-card);
 }
 

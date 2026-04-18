@@ -1699,16 +1699,19 @@ body.erp-maintenance #erpApp.erp-master .erp-topbar.topbar {
 /* Rule 1: + New menu columns — flex row can shrink inside the capped menu width. */
 body.erp-maintenance #erpApp .erp-new-menu__cols {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: accounting board strip + filter grow (inline flex in maintenance.html). */
 body.erp-maintenance #acctBoardStrip,
 body.erp-maintenance .mr-acct-board {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .mr-filter-bar__grow {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: QBO doc header row + print-hidden action strips (flex in HTML / JS). */
@@ -1719,6 +1722,7 @@ body.erp-maintenance .shop-wo-fallback.print-hide-actions,
 body.erp-maintenance .erp-reports-toolbar__actions.print-hide-actions,
 body.erp-maintenance .mr-qbo-banner__right.print-hide-actions {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: ops / accounting filter bars (flex rows in maintenance.html). */
@@ -1727,6 +1731,7 @@ body.erp-maintenance .mr-filter-bar__right,
 body.erp-maintenance .mr-filter-bar__chips,
 body.erp-maintenance .mr-filter-bar__show {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: accounting board "Connections" strip — outer card + each direct row (connections flex + posting preflight). */
@@ -1740,9 +1745,11 @@ body.erp-maintenance #maintIntegrationStrip > div {
   min-height: 0;
 }
 
-/* Rule 1: maintenance.html — inline flex/grid (`display:flex` / `display: flex` / `display:grid` / `display: grid`). Inline min-width/min-height on the same node still wins. */
+/* Rule 1: maintenance.html — inline flex/grid/inline-flex. Inline min-width/min-height on the same node still wins. */
 body.erp-maintenance [style*='display:flex'],
 body.erp-maintenance [style*='display: flex'],
+body.erp-maintenance [style*='display:inline-flex'],
+body.erp-maintenance [style*='display: inline-flex'],
 body.erp-maintenance [style*='display:grid'],
 body.erp-maintenance [style*='display: grid'] {
   min-width: 0;
