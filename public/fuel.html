@@ -173,6 +173,15 @@
   <div class="layout">
     <div class="panel">
       <h2>Fleet</h2>
+      <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+        <span style="min-width:0;flex:1 1 220px">Fleet strip + two columns refresh from <strong>Refresh now</strong> / auto poll (<code>GET /api/board</code>) — search + <strong>FUEL NOW</strong> filter re-slice client-side.</span>
+        <span class="erp-help-tip">
+          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet panel hosts">?</button>
+          <span class="erp-help-tip__panel" role="tooltip">
+            <code>renderFleet()</code> → <code>#fleetSummary</code> <code>textContent</code> (counts); <code>#fleetAssigned</code> / <code>#fleetUnassigned</code> <code>innerHTML</code> via <code>renderFleetColumn()</code> from in-memory <code>boardRows</code> (click → <code>selectUnit()</code>).
+          </span>
+        </span>
+      </div>
       <div class="fleet-summary" id="fleetSummary">No data loaded</div>
       <div class="fleet-columns">
         <div class="fleet-col">
@@ -222,6 +231,15 @@
         </span>
       </h2>
       <div class="panel-body">
+        <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+          <span style="min-width:0;flex:1 1 220px">Unit detail cards — replaced when you pick a fleet row or when the board reloads.</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Selected unit host">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              <code>renderSelectedDetail()</code> → <code>#selectedDetail</code> <code>innerHTML</code> (detail grid from <code>boardRows</code> + optional route context); empty state prompts to select a unit.
+            </span>
+          </span>
+        </div>
         <div id="selectedDetail">Select a unit from the fleet list.</div>
       <div class="section-title">Diesel purchases (ledger)</div>
       <div class="small" style="margin-bottom:8px">
@@ -271,8 +289,26 @@
       <p class="small fuel-relay-info">
         <strong>Relay / Love’s</strong> imports live under <a href="/maintenance.html#accounting-fuel" style="font-weight:500;color:var(--color-border-focus)">Maintenance → Accounting → Fuel expenses</a> next to QBO posting (kept separate from route planning).
       </p>
+      <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+        <span style="min-width:0;flex:1 1 220px">Ledger list + count line — driven by selected unit and <code>GET /api/fuel/purchases</code> (also after <strong>Save purchase</strong>).</span>
+        <span class="erp-help-tip">
+          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel ledger hosts">?</button>
+          <span class="erp-help-tip__panel" role="tooltip">
+            <code>renderFuelLedger()</code> → <code>#fuelLedgerMeta</code> <code>textContent</code> (row count + unit); <code>#fuelLedger</code> <code>textContent</code> or <code>innerHTML</code> (up to 25 newest <code>stop-card</code> rows with MPG badges from <code>fuelPurchases</code>).
+          </span>
+        </span>
+      </div>
       <div id="fuelLedger" class="small">No fuel purchases yet.</div>
         <div class="section-title">Recommended Stops</div>
+        <div class="mini-note" style="margin:6px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+          <span style="min-width:0;flex:1 1 220px">Heuristic Love’s suggestions + planner summary — from <strong>Recommend Stops</strong> (needs a selected unit).</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Recommended stops host">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              <code>recommendForSelected()</code> → <code>#recommendedStops</code> <code>innerHTML</code> (empty / error / planner card + ranked <code>stop-card</code> list); calls <code>renderMap()</code> with route + scored stops.
+            </span>
+          </span>
+        </div>
         <div id="recommendedStops">No recommendations yet.</div>
       </div>
     </div>

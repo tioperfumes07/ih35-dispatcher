@@ -100,6 +100,15 @@
               </span>
             </span>
           </h2>
+          <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:58ch">
+            <span style="min-width:0;flex:1 1 200px">User rows render from <code>GET /api/users</code> after admin sign-in — not live-edited in place.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Users table host">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <code>refresh()</code> → after <code>GET /api/auth/me</code> shows <strong>admin</strong>, <code>GET /api/users</code> fills <code>#usersBody</code> <code>innerHTML</code> with <code>&lt;tr&gt;</code> rows (email, name, role, remove); empty until loaded.
+              </span>
+            </span>
+          </div>
           <table>
             <thead><tr><th>Email</th><th>Name</th><th>Role</th><th></th></tr></thead>
             <tbody id="usersBody"></tbody>
@@ -145,6 +154,15 @@
               <label class="mini" style="margin:0 0 4px;visibility:hidden;line-height:0;height:0;overflow:hidden" aria-hidden="true">&nbsp;</label>
               <button type="button" id="btnEmpRefresh" onclick="loadEmployees()">Refresh</button>
             </div>
+          </div>
+          <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:58ch">
+            <span style="min-width:0;flex:1 1 200px">Employee directory body — paged/filtered <code>innerHTML</code>; complements the title <strong>?</strong> above.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Employees table host">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <code>loadEmployees()</code> + <code>renderEmployeesTable()</code> replace <code>#empBody</code> <code>innerHTML</code> from <code>GET /api/erp/employees</code> cache (search filter + slice); <code>#empPagerHost</code> via <code>erpPagerRender</code> when present. <code>#empErr</code> holds validation/API <code>textContent</code> separately.
+              </span>
+            </span>
           </div>
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Title</th><th>Status</th><th></th></tr></thead>

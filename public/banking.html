@@ -100,6 +100,15 @@
             <button type="button" class="primary" id="btnSnap">Load snapshot</button>
           </div>
         </div>
+        <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+          <span style="min-width:0;flex:1 1 220px">Snapshot summary line + metric tiles — filled only after <strong>Load snapshot</strong>.</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Snapshot hosts">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              <code>#btnSnap</code> handler: <code>#snapMeta</code> <code>textContent</code> (window + ERP candidate count); <code>#snapMetrics</code> <code>innerHTML</code> of <code>.metric</code> cards from <code>GET /api/banking/snapshot</code> QBO counts + import/link tallies (escaped via <code>esc()</code>).
+            </span>
+          </span>
+        </div>
         <div id="snapMeta" class="mini"></div>
         <div class="metrics" id="snapMetrics" style="margin-top:12px"></div>
       </div>
@@ -121,6 +130,15 @@
         </div>
         <textarea id="csvPaste" placeholder="Date,Amount,Description&#10;2026-01-15,-523.40,SHELL OIL 5789"></textarea>
         <button type="button" class="primary" id="btnImport" style="margin-top:10px">Import rows</button>
+        <div class="mini-note" style="margin:10px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+          <span style="min-width:0;flex:1 1 220px">Import result HTML (row count + batch id) — empty until <strong>Import rows</strong> succeeds.</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Import result host">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              <code>#btnImport</code> → <code>POST /api/banking/import-csv</code>; <code>#importOut</code> <code>innerHTML</code> with counts + <code>&lt;code&gt;</code> batch id; <code>#batchId</code> auto-filled for step 3.
+            </span>
+          </span>
+        </div>
         <div id="importOut" class="mini" style="margin-top:10px"></div>
       </div>
     </div>
@@ -146,6 +164,15 @@
             <label class="mini" style="margin:0;visibility:hidden" aria-hidden="true">&nbsp;</label>
             <button type="button" class="primary" id="btnSuggest">Run suggestions</button>
           </div>
+        </div>
+        <div class="mini-note" style="margin:8px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+          <span style="min-width:0;flex:1 1 220px">Suggestion cards + pager — <code>innerHTML</code> from <strong>Run suggestions</strong> or pager slice.</span>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Match suggestion hosts">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              <code>#btnSuggest</code> → <code>POST /api/banking/suggest</code>; <code>#suggestOut</code> <code>innerHTML</code> (empty state or <code>renderBankSuggestView()</code> blocks); <code>#suggestPagerHost</code> via <code>erpPagerRender</code>. Uses <code>esc()</code> for cell text.
+            </span>
+          </span>
         </div>
         <div id="suggestOut"></div>
         <div id="suggestPagerHost" hidden></div>
