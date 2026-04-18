@@ -21,30 +21,52 @@
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="erpDedicatedFormModal" class="erp-dedicated-form-modal hidden" aria-hidden="true">
     <div class="erp-dedicated-form-modal__backdrop" data-erp-ded-close="1"></div>
-    <div class="erp-dedicated-form-modal__shell" role="dialog" aria-modal="true" aria-label="Dedicated expense form — drag the lower-right corner to resize">
-      <div class="erp-dedicated-form-modal__bar">
-        <button type="button" class="erp-dedicated-form-modal__x" data-erp-ded-close="1" title="Close">×</button>
-        <div class="erp-dedicated-form-modal__bar-center" aria-live="polite">
-          <div id="erpDedModalTitle" class="erp-dedicated-form-modal__title"></div>
-          <div class="erp-dedicated-form-modal__total-wrap">
-            <span class="erp-dedicated-form-modal__total-lbl" id="erpDedModalTotalLabel">Amount</span>
-            <span class="erp-dedicated-form-modal__total-amt" id="erpDedModalTotalAmt">$0.00</span>
+    <div class="erp-dedicated-form-modal__shell" role="dialog" aria-modal="true" aria-label="Dedicated expense form — drag the lower-right corner to resize, or use Maximize / Full screen">
+      <div class="erp-dedicated-form-modal__inner">
+        <div class="erp-dedicated-form-modal__bar">
+          <button type="button" class="erp-dedicated-form-modal__x" data-erp-ded-close="1" title="Close">×</button>
+          <div class="erp-dedicated-form-modal__bar-center" aria-live="polite">
+            <div id="erpDedModalTitle" class="erp-dedicated-form-modal__title"></div>
+            <div class="erp-dedicated-form-modal__total-wrap">
+              <span class="erp-dedicated-form-modal__total-lbl" id="erpDedModalTotalLabel">Amount</span>
+              <span class="erp-dedicated-form-modal__total-amt" id="erpDedModalTotalAmt">$0.00</span>
+            </div>
+          </div>
+          <div class="erp-dedicated-form-modal__bar-actions">
+            <button
+              type="button"
+              class="btn btn--small secondary"
+              id="erpDedModalMaxBtn"
+              onclick="erpToggleDedicatedModalMaximize()"
+              title="Use the full overlay (browser chrome stays visible)"
+              aria-pressed="false"
+            >
+              Maximize
+            </button>
+            <button
+              type="button"
+              class="btn btn--small secondary"
+              id="erpDedModalFsBtn"
+              onclick="erpToggleDedicatedModalBrowserFullscreen()"
+              title="Browser full screen (Esc to exit)"
+              aria-pressed="false"
+            >
+              Full screen
+            </button>
+            <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
+            <button type="button" class="btn btn--small secondary" data-erp-ded-close="1">Cancel</button>
           </div>
         </div>
-        <div class="erp-dedicated-form-modal__bar-actions">
-        <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
-          <button type="button" class="btn btn--small secondary" data-erp-ded-close="1">Cancel</button>
-        </div>
+        <div id="erpDedicatedFormModalBody" class="erp-dedicated-form-modal__body"></div>
       </div>
-      <div id="erpDedicatedFormModalBody" class="erp-dedicated-form-modal__body"></div>
     </div>
   </div>
   <div id="boardNavMount"></div>
   <div id="maintCatModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintCatModal()">
-    <div class="maint-modal erp-qb-dialog" onclick="event.stopPropagation()">
+    <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="maintCatModalTitle" onclick="event.stopPropagation()">
       <div id="maintModalFlowTitle" class="hidden"></div>
       <header class="erp-qb-dialog__head">
-        <h3 class="erp-qb-dialog__title">Vehicle type</h3>
+        <h3 id="maintCatModalTitle" class="erp-qb-dialog__title">Vehicle type</h3>
       </header>
       <p class="mini-note erp-qb-dialog__sub">Pick the category, then complete the service or purchase form. Matches Samsara / Maintenance asset groups.</p>
       <div class="erp-qb-dialog__body">
@@ -62,9 +84,9 @@
     </div>
   </div>
   <div id="shopQueueAddModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopQueueModal()">
-    <div class="maint-modal erp-qb-dialog" onclick="event.stopPropagation()" style="max-width:520px">
+    <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="shopQueueAddModalTitle" onclick="event.stopPropagation()" style="max-width:520px">
       <header class="erp-qb-dialog__head">
-        <h3 class="erp-qb-dialog__title">Add to shop queue</h3>
+        <h3 id="shopQueueAddModalTitle" class="erp-qb-dialog__title">Add to shop queue</h3>
       </header>
       <p class="mini-note erp-qb-dialog__sub">Track units through internal, external, roadside, or parts-purchase queues. Status and bottlenecks are saved in the ERP.</p>
       <div class="erp-qb-dialog__body">
@@ -93,10 +115,10 @@
     </div>
   </div>
   <div id="maintWorkOrderModal" class="maint-modal-bg maint-workorder-fullmodal" onclick="if(event.target===this)closeMaintWorkOrderModal()" aria-hidden="true">
-    <div class="maint-modal maint-workorder-fullmodal__shell erp-qb-fullsheet" onclick="event.stopPropagation()">
+    <div class="maint-modal maint-workorder-fullmodal__shell erp-qb-fullsheet" role="dialog" aria-modal="true" aria-labelledby="maintWoFullModalTitle" onclick="event.stopPropagation()">
       <div class="maint-workorder-fullmodal__head">
         <div>
-          <div class="maint-workorder-fullmodal__title">Create work order</div>
+          <div id="maintWoFullModalTitle" class="maint-workorder-fullmodal__title">Create work order</div>
           <div class="mini-note" style="margin:2px 0 0;max-width:56ch">Full-window form (QuickBooks-style). Close when you need the fleet tabs underneath.</div>
         </div>
         <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
@@ -105,9 +127,9 @@
     </div>
   </div>
   <div id="shopDelayModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopDelayModal()">
-    <div class="maint-modal erp-qb-dialog" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="shopDelayModalTitle" onclick="event.stopPropagation()" style="max-width:480px">
       <header class="erp-qb-dialog__head">
-        <h3 class="erp-qb-dialog__title">Past estimated time — bottleneck</h3>
+        <h3 id="shopDelayModalTitle" class="erp-qb-dialog__title">Past estimated time — bottleneck</h3>
       </header>
       <p class="mini-note erp-qb-dialog__sub">Pick a reason so we can see delays (parts, queue, payment, etc.).</p>
       <div class="erp-qb-dialog__body">
@@ -268,7 +290,18 @@
           <a href="/" class="topbar-home-link">Company home</a>
           <div class="erp-topbar__search">
             <div class="erp-topbar__search-inner">
-              <input id="globalSearchInput" class="qb-in" placeholder="Search vendors, units, loads, bills, and work orders…" autocomplete="off" oninput="globalSearchRender()" onkeydown="globalSearchKeydown(event)" />
+              <input
+                id="globalSearchInput"
+                class="qb-in"
+                placeholder="Search vendors, units, loads, bills, and work orders…"
+                autocomplete="off"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="globalSearchMenu"
+                aria-expanded="false"
+                oninput="globalSearchRender()"
+                onkeydown="globalSearchKeydown(event)"
+              />
               <div class="mini-note" style="margin:4px 0 0;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label)">
                 <span style="min-width:0;flex:1 1 100px">Picker list below the field.</span>
                 <span class="erp-help-tip">
@@ -278,7 +311,14 @@
                   </span>
                 </span>
               </div>
-              <div id="globalSearchMenu" class="qb-picker-menu hidden" style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"></div>
+              <div
+                id="globalSearchMenu"
+                class="qb-picker-menu hidden"
+                role="listbox"
+                aria-label="Search results"
+                aria-hidden="true"
+                style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"
+              ></div>
             </div>
           </div>
           <div class="topbar-hint-wrap" aria-label="Workspace tips">
@@ -292,8 +332,25 @@
           </div>
           <div class="erp-topbar__actions print-hide-actions">
             <div class="erp-new-wrap">
-              <button type="button" class="erp-btn-primary" id="erpNewMenuBtn" onclick="erpToggleNewMenu(event)">+ New</button>
-              <div id="erpNewMenu" class="erp-new-menu hidden" role="menu" aria-labelledby="erpNewMenuBtn" onclick="event.stopPropagation()">
+              <button
+                type="button"
+                class="erp-btn-primary"
+                id="erpNewMenuBtn"
+                onclick="erpToggleNewMenu(event)"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="erpNewMenu"
+              >
+                + New
+              </button>
+              <div
+                id="erpNewMenu"
+                class="erp-new-menu hidden"
+                role="menu"
+                aria-labelledby="erpNewMenuBtn"
+                aria-hidden="true"
+                onclick="event.stopPropagation()"
+              >
                 <div class="erp-new-menu__cols">
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Expenses &amp; bills</div>
@@ -301,44 +358,44 @@
                       <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Standard</span
                       ><span class="erp-new-menu__sep-line"></span>
                     </div>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewExpense()">Expense</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewBill()">Bill</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Check')">Check</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Purchase order')">Purchase order</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPayBills()">Pay bills</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Vendor credit')">Vendor credit</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Item receipt')">Item receipt</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewExpense()">Expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewBill()">Bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Check')">Check</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Purchase order')">Purchase order</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPayBills()">Pay bills</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Vendor credit')">Vendor credit</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Item receipt')">Item receipt</button>
                     <div class="erp-new-menu__sep" role="presentation">
                       <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Maintenance &amp; fuel</span
                       ><span class="erp-new-menu__sep-line"></span>
                     </div>
-                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
                     <div class="erp-new-menu__sep" role="presentation">
                       <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Drivers</span
                       ><span class="erp-new-menu__sep-line"></span>
                     </div>
-                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpOpenDriverBillPay()">Driver bill pay</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDriverBillPay()">Driver bill pay</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Maintenance</div>
                     <div class="erp-new-menu__tile-grid" role="group" aria-label="New maintenance record">
-                      <button type="button" class="erp-new-menu__tile" onclick="erpNewWorkOrder()">
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder()">
                         Work order<span class="erp-new-menu__tile-sub">Start here</span>
                       </button>
-                      <button type="button" class="erp-new-menu__tile" onclick="erpNewWorkOrder('pm')">
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('pm')">
                         PM service<span class="erp-new-menu__tile-sub">Preventive</span>
                       </button>
-                      <button type="button" class="erp-new-menu__tile" onclick="erpNewWorkOrder('repair')">
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('repair')">
                         Repair order<span class="erp-new-menu__tile-sub">External shop</span>
                       </button>
-                      <button type="button" class="erp-new-menu__tile" onclick="erpNewWorkOrder('tire')">
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('tire')">
                         Tire record<span class="erp-new-menu__tile-sub">Positions &amp; line items</span>
                       </button>
-                      <button type="button" class="erp-new-menu__tile erp-new-menu__tile--wide" onclick="erpNewWorkOrder('accident')">
+                      <button type="button" class="erp-new-menu__tile erp-new-menu__tile--wide" role="menuitem" onclick="erpNewWorkOrder('accident')">
                         Accident repair order<span class="erp-new-menu__tile-sub">Body / collision / glass</span>
                       </button>
                     </div>
@@ -346,16 +403,16 @@
                       <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">More</span
                       ><span class="erp-new-menu__sep-line"></span>
                     </div>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('air_bag')">Air bag record</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewWorkOrder('battery')">Battery record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('air_bag')">Air bag record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('battery')">Battery record</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Other</div>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewDriverSettlement()">Driver settlement</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewFuelRecord()">Fuel record</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Journal entry')">Journal entry</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>
-                    <button type="button" class="erp-new-menu__item" onclick="erpNewPlaceholder('Transfer')">Transfer</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewDriverSettlement()">Driver settlement</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewFuelRecord()">Fuel record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Journal entry')">Journal entry</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewLoadsEntry()">Load / TMS entry</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Transfer')">Transfer</button>
                   </div>
                 </div>
               </div>
@@ -7121,14 +7178,23 @@
 
     function erpCloseNewMenu() {
       const m = document.getElementById('erpNewMenu');
-      if (m) m.classList.add('hidden');
+      const b = document.getElementById('erpNewMenuBtn');
+      if (m) {
+        m.classList.add('hidden');
+        m.setAttribute('aria-hidden', 'true');
+      }
+      if (b) b.setAttribute('aria-expanded', 'false');
     }
 
     function erpToggleNewMenu(ev) {
       if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
       const m = document.getElementById('erpNewMenu');
+      const b = document.getElementById('erpNewMenuBtn');
       if (!m) return;
       m.classList.toggle('hidden');
+      const open = !m.classList.contains('hidden');
+      m.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
     function erpDocClickCloseNew(ev) {
@@ -7397,14 +7463,87 @@
       if (on) {
         if (__erpDedicatedEscHandler) return;
         __erpDedicatedEscHandler = ev => {
-          if (ev.key === 'Escape' && !document.getElementById('erpDedicatedFormModal')?.classList.contains('hidden')) {
-            erpCloseDedicatedFormModal();
+          if (ev.key !== 'Escape') return;
+          const modal = document.getElementById('erpDedicatedFormModal');
+          if (!modal || modal.classList.contains('hidden')) return;
+          const shell = modal.querySelector('.erp-dedicated-form-modal__shell');
+          if (shell && document.fullscreenElement === shell) {
+            return;
           }
+          erpCloseDedicatedFormModal();
         };
         document.addEventListener('keydown', __erpDedicatedEscHandler, true);
       } else if (__erpDedicatedEscHandler) {
         document.removeEventListener('keydown', __erpDedicatedEscHandler, true);
         __erpDedicatedEscHandler = null;
+      }
+    }
+
+    function erpSyncDedicatedModalFullscreenUi() {
+      const modal = document.getElementById('erpDedicatedFormModal');
+      const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
+      const fsBtn = document.getElementById('erpDedModalFsBtn');
+      if (!fsBtn || !shell) return;
+      if (!modal || modal.classList.contains('hidden')) return;
+      const inFs = document.fullscreenElement === shell;
+      fsBtn.textContent = inFs ? 'Exit full screen' : 'Full screen';
+      fsBtn.setAttribute('aria-pressed', inFs ? 'true' : 'false');
+    }
+
+    function erpToggleDedicatedModalBrowserFullscreen() {
+      const modal = document.getElementById('erpDedicatedFormModal');
+      const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
+      if (!modal || modal.classList.contains('hidden') || !shell) return;
+      if (document.fullscreenElement === shell) {
+        void document.exitFullscreen();
+        return;
+      }
+      const p = shell.requestFullscreen?.();
+      if (p) {
+        void p.catch(() => {
+          if (typeof erpNotify === 'function') {
+            erpNotify('Full screen is not available in this browser or was blocked.', 'info');
+          }
+        });
+      } else if (typeof erpNotify === 'function') {
+        erpNotify('Full screen is not available in this browser.', 'info');
+      }
+    }
+
+    function erpToggleDedicatedModalMaximize() {
+      const modal = document.getElementById('erpDedicatedFormModal');
+      const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
+      if (!modal || modal.classList.contains('hidden') || !shell) return;
+      const on = !shell.classList.contains('erp-dedicated-form-modal__shell--maximized');
+      shell.classList.toggle('erp-dedicated-form-modal__shell--maximized', on);
+      modal.classList.toggle('erp-dedicated-form-modal--maximized', on);
+      const btn = document.getElementById('erpDedModalMaxBtn');
+      if (btn) {
+        btn.textContent = on ? 'Restore' : 'Maximize';
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      if (on && document.fullscreenElement === shell) {
+        void document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function erpResetDedicatedModalLayout() {
+      const modal = document.getElementById('erpDedicatedFormModal');
+      const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
+      if (modal) modal.classList.remove('erp-dedicated-form-modal--maximized');
+      if (shell) shell.classList.remove('erp-dedicated-form-modal__shell--maximized');
+      const maxBtn = document.getElementById('erpDedModalMaxBtn');
+      if (maxBtn) {
+        maxBtn.textContent = 'Maximize';
+        maxBtn.setAttribute('aria-pressed', 'false');
+      }
+      const fsBtn = document.getElementById('erpDedModalFsBtn');
+      if (fsBtn) {
+        fsBtn.textContent = 'Full screen';
+        fsBtn.setAttribute('aria-pressed', 'false');
+      }
+      if (shell && document.fullscreenElement === shell) {
+        void document.exitFullscreen().catch(() => {});
       }
     }
 
@@ -7415,6 +7554,7 @@
       if (!force && erpDedicatedFormDirty()) {
         if (!confirm('Discard unsaved changes and close this form?')) return;
       }
+      erpResetDedicatedModalLayout();
       if (window.__erpDedicatedModalKind === 'ap') {
         const shell = document.getElementById('erpApDocShellPanel');
         const ph = document.getElementById('erpApDocShellPlaceholder');
@@ -7463,6 +7603,7 @@
       const mount = document.getElementById('erpDedicatedFormModalBody');
       const modal = document.getElementById('erpDedicatedFormModal');
       if (!mount || !modal) return;
+      erpResetDedicatedModalLayout();
       const acctBtn = document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]');
 
       if (mode === 'fuel-expense') {
@@ -19515,6 +19656,10 @@
         const t = ev.target;
         if (t && t.closest && t.closest('[data-erp-ded-close]')) erpCloseDedicatedFormModal();
       });
+    }
+    if (!window.__erpDedFsUiBound) {
+      window.__erpDedFsUiBound = true;
+      document.addEventListener('fullscreenchange', erpSyncDedicatedModalFullscreenUi);
     }
     renderErpModuleSidebar(activeSection || 'maintenance');
     loadUnitListPreference();
