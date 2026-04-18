@@ -161,10 +161,10 @@
   </div>
   <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
   <p class="roadmap-note">
-    <strong>Roadmap:</strong> tie origin/destination from active TMS loads into this planner, combine uploaded Love’s price sheets and live tank levels from Samsara, and suggest cheapest legal fuel stops along the route (including state price spreads). PC*Miler practical/short miles will replace heuristic routing for driver-pay mileage when licensed.
+    <strong>Roadmap:</strong> TMS load tie-ins for origin/destination, Love’s price sheets + Samsara tank data, cheapest legal stops along route (incl. state spreads), PC*Miler miles when licensed (replacing heuristic driver-pay routing).
   </p>
   <div id="erpWriteAuthBanner" class="fuel-erp-write-banner" style="display:none">
-    <strong>ERP write protection is on</strong> (server has <code>ERP_WRITE_SECRET</code>). Paste the same secret once — it is kept only in this browser (<code>localStorage</code>), not on the server.
+    <strong>ERP write protection is on</strong> (<code>ERP_WRITE_SECRET</code> on server). Paste once — stored only in this browser (<code>localStorage</code>), not on the server.
     <input id="erpWriteSecretInput" type="password" placeholder="Write secret" autocomplete="off" />
     <button type="button" onclick="saveErpWriteSecret()">Save in browser</button>
     <button type="button" onclick="clearErpWriteSecret()">Clear</button>
@@ -217,7 +217,7 @@
         <span class="erp-help-tip">
           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel ledger on this page">?</button>
           <span class="erp-help-tip__panel" role="tooltip">
-            <strong>Diesel purchases</strong> here are the satellite <strong>route planner</strong> ledger (odometer snapshots → MPG between fills). For <strong>Relay / Love’s CSV</strong>, bulk fuel expense posting, and <strong>QuickBooks</strong>, use <strong>Maintenance → Accounting → Fuel expenses</strong> (linked below).
+            <strong>Diesel purchases</strong> here = route-planner ledger (odometer → MPG). <strong>Relay/Love’s</strong>, bulk expense posting, <strong>QuickBooks</strong> → <strong>Maintenance → Accounting → Fuel expenses</strong> (link below).
           </span>
         </span>
       </h2>
@@ -225,7 +225,7 @@
         <div id="selectedDetail">Select a unit from the fleet list.</div>
       <div class="section-title">Diesel purchases (ledger)</div>
       <div class="small" style="margin-bottom:8px">
-        Save fuel buys with odometer snapshot to compute MPG between purchases and flag anomalies.
+        Log buys + odometer to compute MPG between fills and flag anomalies.
       </div>
       <div
         class="mr-filter-bar erp-ops-filter-bar"
@@ -269,7 +269,7 @@
         <span id="fuelLedgerMeta" class="small"></span>
       </div>
       <p class="small fuel-relay-info">
-        <strong>Relay / Love’s CSV imports</strong> moved to <a href="/maintenance.html#accounting-fuel" style="font-weight:500;color:var(--color-border-focus)">Maintenance → Accounting → Fuel expenses</a> so imports sit next to QuickBooks posting and are not mixed with route planning.
+        <strong>Relay / Love’s</strong> imports live under <a href="/maintenance.html#accounting-fuel" style="font-weight:500;color:var(--color-border-focus)">Maintenance → Accounting → Fuel expenses</a> next to QBO posting (kept separate from route planning).
       </p>
       <div id="fuelLedger" class="small">No fuel purchases yet.</div>
         <div class="section-title">Recommended Stops</div>
