@@ -1492,6 +1492,15 @@
                       <button type="button" class="btn btn--ghost" onclick="maintPrintWorkOrderView()">Print</button>
                     </div>
                     <div class="maint-form-actions__meta">
+                      <div class="mini-note" style="flex:1 1 100%;margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
+                        <span style="min-width:0;flex:1 1 240px">Save/post status (left) and edit-mode line (right) — both use plain <code>textContent</code> only.</span>
+                        <span class="erp-help-tip">
+                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Save / edit hints">?</button>
+                          <span class="erp-help-tip__panel" role="tooltip">
+                            <code>#maintSaveHint</code>: <code>maintToneSaveHint()</code> sets <code>textContent</code> + optional <code>maint-save-hint--caution|error</code> classes — driven from <code>saveRecordWithAction()</code> / <code>maintSaveFromSplitMenu()</code> (busy strings, success, validation), <code>maintPreparePrintWorkOrderOnly()</code> draft PDF messages, and cleared on new form. <code>#maintEditRecordHint</code>: <code>updateMaintEditRecordHint()</code> when <code>__editingMaintRecordId</code> is set from <code>hydrateMaintenanceRecordForm()</code>; cleared in <code>clearMaintenanceEditMode()</code>.
+                          </span>
+                        </span>
+                      </div>
                       <span class="mini-note" id="maintSaveHint" role="status" aria-live="polite" aria-atomic="true"></span>
                       <span class="mini-note" id="maintEditRecordHint" style="color:var(--color-text-label)"></span>
                     </div>
@@ -2691,12 +2700,23 @@
                 </div>
               </div>
 
-              <div class="ap-exp-row ap-exp-row--pdf">
+                  <div class="ap-exp-row ap-exp-row--pdf">
                 <div class="ap-exp-field ap-exp-field--pdf">
                   <span class="qb-l">Repair / vendor invoice PDF</span>
                   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                     <input id="apInvoicePdfInput" type="file" accept="application/pdf" />
                     <button type="button" class="qb-btn-add" onclick="parseApInvoicePdf()">Extract &amp; fill lines</button>
+                  </div>
+                  <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:58ch">
+                    <span style="min-width:0;flex:1 1 220px">Parse status for Accounting AP PDF extract — same parser as maintenance, different <code>applyParsedExpenseInvoicePdf</code> target.</span>
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="AP PDF parse status host">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">
+                        <code>parseApInvoicePdf()</code> sets <code>#apInvoicePdfStatus</code> <code>textContent</code> (“Choose a PDF first.”, “Reading PDF…”, success line with hints, or cleared on error toast). <code>applyParsedExpenseInvoicePdf(p, 'ap')</code> mutates the AP composer. User note: needs selectable text in the PDF; image-only scans usually fail.
+                      </span>
+                    </span>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin-top:2px">
                     <span id="apInvoicePdfStatus" class="mini-note"></span>
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="PDF extract">?</button>
