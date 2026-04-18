@@ -439,3 +439,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **`public/css/maint-accounting-ui-2026.css`** — **`acct-dash-kpis`**, **`acct-dash-cards`**, and **`mr-upload-conn-grid`** also get **`min-width: 0`** on the grid host where missing.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-27
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`#woLines .wo-line-grid`** auto-fill override now ends with **`minmax(0, 1fr)`** (was trailing **`1fr`**). **`maint-cost-lines-head`**, **`maint-cost-line__primary`**, and the **`max-width: 1100px`** shared override use **`minmax(min(100%, …), minmax(0, 1fr))`** (and **`minmax(0, 2.2fr)`** for the description column) so cost-line grids behave like the other hardened maintenance tracks on narrow widths.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
