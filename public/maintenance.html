@@ -2962,6 +2962,15 @@
                 </div>
               </div>
               <div id="bpLogStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 240px">Rows below rebuild when filters or the pager change; the status line above shows counts.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Bill payment log table">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderBpBillPaymentLogTable()</code> stores fetched entries, then <code>bpRenderBillPaymentLogPage()</code> replaces <code>#bpLogBody</code> <code>innerHTML</code> with <code>bpHtmlForBillPaymentLogRow()</code> markup (or a no-rows row) and wires <code>#bpLogPagerHost</code> via <code>erpPagerRender</code> when the filtered list exceeds the page size.
+                  </span>
+                </span>
+              </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap mr-bp-log-wrap" style="min-width:0">
                 <table class="st-settlement erp-bp-log-table" style="min-width:960px">
                   <thead>
@@ -3230,8 +3239,8 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Relay import">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Preview Love’s / Relay <strong>All Transactions</strong> (CSV/Excel). Requires <strong>ERP write secret</strong> in Settings. After <strong>Confirm import</strong>, rows land in the grid — <strong>Record to QuickBooks</strong> creates one Purchase per row.
-                      <span style="display:block;margin-top:8px">Parsed rows carry unit, gallons, totals, vendor, and dates (e.g. <code>4/15/26</code> → ISO). Category mode maps to your expense accounts; <strong>Already in QuickBooks</strong> in the preview keeps staging-only Relay lines.</span>
+                      Preview Love’s / Relay <strong>All Transactions</strong> (CSV/Excel). Needs <strong>ERP write secret</strong> in Settings. <strong>Confirm import</strong> loads the grid; each <strong>Record to QuickBooks</strong> posts one Purchase.
+                      <span style="display:block;margin-top:8px">Rows include unit, gallons, totals, vendor, dates (<code>4/15/26</code> → ISO). Category mode maps expense accounts. <strong>Already in QuickBooks</strong> keeps Relay staging-only.</span>
                     </span>
                   </span>
                 </div>
@@ -3247,14 +3256,14 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="After confirm">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Confirm appends to ERP only. Each <strong>Record to QuickBooks</strong> in the grid creates one Purchase (not batched). With category mode (default), QBO uses the expense account mapped from the Relay-style path.
+                        Appends to ERP only. Each grid <strong>Record to QuickBooks</strong> posts one Purchase (not batched). Default category mode maps Relay paths to expense accounts.
                       </span>
                     </span>
                   </div>
                   <div id="acctFuelRelayImportSummary" class="mini-note"></div>
                   <label class="mini-note" style="display:flex;gap:8px;align-items:center;margin:10px 0">
                     <input type="checkbox" id="acctFuelRelayImportAlreadyQbo" checked />
-                    <span>Relay expense lines already in QuickBooks — save staging only (reconciliation).</span>
+                    <span>Already in QBO — staging only (reconciliation).</span>
                   </label>
                   <div class="acct-fuel-import-scroll-split">
                     <div id="acctFuelRelayImportRelayWrap" class="acct-fuel-import-scroll"></div>
@@ -7838,7 +7847,7 @@
       }
       if (posture.authDisabled) {
         host.innerHTML =
-          '<p class="mini-note">User accounts are not enforced yet. After you create users, set <code>IH35_REQUIRE_AUTH=1</code> so sign-in, heartbeats, and this panel reflect real staff activity.</p>';
+          '<p class="mini-note">Users are not enforced yet. After you add users, set <code>IH35_REQUIRE_AUTH=1</code> so sign-in, heartbeats, and this panel reflect real activity.</p>';
         return;
       }
       const checks = (posture.checks || [])
@@ -7865,7 +7874,7 @@
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How to read this">?</button>
                 <span class="erp-help-tip__panel" role="tooltip">
-                  <strong>Reference</strong> themes common in fleet CMMS products — not a grade for this app. Expand the section below for typical vendor themes vs what this ERP already covers.
+                  <strong>Reference</strong> only — not a grade. Expand below for typical CMMS themes vs what this ERP already covers.
                 </span>
               </span>
             </div>
@@ -7874,9 +7883,8 @@
             <details class="mr-upload-help" style="margin:0">
               <summary>Industry CMMS themes (optional read)</summary>
               <div class="mini-note" style="margin-top:8px;line-height:1.55">
-                Leading fleet maintenance products stress <strong>preventive schedules</strong> (mileage, time, OEM), <strong>digital work orders</strong> with parts and labor,
-                <strong>inspections / DVIR</strong>, <strong>parts inventory</strong>, <strong>telematics</strong>, and <strong>mobile workflows</strong>.
-                This ERP already combines maintenance history, shop queue, Samsara mileage, QBO expenses, settlement, and integrity alerts — extend toward full CMMS parity with PM templates and parts stock when you are ready.
+                Typical fleet CMMS stresses <strong>PM</strong> (mileage, time, OEM), <strong>work orders</strong> (parts + labor), <strong>DVIR</strong>, <strong>parts stock</strong>, <strong>telematics</strong>, and <strong>mobile</strong> workflows.
+                Here: maintenance history, shop queue, Samsara miles, QBO expenses, settlement, integrity alerts — add PM templates and parts when you want closer parity.
               </div>
             </details>
           </div>
@@ -7903,7 +7911,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Roster data">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      ERP <strong>JWT</strong> sign-ins and throttled API activity — separate from QuickBooks or Samsara staff portals. Idle thresholds follow server env vars noted at the bottom of the table.
+                      ERP <strong>JWT</strong> sign-ins and throttled API hits — not QuickBooks or Samsara portals. Idle rules use the env vars at the table foot.
                     </span>
                   </span>
                 </div>
@@ -7942,9 +7950,9 @@
                   </tbody>
                 </table>
               </div>
-              <p class="mini-note" style="margin-top:10px">Idle = days since last API activity (throttled server-side) or login. Warn ≥ <strong>${escapeHtml(
+              <p class="mini-note" style="margin-top:10px">Idle = days since last throttled API activity or login. Warn ≥ <strong>${escapeHtml(
                 String(team.warnDays ?? '')
-              )}</strong> days · critical ≥ <strong>${escapeHtml(String(team.criticalDays ?? ''))}</strong> days. Override with <code>TEAM_ACTIVITY_WARN_DAYS</code> / <code>TEAM_ACTIVITY_CRITICAL_DAYS</code>.</p>
+              )}</strong> d · critical ≥ <strong>${escapeHtml(String(team.criticalDays ?? ''))}</strong> d. Override: <code>TEAM_ACTIVITY_WARN_DAYS</code> / <code>TEAM_ACTIVITY_CRITICAL_DAYS</code>.</p>
             </div>`;
         } catch (e) {
           teamBlock = `<p class="mini-note" style="color:var(--color-semantic-error);margin-top:12px">Team roster: ${escapeHtml(e.message || String(e))}</p>`;
