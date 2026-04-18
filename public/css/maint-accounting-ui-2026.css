@@ -1530,3 +1530,13 @@ body.erp-maintenance #erpApp.erp-master .erp-topbar__actions {
 body.erp-maintenance #erpApp .erp-new-menu__cols {
   min-width: 0;
 }
+
+/* Rule 1: accounting board strip + filter grow (inline flex in maintenance.html). */
+body.erp-maintenance #acctBoardStrip,
+body.erp-maintenance .mr-acct-board {
+  min-width: 0;
+}
+
+body.erp-maintenance .mr-filter-bar__grow {
+  min-width: 0;
+}
