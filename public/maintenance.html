@@ -2749,8 +2749,8 @@
                             <th>Product / service</th>
                             <th>Description</th>
                             <th class="maint-qb-th-num">Qty</th>
-                            <th class="maint-qb-th-num">Rate</th>
-                            <th class="maint-qb-th-num">Line</th>
+                            <th class="maint-qb-th-num">Unit $</th>
+                            <th class="maint-qb-th-num">Total</th>
                             <th>Tire / ref</th>
                             <th class="maint-qb-th-del"></th>
                           </tr>
@@ -4964,7 +4964,7 @@
       </td>
       <td class="maint-qb-td-num">
         <span class="maint-qb-dollar" aria-hidden="true">$</span>
-        <input class="qb-in wo-line-total" type="number" step="0.01" placeholder="0.00" readonly tabindex="-1" title="Qty × rate (line total)" />
+        <input class="qb-in wo-line-total" type="number" step="0.01" placeholder="0.00" title="Line total (qty × unit, or edit to back-solve unit)" />
       </td>
       <td class="maint-qb-td-memo">
         <input class="qb-in wo-tire" placeholder="Tire / ref" autocomplete="off" />
@@ -7104,13 +7104,11 @@
     }
 
     function erpNewExpense() {
-      erpCloseNewMenu();
-      erpOpenDedicatedAccountingForm('maintenance-expense');
+      erpOpenDedicatedAccountingForm('standard-expense');
     }
 
     function erpNewBill() {
-      erpCloseNewMenu();
-      erpOpenDedicatedAccountingForm('maintenance-bill');
+      erpOpenDedicatedAccountingForm('standard-bill');
     }
 
     function erpNewPayBills() {
@@ -7394,9 +7392,19 @@
       openAccountingTab('acct-transactions', stub);
       const sel = document.getElementById('apTxnType');
       if (sel) {
-        if (mode === 'maintenance-expense') sel.value = 'expense';
-        else sel.value = 'bill';
-        sel.disabled = true;
+        if (mode === 'standard-expense') {
+          sel.value = 'expense';
+          sel.disabled = false;
+        } else if (mode === 'standard-bill') {
+          sel.value = 'bill';
+          sel.disabled = false;
+        } else if (mode === 'maintenance-expense') {
+          sel.value = 'expense';
+          sel.disabled = true;
+        } else {
+          sel.value = 'bill';
+          sel.disabled = true;
+        }
       }
       syncApDocTitle();
       const shell = document.getElementById('erpApDocShellPanel');
@@ -7419,6 +7427,8 @@
       document.body.classList.add('erp-dedicated-modal-open');
       erpDedicatedModalBindEscape(true);
       const hashMap = {
+        'standard-expense': 'accounting-expense-new',
+        'standard-bill': 'accounting-bill-new',
         'maintenance-expense': 'accounting-maintenance-expense-new',
         'maintenance-bill': 'accounting-maintenance-bill-new',
         'fuel-bill': 'accounting-fuel-bill-new',
@@ -7556,6 +7566,8 @@
         return;
       }
       const erpDedicatedHashToMode = {
+        'accounting-expense-new': 'standard-expense',
+        'accounting-bill-new': 'standard-bill',
         'accounting-maintenance-expense-new': 'maintenance-expense',
         'accounting-maintenance-bill-new': 'maintenance-bill',
         'accounting-fuel-expense-new': 'fuel-expense',
@@ -14849,9 +14861,9 @@
         return;
       }
       row.remove();
-        refreshWoLineIndices();
-        refreshApDocTotal();
-      }
+      refreshWoLineIndices();
+      refreshApDocTotal();
+    }
 
     function addWoCategoryLine() {
       const tpl = document.getElementById('woLineCategoryTpl');
@@ -16958,7 +16970,6 @@
         if (!row) continue;
         const svc = row.querySelector('.wo-svc');
         const qtyEl = row.querySelector('.wo-qty');
-        const amtEl = row.querySelector('.wo-amt');
         const tireEl = row.querySelector('.wo-tire');
         const acctSearch = row.querySelector('.wo-acct');
         const acctId = row.querySelector('.wo-acct-id');
@@ -16968,7 +16979,19 @@
         if (svc) svc.value = String(ln.description || '').trim() || 'Line';
         const qSrc = ln.qty != null && ln.qty !== '' ? ln.qty : ln.quantity;
         if (qtyEl) qtyEl.value = qSrc != null && qSrc !== '' ? String(qSrc) : '1';
-        if (amtEl) amtEl.value = (Number(ln.amount) || 0) > 0 ? String(Number(ln.amount)) : '';
+        const lineAmt = Number(ln.amount) || 0;
+        if (dm === 'item') {
+          const qn = Math.max(Number(qtyEl?.value) || 1, 0.0001);
+          const rateEl = row.querySelector('.wo-rate');
+          if (rateEl) {
+            if (lineAmt > 0 && qn > 0) rateEl.value = String(Math.round((lineAmt / qn) * 1e8) / 1e8);
+            else rateEl.value = '';
+          }
+          syncWoApItemLineTotal(row);
+        } else {
+          const amtEl = row.querySelector('.wo-amt');
+          if (amtEl) amtEl.value = lineAmt > 0 ? String(lineAmt) : '';
+        }
         if (tireEl) {
           const tireBits = [ln.partRef, ln.partPosition, ln.partNumber, ln.tirePositionText].filter(Boolean);
           tireEl.value = tireBits.length ? tireBits.map(String).join(' / ') : '';
@@ -19353,7 +19376,14 @@
     const woLinesHostInit = document.getElementById('woLines');
     if (woLinesHostInit) {
       woLinesHostInit.addEventListener('input', e => {
-        if (e.target && e.target.classList && e.target.classList.contains('wo-amt')) refreshApDocTotal();
+        const t = e.target;
+        if (!t || !t.classList) return;
+        if (t.classList.contains('wo-amt')) refreshApDocTotal();
+        if (t.classList.contains('wo-qty') || t.classList.contains('wo-rate')) {
+          const row = t.closest('.wo-line-item');
+          if (row) syncWoApItemLineTotal(row);
+          refreshApDocTotal();
+        }
       });
     }
 
