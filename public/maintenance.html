@@ -6782,7 +6782,7 @@
           '<span class="erp-help-tip">' +
           '<button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accounting sidebar Connections">?</button>' +
           '<span class="erp-help-tip__panel" role="tooltip">' +
-          '<code>paintAcctSidebarConnections()</code> replaces <code>#erpAcctSbConnectionsBody</code> <code>innerHTML</code> with QBO status, last refresh, fleet line, and posting-alert counts from cached responses. This is separate from the main-column <code>#erpConnectionStrip</code> in <code>erp-ui.js</code> (<code>textContent</code>).' +
+          '<code>paintAcctSidebarConnections()</code> fills <code>#erpAcctSbConnectionsBody</code> from cache (QBO status, last refresh, fleet line, posting-alert counts). Separate from top <code>#erpConnectionStrip</code> (<code>textContent</code> in <code>erp-ui.js</code>).' +
           '</span></span></div>';
         const connBody = connLead + '<div id="erpAcctSbConnectionsBody" class="erp-acct-sb-conn"></div>';
         inner.innerHTML =
@@ -6801,7 +6801,7 @@
             'module-hub',
             'This workspace',
             true,
-            '<p class="mini-note" style="margin:0;line-height:1.45">Use the <strong>Browse</strong> column on the left of the reports board or the tabs across the top. TMS and settlement reports use your live database connection.</p>'
+            '<p class="mini-note" style="margin:0;line-height:1.45"><strong>Browse</strong> column (left) or top tabs. TMS/settlement need a live DB connection.</p>'
           ) +
           erpSbGroup('reports', 'module-admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
@@ -7190,7 +7190,7 @@
       erpCloseNewMenu();
       openErpDrawer(
         label || 'Create',
-        `<div class="form-stack"><p class="mini-note" style="margin:0 0 10px">This type is not wired end-to-end yet. Use <strong>Accounting</strong> (for example <strong>Maintenance expenses</strong> or related tabs) to record it and sync with QuickBooks.</p><button type="button" class="btn" onclick="closeErpDrawer()">Close</button></div>`,
+        `<div class="form-stack"><p class="mini-note" style="margin:0 0 10px">Not wired end-to-end yet. Use <strong>Accounting</strong> (e.g. <strong>Maintenance expenses</strong>) to record and sync to QuickBooks.</p><button type="button" class="btn" onclick="closeErpDrawer()">Close</button></div>`,
         null
       );
     }
