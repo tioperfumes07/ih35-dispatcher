@@ -19,7 +19,7 @@
   --qb-icon-nav-bg: var(--color-nav-bg, #1a1a2e);
   --qb-icon-nav-muted: var(--color-nav-inactive, #8a8fa8);
   --qb-focus-ring: rgba(25, 103, 210, 0.12);
-  --qb-sidebar-active-bg: var(--pill-blue-bg, #e8f0fe);
+  --qb-sidebar-active-bg: var(--pill-blue-bg);
   --qb-radius-card: 8px;
   --qb-radius-control: 4px;
 }
@@ -451,8 +451,8 @@ body.erp-maintenance .erp-ghost-nav .nav-btn {
 /* --- QBO alert bar (Rule 15 look, same IDs) --- */
 body.erp-maintenance #qboSyncAlertBar:not(.hidden) {
   flex-shrink: 0;
-  background: var(--pill-red-bg, #fce8e6);
-  border-bottom: 1px solid var(--btn-danger-border, #f5c6c2);
+  background: var(--pill-red-bg);
+  border-bottom: 1px solid var(--btn-danger-border);
   color: var(--color-text-primary, var(--qb-text));
   position: sticky;
   top: max(0px, env(safe-area-inset-top, 0px));
@@ -1354,7 +1354,7 @@ body.dispatch-page .topbar button:hover {
 }
 
 body.dispatch-page .topbar button.secondary {
-  background: var(--pill-blue-bg, #e8f0fe);
+  background: var(--pill-blue-bg);
   border-color: var(--btn-info-border, #aec9f9);
   color: var(--qb-blue);
 }
@@ -1795,7 +1795,7 @@ body.dispatch-page #dispatchApp .erp-topbar button:hover {
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button.secondary {
-  background: var(--pill-blue-bg, #e8f0fe);
+  background: var(--pill-blue-bg);
   border-color: var(--btn-info-border, #aec9f9);
   color: var(--qb-blue);
 }

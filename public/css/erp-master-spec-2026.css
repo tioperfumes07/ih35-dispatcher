@@ -240,23 +240,23 @@ body.erp-maintenance .mr-table-scroll > table {
 }
 
 .mr-pill--green {
-  background: var(--pill-green-bg, #e6f4ea);
-  color: var(--pill-green-text, #137333);
+  background: var(--pill-green-bg);
+  color: var(--pill-green-text);
 }
 .mr-pill--red {
-  background: var(--pill-red-bg, #fce8e6);
-  color: var(--pill-red-text, #c5221f);
+  background: var(--pill-red-bg);
+  color: var(--pill-red-text);
 }
 .mr-pill--yellow {
-  background: var(--pill-yellow-bg, #fef7e0);
+  background: var(--pill-yellow-bg);
   color: var(--pill-yellow-text, #b06000);
 }
 .mr-pill--gray {
-  background: var(--pill-gray-bg, #f1f3f4);
-  color: var(--pill-gray-text, #5f6368);
+  background: var(--pill-gray-bg);
+  color: var(--pill-gray-text);
 }
 .mr-pill--blue {
-  background: var(--pill-blue-bg, #e8f0fe);
+  background: var(--pill-blue-bg);
   color: var(--pill-blue-text, #1967d2);
 }
 
@@ -312,8 +312,8 @@ body.erp-maintenance .erp-new-menu__col-title {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: var(--pill-red-bg, #fce8e6);
-  color: var(--pill-red-text, #c5221f);
+  background: var(--pill-red-bg);
+  color: var(--pill-red-text);
   font-weight: 500;
   font-size: 13px;
   display: flex;
@@ -325,7 +325,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 .mr-qbo-banner__title {
   font-weight: 500;
   font-size: 14px;
-  color: var(--pill-red-text, #c5221f);
+  color: var(--pill-red-text);
   margin: 0 0 4px;
 }
 
@@ -443,7 +443,7 @@ body.erp-maintenance .mr-kpi-card .metric-sub {
 }
 
 body.erp-maintenance .mr-kpi-card--bad {
-  border-color: var(--btn-danger-border, #f5c6c2) !important;
+  border-color: var(--btn-danger-border) !important;
   background: var(--pill-red-bg, #fff8f7) !important;
 }
 
@@ -668,12 +668,12 @@ body.erp-maintenance .mr-violation-legend__dot {
 }
 
 body.erp-maintenance .mr-violation-legend__dot--pink {
-  background: var(--pill-red-bg, #fce8e6);
-  border: 1px solid var(--pill-red-text, #c5221f);
+  background: var(--pill-red-bg);
+  border: 1px solid var(--pill-red-text);
 }
 
 body.erp-maintenance .mr-violation-legend__dot--yellow {
-  background: var(--pill-yellow-bg, #fef7e0);
+  background: var(--pill-yellow-bg);
   border: 1px solid var(--pill-yellow-text, #b06000);
 }
 
@@ -832,7 +832,7 @@ body.erp-maintenance .mr-filter-chipwrap > summary:focus-visible {
 
 body.erp-maintenance .mr-filter-chipwrap[open] > summary {
   border-color: var(--color-border-focus);
-  background: var(--pill-blue-bg, #e8f0fe);
+  background: var(--pill-blue-bg);
   color: var(--pill-blue-text, #1967d2);
 }
 
@@ -1044,7 +1044,7 @@ body.erp-maintenance .erp-main-body .tire-dot {
 }
 
 body.erp-maintenance .erp-main-body .tire-dot:hover {
-  fill: var(--pill-blue-bg, #e8f0fe);
+  fill: var(--pill-blue-bg);
   stroke: var(--color-border-focus);
 }
 
@@ -1101,7 +1101,7 @@ body.erp-maintenance #acct-transactions .qb-doc-backlink {
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-backlink:hover {
-  background: var(--pill-blue-bg, #e8f0fe);
+  background: var(--pill-blue-bg);
 }
 
 body.erp-maintenance #acct-transactions .qb-doc-closebtn {
@@ -1177,7 +1177,7 @@ body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-backlink {
 }
 
 body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-backlink:hover {
-  background: var(--pill-blue-bg, #e8f0fe);
+  background: var(--pill-blue-bg);
 }
 
 body.erp-maintenance #acct-fuel-expense .qb-doc-topbar--fuel .qb-doc-closebtn {
@@ -1424,7 +1424,7 @@ body.erp-maintenance .erp-reports-hub__tile:hover {
 
 body.erp-maintenance .erp-reports-hub__tile--active {
   border-color: var(--color-border-focus);
-  background: var(--pill-blue-bg, #e8f0fe);
+  background: var(--pill-blue-bg);
   box-shadow: none;
 }
 
@@ -1759,19 +1759,19 @@ body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.
   height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: var(--btn-primary-save-bg, #1a7a3c);
+  background: var(--btn-primary-save-bg);
 }
 
 .erp-toast__dot--err {
-  background: var(--pill-red-text, #c5221f);
+  background: var(--pill-red-text);
 }
 
 .erp-toast__dot--warn {
-  background: var(--btn-warning-bg, #b06000);
+  background: var(--btn-warning-bg);
 }
 
 .erp-toast__dot--info {
-  background: var(--btn-post-qbo-bg, #1557a0);
+  background: var(--btn-post-qbo-bg);
 }
 
 .erp-toast__x {
@@ -1911,13 +1911,13 @@ body.hub-page .erp-help-tip__btn:focus-visible {
 
 .erp-connection-strip--ok {
   border-color: var(--color-success-border-soft);
-  background: var(--pill-green-bg, #e6f4ea);
-  color: var(--pill-green-text, #137333);
+  background: var(--pill-green-bg);
+  color: var(--pill-green-text);
 }
 .erp-connection-strip--warn {
   border-color: var(--color-warning-border-soft);
-  background: var(--pill-yellow-bg, #fef7e0);
-  color: var(--pill-yellow-text, #8a5200);
+  background: var(--pill-yellow-bg);
+  color: var(--pill-yellow-text);
 }
 .erp-connection-strip--muted {
   background: var(--color-bg-header);
@@ -2105,7 +2105,7 @@ body.banking-page #authBanner.erp-auth-banner {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
-  background: var(--pill-blue-bg, #e8f0fe);
+  background: var(--pill-blue-bg);
   color: var(--pill-blue-text, #1967d2);
   border: 1px solid var(--btn-info-border, #c6dafc);
 }

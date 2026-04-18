@@ -414,3 +414,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1 (flex + items):** **`qb-lines-actions`**, **`qb-doc-actions`** child flex groups, **`list`**, **`hero-card`**, and narrow (**`max-width: 800px`**) single-column dashboard grids use **`min-width: 0`** or **`minmax(0, 1fr)`** so list shells and doc chrome do not widen the main column.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-24
+
+- **Rule 1 (responsive / print grids):** **`public/css/app-theme.css`** — Normalized remaining maintenance **`grid-template-columns: 1fr`**, **`1fr 1fr`**, and **`1fr !important`** declarations inside **`@media`** and **print** rules to **`minmax(0, 1fr)`** (or paired **`minmax(0, 1fr) minmax(0, 1fr)`**) so collapsed layouts (WO form rows, board layout, shop kanban, fuel import split, print WO, etc.) inherit the same minimum track semantics as the primary **`minmax(0, …)`** grids.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
