@@ -485,12 +485,16 @@ body.dispatch-page #dispatchApp table.data {
 }
 
 /* =============================================================================
-   Rule 3 — + New menu: scrollable panel on small viewports (rest in erp-master-redesign)
+   Rule 3 — + New menu: scrollable, user-resizable flyout (rest in erp-master-redesign)
    ============================================================================= */
 body.erp-maintenance #erpApp .erp-new-menu {
   width: min(580px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
-  max-height: min(70vh, 520px);
-  overflow-y: auto;
+  min-width: 240px;
+  min-height: 120px;
+  max-width: min(920px, calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  max-height: min(85vh, 680px);
+  overflow: auto;
+  resize: both;
   padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
     max(20px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
   box-shadow: var(--shadow-menu-panel);
