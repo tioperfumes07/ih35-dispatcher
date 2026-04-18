@@ -69,7 +69,7 @@
 ## 6. Maintenance — shop, safety, tracking, fleet (Rules 12, 16–17)
 
 - [ ] **Shop board:** Each queue tab — pager (**16+**), filters reset page. **Maintenance reports** + **Integrity · fuel · parts alerts** panel title **`?`** tips open.
-- [ ] **Safety / HOS:** HOS + active + in-service + assignments pagers and filter reset behavior. **Active drivers** + **In service now** column title **`?`** tips open.
+- [ ] **Safety / HOS:** HOS + active + in-service + assignments pagers and filter reset behavior. **Active drivers** + **In service now** column title **`?`** tips open. **Driver files:** with **16+** drivers after merge, use pager; type on page **1**, advance page and back — values persist until **Save** or clear (**changelog 217**).
 - [ ] **Tracking:** **Fleet mix snapshot** (above the four-metric strip) **`?`** opens. Map **Units** + **Live map** panel **`?`** tips open; copy matches expectations (map list vs **Maintenance → Units**). **Yard & idle** + **Summary** title **`?`** tips. Map units pager; assets + drivers pagers; **Idle** snapshot pager uses cache on page change (no unnecessary refetch). Pager chrome borders look correct in light theme (token **`--color-border`** when set).
 - [ ] **Maintenance table (fleet):** **Maintenance Table** + **Unit History** panel **`?`** tips; pager + category/service filter reset page.
 - [ ] **Security alerts:** **`mr-filter-bar`** + **Refresh alerts**.
@@ -115,7 +115,7 @@ Re-run targeted checks from [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](
 
 - [ ] **Pay bills → Open bills:** pager + **`Map`** selection across pages (**changelog 215** — load **25+** bills, check rows on page 1, page forward, confirm **draft total** still includes page 1; **Create bill payment** posts checked rows from **all** pages; clear filters resets pager to page **1**).
 - [ ] **Driver pay settlements** — full sign-off on per-vendor pagers after **`Refresh driver settlements`** (**changelog 216**); re-open if product switches to a **single** flattened pager.
-- [ ] **Safety → Driver files** pager without losing per-row edits (if draft store or warnings ship).
+- [ ] **Safety → Driver files** — pager + draft persistence (**changelog 217**); confirm **Save** clears draft and server round-trip.
 
 ---
 

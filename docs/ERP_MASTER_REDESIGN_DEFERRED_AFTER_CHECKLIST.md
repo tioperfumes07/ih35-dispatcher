@@ -12,7 +12,7 @@
 |------|---------------------|
 | **Pay bills → Open bills** (`#bpOpenBillsBody`) | **Shipped (2026-04-18):** pager under the grid + **`window.__bpOpenBillsSelection`** **`Map<billId, { checked, payAmount }>`** + **`bpRenderOpenBillsPage`** / **`bpGetFilteredOpenBills`** — see **`ERP_MASTER_REDESIGN_STATUS.md` changelog 215**. Remaining product gaps (if any): explicit **“select all matching filter”** control, server-backed draft, or different default page size. |
 | **Driver pay settlements** (nested tables per QBO vendor in Reports → Settlement) | **Shipped (2026-04-18):** **per-vendor** **`erpPagerRender`** under each load table (**default 15** rows; shared **`erpPagerSliceRange`**), state in **`window.__driverPaySettPagerByVendor`** + cached **`window.__driverPaySettlementsPayload`** — **`ERP_MASTER_REDESIGN_STATUS.md` changelog 216**. A **flattened** virtual list remains a future alternative if product prefers one pager. |
-| **Safety → Driver files** | Rows are **editable** with **Save** per row; paging away loses in-progress edits unless drafts are persisted per page change. Defer or add explicit “unsaved” warnings + draft store. |
+| **Safety → Driver files** | **Shipped (2026-04-18):** **`#driverFilesPagerHost`** + **`driverFilesPager`**; in-memory **`window.__driverFilesFieldDraft`** **`Map`** (key = driver name lowercased, same as **`mergeDriversForFiles`**) holds CDL / dates / notes until **Save** or cleared fields; **`renderDriverFiles`** merges draft for filter badges + row values. See **`ERP_MASTER_REDESIGN_STATUS.md` changelog 217**. Optional later: explicit **“unsaved”** banner or server autosave. |
 
 ---
 
@@ -57,3 +57,4 @@ When closing the master checklist, **append dated notes** under this file (or op
 - **2026-04-18 — `erpNotify` hardening (partial vs §5):** **`public/maintenance.html`** — explicit toast **`type`** on fuel-expense **validation** path, generic **error** path, and shop-queue **PATCH** failure (`'warning'` / `'error'` / `'error'`) so messages are not left to inference alone.
 - **2026-04-18 — Pay bills open-bills pager + selection map:** Implements deferred **§1** first-row recommendation — **`#bpOpenBillsPagerHost`**, **`erpPagerRender`**, **`Map`**-backed selection, **`submitAccountingBillPayment`** reads full loaded set + map (**changelog 215**).
 - **2026-04-18 — Driver pay settlements per-vendor pagers:** **`loadDriverPaySettlements`** caches payload and **`renderDriverPaySettlementsBox`** renders each vendor’s load slice + pager (**changelog 216**).
+- **2026-04-18 — Safety → Driver files pager + draft map:** **`driverFilesPager`** + **`__driverFilesFieldDraft`** so paging does not discard unsaved row edits (**changelog 217**).
