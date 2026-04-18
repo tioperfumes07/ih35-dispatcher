@@ -13,7 +13,7 @@
   --qb-muted: var(--color-text-label, #5f6368);
   --qb-placeholder: var(--color-text-placeholder, #9aa0a6);
   --qb-green: var(--btn-primary-save-bg, #1e8e3e);
-  --qb-blue: var(--color-border-focus, #1967d2);
+  --qb-blue: var(--color-border-focus);
   --qb-red: var(--color-semantic-error, #d93025);
   --qb-amber: #f9ab00;
   --qb-icon-nav-bg: var(--color-nav-bg, #1a1a2e);
@@ -117,12 +117,12 @@ body.erp-maintenance .erp-icon-nav__link {
 body.erp-maintenance .erp-icon-nav__btn.nav-btn:hover,
 body.erp-maintenance .erp-icon-nav__link:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
 }
 
 body.erp-maintenance .erp-icon-nav__btn.nav-btn.active {
   background: rgba(255, 255, 255, 0.14);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
 }
 
 body.erp-maintenance .erp-icon-nav__glyph {
@@ -201,7 +201,7 @@ body.erp-maintenance .erp-module-sidebar__collapse {
 }
 
 body.erp-maintenance .erp-module-sidebar__collapse:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance .erp-module-sidebar__scroll {
@@ -253,7 +253,7 @@ body.erp-maintenance .erp-sb-link {
 }
 
 body.erp-maintenance .erp-sb-link:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   color: var(--qb-blue);
 }
 
@@ -359,7 +359,7 @@ body.erp-maintenance .erp-btn-primary {
   border-radius: var(--qb-radius-control);
   border: none;
   background: var(--qb-green);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -424,7 +424,7 @@ body.erp-maintenance .erp-new-menu__item {
 }
 
 body.erp-maintenance .erp-new-menu__item:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 /* --- Ghost nav (preserve querySelector targets) --- */
@@ -540,7 +540,7 @@ body.erp-maintenance .erp-topbar .print-hide-actions button {
 }
 
 body.erp-maintenance .erp-topbar .print-hide-actions button:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 @media print {
@@ -602,7 +602,7 @@ body.erp-maintenance .erp-main-body .subtab {
 }
 
 body.erp-maintenance .erp-main-body .subtab:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   color: var(--color-text-body, var(--qb-text));
   border-color: transparent;
 }
@@ -627,7 +627,7 @@ body.erp-maintenance .erp-main-body .maint-board-nav__btn {
 }
 
 body.erp-maintenance .erp-main-body .maint-board-nav__btn:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   color: var(--color-text-primary, var(--qb-text-strong));
 }
 
@@ -724,7 +724,7 @@ body.erp-maintenance .erp-qb-sheet-close {
 
 body.erp-maintenance .erp-qb-dialog__btn-secondary:hover,
 body.erp-maintenance .erp-qb-sheet-close:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   border-color: var(--color-text-label, var(--qb-muted));
 }
 
@@ -825,7 +825,7 @@ body.erp-maintenance .erp-main-body .mini-note {
 body.erp-maintenance .erp-main-body .qb-btn-primary,
 body.erp-maintenance .erp-main-body button.qb-btn-primary {
   background: var(--qb-green);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
   border: none;
   border-radius: var(--qb-radius-control);
   font-weight: 500;
@@ -903,7 +903,7 @@ body.erp-maintenance .erp-main-body .tire-svg {
 
 /* --- List rows --- */
 body.erp-maintenance .erp-main-body .list-row:hover {
-  background: var(--color-bg-hover, #f8f9fa);
+  background: var(--color-bg-hover);
 }
 
 body.erp-maintenance .erp-main-body .list-row.active {
@@ -1172,7 +1172,7 @@ body.erp-maintenance .erp-reports-sblink {
 }
 
 body.erp-maintenance .erp-reports-sblink:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 body.erp-maintenance .erp-reports-sblink--active {
@@ -1349,7 +1349,7 @@ body.dispatch-page .topbar button {
 }
 
 body.dispatch-page .topbar button:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   border-color: var(--color-text-label, var(--qb-muted));
 }
 
@@ -1381,7 +1381,7 @@ body.dispatch-page .tabs button {
 }
 
 body.dispatch-page .tabs button:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   border-color: var(--qb-line-input);
   color: var(--color-text-body, var(--qb-text));
 }
@@ -1430,7 +1430,7 @@ body.dispatch-page table.data th {
 }
 
 body.dispatch-page table.data tr:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 body.dispatch-page .modal {
@@ -1540,12 +1540,12 @@ body.dispatch-page #dispatchApp .erp-icon-nav__link {
 
 body.dispatch-page #dispatchApp .erp-icon-nav__link:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
 }
 
 body.dispatch-page #dispatchApp .erp-icon-nav__link.active {
   background: rgba(255, 255, 255, 0.14);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
 }
 
 body.dispatch-page #dispatchApp .erp-icon-nav__glyph {
@@ -1605,7 +1605,7 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__collapse {
 }
 
 body.dispatch-page #dispatchApp .erp-module-sidebar__collapse:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 body.dispatch-page #dispatchApp .erp-module-sidebar__scroll {
@@ -1665,7 +1665,7 @@ body.dispatch-page #dispatchApp .erp-sb-link {
 }
 
 body.dispatch-page #dispatchApp .erp-sb-link:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   color: var(--qb-blue);
 }
 
@@ -1790,7 +1790,7 @@ body.dispatch-page #dispatchApp .erp-topbar button {
 }
 
 body.dispatch-page #dispatchApp .erp-topbar button:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
   border-color: var(--color-text-label, var(--qb-muted));
 }
 
@@ -1811,7 +1811,7 @@ body.dispatch-page #dispatchApp .erp-btn-primary {
   border-radius: var(--qb-radius-control);
   border: none;
   background: var(--qb-green);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -2088,7 +2088,7 @@ body.fuel-board .fleet-item {
 }
 
 body.fuel-board .fleet-item:hover {
-  background: var(--color-bg-header, #f1f3f4);
+  background: var(--color-bg-header);
 }
 
 body.fuel-board .fleet-item.active {
@@ -2175,7 +2175,7 @@ body.banking-page button {
 
 body.banking-page button.primary {
   background: var(--qb-green);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
   border-color: var(--qb-green);
 }
 
@@ -2189,7 +2189,7 @@ body.banking-page th {
 }
 
 body.banking-page tr:hover td {
-  background: var(--color-bg-hover, #f8f9fa);
+  background: var(--color-bg-hover);
 }
 
 body.banking-page .metric {
@@ -2250,7 +2250,7 @@ body.settings-page button {
 
 body.settings-page button.primary {
   background: var(--qb-green);
-  color: var(--color-bg-card, #fff);
+  color: var(--color-bg-card);
   border-color: var(--qb-green);
 }
 

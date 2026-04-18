@@ -4,6 +4,7 @@ name: Rule 0 (Agent B)
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   rule0-check:
@@ -14,4 +15,4 @@ jobs:
         with:
           node-version: '20'
       - name: Forbidden var(--color-*…) stacks
-        run: npm run rule0:check
+        run: npm test

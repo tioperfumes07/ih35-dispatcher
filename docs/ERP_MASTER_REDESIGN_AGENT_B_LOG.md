@@ -343,3 +343,40 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Log hygiene:** **`## 2026-05-20`** CI bullet clarified (push filter note points at **2026-05-21**).
 
 **Files:** `scripts/rule-zero-agent-b.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-23
+
+- **`package.json`:** **`npm test`** runs **`npm run rule0:check`** so generic CI / local **`npm test`** hits the Agent B disk guard without a server.
+- **Rule 0 list:** **`scripts/rule-zero-agent-b.mjs`** — Forbid **`var(--color-bg-page|bg-card, #`** and **`var(--color-text-primary|body|label, #`** (hex chained after **`--color-*`** ink/surface roles).
+- **CI:** **`.github/workflows/rule0-check.yml`** — **`workflow_dispatch`** for manual runs from the Actions tab; job step invokes **`npm test`** (same as **`rule0:check`**).
+
+**Files:** `package.json`, `scripts/rule-zero-agent-b.mjs`, `.github/workflows/rule0-check.yml`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-17
+
+- **Rule 0 list:** **`scripts/rule-zero-agent-b.mjs`** — Mirror **`, #`** / **`, rgba`** forbidden entries with **no space after the comma** (e.g. **`var(--color-bg-page,#`**, **`var(--color-modal-backdrop,rgba`**) so minified or hand-tightened CSS cannot bypass the guard.
+- **Log hygiene:** Removed duplicate **`## 2026-05-23`** block (same bullets appeared twice).
+
+**Files:** `scripts/rule-zero-agent-b.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-18
+
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`min-width: 0`** on **`acct-dash-kpi`**, **`acct-dash-card`**, **`mr-upload-conn-card`** (children of **`repeat(auto-fit, minmax(…, 1fr))`** grids) and on **`maint-qb-cost-details__sum`** (flex summary row) so long labels / numeric copy can shrink inside the column instead of forcing page-level horizontal scroll.
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-04-19
+
+- **Rule 1:** **`public/css/app-theme.css`** — **`qb-picker-item__label`** gets **`min-width: 0`** plus **`overflow: hidden`** / **`text-overflow: ellipsis`** so long vendor or account names do not widen the QB combobox row past the menu; **`body.erp-maintenance .title`** gets **`min-width: 0`** so the topbar flex row can shrink on narrow widths.
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`erp-topbar .title`** gets **`min-width: 0`** (compact accounting topbar variant).
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`maint-wo-form-stack-inner`** gets **`min-width: 0`** so the WO form column participates in flex/grid shrink the same way as other full-width stacks.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
