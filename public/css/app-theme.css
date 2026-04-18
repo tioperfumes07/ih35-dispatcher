@@ -3360,7 +3360,8 @@ body.erp-maintenance .vendor-link-grid {
   min-width: 0;
 }
 
-body.erp-maintenance #section-reports > .subtabs {
+/* Tab row lives inside .erp-reports-main as #repMainSubtabs (not a direct child of #section-reports). */
+body.erp-maintenance #section-reports #repMainSubtabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -3368,13 +3369,13 @@ body.erp-maintenance #section-reports > .subtabs {
   min-width: 0;
 }
 
-body.erp-maintenance #section-reports > .subtabs > .subtab,
-body.erp-maintenance #section-reports > .subtabs > .nav-dropdown {
+body.erp-maintenance #section-reports #repMainSubtabs > .subtab,
+body.erp-maintenance #section-reports #repMainSubtabs > .nav-dropdown {
   flex: 1 1 auto;
   min-width: min(100%, 168px);
 }
 
-body.erp-maintenance #section-reports > .subtabs .nav-dropdown-trigger {
+body.erp-maintenance #section-reports #repMainSubtabs .nav-dropdown-trigger {
   width: 100%;
   box-sizing: border-box;
   text-align: center;

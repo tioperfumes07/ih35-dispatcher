@@ -668,3 +668,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#section-accounting .panel-head > div`** and **`#section-catalog .panel-head > div`** get **`min-width: 0`** for AP/fuel/QBO/dash stacked panels and catalog panel wrappers (beyond tab-specific rules already present).
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-05-24
+
+- **Rule 1 / selector fix:** **`public/css/app-theme.css`** — Reports inner tab row rules targeted **`#section-reports > .subtabs`**, but **`maintenance.html`** nests the row as **`#repMainSubtabs`** inside **`.erp-reports-main`** (no direct **`.subtabs`** under **`#section-reports`**). Selectors are retargeted to **`#section-reports #repMainSubtabs`** so flex wrap, **`min-width: 0`**, and dropdown trigger sizing actually apply.
+- **Rule 1:** **`public/css/maint-accounting-ui-2026.css`** — **`#section-reports .panel-head`** and **`.panel-head > div`** get **`min-width: 0`** for report panels (overview, TMS, settlement, etc.) with flex title / action rows.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
