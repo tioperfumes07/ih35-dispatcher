@@ -1540,3 +1540,13 @@ body.erp-maintenance .mr-acct-board {
 body.erp-maintenance .mr-filter-bar__grow {
   min-width: 0;
 }
+
+/* Rule 1: QBO doc header row + print-hidden action strips (flex in HTML / JS). */
+body.erp-maintenance .maint-qbo-header-grid,
+body.erp-maintenance #erpConnectionStrip.erp-connection-strip,
+body.erp-maintenance .erp-topbar__actions.print-hide-actions,
+body.erp-maintenance .shop-wo-fallback.print-hide-actions,
+body.erp-maintenance .erp-reports-toolbar__actions.print-hide-actions,
+body.erp-maintenance .mr-qbo-banner__right.print-hide-actions {
+  min-width: 0;
+}
