@@ -399,7 +399,18 @@
                 </span>
               </div>
             </div>
-            <div class="panel-body card-list" id="dashboardSummaryCards"></div>
+            <div class="panel-body">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
+                <span style="min-width:0;flex:1 1 160px">Fleet counts below refresh with <strong>Refresh</strong> on Home — title <strong>?</strong> for ERP + Samsara context.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="System summary cards host">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderDashboardHome()</code> builds five <code>.record-card</code> rows from <code>vehiclesByCategory()</code> (Trucks, Refrigerated Vans, Flatbeds, Dry Vans, Company Vehicles) and replaces <code>#dashboardSummaryCards</code> <code>innerHTML</code> with those counts only.
+                  </span>
+                </span>
+              </div>
+              <div id="dashboardSummaryCards" class="card-list"></div>
+            </div>
           </div>
           <div class="panel">
             <div class="panel-head">
@@ -413,7 +424,18 @@
                 </span>
               </div>
             </div>
-            <div class="panel-body"><div id="dashboardQboSummary" class="mini-note">No data yet.</div></div>
+            <div class="panel-body">
+              <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
+                <span style="min-width:0;flex:1 1 160px">Catalog counts mirror <strong>Accounting</strong> list sync — title <strong>?</strong> for where to drill in.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Sync summary host">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderDashboardHome()</code> replaces <code>#dashboardQboSummary</code> <code>innerHTML</code> with line-broken counts: <code>cacheVendors()</code>, <code>erp.qboCache</code> customers/classes/employees, <code>cacheItems()</code>, <code>cacheAccounts()</code>, <code>erp.apTransactions</code> length, <code>erp.qboBillPaymentLog</code> length, and <code>tireAlerts</code> length.
+                  </span>
+                </span>
+              </div>
+              <div id="dashboardQboSummary" class="mini-note">No data yet.</div>
+            </div>
           </div>
         </div>
       </section>
@@ -537,7 +559,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Definitions">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <strong>Active</strong> = on duty (not off duty or sleeper). <strong>In service now</strong> = driving, on duty, or yard move (from Samsara HOS clocks).
+                <strong>Active</strong> = on duty (not off duty or sleeper). <strong>In service now</strong> = driving, on duty, or yard move (Samsara HOS).
               </span>
             </span>
           </div>
@@ -567,7 +589,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Active / in service grids">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyActivePanels()</code>: <code>applySafetyHosDutyMode</code> + <code>#safetyActiveDutyFilter</code> → split active vs in-service → paged <code>#safetyActiveBody</code> / <code>#safetyInServiceBody</code> + pagers + <code>#safetyActiveMeta</code> / <code>#safetyInServiceMeta</code>. Read-only.
+                <code>renderSafetyActivePanels()</code>: <code>applySafetyHosDutyMode</code> + <code>#safetyActiveDutyFilter</code> → active vs in-service → paged <code>#safetyActiveBody</code> / <code>#safetyInServiceBody</code> + pagers + meta rows. Read-only.
               </span>
             </span>
           </div>
@@ -600,7 +622,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="In service column">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>Driving</strong>, <strong>yard move</strong>, or <strong>on duty</strong> with vehicle — subset of left column. Tab intro <strong>?</strong> for full duty definitions.
+                      <strong>Driving</strong>, <strong>yard move</strong>, or <strong>on duty</strong> with vehicle — subset of Active. Tab <strong>?</strong> has full duty defs.
                     </span>
                   </span>
                 </div>
@@ -653,7 +675,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Assignments table behavior">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyAssignments()</code> fills <code>#safetyAssignBody</code> from <code>board.assignments</code>. <strong>Active</strong> = interval overlaps now (<code>assignmentIsActiveNow</code>); <strong>Inactive</strong> = complement. <code>safetyAssignPager</code> + <code>erpPagerRender</code> after filters; <code>#safetyAssignMeta</code> is counts only. Read-only mirror.
+                <code>renderSafetyAssignments()</code> → <code>#safetyAssignBody</code> from <code>board.assignments</code>. <strong>Active</strong> = overlaps now (<code>assignmentIsActiveNow</code>); <strong>Inactive</strong> = rest. Pager after filters; <code>#safetyAssignMeta</code> = counts. Read-only.
               </span>
             </span>
           </div>
@@ -678,7 +700,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet snapshot counts">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyFleet()</code> writes <code>#safetyFleetSummary</code>: tracked <code>vehicles.length</code>, Samsara <code>(board.vehicles || []).length</code>, <code>(board.hos || []).length</code>. Runs after <code>loadAll()</code> / opening this tab. Read-only.
+                <code>renderSafetyFleet()</code> → <code>#safetyFleetSummary</code>: tracked <code>vehicles.length</code>, Samsara <code>board.vehicles</code>, <code>board.hos</code> lengths. After <code>loadAll()</code> or opening tab. Read-only.
               </span>
             </span>
           </div>
@@ -723,7 +745,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Driver files table API">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderDriverFiles()</code> → <code>#driverFilesBody</code> (paged). Draft map per driver until <strong>Save</strong> → <code>POST /api/safety/driver-profiles</code>; response refreshes profiles and clears that draft. <code>#driverFilesMeta</code> = match counts.
+                <code>renderDriverFiles()</code> → paged <code>#driverFilesBody</code>. Draft per driver until <strong>Save</strong> → <code>POST /api/safety/driver-profiles</code>; response refreshes + clears draft. <code>#driverFilesMeta</code> = counts.
               </span>
             </span>
           </div>
@@ -1634,7 +1656,7 @@
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About these counts">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
-              Tracked Samsara assets by type (truck / reefer / flatbed / other). <strong>Assets</strong> = full grid; <strong>Map</strong> = GPS; <strong>Shop &amp; maintenance</strong> = queues — separate from this strip.
+              Tracked Samsara assets by type. <strong>Assets</strong> = grid; <strong>Map</strong> = GPS; <strong>Shop &amp; maintenance</strong> = queues — not this KPI strip.
             </span>
           </span>
         </div>
@@ -1659,7 +1681,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Navigation &amp; deep links">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Queue, rollups, exports, R&amp;M flags — log WOs in <strong>Maintenance → Create work order</strong>; fleet grid <strong>Maintenance → Fleet table</strong>; yard <strong>Maintenance → Shop / location</strong>. Hashes: <code>#tracking-shop</code> / <code>#maintenance-shop</code>, <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> (or <code>#maintenance-alerts</code>), <code>#maintenance-shop-location</code>.
+                Queues, rollups, exports, R&amp;M flags — WOs <strong>Maintenance → Create work order</strong>; fleet <strong>→ Fleet table</strong>; yard <strong>→ Shop / location</strong>. Deep links: <code>#tracking-shop</code>, <code>#maintenance-shop</code>, <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> / <code>#maintenance-alerts</code>, <code>#maintenance-shop-location</code>.
               </span>
             </span>
           </div>
@@ -1671,7 +1693,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Live internal / external / roadside queues — status, time vs est., delay reasons; expense rollups by fleet type below.
+                      Live internal / external / roadside queues — status vs est., delay reasons; expense rollups by fleet below.
                     </span>
                   </span>
                 </div>
@@ -1689,7 +1711,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tab meanings">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Tabs = queue type — <strong>Parts</strong> vendor POs; <strong>Roadside</strong> ≠ external repair; <strong>OOS</strong> from maint records. Est. hours → overdue tint; past est needs bottleneck reason.
+                    Tabs = queue type — <strong>Parts</strong> = vendor POs; <strong>Roadside</strong> ≠ external repair; <strong>OOS</strong> from maint records. Est. hours → overdue tint; past est needs delay reason.
                     <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:var(--color-border-focus);font-weight:500">Vehicle map</a>
                     · <a href="#" onclick="openSectionByName('safety');return false;" style="color:var(--color-border-focus);font-weight:500">Safety / HOS</a>
                   </span>
@@ -1732,7 +1754,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> → filter <code>shopQueueCache</code> (<code>shopType === &quot;internal&quot;</code>) + toolbar filters → paged <code>#shopInternalTableBody</code> + <code>#shopInternalPagerHost</code>. Cache: <code>GET /api/maintenance/shop-queue</code> on <code>loadAll()</code> + after modal saves; row status handlers on same render pass.
+                      <code>renderShopQueues()</code> → filter <code>shopQueueCache</code> (<code>internal</code>) + toolbar → paged <code>#shopInternalTableBody</code> + pager. Cache: <code>GET /api/maintenance/shop-queue</code> on <code>loadAll()</code> + after saves.
                     </span>
                   </span>
                 </div>
@@ -1790,7 +1812,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> → <code>shopType === &quot;external&quot;</code> + toolbar → paged <code>#shopExternalTableBody</code> + <code>#shopExternalPagerHost</code>. Cache: <code>GET /api/maintenance/shop-queue</code> on <code>loadAll()</code> + after queue saves.
+                      <code>renderShopQueues()</code> → <code>external</code> + toolbar → paged <code>#shopExternalTableBody</code> + pager. Same cache load as internal.
                     </span>
                   </span>
                 </div>
@@ -1848,7 +1870,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> → <code>shopType === &quot;roadside&quot;</code> + toolbar → paged <code>#shopRoadsideTableBody</code> + <code>#shopRoadsidePagerHost</code>. Same shop-queue cache load as internal.
+                      <code>renderShopQueues()</code> → <code>roadside</code> + toolbar → paged <code>#shopRoadsideTableBody</code> + pager. Same cache as other shop tabs.
                     </span>
                   </span>
                 </div>
@@ -1997,12 +2019,12 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Alert signals">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Same heuristics as <strong>R&amp;M Status</strong> — repair frequency, big invoices, tire interval, diesel vs miles. Use with PM dates + shop context, not alone.
+                    Same heuristics as <strong>R&amp;M Status</strong> — repair frequency, large invoices, tire interval, fuel vs miles. Use with PM + shop context — not alone.
                   </span>
                 </span>
               </div>
               <div class="mini-note" style="margin:6px 0 0;max-width:56ch">
-                Surfaces frequency, invoice spikes, tire cycles, fuel vs miles; cross-check <strong>Operational status</strong> + dates — not a single source of truth.
+                Frequency, invoice spikes, tire cycles, fuel vs miles — cross-check <strong>Operational status</strong> + dates; not sole truth.
               </div>
             </div>
             <div class="panel-body">
@@ -2027,11 +2049,11 @@
                 <button type="button" class="btn" onclick="loadSecurityCatalogUi()">Refresh alerts</button>
               </div>
               <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 200px">Use <strong>Refresh alerts</strong> after changing the window or when the card below looks stale — same feed as <strong>Maintenance → R&amp;M Status</strong>.</span>
+                <span style="min-width:0;flex:1 1 200px"><strong>Refresh alerts</strong> after window change or if stale — same feed as <strong>Maintenance → R&amp;M Status</strong>.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop integrity alerts">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/maintenance/security-alerts</code> (days from toolbar) → <code>renderSecurityAlerts</code> on <code>#securityAlertsBody</code> + <code>#maintSecurityAlertsBody</code> (same feed as <strong>R&amp;M Status</strong>). Here: <code>integritySearch</code> / <code>integritySeverity</code>. Errors → short message in the box below.
+                    <code>GET /api/maintenance/security-alerts</code> (toolbar days) → <code>renderSecurityAlerts</code> on <code>#securityAlertsBody</code> + <code>#maintSecurityAlertsBody</code> (same as <strong>R&amp;M Status</strong>). Filters: <code>integritySearch</code> / <code>integritySeverity</code>. Errors show in the box below.
                   </span>
                 </span>
               </div>
@@ -2049,7 +2071,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit list">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      Map-tab list only — filter, pick a row to center the map and fill detail. Not <strong>Maintenance → Units</strong> (WO picker).
+                      Map list only — filter, pick a row to center map + detail. Not <strong>Maintenance → Units</strong> (WO picker).
                     </span>
                   </span>
                 </div>
@@ -2061,7 +2083,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit cards">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderTrackingBoard()</code>: sort + filter <code>vehicles</code> (<code>#trackingSearch</code>) → paged <code>#trackingList</code> (<code>trackingListPager</code>). Row click → <code>selectTrackingVehicle</code> → map, <code>#trackingDetailBox</code>, <code>#trackingSummaryText</code>.
+                      <code>renderTrackingBoard()</code>: sort/filter <code>vehicles</code> (<code>#trackingSearch</code>) → paged <code>#trackingList</code>. Click → <code>selectTrackingVehicle</code> → map, <code>#trackingDetailBox</code>, <code>#trackingSummaryText</code>.
                     </span>
                   </span>
                 </div>
@@ -2088,7 +2110,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map detail box">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>#trackingDetailBox</code> from <code>selectedTrackingVehicle</code> in <code>vehicles</code> (name, MMY, VIN, category, mileage, fuel, engine, lat/long) or <strong>Select a vehicle.</strong>
+                      <code>#trackingDetailBox</code> from <code>selectedTrackingVehicle</code> in <code>vehicles</code> (MMY, VIN, category, mileage, fuel, engine, coords) or <strong>Select a vehicle.</strong>
                     </span>
                   </span>
                 </div>
@@ -2106,9 +2128,9 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Data sources">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Names / VIN / GPS from <strong>Samsara</strong> (read-only here) — edit in
+                    Names / VIN / GPS from <strong>Samsara</strong> (read-only) — edit in
                     <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a>.
-                    TMS-linked units use Postgres when <code>DATABASE_URL</code> is set; align unit codes (e.g. T160).
+                    TMS + Postgres when <code>DATABASE_URL</code> is set; align unit codes (e.g. T160).
                   </span>
                 </span>
               </div>
@@ -2134,7 +2156,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="All tracked assets grid">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderTrackingAssetsTable()</code>: sorted <code>vehicles</code> + <code>#trackingAssetFilter</code> → paged <code>#trackingAssetsTableBody</code> (<code>trackingAssetsTablePager</code>); new filter → page **1**. Read-only — fleet edits in Samsara Cloud.
+                    <code>renderTrackingAssetsTable()</code>: sorted <code>vehicles</code> + <code>#trackingAssetFilter</code> → paged <code>#trackingAssetsTableBody</code>; new filter → page **1**. Read-only — edit fleet in Samsara Cloud.
                   </span>
                 </span>
               </div>
