@@ -5487,7 +5487,7 @@
         maintToneSaveHint(hint, 'Draft PDF opened.', null);
       } catch (e) {
         if (hint) maintToneSaveHint(hint, e.message || String(e), 'error');
-        else erpNotify(e.message || String(e));
+        else erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -5945,7 +5945,7 @@
         document.getElementById('globalSearchInput')?.blur?.();
         r.run && r.run();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -9486,7 +9486,7 @@
         await loadAll();
         await loadServiceCatalogAdminOnly();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -10444,7 +10444,7 @@
         await loadFuelExpenseTab();
       } catch (e) {
         if (hint) hint.textContent = '';
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -11303,7 +11303,7 @@
         loadAccountingBillPaymentLog();
       } catch (e) {
         if (resEl) resEl.textContent = e.message || String(e);
-        else erpNotify(e.message || String(e));
+        else erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -11464,7 +11464,7 @@
         if (st) st.textContent = 'Bill payment reversed.';
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
-        else erpNotify(e.message || String(e));
+        else erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -11530,7 +11530,7 @@
         a.click();
         URL.revokeObjectURL(a.href);
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -11895,7 +11895,7 @@
         shopQueueCache = shopQueueCache.filter(x => String(x.id) !== String(id));
         renderShopQueues();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -11964,7 +11964,7 @@
         shopQueueCache = sqRes && sqRes.ok && Array.isArray(sqRes.queue) ? sqRes.queue : [];
         renderShopQueues();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -12227,7 +12227,7 @@
         });
         await loadAll();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -12251,7 +12251,7 @@
         });
         await loadAll();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -13439,7 +13439,7 @@
         await loadAll();
         await loadOperationalCatalogPanel();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -13458,7 +13458,7 @@
         erpNotify('Samsara vehicle updated.');
         await loadAll();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -13477,7 +13477,7 @@
         erpNotify('Samsara driver updated.');
         await loadAll();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -13805,7 +13805,7 @@
         await loadAll();
       } catch (e) {
         if (hint) hint.textContent = e.message || String(e);
-        else erpNotify(e.message || String(e));
+        else erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -14232,7 +14232,7 @@
         }
       } catch (e) {
         if (st) st.textContent = '';
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -14255,7 +14255,7 @@
         }
       } catch (e) {
         if (st) st.textContent = '';
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -15026,7 +15026,7 @@
         const rb = document.getElementById('acct-qbo-rollback');
         if (rb && !rb.classList.contains('hidden')) loadErpImportBatchesUi();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -15054,7 +15054,7 @@
         await loadAll();
         loadErpImportBatchesUi();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -15074,7 +15074,7 @@
         await loadAll();
         loadErpImportBatchesUi();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -15090,7 +15090,7 @@
         await loadAll();
         loadErpImportBatchesUi();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -15247,7 +15247,7 @@
         await loadAll();
         closeMaintAssetStatusPanel();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -15662,7 +15662,7 @@
           const out = await j('/api/maintenance/record/' + encodeURIComponent(id));
           r = out.record;
         } catch (e) {
-          erpNotify(e.message || String(e));
+          erpNotify(e.message || String(e), 'error');
           return;
         }
       }
@@ -16123,7 +16123,7 @@
         );
       } catch (e) {
         if (hint) maintToneSaveHint(hint, e.message || String(e), 'error');
-        else erpNotify(e.message || String(e));
+        else erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -17876,7 +17876,7 @@
         erpNotify('TMS load miles updated from settlement calculation.');
         await runSettlementLookup();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -18093,7 +18093,7 @@
         });
         await loadAll();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
@@ -18103,7 +18103,7 @@
         await j(`/api/work-orders/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { ...erpWriteHeaders() } });
         await loadAll();
       } catch (e) {
-        erpNotify(e.message || String(e));
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
