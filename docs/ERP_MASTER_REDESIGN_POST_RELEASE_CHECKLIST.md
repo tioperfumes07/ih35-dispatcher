@@ -115,7 +115,7 @@ Re-run targeted checks from [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](
 
 - [ ] **Pay bills → Open bills:** pager + **`Map`** selection across pages (**changelog 215** — load **25+** bills, check rows on page 1, page forward, confirm **draft total** still includes page 1; **Create bill payment** posts checked rows from **all** pages; clear filters resets pager to page **1**).
 - [ ] **Driver pay settlements** — full sign-off on per-vendor pagers after **`Refresh driver settlements`** (**changelog 216**); re-open if product switches to a **single** flattened pager.
-- [ ] **Safety → Driver files** — pager + draft persistence (**changelog 217**); confirm **Save** clears draft and server round-trip.
+- [ ] **Safety → Driver files** — pager + draft persistence (**changelog 217**); confirm **Save** clears draft and server round-trip; with unsaved edits, closing the tab or refreshing should trigger the browser **leave-site** prompt (**changelog 218**).
 
 ---
 

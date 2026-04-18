@@ -456,6 +456,15 @@
               <span class="mini-note" id="safetyHosMeta"></span>
             </div>
           </div>
+          <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+            <span style="min-width:0;flex:1 1 220px">The clock grid below is rebuilt from the latest <strong>board.hos</strong> payload when you search or change <strong>Show</strong>; timers and violations are read-only mirrors of Samsara.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS clocks table behavior">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <code>renderSafetyHos()</code> normalizes each row (<code>normalizeHosClock</code>), applies <code>applySafetyHosDutyMode</code> for the <strong>Show</strong> filter, then replaces <code>#safetyHosBody</code> with the paged slice. <code>safetyHosPager</code> + <code>erpPagerRender</code> control pages; <code>#safetyHosMeta</code> summarizes match count vs total loaded rows. Does not write back to Samsara — refresh the board when clocks look stale.
+              </span>
+            </span>
+          </div>
           <div class="safety-table-wrap erp-ops-data-frame">
             <table>
               <thead>
@@ -505,6 +514,15 @@
                 </select>
               </div>
             </div>
+          </div>
+          <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+            <span style="min-width:0;flex:1 1 220px">Both grids respect the <strong>List filter</strong> above and read from the latest normalized <strong>board.hos</strong> window (same source as <strong>HOS clocks</strong>).</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Active / in service grids">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <code>renderSafetyActivePanels()</code> applies <code>applySafetyHosDutyMode</code> with <code>#safetyActiveDutyFilter</code>, splits into active vs in-service rows, then replaces <code>#safetyActiveBody</code> and <code>#safetyInServiceBody</code> via <code>innerHTML</code> with paged slices. <code>safetyActivePager</code> / <code>safetyInServicePager</code> + <code>erpPagerRender</code>; <code>#safetyActiveMeta</code> / <code>#safetyInServiceMeta</code> show counts. Read-only Samsara mirror.
+              </span>
+            </span>
           </div>
           <div class="safety-active-grid">
             <div>
@@ -1900,6 +1918,15 @@
                   <input id="trackingAssetFilter" class="in mr-filter-search" placeholder="Search…" oninput="renderTrackingAssetsTable()" title="Filter unit" />
                 </div>
               </div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">Rows below are a paged slice of the in-memory <strong>vehicles</strong> list filtered by the search box; mileage, fuel, engine, and GPS columns blend Samsara telemetry with ERP fields where linked.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="All tracked assets grid">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    <code>renderTrackingAssetsTable()</code> sorts <code>vehicles</code> by unit order, applies <code>#trackingAssetFilter</code>, then replaces <code>#trackingAssetsTableBody</code> via <code>innerHTML</code> for the current page. <code>trackingAssetsTablePager</code> + <code>erpPagerRender</code> handle paging; changing the filter resets to page 1. Read-only vs Samsara Cloud for fleet edits.
+                  </span>
+                </span>
+              </div>
               <div class="table-wrap erp-table-scroll">
                 <table>
                   <thead>
@@ -1945,6 +1972,15 @@
                 </select>
               </div>
             </div>
+          </div>
+          <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+            <span style="min-width:0;flex:1 1 220px">Driver rows follow the same normalized <strong>board.hos</strong> window as <strong>Safety → HOS</strong>, using the <strong>Duty filter</strong> in the bar above.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking drivers table">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                <code>renderTrackingDrivers()</code> runs <code>applySafetyHosDutyMode</code> on <code>(board.hos || []).map(normalizeHosClock)</code> using <code>#trackingDriversDutyFilter</code>, then replaces <code>#trackingDriversBody</code> via <code>innerHTML</code> with a paged slice. <code>trackingDriversPager</code> + <code>erpPagerRender</code>; read-only ELD mirror (edit drivers in Samsara Cloud).
+              </span>
+            </span>
           </div>
           <div class="safety-table-wrap erp-ops-data-frame erp-table-scroll">
             <table>
@@ -17147,6 +17183,16 @@
         window.__driverFilesFieldDraft = new Map();
       }
       return window.__driverFilesFieldDraft;
+    }
+
+    if (typeof window !== 'undefined' && !window.__ih35DriverFilesUnloadHook) {
+      window.__ih35DriverFilesUnloadHook = true;
+      window.addEventListener('beforeunload', e => {
+        const m = window.__driverFilesFieldDraft;
+        if (!(m instanceof Map) || !m.size) return;
+        e.preventDefault();
+        e.returnValue = '';
+      });
     }
 
     function driverFilesMergeDraftIntoDriver(d) {

@@ -6,7 +6,9 @@
 
 ---
 
-## 1. Pagination — needs a new interaction model
+## 1. Pagination — interaction model (Apr 2026)
+
+The three **large-table** themes below shipped in **`public/maintenance.html`** with **`erpPagerRender`** / **`erpPagerSliceRange`** and (where needed) **`Map`**-backed client state. What remains is mostly **product polish** (select-all, flattened lists, unsaved banners) where called out.
 
 | Item | Why it was deferred |
 |------|---------------------|
@@ -53,8 +55,9 @@ When closing the master checklist, **append dated notes** under this file (or op
 
 ### Dated log
 
-- **2026-04-18 — Master checklist engineering closure:** [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md) **changelog 213** records **`npm run rule0:check`** + **`npm run smoke`** green and **`npm run report:erp`** RTF refresh; **§5 P0** audit row updated (automated checks done, sign-in / **401** / live **QBO** realm still manual). **`public/tracking.html`** gained **`viewport-fit=cover`** for parity with other ERP shells. **§1–4 above unchanged** — open bills / nested settlement / driver files pagers and Rule **24** second-line strip still await product or architecture decisions.
+- **2026-04-18 — Master checklist engineering closure:** [`ERP_MASTER_REDESIGN_STATUS.md`](./ERP_MASTER_REDESIGN_STATUS.md) **changelog 213** records **`npm run rule0:check`** + **`npm run smoke`** green and **`npm run report:erp`** RTF refresh; **§5 P0** audit row updated (automated checks done, sign-in / **401** / live **QBO** realm still manual). **`public/tracking.html`** gained **`viewport-fit=cover`** for parity with other ERP shells. **§1 pagination row items** later shipped (**changelogs 215–217**); **Rule 24** second-line strip and **§2–4** themes unchanged unless picked up separately.
 - **2026-04-18 — `erpNotify` hardening (partial vs §5):** **`public/maintenance.html`** — explicit toast **`type`** on fuel-expense **validation** path, generic **error** path, and shop-queue **PATCH** failure (`'warning'` / `'error'` / `'error'`) so messages are not left to inference alone.
 - **2026-04-18 — Pay bills open-bills pager + selection map:** Implements deferred **§1** first-row recommendation — **`#bpOpenBillsPagerHost`**, **`erpPagerRender`**, **`Map`**-backed selection, **`submitAccountingBillPayment`** reads full loaded set + map (**changelog 215**).
 - **2026-04-18 — Driver pay settlements per-vendor pagers:** **`loadDriverPaySettlements`** caches payload and **`renderDriverPaySettlementsBox`** renders each vendor’s load slice + pager (**changelog 216**).
 - **2026-04-18 — Safety → Driver files pager + draft map:** **`driverFilesPager`** + **`__driverFilesFieldDraft`** so paging does not discard unsaved row edits (**changelog 217**).
+- **2026-04-18 — Driver files `beforeunload` + smoke pager needles:** Unsaved draft triggers leave-page confirm; smoke asserts **`bpOpenBillsPagerHost`** / **`driverFilesPagerHost`** (**changelog 218**).

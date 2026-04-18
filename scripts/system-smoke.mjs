@@ -53,7 +53,9 @@ const HTML_PAGES = [
       'acct-dash-kpis',
       'id="acctBoardStrip"',
       'erpConnectionStrip',
-      'topbar-hint-wrap'
+      'topbar-hint-wrap',
+      'id="bpOpenBillsPagerHost"',
+      'id="driverFilesPagerHost"'
     ]
   ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
