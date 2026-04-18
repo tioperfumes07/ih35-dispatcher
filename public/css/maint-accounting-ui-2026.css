@@ -247,6 +247,7 @@ body.erp-maintenance .maint-wo-col-units .panel-title {
 body.erp-maintenance .maint-wo-col-units .panel-body {
   flex: 1;
   overflow-y: auto;
+  min-width: 0;
   min-height: 0;
   padding: 0;
 }
@@ -430,10 +431,12 @@ body.erp-maintenance #section-accounting .panel-body,
 body.erp-maintenance #section-accounting .acct-dash-kpis,
 body.erp-maintenance #section-accounting .acct-dash-cards {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting .panel-head > div {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: reports hub + upload center — flex descendants may shrink without widening the viewport. */
@@ -446,29 +449,35 @@ body.erp-maintenance #section-uploads.section.active,
 body.erp-maintenance #section-uploads .panel,
 body.erp-maintenance #section-uploads .panel-body {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-uploads .panel-head,
 body.erp-maintenance #section-uploads .panel-head > div {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-uploads .mr-upload-panel-title {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: lists & catalogs — panel title + first-row intro strips (inline flex in maintenance.html). */
 body.erp-maintenance #section-catalog .panel-head,
 body.erp-maintenance #section-catalog .panel-head .panel-title {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-catalog .panel-head > div {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-catalog .catalog-subpanel > div:first-child {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: reports tile hub (spec flex/grid) — shrink inside .erp-reports-main. */
@@ -478,30 +487,36 @@ body.erp-maintenance #section-reports .erp-reports-hub__tiles--dense,
 body.erp-maintenance #section-reports .erp-reports-hub__card,
 body.erp-maintenance #section-reports .erp-reports-hub__tile {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-reports .erp-reports-hub__tile-title,
 body.erp-maintenance #section-reports .erp-reports-hub__tile-meta {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-reports .erp-reports-hub__label {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-reports .mr-rep-nav-group,
 body.erp-maintenance #section-reports .mr-rep-nav-group__head,
 body.erp-maintenance #section-reports .mr-rep-nav-group__body {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-reports .reports-tab {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-reports .panel-head,
 body.erp-maintenance #section-reports .panel-head > div {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: bill pay tab — flex rows from spec layout (all breakpoints). */
@@ -509,33 +524,40 @@ body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-panel-head,
 body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-hintrow,
 body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-submitrow {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting #acct-bill-pay .mr-bp-panel-head__title {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: expense history + QBO rollback — stacked panel heads and title rows (inline flex in maintenance.html). */
 body.erp-maintenance #section-accounting #acct-expense-history .panel-head,
 body.erp-maintenance #section-accounting #acct-expense-history .panel-head > div {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-head,
 body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-title {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting #acct-expense-history .panel-head > div > div:last-child {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting #acct-qbo-rollback .panel-body .panel-head > div {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #section-accounting #acct-qbo .panel-head {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: remaining maintenance modules — panels inherit min-width from shell flex. */
@@ -555,12 +577,14 @@ body.erp-maintenance
   :is(#section-dashboard, #section-fuel, #section-safety, #section-maintenance, #section-tracking, #section-catalog)
   .panel-body {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: shop queues — wide tables live inside .erp-table-scroll; parents must allow shrink. */
 body.erp-maintenance #section-maintenance .shop-tab-panel,
 body.erp-maintenance #section-maintenance .shop-tab-panel .erp-table-scroll {
   min-width: 0;
+  min-height: 0;
 }
 
 /* Rule 1: horizontal table scroll — any maintenance module using .erp-table-scroll (redesign + JS tables). */

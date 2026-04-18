@@ -893,3 +893,12 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/app-theme.css` — Upload `.upload-subpanel.active` gains `min-height: 0`. `#section-accounting` (`.accounting-tab`, `.qb-doc-shell`, `.qb-doc-body`, nested `.ap-expense-form`, `.qb-doc-topbar` / fuel topbar, AP/fuel `.qb-doc-footer*` flex rows) gains `min-height: 0` with existing width rules. `.maint-modal-bg` gains `min-height: 0`. Catalog `.panel-body > .subtabs` / `.subtab`, `.vendor-link-grid`, reports `#repMainSubtabs` / child `.subtab`+`.nav-dropdown`, and `#section-reports .nav-dropdown-menu` get `min-width: 0` / `min-height: 0` where needed for nested flex/scroll.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-20
+
+- **Rule 1:** `public/css/app-theme.css` — `min-height: 0` added next to existing `min-width: 0` on maintenance shell pieces that participate in flex/grid shrink: `.sidebar-brand-row`, `.toolbar` / `.search-row` / `.unit-summary`, `.qb-doc-total-block`, `.vendor-row-maint`, `.shop-board-grid`, `.shop-subtabs`, `.shop-action-row`, full-screen WO modal (`.maint-workorder-fullmodal__shell`, `__head`, `__title`), `.maint-modal`, `.erp-iframe`, and `#erpTrackingMap`.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — Section-scoped overflow helpers that only declared `min-width: 0` now also declare `min-height: 0` for accounting, reports hub/tiles/nav, uploads/catalog panel heads, bill-pay rows, expense-history / QBO-rollback / QBO heads, and shop tab panels. `.maint-wo-col-units .panel-body` gains `min-width: 0` beside `min-height: 0` so the unit list scroll column cannot widen the WO split layout.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

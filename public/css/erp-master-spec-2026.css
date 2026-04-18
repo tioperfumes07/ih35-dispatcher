@@ -1693,24 +1693,12 @@ button.erp-btn--busy::after {
   animation: erp-ui-spin 0.65s linear infinite;
 }
 
+/* Light spinner on solid / accent primaries (not default `erp-btn-busy` text-colored ring). */
 button.primary.erp-btn--busy::after,
 .banking-page button.primary.erp-btn--busy::after,
-body.erp-maintenance button.btn--primary.erp-btn--busy::after {
-  border-color: var(--erp-btn-busy-on-solid-track);
-  border-top-color: var(--color-bg-card);
-}
-
-body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.erp-btn--busy::after {
-  border-color: var(--erp-btn-busy-on-solid-track);
-  border-top-color: var(--color-bg-card);
-}
-
-.settings-page button.primary.erp-btn--busy::after {
-  border-color: var(--erp-btn-busy-on-solid-track);
-  border-top-color: var(--color-bg-card);
-}
-
-/* Dispatch `.btn-primary` / `.erp-btn-primary`; maintenance `qb-btn-primary` / `erp-btn-primary` — not `button.primary`. */
+.settings-page button.primary.erp-btn--busy::after,
+body.erp-maintenance button.btn--primary.erp-btn--busy::after,
+body.erp-maintenance .maint-save-toolbar--qb .qb-split--primary .qb-split__main.erp-btn--busy::after,
 body.dispatch-page #dispatchApp button.btn-primary.erp-btn--busy::after,
 body.dispatch-page #dispatchApp button.erp-btn-primary.erp-btn--busy::after,
 body.erp-maintenance button.qb-btn-primary.erp-btn--busy::after,

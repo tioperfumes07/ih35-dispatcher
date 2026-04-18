@@ -784,6 +784,7 @@ body.erp-maintenance .sidebar-brand-row {
   gap: 10px;
   margin-bottom: 4px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .sidebar-collapse-btn {
@@ -1215,6 +1216,7 @@ body.erp-maintenance .unit-summary {
   display: grid;
   gap: 10px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .toolbar {
@@ -1682,6 +1684,7 @@ body.erp-maintenance .qb-doc-h2 {
 body.erp-maintenance .qb-doc-total-block {
   text-align: right;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-doc-total-amt {
@@ -1815,6 +1818,7 @@ body.erp-maintenance .vendor-row-maint {
   gap: 8px;
   align-items: flex-end;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .vendor-row-maint .qb-in {
@@ -1828,6 +1832,7 @@ body.erp-maintenance .shop-action-row {
   margin-bottom: 12px;
   align-items: center;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .shop-board-grid {
@@ -1835,11 +1840,13 @@ body.erp-maintenance .shop-board-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .shop-subtabs {
   margin-bottom: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .shop-tab-panel {
@@ -2059,6 +2066,7 @@ body.erp-maintenance .maint-workorder-fullmodal__shell {
   flex-direction: column;
   padding: 0;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__head {
@@ -2075,6 +2083,7 @@ body.erp-maintenance .maint-workorder-fullmodal__head {
     var(--color-bg-card) 100%
   );
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__title {
@@ -2082,6 +2091,7 @@ body.erp-maintenance .maint-workorder-fullmodal__title {
   font-weight: 800;
   color: var(--color-text-primary);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__body {
@@ -2099,6 +2109,7 @@ body.erp-maintenance .maint-modal {
   max-width: 480px;
   width: 100%;
   min-width: 0;
+  min-height: 0;
   padding: 20px;
   box-shadow: var(--shadow);
 }
@@ -2148,6 +2159,7 @@ body.erp-maintenance .erp-iframe {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: 0;
   height: min(920px, calc(100vh - 140px));
   border: 0;
   background: var(--color-bg-card);
@@ -2163,6 +2175,7 @@ body.erp-maintenance #erpTrackingMap {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: 0;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
 }
