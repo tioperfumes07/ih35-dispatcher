@@ -65,6 +65,8 @@
   --pill-purple-text: #5e35b1;
 
   --font-spec-sans: Inter, system-ui, -apple-system, sans-serif;
+  /* Matches `app-theme.css` so `var(--font-spec-sans, var(--font-sans, …))` resolves when tokens load before the theme sheet. */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-xs: 10px;
   --font-sm: 11px;
   --font-base: 12px;

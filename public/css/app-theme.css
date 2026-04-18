@@ -893,6 +893,7 @@ body.erp-maintenance .topbar {
   padding-bottom: 10px;
   border-bottom: 1px solid var(--color-border);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .topbar-home-link {
@@ -1068,6 +1069,7 @@ body.erp-maintenance .panel-head {
   gap: 12px;
   flex-wrap: wrap;
   min-width: 0;
+  min-height: 0;
   background: linear-gradient(180deg, var(--color-bg-header) 0%, var(--color-bg-card) 100%);
 }
 
@@ -1081,6 +1083,7 @@ body.erp-maintenance .panel-title {
 body.erp-maintenance .panel-body {
   padding: 14px 16px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .metric {
@@ -1103,6 +1106,7 @@ body.erp-maintenance .chips {
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .chip {
@@ -1300,6 +1304,7 @@ body.erp-maintenance th {
 
 body.erp-maintenance .st-settlement-wrap {
   min-width: 0;
+  min-height: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -1473,6 +1478,7 @@ body.erp-maintenance .track-grid {
   grid-template-columns: 360px minmax(0, 1fr);
   gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .track-card {
@@ -1482,6 +1488,7 @@ body.erp-maintenance .track-card {
   background: var(--color-bg-hover);
   cursor: pointer;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .track-card.active {
@@ -1531,6 +1538,7 @@ body.erp-maintenance .maint-part-dot.active {
 body.erp-maintenance .qb-panel {
   font-size: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-l {
@@ -1574,6 +1582,8 @@ body.erp-maintenance .maint-form-stack .search-row {
 
 body.erp-maintenance .maint-cost-panel {
   max-width: min(720px, 100%);
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-inline-hint {
@@ -1654,6 +1664,7 @@ body.erp-maintenance .qb-doc-title-row {
   gap: 16px;
   flex-wrap: wrap;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-doc-h2 {
@@ -1693,6 +1704,7 @@ body.erp-maintenance .qb-logistics-bar {
   border-radius: var(--radius-sm);
   background: var(--color-bg-header);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-lines-wrap {
@@ -1716,6 +1728,7 @@ body.erp-maintenance .qb-lines-header {
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-hover);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-lines-header .num {
@@ -1731,6 +1744,7 @@ body.erp-maintenance .qb-lines-actions {
   border-top: 1px solid var(--color-border);
   background: var(--color-bg-hover);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-doc-memo-row {
@@ -1739,6 +1753,7 @@ body.erp-maintenance .qb-doc-memo-row {
   gap: 12px;
   margin-top: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-attach-box {
@@ -1760,6 +1775,7 @@ body.erp-maintenance .qb-doc-actions {
   padding-top: 12px;
   border-top: 1px solid var(--color-border);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-doc-actions .qb-actions-left,
@@ -1769,6 +1785,7 @@ body.erp-maintenance .qb-doc-actions .qb-actions-right {
   gap: 8px;
   align-items: center;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .qb-btn-primary {

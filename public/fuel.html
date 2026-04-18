@@ -12,9 +12,9 @@
   <link rel="stylesheet" href="/css/board-nav.css" />
   <style>
     :root{
-      --red:#dc2626;
-      --yellow:#d97706;
-      --green:#16a34a;
+      --red: var(--pill-red-text);
+      --yellow: var(--pill-yellow-text);
+      --green: var(--pill-green-text);
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:var(--font-spec-sans, var(--font-sans, system-ui, sans-serif));background:var(--color-bg-page);color:var(--color-text-body)}
@@ -747,6 +747,20 @@
       renderFuelLedger();
     }
 
+    /** Leaflet marker / polyline colors — read `design-tokens.css` (same as `.badge-*` text). */
+    function fuelMapInk() {
+      const cs = getComputedStyle(document.documentElement);
+      const g = (name, fb) => cs.getPropertyValue(name).trim() || fb;
+      return {
+        urgent: g('--pill-red-text', '#c5221f'),
+        shift: g('--pill-yellow-text', '#8a5200'),
+        wait: g('--pill-green-text', '#137333'),
+        stop: g('--color-border-focus', '#1967d2'),
+        recPri: g('--pill-purple-text', '#5e35b1'),
+        recSec: g('--pill-blue-text', '#1557a0'),
+      };
+    }
+
     function renderMap(routeCoords = [], recommended = [], visibleStops = []) {
       initMap();
       unitsLayer.clearLayers();
@@ -754,10 +768,16 @@
       routeLayer.clearLayers();
       selectedLayer.clearLayers();
 
+      const ink = fuelMapInk();
       const bounds = [];
 
       boardRows.forEach(r => {
-        const color = r.status.text === 'FUEL NOW' ? '#dc2626' : r.status.text === 'FUEL FOR SHIFT' ? '#d97706' : '#16a34a';
+        const color =
+          r.status.text === 'FUEL NOW'
+            ? ink.urgent
+            : r.status.text === 'FUEL FOR SHIFT'
+              ? ink.shift
+              : ink.wait;
         const marker = L.circleMarker([r.lat, r.lon], {
           radius: r.unit === selectedUnit ? 9 : 6,
           color,
@@ -782,7 +802,7 @@
       visibleStops.forEach(s => {
         L.circleMarker([s.lat, s.lon], {
           radius: 4,
-          color: '#2563eb',
+          color: ink.stop,
           weight: 1,
           fillOpacity: 0.55
         }).bindPopup(`
@@ -797,7 +817,7 @@
       recommended.forEach((s, i) => {
         L.circleMarker([s.lat, s.lon], {
           radius: i === 0 ? 8 : 6,
-          color: i === 0 ? '#7c3aed' : '#0ea5e9',
+          color: i === 0 ? ink.recPri : ink.recSec,
           weight: 3,
           fillOpacity: 0.95
         }).bindPopup(`
@@ -812,7 +832,7 @@
 
       if (routeCoords.length) {
         const latlngs = routeCoords.map(p => [p[1], p[0]]);
-        L.polyline(latlngs, { color: '#2563eb', weight: 4 }).addTo(routeLayer);
+        L.polyline(latlngs, { color: ink.stop, weight: 4 }).addTo(routeLayer);
         latlngs.forEach(ll => bounds.push(ll));
       }
 

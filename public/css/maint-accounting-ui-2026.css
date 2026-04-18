@@ -22,6 +22,7 @@ body.erp-maintenance .maint-action-strip {
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-action-strip__btn {
@@ -63,6 +64,7 @@ body.erp-maintenance .maint-fleet-inline {
   gap: 6px;
   margin-left: 8px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-fleet-inline__label {
@@ -101,6 +103,7 @@ body.erp-maintenance .maint-action-strip__qbo {
   gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-qbo-dot {
@@ -161,6 +164,7 @@ body.erp-maintenance .maint-search-row {
   flex-shrink: 0;
   flex-wrap: wrap;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-search-field {
@@ -168,11 +172,13 @@ body.erp-maintenance .maint-search-field {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-search-field--grow {
   flex: 1;
   min-width: 200px;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-search-field--right {
@@ -338,6 +344,7 @@ body.erp-maintenance .maint-wo-summary-bar {
   align-items: center;
   margin-bottom: 16px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .maint-wo-summary-bar .kv {
@@ -400,6 +407,7 @@ body.erp-maintenance .erp-topbar .title {
   font-weight: 500;
   color: var(--color-text-primary);
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .erp-topbar .topbar-home-link {
@@ -573,6 +581,7 @@ body.erp-maintenance .acct-dash-kpis {
   gap: 12px;
   margin-bottom: 20px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-dash-kpi {
@@ -582,6 +591,7 @@ body.erp-maintenance .acct-dash-kpi {
   padding: 14px 16px;
   box-sizing: border-box;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-dash-kpi__label {
@@ -618,6 +628,7 @@ body.erp-maintenance .acct-dash-cards {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), minmax(0, 1fr)));
   gap: 16px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-dash-card {
@@ -627,6 +638,7 @@ body.erp-maintenance .acct-dash-card {
   padding: 16px 20px;
   box-sizing: border-box;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-dash-card__head {
@@ -644,6 +656,7 @@ body.erp-maintenance .acct-dash-card__btnrow {
   gap: 8px;
   margin-top: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-dash-btn {
@@ -1695,14 +1708,19 @@ body.erp-maintenance .mr-filter-bar__show {
 /* Rule 1: accounting board "Connections" strip — outer card + each direct row (connections flex + posting preflight). */
 body.erp-maintenance #maintIntegrationStrip {
   min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance #maintIntegrationStrip > div {
   min-width: 0;
+  min-height: 0;
 }
 
-/* Rule 1: maintenance.html — inline flex toolbars (`display:flex` or `display: flex`). Flex items default to min-width:auto; inline min-width on the same node still wins. */
+/* Rule 1: maintenance.html — inline flex/grid (`display:flex` / `display: flex` / `display:grid` / `display: grid`). Inline min-width/min-height on the same node still wins. */
 body.erp-maintenance [style*='display:flex'],
-body.erp-maintenance [style*='display: flex'] {
+body.erp-maintenance [style*='display: flex'],
+body.erp-maintenance [style*='display:grid'],
+body.erp-maintenance [style*='display: grid'] {
   min-width: 0;
+  min-height: 0;
 }

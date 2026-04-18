@@ -818,3 +818,28 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/app-theme.css` — Shared `.qb-picker-menu` gets `min-height: 0` with `max-height` + `overflow: auto`. Under `body.erp-maintenance`, `.hero-grid`; `.hero-card` / `.panel` / `.metric` / `.record-card`; `.shop-tab-panel.active`; `.qb-doc-shell`, `.qb-doc-body`, and `.qb-lines-wrap` each gain `min-height: 0` alongside existing `min-width: 0` so dashboard grids, shop boards, and QuickBooks-style doc shells participate in flex/grid height shrink and nested scroll regions behave reliably.
 
 **Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-11
+
+- **Rule 1:** `public/css/app-theme.css` — Under `body.erp-maintenance`, `.panel-head` and `.panel-body` get `min-height: 0`; `.st-settlement-wrap` gets `min-height: 0` with `overflow: hidden`. QB doc chrome: `.qb-doc-title-row`, `.qb-logistics-bar`, `.qb-lines-header`, `.qb-lines-actions`, `.qb-doc-memo-row`, `.qb-doc-actions`, and `.qb-doc-actions .qb-actions-left` / `.qb-actions-right` each gain `min-height: 0` next to existing `min-width: 0` so panels, settlement tables, and cost-line footers shrink correctly inside nested flex/grid layouts.
+
+**Files:** `public/css/app-theme.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-12
+
+- **Rule 1:** `public/css/app-theme.css` — `body.erp-maintenance` `.topbar`, `.chips`, `.track-grid`, `.track-card`, `.qb-panel`, and `.maint-cost-panel` get `min-height: 0` (and `.maint-cost-panel` also gets `min-width: 0`) so tracking, filter chips, and cost panels participate in height shrink beside existing width rules.
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — WO action strip (`.maint-action-strip`, `.maint-fleet-inline`, `.maint-action-strip__qbo`) get `min-height: 0`. Inline layout helper extended to match `display:grid` / `display: grid` as well as flex spellings, with both `min-width: 0` and `min-height: 0` for JS-built grids in `maintenance.html`.
+
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-06-13
+
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — WO search row / fields (`.maint-search-row`, `.maint-search-field`, `.maint-search-field--grow`), `.maint-wo-summary-bar`, accounting `.acct-dash-kpis` / `.acct-dash-kpi`, `#maintIntegrationStrip` and its direct child rows, and `.erp-topbar .title` each get `min-height: 0` where they already use flex or grid with `min-width: 0`, so maintenance and accounting chrome shrink reliably inside the page shell.
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
