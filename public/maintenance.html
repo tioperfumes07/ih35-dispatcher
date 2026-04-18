@@ -2135,7 +2135,7 @@
               </div>
               <div id="idleSnapshotMeta" class="mini-note" style="margin-bottom:10px"></div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">The table below is filled after <strong>Refresh</strong> or when you open this tab — rows are the idle-band fleet slice returned from the server (Samsara + optional TMS fields).</span>
+                <span style="min-width:0;flex:1 1 220px">Rows load after <strong>Refresh</strong> or opening this tab — idle-band fleet slice from the server (Samsara + optional TMS).</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Yard &amp; idle grid">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -3669,11 +3669,11 @@
 
         <div id="rep-settlement" class="reports-tab hidden">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;max-width:90ch">
-            <span class="mini-note" style="margin:0">Revenue vs rolled-up costs by load / invoice #.</span>
+            <span class="mini-note" style="margin:0">Revenue vs rolled-up costs for one load #.</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Combines <strong>work orders</strong>, <strong>AP lines</strong>, and <strong>unit maintenance records</strong> that share the same load or invoice number. When the load exists in TMS (Postgres), the trip header and stops appear in the panel below. This view was moved out of Accounting so the board stays focused on expense entry and QuickBooks operations.
+                Merges <strong>work orders</strong>, <strong>AP</strong>, and <strong>unit maintenance</strong> lines that share the same load / invoice #. With TMS (Postgres), the trip header and stops show under the rollup. Lives here so <strong>Accounting</strong> stays focused on entry and QuickBooks.
               </span>
             </span>
           </div>
@@ -3684,7 +3684,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Rollup panel">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    One load’s merged costs in the table below. Use the filters in this panel: enter the same <strong>load / invoice #</strong> on work orders, AP, and maintenance so costs roll into one trip. <strong>Run lookup</strong> rebuilds rows; <strong>Download CSV</strong> exports the current load. When Postgres has the trip, the TMS header and stops render under the rollup.
+                    Same <strong>load / invoice #</strong> on WO, AP, and maintenance rolls costs into one trip. <strong>Run lookup</strong> fills the table; <strong>Download CSV</strong> exports it. TMS trip details appear below when Postgres has the load.
                   </span>
                 </span>
               </div>
@@ -3741,8 +3741,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About driver pay settlements">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Loads grouped by <strong>QuickBooks driver vendor</strong>: trip revenue, rolled-up expenses (same logic as trip lookup above), and company net.
-                    Set <code>DRIVER_SETTLEMENT_PAY_PCT</code> on the server (0–1) to show suggested driver pay as a percent of linehaul revenue.
+                    By <strong>QuickBooks driver vendor</strong>: trip revenue, rolled-up expenses (same rules as trip lookup), company net. Optional <code>DRIVER_SETTLEMENT_PAY_PCT</code> (0–1) on the server shows suggested pay as % of linehaul revenue.
                   </span>
                 </span>
               </div>
@@ -3759,7 +3758,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement index">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Paged index of loads that already have maintenance / AP / record costs attached. Jump back to <strong>Trip cost rollup</strong> with a row’s load # when you need line detail or CSV.
+                    Loads that already have maintenance, AP, or unit-record costs. Use <strong>View</strong> to open the same # in <strong>Trip cost rollup</strong> for lines or CSV.
                   </span>
                 </span>
               </div>
@@ -18210,7 +18209,7 @@
             pagerHost.hidden = true;
           }
           tb.innerHTML =
-            '<tr><td colspan="6" class="mini-note">No work orders, AP, or unit records with a load/doc # yet.</td></tr>';
+            '<tr><td colspan="6" class="mini-note">No costs tagged with a load/doc # yet.</td></tr>';
           return;
         }
         const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 15);
@@ -18265,7 +18264,7 @@
       const loadId = window.__lastTmsLoadId;
       if (!loadId || !sm || !sm.ok) {
         erpNotify(
-          'Run a settlement lookup with a TMS load that has at least two stops and addresses on first and last stop.',
+          'Run settlement lookup on a TMS load with two+ stops and addresses on first and last stop.',
           'warning'
         );
         return;
@@ -18319,7 +18318,7 @@
           : ' Set DRIVER_SETTLEMENT_PAY_PCT on the server (0–1) to show suggested pay.';
       const drivers = Array.isArray(pay.drivers) ? pay.drivers : [];
       if (!drivers.length) {
-        box.innerHTML = 'No loads with a QBO driver vendor yet.' + pctTxt;
+        box.innerHTML = 'No driver-vendor loads yet.' + pctTxt;
         return;
       }
       box.innerHTML =
@@ -18493,7 +18492,7 @@
             linesPagerHost.hidden = true;
           }
           tb.innerHTML =
-            '<tr><td colspan="5" class="mini-note">No matching rows. Use this load # on work orders, AP doc #, or unit maintenance records.</td></tr>';
+            '<tr><td colspan="5" class="mini-note">No rows for this load # — use the same # on WO, AP, and unit maintenance.</td></tr>';
           return;
         }
         const lsState = settlementLinesPager;
