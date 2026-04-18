@@ -2770,6 +2770,7 @@ body.erp-maintenance .maint-cost-line__billable {
   cursor: pointer;
   padding-bottom: 4px;
   white-space: nowrap;
+  min-width: 0;
 }
 
 @media (max-width: 1100px) {
@@ -3164,6 +3165,7 @@ body.erp-maintenance .maint-cost-coordination {
   );
   font-size: 13px;
   line-height: 1.5;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-cost-coordination .coord-row {
@@ -3172,6 +3174,7 @@ body.erp-maintenance .maint-cost-coordination .coord-row {
   gap: 10px 16px;
   justify-content: space-between;
   align-items: center;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-cost-coordination .coord-total {
@@ -3346,6 +3349,7 @@ body.erp-maintenance #section-reports .nav-dropdown-menu {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+    min-width: 0;
   }
 
   body.erp-maintenance .rep-maint-detail-filters.wo-line-grid > div {
@@ -3648,6 +3652,7 @@ body.erp-maintenance .acct-fuel-import-preview:not([hidden]) {
   margin-top: 12px;
   min-height: min(68vh, 700px);
   max-height: calc(100vh - 160px);
+  min-width: 0;
 }
 
 body.erp-maintenance .acct-fuel-import-scroll-split {
