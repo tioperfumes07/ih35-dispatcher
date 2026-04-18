@@ -61,7 +61,7 @@
 - [ ] **TMS / QBO / sync / IFTA tabs:** Empty and loaded states; **?** tips open.
 - [ ] **Maintenance spend by unit:** After refresh, pager with **16+** units; **Download CSV** full export.
 - [ ] **Maintenance detailed:** Filters + pager (**11+** records); filters reset page to **1**.
-- [ ] **Settlement / P&L:** **Trip cost rollup** + **Loads with recorded costs (index)** panel **`?`** tips open; index pager (**16+** loads), line-item pager on heavy load, **Download CSV** full load; **Driver pay settlements** refresh; TMS box when applicable.
+- [ ] **Settlement / P&L:** **Trip cost rollup** + **Loads with recorded costs (index)** panel **`?`** tips open; index pager (**16+** loads), line-item pager on heavy load, **Download CSV** full load; **Driver pay settlements** refresh — with **two vendors** and **15+** loads on at least one vendor, confirm **per-vendor** pager (**Previous / Next**, rows-per-page); TMS box when applicable.
 - [ ] **Team & security:** **Refresh panel** loads without error when auth enabled. **Configuration posture**, **ERP user activity**, **Security audit log**, and **CMMS benchmark** panel **`?`** tips open (admin); borders use token fallback.
 
 ---
@@ -114,7 +114,7 @@
 Re-run targeted checks from [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md), for example:
 
 - [ ] **Pay bills → Open bills:** pager + **`Map`** selection across pages (**changelog 215** — load **25+** bills, check rows on page 1, page forward, confirm **draft total** still includes page 1; **Create bill payment** posts checked rows from **all** pages; clear filters resets pager to page **1**).
-- [ ] **Driver pay settlements** nested pagination (if UX is specified).
+- [ ] **Driver pay settlements** — full sign-off on per-vendor pagers after **`Refresh driver settlements`** (**changelog 216**); re-open if product switches to a **single** flattened pager.
 - [ ] **Safety → Driver files** pager without losing per-row edits (if draft store or warnings ship).
 
 ---
