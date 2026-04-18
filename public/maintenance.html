@@ -3804,6 +3804,15 @@
                   </div>
                 </div>
               </div>
+              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+                <span style="min-width:0;flex:1 1 220px">The paginated grid loads when you open <strong>Lists &amp; catalogs</strong> (or switch to this sub-tab) and again when <strong>R&amp;M Status</strong> runs its refresh (same code path); use the search bar to narrow names — the pager appears when there are enough rows.</span>
+                <span class="erp-help-tip">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service catalog admin API">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">
+                    Fetches <code>GET /api/maintenance/service-catalog-admin</code>; <code>renderServiceCatalogAdmin</code> replaces <code>#serviceCatalogAdminBody</code> with the table, empty states, or errors. Needs PostgreSQL (<code>DATABASE_URL</code>) and the <code>maintenance_service_catalog</code> table. Adding a type above uses <code>POST /api/maintenance/service-types</code>; after edits elsewhere, <strong>Refresh data</strong> in the sidebar reloads pickers.
+                  </span>
+                </span>
+              </div>
               <div id="serviceCatalogAdminToolbar" class="mr-filter-bar" style="margin-bottom:0;display:none">
                 <div class="mr-filter-bar__grow">
                   <input
@@ -3817,7 +3826,7 @@
                 </div>
               </div>
               <div id="serviceCatalogAdminPagerHost" hidden></div>
-              <div id="serviceCatalogAdminBody" class="mini-note">Loading catalog…</div>
+              <div id="serviceCatalogAdminBody" class="mini-note">Not loaded yet.</div>
             </div>
             <div id="catalog-panel-qbo" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
