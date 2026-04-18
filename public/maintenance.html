@@ -193,6 +193,9 @@
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="tracking" title="Fleet tracking &amp; assets" onclick="openSection('tracking', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">▣</span><span class="erp-icon-nav__lbl">Tracking</span>
       </button>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="fuel" title="Fuel planner — routes, stops, fuel ledger" onclick="openSection('fuel', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">⛽</span><span class="erp-icon-nav__lbl">Fuel planner</span>
+      </button>
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="accounting" title="Accounting — expenses, bills, QuickBooks" onclick="openSection('accounting', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Accounting</span>
         <span id="navAccountingBadge" class="nav-badge nav-badge--danger erp-icon-nav__badge hidden" aria-label="QuickBooks sync needs attention">0</span>
@@ -213,12 +216,11 @@
 
     <div id="erpSectionGhostNav" class="erp-ghost-nav" aria-hidden="true">
       <button type="button" class="nav-btn" data-section="uploads" onclick="openSection('uploads', this); openUploadSubpanel('fuel');" tabindex="-1" aria-hidden="true"></button>
-      <button type="button" class="nav-btn" data-section="fuel" onclick="openSection('fuel', this);" tabindex="-1" aria-hidden="true"></button>
     </div>
 
     <aside class="erp-module-sidebar" aria-label="Lists and shortcuts for the open area">
       <div class="erp-module-sidebar__head">
-        <div class="erp-module-sidebar__brand-title">IH35 ERP</div>
+        <div id="erpModuleBrandTitle" class="erp-module-sidebar__brand-title">Maintenance</div>
         <button type="button" class="erp-module-sidebar__collapse" onclick="toggleErpSidebar(true)" title="Hide lists column">«</button>
       </div>
       <div class="erp-module-sidebar__scroll">
@@ -286,7 +288,7 @@
         <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
         <div id="erpConnectionStrip" class="erp-connection-strip print-hide-actions" aria-live="polite"></div>
         <header class="topbar erp-topbar">
-          <div class="title" id="pageTitle">Maintenance center</div>
+          <div class="title" id="pageTitle">Maintenance</div>
           <a href="/" class="topbar-home-link">Company home</a>
           <div class="erp-topbar__search">
             <div class="erp-topbar__search-inner">
@@ -7726,18 +7728,22 @@
       document.querySelectorAll('#erpIconNav .nav-btn[data-section], #erpSectionGhostNav .nav-btn[data-section]').forEach(el => el.classList.remove('active'));
       if (btn) btn.classList.add('active');
 
-      const titleMap = {
-        dashboard: 'Home overview',
-        fuel: 'Fuel & route planning',
-        maintenance: 'Maintenance center',
-        safety: 'Safety & compliance',
-        tracking: 'Fleet tracking',
+      const moduleTitleMap = {
+        dashboard: 'Home',
+        maintenance: 'Maintenance',
+        fuel: 'Fuel planner',
+        safety: 'Safety',
+        tracking: 'Tracking',
         accounting: 'Accounting',
+        catalog: 'Lists',
         reports: 'Reports',
-        catalog: 'Lists & catalogs',
-        uploads: 'Upload center'
+        uploads: 'Uploads'
       };
-      document.getElementById('pageTitle').textContent = titleMap[name] || 'IH35 ERP';
+      const t = moduleTitleMap[name] || 'IH35 ERP';
+      const pt = document.getElementById('pageTitle');
+      if (pt) pt.textContent = t;
+      const brandEl = document.getElementById('erpModuleBrandTitle');
+      if (brandEl) brandEl.textContent = t;
       if (name === 'maintenance') {
         const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
         openMaintMainTab('record', rb, { skipModal: true });
