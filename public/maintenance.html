@@ -7752,9 +7752,9 @@
         } else {
           const tot = ta.totals || {};
           qbEl.innerHTML = `
-            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Window: last <strong>${ta.windowDays}</strong> days (from <strong>${escapeHtml(
+            <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label)">Last <strong>${ta.windowDays}</strong> days from <strong>${escapeHtml(
             ta.startDate || ''
-          )}</strong>) · up to 200 rows per type.</p>
+          )}</strong> · up to 200 rows/type.</p>
             <div class="grid grid-4" style="margin-bottom:12px">
               <div class="metric"><div class="metric-label">Bills Σ $</div><div class="metric-value">${Number(tot.bills || 0).toFixed(0)}</div></div>
               <div class="metric"><div class="metric-label">Purchases Σ $</div><div class="metric-value">${Number(tot.purchases || 0).toFixed(0)}</div></div>
