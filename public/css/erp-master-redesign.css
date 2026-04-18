@@ -314,7 +314,7 @@ body.erp-maintenance .erp-main-body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* --- Top bar --- */
+/* --- Top bar (blue shell) --- */
 body.erp-maintenance .erp-topbar.topbar {
   flex-shrink: 0;
   min-height: 52px;
@@ -325,14 +325,14 @@ body.erp-maintenance .erp-topbar.topbar {
   gap: 12px;
   padding: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 10px 1.25rem;
   margin: 0;
-  background: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, var(--erp-shell-bar-bg) 0%, var(--erp-shell-bar-bg-deep) 100%);
+  border-bottom: 1px solid var(--erp-shell-bar-edge);
 }
 
 body.erp-maintenance .erp-topbar .title {
   font-size: 16px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--erp-shell-bar-text);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -358,13 +358,42 @@ body.erp-maintenance .erp-topbar__actions {
 
 body.erp-maintenance .erp-topbar .topbar-home-link {
   font-weight: 500;
-  color: var(--color-border-focus);
+  color: var(--erp-shell-bar-muted);
   font-size: 13px;
+  max-width: min(100%, 22rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.erp-maintenance .erp-topbar .topbar-home-link:hover {
+  color: var(--erp-shell-bar-text);
+  text-decoration: underline;
 }
 
 body.erp-maintenance .erp-topbar .topbar-hint {
-  color: var(--color-text-label);
+  color: var(--erp-shell-bar-muted);
   font-size: 12px;
+}
+
+body.erp-maintenance .erp-topbar .topbar-hint strong {
+  color: var(--erp-shell-bar-text);
+  font-weight: 500;
+}
+
+body.erp-maintenance .erp-topbar .mini-note {
+  color: var(--erp-shell-bar-muted) !important;
+}
+
+body.erp-maintenance .erp-topbar .erp-help-tip__btn {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--erp-shell-bar-text);
+}
+
+body.erp-maintenance .erp-topbar .erp-help-tip__btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.55);
 }
 
 body.erp-maintenance .erp-btn-primary {
@@ -593,15 +622,16 @@ body.erp-maintenance .erp-topbar .print-hide-actions button {
   height: 32px;
   padding: 0 12px;
   border-radius: var(--radius-input);
-  border: 1px solid var(--color-border-input);
-  background: var(--color-bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--erp-shell-bar-text);
   font-size: 13px;
   font-weight: 500;
   box-shadow: none;
 }
 
 body.erp-maintenance .erp-topbar .print-hide-actions button:hover {
-  background: var(--color-bg-header);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 @media print {
@@ -620,6 +650,52 @@ body.erp-maintenance .erp-topbar .print-hide-actions button:hover {
   }
   body.erp-maintenance .erp-main-body {
     overflow: visible;
+  }
+  body.erp-maintenance .erp-topbar.topbar {
+    background: var(--color-bg-card);
+    border-bottom: 1px solid var(--color-border);
+  }
+  body.erp-maintenance .erp-topbar .title {
+    color: var(--color-text-primary);
+  }
+  body.erp-maintenance .erp-topbar .topbar-home-link,
+  body.erp-maintenance .erp-topbar .topbar-hint,
+  body.erp-maintenance .erp-topbar .mini-note {
+    color: var(--color-text-label) !important;
+  }
+  body.erp-maintenance .erp-topbar .print-hide-actions button {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-input);
+    color: var(--color-text-body);
+  }
+  body.erp-maintenance .erp-topbar .erp-help-tip__btn {
+    border-color: var(--color-border-input);
+    background: var(--color-bg-hover);
+    color: var(--color-text-label);
+  }
+  body.erp-maintenance .maint-action-strip {
+    background: var(--color-bg-card);
+    border-bottom: 1px solid var(--color-border);
+  }
+  body.erp-maintenance .maint-action-strip__btn {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-input);
+    color: var(--color-text-body);
+  }
+  body.erp-maintenance .maint-action-strip__btn--primary,
+  body.erp-maintenance .maint-action-strip__btn.active {
+    background: var(--color-bg-header);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-input);
+    box-shadow: none;
+  }
+  body.erp-maintenance .maint-fleet-inline__label {
+    color: var(--color-text-label);
+  }
+  body.erp-maintenance .maint-fleet-pill {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-input);
+    color: var(--color-text-body);
   }
 }
 

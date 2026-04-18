@@ -11,18 +11,33 @@ body.erp-maintenance #section-maintenance .maint-page-shell {
   overflow: hidden;
 }
 
-/* --- Action strip (QuickBooks-style) --- */
+/* --- Action strip (blue shell — matches top bar) --- */
 body.erp-maintenance .maint-action-strip {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, var(--erp-shell-bar-bg) 0%, var(--erp-shell-bar-bg-deep) 100%);
+  border-bottom: 1px solid var(--erp-shell-bar-edge);
   flex-shrink: 0;
   min-width: 0;
   min-height: 0;
+}
+
+body.erp-maintenance .maint-action-strip .mini-note {
+  color: var(--erp-shell-bar-muted) !important;
+}
+
+body.erp-maintenance .maint-action-strip .erp-help-tip__btn {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--erp-shell-bar-text);
+}
+
+body.erp-maintenance .maint-action-strip .erp-help-tip__btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.55);
 }
 
 body.erp-maintenance .maint-action-strip__btn {
@@ -30,31 +45,34 @@ body.erp-maintenance .maint-action-strip__btn {
   padding: 0 16px;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 4px;
-  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-input);
+  border: 1px solid rgba(255, 255, 255, 0.38);
   cursor: pointer;
   font-family: inherit;
-  background: var(--color-bg-card);
-  color: var(--color-text-body);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--erp-shell-bar-text);
 }
 
 body.erp-maintenance .maint-action-strip__btn:hover {
-  background: var(--color-bg-hover);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 body.erp-maintenance .maint-action-strip__btn--primary {
-  background: var(--btn-primary-save-bg);
-  color: var(--color-bg-card);
-  border-color: var(--btn-primary-save-bg);
+  background: var(--color-bg-card);
+  color: var(--erp-shell-bar-bg-deep);
+  border-color: var(--color-bg-card);
 }
 
 body.erp-maintenance .maint-action-strip__btn--primary:hover {
-  background: var(--btn-primary-save-hover);
+  background: var(--color-bg-hover);
+  filter: none;
 }
 
 body.erp-maintenance .maint-action-strip__btn.active {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-border-focus) 22%, transparent);
-  border-color: var(--color-border-focus);
+  background: var(--color-bg-card);
+  color: var(--erp-shell-bar-bg-deep);
+  border-color: var(--color-bg-card);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
 }
 
 body.erp-maintenance .maint-fleet-inline {
@@ -69,7 +87,8 @@ body.erp-maintenance .maint-fleet-inline {
 
 body.erp-maintenance .maint-fleet-inline__label {
   font-size: 12px;
-  color: var(--color-text-label);
+  font-weight: 500;
+  color: var(--erp-shell-bar-muted);
   margin-right: 2px;
 }
 
@@ -78,22 +97,22 @@ body.erp-maintenance .maint-fleet-pill {
   padding: 0 12px;
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid var(--color-border-input);
+  border: 1px solid rgba(255, 255, 255, 0.38);
   border-radius: 20px;
-  background: var(--color-bg-card);
-  color: var(--color-text-body);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--erp-shell-bar-text);
   cursor: pointer;
   font-family: inherit;
 }
 
 body.erp-maintenance .maint-fleet-pill:hover {
-  background: var(--color-bg-hover);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 body.erp-maintenance .maint-fleet-pill.active {
-  background: var(--pill-blue-bg);
-  color: var(--pill-blue-text);
-  border-color: var(--color-border-focus);
+  background: var(--color-bg-card);
+  color: var(--erp-shell-bar-bg-deep);
+  border-color: var(--color-bg-card);
 }
 
 body.erp-maintenance .maint-action-strip__qbo {
@@ -404,24 +423,25 @@ body.erp-app .erp-module-sidebar .erp-sb-group:not(.is-open) .erp-sb-group__body
   padding-bottom: 0;
 }
 
-/* --- Topbar title (Change 7) --- */
+/* --- Topbar title (Change 7) — colors from blue shell in erp-master-redesign --- */
 body.erp-maintenance .erp-topbar .title {
   font-size: 15px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--erp-shell-bar-text);
   min-width: 0;
   min-height: 0;
 }
 
 body.erp-maintenance .erp-topbar .topbar-home-link {
   font-size: 13px;
-  color: var(--pill-blue-text);
+  color: var(--erp-shell-bar-muted);
   margin-left: 12px;
   text-decoration: none;
   cursor: pointer;
 }
 
 body.erp-maintenance .erp-topbar .topbar-home-link:hover {
+  color: var(--erp-shell-bar-text);
   text-decoration: underline;
 }
 
@@ -1972,4 +1992,76 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-subcard .maint-subcard__bod
 body.erp-maintenance .maint-label-req {
   color: var(--color-semantic-warn-accent);
   font-weight: 500;
+}
+
+/* Home + Maintenance: uniform hero / KPI cards (clean type rhythm). */
+body.erp-maintenance #section-dashboard .hero-card {
+  min-height: 108px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #section-dashboard .hero-card h3 {
+  font-size: 15px;
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+body.erp-maintenance #section-dashboard .hero-card p {
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  color: var(--color-text-body);
+}
+
+body.erp-maintenance #section-dashboard .metric.mr-kpi-card {
+  min-height: 100px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+body.erp-maintenance #section-dashboard .metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-label);
+}
+
+body.erp-maintenance #section-dashboard .metric-value {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
+  gap: 12px;
+}
+
+body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px 14px;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card__label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card__val {
+  font-size: 20px;
+  font-weight: 500;
+  margin-top: 6px;
 }
