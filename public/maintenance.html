@@ -4037,7 +4037,7 @@
           <button type="button" class="subtab active" data-rep-k="overview executive dashboard metrics board refresh" onclick="openReportsTab('rep-overview', this)">Overview</button>
 
           <div class="nav-dropdown" style="display:inline-block">
-            <button type="button" class="subtab nav-dropdown-trigger" id="repAcctDdTrigger" onclick="event.stopPropagation()">Accounting ▾</button>
+            <button type="button" class="subtab nav-dropdown-trigger" id="repAcctDdTrigger" onclick="event.stopPropagation()" aria-haspopup="true">Accounting ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
               <button type="button" class="nav-dd-item" data-rep-k="erp sync qbo quickbooks reconcile" onclick="openReportsTab('rep-sync', document.getElementById('repAcctDdTrigger'))">ERP ↔ QBO sync</button>
               <button type="button" class="nav-dd-item" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTab('rep-qbo', document.getElementById('repAcctDdTrigger'))">QuickBooks activity</button>
@@ -4045,7 +4045,7 @@
           </div>
 
           <div class="nav-dropdown" style="display:inline-block">
-            <button type="button" class="subtab nav-dropdown-trigger" id="repMaintDdTrigger" onclick="event.stopPropagation()">Maintenance ▾</button>
+            <button type="button" class="subtab nav-dropdown-trigger" id="repMaintDdTrigger" onclick="event.stopPropagation()" aria-haspopup="true">Maintenance ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
               <button type="button" class="nav-dd-item" data-rep-k="parts positions tires detailed breakdown" onclick="openReportsTab('rep-maint-detail', document.getElementById('repMaintDdTrigger'))">Detailed maintenance (parts/positions)</button>
               <button type="button" class="nav-dd-item" data-rep-k="spend unit maintenance cost work order" onclick="openReportsTab('rep-maint', document.getElementById('repMaintDdTrigger'))">Spend by unit</button>
@@ -7725,8 +7725,19 @@
       activeSection = name;
       document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
       secEl.classList.add('active');
-      document.querySelectorAll('#erpIconNav .nav-btn[data-section], #erpSectionGhostNav .nav-btn[data-section]').forEach(el => el.classList.remove('active'));
-      if (btn) btn.classList.add('active');
+      document.querySelectorAll('#erpIconNav .nav-btn[data-section], #erpSectionGhostNav .nav-btn[data-section]').forEach(el => {
+        el.classList.remove('active');
+        el.removeAttribute('aria-current');
+      });
+      const navBtn =
+        btn ||
+        document.querySelector(
+          `#erpIconNav .nav-btn[data-section="${name}"], #erpSectionGhostNav .nav-btn[data-section="${name}"]`
+        );
+      if (navBtn) {
+        navBtn.classList.add('active');
+        navBtn.setAttribute('aria-current', 'true');
+      }
 
       const moduleTitleMap = {
         dashboard: 'Home',
