@@ -5235,8 +5235,57 @@ async function buildQboPurchaseBillLinesFromCostLines(costLines, opts) {
   return out;
 }
 
+function normalizeRepairStatus(v) {
+  const s = String(v || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+  if (s === 'in-progress') return 'in_progress';
+  if (s === 'complete' || s === 'completed') return 'finished';
+  if (s === 'queue' || s === 'awaiting') return 'queued';
+  if (s === 'queued' || s === 'in_progress' || s === 'finished') return s;
+  return '';
+}
+
+function maintAuthUserLabel(req) {
+  const u = req && req.authUser;
+  if (!u) return '';
+  return String(u.email || u.name || u.id || '').trim();
+}
+
+/**
+ * When `repairStatus` changes, stamps `repairStatusAt` / `repairStatusBy` and appends `repairStatusHistory`.
+ * @param {object} record merged next record (must include `repairStatus`)
+ * @param {object|null} prev previous persisted record or null on POST
+ */
+function applyMaintenanceRepairStatusAudit(record, prev, req) {
+  const next = normalizeRepairStatus(record.repairStatus);
+  const prevSt = prev ? normalizeRepairStatus(prev.repairStatus) : '';
+  record.repairStatus = next;
+  if (next === prevSt) {
+    if (prev) {
+      record.repairStatusAt = prev.repairStatusAt;
+      record.repairStatusBy = prev.repairStatusBy;
+      record.repairStatusHistory = prev.repairStatusHistory;
+    } else {
+      delete record.repairStatusAt;
+      delete record.repairStatusBy;
+      delete record.repairStatusHistory;
+    }
+    return;
+  }
+  const at = new Date().toISOString();
+  const by = maintAuthUserLabel(req);
+  record.repairStatusAt = at;
+  record.repairStatusBy = by;
+  const hist = prev && Array.isArray(prev.repairStatusHistory) ? [...prev.repairStatusHistory] : [];
+  hist.push({ from: prevSt || null, to: next || null, at, by });
+  if (hist.length > 120) hist.splice(0, hist.length - 120);
+  record.repairStatusHistory = hist;
+}
+
 /** Shared field normalization for POST / PATCH maintenance ERP records. */
-function deriveMaintenanceRecordFields(body) {
+function deriveMaintenanceRecordFields(body, prev) {
   const unit = String(body.unit || '').trim();
   const serviceType = sanitizeName(body.serviceType || body.recordType || 'Service', 'Service');
   const tireLineItems = sanitizeMaintenanceTireLineItems(body.tireLineItems);
