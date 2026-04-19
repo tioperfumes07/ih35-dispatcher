@@ -6181,7 +6181,10 @@
           vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput')?.value || '',
           workOrderNumber: document.getElementById('recordWorkOrderInput')?.value || '',
           loadNumber: document.getElementById('recordLoadNumberInput')?.value || '',
-          notes: (maintNotesSyncToTextarea(), document.getElementById('notesInput')?.value || ''),
+          notes: (() => {
+            maintNotesSyncToTextarea();
+            return document.getElementById('notesInput')?.value || '';
+          })(),
           plannedWork: collectMaintPlannedServiceLines().map(description => ({ description })),
           costLines: lines.map(l => ({ ...l }))
         };
@@ -15110,6 +15113,7 @@
     }
 
     function composeRecordNotesForSave() {
+      maintNotesSyncToTextarea();
       let n = (document.getElementById('notesInput').value || '').trim();
       const same = (document.getElementById('recordSameCostServicesInput')?.value || '').trim();
       if (same) {
@@ -15414,6 +15418,7 @@
           if (memo) {
             const line = 'Vendor (from PDF header): ' + p.vendorGuess;
             memo.value = memo.value.trim() ? memo.value.trim() + '\n' + line : line;
+            maintNotesSetFromString(memo.value);
           }
         }
         const host = document.getElementById('maintCostCatHost');
@@ -16525,7 +16530,6 @@
         'serviceSearchInput',
         'vendorInput',
         'costInput',
-        'notesInput',
         'recordSameCostServicesInput',
         'customServiceTypeInput',
         'tireBrandInput',
@@ -16554,6 +16558,8 @@
       if (pdfSt) pdfSt.textContent = '';
       const cHint = document.getElementById('maintCatalogServiceHint');
       if (cHint) cHint.textContent = '';
+
+      maintNotesSetFromString('');
 
       document.getElementById('tireConditionSearch').value = '';
       document.getElementById('tireConditionValue').value = '';
@@ -16780,7 +16786,7 @@
       document.getElementById('vendorInput').value = String(r.vendor || '');
       document.getElementById('costInput').value =
         r.cost != null && String(r.cost).trim() !== '' ? String(r.cost) : '';
-      document.getElementById('notesInput').value = String(r.notes || '');
+      maintNotesSetFromString(String(r.notes || ''));
       const sameEl = document.getElementById('recordSameCostServicesInput');
       if (sameEl) sameEl.value = '';
 
@@ -17387,6 +17393,7 @@
 
     function openAccountingDraftFromMaintenanceForm() {
       // Build draft AP (Accounting → Maintenance Expense Transactions) from current maintenance form.
+      maintNotesSyncToTextarea();
       resolveVendorQboIdFromVendorInput();
       const vendorText = (document.getElementById('vendorInput')?.value || '').trim();
       const vendorQboId = (document.getElementById('linkedVendorQboId')?.value || '').trim();
@@ -19891,6 +19898,11 @@
       fillDataLists();
     } catch (e) {
       console.error('initial fillDataLists', e);
+    }
+    try {
+      initMaintNotesNumbered();
+    } catch (e) {
+      console.error('initMaintNotesNumbered', e);
     }
     loadAll();
     setInterval(loadAll, AUTO_REFRESH_MS);
