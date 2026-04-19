@@ -5778,6 +5778,12 @@
     /** Map +New maintenance preset to a catalog service label when possible. */
     function maintPresetServiceCatalogValue(preset) {
       const p = String(preset || '').trim();
+      if (p === 'maintenance_order') {
+        return maintPickServiceFromCatalog(
+          ['PM / preventive maintenance', 'Oil change', 'DOT inspection', 'Repair', 'Annual inspection'],
+          ['maintenance', 'pm /', 'oil', 'dot', 'annual', 'repair', 'preventive']
+        );
+      }
       if (p === 'pm') {
         return maintPickServiceFromCatalog(
           ['PM / preventive maintenance', 'Oil change', 'DOT inspection', 'Annual inspection'],
@@ -7363,7 +7369,12 @@
         syncPrimaryServiceToFirstCostLine();
       };
       try {
-        if (p === 'pm') {
+        if (p === 'maintenance_order') {
+          if (rts) rts.value = 'maintenance';
+          toggleRecordFields();
+          setRepairLocationCode('in-house');
+          applyService();
+        } else if (p === 'pm') {
           if (rts) rts.value = 'maintenance';
           toggleRecordFields();
           setRepairLocationCode('in-house');
@@ -13637,6 +13648,7 @@
       const hid = document.getElementById('apServiceTypeInput');
       if (!inp || !hid) return;
       hid.value = inp.value.trim();
+      syncApServiceToFirstCostLine();
     }
 
     function resolveApItemSearch() {
@@ -14064,6 +14076,13 @@
       const first = host?.querySelector('.maint-cost-cat-line .maint-line-desc');
       const svc = document.getElementById('serviceSearchInput')?.value.trim();
       if (first && svc && !first.value.trim()) first.value = svc;
+    }
+
+    function syncApServiceToFirstCostLine() {
+      const host = document.getElementById('apWoCatHost');
+      const first = host?.querySelector('.wo-line .wo-svc');
+      const svc = document.getElementById('apServiceSearchInput')?.value.trim();
+      if (first && svc && !String(first.value || '').trim()) first.value = svc;
     }
 
     function refreshMaintCostLineIndices() {
@@ -15351,6 +15370,7 @@
       if (!tpl || !host) return;
       host.appendChild(tpl.content.cloneNode(true));
       refreshWoLineIndices();
+      syncApServiceToFirstCostLine();
       refreshApDocTotal();
     }
 
