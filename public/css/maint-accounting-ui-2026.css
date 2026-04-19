@@ -1026,11 +1026,11 @@ body.erp-maintenance .acct-board-qbo-inline__label {
   margin-right: 4px;
 }
 
-/* Match record-type row control metrics in AP / fuel modal composers */
+/* Match record-type row control metrics in AP / fuel / bill-pay modal composers */
 body.erp-maintenance #erpDedicatedFormModal .qb-in,
 body.erp-maintenance #erpDedicatedFormModal select.qb-in {
-  font-size: 12px;
-  min-height: 32px;
+  font-size: var(--erp-form-control-font-size, 12px);
+  min-height: var(--erp-form-control-min-height, 32px);
   padding: 6px 8px;
   box-sizing: border-box;
 }
@@ -2516,14 +2516,14 @@ body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card__val {
   margin-top: 6px;
 }
 
-/* No spinner arrows on numeric money/qty fields (WO, AP, fuel, bill pay). */
-body.erp-maintenance input[type='number']::-webkit-outer-spin-button,
-body.erp-maintenance input[type='number']::-webkit-inner-spin-button {
+/* No spinner arrows on numeric money/qty fields (WO, AP, fuel, bill pay, all ERP shells). */
+body.erp-app input[type='number']::-webkit-outer-spin-button,
+body.erp-app input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-body.erp-maintenance input[type='number'] {
+body.erp-app input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
 }

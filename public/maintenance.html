@@ -1825,7 +1825,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance fleet table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderMaintenanceTable()</code>: <code>dashboard</code> filtered by <code>vehiclesByCategory()[activeAssetCategory]</code> + <code>#maintenanceServiceFilter</code> → paged <code>#maintenanceTableBody</code>. <code>maintDashboardTablePager</code> + <code>erpPagerRender</code> on <code>#maintTablePagerHost</code>; category/service change → page 1. Read-only — edit via WO form.
+                      <code>renderMaintenanceTable()</code>: <code>dashboard</code> filtered by <code>vehiclesByCategory()[activeAssetCategory]</code> + <code>#maintenanceServiceFilter</code> → paged <code>#maintenanceTableBody</code>. <code>maintDashboardTablePager</code> + <code>erpPagerRender</code> on <code>#maintTablePagerHost</code>; category/service change → page 1. <strong>Repair</strong> updates the latest saved ERP row for that unit + service (same API as Shop / location).
                     </span>
                   </span>
                 </div>
@@ -1846,6 +1846,7 @@
                         <th>WO #</th>
                         <th>Load #</th>
                         <th>Cost</th>
+                        <th>Repair</th>
                         <th>QB Sync</th>
                       </tr>
                     </thead>
@@ -2980,6 +2981,8 @@
         </div>
 
         <div id="acct-bill-pay" class="accounting-tab hidden">
+          <div id="erpBillPayShellPlaceholder" class="erp-dom-placeholder" aria-hidden="true"></div>
+          <div id="erpBillPayShellPanel">
           <div class="panel qb-panel qb-doc-shell qb-doc-shell--bill-pay">
             <div class="panel-head mr-bp-panel-head">
               <div class="mr-bp-panel-head__title">
@@ -3237,6 +3240,7 @@
               </div>
               <div id="bpLogPagerHost" hidden></div>
             </div>
+          </div>
           </div>
         </div>
 
@@ -7511,16 +7515,68 @@
 
     function erpOpenAccountingPayBillsStandard() {
       window.__accountingDriverBillPayMode = false;
-      window.location.hash = 'accounting-bill-pay';
-      if (typeof applyNavHash === 'function') applyNavHash();
+      erpOpenDedicatedBillPayForm({ fromHash: false, driverMode: false });
     }
 
     function erpOpenDriverBillPay() {
       erpCloseNewMenu();
-      window.__accountingDriverBillPayMode = true;
       __erpDriverPayeeVendorIdSet = null;
-      window.location.hash = 'accounting-driver-bill-pay';
-      if (typeof applyNavHash === 'function') applyNavHash();
+      erpOpenDedicatedBillPayForm({ fromHash: false, driverMode: true });
+    }
+
+    /** Mount Pay bills workspace (composer + local log) in the same dedicated modal shell as AP / fuel. */
+    function erpOpenDedicatedBillPayForm(opts) {
+      opts = opts || {};
+      const fromHash = !!opts.fromHash;
+      const fromTab = !!opts.fromTab;
+      if (!fromHash && !fromTab) {
+        if (opts.driverMode === true) window.__accountingDriverBillPayMode = true;
+        else if (opts.driverMode === false) window.__accountingDriverBillPayMode = false;
+      }
+      erpCloseNewMenu();
+      const dedModal = document.getElementById('erpDedicatedFormModal');
+      if (
+        dedModal &&
+        !dedModal.classList.contains('hidden') &&
+        window.__erpDedicatedModalKind === 'billpay'
+      ) {
+        syncErpDedicatedModalChrome();
+        return;
+      }
+      if (dedModal && !dedModal.classList.contains('hidden')) {
+        erpCloseDedicatedFormModal({ force: true });
+      }
+      const mount = document.getElementById('erpDedicatedFormModalBody');
+      const modal = document.getElementById('erpDedicatedFormModal');
+      if (!mount || !modal) return;
+      erpResetDedicatedModalLayout();
+      window.__erpDedicatedModalKind = 'billpay';
+      const acctBtn = document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]');
+      window.__erpSkipBillPayModalOpen = true;
+      try {
+        openSection('accounting', acctBtn);
+        openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
+      } finally {
+        window.__erpSkipBillPayModalOpen = false;
+      }
+      const shell = document.getElementById('erpBillPayShellPanel');
+      if (shell && mount) mount.appendChild(shell);
+      erpRefreshBillPayChrome();
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('erp-dedicated-modal-open');
+      erpDedicatedModalBindEscape(true);
+      if (!fromHash && !fromTab) {
+        window.location.hash = window.__accountingDriverBillPayMode
+          ? 'accounting-driver-bill-pay'
+          : 'accounting-bill-pay';
+      }
+      syncErpDedicatedModalChrome();
+      requestAnimationFrame(() => {
+        if (window.__accountingDriverBillPayMode && typeof loadAccountingOpenBills === 'function') {
+          loadAccountingOpenBills();
+        }
+      });
     }
 
     function apWoItemLineAmount(row) {
@@ -7620,6 +7676,22 @@
           termPicked
         );
       }
+      if (window.__erpDedicatedModalKind === 'billpay') {
+        const v = (document.getElementById('bpVendorSearch')?.value || '').trim();
+        const memo = (document.getElementById('bpPrivateNote')?.value || '').trim();
+        const chk = (document.getElementById('bpCheckNum')?.value || '').trim();
+        const qLive = (document.getElementById('bpQbLiveSearch')?.value || '').trim();
+        const qOpen = (document.getElementById('bpOpenBillsSearch')?.value || '').trim();
+        const bid = (document.getElementById('bpBillIdQuick')?.value || '').trim();
+        const map = typeof bpEnsureOpenBillsSelectionMap === 'function' ? bpEnsureOpenBillsSelectionMap() : null;
+        let selDirty = false;
+        if (map && map.size) {
+          for (const st of map.values()) {
+            if (st && st.checked && Number(st.payAmount) > 0.005) selDirty = true;
+          }
+        }
+        return !!(v || memo || chk || qLive || qOpen || bid || selDirty);
+      }
       return false;
     }
 
@@ -7635,6 +7707,18 @@
         if (title && fh) title.textContent = fh.textContent || '';
         if (amt && ft) amt.textContent = ft.textContent || '$0.00';
         if (lab) lab.textContent = 'Amount';
+        return;
+      }
+      if (window.__erpDedicatedModalKind === 'billpay') {
+        const pt = document.getElementById('bpPanelTitle');
+        const st = document.getElementById('bpSelectionTotal');
+        if (title && pt) title.textContent = pt.textContent || 'Pay bills';
+        if (lab) lab.textContent = 'Draft total';
+        if (amt && st) {
+          const raw = String(st.textContent || '');
+          const m = raw.match(/\$[\d,]+(?:\.\d{2})?/);
+          amt.textContent = m ? m[0] : '$0.00';
+        }
         return;
       }
       const docTitle = document.getElementById('apDocTitle');
@@ -7777,6 +7861,11 @@
         const h2 = document.getElementById('fuelManualDocTitleH2');
         if (h2) h2.textContent = 'Manual fuel / DEF expense';
       }
+      if (window.__erpDedicatedModalKind === 'billpay') {
+        const shell = document.getElementById('erpBillPayShellPanel');
+        const ph = document.getElementById('erpBillPayShellPlaceholder');
+        if (shell && ph && ph.parentNode) ph.parentNode.insertBefore(shell, ph.nextSibling);
+      }
       window.__erpDedicatedModalKind = '';
       modal.classList.add('hidden');
       modal.setAttribute('aria-hidden', 'true');
@@ -7897,6 +7986,15 @@
 
     function openSection(name, btn) {
       if (name !== 'maintenance') closeMaintWorkOrderModal();
+      if (
+        name !== 'accounting' &&
+        typeof erpCloseDedicatedFormModal === 'function'
+      ) {
+        const dm = document.getElementById('erpDedicatedFormModal');
+        if (dm && !dm.classList.contains('hidden')) {
+          erpCloseDedicatedFormModal({ force: true });
+        }
+      }
       const secEl = document.getElementById(`section-${name}`);
       if (!secEl) {
         console.warn('openSection: missing #section-' + name);
@@ -8006,15 +8104,14 @@
       if (section === 'accounting-bill-pay') {
         window.__accountingDriverBillPayMode = false;
         openSectionByName('accounting');
-        openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
+        requestAnimationFrame(() => erpOpenDedicatedBillPayForm({ fromHash: true }));
         return;
       }
       if (section === 'accounting-driver-bill-pay') {
         window.__accountingDriverBillPayMode = true;
         __erpDriverPayeeVendorIdSet = null;
         openSectionByName('accounting');
-        openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
-        requestAnimationFrame(() => loadAccountingOpenBills());
+        requestAnimationFrame(() => erpOpenDedicatedBillPayForm({ fromHash: true }));
         return;
       }
       const erpDedicatedHashToMode = {
@@ -8102,10 +8199,17 @@
     window.addEventListener('hashchange', applyNavHash);
 
     function openAccountingTab(id, btn) {
+      if (id === 'acct-bill-pay' && !window.__erpSkipBillPayModalOpen) {
+        erpOpenDedicatedBillPayForm({ fromTab: true });
+        return;
+      }
       const acctPanel = document.getElementById(id);
       if (!acctPanel) {
         console.warn('openAccountingTab: missing #' + id);
         return;
+      }
+      if (window.__erpDedicatedModalKind === 'billpay' && id !== 'acct-bill-pay') {
+        erpCloseDedicatedFormModal({ force: true });
       }
       if (window.__erpDedicatedModalKind === 'ap' && id !== 'acct-transactions') {
         erpCloseDedicatedFormModal({ force: true });
@@ -10874,6 +10978,7 @@
         t += pay;
       }
       el.textContent = `Draft payment total: $${(Math.round(t * 100) / 100).toFixed(2)}`;
+      if (window.__erpDedicatedModalKind === 'billpay') syncErpDedicatedModalChrome();
     }
 
     function bpHtmlForOpenBillRows(bills) {
@@ -13174,6 +13279,7 @@
           const ix = (erp.records || []).findIndex(x => String(x.id) === String(recordId));
           if (ix >= 0) erp.records[ix] = out.record;
           renderMaintLocationBoard();
+          renderMaintenanceTable();
           if (String(out.record.unit || '') === String(selectedUnit || '')) renderUnitHistory();
           if (String(recordId) === String(__editingMaintRecordId || '')) {
             const rss = document.getElementById('recordRepairStatusSelect');
@@ -15904,6 +16010,31 @@
       return best;
     }
 
+    function maintLatestRecordForDashboardRow(row) {
+      const u = String(row.unit || '').trim();
+      const st = String(row.serviceType || '').trim();
+      if (!u || !st) return null;
+      const candidates = (erp.records || []).filter(
+        rec => String(rec.unit || '').trim() === u && String(rec.serviceType || '').trim() === st
+      );
+      if (!candidates.length) return null;
+      candidates.sort((a, b) => String(b.serviceDate || '').localeCompare(String(a.serviceDate || '')));
+      return candidates[0];
+    }
+
+    function maintFleetRepairStatusCell(r) {
+      const rec = maintLatestRecordForDashboardRow(r);
+      if (!rec || !rec.id) {
+        return '<td class="mini-note">—</td>';
+      }
+      const rid = escapeHtml(String(rec.id));
+      const rs = String(rec.repairStatus || '').trim();
+      const rsVal = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
+      const statusLabel = s =>
+        s === 'queued' ? 'Awaiting service' : s === 'in_progress' ? 'In progress' : s === 'finished' ? 'Completed' : String(s || '');
+      return `<td style="white-space:nowrap"><select class="qb-in maint-fleet-repair-status" style="font-size:12px;max-width:200px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select></td>`;
+    }
+
     function renderMaintenanceTable() {
       const tb = document.getElementById('maintenanceTableBody');
       const pagerHost = document.getElementById('maintTablePagerHost');
@@ -15923,7 +16054,7 @@
       pState.filterKey = filterKey;
 
       if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="14">No rows found.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="15">No rows found.</td></tr>';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -15956,6 +16087,7 @@
           <td>${escapeHtml(r.workOrderNumber || '')}</td>
           <td>${escapeHtml(r.loadNumber || '')}</td>
           <td>${r.cost ?? ''}</td>
+          ${maintFleetRepairStatusCell(r)}
           <td><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || '')}</span></td>
         </tr>`
         )
