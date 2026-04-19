@@ -5,10 +5,10 @@
 body.erp-maintenance #section-maintenance .maint-page-shell {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* --- Action strip (same cool blue as top bar + left module sidebar) --- */
@@ -1499,25 +1499,20 @@ body.erp-maintenance .maint-qb-cost-panels {
   margin-top: 4px;
 }
 
-@media (min-width: 1100px) {
-  body.erp-maintenance .maint-qb-cost-panels {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 10px 12px;
-    align-items: start;
-  }
+/* Category + item cost areas: always stacked (category above, item below). */
+body.erp-maintenance .maint-qb-cost-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
 
-  body.erp-maintenance .maint-qb-cost-panels > .maint-qb-cost-details {
-    margin-top: 0;
-  }
+body.erp-maintenance .maint-qb-cost-panels > .maint-qb-cost-details {
+  margin-top: 0;
+}
 
-  body.erp-maintenance .maint-qb-cost-panels > :not(.maint-qb-cost-details) {
-    grid-column: 1 / -1;
-  }
-
-  body.erp-maintenance .maint-qb-cost-panels > .maint-qb-cost-totals-bar {
-    margin-top: 8px;
-  }
+body.erp-maintenance .maint-qb-cost-panels > .maint-qb-cost-totals-bar {
+  margin-top: 4px;
 }
 
 body.erp-maintenance .maint-qb-cost-details {

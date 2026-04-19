@@ -1743,11 +1743,31 @@ async function qboFetchOpenBillByIdFromQbo(billIdRaw) {
   return { bills: [normalized] };
 }
 
+/** Count prior app-recorded bill payments that include a given QBO bill id (for DocNumber suffix). */
+function countPriorBillPaymentsForBill(erp, billQboId) {
+  const id = String(billQboId || '').replace(/\D/g, '');
+  if (!id) return 0;
+  let n = 0;
+  for (const e of erp.qboBillPaymentLog || []) {
+    if (e.reversedAt) continue;
+    const lines = e.lines || [];
+    for (const ln of lines) {
+      const bid = String(ln.billQboId || '').replace(/\D/g, '');
+      if (bid && bid === id) {
+        n++;
+        break;
+      }
+    }
+  }
+  return n;
+}
+
 /**
  * Create a QBO BillPayment (pay vendor bills from a bank or credit-card account).
  * body: vendorQboId, bankAccountQboId, payType ('Check' | 'CreditCard'), txnDate?, privateNote?, checkNum?, lines: [{ billId, amount }]
  */
 async function qboCreateBillPaymentFromApp(body) {
+  const erp = readErp();
   const vendorQboId = String(body?.vendorQboId || '').trim();
   const bankAccountQboId = String(body?.bankAccountQboId || '').trim();
   const payType = String(body?.payType || 'Check').trim();
@@ -1800,11 +1820,28 @@ async function qboCreateBillPaymentFromApp(body) {
   sum = qboMoneyRound(sum);
   if (!(sum > 0)) throw new Error('Total payment must be greater than 0');
 
+  const primaryBillId = String(rawLines[0]?.billId || '').trim();
+  const primaryBillDoc = String(lineLog[0]?.billDocNumber || '').trim();
+  const baseDoc =
+    sanitizeQboDocNumber(primaryBillDoc) ||
+    sanitizeQboDocNumber(`B-${primaryBillId.replace(/\D/g, '')}`) ||
+    `B${primaryBillId.replace(/\D/g, '')}`;
+  const prior = countPriorBillPaymentsForBill(erp, primaryBillId);
+  let docNumber = baseDoc;
+  if (prior > 0) {
+    const suffix = `-${prior}`;
+    const maxBase = Math.max(1, 21 - suffix.length);
+    docNumber = (baseDoc.slice(0, maxBase) + suffix).slice(0, 21);
+  } else {
+    docNumber = String(docNumber).slice(0, 21);
+  }
+
   const payload = {
     VendorRef: { value: vendorQboId },
     TxnDate: txnDate,
     TotalAmt: sum,
-    Line: linePayloads
+    Line: linePayloads,
+    DocNumber: docNumber
   };
   if (privateNote) payload.PrivateNote = privateNote;
 
@@ -6113,6 +6150,7 @@ app.post('/api/work-orders', (req, res) => {
       vendorWorkOrderNumber: body.vendorWorkOrderNumber || '',
       vendor: body.vendor || '',
       qboVendorId: body.qboVendorId || '',
+      serviceType: String(body.serviceType || '').trim(),
       repairLocationType: body.repairLocationType || '',
       isInternalWorkOrder: !!body.isInternalWorkOrder,
       paymentMethodId: body.paymentMethodId || '',

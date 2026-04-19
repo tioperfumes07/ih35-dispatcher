@@ -2538,59 +2538,42 @@
               <div class="acct-dash-kpi__sub" id="acctBoardKpiUnreconciledSub">Needs review</div>
             </div>
           </div>
-          <div class="acct-dash-cards">
-            <div class="acct-dash-card">
-              <div class="acct-dash-card__head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span>Maintenance expenses</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this card">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Totals refresh on load. <strong>View all</strong> → maint expenses tab; <strong>Post pending to QBO</strong> → staged lines already in QuickBooks.
-                  </span>
-                </span>
-              </div>
-              <p class="mini-note" id="acctCardMaintSum" style="margin:0;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
-              <div class="acct-dash-card__btnrow">
-                <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">View all</button>
-                <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="acctScrollToPendingPost()">Post pending to QBO</button>
-              </div>
-            </div>
-            <div class="acct-dash-card">
-              <div class="acct-dash-card__head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span>Fuel &amp; DEF</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel &amp; DEF workspace">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Manual diesel/DEF, <strong>Upload center</strong> imports, preview → post — all on <strong>Fuel &amp; DEF</strong>.
-                  </span>
-                </span>
-              </div>
-              <div class="acct-dash-card__btnrow">
-                <button type="button" class="acct-dash-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">View all</button>
-                <button type="button" class="acct-dash-btn acct-dash-btn--primary" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">New fuel entry</button>
+          <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
+          <div class="acct-entry-board">
+            <div class="acct-entry-board__col">
+              <div class="acct-entry-board__title">New entry <span class="erp-help-tip" style="margin-left:4px">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Same flows as + New">?</button>
+                <span class="erp-help-tip__panel" role="tooltip">Opens the dedicated accounting composer in a modal — same actions as <strong>+ New</strong> (maintenance / fuel / bills).</span>
+              </span></div>
+              <div class="acct-entry-list" role="list">
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewExpense()">Standard expense</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewBill()">Standard bill</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewPayBills()">Pay bills</button>
               </div>
             </div>
-            <div class="acct-dash-card">
-              <div class="acct-dash-card__head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span>QuickBooks sync</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QuickBooks sync shortcuts">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Refresh lists</strong> → vendors/items/accounts. <strong>Test connection</strong> → OAuth. <strong>QBO rollback &amp; imports</strong> → batches + rewinds (full panels on those tabs).
-                  </span>
-                </span>
+            <div class="acct-entry-board__col">
+              <div class="acct-entry-board__title">Saved lists &amp; posting</div>
+              <div class="acct-entry-list acct-entry-list--dense" role="list">
+                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--secondary" role="listitem" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Maintenance expenses (saved)</button>
+                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--secondary" role="listitem" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF</button>
+                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--secondary" role="listitem" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Pay bills (workspace)</button>
+                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--accent" role="listitem" onclick="acctScrollToPendingPost()">Post pending to QuickBooks</button>
               </div>
-              <div class="acct-dash-card__btnrow">
+              <div class="acct-board-qbo-inline">
+                <span class="acct-board-qbo-inline__label">QuickBooks</span>
                 <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
                 <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
               </div>
               <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-                <span style="min-width:0;flex:1 1 180px">Up to three QBO sync error titles show below when the payload has alerts.</span>
+                <span style="min-width:0;flex:1 1 180px">Up to three sync error titles when the payload has alerts.</span>
                 <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accounting dash QBO errors">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>: up to three escaped titles from sync cache. <strong>View all errors</strong> → <code>#qboSyncAlertBar</code>.
-                  </span>
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO errors on dash">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip"><code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>. <strong>View all errors</strong> → sync alert bar.</span>
                 </span>
               </div>
               <div id="acctDashQboErrList" class="acct-qbo-err-list" aria-live="polite"></div>
@@ -2604,16 +2587,8 @@
                 View all errors
               </button>
             </div>
-            <div class="acct-dash-card">
-              <div class="acct-dash-card__head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span>Tools &amp; data</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tools on this card">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Shortcuts to banking, QBO connect, catalogs, settings, uploads, Samsara — same destinations as elsewhere, grouped for desk work.
-                  </span>
-                </span>
-              </div>
+            <div class="acct-entry-board__col acct-entry-board__col--tools">
+              <div class="acct-entry-board__title">Tools &amp; data</div>
               <div class="acct-dash-tools-grid">
                 <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
                 <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
@@ -2729,6 +2704,20 @@
                     <div class="ap-exp-field ap-exp-field--unit">
                       <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
                       <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
+                    </div>
+                    <div class="ap-exp-field">
+                      <span class="qb-l">Service type / description</span>
+                      <input
+                        id="apServiceSearchInput"
+                        class="qb-in"
+                        list="serviceOptions"
+                        placeholder="Service type (catalog + free text)"
+                        autocomplete="off"
+                        oninput="resolveApServiceSearch()"
+                        onblur="resolveApServiceSearch()"
+                        title="Same as work order — types of services performed"
+                      />
+                      <input id="apServiceTypeInput" type="hidden" />
                     </div>
                     <div class="ap-exp-field">
                       <span class="qb-l">Payment method</span>
@@ -6402,14 +6391,19 @@
       if (ev.key !== 'Enter') return;
       const host = document.getElementById('maintNotesNumberedRows');
       if (!host) return;
-      const lines = host.querySelectorAll('.maint-notes-line__in');
-      const last = lines[lines.length - 1];
-      if (!last || ev.target !== last) return;
+      const rowEls = [...host.querySelectorAll('.maint-notes-line')];
+      const idx = rowEls.findIndex(row => row.contains(ev.target));
+      if (idx < 0) return;
       ev.preventDefault();
-      const n = lines.length + 1;
-      host.appendChild(maintNotesCreateLineRow(n, ''));
-      const next = host.querySelector(`.maint-notes-line:nth-child(${n}) .maint-notes-line__in`);
-      if (next) next.focus();
+      const values = rowEls.map(row => row.querySelector('.maint-notes-line__in')?.value ?? '');
+      values.splice(idx + 1, 0, '');
+      host.innerHTML = '';
+      values.forEach((text, i) => {
+        host.appendChild(maintNotesCreateLineRow(i + 1, text));
+      });
+      maintNotesSyncToTextarea();
+      const focusInp = host.querySelector(`.maint-notes-line:nth-child(${idx + 2}) .maint-notes-line__in`);
+      if (focusInp) focusInp.focus();
     }
     function maintNotesSetFromString(raw) {
       const host = document.getElementById('maintNotesNumberedRows');
@@ -6449,6 +6443,7 @@
       );
       const svcWide = __servicePresetList.length ? __servicePresetList : DEFAULT_MAINT_SERVICE_TYPES;
       styleFieldToLongest('serviceSearchInput', svcWide, 40);
+      styleFieldToLongest('apServiceSearchInput', svcWide, 40);
       ['recordTypeSelect', 'repairLocationSelect', 'repairLocationSearch', 'linkedTxnTypeSelect'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.width = 'min(100%, 28ch)';
@@ -13637,6 +13632,13 @@
       document.getElementById('apVendorQboId').value = match ? match.qboId : '';
     }
 
+    function resolveApServiceSearch() {
+      const inp = document.getElementById('apServiceSearchInput');
+      const hid = document.getElementById('apServiceTypeInput');
+      if (!inp || !hid) return;
+      hid.value = inp.value.trim();
+    }
+
     function resolveApItemSearch() {
       const raw = document.getElementById('apItemSearch').value;
       const match = findBestNameMatch(cacheItems(), raw);
@@ -15533,6 +15535,10 @@
       if (apPdfIn) apPdfIn.value = '';
       const apPdfSt = document.getElementById('apInvoicePdfStatus');
       if (apPdfSt) apPdfSt.textContent = '';
+      const aps = document.getElementById('apServiceSearchInput');
+      const apsh = document.getElementById('apServiceTypeInput');
+      if (aps) aps.value = '';
+      if (apsh) apsh.value = '';
       clearWoLines();
       syncApDocTitle();
       refreshApDocTotal();
@@ -16030,9 +16036,9 @@
           pending$ += Number(ap.amount) || 0;
         }
       });
-      const sumEl = document.getElementById('acctCardMaintSum');
+      const sumEl = document.getElementById('acctBoardPendingSummary');
       if (sumEl) {
-        sumEl.textContent = String(pendingN) + ' pending · $' + pending$.toFixed(2) + ' total';
+        sumEl.textContent = String(pendingN) + ' pending · $' + pending$.toFixed(2) + ' total (not yet in QuickBooks)';
       }
     }
 
@@ -17432,6 +17438,13 @@
       document.getElementById('apInternalWorkOrderNumber').value = woNo || '';
       document.getElementById('apLoadInvoiceNumber').value = loadNo || '';
       document.getElementById('apMemo').value = memo || '';
+      const svcIn = document.getElementById('serviceSearchInput');
+      const apSvc = document.getElementById('apServiceSearchInput');
+      const apSvcH = document.getElementById('apServiceTypeInput');
+      if (apSvc && svcIn) {
+        apSvc.value = svcIn.value.trim();
+        if (apSvcH) apSvcH.value = (document.getElementById('serviceTypeInput')?.value || apSvc.value).trim();
+      }
 
       const catHost = document.getElementById('apWoCatHost');
       const itemHost = document.getElementById('apWoItemHost');
@@ -19638,6 +19651,7 @@
           dueDate: document.getElementById('apDueDate').value,
           qboTermId: document.getElementById('apQboTermId')?.value || '',
           qboVendorId: vendorId,
+          serviceType: (document.getElementById('apServiceTypeInput')?.value || document.getElementById('apServiceSearchInput')?.value || '').trim(),
           paymentMethodId: document.getElementById('apPaymentMethodId').value,
           qboBankAccountId: document.getElementById('apBankAccountQboId').value,
           loadNumber: loadInv,
