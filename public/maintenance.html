@@ -6041,9 +6041,16 @@
           for (const r of list) {
             const svc = String(r.serviceType || '').trim() || '—';
             const st = String(r.qboSyncStatus || r.syncStatus || 'local').trim();
-            html += `<li><strong>${escapeHtml(r.unit || '')}</strong> — ${escapeHtml(svc)} <span class="mini-note">· ${escapeHtml(
+            const rid = escapeHtml(String(r.id || ''));
+            const rs = String(r.repairStatus || '').trim();
+            const rsVal = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
+            const rsSel = `<select class="qb-in maint-loc-record-repair-status" style="font-size:12px;max-width:210px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select>`;
+            const ts = r.repairStatusAt
+              ? escapeHtml(String(r.repairStatusAt).slice(0, 19).replace('T', ' '))
+              : '—';
+            html += `<li style="margin-bottom:6px"><strong>${escapeHtml(r.unit || '')}</strong> — ${escapeHtml(svc)} <span class="mini-note">· ${escapeHtml(
               st
-            )} · ${escapeHtml(String(r.serviceDate || '').slice(0, 10))}</span></li>`;
+            )} · ${escapeHtml(String(r.serviceDate || '').slice(0, 10))}</span><div style="margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px">${rsSel}<span class="mini-note">Recorded ${ts}</span></div></li>`;
           }
           html += '</ul>';
         }
@@ -13122,6 +13129,35 @@
       return true;
     }
 
+    async function patchMaintRecordRepairStatus(recordId, nextStatus, selectEl) {
+      const prev = selectEl ? String(selectEl.dataset.prevRepairStatus || '') : '';
+      try {
+        const out = await j('/api/maintenance/record/' + encodeURIComponent(recordId) + '/repair-status', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ repairStatus: nextStatus })
+        });
+        if (out && out.ok && out.record) {
+          const ix = (erp.records || []).findIndex(x => String(x.id) === String(recordId));
+          if (ix >= 0) erp.records[ix] = out.record;
+          renderMaintLocationBoard();
+          showErpToast('Repair status saved.', 'success');
+        }
+      } catch (e) {
+        erpNotify(e.message || String(e), 'error');
+        if (selectEl) selectEl.value = prev;
+      } finally {
+        if (selectEl) selectEl.dataset.prevRepairStatus = selectEl.value;
+      }
+    }
+
+    function onMaintRecordRepairStatusSelect(el) {
+      if (!el) return;
+      const id = el.getAttribute('data-record-id');
+      if (!id) return;
+      patchMaintRecordRepairStatus(id, el.value, el);
+    }
+
     async function onShopQueueStatusSelect(el) {
       const id = el.getAttribute('data-shop-id');
       const v = el.value;
@@ -16795,6 +16831,30 @@
       bindMaintCostPartDelegation();
       refreshMaintCostLineIndices();
       recalcMaintCostTotalFromLines();
+    }
+
+    function formatMaintRepairStatusMeta(r) {
+      const meta = document.getElementById('recordRepairStatusMeta');
+      if (!meta) return;
+      if (!r) {
+        meta.textContent = '';
+        return;
+      }
+      const at = String(r.repairStatusAt || '').trim();
+      const by = String(r.repairStatusBy || '').trim();
+      if (!at && !by) {
+        meta.textContent = '';
+        return;
+      }
+      let d = '';
+      if (at) {
+        try {
+          d = new Date(at).toLocaleString();
+        } catch (_) {
+          d = at.slice(0, 19);
+        }
+      }
+      meta.textContent = [d && `Last change ${d}`, by && `· ${by}`].filter(Boolean).join(' ');
     }
 
     function hydrateMaintenanceRecordForm(r) {
