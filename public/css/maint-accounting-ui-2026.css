@@ -506,25 +506,25 @@ body.erp-app .erp-module-sidebar .erp-sb-group:not(.is-open) .erp-sb-group__body
   padding-bottom: 0;
 }
 
-/* --- Topbar title (Change 7) — colors from blue shell in erp-master-redesign --- */
+/* --- Topbar title — dark text on shell bar (readability) --- */
 body.erp-maintenance .erp-topbar .title {
   font-size: 15px;
   font-weight: 500;
-  color: var(--erp-shell-bar-text);
+  color: var(--color-text-primary);
   min-width: 0;
   min-height: 0;
 }
 
 body.erp-maintenance .erp-topbar .topbar-home-link {
   font-size: 13px;
-  color: var(--erp-shell-bar-muted);
+  color: var(--color-text-body);
   margin-left: 12px;
   text-decoration: none;
   cursor: pointer;
 }
 
 body.erp-maintenance .erp-topbar .topbar-home-link:hover {
-  color: var(--erp-shell-bar-text);
+  color: var(--color-text-primary);
   text-decoration: underline;
 }
 
@@ -583,6 +583,53 @@ body.erp-maintenance #section-catalog .panel-head > div {
 body.erp-maintenance #section-catalog .catalog-subpanel > div:first-child {
   min-width: 0;
   min-height: 0;
+}
+
+/* --- Attachment upload zones (Accounting / maintenance / fuel) --- */
+body.erp-maintenance .erp-qbo-attach-zone {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-border-input);
+  border-radius: var(--radius-input, 8px);
+  background: var(--color-bg-hover);
+}
+body.erp-maintenance .erp-qbo-attach-zone .qb-l {
+  display: block;
+  margin-bottom: 6px;
+}
+body.erp-maintenance .erp-qbo-attach-zone__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+body.erp-maintenance .erp-qbo-attach-zone__cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+body.erp-maintenance .erp-qbo-attach-zone__hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--color-text-label);
+}
+body.erp-maintenance .erp-qbo-attach-zone__list {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+}
+body.erp-maintenance .maint-qb-cost-details__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+body.erp-maintenance .maint-cost-addline--clear,
+body.erp-maintenance .qb-btn-add.maint-line-clear {
+  color: var(--color-text-label);
+  font-weight: 500;
 }
 
 /* Rule 1: reports tile hub (spec flex/grid) — shrink inside .erp-reports-main. */

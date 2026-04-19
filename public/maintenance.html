@@ -1304,6 +1304,7 @@
                         </div>
                         <div class="maint-qb-cost-details__actions">
                           <button type="button" class="maint-cost-addline" onclick="addMaintCategoryCostLine()">+ Add category line</button>
+                          <button type="button" class="maint-cost-addline maint-cost-addline--clear" onclick="clearMaintCategoryCostLines()">Clear category lines</button>
                         </div>
                       </details>
                       <details class="maint-qb-cost-details" id="maintCostItemDetails">
@@ -16240,6 +16241,16 @@
               <div class="record-head">
                 <div><b>${escapeHtml(r.serviceType)}</b> <span class="mini-note">(${escapeHtml(r.recordType || 'maintenance')})</span></div>
                 <div><span class="${statusClass(r.qboSyncStatus || 'current')}">${escapeHtml(r.qboSyncStatus || 'not posted')}</span></div>
+              </div>
+              <div class="mini-note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px">
+                <span>Repair workflow:</span>
+                <select class="qb-in maint-unit-hist-repair-status" style="font-size:12px;max-width:210px" data-record-id="${escapeHtml(String(r.id || ''))}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)">
+                  <option value="" ${!['queued', 'in_progress', 'finished'].includes(String(r.repairStatus || '').trim()) ? 'selected' : ''}>— Not set —</option>
+                  <option value="queued" ${String(r.repairStatus || '').trim() === 'queued' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('queued'))}</option>
+                  <option value="in_progress" ${String(r.repairStatus || '').trim() === 'in_progress' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('in_progress'))}</option>
+                  <option value="finished" ${String(r.repairStatus || '').trim() === 'finished' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('finished'))}</option>
+                </select>
+                <span class="mini-note">${r.repairStatusAt ? escapeHtml(String(r.repairStatusAt).slice(0, 19).replace('T', ' ')) : '—'}${r.repairStatusBy ? ' · ' + escapeHtml(String(r.repairStatusBy)) : ''}</span>
               </div>
               <div class="mini-note">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
               ${r.loadNumber ? `<div class="mini-note">Load / invoice #: ${escapeHtml(r.loadNumber)}</div>` : ''}
