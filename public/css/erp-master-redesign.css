@@ -1629,8 +1629,45 @@ body.dispatch-page textarea.stop-addr {
   border-radius: var(--radius-input);
 }
 
+body.dispatch-page .ac-wrap {
+  position: relative;
+}
+
 body.dispatch-page .ac-list {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 6000;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-input);
+  max-height: 200px;
+  overflow: auto;
+  box-shadow: var(--shadow-dropdown);
+}
+
+body.dispatch-page .ac-list.on {
+  display: block;
+}
+
+body.dispatch-page .ac-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+body.dispatch-page .ac-item:hover {
+  background: var(--accent-soft);
+}
+
+body.dispatch-page .stops-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 body.dispatch-page .stop-miles-summary {
