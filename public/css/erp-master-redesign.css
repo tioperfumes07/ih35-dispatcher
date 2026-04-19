@@ -202,6 +202,9 @@ body.erp-maintenance .erp-module-sidebar__brand-title {
   flex: 1;
   min-width: 0;
   line-height: 1.25;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
 
 body.erp-maintenance .erp-module-sidebar__collapse {
@@ -335,7 +338,7 @@ body.erp-maintenance .erp-topbar.topbar {
 body.erp-maintenance .erp-topbar .title {
   font-size: 16px;
   font-weight: 500;
-  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  color: var(--color-text-primary);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -361,7 +364,7 @@ body.erp-maintenance .erp-topbar__actions {
 
 body.erp-maintenance .erp-topbar .topbar-home-link {
   font-weight: 500;
-  color: var(--erp-maint-chrome-muted, var(--color-text-label));
+  color: var(--color-text-body);
   font-size: 13px;
   max-width: min(100%, 22rem);
   white-space: nowrap;
@@ -370,28 +373,28 @@ body.erp-maintenance .erp-topbar .topbar-home-link {
 }
 
 body.erp-maintenance .erp-topbar .topbar-home-link:hover {
-  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  color: var(--color-text-primary);
   text-decoration: underline;
 }
 
 body.erp-maintenance .erp-topbar .topbar-hint {
-  color: var(--erp-maint-chrome-muted, var(--color-text-label));
+  color: var(--color-text-label);
   font-size: 12px;
 }
 
 body.erp-maintenance .erp-topbar .topbar-hint strong {
-  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  color: var(--color-text-primary);
   font-weight: 500;
 }
 
 body.erp-maintenance .erp-topbar .mini-note {
-  color: var(--erp-maint-chrome-muted, var(--color-text-label)) !important;
+  color: var(--color-text-label) !important;
 }
 
 body.erp-maintenance .erp-topbar .erp-help-tip__btn {
   border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
   background: var(--erp-maint-strip-box-bg, var(--color-bg-card));
-  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  color: var(--color-text-primary);
   box-shadow: var(--erp-maint-strip-box-shadow, none);
 }
 
@@ -615,7 +618,7 @@ body.erp-maintenance .erp-topbar .qb-in {
   border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
   font-size: var(--erp-maint-strip-font-size, 12px);
   background: var(--color-bg-card);
-  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  color: var(--color-text-primary);
   box-shadow: var(--erp-maint-strip-box-shadow, none);
 }
 
@@ -631,7 +634,7 @@ body.erp-maintenance .erp-topbar .print-hide-actions button {
   border-radius: 6px;
   border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
   background: var(--erp-maint-strip-box-bg, var(--color-bg-card));
-  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  color: var(--color-text-primary);
   font-size: var(--erp-maint-strip-font-size, 12px);
   font-weight: 500;
   box-shadow: var(--erp-maint-strip-box-shadow, none);
