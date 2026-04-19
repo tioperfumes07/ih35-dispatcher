@@ -1189,7 +1189,7 @@
                     <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div class="maint-field-cell">
                         <span class="qb-l">Repair status</span>
-                        <select id="recordRepairStatusSelect" class="qb-in maint-field" title="Workflow status stored on this maintenance record">
+                        <select id="recordRepairStatusSelect" class="qb-in maint-field" title="Workflow status stored on this maintenance record" onchange="renderMaintAsideWoSummary()">
                           <option value="">— Not set —</option>
                           <option value="queued">Awaiting service</option>
                           <option value="in_progress">In progress</option>
@@ -6821,7 +6821,7 @@
           if (typ !== 'all' && rt !== typ) return false;
           if (!q) return true;
           const pwHay = plannedWorkDescriptionsFromRecord(r).join(' ');
-          const hay = `${r.serviceType || ''} ${r.vendor || ''} ${r.vendorInvoiceNumber || ''} ${r.workOrderNumber || ''} ${r.notes || ''} ${r.loadNumber || ''} ${pwHay}`.toLowerCase();
+          const hay = `${r.serviceType || ''} ${r.vendor || ''} ${r.vendorInvoiceNumber || ''} ${r.workOrderNumber || ''} ${r.notes || ''} ${r.loadNumber || ''} ${r.repairStatus || ''} ${pwHay}`.toLowerCase();
           return hay.includes(q);
         })
         .slice()
@@ -6878,11 +6878,17 @@
           ? `<div style="display:grid;gap:8px;margin-top:10px">${lines.map(lineHtml).join('')}</div>`
           : `<div class="mini-note" style="margin-top:8px">No cost breakdown lines saved on this record.</div>`;
         const plannedBlock = formatPlannedWorkHtmlCard(r);
+        const rs = maintRepairStatusLabel(r.repairStatus);
+        const rsLine =
+          r.repairStatusAt || r.repairStatusBy
+            ? `<div class="mini-note" style="margin-top:2px">Repair workflow: <strong>${escapeHtml(rs)}</strong>${r.repairStatusAt ? ` · ${escapeHtml(String(r.repairStatusAt).slice(0, 19))}` : ''}${r.repairStatusBy ? ` · ${escapeHtml(String(r.repairStatusBy))}` : ''}</div>`
+            : `<div class="mini-note" style="margin-top:2px">Repair workflow: <strong>${escapeHtml(rs)}</strong></div>`;
         return `<div style="border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-card);padding:12px;margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
               <div style="min-width:260px;flex:1">
                 <div style="font-weight:500">${u} · ${d}</div>
                 <div style="margin-top:4px">${svc}</div>
+                ${rsLine}
                 <div class="mini-note" style="margin-top:4px">${vendor}${inv ? ` · Inv # ${inv}` : ''}${wo ? ` · WO # ${wo}` : ''}</div>
               </div>
               <div style="text-align:right;min-width:140px">
@@ -9051,11 +9057,14 @@
           ? '$' + costNum.toFixed(2)
           : '—';
       const loc = (document.getElementById('repairLocationSearch')?.value || '').trim() || '—';
+      const rsRaw = String(document.getElementById('recordRepairStatusSelect')?.value || '').trim();
+      const repair = maintRepairStatusLabel(rsRaw);
       const inner = `
         <span class="kv"><span class="kv-l">Unit:</span><span class="kv-v">${escapeHtml(unit)}</span></span>
         <span class="kv"><span class="kv-l">WO #:</span><span class="kv-v">${escapeHtml(wo)}</span></span>
         <span class="kv"><span class="kv-l">Total:</span><span class="kv-v">${escapeHtml(cost)}</span></span>
-        <span class="kv"><span class="kv-l">Location:</span><span class="kv-v">${escapeHtml(loc)}</span></span>`;
+        <span class="kv"><span class="kv-l">Location:</span><span class="kv-v">${escapeHtml(loc)}</span></span>
+        <span class="kv"><span class="kv-l">Repair:</span><span class="kv-v">${escapeHtml(repair)}</span></span>`;
       if (host) host.innerHTML = inner;
       if (bar) {
         if (!selectedUnit) bar.classList.add('hidden');
@@ -13141,6 +13150,7 @@
           const ix = (erp.records || []).findIndex(x => String(x.id) === String(recordId));
           if (ix >= 0) erp.records[ix] = out.record;
           renderMaintLocationBoard();
+          if (String(out.record.unit || '') === String(selectedUnit || '')) renderUnitHistory();
           showErpToast('Repair status saved.', 'success');
         }
       } catch (e) {
@@ -16834,6 +16844,14 @@
       bindMaintCostPartDelegation();
       refreshMaintCostLineIndices();
       recalcMaintCostTotalFromLines();
+    }
+
+    function maintRepairStatusLabel(s) {
+      const v = String(s || '').trim();
+      if (v === 'queued') return 'Awaiting service';
+      if (v === 'in_progress') return 'In progress';
+      if (v === 'finished') return 'Completed';
+      return v ? v : '—';
     }
 
     function formatMaintRepairStatusMeta(r) {
