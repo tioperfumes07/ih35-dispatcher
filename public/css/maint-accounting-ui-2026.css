@@ -1830,7 +1830,7 @@ body.erp-maintenance .maint-qb-cost-details__actions {
 
 body.erp-maintenance .maint-qb-cost-totals-bar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
@@ -2167,19 +2167,33 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
 
 @media (min-width: 1100px) {
   body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
-    grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.85fr);
-    gap: 14px 16px;
+    grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.55fr);
+    gap: 14px 20px;
+    justify-items: stretch;
+  }
+
+  body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split > .maint-cost-panel-card {
+    justify-self: center;
+    max-width: min(100%, 980px);
+    width: 100%;
   }
 
   body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split > .maint-subcard:not(.maint-cost-panel-card) {
     position: sticky;
     top: 8px;
     align-self: start;
+    max-width: 100%;
   }
 }
 
 body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split .maint-cost-panel-card {
   min-width: 0;
+}
+
+body.erp-maintenance #maintWorkOrderFormMount .erp-qb-cost-shell .maint-subcard__head--split {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 body.erp-maintenance #maintWorkOrderFormMount .maint-subcard,
@@ -2243,36 +2257,46 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-field--catalog {
   box-sizing: border-box;
 }
 
-body.erp-maintenance #maintWorkOrderFormMount .maint-notes-numbered-host {
+body.erp-maintenance #maintWorkOrderFormMount .maint-notes-slots-wrap {
   width: 100%;
   min-width: 0;
 }
 
-body.erp-maintenance #maintWorkOrderFormMount .maint-notes-numbered-rows {
+body.erp-maintenance #maintWorkOrderFormMount .maint-notes-slots {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
 }
 
-body.erp-maintenance #maintWorkOrderFormMount .maint-notes-line {
+body.erp-maintenance #maintWorkOrderFormMount .maint-notes-slot {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   min-width: 0;
+  margin: 0;
 }
 
-body.erp-maintenance #maintWorkOrderFormMount .maint-notes-line__num {
-  flex: 0 0 1.5rem;
+body.erp-maintenance #maintWorkOrderFormMount .maint-notes-slot__num {
+  flex: 0 0 1.25rem;
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-label);
   text-align: right;
+  line-height: 1.35;
+  padding-top: 7px;
 }
 
-body.erp-maintenance #maintWorkOrderFormMount .maint-notes-line__in {
+body.erp-maintenance #maintWorkOrderFormMount textarea.maint-note-slot {
   flex: 1;
   min-width: 0;
+  min-height: 2.5rem;
+  max-height: 6.5rem;
+  resize: vertical;
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 6px 8px;
+  box-sizing: border-box;
 }
 
 body.erp-maintenance #maintWorkOrderFormMount textarea.maint-notes--serialized {

@@ -1417,9 +1417,17 @@
                     </span>
                   </div>
                   <div id="maintInvoicePdfStatus" class="mini-note maint-field-hint"></div>
-                  <div id="maintNotesNumberedHost" class="maint-notes-numbered-host">
-                    <p class="mini-note maint-notes-numbered-hint" style="margin:0 0 8px;color:var(--color-text-label)">Notes — press <strong>Enter</strong> on the last line to add another.</p>
-                    <div id="maintNotesNumberedRows" class="maint-notes-numbered-rows" aria-label="Work order notes"></div>
+                  <div id="maintNotesSlotsWrap" class="maint-notes-slots-wrap">
+                    <p class="mini-note maint-notes-slots-hint" style="margin:0 0 8px;color:var(--color-text-label)">
+                      Notes <strong>1–5</strong> — use <strong>Enter</strong> for a new line inside the same note.
+                    </p>
+                    <div id="maintNotesSlots" class="maint-notes-slots" aria-label="Work order notes">
+                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">1.</span><textarea id="maintNoteSlot1" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 1"></textarea></label>
+                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">2.</span><textarea id="maintNoteSlot2" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 2"></textarea></label>
+                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">3.</span><textarea id="maintNoteSlot3" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 3"></textarea></label>
+                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">4.</span><textarea id="maintNoteSlot4" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 4"></textarea></label>
+                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">5.</span><textarea id="maintNoteSlot5" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 5"></textarea></label>
+                    </div>
                   </div>
                   <textarea id="notesInput" class="qb-memo maint-notes maint-notes--serialized" tabindex="-1" aria-label="Notes (serialized)" rows="1"></textarea>
                     </div>
@@ -5991,9 +5999,11 @@
             .map(e => {
               const st = String(e.status || 'queued');
               const overdue = e.overdue ? ' <span style="color:var(--color-semantic-warn-accent);font-weight:500">(past est.)</span>' : '';
+              const sid = escapeHtml(String(e.id || ''));
+              const sel = `<select class="qb-in maint-loc-queue-status" style="font-size:12px;max-width:220px;${e.overdue ? 'border-color:var(--color-semantic-warn-accent)' : ''}" data-shop-id="${sid}" data-prev-status="${escapeHtml(st)}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)"><option value="queued" ${st === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${st === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${st === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select>`;
               return `<tr><td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(
                 e.assetCategory || ''
-              )}</div></td><td>${escapeHtml(e.title || '')}${overdue}</td><td>${escapeHtml(statusLabel(st))}</td><td>${escapeHtml(
+              )}</div></td><td>${escapeHtml(e.title || '')}${overdue}</td><td>${sel}</td><td>${escapeHtml(
                 e.vendorHint || ''
               )}</td><td class="mini-note">${escapeHtml(fmtIso(e.queuedAt))}</td></tr>`;
             })
@@ -6366,72 +6376,49 @@
       el.style.width = `min(100%, ${ch}ch)`;
     }
 
-    const MAINT_NOTES_INITIAL_LINES = 5;
+    const MAINT_NOTES_SEP = '\x1e';
+
+    function maintNotesSlotEls() {
+      return [1, 2, 3, 4, 5].map(n => document.getElementById('maintNoteSlot' + n)).filter(Boolean);
+    }
+
     function maintNotesSyncToTextarea() {
-      const host = document.getElementById('maintNotesNumberedRows');
       const ta = document.getElementById('notesInput');
       if (!ta) return;
-      if (!host || !host.querySelector('.maint-notes-line__in')) {
-        return;
-      }
-      const lines = [...host.querySelectorAll('.maint-notes-line__in')].map(i => String(i.value || '').trimEnd());
-      ta.value = lines.join('\n');
+      const slots = maintNotesSlotEls();
+      if (slots.length !== 5) return;
+      ta.value = slots.map(el => String(el.value || '')).join(MAINT_NOTES_SEP);
     }
-    function maintNotesCreateLineRow(num, value) {
-      const wrap = document.createElement('div');
-      wrap.className = 'maint-notes-line';
-      wrap.dataset.lineIx = String(num);
-      const lab = document.createElement('span');
-      lab.className = 'maint-notes-line__num';
-      lab.setAttribute('aria-hidden', 'true');
-      lab.textContent = num + '.';
-      const inp = document.createElement('input');
-      inp.type = 'text';
-      inp.className = 'qb-in maint-field maint-notes-line__in';
-      inp.value = value || '';
-      inp.autocomplete = 'off';
-      inp.addEventListener('input', maintNotesSyncToTextarea);
-      inp.addEventListener('keydown', maintNotesOnLineKeydown);
-      wrap.appendChild(lab);
-      wrap.appendChild(inp);
-      return wrap;
-    }
-    function maintNotesOnLineKeydown(ev) {
-      if (ev.key !== 'Enter') return;
-      const host = document.getElementById('maintNotesNumberedRows');
-      if (!host) return;
-      const rowEls = [...host.querySelectorAll('.maint-notes-line')];
-      const idx = rowEls.findIndex(row => row.contains(ev.target));
-      if (idx < 0) return;
-      ev.preventDefault();
-      const values = rowEls.map(row => row.querySelector('.maint-notes-line__in')?.value ?? '');
-      values.splice(idx + 1, 0, '');
-      host.innerHTML = '';
-      values.forEach((text, i) => {
-        host.appendChild(maintNotesCreateLineRow(i + 1, text));
-      });
-      maintNotesSyncToTextarea();
-      const focusInp = host.querySelector(`.maint-notes-line:nth-child(${idx + 2}) .maint-notes-line__in`);
-      if (focusInp) focusInp.focus();
-    }
+
     function maintNotesSetFromString(raw) {
-      const host = document.getElementById('maintNotesNumberedRows');
       const ta = document.getElementById('notesInput');
       const s = String(raw || '');
       if (ta) ta.value = s;
-      if (!host) return;
-      let parts = s.split(/\r?\n/);
-      while (parts.length < MAINT_NOTES_INITIAL_LINES) parts.push('');
-      host.innerHTML = '';
-      parts.forEach((text, i) => {
-        host.appendChild(maintNotesCreateLineRow(i + 1, text));
+      const slots = maintNotesSlotEls();
+      if (slots.length !== 5) return;
+      let parts;
+      if (s.indexOf(MAINT_NOTES_SEP) !== -1) {
+        parts = s.split(MAINT_NOTES_SEP);
+      } else {
+        const lines = s.split(/\r?\n/);
+        parts = ['', '', '', '', ''];
+        for (let i = 0; i < Math.min(5, lines.length); i++) parts[i] = lines[i];
+        if (lines.length > 5) parts[4] = lines.slice(4).join('\n');
+      }
+      while (parts.length < 5) parts.push('');
+      parts.slice(0, 5).forEach((text, i) => {
+        slots[i].value = text;
       });
       maintNotesSyncToTextarea();
     }
+
     function initMaintNotesNumbered() {
-      const host = document.getElementById('maintNotesNumberedRows');
-      if (!host || host.dataset.bound === '1') return;
-      host.dataset.bound = '1';
+      const wrap = document.getElementById('maintNotesSlots');
+      if (!wrap || wrap.dataset.bound === '1') return;
+      wrap.dataset.bound = '1';
+      maintNotesSlotEls().forEach(el => {
+        el.addEventListener('input', maintNotesSyncToTextarea);
+      });
       const ta = document.getElementById('notesInput');
       maintNotesSetFromString(ta ? ta.value : '');
     }
@@ -13117,6 +13104,7 @@
         if (ix >= 0) shopQueueCache[ix] = data.entry;
       }
       renderShopQueues();
+      renderMaintLocationBoard();
       return true;
     }
 
@@ -15690,20 +15678,10 @@
             ? Number(v.odometerMiles)
             : null;
 
-      let opLabel = String(opStatus || '').replace(/_/g, ' ') || '—';
-      for (const r of operationalCatalogRows()) {
-        const val = typeof r === 'object' ? String(r.value || '').trim() : String(r || '').trim();
-        if (val === opStatus) {
-          opLabel = (typeof r === 'object' ? String(r.label || r.value || val).trim() : val) || opLabel;
-          break;
-        }
-      }
-
       const ymm = [v.year, v.make, v.model].filter(Boolean).join(' ') || '—';
       const vin = v.vin || '—';
       const plate = v.licensePlate ? String(v.licensePlate) : '—';
       const odoStr = displayMi != null && Number.isFinite(displayMi) ? Math.round(displayMi).toLocaleString() : '—';
-      const pillClass = maintOperationalStatusPillClass(opStatus);
       const cardEl = document.getElementById('maintAssetHeaderCard');
       if (cardEl) {
         cardEl.innerHTML = `
@@ -15711,8 +15689,12 @@
             <div class="maint-asset-header-card__row">
               <div class="maint-asset-header-card__unit">${escapeHtml(v.name)}</div>
               <div class="maint-asset-header-card__ymm">${escapeHtml(ymm)}</div>
-              <span class="${pillClass}">${escapeHtml(opLabel)}</span>
-              <button type="button" class="btn btn--small" onclick="openMaintAssetStatusPanel()">Edit status</button>
+            </div>
+            <div class="maint-asset-header-card__row maint-asset-header-card__row--opquick">
+              <span class="qb-l" style="margin:0;align-self:center">Operational status</span>
+              <select id="maintAssetHeaderStatusSelect" class="qb-in maint-field" style="max-width:min(100%,18rem)">${opOpts}</select>
+              <button type="button" class="btn btn--small" onclick="saveAssetStatusFromHeader()">Save</button>
+              <button type="button" class="btn btn--small btn--ghost" onclick="openMaintAssetStatusPanel()">Note / history</button>
             </div>
             <div class="maint-asset-header-card__ids">
               <span>VIN ${escapeHtml(vin)}</span>
@@ -16524,6 +16506,27 @@
         });
         await loadAll();
         closeMaintAssetStatusPanel();
+      } catch (e) {
+        erpNotify(e.message || String(e), 'error');
+      }
+    }
+
+    async function saveAssetStatusFromHeader() {
+      if (!selectedUnit) return;
+      const sel = document.getElementById('maintAssetHeaderStatusSelect');
+      if (!sel) return;
+      try {
+        await j('/api/maintenance/asset-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            unit: selectedUnit,
+            status: sel.value,
+            note: ''
+          })
+        });
+        await loadAll();
+        showErpToast('Operational status saved.', 'success');
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
       }
