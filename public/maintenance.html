@@ -1187,6 +1187,20 @@
                       </div>
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
+                      <div class="maint-field-cell">
+                        <span class="qb-l">Repair status</span>
+                        <select id="recordRepairStatusSelect" class="qb-in maint-field" title="Workflow status stored on this maintenance record">
+                          <option value="">— Not set —</option>
+                          <option value="queued">Awaiting service</option>
+                          <option value="in_progress">In progress</option>
+                          <option value="finished">Completed</option>
+                        </select>
+                        <div id="recordRepairStatusMeta" class="mini-note" style="margin-top:4px" aria-live="polite"></div>
+                      </div>
+                      <div class="maint-field-cell"></div>
+                      <div class="maint-field-cell"></div>
+                    </div>
+                    <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div id="maintVendorInvFieldWrap" class="maint-field-cell">
                         <span class="qb-l" id="maintVendorInvLabel">Vendor invoice #</span>
                         <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="Supplier invoice" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />

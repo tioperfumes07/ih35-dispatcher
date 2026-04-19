@@ -5301,6 +5301,15 @@ function deriveMaintenanceRecordFields(body, prev) {
   const cost =
     costLines.length && costFromLines > 0 ? costFromLines : safeNum(body.cost, 0) || 0;
   const qboTxnType = String(body.qboTxnType || '').trim().toLowerCase() === 'bill' ? 'bill' : 'expense';
+  const repairStatus = (() => {
+    if (body && Object.prototype.hasOwnProperty.call(body, 'repairStatus')) {
+      return normalizeRepairStatus(body.repairStatus);
+    }
+    if (prev != null && prev.repairStatus !== undefined) {
+      return normalizeRepairStatus(prev.repairStatus);
+    }
+    return '';
+  })();
   const recordCore = {
     unit,
     recordType: String(body.recordType || 'maintenance').trim() || 'maintenance',
@@ -5334,7 +5343,8 @@ function deriveMaintenanceRecordFields(body, prev) {
     qboBankAccountId: String(body.qboBankAccountId || '').trim().slice(0, 64),
     qboTxnType,
     qboDueDate: String(body.qboDueDate || '').trim().slice(0, 32),
-    qboDocNumber: String(body.qboDocNumber || '').trim().slice(0, 64)
+    qboDocNumber: String(body.qboDocNumber || '').trim().slice(0, 64),
+    repairStatus
   };
   if (tireLineItems.length) recordCore.tireLineItems = tireLineItems;
   if (costLines.length) recordCore.costLines = costLines;
@@ -5345,7 +5355,7 @@ function deriveMaintenanceRecordFields(body, prev) {
 app.post('/api/maintenance/record', async (req, res) => {
   try {
     const body = req.body || {};
-    const { recordCore, cost } = deriveMaintenanceRecordFields(body);
+    const { recordCore, cost } = deriveMaintenanceRecordFields(body, null);
     const unit = recordCore.unit;
     if (!unit) return res.status(400).json({ error: 'unit is required' });
     const erp = readErp();
@@ -5359,6 +5369,7 @@ app.post('/api/maintenance/record', async (req, res) => {
       qboError: '',
       createdAt: new Date().toISOString()
     };
+    applyMaintenanceRepairStatusAudit(record, null, req);
     erp.records.push(record);
     const sm = safeNum(body.serviceMileage, null);
     if (sm != null && sm > 0) {
@@ -5426,7 +5437,7 @@ app.patch('/api/maintenance/record/:id', async (req, res) => {
     if (idx === -1) return res.status(404).json({ error: 'Maintenance record not found' });
     const prev = erp.records[idx];
 
-    const { recordCore, cost, plannedWork, costLines, tireLineItems } = deriveMaintenanceRecordFields(body);
+    const { recordCore, cost, plannedWork, costLines, tireLineItems } = deriveMaintenanceRecordFields(body, prev);
     const unit = recordCore.unit;
     if (!unit) return res.status(400).json({ error: 'unit is required' });
     if (String(prev.unit || '').trim() !== unit) {
@@ -5456,6 +5467,8 @@ app.patch('/api/maintenance/record/:id', async (req, res) => {
       record.qboSyncStatus = prev.qboSyncStatus || '';
       record.qboError = prev.qboError || '';
     }
+
+    applyMaintenanceRepairStatusAudit(record, prev, req);
 
     if (plannedWork.length) record.plannedWork = plannedWork;
     else delete record.plannedWork;
@@ -5507,6 +5520,27 @@ app.patch('/api/maintenance/record/:id', async (req, res) => {
     res.json({ ok: true, record, qbo });
   } catch (error) {
     logError('api/maintenance/record/:id PATCH', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/** Lightweight repair workflow status update (timestamps + history) without re-posting the full form. */
+app.patch('/api/maintenance/record/:id/repair-status', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const id = String(req.params.id || '').trim();
+    const erp = readErp();
+    if (!Array.isArray(erp.records)) erp.records = [];
+    const idx = erp.records.findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ error: 'Maintenance record not found' });
+    const prev = erp.records[idx];
+    const record = { ...prev, repairStatus: normalizeRepairStatus(body.repairStatus) };
+    applyMaintenanceRepairStatusAudit(record, prev, req);
+    erp.records[idx] = record;
+    writeErp(erp);
+    res.json({ ok: true, record });
+  } catch (error) {
+    logError('api/maintenance/record/:id/repair-status PATCH', error);
     res.status(500).json({ error: error.message });
   }
 });
