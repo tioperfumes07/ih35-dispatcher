@@ -516,6 +516,19 @@ body.erp-maintenance .erp-new-menu__tile:hover {
 body.erp-maintenance .erp-new-menu__tile--wide {
   grid-column: 1 / -1;
 }
+
+body.erp-maintenance .erp-new-menu__tile-grid--services {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.erp-maintenance .erp-new-menu__tile-grid--services .erp-new-menu__tile {
+  min-height: 56px;
+}
+
+body.erp-maintenance .erp-new-menu__tile-grid--services .erp-new-menu__tile:nth-child(5) {
+  grid-column: 1 / -1;
+}
+
 body.erp-maintenance .erp-new-menu__tile-sub {
   display: block;
   font-size: 10px;
@@ -580,6 +593,11 @@ body.erp-maintenance .maint-kpi-card {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   padding: 14px 16px;
+  min-height: 92px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 body.erp-maintenance .maint-kpi-card__label {
@@ -750,6 +768,10 @@ body.erp-maintenance .erp-main-body .subtab {
   padding: 10px 14px;
   margin: 0 2px 0 0;
   box-shadow: none;
+  min-height: 40px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
 }
 
 body.erp-maintenance .erp-main-body .subtab:hover {

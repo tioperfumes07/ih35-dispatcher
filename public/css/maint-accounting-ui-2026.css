@@ -14,15 +14,66 @@ body.erp-maintenance #section-maintenance .maint-page-shell {
 /* --- Action strip (same cool blue as top bar + left module sidebar) --- */
 body.erp-maintenance .maint-action-strip {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px 20px;
   background: var(--erp-sidebar-surface-bg);
   border-bottom: 1px solid var(--erp-sidebar-group-edge);
   flex-shrink: 0;
   min-width: 0;
   min-height: 0;
+}
+
+body.erp-maintenance .maint-action-strip__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  align-items: stretch;
+}
+
+body.erp-maintenance .maint-action-strip__tabs .maint-action-strip__btn {
+  flex: 1 1 0;
+  min-width: min(100%, 9rem);
+}
+
+body.erp-maintenance .maint-action-strip__fleet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-action-strip__pills {
+  flex: 1;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-action-strip__notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding-top: 2px;
+  border-top: 1px solid color-mix(in srgb, var(--erp-sidebar-group-edge) 85%, transparent);
+}
+
+body.erp-maintenance .maint-action-strip__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0;
+  line-height: 1.45;
+  color: var(--color-text-body);
+  font-size: 12px;
+}
+
+body.erp-maintenance .maint-action-strip__note--qbo {
+  color: var(--color-text-label);
 }
 
 body.erp-maintenance .maint-action-strip .mini-note {
@@ -141,14 +192,11 @@ body.erp-maintenance .maint-fleet-pill.active {
     0 0 0 1px color-mix(in srgb, var(--erp-maint-strip-box-active-border, #1557a0) 35%, transparent);
 }
 
-body.erp-maintenance .maint-action-strip__qbo {
-  margin-left: auto;
+body.erp-maintenance #maintTopQboIssuesWrap.maint-action-strip__note--qbo {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
-  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
 }
 
 body.erp-maintenance .maint-qbo-dot {

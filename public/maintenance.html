@@ -403,28 +403,29 @@
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDriverBillPay()">Driver bill pay</button>
                   </div>
                   <div class="erp-new-menu__col">
-                    <div class="erp-new-menu__col-title">Maintenance</div>
-                    <div class="erp-new-menu__tile-grid" role="group" aria-label="New maintenance record">
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder()">
-                        Work order<span class="erp-new-menu__tile-sub">Start here</span>
+                    <div class="erp-new-menu__col-title">Services</div>
+                    <div class="erp-new-menu__tile-grid erp-new-menu__tile-grid--services" role="group" aria-label="New service records">
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('repair')">
+                        Repair order<span class="erp-new-menu__tile-sub">External shop</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('maintenance_order')">
+                        Maintenance order<span class="erp-new-menu__tile-sub">General service</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('accident')">
+                        Accident repair order<span class="erp-new-menu__tile-sub">Body / collision / glass</span>
                       </button>
                       <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('pm')">
                         PM service<span class="erp-new-menu__tile-sub">Preventive</span>
                       </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('repair')">
-                        Repair order<span class="erp-new-menu__tile-sub">External shop</span>
-                      </button>
                       <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('tire')">
                         Tire record<span class="erp-new-menu__tile-sub">Positions &amp; line items</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile erp-new-menu__tile--wide" role="menuitem" onclick="erpNewWorkOrder('accident')">
-                        Accident repair order<span class="erp-new-menu__tile-sub">Body / collision / glass</span>
                       </button>
                     </div>
                     <div class="erp-new-menu__sep" role="presentation">
                       <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">More</span
                       ><span class="erp-new-menu__sep-line"></span>
                     </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder()">Blank work order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('air_bag')">Air bag record</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('battery')">Battery record</button>
                   </div>
@@ -891,36 +892,38 @@
         </div>
         <div class="maint-page-shell">
           <div class="maint-action-strip" aria-label="Maintenance actions">
-            <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
-            <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
-            <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
-            <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
-            <div class="maint-fleet-inline">
-              <span class="maint-fleet-inline__label">Fleet:</span>
-              <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;flex:1 1 min(320px,46vw)">
-                <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;line-height:1.45;color:var(--color-text-body);width:100%">
-                  <span style="min-width:0;flex:1 1 180px">Fleet chips scope unit list, fleet table, and WO column — ERP categories only (not Samsara).</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet category pills">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderMaintenanceCategoryChips()</code> → <code>#maintActionFleetPills</code> pills. <code>setAssetCategory()</code> updates <code>activeAssetCategory</code>, re-renders <code>renderMaintenanceUnitList()</code>, may clear <code>selectedUnit</code> if out of category, then <code>renderSelectedUnit()</code> + <code>renderMaintenanceTable()</code>. Missing strip → same markup on off-screen <code>#assetCategoryChips</code>.
-                    </span>
-                  </span>
-                </div>
-                <span id="maintActionFleetPills" style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center"></span>
-              </div>
+            <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
+              <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
+              <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
+              <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
+              <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
             </div>
-            <div class="maint-action-strip__qbo" id="maintTopQboIssuesWrap" aria-live="polite">
-              <div class="mini-note" style="margin:0;width:100%;flex-basis:100%;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label)">
-                <span style="min-width:0;flex:1 1 140px">QBO posting hint beside fleet pills — updates when sync alerts change.</span>
+            <div class="maint-action-strip__fleet">
+              <span class="maint-fleet-inline__label">Fleet</span>
+              <span id="maintActionFleetPills" class="maint-action-strip__pills" style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center"></span>
+            </div>
+            <div class="maint-action-strip__notes">
+              <div class="maint-action-strip__note mini-note">
+                <span>Fleet chips scope unit list, fleet table, and WO column — ERP categories only (not Samsara).</span>
                 <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance strip QBO indicator">?</button>
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet category pills">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintAsideQbIssues()</code> → <code>#maintTopQboIssuesInd</code> (severity dot + short status; optional <strong>View</strong> → <code>#qboSyncAlertBar</code>). <code>#maintAsideQbIssues</code> gets the same HTML for focus routing.
+                    <code>renderMaintenanceCategoryChips()</code> → <code>#maintActionFleetPills</code> pills. <code>setAssetCategory()</code> updates <code>activeAssetCategory</code>, re-renders <code>renderMaintenanceUnitList()</code>, may clear <code>selectedUnit</code> if out of category, then <code>renderSelectedUnit()</code> + <code>renderMaintenanceTable()</code>. Missing strip → same markup on off-screen <code>#assetCategoryChips</code>.
                   </span>
                 </span>
               </div>
-              <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0"></span>
+              <div class="maint-action-strip__note maint-action-strip__note--qbo mini-note" id="maintTopQboIssuesWrap" aria-live="polite">
+                <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;width:100%">
+                  <span style="min-width:0;flex:1 1 140px;color:var(--color-text-label)">QBO posting hint — updates when sync alerts change.</span>
+                  <span class="erp-help-tip">
+                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance strip QBO indicator">?</button>
+                    <span class="erp-help-tip__panel" role="tooltip">
+                      <code>renderMaintAsideQbIssues()</code> → <code>#maintTopQboIssuesInd</code> (severity dot + short status; optional <strong>View</strong> → <code>#qboSyncAlertBar</code>). <code>#maintAsideQbIssues</code> gets the same HTML for focus routing.
+                    </span>
+                  </span>
+                </div>
+                <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 0"></span>
+              </div>
             </div>
           </div>
           <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
@@ -6133,7 +6136,7 @@
       maintNotesSyncToTextarea();
       document.body.classList.add('print-wo-only');
       closeMaintWorkOrderModal();
-      const recBtn = document.querySelector('#maintMainSubtabs .subtab[data-maint-main="record"]');
+      const recBtn = document.querySelector('#maintMainSubtabs .maint-nav-tab[data-maint-main="record"]');
       openMaintMainTab('record', recBtn, { skipModal: true });
     }
 
@@ -7159,11 +7162,14 @@
           ) +
           erpSbGroup(
             'maintenance',
-            'related',
-            'Related',
+            'services',
+            'Services',
             false,
-            '<button type="button" class="erp-sb-link" onclick="openSection(&quot;fuel&quot;, document.querySelector(&quot;.nav-btn[data-section=fuel]&quot;));">Diesel / Fuel</button>' +
-              '<button type="button" class="erp-sb-link" onclick="openSection(&quot;tracking&quot;, document.querySelector(&quot;.nav-btn[data-section=tracking]&quot;)); openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance (tracking)</button>'
+            '<button type="button" class="erp-sb-link" onclick="erpNewWorkOrder(&quot;repair&quot;)">Repair order</button>' +
+              '<button type="button" class="erp-sb-link" onclick="erpNewWorkOrder(&quot;maintenance_order&quot;)">Maintenance order</button>' +
+              '<button type="button" class="erp-sb-link" onclick="erpNewWorkOrder(&quot;accident&quot;)">Accident repair order</button>' +
+              '<button type="button" class="erp-sb-link" onclick="erpNewWorkOrder(&quot;pm&quot;)">PM service</button>' +
+              '<button type="button" class="erp-sb-link" onclick="erpNewWorkOrder(&quot;tire&quot;)">Tire record</button>'
           ) +
           erpSbGroup('maintenance', 'tools', 'Tools &amp; Data', false, toolsBody) +
           erpSbGroup('maintenance', 'settings', 'Settings', false, settingsBody);
