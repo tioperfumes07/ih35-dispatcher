@@ -29,6 +29,14 @@ function sliceDate(v) {
   return s.length >= 10 ? s.slice(0, 10) : s;
 }
 
+function repairStatusPdfLabel(s) {
+  const v = String(s || '').trim();
+  if (v === 'queued') return 'Awaiting service';
+  if (v === 'in_progress') return 'In progress';
+  if (v === 'finished') return 'Completed';
+  return v || '—';
+}
+
 function paymentDueIso(invDateYmd) {
   const d = new Date(String(invDateYmd).slice(0, 10) + 'T12:00:00');
   if (Number.isNaN(d.getTime())) return '—';
@@ -837,6 +845,14 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
       doc.text(`Unit: ${rec.unit || ''}`);
       doc.text(`Record type: ${rec.recordType || 'maintenance'}`);
       doc.text(`Repair / location type: ${rec.repairLocationType || '—'}`);
+      doc.text(`Repair workflow: ${repairStatusPdfLabel(rec.repairStatus)}`);
+      if (rec.repairStatusAt || rec.repairStatusBy) {
+        const bits = [];
+        if (rec.repairStatusAt) bits.push(`Recorded ${String(rec.repairStatusAt).replace('T', ' ').slice(0, 19)}`);
+        if (rec.repairStatusBy) bits.push(`By: ${rec.repairStatusBy}`);
+        doc.fontSize(9).fillColor('#444444').text(bits.join(' · '));
+        doc.fontSize(11).fillColor('#000000');
+      }
       doc.text(`Service: ${rec.serviceType || ''}`);
       doc.text(`Date: ${rec.serviceDate || ''}   Mileage: ${rec.serviceMileage ?? '—'}`);
       doc.text(`Vendor (name): ${rec.vendor || '—'}`);

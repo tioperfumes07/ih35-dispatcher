@@ -1338,6 +1338,7 @@
                         </div>
                         <div class="maint-qb-cost-details__actions">
                           <button type="button" class="maint-cost-addline" onclick="addMaintItemCostLine()">+ Add item line</button>
+                          <button type="button" class="maint-cost-addline maint-cost-addline--clear" onclick="clearMaintItemCostLines()">Clear item lines</button>
                         </div>
                       </details>
                       <div class="maint-qb-cost-totals-bar" id="maintCostTotalsBar" aria-live="polite">
@@ -1414,6 +1415,25 @@
                           <span class="qb-l">Pay from account (QuickBooks)</span>
                           <input id="linkedBankAccountSearch" class="qb-in maint-field" list="qboBankAccountOptions" placeholder="Checking / credit card (expense / purchase)" autocomplete="off" oninput="resolveLinkedBankSearch()" onblur="resolveLinkedBankSearch()" />
                           <input id="linkedBankAccountQboId" type="hidden" />
+                        </div>
+                        <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-border)">
+                          <span class="qb-l">Attachments</span>
+                          <div class="erp-qbo-attach-zone" style="margin-top:6px">
+                            <input
+                              id="maintRecordAttachmentsInput"
+                              type="file"
+                              class="erp-qbo-attach-zone__input"
+                              multiple
+                              accept=".pdf,image/*,.csv,.xlsx,.xls,.doc,.docx,.txt"
+                              aria-label="Files to attach to this maintenance record"
+                            />
+                            <div class="erp-qbo-attach-zone__cta">
+                              <button type="button" class="btn btn--small" onclick="document.getElementById('maintRecordAttachmentsInput').click()">Choose files</button>
+                              <span class="mini-note" style="margin:0">Stored with the ERP record; uploaded to QuickBooks when you post.</span>
+                            </div>
+                            <p id="maintRecordAttachmentsHint" class="erp-qbo-attach-zone__hint"></p>
+                            <ul id="maintRecordAttachmentsList" class="erp-qbo-attach-zone__list mini-note" style="display:none"></ul>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2850,6 +2870,7 @@
                 </div>
                     <div class="maint-qb-cost-details__actions">
                       <button type="button" class="qb-btn-add" onclick="addWoCategoryLine()">+ Add category line</button>
+                      <button type="button" class="qb-btn-add maint-line-clear" onclick="clearWoCategoryLines()">Clear category lines</button>
                     </div>
                   </details>
                   <details class="maint-qb-cost-details ap-wo-details">
@@ -2877,13 +2898,11 @@
                     </div>
                     <div class="maint-qb-cost-details__actions">
                       <button type="button" class="qb-btn-add" onclick="addWoItemLine()">+ Add item line</button>
+                      <button type="button" class="qb-btn-add maint-line-clear" onclick="clearWoItemLines()">Clear item lines</button>
                     </div>
                   </details>
                 </div>
                 <div class="qb-lines-actions">
-                  <button type="button" class="qb-btn-add" onclick="addWoCategoryLine()">+ Add category line</button>
-                  <button type="button" class="qb-btn-add" onclick="addWoItemLine()">+ Add item line</button>
-                  <button type="button" class="qb-btn-add" onclick="clearWoLines()">Clear all lines</button>
                   <span class="mini-note" style="margin:0">Total lines: <strong id="woLineCount">0</strong></span>
                 </div>
               </div>
@@ -2899,9 +2918,18 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Attachments">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        PDF extract lives above. QBO attachments follow your usual post flow from here.
+                        Files are stored on the server with this work order. When you <strong>Post to QuickBooks</strong>, they are uploaded and linked to the Purchase or Bill in QBO.
                       </span>
                     </span>
+                  </div>
+                  <div class="erp-qbo-attach-zone">
+                    <input id="apWoAttachmentsInput" type="file" class="erp-qbo-attach-zone__input" multiple accept=".pdf,image/*,.csv,.xlsx,.xls,.doc,.docx,.txt" aria-label="Attachment files for this work order" />
+                    <div class="erp-qbo-attach-zone__cta">
+                      <button type="button" class="btn btn--small" onclick="document.getElementById('apWoAttachmentsInput').click()">Choose files</button>
+                      <span class="mini-note" style="margin:0">Multiple files ok — saved with the ERP work order before QBO post.</span>
+                    </div>
+                    <p id="apWoAttachmentsHint" class="erp-qbo-attach-zone__hint"></p>
+                    <ul id="apWoAttachmentsList" class="erp-qbo-attach-zone__list mini-note" style="display:none"></ul>
                   </div>
                 </div>
               </div>
@@ -3239,7 +3267,7 @@
             <div id="fuelExpenseQboBanner" class="mini-note fuel-expense-qbo-banner" style="display:none;margin:0 0 12px"></div>
             <div class="panel-body form-stack fuel-expense-stack">
               <div id="erpFuelManualPlaceholder" class="erp-dom-placeholder" aria-hidden="true"></div>
-              <div id="erpFuelManualDocShellPanel" class="panel qb-panel qb-doc-shell qb-doc-shell--fuel-spec" style="margin:0 0 14px">
+              <div id="erpFuelManualDocShellPanel" class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec qb-doc-shell--fuel-spec" style="margin:0 0 14px">
                 <div class="qb-doc-topbar qb-doc-topbar--fuel">
                   <button
                     type="button"
@@ -3263,7 +3291,7 @@
                     <div style="flex:1;min-width:200px">
                       <div class="fuel-manual-doc-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                         <span id="erpFuelDocTitleAccent" class="erp-ap-doc-accent hidden" aria-hidden="true"></span>
-                        <h2 class="qb-doc-h2" id="fuelManualDocTitleH2">Manual fuel / DEF expense</h2>
+                        <h2 class="qb-doc-h2" id="fuelManualDocTitleH2">Fuel bill / expense (manual)</h2>
                         <span class="erp-help-tip">
                           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Manual fuel form">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
@@ -13152,6 +13180,15 @@
           if (ix >= 0) erp.records[ix] = out.record;
           renderMaintLocationBoard();
           if (String(out.record.unit || '') === String(selectedUnit || '')) renderUnitHistory();
+          if (String(recordId) === String(__editingMaintRecordId || '')) {
+            const rss = document.getElementById('recordRepairStatusSelect');
+            if (rss) {
+              const rs = String(out.record.repairStatus || '').trim();
+              rss.value = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
+            }
+            formatMaintRepairStatusMeta(out.record);
+            renderMaintAsideWoSummary();
+          }
           showErpToast('Repair status saved.', 'success');
         }
       } catch (e) {
