@@ -1382,13 +1382,13 @@
                         </div>
 
                         <div class="search-row">
-                          <input id="linkedDocNumber" class="qb-in maint-field" placeholder="Expense / bill #" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />
+                          <input id="linkedDocNumber" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="Expense / bill #" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />
                         </div>
                         <input id="linkedVendorQboId" type="hidden" />
 
                         <div class="search-row">
                           <input id="linkedPaymentMethodSearch" class="qb-in maint-field" list="paymentMethodOptions" placeholder="Payment method" oninput="resolveLinkedPaymentMethodSearch()" onblur="resolveLinkedPaymentMethodSearch()" />
-                          <input id="linkedDueDate" class="qb-in maint-field" type="date" />
+                          <input id="linkedDueDate" class="qb-in maint-field maint-field--date" type="date" />
                         </div>
                         <input id="linkedPaymentMethodId" type="hidden" />
 
@@ -6448,7 +6448,7 @@
           : ['Load12345']
       );
       const svcWide = __servicePresetList.length ? __servicePresetList : DEFAULT_MAINT_SERVICE_TYPES;
-      styleFieldToLongest('serviceSearchInput', svcWide);
+      styleFieldToLongest('serviceSearchInput', svcWide, 40);
       ['recordTypeSelect', 'repairLocationSelect', 'repairLocationSearch', 'linkedTxnTypeSelect'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.width = 'min(100%, 28ch)';

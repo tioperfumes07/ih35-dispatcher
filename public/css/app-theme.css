@@ -4162,6 +4162,42 @@ body.erp-maintenance #section-safety .panel-head > div {
   body.erp-maintenance.print-wo-only #maintMainTabRecord .unit-summary {
     display: none !important;
   }
+
+  /* Include wheel / position maps when printing work orders (tire, parts, accident diagrams). */
+  body.erp-maintenance.print-wo-only #maintMainTabRecord #tireFields:not(.hidden),
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .tire-layout-wrap,
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .erp-qb-parts-map-chrome {
+    display: block !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    max-width: 100%;
+  }
+
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .maint-notes-numbered-host,
+  body.erp-maintenance.print-wo-only #maintMainTabRecord .maint-notes-line {
+    break-inside: avoid;
+  }
+
+  body.erp-maintenance.print-wo-only #maintWorkOrderFormMount .maint-notes-numbered-host {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintWorkOrderFormMount textarea.maint-notes--serialized {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 4em !important;
+    margin: 0 !important;
+    clip: auto !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    border: 1px solid var(--color-border) !important;
+    padding: 8px !important;
+  }
+
+  body.erp-maintenance.print-wo-only #maintWorkOrderFormMount .maint-notes-numbered-hint {
+    display: none !important;
+  }
 }
 
 /* Accounting → Fuel expenses: Relay import preview uses viewport height so tables are readable */
