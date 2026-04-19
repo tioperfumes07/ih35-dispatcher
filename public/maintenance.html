@@ -1096,14 +1096,14 @@
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l">Service date</span>
-                        <input id="serviceDateInput" class="qb-in maint-field" type="date" />
+                        <input id="serviceDateInput" class="qb-in maint-field maint-field--date" type="date" />
                       </div>
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div class="maint-field-cell">
                         <span class="qb-l">Odometer</span>
                         <div class="maint-field-cell__row">
-                          <input id="serviceMileageInput" class="qb-in maint-field" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" />
+                          <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" />
                           <button type="button" class="btn btn--small" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
                         </div>
                         <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
@@ -1120,7 +1120,7 @@
                       <div class="maint-field-cell">
                         <span class="qb-l">Fleet mileage (ERP)</span>
                         <div class="maint-field-cell__row">
-                          <input id="mileageInput" class="qb-in maint-field" type="number" placeholder="Override" title="Manual fleet mileage override" />
+                          <input id="mileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Override" title="Manual fleet mileage override" />
                           <button type="button" class="btn btn--small" onclick="saveMileage()">Save</button>
                         </div>
                       </div>
@@ -1186,11 +1186,11 @@
                     <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div id="maintVendorInvFieldWrap" class="maint-field-cell">
                         <span class="qb-l" id="maintVendorInvLabel">Vendor invoice #</span>
-                        <input id="recordVendorInvoiceInput" class="qb-in maint-field" placeholder="Supplier invoice" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />
+                        <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="Supplier invoice" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />
                       </div>
                       <div id="maintWoNumberFieldWrap" class="maint-field-cell">
                         <span class="qb-l" id="maintWoNumberLabel">Internal WO #</span>
-                        <input id="recordWorkOrderInput" class="qb-in maint-field" placeholder="WO #" title="Internal shop numbers are assigned automatically" oninput="renderMaintAsideWoSummary()" />
+                        <input id="recordWorkOrderInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="WO #" title="Internal shop numbers are assigned automatically" oninput="renderMaintAsideWoSummary()" />
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l">Invoice total</span>
@@ -1222,7 +1222,7 @@
                       <div class="maint-field-cell maint-field-cell--grow">
                         <span class="qb-l maint-label-optional">Catalog admin</span>
                         <div class="maint-field-cell__row">
-                          <input id="maintNewCatalogServiceName" class="qb-in maint-field" placeholder="New catalog name" autocomplete="off" />
+                          <input id="maintNewCatalogServiceName" class="qb-in maint-field maint-field--catalog" placeholder="New catalog name" maxlength="120" autocomplete="off" />
                           <button type="button" class="btn btn--small" onclick="addCatalogServiceType()">Add</button>
                         </div>
                         <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
@@ -1414,7 +1414,11 @@
                     </span>
                   </div>
                   <div id="maintInvoicePdfStatus" class="mini-note maint-field-hint"></div>
-                  <textarea id="notesInput" class="qb-memo maint-notes" placeholder="Notes"></textarea>
+                  <div id="maintNotesNumberedHost" class="maint-notes-numbered-host">
+                    <p class="mini-note maint-notes-numbered-hint" style="margin:0 0 8px;color:var(--color-text-label)">Notes — press <strong>Enter</strong> on the last line to add another.</p>
+                    <div id="maintNotesNumberedRows" class="maint-notes-numbered-rows" aria-label="Work order notes"></div>
+                  </div>
+                  <textarea id="notesInput" class="qb-memo maint-notes maint-notes--serialized" tabindex="-1" aria-label="Notes (serialized)" rows="1"></textarea>
                     </div>
                   </div>
                   </div>
@@ -1483,8 +1487,8 @@
                         <input id="tireBrandInput" placeholder="Tire brand">
                         <input id="tireDotInput" placeholder="DOT / serial">
                         <div class="grid grid-3">
-                          <input id="installMileageInput" type="number" placeholder="Install mileage">
-                          <input id="removeMileageInput" type="number" placeholder="Remove mileage">
+                          <input id="installMileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Install mileage">
+                          <input id="removeMileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Remove mileage">
                           <input id="expectedTireLifeMilesInput" type="number" placeholder="Expected tire life">
                         </div>
                         <p class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
@@ -6131,6 +6135,7 @@
 
     function maintPreparePrintWorkOrderOnly() {
       bindMaintPrintWorkOrderOnlyListeners();
+      maintNotesSyncToTextarea();
       document.body.classList.add('print-wo-only');
       closeMaintWorkOrderModal();
       const recBtn = document.querySelector('#maintMainSubtabs .subtab[data-maint-main="record"]');
@@ -6176,7 +6181,7 @@
           vendorInvoiceNumber: document.getElementById('recordVendorInvoiceInput')?.value || '',
           workOrderNumber: document.getElementById('recordWorkOrderInput')?.value || '',
           loadNumber: document.getElementById('recordLoadNumberInput')?.value || '',
-          notes: document.getElementById('notesInput')?.value || '',
+          notes: (maintNotesSyncToTextarea(), document.getElementById('notesInput')?.value || ''),
           plannedWork: collectMaintPlannedServiceLines().map(description => ({ description })),
           costLines: lines.map(l => ({ ...l }))
         };
@@ -6360,12 +6365,78 @@
       el.style.width = `min(100%, ${ch}ch)`;
     }
 
+    const MAINT_NOTES_INITIAL_LINES = 5;
+    function maintNotesSyncToTextarea() {
+      const host = document.getElementById('maintNotesNumberedRows');
+      const ta = document.getElementById('notesInput');
+      if (!ta) return;
+      if (!host || !host.querySelector('.maint-notes-line__in')) {
+        return;
+      }
+      const lines = [...host.querySelectorAll('.maint-notes-line__in')].map(i => String(i.value || '').trimEnd());
+      ta.value = lines.join('\n');
+    }
+    function maintNotesCreateLineRow(num, value) {
+      const wrap = document.createElement('div');
+      wrap.className = 'maint-notes-line';
+      wrap.dataset.lineIx = String(num);
+      const lab = document.createElement('span');
+      lab.className = 'maint-notes-line__num';
+      lab.setAttribute('aria-hidden', 'true');
+      lab.textContent = num + '.';
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'qb-in maint-field maint-notes-line__in';
+      inp.value = value || '';
+      inp.autocomplete = 'off';
+      inp.addEventListener('input', maintNotesSyncToTextarea);
+      inp.addEventListener('keydown', maintNotesOnLineKeydown);
+      wrap.appendChild(lab);
+      wrap.appendChild(inp);
+      return wrap;
+    }
+    function maintNotesOnLineKeydown(ev) {
+      if (ev.key !== 'Enter') return;
+      const host = document.getElementById('maintNotesNumberedRows');
+      if (!host) return;
+      const lines = host.querySelectorAll('.maint-notes-line__in');
+      const last = lines[lines.length - 1];
+      if (!last || ev.target !== last) return;
+      ev.preventDefault();
+      const n = lines.length + 1;
+      host.appendChild(maintNotesCreateLineRow(n, ''));
+      const next = host.querySelector(`.maint-notes-line:nth-child(${n}) .maint-notes-line__in`);
+      if (next) next.focus();
+    }
+    function maintNotesSetFromString(raw) {
+      const host = document.getElementById('maintNotesNumberedRows');
+      const ta = document.getElementById('notesInput');
+      const s = String(raw || '');
+      if (ta) ta.value = s;
+      if (!host) return;
+      let parts = s.split(/\r?\n/);
+      while (parts.length < MAINT_NOTES_INITIAL_LINES) parts.push('');
+      host.innerHTML = '';
+      parts.forEach((text, i) => {
+        host.appendChild(maintNotesCreateLineRow(i + 1, text));
+      });
+      maintNotesSyncToTextarea();
+    }
+    function initMaintNotesNumbered() {
+      const host = document.getElementById('maintNotesNumberedRows');
+      if (!host || host.dataset.bound === '1') return;
+      host.dataset.bound = '1';
+      const ta = document.getElementById('notesInput');
+      maintNotesSetFromString(ta ? ta.value : '');
+    }
+
     function applyMaintenanceFieldWidths() {
       styleFieldToLongest(
         'linkedPaymentMethodSearch',
-        paymentMethods().map(p => p.name || p.id)
+        paymentMethods().map(p => p.name || p.id),
+        30
       );
-      styleFieldToLongest('linkedBankAccountSearch', cacheBankAccounts().map(b => b.name));
+      styleFieldToLongest('linkedBankAccountSearch', cacheBankAccounts().map(b => b.name), 34);
       styleFieldToLongest('vendorInput', cacheVendors().map(v => v.name || v.companyName));
       styleFieldToLongest(
         'recordLoadNumberInput',
@@ -6880,7 +6951,21 @@
     function cacheBankAccounts() { return erp.qboCache?.accountsBank || []; }
     function cacheIncomeAccounts() { return erp.qboCache?.accountsIncome || []; }
     function cacheExpenseAccounts() { return erp.qboCache?.accountsExpense || []; }
-    function paymentMethods() { return erp.paymentMethods || []; }
+    function paymentMethods() {
+      const local = erp.paymentMethods || [];
+      const qbo = erp.qboCache?.paymentMethods || [];
+      if (!qbo.length) return local;
+      const seen = new Set(local.map(p => String(p.id)));
+      const out = [...local];
+      for (const p of qbo) {
+        const id = String(p.id);
+        if (!seen.has(id)) {
+          seen.add(id);
+          out.push(p);
+        }
+      }
+      return out;
+    }
 
     function assetCategoryForVehicle(v) {
       return v.assetCategory || 'Trucks';
@@ -7338,8 +7423,7 @@
 
     function erpNewFuelRecord() {
       erpCloseNewMenu();
-      window.location.hash = 'accounting-fuel';
-      if (typeof applyNavHash === 'function') applyNavHash();
+      erpOpenDedicatedAccountingForm('fuel-expense');
     }
 
     const ERP_WRENCH_ICON =
@@ -9168,6 +9252,7 @@
           customers: data.customers || [],
           classes: data.classes || [],
           accountsBank: data.accountsBank || [],
+          paymentMethods: data.paymentMethods || [],
           employees: data.employees || [],
           transactionActivity: data.transactionActivity || null,
           refreshedAt: data.refreshedAt || ''

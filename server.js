@@ -238,6 +238,8 @@ function defaultErpData() {
       customers: [],
       classes: [],
       accountsBank: [],
+      /** QuickBooks PaymentMethod entities (merged in UI with `paymentMethods` on the ERP file). */
+      paymentMethods: [],
       employees: [],
       terms: [],
       refreshedAt: ''
@@ -331,6 +333,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.qboCache.customers)) merged.qboCache.customers = [];
   if (!Array.isArray(merged.qboCache.classes)) merged.qboCache.classes = [];
   if (!Array.isArray(merged.qboCache.accountsBank)) merged.qboCache.accountsBank = [];
+  if (!Array.isArray(merged.qboCache.paymentMethods)) merged.qboCache.paymentMethods = [];
   if (!Array.isArray(merged.qboCache.employees)) merged.qboCache.employees = [];
   if (!Array.isArray(merged.qboCache.terms)) merged.qboCache.terms = [];
   if (!merged.assetStatusByUnit || typeof merged.assetStatusByUnit !== 'object') merged.assetStatusByUnit = {};
@@ -2132,6 +2135,7 @@ function readQboCatalogPayload() {
     customers: c.customers || [],
     classes: c.classes || [],
     accountsBank: c.accountsBank || [],
+    paymentMethods: c.paymentMethods || [],
     employees: c.employees || [],
     terms: c.terms || [],
     transactionActivity: c.transactionActivity || null,
@@ -2152,7 +2156,8 @@ async function qboSyncMasterData() {
     cardData,
     classData,
     employeeData,
-    termsData
+    termsData,
+    paymentMethodData
   ] = await Promise.all([
     qboQuery('select * from Vendor maxresults 1000'),
     qboQuery('select * from Item maxresults 1000'),
@@ -2176,6 +2181,10 @@ async function qboSyncMasterData() {
     }),
     qboQuery('select * from Term maxresults 200').catch(err => {
       logError('qboSync terms', err);
+      return { QueryResponse: {} };
+    }),
+    qboQuery('select * from PaymentMethod maxresults 200').catch(err => {
+      logError('qboSync payment methods', err);
       return { QueryResponse: {} };
     })
   ]);
@@ -2233,6 +2242,15 @@ async function qboSyncMasterData() {
   const accountsBank = [...accountsBankById.values()].sort((x, y) =>
     String(x.name || '').localeCompare(String(y.name || ''))
   );
+
+  const paymentMethods = (paymentMethodData?.QueryResponse?.PaymentMethod || [])
+    .filter(p => p && p.Active !== false && p.Id)
+    .map(p => ({
+      id: String(p.Id),
+      name: String(p.Name || '').trim() || `Payment ${p.Id}`,
+      qboType: String(p.Type || 'Other').trim() || 'Other'
+    }))
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
   const classes = (classData?.QueryResponse?.Class || [])
     .filter(c => c.Active !== false)
@@ -2298,6 +2316,7 @@ async function qboSyncMasterData() {
     customers,
     classes,
     accountsBank,
+    paymentMethods,
     employees,
     terms,
     transactionActivity,
@@ -2518,7 +2537,11 @@ function qboItemTypeOkForPurchaseExpenseLine(itemType) {
 }
 
 function findPaymentMethodLocal(erp, paymentMethodId) {
-  return (erp.paymentMethods || []).find(v => v.id === paymentMethodId) || null;
+  const id = String(paymentMethodId || '').trim();
+  if (!id) return null;
+  const local = (erp.paymentMethods || []).find(v => String(v.id) === id);
+  if (local) return local;
+  return (erp.qboCache?.paymentMethods || []).find(v => String(v.id) === id) || null;
 }
 
 function resolveQboBankAccountId(erp, explicit) {
