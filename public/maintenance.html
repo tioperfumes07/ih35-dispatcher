@@ -2856,8 +2856,13 @@
                             <th class="maint-qb-th-num">#</th>
                             <th>Category</th>
                             <th>Description</th>
-                            <th class="maint-qb-th-num">Line</th>
-                            <th>Tire / ref</th>
+                            <th class="maint-qb-th-num">Amount</th>
+                            <th class="maint-qb-th-bill">Billable</th>
+                            <th>Customer</th>
+                            <th>Class</th>
+                            <th>Position</th>
+                            <th class="maint-qb-th-partno">Part #</th>
+                            <th>Line memo</th>
                             <th class="maint-qb-th-del"></th>
                           </tr>
                         </thead>
@@ -2881,11 +2886,17 @@
                           <tr>
                             <th class="maint-qb-th-num">#</th>
                             <th>Product / service</th>
+                            <th class="maint-qb-th-sku">SKU</th>
                             <th>Description</th>
                             <th class="maint-qb-th-num">Qty</th>
                             <th class="maint-qb-th-num">Unit $</th>
                             <th class="maint-qb-th-num">Total</th>
-                            <th>Tire / ref</th>
+                            <th class="maint-qb-th-bill">Billable</th>
+                            <th>Customer</th>
+                            <th>Class</th>
+                            <th>Position</th>
+                            <th class="maint-qb-th-partno">Part #</th>
+                            <th>Line memo</th>
                             <th class="maint-qb-th-del"></th>
                           </tr>
                         </thead>
@@ -5054,7 +5065,7 @@
   </div>
 
   <template id="woLineCategoryTpl">
-    <tr class="wo-line wo-line-cat">
+    <tr class="wo-line wo-line-cat maint-cost-line">
       <td class="maint-qb-td-num"><span class="wo-idx">1</span></td>
       <td class="maint-qb-td-acct">
         <input
@@ -5074,8 +5085,62 @@
         <span class="maint-qb-dollar" aria-hidden="true">$</span>
         <input class="qb-in wo-amt" type="number" step="0.01" placeholder="0" title="Line amount" />
       </td>
+      <td class="maint-qb-td-bill">
+        <label class="maint-qb-bill-lbl"><input type="checkbox" class="wo-line-billable" title="Billable" /></label>
+      </td>
+      <td class="maint-qb-td-cust">
+        <input
+          class="qb-in wo-cust-search"
+          list="qboCustomerOptions"
+          placeholder="Customer"
+          autocomplete="off"
+          oninput="resolveWoLineCustomer(this)"
+          onblur="resolveWoLineCustomer(this)"
+        />
+        <input type="hidden" class="wo-cust-id" value="" />
+      </td>
+      <td class="maint-qb-td-class">
+        <input
+          class="qb-in wo-class-search"
+          list="qboClassOptions"
+          placeholder="Class"
+          autocomplete="off"
+          oninput="resolveWoLineClass(this)"
+          onblur="resolveWoLineClass(this)"
+          title="Defaults from asset unit when blank"
+        />
+        <input type="hidden" class="wo-class-id" value="" />
+      </td>
+      <td class="maint-qb-td-pos">
+        <select class="qb-in maint-field maint-line-part-cat maint-qb-inline-select" onchange="onMaintLinePartCategoryChange(this)" title="Part family">
+          <option value="">Part type</option>
+          <option value="tire">Tires</option>
+          <option value="battery">Batteries</option>
+          <option value="air_suspension">Air springs / bags</option>
+          <option value="brake">Brakes</option>
+          <option value="filter">Filters</option>
+          <option value="lighting">Lighting</option>
+          <option value="other_multi">Other</option>
+        </select>
+        <select class="qb-in maint-field maint-line-pos-select maint-qb-inline-select" onchange="syncMaintLinePartMapFromSelect(this)" title="Position">
+          <option value="">Position</option>
+        </select>
+        <div class="maint-line-pos-free-wrap hidden">
+          <input class="qb-in maint-field maint-line-pos-free" placeholder="Position (text)" />
+        </div>
+        <div class="maint-line-part-map-host maint-line-part-map-host--inline hidden"></div>
+      </td>
+      <td class="maint-qb-td-partno">
+        <input class="qb-in maint-field maint-line-part-no" placeholder="Part #" autocomplete="off" />
+      </td>
       <td class="maint-qb-td-memo">
-        <input class="qb-in wo-tire" placeholder="Tire / ref" autocomplete="off" />
+        <input
+          class="qb-in maint-field maint-line-qbo-desc"
+          maxlength="380"
+          placeholder="Line memo"
+          autocomplete="off"
+          title="Sent as the Description on this line in QuickBooks"
+        />
       </td>
       <td class="maint-qb-td-del">
         <button type="button" class="qb-btn-del maint-qb-row-del" onclick="removeWoLine(this)" title="Remove line">×</button>
@@ -5088,7 +5153,7 @@
   </template>
 
   <template id="woLineItemTpl">
-    <tr class="wo-line wo-line-item">
+    <tr class="wo-line wo-line-item maint-cost-line">
       <td class="maint-qb-td-num"><span class="wo-idx">1</span></td>
       <td class="maint-qb-td-item">
         <input
@@ -5100,6 +5165,9 @@
           onblur="resolveWoLineItem(this)"
         />
         <input type="hidden" class="wo-item-id" value="" />
+      </td>
+      <td class="maint-qb-td-sku">
+        <input class="qb-in wo-item-sku" type="text" readonly placeholder="—" tabindex="-1" title="From QuickBooks when item matched" />
       </td>
       <td class="maint-qb-td-desc">
         <input class="qb-in wo-svc" placeholder="Description" autocomplete="off" />
@@ -5121,8 +5189,62 @@
           title="Line total (qty × unit, or edit to back-solve unit)"
         />
       </td>
+      <td class="maint-qb-td-bill">
+        <label class="maint-qb-bill-lbl"><input type="checkbox" class="wo-line-billable" title="Billable" /></label>
+      </td>
+      <td class="maint-qb-td-cust">
+        <input
+          class="qb-in wo-cust-search"
+          list="qboCustomerOptions"
+          placeholder="Customer"
+          autocomplete="off"
+          oninput="resolveWoLineCustomer(this)"
+          onblur="resolveWoLineCustomer(this)"
+        />
+        <input type="hidden" class="wo-cust-id" value="" />
+      </td>
+      <td class="maint-qb-td-class">
+        <input
+          class="qb-in wo-class-search"
+          list="qboClassOptions"
+          placeholder="Class"
+          autocomplete="off"
+          oninput="resolveWoLineClass(this)"
+          onblur="resolveWoLineClass(this)"
+          title="Defaults from asset unit when blank"
+        />
+        <input type="hidden" class="wo-class-id" value="" />
+      </td>
+      <td class="maint-qb-td-pos">
+        <select class="qb-in maint-field maint-line-part-cat maint-qb-inline-select" onchange="onMaintLinePartCategoryChange(this)" title="Part family">
+          <option value="">Part type</option>
+          <option value="tire">Tires</option>
+          <option value="battery">Batteries</option>
+          <option value="air_suspension">Air springs / bags</option>
+          <option value="brake">Brakes</option>
+          <option value="filter">Filters</option>
+          <option value="lighting">Lighting</option>
+          <option value="other_multi">Other</option>
+        </select>
+        <select class="qb-in maint-field maint-line-pos-select maint-qb-inline-select" onchange="syncMaintLinePartMapFromSelect(this)" title="Position">
+          <option value="">Position</option>
+        </select>
+        <div class="maint-line-pos-free-wrap hidden">
+          <input class="qb-in maint-field maint-line-pos-free" placeholder="Position (text)" />
+        </div>
+        <div class="maint-line-part-map-host maint-line-part-map-host--inline hidden"></div>
+      </td>
+      <td class="maint-qb-td-partno">
+        <input class="qb-in maint-field maint-line-part-no" placeholder="Part #" autocomplete="off" />
+      </td>
       <td class="maint-qb-td-memo">
-        <input class="qb-in wo-tire" placeholder="Tire / ref" autocomplete="off" />
+        <input
+          class="qb-in maint-field maint-line-qbo-desc"
+          maxlength="380"
+          placeholder="Line memo"
+          autocomplete="off"
+          title="Sent as the Description on this line in QuickBooks"
+        />
       </td>
       <td class="maint-qb-td-del">
         <button type="button" class="qb-btn-del maint-qb-row-del" onclick="removeWoLine(this)" title="Remove line">×</button>
@@ -5665,6 +5787,26 @@
       panel.addEventListener('click', e => {
         const dot = e.target.closest && e.target.closest('.maint-part-dot');
         if (!dot || !panel.contains(dot)) return;
+        const pos = dot.getAttribute('data-pos');
+        const row = dot.closest('.maint-cost-line');
+        if (!row || !pos) return;
+        const sel = row.querySelector('.maint-line-pos-select');
+        if (sel) {
+          sel.value = pos;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        row.querySelectorAll('.maint-part-dot').forEach(d => d.classList.toggle('active', d === dot));
+      });
+    }
+
+    /** Same diagram click behavior as maint cost lines, for Accounting AP `wo-line` rows inside `#woLines`. */
+    function bindApWoPartDelegation() {
+      const host = document.getElementById('woLines');
+      if (!host || host.dataset.apPartMapBound === '1') return;
+      host.dataset.apPartMapBound = '1';
+      host.addEventListener('click', e => {
+        const dot = e.target.closest && e.target.closest('.maint-part-dot');
+        if (!dot || !host.contains(dot)) return;
         const pos = dot.getAttribute('data-pos');
         const row = dot.closest('.maint-cost-line');
         if (!row || !pos) return;
@@ -7636,7 +7778,15 @@
             if ((row.querySelector('.wo-svc')?.value || '').trim()) lineDraft = true;
             if ((row.querySelector('.wo-acct')?.value || '').trim()) lineDraft = true;
             if ((row.querySelector('.wo-item')?.value || '').trim()) lineDraft = true;
-            if ((row.querySelector('.wo-tire')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.maint-line-part-cat')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.maint-line-pos-select')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.maint-line-pos-free')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.wo-cust-search')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.wo-class-search')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.maint-line-part-no')?.value || '').trim()) lineDraft = true;
+            if ((row.querySelector('.maint-line-qbo-desc')?.value || '').trim()) lineDraft = true;
+            const wb = row.querySelector('.wo-line-billable');
+            if (wb && wb.checked) lineDraft = true;
             const qEl = row.querySelector('.wo-qty');
             const qRaw = qEl ? String(qEl.value || '').trim() : '';
             if (qRaw && qRaw !== '1') lineDraft = true;
@@ -15524,7 +15674,6 @@
       if (rows.length <= 1) {
         const svc = row.querySelector('.wo-svc');
         const amt = row.querySelector('.wo-amt');
-        const tire = row.querySelector('.wo-tire');
         const acct = row.querySelector('.wo-acct');
         const acctId = row.querySelectorAll('.wo-acct-id');
         const item = row.querySelector('.wo-item');
@@ -15539,7 +15688,6 @@
         }
         if (rate) rate.value = '';
         if (lineTot) lineTot.value = '';
-        if (tire) tire.value = '';
         if (acct) acct.value = '';
         acctId.forEach(el => {
           el.value = '';
@@ -15549,6 +15697,30 @@
           el.value = '';
         });
         if (qty) qty.value = '1';
+        const cst = row.querySelector('.wo-cust-search');
+        const cid = row.querySelector('.wo-cust-id');
+        if (cst) cst.value = '';
+        if (cid) cid.value = '';
+        const cls = row.querySelector('.wo-class-search');
+        const clid = row.querySelector('.wo-class-id');
+        if (cls) cls.value = '';
+        if (clid) clid.value = '';
+        const bill = row.querySelector('.wo-line-billable');
+        if (bill) bill.checked = false;
+        const sku = row.querySelector('.wo-item-sku');
+        if (sku) sku.value = '';
+        const pc = row.querySelector('.maint-line-part-cat');
+        if (pc) {
+          pc.value = '';
+          onMaintLinePartCategoryChange(pc);
+        }
+        const pfn = row.querySelector('.maint-line-part-no');
+        if (pfn) pfn.value = '';
+        const pfree = row.querySelector('.maint-line-pos-free');
+        if (pfree) pfree.value = '';
+        const qd = row.querySelector('.maint-line-qbo-desc');
+        if (qd) qd.value = '';
+        syncWoApLineDefaultsFromUnit(row);
         refreshWoLineIndices();
         refreshApDocTotal();
         return;
@@ -15563,6 +15735,12 @@
       const host = document.getElementById('apWoCatHost');
       if (!tpl || !host) return;
       host.appendChild(tpl.content.cloneNode(true));
+      const last = host.querySelector('.wo-line-cat:last-child');
+      if (last) {
+        initMaintLinePartUi(last);
+        syncWoApLineDefaultsFromUnit(last);
+      }
+      bindApWoPartDelegation();
       refreshWoLineIndices();
       syncApServiceToFirstCostLine();
       refreshApDocTotal();
@@ -15574,7 +15752,12 @@
       if (!tpl || !host) return;
       host.appendChild(tpl.content.cloneNode(true));
       const last = host.querySelector('.wo-line-item:last-child');
-      if (last) syncWoApItemLineTotal(last);
+      if (last) {
+        initMaintLinePartUi(last);
+        syncWoApLineDefaultsFromUnit(last);
+        syncWoApItemLineTotal(last);
+      }
+      bindApWoPartDelegation();
       refreshWoLineIndices();
       refreshApDocTotal();
     }
@@ -15587,16 +15770,34 @@
       const out = [];
       const push = (row, detailMode) => {
         const amt = detailMode === 'item' ? apWoItemLineAmount(row) : Number(row.querySelector('.wo-amt')?.value) || 0;
-        out.push({
+        const rec = {
           lineType: 'service',
           serviceType: (row.querySelector('.wo-svc')?.value || '').trim() || 'Line',
           detailMode,
           qboAccountId: detailMode === 'category' ? (row.querySelector('.wo-acct-id')?.value || '') : '',
           qboItemId: detailMode === 'item' ? (row.querySelector('.wo-item-id')?.value || '') : '',
           qty: (row.querySelector('.wo-qty')?.value || '1'),
-          amount: amt,
-          tirePositionText: (row.querySelector('.wo-tire')?.value || '').trim()
-        });
+          amount: amt
+        };
+        const partCat = (row.querySelector('.maint-line-part-cat')?.value || '').trim();
+        const partPos =
+          (row.querySelector('.maint-line-pos-select')?.value || '').trim() ||
+          (row.querySelector('.maint-line-pos-free')?.value || '').trim();
+        const pn = (row.querySelector('.maint-line-part-no')?.value || '').trim();
+        if (partCat) rec.partCategory = partCat;
+        if (partPos) rec.partPosition = partPos;
+        if (pn) rec.partNumber = pn;
+        const bits = [partPos, pn].filter(Boolean);
+        if (bits.length) rec.tirePositionText = bits.join(' · ');
+        const qMemo = (row.querySelector('.maint-line-qbo-desc')?.value || '').trim();
+        if (qMemo) rec.qboLineDescription = qMemo;
+        const billEl = row.querySelector('.wo-line-billable');
+        if (billEl) rec.billable = !!billEl.checked;
+        const custId = (row.querySelector('.wo-cust-id')?.value || '').trim().replace(/[^\d]/g, '');
+        if (custId) rec.qboCustomerId = custId;
+        const clsId = (row.querySelector('.wo-class-id')?.value || '').trim().replace(/[^\d]/g, '');
+        if (clsId) rec.qboClassId = clsId;
+        out.push(rec);
       };
       document.querySelectorAll('#apWoCatHost .wo-line').forEach(row => push(row, 'category'));
       document.querySelectorAll('#apWoItemHost .wo-line').forEach(row => push(row, 'item'));
@@ -15766,12 +15967,61 @@
       if (hid) hid.value = match ? match.qboId : '';
     }
 
+    function syncWoLineItemSku(row) {
+      const skuEl = row && row.querySelector ? row.querySelector('.wo-item-sku') : null;
+      if (!skuEl) return;
+      const iid = (row.querySelector('.wo-item-id')?.value || '').trim();
+      if (!iid) {
+        skuEl.value = '';
+        return;
+      }
+      const hit = cacheItemsForProductServicePicker().find(x => String(x.qboId) === iid);
+      skuEl.value = hit && String(hit.sku || '').trim() ? String(hit.sku).trim() : '—';
+    }
+
     function resolveWoLineItem(input) {
       const row = input.closest('.wo-line');
       if (!row) return;
       const match = findBestNameMatch(cacheItemsForProductServicePicker(), input.value);
       const hid = row.querySelector('.wo-item-id');
       if (hid) hid.value = match ? match.qboId : '';
+      syncWoLineItemSku(row);
+    }
+
+    function resolveWoLineCustomer(input) {
+      if (!input) return;
+      const row = input.closest('.wo-line');
+      if (!row) return;
+      const match = findBestNameMatch(cacheQboCustomers(), input.value);
+      const hid = row.querySelector('.wo-cust-id');
+      if (hid) hid.value = match ? String(match.qboId || '').trim() : '';
+    }
+
+    function resolveWoLineClass(input) {
+      if (!input) return;
+      const row = input.closest('.wo-line');
+      if (!row) return;
+      const match = findBestNameMatch(cacheQboClasses(), input.value);
+      const hid = row.querySelector('.wo-class-id');
+      if (hid) hid.value = match ? String(match.qboId || '').trim() : '';
+    }
+
+    /** Default per-line QBO class from AP unit field when the line class is blank. */
+    function syncWoApLineDefaultsFromUnit(row) {
+      if (!row) return;
+      const cid = row.querySelector('.wo-class-id');
+      const cs = row.querySelector('.wo-class-search');
+      if (!cid || !cs) return;
+      if (String(cid.value || '').trim()) return;
+      const unit = (document.getElementById('apAssetUnit')?.value || '').trim();
+      const clsId = qboClassIdForFuelUnitName(unit);
+      if (clsId) {
+        cid.value = String(clsId);
+        cs.value = qboNameByQboId(cacheQboClasses(), clsId) || unit;
+      } else {
+        cid.value = '';
+        cs.value = '';
+      }
     }
 
     const tirePositionMap = {
@@ -17771,7 +18021,6 @@
         if (!row) continue;
         const svc = row.querySelector('.wo-svc');
         const qtyEl = row.querySelector('.wo-qty');
-        const tireEl = row.querySelector('.wo-tire');
         const acctSearch = row.querySelector('.wo-acct');
         const acctId = row.querySelector('.wo-acct-id');
         const itemSearch = row.querySelector('.wo-item');
@@ -17793,10 +18042,27 @@
           const amtEl = row.querySelector('.wo-amt');
           if (amtEl) amtEl.value = lineAmt > 0 ? String(lineAmt) : '';
         }
-        if (tireEl) {
-          const tireBits = [ln.partRef, ln.partPosition, ln.partNumber, ln.tirePositionText].filter(Boolean);
-          tireEl.value = tireBits.length ? tireBits.map(String).join(' / ') : '';
+        const pcat = row.querySelector('.maint-line-part-cat');
+        const pv = String(ln.partCategory || '').trim();
+        if (pcat && pv && [...pcat.options].some(o => o.value === pv)) {
+          pcat.value = pv;
+          onMaintLinePartCategoryChange(pcat);
         }
+        const posSel = row.querySelector('.maint-line-pos-select');
+        const posFree = row.querySelector('.maint-line-pos-free');
+        const pp = String(ln.partPosition || '').trim();
+        if (pp) {
+          if (posSel && [...posSel.options].some(o => o.value === pp)) {
+            posSel.value = pp;
+            syncMaintLinePartMapFromSelect(posSel);
+          } else if (posFree) {
+            posFree.value = pp;
+          }
+        }
+        const partNoM = row.querySelector('.maint-line-part-no');
+        if (partNoM && ln.partNumber) partNoM.value = String(ln.partNumber).trim();
+        const memoM = row.querySelector('.maint-line-qbo-desc');
+        if (memoM && ln.qboLineDescription) memoM.value = String(ln.qboLineDescription).trim();
 
         if (dm === 'item') {
           const qid = String(ln.qboItemId || '').trim();
@@ -17807,6 +18073,23 @@
           if (acctId) acctId.value = qid;
           if (acctSearch) acctSearch.value = qboNameById(cacheAccountsForLinked(), qid) || '';
         }
+        const billEl = row.querySelector('.wo-line-billable');
+        if (billEl && typeof ln.billable === 'boolean') billEl.checked = !!ln.billable;
+        const clsH = row.querySelector('.wo-class-id');
+        const clsS = row.querySelector('.wo-class-search');
+        const qCls = String(ln.qboClassId || '')
+          .trim()
+          .replace(/[^\d]/g, '');
+        if (clsH) clsH.value = qCls;
+        if (clsS && qCls) clsS.value = qboNameByQboId(cacheQboClasses(), qCls) || '';
+        const custH = row.querySelector('.wo-cust-id');
+        const custS = row.querySelector('.wo-cust-search');
+        const qCust = String(ln.qboCustomerId || '')
+          .trim()
+          .replace(/[^\d]/g, '');
+        if (custH) custH.value = qCust;
+        if (custS && qCust) custS.value = qboNameByQboId(cacheQboCustomers(), qCust) || '';
+        if (dm === 'item') syncWoLineItemSku(row);
       }
       refreshApDocTotal();
       requestAnimationFrame(() => {
@@ -18854,10 +19137,14 @@
         const lines = r.lines || [];
         const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
         const lineSumm = lines
-          .map(
-            l =>
-              `${escapeHtml(l.serviceType || '')}: $${escapeHtml(String(l.amount ?? ''))} (${escapeHtml(l.detailMode || '')})`
-          )
+          .map(l => {
+            const base = `${escapeHtml(l.serviceType || '')}: $${escapeHtml(String(l.amount ?? ''))} (${escapeHtml(l.detailMode || '')})`;
+            const bits = [];
+            if (l.partCategory) bits.push(escapeHtml(String(l.partCategory)));
+            if (l.partPosition) bits.push(escapeHtml(String(l.partPosition)));
+            if (l.partNumber) bits.push('#' + escapeHtml(String(l.partNumber)));
+            return bits.length ? `${base} · ${bits.join(' · ')}` : base;
+          })
           .join('<br>');
         const voided = !!r.voided;
         const posted = qboPostedRowWo(r);
@@ -20144,6 +20431,7 @@
           'Repair location',
           'Line count',
           'Total amount',
+          'lines_summary',
           'QB status',
           'QB type',
           'QB ID'
@@ -20152,6 +20440,21 @@
       (erp.workOrders || []).forEach(wo => {
         const lines = wo.lines || [];
         const total = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+        const summary = lines
+          .map(l => {
+            const dm = String(l.detailMode || '').trim() || 'category';
+            const ref = dm === 'item' ? String(l.qboItemId || '').trim() : String(l.qboAccountId || '').trim();
+            const svc = String(l.serviceType || l.lineType || 'Line').trim();
+            const amt = Number(l.amount) || 0;
+            const extras = [];
+            if (l.partCategory) extras.push(`cat=${l.partCategory}`);
+            if (l.partPosition) extras.push(`pos=${l.partPosition}`);
+            if (l.partNumber) extras.push(`pn=${l.partNumber}`);
+            if (l.qboLineDescription) extras.push(`memo=${String(l.qboLineDescription).slice(0, 80)}`);
+            const ex = extras.length ? ` [${extras.join(';')}]` : '';
+            return `${svc} $${amt.toFixed(2)} ${dm}${ref ? `(${ref})` : ''}${ex}`;
+          })
+          .join(' | ');
         rows.push([
           wo.workOrderNumber || '',
           wo.id,
@@ -20167,6 +20470,7 @@
           wo.repairLocationType || '',
           lines.length,
           Math.round(total * 100) / 100,
+          summary,
           wo.qboSyncStatus || '',
           wo.qboEntityType || '',
           wo.qboEntityId || ''
@@ -20190,6 +20494,14 @@
           return;
         }
         if (t.classList.contains('wo-amt')) refreshApDocTotal();
+      });
+    }
+
+    const apUnitForWoClass = document.getElementById('apAssetUnit');
+    if (apUnitForWoClass && !apUnitForWoClass.dataset.woClassSyncBound) {
+      apUnitForWoClass.dataset.woClassSyncBound = '1';
+      apUnitForWoClass.addEventListener('change', () => {
+        woApAllRows().forEach(row => syncWoApLineDefaultsFromUnit(row));
       });
     }
 

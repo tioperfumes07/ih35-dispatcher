@@ -2897,11 +2897,23 @@ async function qboCreateWorkOrderTransaction(workOrder) {
   if (!Array.isArray(workOrder.lines) || !workOrder.lines.length) throw new Error('Work order needs at least one line');
 
   const vendorIdNorm = assertQboVendorIdKnown(erp, workOrder.qboVendorId);
-  const classId = pickValidatedQboClassId(erp, '', workOrder.unit);
   const lines = [];
   for (const line of workOrder.lines) {
     const amount = safeNum(line.amount, 0);
     if (!(amount > 0)) continue;
+
+    const cl = {
+      description: String(line.serviceType || line.lineType || 'Line').trim() || 'Line',
+      qboLineDescription: line.qboLineDescription,
+      partNumber: line.partNumber,
+      partPosition: line.partPosition,
+      partCategory: line.partCategory,
+      billable: line.billable,
+      qboCustomerId: line.qboCustomerId,
+      qboClassId: line.qboClassId,
+      tirePositionText: String(line.tirePositionText || line.tirePosition || '').trim()
+    };
+    const lineDesc = costLineQboDescription(cl);
 
     if (line.detailMode === 'item') {
       if (!line.qboItemId) throw new Error(`Missing QuickBooks item for line ${line.serviceType || line.lineType}`);
@@ -2913,14 +2925,11 @@ async function qboCreateWorkOrderTransaction(workOrder) {
         Qty: qty,
         UnitPrice: amount / qty
       };
-      if (classId) itemDetail.ClassRef = { value: classId };
+      applyMaintenanceExpenseLineRefs(erp, itemDetail, cl, workOrder.unit);
       lines.push({
         Amount: amount,
         DetailType: 'ItemBasedExpenseLineDetail',
-        Description: sanitizeName(
-          `${line.serviceType || line.lineType || 'Line'} ${line.tirePosition || line.tirePositionText || ''}`,
-          'Line'
-        ),
+        Description: lineDesc,
         ItemBasedExpenseLineDetail: itemDetail
       });
     } else {
@@ -2930,14 +2939,11 @@ async function qboCreateWorkOrderTransaction(workOrder) {
       const acctDetail = {
         AccountRef: { value: accountQbo.Id, name: accountQbo.Name }
       };
-      if (classId) acctDetail.ClassRef = { value: classId };
+      applyMaintenanceExpenseLineRefs(erp, acctDetail, cl, workOrder.unit);
       lines.push({
         Amount: amount,
         DetailType: 'AccountBasedExpenseLineDetail',
-        Description: sanitizeName(
-          `${line.serviceType || line.lineType || 'Line'} ${line.tirePosition || line.tirePositionText || ''}`,
-          'Line'
-        ),
+        Description: lineDesc,
         AccountBasedExpenseLineDetail: acctDetail
       });
     }
@@ -5958,7 +5964,13 @@ app.get('/api/reports/export/work-orders.csv', (_req, res) => {
           const ref = dm === 'item' ? String(l.qboItemId || '').trim() : String(l.qboAccountId || '').trim();
           const svc = String(l.serviceType || l.lineType || 'Line').trim();
           const amt = safeNum(l.amount, 0) || 0;
-          return `${svc} $${amt.toFixed(2)} ${dm}${ref ? `(${ref})` : ''}`;
+          const extras = [];
+          if (l.partCategory) extras.push(`cat=${String(l.partCategory)}`);
+          if (l.partPosition) extras.push(`pos=${String(l.partPosition)}`);
+          if (l.partNumber) extras.push(`pn=${String(l.partNumber)}`);
+          if (l.qboLineDescription) extras.push(`memo=${String(l.qboLineDescription).slice(0, 80)}`);
+          const ex = extras.length ? ` [${extras.join(';')}]` : '';
+          return `${svc} $${amt.toFixed(2)} ${dm}${ref ? `(${ref})` : ''}${ex}`;
         })
         .join(' | ');
       lines.push(
@@ -6255,23 +6267,39 @@ app.post('/api/work-orders', (req, res) => {
       qboEntityId: '',
       qboError: '',
       createdAt: new Date().toISOString(),
-      lines: (body.lines || []).map(line => ({
-        id: uid('wol'),
-        lineType: line.lineType || 'service',
-        serviceType: line.serviceType || '',
-        detailMode: line.detailMode || 'category',
-        qboAccountId: line.qboAccountId || '',
-        qboItemId: line.qboItemId || '',
-        tirePosition: line.tirePosition || '',
-        tirePositionText: line.tirePositionText || '',
-        qty: safeNum(line.qty, 1) || 1,
-        rate: safeNum(line.rate, 0),
-        amount: safeNum(line.amount, 0),
-        vendorInvoiceNumber: line.vendorInvoiceNumber || '',
-        vendorWorkOrderNumber: line.vendorWorkOrderNumber || '',
-        notes: line.notes || '',
-        serviceMileage: safeNum(line.serviceMileage, null)
-      }))
+      lines: (body.lines || []).map(line => {
+        const base = {
+          id: uid('wol'),
+          lineType: line.lineType || 'service',
+          serviceType: line.serviceType || '',
+          detailMode: line.detailMode || 'category',
+          qboAccountId: line.qboAccountId || '',
+          qboItemId: line.qboItemId || '',
+          tirePosition: line.tirePosition || '',
+          tirePositionText: line.tirePositionText || '',
+          qty: safeNum(line.qty, 1) || 1,
+          rate: safeNum(line.rate, 0),
+          amount: safeNum(line.amount, 0),
+          vendorInvoiceNumber: line.vendorInvoiceNumber || '',
+          vendorWorkOrderNumber: line.vendorWorkOrderNumber || '',
+          notes: line.notes || '',
+          serviceMileage: safeNum(line.serviceMileage, null)
+        };
+        if (typeof line.billable === 'boolean') base.billable = line.billable;
+        const qCust = qboDigitsId(line.qboCustomerId);
+        if (qCust) base.qboCustomerId = qCust;
+        const qCls = qboDigitsId(line.qboClassId);
+        if (qCls) base.qboClassId = qCls;
+        const qMemo = String(line.qboLineDescription || '').trim().slice(0, 380);
+        if (qMemo) base.qboLineDescription = qMemo;
+        const pn = String(line.partNumber || '').trim().slice(0, 80);
+        if (pn) base.partNumber = pn;
+        const ppos = String(line.partPosition || '').trim().slice(0, 120);
+        if (ppos) base.partPosition = ppos;
+        const pcat = String(line.partCategory || '').trim().slice(0, 64);
+        if (pcat) base.partCategory = pcat;
+        return base;
+      })
     };
 
     erp.workOrders.push(workOrder);

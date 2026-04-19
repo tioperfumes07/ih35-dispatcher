@@ -1005,6 +1005,13 @@ router.get('/api/pdf/work-order/:id', (req, res) => {
         const acct = ln.detailMode === 'category' ? accountNameFromErp(erp, ln.qboAccountId) : '';
         const item = ln.detailMode === 'item' ? itemNameFromErp(erp, ln.qboItemId) : '';
         const tire = [ln.tirePosition, ln.tirePositionText].filter(Boolean).join(' ');
+        const partMeta = [
+          ln.partCategory && `type ${ln.partCategory}`,
+          ln.partPosition && `pos ${ln.partPosition}`,
+          ln.partNumber && `# ${ln.partNumber}`
+        ]
+          .filter(Boolean)
+          .join(' · ');
         const lineBits = [
           `${i + 1}. ${ln.serviceType || ln.lineType || 'Line'}`,
           `Type: ${ln.lineType || '—'}`,
@@ -1013,7 +1020,10 @@ router.get('/api/pdf/work-order/:id', (req, res) => {
           item && `Item: ${item}`,
           `Qty ${ln.qty ?? 1} × rate ${ln.rate != null ? money(ln.rate) : '—'}`,
           amt,
-          tire && `Tire: ${tire}`
+          partMeta && `Parts: ${partMeta}`,
+          tire && `Ref: ${tire}`,
+          ln.qboLineDescription && `Line memo: ${String(ln.qboLineDescription).slice(0, 200)}`,
+          typeof ln.billable === 'boolean' && (ln.billable ? 'Billable' : 'Not billable')
         ].filter(Boolean);
         doc.text(lineBits.join(' · '));
         if (ln.notes) doc.fontSize(8).fillColor('#555555').text(`   Notes: ${ln.notes}`);
