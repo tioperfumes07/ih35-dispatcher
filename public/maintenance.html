@@ -16654,6 +16654,9 @@
       document.getElementById('repairLocationTypeInput').value = '';
       const rls = document.getElementById('repairLocationSelect');
       if (rls) rls.value = '';
+      const rss = document.getElementById('recordRepairStatusSelect');
+      if (rss) rss.value = '';
+      formatMaintRepairStatusMeta(null);
       document.getElementById('accidentAtFaultSearch').value = '';
       document.getElementById('accidentAtFaultValue').value = '';
       document.getElementById('recordTypeSelect').value = 'maintenance';
@@ -16934,6 +16937,13 @@
       document.getElementById('recordLoadNumberInput').value = String(r.loadNumber || '');
       document.getElementById('recordVendorInvoiceInput').value = String(r.vendorInvoiceNumber || '');
       document.getElementById('recordWorkOrderInput').value = String(r.workOrderNumber || '');
+
+      const rss = document.getElementById('recordRepairStatusSelect');
+      if (rss) {
+        const rs = String(r.repairStatus || '').trim();
+        rss.value = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
+      }
+      formatMaintRepairStatusMeta(r);
 
       const qvId = String(r.qboVendorId || '').trim();
       document.getElementById('linkedVendorQboId').value = qvId;
@@ -17228,7 +17238,8 @@
         qboBankAccountId: document.getElementById('linkedBankAccountQboId').value,
         qboTxnType: document.getElementById('linkedTxnTypeSelect').value,
         qboDueDate: document.getElementById('linkedDueDate').value,
-        qboDocNumber: document.getElementById('linkedDocNumber').value
+        qboDocNumber: document.getElementById('linkedDocNumber').value,
+        repairStatus: document.getElementById('recordRepairStatusSelect')?.value || ''
       };
 
       const saveOut = __editingMaintRecordId
