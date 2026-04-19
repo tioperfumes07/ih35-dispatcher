@@ -177,7 +177,10 @@ body.erp-maintenance .erp-module-sidebar {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: linear-gradient(180deg, var(--erp-sidebar-group-body-bg, #f3f8fd) 0%, var(--color-bg-card) 72%);
+  background: var(
+    --erp-sidebar-surface-bg,
+    linear-gradient(180deg, var(--erp-sidebar-group-body-bg, #f3f8fd) 0%, var(--color-bg-card) 72%)
+  );
   border-right: 1px solid var(--erp-sidebar-group-edge, var(--color-border));
   transition: opacity 0.18s ease, width 0.18s ease, min-width 0.18s ease;
 }
@@ -314,7 +317,7 @@ body.erp-maintenance .erp-main-body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* --- Top bar (blue shell) --- */
+/* --- Top bar (same cool blue as module sidebar) --- */
 body.erp-maintenance .erp-topbar.topbar {
   flex-shrink: 0;
   min-height: 52px;
@@ -325,14 +328,14 @@ body.erp-maintenance .erp-topbar.topbar {
   gap: 12px;
   padding: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 10px 1.25rem;
   margin: 0;
-  background: linear-gradient(180deg, var(--erp-shell-bar-bg) 0%, var(--erp-shell-bar-bg-deep) 100%);
-  border-bottom: 1px solid var(--erp-shell-bar-edge);
+  background: var(--erp-sidebar-surface-bg);
+  border-bottom: 1px solid var(--erp-sidebar-group-edge);
 }
 
 body.erp-maintenance .erp-topbar .title {
   font-size: 16px;
   font-weight: 500;
-  color: var(--erp-shell-bar-text);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -358,7 +361,7 @@ body.erp-maintenance .erp-topbar__actions {
 
 body.erp-maintenance .erp-topbar .topbar-home-link {
   font-weight: 500;
-  color: var(--erp-shell-bar-muted);
+  color: var(--erp-maint-chrome-muted, var(--color-text-label));
   font-size: 13px;
   max-width: min(100%, 22rem);
   white-space: nowrap;
@@ -367,33 +370,34 @@ body.erp-maintenance .erp-topbar .topbar-home-link {
 }
 
 body.erp-maintenance .erp-topbar .topbar-home-link:hover {
-  color: var(--erp-shell-bar-text);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
   text-decoration: underline;
 }
 
 body.erp-maintenance .erp-topbar .topbar-hint {
-  color: var(--erp-shell-bar-muted);
+  color: var(--erp-maint-chrome-muted, var(--color-text-label));
   font-size: 12px;
 }
 
 body.erp-maintenance .erp-topbar .topbar-hint strong {
-  color: var(--erp-shell-bar-text);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
   font-weight: 500;
 }
 
 body.erp-maintenance .erp-topbar .mini-note {
-  color: var(--erp-shell-bar-muted) !important;
+  color: var(--erp-maint-chrome-muted, var(--color-text-label)) !important;
 }
 
 body.erp-maintenance .erp-topbar .erp-help-tip__btn {
-  border-color: rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--erp-shell-bar-text);
+  border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
+  background: var(--erp-maint-strip-box-bg, var(--color-bg-card));
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  box-shadow: var(--erp-maint-strip-box-shadow, none);
 }
 
 body.erp-maintenance .erp-topbar .erp-help-tip__btn:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.55);
+  background: var(--erp-maint-strip-box-bg-hover, var(--color-bg-hover));
+  border-color: var(--erp-maint-strip-box-active-border, var(--color-border-focus));
 }
 
 body.erp-maintenance .erp-btn-primary {
@@ -606,10 +610,13 @@ body.erp-maintenance .erp-table-scroll table {
 body.erp-maintenance .erp-topbar .qb-in {
   width: 100%;
   max-width: 100%;
-  height: 32px;
-  border-radius: var(--radius-input);
-  border: 1px solid var(--color-border-input);
-  font-size: 13px;
+  height: var(--erp-maint-strip-control-height, 30px);
+  border-radius: 6px;
+  border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
+  font-size: var(--erp-maint-strip-font-size, 12px);
+  background: var(--color-bg-card);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  box-shadow: var(--erp-maint-strip-box-shadow, none);
 }
 
 body.erp-maintenance .erp-topbar .qb-in:focus {
@@ -619,19 +626,23 @@ body.erp-maintenance .erp-topbar .qb-in:focus {
 }
 
 body.erp-maintenance .erp-topbar .print-hide-actions button {
-  height: 32px;
+  height: var(--erp-maint-strip-control-height, 30px);
   padding: 0 12px;
-  border-radius: var(--radius-input);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--erp-shell-bar-text);
-  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
+  background: var(--erp-maint-strip-box-bg, var(--color-bg-card));
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  font-size: var(--erp-maint-strip-font-size, 12px);
   font-weight: 500;
-  box-shadow: none;
+  box-shadow: var(--erp-maint-strip-box-shadow, none);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 body.erp-maintenance .erp-topbar .print-hide-actions button:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--erp-maint-strip-box-bg-hover, var(--color-bg-hover));
 }
 
 @media print {
@@ -1765,8 +1776,11 @@ body.dispatch-page #dispatchApp .erp-module-sidebar {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--color-bg-card);
-  border-right: 1px solid var(--color-border);
+  background: var(
+    --erp-sidebar-surface-bg,
+    linear-gradient(180deg, var(--erp-sidebar-group-body-bg, #eef5fc) 0%, var(--color-bg-card) 72%)
+  );
+  border-right: 1px solid var(--erp-sidebar-group-edge, var(--color-border));
   transition: opacity 0.18s ease, width 0.18s ease, min-width 0.18s ease;
 }
 

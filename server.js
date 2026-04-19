@@ -4872,10 +4872,18 @@ app.get('/api/maintenance/vendor-catalog', async (_req, res) => {
 app.get('/api/maintenance/service-catalog-admin', async (_req, res) => {
   try {
     if (!getPool()) {
+      const rows = MAINTENANCE_SERVICE_CATALOG_SEEDS.map((name, i) => ({
+        id: `default-${i}`,
+        name,
+        active: true,
+        sort_order: i,
+        created_at: null
+      }));
       return res.json({
-        ok: false,
-        rows: [],
-        error: 'DATABASE_URL is not set — catalog is read-only defaults in this environment'
+        ok: true,
+        readOnly: true,
+        source: 'defaults',
+        rows
       });
     }
     await ensureMaintenanceServiceCatalog();

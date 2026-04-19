@@ -1239,6 +1239,7 @@
                     </div>
                   </div>
 
+                  <div class="maint-wo-form-split">
                   <div id="maintCostLinesPanel" class="maint-subcard maint-cost-panel-card erp-qb-cost-shell">
                     <div class="maint-subcard__head maint-subcard__head--split erp-qb-cost-global-head">
                       <span class="erp-qb-cost-global-head__title">Cost breakdown</span>
@@ -1415,6 +1416,7 @@
                   <div id="maintInvoicePdfStatus" class="mini-note maint-field-hint"></div>
                   <textarea id="notesInput" class="qb-memo maint-notes" placeholder="Notes"></textarea>
                     </div>
+                  </div>
                   </div>
 
                   <div id="recordSameCostServicesWrap" class="form-stack">
@@ -5748,9 +5750,13 @@
 
     /** Same name pool as fillDataLists service datalist (catalog API or defaults). */
     function maintEffectiveServiceCatalog() {
-      const raw =
-        Array.isArray(catalogServiceNames) && catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES;
-      return Array.from(new Set(raw.map(n => String(n || '').trim()).filter(Boolean)));
+      const merged = [
+        ...DEFAULT_MAINT_SERVICE_TYPES,
+        ...(Array.isArray(catalogServiceNames) ? catalogServiceNames : [])
+      ];
+      return Array.from(new Set(merged.map(n => String(n || '').trim()).filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b)
+      );
     }
 
     /**
@@ -9566,10 +9572,15 @@
         }
         setTmsUiEnabled(!!dbRes);
 
-        catalogServiceNames =
-          svcRes && svcRes.ok && Array.isArray(svcRes.names) && svcRes.names.length
-            ? svcRes.names
-            : [...DEFAULT_MAINT_SERVICE_TYPES];
+        {
+          const apiNames =
+            svcRes && svcRes.ok && Array.isArray(svcRes.names)
+              ? svcRes.names.map(n => String(n || '').trim()).filter(Boolean)
+              : [];
+          catalogServiceNames = Array.from(new Set([...DEFAULT_MAINT_SERVICE_TYPES, ...apiNames])).sort((a, b) =>
+            a.localeCompare(b)
+          );
+        }
 
         vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
         dashboard = dashRes.dashboard || [];
@@ -9682,7 +9693,9 @@
       document.getElementById('unitOptions').innerHTML =
         vehicles.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
 
-      const baseSvc = catalogServiceNames.length ? catalogServiceNames : DEFAULT_MAINT_SERVICE_TYPES;
+      const baseSvc = Array.from(
+        new Set([...DEFAULT_MAINT_SERVICE_TYPES, ...(Array.isArray(catalogServiceNames) ? catalogServiceNames : [])])
+      );
       const presetExtras = [
         'Tires',
         'Repair',
@@ -10344,6 +10357,7 @@
           '</p>';
         return;
       }
+      const readOnly = !!c.readOnly;
       const allRows = c.rows || [];
       if (toolbar) toolbar.style.display = allRows.length ? 'flex' : 'none';
 
@@ -10376,14 +10390,31 @@
       const start = (pState.page - 1) * ps;
       const slice = rows.slice(start, start + ps);
 
-      el.innerHTML = `
+      const roBanner = readOnly
+        ? `<p class="mini-note" style="margin:0 0 10px">Read-only default list (no Postgres). Set <strong>DATABASE_URL</strong> to store and toggle service types in the database.</p>`
+        : '';
+      const footNote = readOnly
+        ? '<p class="mini-note" style="margin-top:10px">WO pickers use these defaults until a database catalog is available.</p>'
+        : '<p class="mini-note" style="margin-top:10px">Add new names from the maintenance form (“Add to catalog”) or POST <code>/api/maintenance/service-types</code>.</p>';
+      el.innerHTML =
+        roBanner +
+        `
         <div class="erp-table-scroll">
           <table class="catalog-admin-table">
             <thead><tr><th>Name</th><th>Active</th><th>Sort</th><th></th></tr></thead>
             <tbody>
               ${slice
                 .map(
-                  r => `
+                  r =>
+                    readOnly
+                      ? `
+                <tr>
+                  <td>${escapeHtml(r.name || '')}</td>
+                  <td style="text-align:center">${r.active ? 'Yes' : 'No'}</td>
+                  <td style="text-align:center">${r.sort_order ?? ''}</td>
+                  <td style="text-align:center"><span class="mini-note">View only</span></td>
+                </tr>`
+                      : `
                 <tr>
                   <td>${escapeHtml(r.name || '')}</td>
                   <td style="text-align:center">${r.active ? 'Yes' : 'No'}</td>
@@ -10399,7 +10430,7 @@
             </tbody>
           </table>
         </div>
-        <p class="mini-note" style="margin-top:10px">Add new names from the maintenance form (“Add to catalog”) or POST <code>/api/maintenance/service-types</code>.</p>`;
+        ${footNote}`;
 
       if (pagerHost && window.erpPagerRender) {
         window.erpPagerRender(
@@ -10420,6 +10451,10 @@
 
     async function toggleCatalogActiveFromBtn(btn) {
       const id = btn.getAttribute('data-cat-id');
+      if (String(id || '').startsWith('default-')) {
+        erpNotify('Connect PostgreSQL (DATABASE_URL) to change catalog rows.', 'info');
+        return;
+      }
       const active = btn.getAttribute('data-next-active') === 'true';
       try {
         await j('/api/maintenance/service-catalog-admin', {

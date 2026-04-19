@@ -117,9 +117,22 @@
   --erp-shell-bar-muted: rgba(255, 255, 255, 0.82);
   --erp-shell-bar-edge: rgba(0, 0, 0, 0.14);
 
-  /** Module sidebar accordion (Board, Fleet by type, …) — light blue tints. */
-  --erp-sidebar-group-head-bg: #dcecf9;
-  --erp-sidebar-group-head-bg-hover: #cfe3f7;
-  --erp-sidebar-group-body-bg: #f3f8fd;
-  --erp-sidebar-group-edge: rgba(21, 87, 160, 0.12);
+  /** Module sidebar accordion (Board, Fleet by type, …) — distinct cool blue vs main content. */
+  --erp-sidebar-surface-bg: linear-gradient(180deg, #e9f2fb 0%, #dfeaf8 100%);
+  --erp-sidebar-group-head-bg: #b8d4f0;
+  --erp-sidebar-group-head-bg-hover: #a8c9eb;
+  --erp-sidebar-group-body-bg: #eef5fc;
+  --erp-sidebar-group-edge: rgba(21, 87, 160, 0.2);
+
+  /** Maintenance top bar + action strip — same blue family as sidebar; controls read as petite boxes. */
+  --erp-maint-chrome-text: #132a42;
+  --erp-maint-chrome-muted: #4a5f75;
+  --erp-maint-strip-box-bg: #cfe2f4;
+  --erp-maint-strip-box-bg-hover: #c0d9f0;
+  --erp-maint-strip-box-border: rgba(21, 87, 160, 0.38);
+  --erp-maint-strip-box-shadow: 0 1px 2px rgba(15, 52, 92, 0.1);
+  --erp-maint-strip-box-active-bg: #f7fbff;
+  --erp-maint-strip-box-active-border: #1557a0;
+  --erp-maint-strip-control-height: 30px;
+  --erp-maint-strip-font-size: 12px;
 }

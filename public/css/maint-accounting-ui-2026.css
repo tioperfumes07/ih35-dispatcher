@@ -11,108 +11,134 @@ body.erp-maintenance #section-maintenance .maint-page-shell {
   overflow: hidden;
 }
 
-/* --- Action strip (blue shell — matches top bar) --- */
+/* --- Action strip (same cool blue as top bar + left module sidebar) --- */
 body.erp-maintenance .maint-action-strip {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(180deg, var(--erp-shell-bar-bg) 0%, var(--erp-shell-bar-bg-deep) 100%);
-  border-bottom: 1px solid var(--erp-shell-bar-edge);
+  background: var(--erp-sidebar-surface-bg);
+  border-bottom: 1px solid var(--erp-sidebar-group-edge);
   flex-shrink: 0;
   min-width: 0;
   min-height: 0;
 }
 
 body.erp-maintenance .maint-action-strip .mini-note {
-  color: var(--erp-shell-bar-muted) !important;
+  color: var(--erp-maint-chrome-muted, var(--color-text-label)) !important;
 }
 
 body.erp-maintenance .maint-action-strip .erp-help-tip__btn {
-  border-color: rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--erp-shell-bar-text);
+  border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
+  background: var(--erp-maint-strip-box-bg, var(--color-bg-card));
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  box-shadow: var(--erp-maint-strip-box-shadow, none);
 }
 
 body.erp-maintenance .maint-action-strip .erp-help-tip__btn:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.55);
+  background: var(--erp-maint-strip-box-bg-hover, var(--color-bg-hover));
+  border-color: var(--erp-maint-strip-box-active-border, var(--color-border-focus));
 }
 
 body.erp-maintenance .maint-action-strip__btn {
-  height: 32px;
-  padding: 0 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: var(--radius-input);
-  border: 1px solid rgba(255, 255, 255, 0.38);
+  height: var(--erp-maint-strip-control-height, 30px);
+  min-width: 9.5rem;
+  padding: 0 12px;
+  font-size: var(--erp-maint-strip-font-size, 12px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border-radius: 6px;
+  border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
   cursor: pointer;
   font-family: inherit;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--erp-shell-bar-text);
+  background: var(--erp-maint-strip-box-bg, #cfe2f4);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  box-shadow: var(--erp-maint-strip-box-shadow, none);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
 }
 
 body.erp-maintenance .maint-action-strip__btn:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--erp-maint-strip-box-bg-hover, #c0d9f0);
 }
 
 body.erp-maintenance .maint-action-strip__btn--primary {
-  background: var(--color-bg-card);
-  color: var(--erp-shell-bar-bg-deep);
-  border-color: var(--color-bg-card);
+  background: var(--erp-maint-strip-box-bg, #cfe2f4);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  border-color: var(--erp-maint-strip-box-border, var(--color-border-input));
 }
 
 body.erp-maintenance .maint-action-strip__btn--primary:hover {
-  background: var(--color-bg-hover);
+  background: var(--erp-maint-strip-box-bg-hover, #c0d9f0);
   filter: none;
 }
 
 body.erp-maintenance .maint-action-strip__btn.active {
-  background: var(--color-bg-card);
-  color: var(--erp-shell-bar-bg-deep);
-  border-color: var(--color-bg-card);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+  background: var(--erp-maint-strip-box-active-bg, #f7fbff);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  border-color: var(--erp-maint-strip-box-active-border, #1557a0);
+  box-shadow:
+    var(--erp-maint-strip-box-shadow, 0 1px 2px rgba(15, 52, 92, 0.1)),
+    0 0 0 1px color-mix(in srgb, var(--erp-maint-strip-box-active-border, #1557a0) 35%, transparent);
 }
 
 body.erp-maintenance .maint-fleet-inline {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-left: 8px;
   min-width: 0;
   min-height: 0;
 }
 
 body.erp-maintenance .maint-fleet-inline__label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--erp-shell-bar-muted);
-  margin-right: 2px;
+  font-size: var(--erp-maint-strip-font-size, 12px);
+  font-weight: 700;
+  color: var(--erp-maint-chrome-muted, var(--color-text-label));
+  margin-right: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 body.erp-maintenance .maint-fleet-pill {
-  height: 28px;
-  padding: 0 12px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--erp-shell-bar-text);
+  height: var(--erp-maint-strip-control-height, 30px);
+  min-width: 4.75rem;
+  padding: 0 10px;
+  font-size: var(--erp-maint-strip-font-size, 12px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
+  border-radius: 6px;
+  background: var(--erp-maint-strip-box-bg, #cfe2f4);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
   cursor: pointer;
   font-family: inherit;
+  box-shadow: var(--erp-maint-strip-box-shadow, none);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
 }
 
 body.erp-maintenance .maint-fleet-pill:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--erp-maint-strip-box-bg-hover, #c0d9f0);
 }
 
 body.erp-maintenance .maint-fleet-pill.active {
-  background: var(--color-bg-card);
-  color: var(--erp-shell-bar-bg-deep);
-  border-color: var(--color-bg-card);
+  background: var(--erp-maint-strip-box-active-bg, #f7fbff);
+  color: var(--erp-maint-chrome-text, var(--color-text-primary));
+  border-color: var(--erp-maint-strip-box-active-border, #1557a0);
+  box-shadow:
+    var(--erp-maint-strip-box-shadow, 0 1px 2px rgba(15, 52, 92, 0.1)),
+    0 0 0 1px color-mix(in srgb, var(--erp-maint-strip-box-active-border, #1557a0) 35%, transparent);
 }
 
 body.erp-maintenance .maint-action-strip__qbo {
@@ -139,23 +165,32 @@ body.erp-maintenance .maint-qbo-dot--ok {
 }
 
 body.erp-maintenance .maint-qbo-issues-text {
-  font-size: 12px;
+  font-size: var(--erp-maint-strip-font-size, 12px);
   color: var(--color-semantic-error);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 body.erp-maintenance .maint-qbo-issues-view {
-  font-size: 12px;
-  color: var(--pill-blue-text);
+  font-size: var(--erp-maint-strip-font-size, 12px);
+  font-weight: 600;
+  color: var(--erp-shell-bar-bg);
   cursor: pointer;
   text-decoration: none;
-  background: none;
-  border: none;
-  padding: 0;
+  background: var(--erp-maint-strip-box-bg, #cfe2f4);
+  border: 1px solid var(--erp-maint-strip-box-border, var(--color-border-input));
+  border-radius: 6px;
+  padding: 0 10px;
+  height: var(--erp-maint-strip-control-height, 30px);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: inherit;
+  box-shadow: var(--erp-maint-strip-box-shadow, none);
 }
 
 body.erp-maintenance .maint-qbo-issues-view:hover {
+  background: var(--erp-maint-strip-box-bg-hover, #c0d9f0);
   text-decoration: underline;
 }
 
@@ -1974,6 +2009,33 @@ body.erp-maintenance [style*='display: grid'] {
 body.erp-maintenance #maintWorkOrderFormMount .maint-form-stack {
   max-width: 100%;
   width: 100%;
+  min-width: 0;
+}
+
+/* Cost breakdown + Notes side-by-side on wide viewports (shorter vertical scroll). */
+body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 1100px) {
+  body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
+    grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.85fr);
+    gap: 14px 16px;
+  }
+
+  body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split > .maint-subcard:not(.maint-cost-panel-card) {
+    position: sticky;
+    top: 8px;
+    align-self: start;
+  }
+}
+
+body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split .maint-cost-panel-card {
   min-width: 0;
 }
 
