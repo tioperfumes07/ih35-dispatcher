@@ -490,6 +490,82 @@ body.erp-maintenance .maint-form-actions--sticky {
   box-shadow: 0 -2px 8px color-mix(in srgb, var(--color-text-primary) 5%, transparent);
 }
 
+/* --- Module sidebar: title emphasis --- */
+body.erp-maintenance .erp-module-sidebar__brand-title {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+/* Maintenance action strip: tabs + fleet on one row; hints below (aligned) */
+body.erp-maintenance .maint-action-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+body.erp-maintenance .maint-action-strip__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 14px;
+  justify-content: space-between;
+}
+body.erp-maintenance .maint-action-strip__notes--below {
+  width: 100%;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Accounting board: single uniform list (matches + New) */
+body.erp-maintenance .acct-entry-board--uniform {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+body.erp-maintenance .acct-entry-list--uniform {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 8px;
+}
+body.erp-maintenance .acct-entry-list--uniform .acct-entry-list__btn {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px 12px;
+  box-sizing: border-box;
+}
+
+/* Full-window WO modal: ensure form column scrolls */
+body.maint-wo-modal-open .maint-workorder-fullmodal__shell {
+  min-height: 0;
+}
+body.maint-wo-modal-open #maintWorkOrderModalBody {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+body.maint-wo-modal-open #maintWorkOrderFormMount {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.maint-wo-modal-open #maintWorkOrderFormMount > .maint-wo-columns {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-wo-col-form {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* --- Collapsible sidebar groups (all modules on this page) --- */
 body.erp-app .erp-module-sidebar .erp-sb-group__body {
   overflow: hidden;
@@ -2214,7 +2290,7 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
 
 @media (min-width: 1100px) {
   body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
-    grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.55fr);
+    grid-template-columns: minmax(0, 1.68fr) minmax(180px, 0.32fr);
     gap: 14px 20px;
     justify-items: stretch;
   }

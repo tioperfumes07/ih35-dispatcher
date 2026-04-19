@@ -1826,6 +1826,7 @@ async function qboCreateBillPaymentFromApp(body) {
     sanitizeQboDocNumber(primaryBillDoc) ||
     sanitizeQboDocNumber(`B-${primaryBillId.replace(/\D/g, '')}`) ||
     `B${primaryBillId.replace(/\D/g, '')}`;
+  /** First payment uses the bill's DocNumber; each additional payment to the same bill gets -1, -2, … (QBO max 21 chars). */
   const prior = countPriorBillPaymentsForBill(erp, primaryBillId);
   let docNumber = baseDoc;
   if (prior > 0) {

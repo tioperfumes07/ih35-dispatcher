@@ -244,8 +244,9 @@
         <button type="button" class="erp-module-sidebar__collapse" onclick="toggleErpSidebar(true)" title="Hide lists column">«</button>
       </div>
       <div class="erp-module-sidebar__scroll">
-        <div class="mini-note" style="margin:0 0 8px;padding:0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;line-height:1.45;font-size:11px;color:var(--color-text-body)">
-          <span style="min-width:0;flex:1 1 140px">Groups below refresh when you switch modules.</span>
+        <div id="erpModuleSidebarInner" class="erp-module-sidebar__inner"></div>
+        <div class="erp-module-sidebar__after-groups mini-note" style="margin:10px 0 0;padding:8px 2px 0;border-top:1px solid var(--color-border);display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;line-height:1.45;font-size:11px;color:var(--color-text-body)">
+          <span style="min-width:0;flex:1 1 140px">Groups above refresh when you switch modules.</span>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Left rail list host">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
@@ -253,7 +254,6 @@
             </span>
           </span>
         </div>
-        <div id="erpModuleSidebarInner" class="erp-module-sidebar__inner"></div>
       </div>
       <div class="erp-module-sidebar__footer">
         <div class="erp-sb-heading">Connections</div>
@@ -286,8 +286,12 @@
       </aside>
 
       <main class="main erp-main-surface">
-        <div class="mini-note print-hide-actions" style="margin:0 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-          <span style="min-width:0;flex:1 1 220px"><strong>401</strong> + <code>authRequired</code> → red strip below with sign-in; good <code>loadAll()</code> hides it.</span>
+        <div id="authBanner" class="hidden mini-note erp-auth-banner" aria-live="polite"></div>
+        <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
+        <div id="erpConnectionStrip" class="erp-connection-strip print-hide-actions" aria-live="polite"></div>
+        <div class="erp-main-banner-hints print-hide-actions" style="margin:8px 0 4px;display:flex;flex-direction:column;gap:6px">
+        <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
+          <span style="min-width:0;flex:1 1 220px"><strong>401</strong> + <code>authRequired</code> → red strip above when needed; <code>loadAll()</code> hides it after a good refresh.</span>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Auth banner">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
@@ -295,8 +299,7 @@
             </span>
           </span>
         </div>
-        <div id="authBanner" class="hidden mini-note erp-auth-banner" aria-live="polite"></div>
-        <div class="mini-note print-hide-actions" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
+        <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
           <span style="min-width:0;flex:1 1 220px">Sticky QBO banner — posting/connection issues from the sync poll; <strong>Hide ×</strong> dismisses until the alert set changes.</span>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO sync alert bar">?</button>
@@ -305,8 +308,7 @@
             </span>
           </span>
         </div>
-        <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
-        <div id="erpConnectionStrip" class="erp-connection-strip print-hide-actions" aria-live="polite"></div>
+        </div>
         <header class="topbar erp-topbar">
           <div class="title" id="pageTitle">Maintenance</div>
           <a href="/" class="topbar-home-link" title="Company hub">IH 35 Transportation LLC</a>
@@ -892,6 +894,7 @@
         </div>
         <div class="maint-page-shell">
           <div class="maint-action-strip" aria-label="Maintenance actions">
+            <div class="maint-action-strip__top">
             <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
               <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
               <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
@@ -902,7 +905,8 @@
               <span class="maint-fleet-inline__label">Fleet</span>
               <span id="maintActionFleetPills" class="maint-action-strip__pills" style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center"></span>
             </div>
-            <div class="maint-action-strip__notes">
+            </div>
+            <div class="maint-action-strip__notes maint-action-strip__notes--below">
               <div class="maint-action-strip__note mini-note">
                 <span>Fleet chips scope unit list, fleet table, and WO column — ERP categories only (not Samsara).</span>
                 <span class="erp-help-tip">
@@ -1454,7 +1458,7 @@
                   <div id="maintInvoicePdfStatus" class="mini-note maint-field-hint"></div>
                   <div id="maintNotesSlotsWrap" class="maint-notes-slots-wrap">
                     <p class="mini-note maint-notes-slots-hint" style="margin:0 0 8px;color:var(--color-text-label)">
-                      Notes <strong>1–5</strong> — use <strong>Enter</strong> for a new line inside the same note.
+                      Notes <strong>1–5</strong> — each box is one topic. Press <strong>Enter</strong> for a new line <em>inside</em> that note (the number does not change).
                     </p>
                     <div id="maintNotesSlots" class="maint-notes-slots" aria-label="Work order notes">
                       <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">1.</span><textarea id="maintNoteSlot1" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 1"></textarea></label>
@@ -2585,13 +2589,12 @@
             </div>
           </div>
           <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
-          <div class="acct-entry-board">
-            <div class="acct-entry-board__col">
-              <div class="acct-entry-board__title">New entry <span class="erp-help-tip" style="margin-left:4px">
+          <div class="acct-entry-board acct-entry-board--uniform">
+              <div class="acct-entry-board__title">Record &amp; open <span class="erp-help-tip" style="margin-left:4px">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Same flows as + New">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">Opens the dedicated accounting composer in a modal — same actions as <strong>+ New</strong> (maintenance / fuel / bills).</span>
+                <span class="erp-help-tip__panel" role="tooltip">Pick a row to open the same composer or tab as <strong>+ New</strong> — one list, uniform buttons.</span>
               </span></div>
-              <div class="acct-entry-list" role="list">
+              <div class="acct-entry-list acct-entry-list--uniform" role="list">
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
@@ -2600,14 +2603,9 @@
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewExpense()">Standard expense</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewBill()">Standard bill</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewPayBills()">Pay bills</button>
-              </div>
-            </div>
-            <div class="acct-entry-board__col">
-              <div class="acct-entry-board__title">Saved lists &amp; posting</div>
-              <div class="acct-entry-list acct-entry-list--dense" role="list">
-                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--secondary" role="listitem" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Maintenance expenses (saved)</button>
-                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--secondary" role="listitem" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF</button>
-                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--secondary" role="listitem" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Pay bills (workspace)</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Saved maintenance expenses</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF (ledger)</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Pay bills workspace</button>
                 <button type="button" class="acct-entry-list__btn acct-entry-list__btn--accent" role="listitem" onclick="acctScrollToPendingPost()">Post pending to QuickBooks</button>
               </div>
               <div class="acct-board-qbo-inline">
@@ -2632,9 +2630,7 @@
               >
                 View all errors
               </button>
-            </div>
-            <div class="acct-entry-board__col acct-entry-board__col--tools">
-              <div class="acct-entry-board__title">Tools &amp; data</div>
+            <div class="acct-entry-board__title" style="margin-top:4px">Tools &amp; data</div>
               <div class="acct-dash-tools-grid">
                 <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
                 <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
@@ -2649,7 +2645,6 @@
                 <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
               </div>
             </div>
-          </div>
           <div
             id="maintIntegrationStrip"
             class="mini-note"
