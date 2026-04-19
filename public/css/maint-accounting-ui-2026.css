@@ -2392,3 +2392,15 @@ body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card__val {
   font-weight: 500;
   margin-top: 6px;
 }
+
+/* No spinner arrows on numeric money/qty fields (WO, AP, fuel, bill pay). */
+body.erp-maintenance input[type='number']::-webkit-outer-spin-button,
+body.erp-maintenance input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+body.erp-maintenance input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

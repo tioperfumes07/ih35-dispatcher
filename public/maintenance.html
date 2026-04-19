@@ -6000,7 +6000,7 @@
               const st = String(e.status || 'queued');
               const overdue = e.overdue ? ' <span style="color:var(--color-semantic-warn-accent);font-weight:500">(past est.)</span>' : '';
               const sid = escapeHtml(String(e.id || ''));
-              const sel = `<select class="qb-in maint-loc-queue-status" style="font-size:12px;max-width:220px;${e.overdue ? 'border-color:var(--color-semantic-warn-accent)' : ''}" data-shop-id="${sid}" data-prev-status="${escapeHtml(st)}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)"><option value="queued" ${st === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${st === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${st === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select>`;
+              const sel = `<select class="qb-in maint-loc-queue-status" style="font-size:12px;max-width:220px;${e.overdue ? 'border-color:var(--color-semantic-warn-accent)' : ''}" data-shop-id="${sid}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)"><option value="queued" ${st === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${st === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${st === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select>`;
               return `<tr><td><strong>${escapeHtml(e.unit || '—')}</strong><div class="mini-note">${escapeHtml(
                 e.assetCategory || ''
               )}</div></td><td>${escapeHtml(e.title || '')}${overdue}</td><td>${sel}</td><td>${escapeHtml(
@@ -13124,6 +13124,7 @@
         await j('/api/maintenance/shop-queue/' + encodeURIComponent(id), { method: 'DELETE' });
         shopQueueCache = shopQueueCache.filter(x => String(x.id) !== String(id));
         renderShopQueues();
+        renderMaintLocationBoard();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
       }
