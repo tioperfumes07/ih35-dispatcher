@@ -1407,6 +1407,9 @@ body.erp-maintenance .mr-upload-tabbar .subtab {
   color: var(--color-text-label);
   cursor: pointer;
   font-family: inherit;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-upload-tabbar .subtab:hover {
