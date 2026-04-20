@@ -1,6 +1,6 @@
 /**
  * Reports hub: 8 category tabs + card grid + dataset / QBO viewer (#rep-dynamic).
- * Depends on maintenance inline helpers: j(), escapeHtml(), openReportsTab(), erpNotify().
+ * Uses: j(), escapeHtml(), openReportsTab(), openReportsTabFromSidebar(), repReportsRoadmapMsg(), erpNotify(), authFetchHeaders().
  */
 (function () {
   const SAM = 'Samsara';
@@ -18,9 +18,8 @@
     { id: 'custom', label: 'Custom' }
   ];
 
-  /** @type {{cat:string,title:string,desc:string,source:string,keywords:string,dataset?:string,qbo?:string,legacy?:string,dotPdf?:boolean,fleetPdf?:boolean}[]} */
+  /** @type {{cat:string,title:string,desc:string,source:string,keywords:string,dataset?:string,qbo?:string,legacy?:string,dotPdf?:boolean,custom?:string}[]} */
   const REP_ITEMS = [];
-
   function add(cat, title, desc, source, keywords, extra = {}) {
     REP_ITEMS.push({ cat, title, desc, source, keywords: keywords.toLowerCase(), ...extra });
   }
@@ -43,19 +42,19 @@
   add('maintenance', 'Detailed (parts / positions)', 'Line-level export', ERP, 'parts positions tires', { legacy: 'rep-maint-detail' });
 
   const QBO_MAP = [
-    ['b1', 'ProfitAndLoss', 'Profit & Loss', 'profit loss p&l'],
-    ['b2', 'BalanceSheet', 'Balance Sheet', 'balance sheet'],
-    ['b3', 'CashFlow', 'Cash Flow Statement', 'cash flow'],
-    ['b4', 'AgedPayables', 'Accounts Payable Aging', 'ap aging payable'],
-    ['b5', 'VendorBalance', 'Vendor balance summary', 'vendor balance'],
-    ['b11', 'TrialBalance', 'Trial Balance', 'trial balance'],
-    ['b12', 'GeneralLedgerDetail', 'General Ledger', 'general ledger gl'],
-    ['b13', 'Check', 'Check detail', 'check detail'],
-    ['b14', 'OpenInvoices', 'Open invoices', 'open invoices ar'],
-    ['b15', 'AgedReceivables', 'Accounts receivable aging', 'ar aging receivable'],
-    ['b16', 'CustomerSales', 'Sales by customer', 'sales customer revenue']
+    ['ProfitAndLoss', 'Profit & Loss', 'profit loss p&l'],
+    ['BalanceSheet', 'Balance Sheet', 'balance sheet'],
+    ['CashFlow', 'Cash Flow Statement', 'cash flow'],
+    ['AgedPayables', 'Accounts Payable Aging', 'ap aging payable'],
+    ['VendorBalance', 'Vendor balance summary', 'vendor balance'],
+    ['TrialBalance', 'Trial Balance', 'trial balance'],
+    ['GeneralLedgerDetail', 'General Ledger', 'general ledger gl'],
+    ['Check', 'Check detail', 'check detail'],
+    ['OpenInvoices', 'Open invoices', 'open invoices ar'],
+    ['AgedReceivables', 'Accounts receivable aging', 'ar aging receivable'],
+    ['CustomerSales', 'Sales by customer', 'sales customer revenue']
   ];
-  for (const [id, report, title, kw] of QBO_MAP) {
+  for (const [report, title, kw] of QBO_MAP) {
     add('accounting', title, 'Live QBO Reports API', QBO, kw, { qbo: report });
   }
   add('accounting', 'Expense history (ERP)', 'Posted + local AP expenses', ERP, 'expense history ap', { dataset: 'b6-expense-history' });
@@ -145,7 +144,14 @@
           rangeTag: `${st.startDate || ''}_${st.endDate || ''}`
         })
       });
-      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+      if (!r.ok) {
+        const t = await r.text();
+        let err = t;
+        try {
+          err = JSON.parse(t).error || t;
+        } catch (_) {}
+        throw new Error(err || r.statusText);
+      }
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -170,6 +176,10 @@
     return `<table class="rep-dyn-table" style="min-width:520px;font-size:12px;width:100%"><thead><tr>${th}</tr></thead><tbody>${tr || ''}</tbody></table>`;
   }
 
+  function colIndex(tbl, k) {
+    return [...tbl.querySelectorAll('thead th[data-k]')].findIndex(h => h.getAttribute('data-k') === k);
+  }
+
   function bindSortable(host) {
     const tbl = host.querySelector('table.rep-dyn-table');
     if (!tbl) return;
@@ -182,8 +192,9 @@
         dir = sortKey === k ? -dir : 1;
         sortKey = k;
         const tbody = tbl.querySelector('tbody');
+        const idx = colIndex(tbl, k);
+        if (idx < 0) return;
         const arr = Array.from(tbody.querySelectorAll('tr'));
-        const idx = keysIndex(tbl, k);
         arr.sort((a, b) => {
           const ta = a.children[idx]?.textContent || '';
           const tb = b.children[idx]?.textContent || '';
@@ -196,9 +207,30 @@
       });
     });
   }
-  function keysIndex(tbl, k) {
-    const heads = [...tbl.querySelectorAll('thead th[data-k]')];
-    return heads.findIndex(h => h.getAttribute('data-k') === k);
+
+  function flattenQboReportForTable(report) {
+    const rows = [];
+    const walk = r => {
+      if (!r) return;
+      const list = Array.isArray(r) ? r : [r];
+      for (const row of list) {
+        if (row.ColData) {
+          const cds = Array.isArray(row.ColData) ? row.ColData : [row.ColData];
+          const obj = {};
+          cds.forEach((cd, i) => {
+            obj['c' + i] = cd?.value ?? '';
+          });
+          rows.push(obj);
+        }
+        if (row.Rows && row.Rows.Row) walk(row.Rows.Row);
+      }
+    };
+    if (report?.Rows?.Row) walk(report.Rows.Row);
+    const ncols = rows.reduce((m, r) => Math.max(m, Object.keys(r).filter(k => k.startsWith('c')).length), 0);
+    const columns = [];
+    for (let i = 0; i < ncols; i++) columns.push({ key: 'c' + i, label: 'Column ' + (i + 1) });
+    if (!columns.length) columns.push({ key: 'a', label: 'Data' });
+    return { columns, rows };
   }
 
   async function repOpenDataset(datasetId, title) {
@@ -229,12 +261,14 @@
       badge.hidden = false;
     }
     const r0 = defaultRange();
+    const posField = datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history';
     if (ttl) ttl.textContent = title || datasetId;
     if (fl) {
       fl.innerHTML = `
         <div><label class="qb-l">Start</label><input type="date" class="qb-in" id="repDfStart" value="${r0.start}" /></div>
         <div><label class="qb-l">End</label><input type="date" class="qb-in" id="repDfEnd" value="${r0.end}" /></div>
         <div><label class="qb-l">Unit</label><input type="text" class="qb-in" id="repDfUnit" placeholder="Optional" /></div>
+        ${posField ? '<div><label class="qb-l">Position</label><input type="text" class="qb-in" id="repDfPosition" placeholder="Optional" /></div>' : ''}
         <div style="align-self:flex-end"><button type="button" class="btn" id="repDfRun">Run</button></div>
       `;
     }
@@ -250,9 +284,11 @@
       const s = document.getElementById('repDfStart')?.value || '';
       const e = document.getElementById('repDfEnd')?.value || '';
       const u = document.getElementById('repDfUnit')?.value || '';
+      const p = document.getElementById('repDfPosition')?.value || '';
       if (s) sp.set('startDate', s);
       if (e) sp.set('endDate', e);
       if (u) sp.set('unit', u);
+      if (p) sp.set('position', p);
       const data = await j('/api/reports/dataset?' + sp.toString());
       if (!data.ok) throw new Error(data.error || 'Dataset failed');
       if (disc && data.disclaimer) {
@@ -263,48 +299,47 @@
         host.innerHTML = data.rows && data.rows.length ? renderSortableTable(data.columns, data.rows) : '<p class="mini-note">No rows.</p>';
         bindSortable(host);
       }
-      if (data.meta && Array.isArray(data.meta.positions) && tmap && (datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history')) {
+      if (data.meta && Array.isArray(data.meta.positions) && tmap && posField) {
         tmap.classList.remove('hidden');
         tmap.innerHTML =
-          '<div class="mini-note" style="margin-bottom:6px">Positions</div><div class="rep-pos-chips">' +
+          '<div class="mini-note" style="margin-bottom:6px">Filter by position</div><div class="rep-pos-chips">' +
           data.meta.positions
-            .map(
-              p =>
-                `<button type="button" class="chip${u && String(p).toLowerCase() === String(u).toLowerCase() ? ' active' : ''}" data-pos="${escapeHtml(p)}">${escapeHtml(p)}</button>`
-            )
+            .map(p => `<button type="button" class="chip">${escapeHtml(String(p))}</button>`)
             .join('') +
           '</div>';
         tmap.querySelectorAll('button.chip').forEach(btn => {
           btn.addEventListener('click', () => {
-            const inp = document.getElementById('repDfUnit');
-            if (datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history') {
-              const posInput = document.getElementById('repDfPosition');
-              if (posInput) posInput.value = btn.getAttribute('data-pos') || '';
-            }
+            const inp = document.getElementById('repDfPosition');
+            if (inp) inp.value = btn.textContent || '';
             run().catch(err => {
               if (host) host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(err.message)}</p>`;
             });
           });
         });
       }
-      if ((datasetId === 'a2-cost-by-unit' || datasetId === 'a3-cost-by-service-type' || datasetId === 'd1-fuel-cost-by-unit') && chart && data.rows && data.rows.length) {
+      if (
+        (datasetId === 'a2-cost-by-unit' || datasetId === 'a3-cost-by-service-type' || datasetId === 'd1-fuel-cost-by-unit') &&
+        chart &&
+        data.rows &&
+        data.rows.length
+      ) {
         chart.classList.remove('hidden');
         chart.innerHTML =
-          '<p class="mini-note" style="margin:0 0 6px">Bar chart preview (values in table; full charting roadmap).</p><div class="rep-bar-preview">' +
+          '<p class="mini-note" style="margin:0 0 6px">Bar preview (log-scaled width).</p><div class="rep-bar-preview">' +
           data.rows
-            .slice(0, 12)
+            .slice(0, 14)
             .map(r => {
               const label = r.unit || r.serviceType || r.driver || r.customer || '—';
               const val = Number(r.totalDollars ?? r.total ?? r.revenue ?? 0) || 0;
-              const w = Math.min(100, Math.max(4, val > 0 ? Math.log10(val + 1) * 25 : 4));
-              return `<div class="rep-bar-row"><span>${escapeHtml(String(label))}</span><span class="rep-bar-fill" style="width:${w}%"></span><span>$${val.toFixed(0)}</span></div>`;
+              const w = Math.min(100, Math.max(6, val > 0 ? Math.log10(val + 1) * 28 : 6));
+              return `<div class="rep-bar-row"><span style="min-width:90px">${escapeHtml(String(label))}</span><span class="rep-bar-track"><span class="rep-bar-fill" style="width:${w}%"></span></span><span>$${val.toFixed(0)}</span></div>`;
             })
             .join('') +
           '</div>';
       }
       if (tot && data.totals) {
         tot.classList.remove('hidden');
-        tot.textContent = `Totals: ${JSON.stringify(data.totals)}`;
+        tot.textContent = 'Totals: ' + escapeHtml(JSON.stringify(data.totals));
       }
       window.__repDynState = {
         kind: 'dataset',
@@ -328,48 +363,6 @@
       if (host) host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(err.message)}</p>`;
     });
 
-    if (datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history') {
-      const posRow = document.createElement('div');
-      posRow.innerHTML = '<label class="qb-l">Position filter</label><input type="text" class="qb-in" id="repDfPosition" placeholder="From map chips" />';
-      fl?.appendChild(posRow);
-      const origRun = run;
-      const run2 = async () => {
-        const sp = new URLSearchParams();
-        sp.set('id', datasetId);
-        const s = document.getElementById('repDfStart')?.value || '';
-        const e = document.getElementById('repDfEnd')?.value || '';
-        const u = document.getElementById('repDfUnit')?.value || '';
-        const p = document.getElementById('repDfPosition')?.value || '';
-        if (s) sp.set('startDate', s);
-        if (e) sp.set('endDate', e);
-        if (u) sp.set('unit', u);
-        if (p) sp.set('position', p);
-        const data = await j('/api/reports/dataset?' + sp.toString());
-        if (!data.ok) throw new Error(data.error || 'Dataset failed');
-        if (host) {
-          host.innerHTML = data.rows && data.rows.length ? renderSortableTable(data.columns, data.rows) : '<p class="mini-note">No rows.</p>';
-          bindSortable(host);
-        }
-        window.__repDynState = {
-          kind: 'dataset',
-          datasetId,
-          title: data.title || title,
-          columns: data.columns || [],
-          rows: data.rows || [],
-          startDate: s,
-          endDate: e,
-          unitTag: u
-        };
-      };
-      document.getElementById('repDfRun')?.replaceWith(document.getElementById('repDfRun'));
-      document.getElementById('repDfRun')?.addEventListener('click', () => {
-        run2().catch(err => {
-          if (host) host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(err.message)}</p>`;
-        });
-      });
-      await run2().catch(() => {});
-    }
-
     if (typeof openReportsTab === 'function') openReportsTab('rep-dynamic', null);
   }
 
@@ -387,7 +380,7 @@
     if (ttl) ttl.textContent = title || reportName;
     if (disc) {
       disc.textContent =
-        'Data sourced from QuickBooks Online. Amounts and columns match your QBO company file.';
+        'Data sourced from QuickBooks Online. Columns follow the QBO report layout; use View in QuickBooks for native drill-down.';
       disc.classList.remove('hidden');
     }
     const r0 = defaultRange();
@@ -420,7 +413,10 @@
       if (data.viewUrl) qLink.href = data.viewUrl;
       const flat = flattenQboReportForTable(data.report);
       if (host) {
-        host.innerHTML = flat.rows.length ? renderSortableTable(flat.columns, flat.rows) : `<pre class="mini-note" style="white-space:pre-wrap">${escapeHtml(JSON.stringify(data.report, null, 2).slice(0, 8000))}</pre>`;
+        host.innerHTML =
+          flat.rows.length > 0
+            ? renderSortableTable(flat.columns, flat.rows)
+            : `<pre class="mini-note" style="white-space:pre-wrap;max-height:420px;overflow:auto">${escapeHtml(JSON.stringify(data.report, null, 2).slice(0, 12000))}</pre>`;
         bindSortable(host);
       }
       window.__repDynState = {
@@ -444,51 +440,6 @@
     if (typeof openReportsTab === 'function') openReportsTab('rep-dynamic', null);
   }
 
-  function flattenQboReportForTable(report) {
-    const columns = [];
-    const rows = [];
-    try {
-      const cols = report?.Columns?.Column;
-      const colArr = Array.isArray(cols) ? cols : cols ? [cols] : [];
-      for (const c of colArr) {
-        const t = c?.ColTitle || c?.MetaData?.[0]?.Name || c?.group || 'Col';
-        columns.push({ key: 'c' + columns.length, label: String(t) });
-      }
-      const walk = (node, row) => {
-        if (!node) return;
-        if (node.Header && node.Header.ColData) {
-          const cds = Array.isArray(node.Header.ColData) ? node.Header.ColData : [node.Header.ColData];
-          cds.forEach((cd, i) => {
-            row['c' + i] = cd?.value ?? '';
-          });
-        }
-        if (node.Rows && node.Rows.Row) {
-          const rs = Array.isArray(node.Rows.Row) ? node.Rows.Row : [node.Rows.Row];
-          for (const sub of rs) {
-            if (sub.type === 'Section') walk(sub, { ...row });
-            else if (sub.ColData) {
-              const out = { ...row };
-              const cds = Array.isArray(sub.ColData) ? sub.ColData : [sub.ColData];
-              cds.forEach((cd, i) => {
-                out['c' + i] = cd?.value ?? '';
-              });
-              rows.push(out);
-            } else walk(sub, { ...row });
-          }
-        }
-      };
-      walk({ Rows: report?.Rows }, {});
-      if (!columns.length) {
-        columns.push({ key: 'json', label: 'Report (raw)' });
-        rows.push({ json: 'See JSON below or widen date range.' });
-      }
-    } catch (_) {
-      columns.push({ key: 'v', label: 'Value' });
-      rows.push({ v: 'Could not flatten QBO columns — see QBO UI.' });
-    }
-    return { columns: columns.length ? columns : [{ key: 'a', label: 'A' }], rows };
-  }
-
   function repOpenDotPdf() {
     const u = prompt('Enter unit number (vehicle name) for DOT audit PDF:');
     if (!u) return;
@@ -503,7 +454,7 @@
     const items = REP_ITEMS.filter(x => x.cat === __repCat);
     grid.innerHTML = items
       .map(it => {
-        const kid = `repk-${it.title.replace(/[^\w]+/g, '-').slice(0, 40)}`;
+        const kid = 'repk-' + String(it.title.replace(/[^\w]+/g, '-')).slice(0, 48);
         return `<button type="button" class="rep-catalog-card" id="${kid}" data-rep-k="${escapeHtml(it.keywords)}" data-cat="${escapeHtml(it.cat)}">
           <span class="rep-catalog-card__src">${escapeHtml(it.source)}</span>
           <span class="rep-catalog-card__title">${escapeHtml(it.title)}</span>
@@ -555,6 +506,7 @@
   }
 
   window.repInitReportsHub = function repInitReportsHub() {
+    repHookFilterOnce();
     const tabs = document.getElementById('repCatTabs');
     if (!tabs || tabs.dataset.bound === '1') {
       renderCatalogGrid();
@@ -563,7 +515,7 @@
     tabs.dataset.bound = '1';
     tabs.innerHTML = REP_CATS.map(
       (c, i) =>
-        `<button type="button" role="tab" class="rep-cat-tab${i === 0 ? ' active' : ''}" data-cat="${c.id}" data-rep-k="${c.label} ${c.id} reports">${escapeHtml(c.label)}</button>`
+        `<button type="button" role="tab" class="rep-cat-tab${i === 0 ? ' active' : ''}" data-cat="${c.id}" data-rep-k="${escapeHtml(c.label)} ${escapeHtml(c.id)}">${escapeHtml(c.label)}</button>`
     ).join('');
     tabs.querySelectorAll('.rep-cat-tab').forEach(b => {
       b.addEventListener('click', () => repSwitchReportCategory(b.getAttribute('data-cat'), b));
@@ -577,9 +529,12 @@
   window.repOpenDataset = repOpenDataset;
   window.repOpenQbo = repOpenQbo;
 
-  const origFilter = window.repFilterReports;
-  if (typeof origFilter === 'function') {
-    window.repFilterReports = function (q) {
+  function repHookFilterOnce() {
+    if (window.__repFilterCatalogHooked) return;
+    const origFilter = window.repFilterReports;
+    if (typeof origFilter !== 'function') return;
+    window.__repFilterCatalogHooked = true;
+    const wrapped = function (q) {
       origFilter(q);
       const ql = String(q || '')
         .trim()
@@ -597,5 +552,7 @@
         card.classList.toggle('rep-filter-hidden', ql.length > 0 && !ok);
       });
     };
+    window.repFilterReports = wrapped;
   }
 })();
+

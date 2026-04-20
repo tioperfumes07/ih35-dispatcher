@@ -581,6 +581,9 @@
       sb.textContent = 'Save payment — ' + money(tot);
       sb.disabled = !n || !(tot > 0);
     }
+    const leg = el('bpSelectionTotal');
+    if (leg) leg.textContent = `Draft payment total: ${money(tot)}`;
+    if (typeof syncErpDedicatedModalChrome === 'function') syncErpDedicatedModalChrome();
   }
 
   function vbpValidate() {
@@ -806,7 +809,7 @@
     let html = '';
     for (const r of rows) {
       const bill = String(r.billDocNumber || '');
-      const grp = prevBill && bill === prevBill;
+      const grp = Boolean(prevBill) && bill === prevBill;
       prevBill = bill;
       const st = String(r.qboStatus || 'pending');
       const pill =
@@ -882,20 +885,20 @@
         )}</td><td>${money(s.paymentAmount)}</td><td>${money(s.remainingBalanceAfter)}</td></tr>`;
       }
       serHtml += '</tbody></table>';
-      const batchShort = String(p.batchId || '').slice(0, 8);
+      const batchFull = escapeHtml(String(p.batchId || ''));
       el('vbpPanelBody').innerHTML = `
         <div class="vbp-panel-pnum">${escapeHtml(String(p.paymentNumber))}</div>
-        ${vbpPanelRow('Vendor', p.vendorName)}
-        ${vbpPanelRow('Payment date', p.paymentDate)}
-        ${vbpPanelRow('Method', p.paymentMethod)}
-        ${vbpPanelRow('Account', p.paymentAccountName)}
+        ${vbpPanelRow('Vendor', String(p.vendorName || ''))}
+        ${vbpPanelRow('Payment date', String(p.paymentDate || ''))}
+        ${vbpPanelRow('Method', String(p.paymentMethod || ''))}
+        ${vbpPanelRow('Account', String(p.paymentAccountName || ''))}
         ${vbpPanelRow('Check #', p.checkNum || '—')}
         ${vbpPanelRow('Memo', p.memo || '—')}
-        ${vbpPanelRow('QBO status', p.qboStatus)}
-        ${vbpPanelRow('Batch ID', `${batchShort}… <button type="button" class="qb-btn-add" id="vbpCopyBatch">Copy</button>`)}
-        ${vbpPanelRow('Bill # paid', `<button type="button" class="vbp-linkbtn" id="vbpPanelBill">${escapeHtml(
-          String(p.billDocNumber)
-        )}</button>`)}
+        ${vbpPanelRow('QBO status', String(p.qboStatus || ''))}
+        <div class="vbp-panel-row"><span>Batch ID</span><span><code class="vbp-mono">${batchFull}</code> <button type="button" class="qb-btn-add" id="vbpCopyBatch">Copy</button></span></div>
+        <div class="vbp-panel-row"><span>Bill # paid</span><span><button type="button" class="vbp-linkbtn" id="vbpPanelBill">${escapeHtml(
+          String(p.billDocNumber || '')
+        )}</button></span></div>
         ${vbpPanelRow('Bill amount', money(p.originalAmount))}
         ${vbpPanelRow('Payment amount', money(p.paymentAmount))}
         ${vbpPanelRow('Remaining', money(p.remainingBalanceAfter))}
@@ -913,7 +916,10 @@
           }
           <button type="button" class="btn" id="vbpPanelPrint">Print receipt</button>
         </div>`;
-      el('vbpCopyBatch')?.addEventListener('click', () => navigator.clipboard?.writeText(p.batchId || ''));
+      el('vbpCopyBatch')?.addEventListener('click', () => {
+        const t = String(p.batchId || '');
+        if (navigator.clipboard && t) void navigator.clipboard.writeText(t);
+      });
       el('vbpPanelBill')?.addEventListener('click', () => vbpOpenBillModal(p.billQboId));
       el('vbpPanelPost')?.addEventListener('click', () => vbpPanelPost(p.paymentNumber));
       el('vbpPanelVoid')?.addEventListener('click', () => vbpPanelVoid(p.id));
@@ -926,7 +932,8 @@
   }
 
   function vbpPanelRow(label, val) {
-    return `<div class="vbp-panel-row"><span>${escapeHtml(label)}</span><span>${val}</span></div>`;
+    const v = typeof val === 'string' ? escapeHtml(val) : val;
+    return `<div class="vbp-panel-row"><span>${escapeHtml(label)}</span><span>${v}</span></div>`;
   }
 
   function vbpClosePanel() {
@@ -1041,5 +1048,9 @@
       el('vbpBillFilterChips')?.querySelectorAll('.mr-filter-chip').forEach(x => x.classList.remove('active'));
       chip.classList.add('active');
     }
+  };
+
+  window.vbpHasDraftSelection = function () {
+    return Object.keys(VBP.selected || {}).length > 0;
   };
 })();

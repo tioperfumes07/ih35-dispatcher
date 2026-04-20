@@ -60,6 +60,7 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
           <button type="button" id="adminTabUsers" class="primary" onclick="openAdminTab('users')">Users</button>
           <button type="button" id="adminTabEmployees" onclick="openAdminTab('employees')">Employees</button>
+          <button type="button" id="adminTabCompany" onclick="openAdminTab('company')">Company (DOT / reports)</button>
         </div>
 
         <div id="adminTabPanelUsers">
@@ -160,6 +161,54 @@
           <button type="button" class="primary" style="margin-top:12px" id="btnAddEmployee" onclick="addEmployee()">Add employee</button>
           <div id="empErr" class="err"></div>
         </div>
+
+        <div id="adminTabPanelCompany" class="hidden">
+          <h2 style="font-size:16px;margin:0 0 12px">Company profile</h2>
+          <p class="mini" style="margin-top:0">Used on printed reports, DOT audit PDFs, and ERP headers. Saved to <code>maintenance.json</code> via <code>PATCH /api/erp/company-profile</code> (admin or ERP write).</p>
+          <div class="form-stack" style="max-width:560px">
+            <label>Legal name</label>
+            <input id="coLegalName" />
+            <label>DBA</label>
+            <input id="coDba" />
+            <label>USDOT #</label>
+            <input id="coUsdot" />
+            <label>MC #</label>
+            <input id="coMc" />
+            <label>Street</label>
+            <input id="coStreet" />
+            <div class="search-row" style="gap:10px">
+              <div style="flex:1;min-width:120px">
+                <label>City</label>
+                <input id="coCity" />
+              </div>
+              <div style="width:100px">
+                <label>State</label>
+                <input id="coState" maxlength="8" />
+              </div>
+              <div style="width:120px">
+                <label>ZIP</label>
+                <input id="coZip" />
+              </div>
+            </div>
+            <label>Phone</label>
+            <input id="coPhone" />
+            <label>Email</label>
+            <input id="coEmail" type="email" />
+            <label>IFTA account #</label>
+            <input id="coIfta" />
+            <label>State of operations (home state)</label>
+            <input id="coHomeState" maxlength="8" />
+            <label>PM interval (miles)</label>
+            <input id="coPmMiles" type="number" min="1000" step="500" />
+            <label>Random drug test program note</label>
+            <textarea id="coDrugNote" rows="3" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--color-border)"></textarea>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+              <button type="button" class="primary" id="btnCoSave" onclick="saveCompanyProfile()">Save company profile</button>
+              <button type="button" onclick="loadCompanyProfile()">Reload</button>
+            </div>
+            <div id="coErr" class="err"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -236,10 +285,82 @@
       const t = String(tab || 'users');
       document.getElementById('adminTabPanelUsers').classList.toggle('hidden', t !== 'users');
       document.getElementById('adminTabPanelEmployees').classList.toggle('hidden', t !== 'employees');
+      document.getElementById('adminTabPanelCompany').classList.toggle('hidden', t !== 'company');
       const bU = document.getElementById('adminTabUsers');
       const bE = document.getElementById('adminTabEmployees');
+      const bC = document.getElementById('adminTabCompany');
       if (bU) bU.classList.toggle('primary', t === 'users');
       if (bE) bE.classList.toggle('primary', t === 'employees');
+      if (bC) bC.classList.toggle('primary', t === 'company');
+      if (t === 'company') loadCompanyProfile();
+    }
+
+    function fillCompanyForm(p) {
+      const set = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.value = v != null ? String(v) : '';
+      };
+      set('coLegalName', p.legalName);
+      set('coDba', p.dbaName);
+      set('coUsdot', p.usdotNumber);
+      set('coMc', p.mcNumber);
+      set('coStreet', p.street);
+      set('coCity', p.city);
+      set('coState', p.state);
+      set('coZip', p.zip);
+      set('coPhone', p.phone);
+      set('coEmail', p.email);
+      set('coIfta', p.iftaAccountNumber);
+      set('coHomeState', p.stateOfOperations);
+      set('coPmMiles', p.pmIntervalMiles != null ? p.pmIntervalMiles : '');
+      set('coDrugNote', p.randomDrugTestRateNote);
+    }
+
+    async function loadCompanyProfile() {
+      document.getElementById('coErr').textContent = '';
+      try {
+        const data = await api('/api/erp/company-profile');
+        fillCompanyForm(data.companyProfile || {});
+      } catch (e) {
+        document.getElementById('coErr').textContent = e.message || String(e);
+      }
+    }
+
+    async function saveCompanyProfile() {
+      const btn = document.getElementById('btnCoSave');
+      document.getElementById('coErr').textContent = '';
+      const body = {
+        legalName: document.getElementById('coLegalName').value.trim(),
+        dbaName: document.getElementById('coDba').value.trim(),
+        usdotNumber: document.getElementById('coUsdot').value.trim(),
+        mcNumber: document.getElementById('coMc').value.trim(),
+        street: document.getElementById('coStreet').value.trim(),
+        city: document.getElementById('coCity').value.trim(),
+        state: document.getElementById('coState').value.trim(),
+        zip: document.getElementById('coZip').value.trim(),
+        phone: document.getElementById('coPhone').value.trim(),
+        email: document.getElementById('coEmail').value.trim(),
+        iftaAccountNumber: document.getElementById('coIfta').value.trim(),
+        stateOfOperations: document.getElementById('coHomeState').value.trim(),
+        pmIntervalMiles: Number(document.getElementById('coPmMiles').value) || undefined,
+        randomDrugTestRateNote: document.getElementById('coDrugNote').value.trim()
+      };
+      const run = async () => {
+        const data = await api('/api/erp/company-profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        fillCompanyForm(data.companyProfile || {});
+        if (window.showToast) window.showToast('Company profile saved', 'success');
+      };
+      try {
+        if (window.erpWithBusy && btn) await window.erpWithBusy(btn, run);
+        else await run();
+      } catch (e) {
+        document.getElementById('coErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
     }
 
     let __employees = [];

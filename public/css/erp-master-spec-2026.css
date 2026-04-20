@@ -2621,3 +2621,181 @@ body.banking-page #authBanner.erp-auth-banner {
     page-break-before: always !important;
   }
 }
+
+/* =============================================================================
+   Rule 3b — + New menu: viewport-floated (JS positions; avoids overflow clipping)
+   ============================================================================= */
+body.erp-maintenance #erpApp.erp-master .erp-new-menu.erp-new-menu--floated {
+  position: fixed !important;
+  right: auto !important;
+  top: auto !important;
+  max-height: calc(100vh - 80px) !important;
+  overflow-y: auto !important;
+  resize: none !important;
+  z-index: 9999 !important;
+  width: min(580px, calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))) !important;
+  background: #ffffff !important;
+  border: 1px solid #e0e3e8 !important;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18) !important;
+}
+
+body.erp-maintenance #erpApp.erp-master .erp-new-menu--floated .erp-new-menu__tile {
+  background: #ffffff !important;
+  border: 1px solid #e0e3e8 !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #1a1f36 !important;
+}
+
+body.erp-maintenance #erpApp.erp-master .erp-new-menu--floated .erp-new-menu__tile:hover {
+  background: #f0f7ff !important;
+  border-color: #1557a0 !important;
+}
+
+body.erp-maintenance #erpApp.erp-master .erp-new-menu--floated .erp-new-menu__tile-sub {
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  color: #6b7385 !important;
+}
+
+body.erp-maintenance #erpApp.erp-master .erp-new-menu--floated .erp-new-menu__item {
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: #1a1f36 !important;
+  background: transparent !important;
+  border-radius: 6px !important;
+  display: block !important;
+  width: 100% !important;
+  text-align: left !important;
+}
+
+body.erp-maintenance #erpApp.erp-master .erp-new-menu--floated .erp-new-menu__item:hover {
+  background: #f5f6f8 !important;
+  text-decoration: none !important;
+}
+
+body.erp-maintenance #erpApp.erp-master .erp-new-menu--floated .erp-new-menu__col-title,
+body.erp-maintenance #erpApp.erp-master .erp-new-menu--floated .erp-new-menu__sep-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: #6b7385 !important;
+  padding: 6px 12px 3px !important;
+}
+
+/* Reports catalog (8 tabs + cards) */
+body.erp-maintenance .rep-cat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+body.erp-maintenance .rep-cat-tab {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-body);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+body.erp-maintenance .rep-cat-tab.active {
+  border-color: #1557a0;
+  color: #1557a0;
+  background: #f0f7ff;
+}
+body.erp-maintenance .rep-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+body.erp-maintenance .rep-catalog-card {
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--color-bg-card);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 72px;
+}
+body.erp-maintenance .rep-catalog-card:hover {
+  border-color: #1557a0;
+  background: #f0f7ff;
+}
+body.erp-maintenance .rep-catalog-card__src {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-label);
+}
+body.erp-maintenance .rep-catalog-card__title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-body);
+}
+body.erp-maintenance .rep-catalog-card__desc {
+  font-size: 11px;
+  color: var(--color-text-label);
+  line-height: 1.35;
+}
+body.erp-maintenance .rep-src-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-label);
+}
+body.erp-maintenance .rep-pos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+body.erp-maintenance .rep-pos-chips .chip {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: var(--color-bg-card);
+  cursor: pointer;
+}
+body.erp-maintenance .rep-bar-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 720px;
+}
+body.erp-maintenance .rep-bar-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 140px) 1fr 64px;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+}
+body.erp-maintenance .rep-bar-track {
+  height: 8px;
+  background: var(--color-bg-header);
+  border-radius: 6px;
+  overflow: hidden;
+}
+body.erp-maintenance .rep-bar-fill {
+  display: block;
+  height: 100%;
+  background: #1557a0;
+  border-radius: 6px;
+}

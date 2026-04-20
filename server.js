@@ -6970,6 +6970,380 @@ app.get('/api/qbo/open-bills', async (req, res) => {
   }
 });
 
+/** Open bills + vendor credits for Pay Bills (vendor required). */
+app.get('/api/bills/open', async (req, res) => {
+  try {
+    const vendorId = String(req.query.vendor_id || req.query.vendorId || '').trim();
+    if (!vendorId) {
+      return res.status(400).json({ ok: false, error: 'vendor_id is required' });
+    }
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    const erp = readErp();
+    const bills = await qboFetchOpenBillsFromQbo(vendorId, { maxResults: 500 });
+    const vendorCredits = await qboFetchOpenVendorCreditsForVendor(vendorId).catch(err => {
+      logError('api/bills/open vendor credits', err);
+      return [];
+    });
+    const vendorRow = (erp.qboCache?.vendors || []).find(v => String(v.qboId) === String(vendorId));
+    const openBalanceSum = qboMoneyRound(bills.reduce((s, b) => s + (Number(b.balance) || 0), 0));
+    const today = sliceIsoDate(new Date().toISOString()) || '';
+    let oldestDue = '';
+    let overdueCount = 0;
+    for (const b of bills) {
+      const due = sliceIsoDate(b.dueDate) || sliceIsoDate(b.txnDate) || '';
+      if (due && (!oldestDue || due < oldestDue)) oldestDue = due;
+      if (due && today && due < today) overdueCount++;
+    }
+    res.json({
+      ok: true,
+      bills,
+      vendorCredits,
+      vendorName: vendorRow?.name || bills[0]?.vendorName || '',
+      vendorSummary: {
+        openBalanceSum,
+        oldestOpenBillDate: oldestDue,
+        openBillCount: bills.length,
+        overdueCount
+      },
+      live: true
+    });
+  } catch (error) {
+    logError('api/bills/open', error);
+    res.status(500).json({ ok: false, error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
+  }
+});
+
+app.get('/api/bills/payments/history', (req, res) => {
+  try {
+    const vendorId = String(req.query.vendor_id || req.query.vendorId || '').trim();
+    if (!vendorId) return res.status(400).json({ ok: false, error: 'vendor_id is required' });
+    const erp = readErp();
+    const fromD = sliceIsoDate(req.query.startDate || req.query.from);
+    const toD = sliceIsoDate(req.query.endDate || req.query.to);
+    const rows = vendorBillHistorySlice(erp.vendorBillPaymentRecords, vendorId, fromD, toD);
+    const fmt = String(req.query.format || 'json').toLowerCase();
+    if (fmt === 'csv') {
+      const body = buildVendorBillPaymentHistoryCsv(rows);
+      const day = sliceIsoDate(new Date().toISOString()) || 'export';
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="vendor-payments-${day}.csv"`);
+      return res.send(body);
+    }
+    res.json({ ok: true, payments: rows, count: rows.length });
+  } catch (error) {
+    logError('api/bills/payments/history', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/bills/payment-count', (req, res) => {
+  try {
+    const billQboId = String(req.query.billQboId || req.query.bill_qbo_id || '').trim();
+    if (!billQboId) return res.status(400).json({ ok: false, error: 'billQboId is required' });
+    const erp = readErp();
+    const count = countAppPaymentsTouchingBillQboId(erp, billQboId);
+    res.json({ ok: true, billQboId, count });
+  } catch (error) {
+    logError('api/bills/payment-count', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/bills/payment/:paymentNumber', (req, res) => {
+  try {
+    const paymentNumber = String(req.params.paymentNumber || '').trim();
+    const vendorId = String(req.query.vendor_id || req.query.vendorId || '').trim();
+    if (!paymentNumber) return res.status(400).json({ ok: false, error: 'paymentNumber is required' });
+    const erp = readErp();
+    const recs = erp.vendorBillPaymentRecords || [];
+    const hit = recs.find(
+      r =>
+        String(r.paymentNumber || '') === paymentNumber &&
+        (!vendorId || String(r.vendorQboId || '') === vendorId)
+    );
+    if (!hit) return res.status(404).json({ ok: false, error: 'Payment not found' });
+    const billQboId = String(hit.billQboId || '').replace(/\D/g, '');
+    const seriesForBill = recs
+      .filter(r => !r.voidedAt && String(r.billQboId || '').replace(/\D/g, '') === billQboId)
+      .sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+    res.json({ ok: true, payment: hit, seriesForBill });
+  } catch (error) {
+    logError('api/bills/payment/:paymentNumber', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/bills/bill-detail', async (req, res) => {
+  try {
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    const id = String(req.query.bill_qbo_id || req.query.billQboId || '').replace(/\D/g, '');
+    if (!id) return res.status(400).json({ ok: false, error: 'bill_qbo_id is required' });
+    const data = await qboGet(`bill/${encodeURIComponent(id)}`);
+    const bill = data?.Bill;
+    if (!bill?.Id) return res.status(404).json({ ok: false, error: 'Bill not found' });
+    const n = normalizeQboBill(bill);
+    res.json({
+      ok: true,
+      bill: {
+        ...n,
+        lineSummary: extractQboBillDescription(bill)
+      }
+    });
+  } catch (error) {
+    logError('api/bills/bill-detail', error);
+    res.status(500).json({ ok: false, error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
+  }
+});
+
+app.post('/api/bills/payments/save', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    const body = req.body || {};
+    const vendorQboId = String(body.vendor_id || body.vendorQboId || '').trim();
+    const paymentDate = String(body.payment_date || body.paymentDate || '').trim();
+    const paymentMethod = String(body.payment_method || body.paymentMethod || '').trim();
+    const paymentAccount = String(body.payment_account || body.paymentAccount || '').trim();
+    const checkNum = String(body.check_number || body.checkNum || '').trim().slice(0, 21);
+    const memo = String(body.memo || '').trim().slice(0, 4000);
+    const paymentsIn = Array.isArray(body.payments) ? body.payments : [];
+    if (!vendorQboId) return res.status(400).json({ ok: false, error: 'vendor_id is required' });
+    if (!paymentDate) return res.status(400).json({ ok: false, error: 'payment_date is required' });
+    if (!paymentMethod) return res.status(400).json({ ok: false, error: 'payment_method is required' });
+    if (!paymentAccount) return res.status(400).json({ ok: false, error: 'payment_account is required' });
+    if (!paymentsIn.length) return res.status(400).json({ ok: false, error: 'payments array is required' });
+
+    const erp = readErp();
+    const banks = erp.qboCache?.accountsBank || [];
+    const vendors = erp.qboCache?.vendors || [];
+    const bankName = banks.find(b => String(b.qboId) === String(paymentAccount))?.name || paymentAccount;
+    const vendorName = vendors.find(v => String(v.qboId) === String(vendorQboId))?.name || '';
+    const payType = erpUiPaymentMethodToQboPayType(paymentMethod);
+    const recordedBy =
+      req.authUser?.email || req.authUser?.name || (erpWriteAuthOk(req) ? 'erp_write_secret' : 'unknown');
+
+    const billIdsInBatch = new Set();
+    const saved = [];
+    const batchId = crypto.randomUUID();
+    if (!Array.isArray(erp.vendorBillPaymentRecords)) erp.vendorBillPaymentRecords = [];
+
+    for (const p of paymentsIn) {
+      const billQboId = String(p.bill_qbo_id || p.billQboId || '').replace(/\D/g, '');
+      if (!billQboId) {
+        return res.status(400).json({ ok: false, error: 'Each payment needs bill_qbo_id' });
+      }
+      if (billIdsInBatch.has(billQboId)) {
+        return res.status(400).json({ ok: false, error: 'Duplicate bill in batch' });
+      }
+      billIdsInBatch.add(billQboId);
+      const data = await qboGet(`bill/${encodeURIComponent(billQboId)}`);
+      const bill = data?.Bill;
+      if (!bill?.Id) return res.status(400).json({ ok: false, error: `Bill ${billQboId} not found in QuickBooks` });
+      const bVendor = String(bill.VendorRef?.value || '').trim();
+      if (bVendor !== vendorQboId) {
+        return res.status(400).json({ ok: false, error: `Bill ${billQboId} belongs to a different vendor` });
+      }
+      const balance = qboMoneyRound(bill.Balance);
+      const totalAmt = qboMoneyRound(safeNum(bill.TotalAmt, 0) || 0);
+      const payAmt = qboMoneyRound(p.payment_amount ?? p.paymentAmount);
+      if (!(payAmt > 0)) return res.status(400).json({ ok: false, error: `Invalid payment amount for bill ${billQboId}` });
+      if (payAmt - balance > 0.01) {
+        return res.status(400).json({ ok: false, error: `Payment exceeds open balance for bill ${billQboId}` });
+      }
+      const billDocNumber = String(bill.DocNumber || '').trim();
+      const priorCount = countAppPaymentsTouchingBillQboId(erp, billQboId);
+      const paymentNumber = generatePaymentNumber(billDocNumber || `B${billQboId}`, priorCount);
+      const remainingBalanceAfter = qboMoneyRound(balance - payAmt);
+      const row = {
+        id: uid('vbp'),
+        batchId,
+        paymentNumber,
+        vendorQboId,
+        vendorName: vendorName || bill.VendorRef?.name || '',
+        billQboId,
+        billDocNumber,
+        billDate: bill.TxnDate || '',
+        dueDate: bill.DueDate || '',
+        description: extractQboBillDescription(bill),
+        originalAmount: totalAmt,
+        amountPaidBefore: qboMoneyRound(Math.max(0, totalAmt - balance)),
+        paymentAmount: payAmt,
+        remainingBalanceAfter,
+        paymentDate,
+        paymentMethod,
+        payType,
+        paymentAccountQboId: paymentAccount,
+        paymentAccountName: bankName,
+        checkNum: payType === 'Check' ? checkNum : '',
+        memo,
+        qboStatus: 'pending',
+        qboBillPaymentId: '',
+        erpQboLogId: '',
+        qboError: '',
+        createdAt: new Date().toISOString(),
+        recordedBy
+      };
+      erp.vendorBillPaymentRecords.push(row);
+      saved.push({
+        bill_number: billDocNumber,
+        bill_qbo_id: billQboId,
+        payment_number: paymentNumber,
+        payment_amount: payAmt,
+        remaining_balance: remainingBalanceAfter
+      });
+    }
+    writeErp(erp);
+    res.json({ ok: true, success: true, batch_id: batchId, payments: saved });
+  } catch (error) {
+    logError('api/bills/payments/save', error);
+    res.status(500).json({ ok: false, error: enrichQboInvalidReferenceMessage(error.message || String(error)) });
+  }
+});
+
+app.post('/api/bills/payments/post-to-qbo', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    const store = readQbo();
+    if (!store.tokens?.access_token) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    const batchId = String(req.body?.batch_id || req.body?.batchId || '').trim();
+    const paymentNumbers = Array.isArray(req.body?.payment_numbers) ? req.body.payment_numbers : [];
+    const erp = readErp();
+    let pendingRecs = [];
+    if (batchId) {
+      pendingRecs = (erp.vendorBillPaymentRecords || []).filter(
+        r => r.batchId === batchId && String(r.qboStatus || '') === 'pending' && !r.voidedAt
+      );
+    } else if (paymentNumbers.length) {
+      const set = new Set(paymentNumbers.map(String));
+      pendingRecs = (erp.vendorBillPaymentRecords || []).filter(
+        r => set.has(String(r.paymentNumber || '')) && String(r.qboStatus || '') === 'pending' && !r.voidedAt
+      );
+    }
+    if (!pendingRecs.length) {
+      return res.status(400).json({ ok: false, error: 'No pending payment records for batch_id or payment_numbers' });
+    }
+    const batchIds = new Set(pendingRecs.map(r => String(r.batchId || '')));
+    if (batchIds.size > 1) {
+      return res.status(400).json({ ok: false, error: 'All payment_numbers must belong to the same batch' });
+    }
+    const vendorQboId = String(pendingRecs[0].vendorQboId || '').trim();
+    if (pendingRecs.some(r => String(r.vendorQboId || '') !== vendorQboId)) {
+      return res.status(400).json({ ok: false, error: 'All payments in a post must be for the same vendor' });
+    }
+    const lines = pendingRecs.map(r => ({
+      billId: String(r.billQboId || '').trim(),
+      amount: qboMoneyRound(r.paymentAmount)
+    }));
+    const qboBody = {
+      vendorQboId,
+      bankAccountQboId: String(pendingRecs[0].paymentAccountQboId || '').trim(),
+      payType: String(pendingRecs[0].payType || 'Check').trim(),
+      txnDate: String(pendingRecs[0].paymentDate || '').trim(),
+      checkNum: String(pendingRecs[0].checkNum || '').trim(),
+      privateNote: String(pendingRecs[0].memo || '').trim(),
+      lines,
+      vendorPaymentBatchId: batchId || String(pendingRecs[0].batchId || '')
+    };
+    const result = await qboCreateBillPaymentFromApp(qboBody);
+    const erpLogId = appendQboBillPaymentLogEntry(erp, req, result, qboBody);
+    for (const r of pendingRecs) {
+      const idx = erp.vendorBillPaymentRecords.findIndex(x => x.id === r.id);
+      if (idx >= 0) {
+        erp.vendorBillPaymentRecords[idx] = {
+          ...erp.vendorBillPaymentRecords[idx],
+          qboStatus: 'posted',
+          qboBillPaymentId: result.billPaymentId,
+          erpQboLogId: erpLogId,
+          qboPostedAt: new Date().toISOString(),
+          qboError: ''
+        };
+      }
+    }
+    writeErp(erp);
+    res.json({
+      ok: true,
+      billPaymentId: result.billPaymentId,
+      docNumber: result.docNumber,
+      erpLogId,
+      batch_id: batchId || pendingRecs[0].batchId || '',
+      results: pendingRecs.map(r => ({
+        payment_number: r.paymentNumber,
+        ok: true
+      }))
+    });
+  } catch (error) {
+    logError('api/bills/payments/post-to-qbo', error);
+    const msg = enrichQboInvalidReferenceMessage(error.message || String(error));
+    try {
+      const batchId = String(req.body?.batch_id || req.body?.batchId || '').trim();
+      const paymentNumbers = Array.isArray(req.body?.payment_numbers) ? req.body.payment_numbers : [];
+      const erp2 = readErp();
+      let pendingRecs = [];
+      if (batchId) {
+        pendingRecs = (erp2.vendorBillPaymentRecords || []).filter(
+          r => r.batchId === batchId && String(r.qboStatus || '') === 'pending' && !r.voidedAt
+        );
+      } else if (paymentNumbers.length) {
+        const set = new Set(paymentNumbers.map(String));
+        pendingRecs = (erp2.vendorBillPaymentRecords || []).filter(
+          r => set.has(String(r.paymentNumber || '')) && String(r.qboStatus || '') === 'pending' && !r.voidedAt
+        );
+      }
+      for (const r of pendingRecs) {
+        const idx = erp2.vendorBillPaymentRecords.findIndex(x => x.id === r.id);
+        if (idx >= 0) {
+          erp2.vendorBillPaymentRecords[idx] = {
+            ...erp2.vendorBillPaymentRecords[idx],
+            qboStatus: 'error',
+            qboError: msg,
+            qboErrorAt: new Date().toISOString()
+          };
+        }
+      }
+      writeErp(erp2);
+    } catch (_) {
+      /* ignore */
+    }
+    res.status(500).json({ ok: false, error: msg });
+  }
+});
+
+app.post('/api/bills/payments/void-pending', (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    const id = String(req.body?.id || req.body?.recordId || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'id is required' });
+    const erp = readErp();
+    const idx = (erp.vendorBillPaymentRecords || []).findIndex(r => String(r.id) === id);
+    if (idx < 0) return res.status(404).json({ ok: false, error: 'Record not found' });
+    const row = erp.vendorBillPaymentRecords[idx];
+    if (String(row.qboStatus || '') !== 'pending') {
+      return res.status(400).json({ ok: false, error: 'Only pending payments can be voided here' });
+    }
+    erp.vendorBillPaymentRecords[idx] = {
+      ...row,
+      voidedAt: new Date().toISOString(),
+      voidedBy: req.authUser?.email || req.authUser?.name || 'erp_write_secret'
+    };
+    writeErp(erp);
+    res.json({ ok: true });
+  } catch (error) {
+    logError('api/bills/payments/void-pending', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 /**
  * Record a Bill Payment in QuickBooks (pays posted Bills from a bank or card account).
  * Requires ERP write secret or admin — same as other financial writes.
