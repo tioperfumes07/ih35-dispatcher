@@ -163,7 +163,7 @@ The ERP **Reports Board** (`maintenance.html`, section `reports`) renders these 
 
 Automated guards and pre-release QA for **`maintenance.html`**, shared CSS, and satellite pages are documented here:
 
-- **Local automated gate:** root [`README.md`](../README.md) — *Verification (automated)* — `npm run rule0:check`, `npm run smoke`, `npm run qa:automated` (server must be up for smoke; smoke GETs ERP HTML shells and shared CSS/JS, including `erp-master-redesign.css` and `erp-master-spec-2026.css`), optional `SMOKE_BASE` / `SMOKE_QUIET`.
+- **Local automated gate:** root [`README.md`](../README.md) — *Verification (automated)* — `npm run rule0:check`, `npm run smoke`, `npm run qa:automated` (server must be up for smoke; smoke GETs ERP HTML shells and shared CSS/JS, including `erp-master-redesign.css` and `erp-master-spec-2026.css`, plus **`GET /api/__smoke_not_found__`** to assert JSON **404** for unknown API paths), optional `SMOKE_BASE` / `SMOKE_QUIET`.
 - **Manual sign-off:** [`ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md`](./ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md).
 - **CI:** [`.github/workflows/rule0-check.yml`](../.github/workflows/rule0-check.yml) runs **`npm ci`** + **`npm test`** (Rule 0 stack guard only); HTTP smoke is not run in Actions.
 
