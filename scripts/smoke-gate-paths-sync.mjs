@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Ensures `SMOKE_GATE_API_PATHS` in `server.js` matches GET entries in `scripts/system-smoke.mjs` `CRITICAL`
- * (excluding `/api/health`, which is always auth-exempt). Invoked from `qa-with-server.mjs` before spawning the server.
+ * (excluding `/api/health`, which is always auth-exempt). Invoked from **`qa-with-server.mjs`** before spawning the server, and from **`npm run qa:automated`** (**`package.json`**) before **`rule0:check`** + **`smoke`**.
  *
  * Run: `npm run smoke:gate-sync`
  */
