@@ -1,5 +1,5 @@
 /**
- * IH35 ERP — print documents (Arial, fixed point scale).
+ * IH35 ERP — approved print documents (Arial, fixed point scale).
  * Browser IIFE. Primary export:
  *   generatePrintWindow(documentType, data[, extension])
  * Opens a clean popup, writes HTML + PRINT_CSS, then triggers print after load.

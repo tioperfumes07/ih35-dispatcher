@@ -5822,12 +5822,16 @@ app.get('/api/integrity/export', (req, res) => {
         doc.moveDown(0.45);
         doc.fillColor('#333333').fontSize(10);
         for (const r of arr.slice(0, 45)) {
+          if (doc.y > doc.page.height - 120) doc.addPage();
           const sev = String(r.severity || '').toUpperCase();
           const pill = sev === 'RED' ? 'HIGH' : 'REVIEW';
           doc.fillColor(sev === 'RED' ? '#c5221f' : '#8a5200').text(`[${pill}] `, { continued: true });
-          doc
-            .fillColor('#333333')
-            .text(`${formatReportPdfCellValue(r.triggeredDate || r.createdAt || '') || '—'} — ${String(r.alertType || '')}`);
+          const at = String(r.alertType || r.type || '').trim();
+          const stit = String(r.shortTitle || integrityShortTitle(r) || '').trim();
+          const headLine = at
+            ? `${formatReportPdfCellValue(r.triggeredDate || r.createdAt || '') || '—'} — ${at}${stit && stit !== at ? ` — ${stit}` : ''}`
+            : `${formatReportPdfCellValue(r.triggeredDate || r.createdAt || '') || '—'} — ${stit || 'Alert'}`;
+          doc.fillColor('#333333').text(headLine);
           doc.moveDown(0.12);
           const meta = [
             r.unitId && `Unit: ${String(r.unitId)}`,
@@ -5842,6 +5846,11 @@ app.get('/api/integrity/export', (req, res) => {
             doc.moveDown(0.08);
           }
           doc.fontSize(9).fillColor('#444444').text(String(r.message || '').slice(0, 420), { width: 500 });
+          const notesPdf = String(r.notes || '').trim();
+          if (notesPdf) {
+            doc.moveDown(0.12);
+            doc.fontSize(8).fillColor('#555555').text(`Notes: ${notesPdf.slice(0, 500)}`, { width: 500 });
+          }
           doc.moveDown(0.45);
         }
       }
@@ -5860,12 +5869,41 @@ app.get('/api/integrity/export', (req, res) => {
 
       doc.addPage();
       doc.fillColor('#1a1f36').fontSize(14).text('Effective thresholds (merged with defaults)', { underline: true });
-      doc.moveDown(0.45);
-      doc.fillColor('#333333').fontSize(9.5);
-      const thPdf = mergeIntegrityThresholds(erp);
-      for (const [k, v] of Object.entries(thPdf)) {
-        doc.text(`${k}: ${v}`, { width: 500 });
-        doc.moveDown(0.18);
+      doc.moveDown(0.35);
+      doc.fillColor('#555555').fontSize(9).text('Engine key · human label · unit · value used for the next save-time evaluation.', { width: 500 });
+      doc.moveDown(0.35);
+      doc.fillColor('#333333').fontSize(8.8);
+      const thRows = integrityThresholdExportRows(mergeIntegrityThresholds(erp));
+      for (const row of thRows) {
+        if (doc.y > doc.page.height - 72) doc.addPage();
+        doc.text(
+          `${row.key} — ${row.label} (${row.unitLabel}): ${row.value}`,
+          { width: 500 }
+        );
+        doc.moveDown(0.16);
+      }
+
+      doc.addPage();
+      doc.fillColor('#1a1f36').fontSize(14).text('Alert rule catalog (reference)', { underline: true });
+      doc.moveDown(0.4);
+      doc.fillColor('#666666').fontSize(8.5).text('Codes match alertType in ERP JSON. “Thresholds” lists Settings keys when a numeric cap applies.', { width: 500 });
+      doc.moveDown(0.35);
+      doc.fillColor('#333333').fontSize(8.6);
+      for (const sec of integrityAlertRuleCatalogSections()) {
+        if (doc.y > doc.page.height - 100) doc.addPage();
+        doc.fillColor('#1a1f36').fontSize(10.5).text(sec.title, { underline: false });
+        doc.moveDown(0.2);
+        doc.fillColor('#333333').fontSize(8.3);
+        for (const rule of sec.rules) {
+          if (doc.y > doc.page.height - 56) doc.addPage();
+          const tk =
+            rule.thresholdKeys && rule.thresholdKeys.length
+              ? ` Settings: ${rule.thresholdKeys.join(', ')}.`
+              : '';
+          doc.text(`${rule.code} — ${rule.summary}${tk}`, { width: 500 });
+          doc.moveDown(0.14);
+        }
+        doc.moveDown(0.25);
       }
 
       const range = doc.bufferedPageRange();
@@ -6007,10 +6045,13 @@ app.get('/api/integrity/export', (req, res) => {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('maintenance')), 'Maintenance anomalies');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('samsara')), 'Samsara anomalies');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('predictive')), 'Predictive anomalies');
-    const thX = mergeIntegrityThresholds(erp);
+    const thRowsX = integrityThresholdExportRows(mergeIntegrityThresholds(erp));
     XLSX.utils.book_append_sheet(
       wb,
-      XLSX.utils.aoa_to_sheet([['Key', 'Effective value'], ...Object.entries(thX).map(([k, v]) => [k, v])]),
+      XLSX.utils.aoa_to_sheet([
+        ['Key', 'Label', 'Unit', 'Effective value'],
+        ...thRowsX.map(r => [r.key, r.label, r.unitLabel, r.value])
+      ]),
       'Thresholds'
     );
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
