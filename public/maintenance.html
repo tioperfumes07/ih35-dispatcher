@@ -1086,9 +1086,9 @@
                     </span>
                   </span>
                 </div>
-                <div id="maintWoBanner" class="maint-wo-banner maint-wo-banner--inline hidden" aria-live="polite">
-                  <div class="maint-wo-banner__eyebrow">Work order</div>
-                  <div id="maintWoBannerUnit" class="maint-wo-banner__unit"></div>
+                <div id="maintWoBanner" class="maint-wo-banner maint-wo-banner--inline maint-wo-banner--spec hidden" aria-live="polite">
+                  <span class="maint-wo-banner__title">Work order</span>
+                  <span id="maintWoBannerUnit" class="maint-wo-banner__unit"></span>
                 </div>
                 <div class="form-stack maint-form-stack">
                   <button type="button" class="maint-form-help-btn" onclick="document.getElementById('maintFormHelpDrawer').classList.toggle('hidden')" title="Field help">?</button>
@@ -3446,7 +3446,11 @@
                         <thead>
                           <tr>
                             <th>Description</th>
-                            <th>QBO item / account</th>
+                            <th>Line type</th>
+                            <th>Expense account</th>
+                            <th>Product / service</th>
+                            <th class="maint-cost-table__sku">SKU</th>
+                            <th class="maint-cost-table__lock">Lock line $</th>
                             <th class="maint-cost-table__num">Qty (gal)</th>
                             <th class="maint-cost-table__num">Unit $</th>
                             <th class="maint-cost-table__num">Line $</th>
@@ -3456,7 +3460,7 @@
                         <tbody id="fuelManualLines"></tbody>
                         <tfoot>
                           <tr class="maint-cost-table__addrow">
-                            <td colspan="6">
+                            <td colspan="10">
                               <button type="button" class="maint-cost-addline" onclick="addFuelManualLine()">+ Add line</button>
                             </td>
                           </tr>
@@ -5485,61 +5489,48 @@
           autocomplete="off"
         />
       </td>
-      <td class="maint-cost-td-qbo">
-        <div class="maint-cost-qbo-stack">
-          <div class="maint-cost-qbo-mode">
-            <span class="qb-l">Line type</span>
-            <select class="qb-in maint-field fuel-m-line-mode" onchange="toggleFuelManualLineMode(this)">
-              <option value="category">Category</option>
-              <option value="item">Item</option>
-            </select>
-          </div>
-          <div class="maint-line-qbo-row maint-cost-line__acct">
-            <div class="fuel-m-line-cat-block maint-line-cat-block maint-qbo-line-cat" style="flex:1;min-width:200px">
-              <span class="qb-l">Expense account</span>
-              <input
-                class="qb-in maint-field fuel-m-line-acct-search"
-                list="qboExpenseCategoryOptions"
-                placeholder="Expense account"
-                autocomplete="off"
-                oninput="resolveFuelManualLineAccount(this)"
-                onblur="resolveFuelManualLineAccount(this)"
-              />
-              <input type="hidden" class="fuel-m-line-acct-id" />
-            </div>
-            <div
-              class="fuel-m-line-item-block maint-line-item-block maint-qbo-line-item hidden"
-              style="flex:1;min-width:220px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end"
-            >
-              <div style="flex:1;min-width:140px">
-                <span class="qb-l">Product / service</span>
-                <input
-                  class="qb-in maint-field fuel-m-line-item-search"
-                  list="qboProductServiceOptions"
-                  placeholder="QBO item"
-                  autocomplete="off"
-                  oninput="resolveFuelManualLineItem(this)"
-                  onblur="resolveFuelManualLineItem(this)"
-                />
-                <input type="hidden" class="fuel-m-line-item-id" />
-              </div>
-              <div style="width:92px">
-                <span class="qb-l">SKU</span>
-                <input
-                  class="qb-in maint-field fuel-m-line-item-sku"
-                  type="text"
-                  readonly
-                  placeholder="—"
-                  tabindex="-1"
-                />
-              </div>
-            </div>
-          </div>
-          <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 0">
-            <input type="checkbox" class="fuel-m-line-lock" />
-            <span>Lock line $</span>
-          </label>
-        </div>
+      <td class="fuel-m-td-type">
+        <select class="qb-in maint-field fuel-m-line-mode" onchange="toggleFuelManualLineMode(this)">
+          <option value="category">Category</option>
+          <option value="item">Item</option>
+        </select>
+      </td>
+      <td class="fuel-m-td-cat fuel-m-td-wide">
+        <input
+          class="qb-in maint-field fuel-m-line-acct-search"
+          list="qboExpenseCategoryOptions"
+          placeholder="Expense account"
+          autocomplete="off"
+          oninput="resolveFuelManualLineAccount(this)"
+          onblur="resolveFuelManualLineAccount(this)"
+        />
+        <input type="hidden" class="fuel-m-line-acct-id" />
+      </td>
+      <td class="fuel-m-td-item fuel-m-td-wide hidden">
+        <input
+          class="qb-in maint-field fuel-m-line-item-search"
+          list="qboProductServiceOptions"
+          placeholder="QBO item"
+          autocomplete="off"
+          oninput="resolveFuelManualLineItem(this)"
+          onblur="resolveFuelManualLineItem(this)"
+        />
+        <input type="hidden" class="fuel-m-line-item-id" />
+      </td>
+      <td class="fuel-m-td-item fuel-m-td-sku hidden">
+        <input
+          class="qb-in maint-field fuel-m-line-item-sku"
+          type="text"
+          readonly
+          placeholder="—"
+          tabindex="-1"
+        />
+      </td>
+      <td class="fuel-m-td-lock">
+        <label class="fuel-m-line-lock-lbl">
+          <input type="checkbox" class="fuel-m-line-lock" />
+          <span class="fuel-m-line-lock-lbl__txt">Lock</span>
+        </label>
       </td>
       <td class="maint-cost-table__num maint-cost-td-num">
         <input class="qb-in maint-field fuel-m-line-gal" type="number" step="0.001" min="0" placeholder="0" />
@@ -7716,13 +7707,8 @@
       erpResetDedicatedModalLayout();
       window.__erpDedicatedModalKind = 'billpay';
       const acctBtn = document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]');
-      window.__erpSkipBillPayModalOpen = true;
-      try {
-        openSection('accounting', acctBtn);
-        openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
-      } finally {
-        window.__erpSkipBillPayModalOpen = false;
-      }
+      openSection('accounting', acctBtn);
+      openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
       const shell = document.getElementById('erpBillPayShellPanel');
       if (shell && mount) mount.appendChild(shell);
       erpRefreshBillPayChrome();
@@ -8371,9 +8357,16 @@
     window.addEventListener('hashchange', applyNavHash);
 
     function openAccountingTab(id, btn) {
-      if (id === 'acct-bill-pay' && !window.__erpSkipBillPayModalOpen) {
-        erpOpenDedicatedBillPayForm({ fromTab: true });
-        return;
+      if (id === 'acct-bill-pay') {
+        const dm = document.getElementById('erpDedicatedFormModal');
+        if (
+          dm &&
+          !dm.classList.contains('hidden') &&
+          window.__erpDedicatedModalKind === 'billpay' &&
+          typeof erpCloseDedicatedFormModal === 'function'
+        ) {
+          erpCloseDedicatedFormModal({ force: true });
+        }
       }
       const acctPanel = document.getElementById(id);
       if (!acctPanel) {
@@ -11599,8 +11592,8 @@
         }
       }
       sel.dataset.lastMode = mode;
-      row.querySelectorAll('.fuel-m-line-cat-block').forEach(el => el.classList.toggle('hidden', mode !== 'category'));
-      row.querySelectorAll('.fuel-m-line-item-block').forEach(el => el.classList.toggle('hidden', mode !== 'item'));
+      row.querySelectorAll('.fuel-m-td-cat').forEach(el => el.classList.toggle('hidden', mode !== 'category'));
+      row.querySelectorAll('.fuel-m-td-item').forEach(el => el.classList.toggle('hidden', mode !== 'item'));
     }
 
     function resolveFuelManualLineAccount(input) {

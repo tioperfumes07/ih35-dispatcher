@@ -1301,6 +1301,52 @@ body.erp-maintenance #acct-transactions .ap-attach-head {
   min-height: 0;
 }
 
+/* Fuel manual cost lines — multi-column table (category vs item columns toggle in-row). */
+body.erp-maintenance #acct-fuel-expense .acct-fuel-manual-table thead th.maint-cost-table__sku,
+body.erp-maintenance #acct-fuel-expense .acct-fuel-manual-table thead th.maint-cost-table__lock {
+  text-align: center;
+}
+
+body.erp-maintenance #acct-fuel-expense .acct-fuel-manual-table tbody td.fuel-m-td-type {
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+body.erp-maintenance #acct-fuel-expense .acct-fuel-manual-table tbody td.fuel-m-td-lock {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+body.erp-maintenance #acct-fuel-expense .acct-fuel-manual-table .fuel-m-line-lock-lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-label);
+  cursor: pointer;
+}
+
+body.erp-maintenance #acct-fuel-expense .acct-fuel-manual-table .fuel-m-td-type .fuel-m-line-mode {
+  min-width: 6.5rem;
+}
+
+body.erp-maintenance #acct-fuel-expense .acct-fuel-manual-table .fuel-m-td-wide .qb-in {
+  width: 100%;
+  min-width: 120px;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #acct-fuel-expense .acct-fuel-manual-table .fuel-m-td-sku .qb-in {
+  width: 100%;
+  max-width: 7rem;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
 body.erp-maintenance .fuel-manual-doc-title {
   display: flex;
   align-items: center;

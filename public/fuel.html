@@ -31,6 +31,15 @@
     <span id="lastUpdated" class="small">Loading… · auto-refresh every 60s</span>
   </div>
   <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
+  <div
+    id="erpIntegrationDisconnectBanners"
+    class="erp-disconnect-banners print-hide-actions"
+    hidden
+    aria-live="polite"
+  >
+    <div id="erpQboDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--qbo hidden" role="status"></div>
+    <div id="erpSamsaraDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--samsara hidden" role="status"></div>
+  </div>
   <p class="roadmap-note">
     <strong>Roadmap:</strong> TMS load tie-ins for origin/destination, Love’s price sheets + Samsara tank data, cheapest legal stops along route (incl. state spreads), PC*Miler miles when licensed (replacing heuristic driver-pay routing).
   </p>

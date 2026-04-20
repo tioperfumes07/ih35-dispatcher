@@ -16,6 +16,15 @@
   <script src="/js/board-nav.js" defer></script>
   <div class="wrap">
     <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
+    <div
+      id="erpIntegrationDisconnectBanners"
+      class="erp-disconnect-banners print-hide-actions"
+      hidden
+      aria-live="polite"
+    >
+      <div id="erpQboDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--qbo hidden" role="status"></div>
+      <div id="erpSamsaraDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--samsara hidden" role="status"></div>
+    </div>
     <p><a href="/maintenance.html">← Back to Maintenance / ERP</a></p>
     <h1>Settings &amp; users</h1>
     <p>Sign in when the server has user accounts. The first administrator can be created once (bootstrap), or set <code>IH35_BOOTSTRAP_ADMIN_EMAIL</code> and <code>IH35_BOOTSTRAP_ADMIN_PASSWORD</code> in the server environment.</p>

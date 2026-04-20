@@ -439,8 +439,10 @@
     return Math.min(Math.max(n, lo), hi);
   }
 
-  function erpReadModalRect(storageKey) {
+  function erpReadModalRect(storageKey, minW, minH) {
     if (!storageKey || typeof localStorage === 'undefined') return null;
+    const mw = Number(minW) > 0 ? Number(minW) : 600;
+    const mh = Number(minH) > 0 ? Number(minH) : 500;
     try {
       const raw = localStorage.getItem(`${'modal_size_'}${storageKey}`);
       if (!raw) return null;
@@ -454,8 +456,8 @@
       const maxW = window.innerWidth * 0.95;
       const maxH = window.innerHeight * 0.95;
       return {
-        width: erpClamp(w, 600, maxW),
-        height: erpClamp(h, 500, maxH),
+        width: erpClamp(w, mw, maxW),
+        height: erpClamp(h, mh, maxH),
         left: Number.isFinite(l) ? erpClamp(l, 0, Math.max(0, window.innerWidth - 120)) : null,
         top: Number.isFinite(t) ? erpClamp(t, 0, Math.max(0, window.innerHeight - 120)) : null
       };
@@ -480,7 +482,9 @@
 
   function erpRestoreModalRect(shell, storageKey) {
     if (!shell || !storageKey) return;
-    const rect = erpReadModalRect(storageKey);
+    const mw = Number(shell.dataset.erpModalMinW) > 0 ? Number(shell.dataset.erpModalMinW) : 600;
+    const mh = Number(shell.dataset.erpModalMinH) > 0 ? Number(shell.dataset.erpModalMinH) : 500;
+    const rect = erpReadModalRect(storageKey, mw, mh);
     if (!rect) return;
     shell.classList.add('erp-modal-shell--user-geometry');
     shell.style.position = 'fixed';
@@ -501,10 +505,15 @@
     if (!shell || !(shell instanceof HTMLElement) || __erpModalShellWired.has(shell)) return;
     __erpModalShellWired.add(shell);
 
-    const storageKey = opts.storageKey || 'generic';
+    const getStorageKey =
+      typeof opts.getStorageKey === 'function'
+        ? opts.getStorageKey
+        : () => (opts.storageKey ? String(opts.storageKey) : 'generic');
     const dragRoot = typeof opts.dragRoot === 'string' ? shell.querySelector(opts.dragRoot) : opts.dragRoot;
     const minW = Number(opts.minW) > 0 ? Number(opts.minW) : 600;
     const minH = Number(opts.minH) > 0 ? Number(opts.minH) : 500;
+    shell.dataset.erpModalMinW = String(minW);
+    shell.dataset.erpModalMinH = String(minH);
 
     if (!dragRoot) return;
 
@@ -570,7 +579,7 @@
 
     function onUp() {
       if (mode) {
-        erpWriteModalRect(storageKey, shell);
+        erpWriteModalRect(getStorageKey(), shell);
         mode = '';
         document.removeEventListener('mousemove', onMove, true);
         document.removeEventListener('mouseup', onUp, true);
@@ -618,7 +627,11 @@
     const ded = document.querySelector('#erpDedicatedFormModal .erp-dedicated-form-modal__shell');
     if (ded) {
       erpWireResizableModalShell(ded, {
-        storageKey: 'dedicated_default',
+        getStorageKey() {
+          const map = { fuel: 'dedicated_fuel', ap: 'dedicated_ap', billpay: 'dedicated_billpay' };
+          const k = global.__erpDedicatedModalKind;
+          return map[String(k || '').trim()] || 'dedicated_default';
+        },
         dragRoot: '.erp-dedicated-form-modal__bar',
         minW: 600,
         minH: 500
@@ -633,21 +646,21 @@
         minH: 500
       });
     }
-    const cat = document.querySelector('#maintCatModal .maint-modal.erp-qb-dialog');
-    if (cat) {
-      erpWireResizableModalShell(cat, {
-        storageKey: 'maint_category',
-        dragRoot: '.erp-qb-dialog__head',
-        minW: 360,
-        minH: 240
-      });
-    }
-    const smallModals = document.querySelectorAll('.maint-modal-bg.on .maint-modal.erp-qb-dialog');
-    smallModals.forEach(m => {
-      if (m.closest('#maintCatModal')) return;
+    document.querySelectorAll('.maint-modal-bg .maint-modal.erp-qb-dialog').forEach(m => {
       if (m.closest('#maintWorkOrderModal')) return;
+      const bg = m.closest('.maint-modal-bg');
+      const bgId = bg && bg.id ? String(bg.id) : '';
+      if (bgId === 'maintCatModal') {
+        erpWireResizableModalShell(m, {
+          storageKey: 'maint_category',
+          dragRoot: '.erp-qb-dialog__head',
+          minW: 360,
+          minH: 240
+        });
+        return;
+      }
       erpWireResizableModalShell(m, {
-        storageKey: 'maint_dialog',
+        storageKey: bgId ? `dialog_${bgId}` : 'maint_dialog_misc',
         dragRoot: '.erp-qb-dialog__head',
         minW: 480,
         minH: 320
@@ -667,4 +680,6 @@
   global.erpInitResizableModals = erpInitResizableModals;
   global.erpRestoreDedicatedModalGeometry = erpRestoreDedicatedModalGeometry;
   global.erpWireResizableModalShell = erpWireResizableModalShell;
+  global.erpPersistModalGeometry = erpWriteModalRect;
+  global.erpRestoreModalGeometry = erpRestoreModalRect;
 })(typeof window !== 'undefined' ? window : globalThis);

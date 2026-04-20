@@ -94,6 +94,15 @@
       <main class="main erp-main-surface">
         <div class="erp-main-body dispatch-board-body">
           <div id="erpConnectionStrip" class="erp-connection-strip print-hide-actions" aria-live="polite"></div>
+          <div
+            id="erpIntegrationDisconnectBanners"
+            class="erp-disconnect-banners print-hide-actions"
+            hidden
+            aria-live="polite"
+          >
+            <div id="erpQboDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--qbo hidden" role="status"></div>
+            <div id="erpSamsaraDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--samsara hidden" role="status"></div>
+          </div>
           <header class="topbar erp-topbar">
             <div class="title" id="dispatchPageTitle">Loads &amp; dispatch</div>
             <a href="/" class="topbar-home-link keep-embed" title="Company hub">IH 35 Transportation LLC</a>

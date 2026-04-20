@@ -18,6 +18,15 @@
   <div class="wrap">
     <div id="authBanner" class="hidden erp-auth-banner"></div>
     <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
+    <div
+      id="erpIntegrationDisconnectBanners"
+      class="erp-disconnect-banners print-hide-actions"
+      hidden
+      aria-live="polite"
+    >
+      <div id="erpQboDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--qbo hidden" role="status"></div>
+      <div id="erpSamsaraDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--samsara hidden" role="status"></div>
+    </div>
     <h1>Bank transactions &amp; QuickBooks matching</h1>
     <p class="lead">
       Pull <strong>Purchases, Bills, and Bill Payments</strong> from QuickBooks for a date window; paste <strong>bank CSV</strong> (Date, Amount, Description); run <strong>suggested matches</strong> by amount and date. Saved links = <strong>this app’s audit trail</strong> only — not posted to QuickBooks.

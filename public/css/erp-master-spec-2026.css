@@ -110,6 +110,13 @@ body.erp-maintenance .erp-main-body .maint-cost-table-wrap .maint-cost-table {
   table-layout: auto;
 }
 
+/* Manual fuel cost lines: full-width grid; horizontal scroll on narrow viewports (overrides 32rem cap above). */
+body.erp-maintenance .erp-main-body .maint-cost-table-wrap .maint-cost-table.acct-fuel-manual-table {
+  width: 100%;
+  min-width: 880px;
+  table-layout: auto;
+}
+
 /* --- Rule 1: no decorative shadows on surfaces (maintenance master shell) --- */
 body.erp-maintenance .hero-card,
 body.erp-maintenance .panel,

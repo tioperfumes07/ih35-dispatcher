@@ -5263,8 +5263,17 @@ function normalizeRepairStatus(v) {
     .replace(/\s+/g, '_');
   if (s === 'in-progress') return 'in_progress';
   if (s === 'complete' || s === 'completed') return 'finished';
-  if (s === 'queue' || s === 'awaiting') return 'queued';
-  if (s === 'queued' || s === 'in_progress' || s === 'finished') return s;
+  if (s === 'queue' || s === 'awaiting' || s === 'open') return 'queued';
+  if (s === 'waiting_for_parts' || s === 'waiting-parts' || s === 'parts') return 'waiting_parts';
+  if (s === 'canceled' || s === 'cancelled') return 'cancelled';
+  if (
+    s === 'queued' ||
+    s === 'in_progress' ||
+    s === 'finished' ||
+    s === 'waiting_parts' ||
+    s === 'cancelled'
+  )
+    return s;
   return '';
 }
 
