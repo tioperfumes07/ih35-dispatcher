@@ -8026,7 +8026,8 @@
 
     function erpSbToolsDataBlock(includeBankCsv) {
       let s =
-        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Deduplicate vendors &amp; customers</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
@@ -8041,7 +8042,8 @@
 
     function erpSbAccountingToolsDataBody() {
       return (
-        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Deduplicate vendors &amp; customers</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV matching</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
