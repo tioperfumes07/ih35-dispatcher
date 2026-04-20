@@ -402,12 +402,12 @@
     });
   }
 
-  async function loadAuto(showSpinner) {
+  async function loadAuto(forceRefresh) {
     const status = document.getElementById('erpDedupeStatus');
     const host = document.getElementById('erpDedupeAutoHost');
     if (!host) return;
     state.loading = true;
-    if (status && showSpinner)
+    if (status && forceRefresh)
       status.innerHTML =
         '<span class="erp-dedupe-spinner erp-dedupe-spinner--inline"></span> Loading from QuickBooks…';
     const bust = forceRefresh ? '?refresh=1' : '';
@@ -591,7 +591,7 @@
       state.entity = b.getAttribute('data-ent');
       [...document.querySelectorAll('#erpDedupeSeg button')].forEach(x => x.classList.remove('on'));
       b.classList.add('on');
-      void loadAuto(true);
+      void loadAuto(false);
     });
     document.getElementById('erpDedupeRefresh').onclick = () => loadAuto(true);
     document.getElementById('erpDedupeExportDup').onclick = () => {
@@ -730,7 +730,7 @@
 
   window.erpDedupeInit = function () {
     paintShell();
-    void loadAuto(true);
+    void loadAuto(false);
   };
 
   window.openDedupeTool = function () {

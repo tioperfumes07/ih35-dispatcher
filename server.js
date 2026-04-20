@@ -7244,6 +7244,12 @@ app.post('/api/work-orders', (req, res) => {
       driverId: String(body.driverId || '').trim().slice(0, 80) || undefined,
       driverName: String(body.driverName || '').trim().slice(0, 160) || undefined,
       maintRecordType: String(body.maintRecordType || '').trim().slice(0, 40) || undefined,
+      accidentDotReportable:
+        body.accidentDotReportable === true ||
+        String(body.accidentDotReportable || '').toLowerCase() === 'true' ||
+        String(body.accidentDotReportable || '').toLowerCase() === '1'
+          ? true
+          : undefined,
       lines: (body.lines || []).map(line => {
         const base = {
           id: uid('wol'),

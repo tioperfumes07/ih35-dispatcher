@@ -603,6 +603,7 @@
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('purchase-order')">Purchase order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('find-merge-dupes')">Find &amp; merge duplicates</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Maintenance &amp; shop</div>
@@ -3009,6 +3010,7 @@
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">QuickBooks</h3>
             <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="openDedupeTool()">Deduplicate</button>
               <button type="button" class="acct-board-action-btn" onclick="refreshQboMaster()">Refresh QBO lists</button>
               <button type="button" class="acct-board-action-btn" onclick="testQuickBooks()">Test connection</button>
               <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">QBO rollback &amp; imports</button>
@@ -3153,6 +3155,21 @@
                     <div class="ap-exp-field ap-exp-field--unit">
                       <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
                       <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
+                    </div>
+                    <div class="ap-exp-field">
+                      <span class="qb-l">Driver</span>
+                      <input type="hidden" id="apErpDriverId" value="" />
+                      <input type="hidden" id="apMaintRecordType" value="" />
+                      <input type="hidden" id="apAccidentDotReportable" value="" />
+                      <input
+                        id="apErpDriverSearch"
+                        class="qb-in"
+                        list="maintDriverOptions"
+                        placeholder="Select driver (optional)"
+                        autocomplete="off"
+                        oninput="resolveApErpDriverSearch()"
+                        onblur="resolveApErpDriverSearch()"
+                      />
                     </div>
                     <div class="ap-exp-field hidden" id="apDriverFieldWrap">
                       <span class="qb-l">Driver (QBO customer on first line)</span>
@@ -4442,6 +4459,10 @@
         </div>
       </section>
 
+      <section id="section-dedupe" class="section">
+        <div id="erpDedupeRoot" class="erp-dedupe-root" style="max-width:1220px;margin:0 auto;padding:12px 16px 40px"></div>
+      </section>
+
       <section id="section-reports" class="section">
         <div class="erp-reports-shell">
           <header class="erp-reports-toolbar" role="banner">
@@ -4527,7 +4548,9 @@
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="dot audit overview fleet" onclick="openReportsTabFromSidebar('rep-overview')">DOT audit file</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="fleet overview board" onclick="openReportsTabFromSidebar('rep-overview')">Fleet overview</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="driver qualification team" onclick="openReportsTabFromSidebar('rep-team')">Driver qualification</button>
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="integrity dashboard rm" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]')); openMaintMainTab('rm', document.querySelector('#maintMainSubtabs [data-maint-main=rm]'));">Integrity dashboard</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="integrity anomaly monitoring" onclick="openReportsTabFromSidebar('rep-integrity')">Integrity dashboard</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="integrity export excel pdf" onclick="integrityExportReport('xlsx')">Integrity report (Excel)</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="integrity export pdf" onclick="integrityExportReport('pdf')">Integrity report (PDF)</button>
                 </div>
               </details>
               <details class="mr-rep-nav-group sidebar-group">
@@ -5195,8 +5218,11 @@
               </div>
             </div>
             <div id="catalog-panel-vendors" class="catalog-subpanel">
-              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 0 10px">
                 <span class="mini-note" style="margin:0"><strong>QBO vendors</strong> + <strong>driver payees</strong> — refresh lists after QBO vendor changes (top bar or this tab).</span>
+                <button type="button" class="btn btn--small" style="flex-shrink:0" onclick="openDedupeTool()">Find duplicates</button>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About vendors & drivers">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -7887,6 +7913,7 @@
 
     function erpSbToolsDataBlock(includeBankCsv) {
       let s =
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Deduplicate vendors &amp; customers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
@@ -7901,6 +7928,7 @@
 
     function erpSbAccountingToolsDataBody() {
       return (
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Deduplicate vendors &amp; customers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV matching</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
@@ -8103,6 +8131,7 @@
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
         const qbBody =
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Deduplicate vendors &amp; customers</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctQboRollbackStub&quot;));">QBO rollback &amp; imports</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="testQuickBooks()">Test QuickBooks connection</button>';
@@ -8159,6 +8188,19 @@
       }
       if (name === 'uploads') {
         inner.innerHTML = '<div class="erp-sb-heading sidebar-group-header">Upload center</div>' + adm;
+        return;
+      }
+      if (name === 'dedupe') {
+        inner.innerHTML =
+          erpSbGroup(
+            'dedupe',
+            'nav',
+            'Deduplication',
+            true,
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;accounting&quot;)">Back to Accounting</button>' +
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;catalog&quot;, document.querySelector(&quot;.nav-btn[data-section=catalog]&quot;)); openCatalogSubpanel(&quot;vendors&quot;);">Lists → Vendors &amp; drivers</button>'
+          ) +
+          erpSbGroup('dedupe', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
       }
         inner.innerHTML =
@@ -8305,6 +8347,11 @@
       if (k === 'purchase-order') return erpOpenDedicatedAccountingForm('purchase-order-bill');
       if (k === 'transfer') return erpOpenLedgerStubModal('transfer');
       if (k === 'journal-entry') return erpOpenLedgerStubModal('journal');
+      if (k === 'find-merge-dupes') {
+        erpCloseNewMenu();
+        if (typeof openDedupeTool === 'function') return openDedupeTool();
+        return openSectionByName('dedupe');
+      }
       if (k === 'work-order-blank') return erpNewWorkOrder('');
       if (k === 'wo-repair') return erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair' });
       if (k === 'wo-maintenance') return erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Maintenance' });
@@ -9365,6 +9412,11 @@
           upImportLogRenderAll();
         });
       }
+      if (name === 'dedupe') {
+        requestAnimationFrame(() => {
+          if (typeof window.erpDedupeInit === 'function') window.erpDedupeInit();
+        });
+      }
       renderErpModuleSidebar(name);
       if (name === 'accounting') requestAnimationFrame(() => syncAcctDashFromQboPayload());
     }
@@ -9499,7 +9551,18 @@
         requestAnimationFrame(() => openCatalogSubpanel(which, null));
         return;
       }
-      const allowed = ['dashboard', 'fuel', 'maintenance', 'safety', 'tracking', 'accounting', 'reports', 'catalog', 'uploads'];
+      const allowed = [
+        'dashboard',
+        'fuel',
+        'maintenance',
+        'safety',
+        'tracking',
+        'accounting',
+        'reports',
+        'catalog',
+        'uploads',
+        'dedupe'
+      ];
       if (allowed.includes(section)) openSectionByName(section);
     }
 
@@ -11293,6 +11356,13 @@
       hid.value = resolveDriverNameToId(inp.value);
     }
 
+    function resolveApErpDriverSearch() {
+      const inp = document.getElementById('apErpDriverSearch');
+      const hid = document.getElementById('apErpDriverId');
+      if (!inp || !hid) return;
+      hid.value = resolveDriverNameToId(inp.value);
+    }
+
     async function refreshIntegrityNavBadges() {
       try {
         const c = await j('/api/integrity/counts');
@@ -11383,6 +11453,30 @@
       } catch (_) {
         /* non-blocking */
       }
+    }
+
+    function buildIntegrityCtxFromWorkOrder(wo) {
+      if (!wo || !wo.id) return null;
+      const lines = wo.lines || [];
+      const amount = lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+      const vId = String(wo.qboVendorId || '').trim();
+      const vName = vId ? (cacheVendors().find(v => String(v.qboId) === vId)?.name || '').trim() : '';
+      return {
+        recordType: 'work_order',
+        recordId: wo.id,
+        unitId: wo.unit,
+        driverId: wo.driverId || '',
+        driverName: wo.driverName || '',
+        amount,
+        serviceType: wo.serviceType,
+        maintRecordType: wo.maintRecordType || '',
+        recordSubtype: String(wo.maintRecordType || '').toLowerCase(),
+        date: wo.serviceDate,
+        dotReportable: !!wo.accidentDotReportable,
+        vendor: vName,
+        qboVendorId: vId,
+        lines
+      };
     }
 
     function fillDataLists() {
@@ -18493,6 +18587,14 @@
       const apsh = document.getElementById('apServiceTypeInput');
       if (aps) aps.value = '';
       if (apsh) apsh.value = '';
+      const apEds = document.getElementById('apErpDriverSearch');
+      const apEdid = document.getElementById('apErpDriverId');
+      const apMrt = document.getElementById('apMaintRecordType');
+      const apDot = document.getElementById('apAccidentDotReportable');
+      if (apEds) apEds.value = '';
+      if (apEdid) apEdid.value = '';
+      if (apMrt) apMrt.value = '';
+      if (apDot) apDot.value = '';
       clearWoLines();
       syncApDocTitle();
       refreshApDocTotal();
@@ -20178,6 +20280,8 @@
       resolveLinkedPaymentMethodSearch();
       resolveLinkedBankSearch();
       resolveMaintCostLineRefs();
+      resolveMaintRecordDriverSearch();
+      resolveAccidentDriverSearch();
 
       // Required fields by repair location.
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
@@ -20229,6 +20333,15 @@
         }
         if (!serviceType) {
           erpNotify('Choose or type the service / maintenance performed (or enter a description on the first cost line).', 'warning');
+          return false;
+        }
+      }
+
+      if (recordType === 'accident') {
+        const acid = (document.getElementById('accidentDriverId')?.value || '').trim();
+        if (!acid) {
+          erpNotify('Select the driver involved in this accident', 'warning');
+          document.getElementById('accidentDriverSearch')?.focus();
           return false;
         }
       }
@@ -20365,7 +20478,16 @@
         qboTxnType: document.getElementById('linkedTxnTypeSelect').value,
         qboDueDate: document.getElementById('linkedDueDate').value,
         qboDocNumber: document.getElementById('linkedDocNumber').value,
-        repairStatus: document.getElementById('recordRepairStatusSelect')?.value || ''
+        repairStatus: document.getElementById('recordRepairStatusSelect')?.value || '',
+        driverId:
+          recordType === 'accident'
+            ? (document.getElementById('accidentDriverId')?.value || '').trim()
+            : (document.getElementById('maintRecordDriverId')?.value || '').trim(),
+        driverName:
+          recordType === 'accident'
+            ? (document.getElementById('accidentDriverSearch')?.value || '').trim()
+            : (document.getElementById('maintRecordDriverSearch')?.value || '').trim(),
+        accidentDotReportable: !!document.getElementById('accidentDotReportableInput')?.checked
       };
 
       const saveOut = __editingMaintRecordId
@@ -20390,8 +20512,41 @@
         }
       }
 
+      const rec = saveOut && saveOut.record;
+      if (rec && rec.id) {
+        clearMaintIntegrityInlinePanel();
+        void postIntegrityCheckAfterSave({
+          recordType: 'maintenance_record',
+          recordId: rec.id,
+          unitId: rec.unit,
+          driverId: rec.driverId || '',
+          driverName: rec.driverName || '',
+          amount: Number(rec.cost) || 0,
+          serviceType: rec.serviceType,
+          recordSubtype: rec.recordType,
+          date: rec.serviceDate,
+          dotReportable: !!rec.accidentDotReportable,
+          vendor: rec.vendor,
+          qboVendorId: rec.qboVendorId,
+          tirePosition: rec.tirePosition,
+          tirePositionText: rec.tirePositionText
+        });
+      }
+      const rh = document.getElementById('maintDriverRepairHint');
+      if (rh) {
+        if (recordType === 'repair' && !(document.getElementById('maintRecordDriverId')?.value || '').trim()) {
+          rh.textContent = 'Consider adding the driver assigned to this unit at time of repair';
+          rh.classList.remove('hidden');
+          rh.style.color = '#b86b00';
+        } else {
+          rh.textContent = '';
+          rh.classList.add('hidden');
+        }
+      }
+
       if (!closeAfter) {
         await loadAll();
+        void refreshIntegrityNavBadges();
         return true;
       }
 
@@ -20399,6 +20554,7 @@
       clearMaintenanceEditMode();
       serviceMileageUserTouched = false;
       await loadAll();
+      void refreshIntegrityNavBadges();
       return true;
     }
 
@@ -20695,6 +20851,26 @@
         apSvc.value = svcIn.value.trim();
         if (apSvcH) apSvcH.value = (document.getElementById('serviceTypeInput')?.value || apSvc.value).trim();
       }
+
+      const recType = (document.getElementById('recordTypeSelect')?.value || '').trim();
+      const apMrt = document.getElementById('apMaintRecordType');
+      if (apMrt) apMrt.value = recType;
+      const apDot = document.getElementById('apAccidentDotReportable');
+      if (apDot) apDot.value = document.getElementById('accidentDotReportableInput')?.checked ? '1' : '';
+      const apEds = document.getElementById('apErpDriverSearch');
+      const apEdid = document.getElementById('apErpDriverId');
+      if (recType === 'accident') {
+        const aS = document.getElementById('accidentDriverSearch');
+        const aI = document.getElementById('accidentDriverId');
+        if (apEds && aS) apEds.value = (aS.value || '').trim();
+        if (apEdid && aI) apEdid.value = (aI.value || '').trim();
+      } else {
+        const mS = document.getElementById('maintRecordDriverSearch');
+        const mI = document.getElementById('maintRecordDriverId');
+        if (apEds && mS) apEds.value = (mS.value || '').trim();
+        if (apEdid && mI) apEdid.value = (mI.value || '').trim();
+      }
+      resolveApErpDriverSearch();
 
       const catHost = document.getElementById('apWoCatHost');
       const itemHost = document.getElementById('apWoItemHost');
@@ -21869,6 +22045,19 @@
               ${voided && r.voidReason ? `<div class="mini-note">Void reason: ${escapeHtml(r.voidReason)}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
               <div class="mini-note">Unit: ${escapeHtml(r.unit || '')} | Date: ${escapeHtml(r.serviceDate || '')}</div>
+              ${
+                r.maintRecordType || r.driverName || r.driverId
+                  ? `<div class="mini-note">${r.maintRecordType ? `Type: ${escapeHtml(String(r.maintRecordType))} · ` : ''}Driver: ${escapeHtml(
+                      String(r.driverName || '').trim() ||
+                        (r.driverId
+                          ? String((driverProfiles || []).find(p => String(p.id) === String(r.driverId))?.name || '').trim()
+                          : '') ||
+                        String(r.driverId || '').trim() ||
+                        '—'
+                    )}</div>`
+                  : ''
+              }
+              ${r.accidentDotReportable ? `<div class="mini-note">DOT reportable accident</div>` : ''}
               ${r.repairLocationType ? `<div class="mini-note">Repair location: ${escapeHtml(r.repairLocationType)}</div>` : ''}
               ${r.assetCategory ? `<div class="mini-note">Asset category: ${escapeHtml(r.assetCategory)}</div>` : ''}
               <div class="mini-note">Lines (${lines.length}) total: $${total.toFixed(2)}</div>
@@ -22935,6 +23124,12 @@
           body: JSON.stringify(opts.workOrderBody)
         });
         const woId = data && data.workOrder && data.workOrder.id ? String(data.workOrder.id) : '';
+        const woSavedMb = data && data.workOrder;
+        if (woSavedMb) {
+          clearMaintIntegrityInlinePanel();
+          const ictx = buildIntegrityCtxFromWorkOrder(woSavedMb);
+          if (ictx) void postIntegrityCheckAfterSave(ictx);
+        }
         await loadAll();
         if (postToQbo && woId) await postWorkOrderToQbo(woId);
         if (close) {
@@ -22983,6 +23178,13 @@
       }
 
       const postToQbo = !!(opts && opts.postToQbo);
+      resolveApErpDriverSearch();
+      const apDriverId = (document.getElementById('apErpDriverId')?.value || '').trim();
+      const apDriverSearch = (document.getElementById('apErpDriverSearch')?.value || '').trim();
+      const apMaintType = (document.getElementById('apMaintRecordType')?.value || '').trim();
+      const apDotRaw = (document.getElementById('apAccidentDotReportable')?.value || '').trim();
+      const accidentDotForBody =
+        apMaintType === 'accident' && (apDotRaw === '1' || String(apDotRaw).toLowerCase() === 'true');
       const data = await j('/api/work-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
@@ -23002,10 +23204,20 @@
           internalWorkOrderNumber: internalWo,
           vendorInvoiceNumber: vendorInv,
           notes: document.getElementById('apMemo').value,
+          ...(apMaintType ? { maintRecordType: apMaintType } : {}),
+          ...(apDriverId ? { driverId: apDriverId } : {}),
+          ...(apDriverSearch ? { driverName: apDriverSearch } : {}),
+          ...(accidentDotForBody ? { accidentDotReportable: true } : {}),
           lines
         })
       });
       const woId = data && data.workOrder && data.workOrder.id ? String(data.workOrder.id) : '';
+      const woSaved = data && data.workOrder;
+      if (woSaved) {
+        clearMaintIntegrityInlinePanel();
+        const ictx = buildIntegrityCtxFromWorkOrder(woSaved);
+        if (ictx) void postIntegrityCheckAfterSave(ictx);
+      }
 
       resetWoForm();
       await loadAll();
@@ -23309,5 +23521,6 @@
     syncApDocTitle();
     refreshApDocTotal();
   </script>
+  <script src="/js/erp-qbo-dedupe.js"></script>
 </body>
 </html>
