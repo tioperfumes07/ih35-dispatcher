@@ -521,8 +521,12 @@ body.erp-maintenance #erpApp .erp-new-menu {
 
 body.erp-maintenance #erpApp .erp-new-menu__cols {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
+}
+
+body.erp-maintenance #erpApp .erp-new-menu__cols > * {
+  min-width: 0;
 }
 
 @media (max-width: 720px) {
