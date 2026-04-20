@@ -1484,6 +1484,8 @@ body.erp-maintenance .mr-upload-panel-title {
   font-weight: 500;
   color: var(--color-text-primary);
   margin: 0 0 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-upload-panel-desc {
@@ -1491,6 +1493,8 @@ body.erp-maintenance .mr-upload-panel-desc {
   color: var(--color-text-label);
   line-height: 1.5;
   margin: 0 0 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-upload-section-h {
@@ -1498,12 +1502,16 @@ body.erp-maintenance .mr-upload-section-h {
   font-weight: 500;
   color: var(--color-text-primary);
   margin: 0 0 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-upload-help {
   margin-top: 8px;
   font-size: 12px;
   color: var(--color-text-label);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-upload-help summary {
