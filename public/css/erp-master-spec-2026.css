@@ -1963,6 +1963,8 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   background: var(--color-bg-card);
   color: var(--color-text-body);
   box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
 }
 body.banking-page .wrap > .erp-connection-strip {
   max-width: 1120px;
