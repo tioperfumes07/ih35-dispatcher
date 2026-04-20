@@ -592,6 +592,10 @@ body.erp-maintenance .maint-kpi-cards {
   gap: 0.75rem;
 }
 
+body.erp-maintenance .maint-kpi-cards > * {
+  min-width: 0;
+}
+
 body.erp-maintenance .maint-kpi-card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -3290,6 +3294,8 @@ body.settings-page .panel {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   box-shadow: none;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.settings-page label {
@@ -3451,6 +3457,10 @@ body.hub-page .grid {
   padding: 24px max(24px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
   max-width: 1100px;
   margin: 0 auto;
+}
+
+body.hub-page .grid > * {
+  min-width: 0;
 }
 
 body.hub-page a.card {
