@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Non-destructive HTTP checks against a running server (default http://127.0.0.1:3400).
+ * Non-destructive HTTP checks against a running server (default http://localhost:3400).
  * Run: start the server, then `npm run smoke`. For **Rule 0 guard + smoke** in one step: `npm run qa:automated` (requires server up).
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings, tracking redirect) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, erp-master-redesign, erp-master-spec-2026, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
@@ -13,7 +13,7 @@
 import process from 'process';
 import { ruleZeroForbiddenHits } from './rule-zero-agent-b.mjs';
 
-const base = String(process.env.SMOKE_BASE || `http://127.0.0.1:${process.env.PORT || 3400}`).replace(/\/$/, '');
+const base = String(process.env.SMOKE_BASE || `http://localhost:${process.env.PORT || 3400}`).replace(/\/$/, '');
 
 /** Must return HTTP 2xx with a JSON body that looks healthy. */
 const CRITICAL = [

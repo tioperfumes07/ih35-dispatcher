@@ -36,7 +36,7 @@
 **Verification:** With the app listening (e.g. port **3400**):
 
 ```bash
-SMOKE_BASE=http://127.0.0.1:3400 npm run smoke
+SMOKE_BASE=http://localhost:3400 npm run smoke
 ```
 
 Use **`npm run qa:automated`** for **`rule0:check`** + smoke in one step. Exit code must be **0** before you consider your task done.
@@ -86,7 +86,7 @@ Do **not** inflate percentages without real scope; figures are planning aids, no
 ## 7. Handoff checklist (copy for your final message)
 
 - [ ] Changes limited to agreed scope; no auth/data-model surprises.
-- [ ] **`SMOKE_BASE=http://127.0.0.1:3400 npm run smoke`** passes (or document port if different).
+- [ ] **`SMOKE_BASE=http://localhost:3400 npm run smoke`** passes (or document port if different).
 - [ ] **`docs/ERP_MASTER_REDESIGN_STATUS.md`** updated (headline **141–N**, table notes, rolling average if fractions changed).
 - [ ] Rule 0 files: no new forbidden substrings (`scripts/rule-zero-agent-b.mjs`).
 
