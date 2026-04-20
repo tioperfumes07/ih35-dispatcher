@@ -136,7 +136,10 @@ const SMOKE_GATE_API_PATHS = new Set([
   '/api/maintenance/dashboard',
   '/api/maintenance/records',
   '/api/board',
-  '/api/maintenance/service-types'
+  '/api/maintenance/service-types',
+  '/api/integrity/dashboard',
+  '/api/integrity/counts',
+  '/api/integrity/thresholds'
 ]);
 
 function erpWriteTokenFromRequest(req) {

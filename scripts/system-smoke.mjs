@@ -26,7 +26,10 @@ const CRITICAL = [
   ['GET', '/api/maintenance/dashboard'],
   ['GET', '/api/maintenance/records'],
   ['GET', '/api/board'],
-  ['GET', '/api/maintenance/service-types']
+  ['GET', '/api/maintenance/service-types'],
+  ['GET', '/api/integrity/dashboard'],
+  ['GET', '/api/integrity/counts'],
+  ['GET', '/api/integrity/thresholds']
 ];
 
 /** Optional: DB reachability (fails in dev when URL points at a dead host). */
@@ -264,6 +267,16 @@ function summarize(j, path) {
   if (Array.isArray(j.vehicles)) return `vehicles=${j.vehicles.length}`;
   if (j.records && Array.isArray(j.records)) return `records=${j.records.length}`;
   if (path === '/api/maintenance/dashboard' && j.dashboard) return `dashboardRows=${j.dashboard.length}`;
+  if (path === '/api/integrity/dashboard' && j.ok === true && Array.isArray(j.alerts)) {
+    const k = j.kpi || {};
+    return `alerts=${j.alerts.length} kpiActive=${k.active ?? '—'}`;
+  }
+  if (path === '/api/integrity/counts' && j.ok === true && typeof j.active === 'number') {
+    return `active=${j.active} red=${j.red} amber=${j.amber}`;
+  }
+  if (path === '/api/integrity/thresholds' && j.ok === true && j.thresholds && typeof j.thresholds === 'object') {
+    return `thresholdKeys=${Object.keys(j.thresholds).length}`;
+  }
   return JSON.stringify(j).slice(0, 100);
 }
 
