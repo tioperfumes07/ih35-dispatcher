@@ -405,10 +405,14 @@ router.get('/api/reports/dot-audit/:unit/pdf', async (req, res) => {
 });
 
 router.post('/api/reports/export/dot-audit-pdf', async (req, res) => {
-  const unit = String(req.body?.unitId || req.body?.unit || '').trim();
-  if (!unit) return res.status(400).send('unitId required');
   const body = req.body && typeof req.body === 'object' ? req.body : {};
-  const { unitId: _u1, unit: _u2, startDate: _s, endDate: _e, ...filterRest } = body;
+  const unit = String(body.unitId || body.unit || '').trim();
+  if (!unit) return res.status(400).send('unitId required');
+  const filterRest = { ...body };
+  delete filterRest.unitId;
+  delete filterRest.unit;
+  delete filterRest.startDate;
+  delete filterRest.endDate;
   await streamDotAuditPdf(res, unit, body.startDate, body.endDate, filterRest);
 });
 

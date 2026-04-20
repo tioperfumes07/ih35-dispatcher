@@ -268,7 +268,7 @@ tr:nth-child(even){background:#f9f9f9}
 
   async function repDynamicExport(format) {
     const st = window.__repDynState;
-    if (!st || !st.columns || !st.rows) return;
+    if (!st || !Array.isArray(st.columns) || !Array.isArray(st.rows)) return;
     try {
       if (window.ErpExportUtil && typeof window.ErpExportUtil.exportReport === 'function') {
         await window.ErpExportUtil.exportReport(
@@ -443,7 +443,17 @@ tr:nth-child(even){background:#f9f9f9}
   ]);
 
   function filterPanelOptionsFor(datasetId) {
-    const base = ['dateRange', 'units', 'recordTypes', 'locationCategories', 'costRange', 'sortBy'];
+    const base = [
+      'dateRange',
+      'units',
+      'recordTypes',
+      'locationCategories',
+      'vendors',
+      'drivers',
+      'serviceTypesPick',
+      'costRange',
+      'sortBy'
+    ];
     const gbSvc = [
       { value: 'service_type', label: 'Service type' },
       { value: 'record_type', label: 'Record type' },
@@ -470,7 +480,11 @@ tr:nth-child(even){background:#f9f9f9}
       return { datasetId, defaultMonths: 12, features: [...base, 'groupBy'], groupByOptions: gbLoc };
     if (datasetId === 'm5-internal-external') return { datasetId, defaultMonths: 12, features: [...base] };
     if (datasetId === 'm6-location-summary')
-      return { datasetId, defaultMonths: 12, features: ['dateRange', 'recordTypes', 'locationCategories', 'sortBy'] };
+      return {
+        datasetId,
+        defaultMonths: 12,
+        features: ['dateRange', 'recordTypes', 'locationCategories', 'vendors', 'drivers', 'serviceTypesPick', 'sortBy']
+      };
     if (datasetId === 'a4-pm-schedule') return { datasetId, defaultMonths: 3, features: ['units', 'showOverduePm'] };
     return { datasetId, defaultMonths: 3, features: [...base] };
   }
@@ -515,6 +529,59 @@ tr:nth-child(even){background:#f9f9f9}
       )
       .join('');
     return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px">${cells}</div>`;
+  }
+
+  function flattenGroupedSectionsForExport(sections) {
+    let columns = null;
+    for (const sec of sections || []) {
+      const cols = sec.columns || [];
+      if (cols.length) {
+        columns = [{ key: '__section', label: 'Section' }, ...cols];
+        break;
+      }
+    }
+    if (!columns) columns = [{ key: '__section', label: 'Section' }];
+    const keys = columns.map(c => c.key);
+    const rows = [];
+    for (const sec of sections || []) {
+      const secTitle = sec.title || sec.key || 'Section';
+      for (const r of sec.rows || []) {
+        const row = { __section: secTitle };
+        for (const k of keys) {
+          if (k === '__section') continue;
+          row[k] = r[k];
+        }
+        rows.push(row);
+      }
+    }
+    return { columns, rows };
+  }
+
+  function flattenPivotForExport(columns, rows) {
+    const cols = (columns || []).map(c => ({ key: c.key, label: c.label }));
+    const out = (rows || []).map(r => {
+      const o = {};
+      for (const c of cols) o[c.key] = r[c.key];
+      return o;
+    });
+    return { columns: cols, rows: out };
+  }
+
+  function flattenSplitForExport(meta) {
+    const rows = [];
+    const columns = [
+      { key: '__side', label: 'Side' },
+      { key: 'label', label: 'Service type / vendor' },
+      { key: 'count', label: 'Count' },
+      { key: 'totalCost', label: 'Total $' }
+    ];
+    for (const r of meta.internal?.rows || []) {
+      rows.push({ __side: 'internal', label: r.serviceType, count: r.count, totalCost: r.totalCost });
+    }
+    for (const r of meta.external?.rows || []) {
+      rows.push({ __side: 'external', label: r.vendor, count: r.count, totalCost: r.totalCost });
+    }
+    return { columns, rows };
   }
 
   function renderPivotTable(columns, rows, monthKeys) {
@@ -833,17 +900,34 @@ tr:nth-child(even){background:#f9f9f9}
       const e = sp.get('endDate') || '';
       const uu = sp.getAll('units');
       const u = uu.length ? uu.join(',') : sp.get('unit') || '';
+      const layout = data.meta && data.meta.reportLayout;
+      let exportColumns = data.columns || [];
+      let exportRows = data.rows || [];
+      if (layout === 'grouped' && Array.isArray(data.meta.sections) && data.meta.sections.length) {
+        const flat = flattenGroupedSectionsForExport(data.meta.sections);
+        exportColumns = flat.columns;
+        exportRows = flat.rows;
+      } else if (layout === 'pivot' && data.meta.pivotMonths && (data.rows || []).length) {
+        const flat = flattenPivotForExport(data.columns, data.rows);
+        exportColumns = flat.columns;
+        exportRows = flat.rows;
+      } else if (layout === 'split' && data.meta.internal && data.meta.external) {
+        const flat = flattenSplitForExport(data.meta);
+        exportColumns = flat.columns;
+        exportRows = flat.rows;
+      }
       window.__repDynState = {
         kind: 'dataset',
         datasetId,
         title: data.title || title,
         subtitle: [s, e].filter(Boolean).join(' → '),
-        columns: data.columns || [],
-        rows: data.rows || [],
+        columns: exportColumns,
+        rows: exportRows,
         totals: data.totals || {},
         startDate: s,
         endDate: e,
-        unitTag: u
+        unitTag: u,
+        reportLayout: layout || 'tabular'
       };
       repSaveRecent(datasetId, data.title || title);
     };
@@ -962,7 +1046,7 @@ tr:nth-child(even){background:#f9f9f9}
           <span class="mini-note">to</span>
           <input type="date" class="qb-in" id="repDotCfgEnd" value="${yEnd}" />
         </div>
-        <p class="mini-note" style="margin:8px 0 0">Sections 4A–4I and filter query params are applied on the JSON audit endpoint; PDF export uses the classic template.</p>
+        <p class="mini-note" style="margin:8px 0 0">Vehicle JSON and PDF both honor the same date range; add optional query params on the JSON URL (vendors, drivers, serviceTypes, recordTypes, etc.) — the PDF route forwards the same query string to the audit builder.</p>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn" id="repDotCfgPreview">Preview JSON</button>
           <button type="button" class="btn" style="background:#1b5e20;color:#fff;border-color:#1b5e20" id="repDotCfgPdf">Generate PDF</button>

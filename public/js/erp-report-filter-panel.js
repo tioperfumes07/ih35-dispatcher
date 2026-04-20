@@ -244,7 +244,13 @@
     const root = host.querySelector('#' + id);
     const state = {
       unitPick: new Set(),
-      allUnits: []
+      allUnits: [],
+      vendorPick: new Set(),
+      allVendors: [],
+      driverPick: new Set(),
+      allDrivers: [],
+      serviceTypePick: new Set(),
+      allServiceTypes: []
     };
 
     function setCollapsed(c) {
@@ -297,18 +303,26 @@
         const dm = root.querySelector('.erp-rfp-duemiles')?.value;
         if (dm) sp.set('dueWithinMiles', dm);
       }
+      if (show.has('vendors')) {
+        for (const v of state.vendorPick) sp.append('vendors', v);
+      }
+      if (show.has('drivers')) {
+        for (const d of state.driverPick) sp.append('drivers', d);
+      }
+      if (show.has('serviceTypesPick')) {
+        for (const s of state.serviceTypePick) sp.append('serviceTypes', s);
+      }
       return sp;
     }
 
     function activeCount() {
-      let n = 0;
       const sp = collectParams();
-      const skip = new Set(['sortBy', 'sortDir', 'groupBy']);
+      let n = 0;
       sp.forEach((v, k) => {
-        if (!skip.has(k)) n++;
+        if (k === 'sortBy' || k === 'sortDir') return;
+        n++;
       });
-      if (show.has('recordTypes') && !root.querySelector('.erp-rfp-rt-all')?.checked) n += 0;
-      return sp.toString() ? sp.toString().split('&').filter(x => !x.startsWith('sort')).length : 0;
+      return n;
     }
 
     function paintChips() {
@@ -383,6 +397,54 @@
         });
     }
 
+    function bindMultiPicker({ showKey, url, listKey, statePick, allKey, listSel, searchSel, countSel, clearSel, esc }) {
+      if (!show.has(showKey)) return;
+      const list = root.querySelector(listSel);
+      const search = root.querySelector(searchSel);
+      const countEl = root.querySelector(countSel);
+      if (!list) return;
+      const headers = typeof authFetchHeaders === 'function' ? authFetchHeaders() : {};
+      fetch(url, { headers })
+        .then(r => r.json())
+        .then(data => {
+          state[allKey] = data[listKey] || [];
+          function paintCount() {
+            if (countEl) countEl.textContent = `${state[statePick].size} selected`;
+          }
+          function renderList(q) {
+            const ql = String(q || '').trim().toLowerCase();
+            const rows = state[allKey].filter(v => !ql || String(v).toLowerCase().includes(ql));
+            list.innerHTML = rows
+              .map(
+                v =>
+                  `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-${esc}-cb" value="${String(v).replace(/"/g, '&quot;')}" /> ${String(v)}</label>`
+              )
+              .join('');
+            list.querySelectorAll(`.erp-rfp-${esc}-cb`).forEach(cb => {
+              cb.checked = state[statePick].has(cb.value);
+              cb.addEventListener('change', () => {
+                if (cb.checked) state[statePick].add(cb.value);
+                else state[statePick].delete(cb.value);
+                paintCount();
+                paintChips();
+              });
+            });
+          }
+          renderList('');
+          search?.addEventListener('input', () => renderList(search.value));
+          root.querySelector(clearSel)?.addEventListener('click', () => {
+            state[statePick].clear();
+            renderList(search?.value || '');
+            paintCount();
+            paintChips();
+          });
+          paintCount();
+        })
+        .catch(() => {
+          list.textContent = 'Could not load list.';
+        });
+    }
+
     root.querySelector('.erp-rfp__head')?.addEventListener('click', () => setCollapsed(root.dataset.collapsed !== '1'));
     root.querySelectorAll('.erp-rfp-chip').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -422,8 +484,45 @@
     root.querySelectorAll('.erp-rfp-start, .erp-rfp-end, .erp-rfp-cmin, .erp-rfp-cmax, .erp-rfp-lc-cb').forEach(el =>
       el.addEventListener('change', paintChips)
     );
+    root.querySelectorAll('.erp-rfp-sortby, .erp-rfp-sortdir, .erp-rfp-groupby').forEach(el => el.addEventListener('change', paintChips));
 
     if (show.has('units')) bindUnits();
+    bindMultiPicker({
+      showKey: 'vendors',
+      url: '/api/reports/filters/vendors-used',
+      listKey: 'vendors',
+      statePick: 'vendorPick',
+      allKey: 'allVendors',
+      listSel: '.erp-rfp-vendor-list',
+      searchSel: '.erp-rfp-vendor-search',
+      countSel: '.erp-rfp-vendor-count',
+      clearSel: '.erp-rfp-vendor-clear',
+      esc: 'vendor'
+    });
+    bindMultiPicker({
+      showKey: 'drivers',
+      url: '/api/reports/filters/drivers-used',
+      listKey: 'drivers',
+      statePick: 'driverPick',
+      allKey: 'allDrivers',
+      listSel: '.erp-rfp-driver-list',
+      searchSel: '.erp-rfp-driver-search',
+      countSel: '.erp-rfp-driver-count',
+      clearSel: '.erp-rfp-driver-clear',
+      esc: 'driver'
+    });
+    bindMultiPicker({
+      showKey: 'serviceTypesPick',
+      url: '/api/reports/filters/service-types-used',
+      listKey: 'serviceTypes',
+      statePick: 'serviceTypePick',
+      allKey: 'allServiceTypes',
+      listSel: '.erp-rfp-svc-list',
+      searchSel: '.erp-rfp-svc-search',
+      countSel: '.erp-rfp-svc-count',
+      clearSel: '.erp-rfp-svc-clear',
+      esc: 'svc'
+    });
     paintChips();
     if (cb.onReady) {
       setTimeout(() => {
@@ -441,8 +540,6 @@
         .catch(() => {})
         .finally(() => spin?.classList.add('hidden'));
     });
-
-    if (cb.onReady) cb.onReady(collectParams);
   }
 
   window.ErpReportFilterPanel = { mount };
