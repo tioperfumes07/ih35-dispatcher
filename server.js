@@ -7,6 +7,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
 import * as XLSX from '@e965/xlsx';
+import PDFDocument from 'pdfkit';
 import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
@@ -38,6 +39,8 @@ import {
 } from './lib/security-audit.mjs';
 import { relayLineLabel, relayQuickBooksCategory, relaySpreadsheetCategory } from './lib/relay-qb-categories.mjs';
 import { parseBankCsvText, suggestForBankRow } from './lib/bank-match.mjs';
+import { buildReportDataset, REPORT_DATASET_IDS } from './lib/reports-datasets.mjs';
+import dotAuditReportsRouter from './routes/dot-audit-reports.mjs';
 
 dotenv.config();
 
@@ -292,7 +295,24 @@ function defaultErpData() {
      * Per-bill payment applications (vendor Pay Bills workspace). Numbers generated at save time;
      * qboStatus pending until posted via existing QBO bill payment path.
      */
-    vendorBillPaymentRecords: []
+    vendorBillPaymentRecords: [],
+    /** Company legal + DOT header fields (reports, PDF letterhead). */
+    companyProfile: {
+      legalName: 'IH 35 Transportation LLC',
+      dbaName: '',
+      usdotNumber: '',
+      mcNumber: '',
+      street: '',
+      city: '',
+      state: '',
+      zip: '',
+      phone: '',
+      email: '',
+      iftaAccountNumber: '',
+      stateOfOperations: '',
+      pmIntervalMiles: 25000,
+      randomDrugTestRateNote: ''
+    }
   };
 }
 
@@ -372,6 +392,11 @@ function ensureErpFile() {
   if (!Array.isArray(merged.employees)) merged.employees = [];
   if (!Array.isArray(merged.qboBillPaymentLog)) merged.qboBillPaymentLog = [];
   if (!Array.isArray(merged.vendorBillPaymentRecords)) merged.vendorBillPaymentRecords = [];
+  if (!merged.companyProfile || typeof merged.companyProfile !== 'object') {
+    merged.companyProfile = { ...defaultErpData().companyProfile };
+  } else {
+    merged.companyProfile = { ...defaultErpData().companyProfile, ...merged.companyProfile };
+  }
 
   for (const w of merged.workOrders || []) {
     if (w.voided == null) w.voided = false;
@@ -452,7 +477,37 @@ function sanitizeDriverProfile(raw) {
   if (drugTestExpiry) out.drugTestExpiry = drugTestExpiry;
   if (hireDate) out.hireDate = hireDate;
   if (notes) out.notes = notes;
+  const mvrDate = sliceIsoDate(raw.mvrDate);
+  if (mvrDate) out.mvrDate = mvrDate;
+  const annualReviewDate = sliceIsoDate(raw.annualReviewDate);
+  if (annualReviewDate) out.annualReviewDate = annualReviewDate;
   return out;
+}
+
+function sanitizeCompanyProfile(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const str = (k, max) => String(raw[k] ?? '').trim().slice(0, max);
+  const out = {};
+  const take = (k, max) => {
+    const v = str(k, max);
+    if (v) out[k] = v;
+  };
+  take('legalName', 200);
+  take('dbaName', 200);
+  take('usdotNumber', 32);
+  take('mcNumber', 32);
+  take('street', 200);
+  take('city', 120);
+  take('state', 8);
+  take('zip', 24);
+  take('phone', 40);
+  take('email', 200);
+  take('iftaAccountNumber', 80);
+  take('stateOfOperations', 8);
+  take('randomDrugTestRateNote', 500);
+  const pm = Number(raw.pmIntervalMiles);
+  if (Number.isFinite(pm) && pm > 0) out.pmIntervalMiles = Math.round(pm);
+  return Object.keys(out).length ? out : null;
 }
 
 function normalizeFuelProductType(raw) {
@@ -1815,89 +1870,6 @@ async function qboFetchOpenBillByIdFromQbo(billIdRaw) {
   return { bills: [normalized] };
 }
 
-/** Open vendor credits with balance for one vendor (QuickBooks). */
-async function qboFetchOpenVendorCreditsForVendor(vendorQboId) {
-  const vid = String(vendorQboId || '').replace(/\D/g, '');
-  if (!vid) return [];
-  const data = await qboQuery(
-    `select * from VendorCredit where Balance > '0' AND VendorRef = '${vid}' MAXRESULTS 40`
-  );
-  const rows = data?.QueryResponse?.VendorCredit;
-  const arr = Array.isArray(rows) ? rows : rows ? [rows] : [];
-  return arr.map(vc => {
-    const bal = safeNum(vc.Balance, null);
-    const open = bal != null && Number.isFinite(bal) ? bal : safeNum(vc.TotalAmt, 0) || 0;
-    return {
-      id: vc.Id,
-      docNumber: vc.DocNumber || '',
-      txnDate: vc.TxnDate || '',
-      openBalance: qboMoneyRound(open),
-      totalAmt: qboMoneyRound(safeNum(vc.TotalAmt, 0) || 0),
-      vendorId: vc.VendorRef?.value || '',
-      vendorName: vc.VendorRef?.name || ''
-    };
-  });
-}
-
-function erpUiPaymentMethodToQboPayType(paymentMethod) {
-  const m = String(paymentMethod || '').toLowerCase();
-  if (m.includes('credit')) return 'CreditCard';
-  return 'Check';
-}
-
-function vendorBillHistorySlice(records, vendorId, fromD, toD) {
-  const vid = String(vendorId || '').trim();
-  return (records || [])
-    .filter(r => !r.voidedAt)
-    .filter(r => String(r.vendorQboId || '') === vid)
-    .filter(r => {
-      const d = sliceIsoDate(r.paymentDate || r.txnDate || r.createdAt);
-      if (fromD && (!d || d < fromD)) return false;
-      if (toD && (!d || d > toD)) return false;
-      return true;
-    })
-    .sort((a, b) => String(b.paymentDate || b.createdAt || '').localeCompare(String(a.paymentDate || a.createdAt || '')));
-}
-
-function buildVendorBillPaymentHistoryCsv(rows) {
-  const headers = [
-    'payment_number',
-    'payment_date',
-    'bill_number',
-    'bill_date',
-    'bill_amount',
-    'payment_amount',
-    'remaining_balance',
-    'payment_method',
-    'account',
-    'check_number',
-    'memo',
-    'qbo_status',
-    'batch_id'
-  ];
-  const lines = [headers.map(csvEscape).join(',')];
-  for (const r of rows) {
-    lines.push(
-      [
-        csvEscape(r.paymentNumber),
-        csvEscape(r.paymentDate),
-        csvEscape(r.billDocNumber),
-        csvEscape(r.billDate),
-        csvEscape(r.originalAmount),
-        csvEscape(r.paymentAmount),
-        csvEscape(r.remainingBalanceAfter),
-        csvEscape(r.paymentMethod),
-        csvEscape(r.paymentAccountName),
-        csvEscape(r.checkNum),
-        csvEscape(r.memo),
-        csvEscape(r.qboStatus),
-        csvEscape(r.batchId)
-      ].join(',')
-    );
-  }
-  return lines.join('\n');
-}
-
 /** Human-facing payment # from bill doc number + prior payment count (save-time, not display-only). */
 function generatePaymentNumber(billNumber, existingPaymentCount) {
   const base = String(billNumber || '').trim() || 'BILL';
@@ -1935,38 +1907,9 @@ function countAppPaymentsTouchingBillQboId(erp, billQboId) {
   return n;
 }
 
-/**
- * Count applications used for QBO BillPayment DocNumber suffix only — excludes `pending`
- * vendorBillPaymentRecords (not yet posted) so post-to-QBO after local save does not over-increment.
- */
-function countQboStylePaymentApplicationsForBill(erp, billQboId) {
-  const id = String(billQboId || '').replace(/\D/g, '');
-  if (!id) return 0;
-  let n = 0;
-  for (const r of erp.vendorBillPaymentRecords || []) {
-    if (r.voidedAt) continue;
-    if (String(r.qboStatus || '') === 'pending') continue;
-    const bid = String(r.billQboId || '').replace(/\D/g, '');
-    if (bid && bid === id) n++;
-  }
-  for (const e of erp.qboBillPaymentLog || []) {
-    if (e.reversedAt) continue;
-    if (e.vendorPaymentBatchId) continue;
-    const lines = e.lines || [];
-    for (const ln of lines) {
-      const bid = String(ln.billQboId || '').replace(/\D/g, '');
-      if (bid && bid === id) {
-        n++;
-        break;
-      }
-    }
-  }
-  return n;
-}
-
-/** QBO DocNumber suffix — excludes pending vendor rows. */
+/** @deprecated alias — same as countAppPaymentsTouchingBillQboId (QBO DocNumber suffix on multi-pay). */
 function countPriorBillPaymentsForBill(erp, billQboId) {
-  return countQboStylePaymentApplicationsForBill(erp, billQboId);
+  return countAppPaymentsTouchingBillQboId(erp, billQboId);
 }
 
 /**
@@ -2034,7 +1977,7 @@ async function qboCreateBillPaymentFromApp(body) {
     sanitizeQboDocNumber(`B-${primaryBillId.replace(/\D/g, '')}`) ||
     `B${primaryBillId.replace(/\D/g, '')}`;
   /** First payment uses the bill's DocNumber; each additional payment to the same bill gets -1, -2, … (QBO max 21 chars). */
-  const prior = countQboStylePaymentApplicationsForBill(erp, primaryBillId);
+  const prior = countPriorBillPaymentsForBill(erp, primaryBillId);
   let docNumber = baseDoc;
   if (prior > 0) {
     const suffix = `-${prior}`;
@@ -4598,6 +4541,7 @@ app.get('/api/health/db', async (_req, res) => {
 });
 
 app.use('/api/tms', tmsRouter);
+app.use(dotAuditReportsRouter);
 app.use(pdfRouter);
 app.use('/api/documents', documentParseRouter);
 app.use('/api/integrations', integrationsRouter);
@@ -6097,6 +6041,241 @@ app.get('/api/reports/summary', async (_req, res) => {
     });
   } catch (error) {
     logError('api/reports/summary', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/erp/company-profile', (req, res) => {
+  try {
+    if (authRequired() && !req.authUser) {
+      return res.status(401).json({ ok: false, error: 'Login required' });
+    }
+    const erp = readErp();
+    res.json({
+      ok: true,
+      companyProfile: { ...defaultErpData().companyProfile, ...(erp.companyProfile || {}) }
+    });
+  } catch (error) {
+    logError('api/erp/company-profile GET', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.patch('/api/erp/company-profile', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const patch = sanitizeCompanyProfile(req.body || {});
+    if (!patch) return res.status(400).json({ ok: false, error: 'No valid fields' });
+    const erp = readErp();
+    erp.companyProfile = { ...defaultErpData().companyProfile, ...(erp.companyProfile || {}), ...patch };
+    writeErp(erp);
+    res.json({ ok: true, companyProfile: erp.companyProfile });
+  } catch (error) {
+    logError('api/erp/company-profile PATCH', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/qbo/report/:reportName', async (req, res) => {
+  try {
+    if (!qboConfigured()) {
+      return res.status(400).json({
+        ok: false,
+        error: 'QuickBooks OAuth is not configured on this server.',
+        needsQbo: true
+      });
+    }
+    const store = readQbo();
+    if (!store.tokens?.refresh_token) {
+      return res.status(400).json({
+        ok: false,
+        error: 'QuickBooks connection required. Connect QuickBooks to view this report.',
+        needsConnect: true
+      });
+    }
+    const name = String(req.params.reportName || '').trim();
+    if (!name) return res.status(400).json({ ok: false, error: 'reportName required' });
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(req.query || {})) {
+      if (v == null || v === '') continue;
+      if (Array.isArray(v)) v.forEach(x => sp.append(k, String(x)));
+      else sp.set(k, String(v));
+    }
+    const qs = sp.toString();
+    const path = `reports/${encodeURIComponent(name)}${qs ? `?${qs}` : ''}`;
+    const report = await qboGet(path);
+    const realmId = store.tokens?.realmId || '';
+    const viewUrl = realmId ? `https://app.qbo.intuit.com/app/reportv2?companyId=${encodeURIComponent(realmId)}` : '';
+    res.json({
+      ok: true,
+      report,
+      realmId,
+      viewUrl,
+      disclaimer: 'Data sourced from QuickBooks Online.'
+    });
+  } catch (error) {
+    logError('api/qbo/report', error);
+    res.status(500).json({ ok: false, error: error.message || String(error) });
+  }
+});
+
+app.get('/api/reports/dataset', async (req, res) => {
+  try {
+    const id = String(req.query.id || '').trim();
+    if (!id || !REPORT_DATASET_IDS.has(id)) {
+      return res.status(400).json({ ok: false, error: 'Unknown or missing id' });
+    }
+    const erp = readErp();
+    let fleetByUnit = {};
+    try {
+      const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+      for (const v of enrichedVehicles || []) {
+        const name = String(v.name || '').trim();
+        if (!name) continue;
+        fleetByUnit[name] = {
+          ymm: [v.year, v.make, v.model].filter(Boolean).join(' '),
+          odometerMiles: v.odometerMiles != null ? v.odometerMiles : safeNum(erp.currentMileage?.[name], null)
+        };
+      }
+    } catch (_) {
+      fleetByUnit = {};
+    }
+    let hosClocks = [];
+    try {
+      hosClocks = await fetchAllSamsaraHosClocks();
+    } catch (_) {
+      hosClocks = [];
+    }
+    let dbLoads = [];
+    try {
+      const { rows } = await dbQuery(
+        `SELECT l.load_number, l.status, l.start_date::text AS start_date, l.created_at::text AS created_at,
+                l.revenue_amount,
+                d.name AS driver_name,
+                t.unit_code AS truck_unit,
+                c.name AS customer_name,
+                (COALESCE(l.practical_loaded_miles,0)+COALESCE(l.practical_empty_miles,0))::numeric AS miles
+         FROM loads l
+         LEFT JOIN drivers d ON d.id = l.driver_id
+         LEFT JOIN trucks t ON t.id = l.truck_id
+         LEFT JOIN customers c ON c.id = l.customer_id
+         ORDER BY l.created_at DESC NULLS LAST
+         LIMIT 2000`
+      );
+      dbLoads = (rows || []).map(r => ({
+        load_number: r.load_number,
+        status: r.status,
+        pickup_date: r.start_date,
+        created_at: r.created_at,
+        revenue_amount: r.revenue_amount,
+        driver_name: r.driver_name,
+        truck_unit: r.truck_unit,
+        customer_name: r.customer_name,
+        miles: r.miles
+      }));
+    } catch (_) {
+      dbLoads = [];
+    }
+    const data = await buildReportDataset(id, erp, req.query, {
+      fleetByUnit,
+      hosClocks,
+      dbLoads,
+      samsaraConnected: hasSamsaraReadToken()
+    });
+    res.json(data);
+  } catch (error) {
+    logError('api/reports/dataset', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post('/api/reports/export-table', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const format = String(body.format || 'csv').toLowerCase();
+    const title = String(body.title || 'Report').replace(/[^\w.-]+/g, '_').slice(0, 80);
+    const columns = Array.isArray(body.columns) ? body.columns : [];
+    const rows = Array.isArray(body.rows) ? body.rows : [];
+    const unitTag = String(body.unitTag || '').replace(/[^\w.-]+/g, '_').slice(0, 40);
+    const rangeTag = String(body.rangeTag || '').replace(/[^\w.-]+/g, '_').slice(0, 40);
+    const base = [title, unitTag, rangeTag].filter(Boolean).join('_') || 'export';
+
+    if (format === 'csv') {
+      const keys = columns.map(c => c.key || c.label).filter(Boolean);
+      const labels = columns.map(c => String(c.label || c.key || ''));
+      const esc = v => {
+        const s = String(v ?? '');
+        if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+        return s;
+      };
+      const lines = [labels.map(esc).join(',')];
+      for (const row of rows) {
+        lines.push(keys.map(k => esc(row[k])).join(','));
+      }
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${base}.csv"`);
+      return res.send('\uFEFF' + lines.join('\n'));
+    }
+
+    if (format === 'xlsx') {
+      const keys = columns.map(c => c.key || c.label).filter(Boolean);
+      const labels = columns.map(c => String(c.label || c.key || ''));
+      const aoa = [labels];
+      for (const row of rows) {
+        aoa.push(keys.map(k => row[k]));
+      }
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(wb, ws, 'Report');
+      const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${base}.xlsx"`);
+      return res.send(Buffer.from(buf));
+    }
+
+    if (format === 'pdf') {
+      const doc = new PDFDocument({ margin: 48, size: 'LETTER', layout: 'landscape' });
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${base}.pdf"`);
+      doc.pipe(res);
+      doc.fontSize(14).text(String(body.title || 'Report'), { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(9).text(String(body.subtitle || ''), { width: 700 });
+      doc.moveDown(0.75);
+      const keys = columns.map(c => c.key || c.label).filter(Boolean);
+      const labels = columns.map(c => String(c.label || c.key || ''));
+      const colW = Math.max(56, Math.floor(680 / Math.max(1, labels.length)));
+      const x0 = 48;
+      const drawRow = (cells, bold) => {
+        let yy = doc.y;
+        let xx = x0;
+        doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(8).fillColor('#111');
+        for (let i = 0; i < cells.length; i++) {
+          doc.text(String(cells[i] ?? ''), xx, yy, { width: colW - 4, ellipsis: true });
+          xx += colW;
+        }
+        doc.moveDown(0.35);
+      };
+      drawRow(labels, true);
+      const lineY = doc.y;
+      doc.moveTo(x0, lineY).lineTo(x0 + colW * labels.length, lineY).strokeColor('#cccccc').stroke();
+      doc.moveDown(0.2);
+      for (const row of rows) {
+        if (doc.y > 520) {
+          doc.addPage();
+        }
+        drawRow(
+          keys.map(k => row[k]),
+          false
+        );
+      }
+      doc.end();
+      return;
+    }
+
+    res.status(400).json({ ok: false, error: 'Unsupported format' });
+  } catch (error) {
+    logError('api/reports/export-table', error);
     res.status(500).json({ ok: false, error: error.message });
   }
 });

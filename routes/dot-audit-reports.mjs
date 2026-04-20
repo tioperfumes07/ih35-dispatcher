@@ -20,23 +20,23 @@ function drawTable(doc, startY, headers, rows, colWidths) {
   const x0 = 48;
   doc.fontSize(9).fillColor('#333');
   let x = x0;
-  headers.forEach((h, i) => {
-    doc.text(h, x, y, { width: colWidths[i], continued: i < headers.length - 1 });
+  for (let i = 0; i < headers.length; i++) {
+    doc.text(String(headers[i] ?? ''), x, y, { width: colWidths[i] });
     x += colWidths[i];
-  });
+  }
   y += 14;
-  doc.moveTo(x0, y).lineTo(520, y).stroke('#ccc');
-  y += 6;
-  for (const row of rows.slice(0, 40)) {
+  doc.moveTo(x0, y).lineTo(520, y).strokeColor('#cccccc').stroke();
+  y += 8;
+  for (const row of rows.slice(0, 45)) {
     if (y > 700) {
       doc.addPage();
       y = 60;
     }
     x = x0;
-    row.forEach((cell, i) => {
-      doc.text(String(cell ?? ''), x, y, { width: colWidths[i], ellipsis: true });
+    for (let i = 0; i < row.length; i++) {
+      doc.text(String(row[i] ?? ''), x, y, { width: colWidths[i], ellipsis: true });
       x += colWidths[i];
-    });
+    }
     y += 12;
   }
   return y + 10;
