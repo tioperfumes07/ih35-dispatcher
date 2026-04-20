@@ -585,9 +585,15 @@
               </span>
             </span>
           </div>
-          <p class="mini-note" style="margin:0 0 10px;color:var(--color-text-label);font-size:12px;max-width:76ch">
-            HOS: chips, search, <strong>Show</strong>; <strong>?</strong> = duty rules + token scopes.
-          </p>
+          <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;color:var(--color-text-label);font-size:12px;max-width:76ch;line-height:1.45">
+            <span style="min-width:0;flex:1 1 200px">Tag / duty / violation chips, search, and <strong>Show</strong> below scope the HOS grid.</span>
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS filter bar">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">
+                Chip rows open menus (tags, attributes, duty status, violations). Search matches driver text in the table. <strong>Show</strong> narrows which duty rows appear. Violation dot colors and off-duty-with/without-truck rules: use the <strong>?</strong> next to the legend above (Samsara token scopes there).
+              </span>
+            </span>
+          </div>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">

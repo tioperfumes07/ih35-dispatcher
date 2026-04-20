@@ -1136,3 +1136,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 22:** `public/maintenance.html` — **Connections** footer heading adds **`erp-help-tip`** (how **`#sidebarQboStatus`** / **`#sidebarQboAlertBrief`** / **`#sidebarFleetStatus`** / **`#sidebarLastUpdated`** update; **`changelog 509`** in **`ERP_MASTER_REDESIGN_STATUS.md`**).
 
 **Files:** `public/maintenance.html`, `docs/ERP_MASTER_REDESIGN_STATUS.md`, `docs/reports/ERP_MASTER_REDESIGN_PROGRESS_latest.rtf`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-18
+
+- **Rule 22:** `public/maintenance.html` — **HOS clocks** tab: replace plain **`p.mini-note`** above the filter bar with a flex **`mini-note`** row + **`erp-help-tip`** (chips / search / **Show** vs legend **?**; **`changelog 510`** in **`ERP_MASTER_REDESIGN_STATUS.md`**).
+
+**Files:** `public/maintenance.html`, `docs/ERP_MASTER_REDESIGN_STATUS.md`, `docs/reports/ERP_MASTER_REDESIGN_PROGRESS_latest.rtf`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
