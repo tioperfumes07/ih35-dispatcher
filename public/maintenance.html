@@ -11101,35 +11101,18 @@
       updateAccountingNavBadge(payload);
       renderMaintAsideQbIssues();
       const bar = document.getElementById('qboSyncAlertBar');
-      const side = document.getElementById('sidebarQboAlertBrief');
-      if (!bar) {
-        syncAcctDashFromQboPayload();
-        return;
+      if (bar) {
+        bar.classList.add('hidden');
+        bar.innerHTML = '';
+        bar.removeAttribute('data-fp');
+        bar.removeAttribute('role');
+        bar.removeAttribute('aria-label');
       }
-
+      const side = document.getElementById('sidebarQboAlertBrief');
       const configured = !!payload?.configured;
       const connected = !!payload?.connected;
-      const lookback = payload?.lookbackDays != null ? payload.lookbackDays : 120;
 
       if (!payload || payload.ok === false) {
-        bar.classList.remove('hidden', 'qbo-sync-critical');
-        bar.classList.add('qbo-sync-degraded');
-        bar.removeAttribute('data-fp');
-        bar.setAttribute('role', 'status');
-        bar.innerHTML = `
-          <div class="mr-qbo-banner mr-qbo-banner--degraded">
-            <div class="mr-qbo-banner__left">
-              <span class="mr-qbo-banner__icon" aria-hidden="true">!</span>
-              <div class="mr-qbo-banner__body">
-                <div class="mr-qbo-banner__title">QuickBooks — status unavailable</div>
-                <p class="mr-qbo-banner__meta">Check your connection and sign in, then choose <strong>Refresh</strong> in the top bar.</p>
-              </div>
-            </div>
-            <div class="mr-qbo-banner__right print-hide-actions">
-              <button type="button" class="mr-qbo-banner__linkbtn" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'))">Go to Accounting</button>
-              <button type="button" class="mr-qbo-banner__dismiss" onclick="dismissQboSyncAlertBar()">Hide ×</button>
-            </div>
-          </div>`;
         if (side) {
           side.style.color = 'var(--pill-red-text)';
           side.textContent = 'Could not load posting alerts.';
@@ -11140,16 +11123,9 @@
 
       const alerts = payload.alerts || [];
       const c = payload.counts || {};
-      const fp = qboSyncAlertFingerprint(payload);
-      bar.setAttribute('data-fp', fp);
-
       maybeNotifyQboSyncDesktop(payload);
 
       if (!alerts.length) {
-        bar.classList.add('hidden');
-        bar.classList.remove('qbo-sync-critical', 'qbo-sync-degraded');
-        bar.removeAttribute('data-fp');
-        bar.innerHTML = '';
         if (side) {
           side.style.color = '';
           if (configured && connected) {
@@ -11165,27 +11141,9 @@
         return;
       }
 
-      if (sessionStorage.getItem(QBO_SYNC_BAR_SUPPRESS_KEY) === fp) {
-        bar.classList.add('hidden');
-        bar.innerHTML = '';
-        if (side) {
-          side.style.color = 'var(--sidebar-muted)';
-          side.textContent = `${alerts.length} notice(s) — banner hidden this session (clears if the list changes).`;
-        }
-        syncAcctDashFromQboPayload();
-        return;
-      }
-
       const high = c.high || 0;
       const med = c.medium || 0;
       const low = c.low || 0;
-      const needsConnect = alerts.some(a => a.code === 'qbo_not_connected');
-
-      bar.classList.remove('hidden', 'qbo-sync-degraded');
-      bar.classList.toggle('qbo-sync-critical', high > 0);
-      bar.setAttribute('role', high > 0 ? 'alert' : 'region');
-      bar.setAttribute('aria-label', 'QuickBooks synchronization notices');
-
       if (side) {
         side.style.color = high ? 'var(--pill-red-text)' : 'var(--color-warning-border-soft)';
         const parts = [`${alerts.length} notice(s)`];
@@ -11194,55 +11152,6 @@
         if (low) parts.push(`${low} info`);
         side.textContent = parts.join(' · ');
       }
-
-      const acctBtn = `<button type="button" class="mr-qbo-banner__linkbtn" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); const _s=document.getElementById('acctStubTrans'); if(_s)openAccountingTab('acct-transactions', _s);">Go to Accounting</button>`;
-      const connectBtn = needsConnect
-        ? `<button type="button" class="mr-qbo-banner__linkbtn" onclick="connectQuickBooks()">Connect QuickBooks</button>
-           <button type="button" class="mr-qbo-banner__ghost" onclick="location.href='/settings.html'">Settings</button>`
-        : '';
-      const notifDefault =
-        typeof Notification !== 'undefined' && Notification.permission === 'default'
-          ? `<button type="button" class="mr-qbo-banner__ghost" onclick="requestQboDesktopNotifyPermission()">Desktop notifications</button>`
-          : '';
-      const title =
-        'QuickBooks — ' + String(alerts.length) + ' item' + (alerts.length === 1 ? '' : 's') + ' need attention';
-
-      bar.innerHTML = `
-        <div class="mr-qbo-banner">
-          <div class="mr-qbo-banner__left">
-            <span class="mr-qbo-banner__icon" aria-hidden="true">!</span>
-            <div class="mr-qbo-banner__body">
-              <div class="mr-qbo-banner__title">${escapeHtml(title)}</div>
-              <p class="mr-qbo-banner__meta">${escapeHtml(String(alerts.length))} in the last ${escapeHtml(
-                String(lookback)
-              )}-day window · auto-refresh every ${Math.round(AUTO_REFRESH_MS / 1000)}s</p>
-              <ul class="mr-qbo-banner__list">
-              ${alerts
-                .slice(0, 18)
-                .map(a => {
-                  const sev =
-                    a.severity === 'high' ? 'Error' : a.severity === 'medium' ? 'Pending' : 'Info';
-                  const det = a.detail ? ` — ${escapeHtml(a.detail)}` : '';
-                  return `<li><span class="mr-qbo-banner__sev">${escapeHtml(sev)}</span> · ${escapeHtml(
-                    a.title || a.code || ''
-                  )}${det}</li>`;
-                })
-                .join('')}
-              </ul>
-              ${
-                alerts.length > 18
-                  ? `<p class="mr-qbo-banner__meta">Showing 18 of ${alerts.length}. Use Accounting for the full list.</p>`
-                  : ''
-              }
-            </div>
-          </div>
-          <div class="mr-qbo-banner__right print-hide-actions">
-            ${connectBtn}
-            ${acctBtn}
-            <button type="button" class="mr-qbo-banner__dismiss" onclick="dismissQboSyncAlertBar()">Hide ×</button>
-            ${notifDefault}
-          </div>
-        </div>`;
       syncAcctDashFromQboPayload();
     }
 
