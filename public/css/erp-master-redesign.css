@@ -3026,6 +3026,8 @@ body.fuel-board .auto-item {
   cursor: pointer;
   border-top: 1px solid var(--color-border);
   font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .auto-item:hover {
@@ -3672,6 +3674,8 @@ body.hub-page .arrow {
   font-weight: 500;
   color: var(--color-hub-accent);
   font-size: 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.hub-page footer {
