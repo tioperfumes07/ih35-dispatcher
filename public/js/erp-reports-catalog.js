@@ -143,6 +143,7 @@
     'c7-harsh-driving': '/api/reports/safety/harsh-driving',
     'c8-unassigned-hos': '/api/reports/safety/unassigned-hos',
     'c9-driver-qualification': '/api/reports/safety/driver-qualifications',
+    'g1-driver-qualification': '/api/reports/safety/driver-qualifications',
     'c10-dvir': '/api/reports/safety/dvir',
     'd1-fuel-cost-by-unit': '/api/reports/fuel/cost-by-unit',
     'd2-fuel-cost-by-driver': '/api/reports/fuel/cost-by-driver',

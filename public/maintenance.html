@@ -285,6 +285,7 @@
             <div style="display:flex;flex-direction:column;gap:10px;align-items:stretch">
               <button type="button" class="btn btn-erp-mb-blue" id="mbPostAllBtn" onclick="mbPostAllCreated()">Post all to QuickBooks</button>
               <button type="button" class="btn secondary" onclick="mbViewSeriesInHistory()">View in expense history</button>
+              <button type="button" class="btn secondary" onclick="mbViewSeriesInBillHistory()">View in bill history</button>
               <button type="button" class="btn secondary" data-erp-mb-close="1">Close</button>
             </div>
           </div>
@@ -2816,6 +2817,7 @@
       <section id="section-accounting" class="section">
         <div id="acctNavTabStubs" class="erp-sr-tab-anchor" aria-hidden="true">
           <button type="button" class="subtab" id="acctLogsDdTrigger" onclick="openAccountingTab('acct-expense-history', this)">Expense history</button>
+          <button type="button" class="subtab" id="acctBillHistTrigger" onclick="openAccountingTab('acct-bill-history', this)">Bill history</button>
           <button type="button" class="subtab" id="acctFuelDdTrigger" onclick="openAccountingTab('acct-fuel-expense', this)">Fuel &amp; DEF</button>
           <button type="button" class="subtab active" id="acctStubTrans" onclick="openAccountingTab('acct-transactions', this)">Maintenance expenses</button>
           <button type="button" class="subtab" id="acctBillPayStub" onclick="openAccountingTab('acct-bill-pay', this)">Pay bills</button>
@@ -2872,6 +2874,7 @@
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewPayBills()">Pay bills</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Saved maintenance expenses</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-bill-history', document.getElementById('acctBillHistTrigger'))">Bill history log</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF (ledger)</button>
                 <button
                   type="button"
@@ -4078,11 +4081,11 @@
             <div class="panel-head" style="display:flex;flex-direction:column;align-items:stretch;gap:10px">
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
-                  <div class="panel-title" style="margin:0">Expense history log</div>
+                  <div class="panel-title" id="expHistPanelTitle" style="margin:0">Expense history log</div>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Log scope (title)">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      One grid: AP, WO lines, unit records, Relay staging, bill payments (see intro <strong>?</strong> below). <strong>Export filtered CSV</strong> = all matching rows, not only this page.
+                      One grid: AP, WO lines, unit records, Relay staging, bill payments (see intro <strong>?</strong> below). Use the <strong>Bill history</strong> tab or Source <strong>Bills only</strong> for bill-type WO/AP rows. <strong>Export filtered CSV</strong> = all matching rows, not only this page.
                     </span>
                   </span>
                 </div>
@@ -4123,6 +4126,7 @@
                   <span class="qb-l">Source</span>
                   <select id="expHistSource" class="qb-in" onchange="renderExpenseHistory()">
                     <option value="all">All</option>
+                    <option value="bills">Bills only (WO + AP)</option>
                     <option value="ap">Maintenance AP</option>
                     <option value="wo">Work order lines</option>
                     <option value="relay">Relay (fuel import)</option>
@@ -8823,9 +8827,10 @@
           erpCloseDedicatedFormModal({ force: true });
         }
       }
-      const acctPanel = document.getElementById(id);
+      const effectiveId = id === 'acct-bill-history' ? 'acct-expense-history' : id;
+      const acctPanel = document.getElementById(effectiveId);
       if (!acctPanel) {
-        console.warn('openAccountingTab: missing #' + id);
+        console.warn('openAccountingTab: missing #' + effectiveId);
         return;
       }
       if (window.__erpDedicatedModalKind === 'billpay' && id !== 'acct-bill-pay') {
@@ -8860,7 +8865,16 @@
           window.dispatchEvent(new Event('resize'));
         });
       }
-      if (id === 'acct-expense-history') {
+      if (id === 'acct-expense-history' || id === 'acct-bill-history') {
+        const titleEl = document.getElementById('expHistPanelTitle');
+        const srcEl = document.getElementById('expHistSource');
+        if (id === 'acct-bill-history') {
+          if (titleEl) titleEl.textContent = 'Bill history log';
+          if (srcEl) srcEl.value = 'bills';
+        } else {
+          if (titleEl) titleEl.textContent = 'Expense history log';
+          if (srcEl && btn && btn.id === 'acctLogsDdTrigger') srcEl.value = 'all';
+        }
         resetExpHistQboBanner();
         renderExpenseHistory();
       }
@@ -16833,7 +16847,7 @@
             : '—';
           const warn = Number(r.amount) <= 0.0001 ? ' erp-mb-row--warn' : '';
           const amtCell = diff
-            ? `<div class="erp-mb-row-amt"><button type="button" title="Edit amount" onclick="mbEditPreviewAmount(${r._idx})">$${Number(r.amount || 0).toFixed(2)}</button></div>`
+            ? `<div class="erp-mb-row-amt"><input type="number" class="qb-in erp-mb-amt-input" min="0" step="0.01" data-mb-idx="${r._idx}" value="${Number(r.amount || 0).toFixed(2)}" aria-label="Amount for bill ${escapeHtml(String(r.billNumber))}" /></div>`
             : `<div class="erp-mb-row-amt">$${Number(r.amount || 0).toFixed(2)}</div>`;
           return `<div class="erp-mb-row${warn}" data-mb-idx="${r._idx}">
             <div><span class="erp-mb-num">${escapeHtml(r.billNumber)}</span>${r.past ? ' <span class="erp-mb-pill-past">Past</span>' : ''}</div>
@@ -16847,15 +16861,67 @@
           </div>`;
         })
         .join('');
+      mbEnsurePreviewAmountDeleg();
     }
 
-    function mbEditPreviewAmount(idx) {
+    function mbEnsurePreviewAmountDeleg() {
+      const list = document.getElementById('mbPreviewList');
+      if (!list || list.dataset.mbAmtDeleg === '1') return;
+      list.dataset.mbAmtDeleg = '1';
+      list.addEventListener('input', e => {
+        const t = e.target;
+        if (!t || !t.classList || !t.classList.contains('erp-mb-amt-input')) return;
+        mbOnPreviewAmountInput(t);
+      });
+      list.addEventListener(
+        'blur',
+        e => {
+          const t = e.target;
+          if (!t || !t.classList || !t.classList.contains('erp-mb-amt-input')) return;
+          mbCommitPreviewAmountFromInput(t);
+        },
+        true
+      );
+    }
+
+    function mbUpdatePreviewTotalsFromDom() {
       const mode = String(document.getElementById('mbAmtMode')?.value || '');
       if (mode !== 'diff') return;
-      const cur = __mbPreviewFull.find(r => r._idx === idx);
-      const v = window.prompt('Amount for this bill', cur ? String(cur.amount) : '0');
-      if (v === null) return;
-      const n = Math.round((Number(v) || 0) * 100) / 100;
+      const inputs = document.querySelectorAll('#mbPreviewList .erp-mb-amt-input');
+      let total = 0;
+      inputs.forEach(inp => {
+        total += Number(inp.value) || 0;
+      });
+      const tStr =
+        '$' +
+        total.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      const totS = document.getElementById('mbPreviewTotalStr');
+      const hdr = document.getElementById('mbModalHeaderTotal');
+      if (totS) totS.textContent = 'Total: ' + tStr;
+      if (hdr) hdr.textContent = 'TOTAL: ' + tStr;
+    }
+
+    function mbOnPreviewAmountInput(inp) {
+      const mode = String(document.getElementById('mbAmtMode')?.value || '');
+      if (mode !== 'diff') return;
+      const idx = Number(inp.dataset.mbIdx);
+      if (!Number.isFinite(idx)) return;
+      const n = Math.round((Number(inp.value) || 0) * 100) / 100;
+      __mbAmountEdits.set(idx, n);
+      mbUpdatePreviewTotalsFromDom();
+    }
+
+    function mbCommitPreviewAmountFromInput(inp) {
+      const mode = String(document.getElementById('mbAmtMode')?.value || '');
+      if (mode !== 'diff') return;
+      const idx = Number(inp.dataset.mbIdx);
+      if (!Number.isFinite(idx)) return;
+      let n = Math.round((Number(inp.value) || 0) * 100) / 100;
+      if (n < 0) n = 0;
+      inp.value = n.toFixed(2);
       __mbAmountEdits.set(idx, n);
       __mbPreviewFull = mbBuildFullPreviewRowsFromForm();
       mbRenderPreviewList();
@@ -17039,6 +17105,15 @@
       erpCloseMultiBillsModal();
       openSectionByName('accounting');
       openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'));
+      renderExpenseHistory();
+    }
+
+    function mbViewSeriesInBillHistory() {
+      const s = document.getElementById('expHistSeries');
+      if (s) s.value = __mbSeriesId;
+      erpCloseMultiBillsModal();
+      openSectionByName('accounting');
+      openAccountingTab('acct-bill-history', document.getElementById('acctBillHistTrigger'));
       renderExpenseHistory();
     }
 
@@ -21139,6 +21214,12 @@
       return rows.filter(r => {
         if (series) {
           if (r.kind !== 'wo' || String(r.recurringSeriesId || '') !== series) return false;
+        }
+        if (src === 'bills') {
+          const tt = String(r.txnType || '').toLowerCase();
+          const isBillRow =
+            (r.kind === 'ap' && /\bbill\b/.test(tt)) || (r.kind === 'wo' && /\bbill\b/.test(tt));
+          if (!isBillRow) return false;
         }
         if (src === 'ap' && r.kind !== 'ap') return false;
         if (src === 'wo' && r.kind !== 'wo') return false;
