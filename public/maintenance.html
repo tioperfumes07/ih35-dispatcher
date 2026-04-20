@@ -2827,72 +2827,145 @@
             </div>
           </div>
           <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
-          <div class="acct-entry-board acct-entry-board--uniform">
-              <div class="acct-entry-board__title">Record &amp; open <span class="erp-help-tip" style="margin-left:4px">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Same flows as + New">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">Pick a row to open the same composer or tab as <strong>+ New</strong> — one list, uniform buttons.</span>
-              </span></div>
-              <div class="acct-entry-list acct-entry-list--uniform" role="list">
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewExpense()">Standard expense</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewBill()">Standard bill</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewPayBills()">Pay bills</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Saved maintenance expenses</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-bill-history', document.getElementById('acctBillHistTrigger'))">Bill history log</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF (ledger)</button>
-                <button
-                  type="button"
-                  class="acct-entry-list__btn"
-                  role="listitem"
-                  title="Opens Pay bills in the Accounting tab (same as the Pay bills subtab), not the floating window"
-                  onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))"
-                >
-                  Pay bills workspace
-                </button>
-                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--accent" role="listitem" onclick="acctScrollToPendingPost()">Post pending to QuickBooks</button>
-              </div>
-              <div class="acct-board-qbo-inline">
-                <span class="acct-board-qbo-inline__label">QuickBooks</span>
-                <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
-                <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
-              </div>
-              <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-                <span style="min-width:0;flex:1 1 180px">Up to three sync error titles when the payload has alerts.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO errors on dash">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip"><code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>. <strong>View all errors</strong> → sync alert bar.</span>
-                </span>
-              </div>
-              <div id="acctDashQboErrList" class="acct-qbo-err-list" aria-live="polite"></div>
-              <button
-                type="button"
-                id="acctDashQboErrMore"
-                class="acct-dash-btn hidden"
-                style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus);background:transparent"
-                onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})"
-              >
-                View all errors
-              </button>
-            <div class="acct-entry-board__title" style="margin-top:4px">Tools &amp; data</div>
-              <div class="acct-dash-tools-grid">
-                <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
-                <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
-                <button type="button" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">QBO rollback &amp; imports</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
-                <button type="button" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types database</button>
-                <button type="button" onclick="location.href='/settings.html'">Settings &amp; users</button>
-                <button type="button" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('fuel');">Upload center</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
-              </div>
+
+          <div class="acct-board-section">
+            <h3 class="acct-board-section__h">Expenses</h3>
+            <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpNewExpense()">Expense</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpNewRepairExpense()">Repair expense</button>
             </div>
+            <div class="acct-board-table-wrap">
+              <table class="acct-board-mini-table" aria-label="Recent expenses">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Vendor</th>
+                    <th class="num">Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="acctBoardRecentExpBody"></tbody>
+              </table>
+            </div>
+            <div class="acct-board-section__foot">
+              <button type="button" class="acct-board-linkbtn" onclick="openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'))">View all expenses →</button>
+            </div>
+          </div>
+
+          <div class="acct-board-section">
+            <h3 class="acct-board-section__h">Bills</h3>
+            <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenRepairBill()">Repair bill</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Driver bill</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor bill</button>
+            </div>
+            <div class="acct-board-table-wrap">
+              <table class="acct-board-mini-table" aria-label="Recent bills">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Vendor</th>
+                    <th>Bill#</th>
+                    <th class="num">Amount</th>
+                    <th>Due</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="acctBoardRecentBillsBody"></tbody>
+              </table>
+            </div>
+            <div class="acct-board-section__foot">
+              <button type="button" class="acct-board-linkbtn" onclick="openAccountingTab('acct-bill-history', document.getElementById('acctBillHistTrigger'))">View all bills →</button>
+            </div>
+          </div>
+
+          <div class="acct-board-section">
+            <h3 class="acct-board-section__h">Bill payment</h3>
+            <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="erpNewPayBills()">Pay bills</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDriverBillPay()">Driver bill payment</button>
+              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Bill payment history</button>
+            </div>
+            <div class="acct-board-table-wrap">
+              <table class="acct-board-mini-table" aria-label="Recent bill payments">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Vendor</th>
+                    <th>Payment#</th>
+                    <th class="num">Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="acctBoardRecentPayBody"></tbody>
+              </table>
+            </div>
+            <div class="acct-board-section__foot">
+              <button type="button" class="acct-board-linkbtn" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">View all payments →</button>
+            </div>
+          </div>
+
+          <div class="acct-board-section">
+            <h3 class="acct-board-section__h">Fuel &amp; DEF</h3>
+            <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Open fuel fast entry ↗</button>
+              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF ledger</button>
+            </div>
+          </div>
+
+          <div class="acct-board-section">
+            <h3 class="acct-board-section__h">QuickBooks</h3>
+            <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="refreshQboMaster()">Refresh QBO lists</button>
+              <button type="button" class="acct-board-action-btn" onclick="testQuickBooks()">Test connection</button>
+              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">QBO rollback &amp; imports</button>
+              <button type="button" class="acct-board-action-btn" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
+            </div>
+            <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
+              <span style="min-width:0;flex:1 1 180px">Up to three sync error titles when the payload has alerts.</span>
+              <span class="erp-help-tip">
+                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO errors on dash">?</button>
+                <span class="erp-help-tip__panel" role="tooltip"><code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>. <strong>View all errors</strong> → sync alert bar.</span>
+              </span>
+            </div>
+            <div id="acctDashQboErrList" class="acct-qbo-err-list" aria-live="polite"></div>
+            <button
+              type="button"
+              id="acctDashQboErrMore"
+              class="acct-dash-btn hidden"
+              style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus);background:transparent"
+              onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})"
+            >
+              View all errors
+            </button>
+          </div>
+
+          <div class="acct-board-section">
+            <h3 class="acct-board-section__h">Tools &amp; data</h3>
+            <div class="acct-dash-tools-grid">
+              <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
+              <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
+              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
+              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
+              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
+              <button type="button" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
+              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types database</button>
+              <button type="button" onclick="location.href='/settings.html'">Settings &amp; users</button>
+              <button type="button" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('fuel');">Upload center</button>
+              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
+            </div>
+            <div style="margin-top:12px">
+              <button type="button" class="acct-board-action-btn acct-board-action-btn--accent" onclick="acctScrollToPendingPost()">Post pending to QuickBooks</button>
+              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Saved maintenance expenses</button>
+            </div>
+          </div>
           <div
             id="maintIntegrationStrip"
             class="mini-note"
@@ -8041,6 +8114,28 @@
 
     function erpNewBill() {
       erpOpenDedicatedAccountingForm('standard-bill');
+    }
+
+    function erpNewRepairExpense() {
+      erpOpenDedicatedAccountingForm('standard-expense');
+      requestAnimationFrame(() => {
+        const svc = document.getElementById('apServiceSearchInput');
+        if (svc) {
+          svc.value = 'Repair';
+          if (typeof resolveApServiceSearch === 'function') resolveApServiceSearch();
+        }
+      });
+    }
+
+    function erpOpenRepairBill() {
+      erpOpenDedicatedAccountingForm('maintenance-bill');
+      requestAnimationFrame(() => {
+        const svc = document.getElementById('apServiceSearchInput');
+        if (svc) {
+          svc.value = 'Repair';
+          if (typeof resolveApServiceSearch === 'function') resolveApServiceSearch();
+        }
+      });
     }
 
     function erpNewPayBills() {
