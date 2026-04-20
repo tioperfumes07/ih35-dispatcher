@@ -702,12 +702,16 @@ body.erp-maintenance .mr-violation-legend {
   font-size: 12px;
   color: var(--color-text-label);
   align-items: center;
+  min-width: 0;
 }
 
 body.erp-maintenance .mr-violation-legend__item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-violation-legend__dot {
@@ -1753,6 +1757,7 @@ body.erp-maintenance .erp-reports-roadmap {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
+  min-width: 0;
 }
 
 .erp-pager__meta {
@@ -1803,6 +1808,8 @@ body.erp-maintenance .erp-reports-roadmap {
   gap: 6px;
   font-size: 12px;
   color: var(--color-text-label);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .erp-pager__size-sel {

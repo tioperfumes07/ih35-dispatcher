@@ -1096,6 +1096,8 @@ body.erp-maintenance .hero-card h3 {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.02em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .hero-card p {
@@ -1103,6 +1105,8 @@ body.erp-maintenance .hero-card p {
   font-size: 12px;
   color: var(--color-text-label);
   line-height: 1.4;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .section {
@@ -1182,6 +1186,8 @@ body.erp-maintenance .metric-label {
   font-size: 12px;
   color: var(--color-text-label);
   margin-bottom: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .metric-value {
@@ -1189,6 +1195,7 @@ body.erp-maintenance .metric-value {
   font-weight: 700;
   min-width: 0;
   min-height: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .chips {
