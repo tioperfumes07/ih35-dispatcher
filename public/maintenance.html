@@ -15716,18 +15716,22 @@
       if (type === 'tire') {
         document.getElementById('serviceSearchInput').value = 'Tires';
         document.getElementById('serviceTypeInput').value = 'Tires';
+        maintServiceCatalogBadgeUpdate(document.getElementById('serviceSearchInput'));
       }
       if (type === 'repair') {
         document.getElementById('serviceSearchInput').value = 'Repair';
         document.getElementById('serviceTypeInput').value = 'Repair';
+        maintServiceCatalogBadgeUpdate(document.getElementById('serviceSearchInput'));
       }
       if (type === 'inspection') {
         document.getElementById('serviceSearchInput').value = 'Inspection';
         document.getElementById('serviceTypeInput').value = 'Inspection';
+        maintServiceCatalogBadgeUpdate(document.getElementById('serviceSearchInput'));
       }
       if (type === 'accident') {
         document.getElementById('serviceSearchInput').value = 'Accident Report';
         document.getElementById('serviceTypeInput').value = 'Accident Report';
+        maintServiceCatalogBadgeUpdate(document.getElementById('serviceSearchInput'));
         applyLoadNumberSuggestion(true);
       }
       if (type !== 'custom' && type !== 'accident') syncPrimaryServiceToFirstCostLine();
@@ -17592,6 +17596,7 @@
       if (st) {
         document.getElementById('serviceSearchInput').value = st;
         document.getElementById('serviceTypeInput').value = st;
+        maintServiceCatalogBadgeUpdate(document.getElementById('serviceSearchInput'));
       }
 
       const sd = document.getElementById('serviceDateInput');
