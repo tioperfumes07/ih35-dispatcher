@@ -11,7 +11,6 @@ import PDFDocument from 'pdfkit';
 import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
-import { ensureAppDatabaseObjects } from './lib/ensure-app-database-objects.mjs';
 import {
   ensureMaintenanceServiceCatalog,
   MAINTENANCE_SERVICE_CATALOG_SEEDS
@@ -163,6 +162,7 @@ app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/src', express.static(path.join(__dirname, 'src')));
 
 app.use((req, res, next) => {
   if (!req.originalUrl.startsWith('/api/')) return next();
@@ -10690,7 +10690,6 @@ function bootstrapAdminFromEnv() {
 
 async function startServer() {
   await ensureTmsSchema();
-  await ensureAppDatabaseObjects();
   await ensureMaintenanceServiceCatalog();
   bootstrapAdminFromEnv();
   /** Bind IPv4 so clients using `127.0.0.1` (e.g. `npm run smoke`) reach the listener; Node may otherwise listen IPv6-only. */

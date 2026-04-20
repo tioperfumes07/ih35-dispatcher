@@ -1,5 +1,5 @@
 /**
- * IH35 ERP — approved print document HTML/CSS (Arial/Helvetica, fixed pt scale).
+ * IH35 ERP — approved print documents (Arial/Helvetica, fixed pt scale).
  * Browser-only IIFE; exposes window.generatePrintWindow, helpers, generateFilename.
  */
 (function (global) {
@@ -240,7 +240,7 @@
         ? global.__erpPrintCompanyInfo
         : {};
     const ci = d.companyInfo && typeof d.companyInfo === 'object' ? d.companyInfo : {};
-    const name = pick(ci.companyName, g.companyName, d.companyName, 'IH 35 Transportation LLC');
+    const name = pick(ci.companyName, ci.legalName, ci.dbaName, g.companyName, d.companyName, 'IH 35 Transportation LLC');
     const addr = pick(ci.address, g.address, d.companyAddress);
     const city = pick(ci.city, g.city);
     const phone = pick(ci.phone, g.phone, d.companyPhone);
@@ -367,7 +367,7 @@
         )}</p>`;
       }
     }
-    if (cats.length || items.length) {
+    if (cats.length || items.length || Number.isFinite(inv)) {
       html += `<div class="grand-total">Grand total: ${esc(money(grand))}</div>`;
     }
     return html;
@@ -1003,18 +1003,24 @@
         )}</td></tr>`;
       })
       .join('');
-    const tbl =
+    let sec2Inner =
       rows.length === 0
         ? '<p class="co-sub">No fuel lines.</p>'
         : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">Qty (gal)</th><th class="right">$/gal</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
             Number.isFinite(gal) ? gal.toFixed(3) : '—'
           )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></table>`;
+    if (rows.length === 0) {
+      const { categoryLines, itemLines } = normCostFromMixed(d.costLines || []);
+      if (categoryLines.length || itemLines.length) {
+        sec2Inner = buildCostSection(categoryLines, itemLines, Number.isFinite(bal) ? bal : d.invoiceTotal);
+      }
+    }
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const stub = buildPaymentStub(billNo, d.vendor || d.payee || '', d.dueDate || '', Number.isFinite(bal) ? bal : 0);
     const bodyHtml =
       co +
       buildSection('1', 'Fuel transaction', sec1) +
-      buildSection('2', 'Fuel cost lines', tbl) +
+      buildSection('2', 'Fuel cost lines', sec2Inner) +
       memo +
       stub;
     return wrapHtml(generateFilename('fuel-bill', d, 'pdf').replace(/\.pdf$/i, ''), bodyHtml, {
@@ -1105,12 +1111,13 @@
     const d = data || {};
     const sub = `Payment #: ${pick(d.paymentNumber, d.checkNum, '—')} · ${pick(d.paymentDate, '')}`;
     const co = buildLetterhead(d, 'PAYMENT RECEIPT', sub);
+    const paidDisp = Number.isFinite(Number(d.totalPaid)) ? money(Number(d.totalPaid)) : pick(d.amountDisplay, '');
     const g1 = buildFieldGrid(
       [
         { label: 'Payment #', value: pick(d.paymentNumber, d.checkNum, ''), large: false },
         { label: 'Payment date', value: d.paymentDate || '' },
         { label: 'Vendor', value: d.vendor || '' },
-        { label: 'Total paid', value: pick(d.totalPaid, d.amountDisplay), large: true }
+        { label: 'Total paid', value: paidDisp, large: true }
       ],
       4
     );
@@ -1204,7 +1211,7 @@
     )}</td><td>—</td></tr></tbody></table>`;
     const body = co + buildSection('1', 'Series information', s1) + buildSection('2', 'Bill schedule', tbl);
     return wrapHtml(generateFilename('multiple-bills', d, 'pdf').replace(/\.pdf$/i, ''), body, {
-      center: ['BILL SERIES SUMMARY', d.vendor || '', ''].join(' · ').replace(/\s·\s$/, '')
+      center: ['BILL SERIES SUMMARY', d.vendor || ''].filter(Boolean).join(' · ')
     });
   }
 
@@ -1217,7 +1224,12 @@
     if (t === 'fuel-expense') return buildFuelExpenseHtml(data);
     if (t === 'payment-receipt' || t === 'bill-payment') return buildPaymentReceiptHtml(data);
     if (t === 'multiple-bills') return buildMultipleBillsHtml(data);
-    return wrapHtml(t || 'document', buildLetterhead(data, String(t || 'DOCUMENT').toUpperCase(), '') + `<div class="note-box"><pre style="white-space:pre-wrap;font:inherit">${esc(JSON.stringify(data, null, 2).slice(0, 4000))}</pre></div>`);
+    return wrapHtml(
+      t || 'document',
+      buildLetterhead(data, String(t || 'DOCUMENT').toUpperCase(), '') +
+        `<div class="note-box"><pre style="white-space:pre-wrap;font:inherit">${esc(JSON.stringify(data, null, 2).slice(0, 4000))}</pre></div>`,
+      { center: String(t || 'DOCUMENT').toUpperCase() }
+    );
   }
 
   function toast(msg) {

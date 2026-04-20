@@ -68,7 +68,7 @@ const HTML_PAGES = [
       'id="driverFilesPagerHost"',
       'id="repairLocationSelect"',
       'maint-cost-imports-shortcut',
-      'erp-print.js',
+      'printDocuments.js',
       'erp-multi-bills.js',
       'erpOpenMultiBillsModal',
       'id="erpMultiBillsModal"'
@@ -94,7 +94,7 @@ const STATIC_TEXT = [
   ['/css/board-nav.css', 'Persistent operations bar'],
   ['/js/erp-ui.js', 'IH35 ERP — shared UI helpers', '*/*'],
   ['/js/board-nav.js', 'Fuel & route planning', '*/*'],
-  ['/js/erp-print.js', 'IH35 ERP — standalone print documents', '*/*'],
+  ['/src/utils/printDocuments.js', 'IH35 ERP — approved print documents', '*/*'],
   ['/css/erp-multi-bills.css', 'Multiple bills modal'],
   ['/js/erp-multi-bills.js', 'Multiple bills — pure helpers', '*/*']
 ];

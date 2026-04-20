@@ -70,6 +70,7 @@
         <div class="erp-mb-modal__total" id="mbModalHeaderTotal">TOTAL: $0.00</div>
         <div class="erp-mb-modal__head-actions">
           <button type="button" class="btn secondary" data-erp-mb-close="1">Cancel</button>
+          <button type="button" class="btn secondary" onclick="mbPrintSeriesSummary()" title="Print bill series summary">Print summary</button>
           <button type="button" class="btn btn-erp-mb-blue" onclick="mbPreviewBills()">Preview bills</button>
           <button type="button" class="btn btn-erp-mb-green" onclick="mbStartCreateAll()">Create all bills</button>
         </div>
@@ -6264,7 +6265,7 @@
   <script src="/js/board-nav.js"></script>
   <script src="/js/erp-ui.js"></script>
   <script src="/js/erp-filename-util.js"></script>
-  <script src="/js/erp-print.js"></script>
+  <script src="/src/utils/printDocuments.js"></script>
   <script src="/js/erp-multi-bills.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
@@ -7190,6 +7191,7 @@
       return {
         companyName: 'IH 35 Transportation LLC',
         companyAddress: 'Laredo, TX',
+        companyInfo: window.__erpPrintCompanyInfo || {},
         companyPhone: '',
         workOrderNumber: gv('recordWorkOrderInput'),
         printedAt: new Date().toLocaleString(),
@@ -7241,7 +7243,7 @@
         if (typeof window.generatePrintWindow !== 'function') {
           throw new Error('Print helper not loaded');
         }
-        window.generatePrintWindow('workorder', maintCollectWorkOrderPrintData());
+        window.generatePrintWindow(maintResolveWorkOrderPrintDocumentType(), maintCollectWorkOrderPrintData());
       } catch (e) {
         console.warn('Standalone WO print failed', e);
         maintPreparePrintWorkOrderOnly();
@@ -11528,6 +11530,93 @@
       }
     }
 
+    function syncPrintCompanyInfoFromErp(ep) {
+      const cp = ep && ep.companyProfile;
+      if (!cp || typeof cp !== 'object') return;
+      const cityLine = [cp.city, cp.state].filter(Boolean).join(', ').trim();
+      const zip = cp.zip != null && String(cp.zip).trim() ? String(cp.zip).trim() : '';
+      const cityZip = [cityLine, zip].filter(Boolean).join(' ').trim();
+      window.__erpPrintCompanyInfo = {
+        companyName: String(cp.legalName || cp.dbaName || '').trim() || 'IH 35 Transportation LLC',
+        address: String(cp.street || '').trim(),
+        city: cityZip,
+        phone: String(cp.phone || '').trim(),
+        usdot: String(cp.usdotNumber || '').trim(),
+        mcNumber: String(cp.mcNumber || '').trim()
+      };
+    }
+
+    function maintResolveWorkOrderPrintDocumentType() {
+      const gv = id => String(document.getElementById(id)?.value ?? '').trim();
+      const sel = document.getElementById('recordTypeSelect');
+      const lab =
+        sel && sel.selectedOptions && sel.selectedOptions[0]
+          ? String(sel.selectedOptions[0].textContent || '').trim().toLowerCase()
+          : '';
+      const rt = gv('recordTypeSelect').toLowerCase().replace(/-/g, '_');
+      if (lab.includes('pm')) return 'pm-service';
+      if (lab.includes('repair')) return 'repair-order';
+      if (lab.includes('maintenance')) return 'maintenance-order';
+      if (lab.includes('inspection')) return 'inspection-record';
+      if (lab.includes('accident')) return 'accident-repair';
+      if (lab.includes('tire')) return 'tire-service';
+      if (lab.includes('air') && lab.includes('bag')) return 'airbag-service';
+      if (lab.includes('battery')) return 'battery-service';
+      if (lab.includes('body')) return 'body-work';
+      const map = {
+        repair: 'repair-order',
+        maintenance: 'maintenance-order',
+        maintenance_order: 'maintenance-order',
+        pm: 'pm-service',
+        inspection: 'inspection-record',
+        accident: 'accident-repair',
+        tire: 'tire-service',
+        air_bag: 'airbag-service',
+        battery: 'battery-service',
+        custom: 'workorder'
+      };
+      return map[rt] || 'workorder';
+    }
+
+    function mbCollectMultiBillsPrintData() {
+      __mbPreviewFull = mbBuildFullPreviewRowsFromForm();
+      const rows = mbVisiblePreviewRows();
+      const vendor = String(document.getElementById('mbVendorSearch')?.value || '').trim();
+      const freqHidden = String(document.getElementById('mbFreq')?.value || 'monthly');
+      const freqLabel =
+        freqHidden === 'weekly'
+          ? 'Weekly'
+          : freqHidden === 'quarterly'
+            ? 'Quarterly'
+            : freqHidden === 'custom'
+              ? 'Custom'
+              : 'Monthly';
+      const desc = String(document.getElementById('mbMemo')?.value || '').trim();
+      const bills = rows.map(r => ({
+        billNumber: r.billNumber,
+        billDate: r.billDate,
+        dueDate: r.dueDate,
+        amount: r.amount,
+        status: r.past ? 'Past' : 'Scheduled'
+      }));
+      const totalAmount = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      return { vendor, bills, totalAmount, frequency: freqLabel, description: desc };
+    }
+
+    function mbPrintSeriesSummary() {
+      try {
+        if (typeof window.generatePrintWindow !== 'function') throw new Error('Print helper not loaded');
+        const data = mbCollectMultiBillsPrintData();
+        if (!(data.bills && data.bills.length)) {
+          showErpToast('Add bill details and preview rows first.', 'warning');
+          return;
+        }
+        window.generatePrintWindow('multiple-bills', data);
+      } catch (e) {
+        showErpToast(e.message || String(e), 'error');
+      }
+    }
+
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
@@ -11573,6 +11662,7 @@
         dashboard = dashRes.dashboard || [];
         tireAlerts = dashRes.tireAlerts || [];
         erp = erpRes || {};
+        syncPrintCompanyInfoFromErp(erp);
         board = boardRes || {};
         driverProfiles = Array.isArray(drvRes?.drivers) ? drvRes.drivers : [];
         shopQueueCache = sqRes && sqRes.ok && Array.isArray(sqRes.queue) ? sqRes.queue : [];
@@ -18840,9 +18930,11 @@
       return {
         companyName: 'IH 35 Transportation LLC',
         companyAddress: 'Laredo, TX',
+        companyInfo: window.__erpPrintCompanyInfo || {},
         printedAt: new Date().toLocaleString(),
         docTitle: (document.getElementById('apDocTitle')?.textContent || 'Document').trim(),
         isBill: gv('apTxnType') === 'bill',
+        vendor: gv('apVendorSearch'),
         payee: gv('apVendorSearch'),
         paymentAccount: gv('apBankAccountSearch'),
         paymentDate: gv('apTxnDate'),
@@ -18853,8 +18945,10 @@
         shopWo: gv('apInternalWorkOrderNumber'),
         refNo: gv('apInternalWorkOrderNumber') || gv('apVendorInvoiceNumber'),
         billNumber: gv('apVendorInvoiceNumber'),
+        billDate: gv('apTxnDate'),
         balanceDue: Number.isFinite(amtNum) ? amtNum : undefined,
         txnType: gv('apTxnType'),
+        txnDate: gv('apTxnDate'),
         unit: gv('apAssetUnit'),
         driver: gv('apErpDriverSearch') || gv('apHeaderDriverSearch'),
         serviceType: gv('apServiceSearchInput') || gv('apServiceTypeInput'),
@@ -18888,13 +18982,24 @@
         let billAmount = '';
         const obn = Number(openBal);
         if (Number.isFinite(obn)) billAmount = (Math.round(obn * 100) / 100).toFixed(2);
-        rows.push({ docNumber, billDate, billAmount, amountPaid, remaining });
+        rows.push({
+          billNumber: docNumber,
+          docNumber,
+          billDate,
+          description: '',
+          billAmount,
+          amountPaid,
+          remaining
+        });
       });
       const totLine = gt('bpSelectionTotal');
       const totM = totLine.match(/\$[\d,]+\.\d{2}/);
+      const amtStr = totM ? totM[0] : '';
+      const totPaidNum = Number(String(amtStr).replace(/[^0-9.-]/g, ''));
       return {
         companyName: 'IH 35 Transportation LLC',
         companyAddress: 'Laredo, TX',
+        companyInfo: window.__erpPrintCompanyInfo || {},
         printedAt: new Date().toLocaleString(),
         vendor: gv('bpVendorSearch'),
         paymentNumber: gv('bpCheckNum') || 'DRAFT',
@@ -18902,7 +19007,10 @@
         paymentMethod: payTypeLab,
         account: gv('bpBankSearch'),
         checkNum: gv('bpCheckNum'),
-        amountDisplay: totM ? totM[0] : '',
+        checkNumber: gv('bpCheckNum'),
+        amountDisplay: amtStr,
+        totalPaid: Number.isFinite(totPaidNum) ? totPaidNum : undefined,
+        qboStatus: String(document.getElementById('bpOpenBillsStatus')?.textContent || '').trim() || '',
         billsPaid: rows
       };
     }
@@ -18929,20 +19037,31 @@
       return {
         companyName: 'IH 35 Transportation LLC',
         companyAddress: 'Laredo, TX',
+        companyInfo: window.__erpPrintCompanyInfo || {},
         printedAt: new Date().toLocaleString(),
         docTitle: (document.getElementById('fuelManualDocTitleH2')?.textContent || 'Fuel').trim(),
+        vendor: gv('fuelManualVendorSearch'),
         payee: gv('fuelManualVendorSearch'),
         unit: gv('fuelManualUnit'),
         paymentMethod: gv('fuelManualPaymentMethodSearch'),
         paymentAccount: gv('fuelManualBankSearch'),
+        payFromAccount: gv('fuelManualBankSearch'),
         paymentDate: gv('fuelManualDate'),
+        txnDate: gv('fuelManualDate'),
         location: gv('fuelManualLocation'),
         loadInvoice: gv('fuelManualLoadInvoice'),
+        loadNumber: gv('fuelManualLoadInvoice'),
         vendorInvoice: gv('fuelManualVendorInvoice'),
         shopWo: gv('fuelManualInternalWo'),
         expenseDoc: gv('fuelManualExpenseDoc'),
+        expenseNumber: gv('fuelManualExpenseDoc'),
         classLabel,
         amountDisplay: (document.getElementById('fuelManualHeaderTotal')?.textContent || '').trim(),
+        totalAmount: (() => {
+          const t = (document.getElementById('fuelManualHeaderTotal')?.textContent || '').trim();
+          const n = Number(String(t).replace(/[^0-9.-]/g, ''));
+          return Number.isFinite(n) ? n : undefined;
+        })(),
         memo: gv('fuelManualMemo'),
         fuelLines,
         driver: gv('fuelManualDriverSearch')
@@ -21380,7 +21499,7 @@
           maintNotesSyncToTextarea();
           try {
             if (typeof window.generatePrintWindow === 'function') {
-              window.generatePrintWindow('workorder', maintCollectWorkOrderPrintData());
+              window.generatePrintWindow(maintResolveWorkOrderPrintDocumentType(), maintCollectWorkOrderPrintData());
             } else {
               throw new Error('Print helper not loaded');
             }
