@@ -585,7 +585,7 @@ body.erp-maintenance #qboSyncAlertBar .qbo-sync-actions button {
 /* --- KPI strip (Rule 16 friendly) --- */
 body.erp-maintenance .maint-kpi-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11.25rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(11.25rem, 100%), 1fr));
   gap: 0.75rem;
 }
 
@@ -2732,7 +2732,7 @@ body.fuel-board input:focus {
 
 body.fuel-board .layout {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(0, 2.2fr) minmax(260px, 1fr);
+  grid-template-columns: minmax(min(260px, 100%), 1fr) minmax(0, 2.2fr) minmax(min(260px, 100%), 1fr);
   gap: 12px;
   padding: 12px max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
   width: 100%;
@@ -3165,7 +3165,7 @@ body.banking-page .row {
 
 body.banking-page .metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
   gap: 10px;
   margin-bottom: 12px;
 }
