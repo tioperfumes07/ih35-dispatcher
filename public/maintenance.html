@@ -9796,6 +9796,13 @@
         openAccountingTab('acct-fuel-expense', sub);
         return;
       }
+      if (section === 'accounting-board' || section === 'accounting-overview') {
+        openSectionByName('accounting');
+        requestAnimationFrame(() => {
+          document.getElementById('acctBoardStrip')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        return;
+      }
       if (section === 'accounting-expense-history') {
         openSectionByName('accounting');
         openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'));
@@ -18487,10 +18494,18 @@
             });
           const a = String(ds[0]).slice(0, 10);
           const b = String(ds[ds.length - 1]).slice(0, 10);
-          drEl.textContent =
+          let line =
             a === b
               ? `Bill dates: ${fmtIso(a)} · ${rows.length} bill(s)`
               : `Bill dates: ${fmtIso(a)} — ${fmtIso(b)} · ${rows.length} bill(s)`;
+          const dues = rows.map(r => r.dueDate).filter(Boolean);
+          if (dues.length) {
+            const da = String(dues[0]).slice(0, 10);
+            const db = String(dues[dues.length - 1]).slice(0, 10);
+            line +=
+              da === db ? ` · Due: ${fmtIso(da)}` : ` · Due: ${fmtIso(da)} — ${fmtIso(db)}`;
+          }
+          drEl.textContent = line;
         } else drEl.textContent = '';
       }
       const mode = String(document.getElementById('mbAmtMode')?.value || 'same');
@@ -18618,10 +18633,21 @@
       const d1 = rows[rows.length - 1].billDate;
       const n0 = rows[0].billNumber;
       const n1 = rows[rows.length - 1].billNumber;
+      const mbHumIso = x => {
+        const s = String(x || '').trim().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return escapeHtml(String(x || '—'));
+        return escapeHtml(
+          new Date(s + 'T12:00:00').toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          })
+        );
+      };
       const html = `<table>
         <tr><td>Vendor</td><td><b>${escapeHtml(vn)}</b></td></tr>
         <tr><td>Total bills</td><td><b>${rows.length}</b></td></tr>
-        <tr><td>Date range</td><td><b>${escapeHtml(d0)}</b> to <b>${escapeHtml(d1)}</b></td></tr>
+        <tr><td>Bill date range</td><td><b>${mbHumIso(d0)}</b> to <b>${mbHumIso(d1)}</b></td></tr>
         <tr><td>Total amount</td><td><b>$${total.toFixed(2)}</b></td></tr>
         <tr><td>Bill numbers</td><td><b>${escapeHtml(n0)}</b> → <b>${escapeHtml(n1)}</b></td></tr>
       </table><p class="mini-note" style="margin:8px 0 0">Create ${rows.length} bills?</p>`;

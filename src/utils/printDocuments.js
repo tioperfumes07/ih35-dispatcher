@@ -226,6 +226,21 @@
     return '$' + x.toFixed(2);
   }
 
+  /** ISO YYYY-MM-DD → short locale for print tables (plain text; caller uses esc()). */
+  function formatIsoDateShortPlain(iso) {
+    const s = String(iso == null ? '' : iso)
+      .trim()
+      .slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return String(iso == null ? '' : iso).trim() || '—';
+    try {
+      const d = new Date(s + 'T12:00:00');
+      if (!Number.isFinite(d.getTime())) return s;
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (_) {
+      return s;
+    }
+  }
+
   function pick(...xs) {
     for (const x of xs) {
       if (x != null && x !== '') return x;
@@ -540,7 +555,7 @@
     return `<div class="payment-stub">
       <div class="stub-header">— Payment stub — Detach and return with payment —</div>
       <div class="stub-row"><span>Bill #: ${esc(billNumber)}</span><span>Vendor: ${esc(vendor)}</span></div>
-      <div class="stub-row"><span>Due: ${esc(dueDate)}</span><span>Amount due: ${esc(
+      <div class="stub-row"><span>Due: ${esc(formatIsoDateShortPlain(dueDate))}</span><span>Amount due: ${esc(
         Number.isFinite(Number(amountDue)) ? money(Number(amountDue)) : String(amountDue || '—')
       )}</span></div>
       <div class="stub-fill"><span>Check #: _________________</span><span>Amount paid: $______________</span><span>Date: _____________________</span></div>
@@ -707,7 +722,7 @@
     const dt = WO_TITLE[documentType] ? documentType : 'workorder';
     const title = WO_TITLE[dt];
     const wo = pick(d.woNumber, d.workOrderNumber, 'DRAFT');
-    const sub = `WO#: ${wo} · ${pick(d.serviceDate, '')}`;
+    const sub = `WO#: ${wo} · ${formatIsoDateShortPlain(pick(d.serviceDate, ''))}`;
     const co = buildLetterhead(d, title, sub);
     const fuelDisp = (() => {
       const f = String(d.fuel || d.fuelLevel || '').trim();
@@ -733,7 +748,7 @@
       [
         { label: 'Record type', value: d.recordTypeLabel || d.recordType || '' },
         { label: 'Service type', value: d.serviceType || '' },
-        { label: 'Service date', value: d.serviceDate || '' }
+        { label: 'Service date', value: formatIsoDateShortPlain(d.serviceDate || '') }
       ],
       3
     );
@@ -778,7 +793,7 @@
       const dot = d.accidentDotReportable ? 'YES — DOT REPORTABLE' : 'No';
       const g1 = buildFieldGrid(
         [
-          { label: 'Accident date', value: d.accidentDate || '' },
+          { label: 'Accident date', value: formatIsoDateShortPlain(d.accidentDate || '') },
           { label: 'Accident location', value: d.accidentLocation || '' },
           { label: 'Police report #', value: d.accidentReportNumber || '' },
           { label: 'Insurance claim #', value: d.insuranceClaimNumber || '' }
@@ -809,7 +824,7 @@
           { label: 'Inspection type', value: d.inspectionType || d.inspectionScope || '' },
           { label: 'Inspector name', value: d.inspectorName || '' },
           { label: 'Badge #', value: d.inspectorBadge || '' },
-          { label: 'Next due date', value: d.inspectionNextDue || '' }
+          { label: 'Next due date', value: formatIsoDateShortPlain(d.inspectionNextDue || '') }
         ],
         4
       );
@@ -824,7 +839,7 @@
     } else if (rt === 'pm') {
       sec6 = buildFieldGrid(
         [
-          { label: 'Last PM date', value: d.lastPmDate || '' },
+          { label: 'Last PM date', value: formatIsoDateShortPlain(d.lastPmDate || '') },
           { label: 'Last PM mileage', value: d.lastPmMiles != null ? String(d.lastPmMiles) : '' },
           { label: 'Next PM due miles', value: d.nextPmDueMiles != null ? String(d.nextPmDueMiles) : '' },
           { label: 'Interval miles', value: d.pmIntervalMiles != null ? String(d.pmIntervalMiles) : '' }
@@ -866,7 +881,7 @@
     parts.push(sig);
     const fn = generateFilename(dt, d, 'pdf').replace(/\.pdf$/i, '');
     const foot = {
-      center: [title, pick(d.unit, d.unitNumber, '—'), pick(d.serviceDate, '')].filter(Boolean).join(' · ')
+      center: [title, pick(d.unit, d.unitNumber, '—'), formatIsoDateShortPlain(pick(d.serviceDate, ''))].filter(Boolean).join(' · ')
     };
     return wrapHtml(fn, parts.join(''), foot);
   }
@@ -874,12 +889,12 @@
   function buildExpenseHtml(data) {
     const d = data || {};
     const ref = pick(d.refNumber, d.refNo, d.vendorInvoice, '—');
-    const sub = `Ref #: ${ref} · ${pick(d.paymentDate, '')}`;
+    const sub = `Ref #: ${ref} · ${formatIsoDateShortPlain(pick(d.paymentDate, ''))}`;
     const co = buildLetterhead(d, 'EXPENSE RECORD', sub);
     const pay = buildFieldGrid(
       [
         { label: 'Payee / vendor', value: d.vendor || d.payee || '' },
-        { label: 'Payment date', value: d.paymentDate || '' },
+        { label: 'Payment date', value: formatIsoDateShortPlain(d.paymentDate || '') },
         { label: 'Payment method', value: d.paymentMethod || '' },
         { label: 'Payment account', value: d.paymentAccount || '' }
       ],
@@ -899,8 +914,8 @@
     if (d.pickupDate || d.deliveryDate || d.emptyMiles || d.loadedMiles) {
       sec2 = buildFieldGrid(
         [
-          { label: 'Pick up date', value: d.pickupDate || '' },
-          { label: 'Delivery date', value: d.deliveryDate || '' },
+          { label: 'Pick up date', value: formatIsoDateShortPlain(d.pickupDate || '') },
+          { label: 'Delivery date', value: formatIsoDateShortPlain(d.deliveryDate || '') },
           { label: 'Empty miles', value: d.emptyMiles != null ? String(d.emptyMiles) : '' },
           { label: 'Loaded miles', value: d.loadedMiles != null ? String(d.loadedMiles) : '' }
         ],
@@ -922,22 +937,22 @@
       memo +
       sig;
     return wrapHtml(generateFilename('expense', d, 'pdf').replace(/\.pdf$/i, ''), body, {
-      center: ['EXPENSE RECORD', ref, d.paymentDate || ''].filter(Boolean).join(' · ')
+      center: ['EXPENSE RECORD', ref, formatIsoDateShortPlain(d.paymentDate || '')].filter(Boolean).join(' · ')
     });
   }
 
   function buildBillHtml(data) {
     const d = data || {};
     const billNo = pick(d.billNumber, d.vendorInvoice, '—');
-    const sub = `Bill #: ${billNo} · Due: ${pick(d.dueDate, '')}`;
+    const sub = `Bill #: ${billNo} · Due: ${formatIsoDateShortPlain(pick(d.dueDate, ''))}`;
     const co = buildLetterhead(d, 'BILL', sub);
     const bal = Number(d.balanceDue);
     const balDisp = Number.isFinite(bal) ? money(bal) : pick(d.amountDisplay, '');
     const s1 = buildFieldGrid(
       [
         { label: 'Vendor', value: d.vendor || d.payee || '' },
-        { label: 'Bill date', value: pick(d.billDate, d.paymentDate) },
-        { label: 'Due date', value: d.dueDate || '' },
+        { label: 'Bill date', value: formatIsoDateShortPlain(pick(d.billDate, d.paymentDate)) },
+        { label: 'Due date', value: formatIsoDateShortPlain(d.dueDate || '') },
         { label: 'Terms', value: d.terms || '' }
       ],
       4
@@ -949,21 +964,21 @@
     const stub = buildPaymentStub(billNo, d.vendor || d.payee || '', d.dueDate || '', Number.isFinite(bal) ? bal : 0);
     const body = co + buildSection('1', 'Bill information', s1 + extra) + buildSection('2', 'Bill lines', cost) + memo + stub;
     return wrapHtml(generateFilename('bill', d, 'pdf').replace(/\.pdf$/i, ''), body, {
-      center: ['BILL', billNo, pick(d.billDate, d.paymentDate, '')].filter(Boolean).join(' · ')
+      center: ['BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, ''))].filter(Boolean).join(' · ')
     });
   }
 
   function buildFuelBillHtml(data) {
     const d = data || {};
     const billNo = pick(d.billNumber, d.vendorInvoice, '—');
-    const sub = `Bill #: ${billNo} · Due: ${pick(d.dueDate, '')}`;
+    const sub = `Bill #: ${billNo} · Due: ${formatIsoDateShortPlain(pick(d.dueDate, ''))}`;
     const co = buildLetterhead(d, 'FUEL BILL', sub);
     const bal = Number(d.balanceDue);
     const balDisp = Number.isFinite(bal) ? money(bal) : pick(d.amountDisplay, '');
     const rowA = buildFieldGrid(
       [
         { label: 'Vendor / merchant', value: d.vendor || d.payee || '' },
-        { label: 'Transaction date', value: d.txnDate || d.paymentDate || '' },
+        { label: 'Transaction date', value: formatIsoDateShortPlain(d.txnDate || d.paymentDate || '') },
         { label: 'Unit / truck', value: d.unit || '' },
         { label: 'Driver', value: d.driver || '' }
       ],
@@ -981,7 +996,7 @@
     const rowC = buildFieldGrid(
       [
         { label: 'Terms', value: d.terms || '' },
-        { label: 'Due date', value: d.dueDate || '' },
+        { label: 'Due date', value: formatIsoDateShortPlain(d.dueDate || '') },
         { label: 'Bill #', value: billNo },
         { label: 'Statement #', value: d.statementNumber || d.expenseDoc || '' }
       ],
@@ -1027,7 +1042,7 @@
       memo +
       stub;
     return wrapHtml(generateFilename('fuel-bill', d, 'pdf').replace(/\.pdf$/i, ''), bodyHtml, {
-      center: ['FUEL BILL', billNo, pick(d.billDate, d.paymentDate, '')].filter(Boolean).join(' · ')
+      center: ['FUEL BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, ''))].filter(Boolean).join(' · ')
     });
   }
 
@@ -1035,7 +1050,7 @@
     const rowA = buildFieldGrid(
       [
         { label: 'Vendor / merchant', value: d.vendor || d.payee || '' },
-        { label: 'Transaction date', value: d.txnDate || d.paymentDate || '' },
+        { label: 'Transaction date', value: formatIsoDateShortPlain(d.txnDate || d.paymentDate || '') },
         { label: 'Unit / truck', value: d.unit || '' },
         { label: 'Driver', value: d.driver || '' }
       ],
@@ -1055,7 +1070,7 @@
       x += buildFieldGrid(
         [
           { label: 'Terms', value: d.terms || '' },
-          { label: 'Due date', value: d.dueDate || '' },
+          { label: 'Due date', value: formatIsoDateShortPlain(d.dueDate || '') },
           { label: 'Bill #', value: d.billNumber || '' },
           { label: 'Statement #', value: d.statementNumber || d.expenseDoc || '' }
         ],
@@ -1068,7 +1083,7 @@
   function buildFuelExpenseHtml(data) {
     const d = data || {};
     const ref = pick(d.expenseNumber, d.expenseDoc, d.vendorInvoice, '—');
-    const sub = `Ref #: ${ref} · ${pick(d.txnDate, d.paymentDate, '')}`;
+    const sub = `Ref #: ${ref} · ${formatIsoDateShortPlain(pick(d.txnDate, d.paymentDate, ''))}`;
     const co = buildLetterhead(d, 'FUEL EXPENSE', sub);
     const sec1 = buildFuelTxnBlock(d, false);
     const rows = Array.isArray(d.fuelLines) ? d.fuelLines : [];
@@ -1101,7 +1116,7 @@
     ]);
     const bodyHtml = co + sec1 + buildSection('2', 'Fuel cost lines', tbl) + memo + sig;
     return wrapHtml(generateFilename('fuel-expense', d, 'pdf').replace(/\.pdf$/i, ''), bodyHtml, {
-      center: ['FUEL EXPENSE', d.unit || '', d.txnDate || d.paymentDate || ''].filter(Boolean).join(' · ')
+      center: ['FUEL EXPENSE', d.unit || '', formatIsoDateShortPlain(d.txnDate || d.paymentDate || '')].filter(Boolean).join(' · ')
     });
   }
 
@@ -1112,13 +1127,13 @@
 
   function buildPaymentReceiptHtml(data) {
     const d = data || {};
-    const sub = `Payment #: ${pick(d.paymentNumber, d.checkNum, '—')} · ${pick(d.paymentDate, '')}`;
+    const sub = `Payment #: ${pick(d.paymentNumber, d.checkNum, '—')} · ${formatIsoDateShortPlain(pick(d.paymentDate, ''))}`;
     const co = buildLetterhead(d, 'PAYMENT RECEIPT', sub);
     const paidDisp = Number.isFinite(Number(d.totalPaid)) ? money(Number(d.totalPaid)) : pick(d.amountDisplay, '');
     const g1 = buildFieldGrid(
       [
         { label: 'Payment #', value: pick(d.paymentNumber, d.checkNum, ''), large: false, mono: true },
-        { label: 'Payment date', value: d.paymentDate || '' },
+        { label: 'Payment date', value: formatIsoDateShortPlain(d.paymentDate || '') },
         { label: 'Vendor', value: d.vendor || '' },
         { label: 'Total paid', value: paidDisp, large: true }
       ],
@@ -1153,7 +1168,7 @@
                 ? `<td class="right zero-balance">${esc(money(0))}</td>`
                 : `<td class="right">${esc(r.remaining || '')}</td>`;
             return `<tr><td class="mono">${esc(r.billNumber || r.docNumber || '')}</td><td>${esc(
-              r.billDate || ''
+              formatIsoDateShortPlain(r.billDate || '')
             )}</td><td>${esc(r.description || '')}</td><td class="right">${esc(r.billAmount || '')}</td><td class="right">${esc(
               r.amountPaid || ''
             )}</td>${remCell}</tr>`;
@@ -1175,7 +1190,7 @@
       memo +
       sig;
     return wrapHtml(generateFilename('payment-receipt', d, 'pdf').replace(/\.pdf$/i, ''), body, {
-      center: ['PAYMENT RECEIPT', d.vendor || '', d.paymentDate || ''].filter(Boolean).join(' · ')
+      center: ['PAYMENT RECEIPT', d.vendor || '', formatIsoDateShortPlain(d.paymentDate || '')].filter(Boolean).join(' · ')
     });
   }
 
@@ -1187,12 +1202,30 @@
     const sub = `${pick(d.vendor, '—')} · ${pick(first, '')} to ${pick(last, '')}`;
     const co = buildLetterhead(d, 'BILL SERIES SUMMARY', sub);
     const tot = Number(d.totalAmount);
+    const bd0 = bills[0] && bills[0].billDate;
+    const bd1 = bills.length && bills[bills.length - 1].billDate;
+    const du0 = bills[0] && bills[0].dueDate;
+    const du1 = bills.length && bills[bills.length - 1].dueDate;
+    const billSpan =
+      bd0 || bd1
+        ? String(bd0 || '').slice(0, 10) === String(bd1 || '').slice(0, 10)
+          ? formatIsoDateShortPlain(bd0 || bd1)
+          : formatIsoDateShortPlain(bd0) + ' – ' + formatIsoDateShortPlain(bd1)
+        : '';
+    const dueSpan =
+      du0 || du1
+        ? String(du0 || '').slice(0, 10) === String(du1 || '').slice(0, 10)
+          ? formatIsoDateShortPlain(du0 || du1)
+          : formatIsoDateShortPlain(du0) + ' – ' + formatIsoDateShortPlain(du1)
+        : '';
     const s1 =
       buildFieldGrid(
         [
           { label: 'Vendor', value: d.vendor || '' },
           { label: 'Frequency', value: d.frequency || '' },
           { label: 'Total bills', value: String(bills.length) },
+          { label: 'Bill dates', value: billSpan },
+          { label: 'Due dates', value: dueSpan },
           { label: 'Total amount', value: Number.isFinite(tot) ? money(tot) : '', large: true }
         ],
         4
@@ -1203,9 +1236,11 @@
     const bodyRows = bills
       .map(b => {
         const st = b.status || (b.past ? 'Past' : 'Scheduled');
-        return `<tr><td class="mono">${esc(b.billNumber || '')}</td><td>${esc(b.billDate || '')}</td><td>${esc(
-          b.dueDate || ''
-        )}</td><td class="right">${esc(money(Number(b.amount) || 0))}</td><td>${esc(st)}</td></tr>`;
+        return `<tr><td class="mono">${esc(b.billNumber || '')}</td><td>${esc(
+          formatIsoDateShortPlain(b.billDate || '')
+        )}</td><td>${esc(formatIsoDateShortPlain(b.dueDate || ''))}</td><td class="right">${esc(
+          money(Number(b.amount) || 0)
+        )}</td><td>${esc(st)}</td></tr>`;
       })
       .join('');
     const sum = bills.reduce((s, b) => s + (Number(b.amount) || 0), 0);

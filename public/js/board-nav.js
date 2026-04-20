@@ -52,9 +52,9 @@
     {
       id: 'acct',
       label: 'Accounting',
-      href: '/maintenance.html#accounting',
+      href: '/maintenance.html#accounting-maintenance',
       links: [
-        { label: 'Accounting board', href: '/maintenance.html#accounting' },
+        { label: 'Accounting board (KPIs)', href: '/maintenance.html#accounting-board' },
         { label: 'Expense history (log)', href: '/maintenance.html#accounting-expense-history' },
         { label: 'Bill history (log)', href: '/maintenance.html#accounting-bill-history' },
         { label: 'Saved maintenance expenses', href: '/maintenance.html#accounting-maintenance' },

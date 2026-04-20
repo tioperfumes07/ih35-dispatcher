@@ -29,6 +29,20 @@ function sliceDate(v) {
   return s.length >= 10 ? s.slice(0, 10) : s;
 }
 
+/** Human-readable calendar date (matches `printDocuments.js` / browser print). */
+function formatIsoDateShortPlain(iso) {
+  const raw = String(iso == null ? '' : iso).trim();
+  const s = raw.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return raw || '—';
+  try {
+    const d = new Date(`${s}T12:00:00`);
+    if (!Number.isFinite(d.getTime())) return s;
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return s;
+  }
+}
+
 function repairStatusPdfLabel(s) {
   const v = String(s || '').trim();
   if (v === 'queued') return 'Awaiting service';
@@ -122,7 +136,7 @@ function hr(doc, y, x0 = 48, x1 = null) {
 }
 
 function pdfFooterLine(doc) {
-  const parts = [sliceDate(new Date().toISOString()), TMS_PDF_FOOTER_URL || 'IH35 TMS'].filter(Boolean);
+  const parts = [formatIsoDateShortPlain(sliceDate(new Date().toISOString())), TMS_PDF_FOOTER_URL || 'IH35 TMS'].filter(Boolean);
   doc.font('Helvetica').fontSize(7.5).fillColor('#666666').text(parts.join(' · '), 48, doc.page.height - 56, {
     align: 'center',
     width: doc.page.width - 96
@@ -156,7 +170,7 @@ function stopTypeLabel(t) {
 }
 
 function formatStopLine(s) {
-  const dt = s?.stop_at ? sliceDate(s.stop_at) : '—';
+  const dt = s?.stop_at ? formatIsoDateShortPlain(sliceDate(s.stop_at)) : '—';
   const loc = [s?.location_name, s?.address].filter(Boolean).join(', ').trim() || '—';
   return `${dt}, ${loc}`;
 }
@@ -190,8 +204,10 @@ router.get('/api/pdf/trip-invoice/:id', async (req, res) => {
       (L.end_date && String(L.end_date).slice(0, 10)) ||
       (L.start_date && String(L.start_date).slice(0, 10)) ||
       new Date().toISOString().slice(0, 10);
-    const shipDate = L.start_date ? sliceDate(L.start_date) : sliceDate(stops[0]?.stop_at);
-    const delDate = L.end_date ? sliceDate(L.end_date) : sliceDate(stops[stops.length - 1]?.stop_at);
+    const shipDate = formatIsoDateShortPlain(L.start_date ? sliceDate(L.start_date) : sliceDate(stops[0]?.stop_at));
+    const delDate = formatIsoDateShortPlain(
+      L.end_date ? sliceDate(L.end_date) : sliceDate(stops[stops.length - 1]?.stop_at)
+    );
     const billTo = String(L.qbo_customer_name || '').trim() || String(L.customer_join_name || '').trim() || 'Customer';
     const fn = `Invoice-${String(L.load_number || 'load').replace(/[^\w.-]+/g, '_')}.pdf`;
     const loadedMiles = safeNum(L.practical_loaded_miles, 0);
@@ -266,10 +282,10 @@ router.get('/api/pdf/trip-invoice/:id', async (req, res) => {
       doc.font('Helvetica').text(String(L.load_number || '—'), rightCol + 78, ry, { width: pageW - rightCol - 130 });
       ry += 12;
       doc.font('Helvetica-Bold').text('Invoice Date', rightCol, ry);
-      doc.font('Helvetica').text(invDate, rightCol + 78, ry, { width: 160 });
+      doc.font('Helvetica').text(formatIsoDateShortPlain(invDate), rightCol + 78, ry, { width: 160 });
       ry += 12;
       doc.font('Helvetica-Bold').text('Payment Due', rightCol, ry);
-      doc.font('Helvetica').text(paymentDueIso(invDate), rightCol + 78, ry, { width: 160 });
+      doc.font('Helvetica').text(formatIsoDateShortPlain(paymentDueIso(invDate)), rightCol + 78, ry, { width: 160 });
       ry += 12;
       doc.font('Helvetica-Bold').text('Load #', rightCol, ry);
       doc.font('Helvetica').text(String(L.load_number || '—'), rightCol + 78, ry, { width: 160 });
@@ -411,7 +427,9 @@ router.get('/api/pdf/tms-load/:id', async (req, res) => {
         `Bill-to (QBO name): ${L.qbo_customer_name || L.customer_join_name || '—'} · Driver / carrier: ${L.qbo_driver_vendor_name || L.driver_join_name || '—'}`
       );
       doc.text(`Equipment: Truck ${L.truck_code || '—'} · Trailer ${L.trailer_code || '—'}`);
-      doc.text(`Trip dates: ${String(L.start_date || '—').slice(0, 10)} → ${String(L.end_date || '—').slice(0, 10)}`);
+      doc.text(
+        `Trip dates: ${formatIsoDateShortPlain(L.start_date || '')} → ${formatIsoDateShortPlain(L.end_date || '')}`
+      );
       doc.text(
         `Miles (loaded / empty): ${L.practical_loaded_miles ?? 0} / ${L.practical_empty_miles ?? 0}` +
           (L.revenue_amount != null && String(L.revenue_amount).trim() !== ''
@@ -436,7 +454,7 @@ router.get('/api/pdf/tms-load/:id', async (req, res) => {
       doc.moveDown(1);
       hr(doc, doc.y);
       doc.moveDown(0.4);
-      doc.fontSize(8).fillColor('#666666').text(`Generated ${new Date().toISOString().slice(0, 10)} · IH35 TMS`);
+      doc.fontSize(8).fillColor('#666666').text(`Generated ${formatIsoDateShortPlain(new Date().toISOString())} · IH35 TMS`);
     });
   } catch (e) {
     res.status(500).send(e.message || 'PDF failed');
@@ -482,9 +500,9 @@ router.get('/api/pdf/company-settlement/:loadNumber', async (req, res) => {
       doc.font('Helvetica-Bold').fontSize(12).text(`Company Settlement No. ${stmtNo}`, left, y);
       y += 16;
       doc.font('Helvetica').fontSize(9.5);
-      doc.text(`Start Date:  ${L?.start_date ? sliceDate(L.start_date) : '—'}`, left, y);
+      doc.text(`Start Date:  ${L?.start_date ? formatIsoDateShortPlain(sliceDate(L.start_date)) : '—'}`, left, y);
       y += 12;
-      doc.text(`End Date:  ${L?.end_date ? sliceDate(L.end_date) : '—'}`, left, y);
+      doc.text(`End Date:  ${L?.end_date ? formatIsoDateShortPlain(sliceDate(L.end_date)) : '—'}`, left, y);
       y += 14;
       doc.font('Helvetica-Bold').text(TMS_COMPANY_NAME, left, y);
       y += 14;
@@ -581,7 +599,7 @@ router.get('/api/pdf/company-settlement/:loadNumber', async (req, res) => {
         if (li.kind === 'ap_transaction') {
           const ap = apById.get(String(li.id));
           if (ap) {
-            dt = sliceDate(ap.txnDate);
+            dt = formatIsoDateShortPlain(sliceDate(ap.txnDate));
             vendor = String(ap.vendorName || ap.vendor || '').slice(0, 20);
             loc = String(ap.assetUnit || '').slice(0, 24);
             inv = String(ap.docNumber || '').slice(0, 14);
@@ -589,7 +607,7 @@ router.get('/api/pdf/company-settlement/:loadNumber', async (req, res) => {
         } else if (li.kind === 'work_order_line') {
           const wo = (erp.workOrders || []).find(w => String(w.id) === String(li.parentId));
           if (wo) {
-            dt = sliceDate(wo.serviceDate);
+            dt = formatIsoDateShortPlain(sliceDate(wo.serviceDate));
             vendor = String(wo.vendor || '').slice(0, 20);
             loc = String(wo.unit || '').slice(0, 24);
             inv = String(wo.vendorInvoiceNumber || wo.internalWorkOrderNumber || '').slice(0, 14);
@@ -597,7 +615,7 @@ router.get('/api/pdf/company-settlement/:loadNumber', async (req, res) => {
         } else {
           const rec = (erp.records || []).find(r => String(r.id) === String(li.id));
           if (rec) {
-            dt = sliceDate(rec.serviceDate);
+            dt = formatIsoDateShortPlain(sliceDate(rec.serviceDate));
             vendor = String(rec.vendor || '').slice(0, 20);
             loc = String(rec.unit || '').slice(0, 24);
             inv = String(rec.vendorInvoiceNumber || '').slice(0, 14);
@@ -712,9 +730,9 @@ router.get('/api/pdf/driver-settlement/:vendorId', async (req, res) => {
       doc.font('Helvetica-Bold').fontSize(10).text(`${TMS_COMPANY_NAME}    ${vendorName}`, left, y, { width: w });
       y += 14;
       doc.font('Helvetica').fontSize(9.5);
-      doc.text(`Start Date:  ${startStmt}`, left, y);
+      doc.text(`Start Date:  ${formatIsoDateShortPlain(startStmt)}`, left, y);
       y += 12;
-      doc.text(`End Date:  ${endStmt}`, left, y);
+      doc.text(`End Date:  ${formatIsoDateShortPlain(endStmt)}`, left, y);
       y += 12;
       if (TMS_COMPANY_ADDRESS) doc.text(`Address: ${TMS_COMPANY_ADDRESS.replace(/\n/g, ', ')}`, left, y, { width: w });
       y += TMS_COMPANY_ADDRESS ? 12 : 0;
@@ -854,7 +872,7 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
         doc.fontSize(11).fillColor('#000000');
       }
       doc.text(`Service: ${rec.serviceType || ''}`);
-      doc.text(`Date: ${rec.serviceDate || ''}   Mileage: ${rec.serviceMileage ?? '—'}`);
+      doc.text(`Date: ${formatIsoDateShortPlain(rec.serviceDate || '')}   Mileage: ${rec.serviceMileage ?? '—'}`);
       doc.text(`Vendor (name): ${rec.vendor || '—'}`);
       if (vendorQ) doc.text(`QuickBooks vendor (matched): ${vendorQ}`);
       doc.text(`Vendor invoice #: ${rec.vendorInvoiceNumber || '—'}`);
@@ -918,7 +936,9 @@ router.get('/api/pdf/maintenance-record/:id', (req, res) => {
       doc.font('Helvetica').fontSize(10).fillColor('#000000').text('Notes', { underline: true });
       doc.text(rec.notes || '—', { align: 'left' });
       doc.moveDown();
-      doc.fontSize(8).fillColor('#666666').text(`ERP id: ${rec.id} · Generated ${sliceDate(new Date().toISOString())}`);
+      doc.fontSize(8).fillColor('#666666').text(
+        `ERP id: ${rec.id} · Generated ${formatIsoDateShortPlain(sliceDate(new Date().toISOString()))}`
+      );
       pdfFooterLine(doc);
     });
   } catch (e) {
@@ -939,7 +959,9 @@ router.get('/api/pdf/ap-transaction/:id', (req, res) => {
       doc.text(`Transaction type: ${ap.txnType || ''}   Line mode: ${ap.detailMode || ''}`);
       doc.text(`Vendor: ${vName || ap.qboVendorId || '—'}`);
       doc.text(`Doc #: ${ap.docNumber || '—'}`);
-      doc.text(`Date: ${ap.txnDate || ''}   Due: ${ap.dueDate || '—'}`);
+      doc.text(
+        `Date: ${formatIsoDateShortPlain(ap.txnDate || '')}   Due: ${formatIsoDateShortPlain(ap.dueDate || '')}`
+      );
       doc.text(`Unit / class: ${ap.assetUnit || '—'}`);
       doc.text(`Payment method: ${paymentMethodLabel(erp, ap.paymentMethodId)}`);
       if (ap.qboBankAccountId) doc.text(`Pay-from bank (QBO): ${bankAccountLabel(erp, ap.qboBankAccountId) || ap.qboBankAccountId}`);
