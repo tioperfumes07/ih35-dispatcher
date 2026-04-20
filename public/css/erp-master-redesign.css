@@ -2353,6 +2353,8 @@ body.dispatch-page #dispatchApp .erp-topbar .title {
   color: var(--erp-shell-bar-text);
   margin: 0;
   letter-spacing: -0.01em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.dispatch-page #dispatchApp .erp-topbar__search {
@@ -2698,6 +2700,14 @@ body.fuel-board .topbar {
   border-bottom: 1px solid var(--color-border);
   box-shadow: none;
   color: var(--color-text-body);
+  min-width: 0;
+}
+
+/* Rule 1 — status line can grow long; allow flex shrink + wrap so the topbar does not widen the page. */
+body.fuel-board .topbar #lastUpdated {
+  min-width: 0;
+  flex: 1 1 12rem;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .topbar h1 {
@@ -3466,6 +3476,8 @@ body.hub-page header h1 {
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.02em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.hub-page header p {
