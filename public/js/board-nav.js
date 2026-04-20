@@ -64,7 +64,11 @@
         { label: 'Pay bills', href: '/maintenance.html#accounting-bill-pay' },
         { label: 'QuickBooks lists (live master)', href: '/maintenance.html#accounting' },
         { label: 'Settlement / P&L by load', href: '/maintenance.html#reports-settlement' },
-        { label: 'Vendor / driver bill (dedicated)', href: '/maintenance.html#accounting-vendor-driver-bill-new' }
+        { label: 'Driver bill (dedicated)', href: '/maintenance.html#accounting-driver-bill-new' },
+        { label: 'Vendor bill (dedicated)', href: '/maintenance.html#accounting-vendor-bill-new' },
+        { label: 'Repair bill (dedicated)', href: '/maintenance.html#accounting-repair-bill-new' },
+        { label: 'Repair expense (dedicated)', href: '/maintenance.html#accounting-repair-expense-new' },
+        { label: 'Vendor / driver bill (legacy)', href: '/maintenance.html#accounting-vendor-driver-bill-new' }
       ]
     },
     {
