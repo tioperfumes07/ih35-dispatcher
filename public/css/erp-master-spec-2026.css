@@ -1901,6 +1901,8 @@ body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
 }
 body.dispatch-page #dispatchApp .dispatch-board-intro--compact {
   max-width: min(72ch, 100%);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Dispatch QBO strip before ≤900px block so shorthand does not overwrite margin-left/right (Rule 24). */

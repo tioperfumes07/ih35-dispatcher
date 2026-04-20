@@ -2482,6 +2482,12 @@ body.dispatch-page #dispatchApp .tabs.dispatch-board-tabs {
   margin: 0;
 }
 
+body.dispatch-page #dispatchApp #msg,
+body.dispatch-page #dispatchApp .dispatch-board-intro {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
   flex: 1 1 auto;
   min-width: 0;
