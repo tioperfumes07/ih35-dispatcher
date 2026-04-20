@@ -1,5 +1,4 @@
-# Agent B — Rule 0 token stacks (no server). `npm test` → `rule0:check` only.
-# Full gate with HTTP smoke requires a running server locally: `npm run qa:automated`.
+# Agent B — Rule 0 offline scan + HTTP smoke (`qa:isolated`), same as local full gate without a manual server.
 name: Rule 0 (Agent B)
 
 on:
@@ -7,9 +6,21 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: rule0-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   rule0-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      # Per-fetch ceiling in scripts/system-smoke.mjs (default 8000 ms); CI runners can be noisy.
+      SMOKE_TIMEOUT_MS: '12000'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,5 +29,5 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Forbidden var(--color-*…) stacks
-        run: npm test
+      - name: Full gate (rule0:check + smoke on ephemeral server)
+        run: npm run qa:isolated

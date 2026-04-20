@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
@@ -767,6 +767,20 @@ function samsaraHeaders() {
   };
 }
 
+function hasSamsaraReadToken() {
+  return Boolean(String(SAMSARA_API_TOKEN || '').trim());
+}
+
+/** Driver–vehicle assignments for a time window; no network when Samsara read token is unset. */
+async function fetchSamsaraDriverVehicleAssignmentsWindow(startTimeIso, endTimeIso) {
+  if (!hasSamsaraReadToken()) return { data: [] };
+  const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
+  assignmentsUrl.searchParams.set('filterBy', 'vehicles');
+  assignmentsUrl.searchParams.set('startTime', startTimeIso);
+  assignmentsUrl.searchParams.set('endTime', endTimeIso);
+  return fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({ data: [] }));
+}
+
 function samsaraWriteBearerToken() {
   return String(SAMSARA_WRITE_API_TOKEN || SAMSARA_API_TOKEN || '').trim();
 }
@@ -848,7 +862,7 @@ function pickSamsaraDriverUpdateBody(body) {
 
 /** Paginate Samsara HOS clocks (max 512 per page, up to ~10k drivers). */
 async function fetchAllSamsaraHosClocks() {
-  if (!SAMSARA_API_TOKEN) return [];
+  if (!hasSamsaraReadToken()) return [];
   const all = [];
   let after = '';
   for (let page = 0; page < 24; page++) {
@@ -1064,6 +1078,7 @@ function mergeVehiclesWithStats(vehicles, statsRows = []) {
 }
 
 async function fetchVehiclesSafely() {
+  if (!hasSamsaraReadToken()) return [];
   try {
     const payload = await fetchJson('https://api.samsara.com/fleet/vehicles', { headers: samsaraHeaders() });
     return Array.isArray(payload?.data) ? payload.data : [];
@@ -1074,6 +1089,7 @@ async function fetchVehiclesSafely() {
 }
 
 async function fetchVehicleStatsCurrentSafely() {
+  if (!hasSamsaraReadToken()) return [];
   try {
     // Samsara limits this endpoint to 4 stat types per request.
     const url =
@@ -4069,14 +4085,8 @@ app.get('/api/maintenance/security-alerts', async (req, res) => {
     const now = new Date();
     const startTime = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
     const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
-    const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
-    assignmentsUrl.searchParams.set('filterBy', 'vehicles');
-    assignmentsUrl.searchParams.set('startTime', startTime);
-    assignmentsUrl.searchParams.set('endTime', endTime);
     const [assignmentsRes, vehiclesRaw] = await Promise.all([
-      fetchJson(assignmentsUrl.toString(), {
-        headers: samsaraHeaders()
-      }).catch(() => ({ data: [] })),
+      fetchSamsaraDriverVehicleAssignmentsWindow(startTime, endTime),
       fetchVehiclesSafely()
     ]);
     const vehicleByName = {};
@@ -4099,14 +4109,8 @@ app.get('/api/analytics/fleet-inconsistencies', async (_req, res) => {
     const now = new Date();
     const startTime = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
     const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
-    const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
-    assignmentsUrl.searchParams.set('filterBy', 'vehicles');
-    assignmentsUrl.searchParams.set('startTime', startTime);
-    assignmentsUrl.searchParams.set('endTime', endTime);
     const [assignmentsRes, vehiclesRaw] = await Promise.all([
-      fetchJson(assignmentsUrl.toString(), {
-        headers: samsaraHeaders()
-      }).catch(() => ({ data: [] })),
+      fetchSamsaraDriverVehicleAssignmentsWindow(startTime, endTime),
       fetchVehiclesSafely()
     ]);
     const vehicleByName = {};
@@ -4146,21 +4150,17 @@ app.get('/api/tracking/idle-snapshot', async (_req, res) => {
       String(process.env.YARD_LABEL || '').trim() ||
       '21918 Mines Rd, Laredo, TX (geofence — set YARD_LAT/YARD_LON)';
 
+    const idleAssignmentsWindow = (() => {
+      const now = new Date();
+      return {
+        startTime: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+        endTime: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
+      };
+    })();
     const [fleetSnap, hosAll, assignmentsRes, tmsByUnit] = await Promise.all([
       fetchTrackedFleetSnapshot(),
       fetchAllSamsaraHosClocks(),
-      (async () => {
-        const now = new Date();
-        const startTime = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
-        const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
-        const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
-        assignmentsUrl.searchParams.set('filterBy', 'vehicles');
-        assignmentsUrl.searchParams.set('startTime', startTime);
-        assignmentsUrl.searchParams.set('endTime', endTime);
-        return fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({
-          data: []
-        }));
-      })(),
+      fetchSamsaraDriverVehicleAssignmentsWindow(idleAssignmentsWindow.startTime, idleAssignmentsWindow.endTime),
       fetchTmsTruckIdleByUnit()
     ]);
     const { enrichedVehicles, refreshedAt } = fleetSnap;
@@ -4617,15 +4617,10 @@ app.get('/api/board', async (_req, res) => {
     const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
     const endTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
 
-    const assignmentsUrl = new URL('https://api.samsara.com/fleet/driver-vehicle-assignments');
-    assignmentsUrl.searchParams.set('filterBy', 'vehicles');
-    assignmentsUrl.searchParams.set('startTime', startTime);
-    assignmentsUrl.searchParams.set('endTime', endTime);
-
     const [{ enrichedVehicles, statsRows, refreshedAt }, hosAll, assignmentsRes] = await Promise.all([
       fetchTrackedFleetSnapshot(),
       fetchAllSamsaraHosClocks(),
-      fetchJson(assignmentsUrl.toString(), { headers: samsaraHeaders() }).catch(() => ({ data: [] }))
+      fetchSamsaraDriverVehicleAssignmentsWindow(startTime, endTime)
     ]);
 
     res.json({
@@ -8451,7 +8446,10 @@ app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-/** Unknown `/api/*` paths — JSON body so fetch/XHR clients do not get HTML error pages. */
+/**
+ * Unknown /api/* paths — res.json sets Content-Type application/json so fetch/XHR clients do not get HTML error pages.
+ * scripts/system-smoke.mjs GET /api/__smoke_not_found__ (auth-exempt in middleware above) expects 404 and JSON { error, path }; keep this contract if you change the handler.
+ */
 app.use((req, res, next) => {
   if (!req.originalUrl.startsWith('/api/')) return next();
   const pathOnly = req.originalUrl.split('?')[0];

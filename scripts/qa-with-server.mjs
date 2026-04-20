@@ -5,6 +5,9 @@
  * (older builds may not expose JSON 404 for unknown `/api/*` paths — smoke expects that contract).
  *
  * Run: `npm run qa:isolated`
+ *
+ * When **`CI=true`** (e.g. GitHub Actions), passes **`SMOKE_QUIET=1`** to **`system-smoke.mjs`** so the success footer line is omitted.
+ * **`SIGINT`** / **`SIGTERM`**: **`SIGTERM`** the child **`server.js`**, any in-flight **`rule0:check`** / **`smoke`** Node child, then **`process.exit`** (**130** / **143**) so the parent does not hang (installing signal handlers disables the default Ctrl+C exit).
  */
 import { spawn } from 'node:child_process';
 import net from 'node:net';
@@ -49,21 +52,6 @@ async function waitHealth(base, ms = 45000) {
   throw new Error(`Health check failed for ${base} within ${ms}ms`);
 }
 
-function runNodeScript(rel, extraEnv, extraArgs = []) {
-  return new Promise((resolve, reject) => {
-    const child = spawn('node', [path.join(root, rel), ...extraArgs], {
-      cwd: root,
-      env: { ...process.env, ...extraEnv },
-      stdio: 'inherit',
-    });
-    child.on('error', reject);
-    child.on('exit', (code, sig) => {
-      if (code === 0) resolve();
-      else reject(new Error(`${rel} exited with ${code}${sig ? ` (${sig})` : ''}`));
-    });
-  });
-}
-
 function waitUntilHealthy(server, base) {
   return new Promise((resolve, reject) => {
     const onExit = (code, sig) => {
@@ -95,12 +83,64 @@ async function main() {
     stdio: 'inherit',
   });
 
+  let scriptChild = null;
+  function runNodeScript(rel, extraEnv, extraArgs = []) {
+    return new Promise((resolve, reject) => {
+      const child = spawn('node', [path.join(root, rel), ...extraArgs], {
+        cwd: root,
+        env: { ...process.env, ...extraEnv },
+        stdio: 'inherit',
+      });
+      scriptChild = child;
+      child.on('error', (e) => {
+        scriptChild = null;
+        reject(e);
+      });
+      child.on('exit', (code, sig) => {
+        scriptChild = null;
+        if (code === 0) resolve();
+        else reject(new Error(`${rel} exited with ${code}${sig ? ` (${sig})` : ''}`));
+      });
+    });
+  }
+
+  function stopOnSignal(exitCode) {
+    process.removeListener('SIGINT', onSigInt);
+    process.removeListener('SIGTERM', onSigTerm);
+    if (server.pid) {
+      try {
+        server.kill('SIGTERM');
+      } catch {
+        /* ignore */
+      }
+    }
+    if (scriptChild?.pid) {
+      try {
+        scriptChild.kill('SIGTERM');
+      } catch {
+        /* ignore */
+      }
+    }
+    process.exit(exitCode);
+  }
+  const onSigInt = () => stopOnSignal(130);
+  const onSigTerm = () => stopOnSignal(143);
+  process.once('SIGINT', onSigInt);
+  process.once('SIGTERM', onSigTerm);
+
   try {
     await waitUntilHealthy(server, base);
     await runNodeScript('scripts/rule-zero-agent-b-check.mjs', envPort, ['--skip-release-tip']);
-    await runNodeScript('scripts/system-smoke.mjs', { ...envPort, SMOKE_BASE: base });
+    const smokeEnv = {
+      ...envPort,
+      SMOKE_BASE: base,
+      ...(process.env.CI === 'true' ? { SMOKE_QUIET: '1' } : {})
+    };
+    await runNodeScript('scripts/system-smoke.mjs', smokeEnv);
     console.log(`qa:isolated OK — ${base}`);
   } finally {
+    process.removeListener('SIGINT', onSigInt);
+    process.removeListener('SIGTERM', onSigTerm);
     if (server.pid) {
       try {
         server.kill('SIGTERM');

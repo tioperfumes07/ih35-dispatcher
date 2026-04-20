@@ -1,6 +1,7 @@
 {
   "name": "ih35-dispatch-v3-starter",
   "version": "0.1.0",
+  "description": "IH35 dispatch / ERP operations hub — Express app with Rule 0 + HTTP smoke gate (npm run qa:isolated, scripts/system-smoke.mjs).",
   "type": "module",
   "private": true,
   "engines": {
@@ -19,13 +20,13 @@
     "report:erp": "node scripts/generate-erp-progress-report.mjs"
   },
   "dependencies": {
+    "@e965/xlsx": "^0.20.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "multer": "^2.1.1",
     "pdf-parse": "^1.1.4",
-    "pdfkit": "^0.15.2",
-    "pg": "^8.13.1",
-    "xlsx": "^0.18.5"
+    "pdfkit": "^0.18.0",
+    "pg": "^8.13.1"
   }
 }

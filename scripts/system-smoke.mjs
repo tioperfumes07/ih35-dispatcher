@@ -5,10 +5,12 @@
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings, tracking redirect) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, erp-master-redesign, erp-master-spec-2026, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
  * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). Bodies are reused from earlier successful GETs (**`STATIC_TEXT`** for CSS, HTML needles for **`/maintenance.html`**) so the guard avoids duplicate fetches when those steps pass.
- * **`GET /api/__smoke_not_found__`** (auth-exempt in **`server.js`**) must return **404** JSON **`{ error: 'Not found', path: '...' }`** so XHR clients never see HTML for unknown API paths.
- * Set SMOKE_BASE=http://host:port to target another environment.
+ * **`GET /api/__smoke_not_found__`** (auth-exempt in **`server.js`**) must return **404** with **`Content-Type`** including **`application/json`** and body **`{ error: 'Not found', path: '...' }`** so XHR clients never see HTML for unknown API paths.
+ * Set SMOKE_BASE=http://host:port to target another environment. Set SMOKE_QUIET=1 to omit the trailing “Smoke target” line on success (also set automatically for smoke when CI=true via qa-with-server.mjs).
+ * Set SMOKE_TIMEOUT_MS for per-fetch AbortSignal timeout (default **8000** ms, clamped **2000–30000**); **.github/workflows/rule0-check.yml** sets **12000** for CI.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
+ * On critical failure, the script prints a one-line hint to run **`npm run qa:isolated`** (full gate with a fresh server).
  */
 import process from 'process';
 import { ruleZeroForbiddenHits } from './rule-zero-agent-b.mjs';
@@ -202,8 +204,11 @@ async function oneApiUnknown404(probePath) {
     j = null;
   }
   const pathOnly = probePath.split('?')[0];
+  const ct = String(r.headers.get('content-type') || '');
+  const jsonContentType = ct.toLowerCase().includes('application/json');
   const pass =
     r.status === 404 &&
+    jsonContentType &&
     j &&
     j.error === 'Not found' &&
     String(j.path || '') === pathOnly;
@@ -211,7 +216,7 @@ async function oneApiUnknown404(probePath) {
     path: probePath,
     status: r.status,
     ok: pass,
-    hint: pass ? 'JSON 404 Not found' : 'expected 404 JSON { error, path }',
+    hint: pass ? 'JSON 404 Not found' : 'expected 404 application/json { error, path }',
     jsonSnippet: pass ? JSON.stringify(j) : text.slice(0, 160)
   };
 }
@@ -342,7 +347,7 @@ for (const [method, path] of [SOFT_DB]) {
 
 console.log(
   criticalFailures
-    ? `\nSmoke failed: ${criticalFailures} critical endpoint(s) did not return HTTP 2xx.`
+    ? `\nSmoke failed: ${criticalFailures} critical endpoint(s) did not return HTTP 2xx.\nFull gate with a fresh server (no manual start): npm run qa:isolated`
     : softWarnings
       ? '\nSmoke completed (critical paths OK; see optional DB check above).'
       : '\nSmoke checks completed.'

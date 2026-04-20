@@ -27,7 +27,7 @@
 
 **Additional static GETs** (200 + header needle; see `STATIC_TEXT` in `system-smoke.mjs`): `design-tokens.css`, `maint-accounting-ui-2026.css`, `app-theme.css`, `erp-master-redesign.css`, `erp-master-spec-2026.css`, `board-nav.css`, `erp-ui.js`, `board-nav.js`.
 
-**JSON 404 probe:** `GET /api/__smoke_not_found__` is **auth-exempt** in **`server.js`** and must return **404** with `{ error: 'Not found', path: '/api/__smoke_not_found__' }` so XHR clients never see HTML for unknown `/api/*` paths.
+**JSON 404 probe:** `GET /api/__smoke_not_found__` is **auth-exempt** in **`server.js`** and must return **404** with **`Content-Type`** including **`application/json`** and body `{ error: 'Not found', path: '/api/__smoke_not_found__' }` so XHR clients never see HTML for unknown `/api/*` paths.
 
 **Forbidden patterns** are defined in **`scripts/rule-zero-agent-b.mjs`** (`RULE0_FORBIDDEN_SUBSTRINGS`). Examples: `var(--color-border-focus, var(--accent))`, `var(--color-bg-header, #`, and many `var(--color-*, var(--legacy))` stacks.
 
@@ -39,7 +39,7 @@
 SMOKE_BASE=http://localhost:3400 npm run smoke
 ```
 
-Use **`npm run qa:automated`** for **`rule0:check`** + smoke in one step (server already listening), or **`npm run qa:isolated`** to spawn a fresh `server.js` on a free port. Exit code must be **0** before you consider your task done.
+Use **`npm run qa:automated`** for **`rule0:check`** + smoke in one step (server already listening), or **`npm run qa:isolated`** to spawn a fresh `server.js` on a free port. Exit code must be **0** before you consider your task done. **GitHub Actions** sets **`SMOKE_TIMEOUT_MS=12000`** for HTTP fetches in **`system-smoke.mjs`** (see **`.github/workflows/rule0-check.yml`**); locally the default is **8000** ms unless you set **`SMOKE_TIMEOUT_MS`**.
 
 ---
 
@@ -103,7 +103,7 @@ Do **not** inflate percentages without real scope; figures are planning aids, no
 | **Accounting:** AP + manual fuel **Load / invoice #** labels/placeholders; fuel header **column order** (vendor → unit → payment → bank); **optional QBO class & location** (`fuel-manual-header-more` details); matching **CSS** in `maint-accounting-ui-2026.css`; WO/AP **saved card** line + PDF copy | **Done (2026-04)** — search `fuel-manual-header-more` or `Load / invoice #` in `maintenance.html` | If present, **do not redo** — extend elsewhere only. |
 | **`erpDedicatedFormDirty()`** for **fuel** dedicated modal (vendor/unit/memo, load + invoice refs, optional class/location, payment/bank, lines **total**) | **Owned by maintenance track** — extend only if you add new fuel fields | Grep `erpDedicatedFormDirty` in `maintenance.html`. |
 | **Rule 22** (`mini-note` → `erp-help-tip`) | **Deferred** on fast path — see [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) §2 | Claim **file families** in your PR message (e.g. “Rule 22: banking only”). |
-| **`npm run smoke` / `npm run qa:automated` / `npm run qa:isolated`** | **Whoever has the server** (or use **`qa:isolated`** for a temp server) — not duplicated in CI | Document port via `SMOKE_BASE` if not **3400**; **`qa:isolated`** picks a free port automatically. |
+| **`npm run smoke` / `npm run qa:automated` / `npm run qa:isolated`** | **GitHub Actions** runs **`qa:isolated`** (same full gate); locally use **`smoke`** / **`qa:automated`** when a server is already up | Document port via **`SMOKE_BASE`** if not **3400**; **`qa:isolated`** picks a free port. **CI** sets **`SMOKE_TIMEOUT_MS=12000`** (**`.github/workflows/rule0-check.yml`**); locally optional **`SMOKE_TIMEOUT_MS`** — **README** (*Verification*). |
 | **Rule 10** (shared expense-line module) | **Deferred** until product | See deferred checklist §6. |
 
 **Tip:** Another agent should take **§5 P3–P5** (responsive, font-weight 500 sweep, dispatch) while this track stays on **accounting shell / fuel composer** unless the user re-prioritizes.

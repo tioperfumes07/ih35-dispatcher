@@ -1,6 +1,7 @@
 /**
  * Agent B Rule 0 — forbidden substrings in `app-theme.css`, `maint-accounting-ui-2026.css`, `maintenance.html`.
  * Imported by `system-smoke.mjs` (HTTP guard) and `rule-zero-agent-b-check.mjs` (offline read).
+ * At load time, `RULE0_FORBIDDEN_SUBSTRINGS` is validated (non-empty strings, no duplicates).
  */
 export const RULE0_FORBIDDEN_SUBSTRINGS = [
   'var(--color-border, var(--line))',
@@ -64,6 +65,22 @@ export const RULE0_FORBIDDEN_SUBSTRINGS = [
   'var(--color-text-label, #',
   'var(--color-text-label,#'
 ];
+
+(function assertRule0ListIntegrity() {
+  const seen = new Map();
+  for (let i = 0; i < RULE0_FORBIDDEN_SUBSTRINGS.length; i++) {
+    const s = RULE0_FORBIDDEN_SUBSTRINGS[i];
+    if (typeof s !== 'string' || s.length === 0) {
+      throw new Error(`rule-zero-agent-b.mjs: RULE0_FORBIDDEN_SUBSTRINGS[${i}] must be a non-empty string`);
+    }
+    if (seen.has(s)) {
+      throw new Error(
+        `rule-zero-agent-b.mjs: duplicate RULE0_FORBIDDEN_SUBSTRINGS at index ${i}: ${JSON.stringify(s)}`
+      );
+    }
+    seen.set(s, i);
+  }
+})();
 
 export function ruleZeroForbiddenHits(text) {
   return RULE0_FORBIDDEN_SUBSTRINGS.filter(s => text.includes(s));

@@ -25,23 +25,27 @@ Operations hub for **dispatch / TMS**, **fuel & route planning**, **maintenance 
 
 1. Copy `.env.example` to `.env`
 2. Set `SAMSARA_API_TOKEN`, `DATABASE_URL` (for TMS), and optional `GEOAPIFY_API_KEY`, QBO, and `PCMILER_API_KEY`
-3. `npm install` then `npm run db:migrate` if using Postgres
+3. **`npm install`** or **`npm ci`** (reproducible from **`package-lock.json`**, same as **GitHub Actions**) then **`npm run db:migrate`** if using Postgres
 4. `npm start` (or `npm run dev` for watch mode)
 5. Open `http://localhost:<PORT>` (default in code is `3400`; `.env.example` uses `3100`)
+
+### Dependency audit
+
+Run **`npm audit`** when updating dependencies. Server-side spreadsheet parsing uses **`@e965/xlsx`**; PDFs use **`pdfkit`** (**`routes/pdf.mjs`**). Bump either in a dedicated change and re-run **`npm run qa:isolated`**; after **`pdfkit`** upgrades, spot-check a maintenance or trip PDF in the browser.
 
 ## Verification (automated)
 
 Use these before a release or when validating the ERP shell (see `docs/ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md` for full manual QA).
 
-1. **`npm run rule0:check`** — Agent B Rule 0 guard on `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, and `public/maintenance.html`. After success (outside CI), the script prints a one-line reminder to run smoke; set **`RULE0_QUIET=1`** to hide it. **`npm run qa:automated`** runs the same check with a flag so that reminder is not duplicated before smoke.
+1. **`npm run rule0:check`** — Agent B Rule 0 guard on `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, and `public/maintenance.html`. By default it logs per-file OK lines; with **`CI=true`** or **`RULE0_QUIET=1`** it logs one **`rule0:check OK (N files)`** summary instead. Outside CI, it also prints a reminder to run smoke unless **`RULE0_QUIET=1`**. **`npm run qa:automated`** runs the same check with **`--skip-release-tip`** so that reminder is not duplicated before smoke.
 2. **Start the server** — `npm start` or `npm run dev`. Listen port is **`process.env.PORT` or `3400`** unless your `.env` sets otherwise. The listener uses **`0.0.0.0`** so **`http://localhost:<PORT>`** / **`http://127.0.0.1:<PORT>`** work with **`npm run smoke`** (some Node versions otherwise bind IPv6-only and loopback would not connect).
-3. **`npm run smoke`** — `scripts/system-smoke.mjs` hits health APIs, static ERP HTML shells, shared CSS/JS (including `erp-master-redesign.css` and `erp-master-spec-2026.css` with the other token and shell styles) with stable substring checks, and **`GET /api/__smoke_not_found__`** (auth-exempt) to assert unknown API paths return **404** JSON (`error`, `path`) instead of HTML. Rule 0 body scans reuse cached GET bodies. Default target is **`http://localhost:<PORT>`** (same port as the server). **`npm run qa:automated`** runs steps **1** then **3** in one command.
+3. **`npm run smoke`** — `scripts/system-smoke.mjs` hits health APIs, static ERP HTML shells, shared CSS/JS (including `erp-master-redesign.css` and `erp-master-spec-2026.css` with the other token and shell styles) with stable substring checks, and **`GET /api/__smoke_not_found__`** (auth-exempt) to assert unknown API paths return **404** with **`Content-Type`** including **`application/json`** and body (`error`, `path`) instead of HTML. Rule 0 body scans reuse cached GET bodies. Default target is **`http://localhost:<PORT>`** (same port as the server). **`npm run qa:automated`** runs steps **1** then **3** in one command.
 
-**No server running yet / avoid port conflicts:** **`npm run qa:isolated`** runs **`rule0:check`** + **`smoke`** against a **fresh** `server.js` child on a random free port (see `scripts/qa-with-server.mjs`). Use this when **`localhost:3400`** is occupied or you suspect a stale `server.js` that does not match current `server.js` (smoke requires JSON **404** for unknown `/api/*` paths).
+**No server running yet / avoid port conflicts:** **`npm run qa:isolated`** runs **`rule0:check`** + **`smoke`** against a **fresh** `server.js` child on a random free port (see `scripts/qa-with-server.mjs`). Use this when **`localhost:3400`** is occupied or you suspect a stale `server.js` that does not match current `server.js` (smoke requires JSON **404** for unknown `/api/*` paths). **Ctrl+C** (**SIGINT**) or **SIGTERM** terminates the child server, any in-flight **`rule0:check`** / **`smoke`** subprocess, and the parent process (exit **130** / **143**).
 
-If the server is not on **3400** or smoke must use another host, set **`SMOKE_BASE`** (e.g. `SMOKE_BASE=http://127.0.0.1:3100 npm run smoke`). Set **`SMOKE_QUIET=1`** to hide the extra “Smoke target” line at the end of a successful smoke run.
+If the server is not on **3400** or smoke must use another host, set **`SMOKE_BASE`** (e.g. `SMOKE_BASE=http://127.0.0.1:3100 npm run smoke`). Set **`SMOKE_QUIET=1`** to hide the extra “Smoke target” line at the end of a successful smoke run. Set **`SMOKE_TIMEOUT_MS`** (per-fetch milliseconds in **`system-smoke.mjs`**, default **8000**, clamped **2000–30000**) if smoke times out on slow hosts or remote **`SMOKE_BASE`** targets.
 
-**CI:** [`.github/workflows/rule0-check.yml`](.github/workflows/rule0-check.yml) runs **`npm test`** (`rule0:check`) on push and pull requests. It does **not** start the server; run **`npm run qa:automated`** (server already up) or **`npm run qa:isolated`** locally before release for Rule 0 + smoke.
+**CI:** [`.github/workflows/rule0-check.yml`](.github/workflows/rule0-check.yml) runs **`npm run qa:isolated`** on push and pull requests (Rule 0 offline check plus HTTP smoke on a child `server.js`). Actions sets **`CI=true`**; **`rule0:check`** prints one summary line instead of three per-file OK lines, and `scripts/qa-with-server.mjs` passes **`SMOKE_QUIET=1`** into smoke so the success footer line is omitted. Locally you can use the same command, or **`npm run qa:automated`** / **`npm run smoke`** when a server is already listening. Set **`RULE0_QUIET=1`** to get the same compact **`rule0:check`** output without **`CI`**. The workflow uses **`permissions: contents: read`**, **concurrency** (newer runs cancel superseded jobs on the same ref), a **15-minute** job timeout, and **`SMOKE_TIMEOUT_MS=12000`** (per-request timeout in **`system-smoke.mjs`**, default **8000** locally) for slightly more headroom on shared runners.
 
 **Parallel agents:** See [docs/AGENT_COORDINATION.md](docs/AGENT_COORDINATION.md) for who owns which paths (e.g. ERP master redesign vs maintenance behavior vs server) so PRs do not overlap.
 
