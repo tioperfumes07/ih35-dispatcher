@@ -1711,6 +1711,8 @@ body.erp-maintenance .erp-reports-roadmap {
   font-size: 13px;
   color: var(--color-text-primary);
   box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .erp-pager__controls {
@@ -1723,12 +1725,16 @@ body.erp-maintenance .erp-reports-roadmap {
 .erp-pager__meta {
   color: var(--color-text-label);
   font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .erp-pager__page {
   font-variant-numeric: tabular-nums;
   color: var(--color-text-label);
   font-size: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .erp-pager__btn {

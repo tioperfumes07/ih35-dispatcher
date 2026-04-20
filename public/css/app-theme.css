@@ -382,11 +382,15 @@ body.erp-maintenance .catalog-search-hit {
 .catalog-search-hit__name {
   font-weight: 500;
   font-size: 0.88rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .catalog-search-hit__meta {
   font-size: 0.78rem;
   color: var(--color-text-label);
   margin-top: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* QuickBooks-style picker (combobox dropdown with “+ Add new”) */
