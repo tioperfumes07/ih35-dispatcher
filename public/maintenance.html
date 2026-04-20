@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
   <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
   <link rel="stylesheet" href="/css/maint-accounting-ui-2026.css" />
+  <link rel="stylesheet" href="/css/accounting-layout-overhaul-2026.css" />
   <link rel="stylesheet" href="/css/erp-multi-bills.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -2871,14 +2872,14 @@
       </section>
 
       <section id="section-accounting" class="section">
-        <div id="acctNavTabStubs" class="erp-sr-tab-anchor" aria-hidden="true">
-          <button type="button" class="subtab" id="acctLogsDdTrigger" onclick="openAccountingTab('acct-expense-history', this)">Expense history</button>
-          <button type="button" class="subtab" id="acctBillHistTrigger" onclick="openAccountingTab('acct-bill-history', this)">Bill history</button>
-          <button type="button" class="subtab" id="acctFuelDdTrigger" onclick="openAccountingTab('acct-fuel-expense', this)">Fuel &amp; DEF</button>
-          <button type="button" class="subtab active" id="acctStubTrans" onclick="openAccountingTab('acct-transactions', this)">Maintenance expenses</button>
-          <button type="button" class="subtab" id="acctBillPayStub" onclick="openAccountingTab('acct-bill-pay', this)">Bill payment</button>
-          <button type="button" class="subtab" id="acctQboRollbackStub" onclick="openAccountingTab('acct-qbo-rollback', this)">QBO rollback</button>
-          <button type="button" class="subtab" id="acctQbDdTrigger" onclick="openAccountingTab('acct-qbo', this)">QuickBooks live master</button>
+        <div id="acctNavTabStubs" class="subtabs erp-tab-bar" role="tablist" aria-label="Accounting views">
+          <button type="button" class="subtab" role="tab" id="acctLogsDdTrigger" onclick="openAccountingTab('acct-expense-history', this)">Expense history</button>
+          <button type="button" class="subtab" role="tab" id="acctBillHistTrigger" onclick="openAccountingTab('acct-bill-history', this)">Bill history</button>
+          <button type="button" class="subtab" role="tab" id="acctFuelDdTrigger" onclick="openAccountingTab('acct-fuel-expense', this)">Fuel &amp; DEF</button>
+          <button type="button" class="subtab active" role="tab" id="acctStubTrans" onclick="openAccountingTab('acct-transactions', this)">Maintenance expenses</button>
+          <button type="button" class="subtab" role="tab" id="acctBillPayStub" onclick="openAccountingTab('acct-bill-pay', this)">Bill payment</button>
+          <button type="button" class="subtab" role="tab" id="acctQboRollbackStub" onclick="openAccountingTab('acct-qbo-rollback', this)">QBO rollback</button>
+          <button type="button" class="subtab" role="tab" id="acctQbDdTrigger" onclick="openAccountingTab('acct-qbo', this)">QuickBooks live master</button>
         </div>
 
         <div id="acctBoardStrip" class="mr-acct-board maint-section-card" aria-label="Accounting overview">
@@ -2923,6 +2924,7 @@
               <button type="button" class="acct-board-action-btn" onclick="erpNewExpense()">Expense</button>
               <button type="button" class="acct-board-action-btn" onclick="erpNewRepairExpense()">Repair expense</button>
             </div>
+            <div id="acctBoardExpDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div class="acct-board-table-wrap">
               <table class="acct-board-mini-table" aria-label="Recent expenses">
                 <thead>
@@ -2952,6 +2954,7 @@
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Driver bill</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor bill</button>
             </div>
+            <div id="acctBoardBillsDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div class="acct-board-table-wrap">
               <table class="acct-board-mini-table" aria-label="Recent bills">
                 <thead>
@@ -2979,6 +2982,7 @@
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDriverBillPay()">Driver bill payment</button>
               <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Bill payment history</button>
             </div>
+            <div id="acctBoardPayDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div class="acct-board-table-wrap">
               <table class="acct-board-mini-table" aria-label="Recent bill payments">
                 <thead>
@@ -3023,6 +3027,7 @@
                 <span class="erp-help-tip__panel" role="tooltip"><code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>. <strong>View all errors</strong> → sync alert bar.</span>
               </span>
             </div>
+            <div id="acctBoardQboErrDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div id="acctDashQboErrList" class="acct-qbo-err-list" aria-live="polite"></div>
             <button
               type="button"
@@ -6246,6 +6251,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
   <script src="/js/erp-export-util.js"></script>
   <script src="/js/erp-reports-catalog.js"></script>
+  <script src="/js/erp-accounting-ui-enhancements.js"></script>
   <script>
     let vehicles = [];
     let dashboard = [];
@@ -8237,11 +8243,11 @@
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Payment history</button>';
         const specializedBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;)">Fuel &amp; DEF fast entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel &amp; DEF fast entry</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewDriverSettlement()">Driver settlement</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewPlaceholder(&quot;Journal entry&quot;)">Journal entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewPlaceholder(&quot;Transfer&quot;)">Transfer</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;journal-entry&quot;)">Journal entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;transfer&quot;)">Transfer</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
@@ -8685,6 +8691,10 @@
     }
 
     function erpOpenLedgerStubModal(which) {
+      if (typeof erpOpenAcctWorkflowModal === 'function') {
+        erpOpenAcctWorkflowModal(which === 'journal' ? 'journal-entry' : which);
+        return;
+      }
       erpCloseNewMenu();
       if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
       const mount = document.getElementById('erpDedicatedFormModalBody');
@@ -8693,7 +8703,7 @@
       erpResetDedicatedModalLayout();
       window.__erpDedicatedModalKind = 'ledger-stub';
       window.__erpLedgerStubWhich = which === 'journal' ? 'journal' : 'transfer';
-      const title = window.__erpLedgerStubWhich === 'journal' ? 'Journal entry' : 'Transfer';
+      const title = window.__erpLedgerStubWhich === 'journal' ? 'Journal entry' : 'Transfer funds';
       const body =
         window.__erpLedgerStubWhich === 'journal'
           ? '<div class="form-stack" style="padding:8px 4px 0;max-width:520px;line-height:1.5">' +
@@ -8854,13 +8864,16 @@
 
     function erpNewLoadsEntry() {
       erpCloseNewMenu();
-      window.location.href = '/dispatch.html';
+      const acctBtn = document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]');
+      openSection('accounting', acctBtn);
+      if (typeof erpOpenAcctWorkflowModal === 'function') erpOpenAcctWorkflowModal('load-tms');
     }
 
     function erpNewDriverSettlement() {
       erpCloseNewMenu();
-      window.location.hash = 'reports-settlement';
-      if (typeof applyNavHash === 'function') applyNavHash();
+      const acctBtn = document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]');
+      openSection('accounting', acctBtn);
+      if (typeof erpOpenAcctWorkflowModal === 'function') erpOpenAcctWorkflowModal('driver-settlement');
     }
 
     function erpNewFuelRecord() {
@@ -9066,6 +9079,13 @@
         );
       }
       if (window.__erpDedicatedModalKind === 'ledger-stub') {
+        const shell = document.querySelector('#erpDedicatedFormModalBody .erp-acct-workflow-shell');
+        if (!shell) return false;
+        const controls = shell.querySelectorAll('input:not([disabled]), textarea:not([disabled]), select:not([disabled])');
+        for (let i = 0; i < controls.length; i++) {
+          const el = controls[i];
+          if (el && String(el.value || '').trim()) return true;
+        }
         return false;
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
@@ -9102,7 +9122,14 @@
         return;
       }
       if (window.__erpDedicatedModalKind === 'ledger-stub') {
-        if (title) title.textContent = window.__erpLedgerStubWhich === 'journal' ? 'Journal entry' : 'Transfer';
+        const w = window.__erpLedgerStubWhich || '';
+        const stubTitles = {
+          journal: 'Journal entry',
+          transfer: 'Transfer funds',
+          'driver-settlement': 'Driver settlement',
+          'load-tms': 'Load / TMS entry'
+        };
+        if (title) title.textContent = stubTitles[w] || 'Form';
         if (lab) lab.textContent = '';
         if (amt) amt.textContent = '—';
         return;
@@ -9208,6 +9235,7 @@
     function erpResetDedicatedModalLayout() {
       const modal = document.getElementById('erpDedicatedFormModal');
       const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
+      if (modal) modal.removeAttribute('data-erp-acct-layout');
       if (modal) modal.classList.remove('erp-dedicated-form-modal--maximized');
       if (shell) shell.classList.remove('erp-dedicated-form-modal__shell--maximized');
       const maxBtn = document.getElementById('erpDedModalMaxBtn');
@@ -9377,6 +9405,7 @@
         if (h2) h2.textContent = fuelTitle;
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
+        modal.setAttribute('data-erp-acct-layout', 'fuel');
         document.body.classList.add('erp-dedicated-modal-open');
         erpDedicatedModalBindEscape(true);
         if (!fromHash) window.location.hash = 'accounting-fuel-expense-new';
