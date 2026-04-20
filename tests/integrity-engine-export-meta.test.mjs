@@ -27,6 +27,14 @@ test('integrityThresholdExportRows keys match defaultIntegrityThresholds order',
   }
 });
 
+test('defaultIntegrityThresholds is 17 numeric keys (Settings + export contract)', () => {
+  const d = defaultIntegrityThresholds();
+  assert.equal(Object.keys(d).length, 17);
+  for (const [k, v] of Object.entries(d)) {
+    assert.ok(typeof v === 'number' && Number.isFinite(v), k);
+  }
+});
+
 test('mergeIntegrityThresholds overrides appear in integrityThresholdExportRows', () => {
   const erp = { integrityThresholds: { maxTiresPerUnit90d: 99 } };
   const rows = integrityThresholdExportRows(mergeIntegrityThresholds(erp));
