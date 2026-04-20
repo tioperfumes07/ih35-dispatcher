@@ -29,5 +29,5 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Full gate (rule0:check + smoke on ephemeral server)
+      - name: Full gate (smoke-gate sync, rule0:check, smoke on ephemeral server)
         run: npm run qa:isolated
