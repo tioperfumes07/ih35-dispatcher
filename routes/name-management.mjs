@@ -237,6 +237,146 @@ export function mountNameManagementRoutes(app, deps) {
     return true;
   }
 
+  function invalidateNmCache() {
+    for (const k of ['nm_vendors', 'nm_customers', 'nm_drivers']) {
+      listCache.delete(k);
+    }
+  }
+
+  async function warmListCacheForMismatches(type) {
+    const t = String(type || 'vendor').toLowerCase();
+    if (t === 'vendor') {
+      if (!qboConfigured() || !readQbo()?.tokens?.refresh_token) return;
+      if (!cacheGet('nm_vendors')) {
+        const rows = await qboQueryPaged(qboQuery, 'select * from Vendor maxresults 1000');
+        const erp = readErp();
+        const canon = await loadCanonicalMap('vendor');
+        const list = rows.map(v => {
+          const qboId = String(v.Id || '');
+          const qboName = String(v.DisplayName || '').trim();
+          const counts = countVendorUsageByQboId(erp, qboId);
+          const erpSample = (erp.workOrders || []).find(w => String(w.qboVendorId) === qboId)?.vendor || '';
+          const canonical = canon.get(qboId) || '';
+          const primary = canonical || qboName;
+          const { mismatch } = nameMatchStatus([qboName, erpSample, canonical].filter(Boolean));
+          return {
+            qboId,
+            erpId: qboId,
+            primaryName: primary,
+            qboName,
+            erpNameSample: erpSample,
+            canonicalName: canonical || null,
+            inQbo: true,
+            inSamsara: false,
+            inErp: counts.workOrders + counts.records + counts.fuelPurchases + counts.vendorBillPaymentRecords > 0,
+            nameMismatch: mismatch,
+            counts
+          };
+        });
+        cacheSet('nm_vendors', { vendors: list, loadedAt: new Date().toISOString() });
+      }
+      return;
+    }
+    if (t === 'customer') {
+      if (!qboConfigured() || !readQbo()?.tokens?.refresh_token) return;
+      if (!cacheGet('nm_customers')) {
+        const rows = await qboQueryPaged(qboQuery, 'select * from Customer maxresults 1000');
+        const erp = readErp();
+        const canon = await loadCanonicalMap('customer');
+        const list = rows.map(c => {
+          const qboId = String(c.Id || '');
+          const qboName = String(c.DisplayName || '').trim();
+          const counts = countCustomerUsageByQboId(erp, qboId);
+          const canonical = canon.get(qboId) || '';
+          const primary = canonical || qboName;
+          const { mismatch } = nameMatchStatus([qboName, canonical].filter(Boolean));
+          return {
+            qboId,
+            erpId: qboId,
+            primaryName: primary,
+            qboName,
+            canonicalName: canonical || null,
+            inQbo: true,
+            inSamsara: false,
+            inErp: counts.workOrderLines + counts.fuelDrafts > 0,
+            nameMismatch: mismatch,
+            counts
+          };
+        });
+        cacheSet('nm_customers', { customers: list, loadedAt: new Date().toISOString() });
+      }
+      return;
+    }
+    if (t === 'driver' && getPool() && !cacheGet('nm_drivers')) {
+      const ck = 'nm_drivers';
+      const { rows: drows } = await dbQuery(
+        'SELECT id, name, email, phone, qbo_vendor_id, samsara_driver_id FROM drivers ORDER BY name'
+      );
+      let samsara = [];
+      try {
+        samsara = await fetchSamsaraDriversNormalized({ limit: 500 });
+      } catch {
+        samsara = [];
+      }
+      const erp = readErp();
+      const links = await loadDriverLinks();
+      const list = [];
+      const canonDriver = await loadCanonicalMap('driver');
+      for (const d of drows) {
+        const erpId = String(d.id);
+        const pgName = String(d.name || '').trim();
+        const link = links.get(erpId);
+        let sid = d.samsara_driver_id ? String(d.samsara_driver_id) : '';
+        if (!sid && link?.samsara_driver_id) sid = String(link.samsara_driver_id);
+        const sHit = sid ? samsara.find(s => s.id === sid) : null;
+        let sName = sHit?.name || '';
+        if (!sName && pgName) {
+          const phoneDigits = String(d.phone || '').replace(/\D/g, '');
+          const auto = samsara.find(
+            s =>
+              norm(s.name) === norm(pgName) ||
+              lev(s.name, pgName) <= 2 ||
+              (d.phone && s.phone && String(d.phone) === String(s.phone)) ||
+              (phoneDigits.length >= 7 &&
+                String(s.phone || '')
+                  .replace(/\D/g, '')
+                  .includes(phoneDigits))
+          );
+          if (auto) sName = auto.name;
+        }
+        let qboName = '';
+        const qboVid = d.qbo_vendor_id || link?.qbo_vendor_id;
+        if (qboVid) {
+          try {
+            const vd = await qboGet(`vendor/${encodeURIComponent(String(qboVid))}`);
+            qboName = String(vd?.Vendor?.DisplayName || '').trim();
+          } catch {
+            qboName = '';
+          }
+        }
+        const canonical = canonDriver.get(erpId) || '';
+        const primary = canonical || pgName || qboName || sName;
+        const { mismatch } = nameMatchStatus([pgName, qboName, sName, canonical].filter(Boolean));
+        list.push({
+          erpId,
+          primaryName: primary,
+          erpName: pgName,
+          qboId: qboVid ? String(qboVid) : '',
+          qboName,
+          samsaraId: sid,
+          samsaraName: sName,
+          canonicalName: canonical || null,
+          inQbo: Boolean(qboVid),
+          inSamsara: Boolean(sid || sName),
+          inErp: true,
+          nameMismatch: mismatch,
+          linkConfidence: link?.link_confidence || null
+        });
+      }
+      cacheSet(ck, { drivers: list, loadedAt: new Date().toISOString() });
+    }
+  }
+
   app.get('/api/name-management/vendors', async (req, res) => {
     try {
       if (!qboConfigured() || !readQbo()?.tokens?.refresh_token) {
@@ -339,42 +479,53 @@ export function mountNameManagementRoutes(app, deps) {
       const erp = readErp();
       const links = await loadDriverLinks();
       const list = [];
+      const canonDriver = await loadCanonicalMap('driver');
       for (const d of drows) {
         const erpId = String(d.id);
         const pgName = String(d.name || '').trim();
-        const sid = d.samsara_driver_id ? String(d.samsara_driver_id) : '';
+        const link = links.get(erpId);
+        let sid = d.samsara_driver_id ? String(d.samsara_driver_id) : '';
+        if (!sid && link?.samsara_driver_id) sid = String(link.samsara_driver_id);
         const sHit = sid ? samsara.find(s => s.id === sid) : null;
         let sName = sHit?.name || '';
         if (!sName && pgName) {
+          const phoneDigits = String(d.phone || '').replace(/\D/g, '');
           const auto = samsara.find(
-            s => norm(s.name) === norm(pgName) || lev(s.name, pgName) <= 2 || (d.phone && s.phone && String(d.phone) === String(s.phone))
+            s =>
+              norm(s.name) === norm(pgName) ||
+              lev(s.name, pgName) <= 2 ||
+              (d.phone && s.phone && String(d.phone) === String(s.phone)) ||
+              (phoneDigits.length >= 7 &&
+                String(s.phone || '')
+                  .replace(/\D/g, '')
+                  .includes(phoneDigits))
           );
           if (auto) sName = auto.name;
         }
         let qboName = '';
-        if (d.qbo_vendor_id) {
+        const qboVid = d.qbo_vendor_id || link?.qbo_vendor_id;
+        if (qboVid) {
           try {
-            const vd = await qboGet(`vendor/${encodeURIComponent(String(d.qbo_vendor_id))}`);
+            const vd = await qboGet(`vendor/${encodeURIComponent(String(qboVid))}`);
             qboName = String(vd?.Vendor?.DisplayName || '').trim();
           } catch {
             qboName = '';
           }
         }
-        const link = links.get(erpId);
-        const canonical = (await loadCanonicalMap('driver')).get(erpId) || '';
+        const canonical = canonDriver.get(erpId) || '';
         const primary = canonical || pgName || qboName || sName;
         const { mismatch } = nameMatchStatus([pgName, qboName, sName, canonical].filter(Boolean));
         list.push({
           erpId,
           primaryName: primary,
           erpName: pgName,
-          qboId: d.qbo_vendor_id ? String(d.qbo_vendor_id) : '',
+          qboId: qboVid ? String(qboVid) : '',
           qboName,
-          samsaraId: sid || (link?.samsara_driver_id ? String(link.samsara_driver_id) : ''),
+          samsaraId: sid,
           samsaraName: sName,
           canonicalName: canonical || null,
-          inQbo: !!d.qbo_vendor_id,
-          inSamsara: !!(sid || sName),
+          inQbo: Boolean(qboVid),
+          inSamsara: Boolean(sid || sName),
           inErp: true,
           nameMismatch: mismatch,
           linkConfidence: link?.link_confidence || null
