@@ -2067,8 +2067,10 @@ body.dispatch-page .modal h2 {
 body.dispatch-page .modal-body {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   padding: 16px 20px;
   overflow: auto;
+  overflow-wrap: anywhere;
 }
 
 body.dispatch-page .modal-actions {
@@ -2971,6 +2973,7 @@ body.fuel-board .fuel-relay-info {
   border: 1px solid var(--btn-info-border);
   border-radius: var(--radius-card);
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board #map {
