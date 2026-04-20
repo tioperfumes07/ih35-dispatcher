@@ -67,7 +67,8 @@ const HTML_PAGES = [
       'id="bpOpenBillsPagerHost"',
       'id="driverFilesPagerHost"',
       'id="repairLocationSelect"',
-      'maint-cost-imports-shortcut'
+      'maint-cost-imports-shortcut',
+      'erp-print.js'
     ]
   ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
@@ -89,7 +90,8 @@ const STATIC_TEXT = [
   ],
   ['/css/board-nav.css', 'Persistent operations bar'],
   ['/js/erp-ui.js', 'IH35 ERP — shared UI helpers', '*/*'],
-  ['/js/board-nav.js', 'Fuel & route planning', '*/*']
+  ['/js/board-nav.js', 'Fuel & route planning', '*/*'],
+  ['/js/erp-print.js', 'IH35 ERP — standalone print documents', '*/*']
 ];
 
 /** `[path, Accept header]` — GET body checked against **`rule-zero-agent-b.mjs`** forbidden list. */

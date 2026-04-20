@@ -6823,12 +6823,19 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
     ].filter(Boolean);
     const memo = memoParts.join(' · ');
 
+    const useFuelBill =
+      !!sliceIsoDate(fp.fuelBillDueDate || '') ||
+      !!String(fp.fuelBillQboTermId || '')
+        .trim()
+        .replace(/\D/g, '') ||
+      !!String(fp.fuelBillStatementNumber || '').trim();
+
     const bodyDoc = sanitizeQboDocNumber(String(body.docNumber || body.expenseDocNumber || '').trim());
+    const stmtDoc = sanitizeQboDocNumber(String(fp.fuelBillStatementNumber || '').trim());
     const docNumber =
       bodyDoc ||
-      sanitizeQboDocNumber(
-        String(draft.expenseDocNumber || fp.expenseDocNumber || '').trim()
-      ) ||
+      sanitizeQboDocNumber(String(draft.expenseDocNumber || fp.expenseDocNumber || '').trim()) ||
+      (useFuelBill && stmtDoc ? stmtDoc : '') ||
       sanitizeQboDocNumber(buildFuelPurchaseDocNumber(fp));
     const lineDescription = buildFuelPurchaseLineDescription(fp);
 
@@ -6837,8 +6844,13 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       .replace(/[^\w.-]/g, '');
     const paymentMethodId = paymentMethodIdRaw || 'pm_other';
 
+    const billDue = sliceIsoDate(fp.fuelBillDueDate || '') || '';
+    const billTerm = String(fp.fuelBillQboTermId || '')
+      .trim()
+      .replace(/\D/g, '');
+
     const ap = {
-      txnType: 'expense',
+      txnType: useFuelBill ? 'bill' : 'expense',
       detailMode,
       qboVendorId: vendorId,
       paymentMethodId,
@@ -6848,7 +6860,8 @@ app.post('/api/qbo/post-fuel-purchase/:id', async (req, res) => {
       qty: detailMode === 'item' ? qty : 1,
       amount,
       txnDate,
-      dueDate: '',
+      dueDate: useFuelBill ? billDue || txnDate : '',
+      qboTermId: useFuelBill ? billTerm : '',
       docNumber,
       description: lineDescription,
       memo,

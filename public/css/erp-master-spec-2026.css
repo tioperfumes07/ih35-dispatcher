@@ -2461,3 +2461,163 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-ap-doc-accent svg {
   display: block;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IH35 ERP — global print shell (additive @media print only; screen unchanged)
+   Full-width letter output; hides master chrome that breaks in-browser print.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0.65in 0.65in 0.8in 0.65in;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body.erp-app #erpToastHost,
+  body.erp-app #boardNavMount,
+  body.erp-app #erpIconNav,
+  body.erp-app .erp-icon-nav,
+  body.erp-app #erpApp > aside.erp-module-sidebar,
+  body.erp-app .erp-module-sidebar__collapse,
+  body.erp-app button.sidebar-expand-fab,
+  body.dispatch-page #erpToastHost,
+  body.dispatch-page #boardNavMount,
+  body.dispatch-page .erp-icon-nav,
+  body.dispatch-page button.sidebar-expand-fab,
+  body.banking-page #erpToastHost,
+  body.banking-page #boardNavMount,
+  body.settings-page #erpToastHost,
+  body.settings-page #boardNavMount,
+  body.fuel-board #erpToastHost,
+  body.fuel-board #boardNavMount,
+  body.hub-page #erpToastHost,
+  body.hub-page #boardNavMount,
+  body.hub-page #erpConnectionStrip,
+  .icon-nav,
+  .nav-bar,
+  .print-hide,
+  .print-hide-actions,
+  .erp-toast-host,
+  .erp-connection-strip,
+  [data-erp-connection-strip],
+  [class*="sticky-footer"],
+  [class*="action-footer"],
+  [class*="alert-banner"],
+  [class*="error-banner"],
+  [class*="qbo-banner"],
+  .erp-help-tip,
+  [class*="help-tip"][class*="erp-"],
+  [data-dev-note],
+  body.erp-maintenance .maint-form-help-btn,
+  body.erp-maintenance .maint-form-help-drawer {
+    display: none !important;
+  }
+
+  #erpApp.erp-master,
+  #dispatchApp.erp-master {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+    gap: 0 !important;
+  }
+
+  body.erp-app .erp-main-body,
+  #dispatchApp .erp-main-body,
+  body.erp-maintenance .maint-erp-master__grid,
+  body.erp-maintenance .maint-erp-master__main,
+  #section-maintenance.section.active,
+  .section.active {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  body.erp-maintenance .maint-form-actions--sticky {
+    position: static !important;
+    display: none !important;
+  }
+
+  [class*="overflow"],
+  [class*="scroll"] {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9pt !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  th,
+  td {
+    border: 1px solid #ccc !important;
+    padding: 4pt 6pt !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  th {
+    background: #f5f5f5 !important;
+    font-weight: 700 !important;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  input[type="email"],
+  input[type="search"],
+  select,
+  textarea {
+    border: none !important;
+    border-bottom: 1px solid #999 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #000 !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+
+  h1,
+  h2,
+  h3 {
+    page-break-after: avoid !important;
+  }
+
+  .page-break {
+    page-break-before: always !important;
+  }
+}
