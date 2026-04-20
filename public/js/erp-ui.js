@@ -664,8 +664,8 @@
       erpWireResizableModalShell(cat, {
         storageKey: 'maint_category',
         dragRoot: '.erp-qb-dialog__head',
-        minW: 320,
-        minH: 240
+        minW: 520,
+        minH: 400
       });
     }
     const mbDlg = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
@@ -681,16 +681,16 @@
       erpWireResizableModalShell(m, {
         storageKey: 'shop_queue',
         dragRoot: '.erp-qb-dialog__head',
-        minW: 400,
-        minH: 280
+        minW: 520,
+        minH: 400
       });
     });
     document.querySelectorAll('#shopDelayModal .maint-modal.erp-qb-dialog').forEach(m => {
       erpWireResizableModalShell(m, {
         storageKey: 'shop_delay',
         dragRoot: '.erp-qb-dialog__head',
-        minW: 400,
-        minH: 280
+        minW: 520,
+        minH: 400
       });
     });
   }
@@ -699,7 +699,12 @@
   function erpRestoreDedicatedModalGeometry(kind) {
     const shell = document.querySelector('#erpDedicatedFormModal .erp-dedicated-form-modal__shell');
     if (!shell) return;
-    const map = { fuel: 'dedicated_fuel', ap: 'dedicated_ap', billpay: 'dedicated_billpay' };
+    const map = {
+      fuel: 'dedicated_fuel',
+      ap: 'dedicated_ap',
+      billpay: 'dedicated_billpay',
+      ledger: 'dedicated_ledger'
+    };
     const key = map[String(kind || '').trim()] || 'dedicated_default';
     erpRestoreModalRect(shell, key, { minW: 520, minH: 400 });
   }

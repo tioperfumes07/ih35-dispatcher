@@ -444,6 +444,7 @@
 
     const bar = global.syncErpDedicatedModalChrome;
     if (typeof bar === 'function') bar();
+    if (typeof global.erpRestoreDedicatedModalGeometry === 'function') global.erpRestoreDedicatedModalGeometry('ledger');
 
     wireChips(mount.querySelector('[data-erp-df-prefix="je_hist"]'), () => {});
     wireChips(mount.querySelector('[data-erp-df-prefix="tr_hist"]'), () => {});

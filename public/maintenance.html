@@ -714,7 +714,7 @@
       <section id="section-dashboard" class="section">
         <div class="hero-grid">
           <div class="hero-card" onclick="openSectionByName('fuel')"><h3>Fuel &amp; route planning</h3><p>Diesel planner, relay pricing, and fuel history</p></div>
-          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance center</h3><p>Work orders, fleet table, R&amp;M status, shop / location, and service records</p></div>
+          <div class="hero-card" onclick="openSectionByName('maintenance')"><h3>Maintenance center</h3><p>Work orders, fleet table, R&amp;M status, service / location, and service records</p></div>
           <div class="hero-card" onclick="openSectionByName('safety')"><h3>Safety &amp; compliance</h3><p>Samsara HOS, drivers, and assignments</p></div>
           <div class="hero-card" onclick="openSectionByName('tracking')"><h3>Fleet tracking</h3><p>Live map, assets, <strong>Shop &amp; maintenance</strong> (queues and alerts), and Samsara data</p></div>
           <div class="hero-card" onclick="openSectionByName('accounting')"><h3>Accounting</h3><p>Expenses, bills, and QuickBooks sync</p></div>
@@ -1167,7 +1167,7 @@
                 <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
-                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
               </div>
               <div class="maint-action-strip__right" aria-live="polite">
                 <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"></span>
@@ -1188,7 +1188,7 @@
             <button type="button" class="maint-nav-tab active" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
             <button type="button" class="maint-nav-tab" data-maint-main="fleet" tabindex="-1" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
             <button type="button" class="maint-nav-tab" data-maint-main="rm" tabindex="-1" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
-            <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
+            <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
           </div>
         <div id="maintMainTabRecord" class="maint-main-tab-panel active">
         <div id="maintWorkOrderFormMount">
@@ -1256,20 +1256,22 @@
               <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
             </div>
             <div class="maint-wo-main-aside">
-            <div class="maint-wo-workspace maint-section-card">
-              <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">Live unit header — full swap on unit change. Fuel / PM strip below uses its own fields, not this card.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Asset header card">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderSelectedUnit()</code>: row in <code>vehicles</code> → show <code>#maintWoFormArea</code>, fill <code>#maintAssetHeaderCard</code> (name, YMM, status from <strong>Lists → Operational</strong>, VIN/plate/odo, <strong>Edit status</strong>), rebuild <code>#maintAssetStatusPanelBody</code>, clear <code>#selectedUnitInfo</code>, <code>textContent</code> on <code>#maintUnitSummaryStrip</code>, then <code>renderUnitHistory()</code>, <code>syncMaintWorkOrderHeader()</code>, <code>renderMaintAsideWoSummary()</code>. No unit → placeholder.
-                  </span>
-                </span>
+            <div class="maint-wo-workspace maint-section-card maint-wo-box1">
+              <div id="maintWoBox1Head" class="maint-wo-box1__head hidden" aria-live="polite">
+                <div class="maint-wo-box1__title-row">
+                  <span class="maint-wo-box1__title">Work order</span>
+                  <span id="maintWoBannerUnit" class="maint-wo-box1__unit"></span>
+                </div>
               </div>
-              <div id="maintCard1HeaderSlot" class="maint-card1-header-slot hidden" aria-label="Shop and repair status">
+              <div id="maintCard1HeaderSlot" class="maint-card1-header-slot hidden" aria-label="Service location and repair status">
                 <div class="maint-field-cell" style="flex:1 1 180px;min-width:160px;max-width:280px">
-                  <span class="qb-l">Service location</span>
-                  <select id="repairLocationSelect" class="qb-in maint-field" style="height:30px;min-width:160px" onchange="onRepairLocationSelectChange()" title="Where service was performed">
+                  <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service location type
+                    <span class="erp-help-tip">
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service location type">?</button>
+                      <span class="erp-help-tip__panel" role="tooltip">High-level context (internal shop, external vendor, roadside, etc.). The free-text <strong>Service location</strong> field in the form names the specific place.</span>
+                    </span>
+                  </span>
+                  <select id="repairLocationSelect" class="qb-in maint-field" style="height:30px;min-width:160px" onchange="onRepairLocationSelectChange()" title="Service location type">
                     <option value="">— Choose —</option>
                     <option value="in-house">Internal shop</option>
                     <option value="external">External shop</option>
@@ -1292,76 +1294,49 @@
                   <div id="recordRepairStatusMeta" class="mini-note" style="margin-top:4px" aria-live="polite"></div>
                 </div>
               </div>
+              <div class="maint-wo-box1__vehicle-wrap">
               <div id="maintAssetHeaderCard" class="maint-asset-header-card maint-card1-body-host" aria-live="polite">
                 <div class="maint-asset-header-card__placeholder">Select a unit from the list.</div>
+              </div>
               </div>
               <div id="maintAssetStatusPanel" class="maint-asset-status-panel hidden" aria-hidden="true">
                 <div class="maint-asset-status-panel__head">
                   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0">
                     <span class="panel-title" style="font-size:13px;margin:0">Operational status</span>
                     <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Status codes">?</button>
+                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        Codes from <strong>Lists → Operational</strong> + saved WOs. <strong>Done</strong> closes the sheet only — does not discard the WO.
+                        <strong>Save status</strong> / <strong>Save roster</strong> write to the server. <strong>Done</strong> only closes this sheet. Codes come from <strong>Lists → Operational</strong> plus saved work orders. APIs: <code>saveAssetStatus()</code> → <code>POST /api/maintenance/asset-status</code>; <code>saveAssetFleetActive()</code> → <code>POST /api/maintenance/asset-active</code>. Success runs <code>loadAll()</code>; saving status closes the panel.
                       </span>
                     </span>
                   </div>
                   <button type="button" class="btn btn--small" onclick="closeMaintAssetStatusPanel()">Done</button>
                 </div>
-                <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                  <span style="min-width:0;flex:1 1 200px"><strong>Save status</strong> / <strong>Save roster</strong> hit the server; <strong>Done</strong> only closes.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status sheet APIs">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderSelectedUnit()</code> → <code>#maintAssetStatusPanelBody</code> (picker, note, active/retired row). <code>saveAssetStatus()</code> → <code>POST /api/maintenance/asset-status</code> (<code>unit</code>, <code>status</code>, <code>note</code>). <code>saveAssetFleetActive()</code> → <code>POST /api/maintenance/asset-active</code> (<code>active</code> + <code>erpWriteHeaders()</code> when set). Options from <strong>Lists → Operational</strong>. Success → <code>loadAll()</code>; status save closes panel.
-                    </span>
-                  </span>
-                </div>
                 <div id="maintAssetStatusPanelBody"></div>
               </div>
               <div id="selectedUnitInfo" class="hidden" aria-hidden="true"></div>
-              <div class="unit-summary maint-unit-summary-compact hidden" id="maintUnitSummaryStrip">
-                <div class="unit-box"><div class="k">Fuel</div><div class="v" id="unitFuelBox">N/A</div></div>
-                <div class="unit-box"><div class="k">Past due</div><div class="v" id="unitPastDueBox">0</div></div>
-                <div class="unit-box"><div class="k">Due soon</div><div class="v" id="unitDueSoonBox">0</div></div>
-                <div class="unit-box"><div class="k">Saved odo</div><div class="v" id="unitMileageBox">N/A</div></div>
-              </div>
 
-                <div class="maint-wo-form-shell">
-                <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
-                  <span style="min-width:0;flex:1 1 220px">Print header strip — unit line is <code>textContent</code> only; banner unhides when the form mounts.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="WO banner host">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>syncMaintWorkOrderHeader()</code> removes <code>hidden</code> from <code>#maintWoBanner</code> and sets <code>#maintWoBannerUnit</code> <code>textContent</code> to the selected unit, or a “Select an asset…” prompt when none; also retargets vendor / WO field labels and placeholders by <code>#repairLocationTypeInput</code> (internal vs external / parts / other). Called from unit selection, repair location, chips, and related form hooks; pairs with <code>renderMaintAsideWoSummary()</code>.
-                    </span>
-                  </span>
-                </div>
-                <div id="maintWoBanner" class="maint-wo-banner maint-wo-banner--inline hidden" aria-live="polite">
-                  <div class="maint-wo-banner__eyebrow">Work order</div>
-                  <div id="maintWoBannerUnit" class="maint-wo-banner__unit"></div>
-                </div>
+                <div class="maint-wo-form-shell maint-wo-box2">
                 <div class="form-stack maint-form-stack">
-                  <button type="button" class="maint-form-help-btn" onclick="document.getElementById('maintFormHelpDrawer').classList.toggle('hidden')" title="Field help">?</button>
-                  <div id="maintFormHelpDrawer" class="maint-form-help-drawer hidden" role="region" aria-label="Form help">
-                    <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 8px">
-                      <p class="mini-note" style="margin:0;color:var(--color-text-label);max-width:44ch">Service field: catalog + history + presets.</p>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines & invoice total">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          Each line posts to <strong>QuickBooks</strong> from that row’s account or item. <strong>Lock invoice total</strong> only if you set the header total manually and do not want lines to retotal it.
-                        </span>
-                      </span>
-                    </div>
-                    <button type="button" class="btn btn--small" onclick="document.getElementById('maintFormHelpDrawer').classList.add('hidden')">Close help</button>
-                  </div>
-
                   <div class="maint-form-grid maint-subcard">
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
+                    <div class="maint-form-grid__row maint-form-grid__row--4 maint-wo-box2__row1">
+                      <div class="maint-field-cell maint-field-cell--grow">
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service location <span class="maint-label-req" aria-hidden="true">*</span>
+                          <span class="erp-help-tip" aria-label="Help for service location">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service location">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Where this visit happened (yard, vendor site, bay, shop name, or short notes). Choose the <strong>service location type</strong> in the header above; this field is required. Prior labels appear in the datalist.</span>
+                          </span>
+                        </span>
+                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Service location (required)" aria-required="true" />
+                      </div>
                       <div class="maint-field-cell">
-                        <span class="qb-l">Record type</span>
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Record type
+                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Record type">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Controls which extra blocks appear (tire map, accident fields, etc.).</span>
+                          </span>
+                        </span>
                         <div class="erp-wo-record-type-slot">
-                          <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()" title="Drives which extra blocks show (tire map, accident, etc.)">
+                          <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()" title="Record type">
                             <option value="maintenance">Maintenance</option>
                             <option value="tire">Tire</option>
                             <option value="repair">Repair</option>
@@ -1372,163 +1347,118 @@
                         </div>
                       </div>
                       <div class="maint-field-cell">
-                        <span class="qb-l">Service type</span>
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service type
+                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service type">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Uses the <strong>service catalog</strong> datalist plus free text. Syncs to the first cost line description when that line is empty.</span>
+                          </span>
+                        </span>
                         <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service description" autocomplete="off" oninput="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" onblur="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" title="Catalog + free text" />
                         <input id="serviceTypeInput" type="hidden">
-                        <input
-                          id="customServiceTypeInput"
-                          class="qb-in maint-field hidden"
-                          placeholder="Custom service type"
-                          oninput="toggleRecordFields()"
-                        />
+                        <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type" oninput="toggleRecordFields()" />
                       </div>
                       <div class="maint-field-cell">
-                        <span class="qb-l">Service date</span>
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service date
+                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service date">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Date of this service visit for the record and reporting.</span>
+                          </span>
+                        </span>
                         <input id="serviceDateInput" class="qb-in maint-field maint-field--date" type="date" />
                       </div>
                     </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Fleet mileage (ERP)</span>
-                        <div class="maint-field-cell__row">
-                          <input id="mileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Override" title="Manual fleet mileage override" />
-                          <button type="button" class="btn btn--small" onclick="saveMileage()">Save</button>
-                        </div>
-                      </div>
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Planned work <span class="maint-label-optional">(optional)</span></span>
-                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 180px">Free-text lines; host resets from template when presets / record type clear the form.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Planned work lines">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <code>resetMaintPlannedServiceRows()</code> clears <code>#maintPlannedServicesHost</code>, then <code>addMaintPlannedServiceRow()</code> clones <code>#maintPlannedServiceTpl</code>. <code>collectMaintPlannedServiceLines()</code> reads <code>.maint-planned-desc</code> for save.
-                            </span>
+                    <div class="maint-form-grid__row maint-form-grid__row--3 maint-form-grid__row--vendor-driver-odo maint-wo-box2__row2">
+                      <div class="maint-field-cell" style="flex:1;min-width:0">
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Vendor
+                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">QuickBooks vendor for this expense / bill.</span>
                           </span>
+                        </span>
+                        <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
+                        <button type="button" class="maint-linkish" onclick="goToCreateQboVendor()">New in QBO</button>
+                      </div>
+                      <div class="maint-field-cell maint-field-cell--odo-150">
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Odometer
+                          <span class="erp-help-tip" aria-label="Help for service odometer">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service odometer">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Suggested miles may come from Samsara, saved ERP mileage, or the last service on this unit. Use <strong>Samsara</strong> to pull the latest reading.</span>
+                          </span>
+                        </span>
+                        <div class="maint-field-cell__row">
+                          <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Odometer for this visit" style="max-width:150px" />
+                          <button type="button" class="btn btn--small" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
                         </div>
+                        <div id="serviceMileageHint" class="mini-note maint-field-hint"></div>
+                      </div>
+                      <div class="maint-field-cell maint-field-cell--grow">
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Planned service / repair
+                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Planned work">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Optional lines from the <strong>service catalog</strong> (datalist) describing planned work.</span>
+                          </span>
+                        </span>
                         <div id="maintPlannedServicesHost"></div>
                         <button type="button" class="maint-linkish" onclick="addMaintPlannedServiceRow()">+ Planned line</button>
                       </div>
+                    </div>
+                    <div class="maint-form-grid__row maint-form-grid__row--4 maint-wo-box2__row3">
                       <div class="maint-field-cell">
-                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
-                          >Load #
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Load #
                           <span class="erp-help-tip" aria-label="Help for load number">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Load #">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              When the field is empty, the ERP suggests an open TMS load for this unit (or the most recent delivered load). A short <strong>Suggested:</strong> line may appear under the field. Typing clears it. Imports may also set a note if the PDF unit differs.
-                            </span>
+                            <span class="erp-help-tip__panel" role="tooltip">When empty, the ERP may suggest an open TMS load for this unit. A <strong>Suggested:</strong> line can appear under the field.</span>
                           </span>
                         </span>
                         <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / settlement #" autocomplete="off" />
                         <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
                       </div>
-                    </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3 maint-form-grid__row--vendor-driver-odo">
-                      <div class="maint-field-cell" style="flex:1;min-width:0">
-                        <span class="qb-l">Vendor</span>
-                        <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
-                        <button type="button" class="maint-linkish" onclick="goToCreateQboVendor()">New in QBO</button>
-                      </div>
-                      <div id="maintRecordDriverCell" class="maint-field-cell" style="flex:1;min-width:0">
-                        <span class="qb-l"
-                          >Driver <span id="maintWoDriverReqStar" class="maint-label-req hidden" aria-hidden="true">*</span></span
-                        >
-                        <input type="hidden" id="maintRecordDriverId" value="" />
-                        <input
-                          id="maintRecordDriverSearch"
-                          class="qb-in maint-field"
-                          list="maintDriverOptions"
-                          placeholder="Select driver (optional)"
-                          maxlength="160"
-                          autocomplete="off"
-                          oninput="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();"
-                          onblur="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();"
-                        />
-                        <input type="hidden" id="maintWoDriverNameInput" value="" />
-                        <div id="maintDriverRepairHint" class="mini-note maint-field-hint maint-driver-repair-hint hidden" aria-live="polite"></div>
-                      </div>
-                      <div class="maint-field-cell maint-field-cell--odo-150">
-                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
-                          >Odometer
-                          <span class="erp-help-tip" aria-label="Help for service odometer">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service odometer">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              Suggested miles may come from Samsara (maintenance snapshot or live board), saved ERP mileage, or the last service on this unit. Use <strong>Samsara</strong> to pull the latest reading. Edit the field if this visit was not at that odometer; save may warn if live data differs.
-                            </span>
-                          </span>
-                        </span>
-                        <div class="maint-field-cell__row">
-                          <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" style="max-width:150px" />
-                          <button type="button" class="btn btn--small" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
-                        </div>
-                        <div id="serviceMileageHint" class="mini-note maint-field-hint"></div>
-                      </div>
-                    </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
-                      <div class="maint-field-cell maint-field-cell--grow" style="grid-column:1/-1;max-width:100%">
-                        <span class="qb-l">Service location detail <span class="maint-label-req" aria-hidden="true">*</span></span>
-                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">Choose shop type in the vehicle card above, then enter where work happened (required). The datalist suggests prior labels.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop / location detail">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <strong>Location detail</strong> is saved with the record (yard, vendor site, bay, shop name, or short notes). <code>setRepairLocationCode()</code> keeps the dropdown, hidden type, and this field in sync. <code>fillStaticMaintDatalists()</code> fills <code>#repairLocationOptions</code> for suggestions.
-                            </span>
-                          </span>
-                        </div>
-                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Shop / location detail (required)" aria-required="true" />
-                      </div>
-                    </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div id="maintVendorInvFieldWrap" class="maint-field-cell">
                         <span class="qb-l" id="maintVendorInvLabel">Vendor invoice #</span>
                         <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="Supplier invoice" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />
                       </div>
                       <div id="maintWoNumberFieldWrap" class="maint-field-cell">
-                        <span class="qb-l" id="maintWoNumberLabel">Internal WO #</span>
-                        <input id="recordWorkOrderInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="WO #" title="Internal shop numbers are assigned automatically" oninput="renderMaintAsideWoSummary()" />
+                        <span class="qb-l" id="maintWoNumberLabel">Ref / WO #</span>
+                        <input id="recordWorkOrderInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="WO #" title="Internal shop numbers may be assigned on save" oninput="renderMaintAsideWoSummary()" />
                       </div>
                       <div class="maint-field-cell">
-                        <span class="qb-l">Invoice total</span>
-                        <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Sum of line amounts" oninput="renderMaintAsideWoSummary()" />
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Invoice total
+                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Invoice total">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Should match category + item line totals within <strong>$0.02</strong> before save, or enable <strong>Lock total</strong>. Match status appears on the cost breakdown totals bar.</span>
+                          </span>
+                        </span>
+                        <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Invoice total" oninput="renderMaintAsideWoSummary()" />
                         <label class="maint-lock-inline"><input type="checkbox" id="costTotalLock" /> Lock total</label>
-                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">Compares category + item line sums to invoice total; uses <code>innerHTML</code> when ✓/✗ markup is shown.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Invoice total vs lines">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <code>updateMaintCostTotalMatchUi(lineSum, hasLineMoney)</code> drives <code>#maintCostTotalMatch</code>: empty <code>textContent</code> when no line money; prompt when total missing; <code>innerHTML</code> with green ✓ or red ✗ when <code>#costInput</code> is within <strong>$0.02</strong> of <code>sumMaintCostLineAmounts()</code>. Called from <code>recalcMaintCostTotalFromLines()</code>. Cleared in <code>resetMaintCostLines()</code> / <code>fillMaintCostLinesFromRecord()</code>.
-                            </span>
-                          </span>
-                        </div>
-                        <div id="maintCostTotalMatch" class="mini-note maint-field-hint hidden" aria-hidden="true"></div>
-                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">Reserved coordination strip under invoice total — host stays hidden while logic is stubbed.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Invoice / cost coordination host">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <code>updateMaintInvoiceCostCoordination(lines, rounded, hasAmt)</code> runs from <code>recalcMaintCostTotalFromLines()</code>; currently sets <code>#maintInvoiceCostSummary</code> <code>display:none</code> and clears <code>innerHTML</code> every pass (placeholder for future linked-txn / split guidance).
-                            </span>
-                          </span>
-                        </div>
                         <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
                       </div>
                     </div>
-                    <div class="maint-form-grid__row">
+                    <details class="maint-wo-box2__mileage-details">
+                      <summary class="maint-wo-box2__mileage-sum">Fleet mileage override (ERP)</summary>
+                      <div class="maint-field-cell maint-wo-box2__mileage-body">
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Fleet mileage (ERP)
+                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet mileage override">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Manual override of fleet mileage stored in ERP for this unit (separate from this visit’s odometer).</span>
+                          </span>
+                        </span>
+                        <div class="maint-field-cell__row">
+                          <input id="mileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Override" title="Manual fleet mileage override" />
+                          <button type="button" class="btn btn--small" onclick="saveMileage()">Save</button>
+                        </div>
+                      </div>
+                    </details>
+                    <div id="maintRecordDriverCell" class="maint-field-cell maint-wo-box2__driver-row" style="margin-top:8px">
+                      <span class="qb-l">Driver <span id="maintWoDriverReqStar" class="maint-label-req hidden" aria-hidden="true">*</span></span>
+                      <input type="hidden" id="maintRecordDriverId" value="" />
+                      <input id="maintRecordDriverSearch" class="qb-in maint-field" list="maintDriverOptions" placeholder="Select driver (optional)" maxlength="160" autocomplete="off" oninput="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();" onblur="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();" />
+                      <input type="hidden" id="maintWoDriverNameInput" value="" />
+                      <div id="maintDriverRepairHint" class="mini-note maint-field-hint maint-driver-repair-hint hidden" aria-live="polite"></div>
+                    </div>
+                    <div class="maint-form-grid__row maint-wo-box2__row5">
                       <div class="maint-field-cell maint-field-cell--grow">
-                        <span class="qb-l maint-label-optional">Catalog admin</span>
+                        <span class="qb-l maint-label-optional" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Catalog admin
+                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Catalog admin">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">Add a new name to the service type catalog (<code>POST /api/maintenance/service-types</code>). Feedback appears below.</span>
+                          </span>
+                        </span>
                         <div class="maint-field-cell__row">
                           <input id="maintNewCatalogServiceName" class="qb-in maint-field maint-field--catalog" placeholder="New catalog name" maxlength="120" autocomplete="off" />
                           <button type="button" class="btn btn--small" onclick="addCatalogServiceType()">Add</button>
-                        </div>
-                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">Feedback for <strong>Add</strong> on new catalog names — all <code>textContent</code> on the host below.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Catalog admin hint">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <code>addCatalogServiceType()</code> sets <code>#maintCatalogServiceHint</code> <code>textContent</code> for validation (<strong>Enter a name first.</strong>), success after <code>POST /api/maintenance/service-types</code>, or caught errors; clears at start. <code>resetMaintenanceWorkOrderFormFields()</code> clears on new form.
-                            </span>
-                          </span>
                         </div>
                         <div id="maintCatalogServiceHint" class="mini-note maint-field-hint"></div>
                       </div>
@@ -2098,7 +2028,7 @@
           <div class="panel maint-section-card">
             <div class="panel-head maint-panel-head-center">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
-                <span>Vehicles by shop / location context</span>
+                <span>Vehicles by service / location context</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -2114,9 +2044,9 @@
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Built from <code>shopQueueCache</code> + recent <code>erp.records</code> — open tab after a full maint <strong>Refresh</strong> if stale.</span>
                 <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop / location board">?</button>
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service / location board">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintLocationBoard()</code>: <code>internal</code>/<code>external</code>/<code>roadside</code>/<code>parts</code> from <code>shopQueueCache</code>, then visits by <code>repairLocationType</code> from <code>erp.records</code> → <code>#maintLocationBoardHost</code>. Runs when <strong>Shop / location</strong> is active after <code>loadAll()</code> / queue saves / tab switch.
+                    <code>renderMaintLocationBoard()</code>: <code>internal</code>/<code>external</code>/<code>roadside</code>/<code>parts</code> from <code>shopQueueCache</code>, then visits by <code>repairLocationType</code> from <code>erp.records</code> → <code>#maintLocationBoardHost</code>. Runs when <strong>Service / location</strong> is active after <code>loadAll()</code> / queue saves / tab switch.
                   </span>
                 </span>
               </div>
@@ -2168,7 +2098,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance fleet table">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderMaintenanceTable()</code>: <code>dashboard</code> filtered by <code>vehiclesByCategory()[activeAssetCategory]</code> + <code>#maintenanceServiceFilter</code> → paged <code>#maintenanceTableBody</code>. <code>maintDashboardTablePager</code> + <code>erpPagerRender</code> on <code>#maintTablePagerHost</code>; category/service change → page 1. <strong>Repair</strong> updates the latest saved ERP row for that unit + service (same API as Shop / location).
+                      <code>renderMaintenanceTable()</code>: <code>dashboard</code> filtered by <code>vehiclesByCategory()[activeAssetCategory]</code> + <code>#maintenanceServiceFilter</code> → paged <code>#maintenanceTableBody</code>. <code>maintDashboardTablePager</code> + <code>erpPagerRender</code> on <code>#maintTablePagerHost</code>; category/service change → page 1. <strong>Repair</strong> updates the latest saved ERP row for that unit + service (same API as Service / location).
                     </span>
                   </span>
                 </div>
@@ -2261,7 +2191,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Navigation &amp; deep links">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                Queues, rollups, exports, R&amp;M flags — WOs <strong>Maintenance → Create work order</strong>; fleet <strong>→ Fleet table</strong>; yard <strong>→ Shop / location</strong>. Deep links: <code>#tracking-shop</code>, <code>#maintenance-shop</code>, <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> / <code>#maintenance-alerts</code>, <code>#maintenance-shop-location</code>.
+                Queues, rollups, exports, R&amp;M flags — WOs <strong>Maintenance → Create work order</strong>; fleet <strong>→ Fleet table</strong>; yard <strong>→ Service / location</strong>. Deep links: <code>#tracking-shop</code>, <code>#maintenance-shop</code>, <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> / <code>#maintenance-alerts</code>, <code>#maintenance-shop-location</code>.
               </span>
             </span>
           </div>
@@ -3254,7 +3184,7 @@
                       <input id="apVendorInvoiceNumber" class="qb-in" placeholder="Supplier invoice no.">
                     </div>
                     <div class="ap-exp-field">
-                      <span class="qb-l">Shop / internal WO #</span>
+                      <span class="qb-l">Internal WO #</span>
                       <input id="apInternalWorkOrderNumber" class="qb-in" placeholder="Your work order ref">
                     </div>
                     <div class="ap-exp-field hidden" id="apWrapDue">
@@ -3876,7 +3806,7 @@
                           <input id="fuelManualVendorInvoice" class="qb-in" placeholder="Supplier invoice no." autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
-                          <span class="qb-l">Shop / internal WO #</span>
+                          <span class="qb-l">Internal WO #</span>
                           <input id="fuelManualInternalWo" class="qb-in" placeholder="Your work order ref" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
@@ -6882,10 +6812,20 @@
         document.addEventListener('keydown', e => {
           if (e.key !== 'Escape') return;
           const m = document.getElementById('maintWorkOrderModal');
-          if (m && m.classList.contains('on')) {
+          if (!m || !m.classList.contains('on')) return;
+          const shell = m.querySelector('.maint-workorder-fullmodal__shell');
+          if (shell && typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
             e.preventDefault();
-            closeMaintWorkOrderModal();
+            void erpExitDocumentFullscreen().catch(() => {});
+            const fs = document.getElementById('maintWoFsBtn');
+            if (fs) {
+              fs.textContent = 'Full screen';
+              fs.setAttribute('aria-pressed', 'false');
+            }
+            return;
           }
+          e.preventDefault();
+          closeMaintWorkOrderModal();
         });
       }
       const modal = document.getElementById('maintWorkOrderModal');
@@ -6901,13 +6841,30 @@
         const mb = document.getElementById('maintWorkOrderModalBody');
         if (mb) mb.scrollTop = 0;
         try {
-          modal.querySelector('.maint-workorder-fullmodal__head .btn')?.focus();
+          modal.querySelector('.maint-workorder-fullmodal__head .erp-qb-sheet-close')?.focus();
         } catch (_) {}
       });
     }
 
     function closeMaintWorkOrderModal() {
       const modal = document.getElementById('maintWorkOrderModal');
+      const shell = modal?.querySelector('.maint-workorder-fullmodal__shell');
+      if (shell && typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
+      }
+      if (shell) {
+        shell.classList.remove('maint-wo-shell--max');
+        const mx = document.getElementById('maintWoMaxBtn');
+        const fs = document.getElementById('maintWoFsBtn');
+        if (mx) {
+          mx.textContent = 'Maximize';
+          mx.setAttribute('aria-pressed', 'false');
+        }
+        if (fs) {
+          fs.textContent = 'Full screen';
+          fs.setAttribute('aria-pressed', 'false');
+        }
+      }
       if (modal && modal.classList.contains('on')) {
         modal.classList.remove('on');
         modal.setAttribute('aria-hidden', 'true');
@@ -6915,6 +6872,89 @@
       dockMaintWorkOrderFormToRecordPanel();
       window.__maintWoModalOpen = false;
       document.body.classList.remove('maint-wo-modal-open');
+    }
+
+    function maintWoToggleMaximize() {
+      const shell = document.querySelector('#maintWorkOrderModal .maint-workorder-fullmodal__shell');
+      const btn = document.getElementById('maintWoMaxBtn');
+      if (!shell) return;
+      const on = !shell.classList.contains('maint-wo-shell--max');
+      if (on && typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
+      }
+      shell.classList.toggle('maint-wo-shell--max', on);
+      if (btn) {
+        btn.textContent = on ? 'Restore' : 'Maximize';
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      const fs = document.getElementById('maintWoFsBtn');
+      if (fs && on) {
+        fs.textContent = 'Full screen';
+        fs.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    function maintWoToggleFullscreen() {
+      const modal = document.getElementById('maintWorkOrderModal');
+      const shell = modal?.querySelector('.maint-workorder-fullmodal__shell');
+      const fsBtn = document.getElementById('maintWoFsBtn');
+      if (!modal || !shell || !modal.classList.contains('on')) return;
+      if (typeof erpGetFullscreenElement !== 'function' || typeof erpRequestElementFullscreen !== 'function') return;
+      if (erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
+        if (fsBtn) {
+          fsBtn.textContent = 'Full screen';
+          fsBtn.setAttribute('aria-pressed', 'false');
+        }
+        return;
+      }
+      shell.classList.remove('maint-wo-shell--max');
+      const mx = document.getElementById('maintWoMaxBtn');
+      if (mx) {
+        mx.textContent = 'Maximize';
+        mx.setAttribute('aria-pressed', 'false');
+      }
+      void erpRequestElementFullscreen(shell).catch(() => {});
+      if (fsBtn) {
+        fsBtn.textContent = 'Exit full screen';
+        fsBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+
+    function erpMaintDialogShell(bgId) {
+      const bg = document.getElementById(bgId);
+      return bg ? bg.querySelector('.maint-modal.erp-qb-dialog') : null;
+    }
+
+    function erpMaintDialogToggleMaximize(bgId) {
+      const shell = erpMaintDialogShell(bgId);
+      if (!shell) return;
+      const on = !shell.classList.contains('erp-qb-dialog--viewport-max');
+      if (on && typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
+      }
+      shell.classList.toggle('erp-qb-dialog--viewport-max', on);
+      shell.classList.remove('erp-qb-dialog--viewport-fs');
+    }
+
+    function erpMaintDialogToggleFullscreen(bgId) {
+      const shell = erpMaintDialogShell(bgId);
+      if (!shell || typeof erpRequestElementFullscreen !== 'function') return;
+      if (typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
+        return;
+      }
+      shell.classList.remove('erp-qb-dialog--viewport-max');
+      void erpRequestElementFullscreen(shell).catch(() => {});
+    }
+
+    function erpResetQbDialogViewport(bgId) {
+      const shell = erpMaintDialogShell(bgId);
+      if (!shell) return;
+      if (typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
+        void erpExitDocumentFullscreen().catch(() => {});
+      }
+      shell.classList.remove('erp-qb-dialog--viewport-max', 'erp-qb-dialog--viewport-fs');
     }
 
     function renderMaintLocationBoard() {
@@ -7169,7 +7209,11 @@
       const vin = v && v.vin ? String(v.vin) : '—';
       const plate = v && v.licensePlate ? String(v.licensePlate) : '—';
       const odoInp = gv('serviceMileageInput');
-      const odoTxt = (document.getElementById('maintVehicleKpiOdo')?.textContent || '')
+      const odoTxt = (
+        document.getElementById('maintVehicleKpiOdo')?.textContent ||
+        document.getElementById('unitMileageBox')?.textContent ||
+        ''
+      )
         .replace(/\s*mi\s*$/i, '')
         .trim();
       const odo = odoInp || odoTxt;
@@ -7178,7 +7222,11 @@
       if (v != null && v.fuelPercent != null && Number.isFinite(Number(v.fuelPercent))) {
         fuelLevel = `${Math.round(Number(v.fuelPercent))}%`;
       } else {
-        const kf = (document.getElementById('maintVehicleKpiFuel')?.textContent || '').trim();
+        const kf = (
+          document.getElementById('maintVehicleKpiFuel')?.textContent ||
+          document.getElementById('unitFuelBox')?.textContent ||
+          ''
+        ).trim();
         if (kf) fuelLevel = kf;
       }
       const rts = document.getElementById('recordTypeSelect');
@@ -7222,10 +7270,15 @@
       }
       const invRaw = gv('costInput');
       const invoiceTotal = invRaw === '' ? NaN : Number(invRaw);
-      const hdrSel = document.getElementById('maintAssetHeaderStatusSelect');
+      const hdrSel =
+        document.getElementById('maintAssetHeaderStatusSelect') || document.getElementById('assetStatusSelect');
       let operationalStatus = '';
       if (hdrSel && hdrSel.selectedOptions && hdrSel.selectedOptions[0]) {
         operationalStatus = String(hdrSel.selectedOptions[0].textContent || '').trim();
+      }
+      if (!operationalStatus && selectedUnit) {
+        const st = erp.assetStatusByUnit?.[selectedUnit];
+        operationalStatus = operationalStatusLabelForValue(st?.status || '') || '';
       }
       const fleetType = typeof activeAssetCategory !== 'undefined' ? String(activeAssetCategory || '').trim() : '';
       const driverNm =
@@ -7292,7 +7345,7 @@
       } catch (e) {
         console.warn('Standalone WO print failed', e);
         maintPreparePrintWorkOrderOnly();
-        const el = document.getElementById('maintWoBanner');
+        const el = document.getElementById('maintWoBox1Head');
         if (el) {
           try {
             el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -7398,7 +7451,7 @@
     }
 
     function syncMaintWorkOrderHeader() {
-      const ban = document.getElementById('maintWoBanner');
+      const ban = document.getElementById('maintWoBox1Head');
       const unitLine = document.getElementById('maintWoBannerUnit');
       const vWrap = document.getElementById('maintVendorInvFieldWrap');
       const woWrap = document.getElementById('maintWoNumberFieldWrap');
@@ -7429,7 +7482,7 @@
       if (repairLoc === 'in-house') {
         vWrap.classList.add('hidden');
         woWrap.classList.remove('hidden');
-        if (woLab) woLab.textContent = 'Shop WO # (internal)';
+        if (woLab) woLab.textContent = 'Internal WO #';
         if (vLab) vLab.textContent = 'Vendor invoice #';
         if (woInp) {
           woInp.placeholder = 'Assigned on save if empty';
@@ -8129,6 +8182,16 @@
           ];
       return rows;
     }
+
+    function operationalStatusLabelForValue(val) {
+      const v = String(val || '').trim();
+      if (!v) return '';
+      for (const r of operationalCatalogRows()) {
+        const raw = typeof r === 'object' && r ? r : { value: String(r), label: String(r) };
+        if (String(raw.value || '').trim() === v) return String(raw.label || raw.value || '').trim() || v;
+      }
+      return v;
+    }
     function cacheItems() { return erp.qboCache?.items || []; }
     function cacheAccounts() { return erp.qboCache?.accounts || []; }
     function cacheBankAccounts() { return erp.qboCache?.accountsBank || []; }
@@ -8340,7 +8403,7 @@
             mt('record', 'Create work order') +
               mt('fleet', 'Fleet table') +
               mt('rm', 'R&amp;M status') +
-              mt('shop-loc', 'Shop / location')
+              mt('shop-loc', 'Service / location')
           ) +
           erpSbGroup(
             'maintenance',
@@ -8920,7 +8983,7 @@
       syncErpDedicatedModalChrome();
     }
 
-    /** +New → Maintenance: optional preset shapes record type, shop location, and catalog service line. */
+    /** +New → Maintenance: optional preset shapes record type, service location type, and catalog service line. */
     function maintApplyNewWorkOrderPreset(preset) {
       const p = String(preset || '').trim();
       if (!p) return;
@@ -9125,6 +9188,7 @@
         window.__erpDedicatedModalKind === 'billpay'
       ) {
         syncErpDedicatedModalChrome();
+        if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('billpay');
         return;
       }
       if (dedModal && !dedModal.classList.contains('hidden')) {
@@ -9151,6 +9215,7 @@
           : 'accounting-bill-pay';
       }
       syncErpDedicatedModalChrome();
+      if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('billpay');
       requestAnimationFrame(() => {
         if (window.__accountingDriverBillPayMode && typeof loadAccountingOpenBills === 'function') {
           loadAccountingOpenBills();
@@ -9350,6 +9415,9 @@
           if (!modal || modal.classList.contains('hidden')) return;
           const shell = modal.querySelector('.erp-dedicated-form-modal__shell');
           if (shell && erpGetFullscreenElement() === shell) {
+            ev.preventDefault();
+            void erpExitDocumentFullscreen().catch(() => {});
+            if (typeof erpSyncDedicatedModalFullscreenUi === 'function') erpSyncDedicatedModalFullscreenUi();
             return;
           }
           erpCloseDedicatedFormModal();
@@ -9563,8 +9631,39 @@
       const fromHash = !!opts.fromHash;
       erpCloseNewMenu();
       const dedModal = document.getElementById('erpDedicatedFormModal');
-      if (dedModal && !dedModal.classList.contains('hidden')) {
-        erpCloseDedicatedFormModal({ force: true });
+      const dedOpen = dedModal && !dedModal.classList.contains('hidden');
+      if (dedOpen) {
+        if (mode === 'fuel-expense') {
+          const want = opts.fuelVariant === 'fuel-expense' ? 'fuel-expense' : 'fast-entry';
+          if (window.__erpDedicatedModalKind === 'fuel' && (window.__erpFuelUiVariant || '') === want) {
+            syncErpDedicatedModalChrome();
+            if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('fuel');
+            return;
+          }
+        } else if (mode !== 'fuel-expense') {
+          const presetMapEarly = {
+            'maintenance-expense': 'maintenance-expense',
+            'maintenance-bill': 'maintenance-bill',
+            'fuel-bill': 'fuel-bill',
+            'vendor-driver-bill': 'vendor-driver-bill',
+            'repair-expense': 'repair-expense',
+            'repair-bill': 'repair-bill',
+            'driver-bill': 'driver-bill',
+            'vendor-bill': 'vendor-bill',
+            'check-expense': 'check-expense',
+            'vendor-credit-bill': 'vendor-credit-bill',
+            'item-receipt-expense': 'item-receipt-expense',
+            'purchase-order-bill': 'purchase-order-bill'
+          };
+          const wantPreset = presetMapEarly[mode] || '';
+          if (window.__erpDedicatedModalKind === 'ap' && (window.__erpDedicatedApPreset || '') === wantPreset) {
+            syncErpDedicatedModalChrome();
+            requestAnimationFrame(() => erpApplyApDedicatedUiAfterOpen(mode));
+            if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('ap');
+            return;
+          }
+        }
+        if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
       }
       const mount = document.getElementById('erpDedicatedFormModalBody');
       const modal = document.getElementById('erpDedicatedFormModal');
@@ -9597,6 +9696,7 @@
         erpDedicatedModalBindEscape(true);
         if (!fromHash) window.location.hash = 'accounting-fuel-expense-new';
         syncErpDedicatedModalChrome();
+        if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('fuel');
         return;
       }
 
@@ -9683,6 +9783,7 @@
       refreshApDocTotal();
       requestAnimationFrame(() => erpApplyApDedicatedUiAfterOpen(mode));
       syncErpDedicatedModalChrome();
+      if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('ap');
     }
 
     function erpNewPlaceholder(label) {
@@ -10023,37 +10124,11 @@
     }
 
     function openAccountingTab(id, btn) {
-      if (id === 'acct-bill-pay') {
-        const dm = document.getElementById('erpDedicatedFormModal');
-        if (
-          dm &&
-          !dm.classList.contains('hidden') &&
-          window.__erpDedicatedModalKind === 'billpay' &&
-          typeof erpCloseDedicatedFormModal === 'function'
-        ) {
-          erpCloseDedicatedFormModal({ force: true });
-        }
-      }
       const effectiveId = id === 'acct-bill-history' ? 'acct-expense-history' : id;
       const acctPanel = document.getElementById(effectiveId);
       if (!acctPanel) {
         console.warn('openAccountingTab: missing #' + effectiveId);
         return;
-      }
-      if (window.__erpDedicatedModalKind === 'billpay' && id !== 'acct-bill-pay') {
-        erpCloseDedicatedFormModal({ force: true });
-      }
-      if (window.__erpDedicatedModalKind === 'ap' && id !== 'acct-transactions') {
-        erpCloseDedicatedFormModal({ force: true });
-      }
-      if (window.__erpDedicatedModalKind === 'fuel' && id !== 'acct-fuel-expense') {
-        erpCloseDedicatedFormModal({ force: true });
-      }
-      if (id === 'acct-transactions' && window.__erpDedicatedModalKind === 'ap') {
-        erpCloseDedicatedFormModal({ force: true });
-      }
-      if (id === 'acct-fuel-expense' && window.__erpDedicatedModalKind === 'fuel') {
-        erpCloseDedicatedFormModal({ force: true });
       }
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
       acctPanel.classList.remove('hidden');
@@ -15217,6 +15292,7 @@
     }
 
     function closeMaintCatModal() {
+      erpResetQbDialogViewport('maintCatModal');
       document.getElementById('maintCatModal').classList.remove('on');
       pendingMaintFlow = null;
       const titleEl = document.getElementById('maintModalFlowTitle');
@@ -15228,6 +15304,7 @@
 
     function completeMaintCategory(cat) {
       const flow = pendingMaintFlow;
+      erpResetQbDialogViewport('maintCatModal');
       document.getElementById('maintCatModal').classList.remove('on');
       pendingMaintFlow = null;
       if (!flow) return;
@@ -15507,10 +15584,12 @@
     }
 
     function closeShopQueueModal() {
+      erpResetQbDialogViewport('shopQueueAddModal');
       document.getElementById('shopQueueAddModal').classList.remove('on');
     }
 
     function closeShopDelayModal() {
+      erpResetQbDialogViewport('shopDelayModal');
       document.getElementById('shopDelayModal').classList.remove('on');
       pendingShopPatch = null;
       renderShopQueues();
@@ -15522,6 +15601,7 @@
       const p = pendingShopPatch;
       if (!p) return;
       pendingShopPatch = null;
+      erpResetQbDialogViewport('shopDelayModal');
       document.getElementById('shopDelayModal').classList.remove('on');
       document.getElementById('sqDelayNote').value = '';
       await patchShopQueueEntry(p.id, { ...p.body, delayReasonCode: code, delayReasonNote: note });
@@ -19531,7 +19611,6 @@
         const body = document.getElementById('maintAssetStatusPanelBody');
         if (body) body.innerHTML = '';
         closeMaintAssetStatusPanel();
-        document.getElementById('maintUnitSummaryStrip')?.classList.add('hidden');
         syncMaintWorkOrderHeader();
         renderRepairLocationChips();
         renderMaintAsideWoSummary();
@@ -19578,22 +19657,23 @@
       const cardEl = document.getElementById('maintAssetHeaderCard');
       if (cardEl) {
         cardEl.innerHTML = `
-          <div class="maint-asset-header-card__main">
-            <div class="maint-asset-header-card__row">
-              <div class="maint-asset-header-card__unit">${escapeHtml(v.name)}</div>
-              <div class="maint-asset-header-card__ymm">${escapeHtml(ymm)}</div>
+          <div class="maint-asset-header-card__ro">
+            <div class="maint-asset-header-card__ro-primary">
+              <div class="maint-asset-header-card__ymm-line">${escapeHtml(ymm)}</div>
+              <div class="maint-asset-header-card__ids maint-asset-header-card__ids--stack">
+                <span><span class="maint-asset-header-card__id-k">VIN</span> ${escapeHtml(vin)}</span>
+                <span><span class="maint-asset-header-card__id-k">Plate</span> ${escapeHtml(plate)}</span>
+              </div>
             </div>
-            <div class="maint-asset-header-card__row maint-asset-header-card__row--opquick">
-              <span class="qb-l" style="margin:0;align-self:center">Operational status</span>
-              <select id="maintAssetHeaderStatusSelect" class="qb-in maint-field" style="max-width:min(100%,18rem)">${opOpts}</select>
-              <button type="button" class="btn btn--small" onclick="saveAssetStatusFromHeader()">Save</button>
-              <button type="button" class="btn btn--small btn--ghost" onclick="openMaintAssetStatusPanel()">Note / history</button>
+            <div class="maint-asset-header-card__ro-stats maint-asset-header-card__ro-kpis" aria-label="Vehicle summary">
+              <div class="unit-box"><div class="k">Mileage</div><div class="v" id="unitMileageBox">N/A</div></div>
+              <div class="unit-box"><div class="k">Fuel</div><div class="v" id="unitFuelBox">N/A</div></div>
+              <div class="unit-box"><div class="k">Past due</div><div class="v" id="unitPastDueBox">0</div></div>
+              <div class="unit-box"><div class="k">Due soon</div><div class="v" id="unitDueSoonBox">0</div></div>
             </div>
-            <div class="maint-asset-header-card__ids">
-              <span>VIN ${escapeHtml(vin)}</span>
-              <span>Plate ${escapeHtml(plate)}</span>
-              <span>Odo ${escapeHtml(odoStr)}</span>
-            </div>
+          </div>
+          <div class="maint-asset-header-card__ro-actions">
+            <button type="button" class="btn btn--small btn--ghost" onclick="openMaintAssetStatusPanel()">Operational status…</button>
           </div>`;
       }
 
@@ -19610,13 +19690,17 @@
             </div>
             <div><button type="button" onclick="saveAssetStatus()">Save status</button></div>
           </div>
-          <input id="assetStatusNote" class="qb-in maint-field" placeholder="Optional note (reason, ETA, shop name)" value="${escapeHtml(st.note || '')}" style="margin-top:8px" />
+          <input id="assetStatusNote" class="qb-in maint-field" placeholder="Optional note (reason, ETA, service location)" value="${escapeHtml(st.note || '')}" style="margin-top:8px" />
           ${st.updatedAt ? `<div class="mini-note" style="margin-top:4px">Updated ${escapeHtml(new Date(st.updatedAt).toLocaleString())}${st.updatedBy ? ` · ${escapeHtml(st.updatedBy)}` : ''}</div>` : ''}
         </div>
         <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border)">
-          <span class="qb-l">Fleet roster</span>
-          <p class="mini-note" style="margin:4px 0 8px">Retired: hidden from this list, board, fuel pickers, and maint. alerts. History and imports for that unit name stay.</p>
-          <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px">
+          <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Fleet roster
+            <span class="erp-help-tip">
+              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet roster">?</button>
+              <span class="erp-help-tip__panel" role="tooltip">Retired units are hidden from this list, the board, fuel pickers, and maintenance alerts. History and imports for that unit name remain.</span>
+            </span>
+          </span>
+          <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px;margin-top:4px">
             <select id="assetFleetActiveSelect" class="qb-in maint-field">
               <option value="active" ${erp.assetActiveByUnit?.[v.name] === false ? '' : 'selected'}>Active — show in lists</option>
               <option value="retired" ${erp.assetActiveByUnit?.[v.name] === false ? 'selected' : ''}>Retired — hide from lists</option>
@@ -19629,7 +19713,6 @@
       document.getElementById('selectedUnitInfo').innerHTML = '';
       loadPartsReferenceHint();
 
-      document.getElementById('maintUnitSummaryStrip')?.classList.remove('hidden');
       document.getElementById('unitMileageBox').textContent =
         displayMi != null ? Math.round(displayMi).toLocaleString() : 'N/A';
       const latestFuel = latestFuelPurchaseForUnit(v.name);
@@ -20627,8 +20710,12 @@
 
     async function saveAssetStatusFromHeader() {
       if (!selectedUnit) return;
-      const sel = document.getElementById('maintAssetHeaderStatusSelect');
-      if (!sel) return;
+      const sel =
+        document.getElementById('maintAssetHeaderStatusSelect') || document.getElementById('assetStatusSelect');
+      if (!sel) {
+        openMaintAssetStatusPanel();
+        return;
+      }
       try {
         await j('/api/maintenance/asset-status', {
           method: 'POST',
@@ -21184,7 +21271,7 @@
       }
       const repairLocDetail = String(document.getElementById('repairLocationSearch')?.value || '').trim();
       if (!repairLocDetail) {
-        erpNotify('Enter shop / location detail (yard, vendor site, bay, or notes).', 'warning');
+        erpNotify('Enter service location detail (yard, vendor site, bay, or notes).', 'warning');
         document.getElementById('repairLocationSearch')?.focus();
         return false;
       }
@@ -24615,7 +24702,7 @@
           'Unit',
           'Load / invoice #',
           'Vendor invoice #',
-          'Shop / internal WO #',
+          'Internal WO #',
           'Vendor QBO ID',
           'Service date',
           'Due date',

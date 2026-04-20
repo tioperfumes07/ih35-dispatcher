@@ -2786,6 +2786,25 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-field-cell select.maint-fie
   max-width: 100%;
 }
 
+/* WO form: uniform control height */
+body.erp-maintenance #maintWorkOrderFormMount input.qb-in.maint-field:not([type='checkbox']):not([type='radio']),
+body.erp-maintenance #maintWorkOrderFormMount select.maint-field {
+  height: 30px;
+  min-height: 30px;
+  box-sizing: border-box;
+  line-height: 1.2;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+body.erp-maintenance #maintWorkOrderFormMount input.maint-field--date {
+  min-height: 30px;
+}
+body.erp-maintenance #maintCard1HeaderSlot select.maint-field {
+  height: 30px;
+  min-height: 30px;
+  box-sizing: border-box;
+}
+
 body.erp-maintenance #maintWorkOrderFormMount .maint-qb-lines-scroll {
   max-height: min(38vh, 360px);
   overflow-y: auto;

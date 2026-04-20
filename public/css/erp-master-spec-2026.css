@@ -2209,9 +2209,9 @@ body.banking-page #authBanner.erp-auth-banner {
   justify-self: center;
   align-self: start;
   width: min(860px, 100%);
-  min-width: 320px;
+  min-width: min(520px, 100%);
   max-width: min(98vw, 1200px);
-  min-height: 240px;
+  min-height: 400px;
   height: min(78vh, 720px);
   max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 48px);
   display: block;
@@ -2282,21 +2282,75 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-dedicated-form-modal__shell--maximized {
   position: fixed !important;
   z-index: 2;
-  left: max(0px, env(safe-area-inset-left, 0px)) !important;
-  right: max(0px, env(safe-area-inset-right, 0px)) !important;
-  top: max(0px, env(safe-area-inset-top, 0px)) !important;
-  bottom: max(0px, env(safe-area-inset-bottom, 0px)) !important;
-  width: auto !important;
-  height: auto !important;
-  max-width: none !important;
-  max-height: none !important;
+  left: 50% !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 95vw) !important;
+  height: min(90vh, 95vh) !important;
+  max-width: 95vw !important;
+  max-height: 95vh !important;
   margin: 0 !important;
-  border-radius: 0;
+  border-radius: 12px;
   resize: none;
 }
 .erp-dedicated-form-modal__shell--maximized .erp-dedicated-form-modal__inner {
   height: 100%;
   min-height: 0;
+}
+
+body.erp-maintenance .erp-qb-dialog__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  min-width: 0;
+}
+body.erp-maintenance .erp-qb-dialog__head .erp-qb-dialog__title {
+  flex: 1 1 200px;
+  min-width: 0;
+  margin: 0;
+}
+body.erp-maintenance .erp-qb-dialog__head-viewport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+body.erp-maintenance .maint-workorder-fullmodal__head-viewport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+body.erp-maintenance .maint-workorder-fullmodal__shell.maint-wo-shell--max {
+  width: min(90vw, 95vw) !important;
+  height: min(90vh, 95vh) !important;
+  max-width: 95vw !important;
+  max-height: 95vh !important;
+}
+body.erp-maintenance .maint-workorder-fullmodal__shell:fullscreen,
+body.erp-maintenance .maint-workorder-fullmodal__shell:-webkit-full-screen {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
+}
+body.erp-maintenance .maint-modal.erp-qb-dialog.erp-qb-dialog--viewport-max {
+  width: min(90vw, 95vw) !important;
+  max-width: min(95vw, 1200px) !important;
+  height: min(90vh, 95vh) !important;
+  max-height: 95vh !important;
+}
+body.erp-maintenance .maint-modal.erp-qb-dialog:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
 }
 
 @media (max-width: 900px) {
