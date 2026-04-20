@@ -23036,7 +23036,10 @@
         const sess = window.__integrityDashSessionDismiss;
         const rows = rowsAll.filter(a => !sess.has(String(a.id || '')));
         const body = document.getElementById('repIntegrityBody');
-        if (!body) return;
+        if (!body) {
+          syncIntegrityCatTabsFromSelects();
+          return;
+        }
         if (!rows.length) {
           body.innerHTML =
             '<p class="mini-note" style="margin:0">No alerts for these filters (session-dismissed items stay hidden until you refresh the page).</p>';

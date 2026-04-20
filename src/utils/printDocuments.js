@@ -284,7 +284,8 @@
       .map(f => {
         const v = f && f.value != null ? String(f.value) : '';
         const lg = f && f.large ? ' field-value large' : ' field-value';
-        return `<div class="field"><span class="field-label">${esc(f.label || '')}</span><span class="${lg.trim()}">${esc(
+        const mono = f && f.mono ? ' mono' : '';
+        return `<div class="field"><span class="field-label">${esc(f.label || '')}</span><span class="${lg.trim()}${mono}">${esc(
           v
         )}</span></div>`;
       })
@@ -1116,7 +1117,7 @@
     const paidDisp = Number.isFinite(Number(d.totalPaid)) ? money(Number(d.totalPaid)) : pick(d.amountDisplay, '');
     const g1 = buildFieldGrid(
       [
-        { label: 'Payment #', value: pick(d.paymentNumber, d.checkNum, ''), large: false },
+        { label: 'Payment #', value: pick(d.paymentNumber, d.checkNum, ''), large: false, mono: true },
         { label: 'Payment date', value: d.paymentDate || '' },
         { label: 'Vendor', value: d.vendor || '' },
         { label: 'Total paid', value: paidDisp, large: true }
@@ -1129,7 +1130,7 @@
         [
           { label: 'Payment method', value: d.paymentMethod || '' },
           { label: 'Account', value: d.account || d.payFromAccount || '' },
-          { label: 'Check #', value: d.checkNumber || d.checkNum || '' },
+          { label: 'Check #', value: d.checkNumber || d.checkNum || '', mono: true },
           { label: 'QBO status', value: d.qboStatus ? String(d.qboStatus) : '' }
         ],
         4
