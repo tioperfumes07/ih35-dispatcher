@@ -1004,6 +1004,8 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
   border-bottom: 1px solid var(--erp-sidebar-group-edge);
   font-family: inherit;
   text-align: left;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-module-sidebar .erp-sb-group__head:hover {
@@ -1070,6 +1072,8 @@ body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group__head::-webkit-details-marker {
