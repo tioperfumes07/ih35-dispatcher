@@ -81,6 +81,16 @@ const TEAM_ACTIVITY_CRITICAL_DAYS = Math.min(120, Math.max(TEAM_ACTIVITY_WARN_DA
 
 const __lastSeenThrottle = new Map();
 
+/** When `IH35_SMOKE_GATE=1` (set by `scripts/qa-with-server.mjs` for the ephemeral listener only), these GETs match `scripts/system-smoke.mjs` and skip session auth so `npm run qa:isolated` stays green when ERP login is required. */
+const SMOKE_GATE_API_PATHS = new Set([
+  '/api/qbo/status',
+  '/api/qbo/sync-alerts',
+  '/api/maintenance/dashboard',
+  '/api/maintenance/records',
+  '/api/board',
+  '/api/maintenance/service-types'
+]);
+
 function erpWriteTokenFromRequest(req) {
   const a = req.headers['x-ih35-erp-secret'];
   const b = req.headers['x-erp-write-secret'];
@@ -126,6 +136,13 @@ app.use((req, res, next) => {
     pathOnly === '/api/auth/login' ||
     pathOnly === '/api/auth/status' ||
     pathOnly === '/api/auth/bootstrap-first-user'
+  ) {
+    return next();
+  }
+  if (
+    process.env.IH35_SMOKE_GATE === '1' &&
+    req.method === 'GET' &&
+    SMOKE_GATE_API_PATHS.has(pathOnly)
   ) {
     return next();
   }
@@ -8450,6 +8467,7 @@ app.get('/', (_req, res) => {
 /**
  * Unknown /api/* paths — res.json sets Content-Type application/json so fetch/XHR clients do not get HTML error pages.
  * scripts/system-smoke.mjs GET /api/__smoke_not_found__ (auth-exempt in middleware above) expects 404 and JSON { error, path }; keep this contract if you change the handler.
+ * GET /api/pdf/__smoke__ (routes/pdf.mjs, auth-exempt) is the minimal PDF probe for the same smoke run — do not remove without updating system-smoke.mjs.
  */
 app.use((req, res, next) => {
   if (!req.originalUrl.startsWith('/api/')) return next();

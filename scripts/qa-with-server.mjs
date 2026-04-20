@@ -6,6 +6,7 @@
  *
  * Run: `npm run qa:isolated`
  *
+ * Sets **`IH35_SMOKE_GATE=1`** on the child **`server.js`** so HTTP smoke passes **`/api/*`** GETs used by **`system-smoke.mjs`** even when ERP login is required (users in **`data/app-users.json`**). Do not set **`IH35_SMOKE_GATE`** on long-lived production listeners unless you intend to relax auth for those read-only probes.
  * When **`CI=true`** (e.g. GitHub Actions), passes **`SMOKE_QUIET=1`** to **`system-smoke.mjs`** so the success footer line is omitted.
  * **`SIGINT`** / **`SIGTERM`**: **`SIGTERM`** the child **`server.js`**, any in-flight **`rule0:check`** / **`smoke`** Node child, then **`process.exit`** (**130** / **143**) so the parent does not hang (installing signal handlers disables the default Ctrl+C exit).
  */
@@ -75,7 +76,7 @@ function waitUntilHealthy(server, base) {
 async function main() {
   const port = await getFreePort();
   const base = `http://127.0.0.1:${port}`;
-  const envPort = { PORT: String(port) };
+  const envPort = { PORT: String(port), IH35_SMOKE_GATE: '1' };
 
   const server = spawn('node', ['server.js'], {
     cwd: root,

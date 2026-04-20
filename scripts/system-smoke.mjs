@@ -18,7 +18,7 @@ import { ruleZeroForbiddenHits } from './rule-zero-agent-b.mjs';
 
 const base = String(process.env.SMOKE_BASE || `http://localhost:${process.env.PORT || 3400}`).replace(/\/$/, '');
 
-/** Must return HTTP 2xx with a JSON body that looks healthy. */
+/** Must return HTTP 2xx with a JSON body that looks healthy. Keep paths in sync with `SMOKE_GATE_API_PATHS` in `server.js` (used when `IH35_SMOKE_GATE=1` from `qa-with-server.mjs`). */
 const CRITICAL = [
   ['GET', '/api/health'],
   ['GET', '/api/qbo/status'],
