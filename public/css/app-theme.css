@@ -2974,6 +2974,8 @@ body.erp-maintenance .maint-cost-table__totalrow td {
 body.erp-maintenance .maint-cost-table__total-label {
   text-align: right;
   color: var(--color-text-body);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .maint-form-actions {
@@ -3008,6 +3010,7 @@ body.erp-maintenance .maint-form-actions__meta {
   gap: 8px 14px;
   min-width: 0;
   min-height: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .maint-form-grid {
