@@ -14270,12 +14270,19 @@
     }
 
     function fuelExpenseDisplayDateHtml(r) {
+      const disp = v => {
+        const s = String(v == null ? '' : v).trim();
+        if (!s) return '';
+        if (typeof erpIsoToDisplayShort === 'function') return escapeHtml(erpIsoToDisplayShort(v));
+        const t = s;
+        if (/^\d{4}-\d{2}-\d{2}/.test(t)) return escapeHtml(t.slice(0, 10));
+        if (t.length >= 10) return escapeHtml(t.slice(0, 10));
+        return escapeHtml(t);
+      };
       const t = String(r?.txnDate || '').trim();
-      if (/^\d{4}-\d{2}-\d{2}/.test(t)) return escapeHtml(t.slice(0, 10));
-      if (t.length >= 10) return escapeHtml(t.slice(0, 10));
-      if (t) return escapeHtml(t);
+      if (t) return disp(r.txnDate) || '—';
       const c = String(r?.createdAt || '').trim();
-      if (c.length >= 10) return escapeHtml(c.slice(0, 10));
+      if (c) return disp(r.createdAt) || '—';
       return '—';
     }
 
@@ -20493,7 +20500,7 @@
             .map(b => {
               const undone = !!b.undoneAt;
               return `<tr>
-              <td>${escapeHtml(b.importConfirmedAt || '')}</td>
+              <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(b.importConfirmedAt) : String(b.importConfirmedAt || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(b.kind || '')}</td>
               <td style="word-break:break-all">${escapeHtml(b.importBatchId || '')}</td>
               <td>${escapeHtml(String(b.imported ?? ''))}</td>
@@ -20520,7 +20527,7 @@
             .map(b => {
               const undone = !!b.undoneAt;
               return `<tr>
-              <td>${escapeHtml(b.importConfirmedAt || '')}</td>
+              <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(b.importConfirmedAt) : String(b.importConfirmedAt || '').slice(0, 10) || '—')}</td>
               <td style="word-break:break-all">${escapeHtml(b.importBatchId || '')}</td>
               <td>${escapeHtml(String(b.savedFuel ?? ''))}</td>
               <td>${escapeHtml(String(b.savedRelay ?? ''))}</td>
@@ -23721,6 +23728,21 @@
       });
     }
 
+    function expHistDateCell(r) {
+      const iso = String(r.sortDate || '').trim();
+      if (iso.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(iso)) {
+        if (typeof erpIsoToDisplayShort === 'function') return escapeHtml(erpIsoToDisplayShort(iso));
+        return escapeHtml(iso.slice(0, 10));
+      }
+      const d = String(r.date || '');
+      if (d === '\u2014' || d === '—') return d;
+      if (d.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(d)) {
+        if (typeof erpIsoToDisplayShort === 'function') return escapeHtml(erpIsoToDisplayShort(d.slice(0, 10)));
+        return escapeHtml(d.slice(0, 10));
+      }
+      return escapeHtml(d || '—');
+    }
+
     function renderExpenseHistory() {
       const tb = document.getElementById('expHistBody');
       const sumEl = document.getElementById('expHistSummary');
@@ -23781,7 +23803,7 @@
               ? `<td><a href="#" onclick="erpFilterExpenseHistoryBySeries(${JSON.stringify(String(r.recurringSeriesId))});return false;">${escapeHtml(String(r.seriesDocLabel || 'Series'))} series</a></td>`
               : '<td>—</td>';
           return `<tr>
-            <td>${escapeHtml(r.date)}</td>
+            <td>${expHistDateCell(r)}</td>
             <td>${escapeHtml(r.source)}</td>
             <td>${escapeHtml(r.doc)}</td>
             <td>${escapeHtml(r.txnType)}</td>

@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';
 import { formatIsoDateShortPlain } from './lib/format-iso-date-short-plain.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
-import { ensureAppDatabaseObjects } from './lib/ensure-app-database-objects.mjs';
+import { ensureAppDatabaseObjects, APP_SUPPORT_TABLE_NAMES } from './lib/ensure-app-database-objects.mjs';
 import {
   ensureMaintenanceServiceCatalog,
   MAINTENANCE_SERVICE_CATALOG_SEEDS
@@ -4751,7 +4751,20 @@ app.delete('/api/maintenance/shop-queue/:id', (req, res) => {
 app.get('/api/health/db', async (_req, res) => {
   try {
     const { rows } = await dbQuery('SELECT 1 AS ok, current_database() AS database');
-    res.json({ ok: true, database: rows[0].database });
+    const payload = { ok: true, database: rows[0].database };
+    try {
+      const names = APP_SUPPORT_TABLE_NAMES;
+      const { rows: tr } = await dbQuery(
+        `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+        [names]
+      );
+      const have = new Set(tr.map((r) => r.table_name));
+      payload.appSupportTables = Object.fromEntries(names.map((n) => [n, have.has(n)]));
+      payload.appSupportTablesOk = names.every((n) => have.has(n));
+    } catch (e2) {
+      payload.appSupportTablesError = e2?.message || String(e2);
+    }
+    res.json(payload);
   } catch (error) {
     const msg = error?.message || String(error);
     if (msg.includes('DATABASE_URL is not set')) {
