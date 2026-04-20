@@ -39,6 +39,8 @@ If the server is not on **3400**, set **`SMOKE_BASE`** for smoke (e.g. `SMOKE_BA
 
 **CI:** [`.github/workflows/rule0-check.yml`](.github/workflows/rule0-check.yml) runs **`npm test`** (`rule0:check`) on push and pull requests. It does **not** start the server; run **`npm run qa:automated`** locally before release for Rule 0 + smoke.
 
+**Parallel agents:** See [docs/AGENT_COORDINATION.md](docs/AGENT_COORDINATION.md) for who owns which paths (e.g. ERP master redesign vs maintenance behavior vs server) so PRs do not overlap.
+
 ## Useful endpoints
 
 - `GET /api/health` — Samsara probe + flags (`hasDatabaseUrl`, `hasPcmilerKey`, QBO config, …)
