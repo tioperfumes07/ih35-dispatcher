@@ -9,6 +9,22 @@ import { fetchSamsaraVehiclesNormalized } from '../lib/samsara-client.mjs';
 import { syncSingleLoadDocumentToQbo } from '../lib/qbo-attachments.mjs';
 
 const router = Router();
+router.get("/", (_req, res) => {
+  res.json({
+    ok: true,
+    name: "IH35 TMS API",
+    endpoints: [
+      "/api/tms/meta",
+      "/api/tms/fleet/samsara-vehicles",
+      "/api/tms/meta/next-load-number",
+      "/api/tms/customers",
+      "/api/tms/drivers",
+      "/api/tms/trucks",
+      "/api/tms/trailers",
+      "/api/tms/loads"
+    ]
+  });
+});
 
 const LOAD_DOCS_REL = 'load_documents';
 const LOAD_DOC_TYPES = new Set(['rate_confirmation', 'delivery', 'other']);
