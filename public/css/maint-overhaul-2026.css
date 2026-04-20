@@ -12,19 +12,7 @@ body.erp-maintenance #section-maintenance > .maint-kpi-strip {
   margin-bottom: 12px;
 }
 
-/* Workspace snapshot — KPI cards wrap instead of clipping (overrides 4-col grid) */
-body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  width: 100%;
-}
-
-body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card {
-  flex: 1;
-  min-width: 180px;
-  box-sizing: border-box;
-}
+/* Workspace snapshot KPI row: see maint-accounting-ui-2026.css (.maint-kpi-strip--compact) */
 
 /* --- Page shell --- */
 body.erp-maintenance .maint-page-shell {
