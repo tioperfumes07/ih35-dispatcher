@@ -1120,3 +1120,11 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — **`.acct-entry-list__btn--accent`** **`font-weight`** **600 → 500** (primary row action on the accounting entry list; **`changelog 507`** in **`ERP_MASTER_REDESIGN_STATUS.md`**).
 
 **Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_STATUS.md`, `docs/reports/ERP_MASTER_REDESIGN_PROGRESS_latest.rtf`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+
+---
+
+## 2026-07-16
+
+- **Rule 1:** `public/css/maint-accounting-ui-2026.css` — **`.maint-action-strip__btn`**, **`.maint-fleet-pill`**, **`.maint-qbo-issues-text`**, **`.maint-qbo-issues-view`** **`font-weight`** **600 → 500** (maintenance top strip / fleet pills / QBO issues row; **`changelog 508`** in **`ERP_MASTER_REDESIGN_STATUS.md`**).
+
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_STATUS.md`, `docs/reports/ERP_MASTER_REDESIGN_PROGRESS_latest.rtf`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
