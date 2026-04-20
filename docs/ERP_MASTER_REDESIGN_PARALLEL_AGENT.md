@@ -27,6 +27,8 @@
 
 **Additional static GETs** (200 + header needle; see `STATIC_TEXT` in `system-smoke.mjs`): `design-tokens.css`, `maint-accounting-ui-2026.css`, `app-theme.css`, `erp-master-redesign.css`, `erp-master-spec-2026.css`, `board-nav.css`, `erp-ui.js`, `board-nav.js`.
 
+**JSON 404 probe:** `GET /api/__smoke_not_found__` is **auth-exempt** in **`server.js`** and must return **404** with `{ error: 'Not found', path: '/api/__smoke_not_found__' }` so XHR clients never see HTML for unknown `/api/*` paths.
+
 **Forbidden patterns** are defined in **`scripts/rule-zero-agent-b.mjs`** (`RULE0_FORBIDDEN_SUBSTRINGS`). Examples: `var(--color-border-focus, var(--accent))`, `var(--color-bg-header, #`, and many `var(--color-*, var(--legacy))` stacks.
 
 **When editing the three Rule 0 files above:** use **`var(--color-*)`** (and approved stacks from existing patterns in-repo) only in ways that **do not introduce** any substring from that array. When in doubt, grep the file against the list in `rule-zero-agent-b.mjs` or run smoke.
