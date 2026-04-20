@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import PDFDocument from 'pdfkit';
+import { formatIsoDateShortPlain } from '../lib/format-iso-date-short-plain.mjs';
 import { dbQuery, getPool } from '../lib/db.mjs';
 import { readFullErpJson, readMaintenanceJson } from '../lib/read-erp.mjs';
 import { buildSettlementByLoad } from '../lib/settlement-by-load.mjs';
@@ -27,20 +28,6 @@ function sliceDate(v) {
   if (!v) return '—';
   const s = String(v);
   return s.length >= 10 ? s.slice(0, 10) : s;
-}
-
-/** Human-readable calendar date (matches `printDocuments.js` / browser print). */
-function formatIsoDateShortPlain(iso) {
-  const raw = String(iso == null ? '' : iso).trim();
-  const s = raw.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return raw || '—';
-  try {
-    const d = new Date(`${s}T12:00:00`);
-    if (!Number.isFinite(d.getTime())) return s;
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch {
-    return s;
-  }
 }
 
 function repairStatusPdfLabel(s) {
@@ -1009,13 +996,13 @@ router.get('/api/pdf/work-order/:id', (req, res) => {
       doc.text(`Unit / asset: ${wo.unit || ''}`);
       doc.text(`Category: ${wo.assetCategory || '—'}   ·   ${repairKind}`);
       doc.text(`Repair / location type: ${wo.repairLocationType || '—'}`);
-      doc.text(`Txn type: ${wo.txnType || 'expense'}   Service date: ${wo.serviceDate || '—'}`);
+      doc.text(`Txn type: ${wo.txnType || 'expense'}   Service date: ${formatIsoDateShortPlain(wo.serviceDate || '')}`);
       doc.text(`Vendor (QBO): ${vName || wo.vendor || '—'}`);
       doc.text(`Vendor invoice #: ${wo.vendorInvoiceNumber || '—'}`);
       doc.text(`Shop / internal WO #: ${wo.internalWorkOrderNumber || '—'}`);
       doc.text(`Vendor WO #: ${wo.vendorWorkOrderNumber || '—'}`);
       doc.text(`Load / invoice #: ${wo.loadNumber || '—'}`);
-      doc.text(`Due: ${wo.dueDate || '—'}`);
+      doc.text(`Due: ${formatIsoDateShortPlain(wo.dueDate || '')}`);
       doc.text(`Payment: ${paymentMethodLabel(erp, wo.paymentMethodId)}`);
       if (wo.qboBankAccountId) doc.text(`Pay-from bank (QBO): ${bankAccountLabel(erp, wo.qboBankAccountId) || wo.qboBankAccountId}`);
       doc.moveDown(0.5);
@@ -1125,7 +1112,7 @@ router.post('/api/pdf/fleet-maintenance-draft', (req, res) => {
         doc.text(`Repair / location: ${repairLabel || repairLoc || '—'}${repairLoc && repairLabel ? ` (${repairLoc})` : ''}`);
       }
       doc.text(`Service: ${serviceType || '—'}`);
-      doc.text(`Service date: ${serviceDate || '—'}   Odometer: ${serviceMileage || '—'}`);
+      doc.text(`Service date: ${formatIsoDateShortPlain(serviceDate || '')}   Odometer: ${serviceMileage || '—'}`);
       doc.text(`Vendor (as entered): ${vendor || '—'}`);
       doc.text(`Invoice total: ${cost}`);
       doc.text(`Vendor invoice #: ${vendorInv || '—'}`);
@@ -1156,7 +1143,9 @@ router.post('/api/pdf/fleet-maintenance-draft', (req, res) => {
       doc.font('Helvetica-Bold').fontSize(10).text('Notes');
       doc.font('Helvetica').fontSize(9).fillColor('#333333').text(notes || '—', { align: 'left' });
       doc.fillColor('#000000').moveDown();
-      doc.fontSize(8).fillColor('#666666').text(`Generated ${sliceDate(new Date().toISOString())} · ${TMS_COMPANY_NAME}`);
+      doc.fontSize(8).fillColor('#666666').text(
+        `Generated ${formatIsoDateShortPlain(sliceDate(new Date().toISOString()))} · ${TMS_COMPANY_NAME}`
+      );
       pdfFooterLine(doc);
     });
   } catch (e) {
@@ -1183,7 +1172,7 @@ router.get('/api/pdf/shop-queue', (req, res) => {
     sendPdf(res, fn, doc => {
       drawHeaderBand(doc, 'SHOP QUEUE');
       doc.font('Helvetica').fontSize(10);
-      doc.text(`Open jobs (not finished) · ${sliceDate(new Date().toISOString())}`);
+      doc.text(`Open jobs (not finished) · ${formatIsoDateShortPlain(sliceDate(new Date().toISOString()))}`);
       doc.moveDown(0.8);
       const byType = { internal: [], external: [], roadside: [] };
       for (const e of active) {

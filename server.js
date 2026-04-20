@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import PDFDocument from 'pdfkit';
 import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';
+import { formatIsoDateShortPlain } from './lib/format-iso-date-short-plain.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
 import {
   ensureMaintenanceServiceCatalog,
@@ -508,6 +509,19 @@ function sliceIsoDate(v) {
     return dt.toISOString().slice(0, 10);
   }
   return '';
+}
+
+/** PDF table cell: calendar-like values → short locale date; pass through otherwise. */
+function formatReportPdfCellValue(value) {
+  if (value == null || value === '') return '';
+  if (typeof value === 'number' && !Number.isFinite(value)) return '';
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  const raw = String(value);
+  const t = raw.trim();
+  if (!t) return '';
+  const iso = sliceIsoDate(t);
+  if (iso) return formatIsoDateShortPlain(iso);
+  return raw;
 }
 
 function sanitizeDriverProfile(raw) {
@@ -5649,7 +5663,12 @@ app.get('/api/integrity/export', (req, res) => {
       doc.moveDown(0.35);
       doc.fontSize(16).fillColor('#333333').text(company, { align: 'center' });
       doc.moveDown(0.6);
-      doc.fontSize(11).fillColor('#555555').text(`Reporting period: ${startDate} through ${endDate}`, { align: 'center' });
+      doc
+        .fontSize(11)
+        .fillColor('#555555')
+        .text(`Reporting period: ${formatIsoDateShortPlain(startDate)} through ${formatIsoDateShortPlain(endDate)}`, {
+          align: 'center'
+        });
       doc.moveDown(2);
       doc.fontSize(10).fillColor('#666666').text('Confidential — operational anomaly summary', { align: 'center' });
 
@@ -5706,7 +5725,9 @@ app.get('/api/integrity/export', (req, res) => {
           const sev = String(r.severity || '').toUpperCase();
           const pill = sev === 'RED' ? 'HIGH' : 'REVIEW';
           doc.fillColor(sev === 'RED' ? '#c5221f' : '#8a5200').text(`[${pill}] `, { continued: true });
-          doc.fillColor('#333333').text(`${r.triggeredDate || ''} — ${String(r.alertType || '')}`);
+          doc
+            .fillColor('#333333')
+            .text(`${formatReportPdfCellValue(r.triggeredDate || r.createdAt || '') || '—'} — ${String(r.alertType || '')}`);
           doc.moveDown(0.15);
           doc.fontSize(9).fillColor('#444444').text(String(r.message || '').slice(0, 420), { width: 500 });
           doc.moveDown(0.45);
@@ -7632,7 +7653,7 @@ app.post('/api/reports/export-table', async (req, res) => {
           doc.addPage();
         }
         drawRow(
-          keys.map(k => row[k]),
+          keys.map(k => formatReportPdfCellValue(row[k])),
           false
         );
       }
@@ -7743,7 +7764,7 @@ app.post('/api/reports/export/pdf', async (req, res) => {
     for (const row of rows) {
       if (doc.y > pageBottom) doc.addPage();
       drawRow(
-        keys.map(k => row[k]),
+        keys.map(k => formatReportPdfCellValue(row[k])),
         false
       );
     }
@@ -7753,7 +7774,7 @@ app.post('/api/reports/export/pdf', async (req, res) => {
     }
     const range = doc.bufferedPageRange();
     const footL = `${company} — Confidential`;
-    const footR = `Generated ${new Date().toISOString()}`;
+    const footR = `Generated ${formatIsoDateShortPlain(sliceIsoDate(new Date().toISOString()) || new Date().toISOString().slice(0, 10))}`;
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
       doc.fontSize(7).fillColor('#666').text(footL, 48, pageBottom + 12, { width: 200 });

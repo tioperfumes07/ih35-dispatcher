@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import PDFDocument from 'pdfkit';
+import { formatIsoDateShortPlain } from '../lib/format-iso-date-short-plain.mjs';
 import { readFullErpJson } from '../lib/read-erp.mjs';
 import { buildDotAuditJson } from '../lib/dot-audit-build.mjs';
 import { buildDotVehicleAuditV1 } from '../lib/dot-vehicle-audit-api.mjs';
@@ -11,6 +12,10 @@ const FOOTER = 'Confidential — IH 35 Transportation LLC';
 function sliceIso(v) {
   const s = String(v || '').trim();
   return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+function pdfDateCell(v) {
+  return formatIsoDateShortPlain(sliceIso(v));
 }
 
 function writeSectionPage(doc, title, yStart = 60) {
@@ -66,9 +71,17 @@ function overallLabel(status) {
 function drawComplianceMatrix(doc, startY, cc) {
   let y = startY;
   const rows = [
-    ['Annual inspection current (≤ 12 months)', cc.annual_inspection_current ? 'PASS' : 'FAIL', cc.annual_inspection_date || '—'],
+    [
+      'Annual inspection current (≤ 12 months)',
+      cc.annual_inspection_current ? 'PASS' : 'FAIL',
+      pdfDateCell(cc.annual_inspection_date)
+    ],
     ['PM schedule vs. odometer', cc.pm_schedule_current ? 'PASS' : 'FAIL', '—'],
-    ['Vehicle registration current', cc.registration_current ? 'PASS' : 'FAIL', cc.registration_expiry || '—'],
+    [
+      'Vehicle registration current',
+      cc.registration_current ? 'PASS' : 'FAIL',
+      pdfDateCell(cc.registration_expiry)
+    ],
     ['No open DVIR defects (uncorrected)', cc.no_open_violations ? 'PASS' : 'FAIL', '—'],
     ['DVIR records on file (period / Samsara)', cc.dvir_on_file_90_days ? 'PASS' : 'FAIL', '—'],
     ['No out-of-service events', cc.no_oos_events ? 'PASS' : 'FAIL', '—']
@@ -142,11 +155,11 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
     doc.fontSize(11).fillColor('#444').text(legal, { align: 'center' });
     doc.text(`USDOT ${cp.usdotNumber || '—'} · MC ${cp.mcNumber || '—'}`, { align: 'center' });
     doc.moveDown(1);
-    doc.fontSize(10).text(`Generated ${sliceIso(audit.generatedAt) || ''}`, { align: 'center' });
+    doc.fontSize(10).text(`Generated ${pdfDateCell(audit.generatedAt)}`, { align: 'center' });
     doc.moveDown(0.5);
     doc.fontSize(11).fillColor('#1557a0').text('PREPARED FOR: DOT AUDIT REVIEW (multi-part vehicle file)', { align: 'center' });
     doc.moveDown(2);
-    doc.fontSize(10).fillColor('#111').text(`Period: ${periodStart} → ${periodEnd}`, { align: 'center' });
+    doc.fontSize(10).fillColor('#111').text(`Period: ${pdfDateCell(periodStart)} → ${pdfDateCell(periodEnd)}`, { align: 'center' });
     doc.moveDown(2);
     doc.fontSize(12).text('Table of contents', { underline: true });
     doc.moveDown(0.5);
@@ -171,7 +184,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
     doc.text(`YMM: ${vi.ymm || '—'}`);
     doc.text(`License plate: ${vi.plate || '—'}`);
     doc.text(`GVWR / class: ${vi.gvwr || '—'}  ${vi.vehicleType || ''}`);
-    doc.text(`Registration (if recorded): ${vi.registrationExp || '—'}`);
+    doc.text(`Registration (if recorded): ${pdfDateCell(vi.registrationExp)}`);
     doc.text(`USDOT: ${cp.usdotNumber || '—'}  MC: ${cp.mcNumber || '—'}`);
     doc.text(`Legal name: ${legal}`);
 
@@ -180,7 +193,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
       doc,
       y,
       ['Date', 'Vendor / inspector', 'Type', 'WO', 'Notes'],
-      (s.annual_inspections || []).map(r => [r.date, r.inspector, r.type, r.wo, r.defects || r.notes || '']),
+      (s.annual_inspections || []).map(r => [pdfDateCell(r.date), r.inspector, r.type, r.wo, r.defects || r.notes || '']),
       [64, 120, 100, 72, 140]
     );
 
@@ -189,7 +202,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
       doc,
       y,
       ['Date', 'Miles', 'Service', 'Vendor', 'WO', '$'],
-      (s.pm_history || []).map(r => [r.date, r.mileage, r.service, r.vendor, r.wo, r.cost]),
+      (s.pm_history || []).map(r => [pdfDateCell(r.date), r.mileage, r.service, r.vendor, r.wo, r.cost]),
       [64, 52, 120, 100, 72, 52]
     );
 
@@ -210,7 +223,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
       y,
       ['Date', 'WO', 'Service type', 'Vendor', '$', 'Description (trimmed)'],
       (s.repair_history || []).map(r => [
-        r.date,
+        pdfDateCell(r.date),
         r.wo,
         r.serviceType,
         r.vendor,
@@ -239,7 +252,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
         doc,
         y,
         ['Date', 'WO', 'Service type', 'Vendor', '$', 'Description'],
-        rows.map(r => [r.date, r.wo, r.serviceType, r.vendor, r.cost, String(r.description || '').slice(0, 72)]),
+        rows.map(r => [pdfDateCell(r.date), r.wo, r.serviceType, r.vendor, r.cost, String(r.description || '').slice(0, 72)]),
         [56, 56, 92, 88, 40, 152]
       );
     }
@@ -278,7 +291,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
           doc,
           y,
           ['Date', 'Primary service', '$'],
-          recs.map(r => [r.date, r.service, r.cost]),
+          recs.map(r => [pdfDateCell(r.date), r.service, r.cost]),
           [80, 280, 72]
         );
       }
@@ -294,7 +307,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
         y,
         ['Date', 'Location', 'Police #', 'DOT rep.', 'Fault', '$ est', 'Corrective / notes'],
         acc.map(r => [
-          r.date,
+          pdfDateCell(r.date),
           r.location,
           r.policeReport,
           r.dotReportable,
@@ -325,7 +338,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
         y,
         ['Date / time', 'Driver', 'Type', 'Def?', 'Defect summary', 'Corr.', 'Mechanic'],
         dvir.map(r => [
-          r.date,
+          pdfDateCell(r.date),
           r.driver,
           r.type,
           r.defects_found,
@@ -342,7 +355,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
     if (!oos.length) {
       doc.fontSize(10).text('No out-of-service events recorded for this vehicle in ERP for this period.');
     } else {
-      drawTable(doc, y, ['Date', 'Detail'], oos.map(r => [r.date || r.startDate || '—', JSON.stringify(r).slice(0, 120)]), [80, 380]);
+      drawTable(doc, y, ['Date', 'Detail'], oos.map(r => [pdfDateCell(r.date || r.startDate), JSON.stringify(r).slice(0, 120)]), [80, 380]);
     }
 
     y = writeSectionPage(doc, 'Part 8 — Tire records');
@@ -351,7 +364,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
       y,
       ['Date', 'Pos', 'Brand', 'Part', 'Miles', '$', 'Reason'],
       (s.tire_records || []).map(r => [
-        r.date,
+        pdfDateCell(r.date),
         r.position,
         r.brand,
         r.partNumber,
