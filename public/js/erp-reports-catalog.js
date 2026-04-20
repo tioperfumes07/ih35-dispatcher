@@ -322,6 +322,38 @@ tr:nth-child(even){background:#f9f9f9}
     }
   }
 
+  function renderPmScheduleTable(columns, rows, fleetAvgMeta) {
+    const fa = Number(fleetAvgMeta) > 0 ? Number(fleetAvgMeta) : 12000;
+    const keys = columns.map(c => c.key);
+    const th = columns
+      .map(c => {
+        if (c.key === 'weeksRemainingDisplay') {
+          return `<th data-k="${escapeHtml(c.key)}">${escapeHtml(c.label)}<div class="rep-pm-head-note">Based on fleet avg ${fa.toLocaleString(
+            'en-US'
+          )} mi/month</div></th>`;
+        }
+        return `<th data-k="${escapeHtml(c.key)}">${escapeHtml(c.label)}</th>`;
+      })
+      .join('');
+    const tr = (rows || [])
+      .map(r => {
+        const rowCls = 'rep-pm-row rep-pm-row--' + String(r.status || 'gray');
+        return `<tr class="${rowCls}">${keys
+          .map(k => {
+            const raw = r[k];
+            const isOverdueWeeks =
+              k === 'weeksRemainingDisplay' && String(r.status || '') === 'red' && String(raw).toLowerCase().includes('overdue');
+            const inner = isOverdueWeeks
+              ? `<span class="rep-pm-weeks-overdue">${escapeHtml(String(raw ?? ''))}</span>`
+              : escapeHtml(String(raw ?? ''));
+            return `<td>${inner}</td>`;
+          })
+          .join('')}</tr>`;
+      })
+      .join('');
+    return `<table class="rep-dyn-table rep-pm-schedule-table" style="min-width:520px;font-size:12px;width:100%"><thead><tr>${th}</tr></thead><tbody>${tr || ''}</tbody></table>`;
+  }
+
   function renderSortableTable(columns, rows) {
     const keys = columns.map(c => c.key);
     const th = columns.map(c => `<th data-k="${escapeHtml(c.key)}">${escapeHtml(c.label)}</th>`).join('');
@@ -648,7 +680,11 @@ tr:nth-child(even){background:#f9f9f9}
             </div>`;
           bindSortable(host);
         } else if (data.rows && data.rows.length) {
-          host.innerHTML = renderSortableTable(data.columns, data.rows);
+          if (datasetId === 'a4-pm-schedule') {
+            host.innerHTML = renderPmScheduleTable(data.columns, data.rows, data.meta?.fleetAvgMilesPerMonth);
+          } else {
+            host.innerHTML = renderSortableTable(data.columns, data.rows);
+          }
           bindSortable(host);
         } else {
           host.innerHTML = '<p class="mini-note">No rows.</p>';

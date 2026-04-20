@@ -6323,6 +6323,21 @@ app.get('/api/research/vehicle-due/:unitId', async (req, res) => {
     if (!row) return res.status(404).json({ ok: false, error: 'Unit not found for PM schedule' });
     const mr = Number(row.milesRemaining);
     const timing = breakdownTimeFromMilesRemaining(mr, fleetAvg);
+    const milesPerWeek = fleetAvg / 4.33;
+    let weeks_remaining_display = null;
+    if (Number.isFinite(mr) && milesPerWeek > 0) {
+      const wk = mr / milesPerWeek;
+      const wAbs = Math.round(Math.abs(wk) * 10) / 10;
+      if (mr < 0) weeks_remaining_display = `${wAbs.toFixed(1)} weeks overdue`;
+      else weeks_remaining_display = `${(Math.round(wk * 10) / 10).toFixed(1)} weeks`;
+    }
+    let pm_schedule_band = null;
+    if (Number.isFinite(mr)) {
+      if (mr < 0) pm_schedule_band = 'overdue';
+      else if (mr <= 3000) pm_schedule_band = 'due_soon';
+      else if (mr < 8000) pm_schedule_band = 'upcoming';
+      else pm_schedule_band = 'current';
+    }
     res.json({
       ok: true,
       unit: row.unit,
@@ -6333,6 +6348,10 @@ app.get('/api/research/vehicle-due/:unitId', async (req, res) => {
       next_pm_due_miles: row.nextPmDueMiles,
       current_miles: row.currentMiles,
       miles_remaining: Number.isFinite(mr) ? mr : null,
+      miles_per_week_approx: Math.round(milesPerWeek),
+      pm_thresholds: { due_soon_under_miles: 3000, upcoming_under_miles: 8000, overdue_under_miles: 0 },
+      pm_schedule_band,
+      weeks_remaining_display,
       months_remaining: timing.months_remaining,
       weeks_remaining: timing.weeks_remaining,
       days_remaining: timing.days_remaining,
