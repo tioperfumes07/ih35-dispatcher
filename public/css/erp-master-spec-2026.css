@@ -1929,11 +1929,6 @@ body.dispatch-page #dispatchApp .erp-main-body.dispatch-board-body > .erp-connec
     padding-right: max(12px, env(safe-area-inset-right, 0px));
   }
 
-  body.fuel-board .erp-connection-strip {
-    margin-left: max(8px, env(safe-area-inset-left, 0px));
-    margin-right: max(8px, env(safe-area-inset-right, 0px));
-  }
-
   body.hub-page .erp-connection-strip {
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -1977,8 +1972,9 @@ body.settings-page .wrap > .erp-connection-strip {
   margin-right: auto;
 }
 body.fuel-board .erp-connection-strip {
-  margin: 0 max(12px, env(safe-area-inset-right, 0px)) 10px max(12px, env(safe-area-inset-left, 0px));
-  max-width: 1100px;
+  margin: 0 auto 10px;
+  width: min(1100px, 100%);
+  max-width: min(1100px, 100%);
 }
 body.hub-page .erp-connection-strip {
   max-width: 1100px;
