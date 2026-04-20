@@ -1990,9 +1990,38 @@ function countAppPaymentsTouchingBillQboId(erp, billQboId) {
   return n;
 }
 
-/** @deprecated alias — same as countAppPaymentsTouchingBillQboId (QBO DocNumber suffix on multi-pay). */
+/**
+ * For QBO BillPayment DocNumber suffix only — excludes pending vendorBillPaymentRecords so
+ * posting after a local save does not treat pending rows as already-posted applications.
+ */
+function countQboStylePaymentApplicationsForBill(erp, billQboId) {
+  const id = String(billQboId || '').replace(/\D/g, '');
+  if (!id) return 0;
+  let n = 0;
+  for (const r of erp.vendorBillPaymentRecords || []) {
+    if (r.voidedAt) continue;
+    if (String(r.qboStatus || '') === 'pending') continue;
+    const bid = String(r.billQboId || '').replace(/\D/g, '');
+    if (bid && bid === id) n++;
+  }
+  for (const e of erp.qboBillPaymentLog || []) {
+    if (e.reversedAt) continue;
+    if (e.vendorPaymentBatchId) continue;
+    const lines = e.lines || [];
+    for (const ln of lines) {
+      const bid = String(ln.billQboId || '').replace(/\D/g, '');
+      if (bid && bid === id) {
+        n++;
+        break;
+      }
+    }
+  }
+  return n;
+}
+
+/** QBO DocNumber suffix — excludes pending vendor rows. */
 function countPriorBillPaymentsForBill(erp, billQboId) {
-  return countAppPaymentsTouchingBillQboId(erp, billQboId);
+  return countQboStylePaymentApplicationsForBill(erp, billQboId);
 }
 
 /**
@@ -2060,7 +2089,7 @@ async function qboCreateBillPaymentFromApp(body) {
     sanitizeQboDocNumber(`B-${primaryBillId.replace(/\D/g, '')}`) ||
     `B${primaryBillId.replace(/\D/g, '')}`;
   /** First payment uses the bill's DocNumber; each additional payment to the same bill gets -1, -2, … (QBO max 21 chars). */
-  const prior = countPriorBillPaymentsForBill(erp, primaryBillId);
+  const prior = countQboStylePaymentApplicationsForBill(erp, primaryBillId);
   let docNumber = baseDoc;
   if (prior > 0) {
     const suffix = `-${prior}`;
