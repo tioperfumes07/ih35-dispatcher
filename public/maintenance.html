@@ -5102,12 +5102,15 @@
         <div id="rep-integrity" class="reports-tab hidden">
           <div class="panel">
             <div class="panel-head">
-              <div class="panel-title">Integrity &amp; anomaly alerts</div>
-              <div class="mini-note" style="margin:0;color:var(--color-text-label)">
-                Alerts are created when you save maintenance, work orders, or fuel; exports use the date range below.
+              <div class="panel-title">Integrity &amp; anomaly monitoring</div>
+              <div class="mini-note" style="margin:0;color:#6b7385;font-size:12px">
+                Unusual patterns that may need your attention. Alerts are created when you save work orders or expenses; exports use the date range below.
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(1100px,100%)">
+              <div style="margin:0 0 10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
+                <a class="mini-note" href="/settings.html#integrity-thresholds" style="color:#1557a0;text-decoration:underline;font-size:12px">Configure thresholds</a>
+              </div>
               <div class="mr-filter-bar" style="margin:0 0 12px;flex-wrap:wrap;gap:10px;align-items:flex-end">
                 <div class="ap-exp-field">
                   <span class="qb-l">From</span>
@@ -5149,7 +5152,16 @@
                 <button type="button" class="btn secondary" onclick="integrityExportReport('xlsx')">Excel export</button>
                 <button type="button" class="btn secondary" onclick="integrityExportReport('pdf')">PDF export</button>
               </div>
-              <div id="integrityDashKpi" class="mini-note" style="margin:0 0 10px"></div>
+              <div id="integrityDashCatTabs" class="erp-int-cat-tabs" role="tablist" aria-label="Alert category" style="margin:0 0 12px">
+                <button type="button" class="erp-int-cat-tab active" data-int-tab="all" onclick="erpIntegritySelectTab('all')">All</button>
+                <button type="button" class="erp-int-cat-tab" data-int-tab="tires" onclick="erpIntegritySelectTab('tires')">Tires</button>
+                <button type="button" class="erp-int-cat-tab" data-int-tab="drivers" onclick="erpIntegritySelectTab('drivers')">Drivers</button>
+                <button type="button" class="erp-int-cat-tab" data-int-tab="accidents" onclick="erpIntegritySelectTab('accidents')">Accidents</button>
+                <button type="button" class="erp-int-cat-tab" data-int-tab="fuel" onclick="erpIntegritySelectTab('fuel')">Fuel</button>
+                <button type="button" class="erp-int-cat-tab" data-int-tab="maintenance" onclick="erpIntegritySelectTab('maintenance')">Maintenance</button>
+                <button type="button" class="erp-int-cat-tab" data-int-tab="resolved" onclick="erpIntegritySelectTab('resolved')">Resolved</button>
+              </div>
+              <div id="integrityDashKpi" class="erp-int-kpi-row" style="margin:0 0 14px"></div>
               <div id="repIntegrityBody" class="table-wrap erp-table-scroll" style="min-width:0"></div>
               <div id="integrityInvestigateHost" class="hidden" style="margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px">
                 <div class="panel-title" style="font-size:14px;margin-bottom:8px">Linked records</div>
