@@ -535,7 +535,7 @@ body.erp-maintenance #erpApp .erp-new-menu__cols > * {
 
 @media (max-width: 720px) {
   body.erp-maintenance #erpApp .erp-new-menu__cols {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1437,7 +1437,7 @@ body.erp-maintenance .erp-reports-hub {
 
 @media (max-width: 520px) {
   body.erp-maintenance .erp-reports-hub {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1476,7 +1476,7 @@ body.erp-maintenance .erp-reports-hub__tiles--dense > * {
 
 @media (max-width: 520px) {
   body.erp-maintenance .erp-reports-hub__tiles--dense {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -2047,7 +2047,7 @@ body.banking-page #authBanner.erp-auth-banner {
   inset: 0;
   z-index: 1900;
   display: grid;
-  grid-template: 1fr / 1fr;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: start center;
   padding: max(16px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
     max(24px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));

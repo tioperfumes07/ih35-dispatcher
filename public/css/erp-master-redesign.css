@@ -1508,7 +1508,7 @@ body.erp-maintenance .erp-main-body .safety-active-grid {
 
 @media (max-width: 900px) {
   body.erp-maintenance .erp-main-body .safety-active-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1804,7 +1804,7 @@ body.dispatch-page .grid2 {
 
 @media (max-width: 720px) {
   body.dispatch-page .grid2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -2913,7 +2913,7 @@ body.fuel-board #map {
 
 body.fuel-board .route-inputs {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -3014,7 +3014,7 @@ body.fuel-board .fleet-item.active {
 
 @media (max-width: 1450px) {
   body.fuel-board .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   body.fuel-board #map {

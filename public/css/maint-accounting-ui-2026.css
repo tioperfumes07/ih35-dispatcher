@@ -1105,7 +1105,7 @@ body.erp-maintenance .qb-doc-shell .fuel-manual-exp-grid {
 @media (max-width: 720px) {
   body.erp-maintenance .qb-doc-shell .ap-exp-grid,
   body.erp-maintenance .qb-doc-shell .fuel-manual-exp-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -2288,7 +2288,7 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-form-stack {
 /* Cost breakdown + Notes side-by-side on wide viewports (shorter vertical scroll). */
 body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   align-items: start;
   width: 100%;
