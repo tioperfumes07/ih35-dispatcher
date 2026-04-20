@@ -62,7 +62,7 @@
 
   <div id="erpMultiBillsModal" class="erp-mb-modal hidden" aria-hidden="true">
     <div class="erp-mb-modal__backdrop" data-erp-mb-close="1"></div>
-    <div class="erp-mb-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="erpMultiBillsTitle" onclick="event.stopPropagation()">
+    <div class="erp-mb-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="erpMultiBillsTitle">
       <div class="erp-mb-modal__head">
         <h2 id="erpMultiBillsTitle" class="erp-mb-modal__title">Create multiple bills</h2>
         <div class="erp-mb-modal__total" id="mbModalHeaderTotal">TOTAL: $0.00</div>
@@ -70,6 +70,10 @@
           <button type="button" class="btn secondary" data-erp-mb-close="1">Cancel</button>
           <button type="button" class="btn btn-erp-mb-blue" onclick="mbPreviewBills()">Preview bills</button>
           <button type="button" class="btn btn-erp-mb-green" onclick="mbStartCreateAll()">Create all bills</button>
+        </div>
+        <div class="erp-mb-modal__chrome" data-erp-no-drag="1">
+          <button type="button" class="btn btn--small secondary erp-mb-modal__chrome-fs" id="erpMbMaxBtn" onclick="erpMbToggleMaximize()" title="90% of viewport">Maximize</button>
+          <button type="button" class="btn btn--small secondary erp-mb-modal__chrome-fs" id="erpMbFsBtn" onclick="erpMbToggleFullscreen()" title="Fill entire viewport">Full screen</button>
         </div>
         <button type="button" class="erp-mb-modal__x" data-erp-mb-close="1" aria-label="Close">×</button>
       </div>
@@ -98,7 +102,7 @@
                   <details class="maint-qb-cost-details ap-wo-details" open>
                     <summary class="maint-qb-cost-details__sum">
                       <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
-                      <span class="maint-qb-cost-details__title">Category details</span>
+                      <span class="maint-qb-cost-details__title">Category lines (recurring bills)</span>
                     </summary>
                     <div class="maint-qb-lines-scroll">
                       <table class="maint-qb-lines-table ap-wo-qb-table" aria-label="Multiple bills category lines">
@@ -111,9 +115,6 @@
                             <th class="maint-qb-th-bill">Billable</th>
                             <th>Customer</th>
                             <th>Class</th>
-                            <th>Position</th>
-                            <th class="maint-qb-th-partno">Part #</th>
-                            <th>Line memo</th>
                             <th class="maint-qb-th-del"></th>
                           </tr>
                         </thead>
@@ -122,38 +123,6 @@
                     </div>
                     <div class="maint-qb-cost-details__actions">
                       <button type="button" class="qb-btn-add" onclick="mbAddCategoryLine()">+ Add category line</button>
-                    </div>
-                  </details>
-                  <details class="maint-qb-cost-details ap-wo-details" open>
-                    <summary class="maint-qb-cost-details__sum">
-                      <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
-                      <span class="maint-qb-cost-details__title">Item details</span>
-                    </summary>
-                    <div class="maint-qb-lines-scroll">
-                      <table class="maint-qb-lines-table maint-qb-lines-table--item ap-wo-qb-table" aria-label="Multiple bills item lines">
-                        <thead>
-                          <tr>
-                            <th class="maint-qb-th-num">#</th>
-                            <th>Product / service</th>
-                            <th class="maint-qb-th-sku">SKU</th>
-                            <th>Description</th>
-                            <th class="maint-qb-th-num">Qty</th>
-                            <th class="maint-qb-th-num">Unit $</th>
-                            <th class="maint-qb-th-num">Total</th>
-                            <th class="maint-qb-th-bill">Billable</th>
-                            <th>Customer</th>
-                            <th>Class</th>
-                            <th>Position</th>
-                            <th class="maint-qb-th-partno">Part #</th>
-                            <th>Line memo</th>
-                            <th class="maint-qb-th-del"></th>
-                          </tr>
-                        </thead>
-                        <tbody id="mbWoItemHost"></tbody>
-                      </table>
-                    </div>
-                    <div class="maint-qb-cost-details__actions">
-                      <button type="button" class="qb-btn-add" onclick="mbAddItemLine()">+ Add item line</button>
                     </div>
                   </details>
                 </div>
@@ -3544,7 +3513,7 @@
           <div class="panel qb-panel">
             <div class="panel-head">
               <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;flex-wrap:wrap">
-                <div class="panel-title">Fuel expenses (dispatcher fast entry)</div>
+                <div class="panel-title">Fuel &amp; DEF</div>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel tab overview">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -3553,6 +3522,9 @@
                 </span>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">
+                  Open fuel fast entry ↗
+                </button>
                 <button type="button" class="qb-btn-add" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
                 <button type="button" class="qb-btn-primary" onclick="postFilteredFuelExpensesToQuickBooks()">
                   Record filtered to QuickBooks
@@ -3562,7 +3534,11 @@
             <div id="fuelExpenseQboBanner" class="mini-note fuel-expense-qbo-banner" style="display:none;margin:0 0 12px"></div>
             <div class="panel-body form-stack fuel-expense-stack">
               <div id="erpFuelManualPlaceholder" class="erp-dom-placeholder" aria-hidden="true"></div>
-              <div id="erpFuelManualDocShellPanel" class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec qb-doc-shell--fuel-spec" style="margin:0 0 14px">
+              <div
+                id="erpFuelManualDocShellPanel"
+                class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec qb-doc-shell--fuel-spec fuel-manual-shell-inline-hidden"
+                style="margin:0 0 14px"
+              >
                 <div class="qb-doc-topbar qb-doc-topbar--fuel">
                   <button
                     type="button"
@@ -5466,6 +5442,63 @@
           autocomplete="off"
           title="Sent as the Description on this line in QuickBooks"
         />
+      </td>
+      <td class="maint-qb-td-del">
+        <button type="button" class="qb-btn-del maint-qb-row-del" onclick="removeWoLine(this)" title="Remove line">×</button>
+      </td>
+      <td class="maint-qb-td-hidden" aria-hidden="true">
+        <input type="hidden" class="wo-qty" value="1" />
+        <input type="hidden" class="wo-item-id" value="" />
+      </td>
+    </tr>
+  </template>
+
+  <template id="mbLineCategoryTpl">
+    <tr class="wo-line wo-line-cat wo-line-cat--mb maint-cost-line">
+      <td class="maint-qb-td-num"><span class="wo-idx">1</span></td>
+      <td class="maint-qb-td-acct">
+        <input
+          class="qb-in wo-acct"
+          list="qboExpenseCategoryOptions"
+          placeholder="Expense account"
+          autocomplete="off"
+          oninput="resolveWoLineAccount(this)"
+          onblur="resolveWoLineAccount(this)"
+        />
+        <input type="hidden" class="wo-acct-id" value="" />
+      </td>
+      <td class="maint-qb-td-desc">
+        <input class="qb-in wo-svc" placeholder="Description" autocomplete="off" />
+      </td>
+      <td class="maint-qb-td-num">
+        <span class="maint-qb-dollar" aria-hidden="true">$</span>
+        <input class="qb-in wo-amt" type="number" step="0.01" placeholder="0" title="Line amount" />
+      </td>
+      <td class="maint-qb-td-bill">
+        <label class="maint-qb-bill-lbl"><input type="checkbox" class="wo-line-billable" title="Billable" /></label>
+      </td>
+      <td class="maint-qb-td-cust">
+        <input
+          class="qb-in wo-cust-search"
+          list="qboCustomerOptions"
+          placeholder="Customer"
+          autocomplete="off"
+          oninput="resolveWoLineCustomer(this)"
+          onblur="resolveWoLineCustomer(this)"
+        />
+        <input type="hidden" class="wo-cust-id" value="" />
+      </td>
+      <td class="maint-qb-td-class">
+        <input
+          class="qb-in wo-class-search"
+          list="qboClassOptions"
+          placeholder="Class"
+          autocomplete="off"
+          oninput="resolveWoLineClass(this)"
+          onblur="resolveWoLineClass(this)"
+          title="Defaults from asset unit when blank"
+        />
+        <input type="hidden" class="wo-class-id" value="" />
       </td>
       <td class="maint-qb-td-del">
         <button type="button" class="qb-btn-del maint-qb-row-del" onclick="removeWoLine(this)" title="Remove line">×</button>
@@ -8318,9 +8351,8 @@
       const lab = document.getElementById('erpDedModalTotalLabel');
       const amt = document.getElementById('erpDedModalTotalAmt');
       if (window.__erpDedicatedModalKind === 'fuel') {
-        const fh = document.getElementById('fuelManualDocTitleH2');
         const ft = document.getElementById('fuelManualHeaderTotal');
-        if (title && fh) title.textContent = fh.textContent || '';
+        if (title) title.textContent = 'Fuel / DEF fast entry';
         if (amt && ft) amt.textContent = ft.textContent || '$0.00';
         if (lab) lab.textContent = 'Amount';
         return;
@@ -8469,6 +8501,7 @@
         const shell = document.getElementById('erpFuelManualDocShellPanel');
         const ph = document.getElementById('erpFuelManualPlaceholder');
         if (shell && ph && ph.parentNode) ph.parentNode.insertBefore(shell, ph.nextSibling);
+        shell?.classList.add('fuel-manual-shell-inline-hidden');
         const acc = document.getElementById('erpFuelDocTitleAccent');
         if (acc) {
           acc.innerHTML = '';
@@ -8514,6 +8547,7 @@
         const trig = document.getElementById('acctFuelDdTrigger');
         openAccountingTab('acct-fuel-expense', trig);
         const shell = document.getElementById('erpFuelManualDocShellPanel');
+        shell?.classList.remove('fuel-manual-shell-inline-hidden');
         mount.appendChild(shell);
         const acc = document.getElementById('erpFuelDocTitleAccent');
         if (acc) {
@@ -8521,7 +8555,7 @@
           acc.classList.remove('hidden');
         }
         const h2 = document.getElementById('fuelManualDocTitleH2');
-        if (h2) h2.textContent = 'Fuel expense';
+        if (h2) h2.textContent = 'Fuel / DEF fast entry';
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('erp-dedicated-modal-open');
@@ -8891,12 +8925,12 @@
         bindFuelManualFormOnce();
         void loadFuelExpenseTab().then(() => {
           requestAnimationFrame(() => {
-            const shell = document.querySelector('#acct-fuel-expense .qb-doc-shell');
-            if (!shell) return;
+            const anchor = document.getElementById('fuelExpLedgerAnchor');
+            if (!anchor) return;
             try {
-              shell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } catch (_) {
-              shell.scrollIntoView();
+              anchor.scrollIntoView();
             }
           });
         });
@@ -16296,60 +16330,36 @@
 
     function collectMbFormWoLines() {
       const out = [];
-      const push = (row, detailMode) => {
-        const amt = detailMode === 'item' ? apWoItemLineAmount(row) : Number(row.querySelector('.wo-amt')?.value) || 0;
+      const push = row => {
+        const detailMode = 'category';
+        const amt = Number(row.querySelector('.wo-amt')?.value) || 0;
         const rec = {
           lineType: 'service',
           serviceType: (row.querySelector('.wo-svc')?.value || '').trim() || 'Line',
           detailMode,
-          qboAccountId: detailMode === 'category' ? (row.querySelector('.wo-acct-id')?.value || '') : '',
-          qboItemId: detailMode === 'item' ? (row.querySelector('.wo-item-id')?.value || '') : '',
+          qboAccountId: row.querySelector('.wo-acct-id')?.value || '',
+          qboItemId: '',
           qty: (row.querySelector('.wo-qty')?.value || '1'),
           amount: amt
         };
-        const partCat = (row.querySelector('.maint-line-part-cat')?.value || '').trim();
-        const partPos =
-          (row.querySelector('.maint-line-pos-select')?.value || '').trim() ||
-          (row.querySelector('.maint-line-pos-free')?.value || '').trim();
-        const pn = (row.querySelector('.maint-line-part-no')?.value || '').trim();
-        if (partCat) rec.partCategory = partCat;
-        if (partPos) rec.partPosition = partPos;
-        if (pn) rec.partNumber = pn;
-        const bits = [partPos, pn].filter(Boolean);
-        if (bits.length) rec.tirePositionText = bits.join(' · ');
-        const qMemo = (row.querySelector('.maint-line-qbo-desc')?.value || '').trim();
-        if (qMemo) rec.qboLineDescription = qMemo;
         const billEl = row.querySelector('.wo-line-billable');
         if (billEl) rec.billable = !!billEl.checked;
         const custId = (row.querySelector('.wo-cust-id')?.value || '').trim().replace(/[^\d]/g, '');
         if (custId) rec.qboCustomerId = custId;
         const clsId = (row.querySelector('.wo-class-id')?.value || '').trim().replace(/[^\d]/g, '');
         if (clsId) rec.qboClassId = clsId;
-        const rateEl = row.querySelector('.wo-rate');
-        if (detailMode === 'item' && rateEl && rateEl.value !== '') {
-          const rp = Number(rateEl.value);
-          if (Number.isFinite(rp)) rec.rate = rp;
-        }
         out.push(rec);
       };
-      document.querySelectorAll('#mbWoCatHost .wo-line').forEach(row => push(row, 'category'));
-      document.querySelectorAll('#mbWoItemHost .wo-line').forEach(row => push(row, 'item'));
+      document.querySelectorAll('#mbWoCatHost .wo-line').forEach(row => push(row));
       return out.filter(l => l.amount > 0);
     }
 
     function mbWoAllRows() {
-      return [
-        ...document.querySelectorAll('#mbWoCatHost .wo-line'),
-        ...document.querySelectorAll('#mbWoItemHost .wo-line')
-      ];
+      return [...document.querySelectorAll('#mbWoCatHost .wo-line')];
     }
 
     function mbRefreshWoLineIndices() {
       document.querySelectorAll('#mbWoCatHost .wo-line').forEach((row, i) => {
-        const ix = row.querySelector('.wo-idx');
-        if (ix) ix.textContent = String(i + 1);
-      });
-      document.querySelectorAll('#mbWoItemHost .wo-line').forEach((row, i) => {
         const ix = row.querySelector('.wo-idx');
         if (ix) ix.textContent = String(i + 1);
       });
@@ -16359,9 +16369,6 @@
       let sum = 0;
       document.querySelectorAll('#mbWoCatHost .wo-amt').forEach(inp => {
         sum += Number(inp.value) || 0;
-      });
-      document.querySelectorAll('#mbWoItemHost .wo-line').forEach(row => {
-        sum += apWoItemLineAmount(row);
       });
       return sum;
     }
@@ -16405,36 +16412,19 @@
     }
 
     function mbAddCategoryLine() {
-      const tpl = document.getElementById('woLineCategoryTpl');
+      const tpl = document.getElementById('mbLineCategoryTpl');
       const host = document.getElementById('mbWoCatHost');
       if (!tpl || !host) return;
       host.appendChild(tpl.content.cloneNode(true));
       const last = host.querySelector('.wo-line-cat:last-child');
-      if (last) {
-        initMaintLinePartUi(last);
-        syncWoApLineDefaultsFromUnit(last);
-      }
-      bindApWoPartDelegation();
+      if (last) syncWoApLineDefaultsFromUnit(last);
       mbRefreshWoLineIndices();
       mbRefreshDocTotal();
       mbScheduleRecompute();
     }
 
     function mbAddItemLine() {
-      const tpl = document.getElementById('woLineItemTpl');
-      const host = document.getElementById('mbWoItemHost');
-      if (!tpl || !host) return;
-      host.appendChild(tpl.content.cloneNode(true));
-      const last = host.querySelector('.wo-line-item:last-child');
-      if (last) {
-        initMaintLinePartUi(last);
-        syncWoApLineDefaultsFromUnit(last);
-        syncWoApItemLineTotal(last);
-      }
-      bindApWoPartDelegation();
-      mbRefreshWoLineIndices();
-      mbRefreshDocTotal();
-      mbScheduleRecompute();
+      mbAddCategoryLine();
     }
 
     function mbRemoveWoLine(btn) {
@@ -17099,6 +17089,109 @@
       erpCloseMultiBillsModal();
     }
 
+    let __mbLastFocusEl = null;
+    let __mbFsOn = false;
+    let __mbMaxOn = false;
+
+    function erpMbResetChrome() {
+      const d = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
+      if (!d) return;
+      d.classList.remove('erp-mb-modal__dialog--fs', 'erp-mb-modal__dialog--max');
+      __mbFsOn = false;
+      __mbMaxOn = false;
+      const fs = document.getElementById('erpMbFsBtn');
+      const mx = document.getElementById('erpMbMaxBtn');
+      if (fs) {
+        fs.textContent = 'Full screen';
+        fs.setAttribute('aria-pressed', 'false');
+      }
+      if (mx) {
+        mx.textContent = 'Maximize';
+        mx.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    function erpMbToggleFullscreen() {
+      const d = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
+      if (!d) return;
+      __mbFsOn = !__mbFsOn;
+      if (__mbFsOn) {
+        d.classList.add('erp-mb-modal__dialog--fs');
+        d.classList.remove('erp-mb-modal__dialog--max');
+        __mbMaxOn = false;
+        const mx = document.getElementById('erpMbMaxBtn');
+        if (mx) {
+          mx.textContent = 'Maximize';
+          mx.setAttribute('aria-pressed', 'false');
+        }
+      } else {
+        d.classList.remove('erp-mb-modal__dialog--fs');
+      }
+      const fs = document.getElementById('erpMbFsBtn');
+      if (fs) {
+        fs.textContent = __mbFsOn ? 'Exit full screen' : 'Full screen';
+        fs.setAttribute('aria-pressed', __mbFsOn ? 'true' : 'false');
+      }
+    }
+
+    function erpMbToggleMaximize() {
+      const d = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
+      if (!d) return;
+      __mbMaxOn = !__mbMaxOn;
+      if (__mbMaxOn) {
+        d.classList.add('erp-mb-modal__dialog--max');
+        d.classList.remove('erp-mb-modal__dialog--fs');
+        __mbFsOn = false;
+        const fs = document.getElementById('erpMbFsBtn');
+        if (fs) {
+          fs.textContent = 'Full screen';
+          fs.setAttribute('aria-pressed', 'false');
+        }
+      } else {
+        d.classList.remove('erp-mb-modal__dialog--max');
+      }
+      const mx = document.getElementById('erpMbMaxBtn');
+      if (mx) {
+        mx.textContent = __mbMaxOn ? 'Restore' : 'Maximize';
+        mx.setAttribute('aria-pressed', __mbMaxOn ? 'true' : 'false');
+      }
+    }
+
+    function mbModalHasDirtyData() {
+      const v = (document.getElementById('mbVendorSearch')?.value || '').trim();
+      const memo = (document.getElementById('mbMemo')?.value || '').trim();
+      const fmt = (document.getElementById('mbBillFmt')?.value || '').trim();
+      const amtSame = (document.getElementById('mbAmtSame')?.value || '').trim();
+      const amtTotal = (document.getElementById('mbAmtTotal')?.value || '').trim();
+      const cnt = (document.getElementById('mbCount')?.value || '').trim();
+      if (v || memo || fmt || amtSame || amtTotal) return true;
+      if (cnt && cnt !== '2') return true;
+      const lines = collectMbFormWoLines();
+      if (lines.length) return true;
+      const row = document.querySelector('#mbWoCatHost .wo-line');
+      if (row) {
+        if ((row.querySelector('.wo-acct')?.value || '').trim()) return true;
+        if ((row.querySelector('.wo-svc')?.value || '').trim()) return true;
+        if (Number(row.querySelector('.wo-amt')?.value) > 0) return true;
+        if (row.querySelector('.wo-line-billable')?.checked) return true;
+      }
+      return false;
+    }
+
+    function erpTryCloseMultiBillsModal() {
+      const m = document.getElementById('erpMultiBillsModal');
+      if (!m || m.classList.contains('hidden')) return;
+      if (mbModalHasDirtyData()) {
+        if (
+          !confirm(
+            'Close without creating bills?\nYour configuration will be lost.'
+          )
+        )
+          return;
+      }
+      erpCloseMultiBillsModal();
+    }
+
     function mbViewSeriesInHistory() {
       const s = document.getElementById('expHistSeries');
       if (s) s.value = __mbSeriesId;
@@ -17118,6 +17211,7 @@
     }
 
     function erpCloseMultiBillsModal() {
+      erpMbResetChrome();
       const m = document.getElementById('erpMultiBillsModal');
       if (!m) return;
       m.classList.add('hidden');
@@ -17126,9 +17220,16 @@
       document.getElementById('mbSuccessLayer')?.classList.add('hidden');
       document.getElementById('mbMainFlow')?.classList.remove('hidden');
       document.getElementById('mbProgressWrap')?.classList.add('hidden');
+      if (__mbLastFocusEl && typeof __mbLastFocusEl.focus === 'function') {
+        try {
+          __mbLastFocusEl.focus();
+        } catch (_) {}
+      }
+      __mbLastFocusEl = null;
     }
 
     function erpOpenMultiBillsModal() {
+      __mbLastFocusEl = document.activeElement;
       erpCloseNewMenu();
       if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
       mbBindMultiBillsUiOnce();
@@ -17142,7 +17243,6 @@
       }
       mbPopulateAssetUnitSelect();
       document.getElementById('mbWoCatHost') && (document.getElementById('mbWoCatHost').innerHTML = '');
-      document.getElementById('mbWoItemHost') && (document.getElementById('mbWoItemHost').innerHTML = '');
       mbAddCategoryLine();
       const fd = document.getElementById('mbFirstDate');
       if (fd && !fd.value && typeof localIsoDate === 'function') fd.value = localIsoDate(new Date());
@@ -17166,6 +17266,10 @@
       mbRecomputePreview();
       m.classList.remove('hidden');
       m.setAttribute('aria-hidden', 'false');
+      const mbDlg = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
+      if (mbDlg && typeof erpRestoreModalRect === 'function') {
+        erpRestoreModalRect(mbDlg, 'multi_bills', { minW: 520, minH: 400 });
+      }
       openSectionByName('accounting');
       const stub = document.getElementById('acctStubTrans');
       openAccountingTab('acct-transactions', stub);
@@ -17174,11 +17278,18 @@
     function mbBindMultiBillsUiOnce() {
       if (window.__mbUiBound) return;
       window.__mbUiBound = true;
-      document.addEventListener('click', ev => {
-        const t = ev.target;
-        if (t && t.closest && t.closest('[data-erp-mb-close]')) erpCloseMultiBillsModal();
-      });
       const modal = document.getElementById('erpMultiBillsModal');
+      modal?.addEventListener(
+        'click',
+        ev => {
+          const t = ev.target;
+          if (t && t.closest && t.closest('[data-erp-mb-close]')) {
+            ev.preventDefault();
+            erpTryCloseMultiBillsModal();
+          }
+        },
+        true
+      );
       modal?.addEventListener('click', e => {
         const b = e.target.closest('[data-mb-freq]');
         if (b) mbSetFreq(b.getAttribute('data-mb-freq'));
@@ -17191,19 +17302,19 @@
       mbRoot?.addEventListener('input', e => {
         const t = e.target;
         if (!t || !t.classList) return;
-        const itemRow = t.closest('.wo-line-item');
-        if (itemRow) {
-          if (t.classList.contains('wo-line-total')) syncWoApItemLineFromTotal(itemRow);
-          else if (t.classList.contains('wo-qty') || t.classList.contains('wo-rate')) {
-            syncWoApItemLineTotal(itemRow);
-            mbRefreshDocTotal();
-          }
-          mbScheduleRecompute();
-          return;
-        }
         if (t.classList.contains('wo-amt')) mbRefreshDocTotal();
         mbScheduleRecompute();
       });
+      if (!window.__mbEscHandler) {
+        window.__mbEscHandler = ev => {
+          if (ev.key !== 'Escape') return;
+          const m = document.getElementById('erpMultiBillsModal');
+          if (!m || m.classList.contains('hidden')) return;
+          ev.preventDefault();
+          erpTryCloseMultiBillsModal();
+        };
+        document.addEventListener('keydown', window.__mbEscHandler, true);
+      }
     }
 
     function erpCollectApDedicatedPrintData() {
