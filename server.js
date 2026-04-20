@@ -53,6 +53,7 @@ import {
   defaultIntegrityThresholds,
   alertCategory,
   effectiveIntegrityAlertCategory,
+  compareIntegrityAlertsDesc,
   integrityThresholdExportRows,
   integrityAlertRuleCatalogSections,
   integrityAlertRuleCatalogFlat
@@ -5435,6 +5436,7 @@ function integrityDataContextLines(alert, erp) {
 function enrichIntegrityDashboardAlert(alert, erp) {
   return {
     ...alert,
+    category: effectiveIntegrityAlertCategory(alert),
     shortTitle: integrityShortTitle(alert),
     daysAgoLabel: integrityDaysAgoLabel(alert.triggeredDate || alert.createdAt),
     dataContextLines: integrityDataContextLines(alert, erp)
@@ -5489,7 +5491,20 @@ app.post('/api/integrity/check', async (req, res) => {
       persistIntegrityAlerts(erp, evaluated, ctx, req);
       writeErp(erp);
     }
-    res.json({ ok: true, alerts: evaluated, fleetAvgMilesPerMonth });
+    const alertsOut = (evaluated || []).map(a => {
+      const unitId = String(a.details?.unit || ctx.unitId || ctx.unit || '').trim();
+      return {
+        ...a,
+        alertType: a.type,
+        category: alertCategory(a.type),
+        shortTitle: integrityShortTitle({
+          alertType: a.type,
+          unitId,
+          message: a.message
+        })
+      };
+    });
+    res.json({ ok: true, alerts: alertsOut, fleetAvgMilesPerMonth });
   } catch (error) {
     logError('api/integrity/check', error);
     res.json({ ok: true, alerts: [] });
@@ -5529,7 +5544,7 @@ app.get('/api/integrity/dashboard', (req, res) => {
       return true;
     });
     if (category && category !== 'all') {
-      rows = rows.filter(r => String(r.category || '').toLowerCase() === category);
+      rows = rows.filter(r => effectiveIntegrityAlertCategory(r) === category);
     }
     if (severity === 'RED' || severity === 'AMBER') {
       rows = rows.filter(r => String(r.severity || '').toUpperCase() === severity);
@@ -5540,7 +5555,7 @@ app.get('/api/integrity/dashboard', (req, res) => {
     } else if (status === 'dismissed') {
       rows = rows.filter(r => String(r.status || '') === 'dismissed');
     }
-    rows.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    rows.sort(compareIntegrityAlertsDesc);
     const kpi = integrityKpiSnapshot(erp);
     const enriched = rows.map(r => enrichIntegrityDashboardAlert(r, erp));
     res.json({ ok: true, alerts: enriched, kpi, thresholds: mergeIntegrityThresholds(erp) });
@@ -5582,7 +5597,7 @@ app.post('/api/integrity/alert/:id/review', (req, res) => {
       notes
     };
     writeErp(erp);
-    res.json({ ok: true, alert: erp.integrityAlerts[idx] });
+    res.json({ ok: true, alert: enrichIntegrityDashboardAlert(erp.integrityAlerts[idx], erp) });
   } catch (error) {
     logError('api/integrity/alert/:id/review', error);
     res.status(500).json({ ok: false, error: error.message });
@@ -5603,7 +5618,7 @@ app.post('/api/integrity/alert/:id/notes', (req, res) => {
       notes
     };
     writeErp(erp);
-    res.json({ ok: true, alert: erp.integrityAlerts[idx] });
+    res.json({ ok: true, alert: enrichIntegrityDashboardAlert(erp.integrityAlerts[idx], erp) });
   } catch (error) {
     logError('api/integrity/alert/:id/notes', error);
     res.status(500).json({ ok: false, error: error.message });
@@ -5671,7 +5686,7 @@ app.get('/api/integrity/export', (req, res) => {
     const severity = String(q.severity || '').trim().toUpperCase();
     const status = String(q.status || '').trim().toLowerCase();
     if (category && category !== 'all') {
-      rows = rows.filter(r => String(r.category || '').toLowerCase() === category);
+      rows = rows.filter(r => effectiveIntegrityAlertCategory(r) === category);
     }
     if (severity === 'RED' || severity === 'AMBER') {
       rows = rows.filter(r => String(r.severity || '').toUpperCase() === severity);
@@ -5679,9 +5694,10 @@ app.get('/api/integrity/export', (req, res) => {
     if (status === 'active') rows = rows.filter(r => String(r.status || 'active') === 'active');
     else if (status === 'reviewed' || status === 'resolved') {
       rows = rows.filter(r => String(r.status || '') === 'reviewed');
-    } else if (status === 'dismissed') {
+    }     else if (status === 'dismissed') {
       rows = rows.filter(r => String(r.status || '') === 'dismissed');
     }
+    rows.sort(compareIntegrityAlertsDesc);
     const cp = erp.companyProfile || {};
     const company = String(cp.legalName || 'IH 35 Transportation LLC');
     const exportFiltParts = [];
@@ -5793,7 +5809,7 @@ app.get('/api/integrity/export', (req, res) => {
       const redIn = rows.filter(r => String(r.severity || '').toUpperCase() === 'RED').length;
       const ambIn = rows.filter(r => String(r.severity || '').toUpperCase() === 'AMBER').length;
       doc.text(`Of those rows: RED ${redIn} · AMBER ${ambIn}`);
-      const byCat = c => rows.filter(r => String(r.category || '').toLowerCase() === c);
+      const byCat = c => rows.filter(r => effectiveIntegrityAlertCategory(r) === c);
       doc.moveDown(0.35);
       doc.fontSize(10).fillColor('#444444').text('Counts by category (in this export):', { underline: false });
       doc.text(
@@ -5945,7 +5961,7 @@ app.get('/api/integrity/export', (req, res) => {
       amber: 0
     };
     for (const r of rows) {
-      const c = String(r.category || '').toLowerCase();
+      const c = effectiveIntegrityAlertCategory(r);
       if (c === 'tires') sum.tires++;
       else if (c === 'drivers') sum.drivers++;
       else if (c === 'accidents') sum.accidents++;
@@ -6028,7 +6044,7 @@ app.get('/api/integrity/export', (req, res) => {
       ),
       'All alerts'
     );
-    const byCat = cat => rows.filter(r => String(r.category || '').toLowerCase() === cat);
+    const byCat = cat => rows.filter(r => effectiveIntegrityAlertCategory(r) === cat);
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('tires')), 'Tire anomalies');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('drivers')), 'Driver anomalies');
     const accRecs = (erp.records || []).filter(

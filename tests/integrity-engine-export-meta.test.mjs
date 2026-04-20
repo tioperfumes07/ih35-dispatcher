@@ -5,7 +5,9 @@ import {
   mergeIntegrityThresholds,
   integrityThresholdExportRows,
   integrityAlertRuleCatalogFlat,
-  alertCategory
+  alertCategory,
+  effectiveIntegrityAlertCategory,
+  compareIntegrityAlertsDesc
 } from '../lib/integrity-engine.mjs';
 
 test('integrityThresholdExportRows keys match defaultIntegrityThresholds order', () => {
@@ -54,4 +56,24 @@ test('alertCategory maps engine prefixes for dashboard filters', () => {
   assert.equal(alertCategory('M2'), 'maintenance');
   assert.equal(alertCategory('OD2'), 'samsara');
   assert.equal(alertCategory('MAINTENANCE_DUE_SOON'), 'predictive');
+});
+
+test('effectiveIntegrityAlertCategory fills missing category from alertType', () => {
+  assert.equal(effectiveIntegrityAlertCategory({ category: '', alertType: 'T1' }), 'tires');
+  assert.equal(effectiveIntegrityAlertCategory({ alertType: 'OD1' }), 'samsara');
+  assert.equal(effectiveIntegrityAlertCategory({ type: 'F3', category: '' }), 'fuel');
+});
+
+test('effectiveIntegrityAlertCategory keeps stored category when set', () => {
+  assert.equal(effectiveIntegrityAlertCategory({ category: 'fuel', alertType: 'T1' }), 'fuel');
+});
+
+test('compareIntegrityAlertsDesc orders by triggered day then createdAt', () => {
+  const older = { triggeredDate: '2024-01-15', createdAt: '2024-06-01T12:00:00.000Z' };
+  const newer = { triggeredDate: '2024-02-01', createdAt: '2024-05-01T12:00:00.000Z' };
+  assert.ok(compareIntegrityAlertsDesc(older, newer) > 0);
+  assert.ok(compareIntegrityAlertsDesc(newer, older) < 0);
+  const sameDayA = { triggeredDate: '2024-03-01', createdAt: '2024-03-01T10:00:00.000Z' };
+  const sameDayB = { triggeredDate: '2024-03-01', createdAt: '2024-03-01T15:00:00.000Z' };
+  assert.ok(compareIntegrityAlertsDesc(sameDayA, sameDayB) > 0);
 });

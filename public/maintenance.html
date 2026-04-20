@@ -12124,11 +12124,22 @@
               String(a.type || a.alertType) + ':' + String(a.message || '').slice(0, 48)
             )
         )
-        .map(
-          a =>
-            `<li style="margin:2px 0;padding-left:12px;position:relative">
-              <span style="position:absolute;left:0">•</span>${escapeHtml(a.message || '')}</li>`
-        )
+        .map(a => {
+          const cat = String(a.category || '').trim().toLowerCase();
+          const catLab = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : '';
+          const catHtml = catLab
+            ? `<span class="erp-int-pill erp-int-pill--cat" style="font-size:10px;margin-right:6px;vertical-align:1px">${escapeHtml(catLab)}</span>`
+            : '';
+          const st = String(a.shortTitle || '').trim();
+          const msg = String(a.message || '').trim();
+          const headline = st || msg;
+          const detailLine =
+            st && msg && msg !== st
+              ? `<div class="mini-note" style="margin:3px 0 0 0;line-height:1.35;opacity:0.92">${escapeHtml(msg)}</div>`
+              : '';
+          return `<li style="margin:2px 0;padding-left:12px;position:relative">
+              <span style="position:absolute;left:0">•</span>${catHtml}<span style="font-weight:500">${escapeHtml(headline)}</span>${detailLine}</li>`;
+        })
         .join('');
       if (!items) return;
       host.innerHTML = `
@@ -23675,14 +23686,15 @@
       const ta = document.getElementById('erpIntInvNotes');
       const notes = ta ? ta.value : '';
       try {
-        await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/notes', {
+        const d = await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/notes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
           body: JSON.stringify({ notes })
         });
         erpNotify('Notes saved.', 'success');
         const idx = __integrityDashLastRows.findIndex(x => String(x.id) === String(alertId));
-        if (idx >= 0) __integrityDashLastRows[idx] = { ...__integrityDashLastRows[idx], notes };
+        if (idx >= 0 && d && d.alert) __integrityDashLastRows[idx] = d.alert;
+        else if (idx >= 0) __integrityDashLastRows[idx] = { ...__integrityDashLastRows[idx], notes };
         await loadIntegrityDashboard();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
@@ -23695,11 +23707,13 @@
       const ta = document.getElementById('erpIntInvNotes');
       if (ta) notes = ta.value;
       try {
-        await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/review', {
+        const d = await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/review', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
           body: JSON.stringify({ notes })
         });
+        const idx = __integrityDashLastRows.findIndex(x => String(x.id) === String(alertId));
+        if (idx >= 0 && d && d.alert) __integrityDashLastRows[idx] = d.alert;
         await loadIntegrityDashboard();
         void refreshIntegrityNavBadges();
       } catch (e) {
