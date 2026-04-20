@@ -11017,7 +11017,7 @@
       if (top) {
         top.innerHTML =
           `<span class="maint-qbo-dot" aria-hidden="true"></span><span class="maint-qbo-issues-text">${errN} error${errN === 1 ? '' : 's'}</span>` +
-          `<button type="button" class="maint-qbo-issues-view" onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})">View</button>`;
+          `<button type="button" class="maint-qbo-issues-view" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); document.getElementById('acctBoardStrip')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">View</button>`;
       }
     }
 
