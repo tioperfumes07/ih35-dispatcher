@@ -7,11 +7,11 @@ Use this split so parallel agents do not edit the same surfaces twice. **Agent B
 **Agent 1 currently owns:**
 
 - **`public/css/erp-master-redesign.css`**
-- **`public/fuel.html`**
-- **`public/index.html`** (e.g. inline `<style>` → CSS extraction)
 - Changelog lines in **`docs/ERP_MASTER_REDESIGN_STATUS.md`**
 
-Other agents should **avoid editing those** unless explicitly coordinated. Broader redesign context: [`ERP_MASTER_REDESIGN_PARALLEL_AGENT.md`](./ERP_MASTER_REDESIGN_PARALLEL_AGENT.md).
+**Coordinated / follow-up:** Large satellite-shell passes on **`fuel.html`**, **`index.html`**, **`dispatch.html`**, etc. — **inline `<style>` blocks are cleared** into the redesign sheet (see recent changelogs); further polish still goes through Agent 1 unless coordinated.
+
+Other agents should **avoid editing `erp-master-redesign.css` and the rolling status changelog** unless explicitly coordinated. Broader redesign context: [`ERP_MASTER_REDESIGN_PARALLEL_AGENT.md`](./ERP_MASTER_REDESIGN_PARALLEL_AGENT.md).
 
 ## Agent A — UI shell & layout
 
@@ -32,7 +32,7 @@ Prefer this lane when the task is **logic, copy, or structure-light** changes wi
 
 ## Agent B — Guards, APIs, persistence, tooling
 
-- **`scripts/rule-zero-agent-b.mjs`**, **`scripts/rule-zero-agent-b-check.mjs`**, **`scripts/system-smoke.mjs`**, **`package.json`** test/qa scripts — if smoke expectations change, sync with Agent A / Agent 1 as needed
+- **`scripts/rule-zero-agent-b.mjs`**, **`scripts/rule-zero-agent-b-check.mjs`**, **`scripts/system-smoke.mjs`**, **`package.json`** test/qa scripts — if smoke expectations change, sync with Agent A / Agent 1 as needed. **`npm run smoke`** (server up; optional **`SMOKE_BASE`**) GETs ERP HTML shells (including **`/tracking.html`** — redirect target + **`viewport-fit=cover`**) plus static assets with stable header needles: **`/css/design-tokens.css`**, **`/css/app-theme.css`**, **`/css/erp-master-redesign.css`**, **`/css/erp-master-spec-2026.css`**, **`/css/maint-accounting-ui-2026.css`**, **`/css/board-nav.css`**, **`/js/erp-ui.js`**, **`/js/board-nav.js`**; Rule 0 stack guard reuses cached bodies for **`app-theme`**, **`maint-accounting`**, **`maintenance.html`**. **`npm run qa:automated`** = **`rule0:check`** + smoke.
 - **`.github/workflows/rule0-check.yml`**
 - **`server.js`**, **`routes/**`**, migrations, **`data/**` semantics**
 - **`README.md`** — **verification / how to run checks only** (not the big redesign narrative in `ERP_MASTER_REDESIGN_STATUS.md`; that changelog is Agent 1–owned unless coordinated)
