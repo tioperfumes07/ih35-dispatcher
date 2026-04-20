@@ -108,3 +108,21 @@ test('Purchase scan query uses TxnDate only when cutoff is valid ISO date', asyn
   assert.match(purchaseSqls[0], /TxnDate >= '\d{4}-\d{2}-\d{2}'/i);
   assert.match(purchaseSqls[0], /STARTPOSITION 1 MAXRESULTS 500/i);
 });
+
+test('Purchase scan uses TxnDate fallback when lookback env is unset (avoids QBO 4001 / EntityRef)', async () => {
+  stashEnv();
+  delete process.env.QBO_DEDUPE_PURCHASE_LOOKBACK_YEARS;
+  process.env.QBO_DEDUPE_PURCHASE_CACHE_SEC = '0';
+  const calls = [];
+  const qboQuery = sql => {
+    calls.push(sql);
+    return Promise.resolve({ QueryResponse: { Purchase: [] } });
+  };
+  const { countVendorTransactions, clearQboDedupePurchaseScanCache } = await import('../lib/qbo-dedupe-merge.mjs');
+  clearQboDedupePurchaseScanCache();
+  await countVendorTransactions(qboQuery, '99');
+  const purchaseSqls = calls.filter(s => /from Purchase/i.test(s));
+  assert.ok(purchaseSqls.length >= 1);
+  assert.match(purchaseSqls[0], /TxnDate >= '1990-01-01'/i);
+  assert.match(purchaseSqls[0], /STARTPOSITION 1 MAXRESULTS 500/i);
+});

@@ -274,11 +274,18 @@
     });
   }
 
+  function dedupeChrome() {
+    return typeof erpModalChromeToolbarHtml === 'function' ? erpModalChromeToolbarHtml() : '';
+  }
+
   function openPreviewModal(keep, merge) {
     const bal = (Number(keep.balance) || 0) + (Number(merge.balance) || 0);
     const html = `<div class="erp-dedupe-modal" id="erpDedupeModal">
-      <div class="erp-dedupe-modal__card" style="max-width:560px">
-        <h2 class="erp-dedupe-modal__title">Preview: How the merged record will look</h2>
+      <div class="erp-dedupe-modal__card erp-dedupe-modal__card--standard">
+        <div class="erp-dedupe-modal__head">
+          <h2 class="erp-dedupe-modal__title">Preview: How the merged record will look</h2>
+          ${dedupeChrome()}
+        </div>
         <div class="mini-note" style="margin-bottom:12px">
           <div><strong>Name:</strong> ${escapeHtml(keep.name)} (unchanged)</div>
           <div><strong>Phone:</strong> ${escapeHtml(keep.phone || merge.phone || '—')}</div>
@@ -305,8 +312,11 @@
 
   function openConfirmModal(keep, merge, onConfirm) {
     const html = `<div class="erp-dedupe-modal" id="erpDedupeModal">
-      <div class="erp-dedupe-modal__card" style="width:560px;padding:24px;border-radius:12px">
-        <h2 class="erp-dedupe-modal__title" style="font-size:18px;font-weight:500;color:#1a1f36">Confirm merge</h2>
+      <div class="erp-dedupe-modal__card erp-dedupe-modal__card--confirm">
+        <div class="erp-dedupe-modal__head">
+          <h2 class="erp-dedupe-modal__title erp-dedupe-modal__title--confirm">Confirm merge</h2>
+          ${dedupeChrome()}
+        </div>
         <div class="erp-dedupe-warn">⚠ This action cannot be easily undone. The merged record will be removed from QuickBooks and all its transactions will be transferred to the kept record.</div>
         <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px">
           <tr style="border-left:3px solid #1a7a3c"><td style="padding:10px"><span class="erp-dedupe-pill erp-dedupe-pill--ok">✓ KEEPING</span>
@@ -346,7 +356,11 @@
     const wrap = document.createElement('div');
     wrap.className = 'erp-dedupe-modal';
     wrap.id = 'erpDedupeProgress';
-    wrap.innerHTML = `<div class="erp-dedupe-modal__card" style="width:420px;text-align:center">
+    wrap.innerHTML = `<div class="erp-dedupe-modal__card erp-dedupe-modal__card--progress">
+        <div class="erp-dedupe-modal__head erp-dedupe-modal__head--progress">
+          <span class="erp-dedupe-modal__title erp-dedupe-modal__title--progress">Merging…</span>
+          ${dedupeChrome()}
+        </div>
       <div class="erp-dedupe-spinner"></div>
       <p style="margin-top:12px">Merging records in QuickBooks…</p>
       <ol style="text-align:left;font-size:12px;color:#6b7385;margin-top:12px" id="erpDedupeProgSteps"></ol>
@@ -383,9 +397,12 @@
       state.entity === 'customer'
         ? qboCustomerUrl(keep.qboId, state.realmId)
         : qboVendorUrl(keep.qboId, state.realmId);
-    const html = `<div class="erp-dedupe-modal" id="erpDedupeModal"><div class="erp-dedupe-modal__card" style="max-width:480px">
+    const html = `<div class="erp-dedupe-modal" id="erpDedupeModal"><div class="erp-dedupe-modal__card erp-dedupe-modal__card--result">
+        <div class="erp-dedupe-modal__head">
+          <h2 class="erp-dedupe-modal__title">Merge complete</h2>
+          ${dedupeChrome()}
+        </div>
       <div style="font-size:42px;color:#1a7a3c;text-align:center">✓</div>
-      <h2 style="text-align:center">Merge complete</h2>
       <p class="mini-note">Kept: ${escapeHtml(keep.name)} (ID: ${escapeHtml(keep.qboId)})</p>
       <p class="mini-note">Merged: ${escapeHtml(merge.name)} → now inactive</p>
       <p class="mini-note">${Number(res.transactionsTransferred) || 0} transactions transferred · ${Number(res.erpRecordsUpdated) || 0} ERP records updated</p>

@@ -637,10 +637,15 @@
         )}</td><td class="mini-note">${pnum}</td><td class="num">${money(rem)}</td></tr>`;
       })
       .join('');
+    const chrome =
+      typeof erpModalChromeToolbarHtml === 'function' ? erpModalChromeToolbarHtml() : '';
     host.innerHTML = `
 <div class="vbp-modal-backdrop">
   <div class="vbp-modal">
-    <div class="vbp-modal__title">Confirm payment</div>
+    <div class="vbp-modal__head">
+      <div class="vbp-modal__title">Confirm payment</div>
+      ${chrome}
+    </div>
     <div class="mini-note">Pay to: <strong>${escapeHtml(VBP.vendorName)}</strong></div>
     <div class="mini-note">Payment date: ${escapeHtml(el('vbpPayDate').value)} · Method: ${escapeHtml(
       el('vbpPayMethod').value

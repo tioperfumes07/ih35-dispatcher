@@ -3486,3 +3486,196 @@ body.erp-maintenance #erpApp.erp-master #repIntegrityBody.erp-int-dash-card-host
 body.erp-maintenance #erpApp.erp-master #repIntegrityBody.erp-int-dash-card-host > .erp-int-alert-card {
   margin: 0;
 }
+
+/* =============================================================================
+   Universal modal chrome — Maximize + Full screen (erp-modal-chrome.js)
+   ============================================================================= */
+.erp-modal-chrome {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.erp-modal-chrome__btn,
+.erp-modal-chrome .btn {
+  font-size: 12px;
+  padding: 6px 12px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+body.dispatch-page .dispatch-modal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background: var(--color-bg-header);
+  min-width: 0;
+}
+body.dispatch-page .modal .dispatch-modal-head h2 {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  flex: 1 1 200px;
+  min-width: 0;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+body.dispatch-page .modal.dispatch-docs-modal {
+  max-width: min(640px, 96vw);
+}
+body.dispatch-page .modal.erp-modal-chrome--viewport-max,
+body.dispatch-page .modal.book-modal-wide.erp-modal-chrome--viewport-max {
+  max-width: min(96vw, 1400px) !important;
+  width: min(96vw, 1400px) !important;
+  max-height: 92vh !important;
+}
+body.dispatch-page .modal:fullscreen,
+body.dispatch-page .modal:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
+}
+
+.vbp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12550;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+    max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.vbp-modal {
+  background: var(--color-bg-card, #fff);
+  border-radius: 10px;
+  padding: 20px;
+  width: min(720px, 94vw);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-border, #e0e3e8);
+  box-sizing: border-box;
+}
+.vbp-modal__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+.vbp-modal__title {
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.vbp-modal.erp-modal-chrome--viewport-max {
+  width: min(96vw, 960px) !important;
+  max-width: 96vw !important;
+  max-height: 92vh !important;
+}
+.vbp-modal:fullscreen,
+.vbp-modal:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
+}
+
+.nm-modal.erp-modal-chrome--viewport-max {
+  width: min(96vw, 1200px) !important;
+  max-width: 96vw !important;
+  max-height: 92vh !important;
+}
+.nm-modal:fullscreen,
+.nm-modal:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
+}
+
+.erp-dedupe-modal__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 14px;
+  min-width: 0;
+}
+.erp-dedupe-modal__head--progress {
+  margin-bottom: 12px;
+  text-align: left;
+}
+.erp-dedupe-modal__title {
+  margin: 0;
+  flex: 1 1 200px;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a1f36;
+}
+.erp-dedupe-modal__title--progress {
+  font-size: 16px;
+}
+.erp-dedupe-modal__title--confirm {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a1f36;
+}
+.erp-dedupe-modal__card.erp-dedupe-modal__card--standard {
+  width: min(560px, 94vw);
+  max-width: 96vw;
+  box-sizing: border-box;
+}
+.erp-dedupe-modal__card.erp-dedupe-modal__card--confirm {
+  width: min(560px, 94vw);
+  max-width: 96vw;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.erp-dedupe-modal__card.erp-dedupe-modal__card--progress {
+  width: min(420px, 94vw);
+  max-width: 96vw;
+  text-align: center;
+  box-sizing: border-box;
+}
+.erp-dedupe-modal__card.erp-dedupe-modal__card--result {
+  width: min(480px, 94vw);
+  max-width: 96vw;
+  box-sizing: border-box;
+}
+.erp-dedupe-modal__card.erp-modal-chrome--viewport-max {
+  width: min(96vw, 720px) !important;
+  max-width: 96vw !important;
+  max-height: 92vh !important;
+}
+.erp-dedupe-modal__card:fullscreen,
+.erp-dedupe-modal__card:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
+}

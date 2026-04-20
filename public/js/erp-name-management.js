@@ -401,11 +401,15 @@
       (state.kind !== 'driver' || (row.samsaraName || '') === nn) &&
       ((state.kind === 'driver' ? row.erpName : row.erpNameSample) || '') === nn;
     if (allSame) return alert('New name matches all sources — nothing to update.');
+    const nmChrome = typeof erpModalChromeToolbarHtml === 'function' ? erpModalChromeToolbarHtml() : '';
     const backdrop = document.createElement('div');
     backdrop.className = 'nm-modal-backdrop';
     backdrop.innerHTML = `
       <div class="nm-modal" role="dialog" aria-modal="true">
-        <h3 style="margin:0 0 12px">Confirm rename</h3>
+        <div class="nm-modal__head">
+          <h3>Confirm rename</h3>
+          ${nmChrome}
+        </div>
         <p class="mini-note">Record: <strong>${esc(row.primaryName)}</strong><br/>New name: <strong>${esc(nn)}</strong></p>
         <label style="display:block;margin:12px 0;font-size:13px"><input type="checkbox" id="nmConfirmAck" /> I confirm this rename should be applied across the selected systems.</label>
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
@@ -518,8 +522,12 @@
         .nm-pill--g{background:#e6f4ea;color:#137333}
         .nm-pill--gr{background:#eceff1;color:#444}
         .nm-pill--b{background:#e8f0fe;color:#1557a0}
-        .nm-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:12000}
-        .nm-modal{width:min(500px,92vw);background:#fff;border-radius:10px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+        .nm-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:12000;padding:max(12px,env(safe-area-inset-top,0)) max(12px,env(safe-area-inset-right,0)) max(12px,env(safe-area-inset-bottom,0)) max(12px,env(safe-area-inset-left,0))}
+        .nm-modal{width:min(500px,92vw);max-height:min(90vh,920px);background:#fff;border-radius:10px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.2);overflow:auto;box-sizing:border-box}
+        .nm-modal__head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;min-width:0}
+        .nm-modal__head h3{margin:0;flex:1 1 180px;min-width:0;font-size:16px;font-weight:600}
+        .nm-modal--wide{width:min(1100px,94vw)}
+        .nm-modal--history{width:min(980px,96vw)}
       </style>
       <div class="nm-wrap">
         <h1 style="font-size:22px;margin:0 0 4px">Vendor &amp; driver name management</h1>
@@ -564,6 +572,7 @@
   }
 
   async function openBulkModal() {
+    const nmChrome = typeof erpModalChromeToolbarHtml === 'function' ? erpModalChromeToolbarHtml() : '';
     const t = state.kind;
     const data = await nmFetch(`/api/name-management/mismatches?type=${encodeURIComponent(t)}`);
     state.bulkRows = data.records || [];
@@ -583,8 +592,11 @@
       })
       .join('');
     backdrop.innerHTML = `
-      <div class="nm-modal" style="width:min(1100px,94vw);max-height:88vh;overflow:auto">
-        <h3 style="margin-top:0">Bulk name standardization</h3>
+      <div class="nm-modal nm-modal--wide" style="max-height:88vh;overflow:auto">
+        <div class="nm-modal__head">
+          <h3>Bulk name standardization</h3>
+          ${nmChrome}
+        </div>
         <p class="mini-note">Up to 50 renames per request. Each row still requires confirmation in the API batch (checkboxes below).</p>
         <table class="erp-dedupe-table" style="font-size:11px"><thead>
           <tr><th><input type="checkbox" id="nmBulkAll" /></th><th>Record</th><th>Type</th><th>QBO</th><th>Samsara</th><th>ERP</th><th>Suggested</th><th>New name</th></tr>
@@ -633,7 +645,10 @@
       const more = renames.length > 12 ? `<p class="mini-note">…and ${renames.length - 12} more.</p>` : '';
       ackBackdrop.innerHTML = `
         <div class="nm-modal" role="dialog" aria-modal="true">
-          <h3 style="margin-top:0">Confirm bulk rename</h3>
+          <div class="nm-modal__head">
+            <h3>Confirm bulk rename</h3>
+            ${nmChrome}
+          </div>
           <p class="mini-note">This calls live QuickBooks, Samsara (drivers), and ERP for <strong>${renames.length}</strong> record(s).</p>
           <ul style="margin:8px 0;padding-left:18px;font-size:13px;max-height:200px;overflow:auto">${preview}</ul>
           ${more}
@@ -671,11 +686,15 @@
   }
 
   async function openHistoryModal() {
+    const nmChrome = typeof erpModalChromeToolbarHtml === 'function' ? erpModalChromeToolbarHtml() : '';
     const backdrop = document.createElement('div');
     backdrop.className = 'nm-modal-backdrop';
     backdrop.innerHTML = `
-      <div class="nm-modal" style="width:min(980px,96vw);max-height:90vh;overflow:auto">
-        <h3 style="margin-top:0">Rename history</h3>
+      <div class="nm-modal nm-modal--history" style="max-height:90vh;overflow:auto">
+        <div class="nm-modal__head">
+          <h3>Rename history</h3>
+          ${nmChrome}
+        </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:12px;font-size:13px">
           <label>Type<br/><select id="nmHistType" class="qb-in" style="min-width:120px">
             <option value="">All</option>
