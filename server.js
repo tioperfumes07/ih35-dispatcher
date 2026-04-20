@@ -5680,9 +5680,16 @@ app.get('/api/integrity/export', (req, res) => {
     }
     const cp = erp.companyProfile || {};
     const company = String(cp.legalName || 'IH 35 Transportation LLC');
+    const exportFiltParts = [];
+    if (category && category !== 'all') exportFiltParts.push(`Category: ${category}`);
+    if (severity === 'RED' || severity === 'AMBER') exportFiltParts.push(`Severity: ${severity}`);
+    if (status && status !== 'all') exportFiltParts.push(`Status: ${status}`);
+    const exportFiltLine = exportFiltParts.length
+      ? exportFiltParts.join(' · ')
+      : 'Filters: none (all statuses in date range)';
 
     if (fmt === 'pdf') {
-      const doc = new PDFDocument({ margin: 48, size: 'LETTER' });
+      const doc = new PDFDocument({ margin: 48, size: 'LETTER', bufferPages: true });
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
@@ -5690,8 +5697,10 @@ app.get('/api/integrity/export', (req, res) => {
       );
       doc.pipe(res);
       const kpiPdf = integrityKpiSnapshot(erp);
+      const genStamp = formatIsoDateShortPlain(sliceIsoDate(new Date().toISOString()) || new Date().toISOString().slice(0, 10));
+
       doc.fillColor('#000000');
-      doc.fontSize(24).text('Integrity Report', { align: 'center' });
+      doc.fontSize(24).text('Integrity & anomaly report', { align: 'center' });
       doc.moveDown(0.35);
       doc.fontSize(16).fillColor('#333333').text(company, { align: 'center' });
       doc.moveDown(0.6);
@@ -5701,8 +5710,15 @@ app.get('/api/integrity/export', (req, res) => {
         .text(`Reporting period: ${formatIsoDateShortPlain(startDate)} through ${formatIsoDateShortPlain(endDate)}`, {
           align: 'center'
         });
-      doc.moveDown(2);
-      doc.fontSize(10).fillColor('#666666').text('Confidential — operational anomaly summary', { align: 'center' });
+      doc.moveDown(0.35);
+      doc.fontSize(10).fillColor('#444444').text(exportFiltLine, { align: 'center', width: 480 });
+      doc.moveDown(0.25);
+      doc.fontSize(9).fillColor('#777777').text(`Generated ${genStamp}`, { align: 'center' });
+      doc.moveDown(1.6);
+      doc.fontSize(10).fillColor('#666666').text('Confidential — operational anomaly summary for internal review.', {
+        align: 'center',
+        width: 480
+      });
 
       doc.addPage();
       doc.fillColor('#1a1f36').fontSize(15).text('Contents', { underline: true });
@@ -5726,17 +5742,41 @@ app.get('/api/integrity/export', (req, res) => {
       doc.addPage();
       doc.fillColor('#1a1f36').fontSize(16).text('Executive summary', { underline: true });
       doc.moveDown(0.5);
-      doc.fillColor('#333333').fontSize(11);
-      doc.text(`Active unresolved alerts: ${kpiPdf.active}`);
-      doc.text(`RED severity: ${kpiPdf.red}`);
-      doc.text(`AMBER severity: ${kpiPdf.amber}`);
-      doc.text(`Marked reviewed this month: ${kpiPdf.resolvedThisMonth}`);
-      doc.moveDown(0.4);
-      doc.text(`Alerts included in this export (date range): ${rows.length}`);
+      doc.fillColor('#333333').fontSize(10);
+      doc.text(
+        'This export lists integrity findings that match the date range and filters above. Fleet-wide KPI counts (below) include unresolved alerts regardless of export filters.',
+        { width: 500, align: 'left' }
+      );
+      doc.moveDown(0.5);
+      doc.fontSize(11);
+      doc.text(`Active unresolved alerts (fleet): ${kpiPdf.active}`);
+      doc.text(`RED severity (fleet): ${kpiPdf.red}`);
+      doc.text(`AMBER severity (fleet): ${kpiPdf.amber}`);
+      doc.text(`Marked reviewed this month (fleet): ${kpiPdf.resolvedThisMonth}`);
+      doc.moveDown(0.45);
+      doc.fontSize(10).fillColor('#333333').text(`Rows in this PDF (after filters): ${rows.length}`);
+      const redIn = rows.filter(r => String(r.severity || '').toUpperCase() === 'RED').length;
+      const ambIn = rows.filter(r => String(r.severity || '').toUpperCase() === 'AMBER').length;
+      doc.text(`Of those rows: RED ${redIn} · AMBER ${ambIn}`);
       const byCat = c => rows.filter(r => String(r.category || '').toLowerCase() === c);
       doc.moveDown(0.35);
-      doc.fontSize(10).fillColor('#444444').text('Counts by category (in-range):', { underline: false });
-      doc.text(`Tires: ${byCat('tires').length} · Drivers: ${byCat('drivers').length} · Accidents: ${byCat('accidents').length} · Fuel: ${byCat('fuel').length} · Maintenance: ${byCat('maintenance').length} · Telematics: ${byCat('samsara').length} · Predictive: ${byCat('predictive').length}`);
+      doc.fontSize(10).fillColor('#444444').text('Counts by category (in this export):', { underline: false });
+      doc.text(
+        `Tires: ${byCat('tires').length} · Drivers: ${byCat('drivers').length} · Accidents: ${byCat('accidents').length} · Fuel: ${byCat('fuel').length} · Maintenance: ${byCat('maintenance').length} · Telematics: ${byCat('samsara').length} · Predictive: ${byCat('predictive').length}`
+      );
+      const topRed = rows
+        .filter(r => String(r.severity || '').toUpperCase() === 'RED')
+        .slice(0, 8)
+        .map(r => String(r.shortTitle || r.alertType || r.message || '').trim().slice(0, 120))
+        .filter(Boolean);
+      if (topRed.length) {
+        doc.moveDown(0.45);
+        doc.fontSize(10).fillColor('#c5221f').text('Sample RED items in this export:', { underline: false });
+        for (const t of topRed) {
+          doc.moveDown(0.12);
+          doc.fontSize(9.5).fillColor('#333333').text(`• ${t}`, { width: 500 });
+        }
+      }
 
       const buckets = [
         ['Tires', byCat('tires')],
@@ -5760,7 +5800,19 @@ app.get('/api/integrity/export', (req, res) => {
           doc
             .fillColor('#333333')
             .text(`${formatReportPdfCellValue(r.triggeredDate || r.createdAt || '') || '—'} — ${String(r.alertType || '')}`);
-          doc.moveDown(0.15);
+          doc.moveDown(0.12);
+          const meta = [
+            r.unitId && `Unit: ${String(r.unitId)}`,
+            r.driverId && `Driver: ${String(r.driverId)}`,
+            r.status && `Status: ${String(r.status)}`,
+            r.reviewedAt && `Reviewed: ${String(r.reviewedAt).slice(0, 16)}`
+          ]
+            .filter(Boolean)
+            .join(' · ');
+          if (meta) {
+            doc.fontSize(8.5).fillColor('#666666').text(meta, { width: 500 });
+            doc.moveDown(0.08);
+          }
           doc.fontSize(9).fillColor('#444444').text(String(r.message || '').slice(0, 420), { width: 500 });
           doc.moveDown(0.45);
         }
@@ -5773,7 +5825,7 @@ app.get('/api/integrity/export', (req, res) => {
       doc.text(
         '• Prioritize RED alerts (safety, DOT reportable, repeated mechanical indicators).\n' +
           '• Validate cost and fuel anomalies against source documents before QuickBooks posting.\n' +
-          '• Use the Integrity dashboard to mark items reviewed and capture investigation notes.\n' +
+          '• Use the Integrity dashboard (Maintenance → Reports) to mark items reviewed and capture investigation notes.\n' +
           '• Adjust thresholds under Settings → Integrity thresholds when your fleet norms change.',
         { width: 500 }
       );
@@ -5786,6 +5838,21 @@ app.get('/api/integrity/export', (req, res) => {
       for (const [k, v] of Object.entries(thPdf)) {
         doc.text(`${k}: ${v}`, { width: 500 });
         doc.moveDown(0.18);
+      }
+
+      const range = doc.bufferedPageRange();
+      const pageCount = range.count;
+      const footW = doc.page.width - 96;
+      for (let i = range.start; i < range.start + pageCount; i++) {
+        doc.switchToPage(i);
+        const n = i - range.start + 1;
+        doc
+          .fontSize(7)
+          .fillColor('#888888')
+          .text(`${company} · Page ${n} of ${pageCount} · Integrity export`, 48, doc.page.height - 36, {
+            width: footW,
+            align: 'center'
+          });
       }
 
       doc.end();
@@ -5822,6 +5889,7 @@ app.get('/api/integrity/export', (req, res) => {
       XLSX.utils.aoa_to_sheet([
         [company],
         [`Integrity export ${formatIsoDateShortPlain(startDate)} – ${formatIsoDateShortPlain(endDate)}`],
+        [exportFiltLine],
         [],
         ['KPI (fleet-wide, unresolved)'],
         ['Active alerts', kpiX.active],
