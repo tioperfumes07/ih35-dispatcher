@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
 import { getPool, dbQuery } from '../lib/db.mjs';
+import { ensureAppDatabaseObjects } from '../lib/ensure-app-database-objects.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(__dirname, '..', 'database', 'migrations');
@@ -52,6 +53,8 @@ try {
     applied = await appliedFilenames();
   }
   console.log('Migrations up to date.');
+  await ensureAppDatabaseObjects();
+  console.log('App DB objects re-checked (merge_log, dedupe, fleet catalog, etc.).');
 } catch (err) {
   console.error(err);
   process.exit(1);
