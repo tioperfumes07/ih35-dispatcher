@@ -39,7 +39,7 @@
 SMOKE_BASE=http://localhost:3400 npm run smoke
 ```
 
-Use **`npm run qa:automated`** for **`rule0:check`** + smoke in one step. Exit code must be **0** before you consider your task done.
+Use **`npm run qa:automated`** for **`rule0:check`** + smoke in one step (server already listening), or **`npm run qa:isolated`** to spawn a fresh `server.js` on a free port. Exit code must be **0** before you consider your task done.
 
 ---
 
@@ -86,7 +86,7 @@ Do **not** inflate percentages without real scope; figures are planning aids, no
 ## 7. Handoff checklist (copy for your final message)
 
 - [ ] Changes limited to agreed scope; no auth/data-model surprises.
-- [ ] **`SMOKE_BASE=http://localhost:3400 npm run smoke`** passes (or document port if different).
+- [ ] **`SMOKE_BASE=http://localhost:3400 npm run smoke`** passes (or document port if different), or **`npm run qa:isolated`** passes.
 - [ ] **`docs/ERP_MASTER_REDESIGN_STATUS.md`** updated (headline **141–N**, table notes, rolling average if fractions changed).
 - [ ] Rule 0 files: no new forbidden substrings (`scripts/rule-zero-agent-b.mjs`).
 
@@ -103,7 +103,7 @@ Do **not** inflate percentages without real scope; figures are planning aids, no
 | **Accounting:** AP + manual fuel **Load / invoice #** labels/placeholders; fuel header **column order** (vendor → unit → payment → bank); **optional QBO class & location** (`fuel-manual-header-more` details); matching **CSS** in `maint-accounting-ui-2026.css`; WO/AP **saved card** line + PDF copy | **Done (2026-04)** — search `fuel-manual-header-more` or `Load / invoice #` in `maintenance.html` | If present, **do not redo** — extend elsewhere only. |
 | **`erpDedicatedFormDirty()`** for **fuel** dedicated modal (vendor/unit/memo, load + invoice refs, optional class/location, payment/bank, lines **total**) | **Owned by maintenance track** — extend only if you add new fuel fields | Grep `erpDedicatedFormDirty` in `maintenance.html`. |
 | **Rule 22** (`mini-note` → `erp-help-tip`) | **Deferred** on fast path — see [`ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md`](./ERP_MASTER_REDESIGN_DEFERRED_AFTER_CHECKLIST.md) §2 | Claim **file families** in your PR message (e.g. “Rule 22: banking only”). |
-| **`npm run smoke` / `npm run qa:automated`** | **Whoever has the server** — not duplicated in CI | Document port via `SMOKE_BASE` if not **3400**. |
+| **`npm run smoke` / `npm run qa:automated` / `npm run qa:isolated`** | **Whoever has the server** (or use **`qa:isolated`** for a temp server) — not duplicated in CI | Document port via `SMOKE_BASE` if not **3400**; **`qa:isolated`** picks a free port automatically. |
 | **Rule 10** (shared expense-line module) | **Deferred** until product | See deferred checklist §6. |
 
 **Tip:** Another agent should take **§5 P3–P5** (responsive, font-weight 500 sweep, dispatch) while this track stays on **accounting shell / fuel composer** unless the user re-prioritizes.

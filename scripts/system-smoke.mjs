@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Non-destructive HTTP checks against a running server (default http://localhost:3400).
- * Run: start the server, then `npm run smoke`. For **Rule 0 guard + smoke** in one step: `npm run qa:automated` (requires server up).
+ * Run: start the server, then `npm run smoke`. For **Rule 0 guard + smoke** in one step: `npm run qa:automated` (requires server up) or `npm run qa:isolated` (spawns a temp `server.js` on a free port).
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings, tracking redirect) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, erp-master-redesign, erp-master-spec-2026, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
  * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). Bodies are reused from earlier successful GETs (**`STATIC_TEXT`** for CSS, HTML needles for **`/maintenance.html`**) so the guard avoids duplicate fetches when those steps pass.
@@ -348,6 +348,6 @@ console.log(
       : '\nSmoke checks completed.'
 );
 if (!criticalFailures && process.env.SMOKE_QUIET !== '1') {
-  console.log(`Smoke target: ${base}  (set SMOKE_BASE to override)  |  Full gate: npm run qa:automated`);
+  console.log(`Smoke target: ${base}  (set SMOKE_BASE to override)  |  Full gate: npm run qa:automated | Ephemeral server: npm run qa:isolated`);
 }
 process.exit(criticalFailures ? 1 : 0);

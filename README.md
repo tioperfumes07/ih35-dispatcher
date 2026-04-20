@@ -2,7 +2,7 @@
 
 Operations hub for **dispatch / TMS**, **fuel & route planning**, **maintenance & accounting**, and **Samsara**-backed fleet data. The app is one **Express** server (`server.js`) with static UI under `public/` and APIs for loads, ERP JSON, QuickBooks, PDFs, and integrations.
 
-**Architecture overview:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — includes **ERP shell verification (master redesign)** (how `rule0:check`, smoke, `qa:automated`, post-release checklist, and CI fit together).
+**Architecture overview:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — includes **ERP shell verification (master redesign)** (how `rule0:check`, smoke, `qa:automated` / `qa:isolated`, post-release checklist, and CI fit together).
 
 ## What is included
 
@@ -37,9 +37,11 @@ Use these before a release or when validating the ERP shell (see `docs/ERP_MASTE
 2. **Start the server** — `npm start` or `npm run dev`. Listen port is **`process.env.PORT` or `3400`** unless your `.env` sets otherwise. The listener uses **`0.0.0.0`** so **`http://localhost:<PORT>`** / **`http://127.0.0.1:<PORT>`** work with **`npm run smoke`** (some Node versions otherwise bind IPv6-only and loopback would not connect).
 3. **`npm run smoke`** — `scripts/system-smoke.mjs` hits health APIs, static ERP HTML shells, shared CSS/JS (including `erp-master-redesign.css` and `erp-master-spec-2026.css` with the other token and shell styles) with stable substring checks, and **`GET /api/__smoke_not_found__`** (auth-exempt) to assert unknown API paths return **404** JSON (`error`, `path`) instead of HTML. Rule 0 body scans reuse cached GET bodies. Default target is **`http://localhost:<PORT>`** (same port as the server). **`npm run qa:automated`** runs steps **1** then **3** in one command.
 
+**No server running yet / avoid port conflicts:** **`npm run qa:isolated`** runs **`rule0:check`** + **`smoke`** against a **fresh** `server.js` child on a random free port (see `scripts/qa-with-server.mjs`). Use this when **`localhost:3400`** is occupied or you suspect a stale `server.js` that does not match current `server.js` (smoke requires JSON **404** for unknown `/api/*` paths).
+
 If the server is not on **3400** or smoke must use another host, set **`SMOKE_BASE`** (e.g. `SMOKE_BASE=http://127.0.0.1:3100 npm run smoke`). Set **`SMOKE_QUIET=1`** to hide the extra “Smoke target” line at the end of a successful smoke run.
 
-**CI:** [`.github/workflows/rule0-check.yml`](.github/workflows/rule0-check.yml) runs **`npm test`** (`rule0:check`) on push and pull requests. It does **not** start the server; run **`npm run qa:automated`** locally before release for Rule 0 + smoke.
+**CI:** [`.github/workflows/rule0-check.yml`](.github/workflows/rule0-check.yml) runs **`npm test`** (`rule0:check`) on push and pull requests. It does **not** start the server; run **`npm run qa:automated`** (server already up) or **`npm run qa:isolated`** locally before release for Rule 0 + smoke.
 
 **Parallel agents:** See [docs/AGENT_COORDINATION.md](docs/AGENT_COORDINATION.md) for who owns which paths (e.g. ERP master redesign vs maintenance behavior vs server) so PRs do not overlap.
 
