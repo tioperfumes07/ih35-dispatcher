@@ -3367,3 +3367,215 @@ body.settings-page #adminTabPanelEmployees .mr-filter-bar__grow input {
     margin-bottom: 12px;
   }
 }
+
+/* ========== Company hub (index.html) ========== */
+body.hub-page,
+body.hub-page * {
+  box-sizing: border-box;
+}
+
+body.hub-page {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-spec-sans, var(--font-sans, system-ui, sans-serif));
+  background:
+    radial-gradient(1200px 600px at 10% -10%, var(--color-nav-bg) 0%, transparent 55%),
+    var(--color-hub-bg-deep);
+  color: var(--color-hub-text);
+}
+
+body.hub-page header {
+  padding: 28px max(24px, env(safe-area-inset-right, 0px)) 8px max(24px, env(safe-area-inset-left, 0px));
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+body.hub-page .hub-header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+body.hub-page .hub-header-row__main {
+  flex: 1;
+  min-width: 0;
+  max-width: 720px;
+}
+
+body.hub-page .hub-header-tip {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+body.hub-page header h1 {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+body.hub-page header p {
+  margin: 0;
+  color: var(--color-hub-text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+body.hub-page .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px max(24px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+body.hub-page a.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--color-hub-card);
+  border: 1px solid var(--color-hub-border);
+  border-radius: 16px;
+  padding: 24px;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  min-height: 180px;
+}
+
+body.hub-page a.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-hub-accent);
+  box-shadow: var(--shadow-dropdown);
+}
+
+body.hub-page a.card:focus-visible {
+  outline: 2px solid var(--color-hub-accent);
+  outline-offset: 4px;
+}
+
+body.hub-page .card-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+body.hub-page .tag-dispatch {
+  background: var(--pill-green-bg);
+  color: var(--pill-green-text);
+}
+
+body.hub-page .tag-fuel {
+  background: var(--pill-yellow-bg);
+  color: var(--pill-yellow-text);
+}
+
+body.hub-page .tag-maint {
+  background: var(--pill-purple-bg);
+  color: var(--pill-purple-text);
+}
+
+body.hub-page .tag-reports {
+  background: var(--pill-blue-bg);
+  color: var(--pill-blue-text);
+}
+
+body.hub-page .tag-safety {
+  background: var(--pill-red-bg);
+  color: var(--pill-red-text);
+}
+
+body.hub-page .tag-tracking {
+  background: var(--pill-blue-bg);
+  color: var(--pill-blue-text);
+}
+
+body.hub-page .tag-lists {
+  background: var(--pill-gray-bg);
+  color: var(--pill-gray-text);
+}
+
+body.hub-page .tag-banking {
+  background: var(--pill-blue-bg);
+  color: var(--pill-blue-text);
+}
+
+body.hub-page a.card h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+body.hub-page a.card p {
+  margin: 0;
+  color: var(--color-hub-text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+body.hub-page .arrow {
+  margin-top: 16px;
+  font-weight: 500;
+  color: var(--color-hub-accent);
+  font-size: 14px;
+}
+
+body.hub-page footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px max(24px, env(safe-area-inset-right, 0px)) max(40px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+  color: var(--color-hub-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+body.hub-page footer strong {
+  color: var(--color-hub-footer-strong);
+}
+
+body.hub-page .hub-footer-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+body.hub-page .hub-footer-lead {
+  margin: 0;
+  flex: 1;
+  min-width: min(100%, 240px);
+  max-width: min(72ch, 100%);
+  color: var(--color-hub-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+body.hub-page .hub-footer-tip {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+  body.hub-page header {
+    padding: 20px max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+  }
+
+  body.hub-page .grid {
+    gap: 16px;
+    padding: 16px max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  }
+
+  body.hub-page a.card {
+    padding: 18px;
+    min-height: 160px;
+  }
+
+  body.hub-page footer {
+    padding: 14px max(16px, env(safe-area-inset-right, 0px)) max(32px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  }
+}
