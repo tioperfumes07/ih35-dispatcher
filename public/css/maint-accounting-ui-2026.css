@@ -527,7 +527,7 @@ body.erp-maintenance .acct-entry-board--uniform {
 }
 body.erp-maintenance .acct-entry-list--uniform {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), minmax(0, 1fr)));
   gap: 8px;
 }
 body.erp-maintenance .acct-entry-list--uniform .acct-entry-list__btn {
@@ -939,7 +939,7 @@ body.erp-maintenance .acct-dash-btn--primary:hover {
 
 body.erp-maintenance .acct-entry-board {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), minmax(0, 1fr)));
   gap: 16px 20px;
   align-items: start;
   min-width: 0;

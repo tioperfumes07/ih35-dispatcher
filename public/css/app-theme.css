@@ -2272,13 +2272,13 @@ body.maint-wo-modal-open #maintWorkOrderModalBody > #maintWorkOrderFormMount {
 
 @container maint-wo-modal (min-width: 0) {
   body.erp-maintenance .maint-form-grid__row--3 {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), minmax(0, 1fr)));
   }
   body.erp-maintenance .unit-summary {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), minmax(0, 1fr)));
   }
   body.erp-maintenance .search-row {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), minmax(0, 1fr)));
   }
   body.erp-maintenance .maint-vendor-ref-row__field {
     max-width: none;
