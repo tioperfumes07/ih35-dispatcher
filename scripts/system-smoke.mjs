@@ -268,7 +268,11 @@ try {
   const pass = row.ok;
   if (!pass) criticalFailures++;
   console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${API_NOT_FOUND_PROBE} ${row.hint}`.trim());
-  if (!pass) console.log('   ', row.jsonSnippet);
+  if (!pass) {
+    console.log('   ', row.jsonSnippet);
+    if (String(row.jsonSnippet || '').includes('<!DOCTYPE'))
+      console.log('    Hint: port may be an older server — restart `npm start` (JSON 404 for unknown `/api/*`).');
+  }
 } catch (e) {
   criticalFailures++;
   console.log(`✗ FAIL GET ${API_NOT_FOUND_PROBE}: ${e.message || e}`);
