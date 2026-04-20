@@ -1,0 +1,411 @@
+/* Multiple bills modal — additive to ERP maintenance */
+
+#erpMultiBillsModal.erp-mb-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 12050;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 12px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+#erpMultiBillsModal.erp-mb-modal.hidden {
+  display: none !important;
+}
+
+.erp-mb-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.erp-mb-modal__dialog {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+  margin-bottom: 40px;
+}
+
+.erp-mb-modal__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e3e8;
+}
+
+.erp-mb-modal__title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1f36;
+  margin: 0;
+  flex: 1 1 200px;
+}
+
+.erp-mb-modal__total {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1557a0;
+  white-space: nowrap;
+}
+
+.erp-mb-modal__head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.erp-mb-modal__x {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  color: #6b7385;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.erp-mb-modal__x:hover {
+  color: #d93025;
+}
+
+.erp-mb-panels {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 420px;
+}
+
+.erp-mb-panel {
+  flex: 1 1 340px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.erp-mb-panel--left {
+  border-right: 1px solid #e0e3e8;
+}
+
+.erp-mb-panel--right {
+  background: #f8f9fa;
+}
+
+.erp-mb-card {
+  background: #fff;
+  border: 1px solid #e0e3e8;
+  border-radius: 8px;
+  padding: 14px 14px 10px;
+  margin-bottom: 14px;
+}
+
+.erp-mb-card h4 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1f36;
+}
+
+.erp-mb-field {
+  margin-bottom: 12px;
+}
+
+.erp-mb-field .qb-l {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.erp-mb-field--error .qb-in,
+.erp-mb-field--error input,
+.erp-mb-field--error select {
+  border-color: #d93025 !important;
+}
+
+.erp-mb-field--ok .qb-in,
+.erp-mb-field--ok input {
+  border-color: #1e8e3e !important;
+}
+
+.erp-mb-field-err {
+  font-size: 11px;
+  color: #d93025;
+  margin-top: 4px;
+}
+
+.erp-mb-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.erp-mb-seg button {
+  border: 1px solid #d0d4da;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #1a1f36;
+}
+
+.erp-mb-seg button.is-on {
+  background: #e8f0fe;
+  color: #1557a0;
+  border-color: #c5d9f7;
+}
+
+.erp-mb-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.erp-mb-preview-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1f36;
+}
+
+.erp-mb-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #e8f0fe;
+  color: #1557a0;
+}
+
+.erp-mb-preview-total {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1f36;
+}
+
+.erp-mb-preview-list {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.erp-mb-prev-warn {
+  background: #fef7e0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #8a5200;
+  margin-bottom: 8px;
+}
+
+.erp-mb-prev-empty {
+  text-align: center;
+  color: #6b7385;
+  font-size: 13px;
+  padding: 40px 12px;
+}
+
+.erp-mb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f3f4;
+  background: #ffffff;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.erp-mb-row--warn {
+  outline: 1px solid #f9ab00;
+}
+
+.erp-mb-num {
+  background: #e8f0fe;
+  color: #1557a0;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+.erp-mb-pill-past {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fef7e0;
+  color: #8a5200;
+}
+
+.erp-mb-row-mid {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.erp-mb-row-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a1f36;
+}
+
+.erp-mb-row-due,
+.erp-mb-row-vendor {
+  font-size: 11px;
+  color: #6b7385;
+}
+
+.erp-mb-row-amt {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a1f36;
+  text-align: right;
+  min-width: 72px;
+}
+
+.erp-mb-row-amt button {
+  border: none;
+  background: transparent;
+  font: inherit;
+  cursor: text;
+  text-align: right;
+  width: 100%;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.erp-mb-row-amt button:hover {
+  background: #f0f7ff;
+}
+
+.erp-mb-row-x {
+  border: none;
+  background: transparent;
+  color: #d0d4da;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.erp-mb-row-x:hover {
+  color: #d93025;
+}
+
+.erp-mb-fmt-preview {
+  background: #f0f7ff;
+  border: 1px solid #c5d9f7;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #1557a0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  margin-top: 6px;
+}
+
+.erp-mb-info {
+  background: #e8f0fe;
+  border: 1px solid #c5d9f7;
+  color: #1557a0;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+.erp-mb-confirm {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 10px;
+}
+
+.erp-mb-confirm__box {
+  max-width: 420px;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e0e3e8;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.erp-mb-confirm__box table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.erp-mb-confirm__box td {
+  padding: 4px 0;
+  vertical-align: top;
+}
+
+.erp-mb-confirm__box td:first-child {
+  color: #6b7385;
+  width: 38%;
+}
+
+.erp-mb-progress {
+  margin-top: 10px;
+}
+
+.erp-mb-progress__bar {
+  height: 8px;
+  background: #e0e3e8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.erp-mb-progress__fill {
+  height: 100%;
+  background: #1557a0;
+  width: 0%;
+  transition: width 0.2s ease;
+}
+
+.erp-mb-success {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.erp-mb-success__icon {
+  font-size: 48px;
+  line-height: 1;
+  color: #1e8e3e;
+}
+
+.erp-mb-lines-scroll {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #e0e3e8;
+  border-radius: 8px;
+}
+
+.btn-erp-mb-green {
+  background: #1e8e3e !important;
+  color: #fff !important;
+  border-color: #137333 !important;
+}
+
+.btn-erp-mb-blue {
+  background: #1557a0 !important;
+  color: #fff !important;
+  border-color: #1557a0 !important;
+}

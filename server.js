@@ -6298,6 +6298,7 @@ app.post('/api/work-orders', (req, res) => {
       qboEntityType: '',
       qboEntityId: '',
       qboError: '',
+      recurringSeriesId: String(body.recurringSeriesId || '').trim() || null,
       createdAt: new Date().toISOString(),
       lines: (body.lines || []).map(line => {
         const base = {

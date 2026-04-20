@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
   <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
   <link rel="stylesheet" href="/css/maint-accounting-ui-2026.css" />
+  <link rel="stylesheet" href="/css/erp-multi-bills.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
@@ -58,6 +59,240 @@
       </div>
     </div>
   </div>
+
+  <div id="erpMultiBillsModal" class="erp-mb-modal hidden" aria-hidden="true">
+    <div class="erp-mb-modal__backdrop" data-erp-mb-close="1"></div>
+    <div class="erp-mb-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="erpMultiBillsTitle" onclick="event.stopPropagation()">
+      <div class="erp-mb-modal__head">
+        <h2 id="erpMultiBillsTitle" class="erp-mb-modal__title">Create multiple bills</h2>
+        <div class="erp-mb-modal__total" id="mbModalHeaderTotal">TOTAL: $0.00</div>
+        <div class="erp-mb-modal__head-actions">
+          <button type="button" class="btn secondary" data-erp-mb-close="1">Cancel</button>
+          <button type="button" class="btn btn-erp-mb-blue" onclick="mbPreviewBills()">Preview bills</button>
+          <button type="button" class="btn btn-erp-mb-green" onclick="mbStartCreateAll()">Create all bills</button>
+        </div>
+        <button type="button" class="erp-mb-modal__x" data-erp-mb-close="1" aria-label="Close">×</button>
+      </div>
+      <div id="mbMainFlow">
+        <div class="erp-mb-panels">
+          <div class="erp-mb-panel erp-mb-panel--left">
+            <div class="erp-mb-card">
+              <h4>Bill details</h4>
+              <div class="erp-mb-field" id="mbVendorField">
+                <span class="qb-l">Vendor</span>
+                <input id="mbVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor (QuickBooks)" autocomplete="off" oninput="resolveMbVendorSearch()" onblur="resolveMbVendorSearch()" />
+                <input id="mbVendorQboId" type="hidden" />
+                <div id="mbErrVendor" class="erp-mb-field-err hidden"></div>
+              </div>
+              <div class="erp-mb-field">
+                <span class="qb-l">Description</span>
+                <input id="mbMemo" class="qb-in" placeholder="e.g. Insurance premium, Truck payment, Lease payment…" />
+              </div>
+              <div class="erp-mb-field">
+                <span class="qb-l">Unit / asset</span>
+                <select id="mbAssetUnit" class="qb-in" onchange="mbSyncLinesFromUnit()"></select>
+              </div>
+              <div class="erp-mb-field">
+                <span class="qb-l">Expense lines (same for all bills)</span>
+                <div id="mbWoLinesRoot" class="erp-mb-lines-scroll">
+                  <details class="maint-qb-cost-details ap-wo-details" open>
+                    <summary class="maint-qb-cost-details__sum">
+                      <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
+                      <span class="maint-qb-cost-details__title">Category details</span>
+                    </summary>
+                    <div class="maint-qb-lines-scroll">
+                      <table class="maint-qb-lines-table ap-wo-qb-table" aria-label="Multiple bills category lines">
+                        <thead>
+                          <tr>
+                            <th class="maint-qb-th-num">#</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th class="maint-qb-th-num">Amount</th>
+                            <th class="maint-qb-th-bill">Billable</th>
+                            <th>Customer</th>
+                            <th>Class</th>
+                            <th>Position</th>
+                            <th class="maint-qb-th-partno">Part #</th>
+                            <th>Line memo</th>
+                            <th class="maint-qb-th-del"></th>
+                          </tr>
+                        </thead>
+                        <tbody id="mbWoCatHost"></tbody>
+                      </table>
+                    </div>
+                    <div class="maint-qb-cost-details__actions">
+                      <button type="button" class="qb-btn-add" onclick="mbAddCategoryLine()">+ Add category line</button>
+                    </div>
+                  </details>
+                  <details class="maint-qb-cost-details ap-wo-details" open>
+                    <summary class="maint-qb-cost-details__sum">
+                      <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
+                      <span class="maint-qb-cost-details__title">Item details</span>
+                    </summary>
+                    <div class="maint-qb-lines-scroll">
+                      <table class="maint-qb-lines-table maint-qb-lines-table--item ap-wo-qb-table" aria-label="Multiple bills item lines">
+                        <thead>
+                          <tr>
+                            <th class="maint-qb-th-num">#</th>
+                            <th>Product / service</th>
+                            <th class="maint-qb-th-sku">SKU</th>
+                            <th>Description</th>
+                            <th class="maint-qb-th-num">Qty</th>
+                            <th class="maint-qb-th-num">Unit $</th>
+                            <th class="maint-qb-th-num">Total</th>
+                            <th class="maint-qb-th-bill">Billable</th>
+                            <th>Customer</th>
+                            <th>Class</th>
+                            <th>Position</th>
+                            <th class="maint-qb-th-partno">Part #</th>
+                            <th>Line memo</th>
+                            <th class="maint-qb-th-del"></th>
+                          </tr>
+                        </thead>
+                        <tbody id="mbWoItemHost"></tbody>
+                      </table>
+                    </div>
+                    <div class="maint-qb-cost-details__actions">
+                      <button type="button" class="qb-btn-add" onclick="mbAddItemLine()">+ Add item line</button>
+                    </div>
+                  </details>
+                </div>
+                <div id="mbErrLines" class="erp-mb-field-err hidden"></div>
+              </div>
+            </div>
+
+            <div class="erp-mb-card">
+              <h4>Schedule &amp; numbering</h4>
+              <div class="erp-mb-field">
+                <span class="qb-l">How often</span>
+                <input type="hidden" id="mbFreq" value="monthly" />
+                <div class="erp-mb-seg" id="mbFreqSeg">
+                  <button type="button" data-mb-freq="weekly">Weekly</button>
+                  <button type="button" data-mb-freq="monthly">Monthly</button>
+                  <button type="button" data-mb-freq="quarterly">Quarterly</button>
+                  <button type="button" data-mb-freq="custom">Custom</button>
+                </div>
+              </div>
+              <div class="erp-mb-field hidden" id="mbCustomEveryWrap">
+                <span class="qb-l">Repeat every (days)</span>
+                <input id="mbCustomEvery" class="qb-in" type="number" min="1" max="365" value="14" />
+              </div>
+              <div class="erp-mb-field">
+                <span class="qb-l">First bill date</span>
+                <input id="mbFirstDate" class="qb-in" type="date" />
+                <div id="mbErrFirstDate" class="erp-mb-field-err hidden"></div>
+              </div>
+              <div class="erp-mb-field">
+                <span class="qb-l">Number of bills to create</span>
+                <input id="mbCount" class="qb-in" type="number" min="2" max="60" value="2" placeholder="e.g. 9 for 9 months" />
+                <div class="mini-note" id="mbCountHint" style="margin-top:6px;color:#6b7385;font-size:11px">We will create 2 bills total</div>
+                <div id="mbErrCount" class="erp-mb-field-err hidden"></div>
+              </div>
+              <div class="erp-mb-field">
+                <span class="qb-l">Bill number format</span>
+                <input id="mbBillFmt" class="qb-in" placeholder="e.g. INS-JAN, W7, LEASE-01" oninput="mbOnBillFmtInput()" />
+                <div id="mbFmtMeta" class="mini-note" style="margin-top:4px;color:#6b7385;font-size:11px"></div>
+                <div id="mbFmtPreview" class="erp-mb-fmt-preview hidden"></div>
+                <div id="mbErrFmt" class="erp-mb-field-err hidden"></div>
+              </div>
+              <div class="erp-mb-field">
+                <span class="qb-l">Terms (due date)</span>
+                <select id="mbTermsDaysMode" class="qb-in" onchange="mbOnTermsModeChange()">
+                  <option value="receipt">Due on receipt</option>
+                  <option value="net3">Net 3</option>
+                  <option value="net7">Net 7</option>
+                  <option value="net15">Net 15</option>
+                  <option value="net30" selected>Net 30</option>
+                  <option value="net45">Net 45</option>
+                  <option value="net60">Net 60</option>
+                  <option value="custom">Custom days</option>
+                </select>
+                <div id="mbTermsCustomWrap" class="hidden" style="margin-top:8px">
+                  <span class="qb-l">Custom days</span>
+                  <input id="mbTermsCustomDays" class="qb-in" type="number" min="0" max="365" value="30" />
+                </div>
+              </div>
+              <div class="erp-mb-field">
+                <span class="qb-l">QuickBooks term (optional)</span>
+                <select id="mbQboTermSelect" class="qb-in">
+                  <option value="">— None —</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="erp-mb-card">
+              <h4>Amount</h4>
+              <input type="hidden" id="mbAmtMode" value="same" />
+              <div class="erp-mb-field">
+                <span class="qb-l">Amount mode</span>
+                <div class="erp-mb-seg" id="mbAmtSeg">
+                  <button type="button" data-mb-amt="same">Same amount each bill</button>
+                  <button type="button" data-mb-amt="split">Total — split evenly</button>
+                  <button type="button" data-mb-amt="diff">Different amounts</button>
+                </div>
+              </div>
+              <div class="erp-mb-field" id="mbWrapAmtSame">
+                <span class="qb-l">Amount per bill</span>
+                <input id="mbAmtSame" class="qb-in" type="number" min="0" step="0.01" placeholder="0.00" />
+                <div class="mini-note" id="mbAmtSameHint" style="margin-top:6px;color:#6b7385;font-size:11px"></div>
+              </div>
+              <div class="erp-mb-field hidden" id="mbWrapAmtSplit">
+                <span class="qb-l">Total amount for all bills</span>
+                <input id="mbAmtTotal" class="qb-in" type="number" min="0" step="0.01" placeholder="0.00" />
+                <div class="mini-note" style="margin-top:8px"><span class="qb-l">Amount per bill (calculated)</span></div>
+                <div id="mbPerBillBig" style="font-size:18px;font-weight:600;color:#1a1f36">$0.00</div>
+                <div id="mbSplitNote" class="mini-note" style="margin-top:6px;color:#6b7385"></div>
+                <div id="mbSplitExample" class="erp-mb-info hidden"></div>
+              </div>
+              <div id="mbErrAmt" class="erp-mb-field-err hidden"></div>
+            </div>
+          </div>
+
+          <div class="erp-mb-panel erp-mb-panel--right">
+            <div class="erp-mb-preview-head">
+              <span class="erp-mb-preview-title">Bills to be created</span>
+              <span class="erp-mb-badge" id="mbPreviewBadge">0 bills</span>
+              <span class="erp-mb-preview-total" id="mbPreviewTotalStr">Total: $0.00</span>
+            </div>
+            <div id="mbPastWarn" class="erp-mb-prev-warn hidden"></div>
+            <div id="mbPreviewList" class="erp-mb-preview-list"></div>
+            <div id="mbPreviewEmpty" class="erp-mb-prev-empty">Fill in the details on the left to preview your bills here.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="mbConfirmLayer" class="erp-mb-confirm hidden">
+        <div class="erp-mb-confirm__box">
+          <h3 style="margin:0 0 8px;font-size:16px">Create bills?</h3>
+          <div id="mbConfirmSummary"></div>
+          <div id="mbProgressWrap" class="erp-mb-progress hidden">
+            <div class="mini-note" id="mbProgressText">Creating…</div>
+            <div class="erp-mb-progress__bar"><div class="erp-mb-progress__fill" id="mbProgressFill"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
+            <button type="button" class="btn secondary" onclick="mbCancelConfirm()">Cancel</button>
+            <button type="button" class="btn btn-erp-mb-green" id="mbConfirmCreateBtn" onclick="mbRunCreateSequence()">Create all bills</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="mbSuccessLayer" class="erp-mb-confirm hidden">
+        <div class="erp-mb-confirm__box">
+          <div class="erp-mb-success">
+            <div class="erp-mb-success__icon" aria-hidden="true">✓</div>
+            <h3 style="margin:8px 0;font-size:18px" id="mbSuccessTitle">Bills created</h3>
+            <p class="mini-note" id="mbSuccessBody" style="margin:0 0 16px;line-height:1.5"></p>
+            <div style="display:flex;flex-direction:column;gap:10px;align-items:stretch">
+              <button type="button" class="btn btn-erp-mb-blue" id="mbPostAllBtn" onclick="mbPostAllCreated()">Post all to QuickBooks</button>
+              <button type="button" class="btn secondary" onclick="mbViewSeriesInHistory()">View in expense history</button>
+              <button type="button" class="btn secondary" data-erp-mb-close="1">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="boardNavMount"></div>
   <div id="maintCatModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintCatModal()">
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="maintCatModalTitle" onclick="event.stopPropagation()">
@@ -355,6 +590,9 @@
                     </div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewExpense()">Expense</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewBill()">Bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenMultiBillsModal()">
+                      <span aria-hidden="true" style="margin-right:6px">📅</span>Multiple bills
+                    </button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Check')">Check</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Purchase order')">Purchase order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPayBills()">Pay bills</button>
@@ -2631,6 +2869,7 @@
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewExpense()">Standard expense</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewBill()">Standard bill</button>
+                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewPayBills()">Pay bills</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Saved maintenance expenses</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF (ledger)</button>
@@ -3013,12 +3252,21 @@
                   </span>
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                  <button type="button" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
                   <button type="button" onclick="downloadWorkOrdersCsv()">Export work orders CSV</button>
                   <button type="button" onclick="downloadExpenseTransactionsCsv()">Export AP transactions CSV</button>
                 </div>
               </div>
             </div>
             <div class="panel-body">
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap" role="group" aria-label="Filter saved bills">
+                <div style="min-width:200px;flex:1 1 220px">
+                  <span class="qb-l">Series</span>
+                  <select id="apSeriesFilter" class="qb-in" onchange="renderApTransactions()">
+                    <option value="">All series</option>
+                  </select>
+                </div>
+              </div>
               <div id="apList" class="card-list">No transactions yet.</div>
               <div id="apListPagerHost" hidden></div>
             </div>
@@ -3361,15 +3609,7 @@
                       <div class="ap-exp-col ap-exp-col--left">
                         <div class="ap-exp-field">
                           <span class="qb-l">Type</span>
-                          <input
-                            id="fuelManualTypeDisplay"
-                            class="qb-in"
-                            type="text"
-                            readonly
-                            value="Fuel expense"
-                            aria-readonly="true"
-                            tabindex="0"
-                          />
+                          <input class="qb-in" type="text" readonly value="Fuel expense" aria-readonly="true" tabindex="0" />
                         </div>
                         <div class="ap-exp-field ap-exp-field--vendor">
                           <span class="qb-l">Vendor (QuickBooks)</span>
@@ -3380,33 +3620,15 @@
                           <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
                           <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit" autocomplete="off" />
                         </div>
-                        <div id="fuelManualBillOnlyFields" class="hidden">
-                          <div class="ap-exp-field">
-                            <span class="qb-l">Terms</span>
-                            <select id="fuelManualQboTermId" class="qb-in">
-                              <option value="">— None —</option>
-                            </select>
-                          </div>
-                          <div class="ap-exp-field">
-                            <span class="qb-l">Due date</span>
-                            <input id="fuelManualDueDate" class="qb-in" type="date" />
-                          </div>
-                          <div class="ap-exp-field">
-                            <span class="qb-l">Supplier bill #</span>
-                            <input id="fuelManualBillStmtNo" class="qb-in" maxlength="80" placeholder="Statement or vendor bill no." autocomplete="off" />
-                          </div>
+                        <div class="ap-exp-field">
+                          <span class="qb-l">Payment method</span>
+                          <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
+                          <input type="hidden" id="fuelManualPaymentMethodId" />
                         </div>
-                        <div id="fuelManualExpenseOnlyFields">
-                          <div class="ap-exp-field">
-                            <span class="qb-l">Payment method</span>
-                            <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
-                            <input type="hidden" id="fuelManualPaymentMethodId" />
-                          </div>
-                          <div class="ap-exp-field ap-exp-field--bank">
-                            <span class="qb-l">Pay from bank account (QuickBooks)</span>
-                            <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
-                            <input type="hidden" id="fuelManualBankQboId" />
-                          </div>
+                        <div class="ap-exp-field ap-exp-field--bank">
+                          <span class="qb-l">Pay from bank account (QuickBooks)</span>
+                          <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
+                          <input type="hidden" id="fuelManualBankQboId" />
                         </div>
                         <details class="fuel-manual-header-more">
                           <summary class="fuel-manual-header-more__sum">Optional: QBO class &amp; location</summary>
@@ -3442,7 +3664,7 @@
                           <input id="fuelManualInternalWo" class="qb-in" placeholder="Your work order ref" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
-                          <span class="qb-l" id="fuelManualExpenseDocLabel">Expense # (QBO DocNumber)</span>
+                          <span class="qb-l">Expense # (QBO DocNumber)</span>
                           <input id="fuelManualExpenseDoc" class="qb-in" maxlength="24" placeholder="e.g. 4821-0415" autocomplete="off" />
                         </div>
                       </div>
@@ -5609,6 +5831,7 @@
   <script src="/js/board-nav.js"></script>
   <script src="/js/erp-ui.js"></script>
   <script src="/js/erp-print.js"></script>
+  <script src="/js/erp-multi-bills.js"></script>
   <script>
     let vehicles = [];
     let dashboard = [];
@@ -7585,6 +7808,7 @@
           '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-bill&quot;)">Fuel bill</button>' +
           '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;)">Fuel expense</button>' +
           '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
+          '<button type="button" class="erp-sb-link" onclick="erpOpenMultiBillsModal()">Multiple bills</button>' +
           '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
           '<button type="button" class="erp-sb-link" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-driver-bill&quot;)">Vendor / driver bill</button>' +
           '<button type="button" class="erp-sb-link" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF entry (board)</button>';
@@ -7890,17 +8114,10 @@
     }
 
     function erpDedicatedFormDirty() {
-      if (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') {
+      if (window.__erpDedicatedModalKind === 'fuel') {
         const totalTxt = document.getElementById('fuelManualHeaderTotal')?.textContent || '$0.00';
         const totalNum = Number(String(totalTxt).replace(/[^0-9.-]/g, '')) || 0;
         const ft = id => (document.getElementById(id)?.value || '').trim();
-        const billExtra =
-          String(window.__fuelManualEntryMode || '') === 'bill' &&
-          !!(
-            ft('fuelManualDueDate') ||
-            ft('fuelManualBillStmtNo') ||
-            (document.getElementById('fuelManualQboTermId')?.value || '').trim()
-          );
         return !!(
           ft('fuelManualVendorSearch') ||
           ft('fuelManualUnit') ||
@@ -7913,7 +8130,6 @@
           ft('fuelManualPaymentMethodSearch') ||
           ft('fuelManualBankSearch') ||
           (document.getElementById('fuelManualClassSel')?.value || '').trim() ||
-          billExtra ||
           totalNum > 0.005
         );
       }
@@ -8005,12 +8221,12 @@
       const title = document.getElementById('erpDedModalTitle');
       const lab = document.getElementById('erpDedModalTotalLabel');
       const amt = document.getElementById('erpDedModalTotalAmt');
-      if (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') {
+      if (window.__erpDedicatedModalKind === 'fuel') {
         const fh = document.getElementById('fuelManualDocTitleH2');
         const ft = document.getElementById('fuelManualHeaderTotal');
         if (title && fh) title.textContent = fh.textContent || '';
         if (amt && ft) amt.textContent = ft.textContent || '$0.00';
-        if (lab) lab.textContent = window.__erpDedicatedModalKind === 'fuel_bill' ? 'Balance due' : 'Amount';
+        if (lab) lab.textContent = 'Amount';
         return;
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
@@ -8138,13 +8354,6 @@
       if (!force && erpDedicatedFormDirty()) {
         if (!confirm('Discard unsaved changes and close this form?')) return;
       }
-      (function persistDedicatedGeometry() {
-        const kind = String(window.__erpDedicatedModalKind || '').trim();
-        const shell = modal.querySelector('.erp-dedicated-form-modal__shell');
-        const map = { fuel: 'dedicated_fuel', fuel_bill: 'dedicated_fuel_bill', ap: 'dedicated_ap', billpay: 'dedicated_billpay' };
-        const key = map[kind];
-        if (shell && key && typeof erpPersistModalGeometry === 'function') erpPersistModalGeometry(key, shell);
-      })();
       erpResetDedicatedModalLayout();
       if (window.__erpDedicatedModalKind === 'ap') {
         const shell = document.getElementById('erpApDocShellPanel');
@@ -8160,7 +8369,7 @@
         }
         syncApDocTitle();
       }
-      if (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') {
+      if (window.__erpDedicatedModalKind === 'fuel') {
         const shell = document.getElementById('erpFuelManualDocShellPanel');
         const ph = document.getElementById('erpFuelManualPlaceholder');
         if (shell && ph && ph.parentNode) ph.parentNode.insertBefore(shell, ph.nextSibling);
@@ -8171,8 +8380,6 @@
         }
         const h2 = document.getElementById('fuelManualDocTitleH2');
         if (h2) h2.textContent = 'Manual fuel / DEF expense';
-        window.__fuelManualEntryMode = '';
-        if (typeof syncFuelManualEntryModeUi === 'function') syncFuelManualEntryModeUi();
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
         const shell = document.getElementById('erpBillPayShellPanel');
@@ -8207,7 +8414,6 @@
       if (mode === 'fuel-expense') {
         window.__erpDedicatedApPreset = '';
         window.__erpDedicatedModalKind = 'fuel';
-        window.__fuelManualEntryMode = 'expense';
         openSection('accounting', acctBtn);
         const trig = document.getElementById('acctFuelDdTrigger');
         openAccountingTab('acct-fuel-expense', trig);
@@ -8220,11 +8426,6 @@
         }
         const h2 = document.getElementById('fuelManualDocTitleH2');
         if (h2) h2.textContent = 'Fuel expense';
-        bindFuelManualFormOnce();
-        if (typeof syncFuelManualEntryModeUi === 'function') syncFuelManualEntryModeUi();
-        requestAnimationFrame(() => {
-          if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('fuel');
-        });
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('erp-dedicated-modal-open');
@@ -8234,40 +8435,11 @@
         return;
       }
 
-      if (mode === 'fuel-bill') {
-        window.__erpDedicatedApPreset = '';
-        window.__erpDedicatedModalKind = 'fuel_bill';
-        window.__fuelManualEntryMode = 'bill';
-        openSection('accounting', acctBtn);
-        const trig = document.getElementById('acctFuelDdTrigger');
-        openAccountingTab('acct-fuel-expense', trig);
-        const shell = document.getElementById('erpFuelManualDocShellPanel');
-        mount.appendChild(shell);
-        const acc = document.getElementById('erpFuelDocTitleAccent');
-        if (acc) {
-          acc.innerHTML = ERP_PUMP_ICON;
-          acc.classList.remove('hidden');
-        }
-        const h2 = document.getElementById('fuelManualDocTitleH2');
-        if (h2) h2.textContent = 'Fuel bill';
-        bindFuelManualFormOnce();
-        if (typeof syncFuelManualEntryModeUi === 'function') syncFuelManualEntryModeUi();
-        requestAnimationFrame(() => {
-          if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('fuel_bill');
-        });
-        modal.classList.remove('hidden');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('erp-dedicated-modal-open');
-        erpDedicatedModalBindEscape(true);
-        if (!fromHash) window.location.hash = 'accounting-fuel-bill-new';
-        syncErpDedicatedModalChrome();
-        return;
-      }
-
       window.__erpDedicatedModalKind = 'ap';
       const presetMap = {
         'maintenance-expense': 'maintenance-expense',
         'maintenance-bill': 'maintenance-bill',
+        'fuel-bill': 'fuel-bill',
         'vendor-driver-bill': 'vendor-driver-bill'
       };
       window.__erpDedicatedApPreset = presetMap[mode] || '';
@@ -8298,6 +8470,9 @@
         if (mode === 'maintenance-expense' || mode === 'maintenance-bill') {
           acc.innerHTML = ERP_WRENCH_ICON;
           acc.classList.remove('hidden');
+        } else if (mode === 'fuel-bill') {
+          acc.innerHTML = ERP_PUMP_ICON;
+          acc.classList.remove('hidden');
         } else {
           acc.innerHTML = '';
           acc.classList.add('hidden');
@@ -8312,6 +8487,7 @@
         'standard-bill': 'accounting-bill-new',
         'maintenance-expense': 'accounting-maintenance-expense-new',
         'maintenance-bill': 'accounting-maintenance-bill-new',
+        'fuel-bill': 'accounting-fuel-bill-new',
         'vendor-driver-bill': 'accounting-vendor-driver-bill-new'
       };
       if (!fromHash && hashMap[mode]) window.location.hash = hashMap[mode];
@@ -8565,19 +8741,13 @@
       if (window.__erpDedicatedModalKind === 'ap' && id !== 'acct-transactions') {
         erpCloseDedicatedFormModal({ force: true });
       }
-      if (
-        (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') &&
-        id !== 'acct-fuel-expense'
-      ) {
+      if (window.__erpDedicatedModalKind === 'fuel' && id !== 'acct-fuel-expense') {
         erpCloseDedicatedFormModal({ force: true });
       }
       if (id === 'acct-transactions' && window.__erpDedicatedModalKind === 'ap') {
         erpCloseDedicatedFormModal({ force: true });
       }
-      if (
-        id === 'acct-fuel-expense' &&
-        (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill')
-      ) {
+      if (id === 'acct-fuel-expense' && window.__erpDedicatedModalKind === 'fuel') {
         erpCloseDedicatedFormModal({ force: true });
       }
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
@@ -8612,7 +8782,6 @@
       }
       if (id === 'acct-fuel-expense') {
         bindFuelManualFormOnce();
-        if (typeof syncFuelManualEntryModeUi === 'function') syncFuelManualEntryModeUi();
         void loadFuelExpenseTab().then(() => {
           requestAnimationFrame(() => {
             const shell = document.querySelector('#acct-fuel-expense .qb-doc-shell');
@@ -10380,20 +10549,6 @@
             .join('');
         termSel.value = cur;
       }
-      const fuelTermSel = document.getElementById('fuelManualQboTermId');
-      if (fuelTermSel) {
-        const curF = fuelTermSel.value;
-        const termsF = erp.qboCache?.terms || [];
-        fuelTermSel.innerHTML =
-          '<option value="">— None —</option>' +
-          termsF
-            .map(
-              t =>
-                `<option value="${escapeHtml(String(t.qboId))}">${escapeHtml(t.name || 'Term')}</option>`
-            )
-            .join('');
-        fuelTermSel.value = curF;
-      }
       // QBO “create item” form account pickers
       const incSel = document.getElementById('newItemIncomeAccountId');
       if (incSel) {
@@ -11938,15 +12093,11 @@
         'fuelManualPaymentMethodSearch',
         'fuelManualPaymentMethodId',
         'fuelManualBankSearch',
-        'fuelManualBankQboId',
-        'fuelManualDueDate',
-        'fuelManualBillStmtNo'
+        'fuelManualBankQboId'
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
-      const fuelTerm = document.getElementById('fuelManualQboTermId');
-      if (fuelTerm) fuelTerm.value = '';
       if (!preserveUnit) {
         const u = document.getElementById('fuelManualUnit');
         if (u) u.value = '';
@@ -11960,31 +12111,6 @@
       }
       fuelManualUpdateHeaderTotal();
       syncFuelManualClassFromUnit();
-      syncFuelManualEntryModeUi();
-    }
-
-    function syncFuelManualEntryModeUi() {
-      const mode = String(window.__fuelManualEntryMode || '').toLowerCase();
-      const bill = mode === 'bill';
-      const disp = document.getElementById('fuelManualTypeDisplay');
-      if (disp) disp.value = bill ? 'Fuel bill' : 'Fuel expense';
-      const shell = document.getElementById('erpFuelManualDocShellPanel');
-      if (shell) {
-        if (!mode) {
-          shell.classList.remove('fuel-manual--bill', 'fuel-manual--expense');
-        } else {
-          shell.classList.toggle('fuel-manual--bill', bill);
-          shell.classList.toggle('fuel-manual--expense', !bill);
-        }
-      }
-      const billEl = document.getElementById('fuelManualBillOnlyFields');
-      const expEl = document.getElementById('fuelManualExpenseOnlyFields');
-      if (billEl) billEl.classList.toggle('hidden', !bill);
-      if (expEl) expEl.classList.toggle('hidden', bill);
-      const docLab = document.getElementById('fuelManualExpenseDocLabel');
-      if (docLab) {
-        docLab.textContent = bill ? 'Bill / Doc # (QuickBooks)' : 'Expense # (QBO DocNumber)';
-      }
     }
 
     let __fuelManualFormBound = false;
@@ -12029,23 +12155,18 @@
 
     async function saveManualFuelPurchase(opts) {
       const postToQbo = !!(opts && opts.postToQbo);
-      const billMode = String(window.__fuelManualEntryMode || '').toLowerCase() === 'bill';
       if (postToQbo) {
         if (
           !confirm(
-            billMode
-              ? 'Save each line to the fuel ledger and record each as its own QuickBooks Bill?\n\nThis sends one QBO Bill per line when terms, due date, or supplier bill # are stored on the saved row (open balance until paid in QuickBooks).'
-              : 'Save each line to the fuel ledger and record each as its own QuickBooks Purchase (expense)?\n\nThis sends one QBO transaction per line using the vendors, accounts, and pay-from bank shown on the row after save.'
+            'Save each line to the fuel ledger and record each as its own QuickBooks Purchase (expense)?\n\nThis sends one QBO transaction per line using the vendors, accounts, and pay-from bank shown on the row after save.'
           )
         ) {
           return;
         }
       }
       resolveFuelManualVendor();
-      if (!billMode) {
-        resolveFuelManualPaymentMethod();
-        resolveFuelManualBank();
-      }
+      resolveFuelManualPaymentMethod();
+      resolveFuelManualBank();
       const hint = document.getElementById('fuelManualSaveHint');
       const unit = String(document.getElementById('fuelManualUnit')?.value || '').trim();
       const txnDate = String(document.getElementById('fuelManualDate')?.value || '').trim();
@@ -12075,21 +12196,8 @@
       }
       const gBankIn = document.getElementById('fuelExpBankSearch');
       const gBankId = document.getElementById('fuelExpBankQboId');
-      if (!billMode) {
-        if (gBankIn && bankSearch) gBankIn.value = bankSearch;
-        if (gBankId && bankId) gBankId.value = bankId;
-      }
-
-      const fuelBillQboTermId = billMode
-        ? String(document.getElementById('fuelManualQboTermId')?.value || '')
-            .trim()
-            .replace(/\D/g, '')
-            .slice(0, 24)
-        : '';
-      const fuelBillDueDate = billMode ? String(document.getElementById('fuelManualDueDate')?.value || '').trim() : '';
-      const fuelBillStatementNumber = billMode
-        ? String(document.getElementById('fuelManualBillStmtNo')?.value || '').trim()
-        : '';
+      if (gBankIn && bankSearch) gBankIn.value = bankSearch;
+      if (gBankId && bankId) gBankId.value = bankId;
 
       const lines = [];
       for (const row of lineRows) {
@@ -12164,11 +12272,6 @@
           if (Number.isFinite(ppg) && ppg >= 0) payload.pricePerGallon = ppg;
           if (Number.isFinite(total) && total > 0) payload.totalCost = total;
           if (ln.lineDesc) payload.lineDescription = ln.lineDesc;
-          if (billMode) {
-            if (fuelBillQboTermId) payload.fuelBillQboTermId = fuelBillQboTermId;
-            if (fuelBillDueDate) payload.fuelBillDueDate = fuelBillDueDate;
-            if (fuelBillStatementNumber) payload.fuelBillStatementNumber = fuelBillStatementNumber;
-          }
           const r = await j('/api/fuel/purchases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
@@ -12185,18 +12288,16 @@
             qty: galStr,
             unit: Number.isFinite(ppg) && ppg >= 0 ? String(ppg) : '',
             line: Number.isFinite(total) && total > 0 ? String(total) : '',
+            paymentMethodId: pmId.replace(/[^\w.-]/g, '').slice(0, 48),
+            paymentMethodSearch: pmSearch.slice(0, 120),
+            qboBankAccountId: bankId.replace(/\D/g, '').slice(0, 24),
+            bankSearch: bankSearch.slice(0, 160),
             detailMode: ln.detailMode === 'item' ? 'item' : 'category',
             qboAccountId: String(ln.acctId || '')
               .trim()
               .replace(/\D/g, '')
               .slice(0, 24)
           };
-          if (!billMode) {
-            draftBody.paymentMethodId = pmId.replace(/[^\w.-]/g, '').slice(0, 48);
-            draftBody.paymentMethodSearch = pmSearch.slice(0, 120);
-            draftBody.qboBankAccountId = bankId.replace(/\D/g, '').slice(0, 24);
-            draftBody.bankSearch = bankSearch.slice(0, 160);
-          }
           if (docForLine) draftBody.expenseDocNumber = docForLine;
           try {
             await j('/api/fuel/purchases/' + encodeURIComponent(purchase.id) + '/expense-draft', {
@@ -15833,6 +15934,14 @@
         document.getElementById('apWrapTerms')?.classList.remove('hidden');
         return;
       }
+      if (preset === 'fuel-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Fuel bill';
+        if (lab) lab.textContent = 'Balance due';
+        document.getElementById('apWrapDue')?.classList.remove('hidden');
+        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+        return;
+      }
       if (preset === 'vendor-driver-bill') {
         sel.value = 'bill';
         h.textContent = 'Vendor / driver bill';
@@ -15937,6 +16046,10 @@
     function removeWoLine(btn) {
       const row = btn?.closest?.('.wo-line');
       if (!row) return;
+      if (row.closest('#mbWoLinesRoot')) {
+        mbRemoveWoLine(btn);
+        return;
+      }
       const rows = woApAllRows();
       if (rows.length <= 1) {
         const svc = row.querySelector('.wo-svc');
@@ -16071,6 +16184,843 @@
       return out.filter(l => l.amount > 0);
     }
 
+    function collectMbFormWoLines() {
+      const out = [];
+      const push = (row, detailMode) => {
+        const amt = detailMode === 'item' ? apWoItemLineAmount(row) : Number(row.querySelector('.wo-amt')?.value) || 0;
+        const rec = {
+          lineType: 'service',
+          serviceType: (row.querySelector('.wo-svc')?.value || '').trim() || 'Line',
+          detailMode,
+          qboAccountId: detailMode === 'category' ? (row.querySelector('.wo-acct-id')?.value || '') : '',
+          qboItemId: detailMode === 'item' ? (row.querySelector('.wo-item-id')?.value || '') : '',
+          qty: (row.querySelector('.wo-qty')?.value || '1'),
+          amount: amt
+        };
+        const partCat = (row.querySelector('.maint-line-part-cat')?.value || '').trim();
+        const partPos =
+          (row.querySelector('.maint-line-pos-select')?.value || '').trim() ||
+          (row.querySelector('.maint-line-pos-free')?.value || '').trim();
+        const pn = (row.querySelector('.maint-line-part-no')?.value || '').trim();
+        if (partCat) rec.partCategory = partCat;
+        if (partPos) rec.partPosition = partPos;
+        if (pn) rec.partNumber = pn;
+        const bits = [partPos, pn].filter(Boolean);
+        if (bits.length) rec.tirePositionText = bits.join(' · ');
+        const qMemo = (row.querySelector('.maint-line-qbo-desc')?.value || '').trim();
+        if (qMemo) rec.qboLineDescription = qMemo;
+        const billEl = row.querySelector('.wo-line-billable');
+        if (billEl) rec.billable = !!billEl.checked;
+        const custId = (row.querySelector('.wo-cust-id')?.value || '').trim().replace(/[^\d]/g, '');
+        if (custId) rec.qboCustomerId = custId;
+        const clsId = (row.querySelector('.wo-class-id')?.value || '').trim().replace(/[^\d]/g, '');
+        if (clsId) rec.qboClassId = clsId;
+        const rateEl = row.querySelector('.wo-rate');
+        if (detailMode === 'item' && rateEl && rateEl.value !== '') {
+          const rp = Number(rateEl.value);
+          if (Number.isFinite(rp)) rec.rate = rp;
+        }
+        out.push(rec);
+      };
+      document.querySelectorAll('#mbWoCatHost .wo-line').forEach(row => push(row, 'category'));
+      document.querySelectorAll('#mbWoItemHost .wo-line').forEach(row => push(row, 'item'));
+      return out.filter(l => l.amount > 0);
+    }
+
+    function mbWoAllRows() {
+      return [
+        ...document.querySelectorAll('#mbWoCatHost .wo-line'),
+        ...document.querySelectorAll('#mbWoItemHost .wo-line')
+      ];
+    }
+
+    function mbRefreshWoLineIndices() {
+      document.querySelectorAll('#mbWoCatHost .wo-line').forEach((row, i) => {
+        const ix = row.querySelector('.wo-idx');
+        if (ix) ix.textContent = String(i + 1);
+      });
+      document.querySelectorAll('#mbWoItemHost .wo-line').forEach((row, i) => {
+        const ix = row.querySelector('.wo-idx');
+        if (ix) ix.textContent = String(i + 1);
+      });
+    }
+
+    function sumMbWoComposerAmounts() {
+      let sum = 0;
+      document.querySelectorAll('#mbWoCatHost .wo-amt').forEach(inp => {
+        sum += Number(inp.value) || 0;
+      });
+      document.querySelectorAll('#mbWoItemHost .wo-line').forEach(row => {
+        sum += apWoItemLineAmount(row);
+      });
+      return sum;
+    }
+
+    function mbRefreshDocTotal() {
+      const out = document.getElementById('mbModalHeaderTotal');
+      if (!out) return;
+      const sum = sumMbWoComposerAmounts();
+      out.textContent =
+        'TOTAL: $' +
+        sum.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+    }
+
+    function mbAssetCategoryForUnit(unit) {
+      const u = String(unit || '').trim();
+      if (!u) return activeAssetCategory;
+      const map = vehiclesByCategory();
+      for (const cat of Object.keys(map)) {
+        if ((map[cat] || []).some(v => v.name === u)) return cat;
+      }
+      return activeAssetCategory;
+    }
+
+    function mbPopulateAssetUnitSelect() {
+      const sel = document.getElementById('mbAssetUnit');
+      const src = document.getElementById('apAssetUnit');
+      if (!sel) return;
+      const cur = sel.value || (src && src.value) || '';
+      const names = new Set();
+      Object.values(vehiclesByCategory()).forEach(list => (list || []).forEach(v => names.add(v.name)));
+      sel.innerHTML = [...names].sort().map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+      if (cur && names.has(cur)) sel.value = cur;
+      else if (src && src.value && names.has(src.value)) sel.value = src.value;
+    }
+
+    function mbSyncLinesFromUnit() {
+      mbWoAllRows().forEach(row => syncWoApLineDefaultsFromUnit(row));
+    }
+
+    function mbAddCategoryLine() {
+      const tpl = document.getElementById('woLineCategoryTpl');
+      const host = document.getElementById('mbWoCatHost');
+      if (!tpl || !host) return;
+      host.appendChild(tpl.content.cloneNode(true));
+      const last = host.querySelector('.wo-line-cat:last-child');
+      if (last) {
+        initMaintLinePartUi(last);
+        syncWoApLineDefaultsFromUnit(last);
+      }
+      bindApWoPartDelegation();
+      mbRefreshWoLineIndices();
+      mbRefreshDocTotal();
+      mbScheduleRecompute();
+    }
+
+    function mbAddItemLine() {
+      const tpl = document.getElementById('woLineItemTpl');
+      const host = document.getElementById('mbWoItemHost');
+      if (!tpl || !host) return;
+      host.appendChild(tpl.content.cloneNode(true));
+      const last = host.querySelector('.wo-line-item:last-child');
+      if (last) {
+        initMaintLinePartUi(last);
+        syncWoApLineDefaultsFromUnit(last);
+        syncWoApItemLineTotal(last);
+      }
+      bindApWoPartDelegation();
+      mbRefreshWoLineIndices();
+      mbRefreshDocTotal();
+      mbScheduleRecompute();
+    }
+
+    function mbRemoveWoLine(btn) {
+      const row = btn?.closest?.('.wo-line');
+      if (!row) return;
+      const rows = mbWoAllRows();
+      if (rows.length <= 1) {
+        const svc = row.querySelector('.wo-svc');
+        const amt = row.querySelector('.wo-amt');
+        const acct = row.querySelector('.wo-acct');
+        const acctId = row.querySelectorAll('.wo-acct-id');
+        const item = row.querySelector('.wo-item');
+        const itemId = row.querySelectorAll('.wo-item-id');
+        const qty = row.querySelector('.wo-qty');
+        const rate = row.querySelector('.wo-rate');
+        const lineTot = row.querySelector('.wo-line-total');
+        if (svc) svc.value = '';
+        if (amt) {
+          amt.value = '';
+          amt.readOnly = false;
+        }
+        if (rate) rate.value = '';
+        if (lineTot) lineTot.value = '';
+        if (acct) acct.value = '';
+        acctId.forEach(el => {
+          el.value = '';
+        });
+        if (item) item.value = '';
+        itemId.forEach(el => {
+          el.value = '';
+        });
+        if (qty) qty.value = '1';
+        const cst = row.querySelector('.wo-cust-search');
+        const cid = row.querySelector('.wo-cust-id');
+        if (cst) cst.value = '';
+        if (cid) cid.value = '';
+        const cls = row.querySelector('.wo-class-search');
+        const clid = row.querySelector('.wo-class-id');
+        if (cls) cls.value = '';
+        if (clid) clid.value = '';
+        const bill = row.querySelector('.wo-line-billable');
+        if (bill) bill.checked = false;
+        const sku = row.querySelector('.wo-item-sku');
+        if (sku) sku.value = '';
+        const pc = row.querySelector('.maint-line-part-cat');
+        if (pc) {
+          pc.value = '';
+          onMaintLinePartCategoryChange(pc);
+        }
+        const pfn = row.querySelector('.maint-line-part-no');
+        if (pfn) pfn.value = '';
+        const pfree = row.querySelector('.maint-line-pos-free');
+        if (pfree) pfree.value = '';
+        const qd = row.querySelector('.maint-line-qbo-desc');
+        if (qd) qd.value = '';
+        syncWoApLineDefaultsFromUnit(row);
+        mbRefreshWoLineIndices();
+        mbRefreshDocTotal();
+        mbScheduleRecompute();
+        return;
+      }
+      row.remove();
+      mbRefreshWoLineIndices();
+      mbRefreshDocTotal();
+      mbScheduleRecompute();
+    }
+
+    function resolveMbVendorSearch() {
+      const raw = document.getElementById('mbVendorSearch')?.value || '';
+      const match = findBestNameMatch(cacheVendors(), raw);
+      const hid = document.getElementById('mbVendorQboId');
+      if (hid) hid.value = match ? match.qboId : '';
+      const wrap = document.getElementById('mbVendorField');
+      if (wrap) {
+        wrap.classList.toggle('erp-mb-field--ok', !!hid.value);
+        wrap.classList.toggle('erp-mb-field--error', !hid.value && String(raw).trim().length > 0);
+      }
+    }
+
+    function mbSyncApSeriesFilterOptions(sel) {
+      if (!sel) return;
+      const cur = sel.value;
+      const map = new Map();
+      (erp.workOrders || []).forEach(wo => {
+        const id = String(wo.recurringSeriesId || '').trim();
+        if (!id) return;
+        const lab = String(wo.vendorInvoiceNumber || wo.workOrderNumber || wo.id || id).trim();
+        if (!map.has(id)) map.set(id, `${lab} series`);
+      });
+      const opts = ['<option value="">All series</option>'].concat(
+        [...map.entries()]
+          .sort((a, b) => a[1].localeCompare(b[1]))
+          .map(
+            ([id, lab]) =>
+              `<option value="${escapeHtml(id)}">${escapeHtml(lab)}</option>`
+          )
+      );
+      sel.innerHTML = opts.join('');
+      if (cur && [...map.keys()].includes(cur)) sel.value = cur;
+    }
+
+    function mbPopulateSeriesSelects() {
+      mbSyncApSeriesFilterOptions(document.getElementById('apSeriesFilter'));
+      mbSyncApSeriesFilterOptions(document.getElementById('expHistSeries'));
+    }
+
+    function erpFilterApListBySeries(seriesId) {
+      const sel = document.getElementById('apSeriesFilter');
+      if (sel) sel.value = String(seriesId || '');
+      renderApTransactions();
+      document.getElementById('apList')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    let __mbRecomputeT = null;
+    let __mbPreviewFull = [];
+    let __mbRemoved = new Set();
+    let __mbAmountEdits = new Map();
+    let __mbSeriesId = '';
+    let __mbCreateRows = [];
+    let __mbCreatedWoIds = [];
+
+    function mbScheduleRecompute() {
+      clearTimeout(__mbRecomputeT);
+      __mbRecomputeT = setTimeout(() => mbRecomputePreview(), 60);
+    }
+
+    function mbOnTermsModeChange() {
+      const m = document.getElementById('mbTermsDaysMode')?.value || 'net30';
+      const w = document.getElementById('mbTermsCustomWrap');
+      if (w) w.classList.toggle('hidden', m !== 'custom');
+      mbScheduleRecompute();
+    }
+
+    function mbSetFreq(v) {
+      const el = document.getElementById('mbFreq');
+      if (el) el.value = v;
+      document.querySelectorAll('#mbFreqSeg [data-mb-freq]').forEach(b => {
+        b.classList.toggle('is-on', b.getAttribute('data-mb-freq') === v);
+      });
+      const cw = document.getElementById('mbCustomEveryWrap');
+      if (cw) cw.classList.toggle('hidden', v !== 'custom');
+      __mbRemoved.clear();
+      mbScheduleRecompute();
+    }
+
+    function mbSetAmtMode(v) {
+      const el = document.getElementById('mbAmtMode');
+      if (el) el.value = v;
+      document.querySelectorAll('#mbAmtSeg [data-mb-amt]').forEach(b => {
+        b.classList.toggle('is-on', b.getAttribute('data-mb-amt') === v);
+      });
+      document.getElementById('mbWrapAmtSame')?.classList.toggle('hidden', v !== 'same');
+      document.getElementById('mbWrapAmtSplit')?.classList.toggle('hidden', v !== 'split');
+      __mbAmountEdits.clear();
+      mbScheduleRecompute();
+    }
+
+    function mbOnBillFmtInput() {
+      const fmt = document.getElementById('mbBillFmt')?.value || '';
+      const freq = document.getElementById('mbFreq')?.value || 'monthly';
+      const U = window.ErpMultiBillsUtil;
+      if (!U) return;
+      const meta = U.generateBillNumbersMeta(fmt, 3, freq);
+      const pv = document.getElementById('mbFmtPreview');
+      const lb = document.getElementById('mbFmtMeta');
+      if (lb) lb.textContent = meta.label ? `Detected: ${meta.label}` : '';
+      if (pv) {
+        if (meta.preview && fmt.trim()) {
+          pv.textContent = `Preview: ${meta.preview}`;
+          pv.classList.remove('hidden');
+        } else pv.classList.add('hidden');
+      }
+      mbScheduleRecompute();
+    }
+
+    function mbClearFieldErrors() {
+      ['mbErrVendor', 'mbErrLines', 'mbErrCount', 'mbErrFmt', 'mbErrFirstDate', 'mbErrAmt'].forEach(id => {
+        const e = document.getElementById(id);
+        if (e) {
+          e.textContent = '';
+          e.classList.add('hidden');
+        }
+      });
+    }
+
+    function mbValidateForCreate() {
+      mbClearFieldErrors();
+      let ok = true;
+      const vendorId = String(document.getElementById('mbVendorQboId')?.value || '').trim();
+      if (!vendorId) {
+        const e = document.getElementById('mbErrVendor');
+        if (e) {
+          e.textContent = 'Vendor is required.';
+          e.classList.remove('hidden');
+        }
+        ok = false;
+      }
+      const lines = collectMbFormWoLines();
+      if (!lines.length) {
+        const e = document.getElementById('mbErrLines');
+        if (e) {
+          e.textContent = 'Add at least one expense line with an amount greater than zero.';
+          e.classList.remove('hidden');
+        }
+        ok = false;
+      }
+      const cnt = Math.floor(Number(document.getElementById('mbCount')?.value || 0));
+      if (!Number.isFinite(cnt) || cnt < 2 || cnt > 60) {
+        const e = document.getElementById('mbErrCount');
+        if (e) {
+          e.textContent = 'Number of bills must be between 2 and 60.';
+          e.classList.remove('hidden');
+        }
+        ok = false;
+      }
+      const fmt = String(document.getElementById('mbBillFmt')?.value || '').trim();
+      if (!fmt) {
+        const e = document.getElementById('mbErrFmt');
+        if (e) {
+          e.textContent = 'Bill number format is required.';
+          e.classList.remove('hidden');
+        }
+        ok = false;
+      }
+      const fd = String(document.getElementById('mbFirstDate')?.value || '').trim();
+      if (!fd) {
+        const e = document.getElementById('mbErrFirstDate');
+        if (e) {
+          e.textContent = 'First bill date is required.';
+          e.classList.remove('hidden');
+        }
+        ok = false;
+      }
+      const mode = String(document.getElementById('mbAmtMode')?.value || 'same');
+      if (mode === 'same') {
+        const a = Number(document.getElementById('mbAmtSame')?.value);
+        if (!(a > 0)) {
+          const e = document.getElementById('mbErrAmt');
+          if (e) {
+            e.textContent = 'Enter a positive amount per bill.';
+            e.classList.remove('hidden');
+          }
+          ok = false;
+        }
+      } else if (mode === 'split') {
+        const a = Number(document.getElementById('mbAmtTotal')?.value);
+        if (!(a > 0)) {
+          const e = document.getElementById('mbErrAmt');
+          if (e) {
+            e.textContent = 'Enter a positive total amount.';
+            e.classList.remove('hidden');
+          }
+          ok = false;
+        }
+      }
+      return ok;
+    }
+
+    function mbBuildFullPreviewRowsFromForm() {
+      const U = window.ErpMultiBillsUtil;
+      if (!U) return [];
+      const freq = String(document.getElementById('mbFreq')?.value || 'monthly');
+      const fmt = String(document.getElementById('mbBillFmt')?.value || '').trim();
+      const n = Math.max(0, Math.floor(Number(document.getElementById('mbCount')?.value || 0)));
+      const first = String(document.getElementById('mbFirstDate')?.value || '').trim();
+      const customEvery = Math.floor(Number(document.getElementById('mbCustomEvery')?.value || 14));
+      const termsMode = String(document.getElementById('mbTermsDaysMode')?.value || 'net30');
+      const custDays = Math.floor(Number(document.getElementById('mbTermsCustomDays')?.value || 0));
+      const days = U.termsDays(termsMode === 'custom' ? 'custom' : termsMode, custDays);
+      const numMeta = U.generateBillNumbersMeta(fmt, n, freq);
+      const numbers = numMeta.numbers || [];
+      const dates = U.generateBillDates(first, n, freq, customEvery);
+      const mode = String(document.getElementById('mbAmtMode')?.value || 'same');
+      let amounts = [];
+      if (mode === 'same') {
+        const a = Number(document.getElementById('mbAmtSame')?.value) || 0;
+        amounts = Array(n).fill(Math.round(a * 100) / 100);
+      } else if (mode === 'split') {
+        const tot = Number(document.getElementById('mbAmtTotal')?.value) || 0;
+        amounts = U.splitTotalEvenly(tot, n).amounts;
+      } else {
+        const tplSum = sumMbWoComposerAmounts();
+        amounts = Array(n).fill(0);
+        for (let i = 0; i < n; i++) {
+          if (__mbAmountEdits.has(i)) amounts[i] = Number(__mbAmountEdits.get(i)) || 0;
+          else amounts[i] = Math.round((tplSum / Math.max(1, n)) * 100) / 100;
+        }
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const rows = [];
+      for (let i = 0; i < n; i++) {
+        const billDate = dates[i] || first;
+        const due = U.addDaysIso(billDate, days);
+        const billNumber = numbers[i] != null ? String(numbers[i]) : `${fmt}-${i + 1}`;
+        let amt = amounts[i] != null ? Number(amounts[i]) : 0;
+        if (!Number.isFinite(amt)) amt = 0;
+        const bd = billDate ? new Date(billDate + 'T12:00:00') : null;
+        const past = bd && bd < today;
+        rows.push({ _idx: i, billNumber, billDate, dueDate: due, amount: amt, past });
+      }
+      return rows;
+    }
+
+    function mbVisiblePreviewRows() {
+      return __mbPreviewFull.filter(r => !__mbRemoved.has(r._idx));
+    }
+
+    function mbRecomputePreview() {
+      __mbPreviewFull = mbBuildFullPreviewRowsFromForm();
+      mbRenderPreviewList();
+      const cntEl = document.getElementById('mbCountHint');
+      const n = Math.floor(Number(document.getElementById('mbCount')?.value || 0));
+      if (cntEl) cntEl.textContent = `We will create ${Number.isFinite(n) ? n : 0} bills total`;
+      const mode = String(document.getElementById('mbAmtMode')?.value || 'same');
+      if (mode === 'split') {
+        const tot = Number(document.getElementById('mbAmtTotal')?.value) || 0;
+        const c = Math.max(1, Math.floor(Number(document.getElementById('mbCount')?.value || 1)));
+        const sp = window.ErpMultiBillsUtil.splitTotalEvenly(tot, c);
+        const big = document.getElementById('mbPerBillBig');
+        if (big) big.textContent = '$' + sp.perBill.toFixed(2);
+        const note = document.getElementById('mbSplitNote');
+        if (note) {
+          note.textContent =
+            sp.remainderOnLast && Math.abs(sp.remainderOnLast) > 0.0001
+              ? `Note: Last bill will be $${(sp.perBill + sp.remainderOnLast).toFixed(2)} to account for rounding.`
+              : '';
+        }
+        const ex = document.getElementById('mbSplitExample');
+        if (ex) {
+          if (tot > 0 && c > 0) {
+            ex.textContent = `Example: $${tot.toFixed(2)} total ÷ ${c} bills = $${sp.perBill.toFixed(2)} per bill`;
+            ex.classList.remove('hidden');
+          } else ex.classList.add('hidden');
+        }
+      }
+      const tplSum = sumMbWoComposerAmounts();
+      const mode2 = String(document.getElementById('mbAmtMode')?.value || 'same');
+      const hint = document.getElementById('mbAmtSameHint');
+      if (hint && mode2 === 'same') {
+        const a = Number(document.getElementById('mbAmtSame')?.value) || 0;
+        const c = Math.max(0, Math.floor(Number(document.getElementById('mbCount')?.value || 0)));
+        hint.textContent =
+          c > 0 && a > 0
+            ? `Each of the ${c} bills will be for this amount. Total: $${(a * c).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : '';
+      }
+      mbRefreshDocTotal();
+    }
+
+    function mbRenderPreviewList() {
+      const U = window.ErpMultiBillsUtil;
+      const list = document.getElementById('mbPreviewList');
+      const empty = document.getElementById('mbPreviewEmpty');
+      const badge = document.getElementById('mbPreviewBadge');
+      const totS = document.getElementById('mbPreviewTotalStr');
+      const hdr = document.getElementById('mbModalHeaderTotal');
+      const rows = mbVisiblePreviewRows();
+      const vendorName =
+        cacheVendors().find(v => v.qboId === String(document.getElementById('mbVendorQboId')?.value || '').trim())?.name ||
+        String(document.getElementById('mbVendorSearch')?.value || '').trim() ||
+        '—';
+      if (!list || !empty) return;
+      if (!__mbPreviewFull.length || !document.getElementById('mbBillFmt')?.value.trim()) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        if (badge) badge.textContent = '0 bills';
+        if (totS) totS.textContent = 'Total: $0.00';
+        if (hdr) hdr.textContent = 'TOTAL: $0.00';
+        return;
+      }
+      empty.classList.add('hidden');
+      const total = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      if (badge) badge.textContent = `${rows.length} bills`;
+      const tStr =
+        '$' +
+        total.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      if (totS) totS.textContent = 'Total: ' + tStr;
+      if (hdr) hdr.textContent = 'TOTAL: ' + tStr;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const pastCount = rows.filter(r => r.past).length;
+      const pw = document.getElementById('mbPastWarn');
+      if (pw) {
+        if (pastCount > 0) {
+          pw.textContent = `⚠ ${pastCount} bills have past dates. They will be created as historical records.`;
+          pw.classList.remove('hidden');
+        } else pw.classList.add('hidden');
+      }
+      const mode = String(document.getElementById('mbAmtMode')?.value || 'same');
+      const diff = mode === 'diff';
+      list.innerHTML = rows
+        .map(r => {
+          const dt = r.billDate
+            ? new Date(r.billDate + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+            : '—';
+          const due = r.dueDate
+            ? new Date(r.dueDate + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+            : '—';
+          const warn = Number(r.amount) <= 0.0001 ? ' erp-mb-row--warn' : '';
+          const amtCell = diff
+            ? `<div class="erp-mb-row-amt"><button type="button" title="Edit amount" onclick="mbEditPreviewAmount(${r._idx})">$${Number(r.amount || 0).toFixed(2)}</button></div>`
+            : `<div class="erp-mb-row-amt">$${Number(r.amount || 0).toFixed(2)}</div>`;
+          return `<div class="erp-mb-row${warn}" data-mb-idx="${r._idx}">
+            <div><span class="erp-mb-num">${escapeHtml(r.billNumber)}</span>${r.past ? ' <span class="erp-mb-pill-past">Past</span>' : ''}</div>
+            <div class="erp-mb-row-mid">
+              <div class="erp-mb-row-date">${escapeHtml(dt)}</div>
+              <div class="erp-mb-row-due">Due: ${escapeHtml(due)}</div>
+              <div class="erp-mb-row-vendor">${escapeHtml(vendorName)}</div>
+            </div>
+            ${amtCell}
+            <button type="button" class="erp-mb-row-x" onclick="mbRemovePreviewRow(${r._idx})" title="Remove">×</button>
+          </div>`;
+        })
+        .join('');
+    }
+
+    function mbEditPreviewAmount(idx) {
+      const mode = String(document.getElementById('mbAmtMode')?.value || '');
+      if (mode !== 'diff') return;
+      const cur = __mbPreviewFull.find(r => r._idx === idx);
+      const v = window.prompt('Amount for this bill', cur ? String(cur.amount) : '0');
+      if (v === null) return;
+      const n = Math.round((Number(v) || 0) * 100) / 100;
+      __mbAmountEdits.set(idx, n);
+      __mbPreviewFull = mbBuildFullPreviewRowsFromForm();
+      mbRenderPreviewList();
+    }
+
+    function mbRemovePreviewRow(idx) {
+      __mbRemoved.add(idx);
+      mbRenderPreviewList();
+    }
+
+    function mbPreviewBills() {
+      mbRecomputePreview();
+      document.getElementById('mbPreviewList')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function mbCancelConfirm() {
+      document.getElementById('mbConfirmLayer')?.classList.add('hidden');
+      document.getElementById('mbProgressWrap')?.classList.add('hidden');
+      const f = document.getElementById('mbProgressFill');
+      if (f) f.style.width = '0%';
+    }
+
+    function mbStartCreateAll() {
+      if (!mbValidateForCreate()) return;
+      mbRecomputePreview();
+      const rows = mbVisiblePreviewRows();
+      if (rows.length < 2) {
+        erpNotify('Need at least two bills in the preview.', 'warning');
+        return;
+      }
+      __mbSeriesId = '';
+      const vn =
+        cacheVendors().find(v => v.qboId === String(document.getElementById('mbVendorQboId')?.value || '').trim())?.name || '—';
+      const total = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      const d0 = rows[0].billDate;
+      const d1 = rows[rows.length - 1].billDate;
+      const n0 = rows[0].billNumber;
+      const n1 = rows[rows.length - 1].billNumber;
+      const html = `<table>
+        <tr><td>Vendor</td><td><b>${escapeHtml(vn)}</b></td></tr>
+        <tr><td>Total bills</td><td><b>${rows.length}</b></td></tr>
+        <tr><td>Date range</td><td><b>${escapeHtml(d0)}</b> to <b>${escapeHtml(d1)}</b></td></tr>
+        <tr><td>Total amount</td><td><b>$${total.toFixed(2)}</b></td></tr>
+        <tr><td>Bill numbers</td><td><b>${escapeHtml(n0)}</b> → <b>${escapeHtml(n1)}</b></td></tr>
+      </table><p class="mini-note" style="margin:8px 0 0">Create ${rows.length} bills?</p>`;
+      const box = document.getElementById('mbConfirmSummary');
+      if (box) box.innerHTML = html;
+      __mbCreateRows = rows.slice();
+      window.__mbCreateRowsSnapshot = rows.slice();
+      document.getElementById('mbConfirmLayer')?.classList.remove('hidden');
+      mbCancelConfirm();
+      document.getElementById('mbConfirmLayer')?.classList.remove('hidden');
+    }
+
+    async function mbRunCreateSequence() {
+      const U = window.ErpMultiBillsUtil;
+      const tpl = collectMbFormWoLines();
+      for (const l of tpl) {
+        if (l.detailMode === 'category' && !l.qboAccountId) {
+          erpNotify('Each category line needs a resolved QuickBooks account.', 'warning');
+          return;
+        }
+        if (l.detailMode === 'item' && !l.qboItemId) {
+          erpNotify('Each item line needs a resolved QuickBooks item.', 'warning');
+          return;
+        }
+      }
+      const btn = document.getElementById('mbConfirmCreateBtn');
+      if (btn) btn.disabled = true;
+      const pw = document.getElementById('mbProgressWrap');
+      const pf = document.getElementById('mbProgressFill');
+      const pt = document.getElementById('mbProgressText');
+      pw?.classList.remove('hidden');
+      if (pf) pf.style.width = '0%';
+      if (!__mbSeriesId) {
+        __mbSeriesId =
+          (typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID()) ||
+          'rs_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        __mbCreatedWoIds = [];
+      }
+      const rows = __mbCreateRows.slice();
+      let fail = null;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (pt) pt.textContent = `Creating bill ${i + 1} of ${rows.length}…`;
+        const scaled = U.scaleLinesToTotal(tpl, row.amount);
+        const body = mbBuildWorkOrderBody(row, __mbSeriesId, scaled);
+        try {
+          const data = await saveApTransaction({ workOrderBody: body, close: false, postToQbo: false, skipBanner: true });
+          const id = data && data.workOrder && data.workOrder.id ? String(data.workOrder.id) : '';
+          if (id) __mbCreatedWoIds.push(id);
+        } catch (e) {
+          fail = { i, row, msg: e.message || String(e) };
+          break;
+        }
+        if (pf) pf.style.width = Math.round(((i + 1) / rows.length) * 100) + '%';
+      }
+      if (btn) btn.disabled = false;
+      if (fail) {
+        const done = fail.i;
+        const msg = `Created ${done} of ${rows.length} bills. Error on bill ${fail.row.billNumber}: ${fail.msg}. The ${rows.length - done} remaining bills were not created.`;
+        erpNotify(msg, 'error');
+        document.getElementById('mbConfirmSummary').innerHTML =
+          `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(msg)}</p>` +
+          `<button type="button" class="btn btn-erp-mb-blue" onclick="mbRetryFrom(${fail.i})">Retry from this bill</button>`;
+        pw?.classList.add('hidden');
+        return;
+      }
+      mbCancelConfirm();
+      document.getElementById('mbConfirmLayer')?.classList.add('hidden');
+      document.getElementById('mbMainFlow')?.classList.add('hidden');
+      document.getElementById('mbSuccessLayer')?.classList.remove('hidden');
+      document.getElementById('mbSuccessTitle').textContent = `${rows.length} bills created successfully`;
+      document.getElementById('mbSuccessBody').textContent = `Vendor: ${cacheVendors().find(v => v.qboId === String(document.getElementById('mbVendorQboId')?.value || '').trim())?.name || '—'}. Total: $${rows.reduce((s, r) => s + (Number(r.amount) || 0), 0).toFixed(2)}.`;
+      mbPopulateSeriesSelects();
+      renderApTransactions();
+    }
+
+    function mbRetryFrom(fromIdx) {
+      const snap = window.__mbCreateRowsSnapshot || __mbCreateRows || [];
+      const i = Math.max(0, Math.floor(Number(fromIdx) || 0));
+      __mbCreateRows = snap.slice(i);
+      document.getElementById('mbConfirmLayer')?.classList.remove('hidden');
+      mbRunCreateSequence();
+    }
+
+    function mbBuildWorkOrderBody(row, seriesId, scaledLines) {
+      const unit = String(document.getElementById('mbAssetUnit')?.value || '').trim();
+      const vendorId = String(document.getElementById('mbVendorQboId')?.value || '').trim();
+      const memo = String(document.getElementById('mbMemo')?.value || '').trim();
+      const termsMode = String(document.getElementById('mbTermsDaysMode')?.value || 'net30');
+      const custDays = Math.floor(Number(document.getElementById('mbTermsCustomDays')?.value || 0));
+      const U = window.ErpMultiBillsUtil;
+      const days = U.termsDays(termsMode === 'custom' ? 'custom' : termsMode, custDays);
+      const due = U.addDaysIso(row.billDate, days);
+      const pt = String(document.getElementById('apPaymentMethodId')?.value || '').trim();
+      const bank = String(document.getElementById('apBankAccountQboId')?.value || '').trim();
+      const repairLoc = String(document.getElementById('woRepairLocationType')?.value || '').trim();
+      const firstSvc = (scaledLines[0] && scaledLines[0].serviceType) || memo || 'Line';
+      return {
+        unit,
+        assetCategory: mbAssetCategoryForUnit(unit),
+        repairLocationType: repairLoc,
+        serviceDate: row.billDate,
+        txnType: 'bill',
+        dueDate: due,
+        qboTermId: String(document.getElementById('mbQboTermSelect')?.value || '').trim(),
+        qboVendorId: vendorId,
+        serviceType: firstSvc,
+        paymentMethodId: pt,
+        qboBankAccountId: bank,
+        loadNumber: '',
+        internalWorkOrderNumber: '',
+        vendorInvoiceNumber: row.billNumber,
+        notes: memo,
+        lines: scaledLines.map(l => ({ ...l })),
+        recurringSeriesId: seriesId
+      };
+    }
+
+    async function mbPostAllCreated() {
+      for (const id of __mbCreatedWoIds) {
+        if (!id) continue;
+        try {
+          await postWorkOrderToQbo(id);
+        } catch (e) {
+          erpNotify(`Post failed for ${id}: ${e.message || e}`, 'error');
+        }
+      }
+      erpCloseMultiBillsModal();
+    }
+
+    function mbViewSeriesInHistory() {
+      const s = document.getElementById('expHistSeries');
+      if (s) s.value = __mbSeriesId;
+      erpCloseMultiBillsModal();
+      openSectionByName('accounting');
+      openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'));
+      renderExpenseHistory();
+    }
+
+    function erpCloseMultiBillsModal() {
+      const m = document.getElementById('erpMultiBillsModal');
+      if (!m) return;
+      m.classList.add('hidden');
+      m.setAttribute('aria-hidden', 'true');
+      document.getElementById('mbConfirmLayer')?.classList.add('hidden');
+      document.getElementById('mbSuccessLayer')?.classList.add('hidden');
+      document.getElementById('mbMainFlow')?.classList.remove('hidden');
+    }
+
+    function erpOpenMultiBillsModal() {
+      erpCloseNewMenu();
+      if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
+      mbBindMultiBillsUiOnce();
+      const m = document.getElementById('erpMultiBillsModal');
+      if (!m) return;
+      const apTerm = document.getElementById('apQboTermId');
+      const mbTerm = document.getElementById('mbQboTermSelect');
+      if (apTerm && mbTerm) {
+        mbTerm.innerHTML = apTerm.innerHTML;
+        mbTerm.value = apTerm.value || '';
+      }
+      mbPopulateAssetUnitSelect();
+      document.getElementById('mbWoCatHost') && (document.getElementById('mbWoCatHost').innerHTML = '');
+      document.getElementById('mbWoItemHost') && (document.getElementById('mbWoItemHost').innerHTML = '');
+      mbAddCategoryLine();
+      const fd = document.getElementById('mbFirstDate');
+      if (fd && !fd.value && typeof localIsoDate === 'function') fd.value = localIsoDate(new Date());
+      mbSetFreq('monthly');
+      mbSetAmtMode('same');
+      document.getElementById('mbTermsDaysMode') && (document.getElementById('mbTermsDaysMode').value = 'net30');
+      mbOnTermsModeChange();
+      document.getElementById('mbVendorSearch') && (document.getElementById('mbVendorSearch').value = '');
+      document.getElementById('mbVendorQboId') && (document.getElementById('mbVendorQboId').value = '');
+      document.getElementById('mbMemo') && (document.getElementById('mbMemo').value = '');
+      document.getElementById('mbBillFmt') && (document.getElementById('mbBillFmt').value = '');
+      document.getElementById('mbCount') && (document.getElementById('mbCount').value = '2');
+      document.getElementById('mbAmtSame') && (document.getElementById('mbAmtSame').value = '');
+      document.getElementById('mbAmtTotal') && (document.getElementById('mbAmtTotal').value = '');
+      __mbAmountEdits.clear();
+      __mbRemoved.clear();
+      __mbSeriesId = '';
+      __mbCreatedWoIds = [];
+      window.__mbCreateRowsSnapshot = [];
+      mbOnBillFmtInput();
+      mbRecomputePreview();
+      m.classList.remove('hidden');
+      m.setAttribute('aria-hidden', 'false');
+      openSectionByName('accounting');
+      const stub = document.getElementById('acctStubTrans');
+      openAccountingTab('acct-transactions', stub);
+    }
+
+    function mbBindMultiBillsUiOnce() {
+      if (window.__mbUiBound) return;
+      window.__mbUiBound = true;
+      document.addEventListener('click', ev => {
+        const t = ev.target;
+        if (t && t.closest && t.closest('[data-erp-mb-close]')) erpCloseMultiBillsModal();
+      });
+      const modal = document.getElementById('erpMultiBillsModal');
+      modal?.addEventListener('click', e => {
+        const b = e.target.closest('[data-mb-freq]');
+        if (b) mbSetFreq(b.getAttribute('data-mb-freq'));
+        const a = e.target.closest('[data-mb-amt]');
+        if (a) mbSetAmtMode(a.getAttribute('data-mb-amt'));
+      });
+      modal?.addEventListener('input', () => mbScheduleRecompute());
+      modal?.addEventListener('change', () => mbScheduleRecompute());
+      const mbRoot = document.getElementById('mbWoLinesRoot');
+      mbRoot?.addEventListener('input', e => {
+        const t = e.target;
+        if (!t || !t.classList) return;
+        const itemRow = t.closest('.wo-line-item');
+        if (itemRow) {
+          if (t.classList.contains('wo-line-total')) syncWoApItemLineFromTotal(itemRow);
+          else if (t.classList.contains('wo-qty') || t.classList.contains('wo-rate')) {
+            syncWoApItemLineTotal(itemRow);
+            mbRefreshDocTotal();
+          }
+          mbScheduleRecompute();
+          return;
+        }
+        if (t.classList.contains('wo-amt')) mbRefreshDocTotal();
+        mbScheduleRecompute();
+      });
+    }
+
     function erpCollectApDedicatedPrintData() {
       const gv = id => String(document.getElementById(id)?.value ?? '').trim();
       const gt = id => String(document.getElementById(id)?.textContent ?? '').trim();
@@ -16124,10 +17074,10 @@
       document.querySelectorAll('#apWoCatHost .wo-line').forEach(row => pushRow(row, 'category'));
       document.querySelectorAll('#apWoItemHost .wo-line').forEach(row => pushRow(row, 'item'));
       const attList = document.getElementById('apWoAttachmentsList');
-      let attachmentCount = 0;
-      if (attList && attList.style.display !== 'none') {
-        attachmentCount = attList.querySelectorAll('li').length;
-      }
+      const attInput = document.getElementById('apWoAttachmentsInput');
+      let attachmentCount = attList ? attList.querySelectorAll('li').length : 0;
+      const pickN = attInput && attInput.files ? attInput.files.length : 0;
+      if (pickN > attachmentCount) attachmentCount = pickN;
       const termSel = document.getElementById('apQboTermId');
       let termsLabel = '';
       if (termSel && termSel.selectedOptions && termSel.selectedOptions[0]) {
@@ -16218,18 +17168,14 @@
           window.erpPrintOpenAndPrint(window.generatePrintDoc('fuel-expense', data));
           return;
         }
-        if (kind === 'fuel_bill') {
-          const data = erpCollectFuelDedicatedPrintData();
-          window.erpPrintOpenAndPrint(window.generatePrintDoc('fuel-bill', data));
-          return;
-        }
         if (kind === 'ap') {
           const data = erpCollectApDedicatedPrintData();
           const txn = String(document.getElementById('apTxnType')?.value || '').trim();
           const preset = String(window.__erpDedicatedApPreset || '');
           let type = 'expense';
           if (txn === 'bill') {
-            if (preset === 'maintenance-bill') type = 'maintenance-bill';
+            if (preset === 'fuel-bill') type = 'fuel-bill';
+            else if (preset === 'maintenance-bill') type = 'maintenance-bill';
             else if (preset === 'vendor-driver-bill') type = 'vendor-driver-bill';
             else type = 'bill';
           } else if (preset === 'maintenance-expense') {
@@ -16963,9 +17909,32 @@
           pending$ += Number(ap.amount) || 0;
         }
       });
+      const pendingTxt = String(pendingN) + ' pending · $' + pending$.toFixed(2) + ' total (not yet in QuickBooks)';
       const sumEl = document.getElementById('acctBoardPendingSummary');
-      if (sumEl) {
-        sumEl.textContent = String(pendingN) + ' pending · $' + pending$.toFixed(2) + ' total (not yet in QuickBooks)';
+      if (sumEl) sumEl.textContent = pendingTxt;
+      const maintSub = document.getElementById('acctCardMaintSub');
+      if (maintSub) maintSub.textContent = pendingTxt;
+
+      let fuelMonthN = 0;
+      let fuelMonth$ = 0;
+      (erp.fuelPurchases || []).forEach(fp => {
+        if (!fp) return;
+        const d = fp.txnDate || fp.createdAt || '';
+        if (!inCalendarMonth(d)) return;
+        fuelMonthN++;
+        fuelMonth$ += Number(fp.totalCost) || 0;
+      });
+      const fuelSub = document.getElementById('acctCardFuelSub');
+      if (fuelSub) {
+        fuelSub.textContent =
+          fuelMonthN > 0
+            ? `${fuelMonthN} records this month · $${fuelMonth$.toFixed(2)}`
+            : '0 records this month · $0.00';
+      }
+
+      const qboCard = document.getElementById('acctCardQboSub');
+      if (qboCard && elQS) {
+        qboCard.textContent = elQS.textContent || '—';
       }
     }
 
@@ -20653,6 +21622,31 @@
     }
 
     async function saveApTransaction(opts) {
+      opts = opts || {};
+      if (opts.workOrderBody) {
+        const close = opts.close !== false;
+        const postToQbo = !!opts.postToQbo;
+        const data = await j('/api/work-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify(opts.workOrderBody)
+        });
+        const woId = data && data.workOrder && data.workOrder.id ? String(data.workOrder.id) : '';
+        await loadAll();
+        if (postToQbo && woId) await postWorkOrderToQbo(woId);
+        if (close) {
+          openSectionByName('accounting');
+          const apList = document.getElementById('apList');
+          if (apList) apList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (!opts.skipBanner) {
+          paintApTxnQboBanner(
+            'Saved. Form cleared for the next expense — adjust header fields and lines, then Save or Save and close.',
+            'success'
+          );
+          document.getElementById('apDocTitle')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return data;
+      }
       const close = !opts || opts.close !== false;
       const vendorId = document.getElementById('apVendorQboId').value;
       if (!vendorId) {
