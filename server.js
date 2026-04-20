@@ -52,6 +52,7 @@ import {
   buildInvestigateRecords,
   defaultIntegrityThresholds,
   alertCategory,
+  effectiveIntegrityAlertCategory,
   integrityThresholdExportRows,
   integrityAlertRuleCatalogSections,
   integrityAlertRuleCatalogFlat
