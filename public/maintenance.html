@@ -503,7 +503,8 @@
 
       <main class="main erp-main-surface">
         <div id="authBanner" class="hidden mini-note erp-auth-banner" aria-live="polite"></div>
-        <div id="qboSyncAlertBar" class="qbo-sync-alert-bar hidden" aria-live="polite"></div>
+        <!-- QBO top strip removed (was #qboSyncAlertBar); status lives in sidebar + Accounting. Keep id for smoke/tests. -->
+        <div id="qboSyncAlertBar" hidden class="hidden" style="display:none !important" aria-hidden="true"></div>
         <div id="erpConnectionStrip" class="erp-connection-strip print-hide-actions" aria-live="polite"></div>
         <div
           id="erpIntegrationDisconnectBanners"
@@ -521,15 +522,6 @@
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Auth banner">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
               <code>j()</code> paints <code>#authBanner</code> on 401 so users can open <strong>Settings</strong>. <code>loadAll()</code> clears it (<code>textContent</code> + <code>hidden</code>) after a successful refresh.
-            </span>
-          </span>
-        </div>
-        <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-          <span style="min-width:0;flex:1 1 220px">Sticky QBO banner — posting/connection issues from the sync poll; <strong>Hide ×</strong> dismisses until the alert set changes.</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO sync alert bar">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              <code>renderQboSyncAlerts()</code> fills <code>#qboSyncAlertBar</code> (degraded/empty/rows). <strong>Hide ×</strong> → <code>dismissQboSyncAlertBar()</code> (<code>hidden</code>, cleared <code>innerHTML</code>, session fingerprint so repeats stay dismissed).
             </span>
           </span>
         </div>
@@ -3035,7 +3027,7 @@
               <span style="min-width:0;flex:1 1 180px">Up to three sync error titles when the payload has alerts.</span>
               <span class="erp-help-tip">
                 <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO errors on dash">?</button>
-                <span class="erp-help-tip__panel" role="tooltip"><code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>. <strong>View all errors</strong> → sync alert bar.</span>
+                <span class="erp-help-tip__panel" role="tooltip"><code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>. <strong>View all errors</strong> scrolls the list on this board.</span>
               </span>
             </div>
             <div id="acctBoardQboErrDateFilterHost" class="erp-date-filter-bar-host"></div>
@@ -3045,7 +3037,7 @@
               id="acctDashQboErrMore"
               class="acct-dash-btn hidden"
               style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus);background:transparent"
-              onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})"
+              onclick="document.getElementById('acctDashQboErrList')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
             >
               View all errors
             </button>
