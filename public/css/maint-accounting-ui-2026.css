@@ -725,11 +725,13 @@ body.erp-maintenance #section-reports .erp-reports-hub__tile-title,
 body.erp-maintenance #section-reports .erp-reports-hub__tile-meta {
   min-width: 0;
   min-height: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance #section-reports .erp-reports-hub__label {
   min-width: 0;
   min-height: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance #section-reports .mr-rep-nav-group,
@@ -855,6 +857,8 @@ body.erp-maintenance .acct-dash-kpi__label {
   text-transform: uppercase;
   color: var(--color-text-label);
   letter-spacing: 0.04em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .acct-dash-kpi__val {
@@ -862,6 +866,8 @@ body.erp-maintenance .acct-dash-kpi__val {
   font-weight: 400;
   color: var(--color-text-primary);
   margin-top: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .acct-dash-kpi__val--danger {
@@ -876,6 +882,8 @@ body.erp-maintenance .acct-dash-kpi__sub {
   font-size: 11px;
   color: var(--color-text-placeholder);
   margin-top: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .acct-dash-cards {
@@ -903,6 +911,8 @@ body.erp-maintenance .acct-dash-card__head {
   padding-bottom: 10px;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .acct-dash-card__btnrow {
