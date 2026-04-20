@@ -383,6 +383,8 @@ body.erp-maintenance .erp-topbar .topbar-home-link:hover {
 body.erp-maintenance .erp-topbar .topbar-hint {
   color: var(--color-text-label);
   font-size: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-topbar .topbar-hint strong {
@@ -1619,11 +1621,13 @@ html.dispatch-embed .dispatch-embed-status-bar__inner {
   align-items: flex-start;
   gap: 6px 10px;
   max-width: 100%;
+  min-width: 0;
 }
 
 html.dispatch-embed .dispatch-embed-status-bar__item {
-  flex: 1 1 200px;
-  min-width: min(100%, 160px);
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 html.dispatch-embed .dispatch-embed-status-bar__sep {
