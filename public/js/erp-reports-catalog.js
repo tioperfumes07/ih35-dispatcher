@@ -116,6 +116,60 @@
     return { start: ymd(start), end: ymd(end) };
   }
 
+  /** Prefer canonical GET /api/reports/... (standard envelope); fallback to /api/reports/dataset?id= */
+  const DATASET_REST = {
+    'a1-work-order-history': '/api/reports/maintenance/work-order-history',
+    'a2-cost-by-unit': '/api/reports/maintenance/cost-by-unit',
+    'a3-cost-by-service-type': '/api/reports/maintenance/cost-by-service-type',
+    'a4-pm-schedule': '/api/reports/maintenance/pm-schedule',
+    'a5-tire-history': '/api/reports/maintenance/tire-history',
+    'a6-air-bag-history': '/api/reports/maintenance/air-bag-history',
+    'a7-battery-history': '/api/reports/maintenance/battery-history',
+    'a8-accident-collision': '/api/reports/maintenance/accident-history',
+    'a9-fleet-repair-monthly': '/api/reports/maintenance/fleet-repair-summary',
+    'a10-inspection-history': '/api/reports/maintenance/inspection-history',
+    'b6-expense-history': '/api/reports/accounting/expense-history',
+    'b7-bill-history': '/api/reports/accounting/bill-history',
+    'b8-fuel-expense-history': '/api/reports/accounting/fuel-expense-history',
+    'b9-monthly-expense-summary': '/api/reports/accounting/monthly-summary',
+    'b10-qbo-sync-errors': '/api/reports/accounting/qbo-sync-errors',
+    'b11-vendor-spend': '/api/reports/accounting/vendor-spend',
+    'c1-driver-hos-summary': '/api/reports/safety/hos-summary',
+    'c2-hos-violations': '/api/reports/safety/hos-violations',
+    'c3-daily-driver-log': '/api/reports/safety/daily-driver-log',
+    'c4-safety-score-driver': '/api/reports/safety/safety-scores',
+    'c5-safety-score-fleet': '/api/reports/safety/safety-scores-fleet',
+    'c6-speeding': '/api/reports/safety/speeding',
+    'c7-harsh-driving': '/api/reports/safety/harsh-driving',
+    'c8-unassigned-hos': '/api/reports/safety/unassigned-hos',
+    'c9-driver-qualification': '/api/reports/safety/driver-qualifications',
+    'c10-dvir': '/api/reports/safety/dvir',
+    'd1-fuel-cost-by-unit': '/api/reports/fuel/cost-by-unit',
+    'd2-fuel-cost-by-driver': '/api/reports/fuel/cost-by-driver',
+    'd3-fuel-card-transactions': '/api/reports/fuel/transactions',
+    'd4-ifta-mileage': '/api/reports/fuel/ifta',
+    'd5-mpg-by-unit': '/api/reports/fuel/mpg-by-unit',
+    'e1-load-history': '/api/reports/operations/load-history',
+    'e2-revenue-by-driver': '/api/reports/operations/revenue-by-driver',
+    'e3-revenue-by-customer': '/api/reports/operations/revenue-by-customer',
+    'e4-dispatch-summary': '/api/reports/operations/dispatch-summary',
+    'e5-settlement-report': '/api/reports/operations/settlement',
+    'e6-activity-summary': '/api/reports/operations/activity-summary',
+    'e7-fleet-benchmarks': '/api/reports/operations/fleet-benchmarks',
+    'f-dot-fleet-overview': '/api/reports/dot/fleet-overview',
+    'g1-driver-qualification': '/api/reports/safety/driver-qualifications',
+    'g3-drug-alcohol-testing': '/api/reports/dot/drug-alcohol-testing'
+  };
+
+  function repSaveRecent(datasetId, title) {
+    try {
+      const key = 'erp.reports.recent';
+      const prev = JSON.parse(localStorage.getItem(key) || '[]').filter(x => x.id !== datasetId);
+      prev.unshift({ id: datasetId, title, at: Date.now() });
+      localStorage.setItem(key, JSON.stringify(prev.slice(0, 5)));
+    } catch (_) {}
+  }
+
   function repDynamicBack() {
     if (typeof openReportsTab === 'function') {
       const b = document.querySelector('#section-reports .subtab[onclick*="rep-overview"]');
@@ -124,13 +178,69 @@
   }
 
   function repDynamicPrint() {
-    window.print();
+    const st = window.__repDynState;
+    if (!st || !st.columns) return;
+    const keys = st.columns.map(c => c.key);
+    const th = st.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('');
+    const tr = (st.rows || [])
+      .map(r => `<tr>${keys.map(k => `<td>${escapeHtml(String(r[k] ?? ''))}</td>`).join('')}</tr>`)
+      .join('');
+    const tot =
+      st.totals && Object.keys(st.totals).length
+        ? `<tr class="totals-row">${keys
+            .map((k, i) => `<td>${i === 0 ? 'Total' : escapeHtml(String(st.totals[k] ?? ''))}</td>`)
+            .join('')}</tr>`
+        : '';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${escapeHtml(st.title || 'Report')}</title><style>
+@page { size: letter; margin: 0.75in; }
+body{font-family:Arial,sans-serif;font-size:9pt;color:#000}
+table{width:100%;border-collapse:collapse}
+th{background:#1a1f36;color:#fff;padding:5pt 6pt;font-size:8pt;font-weight:bold;text-align:left}
+td{padding:4pt 6pt;border-bottom:0.5pt solid #ddd;font-size:8pt}
+tr:nth-child(even){background:#f9f9f9}
+.totals-row{font-weight:bold;background:#e8e8e8;border-top:1pt solid #000}
+.report-header{border-bottom:1.5pt solid #000;padding-bottom:6pt;margin-bottom:8pt;display:flex;justify-content:space-between}
+.company-name{font-size:12pt;font-weight:bold}
+.report-title{font-size:14pt;font-weight:bold;text-align:right}
+.sub{font-size:8pt;color:#555}
+@media print{thead{display:table-header-group}tr{page-break-inside:avoid}}
+</style></head><body>
+<div class="report-header"><div><div class="company-name">IH 35 Transportation LLC</div><div class="sub">${escapeHtml(st.subtitle || '')}</div></div>
+<div class="report-title">${escapeHtml(st.title || 'Report')}</div></div>
+<div class="sub" style="margin-bottom:8px">Generated ${escapeHtml(new Date().toISOString())}</div>
+<table><thead><tr>${th}</tr></thead><tbody>${tr}${tot}</tbody></table>
+</body></html>`;
+    const w = window.open('', '_blank', 'width=1000,height=700');
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 500);
   }
 
   async function repDynamicExport(format) {
     const st = window.__repDynState;
     if (!st || !st.columns || !st.rows) return;
     try {
+      if (window.ErpExportUtil && typeof window.ErpExportUtil.exportReport === 'function') {
+        await window.ErpExportUtil.exportReport(
+          format === 'xlsx' ? 'excel' : format,
+          {
+            title: st.title,
+            columns: st.columns,
+            rows: st.rows,
+            totals: st.totals || {},
+            filters: { startDate: st.startDate, endDate: st.endDate, unit: st.unitTag }
+          },
+          {
+            filename: st.title || 'Report',
+            companyName: 'IH 35 Transportation LLC',
+            dateRange: `${st.startDate || ''} to ${st.endDate || ''}`,
+            filtersApplied: { startDate: st.startDate, endDate: st.endDate, unit: st.unitTag }
+          }
+        );
+        return;
+      }
       const r = await fetch('/api/reports/export-table', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(typeof authFetchHeaders === 'function' ? authFetchHeaders() : {}) },
@@ -280,7 +390,6 @@
 
     const run = async () => {
       const sp = new URLSearchParams();
-      sp.set('id', datasetId);
       const s = document.getElementById('repDfStart')?.value || '';
       const e = document.getElementById('repDfEnd')?.value || '';
       const u = document.getElementById('repDfUnit')?.value || '';
@@ -289,10 +398,13 @@
       if (e) sp.set('endDate', e);
       if (u) sp.set('unit', u);
       if (p) sp.set('position', p);
-      const data = await j('/api/reports/dataset?' + sp.toString());
-      if (!data.ok) throw new Error(data.error || 'Dataset failed');
-      if (disc && data.disclaimer) {
-        disc.textContent = data.disclaimer;
+      const rest = DATASET_REST[datasetId];
+      const url = rest ? `${rest}?${sp.toString()}` : `/api/reports/dataset?id=${encodeURIComponent(datasetId)}&${sp.toString()}`;
+      const data = await j(url);
+      if (!data.ok && !(data.rows && data.rows.length)) throw new Error(data.error || data.meta?.error || 'Dataset failed');
+      const disclaimer = data.meta?.disclaimer || data.disclaimer;
+      if (disc && disclaimer) {
+        disc.textContent = [disclaimer, data.meta?.error].filter(Boolean).join(' — ');
         disc.classList.remove('hidden');
       }
       if (host) {
@@ -317,7 +429,65 @@
           });
         });
       }
-      if (
+      if (window.__repDynChart) {
+        try {
+          window.__repDynChart.destroy();
+        } catch (_) {}
+        window.__repDynChart = null;
+      }
+      if (data.meta?.hasChart && window.Chart && chart && data.rows && data.rows.length) {
+        chart.classList.remove('hidden');
+        chart.innerHTML = '<canvas height="240"></canvas>';
+        const canvas = chart.querySelector('canvas');
+        const xk = data.meta.chartXKey || 'unit';
+        const yk = data.meta.chartYKey || 'totalDollars';
+        const labels = data.rows.slice(0, 16).map(r => String(r[xk] ?? '—'));
+        const values = data.rows.slice(0, 16).map(r => Number(r[yk]) || 0);
+        const type = data.meta.chartType === 'pie' ? 'pie' : data.meta.chartType === 'line' ? 'line' : 'bar';
+        const cfg =
+          type === 'pie'
+            ? {
+                type: 'pie',
+                data: {
+                  labels,
+                  datasets: [
+                    {
+                      data: values,
+                      backgroundColor: ['#1557a0', '#2e7d32', '#6a1b9a', '#ef6c00', '#c62828', '#00838f', '#4527a0', '#558b2f']
+                    }
+                  ]
+                },
+                options: { plugins: { legend: { position: 'bottom' } } }
+              }
+            : {
+                type: type === 'line' ? 'line' : 'bar',
+                data: {
+                  labels,
+                  datasets: [
+                    {
+                      label: yk,
+                      data: values,
+                      backgroundColor: type === 'line' ? 'rgba(21,87,160,0.2)' : '#1557a0',
+                      borderColor: '#1557a0',
+                      borderWidth: type === 'line' ? 2 : 0,
+                      tension: 0.3,
+                      pointRadius: 0,
+                      pointHoverRadius: 4
+                    }
+                  ]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: { grid: { color: '#eee' } },
+                    y: { grid: { color: '#eee' }, beginAtZero: true }
+                  },
+                  plugins: { legend: { display: false } }
+                }
+              };
+        window.__repDynChart = new Chart(canvas.getContext('2d'), cfg);
+      } else if (
         (datasetId === 'a2-cost-by-unit' || datasetId === 'a3-cost-by-service-type' || datasetId === 'd1-fuel-cost-by-unit') &&
         chart &&
         data.rows &&
@@ -348,10 +518,12 @@
         subtitle: [s, e].filter(Boolean).join(' → '),
         columns: data.columns || [],
         rows: data.rows || [],
+        totals: data.totals || {},
         startDate: s,
         endDate: e,
         unitTag: u
       };
+      repSaveRecent(datasetId, data.title || title);
     };
 
     document.getElementById('repDfRun')?.addEventListener('click', () => {
@@ -408,10 +580,16 @@
       if (s) sp.set('start_date', s);
       if (e) sp.set('end_date', e);
       sp.set('accounting_method', acct);
-      const data = await j('/api/qbo/report/' + encodeURIComponent(reportName) + '?' + sp.toString());
-      if (!data.ok) throw new Error(data.error || 'QBO report failed');
-      if (data.viewUrl) qLink.href = data.viewUrl;
-      const flat = flattenQboReportForTable(data.report);
+      const data = await j('/api/reports/qbo/' + encodeURIComponent(reportName) + '?' + sp.toString());
+      if (data.meta?.error) throw new Error(data.meta.error);
+      if (data.qboViewUrl) qLink.href = data.qboViewUrl;
+      let flat = { columns: data.columns || [], rows: data.rows || [] };
+      if (!flat.rows.length) {
+        const legacy = await j('/api/qbo/report/' + encodeURIComponent(reportName) + '?' + sp.toString());
+        if (!legacy.ok) throw new Error(legacy.error || 'QBO report failed');
+        if (legacy.viewUrl) qLink.href = legacy.viewUrl;
+        flat = flattenQboReportForTable(legacy.report);
+      }
       if (host) {
         host.innerHTML =
           flat.rows.length > 0
@@ -425,6 +603,7 @@
         subtitle: `${s} → ${e} (${acct})`,
         columns: flat.columns,
         rows: flat.rows,
+        totals: data.totals || {},
         startDate: s,
         endDate: e
       };
@@ -475,6 +654,12 @@
         }
         if (it.legacy) {
           if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar(it.legacy);
+          return;
+        }
+        if (it.dataset === 'g2-driver-dot-audit') {
+          const id = prompt('Driver id or name slug for DOT driver audit:');
+          if (!id) return;
+          window.open('/api/reports/dot/driver-audit/' + encodeURIComponent(id.trim()), '_blank', 'noopener');
           return;
         }
         if (it.dataset) {

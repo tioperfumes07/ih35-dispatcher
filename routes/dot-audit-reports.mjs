@@ -7,6 +7,11 @@ const router = Router();
 
 const FOOTER = 'Confidential — IH 35 Transportation LLC';
 
+function sliceIso(v) {
+  const s = String(v || '').trim();
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
 function writeSectionPage(doc, title, yStart = 60) {
   doc.addPage();
   let y = yStart;
@@ -55,19 +60,17 @@ router.get('/api/reports/dot-audit/:unit', (req, res) => {
   }
 });
 
-router.get('/api/reports/dot-audit/:unit/pdf', (req, res) => {
+function streamDotAuditPdf(res, unit, startDate, endDate) {
   try {
     const erp = readFullErpJson();
-    const unit = String(req.params.unit || '').trim();
-    if (!unit) return res.status(400).send('unit required');
     const cp = erp.companyProfile && typeof erp.companyProfile === 'object' ? erp.companyProfile : {};
-    const d = buildDotAuditJson(erp, unit, req.query.startDate, req.query.endDate, cp);
+    const d = buildDotAuditJson(erp, unit, startDate, endDate, cp);
     const legal = String(cp.legalName || 'IH 35 Transportation LLC').trim();
     const safeFile = unit.replace(/[^\w.-]+/g, '_') || 'unit';
 
     const doc = new PDFDocument({ margin: 48, size: 'LETTER', bufferPages: true });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="DOT-Audit_${safeFile}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="DOT_Audit_${safeFile}_${sliceIso(startDate)}_${sliceIso(endDate)}.pdf"`);
     doc.pipe(res);
 
     // Cover
@@ -194,11 +197,18 @@ router.get('/api/reports/dot-audit/:unit/pdf', (req, res) => {
   } catch (e) {
     if (!res.headersSent) res.status(500).send(e.message || String(e));
   }
+}
+
+router.get('/api/reports/dot-audit/:unit/pdf', (req, res) => {
+  const unit = String(req.params.unit || '').trim();
+  if (!unit) return res.status(400).send('unit required');
+  streamDotAuditPdf(res, unit, req.query.startDate, req.query.endDate);
 });
 
-function sliceIso(v) {
-  const s = String(v || '').trim();
-  return s.length >= 10 ? s.slice(0, 10) : s;
-}
+router.post('/api/reports/export/dot-audit-pdf', (req, res) => {
+  const unit = String(req.body?.unitId || req.body?.unit || '').trim();
+  if (!unit) return res.status(400).send('unitId required');
+  streamDotAuditPdf(res, unit, req.body?.startDate, req.body?.endDate);
+});
 
 export default router;

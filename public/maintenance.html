@@ -4875,7 +4875,7 @@
             <div class="panel-body">
               <p id="repDynamicDisclaimer" class="mini-note hidden" style="margin:0 0 10px;color:var(--color-text-label)"></p>
               <div id="repDynamicFilters" class="mr-filter-bar" style="margin:0 0 12px;flex-wrap:wrap;gap:10px"></div>
-              <div id="repDynamicChart" class="rep-dynamic-chart hidden"></div>
+              <div id="repDynamicChart" class="rep-dynamic-chart hidden" style="height:260px;position:relative;max-width:100%"></div>
               <div id="repDynamicTireMap" class="rep-tire-map hidden"></div>
               <div id="repDynamicTableHost" class="table-wrap erp-table-scroll" style="min-width:0"></div>
               <p id="repDynamicTotals" class="mini-note hidden" style="margin-top:10px"></p>
@@ -5867,7 +5867,9 @@
   <script src="/js/erp-ui.js"></script>
   <script src="/js/erp-print.js"></script>
   <script src="/js/erp-multi-bills.js"></script>
-  <script src="/js/vendor-pay-bills.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+  <script src="/js/erp-export-util.js"></script>
   <script src="/js/erp-reports-catalog.js"></script>
   <script>
     let vehicles = [];
@@ -8288,11 +8290,8 @@
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
         const v = (document.getElementById('bpVendorSearch')?.value || '').trim();
-        const vbpV = (document.getElementById('vbpVendorSearchInput')?.value || '').trim();
         const memo = (document.getElementById('bpPrivateNote')?.value || '').trim();
-        const vbpMemo = (document.getElementById('vbpMemo')?.value || '').trim();
         const chk = (document.getElementById('bpCheckNum')?.value || '').trim();
-        const vbpChk = (document.getElementById('vbpCheckNum')?.value || '').trim();
         const qLive = (document.getElementById('bpQbLiveSearch')?.value || '').trim();
         const qOpen = (document.getElementById('bpOpenBillsSearch')?.value || '').trim();
         const bid = (document.getElementById('bpBillIdQuick')?.value || '').trim();
@@ -8303,9 +8302,7 @@
             if (st && st.checked && Number(st.payAmount) > 0.005) selDirty = true;
           }
         }
-        let vbpSel = false;
-        if (typeof window.vbpHasDraftSelection === 'function') vbpSel = window.vbpHasDraftSelection();
-        return !!(v || vbpV || memo || vbpMemo || chk || vbpChk || qLive || qOpen || bid || selDirty || vbpSel);
+        return !!(v || memo || chk || qLive || qOpen || bid || selDirty);
       }
       return false;
     }
@@ -8327,12 +8324,9 @@
       if (window.__erpDedicatedModalKind === 'billpay') {
         const pt = document.getElementById('bpPanelTitle');
         const st = document.getElementById('bpSelectionTotal');
-        const vtot = document.getElementById('vbpFooterTotal');
         if (title && pt) title.textContent = pt.textContent || 'Pay bills';
         if (lab) lab.textContent = 'Draft total';
-        if (amt && vtot && String(vtot.textContent || '').trim()) {
-          amt.textContent = vtot.textContent.trim();
-        } else if (amt && st) {
+        if (amt && st) {
           const raw = String(st.textContent || '');
           const m = raw.match(/\$[\d,]+(?:\.\d{2})?/);
           amt.textContent = m ? m[0] : '$0.00';
@@ -8878,7 +8872,6 @@
         if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
         bpRefreshSelectionTotal();
         loadAccountingBillPaymentLog();
-        if (typeof window.vbpOnAccountingBillPayTabShown === 'function') window.vbpOnAccountingBillPayTabShown();
       }
       if (id === 'acct-fuel-expense') {
         bindFuelManualFormOnce();

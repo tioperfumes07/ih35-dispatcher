@@ -41,6 +41,7 @@ import { relayLineLabel, relayQuickBooksCategory, relaySpreadsheetCategory } fro
 import { parseBankCsvText, suggestForBankRow } from './lib/bank-match.mjs';
 import { buildReportDataset, REPORT_DATASET_IDS } from './lib/reports-datasets.mjs';
 import dotAuditReportsRouter from './routes/dot-audit-reports.mjs';
+import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
 
 dotenv.config();
 
@@ -6389,6 +6390,88 @@ app.post('/api/reports/export-table', async (req, res) => {
   } catch (error) {
     logError('api/reports/export-table', error);
     res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+mountReportsRestApi(app, {
+  readErp,
+  dbQuery,
+  fetchTrackedFleetSnapshot,
+  fetchAllSamsaraHosClocks,
+  qboConfigured,
+  qboGet,
+  readQbo,
+  logError,
+  hasSamsaraReadToken: () => Boolean(String(SAMSARA_API_TOKEN || '').trim())
+});
+
+app.post('/api/reports/export/pdf', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const data = body.data && typeof body.data === 'object' ? body.data : {};
+    const columns = Array.isArray(data.columns) ? data.columns : [];
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    const title = String(body.reportType || data.title || 'Report').slice(0, 120);
+    const company = String(body.companyName || 'IH 35 Transportation LLC').slice(0, 120);
+    const landscape = columns.length > 6;
+    const doc = new PDFDocument({
+      margin: 43,
+      size: 'LETTER',
+      layout: landscape ? 'landscape' : 'portrait',
+      bufferPages: true
+    });
+    const safeFn = `${title.replace(/[^\w.-]+/g, '_')}_${new Date().toISOString().replace(/[:.]/g, '-')}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFn}"`);
+    doc.pipe(res);
+    const maxW = landscape ? 720 : 520;
+    doc.fontSize(10).fillColor('#1a1f36').text(company, 48, 48);
+    doc.fontSize(13).fillColor('#1a1f36').text(String(data.title || title), 48, 62, { width: maxW - 96 });
+    doc.moveTo(48, 82).lineTo(48 + maxW - 96, 82).stroke('#e0e3e8');
+    doc.y = 92;
+    doc
+      .fontSize(8)
+      .fillColor('#6b7385')
+      .text(`Filters: ${JSON.stringify(body.filters || data.filters || {})}`, { width: maxW - 96 });
+    doc.moveDown(0.6);
+    const keys = columns.map(c => c.key || c.label).filter(Boolean);
+    const labels = columns.map(c => String(c.label || c.key || ''));
+    const colW = Math.max(44, Math.floor((maxW - 96) / Math.max(1, labels.length)));
+    const pageBottom = landscape ? 560 : 720;
+    const drawRow = (cells, bold) => {
+      let yy = doc.y;
+      let xx = 48;
+      doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(7).fillColor('#111');
+      for (let i = 0; i < cells.length; i++) {
+        doc.text(String(cells[i] ?? ''), xx, yy, { width: colW - 2, ellipsis: true });
+        xx += colW;
+      }
+      doc.moveDown(0.3);
+    };
+    drawRow(labels, true);
+    for (const row of rows) {
+      if (doc.y > pageBottom) doc.addPage();
+      drawRow(
+        keys.map(k => row[k]),
+        false
+      );
+    }
+    if (data.totals && typeof data.totals === 'object' && Object.keys(data.totals).length) {
+      doc.moveDown(0.25);
+      doc.font('Helvetica-Bold').fontSize(8).text(`Totals: ${JSON.stringify(data.totals)}`, { width: maxW - 96 });
+    }
+    const range = doc.bufferedPageRange();
+    const footL = `${company} — Confidential`;
+    const footR = `Generated ${new Date().toISOString()}`;
+    for (let i = range.start; i < range.start + range.count; i++) {
+      doc.switchToPage(i);
+      doc.fontSize(7).fillColor('#666').text(footL, 48, pageBottom + 12, { width: 200 });
+      doc.text(footR, 48, pageBottom + 12, { width: maxW - 96, align: 'right' });
+    }
+    doc.end();
+  } catch (error) {
+    logError('api/reports/export/pdf', error);
+    if (!res.headersSent) res.status(500).json({ ok: false, error: error.message });
   }
 });
 
