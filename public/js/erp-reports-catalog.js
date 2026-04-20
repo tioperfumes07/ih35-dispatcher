@@ -215,6 +215,21 @@ tr:nth-child(even){background:#f9f9f9}
     if (!w) return;
     w.document.write(html);
     w.document.close();
+    if (typeof window.generateFilename === 'function' && st) {
+      try {
+        const fn = window.generateFilename(
+          'report',
+          {
+            reportName: st.title,
+            unitFilter: st.unitTag || 'All',
+            startDate: st.startDate,
+            endDate: st.endDate
+          },
+          'pdf'
+        );
+        w.document.title = fn.replace(/\.pdf$/i, '');
+      } catch (_) {}
+    }
     w.focus();
     setTimeout(() => w.print(), 500);
   }

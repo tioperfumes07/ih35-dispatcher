@@ -5396,9 +5396,8 @@ async function runNightlySamsaraIntegrityJob() {
     for (const row of vehicles) {
       const u = String(row.name || '').trim();
       if (!u) continue;
-      const before = (erp.integrityAlerts || []).length;
-      await runSamsaraIntegrityPersistForUnit(erp, u, row, fleetCtx, req);
-      newAlerts += Math.max(0, (erp.integrityAlerts || []).length - before);
+      const bundle = await runSamsaraIntegrityPersistForUnit(erp, u, row, fleetCtx, req);
+      newAlerts += (bundle.crossrefAlerts || []).length;
     }
     erp.integritySamsaraCache = {
       refreshedAt: new Date().toISOString(),
@@ -5459,7 +5458,6 @@ app.get('/api/integrity/fleet-overview', async (_req, res) => {
   try {
     const erp = readErp();
     const snap = await fetchTrackedFleetSnapshot();
-    const fleetCtx = await buildFleetIntegrityContext(erp, snap.enrichedVehicles || []);
     const { rows } = await buildFleetOverviewRows(erp, snap.enrichedVehicles || [], {
       faultCountByUnit: {}
     });
@@ -10358,6 +10356,17 @@ async function startServer() {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on 0.0.0.0:${PORT}`);
   });
+
+  if (String(process.env.DISABLE_INTEGRITY_NIGHTLY_CRON || '').trim() !== '1') {
+    cron.schedule(
+      '0 2 * * *',
+      () => {
+        void runNightlySamsaraIntegrityJob();
+      },
+      { timezone: process.env.TZ || 'America/Chicago' }
+    );
+    console.log('[integrity] nightly Samsara cross-ref cron scheduled (2:00 AM, TZ=%s)', process.env.TZ || 'America/Chicago');
+  }
 
   const syncMin = Number(process.env.QBO_AUTO_SYNC_MINUTES ?? 360);
   const catalogAutoSyncMinutes = Math.max(5, Number.isFinite(syncMin) ? syncMin : 360);

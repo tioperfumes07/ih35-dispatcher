@@ -224,7 +224,13 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
     </div>
     <div class="grid2-r">
       <p class="kv"><b>Odometer:</b> ${esc(data.odometer || '')} mi</p>
-      <p class="kv"><b>Fuel level:</b> ${esc(data.fuelLevel || '')}${String(data.fuelLevel || '').trim() ? '%' : ''}</p>
+      <p class="kv"><b>Fuel level:</b> ${esc(
+        (() => {
+          const f = String(data.fuelLevel || '').trim();
+          if (!f) return '';
+          return /%$/.test(f) ? f : `${f}%`;
+        })()
+      )}</p>
       <p class="kv"><b>Operational status:</b> ${esc(opStat || '—')}</p>
       <p class="kv"><b>Repair status:</b> ${esc(data.repairStatus || '')}</p>
     </div>

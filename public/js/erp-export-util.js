@@ -29,12 +29,12 @@
 
   async function exportPdfServer(reportData, options) {
     const headers = { 'Content-Type': 'application/json', ...(typeof authFetchHeaders === 'function' ? authFetchHeaders() : {}) };
-    const basePdf = smartReportBasename(reportData, options, 'pdf').replace(/\.pdf$/i, '');
+    const title = String(reportData.title || options.filename || 'Report');
     const r = await fetch('/api/reports/export/pdf', {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        reportType: basePdf || reportData.title || 'Report',
+        reportType: title,
         companyName: options.companyName || 'IH 35 Transportation LLC',
         filters: options.filtersApplied || reportData.filters || {},
         data: reportData
