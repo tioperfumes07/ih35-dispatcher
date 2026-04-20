@@ -551,73 +551,95 @@
                 aria-hidden="true"
                 onclick="event.stopPropagation()"
               >
-                <div class="erp-new-menu__cols">
+                <div class="erp-new-menu__cols erp-new-menu__cols--4">
                   <div class="erp-new-menu__col">
-                    <div class="erp-new-menu__col-title">Expenses &amp; bills</div>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Standard</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewExpense()">Expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewBill()">Bill</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenMultiBillsModal()">
-                      <span aria-hidden="true" style="margin-right:6px">📅</span>Multiple bills
-                    </button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Check')">Check</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Purchase order')">Purchase order</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPayBills()">Bill payment</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Vendor credit')">Vendor credit</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Item receipt')">Item receipt</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Maintenance &amp; fuel</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
-                  </div>
-                  <div class="erp-new-menu__col">
-                    <div class="erp-new-menu__col-title">Drivers &amp; vendors</div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDriverBillPay()">Driver bill pay</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewDriverSettlement()">Driver settlement</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewLoadsEntry()">Load / TMS entry</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Transfer')">Transfer</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Journal entry')">Journal entry</button>
-                  </div>
-                  <div class="erp-new-menu__col">
-                    <div class="erp-new-menu__col-title">Maintenance &amp; shop</div>
-                    <div class="erp-new-menu__tile-grid erp-new-menu__tile-grid--services" role="group" aria-label="New service records">
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('repair')">
-                        Fleet repair<span class="erp-new-menu__tile-sub">External shop</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('maintenance_order')">
-                        Work order<span class="erp-new-menu__tile-sub">General service</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('accident')">
-                        Accident repair<span class="erp-new-menu__tile-sub">Body / collision / glass</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('pm')">
-                        PM service<span class="erp-new-menu__tile-sub">Preventive</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('tire')">
-                        Tire record<span class="erp-new-menu__tile-sub">Positions &amp; line items</span>
-                      </button>
-                    </div>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">More</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder()">Blank work order</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('air_bag')">Air bag record</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('battery')">Battery record</button>
+                    <div class="erp-new-menu__col-title">Expenses</div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('expense')">Expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('maintenance-expense')">Maintenance expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('repair-expense')">Repair expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-expense')">Fuel expense</button>
                     <div class="erp-new-menu__sep" role="presentation">
                       <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Fuel</span
                       ><span class="erp-new-menu__sep-line"></span>
                     </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewFuelRecord()">Fuel record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-fast-entry')">Fuel / DEF fast entry</button>
                   </div>
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Bills</div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('bill')">Bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('maintenance-bill')">Maintenance bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('repair-bill')">Repair bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-bill')">Fuel bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill')">Driver bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-bill')">Vendor bill</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Recurring</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item erp-new-menu__item--with-icon" role="menuitem" onclick="erpOpenFromNewMenu('multi-bills')">
+                      <span class="erp-new-menu__cal-ico" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="3" y="5" width="18" height="15" rx="2" stroke="currentColor" stroke-width="1.5" />
+                          <path d="M3 9h18" stroke="currentColor" stroke-width="1.5" />
+                          <path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      Multiple bills
+                    </button>
+                  </div>
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Bill payment</div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('bill-payment')">Bill payment</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill-payment')">Driver bill payment</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Other</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('check')">Check</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-credit')">Vendor credit</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('item-receipt')">Item receipt</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('purchase-order')">Purchase order</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>
+                  </div>
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Maintenance &amp; shop</div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('work-order-blank')">Work order</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">By type</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-repair')">Repair order</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-maintenance')">Maintenance order</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-accident')">Accident repair</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-pm')">PM service</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-inspection')">Inspection</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Parts</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-tire')">Tire record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-air-bag')">Air bag record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-battery')">Battery record</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">More</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewDriverSettlement()">Driver settlement</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewLoadsEntry()">Load / TMS entry</button>
+                  </div>
+                </div>
+                <div class="erp-new-menu__footer" aria-hidden="false">
+                  <span class="erp-new-menu__footer-tip">Tip: Press <kbd class="erp-new-menu__kbd">N</kbd> to open this menu</span>
+                  <span
+                    class="erp-new-menu__footer-customize"
+                    title="Coming soon"
+                    tabindex="0"
+                    role="button"
+                    onclick="void 0"
+                    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();}"
+                    >Customize menu</span
+                  >
                 </div>
               </div>
             </div>
@@ -1317,19 +1339,27 @@
                     <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div class="maint-field-cell">
                         <span class="qb-l">Record type</span>
-                        <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()" title="Drives which extra blocks show (tire map, accident, etc.)">
-                          <option value="maintenance">Maintenance</option>
-                          <option value="tire">Tire</option>
-                          <option value="repair">Repair</option>
-                          <option value="accident">Accident</option>
-                          <option value="custom">Custom</option>
-                        </select>
+                        <div class="erp-wo-record-type-slot">
+                          <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()" title="Drives which extra blocks show (tire map, accident, etc.)">
+                            <option value="maintenance">Maintenance</option>
+                            <option value="tire">Tire</option>
+                            <option value="repair">Repair</option>
+                            <option value="accident">Accident</option>
+                            <option value="custom">Custom</option>
+                          </select>
+                          <div id="recordTypeSelectReadonly" class="erp-ap-type-readonly hidden" aria-hidden="true"></div>
+                        </div>
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l">Service type</span>
                         <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service description" autocomplete="off" oninput="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" onblur="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" title="Catalog + free text" />
                         <input id="serviceTypeInput" type="hidden">
-                        <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type">
+                        <input
+                          id="customServiceTypeInput"
+                          class="qb-in maint-field hidden"
+                          placeholder="Custom service type"
+                          oninput="toggleRecordFields()"
+                        />
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l">Service date</span>
@@ -1416,6 +1446,22 @@
                         </div>
                         <span class="qb-l">Location detail <span class="maint-label-req" aria-hidden="true">*</span></span>
                         <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Shop / location detail (required)" aria-required="true" />
+                      </div>
+                    </div>
+                    <div id="maintWoDriverRow" class="maint-form-grid__row maint-form-grid__row--3 hidden">
+                      <div class="maint-field-cell">
+                        <span class="qb-l"
+                          >Driver <span id="maintWoDriverReqStar" class="maint-label-req hidden" aria-hidden="true">*</span></span
+                        >
+                        <input
+                          id="maintWoDriverNameInput"
+                          class="qb-in maint-field"
+                          placeholder="Driver name (syncs to first cost line customer when set)"
+                          maxlength="160"
+                          autocomplete="off"
+                          onblur="erpSyncMaintWoDriverToFirstCostLine()"
+                          oninput="erpSyncMaintWoDriverToFirstCostLine()"
+                        />
                       </div>
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
@@ -1825,6 +1871,20 @@
                       <button type="button" class="qb-btn-add" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Lists &amp; catalogs → Service types</button>
                       <button type="button" class="qb-btn-add" style="margin-left:8px" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
                     </p>
+                  </div>
+
+                  <div id="maintInspectionDetailsWrap" class="maint-subcard hidden" style="margin-top: 10px">
+                    <div class="maint-subcard__head">Inspection details</div>
+                    <div class="maint-subcard__body form-stack">
+                      <div>
+                        <span class="qb-l">Inspection type / scope</span>
+                        <input id="maintInspectionScopeInput" class="qb-in maint-field" placeholder="e.g. Annual DOT, Level 1, pre-trip…" maxlength="200" autocomplete="off" />
+                      </div>
+                      <div>
+                        <span class="qb-l">DOT / citation reference (optional)</span>
+                        <input id="maintInspectionRefInput" class="qb-in maint-field" placeholder="Reference #" maxlength="120" autocomplete="off" />
+                      </div>
+                    </div>
                   </div>
 
                   <div class="maint-form-actions maint-section-card maint-form-actions--sticky">
@@ -3051,10 +3111,13 @@
                   <div class="ap-exp-col ap-exp-col--left">
                     <div class="ap-exp-field ap-exp-field--type">
                       <span class="qb-l">Type</span>
-                      <select id="apTxnType" class="qb-in" onchange="syncApDocTitle()">
-                        <option value="expense">Expense</option>
-                        <option value="bill">Bill</option>
-                      </select>
+                      <div class="erp-ap-type-slot">
+                        <select id="apTxnType" class="qb-in" onchange="syncApDocTitle()">
+                          <option value="expense">Expense</option>
+                          <option value="bill">Bill</option>
+                        </select>
+                        <div id="apTxnTypeReadonly" class="erp-ap-type-readonly hidden" aria-hidden="true"></div>
+                      </div>
                     </div>
                     <div class="ap-exp-field ap-exp-field--vendor">
                       <span class="qb-l">Vendor (QuickBooks)</span>
@@ -3064,6 +3127,18 @@
                     <div class="ap-exp-field ap-exp-field--unit">
                       <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
                       <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
+                    </div>
+                    <div class="ap-exp-field hidden" id="apDriverFieldWrap">
+                      <span class="qb-l">Driver (QBO customer on first line)</span>
+                      <input
+                        id="apHeaderDriverSearch"
+                        class="qb-in"
+                        list="qboCustomerOptions"
+                        placeholder="Driver / customer"
+                        oninput="erpSyncApHeaderDriverToFirstLine()"
+                        onblur="erpSyncApHeaderDriverToFirstLine()"
+                      />
+                      <input type="hidden" id="apHeaderDriverQboId" value="" />
                     </div>
                     <div class="ap-exp-field">
                       <span class="qb-l">Service type / description</span>
@@ -8150,12 +8225,75 @@
       if (!t.closest('.erp-new-wrap')) erpCloseNewMenu();
     }
 
+    function erpNewMenuGlobalKeydown(ev) {
+      if (!ev || ev.defaultPrevented) return;
+      if (ev.key === 'Escape') {
+        const m = document.getElementById('erpNewMenu');
+        if (m && !m.classList.contains('hidden')) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          erpCloseNewMenu();
+        }
+        return;
+      }
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      const tag = ev.target && ev.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON') return;
+      if (ev.target && ev.target.isContentEditable) return;
+      if (ev.key === 'n' || ev.key === 'N') {
+        ev.preventDefault();
+        erpToggleNewMenu(null);
+      }
+    }
+
     function erpNewExpense() {
       erpOpenDedicatedAccountingForm('standard-expense');
     }
 
     function erpNewBill() {
       erpOpenDedicatedAccountingForm('standard-bill');
+    }
+
+    /** + New menu: single entry point (keeps modal wiring in one place). */
+    function erpOpenFromNewMenu(kind) {
+      const k = String(kind || '').trim();
+      if (!k) return;
+      if (k === 'expense') return erpNewExpense();
+      if (k === 'bill') return erpNewBill();
+      if (k === 'maintenance-expense') return erpOpenDedicatedAccountingForm('maintenance-expense');
+      if (k === 'repair-expense') return erpOpenDedicatedAccountingForm('repair-expense');
+      if (k === 'fuel-expense') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense' });
+      if (k === 'fuel-fast-entry') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry' });
+      if (k === 'maintenance-bill') return erpOpenDedicatedAccountingForm('maintenance-bill');
+      if (k === 'repair-bill') return erpOpenDedicatedAccountingForm('repair-bill');
+      if (k === 'fuel-bill') return erpOpenDedicatedAccountingForm('fuel-bill');
+      if (k === 'driver-bill') return erpOpenDedicatedAccountingForm('driver-bill');
+      if (k === 'vendor-bill') return erpOpenDedicatedAccountingForm('vendor-bill');
+      if (k === 'multi-bills') return erpOpenMultiBillsModal();
+      if (k === 'bill-payment') return erpNavigateBillPaymentWorkspace({ driverMode: false });
+      if (k === 'driver-bill-payment') return erpNavigateBillPaymentWorkspace({ driverMode: true });
+      if (k === 'check') return erpOpenDedicatedAccountingForm('check-expense');
+      if (k === 'vendor-credit') return erpOpenDedicatedAccountingForm('vendor-credit-bill');
+      if (k === 'item-receipt') return erpOpenDedicatedAccountingForm('item-receipt-expense');
+      if (k === 'purchase-order') return erpOpenDedicatedAccountingForm('purchase-order-bill');
+      if (k === 'transfer') return erpOpenLedgerStubModal('transfer');
+      if (k === 'journal-entry') return erpOpenLedgerStubModal('journal');
+      if (k === 'work-order-blank') return erpNewWorkOrder('');
+      if (k === 'wo-repair') return erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair' });
+      if (k === 'wo-maintenance') return erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Maintenance' });
+      if (k === 'wo-accident')
+        return erpNewWorkOrder('accident', {
+          driverRow: true,
+          driverRequired: true,
+          expandAccident: true,
+          recordTypeLabel: 'Accident / collision'
+        });
+      if (k === 'wo-pm') return erpNewWorkOrder('pm', { recordTypeLabel: 'PM service' });
+      if (k === 'wo-inspection')
+        return erpNewWorkOrder('inspection', { expandInspection: true, recordTypeLabel: 'Inspection' });
+      if (k === 'wo-tire') return erpNewWorkOrder('tire', { expandTireParts: true, recordTypeLabel: 'Tire service' });
+      if (k === 'wo-air-bag') return erpNewWorkOrder('air_bag', { recordTypeLabel: 'Air bag service' });
+      if (k === 'wo-battery') return erpNewWorkOrder('battery', { recordTypeLabel: 'Battery service' });
     }
 
     function erpNewRepairExpense() {
@@ -8181,9 +8319,193 @@
     }
 
     function erpNewPayBills() {
+      erpNavigateBillPaymentWorkspace({ driverMode: false });
+    }
+
+    function erpMountBillPayShellInTab() {
+      const shell = document.getElementById('erpBillPayShellPanel');
+      const ph = document.getElementById('erpBillPayShellPlaceholder');
+      if (shell && ph && ph.parentNode) ph.parentNode.insertBefore(shell, ph.nextSibling);
+    }
+
+    /** Bill payment workspace in Accounting tab (full page, not the dedicated modal shell). */
+    function erpNavigateBillPaymentWorkspace(opts) {
+      opts = opts || {};
+      erpCloseNewMenu();
+      if (opts.driverMode === true) window.__accountingDriverBillPayMode = true;
+      else if (opts.driverMode === false) window.__accountingDriverBillPayMode = false;
+      const dm = document.getElementById('erpDedicatedFormModal');
+      if (dm && !dm.classList.contains('hidden') && typeof erpCloseDedicatedFormModal === 'function') {
+        erpCloseDedicatedFormModal({ force: true });
+      }
+      erpMountBillPayShellInTab();
+      const acctBtn = document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]');
+      openSection('accounting', acctBtn);
+      openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
+      if (typeof erpRefreshBillPayChrome === 'function') erpRefreshBillPayChrome();
+      if (!opts.fromHash) {
+        window.location.hash = window.__accountingDriverBillPayMode
+          ? 'accounting-driver-bill-pay'
+          : 'accounting-bill-pay';
+      }
+      requestAnimationFrame(() => {
+        if (window.__accountingDriverBillPayMode && typeof erpEnsureDriverPayeeVendorIds === 'function') {
+          void erpEnsureDriverPayeeVendorIds().then(() => {
+            if (typeof loadAccountingOpenBills === 'function') loadAccountingOpenBills();
+          });
+          return;
+        }
+        if (typeof loadAccountingOpenBills === 'function') loadAccountingOpenBills();
+      });
+    }
+
+    function erpSyncApHeaderDriverToFirstLine() {
+      const inEl = document.getElementById('apHeaderDriverSearch');
+      const hid = document.getElementById('apHeaderDriverQboId');
+      if (!inEl) return;
+      const match = findBestNameMatch(cacheQboCustomers(), inEl.value);
+      if (hid) hid.value = match ? String(match.qboId || '').trim() : '';
+      const row =
+        document.querySelector('#apWoCatHost .wo-line') || document.querySelector('#apWoItemHost .wo-line');
+      if (!row) return;
+      const cs = row.querySelector('.wo-cust-search');
+      const cid = row.querySelector('.wo-cust-id');
+      if (cs) cs.value = inEl.value.trim();
+      if (cid && hid) cid.value = hid.value.trim();
+      if (cs) resolveWoLineCustomer(cs);
+    }
+
+    function erpSyncMaintWoDriverToFirstCostLine() {
+      const drv = (document.getElementById('maintWoDriverNameInput')?.value || '').trim();
+      if (!drv) return;
+      const row =
+        document.querySelector('#maintCostCatHost .maint-cost-cat-line') ||
+        document.querySelector('#maintCostItemHost .maint-cost-item-line');
+      if (!row) return;
+      const cs = row.querySelector('.maint-line-cust-search');
+      if (!cs) return;
+      if (!(cs.value || '').trim()) {
+        cs.value = drv;
+        resolveMaintLineCustomer(cs);
+      }
+    }
+
+    function erpClearApTxnTypeReadonly() {
+      window.__erpApTxnTypeLocked = false;
+      const sel = document.getElementById('apTxnType');
+      const ro = document.getElementById('apTxnTypeReadonly');
+      if (sel) {
+        sel.classList.remove('hidden');
+      }
+      if (ro) {
+        ro.textContent = '';
+        ro.classList.add('hidden');
+      }
+    }
+
+    function erpSetApTxnTypeReadonly(labelText) {
+      const sel = document.getElementById('apTxnType');
+      const ro = document.getElementById('apTxnTypeReadonly');
+      if (!sel || !ro) return;
+      window.__erpApTxnTypeLocked = true;
+      ro.textContent = String(labelText || '').trim() || (sel.value === 'bill' ? 'Bill' : 'Expense');
+      ro.classList.remove('hidden');
+      sel.classList.add('hidden');
+    }
+
+    function erpClearRecordTypeReadonlyWo() {
+      window.__erpWoRecordTypeLocked = false;
+      const sel = document.getElementById('recordTypeSelect');
+      const ro = document.getElementById('recordTypeSelectReadonly');
+      if (sel) sel.classList.remove('hidden');
+      if (ro) {
+        ro.textContent = '';
+        ro.classList.add('hidden');
+      }
+    }
+
+    function erpSetRecordTypeReadonlyWo(labelText) {
+      const sel = document.getElementById('recordTypeSelect');
+      const ro = document.getElementById('recordTypeSelectReadonly');
+      if (!sel || !ro) return;
+      window.__erpWoRecordTypeLocked = true;
+      ro.textContent = String(labelText || '').trim();
+      ro.classList.remove('hidden');
+      sel.classList.add('hidden');
+    }
+
+    function erpPulseApAssetUnit() {
+      const el = document.getElementById('apAssetUnit');
+      if (!el) return;
+      el.classList.remove('erp-ap-asset-unit--pulse');
+      void el.offsetWidth;
+      el.classList.add('erp-ap-asset-unit--pulse');
+      window.setTimeout(() => el.classList.remove('erp-ap-asset-unit--pulse'), 3200);
+    }
+
+    function erpApplyApDedicatedUiAfterOpen(mode) {
+      const wrap = document.getElementById('apDriverFieldWrap');
+      if (wrap) wrap.classList.add('hidden');
+      erpClearApTxnTypeReadonly();
+      const ui = window.__erpApNewMenuUi || {};
+      window.__erpApNewMenuUi = null;
+      if (ui.typeReadonlyLabel) erpSetApTxnTypeReadonly(ui.typeReadonlyLabel);
+      if (ui.showDriverRow && wrap) wrap.classList.remove('hidden');
+      if (ui.unitPulse) erpPulseApAssetUnit();
+      if (ui.paymentMethodCheck) {
+        const pm = document.getElementById('apPaymentMethodSearch');
+        if (pm) {
+          pm.value = 'Check';
+          resolveApPaymentMethodSearch();
+        }
+      }
+      if (ui.serviceRepairHint) {
+        const svc = document.getElementById('apServiceSearchInput');
+        if (svc && !(svc.value || '').trim()) {
+          svc.value = 'Repair';
+          if (typeof resolveApServiceSearch === 'function') resolveApServiceSearch();
+        }
+      }
+      if (typeof syncErpDedicatedModalChrome === 'function') syncErpDedicatedModalChrome();
+    }
+
+    function erpOpenLedgerStubModal(which) {
       erpCloseNewMenu();
       if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
-      erpOpenAccountingPayBillsStandard();
+      const mount = document.getElementById('erpDedicatedFormModalBody');
+      const modal = document.getElementById('erpDedicatedFormModal');
+      if (!mount || !modal) return;
+      erpResetDedicatedModalLayout();
+      window.__erpDedicatedModalKind = 'ledger-stub';
+      window.__erpLedgerStubWhich = which === 'journal' ? 'journal' : 'transfer';
+      const title = window.__erpLedgerStubWhich === 'journal' ? 'Journal entry' : 'Transfer';
+      const body =
+        window.__erpLedgerStubWhich === 'journal'
+          ? '<div class="form-stack" style="padding:8px 4px 0;max-width:520px;line-height:1.5">' +
+            '<p class="mini-note" style="margin:0 0 12px">Journal entries post directly in QuickBooks. Use this workspace to mirror debits/credits before we wire full QBO JE create.</p>' +
+            '<label class="qb-l">Entry date</label><input type="date" class="qb-in" disabled value="" />' +
+            '<label class="qb-l">Memo</label><textarea class="qb-memo" rows="3" disabled placeholder="Coming soon"></textarea>' +
+            '<p class="mini-note" style="margin:12px 0 0">Save/sync is unchanged — this dialog is UI-only until the ledger composer ships.</p></div>'
+          : '<div class="form-stack" style="padding:8px 4px 0;max-width:520px;line-height:1.5">' +
+            '<p class="mini-note" style="margin:0 0 12px">Transfers move funds between balance-sheet accounts in QuickBooks. Use QBO for live transfers today; this form will call the same rules as Accounting bills.</p>' +
+            '<label class="qb-l">From</label><input class="qb-in" disabled placeholder="Bank / card account" />' +
+            '<label class="qb-l">To</label><input class="qb-in" disabled placeholder="Destination account" />' +
+            '<p class="mini-note" style="margin:12px 0 0">Save/sync is unchanged — this dialog is UI-only until the transfer composer ships.</p></div>';
+      mount.innerHTML =
+        '<div class="erp-ledger-stub-shell" data-erp-ledger-stub="1">' +
+        body +
+        '</div>';
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('erp-dedicated-modal-open');
+      erpDedicatedModalBindEscape(true);
+      const mt = document.getElementById('erpDedModalTitle');
+      if (mt) mt.textContent = title;
+      const lab = document.getElementById('erpDedModalTotalLabel');
+      const amt = document.getElementById('erpDedModalTotalAmt');
+      if (lab) lab.textContent = '';
+      if (amt) amt.textContent = '—';
+      syncErpDedicatedModalChrome();
     }
 
     /** +New → Maintenance: optional preset shapes record type, shop location, and catalog service line. */
@@ -8235,19 +8557,79 @@
           toggleRecordFields();
           setRepairLocationCode('external');
           applyService();
+        } else if (p === 'inspection') {
+          if (rts) rts.value = 'custom';
+          const cst = document.getElementById('customServiceTypeInput');
+          if (cst) cst.value = 'Inspection';
+          const svc = document.getElementById('serviceSearchInput');
+          const sti = document.getElementById('serviceTypeInput');
+          if (svc) svc.value = 'Inspection';
+          if (sti) sti.value = 'Inspection';
+          try {
+            if (typeof resolveServiceSearch === 'function') resolveServiceSearch();
+          } catch (_) {}
+          setRepairLocationCode('in-house');
+          toggleRecordFields();
         }
       } catch (_) {}
       syncMaintWorkOrderHeader();
       renderMaintAsideWoSummary();
     }
 
-    function erpNewWorkOrder(preset) {
+    function erpApplyWoNewMenuPresetAfterOpen() {
+      const meta = window.__erpWoNewMenuPreset;
+      window.__erpWoNewMenuPreset = null;
+      erpClearRecordTypeReadonlyWo();
+      const insp = document.getElementById('maintInspectionDetailsWrap');
+      if (insp) insp.classList.add('hidden');
+      const dRow = document.getElementById('maintWoDriverRow');
+      const dReq = document.getElementById('maintWoDriverReqStar');
+      if (dRow) dRow.classList.add('hidden');
+      if (dReq) dReq.classList.add('hidden');
+      if (!meta || typeof meta !== 'object') return;
+      const rtLabel = String(meta.recordTypeLabel || '').trim();
+      if (rtLabel) erpSetRecordTypeReadonlyWo(rtLabel);
+      if (meta.driverRow && dRow) dRow.classList.remove('hidden');
+      if (meta.driverRequired && dReq) dReq.classList.remove('hidden');
+      if (meta.expandInspection && insp) {
+        insp.classList.remove('hidden');
+      }
+      if (meta.expandAccident) {
+        const af = document.getElementById('accidentFields');
+        if (af) {
+          af.classList.remove('hidden');
+          try {
+            af.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          } catch (_) {}
+        }
+      }
+      if (meta.expandTireParts) {
+        const det = document.getElementById('maintCostItemDetails');
+        if (det) det.open = true;
+        const tf = document.getElementById('tireFields');
+        if (tf && !tf.classList.contains('hidden')) {
+          try {
+            tf.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          } catch (_) {}
+        }
+      }
+    }
+
+    function erpNewWorkOrder(preset, woMeta) {
       erpCloseNewMenu();
+      window.__erpWoNewMenuPreset = woMeta && typeof woMeta === 'object' ? woMeta : null;
       openSection('maintenance', document.querySelector('#erpIconNav .nav-btn[data-section="maintenance"]'));
       const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
       openMaintMainTab('record', rb);
       const pre = typeof preset === 'string' ? String(preset).trim() : '';
-      if (pre) requestAnimationFrame(() => maintApplyNewWorkOrderPreset(pre));
+      if (pre) {
+        requestAnimationFrame(() => {
+          maintApplyNewWorkOrderPreset(pre);
+          erpApplyWoNewMenuPresetAfterOpen();
+        });
+      } else {
+        requestAnimationFrame(() => erpApplyWoNewMenuPresetAfterOpen());
+      }
     }
 
     function erpNewLoadsEntry() {
@@ -8263,7 +8645,7 @@
 
     function erpNewFuelRecord() {
       erpCloseNewMenu();
-      erpOpenDedicatedAccountingForm('fuel-expense');
+      erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry' });
     }
 
     const ERP_WRENCH_ICON =
@@ -8297,14 +8679,13 @@
     }
 
     function erpOpenAccountingPayBillsStandard() {
-      window.__accountingDriverBillPayMode = false;
-      erpOpenDedicatedBillPayForm({ fromHash: false, driverMode: false });
+      erpNavigateBillPaymentWorkspace({ driverMode: false });
     }
 
     function erpOpenDriverBillPay() {
       erpCloseNewMenu();
       __erpDriverPayeeVendorIdSet = null;
-      erpOpenDedicatedBillPayForm({ fromHash: false, driverMode: true });
+      erpNavigateBillPaymentWorkspace({ driverMode: true });
     }
 
     /** Mount Pay bills workspace (composer + local log) in the same dedicated modal shell as AP / fuel. */
@@ -8462,6 +8843,9 @@
           termPicked
         );
       }
+      if (window.__erpDedicatedModalKind === 'ledger-stub') {
+        return false;
+      }
       if (window.__erpDedicatedModalKind === 'billpay') {
         const v = (document.getElementById('bpVendorSearch')?.value || '').trim();
         const memo = (document.getElementById('bpPrivateNote')?.value || '').trim();
@@ -8489,9 +8873,16 @@
       const amt = document.getElementById('erpDedModalTotalAmt');
       if (window.__erpDedicatedModalKind === 'fuel') {
         const ft = document.getElementById('fuelManualHeaderTotal');
-        if (title) title.textContent = 'Fuel / DEF fast entry';
+        const fv = window.__erpFuelUiVariant || 'fast-entry';
+        if (title) title.textContent = fv === 'fuel-expense' ? 'Fuel expense' : 'Fuel / DEF fast entry';
         if (amt && ft) amt.textContent = ft.textContent || '$0.00';
         if (lab) lab.textContent = 'Amount';
+        return;
+      }
+      if (window.__erpDedicatedModalKind === 'ledger-stub') {
+        if (title) title.textContent = window.__erpLedgerStubWhich === 'journal' ? 'Journal entry' : 'Transfer';
+        if (lab) lab.textContent = '';
+        if (amt) amt.textContent = '—';
         return;
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
@@ -8627,12 +9018,27 @@
         const sel = document.getElementById('apTxnType');
         if (sel) sel.disabled = false;
         window.__erpDedicatedApPreset = '';
+        window.__erpApNewMenuUi = null;
+        erpClearApTxnTypeReadonly();
+        const dfw = document.getElementById('apDriverFieldWrap');
+        if (dfw) dfw.classList.add('hidden');
+        const ads = document.getElementById('apHeaderDriverSearch');
+        const adid = document.getElementById('apHeaderDriverQboId');
+        if (ads) ads.value = '';
+        if (adid) adid.value = '';
+        const u = document.getElementById('apAssetUnit');
+        if (u) u.classList.remove('erp-ap-asset-unit--pulse');
         const acc = document.getElementById('erpApDocTitleAccent');
         if (acc) {
           acc.innerHTML = '';
           acc.classList.add('hidden');
         }
         syncApDocTitle();
+      }
+      if (window.__erpDedicatedModalKind === 'ledger-stub') {
+        const mount = document.getElementById('erpDedicatedFormModalBody');
+        if (mount) mount.innerHTML = '';
+        window.__erpLedgerStubWhich = '';
       }
       if (window.__erpDedicatedModalKind === 'fuel') {
         const shell = document.getElementById('erpFuelManualDocShellPanel');
@@ -8646,6 +9052,7 @@
         }
         const h2 = document.getElementById('fuelManualDocTitleH2');
         if (h2) h2.textContent = 'Manual fuel / DEF expense';
+        window.__erpFuelUiVariant = '';
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
         const shell = document.getElementById('erpBillPayShellPanel');
@@ -8661,6 +9068,57 @@
       if (mt) mt.textContent = '';
       const ma = document.getElementById('erpDedModalTotalAmt');
       if (ma) ma.textContent = '$0.00';
+    }
+
+    function erpBuildApNewMenuUi(mode) {
+      const ui = {
+        typeReadonlyLabel: '',
+        showDriverRow: false,
+        unitPulse: false,
+        paymentMethodCheck: false,
+        serviceRepairHint: false
+      };
+      const labels = {
+        'maintenance-expense': 'Maintenance expense',
+        'maintenance-bill': 'Maintenance bill',
+        'repair-expense': 'Repair expense',
+        'repair-bill': 'Repair bill',
+        'fuel-bill': 'Fuel bill',
+        'driver-bill': 'Driver bill',
+        'vendor-bill': 'Vendor bill',
+        'vendor-driver-bill': 'Vendor / driver bill',
+        'check-expense': 'Check',
+        'vendor-credit-bill': 'Vendor credit',
+        'item-receipt-expense': 'Item receipt',
+        'purchase-order-bill': 'Purchase order'
+      };
+      const locked = new Set([
+        'maintenance-expense',
+        'maintenance-bill',
+        'fuel-bill',
+        'vendor-driver-bill',
+        'repair-expense',
+        'repair-bill',
+        'driver-bill',
+        'vendor-bill',
+        'check-expense',
+        'vendor-credit-bill',
+        'item-receipt-expense',
+        'purchase-order-bill'
+      ]);
+      if (locked.has(mode)) ui.typeReadonlyLabel = labels[mode] || '';
+      if (mode === 'repair-expense' || mode === 'repair-bill' || mode === 'driver-bill') ui.showDriverRow = true;
+      if (
+        mode === 'maintenance-expense' ||
+        mode === 'maintenance-bill' ||
+        mode === 'repair-expense' ||
+        mode === 'repair-bill'
+      ) {
+        ui.unitPulse = true;
+      }
+      if (mode === 'check-expense') ui.paymentMethodCheck = true;
+      if (mode === 'repair-bill' || mode === 'repair-expense') ui.serviceRepairHint = true;
+      return ui;
     }
 
     function erpOpenDedicatedAccountingForm(mode, opts) {
@@ -8680,6 +9138,7 @@
       if (mode === 'fuel-expense') {
         window.__erpDedicatedApPreset = '';
         window.__erpDedicatedModalKind = 'fuel';
+        window.__erpFuelUiVariant = opts.fuelVariant === 'fuel-expense' ? 'fuel-expense' : 'fast-entry';
         openSection('accounting', acctBtn);
         const trig = document.getElementById('acctFuelDdTrigger');
         openAccountingTab('acct-fuel-expense', trig);
@@ -8692,7 +9151,8 @@
           acc.classList.remove('hidden');
         }
         const h2 = document.getElementById('fuelManualDocTitleH2');
-        if (h2) h2.textContent = 'Fuel / DEF fast entry';
+        const fuelTitle = window.__erpFuelUiVariant === 'fuel-expense' ? 'Fuel expense' : 'Fuel / DEF fast entry';
+        if (h2) h2.textContent = fuelTitle;
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('erp-dedicated-modal-open');
@@ -8707,9 +9167,18 @@
         'maintenance-expense': 'maintenance-expense',
         'maintenance-bill': 'maintenance-bill',
         'fuel-bill': 'fuel-bill',
-        'vendor-driver-bill': 'vendor-driver-bill'
+        'vendor-driver-bill': 'vendor-driver-bill',
+        'repair-expense': 'repair-expense',
+        'repair-bill': 'repair-bill',
+        'driver-bill': 'driver-bill',
+        'vendor-bill': 'vendor-bill',
+        'check-expense': 'check-expense',
+        'vendor-credit-bill': 'vendor-credit-bill',
+        'item-receipt-expense': 'item-receipt-expense',
+        'purchase-order-bill': 'purchase-order-bill'
       };
       window.__erpDedicatedApPreset = presetMap[mode] || '';
+      window.__erpApNewMenuUi = erpBuildApNewMenuUi(mode);
       openSection('accounting', acctBtn);
       const stub = document.getElementById('acctStubTrans');
       openAccountingTab('acct-transactions', stub);
@@ -8721,7 +9190,7 @@
         } else if (mode === 'standard-bill') {
           sel.value = 'bill';
           sel.disabled = false;
-        } else if (mode === 'maintenance-expense') {
+        } else if (mode === 'maintenance-expense' || mode === 'repair-expense' || mode === 'check-expense' || mode === 'item-receipt-expense') {
           sel.value = 'expense';
           sel.disabled = true;
         } else {
@@ -8734,7 +9203,14 @@
       mount.appendChild(shell);
       const acc = document.getElementById('erpApDocTitleAccent');
       if (acc) {
-        if (mode === 'maintenance-expense' || mode === 'maintenance-bill') {
+        if (
+          mode === 'maintenance-expense' ||
+          mode === 'maintenance-bill' ||
+          mode === 'repair-expense' ||
+          mode === 'repair-bill' ||
+          mode === 'driver-bill' ||
+          mode === 'vendor-bill'
+        ) {
           acc.innerHTML = ERP_WRENCH_ICON;
           acc.classList.remove('hidden');
         } else if (mode === 'fuel-bill') {
@@ -8755,10 +9231,19 @@
         'maintenance-expense': 'accounting-maintenance-expense-new',
         'maintenance-bill': 'accounting-maintenance-bill-new',
         'fuel-bill': 'accounting-fuel-bill-new',
-        'vendor-driver-bill': 'accounting-vendor-driver-bill-new'
+        'vendor-driver-bill': 'accounting-vendor-driver-bill-new',
+        'repair-expense': 'accounting-expense-new',
+        'repair-bill': 'accounting-bill-new',
+        'driver-bill': 'accounting-vendor-driver-bill-new',
+        'vendor-bill': 'accounting-bill-new',
+        'check-expense': 'accounting-expense-new',
+        'vendor-credit-bill': 'accounting-bill-new',
+        'item-receipt-expense': 'accounting-expense-new',
+        'purchase-order-bill': 'accounting-bill-new'
       };
       if (!fromHash && hashMap[mode]) window.location.hash = hashMap[mode];
       refreshApDocTotal();
+      requestAnimationFrame(() => erpApplyApDedicatedUiAfterOpen(mode));
       syncErpDedicatedModalChrome();
     }
 
@@ -8892,14 +9377,14 @@
       if (section === 'accounting-bill-pay') {
         window.__accountingDriverBillPayMode = false;
         openSectionByName('accounting');
-        requestAnimationFrame(() => erpOpenDedicatedBillPayForm({ fromHash: true }));
+        requestAnimationFrame(() => erpNavigateBillPaymentWorkspace({ fromHash: true, driverMode: false }));
         return;
       }
       if (section === 'accounting-driver-bill-pay') {
         window.__accountingDriverBillPayMode = true;
         __erpDriverPayeeVendorIdSet = null;
         openSectionByName('accounting');
-        requestAnimationFrame(() => erpOpenDedicatedBillPayForm({ fromHash: true }));
+        requestAnimationFrame(() => erpNavigateBillPaymentWorkspace({ fromHash: true, driverMode: true }));
         return;
       }
       const erpDedicatedHashToMode = {
@@ -16155,6 +16640,21 @@
           n += (n ? '\n\n' : '') + 'Tire line items (' + items.length + ' positions, one total cost):\n' + block;
         }
       }
+      const drv = (document.getElementById('maintWoDriverNameInput')?.value || '').trim();
+      if (drv) {
+        n += (n ? '\n\n' : '') + 'Driver (visit):\n' + drv;
+      }
+      const inspWrap = document.getElementById('maintInspectionDetailsWrap');
+      if (inspWrap && !inspWrap.classList.contains('hidden')) {
+        const sc = (document.getElementById('maintInspectionScopeInput')?.value || '').trim();
+        const rf = (document.getElementById('maintInspectionRefInput')?.value || '').trim();
+        if (sc || rf) {
+          const bits = [];
+          if (sc) bits.push('Scope: ' + sc);
+          if (rf) bits.push('Reference: ' + rf);
+          n += (n ? '\n\n' : '') + 'Inspection details:\n' + bits.join('\n');
+        }
+      }
       return n;
     }
 
@@ -16163,6 +16663,15 @@
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
       document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'custom');
+      const inspW = document.getElementById('maintInspectionDetailsWrap');
+      if (inspW) {
+        const keepInsp =
+          type === 'custom' &&
+          String(document.getElementById('customServiceTypeInput')?.value || '')
+            .trim()
+            .toLowerCase() === 'inspection';
+        if (!keepInsp) inspW.classList.add('hidden');
+      }
       const sameWrap = document.getElementById('recordSameCostServicesWrap');
       if (sameWrap) sameWrap.classList.toggle('hidden', type === 'accident');
       if (type !== 'tire') clearTireExtraLines();
@@ -16199,36 +16708,86 @@
       if (!sel || !h) return;
       const preset = window.__erpDedicatedApPreset || '';
       const isBill = sel.value === 'bill';
-      if (preset === 'maintenance-expense') {
-        sel.value = 'expense';
-        h.textContent = 'Maintenance expense';
+      const billHdr = () => {
+        if (lab) lab.textContent = 'Balance due';
+        document.getElementById('apWrapDue')?.classList.remove('hidden');
+        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+      };
+      const expHdr = () => {
         if (lab) lab.textContent = 'Amount';
         document.getElementById('apWrapDue')?.classList.add('hidden');
         document.getElementById('apWrapTerms')?.classList.add('hidden');
+      };
+      if (preset === 'maintenance-expense') {
+        sel.value = 'expense';
+        h.textContent = 'Maintenance expense';
+        expHdr();
         return;
       }
       if (preset === 'maintenance-bill') {
         sel.value = 'bill';
         h.textContent = 'Maintenance bill';
-        if (lab) lab.textContent = 'Balance due';
-        document.getElementById('apWrapDue')?.classList.remove('hidden');
-        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+        billHdr();
         return;
       }
       if (preset === 'fuel-bill') {
         sel.value = 'bill';
         h.textContent = 'Fuel bill';
-        if (lab) lab.textContent = 'Balance due';
-        document.getElementById('apWrapDue')?.classList.remove('hidden');
-        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+        billHdr();
         return;
       }
       if (preset === 'vendor-driver-bill') {
         sel.value = 'bill';
         h.textContent = 'Vendor / driver bill';
-        if (lab) lab.textContent = 'Balance due';
-        document.getElementById('apWrapDue')?.classList.remove('hidden');
-        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+        billHdr();
+        return;
+      }
+      if (preset === 'repair-expense') {
+        sel.value = 'expense';
+        h.textContent = 'Repair expense';
+        expHdr();
+        return;
+      }
+      if (preset === 'repair-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Repair bill';
+        billHdr();
+        return;
+      }
+      if (preset === 'driver-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Driver bill';
+        billHdr();
+        return;
+      }
+      if (preset === 'vendor-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Vendor bill';
+        billHdr();
+        return;
+      }
+      if (preset === 'check-expense') {
+        sel.value = 'expense';
+        h.textContent = 'Check';
+        expHdr();
+        return;
+      }
+      if (preset === 'vendor-credit-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Vendor credit';
+        billHdr();
+        return;
+      }
+      if (preset === 'item-receipt-expense') {
+        sel.value = 'expense';
+        h.textContent = 'Item receipt';
+        expHdr();
+        return;
+      }
+      if (preset === 'purchase-order-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Purchase order';
+        billHdr();
         return;
       }
       h.textContent = isBill ? 'Bill' : 'Expense';
@@ -19015,6 +19574,18 @@
       document.getElementById('accidentAtFaultSearch').value = '';
       document.getElementById('accidentAtFaultValue').value = '';
       document.getElementById('recordTypeSelect').value = 'maintenance';
+      erpClearRecordTypeReadonlyWo();
+      const dInp = document.getElementById('maintWoDriverNameInput');
+      if (dInp) dInp.value = '';
+      const dRow = document.getElementById('maintWoDriverRow');
+      if (dRow) dRow.classList.add('hidden');
+      const dReq = document.getElementById('maintWoDriverReqStar');
+      if (dReq) dReq.classList.add('hidden');
+      const inspW = document.getElementById('maintInspectionDetailsWrap');
+      if (inspW) inspW.classList.add('hidden');
+      document.getElementById('maintInspectionScopeInput') && (document.getElementById('maintInspectionScopeInput').value = '');
+      document.getElementById('maintInspectionRefInput') && (document.getElementById('maintInspectionRefInput').value = '');
+      window.__erpWoNewMenuPreset = null;
       document.getElementById('linkedTxnTypeSelect').value = 'expense';
       const lnh = document.getElementById('recordLoadNumberHint');
       if (lnh) lnh.textContent = '';
@@ -19240,6 +19811,7 @@
       maintToneSaveHint(document.getElementById('maintSaveHint'), '', null);
       __editingMaintRecordId = String(r.id || '').trim() || null;
       updateMaintEditRecordHint();
+      erpClearRecordTypeReadonlyWo();
 
       const rt = String(r.recordType || 'maintenance').trim() || 'maintenance';
       document.getElementById('recordTypeSelect').value = rt;
@@ -22495,6 +23067,10 @@
     if (!window.__erpNewMenuDoc) {
       window.__erpNewMenuDoc = true;
       document.addEventListener('click', erpDocClickCloseNew);
+    }
+    if (!window.__erpNewMenuKeys) {
+      window.__erpNewMenuKeys = true;
+      document.addEventListener('keydown', erpNewMenuGlobalKeydown, true);
     }
     if (!window.__erpDedicatedModalUi) {
       window.__erpDedicatedModalUi = true;
