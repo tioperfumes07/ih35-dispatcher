@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Non-destructive HTTP checks against a running server (default http://localhost:3400).
- * Run: start the server, then `npm run smoke`. For **Rule 0 guard + smoke** in one step: `npm run qa:automated` (requires server up) or `npm run qa:isolated` (spawns a temp `server.js` on a free port).
+ * Run: start the server, then `npm run smoke`. For **Rule 0 guard + smoke** in one step: `npm run qa:automated` (requires server up) or `npm run qa:isolated` (**`scripts/smoke-gate-paths-sync.mjs`** first, then a temp **`server.js`** on a free port with **`IH35_SMOKE_GATE=1`** from **`qa-with-server.mjs`**).
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings, tracking redirect) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, erp-master-redesign, erp-master-spec-2026, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
  * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). Bodies are reused from earlier successful GETs (**`STATIC_TEXT`** for CSS, HTML needles for **`/maintenance.html`**) so the guard avoids duplicate fetches when those steps pass.

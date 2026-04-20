@@ -2,7 +2,7 @@
 
 Operations hub for **dispatch / TMS**, **fuel & route planning**, **maintenance & accounting**, and **Samsara**-backed fleet data. The app is one **Express** server (`server.js`) with static UI under `public/` and APIs for loads, ERP JSON, QuickBooks, PDFs, and integrations.
 
-**Architecture overview:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — includes **ERP shell verification (master redesign)** (how `rule0:check`, smoke, `qa:automated` / `qa:isolated`, post-release checklist, and CI fit together).
+**Architecture overview:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — includes **ERP shell verification (master redesign)** (how **`rule0:check`**, **`npm run smoke`**, **`npm run qa:automated`**, and **`npm run qa:isolated`** — which runs **`smoke-gate-paths-sync`** before the ephemeral server — line up with the post-release checklist and **CI**).
 
 ## What is included
 
@@ -45,7 +45,7 @@ Use these before a release or when validating the ERP shell (see `docs/ERP_MASTE
 
 If the server is not on **3400** or smoke must use another host, set **`SMOKE_BASE`** (e.g. `SMOKE_BASE=http://127.0.0.1:3100 npm run smoke`). Set **`SMOKE_QUIET=1`** to hide the extra “Smoke target” line at the end of a successful smoke run. Set **`SMOKE_TIMEOUT_MS`** (per-fetch milliseconds in **`system-smoke.mjs`**, default **8000**, clamped **2000–30000**) if smoke times out on slow hosts or remote **`SMOKE_BASE`** targets.
 
-**CI:** [`.github/workflows/rule0-check.yml`](.github/workflows/rule0-check.yml) runs **`npm run qa:isolated`** on push and pull requests (Rule 0 offline check plus HTTP smoke on a child `server.js`). Actions sets **`CI=true`**; **`rule0:check`** prints one summary line instead of three per-file OK lines, and `scripts/qa-with-server.mjs` passes **`SMOKE_QUIET=1`** into smoke so the success footer line is omitted. Locally you can use the same command, or **`npm run qa:automated`** / **`npm run smoke`** when a server is already listening. Set **`RULE0_QUIET=1`** to get the same compact **`rule0:check`** output without **`CI`**. The workflow uses **`permissions: contents: read`**, **concurrency** (newer runs cancel superseded jobs on the same ref), a **15-minute** job timeout, and **`SMOKE_TIMEOUT_MS=12000`** (per-request timeout in **`system-smoke.mjs`**, default **8000** locally) for slightly more headroom on shared runners.
+**CI:** [`.github/workflows/rule0-check.yml`](.github/workflows/rule0-check.yml) runs **`npm run qa:isolated`** on push and pull requests (**`smoke-gate-paths-sync`**, Rule 0 offline check, HTTP smoke on a child `server.js`). Actions sets **`CI=true`**; **`rule0:check`** prints one summary line instead of three per-file OK lines, and `scripts/qa-with-server.mjs` passes **`SMOKE_QUIET=1`** into smoke so the success footer line is omitted. Locally you can use the same command, or **`npm run qa:automated`** / **`npm run smoke`** when a server is already listening. Set **`RULE0_QUIET=1`** to get the same compact **`rule0:check`** output without **`CI`**. The workflow uses **`permissions: contents: read`**, **concurrency** (newer runs cancel superseded jobs on the same ref), a **15-minute** job timeout, and **`SMOKE_TIMEOUT_MS=12000`** (per-request timeout in **`system-smoke.mjs`**, default **8000** locally) for slightly more headroom on shared runners.
 
 **Parallel agents:** See [docs/AGENT_COORDINATION.md](docs/AGENT_COORDINATION.md) for who owns which paths (e.g. ERP master redesign vs maintenance behavior vs server) so PRs do not overlap.
 
