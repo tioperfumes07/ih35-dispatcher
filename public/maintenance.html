@@ -392,6 +392,7 @@
   <datalist id="qboCustomerOptions"></datalist>
   <datalist id="qboClassOptions"></datalist>
   <datalist id="loadNumberOptions"></datalist>
+  <datalist id="maintDriverOptions"></datalist>
   <datalist id="repairLocationOptions"></datalist>
   <datalist id="accidentFaultOptions"></datalist>
   <datalist id="tireConditionOptions"></datalist>
@@ -1368,22 +1369,6 @@
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div class="maint-field-cell">
-                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
-                          >Odometer
-                          <span class="erp-help-tip" aria-label="Help for service odometer">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service odometer">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              Suggested miles may come from Samsara (maintenance snapshot or live board), saved ERP mileage, or the last service on this unit. Use <strong>Samsara</strong> to pull the latest reading. Edit the field if this visit was not at that odometer; save may warn if live data differs.
-                            </span>
-                          </span>
-                        </span>
-                        <div class="maint-field-cell__row">
-                          <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" />
-                          <button type="button" class="btn btn--small" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
-                        </div>
-                        <div id="serviceMileageHint" class="mini-note maint-field-hint"></div>
-                      </div>
-                      <div class="maint-field-cell">
                         <span class="qb-l">Fleet mileage (ERP)</span>
                         <div class="maint-field-cell__row">
                           <input id="mileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Override" title="Manual fleet mileage override" />
@@ -1404,13 +1389,6 @@
                         <div id="maintPlannedServicesHost"></div>
                         <button type="button" class="maint-linkish" onclick="addMaintPlannedServiceRow()">+ Planned line</button>
                       </div>
-                    </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Vendor</span>
-                        <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
-                        <button type="button" class="maint-linkish" onclick="goToCreateQboVendor()">New in QBO</button>
-                      </div>
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
                           >Load #
@@ -1424,7 +1402,50 @@
                         <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / settlement #" autocomplete="off" />
                         <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
                       </div>
-                      <div class="maint-field-cell">
+                    </div>
+                    <div class="maint-form-grid__row maint-form-grid__row--3 maint-form-grid__row--vendor-driver-odo">
+                      <div class="maint-field-cell" style="flex:1;min-width:0">
+                        <span class="qb-l">Vendor</span>
+                        <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
+                        <button type="button" class="maint-linkish" onclick="goToCreateQboVendor()">New in QBO</button>
+                      </div>
+                      <div id="maintRecordDriverCell" class="maint-field-cell" style="flex:1;min-width:0">
+                        <span class="qb-l"
+                          >Driver <span id="maintWoDriverReqStar" class="maint-label-req hidden" aria-hidden="true">*</span></span
+                        >
+                        <input type="hidden" id="maintRecordDriverId" value="" />
+                        <input
+                          id="maintRecordDriverSearch"
+                          class="qb-in maint-field"
+                          list="maintDriverOptions"
+                          placeholder="Select driver (optional)"
+                          maxlength="160"
+                          autocomplete="off"
+                          oninput="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();"
+                          onblur="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();"
+                        />
+                        <input type="hidden" id="maintWoDriverNameInput" value="" />
+                        <div id="maintDriverRepairHint" class="mini-note maint-field-hint maint-driver-repair-hint hidden" aria-live="polite"></div>
+                      </div>
+                      <div class="maint-field-cell maint-field-cell--odo-150">
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
+                          >Odometer
+                          <span class="erp-help-tip" aria-label="Help for service odometer">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service odometer">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              Suggested miles may come from Samsara (maintenance snapshot or live board), saved ERP mileage, or the last service on this unit. Use <strong>Samsara</strong> to pull the latest reading. Edit the field if this visit was not at that odometer; save may warn if live data differs.
+                            </span>
+                          </span>
+                        </span>
+                        <div class="maint-field-cell__row">
+                          <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" style="max-width:150px" />
+                          <button type="button" class="btn btn--small" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
+                        </div>
+                        <div id="serviceMileageHint" class="mini-note maint-field-hint"></div>
+                      </div>
+                    </div>
+                    <div class="maint-form-grid__row maint-form-grid__row--3">
+                      <div class="maint-field-cell maint-field-cell--grow" style="grid-column:1/-1;max-width:100%">
                         <span class="qb-l">Shop location</span>
                         <select id="repairLocationSelect" class="qb-in maint-field" onchange="onRepairLocationSelectChange()" title="Where service was performed">
                           <option value="">— Choose —</option>
@@ -1446,22 +1467,6 @@
                         </div>
                         <span class="qb-l">Location detail <span class="maint-label-req" aria-hidden="true">*</span></span>
                         <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Shop / location detail (required)" aria-required="true" />
-                      </div>
-                    </div>
-                    <div id="maintWoDriverRow" class="maint-form-grid__row maint-form-grid__row--3 hidden">
-                      <div class="maint-field-cell">
-                        <span class="qb-l"
-                          >Driver <span id="maintWoDriverReqStar" class="maint-label-req hidden" aria-hidden="true">*</span></span
-                        >
-                        <input
-                          id="maintWoDriverNameInput"
-                          class="qb-in maint-field"
-                          placeholder="Driver name (syncs to first cost line customer when set)"
-                          maxlength="160"
-                          autocomplete="off"
-                          onblur="erpSyncMaintWoDriverToFirstCostLine()"
-                          oninput="erpSyncMaintWoDriverToFirstCostLine()"
-                        />
                       </div>
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
@@ -1858,6 +1863,25 @@
                       <input id="accidentReportNumberInput" class="qb-in maint-field" placeholder="Accident report #">
                     </div>
                     <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
+                    <div class="search-row" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap;gap:12px">
+                      <div style="flex:1;min-width:200px">
+                        <span class="qb-l">Driver involved in accident <span class="maint-label-req" aria-hidden="true">*</span></span>
+                        <input type="hidden" id="accidentDriverId" value="" />
+                        <input
+                          id="accidentDriverSearch"
+                          class="qb-in maint-field"
+                          list="maintDriverOptions"
+                          placeholder="Select driver"
+                          autocomplete="off"
+                          oninput="resolveAccidentDriverSearch()"
+                          onblur="resolveAccidentDriverSearch()"
+                        />
+                      </div>
+                      <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:0 0 4px;cursor:pointer;white-space:nowrap">
+                        <input type="checkbox" id="accidentDotReportableInput" />
+                        <span>DOT reportable</span>
+                      </label>
+                    </div>
                     <p class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;max-width:72ch;line-height:1.45">
                       <span>Accident visit: add part/labor lines under <strong>Cost breakdown</strong>; the service fields above stay the summary label for the visit.</span>
                       <span class="erp-help-tip">
@@ -8582,14 +8606,19 @@
       erpClearRecordTypeReadonlyWo();
       const insp = document.getElementById('maintInspectionDetailsWrap');
       if (insp) insp.classList.add('hidden');
-      const dRow = document.getElementById('maintWoDriverRow');
       const dReq = document.getElementById('maintWoDriverReqStar');
-      if (dRow) dRow.classList.add('hidden');
+      const dCell = document.getElementById('maintRecordDriverCell');
       if (dReq) dReq.classList.add('hidden');
       if (!meta || typeof meta !== 'object') return;
       const rtLabel = String(meta.recordTypeLabel || '').trim();
       if (rtLabel) erpSetRecordTypeReadonlyWo(rtLabel);
-      if (meta.driverRow && dRow) dRow.classList.remove('hidden');
+      if (meta.driverRow && dCell) {
+        try {
+          dCell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } catch (_) {}
+        const ds = document.getElementById('maintRecordDriverSearch');
+        if (ds) setTimeout(() => ds.focus(), 200);
+      }
       if (meta.driverRequired && dReq) dReq.classList.remove('hidden');
       if (meta.expandInspection && insp) {
         insp.classList.remove('hidden');
@@ -19573,12 +19602,25 @@
       formatMaintRepairStatusMeta(null);
       document.getElementById('accidentAtFaultSearch').value = '';
       document.getElementById('accidentAtFaultValue').value = '';
+      const adS = document.getElementById('accidentDriverSearch');
+      const adI = document.getElementById('accidentDriverId');
+      if (adS) adS.value = '';
+      if (adI) adI.value = '';
+      const adot = document.getElementById('accidentDotReportableInput');
+      if (adot) adot.checked = false;
       document.getElementById('recordTypeSelect').value = 'maintenance';
       erpClearRecordTypeReadonlyWo();
+      const dId = document.getElementById('maintRecordDriverId');
+      const dSearch = document.getElementById('maintRecordDriverSearch');
       const dInp = document.getElementById('maintWoDriverNameInput');
+      if (dId) dId.value = '';
+      if (dSearch) dSearch.value = '';
       if (dInp) dInp.value = '';
-      const dRow = document.getElementById('maintWoDriverRow');
-      if (dRow) dRow.classList.add('hidden');
+      const dRh = document.getElementById('maintDriverRepairHint');
+      if (dRh) {
+        dRh.textContent = '';
+        dRh.classList.add('hidden');
+      }
       const dReq = document.getElementById('maintWoDriverReqStar');
       if (dReq) dReq.classList.add('hidden');
       const inspW = document.getElementById('maintInspectionDetailsWrap');

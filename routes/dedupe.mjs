@@ -115,11 +115,11 @@ export function mountDedupeRoutes(app, deps) {
     requireErpWriteOrAdmin
   } = deps;
 
-  async function ensureDedupeDb(res) {
+  async function requireDedupeDbForWrite(res) {
     if (!getPool()) {
       res.status(503).json({
         ok: false,
-        error: 'DATABASE_URL is not configured. Merge history and skip persistence require Postgres.'
+        error: 'DATABASE_URL is not configured. Merge audit logging and skip persistence require Postgres.'
       });
       return false;
     }
@@ -327,7 +327,6 @@ export function mountDedupeRoutes(app, deps) {
 
   app.post('/api/deduplicate/skip', async (req, res) => {
     try {
-      if (!(await ensureDedupeDb(res))) return;
       const body = req.body || {};
       const recordType = String(body.recordType || '').toLowerCase();
       const ids = Array.isArray(body.ids) ? body.ids.map(String).filter(Boolean) : [];
@@ -339,24 +338,17 @@ export function mountDedupeRoutes(app, deps) {
       const a = sorted[0];
       const b = sorted[sorted.length - 1];
       const by = maintAuthUserLabel(req);
-      await dbQuery(
-        `INSERT INTO dedup_skipped (record_type, qbo_id_a, qbo_id_b, skipped_by, reason, group_signature)
-         VALUES ($1,$2,$3,$4,$5,$6)
-         ON CONFLICT DO NOTHING`,
-        [recordType, a, b, by, body.reason || null, sig]
-      ).catch(async () => {
+      if (getPool()) {
         await dbQuery(
           `INSERT INTO dedup_skipped (record_type, qbo_id_a, qbo_id_b, skipped_by, reason, group_signature)
-           VALUES ($1,$2,$3,$4,$5,$6)`,
+           VALUES ($1,$2,$3,$4,$5,$6)
+           ON CONFLICT (record_type, group_signature) DO NOTHING`,
           [recordType, a, b, by, body.reason || null, sig]
         );
-      });
-      cache.delete(cacheKey(recordType === 'vendor' ? 'vendors' : 'customers', 'all'));
-      res.json({ ok: true, groupSignature: sig });
-    } catch (e) {
-      if (String(e?.message || '').includes('unique')) {
-        return res.json({ ok: true, duplicate: true });
       }
+      cache.delete(cacheKey(recordType === 'vendor' ? 'vendors' : 'customers', 'all'));
+      res.json({ ok: true, groupSignature: sig, localOnly: !getPool() });
+    } catch (e) {
       logError('POST /api/deduplicate/skip', e);
       res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
@@ -368,7 +360,7 @@ export function mountDedupeRoutes(app, deps) {
       if (!qboConfigured()) {
         return res.status(400).json({ ok: false, error: 'QuickBooks is not configured', needsQbo: true });
       }
-      if (!(await ensureDedupeDb(res))) return;
+      if (!(await requireDedupeDbForWrite(res))) return;
       const uid = req.authUser?.id || req.authUser?.email || 'token';
       const rl = checkMergeRateLimit(uid);
       if (!rl.ok) {
@@ -456,7 +448,7 @@ export function mountDedupeRoutes(app, deps) {
       if (!qboConfigured()) {
         return res.status(400).json({ ok: false, error: 'QuickBooks is not configured', needsQbo: true });
       }
-      if (!(await ensureDedupeDb(res))) return;
+      if (!(await requireDedupeDbForWrite(res))) return;
       const uid = req.authUser?.id || req.authUser?.email || 'token';
       const rl = checkMergeRateLimit(uid);
       if (!rl.ok) {
@@ -532,7 +524,12 @@ export function mountDedupeRoutes(app, deps) {
 
   app.get('/api/deduplicate/merge-history', async (req, res) => {
     try {
-      if (!(await ensureDedupeDb(res))) return;
+      if (!getPool()) {
+        if (String(req.query.format || '').toLowerCase() === 'xlsx') {
+          return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set; cannot export merge history.' });
+        }
+        return res.json({ ok: true, total: 0, page: 1, pageSize: 25, rows: [], dbDisabled: true });
+      }
       if (String(req.query.format || '').toLowerCase() === 'xlsx') {
         const r = await dbQuery(
           `SELECT id, merge_type, kept_qbo_id, kept_name, merged_qbo_id, merged_name, merged_by, merged_at,
@@ -611,13 +608,15 @@ export function mountDedupeRoutes(app, deps) {
       const cnt = await dbQuery(`SELECT COUNT(*)::int AS c FROM merge_log ${where}`, params);
       const total = cnt.rows?.[0]?.c || 0;
       const off = (page - 1) * pageSize;
+      const limIdx = i;
+      const offIdx = i + 1;
       const r2 = await dbQuery(
         `SELECT id, merge_type, kept_qbo_id, kept_name, merged_qbo_id, merged_name, merged_by, merged_at,
                 transactions_transferred, erp_records_updated, status, error_details
          FROM merge_log ${where}
          ORDER BY merged_at DESC
-         LIMIT ${pageSize} OFFSET ${off}`,
-        params
+         LIMIT $${limIdx}::int OFFSET $${offIdx}::int`,
+        [...params, pageSize, off]
       );
       res.json({ ok: true, total, page, pageSize, rows: r2.rows || [] });
     } catch (e) {
@@ -628,7 +627,9 @@ export function mountDedupeRoutes(app, deps) {
 
   app.get('/api/deduplicate/merge-log/:id', async (req, res) => {
     try {
-      if (!(await ensureDedupeDb(res))) return;
+      if (!getPool()) {
+        return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      }
       const id = String(req.params.id || '').trim();
       const r = await dbQuery(`SELECT * FROM merge_log WHERE id = $1::bigint`, [id]);
       const row = r.rows?.[0];
@@ -649,11 +650,8 @@ export function mountDedupeRoutes(app, deps) {
         if (kind === 'customer') {
           const customers = await fetchQboCustomers(qboQuery);
           const skipped = await loadSkippedSignatures('customer');
-          data = {
-            ...buildDuplicateGroups(customers, 'customer', skipped),
-            customers,
-            duplicateGroups: buildDuplicateGroups(customers, 'customer', skipped).duplicateGroups
-          };
+          const b = buildDuplicateGroups(customers, 'customer', skipped);
+          data = { ...b, customers };
         } else {
           const vendors = await fetchQboVendors(qboQuery);
           const skipped = await loadSkippedSignatures('vendor');

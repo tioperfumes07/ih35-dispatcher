@@ -49,6 +49,7 @@ import {
   alertCategory
 } from './lib/integrity-engine.mjs';
 import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
+import { mountDedupeRoutes } from './routes/dedupe.mjs';
 
 dotenv.config();
 
@@ -6792,6 +6793,19 @@ mountReportsRestApi(app, {
   readQbo,
   logError,
   hasSamsaraReadToken: () => Boolean(String(SAMSARA_API_TOKEN || '').trim())
+});
+
+mountDedupeRoutes(app, {
+  qboGet,
+  qboPost,
+  qboQuery,
+  readQbo,
+  readErp,
+  writeErp,
+  qboConfigured,
+  logError,
+  maintAuthUserLabel,
+  requireErpWriteOrAdmin
 });
 
 app.post('/api/reports/export/pdf', async (req, res) => {
