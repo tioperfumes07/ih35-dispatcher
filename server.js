@@ -5342,6 +5342,27 @@ app.post('/api/integrity/alert/:id/review', (req, res) => {
   }
 });
 
+app.post('/api/integrity/alert/:id/notes', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const erp = readErp();
+    const id = String(req.params.id || '').trim();
+    const idx = (erp.integrityAlerts || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ ok: false, error: 'Alert not found' });
+    const body = req.body || {};
+    const notes = String(body.notes || '').trim().slice(0, 4000);
+    erp.integrityAlerts[idx] = {
+      ...erp.integrityAlerts[idx],
+      notes
+    };
+    writeErp(erp);
+    res.json({ ok: true, alert: erp.integrityAlerts[idx] });
+  } catch (error) {
+    logError('api/integrity/alert/:id/notes', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.get('/api/integrity/thresholds', (_req, res) => {
   try {
     const erp = readErp();
@@ -5393,19 +5414,64 @@ app.get('/api/integrity/export', (req, res) => {
         'Content-Disposition',
         `attachment; filename="integrity-report-${startDate}-to-${endDate}.pdf"`
       );
-      doc.fontSize(18).text(`Integrity Report — ${company}`, { underline: true });
-      doc.moveDown();
-      doc.fontSize(11).fillColor('#444').text(`Date range: ${startDate} through ${endDate}`);
-      doc.moveDown();
-      doc.fontSize(12).fillColor('#000').text(`Total alerts in range: ${rows.length}`);
-      doc.moveDown();
-      for (const r of rows.slice(0, 120)) {
-        doc.fontSize(10).text(`${r.triggeredDate || ''}  [${r.severity}] ${r.alertType}: ${r.message}`, {
-          paragraphGap: 4
-        });
-      }
-      doc.end();
       doc.pipe(res);
+      const kpiPdf = integrityKpiSnapshot(erp);
+      doc.fillColor('#000000');
+      doc.fontSize(24).text('Integrity Report', { align: 'center' });
+      doc.moveDown(0.35);
+      doc.fontSize(16).fillColor('#333333').text(company, { align: 'center' });
+      doc.moveDown(0.6);
+      doc.fontSize(11).fillColor('#555555').text(`Reporting period: ${startDate} through ${endDate}`, { align: 'center' });
+      doc.moveDown(2);
+      doc.fontSize(10).fillColor('#666666').text('Confidential — operational anomaly summary', { align: 'center' });
+
+      doc.addPage();
+      doc.fillColor('#1a1f36').fontSize(16).text('Executive summary', { underline: true });
+      doc.moveDown(0.5);
+      doc.fillColor('#333333').fontSize(11);
+      doc.text(`Active unresolved alerts: ${kpiPdf.active}`);
+      doc.text(`RED severity: ${kpiPdf.red}`);
+      doc.text(`AMBER severity: ${kpiPdf.amber}`);
+      doc.text(`Marked reviewed this month: ${kpiPdf.resolvedThisMonth}`);
+      doc.moveDown(0.4);
+      doc.text(`Alerts included in this export (date range): ${rows.length}`);
+
+      const buckets = [
+        ['Tires', rows.filter(r => String(r.category || '').toLowerCase() === 'tires')],
+        ['Drivers', rows.filter(r => String(r.category || '').toLowerCase() === 'drivers')],
+        ['Accidents', rows.filter(r => String(r.category || '').toLowerCase() === 'accidents')],
+        ['Fuel', rows.filter(r => String(r.category || '').toLowerCase() === 'fuel')],
+        ['Maintenance', rows.filter(r => String(r.category || '').toLowerCase() === 'maintenance')]
+      ];
+      for (const [label, arr] of buckets) {
+        if (!arr.length) continue;
+        doc.addPage();
+        doc.fillColor('#1a1f36').fontSize(15).text(`${label} anomalies`, { underline: true });
+        doc.moveDown(0.45);
+        doc.fillColor('#333333').fontSize(10);
+        for (const r of arr.slice(0, 45)) {
+          const sev = String(r.severity || '').toUpperCase();
+          const pill = sev === 'RED' ? 'HIGH' : 'REVIEW';
+          doc.fillColor(sev === 'RED' ? '#c5221f' : '#8a5200').text(`[${pill}] `, { continued: true });
+          doc.fillColor('#333333').text(`${r.triggeredDate || ''} — ${String(r.alertType || '')}`);
+          doc.moveDown(0.15);
+          doc.fontSize(9).fillColor('#444444').text(String(r.message || '').slice(0, 420), { width: 500 });
+          doc.moveDown(0.45);
+        }
+      }
+
+      doc.addPage();
+      doc.fillColor('#1a1f36').fontSize(14).text('Recommendations', { underline: true });
+      doc.moveDown(0.45);
+      doc.fillColor('#333333').fontSize(10);
+      doc.text(
+        '• Prioritize RED alerts (safety, DOT reportable, repeated mechanical indicators).\n' +
+          '• Validate cost and fuel anomalies against source documents before QuickBooks posting.\n' +
+          '• Use the Integrity dashboard to mark items reviewed and capture investigation notes.\n' +
+          '• Adjust thresholds under Settings → Integrity when your fleet norms change.',
+        { width: 500 }
+      );
+      doc.end();
       return;
     }
 
@@ -5421,20 +5487,28 @@ app.get('/api/integrity/export', (req, res) => {
       if (String(r.severity || '').toUpperCase() === 'RED') sum.red++;
       else sum.amber++;
     }
+    const kpiX = integrityKpiSnapshot(erp);
     XLSX.utils.book_append_sheet(
       wb,
       XLSX.utils.aoa_to_sheet([
         [company],
         [`Integrity export ${startDate} – ${endDate}`],
         [],
+        ['KPI (fleet-wide, unresolved)'],
+        ['Active alerts', kpiX.active],
+        ['RED', kpiX.red],
+        ['AMBER', kpiX.amber],
+        ['Reviewed this month', kpiX.resolvedThisMonth],
+        [],
+        ['In-range alert counts'],
         ['Category', 'Count'],
         ['Tires', sum.tires],
         ['Drivers', sum.drivers],
         ['Accidents', sum.accidents],
         ['Fuel', sum.fuel],
         ['Maintenance', sum.maintenance],
-        ['RED', sum.red],
-        ['AMBER', sum.amber]
+        ['RED (in range)', sum.red],
+        ['AMBER (in range)', sum.amber]
       ]),
       'Summary'
     );
@@ -5443,21 +5517,39 @@ app.get('/api/integrity/export', (req, res) => {
       'category',
       'severity',
       'alertType',
+      'shortTitle',
       'message',
+      'threshold',
       'unitId',
       'driverName',
       'recordId',
       'recordType',
       'status',
       'reviewedBy',
+      'reviewedAt',
       'notes'
     ];
     XLSX.utils.book_append_sheet(
       wb,
       XLSX.utils.json_to_sheet(
         rows.map(r => {
+          const en = enrichIntegrityDashboardAlert(r, erp);
           const o = {};
-          for (const k of allCols) o[k] = r[k] != null ? r[k] : '';
+          o.triggeredDate = en.triggeredDate != null ? en.triggeredDate : '';
+          o.category = en.category != null ? en.category : '';
+          o.severity = en.severity != null ? en.severity : '';
+          o.alertType = en.alertType != null ? en.alertType : '';
+          o.shortTitle = en.shortTitle != null ? en.shortTitle : '';
+          o.message = en.message != null ? en.message : '';
+          o.threshold = integrityThresholdCell(en.details);
+          o.unitId = en.unitId != null ? en.unitId : '';
+          o.driverName = en.driverName != null ? en.driverName : '';
+          o.recordId = en.recordId != null ? en.recordId : '';
+          o.recordType = en.recordType != null ? en.recordType : '';
+          o.status = en.status != null ? en.status : '';
+          o.reviewedBy = en.reviewedBy != null ? en.reviewedBy : '';
+          o.reviewedAt = en.reviewedAt != null ? en.reviewedAt : '';
+          o.notes = en.notes != null ? en.notes : '';
           return o;
         })
       ),
@@ -6894,6 +6986,20 @@ mountDedupeRoutes(app, {
   requireErpWriteOrAdmin
 });
 
+mountNameManagementRoutes(app, {
+  qboGet,
+  qboPost,
+  qboQuery,
+  readErp,
+  writeErp,
+  readQbo,
+  qboConfigured,
+  logError,
+  maintAuthUserLabel,
+  requireErpWriteOrAdmin,
+  samsaraApiPatch
+});
+
 app.post('/api/reports/export/pdf', async (req, res) => {
   try {
     const body = req.body || {};
@@ -6998,6 +7104,10 @@ app.get('/api/reports/export/work-orders.csv', (_req, res) => {
       'load_number',
       'vendor_invoice_number',
       'internal_work_order_number',
+      'driver_id',
+      'driver_name',
+      'maint_record_type',
+      'accident_dot_reportable',
       'vendor',
       'qbo_vendor_id',
       'payment_method_id',
@@ -7046,6 +7156,10 @@ app.get('/api/reports/export/work-orders.csv', (_req, res) => {
           csvEscape(wo.loadNumber || ''),
           csvEscape(wo.vendorInvoiceNumber || ''),
           csvEscape(wo.internalWorkOrderNumber || ''),
+          csvEscape(wo.driverId || ''),
+          csvEscape(wo.driverName || ''),
+          csvEscape(wo.maintRecordType || ''),
+          csvEscape(wo.accidentDotReportable ? 'yes' : ''),
           csvEscape(wo.vendor || ''),
           csvEscape(wo.qboVendorId || ''),
           csvEscape(wo.paymentMethodId || ''),

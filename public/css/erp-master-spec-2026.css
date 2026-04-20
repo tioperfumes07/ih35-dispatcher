@@ -3111,3 +3111,271 @@ body.erp-maintenance #erpApp.erp-master .erp-new-menu--floated .erp-new-menu__it
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---- Integrity & anomaly (inline panel + dashboard) ---- */
+body.erp-maintenance .erp-integrity-inline {
+  background: #fef7e0;
+  border: 1px solid #f5c67f;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+body.erp-maintenance .erp-integrity-inline__icon {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  background: #f9ab00;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+body.erp-maintenance .erp-integrity-inline__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+body.erp-maintenance .erp-integrity-inline__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8a5200;
+  margin: 0 0 6px;
+}
+body.erp-maintenance .erp-integrity-inline__list {
+  margin: 0 0 8px 16px;
+  padding: 0;
+  color: #8a5200;
+  font-size: 12px;
+  line-height: 1.45;
+}
+body.erp-maintenance .erp-integrity-inline__dashlink {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12px;
+  color: #1557a0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+body.erp-maintenance .erp-integrity-inline__dismiss {
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: #8a5200;
+  opacity: 0.75;
+  cursor: pointer;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+body.erp-maintenance .erp-integrity-inline__dismiss:hover {
+  opacity: 1;
+}
+
+body.erp-maintenance #rep-integrity .erp-int-dash-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1f36;
+  margin: 0 0 4px;
+}
+body.erp-maintenance #rep-integrity .erp-int-dash-sub {
+  font-size: 12px;
+  color: #6b7385;
+  margin: 0 0 14px;
+}
+body.erp-maintenance #rep-integrity .erp-int-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+@media (max-width: 900px) {
+  body.erp-maintenance #rep-integrity .erp-int-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+body.erp-maintenance #rep-integrity .erp-int-kpi-card {
+  border: 1px solid #e0e3e8;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #fff;
+}
+body.erp-maintenance #rep-integrity .erp-int-kpi-card__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7385;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+body.erp-maintenance #rep-integrity .erp-int-kpi-card__val {
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 4px;
+  color: #1a1f36;
+}
+body.erp-maintenance #rep-integrity .erp-int-kpi-card--active .erp-int-kpi-card__val {
+  color: #137333;
+}
+body.erp-maintenance #rep-integrity .erp-int-kpi-card--active.has-red .erp-int-kpi-card__val {
+  color: #c5221f;
+}
+body.erp-maintenance #rep-integrity .erp-int-cat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+body.erp-maintenance #rep-integrity .erp-int-cat-tab {
+  border: 1px solid #e0e3e8;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5f6368;
+  cursor: pointer;
+}
+body.erp-maintenance #rep-integrity .erp-int-cat-tab:hover {
+  background: #f8f9fa;
+}
+body.erp-maintenance #rep-integrity .erp-int-cat-tab.active {
+  background: #e8f0fe;
+  border-color: #aecbfa;
+  color: #1557a0;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-card {
+  background: #ffffff;
+  border: 1px solid #e0e3e8;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-left-width: 4px;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-card--red {
+  border-left-color: #c5221f;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-card--amber {
+  border-left-color: #f9ab00;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+}
+body.erp-maintenance #rep-integrity .erp-int-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+body.erp-maintenance #rep-integrity .erp-int-pill--high {
+  background: #fce8e6;
+  color: #c5221f;
+}
+body.erp-maintenance #rep-integrity .erp-int-pill--review {
+  background: #fef7e0;
+  color: #8a5200;
+}
+body.erp-maintenance #rep-integrity .erp-int-pill--cat {
+  background: #f1f3f4;
+  color: #5f6368;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-date {
+  margin-left: auto;
+  font-size: 11px;
+  color: #a0a8b8;
+  white-space: nowrap;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-h {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1f36;
+  margin: 6px 0 0;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-msg {
+  font-size: 12px;
+  color: #3c4257;
+  margin-top: 4px;
+  line-height: 1.45;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-ctx {
+  background: #f8f9fa;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #6b7385;
+  line-height: 1.45;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+body.erp-maintenance #rep-integrity .erp-int-alert-actions .btn {
+  min-height: 28px;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+body.erp-maintenance #rep-integrity .erp-int-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: #1557a0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+body.erp-maintenance #rep-integrity .erp-int-link--muted {
+  color: #6b7385;
+  text-decoration: none;
+}
+body.erp-maintenance #rep-integrity .erp-int-link--muted:hover {
+  text-decoration: underline;
+}
+
+.settings-page .erp-int-threshold-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  max-width: 720px;
+}
+@media (max-width: 640px) {
+  .settings-page .erp-int-threshold-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.settings-page .erp-int-threshold-grid label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #3c4043;
+}
+.settings-page .erp-int-threshold-grid input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #dadce0);
+  box-sizing: border-box;
+}
+.settings-page .erp-int-th-section {
+  margin-top: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1f36;
+}
