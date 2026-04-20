@@ -1639,8 +1639,8 @@ body.dispatch-page .topbar {
   border-bottom: 1px solid var(--color-border);
   box-shadow: none;
   color: var(--color-text-body);
-  padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) 10px
+    max(14px, env(safe-area-inset-left, 0px));
 }
 
 body.dispatch-page .topbar h1 {
@@ -3385,7 +3385,8 @@ body.hub-page {
 }
 
 body.hub-page header {
-  padding: 28px max(24px, env(safe-area-inset-right, 0px)) 8px max(24px, env(safe-area-inset-left, 0px));
+  padding: max(28px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px)) 8px
+    max(24px, env(safe-area-inset-left, 0px));
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -3562,7 +3563,8 @@ body.hub-page .hub-footer-tip {
 
 @media (max-width: 900px) {
   body.hub-page header {
-    padding: 20px max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+    padding: max(20px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 6px
+      max(16px, env(safe-area-inset-left, 0px));
   }
 
   body.hub-page .grid {

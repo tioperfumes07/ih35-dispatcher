@@ -5,6 +5,7 @@
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings, tracking redirect) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, erp-master-redesign, erp-master-spec-2026, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
  * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). Bodies are reused from earlier successful GETs (**`STATIC_TEXT`** for CSS, HTML needles for **`/maintenance.html`**) so the guard avoids duplicate fetches when those steps pass.
+ * **`GET /api/__smoke_not_found__`** (auth-exempt in **`server.js`**) must return **404** JSON **`{ error: 'Not found', path: '...' }`** so XHR clients never see HTML for unknown API paths.
  * Set SMOKE_BASE=http://host:port to target another environment.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
@@ -27,6 +28,9 @@ const CRITICAL = [
 
 /** Optional: DB reachability (fails in dev when URL points at a dead host). */
 const SOFT_DB = ['GET', '/api/health/db'];
+
+/** Reserved path; auth middleware skips it so smoke can assert JSON 404 even when login is required elsewhere. */
+const API_NOT_FOUND_PROBE = '/api/__smoke_not_found__';
 
 /** Static ERP shells (HTML) — catches broken public paths or 500 on page boot. Second value: one substring or all of a list must be present. */
 const HTML_PAGES = [
@@ -186,6 +190,32 @@ async function oneRuleZeroGuard(path, accept, cachedBody = null) {
   };
 }
 
+async function oneApiUnknown404(probePath) {
+  const url = base + probePath;
+  const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
+  const r = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' }, signal: ctrl });
+  const text = await r.text();
+  let j;
+  try {
+    j = JSON.parse(text);
+  } catch {
+    j = null;
+  }
+  const pathOnly = probePath.split('?')[0];
+  const pass =
+    r.status === 404 &&
+    j &&
+    j.error === 'Not found' &&
+    String(j.path || '') === pathOnly;
+  return {
+    path: probePath,
+    status: r.status,
+    ok: pass,
+    hint: pass ? 'JSON 404 Not found' : 'expected 404 JSON { error, path }',
+    jsonSnippet: pass ? JSON.stringify(j) : text.slice(0, 160)
+  };
+}
+
 function summarize(j, path) {
   if (!j || typeof j !== 'object') return String(j).slice(0, 80);
   if (path === '/api/health') return `ok=${j.ok} samsara=${j.hasSamsaraToken} qboCfg=${j.hasQboConfig}`;
@@ -231,6 +261,17 @@ for (const [method, path] of CRITICAL) {
     console.log('   Is the server running? Try: npm start');
     process.exit(1);
   }
+}
+
+try {
+  const row = await oneApiUnknown404(API_NOT_FOUND_PROBE);
+  const pass = row.ok;
+  if (!pass) criticalFailures++;
+  console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${API_NOT_FOUND_PROBE} ${row.hint}`.trim());
+  if (!pass) console.log('   ', row.jsonSnippet);
+} catch (e) {
+  criticalFailures++;
+  console.log(`✗ FAIL GET ${API_NOT_FOUND_PROBE}: ${e.message || e}`);
 }
 
 for (const [path, needle] of HTML_PAGES) {
