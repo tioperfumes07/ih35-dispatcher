@@ -2809,6 +2809,8 @@ body.fuel-board .fleet-summary {
   font-size: 13px;
   background: var(--color-bg-header);
   color: var(--color-text-label);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .fleet-columns {
@@ -2839,6 +2841,8 @@ body.fuel-board .fleet-section-title {
   z-index: 2;
   background: var(--color-bg-header);
   color: var(--color-text-label);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board #fleetAssigned,
@@ -2861,12 +2865,16 @@ body.fuel-board .fleet-title {
   align-items: center;
   font-weight: 500;
   margin-bottom: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .fleet-sub {
   font-size: 12px;
   color: var(--color-text-label);
   margin-bottom: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .badge {
@@ -3334,6 +3342,8 @@ body.settings-page p {
   color: var(--color-text-label);
   font-size: 13px;
   line-height: 1.55;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.settings-page .panel {
