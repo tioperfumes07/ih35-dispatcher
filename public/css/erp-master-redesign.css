@@ -342,6 +342,8 @@ body.erp-maintenance .erp-topbar .title {
   color: var(--color-text-primary);
   margin: 0;
   letter-spacing: -0.01em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-topbar__search {
@@ -1657,6 +1659,8 @@ body.dispatch-page .topbar h1 {
   font-weight: 500;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.dispatch-page .topbar a {
