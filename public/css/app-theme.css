@@ -2369,7 +2369,6 @@ body.erp-maintenance .asset-cat-grid {
 }
 
 body.erp-maintenance .asset-cat-tile {
-  min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 14px 12px;
@@ -2972,10 +2971,6 @@ body.erp-maintenance .maint-form-grid__row {
 }
 body.erp-maintenance .maint-form-grid__row--3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-body.erp-maintenance .maint-form-grid__row--3 > * {
-  min-width: 0;
 }
 
 @media (max-width: 900px) {
