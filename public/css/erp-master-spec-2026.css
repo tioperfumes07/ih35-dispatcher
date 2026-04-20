@@ -2232,6 +2232,7 @@ body.banking-page #authBanner.erp-auth-banner {
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-card);
+  min-width: 0;
 }
 .erp-dedicated-form-modal__bar-center {
   flex: 1;
@@ -2252,11 +2253,23 @@ body.banking-page #authBanner.erp-auth-banner {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+@media (max-width: 640px) {
+  .erp-dedicated-form-modal__title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}
 .erp-dedicated-form-modal__total-wrap {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .erp-dedicated-form-modal__total-lbl {
   font-size: 11px;
@@ -2264,18 +2277,23 @@ body.banking-page #authBanner.erp-auth-banner {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-label);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .erp-dedicated-form-modal__total-amt {
   font-size: 18px;
   font-weight: 500;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .erp-dedicated-form-modal__bar-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 .erp-dedicated-form-modal__x {
   margin-right: 0;
