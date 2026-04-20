@@ -1721,6 +1721,7 @@ body.dispatch-page .tabs button.active {
 }
 
 body.dispatch-page .wrap {
+  min-width: 0;
   padding: 16px max(18px, env(safe-area-inset-right, 0px)) max(28px, env(safe-area-inset-bottom, 0px))
     max(18px, env(safe-area-inset-left, 0px));
 }
@@ -2460,6 +2461,7 @@ body.dispatch-page #dispatchApp .tabs.dispatch-board-tabs {
 
 body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
   flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
   max-width: none;
   margin: 0;
