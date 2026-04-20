@@ -1842,8 +1842,8 @@ body.erp-maintenance button.maint-action-strip__btn--primary.erp-btn--busy::afte
   display: flex;
   align-items: center;
   gap: 9px;
-  min-width: 260px;
-  max-width: 380px;
+  min-width: min(260px, calc(100vw - 28px));
+  max-width: min(380px, calc(100vw - 28px));
   box-sizing: border-box;
 }
 
@@ -1852,6 +1852,7 @@ body.erp-maintenance button.maint-action-strip__btn--primary.erp-btn--busy::afte
   min-width: 0;
   line-height: 1.45;
   color: var(--color-text-body);
+  overflow-wrap: anywhere;
 }
 
 .erp-toast__dot {
