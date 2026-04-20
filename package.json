@@ -13,6 +13,7 @@
     "db:test": "node scripts/db-test.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "smoke": "node scripts/system-smoke.mjs",
+    "smoke:gate-sync": "node scripts/smoke-gate-paths-sync.mjs",
     "qa:automated": "node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke",
     "qa:isolated": "node scripts/qa-with-server.mjs",
     "test": "npm run rule0:check",

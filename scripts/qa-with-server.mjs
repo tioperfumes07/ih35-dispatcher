@@ -6,11 +6,13 @@
  *
  * Run: `npm run qa:isolated`
  *
+ * Runs **`scripts/smoke-gate-paths-sync.mjs`** first so **`CRITICAL`** and **`SMOKE_GATE_API_PATHS`** cannot drift.
+ *
  * Sets **`IH35_SMOKE_GATE=1`** on the child **`server.js`** so HTTP smoke passes **`/api/*`** GETs used by **`system-smoke.mjs`** even when ERP login is required (users in **`data/app-users.json`**). Do not set **`IH35_SMOKE_GATE`** on long-lived production listeners unless you intend to relax auth for those read-only probes.
  * When **`CI=true`** (e.g. GitHub Actions), passes **`SMOKE_QUIET=1`** to **`system-smoke.mjs`** so the success footer line is omitted.
  * **`SIGINT`** / **`SIGTERM`**: **`SIGTERM`** the child **`server.js`**, any in-flight **`rule0:check`** / **`smoke`** Node child, then **`process.exit`** (**130** / **143**) so the parent does not hang (installing signal handlers disables the default Ctrl+C exit).
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import net from 'node:net';
 import path from 'node:path';
 import process from 'node:process';
@@ -74,6 +76,14 @@ function waitUntilHealthy(server, base) {
 }
 
 async function main() {
+  const sync = spawnSync(process.execPath, [path.join(root, 'scripts/smoke-gate-paths-sync.mjs')], {
+    cwd: root,
+    stdio: 'inherit',
+    env: { ...process.env, SMOKE_GATE_SYNC_QUIET: process.env.CI === 'true' ? '1' : process.env.SMOKE_GATE_SYNC_QUIET }
+  });
+  if (sync.error) throw sync.error;
+  if (sync.status !== 0) process.exit(sync.status ?? 1);
+
   const port = await getFreePort();
   const base = `http://127.0.0.1:${port}`;
   const envPort = { PORT: String(port), IH35_SMOKE_GATE: '1' };

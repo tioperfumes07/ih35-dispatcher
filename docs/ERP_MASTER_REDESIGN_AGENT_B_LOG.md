@@ -58,6 +58,7 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - **Smoke:** Maintenance HTML needles include `**id="erpApp"`** so the master shell root cannot disappear without failing the static GET check.
 - **Smoke (follow-up):** **`GET /api/pdf/__smoke__`** (auth-exempt in **`server.js`**) — **200**, **`application/pdf`**, **`%PDF`** magic (**`pdfkit`**); replaces probing **`/api/pdf/shop-queue`** so agents/CI stay green when ERP login is required. Documented in **`README`**, **`ARCHITECTURE`**, **`AGENT_COORDINATION`**.
 - **Smoke gate + auth:** **`scripts/qa-with-server.mjs`** sets **`IH35_SMOKE_GATE=1`** on the ephemeral **`server.js`**; **`server.js`** **`SMOKE_GATE_API_PATHS`** matches **`system-smoke.mjs`** **`CRITICAL`** JSON GETs so **`npm run qa:isolated`** stays green when users exist / **`IH35_REQUIRE_AUTH=1`**. Do not set **`IH35_SMOKE_GATE`** on production listeners.
+- **Smoke gate sync:** **`scripts/smoke-gate-paths-sync.mjs`** + **`npm run smoke:gate-sync`** assert **`CRITICAL`** (GET, minus **`/api/health`**) equals **`SMOKE_GATE_API_PATHS`**; **`qa-with-server.mjs`** runs it before spawning the child server.
 
 **Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `scripts/system-smoke.mjs`, `README.md`, `docs/ARCHITECTURE.md`, `docs/AGENT_COORDINATION.md`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
 
