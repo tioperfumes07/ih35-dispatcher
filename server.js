@@ -1870,6 +1870,89 @@ async function qboFetchOpenBillByIdFromQbo(billIdRaw) {
   return { bills: [normalized] };
 }
 
+/** Open vendor credits with balance for one vendor (QuickBooks). */
+async function qboFetchOpenVendorCreditsForVendor(vendorQboId) {
+  const vid = String(vendorQboId || '').replace(/\D/g, '');
+  if (!vid) return [];
+  const data = await qboQuery(
+    `select * from VendorCredit where Balance > '0' AND VendorRef = '${vid}' MAXRESULTS 40`
+  );
+  const rows = data?.QueryResponse?.VendorCredit;
+  const arr = Array.isArray(rows) ? rows : rows ? [rows] : [];
+  return arr.map(vc => {
+    const bal = safeNum(vc.Balance, null);
+    const open = bal != null && Number.isFinite(bal) ? bal : safeNum(vc.TotalAmt, 0) || 0;
+    return {
+      id: vc.Id,
+      docNumber: vc.DocNumber || '',
+      txnDate: vc.TxnDate || '',
+      openBalance: qboMoneyRound(open),
+      totalAmt: qboMoneyRound(safeNum(vc.TotalAmt, 0) || 0),
+      vendorId: vc.VendorRef?.value || '',
+      vendorName: vc.VendorRef?.name || ''
+    };
+  });
+}
+
+function erpUiPaymentMethodToQboPayType(paymentMethod) {
+  const m = String(paymentMethod || '').toLowerCase();
+  if (m.includes('credit')) return 'CreditCard';
+  return 'Check';
+}
+
+function vendorBillHistorySlice(records, vendorId, fromD, toD) {
+  const vid = String(vendorId || '').trim();
+  return (records || [])
+    .filter(r => !r.voidedAt)
+    .filter(r => String(r.vendorQboId || '') === vid)
+    .filter(r => {
+      const d = sliceIsoDate(r.paymentDate || r.txnDate || r.createdAt);
+      if (fromD && (!d || d < fromD)) return false;
+      if (toD && (!d || d > toD)) return false;
+      return true;
+    })
+    .sort((a, b) => String(b.paymentDate || b.createdAt || '').localeCompare(String(a.paymentDate || a.createdAt || '')));
+}
+
+function buildVendorBillPaymentHistoryCsv(rows) {
+  const headers = [
+    'payment_number',
+    'payment_date',
+    'bill_number',
+    'bill_date',
+    'bill_amount',
+    'payment_amount',
+    'remaining_balance',
+    'payment_method',
+    'account',
+    'check_number',
+    'memo',
+    'qbo_status',
+    'batch_id'
+  ];
+  const lines = [headers.map(csvEscape).join(',')];
+  for (const r of rows) {
+    lines.push(
+      [
+        csvEscape(r.paymentNumber),
+        csvEscape(r.paymentDate),
+        csvEscape(r.billDocNumber),
+        csvEscape(r.billDate),
+        csvEscape(r.originalAmount),
+        csvEscape(r.paymentAmount),
+        csvEscape(r.remainingBalanceAfter),
+        csvEscape(r.paymentMethod),
+        csvEscape(r.paymentAccountName),
+        csvEscape(r.checkNum),
+        csvEscape(r.memo),
+        csvEscape(r.qboStatus),
+        csvEscape(r.batchId)
+      ].join(',')
+    );
+  }
+  return lines.join('\n');
+}
+
 /** Human-facing payment # from bill doc number + prior payment count (save-time, not display-only). */
 function generatePaymentNumber(billNumber, existingPaymentCount) {
   const base = String(billNumber || '').trim() || 'BILL';
