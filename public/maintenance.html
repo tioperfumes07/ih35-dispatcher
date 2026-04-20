@@ -5118,14 +5118,28 @@
           </div>
         </div>
         <div id="rep-integrity" class="reports-tab hidden">
-          <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">Integrity &amp; anomaly alerts</div>
-              <div class="mini-note" style="margin:0;color:var(--color-text-label)">
-                Alerts are created when you save maintenance, work orders, or fuel; exports use the date range below.
+          <div class="panel erp-int-dash-panel">
+            <div class="panel-head erp-int-dash-panel__head">
+              <div class="erp-int-dash-panel__headtext">
+                <div class="panel-title">Integrity dashboard</div>
+                <p class="erp-int-dash-panel__sub">
+                  Anomaly monitoring across tires, drivers, fuel, maintenance, accidents, Samsara cross-checks, and predictive maintenance. Alerts are created when you save maintenance, work orders, or fuel; exports use the date range below.
+                </p>
+                <a class="erp-int-dash-panel__settingslink" href="/settings.html#integrity-thresholds" target="_blank" rel="noopener">Configure thresholds →</a>
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(1100px,100%)">
+              <div class="erp-int-cat-tabs" role="tablist" aria-label="Integrity category">
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="all" aria-selected="true" onclick="erpIntegritySelectTab('all')">All</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="tires" aria-selected="false" onclick="erpIntegritySelectTab('tires')">Tires</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="drivers" aria-selected="false" onclick="erpIntegritySelectTab('drivers')">Drivers</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="accidents" aria-selected="false" onclick="erpIntegritySelectTab('accidents')">Accidents</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="fuel" aria-selected="false" onclick="erpIntegritySelectTab('fuel')">Fuel</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="maintenance" aria-selected="false" onclick="erpIntegritySelectTab('maintenance')">Maintenance</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="samsara" aria-selected="false" onclick="erpIntegritySelectTab('samsara')">Samsara</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="predictive" aria-selected="false" onclick="erpIntegritySelectTab('predictive')">Predictive</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="resolved" aria-selected="false" onclick="erpIntegritySelectTab('resolved')">Resolved</button>
+              </div>
               <div class="mr-filter-bar" style="margin:0 0 12px;flex-wrap:wrap;gap:10px;align-items:flex-end">
                 <div class="ap-exp-field">
                   <span class="qb-l">From</span>
@@ -5144,6 +5158,8 @@
                     <option value="accidents">Accidents</option>
                     <option value="fuel">Fuel</option>
                     <option value="maintenance">Maintenance</option>
+                    <option value="samsara">Samsara</option>
+                    <option value="predictive">Predictive</option>
                   </select>
                 </div>
                 <div class="ap-exp-field">
@@ -11600,7 +11616,14 @@
         status: r.past ? 'Past' : 'Scheduled'
       }));
       const totalAmount = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-      return { vendor, bills, totalAmount, frequency: freqLabel, description: desc };
+      return {
+        vendor,
+        bills,
+        totalAmount,
+        frequency: freqLabel,
+        description: desc,
+        companyInfo: window.__erpPrintCompanyInfo || {}
+      };
     }
 
     function mbPrintSeriesSummary() {
@@ -22930,6 +22953,38 @@
       }
     }
 
+    function syncIntegrityCatTabsFromSelects() {
+      const cat = String(document.getElementById('integrityDashCategory')?.value || 'all').toLowerCase();
+      const st = String(document.getElementById('integrityDashStatus')?.value || 'active').toLowerCase();
+      let tab = 'all';
+      if (st === 'reviewed') tab = 'resolved';
+      else if (cat && cat !== 'all') tab = cat;
+      window.__integrityDashTab = tab;
+      document.querySelectorAll('.erp-int-cat-tab[data-int-tab]').forEach(btn => {
+        const on = btn.getAttribute('data-int-tab') === tab;
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        btn.classList.toggle('erp-int-cat-tab--active', on);
+      });
+    }
+
+    function erpIntegritySelectTab(tab) {
+      window.__integrityDashTab = String(tab || 'all');
+      const catEl = document.getElementById('integrityDashCategory');
+      const stEl = document.getElementById('integrityDashStatus');
+      const t = window.__integrityDashTab;
+      if (t === 'resolved') {
+        if (catEl) catEl.value = 'all';
+        if (stEl) stEl.value = 'reviewed';
+      } else if (t === 'all') {
+        if (catEl) catEl.value = 'all';
+        if (stEl) stEl.value = 'active';
+      } else {
+        if (catEl) catEl.value = t;
+        if (stEl) stEl.value = 'active';
+      }
+      void loadIntegrityDashboard();
+    }
+
     async function loadIntegrityDashboard() {
       const fromEl = document.getElementById('integrityDashDateFrom');
       const toEl = document.getElementById('integrityDashDateTo');
@@ -22942,15 +22997,8 @@
       if (toEl && !toEl.value) toEl.value = localIsoDate(new Date());
       const start = String(fromEl?.value || '').trim();
       const end = String(toEl?.value || '').trim();
-      const tab = String(window.__integrityDashTab || 'all');
-      let cat = 'all';
-      let st = 'active';
-      if (tab === 'resolved') {
-        st = 'reviewed';
-        cat = 'all';
-      } else if (tab !== 'all') {
-        cat = tab;
-      }
+      const cat = String(document.getElementById('integrityDashCategory')?.value || 'all').trim().toLowerCase();
+      const st = String(document.getElementById('integrityDashStatus')?.value || 'active').trim().toLowerCase();
       const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
       const qs = new URLSearchParams();
       if (start) qs.set('startDate', start);
@@ -22993,6 +23041,7 @@
           body.innerHTML =
             '<p class="mini-note" style="margin:0">No alerts for these filters (session-dismissed items stay hidden until you refresh the page).</p>';
           void refreshIntegrityNavBadges();
+          syncIntegrityCatTabsFromSelects();
           return;
         }
         const cards = rows
@@ -23033,6 +23082,7 @@
           .join('');
         body.innerHTML = cards;
         void refreshIntegrityNavBadges();
+        syncIntegrityCatTabsFromSelects();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
       }

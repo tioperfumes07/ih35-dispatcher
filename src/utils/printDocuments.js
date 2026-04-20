@@ -326,7 +326,7 @@
         return `<tr><td>${i + 1}</td><td>${esc(prod)}</td><td>${esc(sku)}</td><td>${esc(
           desc
         )}</td><td class="right">${esc(String(qty))}</td><td class="right">${esc(
-          Number.isFinite(Number(rate)) ? money(Number(rate)) : String(rate || ''))
+          Number.isFinite(Number(rate)) && String(rate).trim() !== '' ? money(Number(rate)) : String(rate || '')
         )}</td><td class="right">${esc(money(amtLine(ln)))}</td><td>${esc(cls)}</td></tr>`;
       })
       .join('');
@@ -539,7 +539,9 @@
     return `<div class="payment-stub">
       <div class="stub-header">— Payment stub — Detach and return with payment —</div>
       <div class="stub-row"><span>Bill #: ${esc(billNumber)}</span><span>Vendor: ${esc(vendor)}</span></div>
-      <div class="stub-row"><span>Due: ${esc(dueDate)}</span><span>Amount due: ${esc(money(Number(amountDue)))}</span></div>
+      <div class="stub-row"><span>Due: ${esc(dueDate)}</span><span>Amount due: ${esc(
+        Number.isFinite(Number(amountDue)) ? money(Number(amountDue)) : String(amountDue || '—')
+      )}</span></div>
       <div class="stub-fill"><span>Check #: _________________</span><span>Amount paid: $______________</span><span>Date: _____________________</span></div>
     </div>`;
   }

@@ -5365,7 +5365,9 @@ function integrityShortTitle(alert) {
     MR3: `Annual inspection window${u ? ` — ${u}` : ''}`,
     DB1: `Safety events vs fleet average${u ? ` — ${u}` : ''}`,
     DB2: `Safety + repair spend (top quartile)${u ? ` — ${u}` : ''}`,
-    DB3: `Speeding + fuel use${u ? ` — ${u}` : ''}`
+    DB3: `Speeding + fuel use${u ? ` — ${u}` : ''}`,
+    MAINTENANCE_OVERDUE: `Predictive: overdue service${u ? ` — ${u}` : ''}`,
+    MAINTENANCE_DUE_SOON: `Predictive: service due soon${u ? ` — ${u}` : ''}`
   };
   if (map[t]) return map[t];
   return String(alert.message || 'Integrity alert').slice(0, 88);
@@ -5594,13 +5596,23 @@ app.post('/api/integrity/thresholds', (req, res) => {
       return;
     }
     const base = defaultIntegrityThresholds();
-    const next = { ...base };
-    for (const k of Object.keys(base)) {
-      if (body[k] == null || body[k] === '') continue;
+    const stored =
+      erp.integrityThresholds && typeof erp.integrityThresholds === 'object' ? { ...erp.integrityThresholds } : {};
+    for (const k of Object.keys(body)) {
+      if (k === 'reset') continue;
+      if (!Object.prototype.hasOwnProperty.call(base, k)) continue;
+      if (body[k] == null || body[k] === '') {
+        delete stored[k];
+        continue;
+      }
       const n = Number(body[k]);
-      if (Number.isFinite(n)) next[k] = n;
+      if (Number.isFinite(n)) stored[k] = n;
     }
-    erp.integrityThresholds = next;
+    for (const sk of Object.keys({ ...stored })) {
+      if (!Object.prototype.hasOwnProperty.call(base, sk)) continue;
+      if (Number(stored[sk]) === Number(base[sk])) delete stored[sk];
+    }
+    erp.integrityThresholds = stored;
     writeErp(erp);
     res.json({ ok: true, thresholds: mergeIntegrityThresholds(erp) });
   } catch (error) {
@@ -5642,6 +5654,25 @@ app.get('/api/integrity/export', (req, res) => {
       doc.fontSize(10).fillColor('#666666').text('Confidential — operational anomaly summary', { align: 'center' });
 
       doc.addPage();
+      doc.fillColor('#1a1f36').fontSize(15).text('Contents', { underline: true });
+      doc.moveDown(0.45);
+      doc.fillColor('#333333').fontSize(10);
+      const toc = [
+        'Executive summary',
+        'Tires',
+        'Drivers',
+        'Accidents',
+        'Fuel',
+        'Maintenance',
+        'Telematics / Samsara',
+        'Predictive maintenance',
+        'Recommendations',
+        'Effective thresholds (appendix)'
+      ];
+      for (const line of toc) doc.text(`• ${line}`, { indent: 12 });
+      doc.moveDown(0.6);
+
+      doc.addPage();
       doc.fillColor('#1a1f36').fontSize(16).text('Executive summary', { underline: true });
       doc.moveDown(0.5);
       doc.fillColor('#333333').fontSize(11);
@@ -5651,13 +5682,19 @@ app.get('/api/integrity/export', (req, res) => {
       doc.text(`Marked reviewed this month: ${kpiPdf.resolvedThisMonth}`);
       doc.moveDown(0.4);
       doc.text(`Alerts included in this export (date range): ${rows.length}`);
+      const byCat = c => rows.filter(r => String(r.category || '').toLowerCase() === c);
+      doc.moveDown(0.35);
+      doc.fontSize(10).fillColor('#444444').text('Counts by category (in-range):', { underline: false });
+      doc.text(`Tires: ${byCat('tires').length} · Drivers: ${byCat('drivers').length} · Accidents: ${byCat('accidents').length} · Fuel: ${byCat('fuel').length} · Maintenance: ${byCat('maintenance').length} · Telematics: ${byCat('samsara').length} · Predictive: ${byCat('predictive').length}`);
 
       const buckets = [
-        ['Tires', rows.filter(r => String(r.category || '').toLowerCase() === 'tires')],
-        ['Drivers', rows.filter(r => String(r.category || '').toLowerCase() === 'drivers')],
-        ['Accidents', rows.filter(r => String(r.category || '').toLowerCase() === 'accidents')],
-        ['Fuel', rows.filter(r => String(r.category || '').toLowerCase() === 'fuel')],
-        ['Maintenance', rows.filter(r => String(r.category || '').toLowerCase() === 'maintenance')]
+        ['Tires', byCat('tires')],
+        ['Drivers', byCat('drivers')],
+        ['Accidents', byCat('accidents')],
+        ['Fuel', byCat('fuel')],
+        ['Maintenance', byCat('maintenance')],
+        ['Telematics / Samsara', byCat('samsara')],
+        ['Predictive maintenance', byCat('predictive')]
       ];
       for (const [label, arr] of buckets) {
         if (!arr.length) continue;
@@ -5684,21 +5721,44 @@ app.get('/api/integrity/export', (req, res) => {
         '• Prioritize RED alerts (safety, DOT reportable, repeated mechanical indicators).\n' +
           '• Validate cost and fuel anomalies against source documents before QuickBooks posting.\n' +
           '• Use the Integrity dashboard to mark items reviewed and capture investigation notes.\n' +
-          '• Adjust thresholds under Settings → Integrity when your fleet norms change.',
+          '• Adjust thresholds under Settings → Integrity thresholds when your fleet norms change.',
         { width: 500 }
       );
+
+      doc.addPage();
+      doc.fillColor('#1a1f36').fontSize(14).text('Effective thresholds (merged with defaults)', { underline: true });
+      doc.moveDown(0.45);
+      doc.fillColor('#333333').fontSize(9.5);
+      const thPdf = mergeIntegrityThresholds(erp);
+      for (const [k, v] of Object.entries(thPdf)) {
+        doc.text(`${k}: ${v}`, { width: 500 });
+        doc.moveDown(0.18);
+      }
+
       doc.end();
       return;
     }
 
     const wb = XLSX.utils.book_new();
-    const sum = { tires: 0, drivers: 0, accidents: 0, fuel: 0, maintenance: 0, red: 0, amber: 0 };
+    const sum = {
+      tires: 0,
+      drivers: 0,
+      accidents: 0,
+      fuel: 0,
+      maintenance: 0,
+      samsara: 0,
+      predictive: 0,
+      red: 0,
+      amber: 0
+    };
     for (const r of rows) {
       const c = String(r.category || '').toLowerCase();
       if (c === 'tires') sum.tires++;
       else if (c === 'drivers') sum.drivers++;
       else if (c === 'accidents') sum.accidents++;
       else if (c === 'fuel') sum.fuel++;
+      else if (c === 'samsara') sum.samsara++;
+      else if (c === 'predictive') sum.predictive++;
       else sum.maintenance++;
       if (String(r.severity || '').toUpperCase() === 'RED') sum.red++;
       else sum.amber++;
@@ -5723,6 +5783,8 @@ app.get('/api/integrity/export', (req, res) => {
         ['Accidents', sum.accidents],
         ['Fuel', sum.fuel],
         ['Maintenance', sum.maintenance],
+        ['Samsara', sum.samsara],
+        ['Predictive', sum.predictive],
         ['RED (in range)', sum.red],
         ['AMBER (in range)', sum.amber]
       ]),
@@ -5793,6 +5855,14 @@ app.get('/api/integrity/export', (req, res) => {
     );
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('fuel')), 'Fuel anomalies');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('maintenance')), 'Maintenance anomalies');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('samsara')), 'Samsara anomalies');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('predictive')), 'Predictive anomalies');
+    const thX = mergeIntegrityThresholds(erp);
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet([['Key', 'Effective value'], ...Object.entries(thX).map(([k, v]) => [k, v])]),
+      'Thresholds'
+    );
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader(

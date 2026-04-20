@@ -11,31 +11,11 @@
   "fuelImportBatches": [],
   "workOrderSeq": 0,
   "paymentMethods": [
-    {
-      "id": "pm_cash",
-      "name": "Cash",
-      "qboType": "Cash"
-    },
-    {
-      "id": "pm_check",
-      "name": "Check",
-      "qboType": "Check"
-    },
-    {
-      "id": "pm_creditcard",
-      "name": "Credit Card",
-      "qboType": "CreditCard"
-    },
-    {
-      "id": "pm_other",
-      "name": "Other",
-      "qboType": "Other"
-    },
-    {
-      "id": "pm_vendorcredit",
-      "name": "Vendor Credit / Terms",
-      "qboType": "Other"
-    }
+    { "id": "pm_cash", "name": "Cash", "qboType": "Cash" },
+    { "id": "pm_check", "name": "Check", "qboType": "Check" },
+    { "id": "pm_creditcard", "name": "Credit Card", "qboType": "CreditCard" },
+    { "id": "pm_other", "name": "Other", "qboType": "Other" },
+    { "id": "pm_vendorcredit", "name": "Vendor Credit / Terms", "qboType": "Other" }
   ],
   "qboCache": {
     "vendors": [],
@@ -46,28 +26,16 @@
     "customers": [],
     "classes": [],
     "accountsBank": [],
-    "refreshedAt": "",
+    "paymentMethods": [],
     "employees": [],
     "terms": [],
-    "paymentMethods": []
+    "refreshedAt": ""
   },
   "operationalStatusCatalog": [
-    {
-      "value": "in_service",
-      "label": "In service"
-    },
-    {
-      "value": "out_of_service",
-      "label": "Out of service"
-    },
-    {
-      "value": "shop",
-      "label": "In shop"
-    },
-    {
-      "value": "roadside",
-      "label": "Roadside / down"
-    }
+    { "value": "in_service", "label": "In service" },
+    { "value": "out_of_service", "label": "Out of service" },
+    { "value": "shop", "label": "In shop" },
+    { "value": "roadside", "label": "Roadside / down" }
   ],
   "assetStatusByUnit": {},
   "assetActiveByUnit": {},
@@ -80,6 +48,13 @@
   "vendorBillPaymentRecords": [],
   "integrityAlerts": [],
   "integrityThresholds": {},
+  "integritySamsaraCache": {
+    "refreshedAt": "",
+    "deepRefreshedAt": "",
+    "units": {}
+  },
+  "integritySamsaraFaultSnapshots": {},
+  "integrityNightlyLog": [],
   "companyProfile": {
     "legalName": "IH 35 Transportation LLC",
     "dbaName": "",
@@ -94,6 +69,7 @@
     "iftaAccountNumber": "",
     "stateOfOperations": "",
     "pmIntervalMiles": 25000,
-    "randomDrugTestRateNote": ""
+    "randomDrugTestRateNote": "",
+    "integrityReportEmails": []
   }
 }
