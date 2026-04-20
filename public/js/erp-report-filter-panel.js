@@ -152,6 +152,39 @@
         : ''
     }
     ${
+      show.has('vendors')
+        ? `<div style="grid-column:1/-1">
+        <div class="qb-l">Vendor (from work orders)</div>
+        <input type="text" class="qb-in erp-rfp-vendor-search" placeholder="Search vendors…" style="max-width:280px" />
+        <div class="erp-rfp-vendor-list mini-note" style="max-height:120px;overflow:auto;margin-top:6px;border:1px solid #eee;padding:6px;border-radius:6px"></div>
+        <div style="margin-top:6px"><button type="button" class="btn btn--sm erp-rfp-vendor-clear" style="font-size:11px">Clear vendors</button>
+        <span class="erp-rfp-vendor-count mini-note" style="margin-left:8px"></span></div>
+      </div>`
+        : ''
+    }
+    ${
+      show.has('drivers')
+        ? `<div style="grid-column:1/-1">
+        <div class="qb-l">Driver (from work orders)</div>
+        <input type="text" class="qb-in erp-rfp-driver-search" placeholder="Search drivers…" style="max-width:280px" />
+        <div class="erp-rfp-driver-list mini-note" style="max-height:120px;overflow:auto;margin-top:6px;border:1px solid #eee;padding:6px;border-radius:6px"></div>
+        <div style="margin-top:6px"><button type="button" class="btn btn--sm erp-rfp-driver-clear" style="font-size:11px">Clear drivers</button>
+        <span class="erp-rfp-driver-count mini-note" style="margin-left:8px"></span></div>
+      </div>`
+        : ''
+    }
+    ${
+      show.has('serviceTypesPick')
+        ? `<div style="grid-column:1/-1">
+        <div class="qb-l">Service type (from catalog / lines)</div>
+        <input type="text" class="qb-in erp-rfp-svc-search" placeholder="Search service types…" style="max-width:280px" />
+        <div class="erp-rfp-svc-list mini-note" style="max-height:120px;overflow:auto;margin-top:6px;border:1px solid #eee;padding:6px;border-radius:6px"></div>
+        <div style="margin-top:6px"><button type="button" class="btn btn--sm erp-rfp-svc-clear" style="font-size:11px">Clear service types</button>
+        <span class="erp-rfp-svc-count mini-note" style="margin-left:8px"></span></div>
+      </div>`
+        : ''
+    }
+    ${
       show.has('groupBy')
         ? `<div>
         <div class="qb-l">Group results by</div>
