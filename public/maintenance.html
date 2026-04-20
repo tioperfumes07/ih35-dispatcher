@@ -15118,7 +15118,9 @@
             const rss = document.getElementById('recordRepairStatusSelect');
             if (rss) {
               const rs = String(out.record.repairStatus || '').trim();
-              rss.value = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
+              rss.value = ['queued', 'in_progress', 'finished', 'waiting_parts', 'cancelled'].includes(rs)
+                ? rs
+                : '';
             }
             formatMaintRepairStatusMeta(out.record);
             renderMaintAsideWoSummary();
@@ -15559,8 +15561,8 @@
             if (soon > 0) badges.push(`<span class="maint-unit-pill maint-unit-pill--soon">${soon} due soon</span>`);
             const escName = escapeHtml(v.name);
             const tip = escapeHtml(`${v.name} — ${ymm}`);
-            const onclk = `selectUnit(${JSON.stringify(v.name)})`;
-            return `<div class="maint-unit-card ${selectedUnit === v.name ? 'active' : ''}" role="button" tabindex="0" title="${tip}" onclick='${onclk}' onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${onclk}}">
+            const jsUnit = JSON.stringify(v.name);
+            return `<div class="maint-unit-card ${selectedUnit === v.name ? 'active' : ''}" role="button" tabindex="0" title="${tip}" onclick='selectUnit(${jsUnit})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();selectUnit(${jsUnit});}'>
               <div class="maint-unit-card__avatar ${avClass}" title="${tip}">${escName}</div>
               <div class="maint-unit-card__body">
                 <div class="maint-unit-card__title">${escName}</div>
@@ -19122,6 +19124,7 @@
         ph?.classList.remove('hidden');
         fa?.classList.add('hidden');
         document.getElementById('maintWoSummaryBar')?.classList.add('hidden');
+        document.getElementById('maintCard1HeaderSlot')?.classList.add('hidden');
         document.getElementById('selectedUnitInfo').innerHTML = '';
         const cardEl = document.getElementById('maintAssetHeaderCard');
         if (cardEl) {
@@ -19141,6 +19144,7 @@
       fa?.classList.remove('maint-wo-form-animate');
       void fa?.offsetWidth;
       fa?.classList.add('maint-wo-form-animate');
+      document.getElementById('maintCard1HeaderSlot')?.classList.remove('hidden');
 
       closeMaintAssetStatusPanel();
 
@@ -20485,9 +20489,11 @@
 
     function maintRepairStatusLabel(s) {
       const v = String(s || '').trim();
-      if (v === 'queued') return 'Awaiting service';
+      if (v === 'queued') return 'Open';
       if (v === 'in_progress') return 'In progress';
-      if (v === 'finished') return 'Completed';
+      if (v === 'waiting_parts') return 'Waiting for parts';
+      if (v === 'finished') return 'Complete';
+      if (v === 'cancelled') return 'Cancelled';
       return v ? v : '—';
     }
 
@@ -20615,7 +20621,7 @@
       const rss = document.getElementById('recordRepairStatusSelect');
       if (rss) {
         const rs = String(r.repairStatus || '').trim();
-        rss.value = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
+        rss.value = ['queued', 'in_progress', 'finished', 'waiting_parts', 'cancelled'].includes(rs) ? rs : '';
       }
       formatMaintRepairStatusMeta(r);
 
