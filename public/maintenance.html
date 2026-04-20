@@ -2012,6 +2012,11 @@
               </div>
             </div>
             <div class="panel-body">
+              <div class="maint-rm-subtabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;border-bottom:1px solid var(--color-border);padding-bottom:8px">
+                <button type="button" class="btn secondary maint-rm-subtab active" data-maint-rm-sub="alerts" onclick="maintRmSwitchSubtab('alerts', this)">Integrity alerts</button>
+                <button type="button" class="btn secondary maint-rm-subtab" data-maint-rm-sub="due" onclick="maintRmSwitchSubtab('due', this)">Due schedule</button>
+              </div>
+              <div id="maintRmSubpaneAlerts">
               <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Security alerts filters" style="padding-top:0;margin-bottom:10px">
                 <div class="mr-filter-bar__grow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
                   <div style="min-width:220px;flex:1">
@@ -2055,6 +2060,26 @@
                 </span>
               </div>
               <div id="maintSecurityAlertsBody" class="mini-note">Loading…</div>
+              </div>
+              <div id="maintRmSubpaneDue" class="hidden">
+                <p class="mini-note" style="margin:0 0 8px">
+                  Same PM logic as <strong>Reports → PM schedule</strong> (miles remaining, weeks at fleet pace, status colors). Use <strong>Refresh due schedule</strong> after odometer or fleet average changes.
+                </p>
+                <button type="button" class="btn" onclick="loadMaintRmDueSchedule()" style="margin-bottom:10px">Refresh due schedule</button>
+                <div id="maintRmDueScheduleHost" class="mini-note">Open <strong>Due schedule</strong> and press Refresh to load.</div>
+                <details class="maint-plain-schedule" style="margin-top:16px">
+                  <summary style="cursor:pointer;font-weight:600;font-size:13px">Plain language schedule</summary>
+                  <div class="mini-note" style="margin-top:10px;line-height:1.55;max-width:68ch">
+                    <p style="margin:0 0 10px"><strong>Every 2 months</strong> (or 25,000 miles): engine oil and filter; fuel filters (primary + secondary); brake adjustment all axles; fifth wheel lubrication and inspection; steering linkage inspection; lights and safety equipment check.</p>
+                    <p style="margin:0 0 10px"><strong>Every 4 months</strong> (or 50,000 miles): all 2-month items plus air filter; brake lining thickness; tire rotation and tread depth; battery load test; coolant concentration (SCA).</p>
+                    <p style="margin:0 0 10px"><strong>Every 8 months</strong> (or 100,000 miles): all 4-month items plus wheel bearing inspection; cab air suspension; wheel end / hub oil; belt and tensioner; alignment; exhaust inspection.</p>
+                    <p style="margin:0 0 10px"><strong>Every 12 months</strong> (or 150,000 miles): all 8-month items plus air dryer cartridge; annual DOT inspection; complete brake inspection; fuel tank and lines; full chassis lube.</p>
+                    <p style="margin:0 0 10px"><strong>Every 18 months</strong> (or 200,000 miles): all 12-month items plus EGR cleaning; DPF inspection/cleaning as needed; cooling system flush if needed.</p>
+                    <p style="margin:0 0 10px"><strong>Every 21 months</strong> (or 250,000 miles): differential / axle oil; transfer case if applicable.</p>
+                    <p style="margin:0"><strong>Every 42 months</strong> (or 500,000 miles): transmission fluid/filter if applicable; injector service; major engine inspection.</p>
+                  </div>
+                </details>
+              </div>
             </div>
           </div>
         </div>
@@ -6999,9 +7024,74 @@
       }
       if (tab === 'rm') {
         loadSecurityCatalogUi().catch(() => {});
+        const duePane = document.getElementById('maintRmSubpaneDue');
+        if (duePane && !duePane.classList.contains('hidden')) loadMaintRmDueSchedule().catch(() => {});
       }
       if (tab === 'shop-loc') {
         renderMaintLocationBoard();
+      }
+    }
+
+    function maintRmSwitchSubtab(which, _btn) {
+      document.querySelectorAll('.maint-rm-subtab').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-maint-rm-sub') === which);
+      });
+      const al = document.getElementById('maintRmSubpaneAlerts');
+      const du = document.getElementById('maintRmSubpaneDue');
+      if (al) al.classList.toggle('hidden', which !== 'alerts');
+      if (du) du.classList.toggle('hidden', which !== 'due');
+      if (which === 'due') loadMaintRmDueSchedule().catch(() => {});
+    }
+
+    async function loadMaintRmDueSchedule() {
+      const host = document.getElementById('maintRmDueScheduleHost');
+      if (!host) return;
+      host.innerHTML = 'Loading…';
+      try {
+        const d = await j('/api/reports/maintenance/pm-schedule?showOverdue=0');
+        if (d && d.meta && d.meta.error) throw new Error(String(d.meta.error));
+        const cols = d.columns || [];
+        const rows = d.rows || [];
+        const fa = d.meta && d.meta.fleetAvgMilesPerMonth != null ? Number(d.meta.fleetAvgMilesPerMonth) : 12000;
+        if (!rows.length) {
+          host.innerHTML = '<p class="mini-note">No PM schedule rows for current fleet snapshot.</p>';
+          return;
+        }
+        const keys = cols.map(c => c.key);
+        const th = cols
+          .map(c => {
+            if (c.key === 'weeksRemainingDisplay') {
+              return `<th>${escapeHtml(c.label)}<div style="font-size:10px;font-weight:400;color:#888;margin-top:2px">Based on fleet avg ${fa.toLocaleString(
+                'en-US'
+              )} mi/month</div></th>`;
+            }
+            return `<th>${escapeHtml(c.label)}</th>`;
+          })
+          .join('');
+        const tr = rows
+          .map(r => {
+            const cls = 'rep-pm-row rep-pm-row--' + String(r.status || 'gray');
+            return `<tr class="${cls}">${keys
+              .map(k => {
+                const raw = r[k];
+                const isOd =
+                  k === 'weeksRemainingDisplay' &&
+                  String(r.status || '') === 'red' &&
+                  String(raw || '')
+                    .toLowerCase()
+                    .includes('overdue');
+                const cell = isOd
+                  ? `<span class="rep-pm-weeks-overdue">${escapeHtml(String(raw))}</span>`
+                  : escapeHtml(String(raw ?? ''));
+                return `<td>${cell}</td>`;
+              })
+              .join('')}</tr>`;
+          })
+          .join('');
+        const disc = d.meta && d.meta.disclaimer ? `<p class="mini-note" style="margin:8px 0 0">${escapeHtml(d.meta.disclaimer)}</p>` : '';
+        host.innerHTML = `<div class="table-wrap erp-table-scroll"><table class="catalog-admin-table rep-pm-schedule-table" style="font-size:12px"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>${disc}`;
+      } catch (e) {
+        host.innerHTML = '<span style="color:var(--color-semantic-error)">' + escapeHtml(e.message || String(e)) + '</span>';
       }
     }
 

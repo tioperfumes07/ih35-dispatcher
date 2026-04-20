@@ -103,7 +103,8 @@ INSERT INTO research_oem_vehicle_schedules (make, model, year_from, year_to, ser
 ('Mack', 'Anthem', 2018, 2026, 'Steering linkage inspection', 25000, 6, NULL, 'Mack'),
 ('Mack', 'Anthem', 2018, 2026, 'Wheel end / hub oil', 100000, 12, 'Meritor hub oil. Check level and look for leaks at each PM.', 'Mack'),
 ('Mack', 'Anthem', 2018, 2026, 'Fifth wheel inspection and lubrication', 25000, 3, 'Grease top plate. Check for cracks, wear on locking mechanism.', 'Mack'),
-('Mack', 'Anthem', 2018, 2026, 'Battery inspection', 50000, 6, 'Check terminal corrosion, load test batteries annually.', 'Mack');
+('Mack', 'Anthem', 2018, 2026, 'Battery inspection', 50000, 6, 'Check terminal corrosion, load test batteries annually.', 'Mack')
+ON CONFLICT (make, model, year_from, year_to, service_type) DO NOTHING;
 
 -- Peterbilt 579 (2012–2026)
 INSERT INTO research_oem_vehicle_schedules (make, model, year_from, year_to, service_type, interval_miles, interval_months, notes, source) VALUES
@@ -119,7 +120,8 @@ INSERT INTO research_oem_vehicle_schedules (make, model, year_from, year_to, ser
 ('Peterbilt', '579', 2012, 2026, 'Brake lining inspection', 50000, 6, NULL, 'Peterbilt'),
 ('Peterbilt', '579', 2012, 2026, 'Air dryer cartridge', 150000, 12, NULL, 'Peterbilt'),
 ('Peterbilt', '579', 2012, 2026, 'Steering inspection', 25000, 6, NULL, 'Peterbilt'),
-('Peterbilt', '579', 2012, 2026, 'Fifth wheel lubrication', 25000, 3, NULL, 'Peterbilt');
+('Peterbilt', '579', 2012, 2026, 'Fifth wheel lubrication', 25000, 3, NULL, 'Peterbilt')
+ON CONFLICT (make, model, year_from, year_to, service_type) DO NOTHING;
 
 -- Generic ALL / ALL (2000–2026)
 INSERT INTO research_oem_vehicle_schedules (make, model, year_from, year_to, service_type, interval_miles, interval_months, notes, source) VALUES
@@ -132,7 +134,8 @@ INSERT INTO research_oem_vehicle_schedules (make, model, year_from, year_to, ser
 ('ALL', 'ALL', 2000, 2026, 'Brake lining inspection', 50000, 6, NULL, 'Industry reference'),
 ('ALL', 'ALL', 2000, 2026, 'Annual DOT inspection', NULL, 12, 'Required by FMCSA for all CMVs. Must be performed by certified inspector.', 'FMCSA'),
 ('ALL', 'ALL', 2000, 2026, 'Tire inspection and rotation', 50000, 6, NULL, 'Industry reference'),
-('ALL', 'ALL', 2000, 2026, 'Fifth wheel lubrication', 25000, 3, NULL, 'Industry reference');
+('ALL', 'ALL', 2000, 2026, 'Fifth wheel lubrication', 25000, 3, NULL, 'Industry reference')
+ON CONFLICT (make, model, year_from, year_to, service_type) DO NOTHING;
 
 -- Parts benchmarks (Class 8 long-haul — industry averages)
 INSERT INTO research_vehicle_parts_benchmark (make, model, year_from, year_to, part_category, part_name, avg_replacement_miles, avg_replacement_months, avg_cost_low, avg_cost_high, avg_cost_mid, notes) VALUES
@@ -160,6 +163,7 @@ INSERT INTO research_vehicle_parts_benchmark (make, model, year_from, year_to, p
 ('ALL', 'ALL', 2000, 2026, 'Filters', 'Engine oil filter', 25000, NULL, 15, 45, 28, NULL),
 ('ALL', 'ALL', 2000, 2026, 'Filters', 'Fuel filter set', 25000, NULL, 50, 120, 75, NULL),
 ('ALL', 'ALL', 2000, 2026, 'Filters', 'Air filter element', 50000, NULL, 40, 100, 65, NULL),
-('ALL', 'ALL', 2000, 2026, 'Filters', 'Air dryer cartridge', 150000, NULL, 50, 150, 90, NULL);
+('ALL', 'ALL', 2000, 2026, 'Filters', 'Air dryer cartridge', 150000, NULL, 50, 150, 90, NULL)
+ON CONFLICT (make, model, year_from, year_to, part_name) DO NOTHING;
 
 INSERT INTO schema_migrations (filename) VALUES ('017_research_maintenance_intel.sql') ON CONFLICT DO NOTHING;
