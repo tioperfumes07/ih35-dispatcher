@@ -61,6 +61,7 @@
           <button type="button" id="adminTabUsers" class="primary" onclick="openAdminTab('users')">Users</button>
           <button type="button" id="adminTabEmployees" onclick="openAdminTab('employees')">Employees</button>
           <button type="button" id="adminTabCompany" onclick="openAdminTab('company')">Company (DOT / reports)</button>
+          <button type="button" id="adminTabIntegrity" onclick="openAdminTab('integrity')">Integrity thresholds</button>
         </div>
 
         <div id="adminTabPanelUsers">
@@ -207,6 +208,20 @@
               <button type="button" onclick="loadCompanyProfile()">Reload</button>
             </div>
             <div id="coErr" class="err"></div>
+          </div>
+        </div>
+
+        <div id="adminTabPanelIntegrity" class="hidden">
+          <h2 id="integrity-thresholds" style="font-size:16px;margin:0 0 8px;scroll-margin-top:72px">Integrity thresholds</h2>
+          <p class="mini" style="margin-top:0;max-width:62ch">
+            Values used after saves for tire, driver, accident, fuel, and maintenance anomaly checks. Stored in ERP JSON
+            (<code>integrityThresholds</code>). Admin or ERP write secret required to save.
+          </p>
+          <div id="intThErr" class="err"></div>
+          <div id="intThFields"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center">
+            <button type="button" class="primary" id="btnIntThSave" onclick="saveIntegrityThresholds()">Save thresholds</button>
+            <button type="button" onclick="resetIntegrityThresholds()">Reset to defaults</button>
           </div>
         </div>
       </div>

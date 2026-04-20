@@ -4476,6 +4476,10 @@
         <div id="erpDedupeRoot" class="erp-dedupe-root" style="max-width:1220px;margin:0 auto;padding:12px 16px 40px"></div>
       </section>
 
+      <section id="section-name-mgmt" class="section">
+        <div id="erpNameMgmtRoot" style="min-height:320px"></div>
+      </section>
+
       <section id="section-reports" class="section">
         <div class="erp-reports-shell">
           <header class="erp-reports-toolbar" role="banner">
@@ -5203,6 +5207,7 @@
               <button type="button" class="subtab" data-cat-sub="qbo" onclick="openCatalogSubpanel('qbo', this)">QuickBooks items &amp; accounts</button>
               <button type="button" class="subtab active" data-cat-sub="service" onclick="openCatalogSubpanel('service', this)">Service types (DB)</button>
               <button type="button" class="subtab" data-cat-sub="vendors" onclick="openCatalogSubpanel('vendors', this)">Vendors &amp; drivers</button>
+              <button type="button" class="subtab" data-cat-sub="name-mgmt" onclick="openCatalogSubpanel('name-mgmt', this)">Name management</button>
             </div>
             <div id="catalog-panel-service" class="catalog-subpanel active">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
@@ -5331,6 +5336,21 @@
                 </span>
               </div>
               <div id="vendorCatalogBody" class="mini-note">Not loaded yet.</div>
+            </div>
+            <div id="catalog-panel-name-mgmt" class="catalog-subpanel">
+              <div class="subtabs" style="margin-bottom:12px">
+                <button type="button" class="subtab active" onclick="openNameMgmtCatalogDedupeTab(this)">Find &amp; merge duplicates</button>
+                <button type="button" class="subtab" onclick="openNameMgmtCatalogRenameTab(this)">Rename vendors &amp; drivers</button>
+              </div>
+              <div id="nmCatalogDedupePane">
+                <p class="mini-note" style="margin:0 0 10px">
+                  Opens the full QuickBooks deduplication workspace (vendors &amp; customers).
+                </p>
+                <button type="button" class="btn" onclick="openDedupeTool()">Open Find &amp; merge duplicates</button>
+              </div>
+              <div id="nmCatalogRenamePane" style="display:none">
+                <div id="erpNameMgmtRootCatalog"></div>
+              </div>
             </div>
             <div id="catalog-panel-operational" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
@@ -6244,7 +6264,9 @@
       accounting: 'Accounting',
       catalog: 'Lists & catalogs',
       reports: 'Reports',
-      uploads: 'Uploads'
+      uploads: 'Uploads',
+      dedupe: 'Find & merge duplicates',
+      'name-mgmt': 'Vendor & driver name management'
     };
     let activeAssetCategory = 'Trucks';
     let pendingMaintFlow = null;
@@ -9510,6 +9532,11 @@
           if (typeof window.erpDedupeInit === 'function') window.erpDedupeInit();
         });
       }
+      if (name === 'name-mgmt') {
+        requestAnimationFrame(() => {
+          if (typeof window.erpNameMgmtInit === 'function') window.erpNameMgmtInit();
+        });
+      }
       renderErpModuleSidebar(name);
       if (name === 'accounting') requestAnimationFrame(() => syncAcctDashFromQboPayload());
     }
@@ -9639,7 +9666,7 @@
         let which = 'service';
         if (section.startsWith('catalog-')) {
           const rest = section.slice('catalog-'.length);
-          if (['service', 'qbo', 'vendors', 'operational', 'fleet'].includes(rest)) which = rest;
+          if (['service', 'qbo', 'vendors', 'operational', 'fleet', 'name-mgmt'].includes(rest)) which = rest;
         }
         requestAnimationFrame(() => openCatalogSubpanel(which, null));
         return;
@@ -9654,7 +9681,8 @@
         'reports',
         'catalog',
         'uploads',
-        'dedupe'
+        'dedupe',
+        'name-mgmt'
       ];
       if (allowed.includes(section)) openSectionByName(section);
     }
@@ -16199,6 +16227,9 @@
       if (which === 'service') loadServiceCatalogAdminOnly();
       if (which === 'vendors') loadVendorCatalogPanel();
       if (which === 'operational') loadOperationalCatalogPanel();
+      if (which === 'name-mgmt') {
+        if (typeof window.erpNameMgmtInit === 'function') window.erpNameMgmtInit();
+      }
     }
 
     let __vendorLinkPick = { qboId: '', qboName: '', samsaraId: '', samsaraName: '' };
@@ -22359,9 +22390,16 @@
       if (toEl && !toEl.value) toEl.value = localIsoDate(new Date());
       const start = String(fromEl?.value || '').trim();
       const end = String(toEl?.value || '').trim();
-      const cat = String(document.getElementById('integrityDashCategory')?.value || 'all').trim();
+      const tab = String(window.__integrityDashTab || 'all');
+      let cat = 'all';
+      let st = 'active';
+      if (tab === 'resolved') {
+        st = 'reviewed';
+        cat = 'all';
+      } else if (tab !== 'all') {
+        cat = tab;
+      }
       const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
-      const st = String(document.getElementById('integrityDashStatus')?.value || 'active').trim();
       const qs = new URLSearchParams();
       if (start) qs.set('startDate', start);
       if (end) qs.set('endDate', end);
@@ -22371,68 +22409,160 @@
       try {
         const d = await j('/api/integrity/dashboard?' + qs.toString());
         const kpi = d.kpi || {};
-        const host = document.getElementById('integrityDashKpi');
-        if (host) {
-          host.innerHTML = `Active (all time): <strong>${kpi.active ?? 0}</strong> — RED <strong>${kpi.red ?? 0}</strong>, AMBER <strong>${kpi.amber ?? 0}</strong> · Marked reviewed this month: <strong>${kpi.resolvedThisMonth ?? 0}</strong>`;
+        const kHost = document.getElementById('integrityDashKpi');
+        if (kHost) {
+          const activeCls = 'erp-int-kpi-card erp-int-kpi-card--active' + ((kpi.red || 0) > 0 ? ' has-red' : '');
+          kHost.innerHTML = `
+            <div class="${activeCls}">
+              <div class="erp-int-kpi-card__label">Active alerts</div>
+              <div class="erp-int-kpi-card__val">${kpi.active ?? 0}</div>
+            </div>
+            <div class="erp-int-kpi-card">
+              <div class="erp-int-kpi-card__label">RED</div>
+              <div class="erp-int-kpi-card__val" style="color:#c5221f">${kpi.red ?? 0}</div>
+            </div>
+            <div class="erp-int-kpi-card">
+              <div class="erp-int-kpi-card__label">AMBER</div>
+              <div class="erp-int-kpi-card__val" style="color:#b86b00">${kpi.amber ?? 0}</div>
+            </div>
+            <div class="erp-int-kpi-card">
+              <div class="erp-int-kpi-card__label">Reviewed this month</div>
+              <div class="erp-int-kpi-card__val">${kpi.resolvedThisMonth ?? 0}</div>
+            </div>`;
         }
-        const rows = d.alerts || [];
+        const rowsAll = d.alerts || [];
+        __integrityDashLastRows = rowsAll;
+        window.__integrityDashSessionDismiss = window.__integrityDashSessionDismiss || new Set();
+        const sess = window.__integrityDashSessionDismiss;
+        const rows = rowsAll.filter(a => !sess.has(String(a.id || '')));
         const body = document.getElementById('repIntegrityBody');
         if (!body) return;
         if (!rows.length) {
-          body.innerHTML = '<p class="mini-note" style="margin:0">No alerts for these filters.</p>';
+          body.innerHTML =
+            '<p class="mini-note" style="margin:0">No alerts for these filters (session-dismissed items stay hidden until you refresh the page).</p>';
           void refreshIntegrityNavBadges();
           return;
         }
-        const cols = ['Date', 'Sev', 'Type', 'Category', 'Unit', 'Driver', 'Message', 'Status', ''];
-        const tr = rows
+        const cards = rows
           .map(a => {
             const id = String(a.id || '').trim();
+            const sevU = String(a.severity || '').toUpperCase();
+            const cardMod = sevU === 'RED' ? 'erp-int-alert-card--red' : 'erp-int-alert-card--amber';
+            const pill =
+              sevU === 'RED'
+                ? '<span class="erp-int-pill erp-int-pill--high">● HIGH</span>'
+                : '<span class="erp-int-pill erp-int-pill--review">● REVIEW</span>';
+            const catLab = String(a.category || '').trim() || '—';
+            const ctxLines = Array.isArray(a.dataContextLines) ? a.dataContextLines : [];
+            const ctxHtml = ctxLines.length
+              ? `<div class="erp-int-alert-ctx">${ctxLines.map(l => escapeHtml(l)).join('<br>')}</div>`
+              : '';
             const act = String(a.status || 'active') === 'active';
             const reviewBtn = act
-              ? `<button type="button" class="btn" style="font-size:11px;padding:4px 8px" onclick="markIntegrityAlertReviewed(${JSON.stringify(id)})">Mark reviewed</button>`
-              : '';
-            const inv = `<button type="button" class="btn secondary" style="font-size:11px;padding:4px 8px" onclick="loadIntegrityInvestigate(${JSON.stringify(id)})">Records</button>`;
-            return `<tr>
-            <td>${escapeHtml(String(a.triggeredDate || '').slice(0, 10))}</td>
-            <td>${escapeHtml(String(a.severity || ''))}</td>
-            <td>${escapeHtml(String(a.alertType || ''))}</td>
-            <td>${escapeHtml(String(a.category || ''))}</td>
-            <td>${escapeHtml(String(a.unitId || ''))}</td>
-            <td>${escapeHtml(String(a.driverName || a.driverId || ''))}</td>
-            <td>${escapeHtml(String(a.message || '').slice(0, 160))}</td>
-            <td>${escapeHtml(String(a.status || ''))}</td>
-            <td style="white-space:nowrap">${inv} ${reviewBtn}</td>
-          </tr>`;
+              ? `<button type="button" class="btn secondary" onclick="erpIntegrityOpenInvestigate(${JSON.stringify(id)})">Investigate</button>
+                 <button type="button" class="btn" onclick="markIntegrityAlertReviewed(${JSON.stringify(id)})">Mark as reviewed</button>
+                 <button type="button" class="erp-int-link erp-int-link--muted" type="button" onclick="erpIntegritySessionDismiss(${JSON.stringify(id)})">Dismiss</button>`
+              : `<span class="mini-note">Reviewed ${escapeHtml(String(a.reviewedBy || ''))} · ${escapeHtml(String(a.reviewedAt || '').slice(0, 16))}</span>`;
+            return `<div class="erp-int-alert-card ${cardMod}">
+              <div class="erp-int-alert-top">
+                ${pill}
+                <span class="erp-int-pill erp-int-pill--cat">${escapeHtml(catLab)}</span>
+                <span class="erp-int-alert-date">${escapeHtml(a.daysAgoLabel || '')}</span>
+              </div>
+              <div class="erp-int-alert-h">${escapeHtml(a.shortTitle || a.alertType || 'Alert')}</div>
+              <div class="erp-int-alert-msg">${escapeHtml(a.message || '')}</div>
+              ${ctxHtml}
+              <div class="erp-int-alert-actions">
+                <button type="button" class="erp-int-link" onclick="erpIntegrityOpenInvestigate(${JSON.stringify(id)})">View records</button>
+                ${reviewBtn}
+              </div>
+            </div>`;
           })
           .join('');
-        body.innerHTML = `<table class="erp-table" style="font-size:12px;width:100%"><thead><tr>${cols.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>${tr}</tbody></table>`;
+        body.innerHTML = cards;
         void refreshIntegrityNavBadges();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
       }
     }
 
-    async function loadIntegrityInvestigate(alertId) {
-      const host = document.getElementById('integrityInvestigateHost');
-      const pre = document.getElementById('integrityInvestigatePre');
-      if (!host || !pre) return;
-      host.classList.remove('hidden');
-      pre.textContent = 'Loading…';
+    function erpIntegritySessionDismiss(alertId) {
+      if (!alertId) return;
+      window.__integrityDashSessionDismiss = window.__integrityDashSessionDismiss || new Set();
+      window.__integrityDashSessionDismiss.add(String(alertId));
+      loadIntegrityDashboard();
+    }
+
+    async function erpIntegrityOpenInvestigate(alertId) {
+      const a = __integrityDashLastRows.find(x => String(x.id) === String(alertId));
+      const title = a ? String(a.shortTitle || a.alertType || 'Investigate') : 'Investigate';
+      let rowsHtml = '<p class="mini-note">Loading…</p>';
+      openErpDrawer(title, `<div id="erpIntInvMount" style="padding:4px 0 8px">${rowsHtml}</div>`, null);
       try {
         const d = await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/records');
-        pre.textContent = JSON.stringify(d.records || [], null, 2);
+        const recs = d.records || [];
+        const keys = recs.length ? Object.keys(recs[0]) : [];
+        const th = keys.map(k => `<th>${escapeHtml(k)}</th>`).join('');
+        const tr = recs
+          .map(
+            r =>
+              `<tr>${keys.map(k => `<td>${escapeHtml(String(r[k] ?? ''))}</td>`).join('')}</tr>`
+          )
+          .join('');
+        const tbl =
+          recs.length && keys.length
+            ? `<div class="table-wrap erp-table-scroll" style="max-height:240px"><table class="erp-table" style="font-size:11px;width:100%"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`
+            : '<p class="mini-note">No linked rows.</p>';
+        const msg = a ? escapeHtml(String(a.message || '')) : '';
+        const mount = document.getElementById('erpIntInvMount');
+        if (mount) {
+          mount.innerHTML = `
+            <p class="mini-note" style="margin:0 0 8px;line-height:1.4">${msg}</p>
+            ${tbl}
+            <label class="mini-note" style="display:block;margin-top:12px">Investigation notes</label>
+            <textarea id="erpIntInvNotes" rows="4" style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--color-border)"></textarea>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <button type="button" class="btn secondary" onclick="erpIntegritySaveNotes(${JSON.stringify(alertId)})">Save notes</button>
+              <button type="button" class="btn" onclick="markIntegrityAlertReviewed(${JSON.stringify(alertId)});closeErpDrawer();">Mark as reviewed</button>
+            </div>`;
+          const ta = document.getElementById('erpIntInvNotes');
+          if (ta && a && a.notes != null) ta.value = String(a.notes);
+        }
       } catch (e) {
-        pre.textContent = e.message || String(e);
+        const mount = document.getElementById('erpIntInvMount');
+        if (mount) mount.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</p>`;
+      }
+    }
+
+    async function erpIntegritySaveNotes(alertId) {
+      if (!alertId) return;
+      const ta = document.getElementById('erpIntInvNotes');
+      const notes = ta ? ta.value : '';
+      try {
+        await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({ notes })
+        });
+        erpNotify('Notes saved.', 'success');
+        const idx = __integrityDashLastRows.findIndex(x => String(x.id) === String(alertId));
+        if (idx >= 0) __integrityDashLastRows[idx] = { ...__integrityDashLastRows[idx], notes };
+        await loadIntegrityDashboard();
+      } catch (e) {
+        erpNotify(e.message || String(e), 'error');
       }
     }
 
     async function markIntegrityAlertReviewed(alertId) {
       if (!alertId) return;
+      let notes = '';
+      const ta = document.getElementById('erpIntInvNotes');
+      if (ta) notes = ta.value;
       try {
         await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/review', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
-          body: JSON.stringify({ notes: '' })
+          body: JSON.stringify({ notes })
         });
         await loadIntegrityDashboard();
         void refreshIntegrityNavBadges();
@@ -23663,6 +23793,10 @@
           'Load / invoice #',
           'Vendor invoice #',
           'Shop / internal WO #',
+          'Driver ID',
+          'Driver name',
+          'Maint record type',
+          'DOT reportable',
           'Vendor QBO ID',
           'Service date',
           'Due date',
@@ -23702,6 +23836,10 @@
           wo.loadNumber || '',
           wo.vendorInvoiceNumber || '',
           wo.internalWorkOrderNumber || '',
+          wo.driverId || '',
+          wo.driverName || '',
+          wo.maintRecordType || '',
+          wo.accidentDotReportable ? 'yes' : '',
           wo.qboVendorId,
           wo.serviceDate || '',
           wo.dueDate || '',
@@ -23799,5 +23937,6 @@
     refreshApDocTotal();
   </script>
   <script src="/js/erp-qbo-dedupe.js"></script>
+  <script src="/js/erp-name-management.js"></script>
 </body>
 </html>

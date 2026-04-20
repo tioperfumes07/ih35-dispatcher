@@ -5,6 +5,7 @@
 (function () {
   const state = {
     kind: 'vendor',
+    mountCatalog: false,
     list: [],
     loadedAt: null,
     selected: null,
@@ -18,6 +19,12 @@
     renameHistory: [],
     bulkRows: []
   };
+
+  function nmHostEl() {
+    return state.mountCatalog
+      ? document.getElementById('erpNameMgmtRootCatalog')
+      : document.getElementById('erpNameMgmtRoot');
+  }
 
   function esc(s) {
     return typeof escapeHtml === 'function' ? escapeHtml(String(s ?? '')) : String(s ?? '');
@@ -159,11 +166,26 @@
         <button type="button" class="btn btn--small" data-nm-refresh>Refresh all lists</button>
       </div>
       <div class="nm-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
-        ${['all', 'mismatch', 'erp', 'qbo', 'samsara', 'both']
-          .map(
-            f =>
-              `<button type="button" class="btn btn--small${state.filter === f ? '' : ' btn--ghost'}" data-nm-filter="${f}">${f === 'mismatch' ? 'Has name mismatch' : f === 'all' ? 'All' : f}</button>`
-          )
+        ${(
+          state.kind === 'driver'
+            ? ['all', 'mismatch', 'erp', 'qbo', 'samsara', 'both']
+            : ['all', 'mismatch', 'erp']
+        )
+          .map(f => {
+            const lab =
+              f === 'mismatch'
+                ? 'Has name mismatch'
+                : f === 'all'
+                  ? 'All'
+                  : f === 'erp'
+                    ? 'In ERP'
+                    : f === 'qbo'
+                      ? 'In QBO only'
+                      : f === 'samsara'
+                        ? 'In Samsara only'
+                        : 'In both';
+            return `<button type="button" class="btn btn--small${state.filter === f ? '' : ' btn--ghost'}" data-nm-filter="${f}">${lab}</button>`;
+          })
           .join('')}
       </div>
       <div class="nm-list">${rows || '<div class="muted" style="padding:16px;text-align:center">No records.</div>'}</div>
@@ -212,7 +234,11 @@
         <table class="erp-dedupe-table" style="width:100%;font-size:12px">
           <thead><tr><th>System</th><th>Name</th><th>Status</th><th></th></tr></thead>
           <tbody>
-            <tr><td>QuickBooks</td><td>${esc(qboN || '—')}</td><td>${qboN && erpN && qboN.trim() === erpN.trim() ? '✓' : '⚠'}</td><td>${row.qboId ? `<a href="${qboVendorUrl(row.qboId)}" target="_blank" rel="noopener">Edit in QBO</a>` : '—'}</td></tr>
+            <tr><td>QuickBooks</td><td>${esc(qboN || '—')}</td><td>${qboN && erpN && qboN.trim() === erpN.trim() ? '✓' : '⚠'}</td><td>${
+              row.qboId
+                ? `<a href="${state.kind === 'customer' ? qboCustomerUrl(row.qboId) : qboVendorUrl(row.qboId)}" target="_blank" rel="noopener">Edit in QBO</a>`
+                : '—'
+            }</td></tr>
             ${
               state.kind === 'driver'
                 ? `<tr><td>Samsara</td><td>${esc(samN || '—')}</td><td>${samN && erpN && samN.trim() === erpN.trim() ? '✓' : '⚠'}</td><td>${row.samsaraId ? `<a href="https://cloud.samsara.com/o/drivers/${encodeURIComponent(row.samsaraId)}" target="_blank" rel="noopener">View</a>` : 'Not linked'}</td></tr>`
@@ -472,7 +498,7 @@
         <p class="muted" style="margin:0 0 12px;font-size:13px">Keep names consistent across QuickBooks, Samsara, and ERP records.</p>
         <div class="nm-top">
           <div class="nm-seg">
-            <button type="button" type="button" data-kind="vendor" class="${state.kind === 'vendor' ? 'nm-seg--on' : ''}">Vendors</button>
+            <button type="button" data-kind="vendor" class="${state.kind === 'vendor' ? 'nm-seg--on' : ''}">Vendors</button>
             <button type="button" data-kind="driver" class="${state.kind === 'driver' ? 'nm-seg--on' : ''}">Drivers</button>
             <button type="button" data-kind="customer" class="${state.kind === 'customer' ? 'nm-seg--on' : ''}">Customers</button>
           </div>

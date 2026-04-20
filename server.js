@@ -5376,8 +5376,14 @@ app.post('/api/integrity/thresholds', (req, res) => {
   try {
     if (!requireErpWriteOrAdmin(req, res)) return;
     const erp = readErp();
-    const base = defaultIntegrityThresholds();
     const body = req.body && typeof req.body === 'object' ? req.body : {};
+    if (body.reset === true || String(body.reset || '').toLowerCase() === 'true') {
+      erp.integrityThresholds = {};
+      writeErp(erp);
+      res.json({ ok: true, thresholds: mergeIntegrityThresholds(erp) });
+      return;
+    }
+    const base = defaultIntegrityThresholds();
     const next = { ...base };
     for (const k of Object.keys(base)) {
       if (body[k] == null || body[k] === '') continue;
