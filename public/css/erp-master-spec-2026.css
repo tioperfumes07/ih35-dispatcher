@@ -1470,6 +1470,10 @@ body.erp-maintenance .erp-reports-hub__tiles--dense {
   gap: 6px;
 }
 
+body.erp-maintenance .erp-reports-hub__tiles--dense > * {
+  min-width: 0;
+}
+
 @media (max-width: 520px) {
   body.erp-maintenance .erp-reports-hub__tiles--dense {
     grid-template-columns: 1fr;
