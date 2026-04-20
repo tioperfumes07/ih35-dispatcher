@@ -17,15 +17,19 @@
 
 ## 2. Rule 0 — CI / smoke guard (critical)
 
-`npm run smoke` (via `scripts/system-smoke.mjs`) HTTP-fetches these bodies and fails if forbidden substrings appear:
+`npm run smoke` (via `scripts/system-smoke.mjs`) HTTP-fetches ERP HTML shells (hub, maintenance, dispatch, fuel, banking, settings, tracking redirect) and **static assets** with stable header needles, then runs the **Rule 0 stack guard** on cached bodies for the three protected surfaces below.
+
+**Rule 0 body scan (forbidden substrings)** — same three files as `npm run rule0:check`:
 
 - `public/css/app-theme.css`
 - `public/css/maint-accounting-ui-2026.css`
 - `public/maintenance.html`
 
+**Additional static GETs** (200 + header needle; see `STATIC_TEXT` in `system-smoke.mjs`): `design-tokens.css`, `maint-accounting-ui-2026.css`, `app-theme.css`, `erp-master-redesign.css`, `erp-master-spec-2026.css`, `board-nav.css`, `erp-ui.js`, `board-nav.js`.
+
 **Forbidden patterns** are defined in **`scripts/rule-zero-agent-b.mjs`** (`RULE0_FORBIDDEN_SUBSTRINGS`). Examples: `var(--color-border-focus, var(--accent))`, `var(--color-bg-header, #`, and many `var(--color-*, var(--legacy))` stacks.
 
-**When editing those three files:** use **`var(--color-*)`** (and approved stacks from existing patterns in-repo) only in ways that **do not introduce** any substring from that array. When in doubt, grep the file against the list in `rule-zero-agent-b.mjs` or run smoke.
+**When editing the three Rule 0 files above:** use **`var(--color-*)`** (and approved stacks from existing patterns in-repo) only in ways that **do not introduce** any substring from that array. When in doubt, grep the file against the list in `rule-zero-agent-b.mjs` or run smoke.
 
 **Verification:** With the app listening (e.g. port **3400**):
 
@@ -33,7 +37,7 @@
 SMOKE_BASE=http://127.0.0.1:3400 npm run smoke
 ```
 
-Exit code must be **0** before you consider your task done.
+Use **`npm run qa:automated`** for **`rule0:check`** + smoke in one step. Exit code must be **0** before you consider your task done.
 
 ---
 
