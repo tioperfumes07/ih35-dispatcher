@@ -8246,7 +8246,8 @@
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
         const qbBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Deduplicate vendors &amp; customers</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctQboRollbackStub&quot;));">QBO rollback &amp; imports</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="testQuickBooks()">Test QuickBooks connection</button>';
@@ -8296,7 +8297,8 @@
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;operational&quot;);">Operational labels</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
-              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>'
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>' +
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;name-mgmt&quot;);">Name management</button>'
           ) +
           erpSbGroup('catalog', 'module-admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
