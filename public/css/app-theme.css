@@ -2659,7 +2659,7 @@ body.erp-maintenance .maint-kpi-card__val {
 
 body.erp-maintenance .maint-wo-workspace-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  grid-template-columns: minmax(0, 1fr) minmax(min(220px, 100%), min(300px, 100%));
   gap: 14px 16px;
   align-items: start;
   min-width: 0;
@@ -3054,7 +3054,7 @@ body.erp-maintenance .maint-vendor-ref-input {
 
 body.erp-maintenance .maint-wo-split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  grid-template-columns: minmax(0, 1fr) minmax(min(260px, 100%), min(340px, 100%));
   gap: 16px 18px;
   align-items: start;
   margin-top: 4px;
