@@ -51,7 +51,9 @@ import {
   evaluateIntegrityCheck,
   buildInvestigateRecords,
   defaultIntegrityThresholds,
-  alertCategory
+  alertCategory,
+  integrityThresholdExportRows,
+  integrityAlertRuleCatalogSections
 } from './lib/integrity-engine.mjs';
 import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
 import { mountScheduledReports, startReportScheduleRunner } from './routes/scheduled-reports.mjs';
@@ -5725,6 +5727,7 @@ app.get('/api/integrity/export', (req, res) => {
       doc.moveDown(0.45);
       doc.fillColor('#333333').fontSize(10);
       const toc = [
+        'Methodology & data scope',
         'Executive summary',
         'Tires',
         'Drivers',
@@ -5734,10 +5737,35 @@ app.get('/api/integrity/export', (req, res) => {
         'Telematics / Samsara',
         'Predictive maintenance',
         'Recommendations',
-        'Effective thresholds (appendix)'
+        'Effective thresholds (labeled)',
+        'Alert rule catalog (reference)'
       ];
       for (const line of toc) doc.text(`• ${line}`, { indent: 12 });
       doc.moveDown(0.6);
+
+      doc.addPage();
+      doc.fillColor('#1a1f36').fontSize(15).text('Methodology & data scope', { underline: true });
+      doc.moveDown(0.45);
+      doc.fillColor('#333333').fontSize(10);
+      doc.text(
+        'This report is generated from the ERP JSON snapshot at export time. Alert rows are filtered by the reporting period and the category / severity / status filters shown on the cover. Fleet KPI counts in the executive summary count unresolved (active) alerts across the whole fleet, not only rows in this file.',
+        { width: 500 }
+      );
+      doc.moveDown(0.45);
+      doc.text(
+        'Save-time integrity rules (T/D/A/F/M codes) run when maintenance records, work orders, and fuel purchases are saved; thresholds are the merged values in Settings → Integrity thresholds plus built-in defaults.',
+        { width: 500 }
+      );
+      doc.moveDown(0.45);
+      doc.text(
+        'Telematics rules (OD/EH/IT/VU/FC/MR/DB) combine Samsara vehicle snapshots, TMS active driver hints, safety aggregates, and ERP work orders / fuel where noted in each alert’s details.',
+        { width: 500 }
+      );
+      doc.moveDown(0.45);
+      doc.text(
+        'Predictive rules (MAINTENANCE_OVERDUE / MAINTENANCE_DUE_SOON) come from the fleet PM schedule evaluation (Postgres-backed due dates and mileages).',
+        { width: 500 }
+      );
 
       doc.addPage();
       doc.fillColor('#1a1f36').fontSize(16).text('Executive summary', { underline: true });
