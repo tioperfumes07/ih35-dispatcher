@@ -8,7 +8,7 @@
  *
  * Runs **`scripts/smoke-gate-paths-sync.mjs`** first so **`CRITICAL`** and **`SMOKE_GATE_API_PATHS`** cannot drift.
  *
- * After HTTP smoke, runs **`npm run test:name-mgmt`** and **`npm run test:fleet-mileage`** (same suites as **`npm run qa:automated`**) so one command matches the full automated gate when port **3400** is busy.
+ * After HTTP smoke, runs **`npm run test:name-mgmt`**, **`npm run test:fleet-mileage`**, and **`npm run test:integrity-meta`** (same suites as **`npm run qa:automated`**) so one command matches the full automated gate when port **3400** is busy.
  *
  * **`npm run qa:automated`** ( **`package.json`** ) runs the same **`smoke-gate-paths-sync`** step before **`rule0:check`** + **`smoke`** when a server is already listening — no child process here.
  *
@@ -177,6 +177,7 @@ async function main() {
     await runNodeScript('scripts/system-smoke.mjs', smokeEnv);
     await runNpmScript('test:name-mgmt');
     await runNpmScript('test:fleet-mileage');
+    await runNpmScript('test:integrity-meta');
     console.log(`qa:isolated OK — ${base} (smoke + rule0 + unit tests)`);
   } finally {
     process.removeListener('SIGINT', onSigInt);
