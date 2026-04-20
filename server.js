@@ -287,7 +287,12 @@ function defaultErpData() {
     /** Internal employee directory for ERP permissions + contact info. */
     employees: [],
     /** Bill payments posted to QuickBooks from this app (audit + expense history). */
-    qboBillPaymentLog: []
+    qboBillPaymentLog: [],
+    /**
+     * Per-bill payment applications (vendor Pay Bills workspace). Numbers generated at save time;
+     * qboStatus pending until posted via existing QBO bill payment path.
+     */
+    vendorBillPaymentRecords: []
   };
 }
 
@@ -366,6 +371,7 @@ function ensureErpFile() {
   if (!Array.isArray(merged.maintenanceShopQueue)) merged.maintenanceShopQueue = [];
   if (!Array.isArray(merged.employees)) merged.employees = [];
   if (!Array.isArray(merged.qboBillPaymentLog)) merged.qboBillPaymentLog = [];
+  if (!Array.isArray(merged.vendorBillPaymentRecords)) merged.vendorBillPaymentRecords = [];
 
   for (const w of merged.workOrders || []) {
     if (w.voided == null) w.voided = false;
@@ -1673,16 +1679,44 @@ function qboTxnWindowStartIso(days) {
   return d.toISOString().slice(0, 10);
 }
 
+function qboMoneyRound(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 0;
+  return Math.round(x * 100) / 100;
+}
+
+function extractQboBillDescription(b) {
+  const lines = Array.isArray(b?.Line) ? b.Line : [];
+  for (const ln of lines) {
+    const d =
+      ln?.Description ||
+      ln?.AccountBasedExpenseLineDetail?.Description ||
+      ln?.ItemBasedExpenseLineDetail?.Description;
+    if (d && String(d).trim()) return String(d).trim().slice(0, 500);
+  }
+  return String(b?.PrivateNote || '').trim().slice(0, 500);
+}
+
 function normalizeQboBill(b) {
+  const totalAmt = safeNum(b.TotalAmt, 0) || 0;
+  const balance = safeNum(b.Balance, 0) || 0;
+  const amountPaid = qboMoneyRound(Math.max(0, totalAmt - balance));
+  const ref = b.RecurringTransactionRef;
+  const recurringSeries = !!(ref && (ref.value || ref.Value));
   return {
     id: b.Id,
     docNumber: b.DocNumber || '',
     txnDate: b.TxnDate || '',
     dueDate: b.DueDate || '',
-    totalAmt: safeNum(b.TotalAmt, 0) || 0,
-    balance: safeNum(b.Balance, 0) || 0,
+    totalAmt,
+    balance,
+    openBalance: balance,
     vendorId: b.VendorRef?.value || '',
-    vendorName: b.VendorRef?.name || ''
+    vendorName: b.VendorRef?.name || '',
+    description: extractQboBillDescription(b),
+    privateNote: String(b.PrivateNote || '').trim().slice(0, 500),
+    amountPaid,
+    recurringSeries
   };
 }
 
@@ -1737,12 +1771,6 @@ function normalizeQboBillPayment(bp) {
   };
 }
 
-function qboMoneyRound(n) {
-  const x = Number(n);
-  if (!Number.isFinite(x)) return 0;
-  return Math.round(x * 100) / 100;
-}
-
 /** Open (unpaid) bills from QuickBooks; optional vendor filter; optional substring search (server-side filter). */
 async function qboFetchOpenBillsFromQbo(vendorQboId, opts = {}) {
   const vid = String(vendorQboId || '').replace(/\D/g, '');
@@ -1787,13 +1815,114 @@ async function qboFetchOpenBillByIdFromQbo(billIdRaw) {
   return { bills: [normalized] };
 }
 
-/** Count prior app-recorded bill payments that include a given QBO bill id (for DocNumber suffix). */
-function countPriorBillPaymentsForBill(erp, billQboId) {
+/** Open vendor credits with balance for one vendor (QuickBooks). */
+async function qboFetchOpenVendorCreditsForVendor(vendorQboId) {
+  const vid = String(vendorQboId || '').replace(/\D/g, '');
+  if (!vid) return [];
+  const data = await qboQuery(
+    `select * from VendorCredit where Balance > '0' AND VendorRef = '${vid}' MAXRESULTS 40`
+  );
+  const rows = data?.QueryResponse?.VendorCredit;
+  const arr = Array.isArray(rows) ? rows : rows ? [rows] : [];
+  return arr.map(vc => {
+    const bal = safeNum(vc.Balance, null);
+    const open = bal != null && Number.isFinite(bal) ? bal : safeNum(vc.TotalAmt, 0) || 0;
+    return {
+      id: vc.Id,
+      docNumber: vc.DocNumber || '',
+      txnDate: vc.TxnDate || '',
+      openBalance: qboMoneyRound(open),
+      totalAmt: qboMoneyRound(safeNum(vc.TotalAmt, 0) || 0),
+      vendorId: vc.VendorRef?.value || '',
+      vendorName: vc.VendorRef?.name || ''
+    };
+  });
+}
+
+function erpUiPaymentMethodToQboPayType(paymentMethod) {
+  const m = String(paymentMethod || '').toLowerCase();
+  if (m.includes('credit')) return 'CreditCard';
+  return 'Check';
+}
+
+function vendorBillHistorySlice(records, vendorId, fromD, toD) {
+  const vid = String(vendorId || '').trim();
+  return (records || [])
+    .filter(r => !r.voidedAt)
+    .filter(r => String(r.vendorQboId || '') === vid)
+    .filter(r => {
+      const d = sliceIsoDate(r.paymentDate || r.txnDate || r.createdAt);
+      if (fromD && (!d || d < fromD)) return false;
+      if (toD && (!d || d > toD)) return false;
+      return true;
+    })
+    .sort((a, b) => String(b.paymentDate || b.createdAt || '').localeCompare(String(a.paymentDate || a.createdAt || '')));
+}
+
+function buildVendorBillPaymentHistoryCsv(rows) {
+  const headers = [
+    'payment_number',
+    'payment_date',
+    'bill_number',
+    'bill_date',
+    'bill_amount',
+    'payment_amount',
+    'remaining_balance',
+    'payment_method',
+    'account',
+    'check_number',
+    'memo',
+    'qbo_status',
+    'batch_id'
+  ];
+  const lines = [headers.map(csvEscape).join(',')];
+  for (const r of rows) {
+    lines.push(
+      [
+        csvEscape(r.paymentNumber),
+        csvEscape(r.paymentDate),
+        csvEscape(r.billDocNumber),
+        csvEscape(r.billDate),
+        csvEscape(r.originalAmount),
+        csvEscape(r.paymentAmount),
+        csvEscape(r.remainingBalanceAfter),
+        csvEscape(r.paymentMethod),
+        csvEscape(r.paymentAccountName),
+        csvEscape(r.checkNum),
+        csvEscape(r.memo),
+        csvEscape(r.qboStatus),
+        csvEscape(r.batchId)
+      ].join(',')
+    );
+  }
+  return lines.join('\n');
+}
+
+/** Human-facing payment # from bill doc number + prior payment count (save-time, not display-only). */
+function generatePaymentNumber(billNumber, existingPaymentCount) {
+  const base = String(billNumber || '').trim() || 'BILL';
+  const n = Math.max(0, Math.floor(Number(existingPaymentCount) || 0));
+  if (n === 0) return base;
+  return `${base}-${n}`;
+}
+
+/**
+ * Count payment applications to a QBO bill: vendorBillPaymentRecords (non-void) plus legacy
+ * qboBillPaymentLog entries that are not reversed and not already linked to a vendor batch
+ * (those are represented solely by vendorBillPaymentRecords to avoid double-counting).
+ */
+function countAppPaymentsTouchingBillQboId(erp, billQboId) {
   const id = String(billQboId || '').replace(/\D/g, '');
   if (!id) return 0;
   let n = 0;
+  for (const r of erp.vendorBillPaymentRecords || []) {
+    if (r.voidedAt) continue;
+    const bid = String(r.billQboId || '').replace(/\D/g, '');
+    if (bid && bid === id) n++;
+  }
   for (const e of erp.qboBillPaymentLog || []) {
     if (e.reversedAt) continue;
+    if (e.vendorPaymentBatchId) continue;
     const lines = e.lines || [];
     for (const ln of lines) {
       const bid = String(ln.billQboId || '').replace(/\D/g, '');
@@ -1804,6 +1933,40 @@ function countPriorBillPaymentsForBill(erp, billQboId) {
     }
   }
   return n;
+}
+
+/**
+ * Count applications used for QBO BillPayment DocNumber suffix only — excludes `pending`
+ * vendorBillPaymentRecords (not yet posted) so post-to-QBO after local save does not over-increment.
+ */
+function countQboStylePaymentApplicationsForBill(erp, billQboId) {
+  const id = String(billQboId || '').replace(/\D/g, '');
+  if (!id) return 0;
+  let n = 0;
+  for (const r of erp.vendorBillPaymentRecords || []) {
+    if (r.voidedAt) continue;
+    if (String(r.qboStatus || '') === 'pending') continue;
+    const bid = String(r.billQboId || '').replace(/\D/g, '');
+    if (bid && bid === id) n++;
+  }
+  for (const e of erp.qboBillPaymentLog || []) {
+    if (e.reversedAt) continue;
+    if (e.vendorPaymentBatchId) continue;
+    const lines = e.lines || [];
+    for (const ln of lines) {
+      const bid = String(ln.billQboId || '').replace(/\D/g, '');
+      if (bid && bid === id) {
+        n++;
+        break;
+      }
+    }
+  }
+  return n;
+}
+
+/** QBO DocNumber suffix — excludes pending vendor rows. */
+function countPriorBillPaymentsForBill(erp, billQboId) {
+  return countQboStylePaymentApplicationsForBill(erp, billQboId);
 }
 
 /**
@@ -1871,7 +2034,7 @@ async function qboCreateBillPaymentFromApp(body) {
     sanitizeQboDocNumber(`B-${primaryBillId.replace(/\D/g, '')}`) ||
     `B${primaryBillId.replace(/\D/g, '')}`;
   /** First payment uses the bill's DocNumber; each additional payment to the same bill gets -1, -2, … (QBO max 21 chars). */
-  const prior = countPriorBillPaymentsForBill(erp, primaryBillId);
+  const prior = countQboStylePaymentApplicationsForBill(erp, primaryBillId);
   let docNumber = baseDoc;
   if (prior > 0) {
     const suffix = `-${prior}`;
@@ -1950,7 +2113,8 @@ function appendQboBillPaymentLogEntry(erp, req, result, body) {
     qboBillPaymentDocNumber: result.docNumber || '',
     totalAmt: result.totalAmt,
     lines: Array.isArray(result.lineLog) ? result.lineLog : [],
-    recordedBy
+    recordedBy,
+    vendorPaymentBatchId: String(body?.vendorPaymentBatchId || '').trim()
   };
 
   if (!Array.isArray(erp.qboBillPaymentLog)) erp.qboBillPaymentLog = [];
