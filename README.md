@@ -33,7 +33,7 @@ Use these before a release or when validating the ERP shell (see `docs/ERP_MASTE
 
 1. **`npm run rule0:check`** — Agent B Rule 0 guard on `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, and `public/maintenance.html`. After success (outside CI), the script prints a one-line reminder to run smoke; set **`RULE0_QUIET=1`** to hide it. **`npm run qa:automated`** runs the same check with a flag so that reminder is not duplicated before smoke.
 2. **Start the server** — `npm start` or `npm run dev`. Listen port is **`process.env.PORT` or `3400`** unless your `.env` sets otherwise.
-3. **`npm run smoke`** — `scripts/system-smoke.mjs` hits health APIs, static ERP HTML shells, and shared CSS/JS (including `erp-master-redesign.css` with the other token and shell styles) with stable substring checks; Rule 0 body scans reuse cached GET bodies. Expects `127.0.0.1` on the same port. **`npm run qa:automated`** runs steps **1** then **3** in one command.
+3. **`npm run smoke`** — `scripts/system-smoke.mjs` hits health APIs, static ERP HTML shells, and shared CSS/JS (including `erp-master-redesign.css` and `erp-master-spec-2026.css` with the other token and shell styles) with stable substring checks; Rule 0 body scans reuse cached GET bodies. Expects `127.0.0.1` on the same port. **`npm run qa:automated`** runs steps **1** then **3** in one command.
 
 If the server is not on **3400**, set **`SMOKE_BASE`** for smoke (e.g. `SMOKE_BASE=http://127.0.0.1:3100 npm run smoke`). Set **`SMOKE_QUIET=1`** to hide the extra “Smoke target” line at the end of a successful smoke run.
 
