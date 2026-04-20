@@ -2758,6 +2758,7 @@ body.fuel-board .topbar h1 {
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .topbar a {
@@ -3195,6 +3196,8 @@ body.banking-page .ph {
   background: var(--color-bg-header);
   color: var(--color-text-primary);
   font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.banking-page .pb {
