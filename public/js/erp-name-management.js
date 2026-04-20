@@ -465,7 +465,7 @@
   }
 
   function paint() {
-    const host = document.getElementById('erpNameMgmtRoot') || document.getElementById('erpNameMgmtRootCatalog');
+    const host = nmHostEl();
     if (!host) return;
     const loaded = state.loadedAt ? new Date(state.loadedAt).toLocaleString() : '—';
     host.innerHTML = `
@@ -627,8 +627,9 @@
     backdrop.querySelector('[data-close]').addEventListener('click', () => backdrop.remove());
   }
 
-  window.erpNameMgmtInit = async function () {
-    const host = document.getElementById('erpNameMgmtRoot') || document.getElementById('erpNameMgmtRootCatalog');
+  window.erpNameMgmtInit = async function (opts) {
+    state.mountCatalog = !!(opts && opts.catalog);
+    const host = nmHostEl();
     if (!host) return;
     state.kind = 'vendor';
     state.page = 1;
