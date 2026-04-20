@@ -252,11 +252,13 @@ body.erp-maintenance .erp-toast {
 }
 
 /* --- Banners / vendor bar / dropdown stacks --- */
+/* Keep scoped to #section-accounting: `mr-qbo-banner` matches [class*='qbo-banner'] and must NOT
+   style the global #qboSyncAlertBar strip (that lives outside .erp-main-body) or flex/stacking breaks
+   after opening + New / modals — pale red “!” only, or white screen, in Safari/Chrome. */
 body.erp-maintenance #section-accounting .fuel-expense-qbo-banner,
 body.erp-maintenance #section-accounting #expHistQboBanner,
-body.erp-maintenance .mr-qbo-banner,
-body.erp-maintenance [class*='qbo-banner'],
-body.erp-maintenance [class*='sync-banner'] {
+body.erp-maintenance #section-accounting [class*='qbo-banner'],
+body.erp-maintenance #section-accounting [class*='sync-banner'] {
   position: relative !important;
   z-index: 200 !important;
   width: 100% !important;
