@@ -8493,8 +8493,9 @@ async function startServer() {
   await ensureTmsSchema();
   await ensureMaintenanceServiceCatalog();
   bootstrapAdminFromEnv();
-  app.listen(PORT, () => {
-    console.log(`Server running on ${PORT}`);
+  /** Bind IPv4 so clients using `127.0.0.1` (e.g. `npm run smoke`) reach the listener; Node may otherwise listen IPv6-only. */
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on 0.0.0.0:${PORT}`);
   });
 
   const syncMin = Number(process.env.QBO_AUTO_SYNC_MINUTES ?? 360);
