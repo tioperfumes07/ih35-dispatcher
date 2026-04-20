@@ -212,6 +212,7 @@
         </div>
 
         <div id="adminTabPanelIntegrity" class="hidden">
+<<<<<<< HEAD
           <h2 id="integrity-thresholds" style="font-size:16px;margin:0 0 8px">Integrity thresholds</h2>
           <p class="mini" style="margin-top:0;max-width:70ch">
             Controls for tire, driver, fuel, maintenance, and accident anomaly checks (post-save alerts and dashboard). Saved to ERP data via <code>POST /api/integrity/thresholds</code>.
@@ -298,6 +299,16 @@
             </div>
           </div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:18px;align-items:center">
+=======
+          <h2 id="integrity-thresholds" style="font-size:16px;margin:0 0 8px;scroll-margin-top:72px">Integrity thresholds</h2>
+          <p class="mini" style="margin-top:0;max-width:62ch">
+            Values used after saves for tire, driver, accident, fuel, and maintenance anomaly checks. Stored in ERP JSON
+            (<code>integrityThresholds</code>). Admin or ERP write secret required to save.
+          </p>
+          <div id="intThErr" class="err"></div>
+          <div id="intThFields"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center">
+>>>>>>> origin/2026-04-20-jzws
             <button type="button" class="primary" id="btnIntThSave" onclick="saveIntegrityThresholds()">Save thresholds</button>
             <button type="button" onclick="resetIntegrityThresholds()">Reset to defaults</button>
           </div>
@@ -363,11 +374,21 @@
               <td><button type="button" onclick="removeUser('${x.id}')">Remove</button></td>
             </tr>
           `).join('');
+<<<<<<< HEAD
           openAdminTab(location.hash === '#integrity-thresholds' ? 'integrity' : 'users');
           if (location.hash === '#integrity-thresholds') {
             requestAnimationFrame(() =>
               document.getElementById('integrity-thresholds')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             );
+=======
+          if (location.hash === '#integrity-thresholds') {
+            openAdminTab('integrity');
+            requestAnimationFrame(() =>
+              document.getElementById('integrity-thresholds')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            );
+          } else {
+            openAdminTab('users');
+>>>>>>> origin/2026-04-20-jzws
           }
           await loadEmployees();
         } else {
@@ -379,6 +400,7 @@
       }
     }
 
+<<<<<<< HEAD
     const INTEGRITY_THRESHOLD_KEYS = [
       'maxTiresPerUnit90d',
       'maxSameTirePosition180d',
@@ -399,13 +421,117 @@
       'accidentQuarterlyCostYoYPct'
     ];
 
+=======
+    const INTEGRITY_THRESHOLD_FIELDS = [
+      { section: 'Tire thresholds', key: 'maxTiresPerUnit90d', label: 'Max tires per unit per 90 days', step: 1 },
+      { section: 'Tire thresholds', key: 'maxSameTirePosition180d', label: 'Max same position replacements per 180 days', step: 1 },
+      { section: 'Tire thresholds', key: 'tireCostAnomalyMult', label: 'Tire cost anomaly multiplier (×)', step: 0.1 },
+      { section: 'Tire thresholds', key: 'maxFleetTiresPerMonth', label: 'Max fleet tires per calendar month', step: 1 },
+      { section: 'Driver thresholds', key: 'maxRepairsPerDriver90d', label: 'Max repairs per driver per 90 days', step: 1 },
+      { section: 'Driver thresholds', key: 'maxAccidentsPerDriver12mo', label: 'Max accidents per driver per 12 months', step: 1 },
+      { section: 'Driver thresholds', key: 'maxRepairCostDriver90d', label: 'Max repair cost per driver per 90 days ($)', step: 100 },
+      { section: 'Driver thresholds', key: 'maxRepairsSameDriverUnit60d', label: 'Max repairs same driver + unit per 60 days', step: 1 },
+      { section: 'Fuel thresholds', key: 'fuelConsumptionIncreasePct', label: 'Fuel consumption increase threshold (%)', step: 1 },
+      { section: 'Fuel thresholds', key: 'unusualGallonsMult', label: 'Unusual gallons per transaction multiplier (×)', step: 0.1 },
+      { section: 'Fuel thresholds', key: 'fuelPriceSpikePct', label: 'Fuel price spike threshold (%)', step: 1 },
+      { section: 'Maintenance thresholds', key: 'serviceCostAnomalyMult', label: 'Service cost anomaly multiplier (×)', step: 0.1 },
+      { section: 'Maintenance thresholds', key: 'maxMonthlyCostPerUnit', label: 'Max monthly cost per unit ($)', step: 100 },
+      { section: 'Maintenance thresholds', key: 'maxServiceRecordsPerUnit60d', label: 'Max service records per unit per 60 days', step: 1 },
+      { section: 'Maintenance thresholds', key: 'vendorInvoiceIncreasePct', label: 'Vendor invoice increase threshold (%)', step: 1 },
+      { section: 'Accident thresholds', key: 'accidentQuarterlyCostUsd', label: 'Quarterly accident cost alert ($)', step: 500 },
+      { section: 'Accident thresholds', key: 'accidentQuarterlyCostYoYPct', label: 'Quarterly accident cost vs prior year (%)', step: 1 }
+    ];
+
+    function renderIntegrityThresholdForm(th) {
+      const host = document.getElementById('intThFields');
+      if (!host) return;
+      const data = th && typeof th === 'object' ? th : {};
+      let cur = '';
+      const parts = [];
+      for (const row of INTEGRITY_THRESHOLD_FIELDS) {
+        if (row.section !== cur) {
+          parts.push(`<div class="erp-int-th-section" style="grid-column:1/-1">${escapeHtml(row.section)}</div>`);
+          cur = row.section;
+        }
+        const v = data[row.key] != null && data[row.key] !== '' ? String(data[row.key]) : '';
+        parts.push(`<div>
+          <label for="intTh_${escapeHtml(row.key)}">${escapeHtml(row.label)}</label>
+          <input id="intTh_${escapeHtml(row.key)}" type="number" step="${row.step}" value="${escapeHtml(v)}" />
+        </div>`);
+      }
+      host.innerHTML = `<div class="erp-int-threshold-grid">${parts.join('')}</div>`;
+    }
+
+    async function loadIntegrityThresholdsForm() {
+      document.getElementById('intThErr').textContent = '';
+      try {
+        const d = await api('/api/integrity/thresholds');
+        renderIntegrityThresholdForm(d.thresholds || {});
+      } catch (e) {
+        document.getElementById('intThErr').textContent = e.message || String(e);
+      }
+    }
+
+    async function saveIntegrityThresholds() {
+      const btn = document.getElementById('btnIntThSave');
+      document.getElementById('intThErr').textContent = '';
+      const run = async () => {
+        const body = {};
+        for (const row of INTEGRITY_THRESHOLD_FIELDS) {
+          const el = document.getElementById('intTh_' + row.key);
+          if (!el) continue;
+          const raw = String(el.value || '').trim();
+          if (raw === '') continue;
+          const n = Number(raw);
+          if (!Number.isFinite(n)) throw new Error('Invalid number for ' + row.label);
+          body[row.key] = n;
+        }
+        await api('/api/integrity/thresholds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        await loadIntegrityThresholdsForm();
+        if (window.showToast) window.showToast('Thresholds saved.', 'success');
+      };
+      try {
+        if (window.erpWithBusy && btn) await window.erpWithBusy(btn, run);
+        else await run();
+      } catch (e) {
+        document.getElementById('intThErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
+    }
+
+    async function resetIntegrityThresholds() {
+      document.getElementById('intThErr').textContent = '';
+      try {
+        await api('/api/integrity/thresholds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reset: true })
+        });
+        await loadIntegrityThresholdsForm();
+        if (window.showToast) window.showToast('Reset to defaults.', 'success');
+      } catch (e) {
+        document.getElementById('intThErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
+    }
+
+>>>>>>> origin/2026-04-20-jzws
     function openAdminTab(tab) {
       const t = String(tab || 'users');
       document.getElementById('adminTabPanelUsers').classList.toggle('hidden', t !== 'users');
       document.getElementById('adminTabPanelEmployees').classList.toggle('hidden', t !== 'employees');
       document.getElementById('adminTabPanelCompany').classList.toggle('hidden', t !== 'company');
+<<<<<<< HEAD
       const intP = document.getElementById('adminTabPanelIntegrity');
       if (intP) intP.classList.toggle('hidden', t !== 'integrity');
+=======
+      const intPanel = document.getElementById('adminTabPanelIntegrity');
+      if (intPanel) intPanel.classList.toggle('hidden', t !== 'integrity');
+>>>>>>> origin/2026-04-20-jzws
       const bU = document.getElementById('adminTabUsers');
       const bE = document.getElementById('adminTabEmployees');
       const bC = document.getElementById('adminTabCompany');
@@ -415,6 +541,7 @@
       if (bC) bC.classList.toggle('primary', t === 'company');
       if (bI) bI.classList.toggle('primary', t === 'integrity');
       if (t === 'company') loadCompanyProfile();
+<<<<<<< HEAD
       if (t === 'integrity') loadIntegrityThresholds();
     }
 
@@ -478,6 +605,9 @@
         document.getElementById('intThErr').textContent = e.message || String(e);
         if (window.showToast) window.showToast(e.message || String(e), 'error');
       }
+=======
+      if (t === 'integrity') loadIntegrityThresholdsForm();
+>>>>>>> origin/2026-04-20-jzws
     }
 
     function fillCompanyForm(p) {
