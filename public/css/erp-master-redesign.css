@@ -595,7 +595,12 @@ body.erp-maintenance .erp-ghost-nav .nav-btn {
 
 /* --- QBO alert bar (Rule 15 look, same IDs) --- */
 body.erp-maintenance #qboSyncAlertBar:not(.hidden) {
+  flex-grow: 0;
   flex-shrink: 0;
+  flex-basis: auto;
+  align-self: stretch;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--pill-red-bg);
   border-bottom: 1px solid var(--btn-danger-border);
   color: var(--color-text-primary);

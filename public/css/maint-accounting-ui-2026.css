@@ -2642,11 +2642,12 @@ body.erp-maintenance .maint-qbo-header-grid,
 body.erp-maintenance #erpConnectionStrip.erp-connection-strip,
 body.erp-maintenance .erp-topbar__actions.print-hide-actions,
 body.erp-maintenance .shop-wo-fallback.print-hide-actions,
-body.erp-maintenance .erp-reports-toolbar__actions.print-hide-actions,
-body.erp-maintenance .mr-qbo-banner__right.print-hide-actions {
+body.erp-maintenance .erp-reports-toolbar__actions.print-hide-actions {
   min-width: 0;
   min-height: 0;
 }
+/* Note: do not add .mr-qbo-banner__right.print-hide-actions here — min-width:0 lets the QBO sync
+   strip’s action column collapse to a vertical sliver (broken layout). See erp-master-spec-2026.css. */
 
 /* Rule 1: ops / accounting filter bars (flex rows in maintenance.html). */
 body.erp-maintenance .mr-filter-bar,

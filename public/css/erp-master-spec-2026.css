@@ -400,7 +400,11 @@ body.erp-maintenance .erp-new-menu__col-title {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  min-width: 0;
+  /* Do not use min-width:0 here — it lets flex shrink this column to ~one character wide
+     (vertical “QuickBooks…” on the edge of the viewport in Safari/Chrome). */
+  flex-shrink: 0;
+  min-width: min(100%, 12rem);
+  max-width: 100%;
 }
 
 .mr-qbo-banner__linkbtn {
