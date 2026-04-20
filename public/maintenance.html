@@ -315,7 +315,96 @@
         </div>
         </div>
         <header class="topbar erp-topbar">
-          <div class="title" id="pageTitle">Maintenance</div>
+          <div class="erp-topbar__lead">
+            <div class="title" id="pageTitle">Maintenance</div>
+            <div class="erp-new-wrap">
+              <button
+                type="button"
+                class="erp-btn-primary"
+                id="erpNewMenuBtn"
+                onclick="erpToggleNewMenu(event)"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="erpNewMenu"
+              >
+                + New
+              </button>
+              <div
+                id="erpNewMenu"
+                class="erp-new-menu hidden"
+                role="menu"
+                aria-labelledby="erpNewMenuBtn"
+                aria-hidden="true"
+                onclick="event.stopPropagation()"
+              >
+                <div class="erp-new-menu__cols">
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Expenses &amp; bills</div>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Standard</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewExpense()">Expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewBill()">Bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Check')">Check</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Purchase order')">Purchase order</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPayBills()">Pay bills</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Vendor credit')">Vendor credit</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Item receipt')">Item receipt</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Maintenance &amp; fuel</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
+                  </div>
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Drivers &amp; vendors</div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDriverBillPay()">Driver bill pay</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewDriverSettlement()">Driver settlement</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewLoadsEntry()">Load / TMS entry</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Transfer')">Transfer</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Journal entry')">Journal entry</button>
+                  </div>
+                  <div class="erp-new-menu__col">
+                    <div class="erp-new-menu__col-title">Maintenance &amp; shop</div>
+                    <div class="erp-new-menu__tile-grid erp-new-menu__tile-grid--services" role="group" aria-label="New service records">
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('repair')">
+                        Fleet repair<span class="erp-new-menu__tile-sub">External shop</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('maintenance_order')">
+                        Work order<span class="erp-new-menu__tile-sub">General service</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('accident')">
+                        Accident repair<span class="erp-new-menu__tile-sub">Body / collision / glass</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('pm')">
+                        PM service<span class="erp-new-menu__tile-sub">Preventive</span>
+                      </button>
+                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('tire')">
+                        Tire record<span class="erp-new-menu__tile-sub">Positions &amp; line items</span>
+                      </button>
+                    </div>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">More</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder()">Blank work order</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('air_bag')">Air bag record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('battery')">Battery record</button>
+                    <div class="erp-new-menu__sep" role="presentation">
+                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Fuel</span
+                      ><span class="erp-new-menu__sep-line"></span>
+                    </div>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewFuelRecord()">Fuel record</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <a href="/" class="topbar-home-link" title="Company hub">IH 35 Transportation LLC</a>
           <div class="erp-topbar__search">
             <div class="erp-topbar__search-inner">
@@ -360,93 +449,6 @@
             </span>
           </div>
           <div class="erp-topbar__actions print-hide-actions">
-            <div class="erp-new-wrap">
-              <button
-                type="button"
-                class="erp-btn-primary"
-                id="erpNewMenuBtn"
-                onclick="erpToggleNewMenu(event)"
-                aria-haspopup="true"
-                aria-expanded="false"
-                aria-controls="erpNewMenu"
-              >
-                + New
-              </button>
-              <div
-                id="erpNewMenu"
-                class="erp-new-menu hidden"
-                role="menu"
-                aria-labelledby="erpNewMenuBtn"
-                aria-hidden="true"
-                onclick="event.stopPropagation()"
-              >
-                <div class="erp-new-menu__cols">
-                  <div class="erp-new-menu__col">
-                    <div class="erp-new-menu__col-title">Expenses &amp; bills</div>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Standard</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewExpense()">Expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewBill()">Bill</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Check')">Check</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Purchase order')">Purchase order</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPayBills()">Pay bills</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Vendor credit')">Vendor credit</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Item receipt')">Item receipt</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Maintenance &amp; fuel</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Drivers</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenDriverBillPay()">Driver bill pay</button>
-                  </div>
-                  <div class="erp-new-menu__col">
-                    <div class="erp-new-menu__col-title">Services</div>
-                    <div class="erp-new-menu__tile-grid erp-new-menu__tile-grid--services" role="group" aria-label="New service records">
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('repair')">
-                        Repair order<span class="erp-new-menu__tile-sub">External shop</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('maintenance_order')">
-                        Maintenance order<span class="erp-new-menu__tile-sub">General service</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('accident')">
-                        Accident repair order<span class="erp-new-menu__tile-sub">Body / collision / glass</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('pm')">
-                        PM service<span class="erp-new-menu__tile-sub">Preventive</span>
-                      </button>
-                      <button type="button" class="erp-new-menu__tile" role="menuitem" onclick="erpNewWorkOrder('tire')">
-                        Tire record<span class="erp-new-menu__tile-sub">Positions &amp; line items</span>
-                      </button>
-                    </div>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">More</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder()">Blank work order</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('air_bag')">Air bag record</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewWorkOrder('battery')">Battery record</button>
-                  </div>
-                  <div class="erp-new-menu__col">
-                    <div class="erp-new-menu__col-title">Other</div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewDriverSettlement()">Driver settlement</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewFuelRecord()">Fuel record</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Journal entry')">Journal entry</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewLoadsEntry()">Load / TMS entry</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewPlaceholder('Transfer')">Transfer</button>
-                  </div>
-                </div>
-              </div>
-            </div>
             <button type="button" title="Reload lists and boards (auto-refresh also runs in the background)" onclick="loadAll()">Refresh</button>
             <button type="button" title="Verify QuickBooks OAuth and API reachability" onclick="testQuickBooks()">Test QuickBooks connection</button>
             <button type="button" title="Reload vendors, items, and accounts from QuickBooks" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
@@ -1119,19 +1121,18 @@
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div class="maint-field-cell">
-                        <span class="qb-l">Odometer</span>
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
+                          >Odometer
+                          <span class="erp-help-tip" aria-label="Help for service odometer">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service odometer">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              Suggested miles may come from Samsara (maintenance snapshot or live board), saved ERP mileage, or the last service on this unit. Use <strong>Samsara</strong> to pull the latest reading. Edit the field if this visit was not at that odometer; save may warn if live data differs.
+                            </span>
+                          </span>
+                        </span>
                         <div class="maint-field-cell__row">
                           <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" />
                           <button type="button" class="btn btn--small" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
-                        </div>
-                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">Suggested miles line under odometer — updates when the unit or <strong>Samsara</strong> snapshot changes.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service mileage hint host">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <code>updateServiceMileageHint(v, rec)</code> sets <code>#serviceMileageHint</code> <code>innerHTML</code> (escaped source + bold miles) when a numeric odometer exists; otherwise <code>textContent</code> for the manual-entry prompt. <code>fillServiceMileageFromSamsara()</code> and <code>renderSelectedUnit()</code> call it with <code>resolvedServiceMileageRecommendation()</code> metadata.
-                            </span>
-                          </span>
                         </div>
                         <div id="serviceMileageHint" class="mini-note maint-field-hint"></div>
                       </div>
@@ -1164,17 +1165,16 @@
                         <button type="button" class="maint-linkish" onclick="goToCreateQboVendor()">New in QBO</button>
                       </div>
                       <div class="maint-field-cell">
-                        <span class="qb-l">Load #</span>
-                        <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / settlement #" autocomplete="off" />
-                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">TMS suggestion or PDF unit note — line under the field clears when you type a load #.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Load # hint host">?</button>
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
+                          >Load #
+                          <span class="erp-help-tip" aria-label="Help for load number">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Load #">?</button>
                             <span class="erp-help-tip__panel" role="tooltip">
-                              <code>applyLoadNumberSuggestion()</code> sets <code>#recordLoadNumberHint</code> <code>textContent</code> from <code>computeSuggestedLoadNumber()</code> (open TMS load for <code>selectedUnit</code>, else delivered / first row) only when the input is empty; clears when no match. <code>applyParsedExpenseInvoicePdf(..., 'maint')</code> may set <code>textContent</code> for PDF unit vs current unit. <code>resetMaintenanceWorkOrderFormFields()</code> clears the host.
+                              When the field is empty, the ERP suggests an open TMS load for this unit (or the most recent delivered load). A short <strong>Suggested:</strong> line may appear under the field. Typing clears it. Imports may also set a note if the PDF unit differs.
                             </span>
                           </span>
-                        </div>
+                        </span>
+                        <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / settlement #" autocomplete="off" />
                         <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
                       </div>
                       <div class="maint-field-cell">
@@ -1237,7 +1237,7 @@
                             </span>
                           </span>
                         </div>
-                        <div id="maintCostTotalMatch" class="mini-note maint-field-hint"></div>
+                        <div id="maintCostTotalMatch" class="mini-note maint-field-hint hidden" aria-hidden="true"></div>
                         <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 200px">Reserved coordination strip under invoice total — host stays hidden while logic is stubbed.</span>
                           <span class="erp-help-tip">
@@ -1274,7 +1274,15 @@
                   <div class="maint-wo-form-split">
                   <div id="maintCostLinesPanel" class="maint-subcard maint-cost-panel-card erp-qb-cost-shell">
                     <div class="maint-subcard__head maint-subcard__head--split erp-qb-cost-global-head">
-                      <span class="erp-qb-cost-global-head__title">Cost breakdown</span>
+                      <span class="erp-qb-cost-global-head__title" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
+                        >Cost breakdown
+                        <span class="erp-help-tip" aria-label="Help for cost breakdown">
+                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost breakdown">?</button>
+                          <span class="erp-help-tip__panel" role="tooltip">
+                            Category and item lines use the tables below. The totals bar shows category sum, item sum, and grand total. Invoice total should match line sum within $0.02 before save, or use <strong>Lock total</strong>. Status for invoice vs lines appears on the totals bar.
+                          </span>
+                        </span>
+                      </span>
                       <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new cost lines">
                         <span class="erp-qb-cost-global__label">New lines</span>
                         <div class="erp-qb-seg" id="maintCostGlobalModeSeg" role="radiogroup" aria-label="Default line type">
@@ -1371,17 +1379,12 @@
                           ><span class="maint-qb-cost-totals-bar__lbl">Total:</span>
                           <span class="maint-qb-cost-totals-bar__val" id="maintCostTableTotalDisplay">$0.00</span></span
                         >
-                      </div>
-                      <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
-                        <span style="min-width:0;flex:1 1 220px">Live reminder under the totals bar when cost lines carry dollars — copy is <code>textContent</code> only.</span>
-                        <span class="erp-help-tip">
-                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines subtotal hint">?</button>
-                          <span class="erp-help-tip__panel" role="tooltip">
-                            <code>recalcMaintCostTotalFromLines()</code> sets <code>#maintCostLinesSubtotal</code> <code>textContent</code> to the “Totals update live…” line when any line has amount; clears when empty. Also cleared in <code>resetMaintCostLines()</code> / <code>fillMaintCostLinesFromRecord()</code>.
-                          </span>
+                        <span class="maint-qb-cost-totals-bar__piece maint-qb-cost-totals-bar__piece--status" id="maintCostTotalsStatusPiece" aria-live="polite">
+                          <span class="maint-qb-cost-totals-bar__lbl" id="maintCostTotalsStatusLabel"></span>
+                          <span class="maint-qb-cost-totals-bar__val" id="maintCostTotalsStatusVal" style="font-size:12px;font-weight:500"></span>
                         </span>
                       </div>
-                      <div class="mini-note maint-field-hint" id="maintCostLinesSubtotal"></div>
+                      <div class="mini-note maint-field-hint hidden" id="maintCostLinesSubtotal" aria-hidden="true"></div>
                       <div class="maint-cost-imports-shortcut" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--color-border)">
                         <div class="mini-note" style="margin:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
                           <span style="min-width:0;flex:1 1 12rem">Imports &amp; uploads (maint history, AP, fuel) — <strong>Upload center</strong></span>
@@ -2718,9 +2721,7 @@
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this form">?</button>
                       <span class="erp-help-tip__panel" role="tooltip">
-                        QBO-style header: one vendor, many lines. Reuse <strong>load / invoice #</strong> for trip P&amp;L. Save here, then post from the saved list.
-                        <span style="display:block;margin-top:8px"
-                          ><strong>Posting:</strong> save in ERP first → <strong>Record to QuickBooks</strong> → <strong>Verify in QuickBooks</strong>.</span>
+                        Save the expense in ERP first, then use <strong>Record to QuickBooks</strong> and <strong>Verify in QuickBooks</strong> from the saved list. One vendor, many lines — reuse load / invoice # for trip P&amp;L.
                       </span>
                     </span>
                   </div>
@@ -6561,11 +6562,7 @@
         return;
       }
       if (hint) {
-        hint.textContent = inp.value.trim()
-          ? ''
-          : 'Suggested load # for this truck: ' +
-            n +
-            ' (open TMS load for unit, else most recent).';
+        hint.textContent = inp.value.trim() ? '' : 'Suggested: ' + n;
       }
       if (fillIfEmpty && !inp.value.trim()) inp.value = n;
     }
@@ -13930,10 +13927,9 @@
       const mi = v && v.odometerMiles != null ? Number(v.odometerMiles) : null;
       const src = rec && rec.source ? String(rec.source) : 'Samsara';
       if (mi != null && Number.isFinite(mi)) {
-        el.innerHTML = `${escapeHtml(src)}: <strong>${Math.round(mi).toLocaleString()} mi</strong> — default for this service. Edit if wrong; save may warn if live odometer differs.`;
+        el.textContent = `${src}: ${Math.round(mi).toLocaleString()} mi`;
       } else {
-        el.textContent =
-          'No odometer from Samsara or saved mileage — enter manually or refresh fleet data.';
+        el.textContent = 'No suggested miles — enter manually or refresh fleet data.';
       }
     }
 
@@ -14348,34 +14344,35 @@
     function updateMaintCostTotalMatchUi(lineSum, hasLineMoney) {
       const matchEl = document.getElementById('maintCostTotalMatch');
       const costEl = document.getElementById('costInput');
-      if (!matchEl || !costEl) return;
+      const stLbl = document.getElementById('maintCostTotalsStatusLabel');
+      const stVal = document.getElementById('maintCostTotalsStatusVal');
+      if (!costEl) return;
+      if (matchEl) matchEl.textContent = '';
       const inv = Number(costEl.value);
       const invOk = Number.isFinite(inv);
       if (!hasLineMoney) {
-        matchEl.textContent = '';
+        if (stLbl) stLbl.textContent = '';
+        if (stVal) stVal.textContent = '';
         costEl.classList.remove('cost-total-ok', 'cost-total-bad');
         return;
       }
       if (!invOk) {
-        matchEl.textContent = 'Line sum: $' + lineSum.toFixed(2) + ' — enter invoice total to match.';
+        if (stLbl) stLbl.textContent = 'Invoice vs lines:';
+        if (stVal) stVal.textContent = 'Line sum $' + lineSum.toFixed(2) + ' — enter invoice total.';
         costEl.classList.remove('cost-total-ok', 'cost-total-bad');
         return;
       }
       const diff = Math.abs(lineSum - inv);
       if (diff < 0.02) {
-        matchEl.innerHTML =
-          '<span style="color:var(--pill-green-text);font-weight:500">✓</span> Invoice total matches line sum: $' + lineSum.toFixed(2);
+        if (stLbl) stLbl.textContent = 'Match:';
+        if (stVal) stVal.textContent = '✓ Invoice matches lines ($' + lineSum.toFixed(2) + ')';
         costEl.classList.add('cost-total-ok');
         costEl.classList.remove('cost-total-bad');
       } else {
-        matchEl.innerHTML =
-          '<span style="color:var(--color-semantic-error);font-weight:500">✗</span> Invoice total $' +
-          inv.toFixed(2) +
-          ' ≠ line sum $' +
-          lineSum.toFixed(2) +
-          ' (diff $' +
-          diff.toFixed(2) +
-          ') — adjust lines or total before save.';
+        if (stLbl) stLbl.textContent = 'Match:';
+        if (stVal)
+          stVal.textContent =
+            '✗ Off by $' + diff.toFixed(2) + ' (invoice $' + inv.toFixed(2) + ' vs lines $' + lineSum.toFixed(2) + ')';
         costEl.classList.add('cost-total-bad');
         costEl.classList.remove('cost-total-ok');
       }
@@ -14400,11 +14397,7 @@
       }
       if (costEl) costEl.readOnly = false;
 
-      if (sub) {
-        sub.textContent = hasAmt
-          ? 'Totals update live in the bar below — match invoice total or use Lock total. See ? on Cost breakdown for detail.'
-          : '';
-      }
+      if (sub) sub.textContent = '';
 
       updateMaintCostTotalMatchUi(rounded, hasAmt);
       updateMaintInvoiceCostCoordination(lines, rounded, hasAmt);

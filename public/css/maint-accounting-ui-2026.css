@@ -152,7 +152,7 @@ body.erp-maintenance .maint-fleet-inline {
 
 body.erp-maintenance .maint-fleet-inline__label {
   font-size: var(--erp-maint-strip-font-size, 12px);
-  font-weight: 700;
+  font-weight: 500;
   color: var(--erp-maint-chrome-muted, var(--color-text-label));
   margin-right: 0;
   letter-spacing: 0.04em;
@@ -2037,6 +2037,17 @@ body.erp-maintenance .maint-qb-cost-totals-bar__val {
 body.erp-maintenance .maint-qb-cost-totals-bar__piece--grand .maint-qb-cost-totals-bar__val {
   font-size: 15px;
   font-weight: 500;
+}
+
+body.erp-maintenance .maint-qb-cost-totals-bar__piece--status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1 1 200px;
+  min-width: 0;
+  justify-content: flex-end;
+  text-align: right;
 }
 
 body.erp-maintenance .maint-qb-cost-totals-bar__sep {

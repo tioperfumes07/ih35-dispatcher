@@ -351,6 +351,18 @@ body.erp-maintenance .erp-topbar .title {
   overflow-wrap: anywhere;
 }
 
+body.erp-maintenance .erp-topbar__lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-topbar__lead .erp-new-wrap {
+  position: relative;
+}
+
 body.erp-maintenance .erp-topbar__search {
   flex: 1;
   min-width: min(100%, 12rem);
