@@ -1036,6 +1036,8 @@ body.erp-maintenance .acct-board-qbo-inline {
   align-items: center;
   gap: 8px;
   margin-top: 12px;
+  min-width: 0;
+  min-height: 0;
 }
 
 body.erp-maintenance .acct-board-qbo-inline__label {
@@ -1045,6 +1047,8 @@ body.erp-maintenance .acct-board-qbo-inline__label {
   letter-spacing: 0.04em;
   color: var(--color-text-label);
   margin-right: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Match record-type row control metrics in AP / fuel / bill-pay modal composers */
@@ -1091,6 +1095,8 @@ body.erp-maintenance .acct-qbo-err-list {
   font-size: 12px;
   color: var(--color-semantic-error);
   line-height: 1.45;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .acct-expense-form-wrap {
