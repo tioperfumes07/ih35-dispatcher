@@ -3288,11 +3288,15 @@ body.banking-page .metrics > * {
 body.banking-page .metric .k {
   font-size: 11px;
   color: var(--color-text-label);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.banking-page .metric .v {
   font-size: 18px;
   font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.banking-page table {
@@ -3442,6 +3446,8 @@ body.settings-page .mini {
   font-size: 12px;
   color: var(--color-text-label);
   margin-top: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.settings-page table {
@@ -3481,6 +3487,8 @@ body.settings-page .err {
   color: var(--color-semantic-error);
   font-size: 13px;
   margin-top: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.settings-page #adminTabPanelEmployees .mr-filter-bar__grow input {
