@@ -1452,6 +1452,7 @@ body.erp-maintenance .erp-reports-hub {
   padding: 4px 2px 2px;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 4px;
+  min-width: 0;
 }
 
 @media (max-width: 1100px) {
@@ -1481,12 +1482,15 @@ body.erp-maintenance .erp-reports-hub__label {
   text-transform: uppercase;
   color: var(--color-text-label);
   margin-bottom: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-reports-hub__tiles {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 body.erp-maintenance .erp-reports-hub__tiles--dense {
@@ -1515,6 +1519,8 @@ body.erp-maintenance .erp-reports-hub__tile {
   cursor: pointer;
   font-family: inherit;
   transition: background 0.12s ease, border-color 0.12s ease;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 body.erp-maintenance .erp-reports-hub__tile:hover {
@@ -1533,6 +1539,8 @@ body.erp-maintenance .erp-reports-hub__tile-title {
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-body);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-reports-hub__tile-meta {
@@ -1540,6 +1548,8 @@ body.erp-maintenance .erp-reports-hub__tile-meta {
   font-size: 11px;
   color: var(--color-text-label);
   margin-top: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance #section-reports .rep-filter-hidden {
@@ -1557,6 +1567,8 @@ body.erp-maintenance .erp-reports-roadmap {
   line-height: 1.55;
   font-size: 13px;
   box-sizing: border-box;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 900px) {
