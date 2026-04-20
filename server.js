@@ -6,10 +6,12 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
+import PDFDocument from 'pdfkit';
 import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
+import { ensureAppDatabaseObjects } from './lib/ensure-app-database-objects.mjs';
 import {
   ensureMaintenanceServiceCatalog,
   MAINTENANCE_SERVICE_CATALOG_SEEDS
@@ -50,6 +52,7 @@ import {
 import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
 import { mountScheduledReports, startReportScheduleRunner } from './routes/scheduled-reports.mjs';
 import { mountDedupeRoutes } from './routes/dedupe.mjs';
+import { mountNameManagementRoutes } from './routes/name-management.mjs';
 import {
   getFleetAvgMilesPerMonth,
   clampFleetAvgMilesPerMonth,
@@ -6335,7 +6338,7 @@ app.get('/api/research/vehicle-due/:unitId', async (req, res) => {
     if (Number.isFinite(mr)) {
       if (mr < 0) pm_schedule_band = 'overdue';
       else if (mr <= 3000) pm_schedule_band = 'due_soon';
-      else if (mr < 8000) pm_schedule_band = 'upcoming';
+      else if (mr <= 8000) pm_schedule_band = 'upcoming';
       else pm_schedule_band = 'current';
     }
     res.json({
@@ -10687,6 +10690,7 @@ function bootstrapAdminFromEnv() {
 
 async function startServer() {
   await ensureTmsSchema();
+  await ensureAppDatabaseObjects();
   await ensureMaintenanceServiceCatalog();
   bootstrapAdminFromEnv();
   /** Bind IPv4 so clients using `127.0.0.1` (e.g. `npm run smoke`) reach the listener; Node may otherwise listen IPv6-only. */
