@@ -470,6 +470,8 @@ body.erp-maintenance .erp-new-menu__col-title {
   padding-bottom: 6px;
   margin-bottom: 8px;
   border-bottom: 1px solid var(--color-border);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-new-menu__item {
@@ -484,6 +486,8 @@ body.erp-maintenance .erp-new-menu__item {
   padding: 6px 2px;
   cursor: pointer;
   border-radius: var(--radius-input);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-new-menu__item:hover {
@@ -518,6 +522,8 @@ body.erp-maintenance .erp-new-menu__tile {
   line-height: 1.25;
   width: 100%;
   box-sizing: border-box;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 body.erp-maintenance .erp-new-menu__tile:hover {
   border-color: var(--color-border-focus);
@@ -545,6 +551,8 @@ body.erp-maintenance .erp-new-menu__tile-sub {
   font-weight: 400;
   color: var(--color-text-label);
   margin-top: 3px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* --- Ghost nav (preserve querySelector targets) --- */
