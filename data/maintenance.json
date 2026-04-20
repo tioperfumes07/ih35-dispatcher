@@ -11,11 +11,31 @@
   "fuelImportBatches": [],
   "workOrderSeq": 0,
   "paymentMethods": [
-    { "id": "pm_cash", "name": "Cash", "qboType": "Cash" },
-    { "id": "pm_check", "name": "Check", "qboType": "Check" },
-    { "id": "pm_creditcard", "name": "Credit Card", "qboType": "CreditCard" },
-    { "id": "pm_other", "name": "Other", "qboType": "Other" },
-    { "id": "pm_vendorcredit", "name": "Vendor Credit / Terms", "qboType": "Other" }
+    {
+      "id": "pm_cash",
+      "name": "Cash",
+      "qboType": "Cash"
+    },
+    {
+      "id": "pm_check",
+      "name": "Check",
+      "qboType": "Check"
+    },
+    {
+      "id": "pm_creditcard",
+      "name": "Credit Card",
+      "qboType": "CreditCard"
+    },
+    {
+      "id": "pm_other",
+      "name": "Other",
+      "qboType": "Other"
+    },
+    {
+      "id": "pm_vendorcredit",
+      "name": "Vendor Credit / Terms",
+      "qboType": "Other"
+    }
   ],
   "qboCache": {
     "vendors": [],
@@ -32,10 +52,22 @@
     "refreshedAt": ""
   },
   "operationalStatusCatalog": [
-    { "value": "in_service", "label": "In service" },
-    { "value": "out_of_service", "label": "Out of service" },
-    { "value": "shop", "label": "In shop" },
-    { "value": "roadside", "label": "Roadside / down" }
+    {
+      "value": "in_service",
+      "label": "In service"
+    },
+    {
+      "value": "out_of_service",
+      "label": "Out of service"
+    },
+    {
+      "value": "shop",
+      "label": "In shop"
+    },
+    {
+      "value": "roadside",
+      "label": "Roadside / down"
+    }
   ],
   "assetStatusByUnit": {},
   "assetActiveByUnit": {},
@@ -49,9 +81,361 @@
   "integrityAlerts": [],
   "integrityThresholds": {},
   "integritySamsaraCache": {
-    "refreshedAt": "",
+    "refreshedAt": "2026-04-20T09:21:15.705Z",
     "deepRefreshedAt": "",
-    "units": {}
+    "units": {
+      "T120": {
+        "samsaraVehicleId": "212014918168161",
+        "odometerMiles": 60217,
+        "latitude": 27.65614,
+        "longitude": -99.636538,
+        "fuelPercent": 0,
+        "liveStatsUpdatedAt": "2026-04-13T01:44:33Z",
+        "engineState": ""
+      },
+      "T122": {
+        "samsaraVehicleId": "212014918407330",
+        "odometerMiles": 908283,
+        "latitude": 25.78219679,
+        "longitude": -100.16772692,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2024-08-21T02:22:27Z",
+        "engineState": ""
+      },
+      "T139": {
+        "samsaraVehicleId": "212014918145387",
+        "odometerMiles": 677509,
+        "latitude": 27.654799,
+        "longitude": -99.632928,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:05:01Z",
+        "engineState": ""
+      },
+      "T140": {
+        "samsaraVehicleId": "281474981549842",
+        "odometerMiles": 665516,
+        "latitude": 27.573016,
+        "longitude": -99.505054,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-03-09T21:57:39Z",
+        "engineState": ""
+      },
+      "T141": {
+        "samsaraVehicleId": "212014918515872",
+        "odometerMiles": 559084,
+        "latitude": 27.656621,
+        "longitude": -99.636376,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T08:48:16Z",
+        "engineState": ""
+      },
+      "T143": {
+        "samsaraVehicleId": "212014918469225",
+        "odometerMiles": 663880,
+        "latitude": 27.655221,
+        "longitude": -99.632753,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T08:56:51Z",
+        "engineState": ""
+      },
+      "T144": {
+        "samsaraVehicleId": "281474976753761",
+        "odometerMiles": 586502,
+        "latitude": 27.60353616,
+        "longitude": -99.49737948,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2025-07-09T18:00:13Z",
+        "engineState": ""
+      },
+      "T145": {
+        "samsaraVehicleId": "212014918145381",
+        "odometerMiles": 617433,
+        "latitude": 27.656592,
+        "longitude": -99.63656,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-01-27T23:37:52Z",
+        "engineState": ""
+      },
+      "T146": {
+        "samsaraVehicleId": "281474984618865",
+        "odometerMiles": 662385,
+        "latitude": 27.655055,
+        "longitude": -99.63278,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:11:50Z",
+        "engineState": ""
+      },
+      "T147": {
+        "samsaraVehicleId": "212014918145347",
+        "odometerMiles": 364155,
+        "latitude": 27.617196209,
+        "longitude": -99.47394958,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T08:41:11Z",
+        "engineState": ""
+      },
+      "T148": {
+        "samsaraVehicleId": "212014918150482",
+        "odometerMiles": 622515,
+        "latitude": 27.65618,
+        "longitude": -99.636289,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T08:38:45Z",
+        "engineState": ""
+      },
+      "T149": {
+        "samsaraVehicleId": "281474982552360",
+        "odometerMiles": 547039,
+        "latitude": 27.71986319,
+        "longitude": -99.71820332,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2024-08-04T14:30:16Z",
+        "engineState": ""
+      },
+      "T150": {
+        "samsaraVehicleId": "212014918475062",
+        "odometerMiles": 518230,
+        "latitude": 27.7199374,
+        "longitude": -99.71867495,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2024-11-06T23:26:42Z",
+        "engineState": ""
+      },
+      "T151": {
+        "samsaraVehicleId": "281474978401391",
+        "odometerMiles": 467351,
+        "latitude": 27.71975603,
+        "longitude": -99.7189358,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2024-11-06T22:19:28Z",
+        "engineState": ""
+      },
+      "T152": {
+        "samsaraVehicleId": "281474979035903",
+        "odometerMiles": 723856,
+        "latitude": 27.655254,
+        "longitude": -99.632737,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-04T15:01:39Z",
+        "engineState": ""
+      },
+      "T154": {
+        "samsaraVehicleId": "281474979303344",
+        "odometerMiles": 389416,
+        "latitude": 27.64046213,
+        "longitude": -99.71955471,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2024-11-01T19:35:59Z",
+        "engineState": ""
+      },
+      "T155": {
+        "samsaraVehicleId": "281474979383606",
+        "odometerMiles": 397764,
+        "latitude": 33.812348009,
+        "longitude": -93.42908362,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2024-10-08T12:32:25Z",
+        "engineState": ""
+      },
+      "T156": {
+        "samsaraVehicleId": "281474984385108",
+        "odometerMiles": 524795,
+        "latitude": 41.317724,
+        "longitude": -87.820891,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:21:14Z",
+        "engineState": ""
+      },
+      "T157": {
+        "samsaraVehicleId": "281474979383583",
+        "odometerMiles": 423996,
+        "latitude": 27.720077849,
+        "longitude": -99.71872683,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2024-11-12T18:06:11Z",
+        "engineState": ""
+      },
+      "T158": {
+        "samsaraVehicleId": "212014918144591",
+        "odometerMiles": 446505,
+        "latitude": 27.637679,
+        "longitude": -99.562668,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2025-09-13T20:50:29Z",
+        "engineState": ""
+      },
+      "T159": {
+        "samsaraVehicleId": "281474979303185",
+        "odometerMiles": 483541,
+        "latitude": 27.655325,
+        "longitude": -99.632711,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-15T04:47:37Z",
+        "engineState": ""
+      },
+      "T160": {
+        "samsaraVehicleId": "281474980918884",
+        "odometerMiles": 524907,
+        "latitude": 29.863461,
+        "longitude": -95.583113,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:16:30Z",
+        "engineState": ""
+      },
+      "T161": {
+        "samsaraVehicleId": "212014918132392",
+        "odometerMiles": 559759,
+        "latitude": 27.656569,
+        "longitude": -99.636679,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-17T01:56:37Z",
+        "engineState": ""
+      },
+      "T162": {
+        "samsaraVehicleId": "281474981327556",
+        "odometerMiles": 425413,
+        "latitude": 27.614334,
+        "longitude": -99.524976,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:21:03Z",
+        "engineState": ""
+      },
+      "T163": {
+        "samsaraVehicleId": "281474979344428",
+        "odometerMiles": 539545,
+        "latitude": 27.64014,
+        "longitude": -99.547976,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-02-20T18:12:36Z",
+        "engineState": ""
+      },
+      "T164": {
+        "samsaraVehicleId": "278018081689344",
+        "odometerMiles": 415756,
+        "latitude": 38.767318,
+        "longitude": -90.071661,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:20:40Z",
+        "engineState": ""
+      },
+      "T165": {
+        "samsaraVehicleId": "281474976735302",
+        "odometerMiles": 513263,
+        "latitude": 40.544074,
+        "longitude": -74.404829,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:21:06Z",
+        "engineState": ""
+      },
+      "T166": {
+        "samsaraVehicleId": "281474977024421",
+        "odometerMiles": 366907,
+        "latitude": 27.720090119,
+        "longitude": -99.71880743,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2024-11-07T18:55:47Z",
+        "engineState": ""
+      },
+      "T167": {
+        "samsaraVehicleId": "281474982391381",
+        "odometerMiles": 442637,
+        "latitude": 26.108961,
+        "longitude": -98.209001,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:19:57Z",
+        "engineState": ""
+      },
+      "T168": {
+        "samsaraVehicleId": "281474982260973",
+        "odometerMiles": 413138,
+        "latitude": 27.655075,
+        "longitude": -99.632833,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T08:22:54Z",
+        "engineState": ""
+      },
+      "T169": {
+        "samsaraVehicleId": "281474976722691",
+        "odometerMiles": 471213,
+        "latitude": 27.656411,
+        "longitude": -99.636418,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T08:50:12Z",
+        "engineState": ""
+      },
+      "T170": {
+        "samsaraVehicleId": "281474984820437",
+        "odometerMiles": 352348,
+        "latitude": 40.08339,
+        "longitude": -80.545892,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:21:06Z",
+        "engineState": ""
+      },
+      "T171": {
+        "samsaraVehicleId": "281474984820463",
+        "odometerMiles": 381418,
+        "latitude": 33.588026,
+        "longitude": -86.700602,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:19:30Z",
+        "engineState": ""
+      },
+      "T172": {
+        "samsaraVehicleId": "281474984618830",
+        "odometerMiles": 428224,
+        "latitude": 27.655038,
+        "longitude": -99.632805,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T08:57:37Z",
+        "engineState": ""
+      },
+      "T173": {
+        "samsaraVehicleId": "281474984820004",
+        "odometerMiles": 371586,
+        "latitude": 40.715157,
+        "longitude": -86.374772,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:21:07Z",
+        "engineState": ""
+      },
+      "T174": {
+        "samsaraVehicleId": "281474984819962",
+        "odometerMiles": 399852,
+        "latitude": 28.111001,
+        "longitude": -99.333171,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:21:13Z",
+        "engineState": ""
+      },
+      "T175": {
+        "samsaraVehicleId": "281474985873170",
+        "odometerMiles": 415240,
+        "latitude": 27.656517,
+        "longitude": -99.636653,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:12:40Z",
+        "engineState": ""
+      },
+      "T176": {
+        "samsaraVehicleId": "281474985873184",
+        "odometerMiles": 373659,
+        "latitude": 27.518004,
+        "longitude": -99.517809,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-01T02:30:31Z",
+        "engineState": ""
+      },
+      "T177": {
+        "samsaraVehicleId": "281474985855584",
+        "odometerMiles": 420811,
+        "latitude": 28.231472,
+        "longitude": -99.299115,
+        "fuelPercent": null,
+        "liveStatsUpdatedAt": "2026-04-20T09:21:11Z",
+        "engineState": ""
+      }
+    }
   },
   "integritySamsaraFaultSnapshots": {},
   "integrityNightlyLog": [],

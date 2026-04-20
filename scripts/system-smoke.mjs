@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Non-destructive HTTP checks against a running server (default http://localhost:3400).
- * Run: start the server, then `npm run smoke`. For **Rule 0 guard + smoke** in one step: `npm run qa:automated` (**`smoke:gate-sync`** + **`rule0:check`** + this script; requires server up) or `npm run qa:isolated` (**`scripts/smoke-gate-paths-sync.mjs`** first, then a temp **`server.js`** on a free port with **`IH35_SMOKE_GATE=1`** from **`qa-with-server.mjs`**, then **`rule0:check`** + this script).
+ * Run: start the server, then `npm run smoke`. For **Rule 0 guard + smoke** in one step: `npm run qa:automated` (**`smoke:gate-sync`** + **`rule0:check`** + this script; requires server up) or `npm run qa:isolated` (**`scripts/smoke-gate-paths-sync.mjs`** first, then a temp **`server.js`** on a free port with **`IH35_SMOKE_GATE=1`** from **`qa-with-server.mjs`**, then **`rule0:check`** + this script + **`test:name-mgmt`** + **`test:fleet-mileage`**).
  * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings, tracking redirect) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, erp-master-redesign, erp-master-spec-2026, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
  * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). Bodies are reused from earlier successful GETs (**`STATIC_TEXT`** for CSS, HTML needles for **`/maintenance.html`**) so the guard avoids duplicate fetches when those steps pass.
@@ -11,7 +11,7 @@
  * Set SMOKE_TIMEOUT_MS for per-fetch AbortSignal timeout (default **10000** ms, clamped **2000–30000**); **.github/workflows/rule0-check.yml** sets **15000** for CI.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
- * On critical failure, the script prints a one-line hint to run **`npm run qa:isolated`** ( **`smoke-gate-paths-sync`**, temp **`server.js`**, **`rule0:check`**, then this script).
+ * On critical failure, the script prints a one-line hint to run **`npm run qa:isolated`** ( **`smoke-gate-paths-sync`**, temp **`server.js`**, **`rule0:check`**, this script, then unit tests).
  */
 import process from 'process';
 import { ruleZeroForbiddenHits } from './rule-zero-agent-b.mjs';
@@ -393,14 +393,14 @@ for (const [method, path] of [SOFT_DB]) {
 
 console.log(
   criticalFailures
-    ? `\nSmoke failed: ${criticalFailures} critical endpoint(s) did not return HTTP 2xx.\nFull gate (no manual start; smoke-gate sync + rule0 + smoke): npm run qa:isolated`
+    ? `\nSmoke failed: ${criticalFailures} critical endpoint(s) did not return HTTP 2xx.\nFull gate (no manual start; smoke-gate sync + rule0 + smoke + unit tests): npm run qa:isolated`
     : softWarnings
       ? '\nSmoke completed (critical paths OK; see optional DB check above).'
       : '\nSmoke checks completed.'
 );
 if (!criticalFailures && process.env.SMOKE_QUIET !== '1') {
   console.log(
-    `Smoke target: ${base}  (set SMOKE_BASE to override)  |  With server up: npm run qa:automated  |  Ephemeral full gate: npm run qa:isolated (smoke-gate-paths-sync first)`
+    `Smoke target: ${base}  (set SMOKE_BASE to override)  |  With server up: npm run qa:automated  |  Ephemeral full gate (+ unit tests): npm run qa:isolated (smoke-gate-paths-sync first)`
   );
 }
 process.exit(criticalFailures ? 1 : 0);

@@ -8,6 +8,8 @@
  *
  * Runs **`scripts/smoke-gate-paths-sync.mjs`** first so **`CRITICAL`** and **`SMOKE_GATE_API_PATHS`** cannot drift.
  *
+ * After HTTP smoke, runs **`npm run test:name-mgmt`** and **`npm run test:fleet-mileage`** (same suites as **`npm run qa:automated`**) so one command matches the full automated gate when port **3400** is busy.
+ *
  * **`npm run qa:automated`** ( **`package.json`** ) runs the same **`smoke-gate-paths-sync`** step before **`rule0:check`** + **`smoke`** when a server is already listening — no child process here.
  *
  * Sets **`IH35_SMOKE_GATE=1`** on the child **`server.js`** so HTTP smoke passes **`/api/*`** GETs used by **`system-smoke.mjs`** even when ERP login is required (users in **`data/app-users.json`**). Do not set **`IH35_SMOKE_GATE`** on long-lived production listeners unless you intend to relax auth for those read-only probes.
@@ -117,6 +119,26 @@ async function main() {
     });
   }
 
+  function runNpmScript(scriptName) {
+    return new Promise((resolve, reject) => {
+      const child = spawn('npm', ['run', scriptName], {
+        cwd: root,
+        env: { ...process.env },
+        stdio: 'inherit',
+      });
+      scriptChild = child;
+      child.on('error', (e) => {
+        scriptChild = null;
+        reject(e);
+      });
+      child.on('exit', (code, sig) => {
+        scriptChild = null;
+        if (code === 0) resolve();
+        else reject(new Error(`npm run ${scriptName} exited with ${code}${sig ? ` (${sig})` : ''}`));
+      });
+    });
+  }
+
   function stopOnSignal(exitCode) {
     process.removeListener('SIGINT', onSigInt);
     process.removeListener('SIGTERM', onSigTerm);
@@ -153,7 +175,9 @@ async function main() {
       smokeEnv.SMOKE_TIMEOUT_MS = '15000';
     }
     await runNodeScript('scripts/system-smoke.mjs', smokeEnv);
-    console.log(`qa:isolated OK — ${base}`);
+    await runNpmScript('test:name-mgmt');
+    await runNpmScript('test:fleet-mileage');
+    console.log(`qa:isolated OK — ${base} (smoke + rule0 + unit tests)`);
   } finally {
     process.removeListener('SIGINT', onSigInt);
     process.removeListener('SIGTERM', onSigTerm);

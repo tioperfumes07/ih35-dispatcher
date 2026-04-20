@@ -1245,6 +1245,25 @@
     }
   }
 
+  /** After `document.write` + `close()`, some browsers never fire `load`; `readyState` is often already `complete`. */
+  function schedulePopupPrint(win) {
+    const run = function () {
+      setTimeout(function () {
+        try {
+          win.focus();
+          win.print();
+        } catch (_) {}
+      }, 400);
+    };
+    try {
+      const st = win.document && win.document.readyState;
+      if (st === 'complete' || st === 'interactive') run();
+      else win.addEventListener('load', run, { once: true });
+    } catch (_) {
+      run();
+    }
+  }
+
   function generatePrintWindow(documentType, data, extension) {
     const ext = extension || 'pdf';
     const html = generatePrintDoc(documentType, data);
@@ -1267,14 +1286,7 @@
       } catch (_) {}
       return;
     }
-    w.onload = function () {
-      setTimeout(function () {
-        try {
-          w.focus();
-          w.print();
-        } catch (_) {}
-      }, 400);
-    };
+    schedulePopupPrint(w);
   }
 
   global.PRINT_CSS = PRINT_CSS;
@@ -1311,13 +1323,6 @@
         w.document.title = suggested.replace(/\.[a-z0-9]+$/i, '');
       } catch (_) {}
     }
-    w.onload = function () {
-      setTimeout(function () {
-        try {
-          w.focus();
-          w.print();
-        } catch (_) {}
-      }, 400);
-    };
+    schedulePopupPrint(w);
   };
 })(typeof window !== 'undefined' ? window : globalThis);

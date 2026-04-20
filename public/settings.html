@@ -363,7 +363,9 @@
               <td><button type="button" onclick="removeUser('${x.id}')">Remove</button></td>
             </tr>
           `).join('');
-          openAdminTab('users');
+          const h = String(location.hash || '').toLowerCase();
+          if (h === '#integrity-thresholds') openAdminTab('integrity');
+          else openAdminTab('users');
           await loadEmployees();
         } else {
           document.getElementById('adminUsers').classList.add('hidden');
@@ -374,18 +376,119 @@
       }
     }
 
+    const INTEGRITY_THRESHOLD_FIELD_IDS = [
+      'maxTiresPerUnit90d',
+      'maxSameTirePosition180d',
+      'tireCostAnomalyMult',
+      'maxFleetTiresPerMonth',
+      'maxRepairsPerDriver90d',
+      'maxAccidentsPerDriver12mo',
+      'maxRepairCostDriver90d',
+      'maxRepairsSameDriverUnit60d',
+      'fuelConsumptionIncreasePct',
+      'unusualGallonsMult',
+      'fuelPriceSpikePct',
+      'serviceCostAnomalyMult',
+      'maxMonthlyCostPerUnit',
+      'maxServiceRecordsPerUnit60d',
+      'vendorInvoiceIncreasePct',
+      'accidentQuarterlyCostUsd',
+      'accidentQuarterlyCostYoYPct'
+    ];
+
+    function intThInputId(key) {
+      return 'intTh_' + key;
+    }
+
+    async function loadIntegrityThresholdsForm() {
+      const err = document.getElementById('intThErr');
+      if (err) err.textContent = '';
+      try {
+        const d = await api('/api/integrity/thresholds');
+        const th = d.thresholds || {};
+        for (const k of INTEGRITY_THRESHOLD_FIELD_IDS) {
+          const el = document.getElementById(intThInputId(k));
+          if (!el) continue;
+          el.value = th[k] != null && th[k] !== '' ? String(th[k]) : '';
+        }
+      } catch (e) {
+        if (err) err.textContent = e.message || String(e);
+      }
+    }
+
+    async function saveIntegrityThresholds() {
+      const err = document.getElementById('intThErr');
+      const btn = document.getElementById('btnIntThSave');
+      if (err) err.textContent = '';
+      const body = {};
+      for (const k of INTEGRITY_THRESHOLD_FIELD_IDS) {
+        const raw = String(document.getElementById(intThInputId(k))?.value || '').trim();
+        if (raw === '') continue;
+        const n = Number(raw);
+        if (!Number.isFinite(n)) {
+          if (err) err.textContent = 'Invalid number for ' + k;
+          return;
+        }
+        body[k] = n;
+      }
+      const run = async () => {
+        await api('/api/integrity/thresholds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        await loadIntegrityThresholdsForm();
+        if (window.showToast) window.showToast('Integrity thresholds saved.', 'success');
+      };
+      try {
+        if (window.erpWithBusy && btn) await window.erpWithBusy(btn, run);
+        else await run();
+      } catch (e) {
+        if (err) err.textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
+    }
+
+    async function resetIntegrityThresholds() {
+      const err = document.getElementById('intThErr');
+      const btn = document.getElementById('btnIntThReset');
+      if (err) err.textContent = '';
+      if (!confirm('Reset all custom integrity thresholds to built-in defaults?')) return;
+      const run = async () => {
+        await api('/api/integrity/thresholds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reset: true })
+        });
+        await loadIntegrityThresholdsForm();
+        if (window.showToast) window.showToast('Thresholds reset to defaults.', 'success');
+      };
+      try {
+        if (window.erpWithBusy && btn) await window.erpWithBusy(btn, run);
+        else await run();
+      } catch (e) {
+        if (err) err.textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
+    }
+
     function openAdminTab(tab) {
       const t = String(tab || 'users');
       document.getElementById('adminTabPanelUsers').classList.toggle('hidden', t !== 'users');
       document.getElementById('adminTabPanelEmployees').classList.toggle('hidden', t !== 'employees');
       document.getElementById('adminTabPanelCompany').classList.toggle('hidden', t !== 'company');
+      const pInt = document.getElementById('adminTabPanelIntegrity');
+      if (pInt) pInt.classList.toggle('hidden', t !== 'integrity');
       const bU = document.getElementById('adminTabUsers');
       const bE = document.getElementById('adminTabEmployees');
       const bC = document.getElementById('adminTabCompany');
+      const bI = document.getElementById('adminTabIntegrity');
       if (bU) bU.classList.toggle('primary', t === 'users');
       if (bE) bE.classList.toggle('primary', t === 'employees');
       if (bC) bC.classList.toggle('primary', t === 'company');
+      if (bI) bI.classList.toggle('primary', t === 'integrity');
       if (t === 'company') loadCompanyProfile();
+      if (t === 'integrity') void loadIntegrityThresholdsForm();
     }
 
     function fillCompanyForm(p) {
@@ -732,6 +835,13 @@
 
     window.addEventListener('load', () => {
       if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
+    });
+
+    window.addEventListener('hashchange', () => {
+      const au = document.getElementById('adminUsers');
+      if (au && !au.classList.contains('hidden') && String(location.hash || '').toLowerCase() === '#integrity-thresholds') {
+        openAdminTab('integrity');
+      }
     });
 
     refresh();
