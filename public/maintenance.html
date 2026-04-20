@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
   <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
   <link rel="stylesheet" href="/css/maint-accounting-ui-2026.css" />
+  <link rel="stylesheet" href="/css/maint-overhaul-2026.css" />
   <link rel="stylesheet" href="/css/accounting-layout-overhaul-2026.css" />
   <link rel="stylesheet" href="/css/erp-multi-bills.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
@@ -1152,39 +1153,25 @@
         <div class="maint-page-shell">
           <div class="maint-action-strip" aria-label="Maintenance actions">
             <div class="maint-action-strip__top">
-            <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
-              <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
-              <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
-              <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
-              <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
-            </div>
-            <div class="maint-action-strip__fleet">
-              <span class="maint-fleet-inline__label">Fleet</span>
-              <span id="maintActionFleetPills" class="maint-action-strip__pills" style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center"></span>
-            </div>
-            </div>
-            <div class="maint-action-strip__notes maint-action-strip__notes--below">
-              <div class="maint-action-strip__note mini-note erp-dev-note" data-dev-note="true">
-                <span>Fleet chips scope unit list, fleet table, and WO column — ERP categories only (not Samsara).</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet category pills">?</button>
+              <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
+                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
+              </div>
+              <div class="maint-action-strip__right" aria-live="polite">
+                <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"></span>
+                <span class="erp-help-tip" aria-label="Help for QBO issues indicator">
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO posting alerts">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintenanceCategoryChips()</code> → <code>#maintActionFleetPills</code> pills. <code>setAssetCategory()</code> updates <code>activeAssetCategory</code>, re-renders <code>renderMaintenanceUnitList()</code>, may clear <code>selectedUnit</code> if out of category, then <code>renderSelectedUnit()</code> + <code>renderMaintenanceTable()</code>. Missing strip → same markup on off-screen <code>#assetCategoryChips</code>.
+                    Green = no high-severity posting alerts. Counts reflect the same payload as the top sync bar. Use <strong>View</strong> (when shown) to open the full alert list.
                   </span>
                 </span>
               </div>
-              <div class="maint-action-strip__note maint-action-strip__note--qbo mini-note erp-dev-note" data-dev-note="true" id="maintTopQboIssuesWrap" aria-live="polite">
-                <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;width:100%">
-                  <span style="min-width:0;flex:1 1 140px;color:var(--color-text-label)">QBO posting hint — updates when sync alerts change.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance strip QBO indicator">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderMaintAsideQbIssues()</code> → <code>#maintTopQboIssuesInd</code> (severity dot + short status; optional <strong>View</strong> → <code>#qboSyncAlertBar</code>). <code>#maintAsideQbIssues</code> gets the same HTML for focus routing.
-                    </span>
-                  </span>
-                </div>
-                <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 0"></span>
-              </div>
+            </div>
+            <div class="maint-action-strip__fleet">
+              <span class="maint-fleet-inline__label">Fleet</span>
+              <span id="maintActionFleetPills" class="maint-action-strip__pills" style="display:inline-flex;flex-wrap:nowrap;gap:6px;align-items:center"></span>
             </div>
           </div>
           <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
@@ -1193,35 +1180,36 @@
             <button type="button" class="maint-nav-tab" data-maint-main="rm" tabindex="-1" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
             <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop / location</button>
           </div>
-          <div class="maint-search-row">
-            <div class="maint-search-field maint-search-field--grow">
-              <span class="qb-l">Find unit</span>
-              <input
-                id="maintenanceUnitSearch"
-                class="qb-in"
-                list="unitOptions"
-                placeholder="Type vehicle / unit"
-                oninput="renderMaintenanceUnitList()"
-                autocomplete="off"
-              />
-            </div>
-            <div class="maint-search-field maint-search-field--right">
-              <span class="qb-l">Filter by service</span>
-              <input
-                id="maintenanceServiceFilter"
-                class="qb-in"
-                list="serviceOptions"
-                placeholder="Type service (filters table)"
-                oninput="renderMaintenanceTable()"
-                autocomplete="off"
-              />
-            </div>
-          </div>
-
         <div id="maintMainTabRecord" class="maint-main-tab-panel active">
         <div id="maintWorkOrderFormMount">
         <div class="maint-wo-columns" id="maintenanceSplit">
           <div class="maint-wo-col-units">
+            <div class="maint-unit-col__search">
+              <div class="maint-search-input-wrap">
+                <span class="maint-search-icon" aria-hidden="true">⌕</span>
+                <input
+                  id="maintenanceUnitSearch"
+                  class="qb-in"
+                  list="unitOptions"
+                  placeholder="Search units…"
+                  oninput="renderMaintenanceUnitList()"
+                  autocomplete="off"
+                />
+                <button type="button" class="maint-search-clear" onclick="maintClearUnitSearchInput()" title="Clear search" aria-label="Clear unit search">×</button>
+              </div>
+              <div class="maint-search-input-wrap">
+                <span class="maint-search-icon" aria-hidden="true">⌕</span>
+                <input
+                  id="maintenanceServiceFilter"
+                  class="qb-in"
+                  list="serviceOptions"
+                  placeholder="Filter by service…"
+                  oninput="renderMaintenanceUnitList(); renderMaintenanceTable();"
+                  autocomplete="off"
+                />
+                <button type="button" class="maint-search-clear" onclick="maintClearServiceFilterInput()" title="Clear service filter" aria-label="Clear service filter">×</button>
+              </div>
+            </div>
           <div class="panel unit-list-panel">
             <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
@@ -1233,7 +1221,7 @@
                   </span>
                 </span>
               </div>
-              <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse unit list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
+              <button type="button" class="maint-unit-collapse-btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse unit list">◂</button>
             </div>
             <div class="panel-body">
               <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
@@ -1254,6 +1242,9 @@
           <div class="maint-wo-col-form">
             <div id="maintWoNoUnitPlaceholder" class="maint-wo-placeholder">Select a unit from the list to create or view a work order.</div>
             <div id="maintWoFormArea" class="hidden maint-wo-form-stack-inner">
+            <div class="maint-wo-snapshot-dock">
+              <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
+            </div>
             <div class="maint-wo-main-aside">
             <div class="maint-wo-workspace maint-section-card">
               <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
@@ -1265,7 +1256,33 @@
                   </span>
                 </span>
               </div>
-              <div id="maintAssetHeaderCard" class="maint-asset-header-card" aria-live="polite">
+              <div id="maintCard1HeaderSlot" class="maint-card1-header-slot hidden" aria-label="Shop and repair status">
+                <div class="maint-field-cell" style="flex:1 1 180px;min-width:160px;max-width:280px">
+                  <span class="qb-l">Shop location</span>
+                  <select id="repairLocationSelect" class="qb-in maint-field" style="height:30px;min-width:160px" onchange="onRepairLocationSelectChange()" title="Where service was performed">
+                    <option value="">— Choose —</option>
+                    <option value="in-house">Internal shop</option>
+                    <option value="external">External shop</option>
+                    <option value="road-service">Roadside</option>
+                    <option value="parts-purchase">Parts purchase</option>
+                    <option value="over-the-road">Over the road</option>
+                  </select>
+                  <input type="hidden" id="repairLocationTypeInput" value="" />
+                </div>
+                <div class="maint-field-cell" style="flex:1 1 180px;min-width:160px;max-width:280px">
+                  <span class="qb-l">Repair status</span>
+                  <select id="recordRepairStatusSelect" class="qb-in maint-field" style="height:30px;min-width:160px" title="Workflow status stored on this maintenance record" onchange="renderMaintAsideWoSummary()">
+                    <option value="">— Not set —</option>
+                    <option value="queued">Open</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="waiting_parts">Waiting for parts</option>
+                    <option value="finished">Complete</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <div id="recordRepairStatusMeta" class="mini-note" style="margin-top:4px" aria-live="polite"></div>
+                </div>
+              </div>
+              <div id="maintAssetHeaderCard" class="maint-asset-header-card maint-card1-body-host" aria-live="polite">
                 <div class="maint-asset-header-card__placeholder">Select a unit from the list.</div>
               </div>
               <div id="maintAssetStatusPanel" class="maint-asset-status-panel hidden" aria-hidden="true">
@@ -1299,17 +1316,6 @@
                 <div class="unit-box"><div class="k">Due soon</div><div class="v" id="unitDueSoonBox">0</div></div>
                 <div class="unit-box"><div class="k">Saved odo</div><div class="v" id="unitMileageBox">N/A</div></div>
               </div>
-
-              <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
-                <span style="min-width:0;flex:1 1 220px">WO snapshot bar — mirrors R&amp;M aside KV; hidden until a unit is selected.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="WO summary bar">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintAsideWoSummary()</code> → <code>#maintAsideWoSummary</code> + this bar: <code>selectedUnit</code>, WO #, cost, location (<code>hidden</code> without unit).
-                  </span>
-                </span>
-              </div>
-                <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
 
                 <div class="maint-wo-form-shell">
                 <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
@@ -3484,7 +3490,10 @@
                   <input id="bpBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking or card on file in QBO" oninput="resolveBpBankSearch()" onblur="resolveBpBankSearch()">
                   <input id="bpBankQboId" type="hidden">
                 </div>
-                <div>
+                <div
+                  class="mr-bp-paymentdate-row"
+                  style="grid-column:1/-1;margin:14px 0;padding:14px 0;border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)"
+                >
                   <span class="qb-l">Payment date</span>
                   <input id="bpTxnDate" class="qb-in" type="date">
                 </div>
@@ -4500,7 +4509,7 @@
             </span>
           </div>
           <div id="repRoadmapBanner" class="mini-note erp-reports-roadmap hidden" role="status" aria-live="polite"></div>
-          <div id="repCatTabs" class="rep-cat-tabs print-hide-actions" role="tablist" aria-label="Report categories"></div>
+          <div id="repCatTabs" class="rep-cat-tabs erp-tab-bar print-hide-actions" role="tablist" aria-label="Report categories"></div>
           <div id="repCatalogGrid" class="rep-catalog-grid print-hide-actions" aria-live="polite"></div>
           <div class="erp-reports-columns">
             <aside class="erp-reports-sidebar" aria-label="Report categories">
@@ -7489,26 +7498,48 @@
       sp.classList.toggle('unit-list-collapsed');
       const c = sp.classList.contains('unit-list-collapsed');
       if (btn) {
-        btn.textContent = c ? '▲' : '▼';
-        btn.title = c ? 'Expand truck list' : 'Collapse truck list';
+        btn.textContent = c ? '▸' : '◂';
+        btn.title = c ? 'Expand unit list' : 'Collapse unit list';
       }
       try {
-        localStorage.setItem('erpUnitListCollapsed', c ? '1' : '0');
+        const v = c ? '1' : '0';
+        localStorage.setItem('erpUnitListCollapsed', v);
+        localStorage.setItem('maintenance_unit_list_collapsed', v);
       } catch (_) {}
     }
 
     function loadUnitListPreference() {
       try {
-        if (localStorage.getItem('erpUnitListCollapsed') === '1') {
+        const legacy = localStorage.getItem('erpUnitListCollapsed');
+        const m = localStorage.getItem('maintenance_unit_list_collapsed');
+        const c = m === '1' || (m == null && legacy === '1');
+        if (c) {
           const sp = document.getElementById('maintenanceSplit');
           const btn = document.getElementById('unitListToggleBtn');
           sp?.classList.add('unit-list-collapsed');
           if (btn) {
-            btn.textContent = '▲';
-            btn.title = 'Expand truck list';
+            btn.textContent = '▸';
+            btn.title = 'Expand unit list';
           }
         }
       } catch (_) {}
+    }
+
+    function maintClearUnitSearchInput() {
+      const el = document.getElementById('maintenanceUnitSearch');
+      if (el) {
+        el.value = '';
+        renderMaintenanceUnitList();
+      }
+    }
+
+    function maintClearServiceFilterInput() {
+      const el = document.getElementById('maintenanceServiceFilter');
+      if (el) {
+        el.value = '';
+        renderMaintenanceUnitList();
+        renderMaintenanceTable();
+      }
     }
 
     const LS_ERP_KEY = 'ih35_erp_write_secret';
@@ -10653,18 +10684,31 @@
       if (!listEl) return;
       const payload = __maintQboSyncPayloadCache;
       const alerts = payload && Array.isArray(payload.alerts) ? payload.alerts : [];
-      if (!alerts.length) {
+      const r = (window.__acctBoardDateFilters && window.__acctBoardDateFilters.qboerr) || {};
+      function inQboErrWin(a) {
+        if (!r.from && !r.to) return true;
+        const raw = a && (a.createdAt || a.ts || a.time || a.at || '');
+        const d = String(raw).slice(0, 10);
+        if (!d) return true;
+        if (r.from && d < r.from) return false;
+        if (r.to && d > r.to) return false;
+        return true;
+      }
+      const filtered = alerts.length ? alerts.filter(inQboErrWin) : [];
+      const rc = document.getElementById('ab_qbo_rcount');
+      if (rc) rc.textContent = String(filtered.length) + ' records';
+      if (!filtered.length) {
         listEl.innerHTML = '';
         if (moreEl) moreEl.classList.add('hidden');
         return;
       }
-      const lines = alerts.slice(0, 3).map(a => {
+      const lines = filtered.slice(0, 3).map(a => {
         const t = String(a.title || a.code || 'Notice').trim();
         const esc = t.length > 120 ? t.slice(0, 117) + '…' : t;
         return `<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(esc)}</div>`;
       });
       listEl.innerHTML = lines.join('');
-      if (moreEl) moreEl.classList.toggle('hidden', alerts.length <= 3);
+      if (moreEl) moreEl.classList.toggle('hidden', filtered.length <= 3);
     }
 
     function paintAcctSidebarConnections() {
@@ -10771,21 +10815,36 @@
         costRaw != null && String(costRaw).trim() !== '' && Number.isFinite(costNum)
           ? '$' + costNum.toFixed(2)
           : '—';
-      const loc = (document.getElementById('repairLocationSearch')?.value || '').trim() || '—';
+      const locDetail = (document.getElementById('repairLocationSearch')?.value || '').trim();
+      const repairSel = document.getElementById('repairLocationSelect');
+      let locTypeLab = '';
+      if (repairSel && repairSel.selectedOptions && repairSel.selectedOptions[0] && String(repairSel.value || '').trim()) {
+        locTypeLab = String(repairSel.selectedOptions[0].textContent || '').trim();
+      }
+      const loc =
+        locDetail && locTypeLab
+          ? `${locTypeLab} · ${locDetail}`
+          : locDetail || locTypeLab || '—';
       const rsRaw = String(document.getElementById('recordRepairStatusSelect')?.value || '').trim();
       const repair = maintRepairStatusLabel(rsRaw);
-      const inner = `
+      const asideInner = `
         <span class="kv"><span class="kv-l">Unit:</span><span class="kv-v">${escapeHtml(unit)}</span></span>
         <span class="kv"><span class="kv-l">WO #:</span><span class="kv-v">${escapeHtml(wo)}</span></span>
         <span class="kv"><span class="kv-l">Total:</span><span class="kv-v">${escapeHtml(cost)}</span></span>
         <span class="kv"><span class="kv-l">Location:</span><span class="kv-v">${escapeHtml(loc)}</span></span>
         <span class="kv"><span class="kv-l">Repair:</span><span class="kv-v">${escapeHtml(repair)}</span></span>`;
-      if (host) host.innerHTML = inner;
+      const barInner = `
+        <span class="maint-wo-summary-pill"><b>Unit</b> <span class="maint-wo-summary-pill__val--unit">${escapeHtml(unit)}</span></span>
+        <span class="maint-wo-summary-pill"><b>WO #</b> ${escapeHtml(wo)}</span>
+        <span class="maint-wo-summary-pill"><b>Total</b> ${escapeHtml(cost)}</span>
+        <span class="maint-wo-summary-pill"><b>Location</b> ${escapeHtml(loc)}</span>
+        <span class="maint-wo-summary-pill"><b>Repair</b> ${escapeHtml(repair)}</span>`;
+      if (host) host.innerHTML = asideInner;
       if (bar) {
         if (!selectedUnit) bar.classList.add('hidden');
         else {
           bar.classList.remove('hidden');
-          bar.innerHTML = inner;
+          bar.innerHTML = barInner;
         }
       }
     }
@@ -19366,14 +19425,26 @@
 
     function renderAcctBoardMiniTables() {
       const vendorName = id => cacheVendors().find(v => v.qboId === id)?.name || id || '';
+      const df = window.__acctBoardDateFilters || {};
+      function inWin(iso, key) {
+        const r = df[key] || {};
+        if (!r.from && !r.to) return true;
+        const d = String(iso || '').slice(0, 10);
+        if (!d) return true;
+        if (r.from && d < r.from) return false;
+        if (r.to && d > r.to) return false;
+        return true;
+      }
       const exBody = document.getElementById('acctBoardRecentExpBody');
       if (exBody) {
         const items = [];
         (erp.apTransactions || []).forEach(ap => {
           if (String(ap.txnType || '').toLowerCase() !== 'expense') return;
+          const iso = String(ap.txnDate || ap.createdAt || '').slice(0, 10) || '';
           const t = new Date(ap.txnDate || ap.createdAt || 0).getTime() || 0;
           items.push({
             t,
+            iso,
             row: `<tr>
               <td>${escapeHtml(String(ap.txnDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(String(ap.txnType || '').toUpperCase())}</td>
@@ -19387,9 +19458,11 @@
           if (wo.voided) return;
           if (String(wo.txnType || '').toLowerCase() !== 'expense') return;
           const tot = (wo.lines || []).reduce((s, l) => s + (Number(l.amount) || 0), 0);
+          const iso = String(wo.serviceDate || wo.createdAt || wo.date || '').slice(0, 10) || '';
           const t = new Date(wo.serviceDate || wo.createdAt || wo.date || 0).getTime() || 0;
           items.push({
             t,
+            iso,
             row: `<tr>
               <td>${escapeHtml(String(wo.serviceDate || '').slice(0, 10) || '—')}</td>
               <td>WO ${escapeHtml(String(wo.txnType || '').toUpperCase())}</td>
@@ -19399,9 +19472,12 @@
             </tr>`
           });
         });
-        items.sort((a, b) => b.t - a.t);
+        const fItems = items.filter(x => inWin(x.iso, 'expenses'));
+        fItems.sort((a, b) => b.t - a.t);
+        const rc = document.getElementById('ab_exp_rcount');
+        if (rc) rc.textContent = String(fItems.length) + ' records';
         exBody.innerHTML =
-          items.slice(0, 5).map(x => x.row).join('') ||
+          fItems.slice(0, 5).map(x => x.row).join('') ||
           '<tr><td colspan="5" class="mini-note">No recent expenses.</td></tr>';
       }
       const billBody = document.getElementById('acctBoardRecentBillsBody');
@@ -19409,9 +19485,11 @@
         const items = [];
         (erp.apTransactions || []).forEach(ap => {
           if (String(ap.txnType || '').toLowerCase() !== 'bill') return;
+          const iso = String(ap.txnDate || ap.createdAt || '').slice(0, 10) || '';
           const t = new Date(ap.txnDate || ap.createdAt || 0).getTime() || 0;
           items.push({
             t,
+            iso,
             row: `<tr>
               <td>${escapeHtml(String(ap.txnDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(vendorName(ap.qboVendorId))}</td>
@@ -19426,9 +19504,11 @@
           if (wo.voided) return;
           if (String(wo.txnType || '').toLowerCase() !== 'bill') return;
           const tot = (wo.lines || []).reduce((s, l) => s + (Number(l.amount) || 0), 0);
+          const iso = String(wo.serviceDate || wo.createdAt || wo.date || '').slice(0, 10) || '';
           const t = new Date(wo.serviceDate || wo.createdAt || wo.date || 0).getTime() || 0;
           items.push({
             t,
+            iso,
             row: `<tr>
               <td>${escapeHtml(String(wo.serviceDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(vendorName(wo.qboVendorId))}</td>
@@ -19439,25 +19519,36 @@
             </tr>`
           });
         });
-        items.sort((a, b) => b.t - a.t);
+        const fItems = items.filter(x => inWin(x.iso, 'bills'));
+        fItems.sort((a, b) => b.t - a.t);
+        const rc = document.getElementById('ab_bill_rcount');
+        if (rc) rc.textContent = String(fItems.length) + ' records';
         billBody.innerHTML =
-          items.slice(0, 5).map(x => x.row).join('') ||
+          fItems.slice(0, 5).map(x => x.row).join('') ||
           '<tr><td colspan="6" class="mini-note">No recent bills.</td></tr>';
       }
       const payBody = document.getElementById('acctBoardRecentPayBody');
       if (payBody) {
         const log = (erp.qboBillPaymentLog || []).slice().reverse();
-        const rows = log.slice(0, 5).map(e => {
+        const payRows = log.map(e => {
+          const iso = String(e.txnDate || '').slice(0, 10) || '';
           const st = e.reversedAt ? 'reversed' : String(e.qboSyncStatus || e.status || 'posted');
-          return `<tr>
+          return {
+            iso,
+            row: `<tr>
             <td>${escapeHtml(String(e.txnDate || '').slice(0, 10) || '—')}</td>
             <td>${escapeHtml(String(e.vendorName || '—'))}</td>
             <td>${escapeHtml(String(e.qboBillPaymentId || e.docNumber || '—'))}</td>
             <td class="num">${escapeHtml(Number(e.totalAmt || 0).toFixed(2))}</td>
             <td>${escapeHtml(String(e.payType || '—'))}</td>
             <td>${escapeHtml(st)}</td>
-          </tr>`;
+          </tr>`
+          };
         });
+        const fPay = payRows.filter(x => inWin(x.iso, 'payments'));
+        const rc = document.getElementById('ab_pay_rcount');
+        if (rc) rc.textContent = String(fPay.length) + ' records';
+        const rows = fPay.slice(0, 5).map(x => x.row);
         payBody.innerHTML =
           rows.join('') || '<tr><td colspan="6" class="mini-note">No bill payments logged yet.</td></tr>';
       }
@@ -19577,6 +19668,7 @@
         sumEl.textContent = String(pendingN) + ' pending · $' + pending$.toFixed(2) + ' total (not yet in QuickBooks)';
       }
       renderAcctBoardMiniTables();
+      if (typeof erpInitAcctBoardDateFilters === 'function') erpInitAcctBoardDateFilters();
     }
 
     function paintQboStatusBanner(el, text, tier) {
