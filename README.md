@@ -57,6 +57,32 @@ If the server is not on **3400** or smoke must use another host, set **`SMOKE_BA
 - `GET /api/pdf/*` — PDF documents
 - `GET /api/geocode`, `/api/autocomplete`, `/api/route` — location and routing helpers
 
+## Git → GitHub → Render (why deploys may not match pushes)
+
+This clone’s **`origin`** is **`https://github.com/tioperfumes07/ih35-dispatcher.git`** (see `git remote -v`). Pushes from this folder only update **that** GitHub repository’s default branch you push to (usually **`main`**).
+
+### If Render never shows new deploys
+
+1. **Same repo on Render** — In the [Render Dashboard](https://dashboard.render.com) open your **Web Service** → **Settings** → **Build & Deploy** → **Repository**. It must be **`tioperfumes07/ih35-dispatcher`** (same owner + name as `origin`). If Render points at another repo, fork, or org, your pushes here will not affect that service.
+2. **Same branch** — **Branch** should be **`main`** (or whatever branch you actually push to). A `production` branch on Render while you only push `main` will look “stuck.”
+3. **Automatic deploys** — Under **Build & Deploy**, confirm deploys are triggered **on push** to that branch, not **manual deploy only**.
+4. **GitHub access** — Render’s GitHub App must have access to **`tioperfumes07/ih35-dispatcher`** (install/update the app for that org/repo if the service was created under a different GitHub user).
+
+### “I want to see every single commit”
+
+- **Full commit history** lives on **GitHub**, not as a duplicate git log inside Render’s service page. Open: **`https://github.com/tioperfumes07/ih35-dispatcher/commits/main`**
+- **Render** shows **Deploy / Event** history (builds). Each successful Git-triggered deploy is tied to a commit SHA; that is normal “one row per deploy,” not one row per historical commit.
+
+### Quick local checks before blaming Render
+
+```bash
+git remote -v
+git branch --show-current
+git log -1 --oneline
+```
+
+Compare the printed **remote URL** and **branch** to what Render shows in **Build & Deploy**. If they differ, update Render or change `git remote set-url origin …` so local and Render agree.
+
 ## Next build steps (product)
 
 1. Hardening: authentication, non-wildcard CORS, rate limits for public deploys
