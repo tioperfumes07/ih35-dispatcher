@@ -21,6 +21,8 @@ Operations hub for **dispatch / TMS**, **fuel & route planning**, **maintenance 
 
 ## Setup
 
+**Runtime:** **Node.js 18+** (ES modules; native `fetch`). Declared in **`package.json`** `engines`.
+
 1. Copy `.env.example` to `.env`
 2. Set `SAMSARA_API_TOKEN`, `DATABASE_URL` (for TMS), and optional `GEOAPIFY_API_KEY`, QBO, and `PCMILER_API_KEY`
 3. `npm install` then `npm run db:migrate` if using Postgres
