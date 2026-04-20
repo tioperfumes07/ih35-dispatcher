@@ -5789,7 +5789,7 @@ app.get('/api/integrity/export', (req, res) => {
       wb,
       XLSX.utils.aoa_to_sheet([
         [company],
-        [`Integrity export ${startDate} – ${endDate}`],
+        [`Integrity export ${formatIsoDateShortPlain(startDate)} – ${formatIsoDateShortPlain(endDate)}`],
         [],
         ['KPI (fleet-wide, unresolved)'],
         ['Active alerts', kpiX.active],
@@ -5834,7 +5834,8 @@ app.get('/api/integrity/export', (req, res) => {
         rows.map(r => {
           const en = enrichIntegrityDashboardAlert(r, erp);
           const o = {};
-          o.triggeredDate = en.triggeredDate != null ? en.triggeredDate : '';
+          o.triggeredDate =
+            en.triggeredDate != null ? formatReportPdfCellValue(en.triggeredDate) || String(en.triggeredDate) : '';
           o.category = en.category != null ? en.category : '';
           o.severity = en.severity != null ? en.severity : '';
           o.alertType = en.alertType != null ? en.alertType : '';
@@ -5847,7 +5848,7 @@ app.get('/api/integrity/export', (req, res) => {
           o.recordType = en.recordType != null ? en.recordType : '';
           o.status = en.status != null ? en.status : '';
           o.reviewedBy = en.reviewedBy != null ? en.reviewedBy : '';
-          o.reviewedAt = en.reviewedAt != null ? en.reviewedAt : '';
+          o.reviewedAt = en.reviewedAt != null ? formatReportPdfCellValue(en.reviewedAt) || String(en.reviewedAt) : '';
           o.notes = en.notes != null ? en.notes : '';
           return o;
         })
@@ -5864,7 +5865,7 @@ app.get('/api/integrity/export', (req, res) => {
       wb,
       XLSX.utils.json_to_sheet(
         accRecs.map(r => ({
-          serviceDate: r.serviceDate,
+          serviceDate: formatReportPdfCellValue(r.serviceDate) || String(r.serviceDate || ''),
           unit: r.unit,
           driver: r.driverName || r.driverId,
           cost: r.cost,

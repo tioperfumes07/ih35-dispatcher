@@ -1327,6 +1327,7 @@
   global.PRINT_CSS = PRINT_CSS;
   global.sanitizeFilename = sanitizeFilename;
   global.formatDateForFilename = formatDateForFilename;
+  global.formatIsoDateShortPlain = formatIsoDateShortPlain;
   global.generateFilename = function (documentType, data, extension) {
     return generateFilename(documentType, data, extension);
   };

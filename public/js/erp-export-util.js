@@ -10,19 +10,44 @@
     const d = new Date();
     return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
   }
+  function generatedLabel() {
+    const iso = new Date().toISOString();
+    if (typeof window.formatIsoDateShortPlain === 'function') {
+      const datePart = window.formatIsoDateShortPlain(iso);
+      const t = new Date(iso);
+      const tm =
+        typeof t.toLocaleTimeString === 'function'
+          ? t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+          : '';
+      return tm ? `${datePart} · ${tm}` : datePart;
+    }
+    return iso;
+  }
   function escCsv(v) {
     const s = String(v ?? '');
     if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
     return s;
   }
 
+  function smartReportBasename(reportData, options, ext) {
+    const title = String(reportData.title || options.filename || 'Report');
+    const filt = options.filtersApplied || reportData.filters || {};
+    if (typeof window.generateFilename === 'function') {
+      try {
+        return window.generateFilename('report', { reportName: title, unitFilter: filt.unit, startDate: filt.startDate, endDate: filt.endDate }, ext);
+      } catch (_) {}
+    }
+    return `${(options.filename || title).replace(/[^\w.-]+/g, '_')}.${ext}`;
+  }
+
   async function exportPdfServer(reportData, options) {
     const headers = { 'Content-Type': 'application/json', ...(typeof authFetchHeaders === 'function' ? authFetchHeaders() : {}) };
+    const title = String(reportData.title || options.filename || 'Report');
     const r = await fetch('/api/reports/export/pdf', {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        reportType: options.filename || reportData.title || 'Report',
+        reportType: title,
         companyName: options.companyName || 'IH 35 Transportation LLC',
         filters: options.filtersApplied || reportData.filters || {},
         data: reportData
@@ -33,7 +58,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = (options.filename || 'report').replace(/[^\w.-]+/g, '_') + '.pdf';
+    a.download = smartReportBasename(reportData, options, 'pdf');
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -51,6 +76,14 @@
       const keys = columns.map(c => c.key || c.label).filter(Boolean);
       const labels = columns.map(c => String(c.label || c.key || ''));
       const baseName = (options.filename || title).replace(/[^\w.-]+/g, '_');
+      const csvName =
+        typeof window.generateFilename === 'function'
+          ? window.generateFilename('report', { reportName: title, ...(options.filtersApplied || reportData.filters || {}) }, 'csv')
+          : `${baseName}_${stamp()}.csv`;
+      const xlsxName =
+        typeof window.generateFilename === 'function'
+          ? window.generateFilename('report', { reportName: title, ...(options.filtersApplied || reportData.filters || {}) }, 'xlsx')
+          : `${baseName}_${stamp()}.xlsx`;
 
       if (fmt === 'pdf') {
         await exportPdfServer({ ...reportData, title }, options);
@@ -67,7 +100,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${baseName}_${stamp()}.csv`;
+        a.download = csvName;
         a.click();
         URL.revokeObjectURL(url);
         return;
@@ -82,7 +115,7 @@
           [title],
           [`Date range: ${options.dateRange || ''}`],
           [`Filters: ${JSON.stringify(options.filtersApplied || reportData.filters || {})}`],
-          [`Generated: ${new Date().toISOString()}`],
+          [`Generated: ${generatedLabel()}`],
           [],
           labels
         ];
@@ -100,7 +133,7 @@
         }
         const filt = Object.entries(options.filtersApplied || reportData.filters || {}).map(([k, v]) => [k, v]);
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Filter', 'Value']].concat(filt)), 'Filters applied');
-        XLSX.writeFile(wb, `${baseName}_${stamp()}.xlsx`);
+        XLSX.writeFile(wb, xlsxName);
         return;
       }
 
