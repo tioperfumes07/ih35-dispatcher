@@ -53,7 +53,8 @@ import {
   defaultIntegrityThresholds,
   alertCategory,
   integrityThresholdExportRows,
-  integrityAlertRuleCatalogSections
+  integrityAlertRuleCatalogSections,
+  integrityAlertRuleCatalogFlat
 } from './lib/integrity-engine.mjs';
 import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
 import { mountScheduledReports, startReportScheduleRunner } from './routes/scheduled-reports.mjs';
@@ -5756,9 +5757,14 @@ app.get('/api/integrity/export', (req, res) => {
         'Save-time integrity rules (T/D/A/F/M codes) run when maintenance records, work orders, and fuel purchases are saved; thresholds are the merged values in Settings → Integrity thresholds plus built-in defaults.',
         { width: 500 }
       );
+      doc.moveDown(0.35);
+      doc.text(
+        'Rule M3 (service records per unit, 60 days) counts non-PM visits only — preventive / lube-style lines are excluded in the engine.',
+        { width: 500 }
+      );
       doc.moveDown(0.45);
       doc.text(
-        'Telematics rules (OD/EH/IT/VU/FC/MR/DB) combine Samsara vehicle snapshots, TMS active driver hints, safety aggregates, and ERP work orders / fuel where noted in each alert’s details.',
+        "Telematics rules (OD/EH/IT/VU/FC/MR/DB) combine Samsara vehicle snapshots, TMS active driver hints, safety aggregates, and ERP work orders / fuel where noted in each alert's details.",
         { width: 500 }
       );
       doc.moveDown(0.45);
@@ -6053,6 +6059,19 @@ app.get('/api/integrity/export', (req, res) => {
         ...thRowsX.map(r => [r.key, r.label, r.unitLabel, r.value])
       ]),
       'Thresholds'
+    );
+    const ruleRows = integrityAlertRuleCatalogFlat();
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.json_to_sheet(
+        ruleRows.map(r => ({
+          section: r.section,
+          code: r.code,
+          summary: r.summary,
+          thresholdKeys: r.thresholdKeys
+        }))
+      ),
+      'Alert codes'
     );
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

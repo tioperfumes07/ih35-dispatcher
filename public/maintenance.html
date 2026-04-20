@@ -5148,6 +5148,8 @@
                     <option value="accidents">Accidents</option>
                     <option value="fuel">Fuel</option>
                     <option value="maintenance">Maintenance</option>
+                    <option value="samsara">Samsara / telematics</option>
+                    <option value="predictive">Predictive</option>
                   </select>
                 </div>
                 <div class="ap-exp-field">
@@ -5183,6 +5185,8 @@
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="accidents" aria-selected="false" onclick="erpIntegritySelectTab('accidents')">Accidents</button>
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="fuel" aria-selected="false" onclick="erpIntegritySelectTab('fuel')">Fuel</button>
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="maintenance" aria-selected="false" onclick="erpIntegritySelectTab('maintenance')">Maintenance</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="samsara" aria-selected="false" onclick="erpIntegritySelectTab('samsara')">Samsara</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="predictive" aria-selected="false" onclick="erpIntegritySelectTab('predictive')">Predictive</button>
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="resolved" aria-selected="false" onclick="erpIntegritySelectTab('resolved')">Resolved</button>
               </div>
               <div id="integrityDashKpi" class="erp-int-kpi-row" style="margin:0 0 12px"></div>
@@ -23493,7 +23497,17 @@
       else if (cat && cat !== 'all') active = cat;
       else active = 'all';
       window.__integrityDashTab = active;
-      const pillIds = new Set(['all', 'tires', 'drivers', 'accidents', 'fuel', 'maintenance', 'resolved']);
+      const pillIds = new Set([
+        'all',
+        'tires',
+        'drivers',
+        'accidents',
+        'fuel',
+        'maintenance',
+        'samsara',
+        'predictive',
+        'resolved'
+      ]);
       const match = pillIds.has(active) ? active : '';
       host.querySelectorAll('.erp-int-cat-tab[data-int-tab]').forEach(btn => {
         const t = String(btn.getAttribute('data-int-tab') || '');
