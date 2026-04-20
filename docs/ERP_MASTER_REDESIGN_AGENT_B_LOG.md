@@ -56,8 +56,9 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 - `**app-theme.css`:** Cleared more maintenance-only hex fallbacks — warning/success soft borders, semantic warn accent / warning accents, `**stroke: var(--muted, …)`** / `**fill: var(--accent|nav-bg, …)`**, `**var(--accent, #1d4ed8)`** in mixes, semantic success in `**color-mix**`, hero/panel gradients using `**#e8eef9` / `#eef2f9**`, `**var(--color-nav-bg, var(--app-frame-border, …))**` inner hex, and settlement table header gradient now uses `**var(--color-nav-bg)**` + `**color-mix(…, black)**` instead of literal navy stops; settlement `**th**` bottom border uses `**var(--sidebar-bg)**` without a hex fallback.
 - **Rule 1:** `maint-accounting-ui-2026.css` — `**#section-accounting .maint-qb-lines-scroll`** gets `**min-width: 0`** so wide QB line tables stay inside the doc’s horizontal scroll region under flex layout.
 - **Smoke:** Maintenance HTML needles include `**id="erpApp"`** so the master shell root cannot disappear without failing the static GET check.
+- **Smoke (follow-up):** **`GET /api/pdf/__smoke__`** (auth-exempt in **`server.js`**) — **200**, **`application/pdf`**, **`%PDF`** magic (**`pdfkit`**); replaces probing **`/api/pdf/shop-queue`** so agents/CI stay green when ERP login is required. Documented in **`README`**, **`ARCHITECTURE`**, **`AGENT_COORDINATION`**.
 
-**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `scripts/system-smoke.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+**Files:** `public/css/app-theme.css`, `public/css/maint-accounting-ui-2026.css`, `scripts/system-smoke.mjs`, `server.js`, `routes/pdf.mjs`, `README.md`, `docs/ARCHITECTURE.md`, `docs/AGENT_COORDINATION.md`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
 
 ---
 

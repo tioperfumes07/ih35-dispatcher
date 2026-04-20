@@ -1142,6 +1142,17 @@ router.post('/api/pdf/fleet-maintenance-draft', (req, res) => {
   }
 });
 
+/** Minimal PDF for HTTP smoke only (`scripts/system-smoke.mjs`). Auth-exempt in `server.js` so agents/CI pass when login is required. */
+router.get('/api/pdf/__smoke__', (_req, res) => {
+  try {
+    sendPdf(res, 'ih35-smoke.pdf', doc => {
+      doc.font('Helvetica').fontSize(10).text('IH35 smoke PDF probe (pdfkit).');
+    });
+  } catch (e) {
+    res.status(500).send(e.message || 'PDF failed');
+  }
+});
+
 router.get('/api/pdf/shop-queue', (req, res) => {
   try {
     const erp = readFullErpJson();

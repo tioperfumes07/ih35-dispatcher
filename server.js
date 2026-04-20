@@ -122,6 +122,7 @@ app.use((req, res, next) => {
     pathOnly === '/api/health' ||
     pathOnly.startsWith('/api/health/') ||
     pathOnly === '/api/__smoke_not_found__' || // system-smoke.mjs — assert JSON 404 when auth is required
+    pathOnly === '/api/pdf/__smoke__' || // system-smoke.mjs — assert pdfkit when auth is required
     pathOnly === '/api/auth/login' ||
     pathOnly === '/api/auth/status' ||
     pathOnly === '/api/auth/bootstrap-first-user'

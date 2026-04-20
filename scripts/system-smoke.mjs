@@ -6,6 +6,7 @@
  * plus static CSS/JS (design-tokens, app-theme, erp-master-redesign, erp-master-spec-2026, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
  * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). Bodies are reused from earlier successful GETs (**`STATIC_TEXT`** for CSS, HTML needles for **`/maintenance.html`**) so the guard avoids duplicate fetches when those steps pass.
  * **`GET /api/__smoke_not_found__`** (auth-exempt in **`server.js`**) must return **404** with **`Content-Type`** including **`application/json`** and body **`{ error: 'Not found', path: '...' }`** so XHR clients never see HTML for unknown API paths.
+ * **`GET /api/pdf/__smoke__`** (auth-exempt in **`server.js`**) must return **200** with **`Content-Type`** including **`application/pdf`** and a body starting with **`%PDF`** — exercises **`pdfkit`** even when ERP login is required.
  * Set SMOKE_BASE=http://host:port to target another environment. Set SMOKE_QUIET=1 to omit the trailing “Smoke target” line on success (also set automatically for smoke when CI=true via qa-with-server.mjs).
  * Set SMOKE_TIMEOUT_MS for per-fetch AbortSignal timeout (default **8000** ms, clamped **2000–30000**); **.github/workflows/rule0-check.yml** sets **12000** for CI.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
@@ -33,6 +34,9 @@ const SOFT_DB = ['GET', '/api/health/db'];
 
 /** Reserved path; auth middleware skips it so smoke can assert JSON 404 even when login is required elsewhere. */
 const API_NOT_FOUND_PROBE = '/api/__smoke_not_found__';
+
+/** Minimal PDF route (auth-exempt); validates `pdfkit` + `routes/pdf.mjs` when agents run smoke with auth on. */
+const PDF_SMOKE_PATH = '/api/pdf/__smoke__';
 
 /** Static ERP shells (HTML) — catches broken public paths or 500 on page boot. Second value: one substring or all of a list must be present. */
 const HTML_PAGES = [
@@ -221,6 +225,30 @@ async function oneApiUnknown404(probePath) {
   };
 }
 
+async function onePdf(path) {
+  const url = base + path;
+  const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
+  const r = await fetch(url, { method: 'GET', headers: { Accept: 'application/pdf,*/*' }, signal: ctrl });
+  const buf = await r.arrayBuffer();
+  const u8 = new Uint8Array(buf);
+  const magic = u8.length >= 4 && u8[0] === 0x25 && u8[1] === 0x50 && u8[2] === 0x44 && u8[3] === 0x46;
+  const ct = String(r.headers.get('content-type') || '').toLowerCase();
+  const pdfCt = ct.includes('application/pdf');
+  const pass = r.ok && pdfCt && magic;
+  let hint = '';
+  if (pass) hint = 'application/pdf + %PDF header';
+  else if (!r.ok) hint = `HTTP ${r.status}`;
+  else if (!pdfCt) hint = `content-type: ${ct || '—'}`;
+  else hint = 'body missing %PDF magic';
+  return {
+    path,
+    status: r.status,
+    ok: pass,
+    hint,
+    jsonSnippet: `bytes=${buf.byteLength}`
+  };
+}
+
 function summarize(j, path) {
   if (!j || typeof j !== 'object') return String(j).slice(0, 80);
   if (path === '/api/health') return `ok=${j.ok} samsara=${j.hasSamsaraToken} qboCfg=${j.hasQboConfig}`;
@@ -283,6 +311,17 @@ try {
 } catch (e) {
   criticalFailures++;
   console.log(`✗ FAIL GET ${API_NOT_FOUND_PROBE}: ${e.message || e}`);
+}
+
+try {
+  const row = await onePdf(PDF_SMOKE_PATH);
+  const pass = row.ok;
+  if (!pass) criticalFailures++;
+  console.log(`${pass ? '✓' : '✗'} ${row.status} GET ${PDF_SMOKE_PATH} ${row.hint}`.trim());
+  if (!pass) console.log('   ', row.jsonSnippet);
+} catch (e) {
+  criticalFailures++;
+  console.log(`✗ FAIL GET ${PDF_SMOKE_PATH}: ${e.message || e}`);
 }
 
 for (const [path, needle] of HTML_PAGES) {
