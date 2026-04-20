@@ -521,7 +521,10 @@
     host.querySelectorAll('[data-kind]').forEach(btn => {
       btn.addEventListener('click', async () => {
         state.kind = btn.getAttribute('data-kind');
+<<<<<<< HEAD
         if (state.kind !== 'driver' && ['qbo', 'samsara', 'both'].includes(state.filter)) state.filter = 'all';
+=======
+>>>>>>> origin/2026-04-20-jzws
         state.page = 1;
         state.selected = null;
         state.detail = null;
