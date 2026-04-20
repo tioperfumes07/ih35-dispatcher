@@ -12,6 +12,20 @@ body.erp-maintenance #section-maintenance > .maint-kpi-strip {
   margin-bottom: 12px;
 }
 
+/* Workspace snapshot — KPI cards wrap instead of clipping (overrides 4-col grid) */
+body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+}
+
+body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card {
+  flex: 1;
+  min-width: 180px;
+  box-sizing: border-box;
+}
+
 /* --- Page shell --- */
 body.erp-maintenance .maint-page-shell {
   display: flex;
@@ -48,9 +62,16 @@ body.erp-maintenance .maint-action-strip__top {
 body.erp-maintenance .maint-action-strip__tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
   align-items: center;
   min-width: 0;
+  width: 100%;
+}
+
+body.erp-maintenance .maint-action-strip__btn {
+  flex: 1;
+  min-width: 160px;
+  box-sizing: border-box;
 }
 
 body.erp-maintenance .maint-action-strip__btn--primary {

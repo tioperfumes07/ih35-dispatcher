@@ -421,8 +421,8 @@
     <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show lists &amp; shortcuts column">»</button>
 
     <nav id="erpIconNav" class="erp-icon-nav" aria-label="Company navigation">
-      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Home overview" onclick="openSection('dashboard', this)">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Home</span>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Casa overview" onclick="openSection('dashboard', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Casa</span>
       </button>
       <button type="button" class="erp-icon-nav__btn nav-btn active" data-section="maintenance" title="Maintenance — work orders, fleet, shop" aria-current="true" onclick="openSection('maintenance', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maintenance</span>
@@ -6312,7 +6312,7 @@
     let activeSection = 'maintenance';
     /** Top bar, sidebar brand, and `document.title` (see `openSection`). */
     const ERP_MODULE_TITLE_BY_SECTION = {
-      dashboard: 'Home',
+      dashboard: 'Casa',
       maintenance: 'Maintenance',
       fuel: 'Fuel planner',
       safety: 'Safety',
@@ -8471,7 +8471,7 @@
             'board',
             'Board',
             true,
-            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Home overview (KPIs)</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Casa overview (KPIs)</button>' +
               mt('record', 'Maintenance board') +
               mt('rm', 'Maintenance intelligence') +
               mt('fleet', 'Fleet table') +
