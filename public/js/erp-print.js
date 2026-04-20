@@ -390,9 +390,10 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
         const a = Number(r.amount);
         if (Number.isFinite(g)) galSum += g;
         if (Number.isFinite(a)) amtSum += a;
+        const amtCell = Number.isFinite(a) ? money(a) : esc(String(r.amount || '').trim() || '—');
         return `<tr><td>${i + 1}</td><td>${esc(r.description)}</td><td>${esc(r.gallons)}</td><td>${esc(
           r.ppg
-        )}</td><td>${esc(money(Number.isFinite(a) ? a : NaN))}</td><td>${r.lock ? 'Yes' : 'No'}</td><td>${esc(
+        )}</td><td>${amtCell}</td><td>${r.lock ? 'Yes' : 'No'}</td><td>${esc(
           r.mode === 'item' ? r.itemLabel : r.categoryLabel
         )}</td><td>${esc(d.driver || '')}</td></tr>`;
       })

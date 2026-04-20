@@ -8286,7 +8286,6 @@
         'standard-bill': 'accounting-bill-new',
         'maintenance-expense': 'accounting-maintenance-expense-new',
         'maintenance-bill': 'accounting-maintenance-bill-new',
-        'fuel-bill': 'accounting-fuel-bill-new',
         'vendor-driver-bill': 'accounting-vendor-driver-bill-new'
       };
       if (!fromHash && hashMap[mode]) window.location.hash = hashMap[mode];
@@ -8540,13 +8539,19 @@
       if (window.__erpDedicatedModalKind === 'ap' && id !== 'acct-transactions') {
         erpCloseDedicatedFormModal({ force: true });
       }
-      if (window.__erpDedicatedModalKind === 'fuel' && id !== 'acct-fuel-expense') {
+      if (
+        (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') &&
+        id !== 'acct-fuel-expense'
+      ) {
         erpCloseDedicatedFormModal({ force: true });
       }
       if (id === 'acct-transactions' && window.__erpDedicatedModalKind === 'ap') {
         erpCloseDedicatedFormModal({ force: true });
       }
-      if (id === 'acct-fuel-expense' && window.__erpDedicatedModalKind === 'fuel') {
+      if (
+        id === 'acct-fuel-expense' &&
+        (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill')
+      ) {
         erpCloseDedicatedFormModal({ force: true });
       }
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
@@ -8581,6 +8586,7 @@
       }
       if (id === 'acct-fuel-expense') {
         bindFuelManualFormOnce();
+        if (typeof syncFuelManualEntryModeUi === 'function') syncFuelManualEntryModeUi();
         void loadFuelExpenseTab().then(() => {
           requestAnimationFrame(() => {
             const shell = document.querySelector('#acct-fuel-expense .qb-doc-shell');
@@ -15733,14 +15739,6 @@
         document.getElementById('apWrapTerms')?.classList.remove('hidden');
         return;
       }
-      if (preset === 'fuel-bill') {
-        sel.value = 'bill';
-        h.textContent = 'Fuel bill';
-        if (lab) lab.textContent = 'Balance due';
-        document.getElementById('apWrapDue')?.classList.remove('hidden');
-        document.getElementById('apWrapTerms')?.classList.remove('hidden');
-        return;
-      }
       if (preset === 'vendor-driver-bill') {
         sel.value = 'bill';
         h.textContent = 'Vendor / driver bill';
@@ -16126,14 +16124,18 @@
           window.erpPrintOpenAndPrint(window.generatePrintDoc('fuel-expense', data));
           return;
         }
+        if (kind === 'fuel_bill') {
+          const data = erpCollectFuelDedicatedPrintData();
+          window.erpPrintOpenAndPrint(window.generatePrintDoc('fuel-bill', data));
+          return;
+        }
         if (kind === 'ap') {
           const data = erpCollectApDedicatedPrintData();
           const txn = String(document.getElementById('apTxnType')?.value || '').trim();
           const preset = String(window.__erpDedicatedApPreset || '');
           let type = 'expense';
           if (txn === 'bill') {
-            if (preset === 'fuel-bill') type = 'fuel-bill';
-            else if (preset === 'maintenance-bill') type = 'maintenance-bill';
+            if (preset === 'maintenance-bill') type = 'maintenance-bill';
             else if (preset === 'vendor-driver-bill') type = 'vendor-driver-bill';
             else type = 'bill';
           } else if (preset === 'maintenance-expense') {
