@@ -22637,15 +22637,18 @@
       if (toEl && !toEl.value) toEl.value = localIsoDate(new Date());
       const start = String(fromEl?.value || '').trim();
       const end = String(toEl?.value || '').trim();
-      const tab = String(window.__integrityDashTab || 'all');
-      let cat = 'all';
+      const cat =
+        String(document.getElementById('integrityDashCategory')?.value || 'all')
+          .trim()
+          .toLowerCase() || 'all';
+      const stRaw = String(document.getElementById('integrityDashStatus')?.value || 'active')
+        .trim()
+        .toLowerCase();
       let st = 'active';
-      if (tab === 'resolved') {
-        st = 'reviewed';
-        cat = 'all';
-      } else if (tab !== 'all') {
-        cat = tab;
-      }
+      if (stRaw === 'reviewed') st = 'reviewed';
+      else if (stRaw === 'dismissed') st = 'dismissed';
+      else if (stRaw === 'all') st = 'all';
+      else st = 'active';
       const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
       const qs = new URLSearchParams();
       if (start) qs.set('startDate', start);
@@ -22688,6 +22691,7 @@
           body.innerHTML =
             '<p class="mini-note" style="margin:0">No alerts for these filters (session-dismissed items stay hidden until you refresh the page).</p>';
           void refreshIntegrityNavBadges();
+          syncIntegrityCatTabsFromSelects();
           return;
         }
         const cards = rows
