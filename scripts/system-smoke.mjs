@@ -2,7 +2,7 @@
 /**
  * Non-destructive HTTP checks against a running server (default http://127.0.0.1:3400).
  * Run: start the server, then `npm run smoke`. For **Rule 0 guard + smoke** in one step: `npm run qa:automated` (requires server up).
- * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings) and checks for stable substring(s),
+ * Also GETs key static HTML pages (hub, maintenance, dispatch, fuel, banking, settings, tracking redirect) and checks for stable substring(s),
  * plus static CSS/JS (design-tokens, app-theme, erp-master-redesign, erp-master-spec-2026, maint-accounting, board-nav.css, erp-ui.js, board-nav.js) for HTTP 200 + stable header needles.
  * After static needles, **`app-theme.css`**, **`maint-accounting-ui-2026.css`**, and **`maintenance.html`** are scanned for forbidden legacy **`var(--color-*, …)`** substrings (Agent B Rule 0 regression guard). Bodies are reused from earlier successful GETs (**`STATIC_TEXT`** for CSS, HTML needles for **`/maintenance.html`**) so the guard avoids duplicate fetches when those steps pass.
  * Set SMOKE_BASE=http://host:port to target another environment.
@@ -64,7 +64,7 @@ const HTML_PAGES = [
   ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],
   ['/banking.html', ['banking-page', 'erpConnectionStrip']],
   ['/settings.html', ['settings-page', 'erpConnectionStrip']],
-  ['/tracking.html', ['maintenance.html#tracking']]
+  ['/tracking.html', ['maintenance.html#tracking', 'viewport-fit=cover']]
 ];
 
 /** Static assets (200 + stable header): `[path, needle]` or `[path, needle, accept]`. */
