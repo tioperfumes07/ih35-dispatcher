@@ -1499,7 +1499,7 @@
                         <span class="qb-l">Invoice total</span>
                         <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Sum of line amounts" oninput="renderMaintAsideWoSummary()" />
                         <label class="maint-lock-inline"><input type="checkbox" id="costTotalLock" /> Lock total</label>
-                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 200px">Compares category + item line sums to invoice total; uses <code>innerHTML</code> when ✓/✗ markup is shown.</span>
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Invoice total vs lines">?</button>
@@ -1509,7 +1509,7 @@
                           </span>
                         </div>
                         <div id="maintCostTotalMatch" class="mini-note maint-field-hint hidden" aria-hidden="true"></div>
-                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 200px">Reserved coordination strip under invoice total — host stays hidden while logic is stubbed.</span>
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Invoice / cost coordination host">?</button>
@@ -1528,7 +1528,7 @@
                           <input id="maintNewCatalogServiceName" class="qb-in maint-field maint-field--catalog" placeholder="New catalog name" maxlength="120" autocomplete="off" />
                           <button type="button" class="btn btn--small" onclick="addCatalogServiceType()">Add</button>
                         </div>
-                        <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 200px">Feedback for <strong>Add</strong> on new catalog names — all <code>textContent</code> on the host below.</span>
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Catalog admin hint">?</button>
@@ -1662,7 +1662,7 @@
                       </div>
                       <div class="mini-note maint-field-hint hidden" id="maintCostLinesSubtotal" aria-hidden="true"></div>
                       <div class="maint-cost-imports-shortcut" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--color-border)">
-                        <div class="mini-note" style="margin:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
                           <span style="min-width:0;flex:1 1 12rem">Imports &amp; uploads (maint history, AP, fuel) — <strong>Upload center</strong></span>
                           <button
                             type="button"
@@ -1736,7 +1736,7 @@
                     <div class="maint-subcard__head">Notes</div>
                     <div class="maint-subcard__body">
                   <input id="maintInvoicePdfInput" type="file" accept="application/pdf" class="maint-hidden-file" tabindex="-1" aria-hidden="true" />
-                  <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
+                  <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
                     <span style="min-width:0;flex:1 1 220px">Parse status for maintenance PDF import — uses <strong>Parse PDF to lines</strong> / <code>parseMaintRecordInvoicePdf()</code>.</span>
                     <span class="erp-help-tip">
                       <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance PDF parse status">?</button>
