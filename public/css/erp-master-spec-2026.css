@@ -2026,6 +2026,40 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+
+.erp-connection-strip.erp-connection-strip--rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.erp-connection-strip__row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 11px;
+}
+
+.erp-connection-strip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #f9ab00;
+}
+
+.erp-connection-strip__dot--ok {
+  background: #1a7a3c;
+}
+
+.erp-connection-strip__dot--warn {
+  background: #f9ab00;
+}
+
+.erp-connection-strip__dot--bad {
+  background: #c5221f;
+}
 body.banking-page .wrap > .erp-connection-strip {
   max-width: 1120px;
   margin-left: auto;

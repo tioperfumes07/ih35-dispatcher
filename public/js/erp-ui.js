@@ -4,7 +4,7 @@
  * Rule 22 — inline “?” help panels (`erpHelpTipToggle`); style in `erp-master-spec-2026.css`.
  * Rule 19 — toasts (`showToast`); host `#erpToastHost` + styles in `erp-master-spec-2026.css`.
  * `erpNotify` — toast-first replacement for `alert()` (inference for type when omitted); falls back to `alert` if toasts unavailable.
- * Rule 24 — `erpMountConnectionStrip(id)` reads `GET /api/qbo/status` into a one-line status strip (banking, settings, fuel, maintenance, dispatch). Non-2xx HTTP responses use muted “could not load status.” (same as fetch failure).
+ * Rule 24 — `erpMountConnectionStrip(id)` reads `GET /api/qbo/status` and `GET /api/health` (read-only) into a two-row strip: QuickBooks + Samsara. Refreshes every five minutes while the page stays open. Non-2xx QBO status uses muted “could not load status.”
  */
 (function (global) {
   'use strict';
@@ -276,7 +276,7 @@
   global.erpNotify = erpNotify;
 
   /**
-   * Rule 24 — hydrate a host element with QuickBooks connection text (read-only status).
+   * Rule 24 — hydrate a host with QuickBooks + Samsara read-only status (two rows).
    * @param {string | HTMLElement} hostIdOrEl
    */
   async function erpMountConnectionStrip(hostIdOrEl) {
@@ -284,42 +284,331 @@
     const el =
       typeof hostIdOrEl === 'string' ? document.getElementById(hostIdOrEl) : hostIdOrEl;
     if (!el || !(el instanceof HTMLElement)) return;
-    el.classList.add('erp-connection-strip');
+    if (el._erpStripTimer) {
+      global.clearInterval(el._erpStripTimer);
+      el._erpStripTimer = null;
+    }
+    el.classList.add('erp-connection-strip', 'erp-connection-strip--rows');
+
+    function appendRow(dotKind, lineText) {
+      const row = document.createElement('div');
+      row.className = 'erp-connection-strip__row';
+      const dot = document.createElement('span');
+      dot.className =
+        'erp-connection-strip__dot' +
+        (dotKind === 'ok' ? ' erp-connection-strip__dot--ok' : '') +
+        (dotKind === 'warn' ? ' erp-connection-strip__dot--warn' : '') +
+        (dotKind === 'bad' ? ' erp-connection-strip__dot--bad' : '');
+      dot.setAttribute('aria-hidden', 'true');
+      const msg = document.createElement('span');
+      msg.textContent = lineText;
+      row.appendChild(dot);
+      row.appendChild(msg);
+      el.appendChild(row);
+    }
+
+    async function paintStrip() {
+      el.textContent = '';
+      el.classList.remove('erp-connection-strip--ok', 'erp-connection-strip--warn', 'erp-connection-strip--muted');
+      let worst = 0;
+      try {
+        const [rq, rh] = await Promise.all([
+          fetch('/api/qbo/status', { headers: { Accept: 'application/json' } }),
+          fetch('/api/health', { headers: { Accept: 'application/json' } })
+        ]);
+        const qj = rq.ok ? await rq.json().catch(() => ({})) : null;
+        const hj = rh.ok ? await rh.json().catch(() => ({})) : null;
+
+        if (!rq.ok) {
+          appendRow('bad', stripLoadFailed);
+          worst = 2;
+        } else if (!qj || typeof qj !== 'object') {
+          appendRow('bad', 'QuickBooks: status unavailable.');
+          worst = 2;
+        } else if (!qj.configured) {
+          appendRow('warn', 'QuickBooks: not configured on server.');
+          worst = Math.max(worst, 1);
+        } else if (qj.connected) {
+          const nm = qj.companyName ? String(qj.companyName) : '';
+          appendRow('ok', 'QuickBooks: connected' + (nm ? ' — ' + nm : '') + '.');
+        } else {
+          appendRow('warn', 'QuickBooks: not connected — open Settings to authorize.');
+          worst = Math.max(worst, 1);
+        }
+
+        if (!rh.ok) {
+          appendRow('bad', 'Samsara: could not load health status.');
+          worst = 2;
+        } else if (!hj || typeof hj !== 'object') {
+          appendRow('warn', 'Samsara: status unavailable.');
+          worst = Math.max(worst, 1);
+        } else if (!hj.hasSamsaraToken) {
+          appendRow('warn', 'Samsara: API token not configured on server.');
+          worst = Math.max(worst, 1);
+        } else {
+          const nVeh = Number(hj.samsaraVehicles);
+          const tail =
+            Number.isFinite(nVeh) && nVeh >= 0 ? ' Last snapshot vehicles: ' + nVeh + '.' : '';
+          appendRow('ok', 'Samsara: token present on server.' + tail);
+        }
+
+        if (worst >= 2) el.classList.add('erp-connection-strip--muted');
+        else if (worst === 1) el.classList.add('erp-connection-strip--warn');
+        else el.classList.add('erp-connection-strip--ok');
+      } catch (_) {
+        el.textContent = '';
+        appendRow('bad', stripLoadFailed);
+        appendRow('bad', 'Samsara: check failed.');
+        el.classList.add('erp-connection-strip--muted');
+      }
+    }
+
     el.setAttribute('role', 'status');
     el.setAttribute('aria-live', 'polite');
-    el.textContent = 'QuickBooks: checking…';
-    el.classList.remove('erp-connection-strip--ok', 'erp-connection-strip--warn', 'erp-connection-strip--muted');
-    try {
-      const r = await fetch('/api/qbo/status', { headers: { Accept: 'application/json' } });
-      if (!r.ok) {
-        el.classList.add('erp-connection-strip--muted');
-        el.textContent = stripLoadFailed;
-        return;
-      }
-      const j = await r.json().catch(() => ({}));
-      if (!j || typeof j !== 'object') {
-        el.classList.add('erp-connection-strip--muted');
-        el.textContent = 'QuickBooks: status unavailable.';
-        return;
-      }
-      if (!j.configured) {
-        el.classList.add('erp-connection-strip--warn');
-        el.textContent = 'QuickBooks: not configured on server.';
-        return;
-      }
-      if (j.connected) {
-        el.classList.add('erp-connection-strip--ok');
-        el.textContent =
-          'QuickBooks: connected' + (j.companyName ? ' — ' + String(j.companyName) : '') + '.';
-        return;
-      }
-      el.classList.add('erp-connection-strip--warn');
-      el.textContent = 'QuickBooks: not connected — open Settings to authorize.';
-    } catch (_) {
-      el.classList.add('erp-connection-strip--muted');
-      el.textContent = stripLoadFailed;
-    }
+    await paintStrip();
+    el._erpStripTimer = global.setInterval(() => {
+      void paintStrip();
+    }, 300000);
   }
 
   global.erpMountConnectionStrip = erpMountConnectionStrip;
+
+  /**
+   * Resizable + draggable modal shells (visual only). Persists geometry in localStorage.
+   * Keys: `modal_size_[formtype]` — formtype from opts.storageKey (e.g. workorder, dedicated_fuel).
+   */
+  const __erpModalShellWired = new WeakSet();
+
+  function erpClamp(n, lo, hi) {
+    return Math.min(Math.max(n, lo), hi);
+  }
+
+  function erpReadModalRect(storageKey) {
+    if (!storageKey || typeof localStorage === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(`${'modal_size_'}${storageKey}`);
+      if (!raw) return null;
+      const o = JSON.parse(raw);
+      if (!o || typeof o !== 'object') return null;
+      const w = Number(o.width);
+      const h = Number(o.height);
+      const l = Number(o.left);
+      const t = Number(o.top);
+      if (!Number.isFinite(w) || !Number.isFinite(h)) return null;
+      const maxW = window.innerWidth * 0.95;
+      const maxH = window.innerHeight * 0.95;
+      return {
+        width: erpClamp(w, 600, maxW),
+        height: erpClamp(h, 500, maxH),
+        left: Number.isFinite(l) ? erpClamp(l, 0, Math.max(0, window.innerWidth - 120)) : null,
+        top: Number.isFinite(t) ? erpClamp(t, 0, Math.max(0, window.innerHeight - 120)) : null
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function erpWriteModalRect(storageKey, shell) {
+    if (!storageKey || !shell || typeof localStorage === 'undefined') return;
+    try {
+      const r = shell.getBoundingClientRect();
+      const payload = {
+        width: Math.round(r.width),
+        height: Math.round(r.height),
+        left: Math.round(r.left),
+        top: Math.round(r.top)
+      };
+      localStorage.setItem(`${'modal_size_'}${storageKey}`, JSON.stringify(payload));
+    } catch (_) {}
+  }
+
+  function erpRestoreModalRect(shell, storageKey) {
+    if (!shell || !storageKey) return;
+    const rect = erpReadModalRect(storageKey);
+    if (!rect) return;
+    shell.classList.add('erp-modal-shell--user-geometry');
+    shell.style.position = 'fixed';
+    shell.style.margin = '0';
+    shell.style.boxSizing = 'border-box';
+    shell.style.width = `${Math.round(rect.width)}px`;
+    shell.style.height = `${Math.round(rect.height)}px`;
+    if (rect.left != null && rect.top != null) {
+      shell.style.left = `${Math.round(rect.left)}px`;
+      shell.style.top = `${Math.round(rect.top)}px`;
+      shell.style.right = 'auto';
+      shell.style.bottom = 'auto';
+    }
+  }
+
+  function erpWireResizableModalShell(shell, opts) {
+    opts = opts || {};
+    if (!shell || !(shell instanceof HTMLElement) || __erpModalShellWired.has(shell)) return;
+    __erpModalShellWired.add(shell);
+
+    const storageKey = opts.storageKey || 'generic';
+    const dragRoot = typeof opts.dragRoot === 'string' ? shell.querySelector(opts.dragRoot) : opts.dragRoot;
+    const minW = Number(opts.minW) > 0 ? Number(opts.minW) : 600;
+    const minH = Number(opts.minH) > 0 ? Number(opts.minH) : 500;
+
+    if (!dragRoot) return;
+
+    const grip = document.createElement('button');
+    grip.type = 'button';
+    grip.className = 'erp-modal-resize-grip';
+    grip.setAttribute('aria-label', 'Resize dialog');
+    grip.innerHTML =
+      '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M11 1L1 11M8 1L1 8M11 4L4 11" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>';
+    shell.style.position = shell.style.position || 'relative';
+    shell.appendChild(grip);
+
+    let mode = '';
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    function ensureFixedMetrics() {
+      const r = shell.getBoundingClientRect();
+      if (shell.style.position !== 'fixed') {
+        shell.style.position = 'fixed';
+        shell.style.left = `${Math.round(r.left)}px`;
+        shell.style.top = `${Math.round(r.top)}px`;
+        shell.style.width = `${Math.round(r.width)}px`;
+        shell.style.height = `${Math.round(r.height)}px`;
+        shell.style.margin = '0';
+        shell.classList.add('erp-modal-shell--user-geometry');
+      }
+    }
+
+    function onMove(ev) {
+      if (!mode) return;
+      const cx = ev.clientX;
+      const cy = ev.clientY;
+      if (mode === 'resize') {
+        ensureFixedMetrics();
+        const dw = cx - startX;
+        const dh = cy - startY;
+        const maxW = window.innerWidth * 0.95;
+        const maxH = window.innerHeight * 0.95;
+        const nw = erpClamp(startW + dw, minW, maxW);
+        const nh = erpClamp(startH + dh, minH, maxH);
+        shell.style.width = `${Math.round(nw)}px`;
+        shell.style.height = `${Math.round(nh)}px`;
+      } else if (mode === 'drag') {
+        ensureFixedMetrics();
+        const dx = cx - startX;
+        const dy = cy - startY;
+        const r = shell.getBoundingClientRect();
+        const w = r.width;
+        const h = r.height;
+        let nl = startLeft + dx;
+        let nt = startTop + dy;
+        nl = erpClamp(nl, 0, Math.max(0, window.innerWidth - w));
+        nt = erpClamp(nt, 0, Math.max(0, window.innerHeight - h));
+        shell.style.left = `${Math.round(nl)}px`;
+        shell.style.top = `${Math.round(nt)}px`;
+      }
+    }
+
+    function onUp() {
+      if (mode) {
+        erpWriteModalRect(storageKey, shell);
+        mode = '';
+        document.removeEventListener('mousemove', onMove, true);
+        document.removeEventListener('mouseup', onUp, true);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    }
+
+    grip.addEventListener('mousedown', ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      ensureFixedMetrics();
+      const r = shell.getBoundingClientRect();
+      startX = ev.clientX;
+      startY = ev.clientY;
+      startW = r.width;
+      startH = r.height;
+      mode = 'resize';
+      document.body.style.cursor = 'se-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMove, true);
+      document.addEventListener('mouseup', onUp, true);
+    });
+
+    dragRoot.addEventListener('mousedown', ev => {
+      const t = ev.target;
+      if (!t || !(t instanceof Element)) return;
+      if (t.closest('button, a, input, select, textarea, [data-erp-no-drag]')) return;
+      ev.preventDefault();
+      ensureFixedMetrics();
+      const r = shell.getBoundingClientRect();
+      startX = ev.clientX;
+      startY = ev.clientY;
+      startLeft = r.left;
+      startTop = r.top;
+      mode = 'drag';
+      document.body.style.cursor = 'move';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMove, true);
+      document.addEventListener('mouseup', onUp, true);
+    });
+  }
+
+  function erpInitResizableModals() {
+    const ded = document.querySelector('#erpDedicatedFormModal .erp-dedicated-form-modal__shell');
+    if (ded) {
+      erpWireResizableModalShell(ded, {
+        storageKey: 'dedicated_default',
+        dragRoot: '.erp-dedicated-form-modal__bar',
+        minW: 600,
+        minH: 500
+      });
+    }
+    const wo = document.querySelector('#maintWorkOrderModal .maint-workorder-fullmodal__shell');
+    if (wo) {
+      erpWireResizableModalShell(wo, {
+        storageKey: 'workorder',
+        dragRoot: '.maint-workorder-fullmodal__head',
+        minW: 600,
+        minH: 500
+      });
+    }
+    const cat = document.querySelector('#maintCatModal .maint-modal.erp-qb-dialog');
+    if (cat) {
+      erpWireResizableModalShell(cat, {
+        storageKey: 'maint_category',
+        dragRoot: '.erp-qb-dialog__head',
+        minW: 360,
+        minH: 240
+      });
+    }
+    const smallModals = document.querySelectorAll('.maint-modal-bg.on .maint-modal.erp-qb-dialog');
+    smallModals.forEach(m => {
+      if (m.closest('#maintCatModal')) return;
+      if (m.closest('#maintWorkOrderModal')) return;
+      erpWireResizableModalShell(m, {
+        storageKey: 'maint_dialog',
+        dragRoot: '.erp-qb-dialog__head',
+        minW: 480,
+        minH: 320
+      });
+    });
+  }
+
+  /** Call when opening a dedicated accounting form so size keys stay separate per surface. */
+  function erpRestoreDedicatedModalGeometry(kind) {
+    const shell = document.querySelector('#erpDedicatedFormModal .erp-dedicated-form-modal__shell');
+    if (!shell) return;
+    const map = { fuel: 'dedicated_fuel', ap: 'dedicated_ap', billpay: 'dedicated_billpay' };
+    const key = map[String(kind || '').trim()] || 'dedicated_default';
+    erpRestoreModalRect(shell, key);
+  }
+
+  global.erpInitResizableModals = erpInitResizableModals;
+  global.erpRestoreDedicatedModalGeometry = erpRestoreDedicatedModalGeometry;
+  global.erpWireResizableModalShell = erpWireResizableModalShell;
 })(typeof window !== 'undefined' ? window : globalThis);
