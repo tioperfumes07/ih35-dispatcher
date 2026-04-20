@@ -7089,9 +7089,21 @@
       }
       const invRaw = gv('costInput');
       const invoiceTotal = invRaw === '' ? NaN : Number(invRaw);
+      const hdrSel = document.getElementById('maintAssetHeaderStatusSelect');
+      let operationalStatus = '';
+      if (hdrSel && hdrSel.selectedOptions && hdrSel.selectedOptions[0]) {
+        operationalStatus = String(hdrSel.selectedOptions[0].textContent || '').trim();
+      }
+      const fleetType = typeof activeAssetCategory !== 'undefined' ? String(activeAssetCategory || '').trim() : '';
+      const driverNm =
+        gv('maintRecordDriverSearch') ||
+        gv('maintWoDriverNameInput') ||
+        (document.getElementById('maintWoDriverNameInput')?.value || '').trim();
+      const linkedRef = gv('linkedDocNumber');
       return {
         companyName: 'IH 35 Transportation LLC',
         companyAddress: 'Laredo, TX',
+        companyPhone: '',
         workOrderNumber: gv('recordWorkOrderInput'),
         printedAt: new Date().toLocaleString(),
         unitNumber: selectedUnit || '—',
@@ -7110,6 +7122,7 @@
         vendor: gv('vendorInput'),
         loadNumber: gv('recordLoadNumberInput'),
         vendorInvoice: gv('recordVendorInvoiceInput'),
+        vendorReferenceNumber: linkedRef,
         invoiceTotal: Number.isFinite(invoiceTotal) ? invoiceTotal : NaN,
         plannedService: collectMaintPlannedServiceLines().join('\n'),
         costLines,
@@ -7117,6 +7130,11 @@
         accidentLocation: gv('accidentLocationInput'),
         accidentReportNumber: gv('accidentReportNumberInput'),
         accidentFault: gv('accidentAtFaultSearch') || gv('accidentAtFaultValue'),
+        accidentDotReportable: !!document.getElementById('accidentDotReportableInput')?.checked,
+        operationalStatus,
+        fleetType,
+        driverName: driverNm,
+        inspectionScope: gv('maintInspectionScopeInput'),
         partsMapSvg
       };
     }
@@ -7133,10 +7151,10 @@
     function maintPrintWorkOrderView() {
       maintNotesSyncToTextarea();
       try {
-        if (typeof window.generatePrintDoc !== 'function' || typeof window.erpPrintOpenAndPrint !== 'function') {
+        if (typeof window.generatePrintWindow !== 'function') {
           throw new Error('Print helper not loaded');
         }
-        window.erpPrintOpenAndPrint(window.generatePrintDoc('workorder', maintCollectWorkOrderPrintData()));
+        window.generatePrintWindow('workorder', maintCollectWorkOrderPrintData());
       } catch (e) {
         console.warn('Standalone WO print failed', e);
         maintPreparePrintWorkOrderOnly();
@@ -7196,7 +7214,31 @@
         }
         const blob = await r.blob();
         const url = URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener');
+        const fn =
+          typeof window.generateFilename === 'function'
+            ? window.generateFilename(
+                'workorder-draft',
+                {
+                  unitNumber: selectedUnit,
+                  workOrderNumber: document.getElementById('recordWorkOrderInput')?.value || '',
+                  recordType: document.getElementById('recordTypeSelect')?.value || '',
+                  serviceType:
+                    document.getElementById('recordTypeSelect')?.value === 'custom'
+                      ? document.getElementById('customServiceTypeInput')?.value || ''
+                      : document.getElementById('serviceTypeInput')?.value || '',
+                  serviceDate: document.getElementById('serviceDateInput')?.value || ''
+                },
+                'pdf'
+              )
+            : 'fleet-maintenance-draft.pdf';
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fn;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
         maintToneSaveHint(hint, 'Draft PDF opened.', null);
       } catch (e) {
@@ -18550,6 +18592,8 @@
       if (termSel && termSel.selectedOptions && termSel.selectedOptions[0]) {
         termsLabel = String(termSel.selectedOptions[0].textContent || '').trim();
       }
+      const amtTxt = gt('apDocTotalDisplay') || '';
+      const amtNum = Number(String(amtTxt).replace(/[^0-9.-]/g, ''));
       return {
         companyName: 'IH 35 Transportation LLC',
         companyAddress: 'Laredo, TX',
@@ -18560,19 +18604,63 @@
         paymentAccount: gv('apBankAccountSearch'),
         paymentDate: gv('apTxnDate'),
         paymentMethod: gv('apPaymentMethodSearch'),
-        amountDisplay: gt('apDocTotalDisplay') || '$0.00',
+        amountDisplay: amtTxt || '$0.00',
         loadInvoice: gv('apLoadInvoiceNumber'),
         vendorInvoice: gv('apVendorInvoiceNumber'),
         shopWo: gv('apInternalWorkOrderNumber'),
-        refNo: '',
+        refNo: gv('apInternalWorkOrderNumber') || gv('apVendorInvoiceNumber'),
+        billNumber: gv('apVendorInvoiceNumber'),
+        balanceDue: Number.isFinite(amtNum) ? amtNum : undefined,
         txnType: gv('apTxnType'),
         unit: gv('apAssetUnit'),
+        driver: gv('apErpDriverSearch') || gv('apHeaderDriverSearch'),
         serviceType: gv('apServiceSearchInput') || gv('apServiceTypeInput'),
         terms: termsLabel,
         dueDate: gv('apDueDate'),
         memo: gv('apMemo'),
         costLines,
         attachmentCount
+      };
+    }
+
+    function erpCollectBillPayPrintData() {
+      const gv = id => String(document.getElementById(id)?.value ?? '').trim();
+      const gt = id => String(document.getElementById(id)?.textContent ?? '').trim();
+      const payTypeSel = document.getElementById('bpPayType');
+      const payTypeLab =
+        payTypeSel && payTypeSel.selectedOptions && payTypeSel.selectedOptions[0]
+          ? String(payTypeSel.selectedOptions[0].textContent || '').trim()
+          : gv('bpPayType');
+      const rows = [];
+      document.querySelectorAll('#bpOpenBillsBody tr[data-bill-id]').forEach(tr => {
+        const chk = tr.querySelector('.bp-pay-chk');
+        if (!chk || !chk.checked) return;
+        const tds = tr.querySelectorAll('td');
+        const docNumber = tds[2] ? String(tds[2].textContent || '').trim() : '';
+        const billDate = tds[4] ? String(tds[4].textContent || '').trim() : '';
+        const openBal = tr.getAttribute('data-open-balance') || tr.getAttribute('data-balance') || '';
+        const payEl = tr.querySelector('.bp-pay-amt');
+        const amountPaid = payEl ? String(payEl.value || '').trim() : '';
+        const remaining = tr.querySelector('.bp-remain-cell') ? String(tr.querySelector('.bp-remain-cell').textContent || '').trim() : '';
+        let billAmount = '';
+        const obn = Number(openBal);
+        if (Number.isFinite(obn)) billAmount = (Math.round(obn * 100) / 100).toFixed(2);
+        rows.push({ docNumber, billDate, billAmount, amountPaid, remaining });
+      });
+      const totLine = gt('bpSelectionTotal');
+      const totM = totLine.match(/\$[\d,]+\.\d{2}/);
+      return {
+        companyName: 'IH 35 Transportation LLC',
+        companyAddress: 'Laredo, TX',
+        printedAt: new Date().toLocaleString(),
+        vendor: gv('bpVendorSearch'),
+        paymentNumber: gv('bpCheckNum') || 'DRAFT',
+        paymentDate: gv('bpTxnDate'),
+        paymentMethod: payTypeLab,
+        account: gv('bpBankSearch'),
+        checkNum: gv('bpCheckNum'),
+        amountDisplay: totM ? totM[0] : '',
+        billsPaid: rows
       };
     }
 
@@ -18614,13 +18702,13 @@
         amountDisplay: (document.getElementById('fuelManualHeaderTotal')?.textContent || '').trim(),
         memo: gv('fuelManualMemo'),
         fuelLines,
-        driver: ''
+        driver: gv('fuelManualDriverSearch')
       };
     }
 
     function erpPrintDedicatedAccountingModal() {
       try {
-        if (typeof window.generatePrintDoc !== 'function' || typeof window.erpPrintOpenAndPrint !== 'function') {
+        if (typeof window.generatePrintWindow !== 'function') {
           window.print();
           return;
         }
@@ -18632,7 +18720,12 @@
         const kind = window.__erpDedicatedModalKind;
         if (kind === 'fuel') {
           const data = erpCollectFuelDedicatedPrintData();
-          window.erpPrintOpenAndPrint(window.generatePrintDoc('fuel-expense', data));
+          window.generatePrintWindow('fuel-expense', data);
+          return;
+        }
+        if (kind === 'billpay') {
+          const data = erpCollectBillPayPrintData();
+          window.generatePrintWindow('payment-receipt', data);
           return;
         }
         if (kind === 'ap') {
@@ -18650,7 +18743,7 @@
           } else {
             type = 'expense';
           }
-          window.erpPrintOpenAndPrint(window.generatePrintDoc(type, data));
+          window.generatePrintWindow(type, data);
           return;
         }
         window.print();
@@ -21005,8 +21098,8 @@
         if (toPrint) {
           maintNotesSyncToTextarea();
           try {
-            if (typeof window.generatePrintDoc === 'function' && typeof window.erpPrintOpenAndPrint === 'function') {
-              window.erpPrintOpenAndPrint(window.generatePrintDoc('workorder', maintCollectWorkOrderPrintData()));
+            if (typeof window.generatePrintWindow === 'function') {
+              window.generatePrintWindow('workorder', maintCollectWorkOrderPrintData());
             } else {
               throw new Error('Print helper not loaded');
             }
