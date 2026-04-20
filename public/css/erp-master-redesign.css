@@ -3094,7 +3094,8 @@ body.banking-page p.lead {
 
 body.banking-page .panel {
   margin-bottom: 14px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   box-shadow: none;
