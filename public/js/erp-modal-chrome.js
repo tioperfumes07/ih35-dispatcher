@@ -101,5 +101,28 @@
     );
   }
 
+  /** Pass a backdrop (e.g. `#modalBg`) or the shell element itself. */
+  function resetModalShell(backdropOrShell) {
+    if (!backdropOrShell) return;
+    const multi = '.modal, .nm-modal, .vbp-modal, .erp-dedupe-modal__card';
+    let shell = null;
+    if (backdropOrShell.matches && backdropOrShell.matches(multi)) {
+      shell = backdropOrShell;
+    } else if (backdropOrShell.querySelector) {
+      shell = backdropOrShell.querySelector(multi);
+    }
+    if (!shell) return;
+    shell.classList.remove('erp-modal-chrome--viewport-max');
+    const doc = document;
+    const cur = doc.fullscreenElement || doc.webkitFullscreenElement;
+    if (cur === shell) {
+      const efs = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen;
+      if (efs) void efs.call(doc);
+    }
+    shell.querySelectorAll('[data-erp-modal-max-btn]').forEach(b => syncMaxBtn(b, false));
+    shell.querySelectorAll('[data-erp-modal-fs-btn]').forEach(b => syncFsBtn(b, false));
+  }
+
   window.erpModalChromeToolbarHtml = toolbarHtml;
+  window.erpModalChromeResetModalShell = resetModalShell;
 })();

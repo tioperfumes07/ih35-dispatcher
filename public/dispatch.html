@@ -1680,6 +1680,9 @@
     }
 
     function closeDocsModal() {
+      if (typeof erpModalChromeResetModalShell === 'function') {
+        erpModalChromeResetModalShell(document.getElementById('docsModalBg'));
+      }
       document.getElementById('docsModalBg').classList.remove('on');
       currentDocsLoadId = null;
       currentDocsLoadNumber = '';
@@ -2468,6 +2471,9 @@
     }
 
     function closeBookModal() {
+      if (typeof erpModalChromeResetModalShell === 'function') {
+        erpModalChromeResetModalShell(document.getElementById('modalBg'));
+      }
       document.getElementById('modalBg').classList.remove('on');
       editingLoadId = null;
       const ln = document.getElementById('f_load_number');
