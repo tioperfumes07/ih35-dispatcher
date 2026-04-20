@@ -91,8 +91,12 @@
     if (t === 'workorder-draft' || t === 'fleet-maintenance-draft') {
       return `${collapseJoin([unit, wo || 'DRAFT', sanitizeSegment(svc) || 'Maint', date || toYyyyMmDd(new Date())])}.${ext}`;
     }
-    if (t === 'expense' || t === 'maintenance-expense') {
-      return `${collapseJoin([vendor, 'MaintExp', unit, date])}.${ext}`;
+    if (t === 'maintenance-expense') {
+      return `${collapseJoin([unit, vendor, 'MaintExp', date])}.${ext}`;
+    }
+    if (t === 'expense') {
+      const refSeg = ref || billNo || 'NoRef';
+      return `${collapseJoin([vendor, 'Expense', refSeg, date])}.${ext}`;
     }
     if (t === 'bill' || t === 'maintenance-bill' || t === 'vendor-driver-bill') {
       return `${collapseJoin([vendor, 'Bill', billNo || wo, date])}.${ext}`;
@@ -115,7 +119,12 @@
       return `${collapseJoin([rep, u, start, end, hh])}.${ext}`;
     }
     if (t === 'dot-audit') {
-      return `${collapseJoin(['DOT-Audit', unit, d.startDate, 'to', d.endDate])}.${ext}`;
+      return `${collapseJoin(['DOT-Audit', unit, toYyyyMmDd(d.startDate), 'to', toYyyyMmDd(d.endDate)])}.${ext}`;
+    }
+    if (t === 'multi-bills' || t === 'bills-series') {
+      const first = d.firstBillNumber || d.billNumberFirst || '';
+      const last = d.lastBillNumber || d.billNumberLast || '';
+      return `${collapseJoin([vendor, 'Bills', first, 'to', last, date])}.${ext}`;
     }
     return `${collapseJoin([t, unit || vendor || 'doc', date])}.${ext}`;
   }

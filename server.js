@@ -48,7 +48,28 @@ import {
   defaultIntegrityThresholds,
   alertCategory
 } from './lib/integrity-engine.mjs';
+import {
+  fetchVehicleStatsHistory,
+  fetchVehicleStatsSnapshot,
+  fetchSafetyEventsForVehicle,
+  fetchTripsForVehicle,
+  summarizeSafetyEvents,
+  sumTripMeters,
+  extractFaultCodesFromStatsPayload
+} from './lib/samsara-integrity-fetch.mjs';
+import { samsaraPaginate } from './lib/samsara-report-fetch.mjs';
+import {
+  runSamsaraCrossrefChecks,
+  computeVehicleIntegrityScore,
+  lastWorkOrderMileageForUnit,
+  fuelGallonsBetween,
+  lastFuelDateForUnit,
+  lastAnnualInspectionDate,
+  repairCostLastDays,
+  lastPmMileageForUnit
+} from './lib/integrity-samsara-crossref.mjs';
 import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
+import cron from 'node-cron';
 import { mountDedupeRoutes } from './routes/dedupe.mjs';
 
 dotenv.config();
@@ -5098,13 +5119,9 @@ function persistIntegrityAlerts(erp, evaluated, ctx, req) {
     sliceIsoDate(ctx.date || ctx.serviceDate || '') || new Date().toISOString().slice(0, 10);
   const rid = String(ctx.recordId || '');
   for (const a of evaluated || []) {
-    const dedupe = String(a.dedupeKey || `${a.type}:${rid}`);
+    const dedupe = String(a.dedupeKey || `${a.type}:${rid || ctx.unitId || ctx.unit || ''}`);
     const clash = erp.integrityAlerts.some(
-      x =>
-        String(x.dedupeKey) === dedupe &&
-        String(x.recordId || '') === rid &&
-        String(x.alertType || '') === String(a.type) &&
-        String(x.status || 'active') === 'active'
+      x => String(x.status || 'active') === 'active' && String(x.dedupeKey || '') === dedupe
     );
     if (clash) continue;
     erp.integrityAlerts.push({
@@ -5114,7 +5131,7 @@ function persistIntegrityAlerts(erp, evaluated, ctx, req) {
       message: a.message,
       details: { ...(a.details || {}), dedupeKey: dedupe },
       triggeredDate: trig,
-      unitId: ctx.unitId || '',
+      unitId: String(a.unitId || ctx.unitId || ctx.unit || '').trim(),
       driverId: ctx.driverId || '',
       driverName: ctx.driverName || '',
       recordId: rid,

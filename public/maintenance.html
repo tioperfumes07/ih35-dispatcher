@@ -1163,7 +1163,7 @@
             </div>
             </div>
             <div class="maint-action-strip__notes maint-action-strip__notes--below">
-              <div class="maint-action-strip__note mini-note">
+              <div class="maint-action-strip__note mini-note erp-dev-note" data-dev-note="true">
                 <span>Fleet chips scope unit list, fleet table, and WO column — ERP categories only (not Samsara).</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet category pills">?</button>
@@ -1172,7 +1172,7 @@
                   </span>
                 </span>
               </div>
-              <div class="maint-action-strip__note maint-action-strip__note--qbo mini-note" id="maintTopQboIssuesWrap" aria-live="polite">
+              <div class="maint-action-strip__note maint-action-strip__note--qbo mini-note erp-dev-note" data-dev-note="true" id="maintTopQboIssuesWrap" aria-live="polite">
                 <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;width:100%">
                   <span style="min-width:0;flex:1 1 140px;color:var(--color-text-label)">QBO posting hint — updates when sync alerts change.</span>
                   <span class="erp-help-tip">
@@ -1235,7 +1235,7 @@
               <button type="button" class="btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse unit list" style="min-width:40px;font-size:16px;line-height:1;padding:6px 10px">▼</button>
             </div>
             <div class="panel-body">
-              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+              <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 200px">Rows follow <strong>Find unit</strong> + active <strong>Fleet by type</strong>; past-due / due-soon badges use matching <strong>dashboard</strong> rows per unit.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Units list behavior">?</button>
@@ -1255,7 +1255,7 @@
             <div id="maintWoFormArea" class="hidden maint-wo-form-stack-inner">
             <div class="maint-wo-main-aside">
             <div class="maint-wo-workspace maint-section-card">
-              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+              <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Live unit header — full swap on unit change. Fuel / PM strip below uses its own fields, not this card.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Asset header card">?</button>
@@ -1299,7 +1299,7 @@
                 <div class="unit-box"><div class="k">Saved odo</div><div class="v" id="unitMileageBox">N/A</div></div>
               </div>
 
-              <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
+              <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">WO snapshot bar — mirrors R&amp;M aside KV; hidden until a unit is selected.</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="WO summary bar">?</button>
@@ -1311,7 +1311,7 @@
                 <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
 
                 <div class="maint-wo-form-shell">
-                <div class="mini-note" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
+                <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
                   <span style="min-width:0;flex:1 1 220px">Print header strip — unit line is <code>textContent</code> only; banner unhides when the form mounts.</span>
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="WO banner host">?</button>
@@ -1380,7 +1380,7 @@
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l">Planned work <span class="maint-label-optional">(optional)</span></span>
-                        <div class="mini-note" style="margin:4px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 180px">Free-text lines; host resets from template when presets / record type clear the form.</span>
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Planned work lines">?</button>
@@ -1459,7 +1459,7 @@
                           <option value="over-the-road">Over the road</option>
                         </select>
                         <input type="hidden" id="repairLocationTypeInput" value="" />
-                        <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 200px">Choose a type above, then enter where work happened (required). The datalist suggests prior labels.</span>
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop / location detail">?</button>
@@ -5102,15 +5102,12 @@
         <div id="rep-integrity" class="reports-tab hidden">
           <div class="panel">
             <div class="panel-head">
-              <div class="panel-title">Integrity &amp; anomaly monitoring</div>
-              <div class="mini-note" style="margin:0;color:#6b7385;font-size:12px">
-                Unusual patterns that may need your attention. Alerts are created when you save work orders or expenses; exports use the date range below.
+              <div class="panel-title">Integrity &amp; anomaly alerts</div>
+              <div class="mini-note" style="margin:0;color:var(--color-text-label)">
+                Alerts are created when you save maintenance, work orders, or fuel; exports use the date range below.
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(1100px,100%)">
-              <div style="margin:0 0 10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
-                <a class="mini-note" href="/settings.html#integrity-thresholds" style="color:#1557a0;text-decoration:underline;font-size:12px">Configure thresholds</a>
-              </div>
               <div class="mr-filter-bar" style="margin:0 0 12px;flex-wrap:wrap;gap:10px;align-items:flex-end">
                 <div class="ap-exp-field">
                   <span class="qb-l">From</span>
@@ -5152,16 +5149,7 @@
                 <button type="button" class="btn secondary" onclick="integrityExportReport('xlsx')">Excel export</button>
                 <button type="button" class="btn secondary" onclick="integrityExportReport('pdf')">PDF export</button>
               </div>
-              <div id="integrityDashCatTabs" class="erp-int-cat-tabs" role="tablist" aria-label="Alert category" style="margin:0 0 12px">
-                <button type="button" class="erp-int-cat-tab active" data-int-tab="all" onclick="erpIntegritySelectTab('all')">All</button>
-                <button type="button" class="erp-int-cat-tab" data-int-tab="tires" onclick="erpIntegritySelectTab('tires')">Tires</button>
-                <button type="button" class="erp-int-cat-tab" data-int-tab="drivers" onclick="erpIntegritySelectTab('drivers')">Drivers</button>
-                <button type="button" class="erp-int-cat-tab" data-int-tab="accidents" onclick="erpIntegritySelectTab('accidents')">Accidents</button>
-                <button type="button" class="erp-int-cat-tab" data-int-tab="fuel" onclick="erpIntegritySelectTab('fuel')">Fuel</button>
-                <button type="button" class="erp-int-cat-tab" data-int-tab="maintenance" onclick="erpIntegritySelectTab('maintenance')">Maintenance</button>
-                <button type="button" class="erp-int-cat-tab" data-int-tab="resolved" onclick="erpIntegritySelectTab('resolved')">Resolved</button>
-              </div>
-              <div id="integrityDashKpi" class="erp-int-kpi-row" style="margin:0 0 14px"></div>
+              <div id="integrityDashKpi" class="mini-note" style="margin:0 0 10px"></div>
               <div id="repIntegrityBody" class="table-wrap erp-table-scroll" style="min-width:0"></div>
               <div id="integrityInvestigateHost" class="hidden" style="margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px">
                 <div class="panel-title" style="font-size:14px;margin-bottom:8px">Linked records</div>
@@ -6255,6 +6243,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/js/board-nav.js"></script>
   <script src="/js/erp-ui.js"></script>
+  <script src="/js/erp-filename-util.js"></script>
   <script src="/js/erp-print.js"></script>
   <script src="/js/erp-multi-bills.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
@@ -22404,35 +22393,6 @@
       }
     }
 
-    window.__integrityDashTab = window.__integrityDashTab || 'all';
-    let __integrityDashLastRows = [];
-
-    function erpIntegritySelectTab(tab) {
-      const t = String(tab || 'all');
-      const catSel = document.getElementById('integrityDashCategory');
-      const stSel = document.getElementById('integrityDashStatus');
-      if (t === 'resolved') {
-        if (stSel) stSel.value = 'reviewed';
-        if (catSel) catSel.value = 'all';
-      } else {
-        if (stSel) stSel.value = 'active';
-        if (catSel) catSel.value = t;
-      }
-      loadIntegrityDashboard();
-    }
-
-    function syncIntegrityCatTabsFromSelects() {
-      const wrap = document.getElementById('integrityDashCatTabs');
-      if (!wrap) return;
-      const st = String(document.getElementById('integrityDashStatus')?.value || 'active').toLowerCase();
-      const cat = String(document.getElementById('integrityDashCategory')?.value || 'all').toLowerCase();
-      const tab = st === 'reviewed' ? 'resolved' : cat;
-      window.__integrityDashTab = tab;
-      wrap.querySelectorAll('.erp-int-cat-tab').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-int-tab') === tab);
-      });
-    }
-
     function localIsoDate(d) {
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -22489,18 +22449,15 @@
       if (toEl && !toEl.value) toEl.value = localIsoDate(new Date());
       const start = String(fromEl?.value || '').trim();
       const end = String(toEl?.value || '').trim();
-      const cat =
-        String(document.getElementById('integrityDashCategory')?.value || 'all')
-          .trim()
-          .toLowerCase() || 'all';
-      const stRaw = String(document.getElementById('integrityDashStatus')?.value || 'active')
-        .trim()
-        .toLowerCase();
+      const tab = String(window.__integrityDashTab || 'all');
+      let cat = 'all';
       let st = 'active';
-      if (stRaw === 'reviewed') st = 'reviewed';
-      else if (stRaw === 'dismissed') st = 'dismissed';
-      else if (stRaw === 'all') st = 'all';
-      else st = 'active';
+      if (tab === 'resolved') {
+        st = 'reviewed';
+        cat = 'all';
+      } else if (tab !== 'all') {
+        cat = tab;
+      }
       const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
       const qs = new URLSearchParams();
       if (start) qs.set('startDate', start);
@@ -22543,7 +22500,6 @@
           body.innerHTML =
             '<p class="mini-note" style="margin:0">No alerts for these filters (session-dismissed items stay hidden until you refresh the page).</p>';
           void refreshIntegrityNavBadges();
-          syncIntegrityCatTabsFromSelects();
           return;
         }
         const cards = rows
@@ -22564,7 +22520,7 @@
             const reviewBtn = act
               ? `<button type="button" class="btn secondary" onclick="erpIntegrityOpenInvestigate(${JSON.stringify(id)})">Investigate</button>
                  <button type="button" class="btn" onclick="markIntegrityAlertReviewed(${JSON.stringify(id)})">Mark as reviewed</button>
-                 <button type="button" class="erp-int-link erp-int-link--muted" onclick="erpIntegritySessionDismiss(${JSON.stringify(id)})">Dismiss</button>`
+                 <button type="button" class="erp-int-link erp-int-link--muted" type="button" onclick="erpIntegritySessionDismiss(${JSON.stringify(id)})">Dismiss</button>`
               : `<span class="mini-note">Reviewed ${escapeHtml(String(a.reviewedBy || ''))} · ${escapeHtml(String(a.reviewedAt || '').slice(0, 16))}</span>`;
             return `<div class="erp-int-alert-card ${cardMod}">
               <div class="erp-int-alert-top">
@@ -22584,7 +22540,6 @@
           .join('');
         body.innerHTML = cards;
         void refreshIntegrityNavBadges();
-        syncIntegrityCatTabsFromSelects();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
       }
