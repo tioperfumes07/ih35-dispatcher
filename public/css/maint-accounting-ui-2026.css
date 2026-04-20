@@ -484,12 +484,21 @@ body.erp-maintenance .maint-wo-form-stack-inner {
 body.erp-maintenance .maint-form-actions--sticky {
   position: sticky;
   bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 100;
-  background: var(--color-bg-card);
-  border-top: 1px solid var(--color-border);
-  padding: 12px 20px;
-  margin: 16px -16px -16px;
-  box-shadow: 0 -2px 8px color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  min-height: 52px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-top: 1px solid #e0e3e8;
+  padding: 10px 16px;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-wrap: wrap;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
 }
 
 /* --- Module sidebar: title emphasis --- */
@@ -569,6 +578,12 @@ body.maint-wo-modal-open #maintWorkOrderFormMount > .maint-wo-columns {
 body.maint-wo-modal-open #maintWorkOrderFormMount .maint-wo-col-form {
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Scrollable WO column clears sticky save bar (screen only; print uses separate window) */
+body.erp-maintenance #maintWorkOrderFormMount .maint-wo-col-form {
+  padding-bottom: 70px;
+  box-sizing: border-box;
 }
 
 /* --- Collapsible sidebar groups (all modules on this page) --- */
@@ -840,23 +855,11 @@ body.erp-maintenance #section-accounting .maint-qb-lines-scroll {
 
 body.erp-maintenance .acct-dash-kpis {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), minmax(0, 1fr)));
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   min-width: 0;
   min-height: 0;
-}
-
-@media (max-width: 1099px) {
-  body.erp-maintenance .acct-dash-kpis {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 699px) {
-  body.erp-maintenance .acct-dash-kpis {
-    grid-template-columns: 1fr;
-  }
 }
 
 body.erp-maintenance .acct-dash-kpi {
@@ -880,9 +883,9 @@ body.erp-maintenance .acct-dash-kpi__label {
 }
 
 body.erp-maintenance .acct-dash-kpi__val {
-  font-size: 22px;
-  font-weight: 500;
-  color: #1a1f36;
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--color-text-primary);
   margin-top: 4px;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -898,198 +901,10 @@ body.erp-maintenance .acct-dash-kpi__val--ok {
 
 body.erp-maintenance .acct-dash-kpi__sub {
   font-size: 11px;
-  color: #a0a8b8;
+  color: var(--color-text-placeholder);
   margin-top: 4px;
   min-width: 0;
   overflow-wrap: anywhere;
-}
-
-/* Accounting board — 2×2 action cards (Fix 3) */
-body.erp-maintenance .acct-dash-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  margin-bottom: 16px;
-  min-width: 0;
-}
-
-@media (max-width: 899px) {
-  body.erp-maintenance .acct-dash-actions {
-    grid-template-columns: 1fr;
-  }
-}
-
-body.erp-maintenance .acct-dash-action-card {
-  background: #ffffff;
-  border: 1px solid #e0e3e8;
-  border-radius: 8px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-body.erp-maintenance .acct-dash-action-card__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid #f1f3f4;
-  padding-bottom: 10px;
-  margin-bottom: 2px;
-  min-width: 0;
-}
-
-body.erp-maintenance .acct-dash-action-card__title {
-  font-size: 13px;
-  font-weight: 500;
-  color: #1a1f36;
-}
-
-body.erp-maintenance .acct-dash-action-card__sub {
-  font-size: 11px;
-  color: #6b7385;
-  margin-top: 2px;
-  line-height: 1.35;
-  min-width: 0;
-}
-
-body.erp-maintenance .acct-dash-action-card__btns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  align-items: center;
-}
-
-body.erp-maintenance .acct-dash-action-btn {
-  height: 28px;
-  padding: 0 12px;
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 1px solid #d0d4da;
-  background: #ffffff;
-  color: #3c4257;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-body.erp-maintenance .acct-dash-action-btn:hover {
-  background: #f5f6f8;
-}
-
-body.erp-maintenance .acct-dash-action-btn--primary {
-  background: #1557a0;
-  color: #ffffff;
-  border-color: #1557a0;
-}
-
-body.erp-maintenance .acct-dash-action-btn--primary:hover {
-  background: #124a88;
-  border-color: #124a88;
-}
-
-body.erp-maintenance .acct-qbo-err-list .acct-qbo-err-line {
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--color-semantic-error);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-body.erp-maintenance .acct-dash-tools-links {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 14px;
-  min-width: 0;
-}
-
-@media (max-width: 520px) {
-  body.erp-maintenance .acct-dash-tools-links {
-    grid-template-columns: 1fr;
-  }
-}
-
-body.erp-maintenance .acct-dash-tool-link {
-  appearance: none;
-  border: none;
-  background: none;
-  padding: 3px 0;
-  margin: 0;
-  text-align: left;
-  font-size: 12px;
-  color: #1557a0;
-  cursor: pointer;
-  font-family: inherit;
-  line-height: 1.35;
-}
-
-body.erp-maintenance .acct-dash-tool-link:hover {
-  text-decoration: underline;
-}
-
-body.erp-maintenance .acct-fuel-fast-entry-head.panel-head,
-body.erp-maintenance .acct-fuel-fast-entry-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 14px 0 10px;
-  margin-top: 4px;
-  border-top: 1px solid #e0e3e8;
-  min-width: 0;
-}
-
-body.erp-maintenance .acct-fuel-fast-entry-head__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1a1f36;
-}
-
-body.erp-maintenance .acct-fuel-fast-entry-head__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-body.erp-maintenance .maint-service-loc-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-}
-
-body.erp-maintenance .maint-service-loc-row__type {
-  width: 200px;
-  min-width: 160px;
-  flex-shrink: 0;
-}
-
-body.erp-maintenance .maint-service-loc-row__detail {
-  flex: 1 1 200px;
-  min-width: 0;
-}
-
-body.erp-maintenance .maint-service-loc-row__tip {
-  flex-shrink: 0;
-}
-
-body.erp-maintenance #recordTypeSelect {
-  min-width: 180px;
 }
 
 body.erp-maintenance .acct-dash-cards {
@@ -2140,10 +1955,8 @@ body.erp-maintenance .maint-qb-cost-details__badge {
 body.erp-maintenance .maint-qb-lines-scroll {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid #e0e3e8;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  box-sizing: border-box;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
   min-width: 0;
   min-height: 0;
 }
@@ -2151,36 +1964,26 @@ body.erp-maintenance .maint-qb-lines-scroll {
 body.erp-maintenance .maint-qb-lines-table {
   table-layout: auto;
   width: 100%;
-  min-width: 680px;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: 12px;
 }
 
 body.erp-maintenance .maint-qb-lines-table--item {
-  min-width: 860px;
+  min-width: 1040px;
 }
 
 body.erp-maintenance .maint-qb-lines-table thead th {
-  background: #f8f9fa;
+  background: var(--color-bg-hover);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #6b7385;
-  padding: 6px 8px;
-  border-bottom: 1px solid #e0e3e8;
+  letter-spacing: 0.03em;
+  color: var(--color-text-label);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
   white-space: nowrap;
-}
-
-body.erp-maintenance .maint-qb-th-drag {
-  width: 20px;
-  padding: 6px 4px;
-}
-
-body.erp-maintenance .maint-qb-th-copy {
-  width: 28px;
-  padding: 6px 4px;
 }
 
 body.erp-maintenance .maint-qb-th-num,
@@ -2199,17 +2002,15 @@ body.erp-maintenance .maint-qb-td-del {
   text-align: center;
 }
 
-body.erp-maintenance .maint-qb-lines-table tbody tr.maint-cost-line:hover,
-body.erp-maintenance .maint-qb-lines-table tbody tr.wo-line:hover {
-  background: #fafafa;
+body.erp-maintenance .maint-qb-lines-table tbody tr.maint-cost-line:hover {
+  background: var(--color-bg-hover);
 }
 
 body.erp-maintenance .maint-qb-lines-table tbody td {
-  padding: 4px 6px;
-  border-bottom: 1px solid #f1f3f4;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
   overflow-wrap: anywhere;
-  min-height: 34px;
 }
 
 body.erp-maintenance .maint-qb-lines-table .qb-in {
@@ -2251,105 +2052,15 @@ body.erp-maintenance .maint-qb-bill-lbl {
   min-height: 0;
 }
 
-/* Vehicle / parts columns: horizontal cells (no stacked full-width selects in one TD). */
-body.erp-maintenance .maint-qb-td-drag {
-  width: 20px;
-  text-align: center;
-  vertical-align: middle;
-  padding: 2px 4px;
-  color: #d0d4da;
-  cursor: grab;
-  user-select: none;
-}
-
-body.erp-maintenance .maint-qb-drag-h {
-  display: inline-block;
-  font-size: 12px;
-  line-height: 1;
-  letter-spacing: -0.06em;
-}
-
-body.erp-maintenance .maint-qb-td-copy {
-  width: 28px;
-  text-align: center;
-  vertical-align: middle;
-  padding: 2px;
-}
-
-body.erp-maintenance .maint-qb-row-copy {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: #6b7385;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-}
-
-body.erp-maintenance .maint-qb-row-copy:hover {
-  background: #f0f7ff;
-  color: #1557a0;
-}
-
-body.erp-maintenance table.ap-wo-qb-table .veh-parts-cols {
-  display: none;
-}
-
-body.erp-maintenance .maint-qb-td-partfam,
-body.erp-maintenance .maint-qb-td-possel,
-body.erp-maintenance .maint-qb-td-partmap {
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-body.erp-maintenance .maint-qb-td-partfam .maint-line-part-cat,
-body.erp-maintenance .maint-qb-td-possel .maint-line-pos-select {
-  width: auto;
-  min-width: 72px;
-  max-width: 150px;
-  margin: 0 6px 0 0;
-  margin-bottom: 0;
-  display: inline-block;
-  vertical-align: middle;
+body.erp-maintenance .maint-qb-inline-select {
+  width: 100%;
+  margin-bottom: 4px;
   font-size: 12px;
   min-height: 28px;
-  box-sizing: border-box;
-}
-
-body.erp-maintenance .maint-qb-td-possel .maint-line-pos-free-wrap {
-  display: inline-block;
-  vertical-align: middle;
-  margin: 0;
-}
-
-body.erp-maintenance .maint-qb-td-possel .maint-line-pos-free-wrap:not(.hidden) {
-  min-width: 80px;
-  max-width: 160px;
-}
-
-body.erp-maintenance .maint-qb-td-possel .maint-line-pos-free {
-  width: 100%;
-  min-width: 72px;
-}
-
-body.erp-maintenance .maint-qb-td-partmap .maint-line-part-map-host--inline {
-  display: inline-block;
-  vertical-align: middle;
-  margin: 0;
-  max-width: 120px;
-  overflow: hidden;
-}
-
-body.erp-maintenance .maint-qb-td-partmap .maint-line-part-map-host--inline svg {
-  max-height: 56px;
-  width: auto;
 }
 
 body.erp-maintenance .maint-line-part-map-host--inline {
-  margin-top: 0;
+  margin-top: 6px;
 }
 
 body.erp-maintenance .maint-qb-cost-details__actions {
@@ -2359,14 +2070,14 @@ body.erp-maintenance .maint-qb-cost-details__actions {
 
 body.erp-maintenance .maint-qb-cost-totals-bar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: 18px;
-  padding: 8px 12px;
+  gap: 16px;
+  padding: 10px 12px;
   margin-top: 10px;
-  border-top: 2px solid #e0e3e8;
-  background: #fff;
+  border-top: 2px solid var(--color-border);
+  background: var(--color-bg-card);
   min-width: 0;
   min-height: 0;
 }
@@ -2934,439 +2645,5 @@ body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card__val {
   font-size: 20px;
   font-weight: 500;
   margin-top: 6px;
-}
-
-/* —— Resizable modal shell (visual) —— */
-body.erp-maintenance .erp-modal-resize-grip {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  padding: 4px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  border: 0;
-  background: transparent;
-  color: #d0d4da;
-  cursor: se-resize;
-  z-index: 6;
-  box-sizing: border-box;
-}
-
-body.erp-maintenance .erp-dedicated-form-modal__shell,
-body.erp-maintenance .maint-workorder-fullmodal__shell,
-body.erp-maintenance .maint-modal.erp-qb-dialog {
-  position: relative;
-}
-
-body.erp-maintenance .erp-dedicated-form-modal__shell.erp-modal-shell--user-geometry {
-  display: flex;
-  flex-direction: column;
-  max-width: 95vw;
-  max-height: 95vh;
-}
-
-body.erp-maintenance .erp-dedicated-form-modal__shell.erp-modal-shell--user-geometry .erp-dedicated-form-modal__inner {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-body.erp-maintenance .erp-dedicated-form-modal__shell.erp-modal-shell--user-geometry .erp-dedicated-form-modal__body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-body.erp-maintenance .maint-workorder-fullmodal__shell.erp-modal-shell--user-geometry {
-  display: flex;
-  flex-direction: column;
-  max-width: 95vw;
-  max-height: 95vh;
-}
-
-body.erp-maintenance .maint-workorder-fullmodal__shell.erp-modal-shell--user-geometry .maint-workorder-fullmodal__body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-body.erp-maintenance .maint-modal.erp-qb-dialog.erp-modal-shell--user-geometry .erp-qb-dialog__body {
-  max-height: calc(95vh - 120px);
-  overflow-y: auto;
-}
-
-/* —— WO banner (FIX 2A) —— */
-body.erp-maintenance .maint-wo-banner--spec {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 14px 20px;
-  border-bottom: 1px solid #e0e3e8;
-  background: #ffffff;
-}
-
-body.erp-maintenance .maint-wo-banner--spec .maint-wo-banner__title {
-  font-size: 18px;
-  font-weight: 500;
-  color: #1a1f36;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: #d0d4da;
-}
-
-body.erp-maintenance .maint-wo-banner--spec .maint-wo-banner__unit {
-  font-size: 18px;
-  font-weight: 500;
-  color: #1557a0;
-  margin-left: 4px;
-}
-
-/* —— Vehicle information card (FIX 2B) —— */
-body.erp-maintenance .maint-vehicle-info-box {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: #ffffff;
-  padding: 0;
-  margin-bottom: 12px;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__body {
-  padding: 14px 16px 16px;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__title {
-  font-size: 13px;
-  font-weight: 500;
-  margin: 0 0 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e0e3e8;
-  color: #1a1f36;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__cols {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: stretch;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__left {
-  flex: 2 1 280px;
-  min-width: 0;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__right {
-  flex: 1 1 200px;
-  min-width: 180px;
-  border-left: 1px solid #e0e3e8;
-  padding-left: 16px;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__status-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-body.erp-maintenance .maint-field-cell--repair-status-inline {
-  min-width: 160px;
-}
-
-body.erp-maintenance .maint-field-cell--repair-status-inline .qb-in {
-  width: 180px;
-  max-width: 100%;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__ymm {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px;
-  font-size: 13px;
-  color: #3c4257;
-  margin-bottom: 8px;
-}
-
-body.erp-maintenance .maint-vehicle-ymm__y {
-  width: 60px;
-  flex-shrink: 0;
-}
-
-body.erp-maintenance .maint-vehicle-ymm__mk {
-  width: 100px;
-  flex-shrink: 0;
-}
-
-body.erp-maintenance .maint-vehicle-ymm__md {
-  flex: 1 1 120px;
-  min-width: 0;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__mono {
-  font-size: 12px;
-  color: #3c4257;
-  margin-bottom: 6px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: baseline;
-}
-
-body.erp-maintenance .maint-vehicle-id-lbl {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #6b7385;
-}
-
-body.erp-maintenance .maint-vehicle-id-val {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-}
-
-body.erp-maintenance .maint-vehicle-kpi__lbl {
-  display: block;
-  font-size: 11px;
-  font-weight: 500;
-  color: #6b7385;
-  margin-bottom: 4px;
-}
-
-body.erp-maintenance .maint-vehicle-kpi__val {
-  font-size: 20px;
-  font-weight: 500;
-  color: #1a1f36;
-}
-
-body.erp-maintenance .maint-vehicle-kpi__val--md {
-  font-size: 16px;
-  font-weight: 500;
-  color: #1a1f36;
-}
-
-body.erp-maintenance .maint-vehicle-kpi__val--danger {
-  color: #b91c1c;
-}
-
-body.erp-maintenance .maint-vehicle-kpi__val--ok {
-  color: #065f46;
-}
-
-body.erp-maintenance .maint-vehicle-kpi__val--warn {
-  color: #b45309;
-}
-
-body.erp-maintenance .maint-vehicle-kpi__badge {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 500;
-  background: #dcfce7;
-  color: #166534;
-}
-
-body.erp-maintenance .maint-vehicle-info-box__oplink {
-  margin-top: 10px;
-  font-size: 12px;
-}
-
-body.erp-maintenance .maint-status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-body.erp-maintenance .maint-status-pill--ok {
-  background: #dcfce7;
-  color: #166534;
-}
-
-body.erp-maintenance .maint-status-pill--warn {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-body.erp-maintenance .maint-status-pill--danger {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-body.erp-maintenance .maint-status-pill--neutral {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-/* —— Service information card —— */
-body.erp-maintenance .maint-wo-service-info-card__title {
-  font-size: 13px;
-  font-weight: 500;
-  margin: 0 0 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e0e3e8;
-  color: #1a1f36;
-}
-
-body.erp-maintenance .maint-wo-svc-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-body.erp-maintenance .maint-wo-svc-row .maint-field-cell {
-  flex: 1 1 160px;
-  min-width: 0;
-}
-
-body.erp-maintenance .maint-wo-svc-row--1 .maint-field-cell--service-location {
-  flex: 1 1 200px;
-}
-
-body.erp-maintenance .maint-wo-svc-row--1 .maint-field-cell--record-type {
-  flex: 0 0 160px;
-}
-
-body.erp-maintenance .maint-wo-svc-row--1 .maint-field-cell--service-type {
-  flex: 2 1 220px;
-}
-
-body.erp-maintenance .maint-wo-svc-row--1 .maint-field-cell--service-date {
-  flex: 0 0 150px;
-}
-
-body.erp-maintenance .maint-wo-svc-row--2 .maint-field-cell--vendor {
-  flex: 1 1 220px;
-}
-
-body.erp-maintenance .maint-wo-svc-row--2 .maint-field-cell--odo {
-  flex: 0 0 160px;
-}
-
-body.erp-maintenance .maint-wo-svc-row--2 .maint-field-cell--planned {
-  flex: 2 1 220px;
-}
-
-body.erp-maintenance .maint-wo-svc-row--3 .maint-field-cell--load {
-  flex: 0 0 160px;
-}
-
-body.erp-maintenance .maint-wo-service-info-card .qb-l {
-  font-size: 11px;
-  font-weight: 500;
-  color: #6b7385;
-  margin-bottom: 4px;
-  display: block;
-  white-space: nowrap;
-}
-
-body.erp-maintenance .maint-input-action-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-body.erp-maintenance .maint-inline-hint--10 {
-  font-size: 10px;
-  color: var(--color-text-label);
-  margin-top: 4px;
-}
-
-body.erp-maintenance .maint-fleet-odo-details {
-  margin: 4px 0 10px;
-}
-
-body.erp-maintenance .maint-fleet-odo-details__sum {
-  font-size: 11px;
-  color: #1557a0;
-  cursor: pointer;
-  list-style: none;
-}
-
-body.erp-maintenance .maint-fleet-odo-details__sum::-webkit-details-marker {
-  display: none;
-}
-
-body.erp-maintenance .maint-catalog-suggest-wrap {
-  position: relative;
-  width: 100%;
-}
-
-body.erp-maintenance .maint-catalog-suggest {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  z-index: 40;
-  max-height: 220px;
-  overflow-y: auto;
-  background: #ffffff;
-  border: 1px solid #d0d4da;
-  border-radius: 0 0 6px 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-body.erp-maintenance .maint-catalog-suggest__opt {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 8px 12px;
-  font-size: 12px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  color: #1a1f36;
-}
-
-body.erp-maintenance .maint-catalog-suggest__opt:hover {
-  background: #f5f6f8;
-}
-
-body.erp-maintenance .maint-catalog-badge,
-body.erp-maintenance .maint-planned-catalog-badge {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 500;
-  color: #6b7385;
-  background: #eef0f3;
-  vertical-align: middle;
-}
-
-body.erp-maintenance .maint-catalog-add-btn {
-  height: 30px !important;
-  min-height: 30px !important;
-  padding: 0 12px !important;
-  font-size: 12px !important;
-  line-height: 28px !important;
-}
-
-body.erp-maintenance .maint-field-cell__row--catalog {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-body.erp-maintenance .maint-field-cell__row--catalog .maint-field--catalog {
-  flex: 1 1 200px;
-  min-width: 0;
 }
 
