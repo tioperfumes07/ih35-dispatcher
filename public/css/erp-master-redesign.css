@@ -2754,7 +2754,8 @@ body.fuel-board .layout > * {
 }
 
 body.fuel-board .panel {
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   box-shadow: none;
