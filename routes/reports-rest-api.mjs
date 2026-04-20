@@ -3,7 +3,12 @@
  * Read-only: delegates to lib/reports-datasets.mjs (ERP JSON + optional Postgres TMS reads).
  */
 
-import { buildReportDataset } from '../lib/reports-datasets.mjs';
+import {
+  buildReportDataset,
+  buildServiceLocationsFilterList,
+  buildServiceTypesUsedList,
+  buildFleetUnitsFilterList
+} from '../lib/reports-datasets.mjs';
 import { wrapStandardReport } from '../lib/reports-envelope.mjs';
 import { flattenQboReportToStandard } from '../lib/qbo-report-flat.mjs';
 import {
