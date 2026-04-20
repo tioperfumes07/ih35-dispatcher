@@ -28,14 +28,15 @@ body.erp-maintenance .maint-action-strip {
 body.erp-maintenance .maint-action-strip__tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
   width: 100%;
   align-items: stretch;
 }
 
 body.erp-maintenance .maint-action-strip__tabs .maint-action-strip__btn {
-  flex: 1 1 0;
-  min-width: min(100%, 9rem);
+  flex: 1;
+  min-width: 160px;
+  box-sizing: border-box;
 }
 
 body.erp-maintenance .maint-action-strip__fleet {
@@ -2955,10 +2956,17 @@ body.erp-maintenance #section-dashboard .metric-value {
 }
 
 body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card {
+  flex: 1;
+  min-width: 180px;
   min-height: 92px;
   display: flex;
   flex-direction: column;

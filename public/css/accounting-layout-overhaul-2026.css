@@ -80,10 +80,9 @@ body.erp-maintenance #section-accounting .subtabs.erp-tab-bar .subtab.active {
   font-weight: 500 !important;
 }
 
-/* Reports + other tablists in maintenance */
+/* Reports + other tablists in maintenance (not WO action strip — that row wraps in maint-accounting / maint-overhaul) */
 body.erp-maintenance .rep-cat-tabs,
-body.erp-maintenance #maintMainSubtabs,
-body.erp-maintenance #section-maintenance .maint-action-strip__tabs {
+body.erp-maintenance #maintMainSubtabs {
   display: flex !important;
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
