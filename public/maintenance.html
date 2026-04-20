@@ -10051,7 +10051,11 @@
       } else if (tabBtn) tabBtn.classList.add('active');
       syncReportsSidebarActive();
       if (tabId === 'rep-team') loadTeamSecurityPanel();
-      if (tabId === 'rep-integrity') loadIntegrityDashboard();
+      if (tabId === 'rep-integrity') {
+        erpIntegrityDashMode(window.__integrityDashMode || 'alerts');
+        void populateIntegrityVehicleDatalist();
+        loadIntegrityDashboard();
+      }
       if (tabId === 'rep-maint-detail') renderMaintDetailedReport();
       if (tabId === 'rep-settlement') {
         loadSettlementIndex();
@@ -22734,6 +22738,176 @@
         void refreshIntegrityNavBadges();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
+      }
+    }
+
+    async function populateIntegrityVehicleDatalist() {
+      const dl = document.getElementById('integrityVehicleUnitList');
+      if (!dl) return;
+      try {
+        const d = await j('/api/maintenance/dashboard');
+        const vs = d.vehicles || [];
+        dl.innerHTML = vs
+          .map(v => `<option value="${escapeHtml(String(v.name || ''))}"></option>`)
+          .join('');
+      } catch {
+        dl.innerHTML = '';
+      }
+    }
+
+    async function loadIntegrityFleetOverview() {
+      const host = document.getElementById('integrityFleetTableHost');
+      const sum = document.getElementById('integrityFleetSummary');
+      if (!host) return;
+      host.innerHTML = '<p class="mini-note">Loading fleet overview…</p>';
+      try {
+        const d = await j('/api/integrity/fleet-overview');
+        window.__integrityFleetRowsCache = d.rows || [];
+        if (sum) {
+          sum.textContent = `Fleet avg score: ${d.summary?.avgIntegrityScore ?? '—'} · Fleet-wide active alerts: ${d.summary?.activeFleetAlerts ?? '—'} · Units: ${d.summary?.units ?? ''}`;
+        }
+        renderIntegrityFleetTable();
+      } catch (e) {
+        host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</p>`;
+      }
+    }
+
+    function renderIntegrityFleetTable() {
+      const host = document.getElementById('integrityFleetTableHost');
+      const q = String(document.getElementById('integrityFleetFilter')?.value || '')
+        .trim()
+        .toLowerCase();
+      if (!host) return;
+      const rows = (window.__integrityFleetRowsCache || []).filter(r => {
+        if (!q) return true;
+        const hay = `${r.unit} ${r.ymm}`.toLowerCase();
+        return hay.includes(q);
+      });
+      if (!rows.length) {
+        host.innerHTML = '<p class="mini-note">No rows.</p>';
+        return;
+      }
+      const tbl = `<table class="erp-table" style="font-size:12px;width:100%"><thead><tr>
+        <th>Unit</th><th>Score</th><th>RED</th><th>AMBER</th><th>Samsara mi</th><th>Last WO</th><th>Last fuel</th><th>PM</th>
+      </tr></thead><tbody>${rows
+        .map(r => {
+          const scoreCls =
+            r.integrityScore >= 80 ? 'style="color:#137333"' : r.integrityScore >= 60 ? 'style="color:#b86b00"' : 'style="color:#c5221f"';
+          const woWarn = r.daysSinceWo > 60 ? 'style="color:#c5221f;font-weight:600"' : '';
+          const fuWarn = r.daysSinceFuel > 14 ? 'style="color:#c5221f;font-weight:600"' : '';
+          return `<tr><td><button type="button" class="erp-int-link" onclick="erpIntegrityFleetOpenUnit(${JSON.stringify(r.unit)})">${escapeHtml(r.unit)}</button></td>
+          <td><span ${scoreCls}>${r.integrityScore}</span></td>
+          <td>${r.red || 0}</td><td>${r.amber || 0}</td>
+          <td>${r.samsaraOdometer != null ? escapeHtml(String(Math.round(r.samsaraOdometer))) : '—'}</td>
+          <td ${woWarn}>${escapeHtml(r.lastWoDate || '—')}</td>
+          <td ${fuWarn}>${escapeHtml(r.lastFuelDate || '—')}</td>
+          <td>${escapeHtml(r.pmStatus || '')}</td></tr>`;
+        })
+        .join('')}</tbody></table>`;
+      host.innerHTML = `<div class="table-wrap">${tbl}</div>`;
+    }
+
+    function erpIntegrityFleetOpenUnit(unit) {
+      const inp = document.getElementById('integrityVehicleUnitSearch');
+      if (inp) inp.value = unit;
+      erpIntegrityDashMode('vehicle');
+    }
+
+    let __intChartOdo;
+    let __intChartMaint;
+    let __intChartSafe;
+    function integrityDestroyCharts() {
+      try {
+        __intChartOdo?.destroy();
+      } catch {
+        /* */
+      }
+      try {
+        __intChartMaint?.destroy();
+      } catch {
+        /* */
+      }
+      try {
+        __intChartSafe?.destroy();
+      } catch {
+        /* */
+      }
+      __intChartOdo = null;
+      __intChartMaint = null;
+      __intChartSafe = null;
+    }
+
+    async function loadIntegrityVehiclePanel() {
+      if (!window.Chart) return;
+      const u = String(document.getElementById('integrityVehicleUnitSearch')?.value || '').trim();
+      const sum = document.getElementById('integrityVehicleSummary');
+      const det = document.getElementById('integrityVehicleDetail');
+      if (!u) {
+        if (sum) sum.textContent = 'Select a unit to load Samsara + ERP integrity.';
+        return;
+      }
+      if (sum) sum.textContent = 'Loading…';
+      try {
+        const p = await j('/api/integrity/vehicle/' + encodeURIComponent(u));
+        if (p && p.ok === false && p.error) throw new Error(p.error);
+        const sc = p.integrityScore;
+        const scCls = sc >= 80 ? '#137333' : sc >= 60 ? '#b86b00' : '#c5221f';
+        const lbl = sc >= 80 ? 'GOOD' : sc >= 60 ? 'REVIEW' : 'ATTENTION';
+        if (sum) {
+          sum.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+            <div style="width:88px;height:88px;border-radius:50%;border:6px solid ${scCls};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:${scCls}">${sc}</div>
+            <div><div style="font-size:18px;font-weight:500">${escapeHtml(u)}</div>
+            <div class="mini-note">${escapeHtml(String(p.samsara?.vehicleId || ''))}</div>
+            <div class="mini-note">Integrity: <strong style="color:${scCls}">${lbl}</strong> · Active RED: ${p.activeAlertsSummary?.red ?? 0} · AMBER: ${p.activeAlertsSummary?.amber ?? 0}</div>
+            <div class="mini-note">Samsara odo: ${
+              p.samsara?.odometerMiles != null ? escapeHtml(String(Math.round(p.samsara.odometerMiles))) : '—'
+            } mi</div></div>`;
+        }
+        integrityDestroyCharts();
+        const odoLabels = (p.panels?.odometerSeries || []).map(x => x.date);
+        const odoData = (p.panels?.odometerSeries || []).map(x => x.miles);
+        const c1 = document.getElementById('integrityChartOdo');
+        if (c1 && odoLabels.length && window.Chart) {
+          __intChartOdo = new Chart(c1, {
+            type: 'line',
+            data: { labels: odoLabels, datasets: [{ label: 'Mi/day', data: odoData, borderColor: '#1557a0', tension: 0.15 }] },
+            options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 8 } } } }
+          });
+        }
+        const m = p.panels?.maintenanceMonthly || [];
+        const c2 = document.getElementById('integrityChartMaint');
+        if (c2 && m.length && window.Chart) {
+          __intChartMaint = new Chart(c2, {
+            type: 'bar',
+            data: {
+              labels: m.map(x => x.month),
+              datasets: [{ label: '$', data: m.map(x => x.amount), backgroundColor: '#5f6368' }]
+            },
+            options: { plugins: { legend: { display: false } } }
+          });
+        }
+        const sb = p.panels?.safetyBars || {};
+        const sk = ['harshBrake', 'harshAccel', 'speeding', 'distracted', 'collisionRisk'];
+        const labels = ['Harsh brake', 'Harsh accel', 'Speeding', 'Distracted', 'Collision'];
+        const vals = sk.map(k => sb[k] || 0);
+        const c3 = document.getElementById('integrityChartSafety');
+        if (c3 && window.Chart) {
+          __intChartSafe = new Chart(c3, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Events', data: vals, backgroundColor: '#f9ab00' }] },
+            options: { plugins: { legend: { display: false } } }
+          });
+        }
+        if (det) {
+          const fc =
+            (p.samsara?.faultCodes || [])
+              .slice(0, 6)
+              .map(f => `${escapeHtml(f.code)}: ${escapeHtml(f.description || '')}`)
+              .join('<br>') || 'No active fault codes parsed.';
+          det.innerHTML = `<div class="mini-note" style="margin-top:8px"><strong>Faults</strong><br>${fc}</div>`;
+        }
+      } catch (e) {
+        if (sum) sum.textContent = e.message || String(e);
       }
     }
 
