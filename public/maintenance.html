@@ -1449,18 +1449,9 @@
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div class="maint-field-cell maint-field-cell--grow" style="grid-column:1/-1;max-width:100%">
-                        <span class="qb-l">Shop location</span>
-                        <select id="repairLocationSelect" class="qb-in maint-field" onchange="onRepairLocationSelectChange()" title="Where service was performed">
-                          <option value="">— Choose —</option>
-                          <option value="in-house">Internal shop</option>
-                          <option value="external">External shop</option>
-                          <option value="road-service">Roadside</option>
-                          <option value="parts-purchase">Parts purchase</option>
-                          <option value="over-the-road">Over the road</option>
-                        </select>
-                        <input type="hidden" id="repairLocationTypeInput" value="" />
-                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">Choose a type above, then enter where work happened (required). The datalist suggests prior labels.</span>
+                        <span class="qb-l">Service location detail <span class="maint-label-req" aria-hidden="true">*</span></span>
+                        <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 200px">Choose shop type in the vehicle card above, then enter where work happened (required). The datalist suggests prior labels.</span>
                           <span class="erp-help-tip">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop / location detail">?</button>
                             <span class="erp-help-tip__panel" role="tooltip">
@@ -1468,23 +1459,8 @@
                             </span>
                           </span>
                         </div>
-                        <span class="qb-l">Location detail <span class="maint-label-req" aria-hidden="true">*</span></span>
                         <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Shop / location detail (required)" aria-required="true" />
                       </div>
-                    </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Repair status</span>
-                        <select id="recordRepairStatusSelect" class="qb-in maint-field" title="Workflow status stored on this maintenance record" onchange="renderMaintAsideWoSummary()">
-                          <option value="">— Not set —</option>
-                          <option value="queued">Awaiting service</option>
-                          <option value="in_progress">In progress</option>
-                          <option value="finished">Completed</option>
-                        </select>
-                        <div id="recordRepairStatusMeta" class="mini-note" style="margin-top:4px" aria-live="polite"></div>
-                      </div>
-                      <div class="maint-field-cell"></div>
-                      <div class="maint-field-cell"></div>
                     </div>
                     <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div id="maintVendorInvFieldWrap" class="maint-field-cell">
