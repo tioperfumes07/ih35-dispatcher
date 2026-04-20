@@ -3647,6 +3647,8 @@ body.erp-maintenance .sec-alert-high {
   border-radius: var(--radius-sm);
   border: 1px solid var(--btn-danger-border);
   border-left: 4px solid var(--pill-red-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .sec-alert-warn {
@@ -3656,6 +3658,8 @@ body.erp-maintenance .sec-alert-warn {
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-warning-border-soft);
   border-left: 4px solid var(--color-semantic-warning);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .sec-alert-info {
@@ -3665,6 +3669,8 @@ body.erp-maintenance .sec-alert-info {
   border-radius: var(--radius-sm);
   border: 1px solid var(--accent-border);
   border-left: 4px solid var(--pill-blue-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance #section-maintenance .panel-head:not(.maint-panel-head-center) {

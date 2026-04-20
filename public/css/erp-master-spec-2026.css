@@ -851,8 +851,11 @@ body.erp-maintenance .mr-filter-chipwrap > summary {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 28px;
-  padding: 0 12px;
+  min-height: 28px;
+  height: auto;
+  min-width: 0;
+  max-width: min(100%, calc(100vw - 48px));
+  padding: 4px 12px;
   border: 1px solid var(--color-border);
   border-radius: 20px;
   font-size: 12px;
@@ -860,6 +863,9 @@ body.erp-maintenance .mr-filter-chipwrap > summary {
   color: var(--color-text-primary);
   background: var(--color-bg-card);
   font-family: inherit;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 body.erp-maintenance .mr-filter-chipwrap > summary::-webkit-details-marker {
