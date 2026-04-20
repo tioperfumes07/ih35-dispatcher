@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';
 import { formatIsoDateShortPlain } from './lib/format-iso-date-short-plain.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
+import { ensureAppDatabaseObjects } from './lib/ensure-app-database-objects.mjs';
 import {
   ensureMaintenanceServiceCatalog,
   MAINTENANCE_SERVICE_CATALOG_SEEDS
@@ -10782,6 +10783,7 @@ function bootstrapAdminFromEnv() {
 
 async function startServer() {
   await ensureTmsSchema();
+  await ensureAppDatabaseObjects();
   await ensureMaintenanceServiceCatalog();
   bootstrapAdminFromEnv();
   /** Bind IPv4 so clients using `127.0.0.1` (e.g. `npm run smoke`) reach the listener; Node may otherwise listen IPv6-only. */

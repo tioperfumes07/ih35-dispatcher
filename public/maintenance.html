@@ -6274,6 +6274,7 @@
   <script src="/js/erp-ui.js"></script>
   <script src="/js/erp-filename-util.js"></script>
   <script src="/src/utils/printDocuments.js"></script>
+  <script src="/js/erp-date-display.js"></script>
   <script src="/js/erp-multi-bills.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
@@ -6883,10 +6884,8 @@
       if (!host) return;
       const statusLabel = s =>
         s === 'queued' ? 'Awaiting service' : s === 'in_progress' ? 'In progress' : s === 'finished' ? 'Completed' : String(s || '');
-      const fmtIso = iso => {
-        const d = String(iso || '').slice(0, 10);
-        return d || '—';
-      };
+      const fmtIso = iso =>
+        typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(iso) : String(iso || '').slice(0, 10) || '—';
       const pickDate = e => e.finishedAt || e.startedAt || e.queuedAt || '';
       const shopTitles = {
         internal: 'Internal shop queue',
@@ -6946,7 +6945,7 @@
               : '—';
             html += `<li style="margin-bottom:6px"><strong>${escapeHtml(r.unit || '')}</strong> — ${escapeHtml(svc)} <span class="mini-note">· ${escapeHtml(
               st
-            )} · ${escapeHtml(String(r.serviceDate || '').slice(0, 10))}</span><div style="margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px">${rsSel}<span class="mini-note">Recorded ${ts}</span></div></li>`;
+            )} · ${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(r.serviceDate) : String(r.serviceDate || '').slice(0, 10))}</span><div style="margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px">${rsSel}<span class="mini-note">Recorded ${ts}</span></div></li>`;
           }
           html += '</ul>';
         }
@@ -7755,7 +7754,7 @@
 
       // Maintenance records
       (erp.records || []).forEach(r => {
-        const label = `${r.unit || '—'} · ${(r.serviceDate || '').slice(0, 10)} · ${r.serviceType || r.recordType || 'Record'}`;
+        const label = `${r.unit || '—'} · ${typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(r.serviceDate) : (r.serviceDate || '').slice(0, 10)} · ${r.serviceType || r.recordType || 'Record'}`;
         const hay = `${r.unit || ''} ${r.serviceType || ''} ${r.recordType || ''} ${r.vendor || ''} ${r.notes || ''} ${r.loadNumber || ''}`.toLowerCase();
         if (hay.includes(q)) {
           push('Record', label, 'Maintenance', () => {
@@ -7773,7 +7772,7 @@
 
       // Bill payments log (this app)
       (erp.qboBillPaymentLog || []).forEach(e => {
-        const label = `${(e.txnDate || '').slice(0, 10)} · ${e.vendorName || e.vendorQboId || 'Vendor'} · $${Number(e.totalAmt || 0).toFixed(2)}`;
+        const label = `${typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(e.txnDate) : (e.txnDate || '').slice(0, 10)} · ${e.vendorName || e.vendorQboId || 'Vendor'} · $${Number(e.totalAmt || 0).toFixed(2)}`;
         const hay = `${e.vendorName || ''} ${e.vendorQboId || ''} ${e.billPaymentId || ''} ${e.privateNote || ''} ${e.payType || ''}`.toLowerCase();
         if (hay.includes(q)) {
           push('Bill payment', label, 'Accounting', () => {
@@ -7991,7 +7990,7 @@
       const pageRecs = recs.slice(start, start + ps);
 
       const cardHtml = r => {
-        const d = escapeHtml(String(r.serviceDate || '').slice(0, 10));
+        const d = escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(r.serviceDate) : String(r.serviceDate || '').slice(0, 10));
         const u = escapeHtml(String(r.unit || '—'));
         const svc = escapeHtml(String(r.serviceType || r.recordType || 'Record'));
         const vendor = escapeHtml(String(r.vendor || ''));
@@ -14940,7 +14939,7 @@
               String(e.id || '')
             )}, ${JSON.stringify(String(e.qboBillPaymentId || ''))})">Void in QBO</button>`;
       return `<tr>
-            <td>${escapeHtml(String(e.txnDate || '').slice(0, 10) || '—')}</td>
+            <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(e.txnDate) : String(e.txnDate || '').slice(0, 10) || '—')}</td>
             <td>${escapeHtml(String(e.vendorName || e.vendorQboId || '—'))}</td>
             <td>${escapeHtml(String(e.bankAccountName || '—'))}</td>
             <td>${escapeHtml(String(e.payType || '—'))} ${revTag}</td>
@@ -15621,7 +15620,7 @@
         return (
           `<div class="shop-row">${tagHtml || ''}<b>${escapeHtml(w.unit || '—')}</b> — ${escapeHtml(sum)}<br>` +
           partsRefLine +
-          `<span class="mini-note">${escapeHtml(st)} · ${escapeHtml((w.serviceDate || '').slice(0, 10) || '')}</span></div>`
+          `<span class="mini-note">${escapeHtml(st)} · ${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(w.serviceDate) : (w.serviceDate || '').slice(0, 10) || '')}</span></div>`
         );
       };
 
@@ -15636,10 +15635,8 @@
       };
       const pickDate = e => e.finishedAt || e.startedAt || e.queuedAt || '';
       const cap = s => s[0].toUpperCase() + s.slice(1);
-      const fmtIso = iso => {
-        const d = String(iso || '').slice(0, 10);
-        return d || '—';
-      };
+      const fmtIso = iso =>
+        typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(iso) : String(iso || '').slice(0, 10) || '—';
       const statusLabel = s =>
         s === 'queued' ? 'Awaiting service' : s === 'in_progress' ? 'In progress' : 'Completed';
 
@@ -18644,10 +18641,13 @@
           })
         );
       };
+      const du0 = rows[0].dueDate;
+      const du1 = rows[rows.length - 1].dueDate;
       const html = `<table>
         <tr><td>Vendor</td><td><b>${escapeHtml(vn)}</b></td></tr>
         <tr><td>Total bills</td><td><b>${rows.length}</b></td></tr>
         <tr><td>Bill date range</td><td><b>${mbHumIso(d0)}</b> to <b>${mbHumIso(d1)}</b></td></tr>
+        <tr><td>Due date range</td><td><b>${mbHumIso(du0)}</b> to <b>${mbHumIso(du1)}</b></td></tr>
         <tr><td>Total amount</td><td><b>$${total.toFixed(2)}</b></td></tr>
         <tr><td>Bill numbers</td><td><b>${escapeHtml(n0)}</b> → <b>${escapeHtml(n1)}</b></td></tr>
       </table><p class="mini-note" style="margin:8px 0 0">Create ${rows.length} bills?</p>`;
@@ -19907,7 +19907,7 @@
             t,
             iso,
             row: `<tr>
-              <td>${escapeHtml(String(ap.txnDate || '').slice(0, 10) || '—')}</td>
+              <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(ap.txnDate) : String(ap.txnDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(String(ap.txnType || '').toUpperCase())}</td>
               <td>${escapeHtml(vendorName(ap.qboVendorId))}</td>
               <td class="num">${escapeHtml(String(ap.amount ?? '—'))}</td>
@@ -19925,7 +19925,7 @@
             t,
             iso,
             row: `<tr>
-              <td>${escapeHtml(String(wo.serviceDate || '').slice(0, 10) || '—')}</td>
+              <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(wo.serviceDate) : String(wo.serviceDate || '').slice(0, 10) || '—')}</td>
               <td>WO ${escapeHtml(String(wo.txnType || '').toUpperCase())}</td>
               <td>${escapeHtml(vendorName(wo.qboVendorId))}</td>
               <td class="num">${escapeHtml(tot.toFixed(2))}</td>
@@ -19952,11 +19952,11 @@
             t,
             iso,
             row: `<tr>
-              <td>${escapeHtml(String(ap.txnDate || '').slice(0, 10) || '—')}</td>
+              <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(ap.txnDate) : String(ap.txnDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(vendorName(ap.qboVendorId))}</td>
               <td>${escapeHtml(String(ap.docNumber || '—'))}</td>
               <td class="num">${escapeHtml(String(ap.amount ?? '—'))}</td>
-              <td>${escapeHtml(String(ap.dueDate || '').slice(0, 10) || '—')}</td>
+              <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(ap.dueDate) : String(ap.dueDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(String(ap.qboSyncStatus || '—'))}</td>
             </tr>`
           });
@@ -19971,11 +19971,11 @@
             t,
             iso,
             row: `<tr>
-              <td>${escapeHtml(String(wo.serviceDate || '').slice(0, 10) || '—')}</td>
+              <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(wo.serviceDate) : String(wo.serviceDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(vendorName(wo.qboVendorId))}</td>
               <td>${escapeHtml(String(wo.vendorInvoiceNumber || wo.workOrderNumber || '—'))}</td>
               <td class="num">${escapeHtml(tot.toFixed(2))}</td>
-              <td>${escapeHtml(String(wo.dueDate || '').slice(0, 10) || '—')}</td>
+              <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(wo.dueDate) : String(wo.dueDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(String(wo.qboSyncStatus || '—'))}</td>
             </tr>`
           });
@@ -19997,7 +19997,7 @@
           return {
             iso,
             row: `<tr>
-            <td>${escapeHtml(String(e.txnDate || '').slice(0, 10) || '—')}</td>
+            <td>${escapeHtml(typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(e.txnDate) : String(e.txnDate || '').slice(0, 10) || '—')}</td>
             <td>${escapeHtml(String(e.vendorName || '—'))}</td>
             <td>${escapeHtml(String(e.qboBillPaymentId || e.docNumber || '—'))}</td>
             <td class="num">${escapeHtml(Number(e.totalAmt || 0).toFixed(2))}</td>
@@ -20584,7 +20584,7 @@
           posted.push({
             kind: 'fuel',
             id: fp.id,
-            label: `Fuel · ${fp.unit || ''} · ${String(fp.txnDate || '').slice(0, 10)} · ${fp.qboEntityType} ${fp.qboEntityId}`
+            label: `Fuel · ${fp.unit || ''} · ${typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(fp.txnDate) : String(fp.txnDate || '').slice(0, 10)} · ${fp.qboEntityType} ${fp.qboEntityId}`
           });
         }
       });
