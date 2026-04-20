@@ -16228,8 +16228,32 @@
       if (which === 'vendors') loadVendorCatalogPanel();
       if (which === 'operational') loadOperationalCatalogPanel();
       if (which === 'name-mgmt') {
-        if (typeof window.erpNameMgmtInit === 'function') window.erpNameMgmtInit();
+        const firstNm = document.querySelector('#catalog-panel-name-mgmt .subtabs .subtab');
+        openNameMgmtCatalogDedupeTab(firstNm);
       }
+    }
+
+    function openNameMgmtCatalogDedupeTab(btn) {
+      const root = document.getElementById('catalog-panel-name-mgmt');
+      if (!root) return;
+      root.querySelectorAll('.subtabs .subtab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const d = document.getElementById('nmCatalogDedupePane');
+      const r = document.getElementById('nmCatalogRenamePane');
+      if (d) d.style.display = '';
+      if (r) r.style.display = 'none';
+    }
+
+    function openNameMgmtCatalogRenameTab(btn) {
+      const root = document.getElementById('catalog-panel-name-mgmt');
+      if (!root) return;
+      root.querySelectorAll('.subtabs .subtab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const d = document.getElementById('nmCatalogDedupePane');
+      const r = document.getElementById('nmCatalogRenamePane');
+      if (d) d.style.display = 'none';
+      if (r) r.style.display = '';
+      if (typeof window.erpNameMgmtInit === 'function') window.erpNameMgmtInit();
     }
 
     let __vendorLinkPick = { qboId: '', qboName: '', samsaraId: '', samsaraName: '' };
@@ -23793,10 +23817,6 @@
           'Load / invoice #',
           'Vendor invoice #',
           'Shop / internal WO #',
-          'Driver ID',
-          'Driver name',
-          'Maint record type',
-          'DOT reportable',
           'Vendor QBO ID',
           'Service date',
           'Due date',
@@ -23836,10 +23856,6 @@
           wo.loadNumber || '',
           wo.vendorInvoiceNumber || '',
           wo.internalWorkOrderNumber || '',
-          wo.driverId || '',
-          wo.driverName || '',
-          wo.maintRecordType || '',
-          wo.accidentDotReportable ? 'yes' : '',
           wo.qboVendorId,
           wo.serviceDate || '',
           wo.dueDate || '',
