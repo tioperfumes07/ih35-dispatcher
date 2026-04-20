@@ -3074,6 +3074,7 @@ body.banking-page #boardNavMount {
 
 body.banking-page .wrap {
   margin: 0 auto;
+  min-width: 0;
   max-width: min(1120px, 100%);
   padding: max(16px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))
     max(40px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
@@ -3272,6 +3273,7 @@ body.settings-page #boardNavMount {
 
 body.settings-page .wrap {
   margin: 0 auto;
+  min-width: 0;
   max-width: min(640px, 100%);
   padding: max(20px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))
     max(40px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
