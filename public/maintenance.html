@@ -3367,7 +3367,15 @@
                       <div class="ap-exp-col ap-exp-col--left">
                         <div class="ap-exp-field">
                           <span class="qb-l">Type</span>
-                          <input class="qb-in" type="text" readonly value="Fuel expense" aria-readonly="true" tabindex="0" />
+                          <input
+                            id="fuelManualTypeDisplay"
+                            class="qb-in"
+                            type="text"
+                            readonly
+                            value="Fuel expense"
+                            aria-readonly="true"
+                            tabindex="0"
+                          />
                         </div>
                         <div class="ap-exp-field ap-exp-field--vendor">
                           <span class="qb-l">Fuel merchant or card program</span>
@@ -3378,15 +3386,33 @@
                           <span class="qb-l">Unit / truck</span>
                           <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit" autocomplete="off" />
                         </div>
-                        <div class="ap-exp-field">
-                          <span class="qb-l">Payment method</span>
-                          <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Fuel card, credit card, cash…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
-                          <input type="hidden" id="fuelManualPaymentMethodId" />
+                        <div id="fuelManualBillOnlyFields" class="fuel-manual-bill-only hidden">
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Terms</span>
+                            <select id="fuelManualQboTermId" class="qb-in" title="QuickBooks payment terms (bill)">
+                              <option value="">— Choose —</option>
+                            </select>
+                          </div>
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Due date</span>
+                            <input id="fuelManualDueDate" class="qb-in" type="date" title="Bill due date" />
+                          </div>
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Bill / statement #</span>
+                            <input id="fuelManualBillStmtNo" class="qb-in" placeholder="Vendor statement #" autocomplete="off" />
+                          </div>
                         </div>
-                        <div class="ap-exp-field ap-exp-field--bank">
-                          <span class="qb-l">Payment account</span>
-                          <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
-                          <input type="hidden" id="fuelManualBankQboId" />
+                        <div id="fuelManualExpenseOnlyFields" class="fuel-manual-expense-only">
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Payment method</span>
+                            <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Fuel card, credit card, cash…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
+                            <input type="hidden" id="fuelManualPaymentMethodId" />
+                          </div>
+                          <div class="ap-exp-field ap-exp-field--bank">
+                            <span class="qb-l">Payment account</span>
+                            <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
+                            <input type="hidden" id="fuelManualBankQboId" />
+                          </div>
                         </div>
                         <details class="fuel-manual-header-more">
                           <summary class="fuel-manual-header-more__sum">Optional: QBO class &amp; location</summary>
@@ -3406,7 +3432,7 @@
                       </div>
                       <div class="ap-exp-col ap-exp-col--right">
                         <div class="ap-exp-field">
-                          <span class="qb-l">Txn date</span>
+                          <span class="qb-l">Transaction date</span>
                           <input id="fuelManualDate" class="qb-in" type="date" />
                         </div>
                         <div class="ap-exp-field">
@@ -3418,12 +3444,15 @@
                           <input id="fuelManualVendorInvoice" class="qb-in" placeholder="Supplier invoice no." autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
-                          <span class="qb-l">Shop / internal WO #</span>
-                          <input id="fuelManualInternalWo" class="qb-in" placeholder="Your work order ref" autocomplete="off" />
+                          <span class="qb-l">Reference / WO #</span>
+                          <input id="fuelManualInternalWo" class="qb-in" placeholder="Vendor WO / internal ref" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
-                          <span class="qb-l">Expense # (QBO DocNumber)</span>
-                          <input id="fuelManualExpenseDoc" class="qb-in" maxlength="24" placeholder="e.g. 4821-0415" autocomplete="off" />
+                          <span class="qb-l">Expense # (QBO doc)</span>
+                          <input id="fuelManualExpenseDoc" class="qb-in" maxlength="24" placeholder="e.g. 4621-04" autocomplete="off" />
+                          <div class="mini-note fuel-manual-exp-doc-hint" style="margin-top:4px;font-size:10px;color:var(--color-text-label)">
+                            Add -L2, -L3 for multiple trucks
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -8026,7 +8055,12 @@
       }
       try {
         const sh = modal.querySelector('.erp-dedicated-form-modal__shell');
-        const map = { fuel: 'dedicated_fuel', ap: 'dedicated_ap', billpay: 'dedicated_billpay' };
+        const map = {
+          fuel: 'dedicated_fuel',
+          fuel_bill: 'dedicated_fuel_bill',
+          ap: 'dedicated_ap',
+          billpay: 'dedicated_billpay'
+        };
         const key = map[String(window.__erpDedicatedModalKind || '').trim()] || 'dedicated_default';
         if (sh && typeof window.erpPersistModalGeometry === 'function') window.erpPersistModalGeometry(sh, key);
       } catch (_) {}
@@ -8045,7 +8079,7 @@
         }
         syncApDocTitle();
       }
-      if (window.__erpDedicatedModalKind === 'fuel') {
+      if (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') {
         const shell = document.getElementById('erpFuelManualDocShellPanel');
         const ph = document.getElementById('erpFuelManualPlaceholder');
         if (shell && ph && ph.parentNode) ph.parentNode.insertBefore(shell, ph.nextSibling);
@@ -8056,6 +8090,8 @@
         }
         const h2 = document.getElementById('fuelManualDocTitleH2');
         if (h2) h2.textContent = 'Manual fuel / DEF expense';
+        window.__fuelManualEntryMode = 'expense';
+        if (typeof syncFuelManualEntryModeUi === 'function') syncFuelManualEntryModeUi();
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
         const shell = document.getElementById('erpBillPayShellPanel');
@@ -8090,6 +8126,7 @@
       if (mode === 'fuel-expense') {
         window.__erpDedicatedApPreset = '';
         window.__erpDedicatedModalKind = 'fuel';
+        window.__fuelManualEntryMode = 'expense';
         openSection('accounting', acctBtn);
         const trig = document.getElementById('acctFuelDdTrigger');
         openAccountingTab('acct-fuel-expense', trig);
@@ -8102,6 +8139,8 @@
         }
         const h2 = document.getElementById('fuelManualDocTitleH2');
         if (h2) h2.textContent = 'Fuel expense';
+        bindFuelManualFormOnce();
+        syncFuelManualEntryModeUi();
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('erp-dedicated-modal-open');
@@ -8118,11 +8157,44 @@
         return;
       }
 
+      if (mode === 'fuel-bill') {
+        window.__erpDedicatedApPreset = '';
+        window.__erpDedicatedModalKind = 'fuel_bill';
+        window.__fuelManualEntryMode = 'bill';
+        openSection('accounting', acctBtn);
+        const trig = document.getElementById('acctFuelDdTrigger');
+        openAccountingTab('acct-fuel-expense', trig);
+        const shell = document.getElementById('erpFuelManualDocShellPanel');
+        mount.appendChild(shell);
+        const acc = document.getElementById('erpFuelDocTitleAccent');
+        if (acc) {
+          acc.innerHTML = ERP_PUMP_ICON;
+          acc.classList.remove('hidden');
+        }
+        const h2 = document.getElementById('fuelManualDocTitleH2');
+        if (h2) h2.textContent = 'Fuel bill';
+        bindFuelManualFormOnce();
+        syncFuelManualEntryModeUi();
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('erp-dedicated-modal-open');
+        erpDedicatedModalBindEscape(true);
+        if (!fromHash) window.location.hash = 'accounting-fuel-bill-new';
+        syncErpDedicatedModalChrome();
+        requestAnimationFrame(() => {
+          try {
+            if (typeof erpRestoreDedicatedModalGeometry === 'function') {
+              erpRestoreDedicatedModalGeometry(window.__erpDedicatedModalKind);
+            }
+          } catch (_) {}
+        });
+        return;
+      }
+
       window.__erpDedicatedModalKind = 'ap';
       const presetMap = {
         'maintenance-expense': 'maintenance-expense',
         'maintenance-bill': 'maintenance-bill',
-        'fuel-bill': 'fuel-bill',
         'vendor-driver-bill': 'vendor-driver-bill'
       };
       window.__erpDedicatedApPreset = presetMap[mode] || '';
@@ -8152,9 +8224,6 @@
       if (acc) {
         if (mode === 'maintenance-expense' || mode === 'maintenance-bill') {
           acc.innerHTML = ERP_WRENCH_ICON;
-          acc.classList.remove('hidden');
-        } else if (mode === 'fuel-bill') {
-          acc.innerHTML = ERP_PUMP_ICON;
           acc.classList.remove('hidden');
         } else {
           acc.innerHTML = '';

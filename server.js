@@ -505,6 +505,15 @@ function sanitizeFuelPurchase(raw) {
   if (vendInv) out.vendorInvoiceNumber = vendInv;
   const iwo = String(raw.internalWorkOrderNumber || raw.workOrderNumber || '').trim().slice(0, 80);
   if (iwo) out.internalWorkOrderNumber = iwo;
+  const fbt = String(raw.fuelBillQboTermId || '')
+    .trim()
+    .replace(/[^\d]/g, '')
+    .slice(0, 24);
+  if (fbt) out.fuelBillQboTermId = fbt;
+  const fbd = sliceIsoDate(raw.fuelBillDueDate || '');
+  if (fbd) out.fuelBillDueDate = fbd;
+  const fbs = String(raw.fuelBillStatementNumber || '').trim().slice(0, 80);
+  if (fbs) out.fuelBillStatementNumber = fbs;
   return out;
 }
 

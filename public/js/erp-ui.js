@@ -628,7 +628,12 @@
     if (ded) {
       erpWireResizableModalShell(ded, {
         getStorageKey() {
-          const map = { fuel: 'dedicated_fuel', ap: 'dedicated_ap', billpay: 'dedicated_billpay' };
+          const map = {
+            fuel: 'dedicated_fuel',
+            fuel_bill: 'dedicated_fuel_bill',
+            ap: 'dedicated_ap',
+            billpay: 'dedicated_billpay'
+          };
           const k = global.__erpDedicatedModalKind;
           return map[String(k || '').trim()] || 'dedicated_default';
         },
@@ -672,7 +677,12 @@
   function erpRestoreDedicatedModalGeometry(kind) {
     const shell = document.querySelector('#erpDedicatedFormModal .erp-dedicated-form-modal__shell');
     if (!shell) return;
-    const map = { fuel: 'dedicated_fuel', ap: 'dedicated_ap', billpay: 'dedicated_billpay' };
+    const map = {
+      fuel: 'dedicated_fuel',
+      fuel_bill: 'dedicated_fuel_bill',
+      ap: 'dedicated_ap',
+      billpay: 'dedicated_billpay'
+    };
     const key = map[String(kind || '').trim()] || 'dedicated_default';
     erpRestoreModalRect(shell, key);
   }
