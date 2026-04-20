@@ -2290,7 +2290,7 @@ body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
 
 @media (min-width: 1100px) {
   body.erp-maintenance #maintWorkOrderFormMount .maint-wo-form-split {
-    grid-template-columns: minmax(0, 1.68fr) minmax(180px, 0.32fr);
+    grid-template-columns: minmax(0, 1.68fr) minmax(min(180px, 100%), 0.32fr);
     gap: 14px 20px;
     justify-items: stretch;
   }
