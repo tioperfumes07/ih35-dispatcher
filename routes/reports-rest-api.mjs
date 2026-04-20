@@ -323,7 +323,7 @@ export function mountReportsRestApi(app, deps) {
       const unitId = String(req.params.unitId || '').trim();
       if (!unitId) return res.status(400).json({ error: 'unitId required' });
       const merged = erp.companyProfile && typeof erp.companyProfile === 'object' ? erp.companyProfile : {};
-      const data = await buildDotVehicleAuditV1(erp, unitId, req.query.startDate, req.query.endDate, merged);
+      const data = await buildDotVehicleAuditV1(erp, unitId, req.query.startDate, req.query.endDate, merged, req.query);
       res.json(data);
     } catch (error) {
       logError?.('api/reports/dot/vehicle-audit', error);
@@ -366,6 +366,91 @@ export function mountReportsRestApi(app, deps) {
     } catch (error) {
       logError?.('api/reports/dot/driver-audit', error);
       res.status(500).json({ error: error?.message || String(error) });
+    }
+  });
+
+  app.get('/api/reports/dot/fleet-audit', async (req, res) => {
+    try {
+      const erp = readErp();
+      const merged = erp.companyProfile && typeof erp.companyProfile === 'object' ? erp.companyProfile : {};
+      const all = String(req.query.all || '').toLowerCase() === 'true' || String(req.query.all || '') === '1';
+      let unitIds = [];
+      const raw = req.query.unitIds;
+      if (Array.isArray(raw)) unitIds = raw.map(String);
+      else if (raw) unitIds = String(raw).split(',').map(s => s.trim()).filter(Boolean);
+      if (all || !unitIds.length) {
+        const s = new Set();
+        for (const w of erp.workOrders || []) {
+          if (w.voided) continue;
+          const u = String(w.unit || '').trim();
+          if (u) s.add(u);
+        }
+        unitIds = [...s].sort((a, b) => a.localeCompare(b));
+      }
+      const vehicles = [];
+      for (const u of unitIds.slice(0, 120)) {
+        try {
+          vehicles.push({
+            unitId: u,
+            audit: await buildDotVehicleAuditV1(erp, u, req.query.startDate, req.query.endDate, merged, req.query)
+          });
+        } catch (e) {
+          vehicles.push({ unitId: u, error: e?.message || String(e) });
+        }
+      }
+      res.json({
+        title: 'DOT fleet audit',
+        generatedAt: new Date().toISOString(),
+        filters: { ...req.query },
+        vehicles,
+        meta: { compound: true, vehicleCount: vehicles.length }
+      });
+    } catch (error) {
+      logError?.('api/reports/dot/fleet-audit', error);
+      res.status(500).json({ error: error?.message || String(error) });
+    }
+  });
+
+  app.get('/api/reports/filters/service-locations', async (req, res) => {
+    try {
+      const erp = readErp();
+      res.json({ ok: true, generatedAt: new Date().toISOString(), ...buildServiceLocationsFilterList(erp) });
+    } catch (error) {
+      logError?.('api/reports/filters/service-locations', error);
+      res.status(500).json({ ok: false, error: error?.message || String(error) });
+    }
+  });
+
+  app.get('/api/reports/filters/service-types-used', async (req, res) => {
+    try {
+      const erp = readErp();
+      res.json({ ok: true, generatedAt: new Date().toISOString(), ...buildServiceTypesUsedList(erp) });
+    } catch (error) {
+      logError?.('api/reports/filters/service-types-used', error);
+      res.status(500).json({ ok: false, error: error?.message || String(error) });
+    }
+  });
+
+  app.get('/api/reports/filters/fleet-units', async (req, res) => {
+    try {
+      const erp = readErp();
+      let fleetByUnit = {};
+      try {
+        const snap = await fetchTrackedFleetSnapshot();
+        for (const v of snap.enrichedVehicles || []) {
+          const name = String(v.name || '').trim();
+          if (!name) continue;
+          fleetByUnit[name] = {
+            ymm: [v.year, v.make, v.model].filter(Boolean).join(' ')
+          };
+        }
+      } catch (_) {
+        fleetByUnit = {};
+      }
+      res.json({ ok: true, generatedAt: new Date().toISOString(), ...buildFleetUnitsFilterList(erp, fleetByUnit) });
+    } catch (error) {
+      logError?.('api/reports/filters/fleet-units', error);
+      res.status(500).json({ ok: false, error: error?.message || String(error) });
     }
   });
 }
