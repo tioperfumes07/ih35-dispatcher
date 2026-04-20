@@ -26,6 +26,14 @@
       : document.getElementById('erpNameMgmtRoot');
   }
 
+  function nmRemoveBackdrop(el) {
+    if (!el) return;
+    if (typeof erpModalChromeResetModalShell === 'function') {
+      erpModalChromeResetModalShell(el);
+    }
+    el.remove();
+  }
+
   function esc(s) {
     return typeof escapeHtml === 'function' ? escapeHtml(String(s ?? '')) : String(s ?? '');
   }
@@ -423,7 +431,7 @@
     ack.addEventListener('change', () => {
       go.disabled = !ack.checked;
     });
-    backdrop.querySelector('[data-cancel]').addEventListener('click', () => backdrop.remove());
+    backdrop.querySelector('[data-cancel]').addEventListener('click', () => nmRemoveBackdrop(backdrop));
     go.addEventListener('click', async () => {
       go.disabled = true;
       const body = {
@@ -443,7 +451,7 @@
         if (state.kind === 'driver') parts.push(out.samsara_updated ? 'Samsara: updated ✓' : `Samsara: ${out.samsara_error || 'skipped'}`);
         parts.push(`ERP rows touched: ${out.erp_records_updated}${out.erp_error ? ' — ' + out.erp_error : ' ✓'}`);
         alert(out.success ? 'Name update finished.\n\n' + parts.join('\n') : 'Completed with warnings.\n\n' + parts.join('\n'));
-        backdrop.remove();
+        nmRemoveBackdrop(backdrop);
         await refreshLists();
         const id = state.kind === 'driver' ? row.erpId : row.qboId;
         const nr = state.list.find(x => (state.kind === 'driver' ? x.erpId : x.qboId) === id);
@@ -607,7 +615,7 @@
         </div>
       </div>`;
     document.body.appendChild(backdrop);
-    backdrop.querySelector('[data-close]').addEventListener('click', () => backdrop.remove());
+    backdrop.querySelector('[data-close]').addEventListener('click', () => nmRemoveBackdrop(backdrop));
     backdrop.querySelector('#nmBulkAll')?.addEventListener('change', ev => {
       backdrop.querySelectorAll('.nm-bulk-cb').forEach(c => {
         c.checked = ev.target.checked;
@@ -665,7 +673,7 @@
       ack?.addEventListener('change', () => {
         if (exec) exec.disabled = !ack.checked;
       });
-      ackBackdrop.querySelector('[data-cancel-bulk]')?.addEventListener('click', () => ackBackdrop.remove());
+      ackBackdrop.querySelector('[data-cancel-bulk]')?.addEventListener('click', () => nmRemoveBackdrop(ackBackdrop));
       exec?.addEventListener('click', async () => {
         if (!ack?.checked) return;
         exec.disabled = true;
@@ -673,8 +681,8 @@
           const out = await nmPost('/api/name-management/bulk-rename', { renames });
           const okN = (out.results || []).filter(x => x.ok && x.success).length;
           alert(`Bulk rename finished. ${okN} / ${renames.length} reported full success. See server logs for details.`);
-          ackBackdrop.remove();
-          backdrop.remove();
+          nmRemoveBackdrop(ackBackdrop);
+          nmRemoveBackdrop(backdrop);
           await refreshLists();
           paint();
         } catch (e) {
@@ -766,7 +774,7 @@
         alert('Download failed: ' + (e.message || e));
       }
     });
-    backdrop.querySelector('[data-close]')?.addEventListener('click', () => backdrop.remove());
+    backdrop.querySelector('[data-close]')?.addEventListener('click', () => nmRemoveBackdrop(backdrop));
     await reloadHist();
   }
 

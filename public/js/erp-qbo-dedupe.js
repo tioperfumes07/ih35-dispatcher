@@ -278,6 +278,14 @@
     return typeof erpModalChromeToolbarHtml === 'function' ? erpModalChromeToolbarHtml() : '';
   }
 
+  function dedupeRemoveModal(el) {
+    if (!el) return;
+    if (typeof erpModalChromeResetModalShell === 'function') {
+      erpModalChromeResetModalShell(el);
+    }
+    el.remove();
+  }
+
   function openPreviewModal(keep, merge) {
     const bal = (Number(keep.balance) || 0) + (Number(merge.balance) || 0);
     const html = `<div class="erp-dedupe-modal" id="erpDedupeModal">
@@ -300,13 +308,13 @@
       </div></div>`;
     document.body.insertAdjacentHTML('beforeend', html);
     const m = document.getElementById('erpDedupeModal');
-    m.querySelector('[data-close="1"]').onclick = () => m.remove();
+    m.querySelector('[data-close="1"]').onclick = () => dedupeRemoveModal(m);
     m.querySelector('[data-proceed="1"]').onclick = () => {
-      m.remove();
+      dedupeRemoveModal(m);
       openConfirmModal(keep, merge, () => runMergeFlow(keep, merge, null));
     };
     m.addEventListener('click', ev => {
-      if (ev.target === m) m.remove();
+      if (ev.target === m) dedupeRemoveModal(m);
     });
   }
 
@@ -341,14 +349,14 @@
     cb.addEventListener('change', () => {
       go.disabled = !cb.checked;
     });
-    m.querySelector('[data-close="1"]').onclick = () => m.remove();
+    m.querySelector('[data-close="1"]').onclick = () => dedupeRemoveModal(m);
     go.onclick = async () => {
       if (!cb.checked) return;
-      m.remove();
+      dedupeRemoveModal(m);
       await onConfirm();
     };
     m.addEventListener('click', ev => {
-      if (ev.target === m) m.remove();
+      if (ev.target === m) dedupeRemoveModal(m);
     });
   }
 
@@ -382,12 +390,12 @@
       addStep('Deactivating merged record', true);
       addStep('Updating ERP references', true);
       addStep('Logging merge action', true);
-      wrap.remove();
+      dedupeRemoveModal(wrap);
       showResultOk(res, keep, merge);
       if (cardEl) cardEl.remove();
       await loadAuto(false);
     } catch (e) {
-      wrap.remove();
+      dedupeRemoveModal(wrap);
       alert(String(e.message || e));
     }
   }
@@ -413,9 +421,9 @@
     </div></div>`;
     document.body.insertAdjacentHTML('beforeend', html);
     const m = document.getElementById('erpDedupeModal');
-    m.querySelector('[data-close="1"]').onclick = () => m.remove();
+    m.querySelector('[data-close="1"]').onclick = () => dedupeRemoveModal(m);
     m.addEventListener('click', ev => {
-      if (ev.target === m) m.remove();
+      if (ev.target === m) dedupeRemoveModal(m);
     });
   }
 

@@ -621,6 +621,9 @@
   function vbpConfirmModal() {
     const host = el('vbpModalHost');
     if (!host) return;
+    if (typeof erpModalChromeResetModalShell === 'function') {
+      erpModalChromeResetModalShell(host);
+    }
     const rows = Object.keys(VBP.selected)
       .map(id => {
         const r = el('vbpOpenBody')?.querySelector(`tr[data-bill-id="${id}"]`);
@@ -659,9 +662,15 @@
   </div>
 </div>`;
     el('vbpModalCancel').onclick = () => {
+      if (typeof erpModalChromeResetModalShell === 'function') {
+        erpModalChromeResetModalShell(host);
+      }
       host.innerHTML = '';
     };
     el('vbpModalOk').onclick = () => {
+      if (typeof erpModalChromeResetModalShell === 'function') {
+        erpModalChromeResetModalShell(host);
+      }
       host.innerHTML = '';
       vbpExecuteSave();
     };
