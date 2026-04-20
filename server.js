@@ -12,20 +12,22 @@ const pool = new pg.Pool({
 });
 
 app.get("/", (req, res) => {
-  res.send("Server running 🚛");
+  res.send("IH35 TEST SERVER LIVE");
 });
 
 app.get("/db-test", async (req, res) => {
   try {
-    const result = await pool.query("SELECT NOW()");
+    const result = await pool.query("SELECT NOW() AS now");
     res.json({
       success: true,
+      marker: "IH35 TEST DB OK",
       time: result.rows[0],
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({
       success: false,
+      marker: "IH35 TEST DB FAIL",
       error: err.message,
     });
   }
@@ -34,5 +36,5 @@ app.get("/db-test", async (req, res) => {
 const PORT = process.env.PORT || 3100;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`IH35 TEST SERVER listening on port ${PORT}`);
 });
