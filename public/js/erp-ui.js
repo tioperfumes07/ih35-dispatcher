@@ -275,6 +275,59 @@
 
   global.erpNotify = erpNotify;
 
+  /** @type {Set<HTMLElement>} */
+  const __erpStripHosts = new Set();
+  if (!global.__erpStripPagehideBound) {
+    global.__erpStripPagehideBound = true;
+    window.addEventListener('pagehide', () => {
+      __erpStripHosts.forEach(host => {
+        if (host && host._erpStripTimer) {
+          global.clearInterval(host._erpStripTimer);
+          host._erpStripTimer = null;
+        }
+      });
+      __erpStripHosts.clear();
+    });
+  }
+
+  /**
+   * Optional `#erpIntegrationDisconnectBanners` (e.g. maintenance shell): show when QBO is configured but not connected, or Samsara token is missing.
+   * @param {boolean} rqOk
+   * @param {boolean} rhOk
+   * @param {object | null} qj
+   * @param {object | null} hj
+   */
+  function syncOptionalDisconnectBanners(rqOk, rhOk, qj, hj) {
+    const wrap = document.getElementById('erpIntegrationDisconnectBanners');
+    const qb = document.getElementById('erpQboDisconnectBanner');
+    const sb = document.getElementById('erpSamsaraDisconnectBanner');
+    if (!wrap || !qb || !sb) return;
+    while (qb.firstChild) qb.removeChild(qb.firstChild);
+    while (sb.firstChild) sb.removeChild(sb.firstChild);
+    qb.classList.add('hidden');
+    sb.classList.add('hidden');
+    let any = false;
+    if (rqOk && qj && typeof qj === 'object' && qj.configured && !qj.connected) {
+      qb.classList.remove('hidden');
+      qb.appendChild(document.createTextNode('QuickBooks disconnected. '));
+      const a = document.createElement('a');
+      a.href = '/settings.html';
+      a.textContent = 'Open Settings';
+      qb.appendChild(a);
+      any = true;
+    }
+    if (rhOk && hj && typeof hj === 'object' && !hj.hasSamsaraToken) {
+      sb.classList.remove('hidden');
+      sb.appendChild(document.createTextNode('Samsara API token is not set on this server. '));
+      const a2 = document.createElement('a');
+      a2.href = '/settings.html';
+      a2.textContent = 'Open Settings';
+      sb.appendChild(a2);
+      any = true;
+    }
+    wrap.hidden = !any;
+  }
+
   /**
    * Rule 24 — hydrate a host with QuickBooks + Samsara read-only status (two rows).
    * @param {string | HTMLElement} hostIdOrEl
@@ -284,6 +337,7 @@
     const el =
       typeof hostIdOrEl === 'string' ? document.getElementById(hostIdOrEl) : hostIdOrEl;
     if (!el || !(el instanceof HTMLElement)) return;
+    __erpStripHosts.add(el);
     if (el._erpStripTimer) {
       global.clearInterval(el._erpStripTimer);
       el._erpStripTimer = null;
@@ -355,11 +409,13 @@
         if (worst >= 2) el.classList.add('erp-connection-strip--muted');
         else if (worst === 1) el.classList.add('erp-connection-strip--warn');
         else el.classList.add('erp-connection-strip--ok');
+        syncOptionalDisconnectBanners(rq.ok, rh.ok, qj, hj);
       } catch (_) {
         el.textContent = '';
         appendRow('bad', stripLoadFailed);
         appendRow('bad', 'Samsara: check failed.');
         el.classList.add('erp-connection-strip--muted');
+        syncOptionalDisconnectBanners(false, false, null, null);
       }
     }
 

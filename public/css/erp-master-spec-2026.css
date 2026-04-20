@@ -2060,6 +2060,33 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
 .erp-connection-strip__dot--bad {
   background: #c5221f;
 }
+
+/* Rule 24 — optional integration disconnect banners (synced from `erpMountConnectionStrip` when hosts exist) */
+.erp-disconnect-banners {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0 0 10px;
+  max-width: 100%;
+}
+.erp-disconnect-banner {
+  padding: 8px 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  border-bottom: 1px solid #f5c67f;
+  background: #fef7e0;
+  color: #8a5200;
+  box-sizing: border-box;
+}
+.erp-disconnect-banner a {
+  color: #1557a0;
+  font-weight: 500;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+.erp-disconnect-banner a:hover {
+  text-decoration: underline;
+}
 body.banking-page .wrap > .erp-connection-strip {
   max-width: 1120px;
   margin-left: auto;
