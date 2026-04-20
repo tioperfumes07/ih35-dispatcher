@@ -453,6 +453,7 @@ body.erp-maintenance .mr-kpi-strip {
   grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), minmax(0, 1fr)));
   gap: 12px;
   margin-top: 4px;
+  min-width: 0;
 }
 
 body.erp-maintenance .mr-kpi-strip > * {
@@ -470,6 +471,8 @@ body.erp-maintenance .mr-kpi-card .metric-label {
   text-transform: uppercase;
   color: var(--color-text-label);
   font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-kpi-card .metric-value {
@@ -477,12 +480,16 @@ body.erp-maintenance .mr-kpi-card .metric-value {
   font-weight: 400;
   color: var(--color-text-primary);
   line-height: 1.2;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-kpi-card .metric-sub {
   margin-top: 4px;
   font-size: 11px;
   color: var(--color-text-placeholder);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .mr-kpi-card--bad {
