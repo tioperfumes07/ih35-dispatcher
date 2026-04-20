@@ -999,7 +999,7 @@ router.get('/api/pdf/work-order/:id', (req, res) => {
       doc.text(`Txn type: ${wo.txnType || 'expense'}   Service date: ${formatIsoDateShortPlain(wo.serviceDate || '')}`);
       doc.text(`Vendor (QBO): ${vName || wo.vendor || '—'}`);
       doc.text(`Vendor invoice #: ${wo.vendorInvoiceNumber || '—'}`);
-      doc.text(`Shop / internal WO #: ${wo.internalWorkOrderNumber || '—'}`);
+      doc.text(`Internal WO #: ${wo.internalWorkOrderNumber || '—'}`);
       doc.text(`Vendor WO #: ${wo.vendorWorkOrderNumber || '—'}`);
       doc.text(`Load / invoice #: ${wo.loadNumber || '—'}`);
       doc.text(`Due: ${formatIsoDateShortPlain(wo.dueDate || '')}`);
