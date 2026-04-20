@@ -318,7 +318,6 @@ export function mountNameManagementRoutes(app, deps) {
       } catch {
         samsara = [];
       }
-      const erp = readErp();
       const links = await loadDriverLinks();
       const list = [];
       const canonDriver = await loadCanonicalMap('driver');
@@ -476,7 +475,6 @@ export function mountNameManagementRoutes(app, deps) {
       } catch {
         samsara = [];
       }
-      const erp = readErp();
       const links = await loadDriverLinks();
       const list = [];
       const canonDriver = await loadCanonicalMap('driver');

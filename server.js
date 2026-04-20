@@ -5131,6 +5131,102 @@ function persistIntegrityAlerts(erp, evaluated, ctx, req) {
   }
 }
 
+function integrityDaysAgoLabel(iso) {
+  const d = sliceIsoDate(iso || '');
+  if (!d) return '';
+  const t0 = new Date(`${d}T12:00:00Z`).getTime();
+  const diff = Math.floor((Date.now() - t0) / 86400000);
+  if (diff <= 0) return 'Today';
+  if (diff === 1) return '1 day ago';
+  return `${diff} days ago`;
+}
+
+function integrityShortTitle(alert) {
+  const u = String(alert.unitId || '').trim();
+  const t = String(alert.alertType || '');
+  const map = {
+    T1: `Excessive tire replacements${u ? ` — ${u}` : ''}`,
+    T2: `Repeated tire position${u ? ` — ${u}` : ''}`,
+    T3: `High tire invoice${u ? ` — ${u}` : ''}`,
+    T4: 'Fleet tire volume high',
+    D1: 'Driver repair frequency',
+    D2: 'Driver accident frequency',
+    D3: 'Driver repair spend',
+    D4: 'Driver + unit repair cluster',
+    A1: `Multiple accidents on unit${u ? ` — ${u}` : ''}`,
+    A2: 'Accident cost trend',
+    A3: 'DOT reportable accident',
+    F1: `Fuel use spike (unit)${u ? ` — ${u}` : ''}`,
+    F2: 'Fuel use spike (driver)',
+    F3: `Unusual fill volume${u ? ` — ${u}` : ''}`,
+    F4: 'Fuel price spike',
+    F5: `Same-day fuel entries${u ? ` — ${u}` : ''}`,
+    M1: 'Service cost vs fleet average',
+    M2: `High monthly maint. spend${u ? ` — ${u}` : ''}`,
+    M3: `Frequent services${u ? ` — ${u}` : ''}`,
+    M4: 'Vendor invoice vs history'
+  };
+  if (map[t]) return map[t];
+  return String(alert.message || 'Integrity alert').slice(0, 88);
+}
+
+function integrityDataContextLines(alert, erp) {
+  const th = mergeIntegrityThresholds(erp);
+  const det = alert.details && typeof alert.details === 'object' ? alert.details : {};
+  const lines = [];
+  const uid = String(alert.unitId || '').trim();
+  if (uid) lines.push(`Unit: ${uid}`);
+  const drv = String(alert.driverName || '').trim() || String(alert.driverId || '').trim();
+  if (drv) lines.push(`Driver: ${drv}`);
+  const trig = sliceIsoDate(alert.triggeredDate || alert.createdAt || '');
+  if (trig) lines.push(`Triggered: ${trig}`);
+  if (det.count != null) lines.push(`Count: ${det.count}`);
+  if (det.threshold != null) lines.push(`Threshold: ${det.threshold}`);
+  if (det.thresholdPct != null) lines.push(`Configured %: ${det.thresholdPct}%`);
+  if (det.monthCost != null) lines.push(`Month cost: $${(safeNum(det.monthCost, 0) || 0).toFixed(2)} (limit $${th.maxMonthlyCostPerUnit})`);
+  if (det.amount != null && det.fleetAvg != null) {
+    lines.push(`Amount $${(safeNum(det.amount, 0) || 0).toFixed(2)} vs fleet avg $${(safeNum(det.fleetAvg, 0) || 0).toFixed(2)}`);
+  }
+  if (det.quarterCost != null) lines.push(`Quarter accident cost: $${(safeNum(det.quarterCost, 0) || 0).toFixed(2)}`);
+  if (det.sum30 != null) lines.push(`30d gallons: ${(safeNum(det.sum30, 0) || 0).toFixed(1)}`);
+  if (det.avgGallons != null) lines.push(`Avg fill: ${(safeNum(det.avgGallons, 0) || 0).toFixed(1)} gal`);
+  if (det.vendorAvg != null) lines.push(`Vendor avg: $${(safeNum(det.vendorAvg, 0) || 0).toFixed(2)}`);
+  return lines;
+}
+
+function enrichIntegrityDashboardAlert(alert, erp) {
+  return {
+    ...alert,
+    shortTitle: integrityShortTitle(alert),
+    daysAgoLabel: integrityDaysAgoLabel(alert.triggeredDate || alert.createdAt),
+    dataContextLines: integrityDataContextLines(alert, erp)
+  };
+}
+
+function integrityKpiSnapshot(erp) {
+  const activeAll = (erp.integrityAlerts || []).filter(x => String(x.status || 'active') === 'active');
+  const reviewedThisMonth = (erp.integrityAlerts || []).filter(r => {
+    if (String(r.status || '') !== 'reviewed') return false;
+    const at = String(r.reviewedAt || '').slice(0, 7);
+    const cur = new Date().toISOString().slice(0, 7);
+    return at === cur;
+  }).length;
+  return {
+    active: activeAll.length,
+    red: activeAll.filter(x => String(x.severity || '').toUpperCase() === 'RED').length,
+    amber: activeAll.filter(x => String(x.severity || '').toUpperCase() !== 'RED').length,
+    resolvedThisMonth: reviewedThisMonth
+  };
+}
+
+function integrityThresholdCell(details) {
+  const d = details && typeof details === 'object' ? details : {};
+  if (d.threshold != null) return String(d.threshold);
+  if (d.thresholdPct != null) return `${d.thresholdPct}%`;
+  if (d.fleetAvg != null) return `avg ${(safeNum(d.fleetAvg, 0) || 0).toFixed(2)}`;
+  return '';
+}
+
 app.post('/api/integrity/check', (req, res) => {
   try {
     const ctx = buildIntegrityCheckCtx(req.body || {});
@@ -5198,20 +5294,9 @@ app.get('/api/integrity/dashboard', (req, res) => {
       rows = rows.filter(r => String(r.status || '') === 'dismissed');
     }
     rows.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-    const reviewedThisMonth = (erp.integrityAlerts || []).filter(r => {
-      if (String(r.status || '') !== 'reviewed') return false;
-      const at = String(r.reviewedAt || '').slice(0, 7);
-      const cur = new Date().toISOString().slice(0, 7);
-      return at === cur;
-    }).length;
-    const activeAll = (erp.integrityAlerts || []).filter(x => String(x.status || 'active') === 'active');
-    const kpi = {
-      active: activeAll.length,
-      red: activeAll.filter(x => String(x.severity || '').toUpperCase() === 'RED').length,
-      amber: activeAll.filter(x => String(x.severity || '').toUpperCase() !== 'RED').length,
-      resolvedThisMonth: reviewedThisMonth
-    };
-    res.json({ ok: true, alerts: rows, kpi, thresholds: mergeIntegrityThresholds(erp) });
+    const kpi = integrityKpiSnapshot(erp);
+    const enriched = rows.map(r => enrichIntegrityDashboardAlert(r, erp));
+    res.json({ ok: true, alerts: enriched, kpi, thresholds: mergeIntegrityThresholds(erp) });
   } catch (error) {
     logError('api/integrity/dashboard', error);
     res.status(500).json({ ok: false, error: error.message });
