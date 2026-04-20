@@ -329,7 +329,8 @@ body.erp-maintenance .erp-topbar.topbar {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 10px 1.25rem;
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(1.25rem, env(safe-area-inset-right, 0px)) 10px
+    max(1.25rem, env(safe-area-inset-left, 0px));
   margin: 0;
   background: var(--erp-sidebar-surface-bg);
   border-bottom: 1px solid var(--erp-sidebar-group-edge);
