@@ -8450,6 +8450,13 @@ app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+/** Unknown `/api/*` paths — JSON body so fetch/XHR clients do not get HTML error pages. */
+app.use((req, res, next) => {
+  if (!req.originalUrl.startsWith('/api/')) return next();
+  const pathOnly = req.originalUrl.split('?')[0];
+  res.status(404).json({ error: 'Not found', path: pathOnly });
+});
+
 app.use((err, _req, res, _next) => {
   logError('unhandled middleware error', err);
   res.status(500).json({ error: err?.message || 'Internal server error' });
