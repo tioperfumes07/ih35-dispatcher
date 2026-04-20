@@ -3059,6 +3059,8 @@ body.fuel-board .label {
   color: var(--color-text-label);
   font-size: 12px;
   margin-bottom: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .section-title {
@@ -3067,6 +3069,8 @@ body.fuel-board .section-title {
   font-weight: 500;
   color: var(--color-text-label);
   text-transform: uppercase;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .stop-card {
@@ -3075,11 +3079,15 @@ body.fuel-board .stop-card {
   padding: 10px;
   margin-bottom: 8px;
   background: var(--color-bg-card);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .small {
   font-size: 12px;
   color: var(--color-text-label);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .fleet-item:hover {
@@ -3611,6 +3619,10 @@ body.hub-page .card-tag {
   padding: 4px 10px;
   border-radius: 999px;
   margin-bottom: 12px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 
 body.hub-page .tag-dispatch {
