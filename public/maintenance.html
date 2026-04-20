@@ -4621,11 +4621,22 @@
               <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-ifta" data-rep-k="ifta miles fuel tax jurisdiction compliance" onclick="openReportsTabFromSidebar('rep-ifta')">
                 <span class="erp-reports-hub__tile-title">IFTA</span>
               </button>
+              <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-integrity" data-rep-k="integrity anomaly monitoring dot compliance" onclick="openReportsTabFromSidebar('rep-integrity')">
+                <span class="erp-reports-hub__tile-title">Integrity alerts</span>
+              </button>
             </div>
           </div>
         </nav>
         <div id="repMainSubtabs" class="subtabs" style="gap:8px;flex-wrap:wrap;align-items:center">
           <button type="button" class="subtab active" data-rep-k="overview executive dashboard metrics board refresh" onclick="openReportsTab('rep-overview', this)">Overview</button>
+          <button
+            type="button"
+            class="subtab"
+            data-rep-k="integrity anomaly monitoring dot compliance"
+            onclick="openReportsTab('rep-integrity', this)"
+          >
+            Integrity
+          </button>
 
           <div class="nav-dropdown" style="display:inline-block">
             <button type="button" class="subtab nav-dropdown-trigger" id="repAcctDdTrigger" onclick="event.stopPropagation()" aria-haspopup="true">Accounting ▾</button>
@@ -4647,6 +4658,14 @@
             <button type="button" class="subtab nav-dropdown-trigger" id="repOpsDdTrigger" onclick="event.stopPropagation()" aria-haspopup="true">Operations ▾</button>
             <div class="nav-dropdown-menu" onclick="event.stopPropagation()">
               <button type="button" class="nav-dd-item" data-rep-k="ifta miles fuel tax jurisdiction compliance" onclick="openReportsTab('rep-ifta', document.getElementById('repOpsDdTrigger'))">IFTA &amp; compliance</button>
+              <button
+                type="button"
+                class="nav-dd-item"
+                data-rep-k="integrity anomaly monitoring dot compliance"
+                onclick="openReportsTab('rep-integrity', document.getElementById('repOpsDdTrigger'))"
+              >
+                Integrity alerts
+              </button>
               <button
                 type="button"
                 class="nav-dd-item"
@@ -5070,6 +5089,65 @@
             </div>
             <div class="panel-body form-stack" style="max-width:min(820px,100%)">
               <p class="mini-note" style="margin:0;color:var(--color-text-label)">Roadmap — see title <strong>?</strong> for scope and what ships today.</p>
+            </div>
+          </div>
+        </div>
+        <div id="rep-integrity" class="reports-tab hidden">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Integrity &amp; anomaly alerts</div>
+              <div class="mini-note" style="margin:0;color:var(--color-text-label)">
+                Alerts are created when you save maintenance, work orders, or fuel; exports use the date range below.
+              </div>
+            </div>
+            <div class="panel-body form-stack" style="max-width:min(1100px,100%)">
+              <div class="mr-filter-bar" style="margin:0 0 12px;flex-wrap:wrap;gap:10px;align-items:flex-end">
+                <div class="ap-exp-field">
+                  <span class="qb-l">From</span>
+                  <input type="date" id="integrityDashDateFrom" class="qb-in" onchange="loadIntegrityDashboard()" />
+                </div>
+                <div class="ap-exp-field">
+                  <span class="qb-l">To</span>
+                  <input type="date" id="integrityDashDateTo" class="qb-in" onchange="loadIntegrityDashboard()" />
+                </div>
+                <div class="ap-exp-field">
+                  <span class="qb-l">Category</span>
+                  <select id="integrityDashCategory" class="qb-in" onchange="loadIntegrityDashboard()">
+                    <option value="all">All</option>
+                    <option value="tires">Tires</option>
+                    <option value="drivers">Drivers</option>
+                    <option value="accidents">Accidents</option>
+                    <option value="fuel">Fuel</option>
+                    <option value="maintenance">Maintenance</option>
+                  </select>
+                </div>
+                <div class="ap-exp-field">
+                  <span class="qb-l">Severity</span>
+                  <select id="integrityDashSeverity" class="qb-in" onchange="loadIntegrityDashboard()">
+                    <option value="">All</option>
+                    <option value="RED">RED</option>
+                    <option value="AMBER">AMBER</option>
+                  </select>
+                </div>
+                <div class="ap-exp-field">
+                  <span class="qb-l">Status</span>
+                  <select id="integrityDashStatus" class="qb-in" onchange="loadIntegrityDashboard()">
+                    <option value="active">Active</option>
+                    <option value="all">All</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="dismissed">Dismissed</option>
+                  </select>
+                </div>
+                <button type="button" class="btn secondary" onclick="loadIntegrityDashboard()">Refresh</button>
+                <button type="button" class="btn secondary" onclick="integrityExportReport('xlsx')">Excel export</button>
+                <button type="button" class="btn secondary" onclick="integrityExportReport('pdf')">PDF export</button>
+              </div>
+              <div id="integrityDashKpi" class="mini-note" style="margin:0 0 10px"></div>
+              <div id="repIntegrityBody" class="table-wrap erp-table-scroll" style="min-width:0"></div>
+              <div id="integrityInvestigateHost" class="hidden" style="margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px">
+                <div class="panel-title" style="font-size:14px;margin-bottom:8px">Linked records</div>
+                <pre id="integrityInvestigatePre" class="mini-note" style="white-space:pre-wrap;margin:0;max-height:280px;overflow:auto;font-size:11px"></pre>
+              </div>
             </div>
           </div>
         </div>
@@ -9773,7 +9851,9 @@
         'rep-tms': () => document.getElementById('repOpsDdTrigger'),
         'rep-settlement': () => document.getElementById('repOpsDdTrigger'),
         'rep-team': () => document.getElementById('repOpsDdTrigger'),
-        'rep-ifta': () => document.getElementById('repOpsDdTrigger')
+        'rep-ifta': () => document.getElementById('repOpsDdTrigger'),
+        'rep-integrity': () =>
+          document.querySelector('#section-reports .subtab[onclick*="rep-integrity"]') || document.getElementById('repOpsDdTrigger')
       };
       const fn = byId[tid];
       return fn ? fn() : null;
@@ -9821,6 +9901,7 @@
       } else if (tabBtn) tabBtn.classList.add('active');
       syncReportsSidebarActive();
       if (tabId === 'rep-team') loadTeamSecurityPanel();
+      if (tabId === 'rep-integrity') loadIntegrityDashboard();
       if (tabId === 'rep-maint-detail') renderMaintDetailedReport();
       if (tabId === 'rep-settlement') {
         loadSettlementIndex();
@@ -18039,6 +18120,10 @@
     }
 
     function mbBuildWorkOrderBody(row, seriesId, scaledLines) {
+      resolveApErpDriverSearch();
+      const apMrt = String(document.getElementById('apMaintRecordType')?.value || '').trim();
+      const apDid = String(document.getElementById('apErpDriverId')?.value || '').trim();
+      const apDnm = String(document.getElementById('apErpDriverSearch')?.value || '').trim();
       const unit = String(document.getElementById('mbAssetUnit')?.value || '').trim();
       const vendorId = String(document.getElementById('mbVendorQboId')?.value || '').trim();
       const memo = String(document.getElementById('mbMemo')?.value || '').trim();
@@ -18068,7 +18153,10 @@
         vendorInvoiceNumber: row.billNumber,
         notes: memo,
         lines: scaledLines.map(l => ({ ...l })),
-        recurringSeriesId: seriesId
+        recurringSeriesId: seriesId,
+        ...(apMrt ? { maintRecordType: apMrt } : {}),
+        ...(apDid ? { driverId: apDid } : {}),
+        ...(apDnm ? { driverName: apDnm } : {})
       };
     }
 
@@ -19453,6 +19541,19 @@
                 <span class="mini-note">${r.repairStatusAt ? escapeHtml(String(r.repairStatusAt).slice(0, 19).replace('T', ' ')) : '—'}${r.repairStatusBy ? ' · ' + escapeHtml(String(r.repairStatusBy)) : ''}</span>
               </div>
               <div class="mini-note">Date: ${escapeHtml(r.serviceDate || '')} | Mileage: ${r.serviceMileage ?? ''}</div>
+              ${
+                r.driverName || r.driverId
+                  ? `<div class="mini-note">Driver: ${escapeHtml(
+                      String(r.driverName || '').trim() ||
+                        (r.driverId
+                          ? String((driverProfiles || []).find(p => String(p.id) === String(r.driverId))?.name || '').trim()
+                          : '') ||
+                        String(r.driverId || '').trim() ||
+                        '—'
+                    )}</div>`
+                  : ''
+              }
+              ${r.recordType === 'accident' && r.accidentDotReportable ? `<div class="mini-note">DOT reportable accident</div>` : ''}
               ${r.loadNumber ? `<div class="mini-note">Load / invoice #: ${escapeHtml(r.loadNumber)}</div>` : ''}
               ${r.vendorInvoiceNumber || r.workOrderNumber ? `<div class="mini-note">Vendor inv: ${escapeHtml(r.vendorInvoiceNumber || '')} · WO: ${escapeHtml(r.workOrderNumber || '')}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(r.vendor || '')} | Cost: ${r.cost ?? ''}</div>
@@ -22207,6 +22308,137 @@
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
+    }
+
+    function integrityReportDateRange() {
+      const f = document.getElementById('integrityDashDateFrom');
+      const t = document.getElementById('integrityDashDateTo');
+      return {
+        start: String(f?.value || '').trim(),
+        end: String(t?.value || '').trim()
+      };
+    }
+
+    async function integrityExportReport(fmt) {
+      const f = String(fmt || 'xlsx').toLowerCase();
+      const qs = new URLSearchParams();
+      qs.set('format', f === 'pdf' ? 'pdf' : 'xlsx');
+      const { start, end } = integrityReportDateRange();
+      if (start) qs.set('startDate', start);
+      if (end) qs.set('endDate', end);
+      const url = '/api/integrity/export?' + qs.toString();
+      try {
+        const r = await fetch(url, { headers: { ...authFetchHeaders(), ...erpWriteHeaders() } });
+        if (!r.ok) {
+          const t = await r.text();
+          throw new Error(t.slice(0, 240));
+        }
+        const blob = await r.blob();
+        const cd = r.headers.get('Content-Disposition') || '';
+        const m = cd.match(/filename="?([^";]+)"?/i);
+        const name = m ? m[1].trim() : `integrity-export.${f === 'pdf' ? 'pdf' : 'xlsx'}`;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (e) {
+        erpNotify(e.message || String(e), 'error');
+      }
+    }
+
+    async function loadIntegrityDashboard() {
+      const fromEl = document.getElementById('integrityDashDateFrom');
+      const toEl = document.getElementById('integrityDashDateTo');
+      if (fromEl && !fromEl.value) {
+        const end = new Date();
+        const st = new Date(end);
+        st.setDate(st.getDate() - 89);
+        fromEl.value = localIsoDate(st);
+      }
+      if (toEl && !toEl.value) toEl.value = localIsoDate(new Date());
+      const start = String(fromEl?.value || '').trim();
+      const end = String(toEl?.value || '').trim();
+      const cat = String(document.getElementById('integrityDashCategory')?.value || 'all').trim();
+      const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
+      const st = String(document.getElementById('integrityDashStatus')?.value || 'active').trim();
+      const qs = new URLSearchParams();
+      if (start) qs.set('startDate', start);
+      if (end) qs.set('endDate', end);
+      if (cat && cat !== 'all') qs.set('category', cat);
+      if (sev) qs.set('severity', sev);
+      if (st && st !== 'all') qs.set('status', st);
+      try {
+        const d = await j('/api/integrity/dashboard?' + qs.toString());
+        const kpi = d.kpi || {};
+        const host = document.getElementById('integrityDashKpi');
+        if (host) {
+          host.innerHTML = `Active (all time): <strong>${kpi.active ?? 0}</strong> — RED <strong>${kpi.red ?? 0}</strong>, AMBER <strong>${kpi.amber ?? 0}</strong> · Marked reviewed this month: <strong>${kpi.resolvedThisMonth ?? 0}</strong>`;
+        }
+        const rows = d.alerts || [];
+        const body = document.getElementById('repIntegrityBody');
+        if (!body) return;
+        if (!rows.length) {
+          body.innerHTML = '<p class="mini-note" style="margin:0">No alerts for these filters.</p>';
+          void refreshIntegrityNavBadges();
+          return;
+        }
+        const cols = ['Date', 'Sev', 'Type', 'Category', 'Unit', 'Driver', 'Message', 'Status', ''];
+        const tr = rows
+          .map(a => {
+            const id = String(a.id || '').trim();
+            const act = String(a.status || 'active') === 'active';
+            const reviewBtn = act
+              ? `<button type="button" class="btn" style="font-size:11px;padding:4px 8px" onclick="markIntegrityAlertReviewed(${JSON.stringify(id)})">Mark reviewed</button>`
+              : '';
+            const inv = `<button type="button" class="btn secondary" style="font-size:11px;padding:4px 8px" onclick="loadIntegrityInvestigate(${JSON.stringify(id)})">Records</button>`;
+            return `<tr>
+            <td>${escapeHtml(String(a.triggeredDate || '').slice(0, 10))}</td>
+            <td>${escapeHtml(String(a.severity || ''))}</td>
+            <td>${escapeHtml(String(a.alertType || ''))}</td>
+            <td>${escapeHtml(String(a.category || ''))}</td>
+            <td>${escapeHtml(String(a.unitId || ''))}</td>
+            <td>${escapeHtml(String(a.driverName || a.driverId || ''))}</td>
+            <td>${escapeHtml(String(a.message || '').slice(0, 160))}</td>
+            <td>${escapeHtml(String(a.status || ''))}</td>
+            <td style="white-space:nowrap">${inv} ${reviewBtn}</td>
+          </tr>`;
+          })
+          .join('');
+        body.innerHTML = `<table class="erp-table" style="font-size:12px;width:100%"><thead><tr>${cols.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>${tr}</tbody></table>`;
+        void refreshIntegrityNavBadges();
+      } catch (e) {
+        erpNotify(e.message || String(e), 'error');
+      }
+    }
+
+    async function loadIntegrityInvestigate(alertId) {
+      const host = document.getElementById('integrityInvestigateHost');
+      const pre = document.getElementById('integrityInvestigatePre');
+      if (!host || !pre) return;
+      host.classList.remove('hidden');
+      pre.textContent = 'Loading…';
+      try {
+        const d = await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/records');
+        pre.textContent = JSON.stringify(d.records || [], null, 2);
+      } catch (e) {
+        pre.textContent = e.message || String(e);
+      }
+    }
+
+    async function markIntegrityAlertReviewed(alertId) {
+      if (!alertId) return;
+      try {
+        await j('/api/integrity/alert/' + encodeURIComponent(alertId) + '/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({ notes: '' })
+        });
+        await loadIntegrityDashboard();
+        void refreshIntegrityNavBadges();
+      } catch (e) {
+        erpNotify(e.message || String(e), 'error');
+      }
     }
 
     let expHistSearchT = null;

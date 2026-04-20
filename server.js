@@ -5234,6 +5234,7 @@ app.get('/api/integrity/alert/:id/records', (req, res) => {
 
 app.post('/api/integrity/alert/:id/review', (req, res) => {
   try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
     const erp = readErp();
     const id = String(req.params.id || '').trim();
     const idx = (erp.integrityAlerts || []).findIndex(x => String(x.id) === id);
