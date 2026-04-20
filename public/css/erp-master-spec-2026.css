@@ -2197,6 +2197,7 @@ body.banking-page #authBanner.erp-auth-banner {
   font-size: 15px;
   font-weight: 500;
   color: var(--color-text-primary);
+  min-width: 0;
   max-width: 48%;
   white-space: nowrap;
   overflow: hidden;
@@ -2206,6 +2207,7 @@ body.banking-page #authBanner.erp-auth-banner {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  flex-shrink: 0;
 }
 .erp-dedicated-form-modal__total-lbl {
   font-size: 11px;
