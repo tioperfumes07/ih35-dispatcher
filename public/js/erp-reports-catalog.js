@@ -29,15 +29,40 @@
   add('overview', 'Settlement / P&L by load', 'Per-load rollup when TMS on', ERP, 'settlement pnl profit', { legacy: 'rep-settlement' });
   add('overview', 'Team & security', 'Sign-in posture', ERP, 'team security users', { legacy: 'rep-team' });
 
-  add('maintenance', 'Work order history', 'Filters + totals', ERP, 'work order history wo', { dataset: 'a1-work-order-history' });
-  add('maintenance', 'Cost by unit', 'Bar + table', ERP, 'cost unit spend', { dataset: 'a2-cost-by-unit' });
-  add('maintenance', 'Cost by service type', 'Pie + table', ERP, 'service type spend', { dataset: 'a3-cost-by-service-type' });
-  add('maintenance', 'PM schedule', 'Miles-based status colors', ERP, 'pm preventive schedule', { dataset: 'a4-pm-schedule' });
-  add('maintenance', 'Tire history', 'Position map filter', ERP, 'tire position', { dataset: 'a5-tire-history' });
-  add('maintenance', 'Air bag history', 'Position map', ERP, 'air bag suspension', { dataset: 'a6-air-bag-history' });
-  add('maintenance', 'Battery history', 'Parts + cost', ERP, 'battery', { dataset: 'a7-battery-history' });
-  add('maintenance', 'Accident / collision', 'Fault + insurance fields', ERP, 'accident collision police', { dataset: 'a8-accident-collision' });
-  add('maintenance', 'Fleet repair summary (monthly)', 'Spend by month', ERP, 'monthly repair fleet', { dataset: 'a9-fleet-repair-monthly' });
+  add('maintenance', 'Expense by service type', 'Compare costs across service types', ERP, 'expense service type grouped', {
+    dataset: 'm1-expense-by-service-type',
+    subsection: 'Cost analysis'
+  });
+  add('maintenance', 'Maintenance cost summary', 'Pivot: service types × months', ERP, 'pivot heat cost months', {
+    dataset: 'm2-maintenance-cost-pivot',
+    subsection: 'Cost analysis'
+  });
+  add('maintenance', 'Repair vs maintenance split', 'Planned vs unplanned over time', ERP, 'repair maintenance ratio', {
+    dataset: 'm3-repair-vs-maintenance',
+    subsection: 'Cost analysis'
+  });
+  add('maintenance', 'Cost by unit', 'Bar + table', ERP, 'cost unit spend', { dataset: 'a2-cost-by-unit', subsection: 'Cost analysis' });
+  add('maintenance', 'Cost by service type', 'Pie + table', ERP, 'service type spend', { dataset: 'a3-cost-by-service-type', subsection: 'Cost analysis' });
+  add('maintenance', 'Work order history', 'Filters + totals', ERP, 'work order history wo', { dataset: 'a1-work-order-history', subsection: 'Service history' });
+  add('maintenance', 'PM schedule', 'Miles-based status colors', ERP, 'pm preventive schedule', { dataset: 'a4-pm-schedule', subsection: 'Service history' });
+  add('maintenance', 'Inspection history', 'DOT / shop inspections', ERP, 'inspection history', { dataset: 'a10-inspection-history', subsection: 'Service history' });
+  add('maintenance', 'Tire history', 'Position map filter', ERP, 'tire position', { dataset: 'a5-tire-history', subsection: 'Service history' });
+  add('maintenance', 'Air bag history', 'Position map', ERP, 'air bag suspension', { dataset: 'a6-air-bag-history', subsection: 'Service history' });
+  add('maintenance', 'Battery history', 'Parts + cost', ERP, 'battery', { dataset: 'a7-battery-history', subsection: 'Service history' });
+  add('maintenance', 'Accident / collision', 'Fault + insurance fields', ERP, 'accident collision police', { dataset: 'a8-accident-collision', subsection: 'Service history' });
+  add('maintenance', 'Work by service location', 'Grouped by where work was done', ERP, 'location shop vendor', {
+    dataset: 'm4-work-by-location',
+    subsection: 'Location analysis'
+  });
+  add('maintenance', 'Internal vs external shop analysis', 'In-house vs vendor spend', ERP, 'internal external shop', {
+    dataset: 'm5-internal-external',
+    subsection: 'Location analysis'
+  });
+  add('maintenance', 'All locations — service summary', 'One row per location', ERP, 'location summary rollup', {
+    dataset: 'm6-location-summary',
+    subsection: 'Location analysis'
+  });
+  add('maintenance', 'Fleet repair summary (monthly)', 'Spend by month', ERP, 'monthly repair fleet', { dataset: 'a9-fleet-repair-monthly', subsection: 'Location analysis' });
   add('maintenance', 'Spend by unit (legacy)', 'Original summary table', ERP, 'spend unit maintenance', { legacy: 'rep-maint' });
   add('maintenance', 'Detailed (parts / positions)', 'Line-level export', ERP, 'parts positions tires', { legacy: 'rep-maint-detail' });
 
@@ -92,6 +117,7 @@
   add('operations', 'Fleet benchmarks', 'Industry reference', SAM, 'benchmark fleet', { dataset: 'e7-fleet-benchmarks' });
 
   add('dot', 'DOT audit file (PDF)', 'Per-vehicle multi-section', ERP, 'dot audit file vehicle', { dotPdf: true });
+  add('dot', 'DOT audit (configure)', 'Sections, grouping, filters → PDF', ERP, 'dot audit configure', { custom: 'dot-audit-config' });
   add('dot', 'DOT fleet overview', 'Compliance matrix', ERP, 'dot fleet overview', { dataset: 'f-dot-fleet-overview' });
   add('dot', 'Driver qualification (DOT)', '391 file status', ERP, 'driver qualification dot', { dataset: 'g1-driver-qualification' });
   add('dot', 'Driver DOT audit file', 'Per-driver packet (shell)', ERP, 'driver dot audit', { dataset: 'g2-driver-dot-audit' });
@@ -128,6 +154,12 @@
     'a8-accident-collision': '/api/reports/maintenance/accident-history',
     'a9-fleet-repair-monthly': '/api/reports/maintenance/fleet-repair-summary',
     'a10-inspection-history': '/api/reports/maintenance/inspection-history',
+    'm1-expense-by-service-type': '/api/reports/maintenance/by-service-type',
+    'm2-maintenance-cost-pivot': '/api/reports/maintenance/cost-pivot',
+    'm3-repair-vs-maintenance': '/api/reports/maintenance/repair-vs-maintenance',
+    'm4-work-by-location': '/api/reports/maintenance/by-location',
+    'm5-internal-external': '/api/reports/maintenance/internal-external',
+    'm6-location-summary': '/api/reports/maintenance/location-summary',
     'b6-expense-history': '/api/reports/accounting/expense-history',
     'b7-bill-history': '/api/reports/accounting/bill-history',
     'b8-fuel-expense-history': '/api/reports/accounting/fuel-expense-history',
@@ -215,6 +247,21 @@ tr:nth-child(even){background:#f9f9f9}
     if (!w) return;
     w.document.write(html);
     w.document.close();
+    if (typeof window.generateFilename === 'function' && st) {
+      try {
+        const fn = window.generateFilename(
+          'report',
+          {
+            reportName: st.title,
+            unitFilter: st.unitTag || 'All',
+            startDate: st.startDate,
+            endDate: st.endDate
+          },
+          'pdf'
+        );
+        w.document.title = fn.replace(/\.pdf$/i, '');
+      } catch (_) {}
+    }
     w.focus();
     setTimeout(() => w.print(), 500);
   }
@@ -344,6 +391,121 @@ tr:nth-child(even){background:#f9f9f9}
     return { columns, rows };
   }
 
+  const FILTER_PANEL_DATASETS = new Set([
+    'a1-work-order-history',
+    'a2-cost-by-unit',
+    'a3-cost-by-service-type',
+    'a4-pm-schedule',
+    'a5-tire-history',
+    'a6-air-bag-history',
+    'a7-battery-history',
+    'a8-accident-collision',
+    'a9-fleet-repair-monthly',
+    'a10-inspection-history',
+    'm1-expense-by-service-type',
+    'm2-maintenance-cost-pivot',
+    'm3-repair-vs-maintenance',
+    'm4-work-by-location',
+    'm5-internal-external',
+    'm6-location-summary'
+  ]);
+
+  function filterPanelOptionsFor(datasetId) {
+    const base = ['dateRange', 'units', 'recordTypes', 'locationCategories', 'costRange', 'sortBy'];
+    const gbSvc = [
+      { value: 'service_type', label: 'Service type' },
+      { value: 'record_type', label: 'Record type' },
+      { value: 'vehicle', label: 'Vehicle' },
+      { value: 'month', label: 'Month' }
+    ];
+    const gbMonth = [
+      { value: 'month', label: 'Month' },
+      { value: 'quarter', label: 'Quarter' },
+      { value: 'year', label: 'Year' }
+    ];
+    const gbLoc = [
+      { value: 'location', label: 'Location' },
+      { value: 'location_type', label: 'Location type' },
+      { value: 'vehicle', label: 'Vehicle' },
+      { value: 'service_type', label: 'Service type' }
+    ];
+    if (datasetId === 'm1-expense-by-service-type')
+      return { datasetId, defaultMonths: 12, features: [...base, 'groupBy'], groupByOptions: gbSvc };
+    if (datasetId === 'm2-maintenance-cost-pivot') return { datasetId, defaultMonths: 12, features: [...base] };
+    if (datasetId === 'm3-repair-vs-maintenance')
+      return { datasetId, defaultMonths: 12, features: [...base, 'groupBy'], groupByOptions: gbMonth };
+    if (datasetId === 'm4-work-by-location')
+      return { datasetId, defaultMonths: 12, features: [...base, 'groupBy'], groupByOptions: gbLoc };
+    if (datasetId === 'm5-internal-external') return { datasetId, defaultMonths: 12, features: [...base] };
+    if (datasetId === 'm6-location-summary')
+      return { datasetId, defaultMonths: 12, features: ['dateRange', 'recordTypes', 'locationCategories', 'sortBy'] };
+    if (datasetId === 'a4-pm-schedule') return { datasetId, defaultMonths: 3, features: ['units', 'showOverduePm'] };
+    return { datasetId, defaultMonths: 3, features: [...base] };
+  }
+
+  function renderGroupedSections(sections) {
+    const bar = (border, title, count, total, avg, bodyHtml) =>
+      `<details open class="rep-grp-sec" style="margin-bottom:10px;border:1px solid #e0e3eb;border-radius:8px;overflow:hidden">
+        <summary style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f1f3f4;border-left:4px solid ${border}">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-weight:600;font-size:13px;color:#1a1f36">${escapeHtml(title)}</span>
+            <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:#e8f0fe;color:#1557a0">${count} records</span>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:14px;font-weight:500;color:#1a1f36">$${Number(total || 0).toFixed(2)}</div>
+            <div style="font-size:11px;color:#6b7385">avg $${Number(avg || 0).toFixed(2)}</div>
+          </div>
+        </summary>
+        <div style="padding:8px">${bodyHtml}</div>
+      </details>`;
+    const colors = ['#1557a0', '#1a7a3c', '#c5221f', '#6200ea', '#f9ab00', '#00897b'];
+    let i = 0;
+    return (sections || [])
+      .map(sec => {
+        const border = colors[i++ % colors.length];
+        const cols = sec.columns || [];
+        const rows = sec.rows || [];
+        const body = rows.length ? renderSortableTable(cols, rows) : '<p class="mini-note">No rows in this group.</p>';
+        return bar(border, sec.title || sec.key, sec.recordCount ?? rows.length, sec.totalCost ?? 0, sec.avgCost ?? 0, body);
+      })
+      .join('');
+  }
+
+  function renderSummaryCards(cards) {
+    if (!cards || !cards.length) return '';
+    const cells = cards
+      .map(
+        c =>
+          `<div style="padding:10px;border:1px solid #e0e3eb;border-radius:8px;background:#fff">
+          <div style="font-size:11px;color:#6b7385">${escapeHtml(c.label || '')}</div>
+          <div style="font-weight:600;font-size:13px;margin-top:4px;color:#1a1f36">${escapeHtml(c.value || '')}</div>
+        </div>`
+      )
+      .join('');
+    return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px">${cells}</div>`;
+  }
+
+  function renderPivotTable(columns, rows, monthKeys) {
+    const maxVal = Math.max(0.01, ...rows.flatMap(r => monthKeys.map(m => Number(r[m]) || 0)));
+    const th = columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('');
+    const tr = rows
+      .map(r => {
+        const tds = columns.map(c => {
+          const k = c.key;
+          if (monthKeys.includes(k)) {
+            const v = Number(r[k]) || 0;
+            const intensity = Math.min(1, v / maxVal);
+            const bg = `rgba(21,87,160,${0.08 + intensity * 0.85})`;
+            return `<td style="background:${bg};text-align:right">${escapeHtml(String(v))}</td>`;
+          }
+          return `<td>${escapeHtml(String(r[k] ?? ''))}</td>`;
+        });
+        return `<tr>${tds.join('')}</tr>`;
+      })
+      .join('');
+    return `<table class="rep-dyn-table" style="min-width:520px;font-size:12px;width:100%"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table>`;
+  }
+
   async function repOpenDataset(datasetId, title) {
     const host = document.getElementById('repDynamicTableHost');
     const fl = document.getElementById('repDynamicFilters');
@@ -374,14 +536,30 @@ tr:nth-child(even){background:#f9f9f9}
     const r0 = defaultRange();
     const posField = datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history';
     if (ttl) ttl.textContent = title || datasetId;
+    const fpOpts = FILTER_PANEL_DATASETS.has(datasetId) ? filterPanelOptionsFor(datasetId) : null;
     if (fl) {
-      fl.innerHTML = `
+      if (window.ErpReportFilterPanel && fpOpts) {
+        fl.innerHTML = '';
+        window.ErpReportFilterPanel.mount(fl, fpOpts, {
+          onApply: sp => run(sp),
+          onReady: sp => run(sp)
+        });
+        if (posField) {
+          const wrap = document.createElement('div');
+          wrap.style.marginTop = '8px';
+          wrap.innerHTML =
+            '<label class="qb-l">Position</label> <input type="text" class="qb-in" id="repDfPosition" placeholder="Optional filter" />';
+          fl.appendChild(wrap);
+        }
+      } else {
+        fl.innerHTML = `
         <div><label class="qb-l">Start</label><input type="date" class="qb-in" id="repDfStart" value="${r0.start}" /></div>
         <div><label class="qb-l">End</label><input type="date" class="qb-in" id="repDfEnd" value="${r0.end}" /></div>
         <div><label class="qb-l">Unit</label><input type="text" class="qb-in" id="repDfUnit" placeholder="Optional" /></div>
         ${posField ? '<div><label class="qb-l">Position</label><input type="text" class="qb-in" id="repDfPosition" placeholder="Optional" /></div>' : ''}
         <div style="align-self:flex-end"><button type="button" class="btn" id="repDfRun">Run</button></div>
       `;
+      }
     }
     if (disc) {
       disc.classList.add('hidden');
@@ -389,16 +567,23 @@ tr:nth-child(even){background:#f9f9f9}
     }
     if (host) host.innerHTML = '<p class="mini-note">Loading…</p>';
 
-    const run = async () => {
-      const sp = new URLSearchParams();
-      const s = document.getElementById('repDfStart')?.value || '';
-      const e = document.getElementById('repDfEnd')?.value || '';
-      const u = document.getElementById('repDfUnit')?.value || '';
-      const p = document.getElementById('repDfPosition')?.value || '';
-      if (s) sp.set('startDate', s);
-      if (e) sp.set('endDate', e);
-      if (u) sp.set('unit', u);
-      if (p) sp.set('position', p);
+    let lastPanelSp = null;
+    const run = async fromPanel => {
+      const sp = fromPanel instanceof URLSearchParams ? new URLSearchParams(fromPanel.toString()) : new URLSearchParams();
+      if (fromPanel instanceof URLSearchParams) lastPanelSp = new URLSearchParams(sp.toString());
+      if (!(fromPanel instanceof URLSearchParams)) {
+        const s = document.getElementById('repDfStart')?.value || '';
+        const e = document.getElementById('repDfEnd')?.value || '';
+        const u = document.getElementById('repDfUnit')?.value || '';
+        const p = document.getElementById('repDfPosition')?.value || '';
+        if (s) sp.set('startDate', s);
+        if (e) sp.set('endDate', e);
+        if (u) sp.set('unit', u);
+        if (p) sp.set('position', p);
+      } else {
+        const p = document.getElementById('repDfPosition')?.value || '';
+        if (p) sp.set('position', p);
+      }
       const rest = DATASET_REST[datasetId];
       const url = rest ? `${rest}?${sp.toString()}` : `/api/reports/dataset?id=${encodeURIComponent(datasetId)}&${sp.toString()}`;
       const data = await j(url);
@@ -409,8 +594,65 @@ tr:nth-child(even){background:#f9f9f9}
         disc.classList.remove('hidden');
       }
       if (host) {
-        host.innerHTML = data.rows && data.rows.length ? renderSortableTable(data.columns, data.rows) : '<p class="mini-note">No rows.</p>';
-        bindSortable(host);
+        const layout = data.meta && data.meta.reportLayout;
+        if (layout === 'grouped' && Array.isArray(data.meta.sections)) {
+          if (!data.meta.sections.length) {
+            host.innerHTML = '<p class="mini-note">No rows.</p>';
+          } else {
+          const cards = (data.meta.summaryCards || []).map(c => ({ label: c.label, value: c.value }));
+          const top = renderSummaryCards(cards);
+          const secHtml = renderGroupedSections(data.meta.sections);
+          const expandBar = `<div style="margin:8px 0">
+            <button type="button" class="btn btn--sm" id="repExpandAll">Expand all sections</button>
+            <button type="button" class="btn btn--sm" id="repCollapseAll" style="margin-left:6px">Collapse all sections</button>
+          </div>`;
+          host.innerHTML = top + expandBar + (secHtml || '<p class="mini-note">No rows.</p>');
+          host.querySelector('#repExpandAll')?.addEventListener('click', () => {
+            host.querySelectorAll('details.rep-grp-sec').forEach(d => {
+              d.open = true;
+            });
+          });
+          host.querySelector('#repCollapseAll')?.addEventListener('click', () => {
+            host.querySelectorAll('details.rep-grp-sec').forEach(d => {
+              d.open = false;
+            });
+          });
+          bindSortable(host);
+          }
+        } else if (layout === 'pivot' && data.meta.pivotMonths) {
+          const months = data.meta.pivotMonths;
+          host.innerHTML = renderPivotTable(data.columns || [], data.rows || [], months);
+          bindSortable(host);
+        } else if (layout === 'split' && data.meta.internal && data.meta.external) {
+          const left = renderSortableTable(
+            [
+              { key: 'serviceType', label: 'Service type' },
+              { key: 'count', label: 'Count' },
+              { key: 'totalCost', label: 'Total $' }
+            ],
+            data.meta.internal.rows || []
+          );
+          const right = renderSortableTable(
+            [
+              { key: 'vendor', label: 'Vendor' },
+              { key: 'count', label: 'Count' },
+              { key: 'totalCost', label: 'Total $' }
+            ],
+            data.meta.external.rows || []
+          );
+          host.innerHTML =
+            renderSummaryCards(data.meta.summaryCards || []) +
+            `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+              <div><h4 style="margin:0 0 6px;font-size:13px">Internal shop</h4>${left}</div>
+              <div><h4 style="margin:0 0 6px;font-size:13px">External vendors</h4>${right}</div>
+            </div>`;
+          bindSortable(host);
+        } else if (data.rows && data.rows.length) {
+          host.innerHTML = renderSortableTable(data.columns, data.rows);
+          bindSortable(host);
+        } else {
+          host.innerHTML = '<p class="mini-note">No rows.</p>';
+        }
       }
       if (data.meta && Array.isArray(data.meta.positions) && tmap && posField) {
         tmap.classList.remove('hidden');
@@ -424,7 +666,12 @@ tr:nth-child(even){background:#f9f9f9}
           btn.addEventListener('click', () => {
             const inp = document.getElementById('repDfPosition');
             if (inp) inp.value = btn.textContent || '';
-            run().catch(err => {
+            const merged =
+              lastPanelSp instanceof URLSearchParams
+                ? new URLSearchParams(lastPanelSp.toString())
+                : new URLSearchParams();
+            if (inp && inp.value) merged.set('position', inp.value);
+            run(merged).catch(err => {
               if (host) host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(err.message)}</p>`;
             });
           });
@@ -436,58 +683,92 @@ tr:nth-child(even){background:#f9f9f9}
         } catch (_) {}
         window.__repDynChart = null;
       }
-      if (data.meta?.hasChart && window.Chart && chart && data.rows && data.rows.length) {
+      if (datasetId === 'm3-repair-vs-maintenance' && data.meta?.chartStacked && window.Chart && chart && data.rows && data.rows.length) {
         chart.classList.remove('hidden');
-        chart.innerHTML = '<canvas height="240"></canvas>';
+        chart.innerHTML = '<canvas height="260"></canvas><p class="mini-note" style="margin:6px 0 0">Benchmark: repair under 30% of total spend.</p>';
         const canvas = chart.querySelector('canvas');
-        const xk = data.meta.chartXKey || 'unit';
-        const yk = data.meta.chartYKey || 'totalDollars';
-        const labels = data.rows.slice(0, 16).map(r => String(r[xk] ?? '—'));
-        const values = data.rows.slice(0, 16).map(r => Number(r[yk]) || 0);
-        const type = data.meta.chartType === 'pie' ? 'pie' : data.meta.chartType === 'line' ? 'line' : 'bar';
-        const cfg =
-          type === 'pie'
-            ? {
-                type: 'pie',
-                data: {
-                  labels,
-                  datasets: [
-                    {
-                      data: values,
-                      backgroundColor: ['#1557a0', '#2e7d32', '#6a1b9a', '#ef6c00', '#c62828', '#00838f', '#4527a0', '#558b2f']
-                    }
-                  ]
-                },
-                options: { plugins: { legend: { position: 'bottom' } } }
-              }
-            : {
-                type: type === 'line' ? 'line' : 'bar',
-                data: {
-                  labels,
-                  datasets: [
-                    {
-                      label: yk,
-                      data: values,
-                      backgroundColor: type === 'line' ? 'rgba(21,87,160,0.2)' : '#1557a0',
-                      borderColor: '#1557a0',
-                      borderWidth: type === 'line' ? 2 : 0,
-                      tension: 0.3,
-                      pointRadius: 0,
-                      pointHoverRadius: 4
-                    }
-                  ]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    x: { grid: { color: '#eee' } },
-                    y: { grid: { color: '#eee' }, beginAtZero: true }
+        const labels = data.rows.map(r => String(r.month ?? '—'));
+        const series = data.meta.chartSeries || [];
+        const datasets = series.map(s => ({
+          label: s.label,
+          data: data.rows.map(r => Number(r[s.key]) || 0),
+          backgroundColor: s.color || '#1557a0',
+          stack: 's'
+        }));
+        window.__repDynChart = new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { stacked: true, grid: { color: '#eee' } },
+              y: { stacked: true, grid: { color: '#eee' }, beginAtZero: true }
+            },
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      } else if (data.meta?.hasChart && window.Chart && chart) {
+        let labels = [];
+        let values = [];
+        if (data.meta.chartSource === 'sections' && Array.isArray(data.meta.sections)) {
+          labels = data.meta.sections.slice(0, 18).map(s => String(s.title ?? s.key ?? '—'));
+          values = data.meta.sections.slice(0, 18).map(s => Number(s.totalCost) || 0);
+        } else if (data.rows && data.rows.length) {
+          const xk = data.meta.chartXKey || 'unit';
+          const yk = data.meta.chartYKey || 'totalDollars';
+          labels = data.rows.slice(0, 16).map(r => String(r[xk] ?? '—'));
+          values = data.rows.slice(0, 16).map(r => Number(r[yk]) || 0);
+        }
+        if (labels.length) {
+          chart.classList.remove('hidden');
+          chart.innerHTML = '<canvas height="240"></canvas>';
+          const canvas = chart.querySelector('canvas');
+          const type = data.meta.chartType === 'pie' ? 'pie' : data.meta.chartType === 'line' ? 'line' : 'bar';
+          const cfg =
+            type === 'pie'
+              ? {
+                  type: 'pie',
+                  data: {
+                    labels,
+                    datasets: [
+                      {
+                        data: values,
+                        backgroundColor: ['#1557a0', '#2e7d32', '#6a1b9a', '#ef6c00', '#c62828', '#00838f', '#4527a0', '#558b2f']
+                      }
+                    ]
                   },
-                  plugins: { legend: { display: false } }
+                  options: { plugins: { legend: { position: 'bottom' } } }
                 }
-              };
-        window.__repDynChart = new Chart(canvas.getContext('2d'), cfg);
+              : {
+                  type: type === 'line' ? 'line' : 'bar',
+                  data: {
+                    labels,
+                    datasets: [
+                      {
+                        label: data.meta.chartYKey || 'total',
+                        data: values,
+                        backgroundColor: type === 'line' ? 'rgba(21,87,160,0.2)' : '#1557a0',
+                        borderColor: '#1557a0',
+                        borderWidth: type === 'line' ? 2 : 0,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                      }
+                    ]
+                  },
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      x: { grid: { color: '#eee' } },
+                      y: { grid: { color: '#eee' }, beginAtZero: true }
+                    },
+                    plugins: { legend: { display: false } }
+                  }
+                };
+          window.__repDynChart = new Chart(canvas.getContext('2d'), cfg);
+        }
       } else if (
         (datasetId === 'a2-cost-by-unit' || datasetId === 'a3-cost-by-service-type' || datasetId === 'd1-fuel-cost-by-unit') &&
         chart &&
@@ -512,6 +793,10 @@ tr:nth-child(even){background:#f9f9f9}
         tot.classList.remove('hidden');
         tot.textContent = 'Totals: ' + escapeHtml(JSON.stringify(data.totals));
       }
+      const s = sp.get('startDate') || '';
+      const e = sp.get('endDate') || '';
+      const uu = sp.getAll('units');
+      const u = uu.length ? uu.join(',') : sp.get('unit') || '';
       window.__repDynState = {
         kind: 'dataset',
         datasetId,
@@ -527,14 +812,16 @@ tr:nth-child(even){background:#f9f9f9}
       repSaveRecent(datasetId, data.title || title);
     };
 
-    document.getElementById('repDfRun')?.addEventListener('click', () => {
-      run().catch(err => {
+    if (!fpOpts || !window.ErpReportFilterPanel) {
+      document.getElementById('repDfRun')?.addEventListener('click', () => {
+        run().catch(err => {
+          if (host) host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(err.message)}</p>`;
+        });
+      });
+      await run().catch(err => {
         if (host) host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(err.message)}</p>`;
       });
-    });
-    await run().catch(err => {
-      if (host) host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(err.message)}</p>`;
-    });
+    }
 
     if (typeof openReportsTab === 'function') openReportsTab('rep-dynamic', null);
   }
@@ -620,6 +907,56 @@ tr:nth-child(even){background:#f9f9f9}
     if (typeof openReportsTab === 'function') openReportsTab('rep-dynamic', null);
   }
 
+  function repOpenDotAuditConfigurator() {
+    const host = document.getElementById('repDynamicTableHost');
+    const fl = document.getElementById('repDynamicFilters');
+    const ttl = document.getElementById('repDynamicTitle');
+    if (ttl) ttl.textContent = 'DOT audit report configuration';
+    if (fl) {
+      fl.innerHTML = '';
+      const r = defaultRange();
+      const y = new Date();
+      const yEnd = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
+      fl.innerHTML = `<div class="form-stack" style="max-width:560px">
+        <label class="qb-l">Unit number</label>
+        <input type="text" class="qb-in" id="repDotCfgUnit" placeholder="e.g. 101" />
+        <label class="qb-l">Date range</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="date" class="qb-in" id="repDotCfgStart" value="${r.start}" />
+          <span class="mini-note">to</span>
+          <input type="date" class="qb-in" id="repDotCfgEnd" value="${yEnd}" />
+        </div>
+        <p class="mini-note" style="margin:8px 0 0">Sections 4A–4I and filter query params are applied on the JSON audit endpoint; PDF export uses the classic template.</p>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn" id="repDotCfgPreview">Preview JSON</button>
+          <button type="button" class="btn" style="background:#1b5e20;color:#fff;border-color:#1b5e20" id="repDotCfgPdf">Generate PDF</button>
+        </div>
+      </div>`;
+      document.getElementById('repDotCfgPreview')?.addEventListener('click', () => {
+        const u = document.getElementById('repDotCfgUnit')?.value?.trim();
+        if (!u) return alert('Enter a unit.');
+        const s = document.getElementById('repDotCfgStart')?.value || '';
+        const e = document.getElementById('repDotCfgEnd')?.value || '';
+        const qs = new URLSearchParams();
+        if (s) qs.set('startDate', s);
+        if (e) qs.set('endDate', e);
+        window.open('/api/reports/dot/vehicle-audit/' + encodeURIComponent(u) + '?' + qs.toString(), '_blank', 'noopener');
+      });
+      document.getElementById('repDotCfgPdf')?.addEventListener('click', () => {
+        const u = document.getElementById('repDotCfgUnit')?.value?.trim();
+        if (!u) return alert('Enter a unit.');
+        const s = document.getElementById('repDotCfgStart')?.value || '';
+        const e = document.getElementById('repDotCfgEnd')?.value || '';
+        const qs = new URLSearchParams();
+        if (s) qs.set('startDate', s);
+        if (e) qs.set('endDate', e);
+        window.open('/api/reports/dot-audit/' + encodeURIComponent(u) + '/pdf?' + qs.toString(), '_blank', 'noopener');
+      });
+    }
+    if (host) host.innerHTML = '<p class="mini-note">Choose a vehicle and date range, then preview JSON or open the PDF.</p>';
+    if (typeof openReportsTab === 'function') openReportsTab('rep-dynamic', null);
+  }
+
   function repOpenDotPdf() {
     const u = prompt('Enter unit number (vehicle name) for DOT audit PDF:');
     if (!u) return;
@@ -632,21 +969,59 @@ tr:nth-child(even){background:#f9f9f9}
     const grid = document.getElementById('repCatalogGrid');
     if (!grid) return;
     const items = REP_ITEMS.filter(x => x.cat === __repCat);
-    grid.innerHTML = items
-      .map(it => {
-        const kid = 'repk-' + String(it.title.replace(/[^\w]+/g, '-')).slice(0, 48);
-        return `<button type="button" class="rep-catalog-card" id="${kid}" data-rep-k="${escapeHtml(it.keywords)}" data-cat="${escapeHtml(it.cat)}">
+    const SUB_ORDER = ['Cost analysis', 'Service history', 'Location analysis', 'Other'];
+    const cardHtml = it => {
+      const kid = 'repk-' + String(it.title.replace(/[^\w]+/g, '-')).slice(0, 48);
+      return `<button type="button" class="rep-catalog-card" id="${kid}" data-rep-title="${escapeHtml(it.title)}" data-rep-k="${escapeHtml(it.keywords)}" data-cat="${escapeHtml(it.cat)}">
           <span class="rep-catalog-card__src">${escapeHtml(it.source)}</span>
           <span class="rep-catalog-card__title">${escapeHtml(it.title)}</span>
           <span class="rep-catalog-card__desc">${escapeHtml(it.desc)}</span>
         </button>`;
-      })
-      .join('');
-    grid.querySelectorAll('.rep-catalog-card').forEach((btn, i) => {
-      const it = items[i];
+    };
+    if (__repCat === 'maintenance') {
+      const bySub = {};
+      for (const it of items) {
+        const s = it.subsection || 'Other';
+        if (!bySub[s]) bySub[s] = [];
+        bySub[s].push(it);
+      }
+      const parts = [];
+      for (const sub of SUB_ORDER) {
+        const list = bySub[sub];
+        if (!list || !list.length) continue;
+        parts.push(
+          `<div class="rep-catalog-sub" style="margin-bottom:14px">
+            <h3 class="rep-catalog-sub__title" style="font-size:13px;margin:0 0 8px;color:#1a1f36">${escapeHtml(sub)}</h3>
+            <div class="rep-catalog-subgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${list.map(cardHtml).join('')}</div>
+          </div>`
+        );
+        delete bySub[sub];
+      }
+      for (const sub of Object.keys(bySub).sort()) {
+        const list = bySub[sub];
+        if (!list.length) continue;
+        parts.push(
+          `<div class="rep-catalog-sub" style="margin-bottom:14px">
+            <h3 class="rep-catalog-sub__title" style="font-size:13px;margin:0 0 8px;color:#1a1f36">${escapeHtml(sub)}</h3>
+            <div class="rep-catalog-subgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${list.map(cardHtml).join('')}</div>
+          </div>`
+        );
+      }
+      grid.innerHTML = parts.join('');
+    } else {
+      grid.innerHTML = items.map(cardHtml).join('');
+    }
+    grid.querySelectorAll('.rep-catalog-card').forEach(btn => {
+      const t = btn.getAttribute('data-rep-title');
+      const it = items.find(x => x.title === t);
+      if (!it) return;
       btn.addEventListener('click', () => {
         if (it.custom === 'new') {
           if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('custom');
+          return;
+        }
+        if (it.custom === 'dot-audit-config') {
+          repOpenDotAuditConfigurator();
           return;
         }
         if (it.custom === 'scheduled') {
@@ -714,6 +1089,7 @@ tr:nth-child(even){background:#f9f9f9}
   window.repDynamicExport = repDynamicExport;
   window.repOpenDataset = repOpenDataset;
   window.repOpenQbo = repOpenQbo;
+  window.repOpenDotAuditConfigurator = repOpenDotAuditConfigurator;
 
   function repHookFilterOnce() {
     if (window.__repFilterCatalogHooked) return;
