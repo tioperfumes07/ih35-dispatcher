@@ -19,8 +19,8 @@ jobs:
     timeout-minutes: 15
     env:
       CI: 'true'
-      # Per-fetch ceiling in scripts/system-smoke.mjs (default 8000 ms); CI runners can be noisy.
-      SMOKE_TIMEOUT_MS: '12000'
+      # Per-fetch ceiling in scripts/system-smoke.mjs (default 10000 ms); CI runners can be noisy.
+      SMOKE_TIMEOUT_MS: '15000'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
