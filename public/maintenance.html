@@ -16253,7 +16253,7 @@
       const r = document.getElementById('nmCatalogRenamePane');
       if (d) d.style.display = 'none';
       if (r) r.style.display = '';
-      if (typeof window.erpNameMgmtInit === 'function') window.erpNameMgmtInit();
+      if (typeof window.erpNameMgmtInit === 'function') window.erpNameMgmtInit({ catalog: true });
     }
 
     let __vendorLinkPick = { qboId: '', qboName: '', samsaraId: '', samsaraName: '' };
