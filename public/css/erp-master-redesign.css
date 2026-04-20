@@ -2482,6 +2482,11 @@ body.dispatch-page #dispatchApp .tabs.dispatch-board-tabs {
   margin: 0;
 }
 
+body.dispatch-page #dispatchApp .tabs.dispatch-board-tabs button {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 body.dispatch-page #dispatchApp #msg,
 body.dispatch-page #dispatchApp .dispatch-board-intro {
   min-width: 0;
@@ -3678,6 +3683,8 @@ body.hub-page .hub-footer-lead {
 body.hub-page .hub-footer-tip {
   flex-shrink: 0;
   margin-top: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 900px) {
