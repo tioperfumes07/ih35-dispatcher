@@ -2327,7 +2327,8 @@ body.dispatch-page #dispatchApp .erp-topbar.topbar {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding: 10px max(1.25rem, env(safe-area-inset-right, 0px)) 10px max(1.25rem, env(safe-area-inset-left, 0px));
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(1.25rem, env(safe-area-inset-right, 0px)) 10px
+    max(1.25rem, env(safe-area-inset-left, 0px));
   margin: 0;
   background: linear-gradient(180deg, var(--erp-shell-bar-bg) 0%, var(--erp-shell-bar-bg-deep) 100%);
   border-bottom: 1px solid var(--erp-shell-bar-edge);
