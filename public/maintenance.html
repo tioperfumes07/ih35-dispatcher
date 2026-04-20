@@ -604,6 +604,7 @@
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('find-merge-dupes')">Find &amp; merge duplicates</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('rename-vendor-driver')">Rename vendor / driver</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Maintenance &amp; shop</div>
@@ -8492,6 +8493,11 @@
         erpCloseNewMenu();
         if (typeof openDedupeTool === 'function') return openDedupeTool();
         return openSectionByName('dedupe');
+      }
+      if (k === 'rename-vendor-driver') {
+        erpCloseNewMenu();
+        if (typeof openNameMgmtTool === 'function') return openNameMgmtTool();
+        return openSectionByName('name-mgmt');
       }
       if (k === 'work-order-blank') return erpNewWorkOrder('');
       if (k === 'wo-repair') return erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair' });
