@@ -41,6 +41,13 @@ import { relayLineLabel, relayQuickBooksCategory, relaySpreadsheetCategory } fro
 import { parseBankCsvText, suggestForBankRow } from './lib/bank-match.mjs';
 import { buildReportDataset, REPORT_DATASET_IDS } from './lib/reports-datasets.mjs';
 import dotAuditReportsRouter from './routes/dot-audit-reports.mjs';
+import {
+  mergeIntegrityThresholds,
+  evaluateIntegrityCheck,
+  buildInvestigateRecords,
+  defaultIntegrityThresholds,
+  alertCategory
+} from './lib/integrity-engine.mjs';
 import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
 
 dotenv.config();
@@ -297,6 +304,10 @@ function defaultErpData() {
      * qboStatus pending until posted via existing QBO bill payment path.
      */
     vendorBillPaymentRecords: [],
+    /** Persisted integrity alerts (dashboard + exports). */
+    integrityAlerts: [],
+    /** Numeric thresholds merged with defaults in `mergeIntegrityThresholds`. */
+    integrityThresholds: {},
     /** Company legal + DOT header fields (reports, PDF letterhead). */
     companyProfile: {
       legalName: 'IH 35 Transportation LLC',
@@ -393,6 +404,8 @@ function ensureErpFile() {
   if (!Array.isArray(merged.employees)) merged.employees = [];
   if (!Array.isArray(merged.qboBillPaymentLog)) merged.qboBillPaymentLog = [];
   if (!Array.isArray(merged.vendorBillPaymentRecords)) merged.vendorBillPaymentRecords = [];
+  if (!Array.isArray(merged.integrityAlerts)) merged.integrityAlerts = [];
+  if (!merged.integrityThresholds || typeof merged.integrityThresholds !== 'object') merged.integrityThresholds = {};
   if (!merged.companyProfile || typeof merged.companyProfile !== 'object') {
     merged.companyProfile = { ...defaultErpData().companyProfile };
   } else {
@@ -5604,8 +5617,17 @@ function deriveMaintenanceRecordFields(body, prev) {
     qboTxnType,
     qboDueDate: String(body.qboDueDate || '').trim().slice(0, 32),
     qboDocNumber: String(body.qboDocNumber || '').trim().slice(0, 64),
-    repairStatus
+    repairStatus,
+    driverId: String(body.driverId || '').trim().slice(0, 80),
+    driverName: String(body.driverName || '').trim().slice(0, 160),
+    accidentDotReportable:
+      body.accidentDotReportable === true ||
+      String(body.accidentDotReportable || '').toLowerCase() === 'true' ||
+      String(body.accidentDotReportable || '').toLowerCase() === '1'
   };
+  if (!recordCore.accidentDotReportable) delete recordCore.accidentDotReportable;
+  if (!recordCore.driverId) delete recordCore.driverId;
+  if (!recordCore.driverName) delete recordCore.driverName;
   if (tireLineItems.length) recordCore.tireLineItems = tireLineItems;
   if (costLines.length) recordCore.costLines = costLines;
   if (plannedWork.length) recordCore.plannedWork = plannedWork;
