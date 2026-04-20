@@ -23,7 +23,8 @@
     "qa:isolated": "node scripts/qa-with-server.mjs",
     "test": "npm run rule0:check",
     "rule0:check": "node scripts/rule-zero-agent-b-check.mjs",
-    "report:erp": "node scripts/generate-erp-progress-report.mjs"
+    "report:erp": "node scripts/generate-erp-progress-report.mjs",
+    "git:sync": "bash .cursor/hooks/auto-git-sync.sh"
   },
   "dependencies": {
     "xlsx": "npm:@e965/xlsx@^0.20.3",
