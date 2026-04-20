@@ -1340,7 +1340,10 @@ body.erp-maintenance .erp-reports-toolbar__title {
   font-weight: 500;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .erp-reports-toolbar__search {
