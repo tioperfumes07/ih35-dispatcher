@@ -406,6 +406,7 @@
       </button>
       <button type="button" class="erp-icon-nav__btn nav-btn active" data-section="maintenance" title="Maintenance — work orders, fleet, shop" aria-current="true" onclick="openSection('maintenance', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maintenance</span>
+        <span id="navMaintIntegrityDot" class="erp-icon-nav__dot hidden" aria-hidden="true"></span>
       </button>
       <a class="erp-icon-nav__link" href="/dispatch.html" title="Loads &amp; dispatch (TMS board)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">⎔</span><span class="erp-icon-nav__lbl">Loads</span>
@@ -1996,6 +1997,7 @@
                       </div>
                       <span class="mini-note" id="maintSaveHint" role="status" aria-live="polite" aria-atomic="true"></span>
                       <span class="mini-note" id="maintEditRecordHint" style="color:var(--color-text-label)"></span>
+                      <div id="maintIntegrityInlineAlerts" class="maint-integrity-inline-host hidden" style="flex:1 1 100%;margin-top:10px;width:100%;min-width:0"></div>
                     </div>
                   </div>
                 </div>
@@ -7971,7 +7973,8 @@
             '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Home overview (KPIs)</button>' +
               mt('record', 'Maintenance board') +
               mt('rm', 'Maintenance intelligence') +
-              mt('fleet', 'Fleet table')
+              mt('fleet', 'Fleet table') +
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;reports&quot;, document.querySelector(&quot;.nav-btn[data-section=reports]&quot;)); openReportsTabFromSidebar(&quot;rep-integrity&quot;);">Integrity alerts <span id="maintIntegritySidebarBadge" class="erp-sb-badge hidden" aria-live="polite"></span></button>'
           ) +
           erpSbGroup(
             'maintenance',
@@ -8400,7 +8403,9 @@
     }
 
     function erpSyncMaintWoDriverToFirstCostLine() {
-      const drv = (document.getElementById('maintWoDriverNameInput')?.value || '').trim();
+      const drv =
+        (document.getElementById('maintRecordDriverSearch')?.value || '').trim() ||
+        (document.getElementById('maintWoDriverNameInput')?.value || '').trim();
       if (!drv) return;
       const row =
         document.querySelector('#maintCostCatHost .maint-cost-cat-line') ||
@@ -11255,8 +11260,134 @@
       }
     }
 
+    function fillMaintDriverDatalist() {
+      const dl = document.getElementById('maintDriverOptions');
+      if (!dl) return;
+      const names = (driverProfiles || [])
+        .map(d => String(d.name || '').trim())
+        .filter(Boolean);
+      const uniq = Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
+      dl.innerHTML = uniq.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+    }
+
+    function resolveDriverNameToId(name) {
+      const nm = String(name || '').trim().toLowerCase();
+      if (!nm) return '';
+      const d = (driverProfiles || []).find(p => String(p.name || '').trim().toLowerCase() === nm);
+      return d ? String(d.id || '').trim() : '';
+    }
+
+    function resolveMaintRecordDriverSearch() {
+      const inp = document.getElementById('maintRecordDriverSearch');
+      const hid = document.getElementById('maintRecordDriverId');
+      const syncNm = document.getElementById('maintWoDriverNameInput');
+      if (!inp || !hid) return;
+      hid.value = resolveDriverNameToId(inp.value);
+      if (syncNm) syncNm.value = String(inp.value || '').trim();
+    }
+
+    function resolveAccidentDriverSearch() {
+      const inp = document.getElementById('accidentDriverSearch');
+      const hid = document.getElementById('accidentDriverId');
+      if (!inp || !hid) return;
+      hid.value = resolveDriverNameToId(inp.value);
+    }
+
+    async function refreshIntegrityNavBadges() {
+      try {
+        const c = await j('/api/integrity/counts');
+        const red = Number(c.red) || 0;
+        const amb = Number(c.amber) || 0;
+        const dot = document.getElementById('navMaintIntegrityDot');
+        if (dot) dot.classList.toggle('hidden', red === 0);
+        const sb = document.getElementById('maintIntegritySidebarBadge');
+        if (sb) {
+          if (red > 0) {
+            sb.textContent = String(red);
+            sb.className = 'erp-sb-badge erp-sb-badge--danger';
+            sb.classList.remove('hidden');
+          } else if (amb > 0) {
+            sb.textContent = String(amb);
+            sb.className = 'erp-sb-badge erp-sb-badge--amber';
+            sb.classList.remove('hidden');
+          } else {
+            sb.textContent = '';
+            sb.classList.add('hidden');
+          }
+        }
+      } catch (_) {
+        const dot = document.getElementById('navMaintIntegrityDot');
+        if (dot) dot.classList.add('hidden');
+      }
+    }
+
+    const __integrityDismissedSession = new Set();
+
+    function clearMaintIntegrityInlinePanel() {
+      const host = document.getElementById('maintIntegrityInlineAlerts');
+      if (host) {
+        host.innerHTML = '';
+        host.classList.add('hidden');
+      }
+    }
+
+    function renderMaintIntegrityInlinePanel(alerts) {
+      const host = document.getElementById('maintIntegrityInlineAlerts');
+      if (!host || !alerts || !alerts.length) return;
+      const items = alerts
+        .filter(
+          a =>
+            !__integrityDismissedSession.has(
+              String(a.type || a.alertType) + ':' + String(a.message || '').slice(0, 48)
+            )
+        )
+        .map(
+          a =>
+            `<li style="margin:2px 0;padding-left:12px;position:relative">
+              <span style="position:absolute;left:0">•</span>${escapeHtml(a.message || '')}</li>`
+        )
+        .join('');
+      if (!items) return;
+      host.innerHTML = `
+        <div class="erp-integrity-inline" role="status">
+          <div class="erp-integrity-inline__icon" aria-hidden="true">⚠</div>
+          <div class="erp-integrity-inline__body">
+            <div class="erp-integrity-inline__title">Integrity alert</div>
+            <ul class="erp-integrity-inline__list">${items}</ul>
+            <button type="button" class="erp-integrity-inline__dashlink" onclick="openSection('reports', document.querySelector('.nav-btn[data-section=reports]')); openReportsTabFromSidebar('rep-integrity');">View integrity dashboard →</button>
+          </div>
+          <button type="button" class="erp-integrity-inline__dismiss" title="Dismiss" aria-label="Dismiss">×</button>
+        </div>`;
+      host.classList.remove('hidden');
+      const dismiss = host.querySelector('.erp-integrity-inline__dismiss');
+      if (dismiss) {
+        dismiss.onclick = () => {
+          for (const a of alerts) {
+            __integrityDismissedSession.add(String(a.type || a.alertType) + ':' + String(a.message || '').slice(0, 48));
+          }
+          clearMaintIntegrityInlinePanel();
+        };
+      }
+    }
+
+    async function postIntegrityCheckAfterSave(ctx) {
+      try {
+        const data = await j('/api/integrity/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify(ctx)
+        });
+        const alerts = (data && data.alerts) || [];
+        if (alerts.length) renderMaintIntegrityInlinePanel(alerts);
+        void refreshIntegrityNavBadges();
+      } catch (_) {
+        /* non-blocking */
+      }
+    }
+
     function fillDataLists() {
       fillStaticMaintDatalists();
+      fillMaintDriverDatalist();
 
       document.getElementById('unitOptions').innerHTML =
         vehicles.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
@@ -19898,6 +20029,24 @@
       document.getElementById('accidentAtFaultSearch').value = String(r.accidentAtFault || '');
       document.getElementById('accidentLocationInput').value = String(r.accidentLocation || '');
       document.getElementById('accidentReportNumberInput').value = String(r.accidentReportNumber || '');
+      const adSearch = document.getElementById('accidentDriverSearch');
+      const adId = document.getElementById('accidentDriverId');
+      if (adSearch) adSearch.value = String(r.driverName || '').trim();
+      if (adId) adId.value = String(r.driverId || '').trim();
+      const adot = document.getElementById('accidentDotReportableInput');
+      if (adot) adot.checked = !!r.accidentDotReportable;
+      const mdS = document.getElementById('maintRecordDriverSearch');
+      const mdI = document.getElementById('maintRecordDriverId');
+      const wn = document.getElementById('maintWoDriverNameInput');
+      if (rt === 'accident') {
+        if (mdS) mdS.value = '';
+        if (mdI) mdI.value = '';
+        if (wn) wn.value = String(r.driverName || '').trim();
+      } else {
+        if (mdS) mdS.value = String(r.driverName || '').trim();
+        if (mdI) mdI.value = String(r.driverId || '').trim();
+        if (wn) wn.value = String(r.driverName || '').trim();
+      }
 
       const rl = String(r.repairLocationType || '').trim();
       if (rl) setRepairLocationCode(rl);
