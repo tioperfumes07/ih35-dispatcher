@@ -971,6 +971,8 @@ body.erp-maintenance .maint-workorder-fullmodal__title {
   font-weight: 500;
   color: var(--color-text-primary);
   font-size: 16px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .maint-workorder-fullmodal__head-main {
@@ -2078,8 +2080,10 @@ body.dispatch-page .modal-actions {
   padding: 14px 20px;
   border-top: 1px solid var(--color-border);
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 /* ========== Dispatch: full ERP shell (icon rail + module sidebar + main) ========== */
