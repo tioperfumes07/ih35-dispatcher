@@ -2578,7 +2578,7 @@ body.erp-maintenance .maint-section-card {
 
 body.erp-maintenance .maint-board-layout {
   display: grid;
-  grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, min(200px, 100%)) minmax(0, 1fr);
   gap: 14px 18px;
   align-items: start;
   margin-top: 10px;
