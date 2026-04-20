@@ -116,16 +116,8 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
     let tableHtml = '';
     const catLines = lines.filter(l => l.detailMode === 'category');
     const itemLines = lines.filter(l => l.detailMode === 'item');
-    const theadCat = `<thead>${headCat.replace('<tr>', '<tr>').replace('</tr>', '</tr>')}</thead>`.replace(
-      '<thead><tr>',
-      '<thead><tr>'
-    );
-    const theadCatReal = `<thead><tr>${headCat
-      .replace(/^<tr>/, '')
-      .replace(/<\/tr>$/, '')}</tr></thead>`;
-    const theadItemReal = `<thead><tr>${headItem
-      .replace(/^<tr>/, '')
-      .replace(/<\/tr>$/, '')}</tr></thead>`;
+    const theadCatReal = `<thead>${headCat}</thead>`;
+    const theadItemReal = `<thead>${headItem}</thead>`;
 
     if (catLines.length) {
       const body = catLines
@@ -169,7 +161,6 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
       tableHtml += `<div class="sec-title">Item lines</div><table class="cost">${theadItemReal}<tbody>${body}</tbody></table>
         <div class="tot" style="font-size:9pt;margin:2px 0 6px">Item subtotal: ${esc(money(itemSum))}</div>`;
     }
-    void theadCat;
     if (!tableHtml) {
       tableHtml = '<p class="kv"><b>Cost lines:</b> —</p>';
     }
@@ -179,29 +170,39 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
 
     const planned = String(data.plannedService || '').trim();
     const notes = String(data.notes || '').trim();
+    const badge = workorderBadgeTitle(rt, data.recordTypeLabel);
+    const woDisp = String(data.workOrderNumber || '').trim() || 'DRAFT';
+    const subLine = `WO #: ${woDisp} · Date: ${data.serviceDate || '—'}`;
+    const fleetType = String(data.fleetType || '').trim();
+    const opStat = String(data.operationalStatus || '').trim();
+    const driverNm = String(data.driverName || '').trim();
+    const vendorRef = String(data.vendorReferenceNumber || '').trim();
 
     let accidentBlock = '';
     if (rt === 'accident') {
+      const dot = data.accidentDotReportable ? 'YES' : 'NO';
       accidentBlock = `
         <div class="sec-title">ACCIDENT INFORMATION</div>
         <div class="grid2"><div class="grid2-l" style="flex:1;border:none">
           <p class="kv"><b>Accident location:</b> ${esc(data.accidentLocation || '')}</p>
           <p class="kv"><b>Police / report #:</b> ${esc(data.accidentReportNumber || '')}</p>
           <p class="kv"><b>Fault:</b> ${esc(data.accidentFault || '')}</p>
+          <p class="kv"><b>DOT reportable:</b> ${esc(dot)}</p>
         </div></div>`;
     }
 
     const svcLower = String(data.serviceType || '').toLowerCase();
     let inspectionBlock = '';
+    const inspScope = String(data.inspectionScope || '').trim();
     if (data.inspectionLayout) {
       inspectionBlock = `
         <div class="sec-title">INSPECTION RESULTS</div>
         <div class="box">${esc(data.inspectionSummary || '')}</div>`;
-    } else if (svcLower.includes('inspection') || svcLower.includes('dot annual')) {
+    } else if (svcLower.includes('inspection') || svcLower.includes('dot annual') || inspScope) {
       inspectionBlock = `
         <div class="sec-title">INSPECTION RESULTS</div>
         <div class="box">${esc(
-          `Type: ${data.serviceType || '—'}\nInspector / result: see service notes and cost lines.\nNotes:\n${notes || '—'}`
+          `${inspScope ? `Inspection type / scope: ${inspScope}\n` : ''}Service: ${data.serviceType || '—'}\nNotes:\n${notes || '—'}`
         )}</div>`;
     }
 
@@ -209,9 +210,9 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
       ? `<div class="sec-title">Parts / positions</div><div class="parts-map">${data.partsMapSvg}</div>`
       : '';
 
-    return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>${esc(
-      'WO ' + (data.workOrderNumber || '')
-    )}</title><style>${baseStyles()}</style></head><body>
+    const docTitle = `${badge} — ${data.unitNumber || 'Unit'}`;
+
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>${esc(docTitle)}</title><style>${baseStyles()}</style></head><body>
 <div class="pwrap">
   <div class="hdr">
     <div class="co-l">
@@ -219,36 +220,49 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
       <div class="co-addr">${esc(data.companyAddress || 'Laredo, TX')}</div>
     </div>
     <div class="co-r">
-      <div class="doc-badge">WORK ORDER</div>
-      <div class="wo-meta"><div><b>WO #</b> ${esc(data.workOrderNumber || '—')}</div>
-      <div class="muted">Printed ${esc(data.printedAt || '')}</div></div>
+      <div class="doc-badge">${esc(badge)}</div>
+      <div class="wo-meta">
+        <div class="muted">${esc(subLine)}</div>
+        <div class="muted" style="margin-top:4px">Printed ${esc(data.printedAt || '')}</div>
+      </div>
     </div>
   </div>
 
+  <div class="sec-title">VEHICLE INFORMATION</div>
   <div class="grid2">
     <div class="grid2-l">
-      <p class="kv"><b>Unit #:</b> ${esc(data.unitNumber || '')}</p>
+      <p class="kv" style="font-size:12pt"><b>Unit #:</b> ${esc(data.unitNumber || '')}</p>
       <p class="kv"><b>Year / Make / Model:</b> ${esc(data.yearMakeModel || '')}</p>
       <p class="kv"><b>VIN:</b> ${esc(data.vin || '')}</p>
-      <p class="kv"><b>Plate:</b> ${esc(data.plate || '')}</p>
-      <p class="kv"><b>Odometer:</b> ${esc(data.odometer || '')}</p>
-      <p class="kv"><b>Fuel level:</b> ${esc(data.fuelLevel || '')}</p>
+      <p class="kv"><b>License plate:</b> ${esc(data.plate || '')}</p>
+      <p class="kv"><b>Fleet type:</b> ${esc(fleetType || '—')}</p>
     </div>
     <div class="grid2-r">
-      <p class="kv"><b>Record type:</b> ${esc(data.recordTypeLabel || data.recordType || '')}</p>
-      <p class="kv"><b>Service type:</b> ${esc(data.serviceType || '')}</p>
-      <p class="kv"><b>Service date:</b> ${esc(data.serviceDate || '')}</p>
-      <p class="kv"><b>Service location:</b> ${esc(data.serviceLocation || '')}</p>
-      <p class="kv"><b>Location detail:</b> ${esc(data.locationDetail || '')}</p>
+      <p class="kv"><b>Odometer:</b> ${esc(data.odometer || '')} mi</p>
+      <p class="kv"><b>Fuel level:</b> ${esc(data.fuelLevel || '')}${String(data.fuelLevel || '').trim() ? '%' : ''}</p>
+      <p class="kv"><b>Operational status:</b> ${esc(opStat || '—')}</p>
       <p class="kv"><b>Repair status:</b> ${esc(data.repairStatus || '')}</p>
     </div>
   </div>
 
+  <div class="sec-title">SERVICE INFORMATION</div>
   <div class="row4">
+    <div><p class="kv"><b>Record type</b><br>${esc(data.recordTypeLabel || data.recordType || '')}</p></div>
+    <div><p class="kv"><b>Service type</b><br>${esc(data.serviceType || '')}</p></div>
+    <div><p class="kv"><b>Service date</b><br>${esc(data.serviceDate || '')}</p></div>
+    <div><p class="kv"><b>Service location</b><br>${esc(data.serviceLocation || '')}</p></div>
+  </div>
+  <div class="row4">
+    <div><p class="kv"><b>Location detail</b><br>${esc(data.locationDetail || '')}</p></div>
     <div><p class="kv"><b>Vendor</b><br>${esc(data.vendor || '')}</p></div>
+    <div><p class="kv"><b>Driver</b><br>${esc(driverNm || '—')}</p></div>
     <div><p class="kv"><b>Load #</b><br>${esc(data.loadNumber || '')}</p></div>
+  </div>
+  <div class="row4">
+    <div><p class="kv"><b>Odometer at service</b><br>${esc(data.odometer || '')}</p></div>
     <div><p class="kv"><b>Vendor invoice #</b><br>${esc(data.vendorInvoice || '')}</p></div>
-    <div><p class="kv"><b>Invoice total</b><br>${esc(totalDisp)}</p></div>
+    <div><p class="kv"><b>Reference / WO #</b><br>${esc(vendorRef || '—')}</p></div>
+    <div><p class="kv"><b>Invoice total</b><br><span style="font-size:12pt;font-weight:700">${esc(totalDisp)}</span></p></div>
   </div>
 
   ${accidentBlock}
@@ -265,23 +279,24 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
   <div class="tot">
     Category lines: ${esc(money(catSum))}<br/>
     Item lines: ${esc(money(itemSum))}<br/>
-    <span style="font-size:11pt">TOTAL: ${esc(totalDisp)}</span>
+    <span style="font-size:12pt;font-weight:700">INVOICE TOTAL: ${esc(totalDisp)}</span>
   </div>
 
   ${partsHtml}
 
   ${notes ? `<div class="sec-title">NOTES</div><div class="box">${esc(notes)}</div>` : ''}
 
+  <div class="sec-title">SIGNATURES</div>
   <div class="sig-row">
-    <div class="sig">Technician: __________________________ &nbsp; Date: __________</div>
-    <div class="sig">Supervisor: __________________________ &nbsp; Date: __________</div>
-    <div class="sig">Approved by: __________________________ &nbsp; Date: __________</div>
+    <div class="sig">Technician: __________________________<br/>Print name: __________________________<br/>Date: __________</div>
+    <div class="sig">Supervisor: __________________________<br/>Print name: __________________________<br/>Date: __________</div>
+    <div class="sig">Approved by: __________________________<br/>Title: __________________________<br/>Date: __________</div>
   </div>
 </div>
 <div class="footer">
   <span>${esc(data.companyName || 'IH 35 Transportation LLC')} — Confidential</span>
-  <span class="c">WO ${esc(data.workOrderNumber || '—')}</span>
-  <span>Page <span class="pnum"></span></span>
+  <span class="c">${esc(badge)} · ${esc(data.unitNumber || '—')} · ${esc(data.serviceDate || '')}</span>
+  <span>Page 1</span>
 </div>
 </body></html>`;
   }
