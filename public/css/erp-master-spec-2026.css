@@ -3393,3 +3393,14 @@ body.erp-maintenance #erpApp.erp-master .erp-integrity-inline__dashlink {
   border: 1px solid var(--color-border, #d8dee9);
   font-size: 13px;
 }
+
+/* Integrity reports: responsive card stack under KPI row */
+body.erp-maintenance #erpApp.erp-master #repIntegrityBody.erp-int-dash-card-host {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+body.erp-maintenance #erpApp.erp-master #repIntegrityBody.erp-int-dash-card-host > .erp-int-alert-card {
+  margin: 0;
+}

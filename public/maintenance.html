@@ -1260,7 +1260,7 @@
               </div>
               <div id="maintCard1HeaderSlot" class="maint-card1-header-slot hidden" aria-label="Shop and repair status">
                 <div class="maint-field-cell" style="flex:1 1 180px;min-width:160px;max-width:280px">
-                  <span class="qb-l">Shop location</span>
+                  <span class="qb-l">Service location</span>
                   <select id="repairLocationSelect" class="qb-in maint-field" style="height:30px;min-width:160px" onchange="onRepairLocationSelectChange()" title="Where service was performed">
                     <option value="">— Choose —</option>
                     <option value="in-house">Internal shop</option>
@@ -5127,10 +5127,22 @@
         </div>
         <div id="rep-integrity" class="reports-tab hidden">
           <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">Integrity &amp; anomaly alerts</div>
-              <div class="mini-note" style="margin:0;color:var(--color-text-label)">
-                Alerts are created when you save maintenance, work orders, or fuel; exports use the date range below.
+            <div class="panel-head" style="align-items:stretch">
+              <div class="erp-int-dash-panel__head" style="width:100%">
+                <div class="erp-int-dash-panel__headtext">
+                  <div class="panel-title" style="margin:0">Integrity &amp; anomaly alerts</div>
+                  <div class="erp-int-dash-panel__sub">
+                    Alerts are created when you save maintenance, work orders, or fuel. Use filters, quick category tabs, or exports
+                    (same date range). Tune numeric cutoffs under
+                    <strong>Settings → Integrity thresholds</strong>.
+                  </div>
+                </div>
+                <a
+                  class="erp-int-dash-panel__settingslink"
+                  href="/settings.html#integrity-thresholds"
+                  target="_blank"
+                  rel="noopener"
+                  >Configure thresholds</a>
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(1100px,100%)">
@@ -5175,8 +5187,22 @@
                 <button type="button" class="btn secondary" onclick="integrityExportReport('xlsx')">Excel export</button>
                 <button type="button" class="btn secondary" onclick="integrityExportReport('pdf')">PDF export</button>
               </div>
-              <div id="integrityDashKpi" class="mini-note" style="margin:0 0 10px"></div>
-              <div id="repIntegrityBody" class="table-wrap erp-table-scroll" style="min-width:0"></div>
+              <div
+                id="integrityDashCatTabs"
+                class="erp-int-cat-tabs"
+                role="tablist"
+                aria-label="Integrity quick categories"
+              >
+                <button type="button" class="erp-int-cat-tab erp-int-cat-tab--active" role="tab" data-int-tab="all" aria-selected="true" onclick="erpIntegritySelectTab('all')">All</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="tires" aria-selected="false" onclick="erpIntegritySelectTab('tires')">Tires</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="drivers" aria-selected="false" onclick="erpIntegritySelectTab('drivers')">Drivers</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="accidents" aria-selected="false" onclick="erpIntegritySelectTab('accidents')">Accidents</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="fuel" aria-selected="false" onclick="erpIntegritySelectTab('fuel')">Fuel</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="maintenance" aria-selected="false" onclick="erpIntegritySelectTab('maintenance')">Maintenance</button>
+                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="resolved" aria-selected="false" onclick="erpIntegritySelectTab('resolved')">Resolved</button>
+              </div>
+              <div id="integrityDashKpi" class="erp-int-kpi-row" style="margin:0 0 12px"></div>
+              <div id="repIntegrityBody" class="erp-int-dash-card-host table-wrap erp-table-scroll" style="min-width:0"></div>
               <div id="integrityInvestigateHost" class="hidden" style="margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px">
                 <div class="panel-title" style="font-size:14px;margin-bottom:8px">Linked records</div>
                 <pre id="integrityInvestigatePre" class="mini-note" style="white-space:pre-wrap;margin:0;max-height:280px;overflow:auto;font-size:11px"></pre>
@@ -11982,7 +12008,10 @@
           <div class="erp-integrity-inline__body">
             <div class="erp-integrity-inline__title">Integrity alert</div>
             <ul class="erp-integrity-inline__list">${items}</ul>
-            <button type="button" class="erp-integrity-inline__dashlink" onclick="openSection('reports', document.querySelector('.nav-btn[data-section=reports]')); openReportsTabFromSidebar('rep-integrity');">View integrity dashboard →</button>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:8px">
+              <button type="button" class="erp-integrity-inline__dashlink" style="margin-top:0" onclick="openSection('reports', document.querySelector('.nav-btn[data-section=reports]')); openReportsTabFromSidebar('rep-integrity');">View integrity dashboard →</button>
+              <a class="erp-integrity-inline__dashlink" style="margin-top:0" href="/settings.html#integrity-thresholds" target="_blank" rel="noopener">Configure thresholds</a>
+            </div>
           </div>
           <button type="button" class="erp-integrity-inline__dismiss" title="Dismiss" aria-label="Dismiss">×</button>
         </div>`;
@@ -23139,6 +23168,12 @@
       const { start, end } = integrityReportDateRange();
       if (start) qs.set('startDate', start);
       if (end) qs.set('endDate', end);
+      const cat = String(document.getElementById('integrityDashCategory')?.value || '').trim().toLowerCase();
+      const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
+      const st = String(document.getElementById('integrityDashStatus')?.value || '').trim().toLowerCase();
+      if (cat && cat !== 'all') qs.set('category', cat);
+      if (sev) qs.set('severity', sev);
+      if (st && st !== 'all') qs.set('status', st);
       const url = '/api/integrity/export?' + qs.toString();
       try {
         const r = await fetch(url, { headers: { ...authFetchHeaders(), ...erpWriteHeaders() } });
@@ -23160,6 +23195,48 @@
       }
     }
 
+    function erpIntegritySelectTab(tabId) {
+      const id = String(tabId || 'all').toLowerCase();
+      window.__integrityDashTab = id;
+      const catSel = document.getElementById('integrityDashCategory');
+      const statSel = document.getElementById('integrityDashStatus');
+      if (catSel && statSel) {
+        if (id === 'resolved') {
+          catSel.value = 'all';
+          statSel.value = 'reviewed';
+        } else if (id === 'all') {
+          catSel.value = 'all';
+          statSel.value = 'active';
+        } else {
+          catSel.value = id;
+          statSel.value = 'active';
+        }
+      }
+      void loadIntegrityDashboard();
+    }
+
+    function syncIntegrityCatTabsFromSelects() {
+      const catSel = document.getElementById('integrityDashCategory');
+      const statSel = document.getElementById('integrityDashStatus');
+      const host = document.getElementById('integrityDashCatTabs');
+      if (!host) return;
+      const cat = String(catSel?.value || 'all').trim().toLowerCase();
+      const st = String(statSel?.value || 'active').trim().toLowerCase();
+      let active = 'all';
+      if ((st === 'reviewed' || st === 'resolved') && cat === 'all') active = 'resolved';
+      else if (cat && cat !== 'all') active = cat;
+      else active = 'all';
+      window.__integrityDashTab = active;
+      const pillIds = new Set(['all', 'tires', 'drivers', 'accidents', 'fuel', 'maintenance', 'resolved']);
+      const match = pillIds.has(active) ? active : '';
+      host.querySelectorAll('.erp-int-cat-tab[data-int-tab]').forEach(btn => {
+        const t = String(btn.getAttribute('data-int-tab') || '');
+        const on = match && t === match;
+        btn.classList.toggle('erp-int-cat-tab--active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+    }
+
     async function loadIntegrityDashboard() {
       const fromEl = document.getElementById('integrityDashDateFrom');
       const toEl = document.getElementById('integrityDashDateTo');
@@ -23172,15 +23249,10 @@
       if (toEl && !toEl.value) toEl.value = localIsoDate(new Date());
       const start = String(fromEl?.value || '').trim();
       const end = String(toEl?.value || '').trim();
-      const tab = String(window.__integrityDashTab || 'all');
-      let cat = 'all';
-      let st = 'active';
-      if (tab === 'resolved') {
-        st = 'reviewed';
-        cat = 'all';
-      } else if (tab !== 'all') {
-        cat = tab;
-      }
+      const catSel = document.getElementById('integrityDashCategory');
+      const statSel = document.getElementById('integrityDashStatus');
+      let cat = String(catSel?.value || 'all').trim().toLowerCase() || 'all';
+      let st = String(statSel?.value || 'active').trim().toLowerCase() || 'active';
       const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
       const qs = new URLSearchParams();
       if (start) qs.set('startDate', start);
@@ -23223,6 +23295,7 @@
           body.innerHTML =
             '<p class="mini-note" style="margin:0">No alerts for these filters (session-dismissed items stay hidden until you refresh the page).</p>';
           void refreshIntegrityNavBadges();
+          syncIntegrityCatTabsFromSelects();
           return;
         }
         const cards = rows
@@ -23263,6 +23336,7 @@
           .join('');
         body.innerHTML = cards;
         void refreshIntegrityNavBadges();
+        syncIntegrityCatTabsFromSelects();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
       }
