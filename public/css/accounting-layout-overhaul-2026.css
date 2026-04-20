@@ -1,0 +1,460 @@
+/* Accounting + maintenance layout polish (2026). Visual/layout only — maintenance.html. */
+
+/* --- Scoped flex shrink (avoid breaking icon rails) --- */
+body.erp-maintenance .erp-main-body,
+body.erp-maintenance .erp-main-body * {
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .erp-main-body * {
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-icon-nav *,
+body.erp-maintenance .erp-module-sidebar__brand-mark {
+  min-width: auto;
+}
+
+/* --- Accounting tab bar (visible, horizontal scroll) --- */
+body.erp-maintenance #section-accounting #acctNavTabStubs.erp-tab-bar,
+body.erp-maintenance #section-accounting .subtabs.erp-tab-bar {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  width: 100% !important;
+  gap: 0 !important;
+  border-bottom: 1px solid #e0e3e8 !important;
+  background: #ffffff !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #d0d4da transparent !important;
+  -webkit-overflow-scrolling: touch !important;
+  position: relative !important;
+  padding: 0 !important;
+  margin: 0 0 12px 0 !important;
+}
+
+body.erp-maintenance #section-accounting #acctNavTabStubs.erp-tab-bar::-webkit-scrollbar,
+body.erp-maintenance #section-accounting .subtabs.erp-tab-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+body.erp-maintenance #section-accounting #acctNavTabStubs.erp-tab-bar::-webkit-scrollbar-thumb,
+body.erp-maintenance #section-accounting .subtabs.erp-tab-bar::-webkit-scrollbar-thumb {
+  background: #d0d4da;
+  border-radius: 4px;
+}
+
+body.erp-maintenance #section-accounting #acctNavTabStubs .subtab,
+body.erp-maintenance #section-accounting .subtabs.erp-tab-bar .subtab {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  padding: 10px 14px !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: #6b7385 !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  transition: color 0.15s, border-color 0.15s !important;
+  position: relative !important;
+  top: 1px !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: fit-content !important;
+}
+
+body.erp-maintenance #section-accounting #acctNavTabStubs .subtab:hover,
+body.erp-maintenance #section-accounting .subtabs.erp-tab-bar .subtab:hover {
+  color: #1a1f36 !important;
+  background: #f8f9fa !important;
+}
+
+body.erp-maintenance #section-accounting #acctNavTabStubs .subtab.active,
+body.erp-maintenance #section-accounting .subtabs.erp-tab-bar .subtab.active {
+  color: #1557a0 !important;
+  border-bottom-color: #1557a0 !important;
+  font-weight: 500 !important;
+}
+
+/* Reports + other tablists in maintenance */
+body.erp-maintenance .rep-cat-tabs,
+body.erp-maintenance #maintMainSubtabs,
+body.erp-maintenance #section-maintenance .maint-action-strip__tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  scrollbar-width: thin !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body.erp-maintenance [role='tabpanel'],
+body.erp-maintenance .accounting-tab:not(.hidden) {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* --- Accounting board responsive grids --- */
+body.erp-maintenance #acctBoardStrip .acct-dash-kpis {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+body.erp-maintenance #acctBoardStrip .acct-board-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+body.erp-maintenance #acctBoardStrip .acct-dash-tools-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+body.erp-maintenance .acct-dash-kpi__sub {
+  margin-top: 4px !important;
+  font-size: 10px !important;
+  color: #a0a8b8 !important;
+}
+
+/* --- Date inputs (accounting + dedicated modal) --- */
+body.erp-maintenance #section-accounting input[type='date'],
+body.erp-maintenance .erp-dedicated-form-modal input[type='date'] {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 130px !important;
+  height: 30px !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+  box-sizing: border-box !important;
+  flex-shrink: 1 !important;
+}
+
+body.erp-maintenance .date-range,
+body.erp-maintenance .erp-date-filter-bar .erp-date-filter-bar__left {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-width: 0 !important;
+}
+
+body.erp-maintenance .erp-date-filter-bar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px 12px !important;
+  padding: 10px 0 !important;
+  border-bottom: 1px solid #f1f3f4 !important;
+  margin-bottom: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body.erp-maintenance .erp-date-filter-bar__left {
+  flex: 1 1 280px !important;
+}
+
+body.erp-maintenance .erp-date-filter-bar__right {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin-left: auto !important;
+}
+
+body.erp-maintenance .erp-df-lbl {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  color: #6b7385 !important;
+}
+
+body.erp-maintenance .erp-df-sep {
+  color: #6b7385 !important;
+  font-size: 11px !important;
+  flex-shrink: 0 !important;
+}
+
+body.erp-maintenance .erp-df-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+  width: 100% !important;
+}
+
+body.erp-maintenance .erp-df-chip {
+  height: 24px !important;
+  padding: 0 10px !important;
+  border: 1px solid #d0d4da !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  background: #fff !important;
+  color: #1a1f36 !important;
+}
+
+body.erp-maintenance .erp-df-chip--active {
+  background: #e8f0fe !important;
+  color: #1557a0 !important;
+  border-color: #c5d9f7 !important;
+}
+
+body.erp-maintenance .erp-df-apply {
+  height: 28px !important;
+  line-height: 1 !important;
+  padding: 0 12px !important;
+  background: #0d7a3b !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+}
+
+body.erp-maintenance .erp-df-count {
+  font-size: 11px !important;
+  color: #6b7385 !important;
+}
+
+/* Mini tables: date columns */
+body.erp-maintenance .acct-board-mini-table th:nth-child(1),
+body.erp-maintenance .acct-board-mini-table td:nth-child(1) {
+  min-width: 92px !important;
+}
+
+body.erp-maintenance .acct-board-mini-table th:nth-child(5),
+body.erp-maintenance .acct-board-mini-table td:nth-child(5) {
+  min-width: 92px !important;
+}
+
+/* --- Toasts above modals --- */
+body.erp-maintenance #erpToastHost.erp-toast-host,
+body.erp-maintenance .erp-toast-host {
+  z-index: 9000 !important;
+  pointer-events: none !important;
+}
+
+body.erp-maintenance .erp-toast {
+  pointer-events: auto !important;
+  max-width: 380px !important;
+}
+
+/* --- Banners / vendor bar / dropdown stacks --- */
+body.erp-maintenance #section-accounting .fuel-expense-qbo-banner,
+body.erp-maintenance #section-accounting #expHistQboBanner,
+body.erp-maintenance .mr-qbo-banner,
+body.erp-maintenance [class*='qbo-banner'],
+body.erp-maintenance [class*='sync-banner'] {
+  position: relative !important;
+  z-index: 200 !important;
+  width: 100% !important;
+}
+
+body.erp-maintenance .mr-bp-vendorbar,
+body.erp-maintenance #bpVendorSummaryBar {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+body.erp-maintenance .mr-filter-bar,
+body.erp-maintenance .erp-ops-filter-bar {
+  position: relative !important;
+  z-index: 50 !important;
+}
+
+body.erp-maintenance .erp-acct-sb-conn,
+body.erp-maintenance [class*='connections'] {
+  position: sticky !important;
+  bottom: 0 !important;
+  background: #ffffff !important;
+  z-index: 10 !important;
+  padding: 10px 14px !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-shell [class*='dropdown-list'],
+body.erp-maintenance .erp-acct-workflow-shell [class*='autocomplete-list'],
+body.erp-maintenance #section-accounting [class*='dropdown-list'],
+body.erp-maintenance #section-accounting [class*='autocomplete-list'] {
+  z-index: 400 !important;
+}
+
+/* Dedicated modal default widths per workflow */
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .erp-dedicated-form-modal__shell {
+  width: min(800px, 96vw) !important;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='driver-settlement'] .erp-dedicated-form-modal__shell {
+  width: min(860px, 96vw) !important;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='load-tms'] .erp-dedicated-form-modal__shell {
+  width: min(820px, 96vw) !important;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='journal'] .erp-dedicated-form-modal__shell {
+  width: min(780px, 96vw) !important;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='transfer'] .erp-dedicated-form-modal__shell {
+  width: min(640px, 96vw) !important;
+}
+
+/* Workflow shell: scroll inside modal body only */
+body.erp-maintenance .erp-acct-workflow-shell {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-section {
+  padding: 12px 0 !important;
+  border-bottom: 1px solid #eef1f4 !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-section:last-child {
+  border-bottom: none !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-h {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  margin: 0 0 10px !important;
+  color: #1a1f36 !important;
+}
+
+body.erp-maintenance .erp-acct-field-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 14px !important;
+  width: 100% !important;
+  align-items: flex-end !important;
+}
+
+body.erp-maintenance .erp-acct-field-grid > .erp-acct-field {
+  flex: 1 1 160px !important;
+  min-width: 130px !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-table-wrap {
+  width: 100% !important;
+  overflow-x: auto !important;
+  min-width: 0 !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 12px !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-table th,
+body.erp-maintenance .erp-acct-workflow-table td {
+  border: 1px solid #e0e3e8 !important;
+  padding: 6px 8px !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-table th {
+  background: #f8f9fa !important;
+  font-weight: 600 !important;
+  color: #4a5160 !important;
+}
+
+body.erp-maintenance .erp-acct-workflow-foot {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  justify-content: flex-end !important;
+  padding-top: 12px !important;
+}
+
+body.erp-maintenance .erp-acct-btn {
+  height: 32px !important;
+  padding: 0 14px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  border: 1px solid #d0d4da !important;
+  background: #fff !important;
+}
+
+body.erp-maintenance .erp-acct-btn--green {
+  background: #0d7a3b !important;
+  border-color: #0b6330 !important;
+  color: #fff !important;
+}
+
+body.erp-maintenance .erp-acct-btn--blue {
+  background: #1557a0 !important;
+  border-color: #124a88 !important;
+  color: #fff !important;
+}
+
+body.erp-maintenance .erp-acct-btn--muted {
+  background: #f8f9fa !important;
+  color: #1a1f36 !important;
+}
+
+body.erp-maintenance .erp-acct-btn[disabled] {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+}
+
+body.erp-maintenance .erp-acct-netpay {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #0d7a3b !important;
+}
+
+body.erp-maintenance .erp-acct-warn {
+  margin-top: 8px !important;
+  font-size: 12px !important;
+  color: #b42318 !important;
+  font-weight: 600 !important;
+}
+
+body.erp-maintenance .erp-acct-warn[hidden] {
+  display: none !important;
+}
+
+/* Module sidebar width + ellipsis (accounting section open) */
+body.erp-maintenance .erp-module-sidebar {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+body.erp-maintenance .erp-module-sidebar .erp-sb-link,
+body.erp-maintenance .erp-module-sidebar .erp-sb-group__head {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.erp-maintenance.erp-sidebar-collapsed .erp-module-sidebar,
+body.erp-maintenance #erpApp.erp-sidebar-collapsed .erp-module-sidebar {
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+}
