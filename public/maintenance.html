@@ -15519,30 +15519,59 @@
     }
 
     function renderMaintenanceUnitList() {
-      const q = document.getElementById('maintenanceUnitSearch').value.trim().toLowerCase();
+      const qEl = document.getElementById('maintenanceUnitSearch');
+      const sEl = document.getElementById('maintenanceServiceFilter');
+      const q = (qEl?.value || '').trim().toLowerCase();
+      const svcQ = (sEl?.value || '').trim().toLowerCase();
       const list = vehiclesByCategory()[activeAssetCategory] || [];
+      const host = document.getElementById('maintenanceUnitList');
+      if (!host) return;
 
-      document.getElementById('maintenanceUnitList').innerHTML = list
-        .filter(v => !q || String(v.name || '').toLowerCase().includes(q))
-        .map(v => {
-          const rows = dashboard.filter(d => d.unit === v.name);
-          const past = rows.filter(r => r.status === 'past due').length;
-          const soon = rows.filter(r => r.status === 'due soon').length;
+      const filtered = list.filter(v => {
+        if (q && !String(v.name || '').toLowerCase().includes(q)) return false;
+        if (!svcQ) return true;
+        const rows = dashboard.filter(d => d.unit === v.name);
+        return rows.some(r => String(r.serviceType || '').toLowerCase().includes(svcQ));
+      });
 
-          return `
-            <div class="list-row maint-unit-list-row ${selectedUnit === v.name ? 'active' : ''}" onclick="selectUnit('${v.name}')">
-              <div class="list-title">${escapeHtml(v.name)}</div>
-              <div class="list-sub">
-                ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}<br>
-                Mileage: ${v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : 'N/A'}<br>
-                Fuel: ${v.fuelPercent != null ? `${Math.round(v.fuelPercent)}%` : 'N/A'}<br>
-                <span class="maint-unit-pd ${past > 0 ? 'maint-unit-pd--past' : ''}">Past due: ${past}</span>
-                <span class="maint-unit-pd"> · </span>
-                <span class="maint-unit-pd ${soon > 0 ? 'maint-unit-pd--soon' : ''}">Due soon: ${soon}</span>
+      const fmtMi = v => {
+        if (v.odometerMiles != null && Number.isFinite(Number(v.odometerMiles)))
+          return `${Number(v.odometerMiles).toLocaleString()} mi`;
+        return '—';
+      };
+      const fuelPct = v =>
+        v.fuelPercent != null && Number.isFinite(Number(v.fuelPercent)) ? Math.round(Number(v.fuelPercent)) : null;
+
+      host.innerHTML =
+        filtered
+          .map(v => {
+            const rows = dashboard.filter(d => d.unit === v.name);
+            const past = rows.filter(r => r.status === 'past due').length;
+            const soon = rows.filter(r => r.status === 'due soon').length;
+            const fp = fuelPct(v);
+            const ymm = [v.year, v.make, v.model].filter(Boolean).join(' ') || '—';
+            const avClass =
+              past > 0 ? 'maint-unit-card__avatar--past' : soon > 0 ? 'maint-unit-card__avatar--alert' : '';
+            const fillW = fp != null ? Math.max(0, Math.min(100, fp)) : 0;
+            const fuelBar = `<div class="maint-unit-card__fuel"><div class="maint-unit-card__fuel-bar"><span class="maint-unit-card__fuel-fill" style="width:${fillW}%"></span></div><span class="maint-unit-card__fuel-txt">${fp != null ? `${fp}%` : '0%'}</span></div>`;
+            const badges = [];
+            if (past > 0) badges.push(`<span class="maint-unit-pill maint-unit-pill--past">${past} past due</span>`);
+            if (soon > 0) badges.push(`<span class="maint-unit-pill maint-unit-pill--soon">${soon} due soon</span>`);
+            const escName = escapeHtml(v.name);
+            const tip = escapeHtml(`${v.name} — ${ymm}`);
+            const onclk = `selectUnit(${JSON.stringify(v.name)})`;
+            return `<div class="maint-unit-card ${selectedUnit === v.name ? 'active' : ''}" role="button" tabindex="0" title="${tip}" onclick='${onclk}' onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${onclk}}">
+              <div class="maint-unit-card__avatar ${avClass}" title="${tip}">${escName}</div>
+              <div class="maint-unit-card__body">
+                <div class="maint-unit-card__title">${escName}</div>
+                <div class="maint-unit-card__sub">${escapeHtml(ymm)}</div>
+                <div class="maint-unit-card__mile">${fmtMi(v)}</div>
+                ${fuelBar}
               </div>
-            </div>
-          `;
-        }).join('') || '<div class="list-row">No assets found.</div>';
+              <div class="maint-unit-card__badges">${badges.join('')}</div>
+            </div>`;
+          })
+          .join('') || '<div class="maint-unit-list-empty">No units match your search.</div>';
     }
 
     function selectUnit(unit, opts = {}) {
