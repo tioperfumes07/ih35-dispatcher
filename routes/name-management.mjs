@@ -541,62 +541,464 @@ export function mountNameManagementRoutes(app, deps) {
   app.get('/api/name-management/mismatches', async (req, res) => {
     try {
       const type = String(req.query.type || 'vendor').toLowerCase();
-      if (type === 'customer') {
-        const j = await fetch(`http://localhost:${process.env.PORT || 3400}/api/name-management/customers`).then(() =>
-          null
-        );
-        void j;
-      }
-      /* inline fetch without self-http */
-      const vendorsRes =
-        type === 'vendor'
-          ? await new Promise((resolve, reject) => {
-              const mock = { statusCode: 0, json: () => {} };
-              const r = { ...mock, status: () => ({ json: resolve }) };
-              /* skip — call handlers by duplicating filter */
-              resolve(null);
-            })
-          : null;
-      void vendorsRes;
-      /* simpler: reuse cache */
+      await warmListCacheForMismatches(type);
       let list = [];
-      if (type === 'driver') {
-        const pool = getPool();
-        if (!pool) return res.json({ ok: true, records: [] });
-        const data = cacheGet('nm_drivers') || (await import('./name-management-selfcall.mjs')).catch?.();
-        void data;
-      }
+      let loadedAt = null;
       if (type === 'vendor') {
         const v = cacheGet('nm_vendors');
+        loadedAt = v?.loadedAt || null;
         list = (v?.vendors || []).filter(x => x.nameMismatch);
       } else if (type === 'customer') {
         const v = cacheGet('nm_customers');
+        loadedAt = v?.loadedAt || null;
         list = (v?.customers || []).filter(x => x.nameMismatch);
       } else {
+        if (!getPool()) return res.json({ ok: true, type, records: [], loadedAt: null });
         const v = cacheGet('nm_drivers');
+        loadedAt = v?.loadedAt || null;
         list = (v?.drivers || []).filter(x => x.nameMismatch);
       }
-      res.json({ ok: true, type, records: list });
+      res.json({ ok: true, type, records: list, loadedAt });
     } catch (e) {
       logError('GET /api/name-management/mismatches', e);
       res.status(500).json({ ok: false, error: e.message });
     }
   });
 
-  /* Fix mismatches endpoint - populate cache first */
-  app.get('/api/name-management/mismatches', async (req, res) => {
+  app.get('/api/name-management/record/:type/:id', async (req, res) => {
     try {
-      const type = String(req.query.type || 'vendor').toLowerCase();
-      if (type === 'vendor' && !cacheGet('nm_vendors')) {
-        await new Promise((res2, rej) => {
-          const http = require('http');
-          void http;
-          res2();
+      const type = String(req.params.type || '').toLowerCase();
+      const id = decodeURIComponent(String(req.params.id || '').trim());
+      if (!id || !['vendor', 'customer', 'driver'].includes(type)) {
+        return res.status(400).json({ ok: false, error: 'Invalid type or id' });
+      }
+      const realm = String(readQbo()?.tokens?.realmId || '').trim();
+      const qboCompany = realm ? `&companyId=${encodeURIComponent(realm)}` : '';
+      if (type === 'vendor') {
+        await warmListCacheForMismatches('vendor');
+        const row = (cacheGet('nm_vendors')?.vendors || []).find(v => v.qboId === id);
+        if (!row) return res.status(404).json({ ok: false, error: 'Vendor not found' });
+        const erp = readErp();
+        const counts = countVendorUsageByQboId(erp, id);
+        return res.json({
+          ok: true,
+          record: {
+            type: 'vendor',
+            ...row,
+            counts,
+            qboEditUrl: `https://app.qbo.intuit.com/app/vendordetail?nameId=${encodeURIComponent(id)}${qboCompany}`
+          }
         });
       }
-      /* call internal build */
-      res.json({ ok: true, records: [], hint: 'Call vendors/drivers/customers first or use refresh=1 on those endpoints' });
+      if (type === 'customer') {
+        await warmListCacheForMismatches('customer');
+        const row = (cacheGet('nm_customers')?.customers || []).find(c => c.qboId === id);
+        if (!row) return res.status(404).json({ ok: false, error: 'Customer not found' });
+        const erp = readErp();
+        const counts = countCustomerUsageByQboId(erp, id);
+        return res.json({
+          ok: true,
+          record: {
+            type: 'customer',
+            ...row,
+            counts,
+            qboEditUrl: `https://app.qbo.intuit.com/app/customerdetail?nameId=${encodeURIComponent(id)}${qboCompany}`
+          }
+        });
+      }
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL required for driver detail' });
+      await warmListCacheForMismatches('driver');
+      const row = (cacheGet('nm_drivers')?.drivers || []).find(d => d.erpId === id);
+      if (!row) return res.status(404).json({ ok: false, error: 'Driver not found' });
+      const erp = readErp();
+      const counts = countDriverUsageInErp(erp, id, row.erpName);
+      const links = await loadDriverLinks();
+      const link = links.get(id);
+      return res.json({
+        ok: true,
+        record: {
+          type: 'driver',
+          ...row,
+          counts,
+          link,
+          qboEditUrl: row.qboId
+            ? `https://app.qbo.intuit.com/app/vendordetail?nameId=${encodeURIComponent(row.qboId)}${qboCompany}`
+            : null,
+          samsaraUrl: row.samsaraId ? `https://cloud.samsara.com/o/drivers/${encodeURIComponent(row.samsaraId)}` : null
+        }
+      });
     } catch (e) {
+      logError('GET /api/name-management/record/:type/:id', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  app.get('/api/name-management/samsara-drivers', async (req, res) => {
+    try {
+      const q = String(req.query.q || '').trim();
+      const drivers = await fetchSamsaraDriversNormalized({ q, limit: 400 });
+      res.json({ ok: true, drivers });
+    } catch (e) {
+      logError('GET /api/name-management/samsara-drivers', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  app.post('/api/name-management/link', async (req, res) => {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    if (!requireDb(res)) return;
+    try {
+      const b = req.body || {};
+      const erpDriverId = String(b.erp_driver_id || b.erpDriverId || '').trim();
+      const samsaraDriverId = b.samsara_driver_id != null ? String(b.samsara_driver_id).trim() : null;
+      const qboVendorId = b.qbo_vendor_id != null ? String(b.qbo_vendor_id).trim() : null;
+      const qboEmployeeId = b.qbo_employee_id != null ? String(b.qbo_employee_id).trim() : null;
+      if (!erpDriverId) return res.status(400).json({ ok: false, error: 'erp_driver_id required' });
+      const by = maintAuthUserLabel(req);
+      await dbQuery(
+        `INSERT INTO driver_system_links (erp_driver_id, samsara_driver_id, qbo_vendor_id, qbo_employee_id, link_confidence, linked_by, linked_at, updated_at)
+         VALUES ($1,$2,$3,$4,'manual',$5,now(),now())
+         ON CONFLICT (erp_driver_id) DO UPDATE SET
+           samsara_driver_id = EXCLUDED.samsara_driver_id,
+           qbo_vendor_id = EXCLUDED.qbo_vendor_id,
+           qbo_employee_id = EXCLUDED.qbo_employee_id,
+           link_confidence = 'manual',
+           linked_by = EXCLUDED.linked_by,
+           linked_at = now(),
+           updated_at = now()`,
+        [erpDriverId, samsaraDriverId || null, qboVendorId || null, qboEmployeeId || null, by]
+      );
+      await dbQuery(
+        `UPDATE drivers SET samsara_driver_id = COALESCE($2::text, samsara_driver_id), qbo_vendor_id = COALESCE($3::text, qbo_vendor_id) WHERE id = $1::uuid`,
+        [erpDriverId, samsaraDriverId || null, qboVendorId || null]
+      );
+      invalidateNmCache();
+      res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/name-management/link', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  async function runRenameOperation(b, by) {
+    const type = String(b.type || '').toLowerCase();
+    const newName = String(b.new_name || b.newName || '').trim();
+    const updateQbo = b.update_qbo !== false;
+    const updateErp = b.update_erp !== false;
+    if (!['vendor', 'driver', 'customer'].includes(type) || newName.length < 2) {
+      return { ok: false, status: 400, error: 'type and new_name (2+ chars) required' };
+    }
+    let qboUpdated = false;
+    let qboError = null;
+    let samsaraUpdated = false;
+    let samsaraError = null;
+    let erpN = 0;
+    let erpError = null;
+    const systemsAttempted = { qbo: updateQbo, samsara: false, erp: updateErp };
+    const systemsSucceeded = { qbo: false, samsara: false, erp: false };
+    let qboId = String(b.qbo_id || b.qboId || '').trim();
+    let erpId = String(b.erp_id || b.erpId || '').trim();
+    let samsaraId = String(b.samsara_id || b.samsaraId || '').trim();
+    let oldName = '';
+    const erpData = readErp();
+
+    if (type === 'vendor') {
+      if (!qboId) return { ok: false, status: 400, error: 'qbo_id required for vendor' };
+      const vd = await qboGet(`vendor/${encodeURIComponent(qboId)}`);
+      oldName = String(vd?.Vendor?.DisplayName || '').trim();
+      if (updateQbo) {
+        try {
+          await qboUpdateVendorName(qboGet, qboPost, qboId, newName);
+          qboUpdated = true;
+          const ver = await verifyQboName(qboGet, 'vendor', qboId, newName);
+          systemsSucceeded.qbo = ver.ok;
+          if (!ver.ok) qboError = `QuickBooks accepted the update but DisplayName is still "${ver.displayName}" (propagation delay?)`;
+        } catch (e) {
+          qboError = e.message;
+        }
+      }
+      if (updateErp) {
+        try {
+          erpN = applyVendorNameToErp(erpData, qboId, newName);
+          writeErp(erpData);
+          systemsSucceeded.erp = true;
+        } catch (e) {
+          erpError = e.message;
+        }
+      }
+      erpId = qboId;
+    } else if (type === 'customer') {
+      if (!qboId) return { ok: false, status: 400, error: 'qbo_id required for customer' };
+      const cd = await qboGet(`customer/${encodeURIComponent(qboId)}`);
+      oldName = String(cd?.Customer?.DisplayName || '').trim();
+      if (updateQbo) {
+        try {
+          await qboUpdateCustomerName(qboGet, qboPost, qboId, newName);
+          qboUpdated = true;
+          const ver = await verifyQboName(qboGet, 'customer', qboId, newName);
+          systemsSucceeded.qbo = ver.ok;
+          if (!ver.ok) qboError = `QuickBooks accepted the update but DisplayName is still "${ver.displayName}" (propagation delay?)`;
+        } catch (e) {
+          qboError = e.message;
+        }
+      }
+      if (updateErp) {
+        try {
+          erpN = applyCustomerNameToErp(erpData, qboId, newName);
+          writeErp(erpData);
+          systemsSucceeded.erp = true;
+        } catch (e) {
+          erpError = e.message;
+        }
+      }
+      erpId = qboId;
+    } else if (type === 'driver') {
+      if (!erpId) return { ok: false, status: 400, error: 'erp_id required for driver' };
+      const { rows: dr } = await dbQuery(
+        'SELECT id, name, qbo_vendor_id, samsara_driver_id FROM drivers WHERE id = $1::uuid',
+        [erpId]
+      );
+      const d = dr?.[0];
+      if (!d) return { ok: false, status: 404, error: 'Driver not found' };
+      oldName = String(d.name || '').trim();
+      const links = await loadDriverLinks();
+      const link = links.get(erpId);
+      if (!qboId) qboId = d.qbo_vendor_id ? String(d.qbo_vendor_id) : link?.qbo_vendor_id ? String(link.qbo_vendor_id) : '';
+      if (!samsaraId) samsaraId = d.samsara_driver_id ? String(d.samsara_driver_id) : link?.samsara_driver_id ? String(link.samsara_driver_id) : '';
+      const qboEmployeeId = link?.qbo_employee_id ? String(link.qbo_employee_id) : '';
+      const updateSamsara = b.update_samsara !== false && Boolean(samsaraId);
+      systemsAttempted.samsara = updateSamsara;
+      if (updateQbo) {
+        try {
+          if (qboId) {
+            await qboUpdateVendorName(qboGet, qboPost, qboId, newName);
+            qboUpdated = true;
+            const ver = await verifyQboName(qboGet, 'vendor', qboId, newName);
+            systemsSucceeded.qbo = ver.ok;
+            if (!ver.ok) qboError = `QuickBooks accepted the update but DisplayName is still "${ver.displayName}" (propagation delay?)`;
+          } else if (qboEmployeeId) {
+            await qboUpdateEmployeeName(qboGet, qboPost, qboEmployeeId, newName);
+            qboUpdated = true;
+            const ver = await verifyQboName(qboGet, 'employee', qboEmployeeId, newName);
+            systemsSucceeded.qbo = ver.ok;
+            if (!ver.ok) qboError = `QuickBooks accepted the update but DisplayName is still "${ver.displayName}" (propagation delay?)`;
+            qboId = qboEmployeeId;
+          } else {
+            qboError = 'No QuickBooks vendor or employee id linked for this driver';
+          }
+        } catch (e) {
+          qboError = e.message;
+        }
+      }
+      if (updateSamsara && samsaraApiPatch) {
+        try {
+          await samsaraApiPatch(`/fleet/drivers/${encodeURIComponent(samsaraId)}`, { name: newName });
+          samsaraUpdated = true;
+          systemsSucceeded.samsara = true;
+        } catch (e) {
+          samsaraError = e.message;
+        }
+      }
+      if (updateErp) {
+        try {
+          erpN = applyDriverNameToErp(erpData, erpId, oldName, newName);
+          const wr = await dbQuery(`UPDATE drivers SET name = $1 WHERE id = $2::uuid AND name IS DISTINCT FROM $1`, [
+            newName,
+            erpId
+          ]);
+          erpN += Number(wr.rowCount || 0);
+          writeErp(erpData);
+          systemsSucceeded.erp = true;
+        } catch (e) {
+          erpError = e.message;
+        }
+      }
+    } else {
+      return { ok: false, status: 400, error: 'Unsupported type' };
+    }
+
+    const updateSamsaraRequested = type === 'driver' ? b.update_samsara !== false && Boolean(samsaraId) : false;
+    systemsAttempted.samsara = updateSamsaraRequested;
+
+    try {
+      const erpKey = type === 'driver' ? erpId : qboId;
+      await dbQuery(
+        `INSERT INTO canonical_names (record_type, erp_id, canonical_name, set_by, notes)
+         VALUES ($1,$2,$3,$4,$5)
+         ON CONFLICT (record_type, erp_id) DO UPDATE SET canonical_name = EXCLUDED.canonical_name, set_by = EXCLUDED.set_by, set_at = now()`,
+        [type, erpKey, newName, by, null]
+      );
+    } catch {
+      /* canonical_names missing until migrate */
+    }
+
+    let logId = null;
+    try {
+      const logRes = await dbQuery(
+        `INSERT INTO rename_log (
+          record_type, erp_id, qbo_id, samsara_id, old_name, new_name,
+          update_qbo_requested, update_samsara_requested, update_erp_requested,
+          qbo_updated, qbo_error, samsara_updated, samsara_error, erp_records_updated, erp_error,
+          renamed_by, systems_attempted, systems_succeeded, error_details
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+        RETURNING id`,
+        [
+          type,
+          type === 'driver' ? erpId : qboId,
+          qboId || null,
+          samsaraId || null,
+          oldName,
+          newName,
+          updateQbo,
+          updateSamsaraRequested,
+          updateErp,
+          Boolean(updateQbo && qboUpdated && !qboError),
+          qboError,
+          samsaraUpdated,
+          samsaraError,
+          erpN,
+          erpError,
+          by,
+          JSON.stringify(systemsAttempted),
+          JSON.stringify(systemsSucceeded),
+          JSON.stringify({ qboError, samsaraError, erpError })
+        ]
+      );
+      logId = logRes.rows?.[0]?.id;
+    } catch (e) {
+      logError('rename_log insert', e);
+    }
+
+    invalidateNmCache();
+    const success =
+      (updateQbo ? !qboError && systemsSucceeded.qbo !== false : true) &&
+      (updateSamsaraRequested ? samsaraUpdated || !samsaraId : true) &&
+      (updateErp ? !erpError : true);
+    return {
+      ok: true,
+      success,
+      qbo_updated: Boolean(updateQbo && !qboError && qboUpdated),
+      qbo_error: qboError,
+      samsara_updated: samsaraUpdated,
+      samsara_error: samsaraError,
+      erp_records_updated: erpN,
+      erp_error: erpError,
+      log_id: logId
+    };
+  }
+
+  app.post('/api/name-management/rename', async (req, res) => {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    if (!requireDb(res)) return;
+    try {
+      const by = maintAuthUserLabel(req);
+      const out = await runRenameOperation(req.body || {}, by);
+      if (!out.ok) return res.status(out.status || 400).json(out);
+      res.json({ ok: true, ...out });
+    } catch (e) {
+      logError('POST /api/name-management/rename', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  app.post('/api/name-management/bulk-rename', async (req, res) => {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    if (!requireDb(res)) return;
+    try {
+      const items = Array.isArray(req.body?.renames) ? req.body.renames : [];
+      if (!items.length || items.length > 50) {
+        return res.status(400).json({ ok: false, error: 'Provide 1–50 renames in body.renames' });
+      }
+      const by = maintAuthUserLabel(req);
+      const results = [];
+      for (const it of items) {
+        try {
+          const out = await runRenameOperation(it, by);
+          results.push(out);
+        } catch (e) {
+          results.push({ ok: false, error: e.message });
+        }
+      }
+      res.json({ ok: true, results });
+    } catch (e) {
+      logError('POST /api/name-management/bulk-rename', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  app.get('/api/name-management/rename-history', async (req, res) => {
+    try {
+      if (!getPool()) {
+        if (String(req.query.format || '').toLowerCase() === 'xlsx') {
+          return res.status(503).json({ ok: false, error: 'DATABASE_URL not set' });
+        }
+        return res.json({ ok: true, rows: [], total: 0, dbDisabled: true });
+      }
+      const limit = Math.min(500, Math.max(1, parseInt(String(req.query.limit || '100'), 10) || 100));
+      const offset = Math.max(0, parseInt(String(req.query.offset || '0'), 10) || 0);
+      const rt = String(req.query.type || '').trim();
+      const by = String(req.query.renamed_by || '').trim();
+      const start = String(req.query.startDate || '').trim();
+      const end = String(req.query.endDate || '').trim();
+      const wh = [];
+      const pr = [];
+      let i = 1;
+      if (rt) {
+        wh.push(`record_type = $${i++}`);
+        pr.push(rt);
+      }
+      if (by) {
+        wh.push(`renamed_by ILIKE $${i++}`);
+        pr.push(`%${by}%`);
+      }
+      if (start) {
+        wh.push(`renamed_at >= $${i++}::timestamptz`);
+        pr.push(start);
+      }
+      if (end) {
+        wh.push(`renamed_at < ($${i++}::timestamptz + interval '1 day')`);
+        pr.push(end);
+      }
+      const where = wh.length ? `WHERE ${wh.join(' AND ')}` : '';
+      const cnt = await dbQuery(`SELECT count(*)::int AS c FROM rename_log ${where}`, pr);
+      const total = cnt.rows?.[0]?.c ?? 0;
+      const r = await dbQuery(
+        `SELECT id, record_type, erp_id, qbo_id, samsara_id, old_name, new_name,
+                update_qbo_requested, update_samsara_requested, update_erp_requested,
+                qbo_updated, qbo_error, samsara_updated, samsara_error, erp_records_updated, erp_error,
+                renamed_by, renamed_at, systems_attempted, systems_succeeded, error_details
+         FROM rename_log ${where} ORDER BY renamed_at DESC LIMIT $${i} OFFSET $${i + 1}`,
+        [...pr, limit, offset]
+      );
+      if (String(req.query.format || '').toLowerCase() === 'xlsx') {
+        const aoa = [
+          ['Date', 'Type', 'ERP id', 'Old', 'New', 'QBO ok', 'Samsara ok', 'ERP count', 'By', 'QBO err', 'Samsara err', 'ERP err'],
+          ...(r.rows || []).map(x => [
+            x.renamed_at ? new Date(x.renamed_at).toLocaleString('en-US') : '',
+            x.record_type,
+            x.erp_id,
+            x.old_name,
+            x.new_name,
+            x.qbo_updated ? 'Y' : 'N',
+            x.samsara_updated ? 'Y' : 'N',
+            x.erp_records_updated,
+            x.renamed_by,
+            x.qbo_error || '',
+            x.samsara_error || '',
+            x.erp_error || ''
+          ])
+        ];
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        XLSX.utils.book_append_sheet(wb, ws, 'rename_log');
+        const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="rename-history.xlsx"');
+        return res.send(Buffer.from(buf));
+      }
+      res.json({ ok: true, rows: r.rows || [], total, limit, offset });
+    } catch (e) {
+      logError('GET /api/name-management/rename-history', e);
       res.status(500).json({ ok: false, error: e.message });
     }
   });
