@@ -419,3 +419,48 @@
   color: #fff !important;
   border-color: #1557a0 !important;
 }
+
+.erp-mb-modal__head {
+  align-items: flex-start;
+}
+
+.erp-mb-modal__chrome {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.erp-mb-modal__dialog.erp-modal-shell--user-geometry {
+  display: flex;
+  flex-direction: column;
+  max-height: 95vh;
+}
+
+.erp-mb-modal__dialog.erp-modal-shell--user-geometry #mbMainFlow,
+.erp-mb-modal__dialog.erp-modal-shell--user-geometry .erp-mb-confirm {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.erp-mb-modal__dialog--max {
+  width: 90vw !important;
+  height: 90vh !important;
+  max-width: none !important;
+  margin: 2vh auto !important;
+}
+
+.erp-mb-modal__dialog--fs {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  max-height: none !important;
+}
+
+#erpMultiBillsModal .erp-mb-modal__dialog .erp-modal-resize-grip {
+  z-index: 10;
+}

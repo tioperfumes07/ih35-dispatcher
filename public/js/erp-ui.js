@@ -624,7 +624,7 @@
     dragRoot.addEventListener('mousedown', ev => {
       const t = ev.target;
       if (!t || !(t instanceof Element)) return;
-      if (t.closest('button, a, input, select, textarea, [data-erp-no-drag]')) return;
+      if (t.closest('button, a, input, select, textarea, [data-erp-no-drag], .erp-mb-modal__chrome')) return;
       ev.preventDefault();
       ensureFixedMetrics();
       const r = shell.getBoundingClientRect();

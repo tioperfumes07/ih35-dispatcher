@@ -4409,8 +4409,8 @@
               <details class="mr-rep-nav-group sidebar-group">
                 <summary class="mr-rep-nav-group__head sidebar-group-header">Safety &amp; HOS <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="safety active service" onclick="openSection('safety', document.querySelector('.nav-btn[data-section=safety]')); openSafetyTab('safe-active', document.querySelector('#section-safety .subtab[onclick*=\'safe-active\']'));">Active / in service</button>
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="hos clocks" onclick="openSection('safety', document.querySelector('.nav-btn[data-section=safety]')); openSafetyTab('safe-hos', document.querySelector('#section-safety .subtab[onclick*=\'safe-hos\']'));">HOS clocks</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="safety active service" onclick="openSection('safety', document.querySelector('.nav-btn[data-section=safety]')); openSafetyTab('safe-active', document.querySelector(&quot;#section-safety .subtab[onclick*='safe-active']&quot;));">Active / in service</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="hos clocks" onclick="openSection('safety', document.querySelector('.nav-btn[data-section=safety]')); openSafetyTab('safe-hos', document.querySelector(&quot;#section-safety .subtab[onclick*='safe-hos']&quot;));">HOS clocks</button>
                 </div>
               </details>
               <details class="mr-rep-nav-group sidebar-group">
@@ -17300,9 +17300,7 @@
       const fmt = (document.getElementById('mbBillFmt')?.value || '').trim();
       const amtSame = (document.getElementById('mbAmtSame')?.value || '').trim();
       const amtTotal = (document.getElementById('mbAmtTotal')?.value || '').trim();
-      const cnt = (document.getElementById('mbCount')?.value || '').trim();
       if (v || memo || fmt || amtSame || amtTotal) return true;
-      if (cnt && cnt !== '2') return true;
       const lines = collectMbFormWoLines();
       if (lines.length) return true;
       const row = document.querySelector('#mbWoCatHost .wo-line');
