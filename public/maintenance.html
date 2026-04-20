@@ -301,6 +301,10 @@
   <div id="shopQueueAddModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopQueueModal()">
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="shopQueueAddModalTitle" onclick="event.stopPropagation()" style="max-width:520px">
       <header class="erp-qb-dialog__head">
+        <div class="erp-qb-dialog__head-viewport" data-erp-no-drag="1">
+          <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleMaximize('shopQueueAddModal')" title="90% of viewport">Maximize</button>
+          <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleFullscreen('shopQueueAddModal')" title="Fill viewport">Full screen</button>
+        </div>
         <h3 id="shopQueueAddModalTitle" class="erp-qb-dialog__title">Add to shop queue</h3>
         <span class="erp-help-tip" aria-label="Help for shop queues">
           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About shop queues">?</button>
@@ -358,6 +362,10 @@
   <div id="shopDelayModal" class="maint-modal-bg" onclick="if(event.target===this)closeShopDelayModal()">
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="shopDelayModalTitle" onclick="event.stopPropagation()" style="max-width:480px">
       <header class="erp-qb-dialog__head">
+        <div class="erp-qb-dialog__head-viewport" data-erp-no-drag="1">
+          <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleMaximize('shopDelayModal')" title="90% of viewport">Maximize</button>
+          <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleFullscreen('shopDelayModal')" title="Fill viewport">Full screen</button>
+        </div>
         <h3 id="shopDelayModalTitle" class="erp-qb-dialog__title">Past estimated time — bottleneck</h3>
         <span class="erp-help-tip" aria-label="Help for delay reasons">
           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Why log a reason">?</button>
@@ -9687,16 +9695,6 @@
     }
 
     function openSection(name, btn) {
-      if (name !== 'maintenance') closeMaintWorkOrderModal();
-      if (
-        name !== 'accounting' &&
-        typeof erpCloseDedicatedFormModal === 'function'
-      ) {
-        const dm = document.getElementById('erpDedicatedFormModal');
-        if (dm && !dm.classList.contains('hidden')) {
-          erpCloseDedicatedFormModal({ force: true });
-        }
-      }
       const secEl = document.getElementById(`section-${name}`);
       if (!secEl) {
         console.warn('openSection: missing #section-' + name);
@@ -9793,8 +9791,16 @@
       openSection(name, btn);
     }
 
-    function applyNavHash() {
+    function applyNavHash(opts) {
+      if (opts instanceof Event) opts = {};
+      opts = opts && typeof opts === 'object' ? opts : {};
       const section = (location.hash || '').replace(/^#/, '').split('?')[0];
+      if (opts.fromLoadAll) {
+        if (window.__ih35LastAppliedNavHash !== undefined && section === window.__ih35LastAppliedNavHash) {
+          return;
+        }
+      }
+      try {
       if (!section) {
         if (!defaultNavBootstrapped) {
           defaultNavBootstrapped = true;
@@ -9976,9 +9982,12 @@
         'name-mgmt'
       ];
       if (allowed.includes(section)) openSectionByName(section);
+    } finally {
+      window.__ih35LastAppliedNavHash = section;
+    }
     }
 
-    window.addEventListener('hashchange', applyNavHash);
+    window.addEventListener('hashchange', () => applyNavHash());
 
     /** Keep #… in sync when switching accounting subtabs (bookmark/share). Skips when a dedicated modal owns the shell. */
     function erpSyncAccountingTabHash(tabId) {
@@ -11785,7 +11794,7 @@
           uploadCenterBindUploadUiOnce();
           uploadCenterPaintConnectionCards();
         });
-        applyNavHash();
+        applyNavHash({ fromLoadAll: true });
         if (activeSection === 'reports') loadReportsData();
         const repTeamPanel = document.getElementById('rep-team');
         if (activeSection === 'reports' && repTeamPanel && !repTeamPanel.classList.contains('hidden')) {
@@ -11800,7 +11809,7 @@
           bar.innerHTML = `${escapeHtml(e.message || String(e))} · <a href="/settings.html" style="color:var(--color-border-focus);font-weight:500">Sign in</a>`;
         }
         try {
-          applyNavHash();
+          applyNavHash({ fromLoadAll: true });
         } catch (e2) {
           console.error('applyNavHash after load failure', e2);
         }
