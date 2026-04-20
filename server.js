@@ -5,12 +5,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import pg from "pg";
 
-// ROUTES
-import tmsRoutes from "./routes/tms.mjs";
-import reportsRoutes from "./routes/reports-rest-api.mjs";
-import scheduledReports from "./routes/scheduled-reports.mjs";
-import integrations from "./routes/integrations.mjs";
-
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,9 +12,6 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// =======================
-// DATABASE (NEON)
-// =======================
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -28,24 +19,17 @@ const pool = new pg.Pool({
   },
 });
 
-// Make DB accessible everywhere
 app.locals.db = pool;
 
-// =======================
-// MIDDLEWARE
-// =======================
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// =======================
-// BASIC ROUTES
-// =======================
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("IH35 TMS LIVE 🚛");
 });
 
-app.get("/db-test", async (req, res) => {
+app.get("/db-test", async (_req, res) => {
   try {
     const result = await pool.query("SELECT NOW() AS now");
     res.json({
@@ -53,6 +37,7 @@ app.get("/db-test", async (req, res) => {
       time: result.rows[0],
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       success: false,
       error: err.message,
@@ -60,30 +45,74 @@ app.get("/db-test", async (req, res) => {
   }
 });
 
-// =======================
-// TMS ROUTES
-// =======================
-app.use("/api/tms", tmsRoutes);
-app.use("/api/reports", reportsRoutes);
-app.use("/api/scheduled", scheduledReports);
-app.use("/api/integrations", integrations);
+function pickRouter(mod) {
+  if (!mod) return null;
 
-// =======================
-// START SERVER FIRST
-// =======================
-const PORT = process.env.PORT || 3100;
+  const candidates = [
+    mod.default,
+    mod.router,
+    mod.routes,
+    mod.tmsRouter,
+    mod.reportsRouter,
+    mod.integrationsRouter,
+    mod.scheduledReportsRouter,
+    ...Object.values(mod),
+  ];
 
-app.listen(PORT, () => {
-  console.log(`IH35 TMS running on port ${PORT}`);
-
-  // Run any heavy startup AFTER server starts
-  setTimeout(async () => {
-    try {
-      console.log("Running background initialization...");
-      await pool.query("SELECT 1");
-      console.log("Database ready.");
-    } catch (e) {
-      console.error("Startup error:", e.message);
+  for (const candidate of candidates) {
+    if (
+      candidate &&
+      typeof candidate === "function" &&
+      typeof candidate.use === "function" &&
+      typeof candidate.handle === "function"
+    ) {
+      return candidate;
     }
-  }, 1000);
+  }
+
+  return null;
+}
+
+async function mountRoute(urlBase, modulePath, label) {
+  try {
+    const mod = await import(modulePath);
+    const router = pickRouter(mod);
+
+    if (!router) {
+      console.warn(`[routes] Skipped ${label}: no Express router export found`);
+      return;
+    }
+
+    app.use(urlBase, router);
+    console.log(`[routes] Mounted ${label} at ${urlBase}`);
+  } catch (err) {
+    console.error(`[routes] Failed to load ${label}: ${err.message}`);
+  }
+}
+
+async function bootstrap() {
+  await mountRoute("/api/tms", "./routes/tms.mjs", "tms");
+  await mountRoute("/api/reports", "./routes/reports-rest-api.mjs", "reports-rest-api");
+  await mountRoute("/api/scheduled", "./routes/scheduled-reports.mjs", "scheduled-reports");
+  await mountRoute("/api/integrations", "./routes/integrations.mjs", "integrations");
+
+  const PORT = process.env.PORT || 3100;
+
+  app.listen(PORT, () => {
+    console.log(`IH35 TMS running on port ${PORT}`);
+
+    setTimeout(async () => {
+      try {
+        await pool.query("SELECT 1");
+        console.log("[db] Database ready.");
+      } catch (e) {
+        console.error("[db] Startup error:", e.message);
+      }
+    }, 1000);
+  });
+}
+
+bootstrap().catch((err) => {
+  console.error("Fatal bootstrap error:", err);
+  process.exit(1);
 });
