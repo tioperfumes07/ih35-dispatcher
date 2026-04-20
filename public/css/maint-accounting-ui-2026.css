@@ -995,6 +995,15 @@ body.erp-maintenance .acct-dash-action-btn--primary:hover {
   border-color: #124a88;
 }
 
+body.erp-maintenance .acct-qbo-err-list .acct-qbo-err-line {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--color-semantic-error);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 body.erp-maintenance .acct-dash-tools-links {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1026,6 +1035,7 @@ body.erp-maintenance .acct-dash-tool-link:hover {
   text-decoration: underline;
 }
 
+body.erp-maintenance .acct-fuel-fast-entry-head.panel-head,
 body.erp-maintenance .acct-fuel-fast-entry-head {
   display: flex;
   align-items: center;
@@ -1052,6 +1062,34 @@ body.erp-maintenance .acct-fuel-fast-entry-head__actions {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+body.erp-maintenance .maint-service-loc-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-service-loc-row__type {
+  width: 200px;
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .maint-service-loc-row__detail {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-service-loc-row__tip {
+  flex-shrink: 0;
+}
+
+body.erp-maintenance #recordTypeSelect {
+  min-width: 180px;
 }
 
 body.erp-maintenance .acct-dash-cards {

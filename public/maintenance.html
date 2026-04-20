@@ -104,6 +104,7 @@
                       <table class="maint-qb-lines-table ap-wo-qb-table" aria-label="Multiple bills category lines">
                         <thead>
                           <tr>
+                            <th class="maint-qb-th-drag" aria-hidden="true"></th>
                             <th class="maint-qb-th-num">#</th>
                             <th>Category</th>
                             <th>Description</th>
@@ -111,9 +112,12 @@
                             <th class="maint-qb-th-bill">Billable</th>
                             <th>Customer</th>
                             <th>Class</th>
-                            <th>Position</th>
-                            <th class="maint-qb-th-partno">Part #</th>
-                            <th>Line memo</th>
+                            <th class="veh-parts-cols">Part type</th>
+                            <th class="veh-parts-cols">Position</th>
+                            <th class="veh-parts-cols">Map</th>
+                            <th class="veh-parts-cols maint-qb-th-partno">Part #</th>
+                            <th>QBO line memo</th>
+                            <th class="maint-qb-th-copy" aria-hidden="true"></th>
                             <th class="maint-qb-th-del"></th>
                           </tr>
                         </thead>
@@ -133,19 +137,23 @@
                       <table class="maint-qb-lines-table maint-qb-lines-table--item ap-wo-qb-table" aria-label="Multiple bills item lines">
                         <thead>
                           <tr>
+                            <th class="maint-qb-th-drag" aria-hidden="true"></th>
                             <th class="maint-qb-th-num">#</th>
                             <th>Product / service</th>
                             <th class="maint-qb-th-sku">SKU</th>
                             <th>Description</th>
                             <th class="maint-qb-th-num">Qty</th>
-                            <th class="maint-qb-th-num">Unit $</th>
-                            <th class="maint-qb-th-num">Total</th>
+                            <th class="maint-qb-th-num">Rate</th>
+                            <th class="maint-qb-th-num">Amount</th>
                             <th class="maint-qb-th-bill">Billable</th>
                             <th>Customer</th>
                             <th>Class</th>
-                            <th>Position</th>
-                            <th class="maint-qb-th-partno">Part #</th>
-                            <th>Line memo</th>
+                            <th class="veh-parts-cols">Part type</th>
+                            <th class="veh-parts-cols">Position</th>
+                            <th class="veh-parts-cols">Map</th>
+                            <th class="veh-parts-cols maint-qb-th-partno">Part #</th>
+                            <th>QBO line memo</th>
+                            <th class="maint-qb-th-copy" aria-hidden="true"></th>
                             <th class="maint-qb-th-del"></th>
                           </tr>
                         </thead>
@@ -2855,72 +2863,101 @@
               <div class="acct-dash-kpi__sub" id="acctBoardKpiUnreconciledSub">Needs review</div>
             </div>
           </div>
-          <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
-          <div class="acct-entry-board acct-entry-board--uniform">
-              <div class="acct-entry-board__title">Record &amp; open <span class="erp-help-tip" style="margin-left:4px">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Same flows as + New">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">Pick a row to open the same composer or tab as <strong>+ New</strong> — one list, uniform buttons.</span>
-              </span></div>
-              <div class="acct-entry-list acct-entry-list--uniform" role="list">
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewExpense()">Standard expense</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewBill()">Standard bill</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewPayBills()">Pay bills</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Saved maintenance expenses</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF (ledger)</button>
+          <p class="mini-note" id="acctBoardPendingSummary" style="display:none;margin:0" aria-hidden="true">—</p>
+          <div class="acct-dash-actions" role="navigation" aria-label="Accounting quick actions">
+            <article class="acct-dash-action-card" aria-labelledby="acctCardMaintTitle">
+              <header class="acct-dash-action-card__head">
+                <div>
+                  <div id="acctCardMaintTitle" class="acct-dash-action-card__title">Maintenance expenses</div>
+                  <div class="acct-dash-action-card__sub" id="acctCardMaintSub">—</div>
+                </div>
+              </header>
+              <div class="acct-dash-action-card__btns">
+                <button type="button" class="acct-dash-action-btn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">View all</button>
+                <button type="button" class="acct-dash-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">New maintenance expense</button>
+                <button type="button" class="acct-dash-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">New maintenance bill</button>
+                <button type="button" class="acct-dash-action-btn acct-dash-action-btn--primary" onclick="acctScrollToPendingPost()">Post pending to QBO</button>
+              </div>
+            </article>
+            <article class="acct-dash-action-card" aria-labelledby="acctCardFuelTitle">
+              <header class="acct-dash-action-card__head">
+                <div>
+                  <div id="acctCardFuelTitle" class="acct-dash-action-card__title">Fuel &amp; DEF</div>
+                  <div class="acct-dash-action-card__sub" id="acctCardFuelSub">—</div>
+                </div>
+              </header>
+              <div class="acct-dash-action-card__btns">
+                <button type="button" class="acct-dash-action-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">View all</button>
+                <button type="button" class="acct-dash-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">New fuel expense</button>
+                <button type="button" class="acct-dash-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">New fuel bill</button>
                 <button
                   type="button"
-                  class="acct-entry-list__btn"
-                  role="listitem"
-                  title="Opens Pay bills in the Accounting tab (same as the Pay bills subtab), not the floating window"
-                  onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))"
+                  class="acct-dash-action-btn"
+                  onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger')); document.getElementById('erpFuelManualDocShellPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
                 >
-                  Pay bills workspace
+                  Fast entry
                 </button>
-                <button type="button" class="acct-entry-list__btn acct-entry-list__btn--accent" role="listitem" onclick="acctScrollToPendingPost()">Post pending to QuickBooks</button>
+                <button type="button" class="acct-dash-action-btn acct-dash-action-btn--primary" onclick="postFilteredFuelExpensesToQuickBooks()">Record filtered to QuickBooks</button>
+                <button type="button" class="acct-dash-action-btn" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
               </div>
-              <div class="acct-board-qbo-inline">
-                <span class="acct-board-qbo-inline__label">QuickBooks</span>
-                <button type="button" class="acct-dash-btn" onclick="refreshQboMaster()">Refresh lists</button>
-                <button type="button" class="acct-dash-btn" onclick="testQuickBooks()">Test connection</button>
-              </div>
-              <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-                <span style="min-width:0;flex:1 1 180px">Up to three sync error titles when the payload has alerts.</span>
+            </article>
+            <article class="acct-dash-action-card" aria-labelledby="acctCardQboTitle">
+              <header class="acct-dash-action-card__head">
+                <div>
+                  <div id="acctCardQboTitle" class="acct-dash-action-card__title">QuickBooks sync</div>
+                  <div class="acct-dash-action-card__sub" id="acctCardQboSub">—</div>
+                </div>
                 <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO errors on dash">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip"><code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>. <strong>View all errors</strong> → sync alert bar.</span>
+                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Sync errors on this card">?</button>
+                  <span class="erp-help-tip__panel" role="tooltip">Up to three current sync error titles appear below. Use <strong>View all errors</strong> for the full alert bar.</span>
                 </span>
-              </div>
-              <div id="acctDashQboErrList" class="acct-qbo-err-list" aria-live="polite"></div>
+              </header>
+              <div id="acctDashQboErrList" class="acct-qbo-err-list" aria-live="polite" style="margin:0"></div>
               <button
                 type="button"
                 id="acctDashQboErrMore"
-                class="acct-dash-btn hidden"
-                style="margin-top:8px;border:none;padding:0;height:auto;color:var(--color-border-focus);background:transparent"
+                class="acct-dash-action-btn hidden"
+                style="align-self:flex-start"
                 onclick="document.getElementById('qboSyncAlertBar')?.classList.remove('hidden'); document.getElementById('qboSyncAlertBar')?.scrollIntoView({behavior:'smooth',block:'start'})"
               >
                 View all errors
               </button>
-            <div class="acct-entry-board__title" style="margin-top:4px">Tools &amp; data</div>
-              <div class="acct-dash-tools-grid">
-                <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
-                <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
-                <button type="button" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">QBO rollback &amp; imports</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
-                <button type="button" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types database</button>
-                <button type="button" onclick="location.href='/settings.html'">Settings &amp; users</button>
-                <button type="button" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('fuel');">Upload center</button>
-                <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
+              <div class="acct-dash-action-card__btns">
+                <button type="button" class="acct-dash-action-btn" onclick="refreshQboMaster()">Refresh QBO lists</button>
+                <button type="button" class="acct-dash-action-btn" onclick="testQuickBooks()">Test connection</button>
+                <button type="button" class="acct-dash-action-btn" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">QBO rollback &amp; imports</button>
+                <button type="button" class="acct-dash-action-btn" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
               </div>
-            </div>
+            </article>
+            <article class="acct-dash-action-card" aria-labelledby="acctCardToolsTitle">
+              <header class="acct-dash-action-card__head">
+                <div>
+                  <div id="acctCardToolsTitle" class="acct-dash-action-card__title">Tools &amp; data</div>
+                </div>
+              </header>
+              <nav class="acct-dash-tools-links" aria-label="Tools and data (A–Z)">
+                <button type="button" class="acct-dash-tool-link" onclick="location.href='/banking.html'">Bank CSV matching</button>
+                <button type="button" class="acct-dash-tool-link" onclick="connectQuickBooks()">Connect QuickBooks</button>
+                <button type="button" class="acct-dash-tool-link" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
+                <button type="button" class="acct-dash-tool-link" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
+                <button type="button" class="acct-dash-tool-link" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QBO items &amp; accounts</button>
+                <button type="button" class="acct-dash-tool-link" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">QBO rollback &amp; imports</button>
+                <button type="button" class="acct-dash-tool-link" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
+                <button type="button" class="acct-dash-tool-link" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types database</button>
+                <button type="button" class="acct-dash-tool-link" onclick="location.href='/settings.html'">Settings &amp; users</button>
+                <button type="button" class="acct-dash-tool-link" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('fuel');">Upload center</button>
+                <button type="button" class="acct-dash-tool-link" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
+              </nav>
+            </article>
+          </div>
+          <div class="acct-dash-more-links" style="margin:10px 0 4px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <button type="button" class="acct-dash-action-btn" onclick="erpNewExpense()">Standard expense</button>
+            <button type="button" class="acct-dash-action-btn" onclick="erpNewBill()">Standard bill</button>
+            <button type="button" class="acct-dash-action-btn" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
+            <button type="button" class="acct-dash-action-btn" onclick="erpNewPayBills()">Pay bills</button>
+            <button type="button" class="acct-dash-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor / driver bill</button>
+            <button type="button" class="acct-dash-action-btn" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Pay bills workspace</button>
+          </div>
           <div
             id="maintIntegrationStrip"
             class="mini-note"
@@ -3539,9 +3576,9 @@
 
         <div id="acct-fuel-expense" class="accounting-tab hidden">
           <div class="panel qb-panel">
-            <div class="panel-head">
-              <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;flex-wrap:wrap">
-                <div class="panel-title">Fuel expenses (dispatcher fast entry)</div>
+            <div class="panel-head acct-fuel-fast-entry-head">
+              <div class="acct-fuel-fast-entry-head__title">
+                <span>Fuel expenses — fast entry</span>
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel tab overview">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
@@ -3549,9 +3586,9 @@
                   </span>
                 </span>
               </div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <button type="button" class="qb-btn-add" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
-                <button type="button" class="qb-btn-primary" onclick="postFilteredFuelExpensesToQuickBooks()">
+              <div class="acct-fuel-fast-entry-head__actions">
+                <button type="button" class="acct-dash-action-btn" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
+                <button type="button" class="acct-dash-action-btn acct-dash-action-btn--primary" onclick="postFilteredFuelExpensesToQuickBooks()">
                   Record filtered to QuickBooks
                 </button>
               </div>
@@ -4130,6 +4167,12 @@
                     <option value="bpp">Bill payments (QBO)</option>
                   </select>
                 </div>
+                <div>
+                  <span class="qb-l">Series</span>
+                  <select id="expHistSeries" class="qb-in" onchange="renderExpenseHistory()">
+                    <option value="">All series</option>
+                  </select>
+                </div>
                 <div style="grid-column:span 2">
                   <span class="qb-l">Search (doc, vendor, unit, memo)</span>
                   <input id="expHistSearch" class="qb-in" placeholder="Type to filter…" oninput="expHistSearchDebounce()">
@@ -4182,6 +4225,7 @@
                       <th>Source</th>
                       <th>Doc / ref #</th>
                       <th>Type</th>
+                      <th>Series</th>
                       <th>Vendor</th>
                       <th>Unit</th>
                       <th>Category (QB)</th>
@@ -15886,19 +15930,45 @@
       if (sameWrap) sameWrap.classList.toggle('hidden', type === 'accident');
       if (type !== 'tire') clearTireExtraLines();
 
-      if (type === 'tire') {
-        document.getElementById('serviceSearchInput').value = 'Tires';
-        document.getElementById('serviceTypeInput').value = 'Tires';
-      }
-      if (type === 'repair') {
-        document.getElementById('serviceSearchInput').value = 'Repair';
-        document.getElementById('serviceTypeInput').value = 'Repair';
-      }
-      if (type === 'accident') {
-        document.getElementById('serviceSearchInput').value = 'Accident Report';
-        document.getElementById('serviceTypeInput').value = 'Accident Report';
+      const svcIn = document.getElementById('serviceSearchInput');
+      const svcHid = document.getElementById('serviceTypeInput');
+      const setSvc = (preferred, needles) => {
+        if (!svcIn || !svcHid) return;
+        const fin = maintPickServiceFromCatalog(
+          Array.isArray(preferred) ? preferred : [preferred],
+          needles || []
+        );
+        if (!fin) return;
+        svcIn.value = fin;
+        svcHid.value = fin;
+      };
+
+      if (type === 'tire') setSvc(['Tires', 'Tire rotation'], ['tire']);
+      else if (type === 'repair') setSvc(['Repair'], ['repair']);
+      else if (type === 'accident') {
+        setSvc(['Accident Report'], ['accident']);
         applyLoadNumberSuggestion(true);
+      } else if (type === 'pm') {
+        setSvc(['PM / preventive maintenance', 'Oil change'], ['preventive', 'pm']);
+      } else if (type === 'inspection') {
+        setSvc(['DOT inspection', 'Annual inspection', 'Pre-trip inspection'], ['inspection', 'dot', 'annual']);
+      } else if (type === 'air_bag') {
+        setSvc(['Air suspension / air bags'], ['air bag', 'air suspension']);
+      } else if (type === 'battery') {
+        setSvc(['Battery service'], ['battery']);
+      } else if (type === 'body') {
+        setSvc(['Body / paint / aesthetic'], ['body', 'paint']);
       }
+
+      const catDet = document.getElementById('maintCostCatDetails');
+      const itemDet = document.getElementById('maintCostItemDetails');
+      if (catDet && itemDet && type === 'tire') {
+        try {
+          catDet.open = true;
+          itemDet.open = false;
+        } catch (_) {}
+      }
+
       if (type !== 'custom' && type !== 'accident') syncPrimaryServiceToFirstCostLine();
       syncMaintWorkOrderHeader();
       renderRepairLocationChips();
@@ -16438,6 +16508,14 @@
       document.getElementById('apList')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    function erpFilterExpenseHistoryBySeries(seriesId) {
+      const sel = document.getElementById('expHistSeries');
+      if (sel) sel.value = String(seriesId || '');
+      const src = document.getElementById('expHistSource');
+      if (src) src.value = 'wo';
+      renderExpenseHistory();
+    }
+
     let __mbRecomputeT = null;
     let __mbPreviewFull = [];
     let __mbRemoved = new Set();
@@ -16808,6 +16886,10 @@
 
     async function mbRunCreateSequence() {
       const U = window.ErpMultiBillsUtil;
+      if (!U) {
+        erpNotify('Multiple bills helper not loaded. Refresh the page.', 'error');
+        return;
+      }
       const tpl = collectMbFormWoLines();
       for (const l of tpl) {
         if (l.detailMode === 'category' && !l.qboAccountId) {
@@ -16849,7 +16931,6 @@
         }
         if (pf) pf.style.width = Math.round(((i + 1) / rows.length) * 100) + '%';
       }
-      if (btn) btn.disabled = false;
       if (fail) {
         const done = fail.i;
         const msg = `Created ${done} of ${rows.length} bills. Error on bill ${fail.row.billNumber}: ${fail.msg}. The ${rows.length - done} remaining bills were not created.`;
@@ -16858,6 +16939,7 @@
           `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(msg)}</p>` +
           `<button type="button" class="btn btn-erp-mb-blue" onclick="mbRetryFrom(${fail.i})">Retry from this bill</button>`;
         pw?.classList.add('hidden');
+        if (btn) btn.disabled = false;
         return;
       }
       mbCancelConfirm();
@@ -16868,6 +16950,7 @@
       document.getElementById('mbSuccessBody').textContent = `Vendor: ${cacheVendors().find(v => v.qboId === String(document.getElementById('mbVendorQboId')?.value || '').trim())?.name || '—'}. Total: $${rows.reduce((s, r) => s + (Number(r.amount) || 0), 0).toFixed(2)}.`;
       mbPopulateSeriesSelects();
       renderApTransactions();
+      if (btn) btn.disabled = false;
     }
 
     function mbRetryFrom(fromIdx) {
@@ -16941,6 +17024,7 @@
       document.getElementById('mbConfirmLayer')?.classList.add('hidden');
       document.getElementById('mbSuccessLayer')?.classList.add('hidden');
       document.getElementById('mbMainFlow')?.classList.remove('hidden');
+      document.getElementById('mbProgressWrap')?.classList.add('hidden');
     }
 
     function erpOpenMultiBillsModal() {
@@ -17668,10 +17752,9 @@
       }
       const rid = escapeHtml(String(rec.id));
       const rs = String(rec.repairStatus || '').trim();
-      const rsVal = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
-      const statusLabel = s =>
-        s === 'queued' ? 'Awaiting service' : s === 'in_progress' ? 'In progress' : s === 'finished' ? 'Completed' : String(s || '');
-      return `<td style="white-space:nowrap"><select class="qb-in maint-fleet-repair-status" style="font-size:12px;max-width:200px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select></td>`;
+      const rsVal = ['queued', 'in_progress', 'waiting_parts', 'finished', 'cancelled'].includes(rs) ? rs : '';
+      const statusLabel = s => maintRepairStatusLabel(s);
+      return `<td style="white-space:nowrap"><select class="qb-in maint-fleet-repair-status" style="font-size:12px;max-width:200px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>Not set</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="waiting_parts" ${rsVal === 'waiting_parts' ? 'selected' : ''}>${escapeHtml(statusLabel('waiting_parts'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option><option value="cancelled" ${rsVal === 'cancelled' ? 'selected' : ''}>${escapeHtml(statusLabel('cancelled'))}</option></select></td>`;
     }
 
     function renderMaintenanceTable() {
@@ -17874,11 +17957,10 @@
         elQ.classList.remove('acct-dash-kpi__val--danger', 'acct-dash-kpi__val--ok');
         elQ.classList.add(alertTotal > 0 ? 'acct-dash-kpi__val--danger' : 'acct-dash-kpi__val--ok');
       }
-      if (elQS) {
-        const high = Number(c.high) || 0;
-        const med = Number(c.medium) || 0;
-        elQS.textContent = `${med} pending · ${high} errors · timer ~${Math.round(AUTO_REFRESH_MS / 60000)} min`;
-      }
+      const highCt = Number(c.high) || 0;
+      const medCt = Number(c.medium) || 0;
+      const syncLine = `${medCt} pending · ${highCt} errors · timer ~${Math.round(AUTO_REFRESH_MS / 60000)} min`;
+      if (elQS) elQS.textContent = syncLine;
 
       let errReview = 0;
       (erp.apTransactions || []).forEach(ap => {
@@ -17933,9 +18015,7 @@
       }
 
       const qboCard = document.getElementById('acctCardQboSub');
-      if (qboCard && elQS) {
-        qboCard.textContent = elQS.textContent || '—';
-      }
+      if (qboCard) qboCard.textContent = syncLine;
     }
 
     function paintQboStatusBanner(el, text, tier) {
@@ -18685,9 +18765,11 @@
 
     function maintRepairStatusLabel(s) {
       const v = String(s || '').trim();
-      if (v === 'queued') return 'Awaiting service';
+      if (v === 'queued') return 'Open';
       if (v === 'in_progress') return 'In progress';
-      if (v === 'finished') return 'Completed';
+      if (v === 'waiting_parts') return 'Waiting for parts';
+      if (v === 'finished') return 'Complete';
+      if (v === 'cancelled') return 'Cancelled';
       return v ? v : '—';
     }
 
@@ -20551,7 +20633,10 @@
       const itemName = id => cacheItems().find(v => v.qboId === id)?.name || id || '';
       const accountName = id => cacheAccounts().find(v => v.qboId === id)?.name || id || '';
 
-      const wos = (erp.workOrders || []).slice().reverse();
+      mbPopulateSeriesSelects();
+      const seriesF = String(document.getElementById('apSeriesFilter')?.value || '').trim();
+      const wosAll = (erp.workOrders || []).slice().reverse();
+      const wos = seriesF ? wosAll.filter(r => String(r.recurringSeriesId || '') === seriesF) : wosAll;
       const apRows = (erp.apTransactions || []).slice().reverse();
 
       const woCards = wos.map(r => {
@@ -20578,6 +20663,10 @@
             : `<button type="button" class="btn" onclick="voidWorkOrderClient(${JSON.stringify(r.id)})">Void</button>
                 <button type="button" class="btn" style="color:var(--btn-danger-text)" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete</button>`;
         const voidDelPosted = !posted && voided ? `<button type="button" class="btn" style="color:var(--btn-danger-text)" onclick="deleteWorkOrderClient(${JSON.stringify(r.id)})">Delete draft</button>` : '';
+        const serTag =
+          r.recurringSeriesId && !voided
+            ? `<div class="mini-note">Series: <a href="#" onclick="erpFilterApListBySeries(${JSON.stringify(String(r.recurringSeriesId))});return false;">${escapeHtml(String(r.vendorInvoiceNumber || 'Bill'))} series</a></div>`
+            : '';
         return `
             <div class="record-card"${voided ? ' style="opacity:0.88"' : ''}>
               <div class="record-head">
@@ -20587,6 +20676,7 @@
               <div class="mini-note"><strong>WO #</strong> ${escapeHtml(r.workOrderNumber || '—')} <span class="muted">(system)</span></div>
               <div class="mini-note">Load / invoice #: ${escapeHtml(r.loadNumber || '—')}</div>
               <div class="mini-note">Vendor invoice: ${escapeHtml(r.vendorInvoiceNumber || '—')} · Shop WO: ${escapeHtml(r.internalWorkOrderNumber || '—')}</div>
+              ${serTag}
               ${voided && r.voidReason ? `<div class="mini-note">Void reason: ${escapeHtml(r.voidReason)}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
               <div class="mini-note">Unit: ${escapeHtml(r.unit || '')} | Date: ${escapeHtml(r.serviceDate || '')}</div>
@@ -20650,13 +20740,15 @@
       const pagerHost = document.getElementById('apListPagerHost');
       if (!apListEl) return;
       const pState = apTxnListPager;
-      const filterKey = `${wos.length}|${apRows.length}`;
+      const filterKey = `${seriesF}|${(erp.workOrders || []).length}|${apRows.length}`;
       if (pState.filterKey !== filterKey) {
         pState.page = 1;
       }
       pState.filterKey = filterKey;
       if (!cards.length) {
-        apListEl.innerHTML = 'No maintenance expense transactions yet.';
+        apListEl.innerHTML = seriesF
+          ? 'No saved transactions for this series. Clear the Series filter to see all bills.'
+          : 'No maintenance expense transactions yet.';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -20880,7 +20972,9 @@
             postedAt,
             erpId: `${wo.id}#${ln.id != null ? ln.id : idx}`,
             notes: [wo.notes, wo.repairLocationType && `Loc: ${wo.repairLocationType}`].filter(Boolean).join(' · ').slice(0, 260),
-            qboError: wo.qboError || ''
+            qboError: wo.qboError || '',
+            recurringSeriesId: wo.recurringSeriesId || '',
+            seriesDocLabel: String(wo.vendorInvoiceNumber || '').trim() || 'Series'
           });
         };
 
@@ -20905,7 +20999,9 @@
             postedAt,
             erpId: wo.id || '—',
             notes: [wo.notes, wo.repairLocationType && `Loc: ${wo.repairLocationType}`].filter(Boolean).join(' · ').slice(0, 260),
-            qboError: wo.qboError || ''
+            qboError: wo.qboError || '',
+            recurringSeriesId: wo.recurringSeriesId || '',
+            seriesDocLabel: String(wo.vendorInvoiceNumber || '').trim() || 'Series'
           });
         } else lines.forEach((ln, idx) => pushLine(ln, idx));
       }
@@ -21034,7 +21130,11 @@
       const to = (document.getElementById('expHistDateTo')?.value || '').trim();
       const src = document.getElementById('expHistSource')?.value || 'all';
       const q = (document.getElementById('expHistSearch')?.value || '').trim().toLowerCase();
+      const series = String(document.getElementById('expHistSeries')?.value || '').trim();
       return rows.filter(r => {
+        if (series) {
+          if (r.kind !== 'wo' || String(r.recurringSeriesId || '') !== series) return false;
+        }
         if (src === 'ap' && r.kind !== 'ap') return false;
         if (src === 'wo' && r.kind !== 'wo') return false;
         if (src === 'relay' && r.kind !== 'relay') return false;
@@ -21065,7 +21165,8 @@
       const toF = (document.getElementById('expHistDateTo')?.value || '').trim();
       const srcF = document.getElementById('expHistSource')?.value || 'all';
       const qF = (document.getElementById('expHistSearch')?.value || '').trim().toLowerCase();
-      const filterKey = `${fromF}|${toF}|${srcF}|${qF}`;
+      const serF = String(document.getElementById('expHistSeries')?.value || '').trim();
+      const filterKey = `${fromF}|${toF}|${srcF}|${qF}|${serF}`;
       const pState = expHistPager;
       if (pState.filterKey !== filterKey) {
         pState.page = 1;
@@ -21083,7 +21184,7 @@
         sumEl.textContent = `${total} filtered of ${all.length} row(s) · Filtered total $${tot.toFixed(2)}${pageNote}`;
       }
       if (!filtered.length) {
-        tb.innerHTML = '<tr><td colspan="16" class="mini-note">No rows match filters.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="17" class="mini-note">No rows match filters.</td></tr>';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -21107,11 +21208,16 @@
           const verifyBtn = canHistVerify
             ? `<button type="button" class="btn" style="font-size:11px;padding:4px 8px" onclick="verifyExpenseHistoryRow(${JSON.stringify(verifyKind)}, ${JSON.stringify(String(r.erpId))})">Verify</button>`
             : '—';
+          const serCell =
+            r.kind === 'wo' && r.recurringSeriesId
+              ? `<td><a href="#" onclick="erpFilterExpenseHistoryBySeries(${JSON.stringify(String(r.recurringSeriesId))});return false;">${escapeHtml(String(r.seriesDocLabel || 'Series'))} series</a></td>`
+              : '<td>—</td>';
           return `<tr>
             <td>${escapeHtml(r.date)}</td>
             <td>${escapeHtml(r.source)}</td>
             <td>${escapeHtml(r.doc)}</td>
             <td>${escapeHtml(r.txnType)}</td>
+            ${serCell}
             <td>${escapeHtml(r.vendor)}</td>
             <td>${escapeHtml(r.unit)}</td>
             <td>${escapeHtml(r.category)}</td>
@@ -21152,6 +21258,7 @@
         'Source',
         'Doc / ref #',
         'Type',
+        'Series id',
         'Vendor',
         'Unit',
         'Category (QB)',
@@ -21172,6 +21279,7 @@
           r.source,
           r.doc,
           r.txnType,
+          r.recurringSeriesId || '',
           r.vendor,
           r.unit,
           r.category,

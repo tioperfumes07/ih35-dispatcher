@@ -68,7 +68,10 @@ const HTML_PAGES = [
       'id="driverFilesPagerHost"',
       'id="repairLocationSelect"',
       'maint-cost-imports-shortcut',
-      'erp-print.js'
+      'erp-print.js',
+      'erp-multi-bills.js',
+      'erpOpenMultiBillsModal',
+      'id="erpMultiBillsModal"'
     ]
   ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
@@ -91,7 +94,9 @@ const STATIC_TEXT = [
   ['/css/board-nav.css', 'Persistent operations bar'],
   ['/js/erp-ui.js', 'IH35 ERP — shared UI helpers', '*/*'],
   ['/js/board-nav.js', 'Fuel & route planning', '*/*'],
-  ['/js/erp-print.js', 'IH35 ERP — standalone print documents', '*/*']
+  ['/js/erp-print.js', 'IH35 ERP — standalone print documents', '*/*'],
+  ['/css/erp-multi-bills.css', 'Multiple bills modal'],
+  ['/js/erp-multi-bills.js', 'Multiple bills — pure helpers', '*/*']
 ];
 
 /** `[path, Accept header]` — GET body checked against **`rule-zero-agent-b.mjs`** forbidden list. */
