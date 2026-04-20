@@ -14,7 +14,9 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "smoke": "node scripts/system-smoke.mjs",
     "smoke:gate-sync": "node scripts/smoke-gate-paths-sync.mjs",
-    "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke",
+    "test:name-mgmt": "node --test tests/name-management-erp.test.mjs",
+    "test:fleet-mileage": "node --test tests/fleet-mileage-settings.test.mjs",
+    "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke && npm run test:name-mgmt && npm run test:fleet-mileage",
     "qa:isolated": "node scripts/qa-with-server.mjs",
     "test": "npm run rule0:check",
     "rule0:check": "node scripts/rule-zero-agent-b-check.mjs",
@@ -26,6 +28,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "multer": "^2.1.1",
+    "node-cron": "^3.0.3",
     "pdf-parse": "^1.1.4",
     "pdfkit": "^0.18.0",
     "pg": "^8.13.1"

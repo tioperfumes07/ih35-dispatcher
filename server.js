@@ -6,8 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
-import * as XLSX from '@e965/xlsx';
-import PDFDocument from 'pdfkit';
+import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';
 import { ensureTmsSchema } from './lib/tms-schema.mjs';
@@ -49,7 +48,27 @@ import {
   alertCategory
 } from './lib/integrity-engine.mjs';
 import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
+import { mountScheduledReports, startReportScheduleRunner } from './routes/scheduled-reports.mjs';
 import { mountDedupeRoutes } from './routes/dedupe.mjs';
+import {
+  getFleetAvgMilesPerMonth,
+  clampFleetAvgMilesPerMonth,
+  recalcAllIntervalMonthsFromFleetAvg,
+  breakdownTimeFromMilesRemaining
+} from './lib/fleet-mileage-settings.mjs';
+import cron from 'node-cron';
+import {
+  lightRefreshFleetCache,
+  mergeDeepIntoFleetCache,
+  buildVehicleIntegrityBundle,
+  buildFleetOverviewRows,
+  fetchOrgSafetyEvents30d,
+  buildFleetTelematicsContext,
+  getFuelCostPerMileForUnit,
+  computeIntegrityScoreFromAlerts
+} from './lib/integrity-samsara-bundle.mjs';
+import { runSamsaraCrossrefChecks } from './lib/integrity-samsara-crossref.mjs';
+import { fetchVehicleStatsHistory, fetchSafetyEventsWindow } from './lib/samsara-integrity-fetch.mjs';
 
 dotenv.config();
 
@@ -92,6 +111,11 @@ const TEAM_ACTIVITY_WARN_DAYS = Math.min(90, Math.max(1, Number(process.env.TEAM
 const TEAM_ACTIVITY_CRITICAL_DAYS = Math.min(120, Math.max(TEAM_ACTIVITY_WARN_DAYS, Number(process.env.TEAM_ACTIVITY_CRITICAL_DAYS) || 14));
 
 const __lastSeenThrottle = new Map();
+
+const __integrityVehicleBundleCache = new Map();
+const __integrityJobs = new Map();
+let __integrityDeepRefreshLastStart = 0;
+let __integrityDeepRefreshTimer = null;
 
 /** When `IH35_SMOKE_GATE=1` (set by `scripts/qa-with-server.mjs` for the ephemeral listener only), these GETs match `scripts/system-smoke.mjs` and skip session auth so `npm run qa:isolated` stays green when ERP login is required. */
 const SMOKE_GATE_API_PATHS = new Set([
@@ -309,6 +333,9 @@ function defaultErpData() {
     integrityAlerts: [],
     /** Numeric thresholds merged with defaults in `mergeIntegrityThresholds`. */
     integrityThresholds: {},
+    integritySamsaraCache: { refreshedAt: '', deepRefreshedAt: '', units: {} },
+    integritySamsaraFaultSnapshots: {},
+    integrityNightlyLog: [],
     /** Company legal + DOT header fields (reports, PDF letterhead). */
     companyProfile: {
       legalName: 'IH 35 Transportation LLC',
@@ -324,7 +351,8 @@ function defaultErpData() {
       iftaAccountNumber: '',
       stateOfOperations: '',
       pmIntervalMiles: 25000,
-      randomDrugTestRateNote: ''
+      randomDrugTestRateNote: '',
+      integrityReportEmails: []
     }
   };
 }
@@ -407,11 +435,19 @@ function ensureErpFile() {
   if (!Array.isArray(merged.vendorBillPaymentRecords)) merged.vendorBillPaymentRecords = [];
   if (!Array.isArray(merged.integrityAlerts)) merged.integrityAlerts = [];
   if (!merged.integrityThresholds || typeof merged.integrityThresholds !== 'object') merged.integrityThresholds = {};
+  if (!merged.integritySamsaraCache || typeof merged.integritySamsaraCache !== 'object') {
+    merged.integritySamsaraCache = { refreshedAt: '', deepRefreshedAt: '', units: {} };
+  }
+  if (!merged.integritySamsaraFaultSnapshots || typeof merged.integritySamsaraFaultSnapshots !== 'object') {
+    merged.integritySamsaraFaultSnapshots = {};
+  }
+  if (!Array.isArray(merged.integrityNightlyLog)) merged.integrityNightlyLog = [];
   if (!merged.companyProfile || typeof merged.companyProfile !== 'object') {
     merged.companyProfile = { ...defaultErpData().companyProfile };
   } else {
     merged.companyProfile = { ...defaultErpData().companyProfile, ...merged.companyProfile };
   }
+  if (!Array.isArray(merged.companyProfile.integrityReportEmails)) merged.companyProfile.integrityReportEmails = [];
 
   for (const w of merged.workOrders || []) {
     if (w.voided == null) w.voided = false;
@@ -1379,6 +1415,19 @@ function buildDashboardRows(vehicles, erpStore) {
       };
     });
   });
+}
+
+function pmStatusLabelForUnit(dashboardRows, unit) {
+  const u = String(unit || '').trim();
+  const hits = (dashboardRows || []).filter(
+    r =>
+      String(r.unit || '').trim() === u &&
+      /pm|lubrication|oil service|preventive|oil change|grease/i.test(String(r.serviceType || ''))
+  );
+  if (!hits.length) return '—';
+  if (hits.some(r => r.status === 'past due')) return 'Overdue';
+  if (hits.some(r => r.status === 'due soon')) return 'Due soon';
+  return 'Current';
 }
 
 /** Per-unit maintenance urgency for dispatch (PM past due / due soon + out-of-service records). */
@@ -4117,6 +4166,30 @@ async function fetchTmsTruckIdleByUnit() {
   }
 }
 
+async function fetchTmsActiveDriverByUnit() {
+  if (!getPool()) return {};
+  try {
+    const { rows } = await dbQuery(
+      `SELECT DISTINCT ON (t.id) t.unit_code AS unit, d.name AS driver_name
+       FROM trucks t
+       INNER JOIN loads l ON l.truck_id = t.id AND l.status = ANY($1::text[])
+       LEFT JOIN drivers d ON d.id = l.driver_id
+       ORDER BY t.id, l.updated_at DESC NULLS LAST`,
+      [TMS_ACTIVE_LOAD_STATUSES]
+    );
+    const m = {};
+    for (const r of rows || []) {
+      const u = String(r.unit || '').trim();
+      if (!u) continue;
+      m[u] = String(r.driver_name || '').trim();
+    }
+    return m;
+  } catch (err) {
+    logError('fetchTmsActiveDriverByUnit', err);
+    return {};
+  }
+}
+
 function daysSinceDateStr(isoDate) {
   if (!isoDate) return null;
   const d = new Date(String(isoDate).slice(0, 10));
@@ -4877,6 +4950,107 @@ async function fetchTrackedFleetSnapshot() {
   };
 }
 
+function pushIntegrityNightlyLog(erp, entry) {
+  if (!Array.isArray(erp.integrityNightlyLog)) erp.integrityNightlyLog = [];
+  erp.integrityNightlyLog.unshift(entry);
+  erp.integrityNightlyLog = erp.integrityNightlyLog.slice(0, 40);
+}
+
+function scheduleIntegritySamsaraDeepRefresh() {
+  if (!hasSamsaraReadToken()) return;
+  const now = Date.now();
+  if (now - __integrityDeepRefreshLastStart < 300000) return;
+  clearTimeout(__integrityDeepRefreshTimer);
+  __integrityDeepRefreshTimer = setTimeout(async () => {
+    __integrityDeepRefreshLastStart = Date.now();
+    try {
+      const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+      const erp = readErp();
+      await mergeDeepIntoFleetCache(erp, enrichedVehicles, { maxUnitsPerRun: 18 });
+      writeErp(erp);
+    } catch (e) {
+      logError('integrity samsara deep cache', e);
+    }
+  }, 5000);
+}
+
+async function runNightlySamsaraIntegrityJob() {
+  if (process.env.DISABLE_INTEGRITY_NIGHTLY_CRON === '1') return;
+  const entry = {
+    startedAt: new Date().toISOString(),
+    finishedAt: '',
+    newAlerts: 0,
+    units: 0,
+    note: ''
+  };
+  const erp = readErp();
+  try {
+    if (!hasSamsaraReadToken()) {
+      entry.note = 'skipped_no_token';
+      entry.finishedAt = new Date().toISOString();
+      pushIntegrityNightlyLog(erp, entry);
+      writeErp(erp);
+      return;
+    }
+    const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+    const tmsDrivers = await fetchTmsActiveDriverByUnit();
+    lightRefreshFleetCache(erp, enrichedVehicles);
+    await mergeDeepIntoFleetCache(erp, enrichedVehicles, { maxUnitsPerRun: 200 });
+    const evs = await fetchOrgSafetyEvents30d();
+    const ctx = buildFleetTelematicsContext(erp, enrichedVehicles, evs, tmsDrivers);
+    entry.units = enrichedVehicles.length;
+    const evalBase = {
+      recordId: '',
+      recordType: 'telematics_nightly',
+      date: entry.startedAt.slice(0, 10),
+      driverId: '',
+      driverName: '',
+      unitId: '',
+      unit: ''
+    };
+    let newAlerts = 0;
+    for (const v of enrichedVehicles) {
+      const u = String(v.name || '').trim();
+      if (!u) continue;
+      const cacheUnit = (erp.integritySamsaraCache?.units || {})[u] || {};
+      const unitFuel = getFuelCostPerMileForUnit(erp, u, 30, cacheUnit.tripMiles30d);
+      const localSafety = cacheUnit.safetyLocal || {};
+      const alerts = runSamsaraCrossrefChecks({
+        unit: u,
+        erp,
+        cacheUnit,
+        fleetSafetyAgg: { avg: ctx.fleetSafetyAgg.avg },
+        repairCostByUnit: ctx.repairCostByUnit,
+        safetyTotalsByUnit: ctx.safetyTotalsByUnit,
+        tmsDriverName: ctx.tmsDriverByUnit[u] || '',
+        samsaraDriverName: cacheUnit.driverName,
+        fleetAvgFuelCostPerMile: ctx.fleetAvgFuel,
+        unitFuelCostPerMile30d: unitFuel,
+        localSafety
+      });
+      const prevLen = (erp.integrityAlerts || []).length;
+      persistIntegrityAlerts(erp, alerts, { ...evalBase, unitId: u, unit: u }, {
+        authUser: { email: 'nightly-integrity', name: 'Nightly integrity' }
+      });
+      newAlerts += (erp.integrityAlerts || []).length - prevLen;
+    }
+    entry.newAlerts = newAlerts;
+    entry.finishedAt = new Date().toISOString();
+    const emails = erp.companyProfile?.integrityReportEmails;
+    if (Array.isArray(emails) && emails.filter(Boolean).length) {
+      console.log('[integrity-nightly] email stub recipients:', emails.join(', '), 'newAlerts=', newAlerts);
+    }
+    pushIntegrityNightlyLog(erp, entry);
+    writeErp(erp);
+  } catch (e) {
+    entry.note = e?.message || String(e);
+    entry.finishedAt = new Date().toISOString();
+    pushIntegrityNightlyLog(erp, entry);
+    writeErp(erp);
+    logError('nightly samsara integrity', e);
+  }
+}
+
 app.get('/api/board', async (_req, res) => {
   try {
     const now = new Date();
@@ -4908,6 +5082,13 @@ app.get('/api/maintenance/dashboard', async (_req, res) => {
 
     const erp = readErp();
     const dashboard = buildDashboardRows(enrichedVehicles, erp);
+    try {
+      lightRefreshFleetCache(erp, enrichedVehicles);
+      writeErp(erp);
+      scheduleIntegritySamsaraDeepRefresh();
+    } catch (e) {
+      logError('integrity samsara light cache', e);
+    }
 
     res.json({
       vehicles: enrichedVehicles,
@@ -5098,11 +5279,10 @@ function persistIntegrityAlerts(erp, evaluated, ctx, req) {
     sliceIsoDate(ctx.date || ctx.serviceDate || '') || new Date().toISOString().slice(0, 10);
   const rid = String(ctx.recordId || '');
   for (const a of evaluated || []) {
-    const dedupe = String(a.dedupeKey || `${a.type}:${rid}`);
+    const dedupe = String(a.dedupeKey || `${a.type}:${rid}:${ctx.unitId || ''}`);
     const clash = erp.integrityAlerts.some(
       x =>
-        String(x.dedupeKey) === dedupe &&
-        String(x.recordId || '') === rid &&
+        String(x.dedupeKey || '') === dedupe &&
         String(x.alertType || '') === String(a.type) &&
         String(x.status || 'active') === 'active'
     );
@@ -5114,7 +5294,7 @@ function persistIntegrityAlerts(erp, evaluated, ctx, req) {
       message: a.message,
       details: { ...(a.details || {}), dedupeKey: dedupe },
       triggeredDate: trig,
-      unitId: ctx.unitId || '',
+      unitId: String(a.unitId || ctx.unitId || ctx.unit || '').trim(),
       driverId: ctx.driverId || '',
       driverName: ctx.driverName || '',
       recordId: rid,
@@ -5164,7 +5344,25 @@ function integrityShortTitle(alert) {
     M1: 'Service cost vs fleet average',
     M2: `High monthly maint. spend${u ? ` — ${u}` : ''}`,
     M3: `Frequent services${u ? ` — ${u}` : ''}`,
-    M4: 'Vendor invoice vs history'
+    M4: 'Vendor invoice vs history',
+    OD1: `Odometer mismatch (ERP vs Samsara)${u ? ` — ${u}` : ''}`,
+    OD2: `PM overdue by mileage${u ? ` — ${u}` : ''}`,
+    OD3: `Fuel vs miles (MPG) anomaly${u ? ` — ${u}` : ''}`,
+    EH1: `Low miles per engine hour${u ? ` — ${u}` : ''}`,
+    EH2: `Engine-hour service due${u ? ` — ${u}` : ''}`,
+    FC1: `Active fault codes (Samsara)${u ? ` — ${u}` : ''}`,
+    FC2: `Recurring fault code${u ? ` — ${u}` : ''}`,
+    IT1: `High idle percentage${u ? ` — ${u}` : ''}`,
+    IT2: `Idle + fuel anomaly${u ? ` — ${u}` : ''}`,
+    VU1: `No movement / in service${u ? ` — ${u}` : ''}`,
+    VU2: `Unassigned driving miles${u ? ` — ${u}` : ''}`,
+    VU3: `Driver mismatch (Samsara vs dispatch)${u ? ` — ${u}` : ''}`,
+    MR1: `Miles without fuel record${u ? ` — ${u}` : ''}`,
+    MR2: `Work orders not posted to QBO${u ? ` — ${u}` : ''}`,
+    MR3: `Annual inspection window${u ? ` — ${u}` : ''}`,
+    DB1: `Safety events vs fleet average${u ? ` — ${u}` : ''}`,
+    DB2: `Safety + repair spend (top quartile)${u ? ` — ${u}` : ''}`,
+    DB3: `Speeding + fuel use${u ? ` — ${u}` : ''}`
   };
   if (map[t]) return map[t];
   return String(alert.message || 'Integrity alert').slice(0, 88);
@@ -5227,9 +5425,18 @@ function integrityThresholdCell(details) {
   return '';
 }
 
-app.post('/api/integrity/check', (req, res) => {
+app.post('/api/integrity/check', async (req, res) => {
   try {
     const ctx = buildIntegrityCheckCtx(req.body || {});
+    let fleetAvgMilesPerMonth = 12000;
+    if (getPool()) {
+      try {
+        fleetAvgMilesPerMonth = await getFleetAvgMilesPerMonth(dbQuery);
+      } catch {
+        fleetAvgMilesPerMonth = 12000;
+      }
+    }
+    ctx.fleetAvgMilesPerMonth = fleetAvgMilesPerMonth;
     const erp = readErp();
     let evaluated = [];
     try {
@@ -5242,7 +5449,7 @@ app.post('/api/integrity/check', (req, res) => {
       persistIntegrityAlerts(erp, evaluated, ctx, req);
       writeErp(erp);
     }
-    res.json({ ok: true, alerts: evaluated });
+    res.json({ ok: true, alerts: evaluated, fleetAvgMilesPerMonth });
   } catch (error) {
     logError('api/integrity/check', error);
     res.json({ ok: true, alerts: [] });
@@ -5349,17 +5556,12 @@ app.post('/api/integrity/alert/:id/notes', (req, res) => {
     const id = String(req.params.id || '').trim();
     const idx = (erp.integrityAlerts || []).findIndex(x => String(x.id) === id);
     if (idx === -1) return res.status(404).json({ ok: false, error: 'Alert not found' });
-<<<<<<< HEAD
-    const notes = String((req.body || {}).notes || '').trim().slice(0, 4000);
-    erp.integrityAlerts[idx] = { ...erp.integrityAlerts[idx], notes };
-=======
     const body = req.body || {};
     const notes = String(body.notes || '').trim().slice(0, 4000);
     erp.integrityAlerts[idx] = {
       ...erp.integrityAlerts[idx],
       notes
     };
->>>>>>> origin/2026-04-20-jzws
     writeErp(erp);
     res.json({ ok: true, alert: erp.integrityAlerts[idx] });
   } catch (error) {
@@ -5382,18 +5584,11 @@ app.post('/api/integrity/thresholds', (req, res) => {
     if (!requireErpWriteOrAdmin(req, res)) return;
     const erp = readErp();
     const body = req.body && typeof req.body === 'object' ? req.body : {};
-<<<<<<< HEAD
-    if (body.reset === true) {
-      erp.integrityThresholds = {};
-      writeErp(erp);
-      return res.json({ ok: true, thresholds: mergeIntegrityThresholds(erp) });
-=======
     if (body.reset === true || String(body.reset || '').toLowerCase() === 'true') {
       erp.integrityThresholds = {};
       writeErp(erp);
       res.json({ ok: true, thresholds: mergeIntegrityThresholds(erp) });
       return;
->>>>>>> origin/2026-04-20-jzws
     }
     const base = defaultIntegrityThresholds();
     const next = { ...base };
@@ -5433,19 +5628,6 @@ app.get('/api/integrity/export', (req, res) => {
         `attachment; filename="integrity-report-${startDate}-to-${endDate}.pdf"`
       );
       doc.pipe(res);
-<<<<<<< HEAD
-      doc.fontSize(18).text(`Integrity Report — ${company}`, { underline: true });
-      doc.moveDown();
-      doc.fontSize(11).fillColor('#444').text(`Date range: ${startDate} through ${endDate}`);
-      doc.moveDown();
-      doc.fontSize(12).fillColor('#000').text(`Total alerts in range: ${rows.length}`);
-      doc.moveDown();
-      for (const r of rows.slice(0, 120)) {
-        doc.fontSize(10).text(`${r.triggeredDate || ''}  [${r.severity}] ${r.alertType}: ${r.message}`, {
-          paragraphGap: 4
-        });
-      }
-=======
       const kpiPdf = integrityKpiSnapshot(erp);
       doc.fillColor('#000000');
       doc.fontSize(24).text('Integrity Report', { align: 'center' });
@@ -5502,7 +5684,6 @@ app.get('/api/integrity/export', (req, res) => {
           '• Adjust thresholds under Settings → Integrity when your fleet norms change.',
         { width: 500 }
       );
->>>>>>> origin/2026-04-20-jzws
       doc.end();
       return;
     }
@@ -5619,6 +5800,204 @@ app.get('/api/integrity/export', (req, res) => {
   } catch (error) {
     logError('api/integrity/export', error);
     res.status(500).send(error.message);
+  }
+});
+
+app.get('/api/integrity/vehicle/:unitId', async (req, res) => {
+  try {
+    const unitId = String(req.params.unitId || '').trim();
+    if (!unitId) return res.status(400).json({ ok: false, error: 'unitId required' });
+    const now = Date.now();
+    const hit = __integrityVehicleBundleCache.get(unitId);
+    if (hit && now - hit.at < 300000) {
+      return res.json({ ok: true, ...hit.payload, cached: true });
+    }
+    const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+    const erp = readErp();
+    const tms = await fetchTmsActiveDriverByUnit();
+    const evs = await fetchOrgSafetyEvents30d();
+    const bundle = await buildVehicleIntegrityBundle({
+      erp,
+      unitId,
+      enrichedVehicles,
+      tmsDriverByUnit: tms,
+      orgSafetyEvents: evs
+    });
+    if (!bundle.ok) return res.status(404).json(bundle);
+    __integrityVehicleBundleCache.set(unitId, { at: now, payload: bundle });
+    res.json({ ok: true, ...bundle, cached: false });
+  } catch (error) {
+    logError('api/integrity/vehicle/:unitId', error);
+    res.status(500).json({ ok: false, error: error.message || String(error) });
+  }
+});
+
+app.get('/api/integrity/vehicle/:unitId/score', async (req, res) => {
+  try {
+    const unitId = String(req.params.unitId || '').trim();
+    const erp = readErp();
+    const active = (erp.integrityAlerts || []).filter(
+      x => String(x.status || 'active') === 'active' && String(x.unitId || '') === unitId
+    );
+    const score = computeIntegrityScoreFromAlerts(active, {});
+    res.json({ ok: true, unitId, ...score });
+  } catch (error) {
+    logError('api/integrity/vehicle/:unitId/score', error);
+    res.status(500).json({ ok: false, error: error.message || String(error) });
+  }
+});
+
+app.get('/api/integrity/fleet-overview', async (_req, res) => {
+  try {
+    const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+    const erp = readErp();
+    const dashboard = buildDashboardRows(enrichedVehicles, erp);
+    const pmByUnit = {};
+    for (const v of enrichedVehicles || []) {
+      const u = String(v.name || '').trim();
+      if (u) pmByUnit[u] = pmStatusLabelForUnit(dashboard, u);
+    }
+    const rows = buildFleetOverviewRows(erp, enrichedVehicles, { pmByUnit });
+    const fleetAvgScore =
+      rows.length > 0
+        ? Math.round(rows.reduce((s, r) => s + (Number(r.integrityScore) || 0), 0) / rows.length)
+        : 100;
+    const totalAlerts = rows.reduce((s, r) => s + (Number(r.activeAlerts) || 0), 0);
+    const attention = rows.filter(r => Number(r.integrityScore) < 80).length;
+    res.json({
+      ok: true,
+      rows,
+      summary: { fleetAvgScore, totalActiveAlerts: totalAlerts, unitsNeedingAttention: attention }
+    });
+  } catch (error) {
+    logError('api/integrity/fleet-overview', error);
+    res.status(500).json({ ok: false, error: error.message || String(error) });
+  }
+});
+
+app.post('/api/integrity/run-checks/:unitId', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    const unitId = String(req.params.unitId || '').trim();
+    if (!unitId) return res.status(400).json({ ok: false, error: 'unitId required' });
+    const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+    const erp = readErp();
+    const tms = await fetchTmsActiveDriverByUnit();
+    const evs = await fetchOrgSafetyEvents30d();
+    const ctx = buildFleetTelematicsContext(erp, enrichedVehicles, evs, tms);
+    const cacheUnit = (erp.integritySamsaraCache?.units || {})[unitId] || {};
+    const unitFuel = getFuelCostPerMileForUnit(erp, unitId, 30, cacheUnit.tripMiles30d);
+    const alerts = runSamsaraCrossrefChecks({
+      unit: unitId,
+      erp,
+      cacheUnit,
+      fleetSafetyAgg: { avg: ctx.fleetSafetyAgg.avg },
+      repairCostByUnit: ctx.repairCostByUnit,
+      safetyTotalsByUnit: ctx.safetyTotalsByUnit,
+      tmsDriverName: ctx.tmsDriverByUnit[unitId] || '',
+      samsaraDriverName: cacheUnit.driverName,
+      fleetAvgFuelCostPerMile: ctx.fleetAvgFuel,
+      unitFuelCostPerMile30d: unitFuel,
+      localSafety: cacheUnit.safetyLocal || {}
+    });
+    const prevLen = (erp.integrityAlerts || []).length;
+    persistIntegrityAlerts(
+      erp,
+      alerts,
+      {
+        recordId: '',
+        recordType: 'telematics_manual',
+        date: new Date().toISOString().slice(0, 10),
+        unitId,
+        unit: unitId,
+        driverId: '',
+        driverName: ''
+      },
+      req
+    );
+    const inserted = (erp.integrityAlerts || []).length - prevLen;
+    writeErp(erp);
+    res.json({ ok: true, checksRun: alerts.length, alertsFound: inserted, alerts });
+  } catch (error) {
+    logError('api/integrity/run-checks/:unitId', error);
+    res.status(500).json({ ok: false, error: error.message || String(error) });
+  }
+});
+
+app.post('/api/integrity/run-all', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    const jobId = uid('intj');
+    __integrityJobs.set(jobId, { status: 'running', startedAt: new Date().toISOString() });
+    setImmediate(async () => {
+      try {
+        await runNightlySamsaraIntegrityJob();
+        __integrityJobs.set(jobId, {
+          status: 'done',
+          finishedAt: new Date().toISOString()
+        });
+      } catch (e) {
+        __integrityJobs.set(jobId, {
+          status: 'error',
+          finishedAt: new Date().toISOString(),
+          error: e?.message || String(e)
+        });
+      }
+    });
+    res.json({ ok: true, jobId });
+  } catch (error) {
+    logError('api/integrity/run-all', error);
+    res.status(500).json({ ok: false, error: error.message || String(error) });
+  }
+});
+
+app.get('/api/integrity/job/:jobId', (req, res) => {
+  try {
+    const jobId = String(req.params.jobId || '').trim();
+    const j = __integrityJobs.get(jobId);
+    if (!j) return res.status(404).json({ ok: false, error: 'Job not found' });
+    res.json({ ok: true, jobId, ...j });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message || String(error) });
+  }
+});
+
+app.get('/api/integrity/samsara/vehicle-stats/:unitId', async (req, res) => {
+  try {
+    if (!hasSamsaraReadToken()) return res.status(400).json({ ok: false, error: 'Samsara token not configured' });
+    const unitId = String(req.params.unitId || '').trim();
+    const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+    const vrow = (enrichedVehicles || []).find(x => String(x.name || '').trim() === unitId);
+    if (!vrow) return res.status(404).json({ ok: false, error: 'Unit not in fleet snapshot' });
+    const vid = String(vrow.id || vrow.vehicleId || vrow.ids?.samsaraId || '').trim();
+    const q = req.query || {};
+    const startTime = String(q.startTime || '').trim() || new Date(Date.now() - 30 * 86400000).toISOString();
+    const endTime = String(q.endTime || '').trim() || new Date().toISOString();
+    const types = String(q.types || 'obdOdometerMeters,engineSeconds,idleEngineSeconds').trim();
+    const data = await fetchVehicleStatsHistory(vid, startTime, endTime, types);
+    res.json({ ok: true, unitId, vehicleId: vid, types, data });
+  } catch (error) {
+    logError('api/integrity/samsara/vehicle-stats/:unitId', error);
+    res.status(500).json({ ok: false, error: error.message || String(error) });
+  }
+});
+
+app.get('/api/integrity/samsara/safety-events/:unitId', async (req, res) => {
+  try {
+    if (!hasSamsaraReadToken()) return res.status(400).json({ ok: false, error: 'Samsara token not configured' });
+    const unitId = String(req.params.unitId || '').trim();
+    const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+    const vrow = (enrichedVehicles || []).find(x => String(x.name || '').trim() === unitId);
+    if (!vrow) return res.status(404).json({ ok: false, error: 'Unit not in fleet snapshot' });
+    const vid = String(vrow.id || vrow.vehicleId || vrow.ids?.samsaraId || '').trim();
+    const q = req.query || {};
+    const startDate = String(q.startDate || '').trim() || new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const endDate = String(q.endDate || '').trim() || new Date().toISOString().slice(0, 10);
+    const events = await fetchSafetyEventsWindow({ startDate, endDate, vehicleId: vid });
+    res.json({ ok: true, unitId, vehicleId: vid, events });
+  } catch (error) {
+    logError('api/integrity/samsara/safety-events/:unitId', error);
+    res.status(500).json({ ok: false, error: error.message || String(error) });
   }
 });
 
@@ -5838,6 +6217,189 @@ app.post('/api/maintenance/mileage', (req, res) => {
   } catch (error) {
     logError('api/maintenance/mileage', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/maintenance/fleet-mileage-settings', async (_req, res) => {
+  try {
+    if (!getPool()) return res.json({ ok: true, fleet_avg_miles_per_month: 12000, source: 'default' });
+    const v = await getFleetAvgMilesPerMonth(dbQuery);
+    res.json({ ok: true, fleet_avg_miles_per_month: v, source: 'database' });
+  } catch (error) {
+    logError('api/maintenance/fleet-mileage-settings GET', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post('/api/maintenance/fleet-mileage-settings', async (req, res) => {
+  if (!requireErpWriteOrAdmin(req, res)) return;
+  try {
+    if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+    const raw = req.body?.fleet_avg_miles_per_month ?? req.body?.fleetAvgMilesPerMonth;
+    const n = clampFleetAvgMilesPerMonth(raw);
+    await dbQuery(
+      `INSERT INTO erp_fleet_defaults (id, fleet_avg_miles_per_month, updated_at) VALUES (1, $1, now())
+       ON CONFLICT (id) DO UPDATE SET fleet_avg_miles_per_month = EXCLUDED.fleet_avg_miles_per_month, updated_at = now()`,
+      [n]
+    );
+    await recalcAllIntervalMonthsFromFleetAvg(dbQuery, n);
+    const erp = readErp();
+    if (!erp.companyProfile || typeof erp.companyProfile !== 'object') erp.companyProfile = {};
+    erp.companyProfile.fleetAvgMilesPerMonth = n;
+    writeErp(erp);
+    res.json({ ok: true, fleet_avg_miles_per_month: n });
+  } catch (error) {
+    logError('api/maintenance/fleet-mileage-settings POST', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/maintenance/service-interval-catalog', async (_req, res) => {
+  try {
+    if (!getPool()) {
+      return res.json({ ok: true, fleet_avg_miles_per_month: 12000, service_types: [], vehicle_maintenance_schedules: [], parts: [] });
+    }
+    const avg = await getFleetAvgMilesPerMonth(dbQuery);
+    const st = await dbQuery(
+      `SELECT id, slug, name, category, interval_miles, interval_months, notes, vehicle_make, vehicle_model, active
+       FROM service_types WHERE active = true ORDER BY category, name`
+    );
+    const vs = await dbQuery(
+      `SELECT v.id, v.unit_code, v.interval_miles, v.interval_months, st.slug AS service_slug, st.name AS service_name
+       FROM vehicle_maintenance_schedules v
+       JOIN service_types st ON st.id = v.service_type_id
+       ORDER BY st.category, st.name`
+    );
+    const pr = await dbQuery(
+      `SELECT part_key, label, avg_replacement_miles, avg_replacement_months, avg_cost_mid FROM vehicle_parts_reference ORDER BY label`
+    );
+    res.json({
+      ok: true,
+      fleet_avg_miles_per_month: avg,
+      service_types: st.rows || [],
+      vehicle_maintenance_schedules: vs.rows || [],
+      parts: pr.rows || []
+    });
+  } catch (error) {
+    logError('api/maintenance/service-interval-catalog GET', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/research/fleet-mileage-settings', async (_req, res) => {
+  try {
+    if (!getPool()) return res.json({ ok: true, fleet_avg_miles_per_month: 12000, source: 'default' });
+    const v = await getFleetAvgMilesPerMonth(dbQuery);
+    res.json({ ok: true, fleet_avg_miles_per_month: v, source: 'database' });
+  } catch (error) {
+    logError('api/research/fleet-mileage-settings GET', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/research/vehicle-due/:unitId', async (req, res) => {
+  try {
+    const unitId = String(req.params.unitId || '').trim();
+    if (!unitId) return res.status(400).json({ ok: false, error: 'unitId is required' });
+    const erp = readErp();
+    const { enrichedVehicles } = await fetchTrackedFleetSnapshot();
+    const fleetByUnit = {};
+    for (const v of enrichedVehicles || []) {
+      const n = String(v.name || '').trim();
+      if (!n) continue;
+      fleetByUnit[n] = {
+        ymm: [v.year, v.make, v.model].filter(Boolean).join(' '),
+        odometerMiles: v.odometerMiles != null ? v.odometerMiles : null
+      };
+    }
+    const fleetAvg = getPool() ? await getFleetAvgMilesPerMonth(dbQuery) : 12000;
+    const raw = await buildReportDataset(
+      'a4-pm-schedule',
+      erp,
+      { unit: unitId, showOverdue: '0' },
+      { fleetByUnit, fleetAvgMilesPerMonth: fleetAvg }
+    );
+    const row = (raw.rows || []).find(r => String(r.unit).toLowerCase() === unitId.toLowerCase());
+    if (!row) return res.status(404).json({ ok: false, error: 'Unit not found for PM schedule' });
+    const mr = Number(row.milesRemaining);
+    const timing = breakdownTimeFromMilesRemaining(mr, fleetAvg);
+    res.json({
+      ok: true,
+      unit: row.unit,
+      fleet_avg_miles_per_month: fleetAvg,
+      pm_interval_miles: Number(erp.companyProfile?.pmIntervalMiles) > 0 ? Number(erp.companyProfile.pmIntervalMiles) : 25000,
+      last_pm_date: row.lastPmDate,
+      last_pm_miles: row.lastPmMiles,
+      next_pm_due_miles: row.nextPmDueMiles,
+      current_miles: row.currentMiles,
+      miles_remaining: Number.isFinite(mr) ? mr : null,
+      months_remaining: timing.months_remaining,
+      weeks_remaining: timing.weeks_remaining,
+      days_remaining: timing.days_remaining,
+      time_unit: timing.time_unit,
+      estimated_due_date: timing.estimated_due_date,
+      months_overdue: timing.months_overdue,
+      status_label: row.statusLabel
+    });
+  } catch (error) {
+    logError('api/research/vehicle-due', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/research/cost-forecast/:unitId', async (req, res) => {
+  try {
+    const unitId = String(req.params.unitId || '').trim();
+    if (!unitId) return res.status(400).json({ ok: false, error: 'unitId is required' });
+    const erp = readErp();
+    const cur = Number(erp.currentMileage?.[unitId]);
+    const fleetAvg = getPool() ? await getFleetAvgMilesPerMonth(dbQuery) : 12000;
+    let services = [];
+    if (getPool()) {
+      try {
+        const { rows } = await dbQuery(
+          `SELECT slug, name, interval_miles, interval_months FROM service_types WHERE active = true AND interval_miles IS NOT NULL ORDER BY interval_miles ASC`
+        );
+        services = rows || [];
+      } catch {
+        services = [];
+      }
+    }
+    const forecast = [];
+    const today = new Date();
+    for (let N = 1; N <= 12; N++) {
+      const projected = (Number.isFinite(cur) ? cur : 0) + N * fleetAvg;
+      const prev = (Number.isFinite(cur) ? cur : 0) + (N - 1) * fleetAvg;
+      const dueNames = [];
+      let estimatedCost = 0;
+      for (const st of services) {
+        const iv = Number(st.interval_miles);
+        if (!Number.isFinite(iv) || iv <= 0) continue;
+        const hitsNow = Math.floor(projected / iv);
+        const hitsPrev = Math.floor(prev / iv);
+        if (hitsNow > hitsPrev) {
+          dueNames.push(String(st.name || st.slug));
+        }
+      }
+      const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + N, 1));
+      forecast.push({
+        month: N,
+        month_label: d.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+        projected_odometer: Math.round(projected),
+        services_due: dueNames,
+        estimated_cost: Math.round(estimatedCost * 100) / 100
+      });
+    }
+    res.json({
+      ok: true,
+      unit: unitId,
+      fleet_avg_miles_per_month: fleetAvg,
+      current_odometer: Number.isFinite(cur) ? cur : null,
+      forecast
+    });
+  } catch (error) {
+    logError('api/research/cost-forecast', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
@@ -7003,6 +7565,16 @@ mountReportsRestApi(app, {
   readQbo,
   logError,
   hasSamsaraReadToken: () => Boolean(String(SAMSARA_API_TOKEN || '').trim())
+});
+
+mountScheduledReports(app, {
+  dbQuery,
+  readErp,
+  fetchTrackedFleetSnapshot,
+  fetchAllSamsaraHosClocks,
+  hasSamsaraReadToken: () => Boolean(String(SAMSARA_API_TOKEN || '').trim()),
+  logError,
+  requireErpWriteOrAdmin
 });
 
 mountDedupeRoutes(app, {
@@ -10119,6 +10691,27 @@ async function startServer() {
       console.warn('[qbo] catalog auto-sync failed:', e?.message || e);
     }
   }, QBO_SYNC_MS);
+
+  const tz = process.env.TZ || 'America/Chicago';
+  if (process.env.DISABLE_INTEGRITY_NIGHTLY_CRON !== '1') {
+    cron.schedule(
+      '0 2 * * *',
+      () => {
+        runNightlySamsaraIntegrityJob().catch(e => logError('cron integrity nightly', e));
+      },
+      { timezone: tz }
+    );
+    console.log(`[integrity-nightly] cron 02:00 ${tz} (set DISABLE_INTEGRITY_NIGHTLY_CRON=1 to skip)`);
+  }
+
+  startReportScheduleRunner({
+    dbQuery,
+    readErp,
+    fetchTrackedFleetSnapshot,
+    fetchAllSamsaraHosClocks,
+    hasSamsaraReadToken: () => Boolean(String(SAMSARA_API_TOKEN || '').trim()),
+    logError
+  });
 }
 
 startServer();

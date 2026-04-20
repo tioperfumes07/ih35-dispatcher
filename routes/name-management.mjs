@@ -63,6 +63,28 @@ function splitEmployeeName(full) {
   return { GivenName: t.slice(0, i).slice(0, 100), FamilyName: t.slice(i + 1).slice(0, 100) };
 }
 
+function safeJsonObj(v) {
+  if (v == null) return {};
+  if (typeof v === 'object' && !Array.isArray(v)) return v;
+  try {
+    const o = JSON.parse(String(v || '{}'));
+    return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+  } catch {
+    return {};
+  }
+}
+
+/** One-line cross-system outcome for audit exports (QBO / Samsara / ERP). */
+function formatSystemsTimeline(row) {
+  const att = safeJsonObj(row.systems_attempted);
+  const suc = safeJsonObj(row.systems_succeeded);
+  const parts = [];
+  if (att.qbo) parts.push(`QBO${suc.qbo ? '+' : '−'}`);
+  if (att.samsara) parts.push(`Sam${suc.samsara ? '+' : '−'}`);
+  if (att.erp) parts.push(`ERP${suc.erp ? '+' : '−'}`);
+  return parts.length ? parts.join(' ') : '—';
+}
+
 async function qboQueryPaged(qboQuery, sqlBase) {
   let start = 1;
   const out = [];
@@ -927,6 +949,7 @@ export function mountNameManagementRoutes(app, deps) {
   });
 
   app.get('/api/name-management/rename-history', async (req, res) => {
+    if (!requireErpWriteOrAdmin(req, res)) return;
     try {
       if (!getPool()) {
         if (String(req.query.format || '').toLowerCase() === 'xlsx') {
@@ -940,6 +963,7 @@ export function mountNameManagementRoutes(app, deps) {
       const by = String(req.query.renamed_by || '').trim();
       const start = String(req.query.startDate || '').trim();
       const end = String(req.query.endDate || '').trim();
+      const recordId = String(req.query.record_id || '').trim();
       const wh = [];
       const pr = [];
       let i = 1;
@@ -959,6 +983,11 @@ export function mountNameManagementRoutes(app, deps) {
         wh.push(`renamed_at < ($${i++}::timestamptz + interval '1 day')`);
         pr.push(end);
       }
+      if (recordId) {
+        wh.push(`(erp_id = $${i} OR qbo_id = $${i} OR samsara_id = $${i})`);
+        pr.push(recordId);
+        i++;
+      }
       const where = wh.length ? `WHERE ${wh.join(' AND ')}` : '';
       const cnt = await dbQuery(`SELECT count(*)::int AS c FROM rename_log ${where}`, pr);
       const total = cnt.rows?.[0]?.c ?? 0;
@@ -972,16 +1001,35 @@ export function mountNameManagementRoutes(app, deps) {
       );
       if (String(req.query.format || '').toLowerCase() === 'xlsx') {
         const aoa = [
-          ['Date', 'Type', 'ERP id', 'Old', 'New', 'QBO ok', 'Samsara ok', 'ERP count', 'By', 'QBO err', 'Samsara err', 'ERP err'],
+          [
+            'Date',
+            'Type',
+            'ERP id',
+            'QBO id',
+            'Samsara id',
+            'Old',
+            'New',
+            'QBO ok',
+            'Samsara ok',
+            'ERP count',
+            'Systems timeline',
+            'By',
+            'QBO err',
+            'Samsara err',
+            'ERP err'
+          ],
           ...(r.rows || []).map(x => [
             x.renamed_at ? new Date(x.renamed_at).toLocaleString('en-US') : '',
             x.record_type,
             x.erp_id,
+            x.qbo_id,
+            x.samsara_id,
             x.old_name,
             x.new_name,
             x.qbo_updated ? 'Y' : 'N',
             x.samsara_updated ? 'Y' : 'N',
             x.erp_records_updated,
+            formatSystemsTimeline(x),
             x.renamed_by,
             x.qbo_error || '',
             x.samsara_error || '',
@@ -996,7 +1044,10 @@ export function mountNameManagementRoutes(app, deps) {
         res.setHeader('Content-Disposition', 'attachment; filename="rename-history.xlsx"');
         return res.send(Buffer.from(buf));
       }
-      res.json({ ok: true, rows: r.rows || [], total, limit, offset });
+      const rows = (r.rows || []).map(x =>
+        Object.assign({}, x, { systems_timeline: formatSystemsTimeline(x) })
+      );
+      res.json({ ok: true, rows, total, limit, offset });
     } catch (e) {
       logError('GET /api/name-management/rename-history', e);
       res.status(500).json({ ok: false, error: e.message });

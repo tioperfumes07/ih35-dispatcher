@@ -57,6 +57,33 @@
     });
   }
 
+  /** Authenticated XLSX download (opening the URL in a new tab cannot send Bearer / ERP secret). */
+  async function nmDownloadRenameHistoryXlsx(searchParams) {
+    const p = new URLSearchParams(searchParams);
+    p.set('format', 'xlsx');
+    const t = localStorage.getItem('ih35_token');
+    const wh = typeof erpWriteHeaders === 'function' ? erpWriteHeaders() : {};
+    const r = await fetch(`/api/name-management/rename-history?${p.toString()}`, {
+      headers: { ...wh, ...(t ? { Authorization: `Bearer ${t}` } : {}) }
+    });
+    if (!r.ok) {
+      let msg = `HTTP ${r.status}`;
+      try {
+        const j = JSON.parse(await r.text());
+        if (j.error) msg = j.error;
+      } catch {
+        /* ignore */
+      }
+      throw new Error(msg);
+    }
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'rename-history.xlsx';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   function endpointList() {
     if (state.kind === 'driver') return '/api/name-management/drivers';
     if (state.kind === 'customer') return '/api/name-management/customers';
@@ -346,15 +373,16 @@
     if (!host || !state.selected) return;
     try {
       const id = state.kind === 'driver' ? state.selected.erpId : state.selected.qboId;
-      const h = await nmFetch(`/api/name-management/rename-history?limit=30&type=${state.kind}`);
-      const rows = (h.rows || []).filter(
-        r => String(r.erp_id) === String(id) || String(r.qbo_id) === String(id)
-      );
+      const q = new URLSearchParams({ limit: '40', type: state.kind, record_id: String(id) });
+      const h = await nmFetch(`/api/name-management/rename-history?${q.toString()}`);
+      const rows = h.rows || [];
       host.innerHTML = rows.length
-        ? `<table class="erp-dedupe-table"><thead><tr><th>When</th><th>Old</th><th>New</th><th>By</th></tr></thead><tbody>${rows
+        ? `<table class="erp-dedupe-table"><thead><tr><th>When</th><th>Old</th><th>New</th><th>Systems</th><th>By</th></tr></thead><tbody>${rows
             .map(
               x =>
-                `<tr><td>${esc(new Date(x.renamed_at).toLocaleString())}</td><td>${esc(x.old_name)}</td><td>${esc(x.new_name)}</td><td>${esc(x.renamed_by)}</td></tr>`
+                `<tr><td>${esc(new Date(x.renamed_at).toLocaleString())}</td><td>${esc(x.old_name)}</td><td>${esc(x.new_name)}</td><td>${esc(
+                  x.systems_timeline || '—'
+                )}</td><td>${esc(x.renamed_by)}</td></tr>`
             )
             .join('')}</tbody></table>`
         : 'No renames logged for this id yet.';
@@ -521,10 +549,7 @@
     host.querySelectorAll('[data-kind]').forEach(btn => {
       btn.addEventListener('click', async () => {
         state.kind = btn.getAttribute('data-kind');
-<<<<<<< HEAD
         if (state.kind !== 'driver' && ['qbo', 'samsara', 'both'].includes(state.filter)) state.filter = 'all';
-=======
->>>>>>> origin/2026-04-20-jzws
         state.page = 1;
         state.selected = null;
         state.detail = null;
@@ -576,7 +601,7 @@
         c.checked = ev.target.checked;
       });
     });
-    backdrop.querySelector('#nmBulkRun')?.addEventListener('click', async () => {
+    backdrop.querySelector('#nmBulkRun')?.addEventListener('click', () => {
       const trs = [...backdrop.querySelectorAll('tbody tr')];
       const renames = [];
       for (const tr of trs) {
@@ -598,37 +623,132 @@
         });
       }
       if (!renames.length) return alert('Select at least one row with a valid new name.');
-      if (!window.confirm(`Apply ${renames.length} rename(s)? Each uses live QBO/Samsara/ERP writes.`)) return;
-      const out = await nmPost('/api/name-management/bulk-rename', { renames });
-      const okN = (out.results || []).filter(x => x.ok && x.success).length;
-      alert(`Bulk rename finished. ${okN} / ${renames.length} reported full success. See server logs for details.`);
-      backdrop.remove();
-      await refreshLists();
-      paint();
+      const ackBackdrop = document.createElement('div');
+      ackBackdrop.className = 'nm-modal-backdrop';
+      ackBackdrop.style.zIndex = '13000';
+      const preview = renames
+        .slice(0, 12)
+        .map(x => `<li>${esc(x.new_name)} <span class="muted">(${esc(x.type)})</span></li>`)
+        .join('');
+      const more = renames.length > 12 ? `<p class="mini-note">…and ${renames.length - 12} more.</p>` : '';
+      ackBackdrop.innerHTML = `
+        <div class="nm-modal" role="dialog" aria-modal="true">
+          <h3 style="margin-top:0">Confirm bulk rename</h3>
+          <p class="mini-note">This calls live QuickBooks, Samsara (drivers), and ERP for <strong>${renames.length}</strong> record(s).</p>
+          <ul style="margin:8px 0;padding-left:18px;font-size:13px;max-height:200px;overflow:auto">${preview}</ul>
+          ${more}
+          <label style="display:block;margin:14px 0;font-size:13px"><input type="checkbox" id="nmBulkAckFinal" />
+            I confirm these renames should be applied.</label>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
+            <button type="button" class="btn btn--ghost" data-cancel-bulk>Back</button>
+            <button type="button" class="btn" style="background:#1b5e20;color:#fff" id="nmBulkExec" disabled>Apply ${renames.length} rename(s)</button>
+          </div>
+        </div>`;
+      document.body.appendChild(ackBackdrop);
+      const ack = ackBackdrop.querySelector('#nmBulkAckFinal');
+      const exec = ackBackdrop.querySelector('#nmBulkExec');
+      ack?.addEventListener('change', () => {
+        if (exec) exec.disabled = !ack.checked;
+      });
+      ackBackdrop.querySelector('[data-cancel-bulk]')?.addEventListener('click', () => ackBackdrop.remove());
+      exec?.addEventListener('click', async () => {
+        if (!ack?.checked) return;
+        exec.disabled = true;
+        try {
+          const out = await nmPost('/api/name-management/bulk-rename', { renames });
+          const okN = (out.results || []).filter(x => x.ok && x.success).length;
+          alert(`Bulk rename finished. ${okN} / ${renames.length} reported full success. See server logs for details.`);
+          ackBackdrop.remove();
+          backdrop.remove();
+          await refreshLists();
+          paint();
+        } catch (e) {
+          alert('Bulk rename failed: ' + (e.message || e));
+          exec.disabled = false;
+        }
+      });
     });
   }
 
   async function openHistoryModal() {
-    const data = await nmFetch('/api/name-management/rename-history?limit=200');
     const backdrop = document.createElement('div');
     backdrop.className = 'nm-modal-backdrop';
     backdrop.innerHTML = `
-      <div class="nm-modal" style="width:min(900px,94vw);max-height:88vh;overflow:auto">
+      <div class="nm-modal" style="width:min(980px,96vw);max-height:90vh;overflow:auto">
         <h3 style="margin-top:0">Rename history</h3>
-        <p class="mini-note"><a href="/api/name-management/rename-history?format=xlsx" target="_blank" rel="noopener">Export Excel</a> (same filters as JSON in a follow-up).</p>
-        <table class="erp-dedupe-table" style="font-size:11px"><thead>
-          <tr><th>When</th><th>Type</th><th>Old</th><th>New</th><th>QBO</th><th>Sam</th><th>ERP#</th><th>By</th></tr>
-        </thead><tbody>${(data.rows || [])
-          .map(
-            x =>
-              `<tr><td>${esc(new Date(x.renamed_at).toLocaleString())}</td><td>${esc(x.record_type)}</td><td>${esc(x.old_name)}</td><td>${esc(x.new_name)}</td>
-            <td>${x.qbo_updated ? '✓' : '✗'}</td><td>${x.samsara_updated ? '✓' : '✗'}</td><td>${esc(x.erp_records_updated)}</td><td>${esc(x.renamed_by)}</td></tr>`
-          )
-          .join('')}</tbody></table>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:12px;font-size:13px">
+          <label>Type<br/><select id="nmHistType" class="qb-in" style="min-width:120px">
+            <option value="">All</option>
+            <option value="vendor">vendor</option>
+            <option value="driver">driver</option>
+            <option value="customer">customer</option>
+          </select></label>
+          <label>Renamed by contains<br/><input id="nmHistBy" class="qb-in" placeholder="email or name" style="width:160px" /></label>
+          <label>From<br/><input id="nmHistStart" type="date" class="qb-in" /></label>
+          <label>To<br/><input id="nmHistEnd" type="date" class="qb-in" /></label>
+          <button type="button" class="btn btn--small" id="nmHistApply">Apply filters</button>
+          <button type="button" class="btn btn--small btn--ghost" id="nmHistDl">Download Excel</button>
+        </div>
+        <p class="mini-note">Filters apply to the table and to Excel export. Timeline shows which integrations were attempted (+ succeeded / − failed or skipped).</p>
+        <div id="nmHistWrap" style="max-height:52vh;overflow:auto;border:1px solid #e0e3e8;border-radius:6px">
+          <table class="erp-dedupe-table" style="font-size:11px;width:100%"><thead>
+            <tr><th>When</th><th>Type</th><th>Old</th><th>New</th><th>Timeline</th><th>QBO</th><th>Sam</th><th>ERP#</th><th>By</th></tr>
+          </thead><tbody id="nmHistBody"><tr><td colspan="9">Loading…</td></tr></tbody></table>
+        </div>
+        <p class="mini-note" id="nmHistMeta"></p>
         <button type="button" class="btn" style="margin-top:12px" data-close>Close</button>
       </div>`;
     document.body.appendChild(backdrop);
-    backdrop.querySelector('[data-close]').addEventListener('click', () => backdrop.remove());
+
+    async function reloadHist() {
+      const p = new URLSearchParams();
+      p.set('limit', '200');
+      const typ = backdrop.querySelector('#nmHistType')?.value || '';
+      if (typ) p.set('type', typ);
+      const by = String(backdrop.querySelector('#nmHistBy')?.value || '').trim();
+      if (by) p.set('renamed_by', by);
+      const s = String(backdrop.querySelector('#nmHistStart')?.value || '').trim();
+      const e = String(backdrop.querySelector('#nmHistEnd')?.value || '').trim();
+      if (s) p.set('startDate', s);
+      if (e) p.set('endDate', e);
+      const body = backdrop.querySelector('#nmHistBody');
+      const meta = backdrop.querySelector('#nmHistMeta');
+      if (body) body.innerHTML = '<tr><td colspan="9">Loading…</td></tr>';
+      try {
+        const data = await nmFetch(`/api/name-management/rename-history?${p.toString()}`);
+        const rows = data.rows || [];
+        if (body) {
+          body.innerHTML = rows.length
+            ? rows
+                .map(
+                  x =>
+                    `<tr><td>${esc(new Date(x.renamed_at).toLocaleString())}</td><td>${esc(x.record_type)}</td><td>${esc(x.old_name)}</td><td>${esc(
+                      x.new_name
+                    )}</td><td>${esc(x.systems_timeline || '—')}</td>
+            <td>${x.qbo_updated ? '✓' : '✗'}</td><td>${x.samsara_updated ? '✓' : '✗'}</td><td>${esc(x.erp_records_updated)}</td><td>${esc(x.renamed_by)}</td></tr>`
+                )
+                .join('')
+            : '<tr><td colspan="9">No rows for these filters.</td></tr>';
+        }
+        if (meta) meta.textContent = `Total matching: ${data.total ?? rows.length} (showing up to ${rows.length})`;
+        backdrop.dataset.histQuery = p.toString();
+      } catch (err) {
+        if (body) body.innerHTML = `<tr><td colspan="9">${esc(err.message || err)}</td></tr>`;
+        if (meta) meta.textContent = '';
+      }
+    }
+
+    backdrop.querySelector('#nmHistApply')?.addEventListener('click', () => void reloadHist());
+    backdrop.querySelector('#nmHistDl')?.addEventListener('click', async () => {
+      const raw = backdrop.dataset.histQuery || 'limit=200';
+      try {
+        await nmDownloadRenameHistoryXlsx(raw);
+      } catch (e) {
+        alert('Download failed: ' + (e.message || e));
+      }
+    });
+    backdrop.querySelector('[data-close]')?.addEventListener('click', () => backdrop.remove());
+    await reloadHist();
   }
 
   window.erpNameMgmtInit = async function (opts) {

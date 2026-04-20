@@ -1999,6 +1999,7 @@
 
         <div id="maintMainTabRm" class="maint-main-tab-panel">
           <div class="panel maint-section-card">
+            <div id="erpFleetMileageBannerRm" class="mini-note" style="display:none;margin:0 0 10px;padding:8px 12px;border-radius:6px;border:1px solid #c5d9f7;background:#f0f7ff;color:#1557a0;font-size:11px;line-height:1.45"></div>
             <div class="panel-head maint-panel-head-center">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
                 <div class="panel-title" style="margin:0">R&amp;M Status — integrity · fuel · parts</div>
@@ -4509,6 +4510,7 @@
             </span>
           </div>
           <div id="repRoadmapBanner" class="mini-note erp-reports-roadmap hidden" role="status" aria-live="polite"></div>
+          <div id="erpFleetMileageBannerRep" class="mini-note print-hide-actions" style="display:none;margin:0 0 10px;padding:8px 12px;border-radius:6px;border:1px solid #c5d9f7;background:#f0f7ff;color:#1557a0;font-size:11px;line-height:1.45"></div>
           <div id="repCatTabs" class="rep-cat-tabs erp-tab-bar print-hide-actions" role="tablist" aria-label="Report categories"></div>
           <div id="repCatalogGrid" class="rep-catalog-grid print-hide-actions" aria-live="polite"></div>
           <div class="erp-reports-columns">
@@ -5240,6 +5242,9 @@
                   </span>
                 </span>
               </div>
+              <div id="erpFleetMileageBannerCat" class="mini-note" style="display:none;margin:0 0 10px;padding:8px 12px;border-radius:6px;border:1px solid #c5d9f7;background:#f0f7ff;color:#1557a0;font-size:11px;line-height:1.45"></div>
+              <div class="mini-note" style="margin:0 0 6px;font-weight:600">Service interval catalog (Postgres)</div>
+              <div id="serviceIntervalCatalogBody" class="mini-note" style="margin:0 0 12px">Open <strong>Lists → Service types</strong> after refresh to load miles + month intervals.</div>
               <div id="serviceCatalogAdminToolbar" class="mr-filter-bar" style="margin-bottom:0;display:none">
                 <div class="mr-filter-bar__grow">
                   <input
@@ -6900,8 +6905,8 @@
             const st = String(r.qboSyncStatus || r.syncStatus || 'local').trim();
             const rid = escapeHtml(String(r.id || ''));
             const rs = String(r.repairStatus || '').trim();
-            const rsVal = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
-            const rsSel = `<select class="qb-in maint-loc-record-repair-status" style="font-size:12px;max-width:210px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select>`;
+            const rsVal = ['queued', 'in_progress', 'finished', 'waiting_parts', 'cancelled'].includes(rs) ? rs : '';
+            const rsSel = `<select class="qb-in maint-loc-record-repair-status" style="font-size:12px;max-width:210px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('in_progress'))}</option><option value="waiting_parts" ${rsVal === 'waiting_parts' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('waiting_parts'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('finished'))}</option><option value="cancelled" ${rsVal === 'cancelled' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('cancelled'))}</option></select>`;
             const ts = r.repairStatusAt
               ? escapeHtml(String(r.repairStatusAt).slice(0, 19).replace('T', ' '))
               : '—';
@@ -11558,6 +11563,7 @@
         if (activeSection === 'reports' && repTeamPanel && !repTeamPanel.classList.contains('hidden')) {
           loadTeamSecurityPanel();
         }
+        await refreshFleetMileageBanner();
       } catch (e) {
         console.error(e);
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
@@ -12247,10 +12253,70 @@
       });
     }
 
+    async function refreshFleetMileageBanner() {
+      const txt = (avg, extra) =>
+        `Fleet average: <strong>${Number(avg).toLocaleString(
+          'en-US'
+        )}</strong> miles per truck per month. ${extra || 'Time estimates use this pace (FLOOR months from miles).'} <a href="/settings.html" class="linkish">Change in Settings → Company</a>.`;
+      const ids = ['erpFleetMileageBannerRm', 'erpFleetMileageBannerRep', 'erpFleetMileageBannerCat'];
+      try {
+        const d = await j('/api/maintenance/fleet-mileage-settings');
+        const avg = d.fleet_avg_miles_per_month ?? 12000;
+        for (const id of ids) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          el.style.display = 'block';
+          el.innerHTML = txt(avg, '');
+        }
+      } catch {
+        for (const id of ids) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          el.style.display = 'block';
+          el.innerHTML = txt(12000, 'Using default 12,000 (Postgres not configured).');
+        }
+      }
+    }
+
+    async function loadServiceIntervalCatalog() {
+      const el = document.getElementById('serviceIntervalCatalogBody');
+      if (!el) return;
+      el.textContent = 'Loading interval catalog…';
+      try {
+        const d = await j('/api/maintenance/service-interval-catalog');
+        const avg = d.fleet_avg_miles_per_month ?? 12000;
+        const rows = (d.service_types || []).map(st => {
+          const mi = st.interval_miles != null ? `${Number(st.interval_miles).toLocaleString('en-US')} mi` : '—';
+          const mo =
+            st.interval_months != null
+              ? `≈ ${st.interval_months} mo @ ${Number(avg).toLocaleString('en-US')} mi/mo`
+              : 'Time / as needed';
+          const mm =
+            st.vehicle_make || st.vehicle_model
+              ? ` <span style="color:#666">(${escapeHtml([st.vehicle_make, st.vehicle_model].filter(Boolean).join(' '))})</span>`
+              : '';
+          return `<tr><td>${escapeHtml(st.name)}${mm}</td><td style="font-weight:600">${mi}</td><td style="font-size:11px;color:#555">${mo}</td></tr>`;
+        });
+        el.innerHTML =
+          `<p class="mini-note" style="margin:0 0 6px">Fleet pace: <strong>${Number(avg).toLocaleString(
+            'en-US'
+          )}</strong> mi/mo. Stacked: miles (bold) + estimated months.</p>` +
+          `<div class="erp-table-scroll" style="max-height:280px"><table class="catalog-admin-table"><thead><tr><th>Service</th><th>Interval (miles)</th><th>Months (est.)</th></tr></thead><tbody>${rows.join(
+            ''
+          )}</tbody></table></div>`;
+      } catch (e) {
+        el.innerHTML =
+          '<span style="color:var(--color-semantic-error)">Interval catalog requires DATABASE_URL and migration 015: ' +
+          escapeHtml(e.message || String(e)) +
+          '</span>';
+      }
+    }
+
     async function loadServiceCatalogAdminOnly() {
       try {
         const cat = await j('/api/maintenance/service-catalog-admin');
         renderServiceCatalogAdmin(cat);
+        await loadServiceIntervalCatalog();
       } catch (e) {
         serviceCatalogAdminCache = null;
         const toolbar = document.getElementById('serviceCatalogAdminToolbar');
@@ -12267,6 +12333,7 @@
             escapeHtml(e.message || String(e)) +
             '</span>';
         }
+        await loadServiceIntervalCatalog();
       }
     }
 
@@ -19324,10 +19391,9 @@
       }
       const rid = escapeHtml(String(rec.id));
       const rs = String(rec.repairStatus || '').trim();
-      const rsVal = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
-      const statusLabel = s =>
-        s === 'queued' ? 'Awaiting service' : s === 'in_progress' ? 'In progress' : s === 'finished' ? 'Completed' : String(s || '');
-      return `<td style="white-space:nowrap"><select class="qb-in maint-fleet-repair-status" style="font-size:12px;max-width:200px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select></td>`;
+      const rsVal = ['queued', 'in_progress', 'finished', 'waiting_parts', 'cancelled'].includes(rs) ? rs : '';
+      const statusLabel = s => maintRepairStatusLabel(s);
+      return `<td style="white-space:nowrap"><select class="qb-in maint-fleet-repair-status" style="font-size:12px;max-width:200px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="waiting_parts" ${rsVal === 'waiting_parts' ? 'selected' : ''}>${escapeHtml(statusLabel('waiting_parts'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option><option value="cancelled" ${rsVal === 'cancelled' ? 'selected' : ''}>${escapeHtml(statusLabel('cancelled'))}</option></select></td>`;
     }
 
     function renderMaintenanceTable() {
@@ -19837,10 +19903,12 @@
               <div class="mini-note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px">
                 <span>Repair workflow:</span>
                 <select class="qb-in maint-unit-hist-repair-status" style="font-size:12px;max-width:210px" data-record-id="${escapeHtml(String(r.id || ''))}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)">
-                  <option value="" ${!['queued', 'in_progress', 'finished'].includes(String(r.repairStatus || '').trim()) ? 'selected' : ''}>— Not set —</option>
+                  <option value="" ${!['queued', 'in_progress', 'finished', 'waiting_parts', 'cancelled'].includes(String(r.repairStatus || '').trim()) ? 'selected' : ''}>— Not set —</option>
                   <option value="queued" ${String(r.repairStatus || '').trim() === 'queued' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('queued'))}</option>
                   <option value="in_progress" ${String(r.repairStatus || '').trim() === 'in_progress' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('in_progress'))}</option>
+                  <option value="waiting_parts" ${String(r.repairStatus || '').trim() === 'waiting_parts' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('waiting_parts'))}</option>
                   <option value="finished" ${String(r.repairStatus || '').trim() === 'finished' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('finished'))}</option>
+                  <option value="cancelled" ${String(r.repairStatus || '').trim() === 'cancelled' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('cancelled'))}</option>
                 </select>
                 <span class="mini-note">${r.repairStatusAt ? escapeHtml(String(r.repairStatusAt).slice(0, 19).replace('T', ' ')) : '—'}${r.repairStatusBy ? ' · ' + escapeHtml(String(r.repairStatusBy)) : ''}</span>
               </div>

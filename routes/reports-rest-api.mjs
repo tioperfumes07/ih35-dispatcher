@@ -19,6 +19,8 @@ import {
   buildSafetyScoresPlaceholder
 } from '../lib/reports-safety-live.mjs';
 import { buildDotVehicleAuditV1 } from '../lib/dot-vehicle-audit-api.mjs';
+import { fetchSamsaraIftaAggregatedForRange } from '../lib/samsara-ifta.mjs';
+import { getFleetAvgMilesPerMonth } from '../lib/fleet-mileage-settings.mjs';
 
 const TABULAR_PATHS = [
   ['maintenance/work-order-history', 'a1-work-order-history'],
@@ -68,6 +70,9 @@ const TABULAR_PATHS = [
   ['dot/fleet-overview', 'f-dot-fleet-overview'],
   ['dot/drug-alcohol-testing', 'g3-drug-alcohol-testing']
 ];
+
+/** HTTP path suffix (e.g. `fuel/ifta`) → internal dataset id for schedulers. */
+export const REPORT_DATASET_BY_HTTP_PATH = Object.fromEntries(TABULAR_PATHS);
 
 const QBO_ALLOWED = new Set([
   'ProfitAndLoss',
@@ -132,7 +137,7 @@ async function loadDbLoads(dbQuery) {
   }
 }
 
-async function enrichSamsara(datasetId, query, samsaraConnected) {
+async function enrichSamsara(datasetId, query, samsaraConnected, samsaraVehicleIdByUnit = {}) {
   const samsara = {};
   if (!samsaraConnected) return { samsara };
   try {
@@ -166,10 +171,79 @@ async function enrichSamsara(datasetId, query, samsaraConnected) {
       if (ph.disclaimer) samsara.safetyScoresDisclaimer = ph.disclaimer;
       if (ph.error) samsara.safetyScoresDisclaimer = ph.error;
     }
+    if (datasetId === 'd4-ifta-mileage') {
+      try {
+        const unit = String(query.unit || '').trim();
+        let vehicleIdsCsv = '';
+        if (unit && samsaraVehicleIdByUnit[unit]) {
+          vehicleIdsCsv = String(samsaraVehicleIdByUnit[unit]);
+        }
+        samsara.ifta = await fetchSamsaraIftaAggregatedForRange({
+          startDate: String(query.startDate || '').trim(),
+          endDate: String(query.endDate || '').trim(),
+          vehicleIdsCsv
+        });
+      } catch (e) {
+        samsara.ifta = {
+          ok: false,
+          byJurisdiction: {},
+          monthsFetched: [],
+          errors: [e?.message || String(e)]
+        };
+      }
+    }
   } catch (e) {
     samsara.liveError = e.message || String(e);
   }
   return { samsara };
+}
+
+/**
+ * Build ERP + fleet snapshot + Samsara enrichments for tabular reports.
+ * Exported for scheduled report runner (POST writes — exempt from GET-only policy).
+ */
+export async function resolveReportDatasetContext(deps, query, datasetId) {
+  const { readErp, dbQuery, fetchTrackedFleetSnapshot, fetchAllSamsaraHosClocks, hasSamsaraReadToken } = deps;
+  const erp = readErp();
+  let fleetByUnit = {};
+  const samsaraVehicleIdByUnit = {};
+  try {
+    const snap = await fetchTrackedFleetSnapshot();
+    for (const v of snap.enrichedVehicles || []) {
+      const name = String(v.name || '').trim();
+      if (!name) continue;
+      fleetByUnit[name] = {
+        ymm: [v.year, v.make, v.model].filter(Boolean).join(' '),
+        odometerMiles: v.odometerMiles != null ? v.odometerMiles : null
+      };
+      const sid = String(v.id || v.vehicleId || v.ids?.samsaraId || '').trim();
+      if (sid) samsaraVehicleIdByUnit[name] = sid;
+    }
+  } catch (_) {
+    fleetByUnit = {};
+  }
+  let hosClocks = [];
+  try {
+    hosClocks = await fetchAllSamsaraHosClocks();
+  } catch (_) {
+    hosClocks = [];
+  }
+  const dbLoads = await loadDbLoads(dbQuery);
+  const samsaraConnected = hasSamsaraReadToken();
+  const { samsara } = await enrichSamsara(datasetId, query, samsaraConnected, samsaraVehicleIdByUnit);
+  const fleetAvgMilesPerMonth = dbQuery ? await getFleetAvgMilesPerMonth(dbQuery) : 12000;
+  return {
+    erp,
+    ctx: {
+      fleetByUnit,
+      hosClocks,
+      dbLoads,
+      samsaraConnected,
+      samsara,
+      samsaraVehicleIdByUnit,
+      fleetAvgMilesPerMonth
+    }
+  };
 }
 
 export function mountReportsRestApi(app, deps) {
@@ -186,31 +260,7 @@ export function mountReportsRestApi(app, deps) {
   } = deps;
 
   async function buildCtx(query, datasetId) {
-    const erp = readErp();
-    let fleetByUnit = {};
-    try {
-      const snap = await fetchTrackedFleetSnapshot();
-      for (const v of snap.enrichedVehicles || []) {
-        const name = String(v.name || '').trim();
-        if (!name) continue;
-        fleetByUnit[name] = {
-          ymm: [v.year, v.make, v.model].filter(Boolean).join(' '),
-          odometerMiles: v.odometerMiles != null ? v.odometerMiles : null
-        };
-      }
-    } catch (_) {
-      fleetByUnit = {};
-    }
-    let hosClocks = [];
-    try {
-      hosClocks = await fetchAllSamsaraHosClocks();
-    } catch (_) {
-      hosClocks = [];
-    }
-    const dbLoads = await loadDbLoads(dbQuery);
-    const samsaraConnected = hasSamsaraReadToken();
-    const { samsara } = await enrichSamsara(datasetId, query, samsaraConnected);
-    return { erp, ctx: { fleetByUnit, hosClocks, dbLoads, samsaraConnected, samsara } };
+    return resolveReportDatasetContext(deps, query, datasetId);
   }
 
   for (const [pathSuffix, datasetId] of TABULAR_PATHS) {
