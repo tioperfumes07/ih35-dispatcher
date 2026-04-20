@@ -1086,9 +1086,9 @@
                     </span>
                   </span>
                 </div>
-                <div id="maintWoBanner" class="maint-wo-banner maint-wo-banner--inline maint-wo-banner--spec hidden" aria-live="polite">
-                  <span class="maint-wo-banner__title">Work order</span>
-                  <span id="maintWoBannerUnit" class="maint-wo-banner__unit"></span>
+                <div id="maintWoBanner" class="maint-wo-banner maint-wo-banner--inline hidden" aria-live="polite">
+                  <div class="maint-wo-banner__eyebrow">Work order</div>
+                  <div id="maintWoBannerUnit" class="maint-wo-banner__unit"></div>
                 </div>
                 <div class="form-stack maint-form-stack">
                   <button type="button" class="maint-form-help-btn" onclick="document.getElementById('maintFormHelpDrawer').classList.toggle('hidden')" title="Field help">?</button>
@@ -1105,31 +1105,76 @@
                     <button type="button" class="btn btn--small" onclick="document.getElementById('maintFormHelpDrawer').classList.add('hidden')">Close help</button>
                   </div>
 
-                  <div class="maint-form-grid maint-subcard">
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
-                      <div class="maint-field-cell">
+                  <div class="maint-form-grid maint-subcard maint-wo-service-info-card">
+                    <div class="maint-wo-service-info-card__title">Service information</div>
+                    <div class="maint-form-grid__row maint-wo-svc-row maint-wo-svc-row--1">
+                      <div class="maint-field-cell maint-field-cell--stack maint-field-cell--service-location">
+                        <span class="qb-l">Service location</span>
+                        <select id="repairLocationSelect" class="qb-in maint-field" onchange="onRepairLocationSelectChange()" title="Where service was performed">
+                          <option value="">— Choose —</option>
+                          <option value="in-house">Internal shop</option>
+                          <option value="external">External shop</option>
+                          <option value="road-service">Roadside</option>
+                          <option value="parts-purchase">Parts purchase</option>
+                          <option value="over-the-road">Over the road</option>
+                        </select>
+                        <input type="hidden" id="repairLocationTypeInput" value="" />
+                        <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
+                          <span style="min-width:0;flex:1 1 200px">Choose a type above, then enter where work happened (required). The datalist suggests prior labels.</span>
+                          <span class="erp-help-tip">
+                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service location detail">?</button>
+                            <span class="erp-help-tip__panel" role="tooltip">
+                              <strong>Location detail</strong> is saved with the record (yard, vendor site, bay, shop name, or short notes). <code>setRepairLocationCode()</code> keeps the dropdown, hidden type, and this field in sync. <code>fillStaticMaintDatalists()</code> fills <code>#repairLocationOptions</code> for suggestions.
+                            </span>
+                          </span>
+                        </div>
+                        <span class="qb-l">Location detail <span class="maint-label-req" aria-hidden="true">*</span></span>
+                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Service location detail (required)" aria-required="true" />
+                      </div>
+                      <div class="maint-field-cell maint-field-cell--record-type">
                         <span class="qb-l">Record type</span>
                         <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()" title="Drives which extra blocks show (tire map, accident, etc.)">
                           <option value="maintenance">Maintenance</option>
-                          <option value="tire">Tire</option>
                           <option value="repair">Repair</option>
+                          <option value="inspection">Inspection</option>
+                          <option value="tire">Tire</option>
                           <option value="accident">Accident</option>
-                          <option value="custom">Custom</option>
+                          <option value="custom">Other</option>
                         </select>
                       </div>
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Service type</span>
-                        <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service description" autocomplete="off" oninput="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" onblur="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" title="Catalog + free text" />
-                        <input id="serviceTypeInput" type="hidden">
-                        <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type">
+                      <div class="maint-field-cell maint-field-cell--service-type maint-field-cell--tight-next">
+                        <span class="qb-l"
+                          >Service type
+                          <span id="serviceSearchCatalogBadge" class="maint-catalog-badge hidden" aria-live="polite"></span
+                        ></span>
+                        <div class="maint-catalog-suggest-wrap">
+                          <input
+                            id="serviceSearchInput"
+                            class="qb-in maint-field"
+                            list="serviceOptions"
+                            placeholder="Search catalog or type custom"
+                            autocomplete="off"
+                            oninput="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine(); maintServiceCatalogSuggestOnInput(event.target);"
+                            onblur="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine(); maintServiceCatalogSuggestOnBlur(event.target);"
+                            title="Catalog + free text"
+                          />
+                          <div id="serviceSearchSuggest" class="maint-catalog-suggest hidden" role="listbox" aria-label="Service catalog matches"></div>
+                        </div>
+                        <input id="serviceTypeInput" type="hidden" />
+                        <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type" />
                       </div>
-                      <div class="maint-field-cell">
+                      <div class="maint-field-cell maint-field-cell--service-date">
                         <span class="qb-l">Service date</span>
                         <input id="serviceDateInput" class="qb-in maint-field maint-field--date" type="date" />
                       </div>
                     </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
-                      <div class="maint-field-cell">
+                    <div class="maint-form-grid__row maint-wo-svc-row maint-wo-svc-row--2">
+                      <div class="maint-field-cell maint-field-cell--vendor">
+                        <span class="qb-l">Vendor</span>
+                        <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
+                        <button type="button" class="maint-input-action-btn" onclick="goToCreateQboVendor()">New in QBO</button>
+                      </div>
+                      <div class="maint-field-cell maint-field-cell--odo">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
                           >Odometer
                           <span class="erp-help-tip" aria-label="Help for service odometer">
@@ -1139,21 +1184,15 @@
                             </span>
                           </span>
                         </span>
-                        <div class="maint-field-cell__row">
-                          <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" />
-                          <button type="button" class="btn btn--small" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
+                        <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Samsara odometer for this visit" />
+                        <div class="maint-input-action-row">
+                          <button type="button" class="maint-input-action-btn" onclick="fillServiceMileageFromSamsara()" title="Latest Samsara odometer">Samsara</button>
+                          <button type="button" class="maint-input-action-btn" onclick="saveServiceMileageAsFleet()" title="Copy this reading to fleet mileage and save">Save</button>
                         </div>
                         <div id="serviceMileageHint" class="mini-note maint-field-hint"></div>
                       </div>
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Fleet mileage (ERP)</span>
-                        <div class="maint-field-cell__row">
-                          <input id="mileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Override" title="Manual fleet mileage override" />
-                          <button type="button" class="btn btn--small" onclick="saveMileage()">Save</button>
-                        </div>
-                      </div>
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Planned work <span class="maint-label-optional">(optional)</span></span>
+                      <div class="maint-field-cell maint-field-cell--planned maint-field-cell--grow">
+                        <span class="qb-l">Planned service / repair <span class="maint-label-optional">(optional)</span></span>
                         <div class="mini-note" style="margin:4px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 180px">Free-text lines; host resets from template when presets / record type clear the form.</span>
                           <span class="erp-help-tip">
@@ -1167,13 +1206,8 @@
                         <button type="button" class="maint-linkish" onclick="addMaintPlannedServiceRow()">+ Planned line</button>
                       </div>
                     </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Vendor</span>
-                        <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
-                        <button type="button" class="maint-linkish" onclick="goToCreateQboVendor()">New in QBO</button>
-                      </div>
-                      <div class="maint-field-cell">
+                    <div class="maint-form-grid__row maint-wo-svc-row maint-wo-svc-row--3">
+                      <div class="maint-field-cell maint-field-cell--load">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
                           >Load #
                           <span class="erp-help-tip" aria-label="Help for load number">
@@ -1184,56 +1218,18 @@
                           </span>
                         </span>
                         <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / settlement #" autocomplete="off" />
-                        <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
+                        <button type="button" class="maint-input-action-btn" onclick="applyLoadNumberSuggestion(true)">Load / set</button>
+                        <div id="recordLoadNumberHint" class="maint-inline-hint maint-inline-hint--10"></div>
                       </div>
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Shop location</span>
-                        <select id="repairLocationSelect" class="qb-in maint-field" onchange="onRepairLocationSelectChange()" title="Where service was performed">
-                          <option value="">— Choose —</option>
-                          <option value="in-house">Internal shop</option>
-                          <option value="external">External shop</option>
-                          <option value="road-service">Roadside</option>
-                          <option value="parts-purchase">Parts purchase</option>
-                          <option value="over-the-road">Over the road</option>
-                        </select>
-                        <input type="hidden" id="repairLocationTypeInput" value="" />
-                        <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
-                          <span style="min-width:0;flex:1 1 200px">Choose a type above, then enter where work happened (required). The datalist suggests prior labels.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop / location detail">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <strong>Location detail</strong> is saved with the record (yard, vendor site, bay, shop name, or short notes). <code>setRepairLocationCode()</code> keeps the dropdown, hidden type, and this field in sync. <code>fillStaticMaintDatalists()</code> fills <code>#repairLocationOptions</code> for suggestions.
-                            </span>
-                          </span>
-                        </div>
-                        <span class="qb-l">Location detail <span class="maint-label-req" aria-hidden="true">*</span></span>
-                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Shop / location detail (required)" aria-required="true" />
-                      </div>
-                    </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
-                      <div class="maint-field-cell">
-                        <span class="qb-l">Repair status</span>
-                        <select id="recordRepairStatusSelect" class="qb-in maint-field" title="Workflow status stored on this maintenance record" onchange="renderMaintAsideWoSummary()">
-                          <option value="">— Not set —</option>
-                          <option value="queued">Awaiting service</option>
-                          <option value="in_progress">In progress</option>
-                          <option value="finished">Completed</option>
-                        </select>
-                        <div id="recordRepairStatusMeta" class="mini-note" style="margin-top:4px" aria-live="polite"></div>
-                      </div>
-                      <div class="maint-field-cell"></div>
-                      <div class="maint-field-cell"></div>
-                    </div>
-                    <div class="maint-form-grid__row maint-form-grid__row--3">
                       <div id="maintVendorInvFieldWrap" class="maint-field-cell">
                         <span class="qb-l" id="maintVendorInvLabel">Vendor invoice #</span>
-                        <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="Supplier invoice" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />
+                        <input id="recordVendorInvoiceInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="Supplier invoice (optional)" autocomplete="off" oninput="scheduleSyncMaintLinkAccountingFromCostLines()" onchange="scheduleSyncMaintLinkAccountingFromCostLines()" />
                       </div>
                       <div id="maintWoNumberFieldWrap" class="maint-field-cell">
-                        <span class="qb-l" id="maintWoNumberLabel">Internal WO #</span>
-                        <input id="recordWorkOrderInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="WO #" title="Internal shop numbers are assigned automatically" oninput="renderMaintAsideWoSummary()" />
+                        <span class="qb-l" id="maintWoNumberLabel">Reference / WO #</span>
+                        <input id="recordWorkOrderInput" class="qb-in maint-field maint-field--ref" maxlength="24" placeholder="Vendor WO / internal ref" title="Internal shop numbers are assigned automatically" oninput="renderMaintAsideWoSummary()" />
                       </div>
-                      <div class="maint-field-cell">
+                      <div class="maint-field-cell maint-field-cell--inv-total">
                         <span class="qb-l">Invoice total</span>
                         <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Sum of line amounts" oninput="renderMaintAsideWoSummary()" />
                         <label class="maint-lock-inline"><input type="checkbox" id="costTotalLock" /> Lock total</label>
@@ -1259,12 +1255,22 @@
                         <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
                       </div>
                     </div>
-                    <div class="maint-form-grid__row">
-                      <div class="maint-field-cell maint-field-cell--grow">
-                        <span class="qb-l maint-label-optional">Catalog admin</span>
+                    <details class="maint-fleet-odo-details">
+                      <summary class="maint-fleet-odo-details__sum">Override odometer</summary>
+                      <div class="maint-field-cell" style="margin-top:8px">
+                        <span class="qb-l">Fleet mileage (ERP)</span>
                         <div class="maint-field-cell__row">
+                          <input id="mileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Override" title="Manual fleet mileage override" />
+                          <button type="button" class="maint-input-action-btn" onclick="saveMileage()">Save</button>
+                        </div>
+                      </div>
+                    </details>
+                    <div class="maint-form-grid__row maint-wo-svc-row maint-wo-svc-row--catalog-admin">
+                      <div class="maint-field-cell maint-field-cell--grow">
+                        <span class="qb-l maint-label-optional" style="color:#6b7385">Add to catalog</span>
+                        <div class="maint-field-cell__row maint-field-cell__row--catalog">
                           <input id="maintNewCatalogServiceName" class="qb-in maint-field maint-field--catalog" placeholder="New catalog name" maxlength="120" autocomplete="off" />
-                          <button type="button" class="btn btn--small" onclick="addCatalogServiceType()">Add</button>
+                          <button type="button" class="btn btn--secondary maint-catalog-add-btn" onclick="addCatalogServiceType()">Add</button>
                         </div>
                         <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 200px">Feedback for <strong>Add</strong> on new catalog names — all <code>textContent</code> on the host below.</span>
@@ -2634,7 +2640,15 @@
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="erpNewPayBills()">Pay bills</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Saved maintenance expenses</button>
                 <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF (ledger)</button>
-                <button type="button" class="acct-entry-list__btn" role="listitem" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Pay bills workspace</button>
+                <button
+                  type="button"
+                  class="acct-entry-list__btn"
+                  role="listitem"
+                  title="Opens Pay bills in the Accounting tab (same as the Pay bills subtab), not the floating window"
+                  onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))"
+                >
+                  Pay bills workspace
+                </button>
                 <button type="button" class="acct-entry-list__btn acct-entry-list__btn--accent" role="listitem" onclick="acctScrollToPendingPost()">Post pending to QuickBooks</button>
               </div>
               <div class="acct-board-qbo-inline">
@@ -5287,9 +5301,20 @@
 
   <template id="maintPlannedServiceTpl">
     <div class="maint-planned-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:8px;width:100%">
-      <div style="flex:1;min-width:160px">
+      <div class="maint-planned-row__main" style="flex:1;min-width:160px">
         <span class="qb-l">Planned service / repair</span>
-        <input class="qb-in maint-field maint-planned-desc" list="serviceOptions" placeholder="e.g. Radiator, bumper labor, tire set…" autocomplete="off" />
+        <div class="maint-catalog-suggest-wrap">
+          <input
+            class="qb-in maint-field maint-planned-desc"
+            list="serviceOptions"
+            placeholder="e.g. Radiator, bumper labor, tire set…"
+            autocomplete="off"
+            oninput="maintServiceCatalogSuggestOnInput(event.target)"
+            onblur="maintServiceCatalogSuggestOnBlur(event.target)"
+          />
+          <div class="maint-catalog-suggest hidden" role="listbox" aria-label="Service catalog matches"></div>
+        </div>
+        <span class="maint-planned-catalog-badge maint-catalog-badge hidden" aria-live="polite">Not in catalog</span>
       </div>
       <button type="button" class="qb-btn-del" onclick="this.closest('.maint-planned-row').remove(); maybeMaintPlannedPlaceholder();" title="Remove line">×</button>
     </div>
@@ -6153,6 +6178,10 @@
         const mb = document.getElementById('maintWorkOrderModalBody');
         if (mb) mb.scrollTop = 0;
         try {
+          const sh = modal.querySelector('.maint-workorder-fullmodal__shell');
+          if (sh && typeof window.erpRestoreModalGeometry === 'function') window.erpRestoreModalGeometry(sh, 'workorder');
+        } catch (_) {}
+        try {
           modal.querySelector('.maint-workorder-fullmodal__head .btn')?.focus();
         } catch (_) {}
       });
@@ -6161,6 +6190,10 @@
     function closeMaintWorkOrderModal() {
       const modal = document.getElementById('maintWorkOrderModal');
       if (modal && modal.classList.contains('on')) {
+        try {
+          const sh = modal.querySelector('.maint-workorder-fullmodal__shell');
+          if (sh && typeof window.erpPersistModalGeometry === 'function') window.erpPersistModalGeometry(sh, 'workorder');
+        } catch (_) {}
         modal.classList.remove('on');
         modal.setAttribute('aria-hidden', 'true');
       }
@@ -6172,8 +6205,7 @@
     function renderMaintLocationBoard() {
       const host = document.getElementById('maintLocationBoardHost');
       if (!host) return;
-      const statusLabel = s =>
-        s === 'queued' ? 'Awaiting service' : s === 'in_progress' ? 'In progress' : s === 'finished' ? 'Completed' : String(s || '');
+      const statusLabel = s => maintRepairStatusLabel(s);
       const fmtIso = iso => {
         const d = String(iso || '').slice(0, 10);
         return d || '—';
@@ -6230,8 +6262,8 @@
             const st = String(r.qboSyncStatus || r.syncStatus || 'local').trim();
             const rid = escapeHtml(String(r.id || ''));
             const rs = String(r.repairStatus || '').trim();
-            const rsVal = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
-            const rsSel = `<select class="qb-in maint-loc-record-repair-status" style="font-size:12px;max-width:210px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option></select>`;
+            const rsVal = ['queued', 'in_progress', 'waiting_parts', 'finished', 'cancelled'].includes(rs) ? rs : '';
+            const rsSel = `<select class="qb-in maint-loc-record-repair-status" style="font-size:12px;max-width:210px" data-record-id="${rid}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)"><option value="" ${rsVal === '' ? 'selected' : ''}>— Not set —</option><option value="queued" ${rsVal === 'queued' ? 'selected' : ''}>${escapeHtml(statusLabel('queued'))}</option><option value="in_progress" ${rsVal === 'in_progress' ? 'selected' : ''}>${escapeHtml(statusLabel('in_progress'))}</option><option value="waiting_parts" ${rsVal === 'waiting_parts' ? 'selected' : ''}>${escapeHtml(statusLabel('waiting_parts'))}</option><option value="finished" ${rsVal === 'finished' ? 'selected' : ''}>${escapeHtml(statusLabel('finished'))}</option><option value="cancelled" ${rsVal === 'cancelled' ? 'selected' : ''}>${escapeHtml(statusLabel('cancelled'))}</option></select>`;
             const ts = r.repairStatusAt
               ? escapeHtml(String(r.repairStatusAt).slice(0, 19).replace('T', ' '))
               : '—';
@@ -13450,7 +13482,7 @@
             const rss = document.getElementById('recordRepairStatusSelect');
             if (rss) {
               const rs = String(out.record.repairStatus || '').trim();
-              rss.value = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
+              rss.value = ['queued', 'in_progress', 'waiting_parts', 'finished', 'cancelled'].includes(rs) ? rs : '';
             }
             formatMaintRepairStatusMeta(out.record);
             renderMaintAsideWoSummary();
@@ -13956,18 +13988,155 @@
       updateServiceMileageHint({ odometerMiles: mi }, rec);
     }
 
+    async function saveServiceMileageAsFleet() {
+      if (!selectedUnit) return;
+      const sm = document.getElementById('serviceMileageInput');
+      const raw = sm && String(sm.value || '').trim();
+      const mi = raw !== '' && raw != null ? Number(raw) : NaN;
+      if (!Number.isFinite(mi)) {
+        erpNotify('Enter a service odometer first.', 'warning');
+        return;
+      }
+      const fleetIn = document.getElementById('mileageInput');
+      if (fleetIn) fleetIn.value = String(Math.round(mi));
+      await saveMileage();
+    }
+
     function setServiceOptions() {
       const rows = dashboard.filter(x => x.unit === selectedUnit);
       const services = Array.from(new Set(rows.map(x => x.serviceType))).sort();
       if (services.length && !document.getElementById('serviceSearchInput').value) {
         document.getElementById('serviceSearchInput').value = services[0];
         document.getElementById('serviceTypeInput').value = services[0];
+        resolveServiceSearch();
       }
     }
 
     function resolveServiceSearch() {
-      document.getElementById('serviceTypeInput').value = document.getElementById('serviceSearchInput').value.trim();
+      const inp = document.getElementById('serviceSearchInput');
+      document.getElementById('serviceTypeInput').value = (inp && inp.value ? inp.value : '').trim();
+      maintServiceCatalogBadgeUpdate(document.getElementById('serviceSearchInput'));
+      syncPrimaryServiceToFirstCostLine();
     }
+
+    const MAINT_SVC_CAT_DEBOUNCE_MS = 300;
+    let __maintSvcCatTimer = null;
+    let __maintSvcCatInp = null;
+
+    function maintServiceCatalogListRaw() {
+      return Array.isArray(window.__servicePresetList) ? window.__servicePresetList : [];
+    }
+
+    function maintServiceCatalogFilter(q) {
+      const qn = String(q || '')
+        .trim()
+        .toLowerCase();
+      const all = maintServiceCatalogListRaw();
+      if (!qn) return all.slice(0, 50);
+      return all.filter(s => String(s).toLowerCase().includes(qn)).slice(0, 80);
+    }
+
+    function maintServiceCatalogBadgeUpdate(inp) {
+      const badge = document.getElementById('serviceSearchCatalogBadge');
+      if (!badge || !inp || inp.id !== 'serviceSearchInput') return;
+      const raw = String(inp.value || '').trim();
+      if (!raw) {
+        badge.textContent = '';
+        badge.classList.add('hidden');
+        return;
+      }
+      const hit = maintServiceCatalogListRaw().some(s => String(s).toLowerCase() === raw.toLowerCase());
+      if (hit) {
+        badge.textContent = '';
+        badge.classList.add('hidden');
+        return;
+      }
+      badge.textContent = 'Not in catalog';
+      badge.classList.remove('hidden');
+    }
+
+    function maintPlannedCatalogBadgeUpdate(inp) {
+      if (!inp) return;
+      const row = inp.closest('.maint-planned-row');
+      const badge = row && row.querySelector('.maint-planned-catalog-badge');
+      if (!badge) return;
+      const raw = String(inp.value || '').trim();
+      if (!raw) {
+        badge.textContent = '';
+        badge.classList.add('hidden');
+        return;
+      }
+      const hit = maintServiceCatalogListRaw().some(s => String(s).toLowerCase() === raw.toLowerCase());
+      if (hit) {
+        badge.textContent = '';
+        badge.classList.add('hidden');
+        return;
+      }
+      badge.textContent = 'Not in catalog';
+      badge.classList.remove('hidden');
+    }
+
+    function maintServiceCatalogSuggestRenderForInput(inp, host) {
+      if (!inp || !host) return;
+      const rows = maintServiceCatalogFilter(inp.value);
+      if (!rows.length) {
+        host.innerHTML = '';
+        host.classList.add('hidden');
+        return;
+      }
+      host.innerHTML = rows
+        .map(
+          s =>
+            `<button type="button" class="maint-catalog-suggest__opt" role="option" data-val="${escapeHtml(String(s))}">${escapeHtml(String(s))}</button>`
+        )
+        .join('');
+      host.classList.remove('hidden');
+    }
+
+    function maintServiceCatalogSuggestOnInput(inp) {
+      const el = inp && inp.nodeType === 1 ? inp : null;
+      if (!el) return;
+      const wrap = el.closest('.maint-catalog-suggest-wrap');
+      const host = wrap && wrap.querySelector('.maint-catalog-suggest');
+      if (!host) return;
+      __maintSvcCatInp = el;
+      if (__maintSvcCatTimer) clearTimeout(__maintSvcCatTimer);
+      __maintSvcCatTimer = setTimeout(() => {
+        maintServiceCatalogSuggestRenderForInput(el, host);
+        if (el.classList.contains('maint-planned-desc')) maintPlannedCatalogBadgeUpdate(el);
+      }, MAINT_SVC_CAT_DEBOUNCE_MS);
+    }
+
+    function maintServiceCatalogSuggestOnBlur(inp) {
+      const el = inp && inp.nodeType === 1 ? inp : null;
+      if (!el) return;
+      const wrap = el.closest('.maint-catalog-suggest-wrap');
+      const host = wrap && wrap.querySelector('.maint-catalog-suggest');
+      if (!host) return;
+      setTimeout(() => {
+        const ae = document.activeElement;
+        if (ae && host.contains(ae)) return;
+        host.classList.add('hidden');
+        if (el.id === 'serviceSearchInput') maintServiceCatalogBadgeUpdate(el);
+        if (el.classList.contains('maint-planned-desc')) maintPlannedCatalogBadgeUpdate(el);
+      }, 180);
+    }
+
+    document.addEventListener('click', ev => {
+      const t = ev.target;
+      if (!t || !t.closest) return;
+      const opt = t.closest('.maint-catalog-suggest__opt');
+      if (!opt) return;
+      const host = opt.closest('.maint-catalog-suggest');
+      const wrap = host && host.closest('.maint-catalog-suggest-wrap');
+      const inp = wrap && wrap.querySelector('input.qb-in');
+      if (inp) {
+        inp.value = opt.getAttribute('data-val') || opt.textContent || '';
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (host) host.classList.add('hidden');
+    });
 
     function resolveRepairLocationSearch() {
       const lab = document.getElementById('repairLocationSearch').value.trim();
@@ -15532,6 +15701,10 @@
         document.getElementById('serviceSearchInput').value = 'Repair';
         document.getElementById('serviceTypeInput').value = 'Repair';
       }
+      if (type === 'inspection') {
+        document.getElementById('serviceSearchInput').value = 'Inspection';
+        document.getElementById('serviceTypeInput').value = 'Inspection';
+      }
       if (type === 'accident') {
         document.getElementById('serviceSearchInput').value = 'Accident Report';
         document.getElementById('serviceTypeInput').value = 'Accident Report';
@@ -16096,10 +16269,10 @@
         fa?.classList.add('hidden');
         document.getElementById('maintWoSummaryBar')?.classList.add('hidden');
         document.getElementById('selectedUnitInfo').innerHTML = '';
-        const cardEl = document.getElementById('maintAssetHeaderCard');
-        if (cardEl) {
-          cardEl.innerHTML = '<div class="maint-asset-header-card__placeholder">Select a unit from the list.</div>';
-        }
+        const empty = document.getElementById('maintAssetHeaderEmpty');
+        const hBody = document.getElementById('maintAssetHeaderBody');
+        if (empty) empty.classList.remove('hidden');
+        if (hBody) hBody.classList.add('hidden');
         const body = document.getElementById('maintAssetStatusPanelBody');
         if (body) body.innerHTML = '';
         closeMaintAssetStatusPanel();
@@ -16145,27 +16318,73 @@
       const ymm = [v.year, v.make, v.model].filter(Boolean).join(' ') || '—';
       const vin = v.vin || '—';
       const plate = v.licensePlate ? String(v.licensePlate) : '—';
-      const odoStr = displayMi != null && Number.isFinite(displayMi) ? Math.round(displayMi).toLocaleString() : '—';
-      const cardEl = document.getElementById('maintAssetHeaderCard');
-      if (cardEl) {
-        cardEl.innerHTML = `
-          <div class="maint-asset-header-card__main">
-            <div class="maint-asset-header-card__row">
-              <div class="maint-asset-header-card__unit">${escapeHtml(v.name)}</div>
-              <div class="maint-asset-header-card__ymm">${escapeHtml(ymm)}</div>
-            </div>
-            <div class="maint-asset-header-card__row maint-asset-header-card__row--opquick">
-              <span class="qb-l" style="margin:0;align-self:center">Operational status</span>
-              <select id="maintAssetHeaderStatusSelect" class="qb-in maint-field" style="max-width:min(100%,18rem)">${opOpts}</select>
-              <button type="button" class="btn btn--small" onclick="saveAssetStatusFromHeader()">Save</button>
-              <button type="button" class="btn btn--small btn--ghost" onclick="openMaintAssetStatusPanel()">Note / history</button>
-            </div>
-            <div class="maint-asset-header-card__ids">
-              <span>VIN ${escapeHtml(vin)}</span>
-              <span>Plate ${escapeHtml(plate)}</span>
-              <span>Odo ${escapeHtml(odoStr)}</span>
-            </div>
-          </div>`;
+      const empty = document.getElementById('maintAssetHeaderEmpty');
+      const hBody = document.getElementById('maintAssetHeaderBody');
+      if (empty) empty.classList.add('hidden');
+      if (hBody) hBody.classList.remove('hidden');
+
+      const pill = document.getElementById('maintVehicleOpPill');
+      const opRaw = String(opStatus || '').toLowerCase();
+      let pillCls = 'maint-status-pill maint-status-pill--ok';
+      let pillTxt = 'In service';
+      if (erp.assetActiveByUnit?.[v.name] === false) {
+        pillCls = 'maint-status-pill maint-status-pill--danger';
+        pillTxt = 'Retired';
+      } else if (opRaw.includes('out') || opRaw.includes('oos') || opRaw === 'down') {
+        pillCls = 'maint-status-pill maint-status-pill--danger';
+        pillTxt = 'Out of service';
+      } else if (opRaw.includes('shop') || opRaw.includes('yard') || opRaw === 'in_shop') {
+        pillCls = 'maint-status-pill maint-status-pill--warn';
+        pillTxt = 'In shop';
+      }
+      if (pill) {
+        pill.className = pillCls;
+        pill.textContent = pillTxt;
+      }
+
+      const ymmRow = document.getElementById('maintVehicleYmmRow');
+      if (ymmRow) {
+        const y = v.year != null && String(v.year).trim() !== '' ? escapeHtml(String(v.year)) : '';
+        const mk = escapeHtml(String(v.make || '').trim());
+        const md = escapeHtml(String(v.model || '').trim());
+        ymmRow.innerHTML = `<span class="maint-vehicle-ymm__y">${y}</span><span class="maint-vehicle-ymm__mk">${mk}</span><span class="maint-vehicle-ymm__md">${md}</span>`;
+      }
+      const vinRow = document.getElementById('maintVehicleVinRow');
+      if (vinRow) {
+        vinRow.innerHTML = `<span class="maint-vehicle-id-lbl">VIN</span><span class="maint-vehicle-id-val">${escapeHtml(vin)}</span>`;
+      }
+      const plateRow = document.getElementById('maintVehiclePlateRow');
+      if (plateRow) {
+        plateRow.innerHTML = `<span class="maint-vehicle-id-lbl">PLATE</span><span class="maint-vehicle-id-val">${escapeHtml(plate)}</span>`;
+      }
+
+      const kO = document.getElementById('maintVehicleKpiOdo');
+      if (kO) {
+        kO.textContent =
+          displayMi != null && Number.isFinite(displayMi) ? `${Math.round(displayMi).toLocaleString()} mi` : '—';
+      }
+      const srcEl = document.getElementById('maintVehicleKpiOdoSrc');
+      if (srcEl) {
+        const hay = `${String(odoRec?.source || '')} ${String(odoRec?.label || '')}`.toLowerCase();
+        const live = /samsara/.test(hay) && displayMi != null && Number.isFinite(displayMi);
+        srcEl.classList.toggle('hidden', !live);
+      }
+      const kF = document.getElementById('maintVehicleKpiFuel');
+      if (kF) {
+        kF.textContent =
+          v.fuelPercent != null && Number.isFinite(Number(v.fuelPercent)) ? `${Math.round(Number(v.fuelPercent))}%` : '0%';
+      }
+      const kP = document.getElementById('maintVehicleKpiPast');
+      const kS = document.getElementById('maintVehicleKpiSoon');
+      if (kP) {
+        kP.textContent = String(past);
+        kP.classList.remove('maint-vehicle-kpi__val--danger', 'maint-vehicle-kpi__val--ok');
+        kP.classList.add(past > 0 ? 'maint-vehicle-kpi__val--danger' : 'maint-vehicle-kpi__val--ok');
+      }
+      if (kS) {
+        kS.textContent = String(soon);
+        kS.classList.remove('maint-vehicle-kpi__val--warn');
+        if (soon > 0) kS.classList.add('maint-vehicle-kpi__val--warn');
       }
 
       const panelBody = document.getElementById('maintAssetStatusPanelBody');
@@ -16673,10 +16892,12 @@
               <div class="mini-note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px">
                 <span>Repair workflow:</span>
                 <select class="qb-in maint-unit-hist-repair-status" style="font-size:12px;max-width:210px" data-record-id="${escapeHtml(String(r.id || ''))}" onfocus="this.dataset.prevRepairStatus=this.value" onchange="onMaintRecordRepairStatusSelect(this)">
-                  <option value="" ${!['queued', 'in_progress', 'finished'].includes(String(r.repairStatus || '').trim()) ? 'selected' : ''}>— Not set —</option>
+                  <option value="" ${!['queued', 'in_progress', 'waiting_parts', 'finished', 'cancelled'].includes(String(r.repairStatus || '').trim()) ? 'selected' : ''}>— Not set —</option>
                   <option value="queued" ${String(r.repairStatus || '').trim() === 'queued' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('queued'))}</option>
                   <option value="in_progress" ${String(r.repairStatus || '').trim() === 'in_progress' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('in_progress'))}</option>
+                  <option value="waiting_parts" ${String(r.repairStatus || '').trim() === 'waiting_parts' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('waiting_parts'))}</option>
                   <option value="finished" ${String(r.repairStatus || '').trim() === 'finished' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('finished'))}</option>
+                  <option value="cancelled" ${String(r.repairStatus || '').trim() === 'cancelled' ? 'selected' : ''}>${escapeHtml(maintRepairStatusLabel('cancelled'))}</option>
                 </select>
                 <span class="mini-note">${r.repairStatusAt ? escapeHtml(String(r.repairStatusAt).slice(0, 19).replace('T', ' ')) : '—'}${r.repairStatusBy ? ' · ' + escapeHtml(String(r.repairStatusBy)) : ''}</span>
               </div>
@@ -17013,8 +17234,11 @@
 
     async function saveAssetStatusFromHeader() {
       if (!selectedUnit) return;
-      const sel = document.getElementById('maintAssetHeaderStatusSelect');
-      if (!sel) return;
+      const sel = document.getElementById('assetStatusSelect');
+      if (!sel) {
+        openMaintAssetStatusPanel();
+        return;
+      }
       try {
         await j('/api/maintenance/asset-status', {
           method: 'POST',
@@ -17287,9 +17511,11 @@
 
     function maintRepairStatusLabel(s) {
       const v = String(s || '').trim();
-      if (v === 'queued') return 'Awaiting service';
+      if (v === 'queued') return 'Open';
       if (v === 'in_progress') return 'In progress';
-      if (v === 'finished') return 'Completed';
+      if (v === 'waiting_parts') return 'Waiting for parts';
+      if (v === 'finished') return 'Complete';
+      if (v === 'cancelled') return 'Cancelled';
       return v ? v : '—';
     }
 
@@ -17398,7 +17624,7 @@
       const rss = document.getElementById('recordRepairStatusSelect');
       if (rss) {
         const rs = String(r.repairStatus || '').trim();
-        rss.value = ['queued', 'in_progress', 'finished'].includes(rs) ? rs : '';
+        rss.value = ['queued', 'in_progress', 'waiting_parts', 'finished', 'cancelled'].includes(rs) ? rs : '';
       }
       formatMaintRepairStatusMeta(r);
 
@@ -17461,7 +17687,10 @@
           if (i > 0) addMaintPlannedServiceRow();
           const rows = pHost.querySelectorAll('.maint-planned-row');
           const inp = rows[i]?.querySelector('.maint-planned-desc');
-          if (inp) inp.value = text;
+          if (inp) {
+            inp.value = text;
+            maintPlannedCatalogBadgeUpdate(inp);
+          }
         });
         if (!pdescs.length) maybeMaintPlannedPlaceholder();
       }
