@@ -7813,10 +7813,13 @@
     }
 
     function erpDedicatedFormDirty() {
-      if (window.__erpDedicatedModalKind === 'fuel') {
+      if (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') {
         const totalTxt = document.getElementById('fuelManualHeaderTotal')?.textContent || '$0.00';
         const totalNum = Number(String(totalTxt).replace(/[^0-9.-]/g, '')) || 0;
         const ft = id => (document.getElementById(id)?.value || '').trim();
+        const billExtra =
+          String(window.__fuelManualEntryMode || '') === 'bill' &&
+          !!(ft('fuelManualDueDate') || ft('fuelManualBillStmtNo') || (document.getElementById('fuelManualQboTermId')?.value || '').trim());
         return !!(
           ft('fuelManualVendorSearch') ||
           ft('fuelManualUnit') ||
@@ -7829,6 +7832,7 @@
           ft('fuelManualPaymentMethodSearch') ||
           ft('fuelManualBankSearch') ||
           (document.getElementById('fuelManualClassSel')?.value || '').trim() ||
+          billExtra ||
           totalNum > 0.005
         );
       }
@@ -7920,12 +7924,12 @@
       const title = document.getElementById('erpDedModalTitle');
       const lab = document.getElementById('erpDedModalTotalLabel');
       const amt = document.getElementById('erpDedModalTotalAmt');
-      if (window.__erpDedicatedModalKind === 'fuel') {
+      if (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') {
         const fh = document.getElementById('fuelManualDocTitleH2');
         const ft = document.getElementById('fuelManualHeaderTotal');
         if (title && fh) title.textContent = fh.textContent || '';
         if (amt && ft) amt.textContent = ft.textContent || '$0.00';
-        if (lab) lab.textContent = 'Amount';
+        if (lab) lab.textContent = window.__erpDedicatedModalKind === 'fuel_bill' ? 'Balance due' : 'Amount';
         return;
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
@@ -8500,13 +8504,19 @@
       if (window.__erpDedicatedModalKind === 'ap' && id !== 'acct-transactions') {
         erpCloseDedicatedFormModal({ force: true });
       }
-      if (window.__erpDedicatedModalKind === 'fuel' && id !== 'acct-fuel-expense') {
+      if (
+        (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill') &&
+        id !== 'acct-fuel-expense'
+      ) {
         erpCloseDedicatedFormModal({ force: true });
       }
       if (id === 'acct-transactions' && window.__erpDedicatedModalKind === 'ap') {
         erpCloseDedicatedFormModal({ force: true });
       }
-      if (id === 'acct-fuel-expense' && window.__erpDedicatedModalKind === 'fuel') {
+      if (
+        id === 'acct-fuel-expense' &&
+        (window.__erpDedicatedModalKind === 'fuel' || window.__erpDedicatedModalKind === 'fuel_bill')
+      ) {
         erpCloseDedicatedFormModal({ force: true });
       }
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
