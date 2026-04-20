@@ -285,7 +285,14 @@
               <td><button type="button" onclick="removeUser('${x.id}')">Remove</button></td>
             </tr>
           `).join('');
-          openAdminTab('users');
+          if (location.hash === '#integrity-thresholds') {
+            openAdminTab('integrity');
+            requestAnimationFrame(() =>
+              document.getElementById('integrity-thresholds')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            );
+          } else {
+            openAdminTab('users');
+          }
           await loadEmployees();
         } else {
           document.getElementById('adminUsers').classList.add('hidden');
