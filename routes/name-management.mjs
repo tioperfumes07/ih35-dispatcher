@@ -162,7 +162,17 @@ async function qboUpdateCustomerName(qboGet, qboPost, id, newName) {
       c = await fetchC();
       return await tryPost();
     }
-    throw e;
+    try {
+      return await qboPost('customer', {
+        sparse: true,
+        Id: c.Id,
+        SyncToken: c.SyncToken,
+        DisplayName: nm,
+        PrintOnCheckName: nm
+      });
+    } catch (e2) {
+      throw e2;
+    }
   }
 }
 
@@ -212,6 +222,7 @@ export function mountNameManagementRoutes(app, deps) {
     readErp,
     writeErp,
     qboConfigured,
+    readQbo,
     logError,
     maintAuthUserLabel,
     requireErpWriteOrAdmin,
@@ -295,7 +306,7 @@ export function mountNameManagementRoutes(app, deps) {
           inQbo: true,
           inSamsara: false,
           inErp: counts.workOrderLines + counts.fuelDrafts > 0,
-          nameMismatch: mismatch || counts.workOrderLines > 0,
+          nameMismatch: mismatch,
           counts
         };
       });
