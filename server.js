@@ -7599,7 +7599,7 @@ app.post('/api/reports/export-table', async (req, res) => {
       };
       const lines = [labels.map(esc).join(',')];
       for (const row of rows) {
-        lines.push(keys.map(k => esc(row[k])).join(','));
+        lines.push(keys.map(k => esc(formatReportPdfCellValue(row[k]))).join(','));
       }
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${base}.csv"`);
@@ -7611,7 +7611,7 @@ app.post('/api/reports/export-table', async (req, res) => {
       const labels = columns.map(c => String(c.label || c.key || ''));
       const aoa = [labels];
       for (const row of rows) {
-        aoa.push(keys.map(k => row[k]));
+        aoa.push(keys.map(k => formatReportPdfCellValue(row[k])));
       }
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(aoa);

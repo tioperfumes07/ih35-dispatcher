@@ -10,18 +10,54 @@
     const d = new Date();
     return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
   }
+  /** Matches server `formatIsoDateShortPlain` / `printDocuments.js` (used when global not on page). */
+  function formatIsoDateShortPlainInline(iso) {
+    if (typeof window.formatIsoDateShortPlain === 'function') return window.formatIsoDateShortPlain(iso);
+    const raw = String(iso == null ? '' : iso).trim();
+    const s = raw.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return raw || '';
+    try {
+      const d = new Date(s + 'T12:00:00');
+      if (!Number.isFinite(d.getTime())) return s;
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (_) {
+      return s;
+    }
+  }
+
+  /** ISO / US-style calendar values → short locale label for CSV & Excel; pass through otherwise. */
+  function formatExportCell(value) {
+    if (value == null || value === '') return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'boolean') return value;
+    const raw = String(value).trim();
+    if (!raw) return '';
+    const isoM = raw.match(/^(\d{4}-\d{2}-\d{2})(?:T|[\s+-]|$)/);
+    if (isoM) return formatIsoDateShortPlainInline(isoM[1]);
+    const us = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s|$)/);
+    if (us) {
+      const mo = parseInt(us[1], 10);
+      const da = parseInt(us[2], 10);
+      let yr = parseInt(us[3], 10);
+      if (yr < 100) yr += yr >= 70 ? 1900 : 2000;
+      const u = new Date(Date.UTC(yr, mo - 1, da));
+      if (Number.isNaN(u.getTime())) return raw;
+      if (u.getUTCFullYear() !== yr || u.getUTCMonth() !== mo - 1 || u.getUTCDate() !== da) return raw;
+      return formatIsoDateShortPlainInline(u.toISOString().slice(0, 10));
+    }
+    return raw;
+  }
+
   function generatedLabel() {
     const iso = new Date().toISOString();
-    if (typeof window.formatIsoDateShortPlain === 'function') {
-      const datePart = window.formatIsoDateShortPlain(iso);
-      const t = new Date(iso);
-      const tm =
-        typeof t.toLocaleTimeString === 'function'
-          ? t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-          : '';
-      return tm ? `${datePart} · ${tm}` : datePart;
-    }
-    return iso;
+    const datePart = formatIsoDateShortPlainInline(iso);
+    const t = new Date(iso);
+    const tm =
+      typeof t.toLocaleTimeString === 'function'
+        ? t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+        : '';
+    if (datePart && tm) return `${datePart} · ${tm}`;
+    return datePart || iso;
   }
   function escCsv(v) {
     const s = String(v ?? '');
@@ -92,9 +128,11 @@
 
       if (fmt === 'csv') {
         const lines = [labels.map(escCsv).join(',')];
-        for (const row of rows) lines.push(keys.map(k => escCsv(row[k])).join(','));
+        for (const row of rows) lines.push(keys.map(k => escCsv(formatExportCell(row[k]))).join(','));
         if (reportData.totals && Object.keys(reportData.totals).length) {
-          lines.push(keys.map((k, i) => (i === 0 ? 'Totals' : escCsv(reportData.totals[k] ?? ''))).join(','));
+          lines.push(
+            keys.map((k, i) => (i === 0 ? 'Totals' : escCsv(formatExportCell(reportData.totals[k] ?? '')))).join(',')
+          );
         }
         const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -119,19 +157,24 @@
           [],
           labels
         ];
-        const dataRows = rows.map(row => keys.map(k => row[k]));
-        const totalRow = keys.map((k, i) => (i === 0 ? 'Totals' : reportData.totals?.[k] ?? ''));
+        const dataRows = rows.map(row => keys.map(k => formatExportCell(row[k])));
+        const totalRow = keys.map((k, i) => (i === 0 ? 'Totals' : formatExportCell(reportData.totals?.[k] ?? '')));
         const aoa = hdr.concat(dataRows).concat(reportData.totals && Object.keys(reportData.totals).length ? [totalRow] : []);
         const ws = XLSX.utils.aoa_to_sheet(aoa);
         try {
           ws['!views'] = [{ state: 'frozen', ySplit: 6, topLeftCell: 'A7', activeCell: 'A7' }];
         } catch (_) {}
         XLSX.utils.book_append_sheet(wb, ws, 'Report data');
-        const totAoa = [['Metric', 'Value']].concat(Object.entries(reportData.totals || {}).map(([k, v]) => [k, v]));
+        const totAoa = [['Metric', 'Value']].concat(
+          Object.entries(reportData.totals || {}).map(([k, v]) => [k, formatExportCell(v)])
+        );
         if (reportData.totals && Object.keys(reportData.totals).length) {
           XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(totAoa), 'Totals summary');
         }
-        const filt = Object.entries(options.filtersApplied || reportData.filters || {}).map(([k, v]) => [k, v]);
+        const filt = Object.entries(options.filtersApplied || reportData.filters || {}).map(([k, v]) => [
+          k,
+          formatExportCell(v)
+        ]);
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Filter', 'Value']].concat(filt)), 'Filters applied');
         XLSX.writeFile(wb, xlsxName);
         return;
