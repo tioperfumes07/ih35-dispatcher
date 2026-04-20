@@ -2922,7 +2922,7 @@
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
               <button type="button" class="acct-board-action-btn" onclick="erpNewExpense()">Expense</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpNewRepairExpense()">Repair expense</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('repair-expense')">Repair expense</button>
             </div>
             <div class="acct-board-table-wrap">
               <table class="acct-board-mini-table" aria-label="Recent expenses">
@@ -2950,8 +2950,8 @@
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenRepairBill()">Repair bill</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Driver bill</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-driver-bill')">Vendor bill</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('driver-bill')">Driver bill</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-bill')">Vendor bill</button>
             </div>
             <div class="acct-board-table-wrap">
               <table class="acct-board-mini-table" aria-label="Recent bills">
@@ -6294,6 +6294,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
   <script src="/js/erp-export-util.js"></script>
+  <script src="/js/erp-report-filter-panel.js"></script>
   <script src="/js/erp-reports-catalog.js"></script>
   <script>
     let vehicles = [];
@@ -8315,14 +8316,14 @@
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;)">Fuel expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewExpense()">Expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewRepairExpense()">Repair expense</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;repair-expense&quot;)">Repair expense</button>';
         const billsBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-bill&quot;)">Fuel bill</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenRepairBill()">Repair bill</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenMultiBillsModal()">Multiple bills</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-driver-bill&quot;)">Driver bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-driver-bill&quot;)">Vendor bill</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;driver-bill&quot;)">Driver bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-bill&quot;)">Vendor bill</button>';
         const billPayBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewPayBills()">Bill payment</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
@@ -8606,25 +8607,11 @@
     }
 
     function erpNewRepairExpense() {
-      erpOpenDedicatedAccountingForm('standard-expense');
-      requestAnimationFrame(() => {
-        const svc = document.getElementById('apServiceSearchInput');
-        if (svc) {
-          svc.value = 'Repair';
-          if (typeof resolveApServiceSearch === 'function') resolveApServiceSearch();
-        }
-      });
+      erpOpenDedicatedAccountingForm('repair-expense');
     }
 
     function erpOpenRepairBill() {
-      erpOpenDedicatedAccountingForm('maintenance-bill');
-      requestAnimationFrame(() => {
-        const svc = document.getElementById('apServiceSearchInput');
-        if (svc) {
-          svc.value = 'Repair';
-          if (typeof resolveApServiceSearch === 'function') resolveApServiceSearch();
-        }
-      });
+      erpOpenDedicatedAccountingForm('repair-bill');
     }
 
     function erpNewPayBills() {
@@ -9550,10 +9537,10 @@
         'maintenance-bill': 'accounting-maintenance-bill-new',
         'fuel-bill': 'accounting-fuel-bill-new',
         'vendor-driver-bill': 'accounting-vendor-driver-bill-new',
-        'repair-expense': 'accounting-expense-new',
-        'repair-bill': 'accounting-bill-new',
-        'driver-bill': 'accounting-vendor-driver-bill-new',
-        'vendor-bill': 'accounting-bill-new',
+        'repair-expense': 'accounting-repair-expense-new',
+        'repair-bill': 'accounting-repair-bill-new',
+        'driver-bill': 'accounting-driver-bill-new',
+        'vendor-bill': 'accounting-vendor-bill-new',
         'check-expense': 'accounting-expense-new',
         'vendor-credit-bill': 'accounting-bill-new',
         'item-receipt-expense': 'accounting-expense-new',
@@ -9722,7 +9709,11 @@
         'accounting-maintenance-bill-new': 'maintenance-bill',
         'accounting-fuel-expense-new': 'fuel-expense',
         'accounting-fuel-bill-new': 'fuel-bill',
-        'accounting-vendor-driver-bill-new': 'vendor-driver-bill'
+        'accounting-vendor-driver-bill-new': 'vendor-driver-bill',
+        'accounting-repair-expense-new': 'repair-expense',
+        'accounting-repair-bill-new': 'repair-bill',
+        'accounting-driver-bill-new': 'driver-bill',
+        'accounting-vendor-bill-new': 'vendor-bill'
       };
       if (erpDedicatedHashToMode[section]) {
         openSectionByName('accounting');
@@ -10706,18 +10697,31 @@
       if (!listEl) return;
       const payload = __maintQboSyncPayloadCache;
       const alerts = payload && Array.isArray(payload.alerts) ? payload.alerts : [];
-      if (!alerts.length) {
+      const r = (window.__acctBoardDateFilters && window.__acctBoardDateFilters.qboerr) || {};
+      function inQboErrWin(a) {
+        if (!r.from && !r.to) return true;
+        const raw = a && (a.createdAt || a.ts || a.time || a.at || '');
+        const d = String(raw).slice(0, 10);
+        if (!d) return true;
+        if (r.from && d < r.from) return false;
+        if (r.to && d > r.to) return false;
+        return true;
+      }
+      const filtered = alerts.length ? alerts.filter(inQboErrWin) : [];
+      const rc = document.getElementById('ab_qbo_rcount');
+      if (rc) rc.textContent = String(filtered.length) + ' records';
+      if (!filtered.length) {
         listEl.innerHTML = '';
         if (moreEl) moreEl.classList.add('hidden');
         return;
       }
-      const lines = alerts.slice(0, 3).map(a => {
+      const lines = filtered.slice(0, 3).map(a => {
         const t = String(a.title || a.code || 'Notice').trim();
         const esc = t.length > 120 ? t.slice(0, 117) + '…' : t;
         return `<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(esc)}</div>`;
       });
       listEl.innerHTML = lines.join('');
-      if (moreEl) moreEl.classList.toggle('hidden', alerts.length <= 3);
+      if (moreEl) moreEl.classList.toggle('hidden', filtered.length <= 3);
     }
 
     function paintAcctSidebarConnections() {
@@ -19419,14 +19423,26 @@
 
     function renderAcctBoardMiniTables() {
       const vendorName = id => cacheVendors().find(v => v.qboId === id)?.name || id || '';
+      const df = window.__acctBoardDateFilters || {};
+      function inWin(iso, key) {
+        const r = df[key] || {};
+        if (!r.from && !r.to) return true;
+        const d = String(iso || '').slice(0, 10);
+        if (!d) return true;
+        if (r.from && d < r.from) return false;
+        if (r.to && d > r.to) return false;
+        return true;
+      }
       const exBody = document.getElementById('acctBoardRecentExpBody');
       if (exBody) {
         const items = [];
         (erp.apTransactions || []).forEach(ap => {
           if (String(ap.txnType || '').toLowerCase() !== 'expense') return;
+          const iso = String(ap.txnDate || ap.createdAt || '').slice(0, 10) || '';
           const t = new Date(ap.txnDate || ap.createdAt || 0).getTime() || 0;
           items.push({
             t,
+            iso,
             row: `<tr>
               <td>${escapeHtml(String(ap.txnDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(String(ap.txnType || '').toUpperCase())}</td>
@@ -19440,9 +19456,11 @@
           if (wo.voided) return;
           if (String(wo.txnType || '').toLowerCase() !== 'expense') return;
           const tot = (wo.lines || []).reduce((s, l) => s + (Number(l.amount) || 0), 0);
+          const iso = String(wo.serviceDate || wo.createdAt || wo.date || '').slice(0, 10) || '';
           const t = new Date(wo.serviceDate || wo.createdAt || wo.date || 0).getTime() || 0;
           items.push({
             t,
+            iso,
             row: `<tr>
               <td>${escapeHtml(String(wo.serviceDate || '').slice(0, 10) || '—')}</td>
               <td>WO ${escapeHtml(String(wo.txnType || '').toUpperCase())}</td>
@@ -19452,9 +19470,12 @@
             </tr>`
           });
         });
-        items.sort((a, b) => b.t - a.t);
+        const fItems = items.filter(x => inWin(x.iso, 'expenses'));
+        fItems.sort((a, b) => b.t - a.t);
+        const rc = document.getElementById('ab_exp_rcount');
+        if (rc) rc.textContent = String(fItems.length) + ' records';
         exBody.innerHTML =
-          items.slice(0, 5).map(x => x.row).join('') ||
+          fItems.slice(0, 5).map(x => x.row).join('') ||
           '<tr><td colspan="5" class="mini-note">No recent expenses.</td></tr>';
       }
       const billBody = document.getElementById('acctBoardRecentBillsBody');
@@ -19462,9 +19483,11 @@
         const items = [];
         (erp.apTransactions || []).forEach(ap => {
           if (String(ap.txnType || '').toLowerCase() !== 'bill') return;
+          const iso = String(ap.txnDate || ap.createdAt || '').slice(0, 10) || '';
           const t = new Date(ap.txnDate || ap.createdAt || 0).getTime() || 0;
           items.push({
             t,
+            iso,
             row: `<tr>
               <td>${escapeHtml(String(ap.txnDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(vendorName(ap.qboVendorId))}</td>
@@ -19479,9 +19502,11 @@
           if (wo.voided) return;
           if (String(wo.txnType || '').toLowerCase() !== 'bill') return;
           const tot = (wo.lines || []).reduce((s, l) => s + (Number(l.amount) || 0), 0);
+          const iso = String(wo.serviceDate || wo.createdAt || wo.date || '').slice(0, 10) || '';
           const t = new Date(wo.serviceDate || wo.createdAt || wo.date || 0).getTime() || 0;
           items.push({
             t,
+            iso,
             row: `<tr>
               <td>${escapeHtml(String(wo.serviceDate || '').slice(0, 10) || '—')}</td>
               <td>${escapeHtml(vendorName(wo.qboVendorId))}</td>
@@ -19492,25 +19517,36 @@
             </tr>`
           });
         });
-        items.sort((a, b) => b.t - a.t);
+        const fItems = items.filter(x => inWin(x.iso, 'bills'));
+        fItems.sort((a, b) => b.t - a.t);
+        const rc = document.getElementById('ab_bill_rcount');
+        if (rc) rc.textContent = String(fItems.length) + ' records';
         billBody.innerHTML =
-          items.slice(0, 5).map(x => x.row).join('') ||
+          fItems.slice(0, 5).map(x => x.row).join('') ||
           '<tr><td colspan="6" class="mini-note">No recent bills.</td></tr>';
       }
       const payBody = document.getElementById('acctBoardRecentPayBody');
       if (payBody) {
         const log = (erp.qboBillPaymentLog || []).slice().reverse();
-        const rows = log.slice(0, 5).map(e => {
+        const payRows = log.map(e => {
+          const iso = String(e.txnDate || '').slice(0, 10) || '';
           const st = e.reversedAt ? 'reversed' : String(e.qboSyncStatus || e.status || 'posted');
-          return `<tr>
+          return {
+            iso,
+            row: `<tr>
             <td>${escapeHtml(String(e.txnDate || '').slice(0, 10) || '—')}</td>
             <td>${escapeHtml(String(e.vendorName || '—'))}</td>
             <td>${escapeHtml(String(e.qboBillPaymentId || e.docNumber || '—'))}</td>
             <td class="num">${escapeHtml(Number(e.totalAmt || 0).toFixed(2))}</td>
             <td>${escapeHtml(String(e.payType || '—'))}</td>
             <td>${escapeHtml(st)}</td>
-          </tr>`;
+          </tr>`
+          };
         });
+        const fPay = payRows.filter(x => inWin(x.iso, 'payments'));
+        const rc = document.getElementById('ab_pay_rcount');
+        if (rc) rc.textContent = String(fPay.length) + ' records';
+        const rows = fPay.slice(0, 5).map(x => x.row);
         payBody.innerHTML =
           rows.join('') || '<tr><td colspan="6" class="mini-note">No bill payments logged yet.</td></tr>';
       }
