@@ -265,6 +265,24 @@ export function mountReportsRestApi(app, deps) {
     return resolveReportDatasetContext(deps, query, datasetId);
   }
 
+  async function dotAuditFleetCtx() {
+    let fleetByUnit = {};
+    try {
+      const snap = await fetchTrackedFleetSnapshot();
+      for (const v of snap.enrichedVehicles || []) {
+        const name = String(v.name || '').trim();
+        if (!name) continue;
+        fleetByUnit[name] = {
+          ymm: [v.year, v.make, v.model].filter(Boolean).join(' '),
+          odometerMiles: v.odometerMiles != null ? v.odometerMiles : null
+        };
+      }
+    } catch (_) {
+      fleetByUnit = {};
+    }
+    return { fleetByUnit };
+  }
+
   for (const [pathSuffix, datasetId] of TABULAR_PATHS) {
     app.get(`/api/reports/${pathSuffix}`, async (req, res) => {
       try {
@@ -375,7 +393,8 @@ export function mountReportsRestApi(app, deps) {
       const unitId = String(req.params.unitId || '').trim();
       if (!unitId) return res.status(400).json({ error: 'unitId required' });
       const merged = erp.companyProfile && typeof erp.companyProfile === 'object' ? erp.companyProfile : {};
-      const data = await buildDotVehicleAuditV1(erp, unitId, req.query.startDate, req.query.endDate, merged, req.query);
+      const dotCtx = await dotAuditFleetCtx();
+      const data = await buildDotVehicleAuditV1(erp, unitId, req.query.startDate, req.query.endDate, merged, req.query, dotCtx);
       res.json(data);
     } catch (error) {
       logError?.('api/reports/dot/vehicle-audit', error);
@@ -439,12 +458,13 @@ export function mountReportsRestApi(app, deps) {
         }
         unitIds = [...s].sort((a, b) => a.localeCompare(b));
       }
+      const dotCtx = await dotAuditFleetCtx();
       const vehicles = [];
       for (const u of unitIds.slice(0, 120)) {
         try {
           vehicles.push({
             unitId: u,
-            audit: await buildDotVehicleAuditV1(erp, u, req.query.startDate, req.query.endDate, merged, req.query)
+            audit: await buildDotVehicleAuditV1(erp, u, req.query.startDate, req.query.endDate, merged, req.query, dotCtx)
           });
         } catch (e) {
           vehicles.push({ unitId: u, error: e?.message || String(e) });

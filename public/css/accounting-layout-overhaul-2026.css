@@ -458,3 +458,22 @@ body.erp-maintenance #erpApp.erp-sidebar-collapsed .erp-module-sidebar {
   min-width: 52px !important;
   max-width: 52px !important;
 }
+
+/* Expense / bill history + payment log: first column dates readable */
+body.erp-maintenance #acct-expense-history .st-settlement th:nth-child(1),
+body.erp-maintenance #acct-expense-history .st-settlement td:nth-child(1) {
+  min-width: 96px !important;
+  white-space: nowrap !important;
+}
+
+body.erp-maintenance .erp-bp-log-table th:first-child,
+body.erp-maintenance .erp-bp-log-table td:first-child {
+  min-width: 96px !important;
+  white-space: nowrap !important;
+}
+
+body.erp-maintenance #acct-fuel-expense .fuel-exp-table th:nth-child(1),
+body.erp-maintenance #acct-fuel-expense .fuel-exp-table td:nth-child(1) {
+  min-width: 96px !important;
+  white-space: nowrap !important;
+}

@@ -104,7 +104,7 @@ router.get('/api/reports/dot-audit/:unit', (req, res) => {
     const unit = String(req.params.unit || '').trim();
     if (!unit) return res.status(400).json({ ok: false, error: 'unit required' });
     const cp = erp.companyProfile && typeof erp.companyProfile === 'object' ? erp.companyProfile : {};
-    const data = buildDotAuditJson(erp, unit, req.query.startDate, req.query.endDate, cp);
+    const data = buildDotAuditJson(erp, unit, req.query.startDate, req.query.endDate, cp, { ...req.query });
     res.json({ ok: true, data });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message || String(e) });

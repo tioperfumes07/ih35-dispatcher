@@ -164,8 +164,8 @@
       '<div class="erp-acct-workflow-h">Lines</div>' +
       '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table" id="jeTable">' +
       '<thead><tr><th>Account</th><th>Description</th><th class="num">Debit</th><th class="num">Credit</th><th>Name</th><th>Class</th></tr></thead><tbody>' +
-      '<tr><td><input class="qb-in" placeholder="Expense" disabled /></td><td><input class="qb-in je-desc" value="Line 1" /></td><td><input class="qb-in je-d num" inputmode="decimal" value="100.00" /></td><td><input class="qb-in je-c num" inputmode="decimal" value="" /></td><td><input class="qb-in" disabled placeholder="—" /></td><td><input class="qb-in" disabled placeholder="—" /></td></tr>' +
-      '<tr><td><input class="qb-in" placeholder="Bank" disabled /></td><td><input class="qb-in je-desc" value="Line 2" /></td><td><input class="qb-in je-d num" inputmode="decimal" value="" /></td><td><input class="qb-in je-c num" inputmode="decimal" value="100.00" /></td><td><input class="qb-in" disabled placeholder="—" /></td><td><input class="qb-in" disabled placeholder="—" /></td></tr>' +
+      '<tr><td><input class="qb-in" placeholder="Expense" disabled /></td><td><input class="qb-in je-desc" value="" placeholder="Description" /></td><td><input class="qb-in je-d num" inputmode="decimal" value="" placeholder="0.00" /></td><td><input class="qb-in je-c num" inputmode="decimal" value="" placeholder="0.00" /></td><td><input class="qb-in" disabled placeholder="—" /></td><td><input class="qb-in" disabled placeholder="—" /></td></tr>' +
+      '<tr><td><input class="qb-in" placeholder="Bank" disabled /></td><td><input class="qb-in je-desc" value="" placeholder="Description" /></td><td><input class="qb-in je-d num" inputmode="decimal" value="" placeholder="0.00" /></td><td><input class="qb-in je-c num" inputmode="decimal" value="" placeholder="0.00" /></td><td><input class="qb-in" disabled placeholder="—" /></td><td><input class="qb-in" disabled placeholder="—" /></td></tr>' +
       '</tbody></table></div>' +
       '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">' +
       '<button type="button" class="erp-acct-btn erp-acct-btn--muted" id="jeAddLine">Add line</button>' +
@@ -424,6 +424,9 @@
     if (typeof global.erpCloseDedicatedFormModal === 'function')
       global.erpCloseDedicatedFormModal({ force: true });
 
+    const acctBtn = document.querySelector('#erpIconNav .nav-btn[data-section="accounting"]');
+    if (typeof global.openSection === 'function') global.openSection('accounting', acctBtn);
+
     const mount = document.getElementById('erpDedicatedFormModalBody');
     const modal = document.getElementById('erpDedicatedFormModal');
     if (!mount || !modal) return;
@@ -504,5 +507,261 @@
         if (cnt) cnt.textContent = 'Applied';
       });
     });
+  };
+
+  function updateExphBarCount() {
+    const sumEl = document.getElementById('expHistSummary');
+    const cnt = document.getElementById('exph_df_rcount');
+    if (!cnt) return;
+    const t = sumEl ? String(sumEl.textContent || '').trim() : '';
+    if (!t) {
+      cnt.textContent = '—';
+      return;
+    }
+    const m = t.match(/^(\d+)\s+filtered/);
+    cnt.textContent = m ? m[1] + ' records' : t.slice(0, 56);
+  }
+
+  function syncExphBarFromInputs() {
+    const from = document.getElementById('expHistDateFrom');
+    const to = document.getElementById('expHistDateTo');
+    const bf = document.getElementById('exph_df_from');
+    const bt = document.getElementById('exph_df_to');
+    if (bf && from) bf.value = from.value || '';
+    if (bt && to) bt.value = to.value || '';
+  }
+
+  global.erpSyncExpenseHistoryDateBarFromInputs = function erpSyncExpenseHistoryDateBarFromInputs() {
+    syncExphBarFromInputs();
+    updateExphBarCount();
+  };
+
+  global.erpInitExpenseHistoryDateBar = function erpInitExpenseHistoryDateBar() {
+    const host = document.getElementById('acctExpHistDateBarHost');
+    if (!host || host.getAttribute('data-erp-df-mounted')) return;
+    host.setAttribute('data-erp-df-mounted', '1');
+    host.innerHTML = renderDateBarHtml('exph_df', '');
+    const bar = host.firstElementChild;
+    syncExphBarFromInputs();
+    const apply = () => {
+      const r = readBar('exph_df');
+      const from = document.getElementById('expHistDateFrom');
+      const to = document.getElementById('expHistDateTo');
+      if (from) from.value = r.from;
+      if (to) to.value = r.to;
+      if (typeof global.renderExpenseHistory === 'function') global.renderExpenseHistory();
+      updateExphBarCount();
+    };
+    wireChips(bar, apply);
+    const fromIn = document.getElementById('expHistDateFrom');
+    const toIn = document.getElementById('expHistDateTo');
+    const syncBack = () => {
+      syncExphBarFromInputs();
+      updateExphBarCount();
+    };
+    if (fromIn) fromIn.addEventListener('change', syncBack);
+    if (toIn) toIn.addEventListener('change', syncBack);
+    updateExphBarCount();
+  };
+
+  function syncBpLogBarFromInputs() {
+    const from = document.getElementById('bpLogFrom');
+    const to = document.getElementById('bpLogTo');
+    const bf = document.getElementById('bplog_df_from');
+    const bt = document.getElementById('bplog_df_to');
+    if (bf && from) bf.value = from.value || '';
+    if (bt && to) bt.value = to.value || '';
+  }
+
+  function updateBpLogBarCount() {
+    const st = document.getElementById('bpLogStatus');
+    const cnt = document.getElementById('bplog_df_rcount');
+    if (!cnt) return;
+    const t = st ? String(st.textContent || '').trim() : '';
+    if (!t) {
+      cnt.textContent = '—';
+      return;
+    }
+    const m = t.match(/(\d+)\s+payment/);
+    cnt.textContent = m ? m[1] + ' records' : t.slice(0, 48);
+  }
+
+  global.erpSyncBpPaymentLogDateBarFromInputs = function erpSyncBpPaymentLogDateBarFromInputs() {
+    syncBpLogBarFromInputs();
+    updateBpLogBarCount();
+  };
+
+  global.erpInitBpPaymentLogDateBar = function erpInitBpPaymentLogDateBar() {
+    const host = document.getElementById('acctBpLogDateBarHost');
+    if (!host || host.getAttribute('data-erp-df-mounted')) return;
+    host.setAttribute('data-erp-df-mounted', '1');
+    host.innerHTML = renderDateBarHtml('bplog_df', '');
+    const bar = host.firstElementChild;
+    syncBpLogBarFromInputs();
+    const apply = () => {
+      const r = readBar('bplog_df');
+      const from = document.getElementById('bpLogFrom');
+      const to = document.getElementById('bpLogTo');
+      if (from) from.value = r.from;
+      if (to) to.value = r.to;
+      const run = global.loadAccountingBillPaymentLog;
+      if (typeof run === 'function') {
+        Promise.resolve(run()).then(() => updateBpLogBarCount());
+      } else updateBpLogBarCount();
+    };
+    wireChips(bar, apply);
+    const fromIn = document.getElementById('bpLogFrom');
+    const toIn = document.getElementById('bpLogTo');
+    const syncBack = () => {
+      syncBpLogBarFromInputs();
+      updateBpLogBarCount();
+    };
+    if (fromIn) fromIn.addEventListener('change', syncBack);
+    if (toIn) toIn.addEventListener('change', syncBack);
+    updateBpLogBarCount();
+  };
+
+  global.erpUpdateFuelLedgerDateBarCount = function erpUpdateFuelLedgerDateBarCount(n) {
+    const cnt = document.getElementById('fuel_df_rcount');
+    if (!cnt) return;
+    const num = Number(n);
+    cnt.textContent = Number.isFinite(num) && num >= 0 ? num + ' records' : '—';
+  };
+
+  function syncFuelLedgerBarFromInputs() {
+    const from = document.getElementById('fuelExpFrom');
+    const to = document.getElementById('fuelExpTo');
+    const bf = document.getElementById('fuel_df_from');
+    const bt = document.getElementById('fuel_df_to');
+    if (bf && from) bf.value = from.value || '';
+    if (bt && to) bt.value = to.value || '';
+  }
+
+  global.erpSyncFuelLedgerDateBarFromInputs = function erpSyncFuelLedgerDateBarFromInputs() {
+    syncFuelLedgerBarFromInputs();
+  };
+
+  global.erpInitFuelLedgerDateBar = function erpInitFuelLedgerDateBar() {
+    const host = document.getElementById('acctFuelLedgerDateBarHost');
+    if (!host || host.getAttribute('data-erp-df-mounted')) {
+      syncFuelLedgerBarFromInputs();
+      if (typeof global.renderFuelExpenseRows === 'function') global.renderFuelExpenseRows();
+      return;
+    }
+    host.setAttribute('data-erp-df-mounted', '1');
+    host.innerHTML = renderDateBarHtml('fuel_df', '');
+    syncFuelLedgerBarFromInputs();
+    const bar = host.firstElementChild;
+    const apply = () => {
+      const r = readBar('fuel_df');
+      const from = document.getElementById('fuelExpFrom');
+      const to = document.getElementById('fuelExpTo');
+      if (from) from.value = r.from;
+      if (to) to.value = r.to;
+      if (typeof global.renderFuelExpenseRows === 'function') global.renderFuelExpenseRows();
+    };
+    wireChips(bar, apply);
+    const fromIn = document.getElementById('fuelExpFrom');
+    const toIn = document.getElementById('fuelExpTo');
+    const syncBack = () => {
+      syncFuelLedgerBarFromInputs();
+    };
+    if (fromIn) fromIn.addEventListener('change', syncBack);
+    if (toIn) toIn.addEventListener('change', syncBack);
+    if (typeof global.renderFuelExpenseRows === 'function') global.renderFuelExpenseRows();
+  };
+
+  function updateRollbackImportBarCount(erpN, fuelN) {
+    const cnt = document.getElementById('rb_imp_rcount');
+    if (!cnt) return;
+    const err = String(global.__erpRollbackBatchLoadErr || '').trim();
+    if (err) {
+      cnt.textContent = '—';
+      return;
+    }
+    cnt.textContent = String(erpN) + ' ERP · ' + String(fuelN) + ' fuel';
+  }
+
+  global.erpUpdateRollbackImportDateBarCount = updateRollbackImportBarCount;
+
+  function applyRollbackImportDateFilter() {
+    const err = String(global.__erpRollbackBatchLoadErr || '').trim();
+    const erpAll = global.__erpRollbackErpBatchesCache || [];
+    const fuelAll = global.__erpRollbackFuelBatchesCache || [];
+    const r = readBar('rb_imp');
+    const fn = global.rollbackImportBatchInDateRange;
+    const useFilter =
+      !err && (r.from || r.to) && typeof fn === 'function' && (erpAll.length > 0 || fuelAll.length > 0);
+    const erpShow = useFilter ? erpAll.filter(b => fn(b, r.from, r.to)) : erpAll;
+    const fuelShow = useFilter ? fuelAll.filter(b => fn(b, r.from, r.to)) : fuelAll;
+    if (typeof global.renderErpImportBatchTableBodies === 'function') {
+      global.renderErpImportBatchTableBodies(erpShow, fuelShow, err || undefined);
+    }
+    updateRollbackImportBarCount(erpShow.length, fuelShow.length);
+  }
+
+  global.erpSyncRollbackImportDateBarFromInputs = function erpSyncRollbackImportDateBarFromInputs() {
+    applyRollbackImportDateFilter();
+  };
+
+  global.erpInitRollbackImportDateBar = function erpInitRollbackImportDateBar() {
+    const host = document.getElementById('acctRollbackImportDateBarHost');
+    if (!host || host.getAttribute('data-erp-df-mounted')) {
+      applyRollbackImportDateFilter();
+      return;
+    }
+    host.setAttribute('data-erp-df-mounted', '1');
+    host.innerHTML = renderDateBarHtml('rb_imp', '');
+    const bf = document.getElementById('rb_imp_from');
+    const bt = document.getElementById('rb_imp_to');
+    if (bf) bf.value = '';
+    if (bt) bt.value = '';
+    const bar = host.firstElementChild;
+    wireChips(bar, applyRollbackImportDateFilter);
+    applyRollbackImportDateFilter();
+  };
+
+  global.erpUpdateApSavedListDateBarCount = function erpUpdateApSavedListDateBarCount(n) {
+    const cnt = document.getElementById('ap_saved_df_rcount');
+    if (!cnt) return;
+    const num = Number(n);
+    cnt.textContent = Number.isFinite(num) && num >= 0 ? num + ' cards' : '—';
+  };
+
+  function syncApSavedBarFromHidden() {
+    const from = document.getElementById('apListDateFrom');
+    const to = document.getElementById('apListDateTo');
+    const bf = document.getElementById('ap_saved_df_from');
+    const bt = document.getElementById('ap_saved_df_to');
+    if (bf && from) bf.value = from.value || '';
+    if (bt && to) bt.value = to.value || '';
+  }
+
+  global.erpInitApSavedListDateBar = function erpInitApSavedListDateBar() {
+    const host = document.getElementById('acctApSavedDateBarHost');
+    if (!host || host.getAttribute('data-erp-df-mounted')) {
+      syncApSavedBarFromHidden();
+      if (typeof global.renderApTransactions === 'function') global.renderApTransactions();
+      return;
+    }
+    host.setAttribute('data-erp-df-mounted', '1');
+    host.innerHTML = renderDateBarHtml('ap_saved_df', '');
+    const bf = document.getElementById('ap_saved_df_from');
+    const bt = document.getElementById('ap_saved_df_to');
+    if (bf) bf.value = '';
+    if (bt) bt.value = '';
+    const fromH = document.getElementById('apListDateFrom');
+    const toH = document.getElementById('apListDateTo');
+    if (fromH) fromH.value = '';
+    if (toH) toH.value = '';
+    const bar = host.firstElementChild;
+    const apply = () => {
+      const r = readBar('ap_saved_df');
+      if (fromH) fromH.value = r.from;
+      if (toH) toH.value = r.to;
+      if (typeof global.renderApTransactions === 'function') global.renderApTransactions();
+    };
+    wireChips(bar, apply);
+    if (typeof global.renderApTransactions === 'function') global.renderApTransactions();
   };
 })(typeof window !== 'undefined' ? window : this);

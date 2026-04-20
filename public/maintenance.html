@@ -226,6 +226,7 @@
               <span class="erp-mb-badge" id="mbPreviewBadge">0 bills</span>
               <span class="erp-mb-preview-total" id="mbPreviewTotalStr">Total: $0.00</span>
             </div>
+            <div id="mbPreviewDateRange" class="mini-note erp-mb-preview-daterange" style="margin:0 0 8px;color:#6b7385;font-size:11px;line-height:1.45" aria-live="polite"></div>
             <div id="mbPastWarn" class="erp-mb-prev-warn hidden"></div>
             <div id="mbPreviewList" class="erp-mb-preview-list"></div>
             <div id="mbPreviewEmpty" class="erp-mb-prev-empty">Fill in the details on the left to preview your bills here.</div>
@@ -3439,6 +3440,9 @@
               </div>
             </div>
             <div class="panel-body">
+              <div id="acctApSavedDateBarHost" class="acct-ap-saved-df-host" aria-label="Saved transactions date range"></div>
+              <input type="hidden" id="apListDateFrom" value="" />
+              <input type="hidden" id="apListDateTo" value="" />
               <div class="mr-filter-bar erp-ops-filter-bar" style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap" role="group" aria-label="Filter saved bills">
                 <div style="min-width:200px;flex:1 1 220px">
                   <span class="qb-l">Series</span>
@@ -3631,6 +3635,7 @@
               </div>
             </div>
             <div class="panel-body form-stack">
+              <div id="acctBpLogDateBarHost" class="acct-bp-log-df-host" aria-label="Payment log date range"></div>
               <div class="mr-bp-hintrow" style="margin-bottom:10px">
                 <span class="mini-note" style="margin:0">Local log when you post above · date filters apply to export</span>
                 <span class="erp-help-tip">
@@ -3955,6 +3960,7 @@
                   </div>
                 </footer>
               </div>
+              <div id="acctFuelLedgerDateBarHost" class="acct-fuel-ledger-df-host" aria-label="Fuel ledger date range"></div>
               <div
                 class="mr-filter-bar erp-ops-filter-bar"
                 role="group"
@@ -4296,6 +4302,7 @@
               </div>
             </div>
             <div class="panel-body form-stack">
+              <div id="acctExpHistDateBarHost" class="acct-exp-hist-df-host" aria-label="Date range (unified)"></div>
               <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap">
                 <span class="mini-note" style="margin:0">Combined expense history</span>
                 <span class="erp-help-tip">
@@ -4445,6 +4452,7 @@
               <div id="erpRollbackPostedSection" class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">
                 <p class="mini-note" style="margin:0">Click <strong>Refresh</strong> to load posted QuickBooks rows and batch lists.</p>
               </div>
+              <div id="acctRollbackImportDateBarHost" class="acct-rollback-df-host" aria-label="Import batch date range"></div>
               <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:4px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <div class="panel-title" style="font-size:14px;margin:0">ERP import batches (maintenance &amp; AP files)</div>
@@ -5118,28 +5126,14 @@
           </div>
         </div>
         <div id="rep-integrity" class="reports-tab hidden">
-          <div class="panel erp-int-dash-panel">
-            <div class="panel-head erp-int-dash-panel__head">
-              <div class="erp-int-dash-panel__headtext">
-                <div class="panel-title">Integrity dashboard</div>
-                <p class="erp-int-dash-panel__sub">
-                  Anomaly monitoring across tires, drivers, fuel, maintenance, accidents, Samsara cross-checks, and predictive maintenance. Alerts are created when you save maintenance, work orders, or fuel; exports use the date range below.
-                </p>
-                <a class="erp-int-dash-panel__settingslink" href="/settings.html#integrity-thresholds" target="_blank" rel="noopener">Configure thresholds →</a>
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Integrity &amp; anomaly alerts</div>
+              <div class="mini-note" style="margin:0;color:var(--color-text-label)">
+                Alerts are created when you save maintenance, work orders, or fuel; exports use the date range below.
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(1100px,100%)">
-              <div class="erp-int-cat-tabs" role="tablist" aria-label="Integrity category">
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="all" aria-selected="true" onclick="erpIntegritySelectTab('all')">All</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="tires" aria-selected="false" onclick="erpIntegritySelectTab('tires')">Tires</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="drivers" aria-selected="false" onclick="erpIntegritySelectTab('drivers')">Drivers</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="accidents" aria-selected="false" onclick="erpIntegritySelectTab('accidents')">Accidents</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="fuel" aria-selected="false" onclick="erpIntegritySelectTab('fuel')">Fuel</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="maintenance" aria-selected="false" onclick="erpIntegritySelectTab('maintenance')">Maintenance</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="samsara" aria-selected="false" onclick="erpIntegritySelectTab('samsara')">Samsara</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="predictive" aria-selected="false" onclick="erpIntegritySelectTab('predictive')">Predictive</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="resolved" aria-selected="false" onclick="erpIntegritySelectTab('resolved')">Resolved</button>
-              </div>
               <div class="mr-filter-bar" style="margin:0 0 12px;flex-wrap:wrap;gap:10px;align-items:flex-end">
                 <div class="ap-exp-field">
                   <span class="qb-l">From</span>
@@ -5158,8 +5152,6 @@
                     <option value="accidents">Accidents</option>
                     <option value="fuel">Fuel</option>
                     <option value="maintenance">Maintenance</option>
-                    <option value="samsara">Samsara</option>
-                    <option value="predictive">Predictive</option>
                   </select>
                 </div>
                 <div class="ap-exp-field">
@@ -5183,7 +5175,7 @@
                 <button type="button" class="btn secondary" onclick="integrityExportReport('xlsx')">Excel export</button>
                 <button type="button" class="btn secondary" onclick="integrityExportReport('pdf')">PDF export</button>
               </div>
-              <div id="integrityDashKpi" class="erp-int-kpi-row mini-note" style="margin:0 0 10px"></div>
+              <div id="integrityDashKpi" class="mini-note" style="margin:0 0 10px"></div>
               <div id="repIntegrityBody" class="table-wrap erp-table-scroll" style="min-width:0"></div>
               <div id="integrityInvestigateHost" class="hidden" style="margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px">
                 <div class="panel-title" style="font-size:14px;margin-bottom:8px">Linked records</div>
@@ -9751,7 +9743,18 @@
         });
       }
       renderErpModuleSidebar(name);
-      if (name === 'accounting') requestAnimationFrame(() => syncAcctDashFromQboPayload());
+      if (name === 'accounting') {
+        requestAnimationFrame(() => {
+          syncAcctDashFromQboPayload();
+          const cur = String(location.hash || '')
+            .replace(/^#/, '')
+            .split('?')[0]
+            .split('&')[0];
+          if (cur === 'accounting' && typeof erpSyncAccountingTabHash === 'function') {
+            erpSyncAccountingTabHash('acct-transactions');
+          }
+        });
+      }
     }
 
     function openSectionByName(name) {
@@ -9791,6 +9794,41 @@
         openSectionByName('accounting');
         const sub = document.getElementById('acctFuelDdTrigger');
         openAccountingTab('acct-fuel-expense', sub);
+        return;
+      }
+      if (section === 'accounting-expense-history') {
+        openSectionByName('accounting');
+        openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'));
+        return;
+      }
+      if (section === 'accounting-bill-history') {
+        openSectionByName('accounting');
+        openAccountingTab('acct-bill-history', document.getElementById('acctBillHistTrigger'));
+        return;
+      }
+      if (section === 'accounting-maintenance' || section === 'accounting-ap-ledger') {
+        openSectionByName('accounting');
+        openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'));
+        return;
+      }
+      if (section === 'accounting-fuel-ledger') {
+        openSectionByName('accounting');
+        openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'));
+        return;
+      }
+      if (section === 'accounting-rollback' || section === 'accounting-imports') {
+        openSectionByName('accounting');
+        openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'));
+        return;
+      }
+      if (section === 'accounting-qbo-master' || section === 'accounting-quickbooks-master') {
+        openSectionByName('accounting');
+        openAccountingTab('acct-qbo', document.getElementById('acctQbDdTrigger'));
+        return;
+      }
+      if (section === 'accounting-payment-history') {
+        openSectionByName('accounting');
+        openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
         return;
       }
       if (section === 'accounting-bill-pay') {
@@ -9906,6 +9944,39 @@
 
     window.addEventListener('hashchange', applyNavHash);
 
+    /** Keep #… in sync when switching accounting subtabs (bookmark/share). Skips when a dedicated modal owns the shell. */
+    function erpSyncAccountingTabHash(tabId) {
+      const kind = String(window.__erpDedicatedModalKind || '').trim();
+      if (kind === 'billpay' || kind === 'ap' || kind === 'fuel' || kind === 'ledger-stub') return;
+      const map = {
+        'acct-transactions': 'accounting-maintenance',
+        'acct-expense-history': 'accounting-expense-history',
+        'acct-bill-history': 'accounting-bill-history',
+        'acct-fuel-expense': 'accounting-fuel-ledger',
+        'acct-qbo-rollback': 'accounting-rollback',
+        'acct-qbo': 'accounting-qbo-master',
+        'acct-bill-pay': 'accounting-payment-history'
+      };
+      const next = map[String(tabId || '')];
+      if (!next) return;
+      const cur = String(location.hash || '')
+        .replace(/^#/, '')
+        .split('?')[0]
+        .split('&')[0];
+      if (cur === next) return;
+      try {
+        const u = new URL(window.location.href);
+        u.hash = '#' + next;
+        history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+      } catch (_) {
+        try {
+          window.location.hash = next;
+        } catch (__) {
+          /* ignore */
+        }
+      }
+    }
+
     function openAccountingTab(id, btn) {
       if (id === 'acct-bill-pay') {
         const dm = document.getElementById('erpDedicatedFormModal');
@@ -9951,6 +10022,7 @@
         if (wl && !wl.querySelector('.wo-line')) addWoLine();
         syncApDocTitle();
         refreshApDocTotal();
+        if (typeof erpInitApSavedListDateBar === 'function') erpInitApSavedListDateBar();
         requestAnimationFrame(() => {
           document.getElementById('section-accounting')?.scrollTo(0, 0);
           window.dispatchEvent(new Event('resize'));
@@ -9968,8 +10040,13 @@
         }
         resetExpHistQboBanner();
         renderExpenseHistory();
+        if (typeof erpInitExpenseHistoryDateBar === 'function') erpInitExpenseHistoryDateBar();
       }
-      if (id === 'acct-qbo-rollback') loadErpImportBatchesUi();
+      if (id === 'acct-qbo-rollback') {
+        void loadErpImportBatchesUi().then(() => {
+          if (typeof erpInitRollbackImportDateBar === 'function') erpInitRollbackImportDateBar();
+        });
+      }
       if (id === 'acct-qbo') renderQboMaster();
       if (id === 'acct-bill-pay') {
         erpRefreshBillPayChrome();
@@ -9977,10 +10054,12 @@
         if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
         bpRefreshSelectionTotal();
         loadAccountingBillPaymentLog();
+        if (typeof erpInitBpPaymentLogDateBar === 'function') erpInitBpPaymentLogDateBar();
       }
       if (id === 'acct-fuel-expense') {
         bindFuelManualFormOnce();
         void loadFuelExpenseTab().then(() => {
+          if (typeof erpInitFuelLedgerDateBar === 'function') erpInitFuelLedgerDateBar();
           requestAnimationFrame(() => {
             const anchor = document.getElementById('fuelExpLedgerAnchor');
             if (!anchor) return;
@@ -9992,6 +10071,7 @@
           });
         });
       }
+      erpSyncAccountingTabHash(id);
       requestAnimationFrame(() => syncAcctDashFromQboPayload());
     }
 
@@ -14230,6 +14310,7 @@
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
         }
+        if (typeof erpUpdateFuelLedgerDateBarCount === 'function') erpUpdateFuelLedgerDateBarCount(0);
         return;
       }
 
@@ -14444,6 +14525,7 @@
         pagerHost.innerHTML = '';
         pagerHost.hidden = true;
       }
+      if (typeof erpUpdateFuelLedgerDateBarCount === 'function') erpUpdateFuelLedgerDateBarCount(filtered.length);
     }
 
     /**
@@ -14816,6 +14898,7 @@
       if (toEl) toEl.value = to.toISOString().slice(0, 10);
       if (fromEl) fromEl.value = from.toISOString().slice(0, 10);
       loadAccountingBillPaymentLog();
+      if (typeof erpSyncBpPaymentLogDateBarFromInputs === 'function') erpSyncBpPaymentLogDateBarFromInputs();
     }
 
     function bpFilteredBillPaymentLogEntries() {
@@ -14981,6 +15064,7 @@
         renderBpBillPaymentLogTable(entries);
         const extra = data.totalInErp != null ? ` · ${data.totalInErp} stored in ERP` : '';
         if (st) st.textContent = `${entries.length} payment(s)${extra}.`;
+        if (typeof erpSyncBpPaymentLogDateBarFromInputs === 'function') erpSyncBpPaymentLogDateBarFromInputs();
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
         if (tb) tb.innerHTML = '<tr><td colspan="8" class="mini-note">Failed to load.</td></tr>';
@@ -18366,6 +18450,8 @@
         if (badge) badge.textContent = '0 bills';
         if (totS) totS.textContent = 'Total: $0.00';
         if (hdr) hdr.textContent = 'TOTAL: $0.00';
+        const drEl = document.getElementById('mbPreviewDateRange');
+        if (drEl) drEl.textContent = '';
         return;
       }
       empty.classList.add('hidden');
@@ -18388,6 +18474,24 @@
           pw.textContent = `⚠ ${pastCount} bills have past dates. They will be created as historical records.`;
           pw.classList.remove('hidden');
         } else pw.classList.add('hidden');
+      }
+      const drEl = document.getElementById('mbPreviewDateRange');
+      if (drEl) {
+        const ds = rows.map(r => r.billDate).filter(Boolean);
+        if (ds.length) {
+          const fmtIso = d =>
+            new Date(String(d).slice(0, 10) + 'T12:00:00').toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
+          const a = String(ds[0]).slice(0, 10);
+          const b = String(ds[ds.length - 1]).slice(0, 10);
+          drEl.textContent =
+            a === b
+              ? `Bill dates: ${fmtIso(a)} · ${rows.length} bill(s)`
+              : `Bill dates: ${fmtIso(a)} — ${fmtIso(b)} · ${rows.length} bill(s)`;
+        } else drEl.textContent = '';
       }
       const mode = String(document.getElementById('mbAmtMode')?.value || 'same');
       const diff = mode === 'diff';
@@ -20331,6 +20435,82 @@
       }
     }
 
+    /** Client-side date window for import batch tables (rollback tab). ISO slice on importConfirmedAt. */
+    function rollbackImportBatchInDateRange(b, from, to) {
+      const fromS = String(from || '').trim();
+      const toS = String(to || '').trim();
+      if (!fromS && !toS) return true;
+      const d = String((b && b.importConfirmedAt) || '').slice(0, 10);
+      if (!d) return true;
+      if (fromS && d < fromS) return false;
+      if (toS && d > toS) return false;
+      return true;
+    }
+    window.rollbackImportBatchInDateRange = rollbackImportBatchInDateRange;
+
+    function renderErpImportBatchTableBodies(erpBatches, fuelBatches, batchLoadErr) {
+      const erpBody = document.getElementById('erpImportBatchesBody');
+      const fuelBody = document.getElementById('fuelImportBatchesBody');
+      if (!erpBody || !fuelBody) return;
+      if (batchLoadErr) {
+        erpBody.innerHTML = `<span class="mini-note">Could not load batches: ${escapeHtml(batchLoadErr)}</span>`;
+        fuelBody.innerHTML = '';
+        return;
+      }
+      if (!erpBatches.length) {
+        erpBody.innerHTML = '<span class="mini-note">No maintenance/AP import batches recorded yet.</span>';
+      } else {
+        erpBody.innerHTML = `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
+          <th>When</th><th>Kind</th><th>Batch id</th><th>Rows</th><th>Status</th><th></th>
+        </tr></thead><tbody>` +
+          erpBatches
+            .map(b => {
+              const undone = !!b.undoneAt;
+              return `<tr>
+              <td>${escapeHtml(b.importConfirmedAt || '')}</td>
+              <td>${escapeHtml(b.kind || '')}</td>
+              <td style="word-break:break-all">${escapeHtml(b.importBatchId || '')}</td>
+              <td>${escapeHtml(String(b.imported ?? ''))}</td>
+              <td>${undone ? 'Undone' : 'Active'}</td>
+              <td>${
+                undone
+                  ? '—'
+                  : `<button type="button" class="qb-btn-add" onclick="undoErpImportBatch(${JSON.stringify(String(b.kind || ''))}, ${JSON.stringify(String(b.importBatchId || ''))})">Undo import</button>`
+              }</td>
+            </tr>`;
+            })
+            .join('') +
+          '</tbody></table></div>';
+      }
+
+      if (!fuelBatches.length) {
+        fuelBody.innerHTML =
+          '<span class="mini-note">No fuel batches recorded. Confirm a fuel import on the <a href="/fuel.html">Fuel Board</a> first.</span>';
+      } else {
+        fuelBody.innerHTML = `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
+          <th>When</th><th>Batch id</th><th>Fuel</th><th>Relay</th><th>Status</th><th></th>
+        </tr></thead><tbody>` +
+          fuelBatches
+            .map(b => {
+              const undone = !!b.undoneAt;
+              return `<tr>
+              <td>${escapeHtml(b.importConfirmedAt || '')}</td>
+              <td style="word-break:break-all">${escapeHtml(b.importBatchId || '')}</td>
+              <td>${escapeHtml(String(b.savedFuel ?? ''))}</td>
+              <td>${escapeHtml(String(b.savedRelay ?? ''))}</td>
+              <td>${undone ? 'Undone' : 'Active'}</td>
+              <td>${
+                undone
+                  ? '—'
+                  : `<button type="button" class="qb-btn-add" onclick="undoFuelImportBatchFromMaint(${JSON.stringify(String(b.importBatchId || ''))})">Undo import</button>`
+              }</td>
+            </tr>`;
+            })
+            .join('') +
+          '</tbody></table></div>';
+      }
+    }
+
     async function loadErpImportBatchesUi() {
       const postedEl = document.getElementById('erpRollbackPostedSection');
       const erpBody = document.getElementById('erpImportBatchesBody');
@@ -20410,64 +20590,26 @@
       }
 
       const erpBatches = (batchPayload.erpImportBatches || []).slice().reverse();
-      if (batchLoadErr) {
-        erpBody.innerHTML = `<span class="mini-note">Could not load batches: ${escapeHtml(batchLoadErr)}</span>`;
-      } else if (!erpBatches.length) {
-        erpBody.innerHTML = '<span class="mini-note">No maintenance/AP import batches recorded yet.</span>';
-      } else {
-        erpBody.innerHTML = `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
-          <th>When</th><th>Kind</th><th>Batch id</th><th>Rows</th><th>Status</th><th></th>
-        </tr></thead><tbody>` +
-          erpBatches
-            .map(b => {
-              const undone = !!b.undoneAt;
-              return `<tr>
-              <td>${escapeHtml(b.importConfirmedAt || '')}</td>
-              <td>${escapeHtml(b.kind || '')}</td>
-              <td style="word-break:break-all">${escapeHtml(b.importBatchId || '')}</td>
-              <td>${escapeHtml(String(b.imported ?? ''))}</td>
-              <td>${undone ? 'Undone' : 'Active'}</td>
-              <td>${
-                undone
-                  ? '—'
-                  : `<button type="button" class="qb-btn-add" onclick="undoErpImportBatch(${JSON.stringify(String(b.kind || ''))}, ${JSON.stringify(String(b.importBatchId || ''))})">Undo import</button>`
-              }</td>
-            </tr>`;
-            })
-            .join('') +
-          '</tbody></table></div>';
-      }
-
       const fuelBatches = (batchPayload.fuelImportBatches || []).slice().reverse();
-      if (batchLoadErr) {
-        fuelBody.innerHTML = '';
-      } else if (!fuelBatches.length) {
-        fuelBody.innerHTML =
-          '<span class="mini-note">No fuel batches recorded. Confirm a fuel import on the <a href="/fuel.html">Fuel Board</a> first.</span>';
-      } else {
-        fuelBody.innerHTML = `<div class="table-wrap erp-table-scroll" style="min-width:0"><table style="min-width:520px;font-size:12px"><thead><tr>
-          <th>When</th><th>Batch id</th><th>Fuel</th><th>Relay</th><th>Status</th><th></th>
-        </tr></thead><tbody>` +
-          fuelBatches
-            .map(b => {
-              const undone = !!b.undoneAt;
-              return `<tr>
-              <td>${escapeHtml(b.importConfirmedAt || '')}</td>
-              <td style="word-break:break-all">${escapeHtml(b.importBatchId || '')}</td>
-              <td>${escapeHtml(String(b.savedFuel ?? ''))}</td>
-              <td>${escapeHtml(String(b.savedRelay ?? ''))}</td>
-              <td>${undone ? 'Undone' : 'Active'}</td>
-              <td>${
-                undone
-                  ? '—'
-                  : `<button type="button" class="qb-btn-add" onclick="undoFuelImportBatchFromMaint(${JSON.stringify(String(b.importBatchId || ''))})">Undo import</button>`
-              }</td>
-            </tr>`;
-            })
-            .join('') +
-          '</tbody></table></div>';
-      }
+      window.__erpRollbackErpBatchesCache = erpBatches;
+      window.__erpRollbackFuelBatchesCache = fuelBatches;
+      window.__erpRollbackBatchLoadErr = batchLoadErr;
+      const rbFrom = (document.getElementById('rb_imp_from')?.value || '').trim();
+      const rbTo = (document.getElementById('rb_imp_to')?.value || '').trim();
+      const erpShow =
+        !batchLoadErr && (rbFrom || rbTo)
+          ? erpBatches.filter(b => rollbackImportBatchInDateRange(b, rbFrom, rbTo))
+          : erpBatches;
+      const fuelShow =
+        !batchLoadErr && (rbFrom || rbTo)
+          ? fuelBatches.filter(b => rollbackImportBatchInDateRange(b, rbFrom, rbTo))
+          : fuelBatches;
+      renderErpImportBatchTableBodies(erpShow, fuelShow, batchLoadErr);
+      if (typeof erpUpdateRollbackImportDateBarCount === 'function')
+        erpUpdateRollbackImportDateBarCount(erpShow.length, fuelShow.length);
     }
+
+    window.renderErpImportBatchTableBodies = renderErpImportBatchTableBodies;
 
     async function saveAssetStatus() {
       if (!selectedUnit) return;
@@ -22745,6 +22887,29 @@
       renderTrackingBoard();
     }
 
+    function apSavedListDateKeyWo(r) {
+      return String((r && (r.serviceDate || r.date || r.createdAt)) || '')
+        .trim()
+        .slice(0, 10);
+    }
+
+    function apSavedListDateKeyAp(r) {
+      return String((r && (r.txnDate || r.billDate || r.createdAt)) || '')
+        .trim()
+        .slice(0, 10);
+    }
+
+    function apSavedListInDateRange(iso, from, to) {
+      const fromS = String(from || '').trim();
+      const toS = String(to || '').trim();
+      if (!fromS && !toS) return true;
+      const d = String(iso || '').trim().slice(0, 10);
+      if (!d) return false;
+      if (fromS && d < fromS) return false;
+      if (toS && d > toS) return false;
+      return true;
+    }
+
     function renderApTransactions() {
       const vendorName = id => cacheVendors().find(v => v.qboId === id)?.name || id || '';
       const itemName = id => cacheItems().find(v => v.qboId === id)?.name || id || '';
@@ -22752,9 +22917,13 @@
 
       mbPopulateSeriesSelects();
       const seriesF = String(document.getElementById('apSeriesFilter')?.value || '').trim();
+      const fromD = String(document.getElementById('apListDateFrom')?.value || '').trim();
+      const toD = String(document.getElementById('apListDateTo')?.value || '').trim();
       const wosAll = (erp.workOrders || []).slice().reverse();
-      const wos = seriesF ? wosAll.filter(r => String(r.recurringSeriesId || '') === seriesF) : wosAll;
-      const apRows = (erp.apTransactions || []).slice().reverse();
+      const wosSeries = seriesF ? wosAll.filter(r => String(r.recurringSeriesId || '') === seriesF) : wosAll;
+      const wos = wosSeries.filter(r => apSavedListInDateRange(apSavedListDateKeyWo(r), fromD, toD));
+      const apRowsAll = (erp.apTransactions || []).slice().reverse();
+      const apRows = apRowsAll.filter(r => apSavedListInDateRange(apSavedListDateKeyAp(r), fromD, toD));
 
       const woCards = wos.map(r => {
         const lines = r.lines || [];
@@ -22870,19 +23039,23 @@
       const pagerHost = document.getElementById('apListPagerHost');
       if (!apListEl) return;
       const pState = apTxnListPager;
-      const filterKey = `${seriesF}|${(erp.workOrders || []).length}|${apRows.length}`;
+      const filterKey = `${seriesF}|${fromD}|${toD}|${(erp.workOrders || []).length}|${(erp.apTransactions || []).length}`;
       if (pState.filterKey !== filterKey) {
         pState.page = 1;
       }
       pState.filterKey = filterKey;
       if (!cards.length) {
+        const dateFiltered = !!(fromD || toD);
         apListEl.innerHTML = seriesF
           ? 'No saved transactions for this series. Clear the Series filter to see all bills.'
-          : 'No maintenance expense transactions yet.';
+          : dateFiltered
+            ? 'No saved work orders or AP rows in this date range. Clear the date filter or choose another range.'
+            : 'No maintenance expense transactions yet.';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
         }
+        if (typeof erpUpdateApSavedListDateBarCount === 'function') erpUpdateApSavedListDateBarCount(0);
         return;
       }
       const ps = Math.max(1, Math.floor(Number(pState.pageSize)) || 10);
@@ -22907,6 +23080,7 @@
         pagerHost.innerHTML = '';
         pagerHost.hidden = true;
       }
+      if (typeof erpUpdateApSavedListDateBarCount === 'function') erpUpdateApSavedListDateBarCount(cards.length);
     }
 
     function localIsoDate(d) {
@@ -22953,38 +23127,6 @@
       }
     }
 
-    function syncIntegrityCatTabsFromSelects() {
-      const cat = String(document.getElementById('integrityDashCategory')?.value || 'all').toLowerCase();
-      const st = String(document.getElementById('integrityDashStatus')?.value || 'active').toLowerCase();
-      let tab = 'all';
-      if (st === 'reviewed') tab = 'resolved';
-      else if (cat && cat !== 'all') tab = cat;
-      window.__integrityDashTab = tab;
-      document.querySelectorAll('.erp-int-cat-tab[data-int-tab]').forEach(btn => {
-        const on = btn.getAttribute('data-int-tab') === tab;
-        btn.setAttribute('aria-selected', on ? 'true' : 'false');
-        btn.classList.toggle('erp-int-cat-tab--active', on);
-      });
-    }
-
-    function erpIntegritySelectTab(tab) {
-      window.__integrityDashTab = String(tab || 'all');
-      const catEl = document.getElementById('integrityDashCategory');
-      const stEl = document.getElementById('integrityDashStatus');
-      const t = window.__integrityDashTab;
-      if (t === 'resolved') {
-        if (catEl) catEl.value = 'all';
-        if (stEl) stEl.value = 'reviewed';
-      } else if (t === 'all') {
-        if (catEl) catEl.value = 'all';
-        if (stEl) stEl.value = 'active';
-      } else {
-        if (catEl) catEl.value = t;
-        if (stEl) stEl.value = 'active';
-      }
-      void loadIntegrityDashboard();
-    }
-
     async function loadIntegrityDashboard() {
       const fromEl = document.getElementById('integrityDashDateFrom');
       const toEl = document.getElementById('integrityDashDateTo');
@@ -22997,8 +23139,15 @@
       if (toEl && !toEl.value) toEl.value = localIsoDate(new Date());
       const start = String(fromEl?.value || '').trim();
       const end = String(toEl?.value || '').trim();
-      const cat = String(document.getElementById('integrityDashCategory')?.value || 'all').trim().toLowerCase();
-      const st = String(document.getElementById('integrityDashStatus')?.value || 'active').trim().toLowerCase();
+      const tab = String(window.__integrityDashTab || 'all');
+      let cat = 'all';
+      let st = 'active';
+      if (tab === 'resolved') {
+        st = 'reviewed';
+        cat = 'all';
+      } else if (tab !== 'all') {
+        cat = tab;
+      }
       const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
       const qs = new URLSearchParams();
       if (start) qs.set('startDate', start);
@@ -23036,15 +23185,11 @@
         const sess = window.__integrityDashSessionDismiss;
         const rows = rowsAll.filter(a => !sess.has(String(a.id || '')));
         const body = document.getElementById('repIntegrityBody');
-        if (!body) {
-          syncIntegrityCatTabsFromSelects();
-          return;
-        }
+        if (!body) return;
         if (!rows.length) {
           body.innerHTML =
             '<p class="mini-note" style="margin:0">No alerts for these filters (session-dismissed items stay hidden until you refresh the page).</p>';
           void refreshIntegrityNavBadges();
-          syncIntegrityCatTabsFromSelects();
           return;
         }
         const cards = rows
@@ -23085,7 +23230,6 @@
           .join('');
         body.innerHTML = cards;
         void refreshIntegrityNavBadges();
-        syncIntegrityCatTabsFromSelects();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
       }
@@ -23191,6 +23335,7 @@
       if (toEl) toEl.value = localIsoDate(end);
       if (fromEl) fromEl.value = localIsoDate(start);
       renderExpenseHistory();
+      if (typeof erpSyncExpenseHistoryDateBarFromInputs === 'function') erpSyncExpenseHistoryDateBarFromInputs();
     }
 
     function clearExpenseHistoryDates() {
@@ -23199,6 +23344,7 @@
       if (fromEl) fromEl.value = '';
       if (toEl) toEl.value = '';
       renderExpenseHistory();
+      if (typeof erpSyncExpenseHistoryDateBarFromInputs === 'function') erpSyncExpenseHistoryDateBarFromInputs();
     }
 
     function expenseHistoryStatusClass(kind, qboSyncStatus, displayLabel) {
