@@ -3791,6 +3791,19 @@
                           <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
+                          <span class="qb-l">Driver</span>
+                          <input type="hidden" id="fuelManualDriverId" value="" />
+                          <input
+                            id="fuelManualDriverSearch"
+                            class="qb-in"
+                            list="maintDriverOptions"
+                            placeholder="Select driver (optional)"
+                            autocomplete="off"
+                            oninput="resolveFuelManualDriverSearch()"
+                            onblur="resolveFuelManualDriverSearch()"
+                          />
+                        </div>
+                        <div class="ap-exp-field">
                           <span class="qb-l">Payment method</span>
                           <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
                           <input type="hidden" id="fuelManualPaymentMethodId" />
@@ -8857,6 +8870,7 @@
           ft('fuelManualLocation') ||
           ft('fuelManualPaymentMethodSearch') ||
           ft('fuelManualBankSearch') ||
+          ft('fuelManualDriverSearch') ||
           (document.getElementById('fuelManualClassSel')?.value || '').trim() ||
           totalNum > 0.005
         );
@@ -8914,6 +8928,7 @@
           apHdr('apLoadInvoiceNumber') ||
           apHdr('apVendorInvoiceNumber') ||
           apHdr('apInternalWorkOrderNumber') ||
+          apHdr('apErpDriverSearch') ||
           apHdr('apPaymentMethodSearch') ||
           apHdr('apBankAccountSearch') ||
           dueDirty ||
@@ -11363,6 +11378,13 @@
       hid.value = resolveDriverNameToId(inp.value);
     }
 
+    function resolveFuelManualDriverSearch() {
+      const inp = document.getElementById('fuelManualDriverSearch');
+      const hid = document.getElementById('fuelManualDriverId');
+      if (!inp || !hid) return;
+      hid.value = resolveDriverNameToId(inp.value);
+    }
+
     async function refreshIntegrityNavBadges() {
       try {
         const c = await j('/api/integrity/counts');
@@ -13113,7 +13135,9 @@
         'fuelManualPaymentMethodSearch',
         'fuelManualPaymentMethodId',
         'fuelManualBankSearch',
-        'fuelManualBankQboId'
+        'fuelManualBankQboId',
+        'fuelManualDriverSearch',
+        'fuelManualDriverId'
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
@@ -13187,6 +13211,9 @@
       resolveFuelManualVendor();
       resolveFuelManualPaymentMethod();
       resolveFuelManualBank();
+      resolveFuelManualDriverSearch();
+      const fuelDriverId = (document.getElementById('fuelManualDriverId')?.value || '').trim();
+      const fuelDriverName = (document.getElementById('fuelManualDriverSearch')?.value || '').trim();
       const hint = document.getElementById('fuelManualSaveHint');
       const unit = String(document.getElementById('fuelManualUnit')?.value || '').trim();
       const txnDate = String(document.getElementById('fuelManualDate')?.value || '').trim();
@@ -13268,6 +13295,7 @@
       const intWoH = String(document.getElementById('fuelManualInternalWo')?.value || '').trim();
       try {
         if (hint) hint.textContent = postToQbo ? 'Saving…' : 'Saving…';
+        clearMaintIntegrityInlinePanel();
         const savedIds = [];
         for (let i = 0; i < lines.length; i++) {
           const ln = lines[i];
@@ -13292,12 +13320,29 @@
           if (Number.isFinite(ppg) && ppg >= 0) payload.pricePerGallon = ppg;
           if (Number.isFinite(total) && total > 0) payload.totalCost = total;
           if (ln.lineDesc) payload.lineDescription = ln.lineDesc;
+          if (fuelDriverId) payload.driverId = fuelDriverId;
+          if (fuelDriverName) payload.driverName = fuelDriverName;
           const r = await j('/api/fuel/purchases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
             body: JSON.stringify(payload)
           });
           const purchase = r.purchase;
+          if (purchase && purchase.id) {
+            void postIntegrityCheckAfterSave({
+              recordType: 'fuel_purchase',
+              recordId: purchase.id,
+              unitId: purchase.unit || unit,
+              driverId: purchase.driverId || '',
+              driverName: purchase.driverName || '',
+              amount: Number(purchase.totalCost) || 0,
+              serviceType: 'Fuel',
+              date: purchase.txnDate || txnDate,
+              gallons: purchase.gallons,
+              pricePerGallon: purchase.pricePerGallon,
+              totalCost: purchase.totalCost
+            });
+          }
           const galStr = Number.isFinite(gal) && gal > 0 ? String(gal) : '';
           const draftBody = {
             qboClassId: cls.replace(/\D/g, '').slice(0, 24),
