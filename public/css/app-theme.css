@@ -4236,6 +4236,34 @@ body.erp-maintenance #section-safety .panel-head > div {
     display: none !important;
   }
 
+  /* Maintenance + accounting: hide unit picker column, dev notes, and help tips when printing the live page */
+  body.erp-maintenance #section-maintenance #maintenanceSplit > .maint-wo-col-units,
+  body.erp-maintenance #section-maintenance .erp-dev-note,
+  body.erp-maintenance #section-maintenance [data-dev-note='true'],
+  body.erp-maintenance #section-maintenance .erp-help-tip,
+  body.erp-maintenance #section-accounting .erp-dev-note,
+  body.erp-maintenance #section-accounting [data-dev-note='true'],
+  body.erp-maintenance #section-accounting .erp-help-tip {
+    display: none !important;
+  }
+
+  body.erp-maintenance #section-maintenance #maintMainSubtabs,
+  body.erp-maintenance #section-maintenance .maint-top-toolbar,
+  body.erp-maintenance #section-maintenance .maint-action-strip,
+  body.erp-maintenance #section-maintenance .maint-kpi-strip {
+    display: none !important;
+  }
+
+  body.erp-maintenance #section-maintenance button,
+  body.erp-maintenance #section-maintenance .btn,
+  body.erp-maintenance #section-accounting .qb-doc-footer .btn,
+  body.erp-maintenance #section-accounting .qb-doc-footer button,
+  body.erp-maintenance #section-accounting .mr-bp-submitrow button,
+  body.erp-maintenance #section-accounting .mr-bp-panel-head button,
+  body.erp-maintenance #section-accounting .mr-filter-bar--bp-load button {
+    display: none !important;
+  }
+
   body.erp-maintenance .app {
     grid-template-columns: minmax(0, 1fr) !important;
   }
@@ -4321,6 +4349,15 @@ body.erp-maintenance #section-safety .panel-head > div {
   }
 
   body.erp-maintenance.print-wo-only #maintMainTabRecord button {
+    display: none !important;
+  }
+
+  body.erp-maintenance.print-wo-only .erp-dev-note,
+  body.erp-maintenance.print-wo-only [data-dev-note='true'],
+  body.erp-maintenance.print-wo-only .erp-help-tip,
+  body.erp-maintenance.print-wo-only .maint-action-strip,
+  body.erp-maintenance.print-wo-only #maintValidationBanner,
+  body.erp-maintenance.print-wo-only #apValidationBanner {
     display: none !important;
   }
 

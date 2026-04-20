@@ -1095,6 +1095,30 @@ body.erp-maintenance .erp-module-sidebar .erp-sb-group[data-erp-sb-group='views'
   line-height: 1.3;
 }
 
+/* Accounting module sidebar — group / child hierarchy + active rail */
+body.erp-maintenance .erp-module-sidebar .erp-sb-group[data-erp-sb-module='accounting'] > .erp-sb-group__head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #6b7385;
+}
+
+body.erp-maintenance .erp-module-sidebar .erp-sb-group[data-erp-sb-module='accounting'] .erp-sb-group__body .erp-sb-link.sidebar-child-item {
+  font-size: 12px;
+  font-weight: 400;
+  color: #3c4257;
+  padding: 7px 16px 7px 28px;
+}
+
+body.erp-maintenance .erp-module-sidebar .erp-sb-group[data-erp-sb-module='accounting'] .erp-sb-link.sidebar-child-item.erp-sb-link--active,
+body.erp-maintenance .erp-module-sidebar .erp-sb-group[data-erp-sb-module='accounting'] .erp-sb-link.sidebar-child-item[aria-current='page'] {
+  background: #e8f0fe !important;
+  color: #1557a0 !important;
+  font-weight: 500 !important;
+  border-left: 3px solid #1557a0 !important;
+  padding-left: 25px !important;
+}
+
 /* --- Rule 3 (reports in-page sidebar): native <details> groups --- */
 body.erp-maintenance .erp-reports-sidebar .mr-rep-nav-group {
   border-bottom: 1px solid var(--color-border);

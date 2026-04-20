@@ -974,6 +974,33 @@
   }
 
   function vbpPrintReceipt(p) {
+    if (typeof window.generatePrintWindow === 'function') {
+      const rem = Number(p.remainingBalanceAfter);
+      window.generatePrintWindow('payment-receipt', {
+        companyInfo: typeof window.__erpPrintCompanyInfo === 'object' && window.__erpPrintCompanyInfo != null ? window.__erpPrintCompanyInfo : {},
+        vendor: p.vendorName,
+        paymentNumber: String(p.paymentNumber || ''),
+        checkNum: String(p.paymentNumber || ''),
+        paymentDate: String(p.paymentDate || '').slice(0, 10),
+        totalPaid: p.paymentAmount,
+        paymentMethod: p.paymentMethod,
+        account: p.paymentAccountName,
+        qboStatus: p.qboStatus === 'posted' ? 'Posted' : p.qboStatus === 'pending' ? 'Pending' : String(p.qboStatus || ''),
+        billsPaid: [
+          {
+            billNumber: p.billDocNumber,
+            docNumber: p.billDocNumber,
+            billDate: String(p.billDate || '').slice(0, 10),
+            description: p.description || '',
+            billAmount: p.originalAmount,
+            amountPaid: p.paymentAmount,
+            remaining: Number.isFinite(rem) ? rem : p.remainingBalanceAfter
+          }
+        ],
+        memo: p.memo || ''
+      });
+      return;
+    }
     const w = window.open('', '_blank');
     if (!w) return;
     const co = 'IH 35 Transportation LLC';

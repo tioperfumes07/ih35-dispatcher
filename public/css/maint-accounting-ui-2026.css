@@ -3414,3 +3414,112 @@ body.erp-maintenance .maint-field-cell__row--catalog .maint-field--catalog {
   min-width: 0;
 }
 
+/* ERP inline validation (maintenance WO + AP expense) */
+.erp-validation-banner {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-body);
+}
+
+.erp-validation-banner__block {
+  margin-top: 8px;
+}
+.erp-validation-banner__block:first-child {
+  margin-top: 0;
+}
+
+.erp-validation-banner__block--error {
+  color: #8a1212;
+}
+
+.erp-validation-banner__block--warn {
+  color: #8a5b00;
+}
+
+.erp-validation-banner__list {
+  margin: 6px 0 0 18px;
+  padding: 0;
+}
+
+.erp-validation-banner__link {
+  margin-top: 8px;
+  border: none;
+  background: transparent;
+  color: var(--color-border-focus, #1a5fb4);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+
+@keyframes erp-validation-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.erp-validation-banner--shake {
+  animation: erp-validation-shake 0.45s ease;
+}
+
+.erp-label--error {
+  color: #b00020 !important;
+}
+
+input.erp-input--error,
+select.erp-select--error,
+textarea.erp-input--error {
+  border-color: #c62828 !important;
+  box-shadow: 0 0 0 1px rgba(198, 40, 40, 0.2);
+}
+
+#maintCostLinesPanel.erp-input--error,
+#woLines.erp-input--error {
+  outline: 2px solid rgba(198, 40, 40, 0.35);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.qb-doc-total-amt.erp-input--error {
+  color: #b00020;
+}
+
+.erp-field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #b00020;
+}
+
+.erp-field-error__ic {
+  flex: 0 0 auto;
+  font-weight: 700;
+  margin-top: 1px;
+}
+
+.erp-field-error__txt {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+

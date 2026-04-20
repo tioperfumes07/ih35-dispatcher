@@ -67,7 +67,7 @@
         { label: 'Fuel expense (dedicated)', href: '/maintenance.html#accounting-fuel-expense-new' },
         { label: 'Maintenance bill (dedicated)', href: '/maintenance.html#accounting-maintenance-bill-new' },
         { label: 'Maintenance expense (dedicated)', href: '/maintenance.html#accounting-maintenance-expense-new' },
-        { label: 'Pay bills (composer)', href: '/maintenance.html#accounting-bill-pay' },
+        { label: 'Bill payment (composer)', href: '/maintenance.html#accounting-bill-pay' },
         { label: 'Bill payment history (tab)', href: '/maintenance.html#accounting-payment-history' },
         { label: 'Settlement / P&L by load', href: '/maintenance.html#reports-settlement' },
         { label: 'Driver bill (dedicated)', href: '/maintenance.html#accounting-driver-bill-new' },

@@ -544,11 +544,10 @@
         </div>
         <header class="topbar erp-topbar">
           <div class="erp-topbar__lead">
-            <div class="title" id="pageTitle">Maintenance</div>
             <div class="erp-new-wrap">
               <button
                 type="button"
-                class="erp-btn-primary"
+                class="erp-btn-primary erp-topbar-new-btn"
                 id="erpNewMenuBtn"
                 onclick="erpToggleNewMenu(event)"
                 aria-haspopup="true"
@@ -572,11 +571,7 @@
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('maintenance-expense')">Maintenance expense</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('repair-expense')">Repair expense</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-expense')">Fuel expense</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Fuel</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-fast-entry')">Fuel / DEF fast entry</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-fast-entry')">Fuel/DEF fast entry</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Bills</div>
@@ -586,10 +581,6 @@
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-bill')">Fuel bill</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill')">Driver bill</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-bill')">Vendor bill</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Recurring</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
                     <button type="button" class="erp-new-menu__item erp-new-menu__item--with-icon" role="menuitem" onclick="erpOpenFromNewMenu('multi-bills')">
                       <span class="erp-new-menu__cal-ico" aria-hidden="true">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -605,44 +596,24 @@
                     <div class="erp-new-menu__col-title">Bill payment</div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('bill-payment')">Bill payment</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill-payment')">Driver bill payment</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Other</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('check')">Check</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-credit')">Vendor credit</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('item-receipt')">Item receipt</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('purchase-order')">Purchase order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('find-merge-dupes')">Find &amp; merge duplicates</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('rename-vendor-driver')">Rename vendor / driver</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Maintenance &amp; shop</div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('work-order-blank')">Work order</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">By type</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-repair')">Repair order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-maintenance')">Maintenance order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-accident')">Accident repair</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-pm')">PM service</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-inspection')">Inspection</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">Parts</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-tire')">Tire record</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-air-bag')">Air bag record</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-battery')">Battery record</button>
-                    <div class="erp-new-menu__sep" role="presentation">
-                      <span class="erp-new-menu__sep-line"></span><span class="erp-new-menu__sep-label">More</span
-                      ><span class="erp-new-menu__sep-line"></span>
-                    </div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewDriverSettlement()">Driver settlement</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpNewLoadsEntry()">Load / TMS entry</button>
                   </div>
                 </div>
                 <div class="erp-new-menu__footer" aria-hidden="false">
@@ -659,6 +630,7 @@
                 </div>
               </div>
             </div>
+            <div class="title" id="pageTitle">Maintenance</div>
           </div>
           <a href="/" class="topbar-home-link" title="Company hub">IH 35 Transportation LLC</a>
           <div class="erp-topbar__search">
@@ -695,11 +667,11 @@
             </div>
           </div>
           <div class="topbar-hint-wrap" aria-label="Workspace tips">
-            <span class="mini-note topbar-hint topbar-hint--lead">Tip: left rail, search, and <strong>+ New</strong>.</span>
+            <span class="mini-note topbar-hint topbar-hint--lead">Tip: left rail, search, and the green <strong>+ New</strong> (left of the title).</span>
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How navigation works">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <strong>Left icon rail</strong> switches modules. Search covers vendors, units, loads, bills, WOs. <strong>+ New</strong> opens the four-column menu (Expenses, Bills, Bill payment, Maintenance &amp; shop).
+                <strong>Left icon rail</strong> switches modules. Search covers vendors, units, loads, bills, WOs. The green <strong>+ New</strong> button (left of the page title) opens a fixed four-column menu: Expenses, Bills, Bill payment, Maintenance &amp; shop. Click outside or press Escape to close.
               </span>
             </span>
           </div>
@@ -1252,6 +1224,7 @@
           <div class="maint-wo-col-form">
             <div id="maintWoNoUnitPlaceholder" class="maint-wo-placeholder">Select a unit from the list to create or view a work order.</div>
             <div id="maintWoFormArea" class="hidden maint-wo-form-stack-inner">
+            <div id="maintValidationBanner" class="erp-validation-banner hidden" role="region" aria-live="polite"></div>
             <div class="maint-wo-snapshot-dock">
               <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
             </div>
@@ -1812,10 +1785,13 @@
                           <input id="insuranceClaimNumberInput" class="qb-in maint-field" placeholder="Claim #" maxlength="120" autocomplete="off" />
                         </div>
                       </div>
-                      <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 0;cursor:pointer;white-space:nowrap">
-                        <input type="checkbox" id="accidentDotReportableInput" />
-                        <span>DOT reportable</span>
-                      </label>
+                      <div class="maint-field-cell" style="margin-top:6px;max-width:440px">
+                        <span class="qb-l">DOT reportable</span>
+                        <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 0;cursor:pointer;white-space:nowrap">
+                          <input type="checkbox" id="accidentDotReportableInput" onchange="this.dataset.erpTouched='1'" />
+                          <span>Toggle to confirm you reviewed DOT-reportable status</span>
+                        </label>
+                      </div>
                       <span class="erp-help-tip" style="margin-top:6px;display:inline-flex">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accident record">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
@@ -1858,6 +1834,17 @@
                           <span class="qb-l">Next due</span>
                           <input id="maintInspectionNextDueInput" class="qb-in maint-field maint-field--date" type="date" title="Next inspection due date" />
                         </div>
+                      </div>
+                      <div style="margin-top:10px">
+                        <span class="qb-l">Out-of-service items</span>
+                        <textarea
+                          id="maintInspectionOosInput"
+                          class="qb-in maint-field"
+                          rows="2"
+                          maxlength="4000"
+                          placeholder="Required when result is Fail or Out of service — list items placed OOS"
+                          title="DOT / shop out-of-service findings"
+                        ></textarea>
                       </div>
                     </div>
                   </div>
@@ -2976,9 +2963,9 @@
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Bill payment</h3>
             <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="erpNewPayBills()">Pay bills</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpNewPayBills()">Bill payment</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDriverBillPay()">Driver bill payment</button>
-              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Bill payment history</button>
+              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Payment history</button>
             </div>
             <div id="acctBoardPayDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div class="acct-board-table-wrap">
@@ -3138,6 +3125,7 @@
             >
               <span id="apTxnQboBannerText"></span>
             </div>
+            <div id="apValidationBanner" class="erp-validation-banner hidden" role="region" aria-live="polite"></div>
             <div class="panel-body form-stack qb-doc-body">
               <div class="ap-expense-form">
                 <div class="ap-exp-grid">
@@ -3394,6 +3382,7 @@
                 </button>
               </div>
               <div class="qb-doc-footer__right">
+                <button type="button" class="secondary" onclick="erpPrintApExpenseForm()">Print</button>
                 <button type="button" onclick="window.erpWithBusy(this, () => saveApTransaction({ close: false }))">Save</button>
                 <button
                   type="button"
@@ -3451,7 +3440,7 @@
             <div class="panel-head mr-bp-panel-head">
               <div class="mr-bp-panel-head__title">
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                  <div class="panel-title" id="bpPanelTitle">Pay bills (QuickBooks)</div>
+                  <div class="panel-title" id="bpPanelTitle">Bill payment (QuickBooks)</div>
                   <span id="bpDriverPayChip" class="bp-driver-pay-chip hidden" aria-live="polite">Driver payees only</span>
                 </div>
                 <span class="erp-help-tip">
@@ -3596,6 +3585,7 @@
               </div>
               <div id="bpOpenBillsPagerHost" class="mr-bp-open-pager" style="margin-top:8px" hidden></div>
               <div class="mr-bp-submitrow">
+                <button type="button" class="secondary" onclick="erpPrintBillPayDraft()">Print draft</button>
                 <button type="button" class="qb-btn-primary" onclick="submitAccountingBillPayment()">Create bill payment in QuickBooks</button>
                 <span class="mini-note" style="margin:0">Requires ERP write secret or admin (Settings).</span>
               </div>
@@ -3611,7 +3601,7 @@
                   <span class="erp-help-tip">
                     <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Local payment log">?</button>
                     <span class="erp-help-tip__panel" role="tooltip">
-                      ERP log of <strong>Bill Payment</strong> posts from <strong>Pay bills</strong> (not full QBO audit). Filter + export for recon; body <strong>?</strong> for date presets vs export scope.
+                      ERP log of <strong>Bill Payment</strong> posts from <strong>Bill payment</strong> (not full QBO audit). Filter + export for recon; body <strong>?</strong> for date presets vs export scope.
                     </span>
                   </span>
                 </div>
@@ -6297,6 +6287,8 @@
   <script src="/js/erp-ui.js"></script>
   <script src="/js/erp-filename-util.js"></script>
   <script src="/src/utils/printDocuments.js"></script>
+  <script src="/src/utils/workOrderValidation.js"></script>
+  <script src="/src/utils/expenseValidation.js"></script>
   <script src="/js/erp-date-display.js"></script>
   <script src="/js/erp-multi-bills.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
@@ -7402,6 +7394,7 @@
         inspectorBadge: gv('maintInspectorBadgeInput'),
         inspectionResult: gv('maintInspectionResultSelect'),
         inspectionNextDue: gv('maintInspectionNextDueInput'),
+        outOfServiceItems: gv('maintInspectionOosInput'),
         pmIntervalMiles: gv('maintPmIntervalMilesInput'),
         lastPmDate: gv('maintPmLastDateInput'),
         lastPmMiles: gv('maintPmLastMilesInput'),
@@ -8582,7 +8575,7 @@
       if (name === 'accounting') {
         const expensesBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;)">Fuel expense</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;, { fuelVariant: &quot;fuel-expense&quot; })">Fuel expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewExpense()">Expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;repair-expense&quot;)">Repair expense</button>';
         const billsBody =
@@ -8593,25 +8586,22 @@
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;driver-bill&quot;)">Driver bill</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-bill&quot;)">Vendor bill</button>';
         const billPayBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewPayBills()">Bill payment</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Payment history</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpNewPayBills()">Bill payment</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Payment history</button>';
         const specializedBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel &amp; DEF fast entry</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewDriverSettlement()">Driver settlement</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;journal-entry&quot;)">Journal entry</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;transfer&quot;)">Transfer</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-expense-history" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-history" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-fuel-expense" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
         const qbBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctQboRollbackStub&quot;));">QBO rollback &amp; imports</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-qbo-rollback" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctQboRollbackStub&quot;));">QBO rollback &amp; imports</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-qbo" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="testQuickBooks()">Test QuickBooks connection</button>';
-        const uploadsBody = erpSbUploadCenterLink();
         const acctToolsBody = erpSbAccountingToolsDataBody();
         const connLead =
           '<div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">' +
@@ -8628,8 +8618,7 @@
           erpSbGroup('accounting', 'billpay', 'Bill payment', true, billPayBody) +
           erpSbGroup('accounting', 'specialized', 'Specialized', false, specializedBody) +
           erpSbGroup('accounting', 'quickbooks', 'QuickBooks', false, qbBody) +
-          erpSbGroup('accounting', 'uploads', 'Uploads', false, uploadsBody) +
-          erpSbGroup('accounting', 'tools', 'Tools &amp; Data', false, acctToolsBody) +
+          erpSbGroup('accounting', 'tools', 'Tools &amp; data', false, acctToolsBody) +
           erpSbGroup('accounting', 'connections', 'Connections', false, connBody);
         requestAnimationFrame(() => paintAcctSidebarConnections());
         return;
@@ -8746,14 +8735,19 @@
       const dropdownWidth = m.offsetWidth;
       m.style.visibility = '';
       m.style.display = '';
+      const pad = 12;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      let top = rect.bottom + 4;
+      let top = rect.bottom + 6;
       let left = rect.left;
-      if (left + dropdownWidth > vw) left = vw - dropdownWidth - 8;
-      if (top + dropdownHeight > vh) top = rect.top - dropdownHeight - 4;
-      if (left < 8) left = 8;
-      if (top < 8) top = 8;
+      if (left + dropdownWidth > vw - pad) left = Math.max(pad, vw - dropdownWidth - pad);
+      if (left < pad) left = pad;
+      if (top + dropdownHeight > vh - pad) {
+        const above = rect.top - dropdownHeight - 6;
+        if (above >= pad) top = above;
+        else top = Math.max(pad, vh - dropdownHeight - pad);
+      }
+      if (top < pad) top = pad;
       m.style.position = 'fixed';
       m.style.top = top + 'px';
       m.style.left = left + 'px';
@@ -8826,6 +8820,7 @@
     function erpOpenFromNewMenu(kind) {
       const k = String(kind || '').trim();
       if (!k) return;
+      erpCloseNewMenu();
       if (k === 'expense') return erpNewExpense();
       if (k === 'bill') return erpNewBill();
       if (k === 'maintenance-expense') return erpOpenDedicatedAccountingForm('maintenance-expense');
@@ -8857,21 +8852,21 @@
         return openSectionByName('name-mgmt');
       }
       if (k === 'work-order-blank') return erpNewWorkOrder('');
-      if (k === 'wo-repair') return erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair' });
-      if (k === 'wo-maintenance') return erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Maintenance' });
+      if (k === 'wo-repair') return erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair order' });
+      if (k === 'wo-maintenance') return erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Maintenance order' });
       if (k === 'wo-accident')
         return erpNewWorkOrder('accident', {
           driverRow: true,
           driverRequired: true,
           expandAccident: true,
-          recordTypeLabel: 'Accident / collision'
+          recordTypeLabel: 'Accident repair'
         });
       if (k === 'wo-pm') return erpNewWorkOrder('pm', { recordTypeLabel: 'PM service' });
       if (k === 'wo-inspection')
         return erpNewWorkOrder('inspection', { expandInspection: true, recordTypeLabel: 'Inspection' });
-      if (k === 'wo-tire') return erpNewWorkOrder('tire', { expandTireParts: true, recordTypeLabel: 'Tire service' });
-      if (k === 'wo-air-bag') return erpNewWorkOrder('air_bag', { recordTypeLabel: 'Air bag service' });
-      if (k === 'wo-battery') return erpNewWorkOrder('battery', { recordTypeLabel: 'Battery service' });
+      if (k === 'wo-tire') return erpNewWorkOrder('tire', { expandTireParts: true, recordTypeLabel: 'Tire record' });
+      if (k === 'wo-air-bag') return erpNewWorkOrder('air_bag', { recordTypeLabel: 'Air bag record' });
+      if (k === 'wo-battery') return erpNewWorkOrder('battery', { recordTypeLabel: 'Battery record' });
     }
 
     function erpNewRepairExpense() {
@@ -9251,7 +9246,7 @@
       const title = document.getElementById('bpPanelTitle');
       const isDriver = !!window.__accountingDriverBillPayMode;
       if (chip) chip.classList.toggle('hidden', !isDriver);
-      if (title) title.textContent = isDriver ? 'Driver bill pay' : 'Pay bills (QuickBooks)';
+      if (title) title.textContent = isDriver ? 'Driver bill payment (QuickBooks)' : 'Bill payment (QuickBooks)';
     }
 
     function erpOpenAccountingPayBillsStandard() {
@@ -9264,7 +9259,7 @@
       erpNavigateBillPaymentWorkspace({ driverMode: true });
     }
 
-    /** Mount Pay bills workspace (composer + local log) in the same dedicated modal shell as AP / fuel. */
+    /** Mount bill payment workspace (composer + local log) in the same dedicated modal shell as AP / fuel. */
     function erpOpenDedicatedBillPayForm(opts) {
       opts = opts || {};
       const fromHash = !!opts.fromHash;
@@ -9482,7 +9477,7 @@
       if (window.__erpDedicatedModalKind === 'billpay') {
         const pt = document.getElementById('bpPanelTitle');
         const st = document.getElementById('bpSelectionTotal');
-        if (title && pt) title.textContent = pt.textContent || 'Pay bills';
+        if (title && pt) title.textContent = pt.textContent || 'Bill payment';
         if (lab) lab.textContent = 'Draft total';
         if (amt && st) {
           const raw = String(st.textContent || '');
@@ -9677,6 +9672,8 @@
         serviceRepairHint: false
       };
       const labels = {
+        'standard-expense': 'Expense',
+        'standard-bill': 'Bill',
         'maintenance-expense': 'Maintenance expense',
         'maintenance-bill': 'Maintenance bill',
         'repair-expense': 'Repair expense',
@@ -9691,6 +9688,8 @@
         'purchase-order-bill': 'Purchase order'
       };
       const locked = new Set([
+        'standard-expense',
+        'standard-bill',
         'maintenance-expense',
         'maintenance-bill',
         'fuel-bill',
@@ -9735,6 +9734,8 @@
           }
         } else if (mode !== 'fuel-expense') {
           const presetMapEarly = {
+            'standard-expense': 'standard-expense',
+            'standard-bill': 'standard-bill',
             'maintenance-expense': 'maintenance-expense',
             'maintenance-bill': 'maintenance-bill',
             'fuel-bill': 'fuel-bill',
@@ -9795,6 +9796,8 @@
 
       window.__erpDedicatedModalKind = 'ap';
       const presetMap = {
+        'standard-expense': 'standard-expense',
+        'standard-bill': 'standard-bill',
         'maintenance-expense': 'maintenance-expense',
         'maintenance-bill': 'maintenance-bill',
         'fuel-bill': 'fuel-bill',
@@ -9817,10 +9820,10 @@
       if (sel) {
         if (mode === 'standard-expense') {
           sel.value = 'expense';
-          sel.disabled = false;
+          sel.disabled = true;
         } else if (mode === 'standard-bill') {
           sel.value = 'bill';
-          sel.disabled = false;
+          sel.disabled = true;
         } else if (mode === 'maintenance-expense' || mode === 'repair-expense' || mode === 'check-expense' || mode === 'item-receipt-expense') {
           sel.value = 'expense';
           sel.disabled = true;
@@ -9967,6 +9970,7 @@
       if (name === 'accounting') {
         requestAnimationFrame(() => {
           syncAcctDashFromQboPayload();
+          syncAccountingSidebarActive();
           const cur = String(location.hash || '')
             .replace(/^#/, '')
             .split('?')[0]
@@ -10216,6 +10220,30 @@
       }
     }
 
+    function paintAccountingSidebarActive(tabId) {
+      const inner = document.getElementById('erpModuleSidebarInner');
+      if (!inner) return;
+      const t = String(tabId || '');
+      inner.querySelectorAll('.erp-sb-group[data-erp-sb-module="accounting"] .erp-sb-link[data-erp-acct-tab]').forEach(el => {
+        const match = el.getAttribute('data-erp-acct-tab') === t;
+        el.classList.toggle('erp-sb-link--active', match);
+        if (match) el.setAttribute('aria-current', 'page');
+        else el.removeAttribute('aria-current');
+      });
+    }
+
+    function syncAccountingSidebarActive() {
+      const sec = document.getElementById('section-accounting');
+      if (!sec || !sec.classList.contains('active')) return;
+      const activeTab = sec.querySelector('.accounting-tab:not(.hidden)');
+      let tabId = activeTab && activeTab.id ? String(activeTab.id) : '';
+      if (tabId === 'acct-expense-history') {
+        const src = document.getElementById('expHistSource');
+        if (src && String(src.value || '').toLowerCase() === 'bills') tabId = 'acct-bill-history';
+      }
+      paintAccountingSidebarActive(tabId);
+    }
+
     function openAccountingTab(id, btn) {
       const effectiveId = id === 'acct-bill-history' ? 'acct-expense-history' : id;
       const acctPanel = document.getElementById(effectiveId);
@@ -10285,6 +10313,7 @@
         });
       }
       erpSyncAccountingTabHash(id);
+      paintAccountingSidebarActive(id);
       requestAnimationFrame(() => syncAcctDashFromQboPayload());
     }
 
@@ -17852,6 +17881,22 @@
       if (!sel || !h) return;
       const preset = window.__erpDedicatedApPreset || '';
       const isBill = sel.value === 'bill';
+      if (preset === 'standard-expense') {
+        sel.value = 'expense';
+        h.textContent = 'Expense';
+        if (lab) lab.textContent = 'Amount';
+        document.getElementById('apWrapDue')?.classList.add('hidden');
+        document.getElementById('apWrapTerms')?.classList.add('hidden');
+        return;
+      }
+      if (preset === 'standard-bill') {
+        sel.value = 'bill';
+        h.textContent = 'Bill';
+        if (lab) lab.textContent = 'Balance due';
+        document.getElementById('apWrapDue')?.classList.remove('hidden');
+        document.getElementById('apWrapTerms')?.classList.remove('hidden');
+        return;
+      }
       const billHdr = () => {
         if (lab) lab.textContent = 'Balance due';
         document.getElementById('apWrapDue')?.classList.remove('hidden');
@@ -19288,6 +19333,7 @@
         billNumber: gv('apVendorInvoiceNumber'),
         billDate: gv('apTxnDate'),
         balanceDue: Number.isFinite(amtNum) ? amtNum : undefined,
+        invoiceTotal: Number.isFinite(amtNum) ? amtNum : undefined,
         txnType: gv('apTxnType'),
         txnDate: gv('apTxnDate'),
         unit: gv('apAssetUnit'),
@@ -19409,6 +19455,49 @@
       };
     }
 
+    function erpPrintBillPayDraft() {
+      try {
+        if (typeof window.generatePrintWindow !== 'function') {
+          erpNotify('Print helper not loaded. Refresh the page.', 'warning');
+          return;
+        }
+        const data = erpCollectBillPayPrintData();
+        if (!data.billsPaid || !data.billsPaid.length) {
+          erpNotify('Check at least one bill (or enter pay amounts) before printing the draft receipt.', 'warning');
+          return;
+        }
+        window.generatePrintWindow('payment-receipt', data);
+      } catch (e) {
+        console.warn('Bill pay draft print failed', e);
+        erpNotify(e.message || String(e), 'error');
+      }
+    }
+
+    function erpPrintApExpenseForm() {
+      try {
+        if (typeof window.generatePrintWindow !== 'function') {
+          erpNotify('Print helper not loaded. Refresh the page.', 'warning');
+          return;
+        }
+        const data = erpCollectApDedicatedPrintData();
+        const txn = String(document.getElementById('apTxnType')?.value || '').trim();
+        const preset = String(window.__erpDedicatedApPreset || '');
+        let type = 'expense';
+        if (txn === 'bill') {
+          if (preset === 'fuel-bill') type = 'fuel-bill';
+          else if (preset === 'maintenance-bill') type = 'maintenance-bill';
+          else if (preset === 'vendor-driver-bill') type = 'vendor-driver-bill';
+          else type = 'bill';
+        } else if (preset === 'maintenance-expense') {
+          type = 'maintenance-expense';
+        }
+        window.generatePrintWindow(type, data);
+      } catch (e) {
+        console.warn('AP expense print failed', e);
+        erpNotify(e.message || String(e), 'error');
+      }
+    }
+
     function erpPrintDedicatedAccountingModal() {
       try {
         if (typeof window.generatePrintWindow !== 'function') {
@@ -19432,21 +19521,7 @@
           return;
         }
         if (kind === 'ap') {
-          const data = erpCollectApDedicatedPrintData();
-          const txn = String(document.getElementById('apTxnType')?.value || '').trim();
-          const preset = String(window.__erpDedicatedApPreset || '');
-          let type = 'expense';
-          if (txn === 'bill') {
-            if (preset === 'fuel-bill') type = 'fuel-bill';
-            else if (preset === 'maintenance-bill') type = 'maintenance-bill';
-            else if (preset === 'vendor-driver-bill') type = 'vendor-driver-bill';
-            else type = 'bill';
-          } else if (preset === 'maintenance-expense') {
-            type = 'maintenance-expense';
-          } else {
-            type = 'expense';
-          }
-          window.generatePrintWindow(type, data);
+          erpPrintApExpenseForm();
           return;
         }
         window.print();
@@ -19617,6 +19692,13 @@
       clearWoLines();
       syncApDocTitle();
       refreshApDocTotal();
+      if (typeof clearErpValidationUi === 'function') clearErpValidationUi('#erpApDocShellPanel');
+      const __apb = document.getElementById('apValidationBanner');
+      if (__apb) {
+        __apb.classList.add('hidden');
+        __apb.innerHTML = '';
+        __apb.classList.remove('erp-validation-banner--shake');
+      }
     }
 
     function resolveWoLineAccount(input) {
@@ -20949,7 +21031,10 @@
       document.getElementById('accidentAtFaultSearch').value = '';
       document.getElementById('accidentAtFaultValue').value = '';
       const adot = document.getElementById('accidentDotReportableInput');
-      if (adot) adot.checked = false;
+      if (adot) {
+        adot.checked = false;
+        delete adot.dataset.erpTouched;
+      }
       document.getElementById('recordTypeSelect').value = 'maintenance';
       erpClearRecordTypeReadonlyWo();
       const dId = document.getElementById('maintRecordDriverId');
@@ -20979,6 +21064,7 @@
       const irs = document.getElementById('maintInspectionResultSelect');
       if (irs) irs.value = '';
       setv('maintInspectionNextDueInput', '');
+      setv('maintInspectionOosInput', '');
       setv('accidentDateInput', '');
       setv('insuranceClaimNumberInput', '');
       setv('maintPmIntervalMilesInput', '');
@@ -21002,6 +21088,13 @@
       resetMaintPlannedServiceRows();
       renderRepairLocationChips();
       toggleRecordFields();
+      if (typeof clearErpValidationUi === 'function') clearErpValidationUi('#maintWorkOrderFormMount');
+      const __mvb2 = document.getElementById('maintValidationBanner');
+      if (__mvb2) {
+        __mvb2.classList.add('hidden');
+        __mvb2.innerHTML = '';
+        __mvb2.classList.remove('erp-validation-banner--shake');
+      }
     }
 
     async function clearMaintenanceFormNewEntry() {
@@ -21201,6 +21294,13 @@
       if (!r) return;
       __hydratingMaintenanceRecord = true;
       try {
+        if (typeof clearErpValidationUi === 'function') clearErpValidationUi('#maintWorkOrderFormMount');
+        const __mvb = document.getElementById('maintValidationBanner');
+        if (__mvb) {
+          __mvb.classList.add('hidden');
+          __mvb.innerHTML = '';
+          __mvb.classList.remove('erp-validation-banner--shake');
+        }
         const targetUnit = String(r.unit || '').trim();
         if (!targetUnit) {
           erpNotify('This record has no unit; cannot load into the form.', 'warning');
@@ -21265,7 +21365,10 @@
       const insCl = document.getElementById('insuranceClaimNumberInput');
       if (insCl) insCl.value = String(r.insuranceClaimNumber || '').trim();
       const adot = document.getElementById('accidentDotReportableInput');
-      if (adot) adot.checked = !!r.accidentDotReportable;
+      if (adot) {
+        adot.checked = !!r.accidentDotReportable;
+        adot.dataset.erpTouched = '1';
+      }
       const mdS = document.getElementById('maintRecordDriverSearch');
       const mdI = document.getElementById('maintRecordDriverId');
       const wn = document.getElementById('maintWoDriverNameInput');
@@ -21283,6 +21386,8 @@
       if (irs) irs.value = String(r.inspectionResult || '').trim();
       const ind = document.getElementById('maintInspectionNextDueInput');
       if (ind) ind.value = String(r.inspectionNextDue || '').trim().slice(0, 10);
+      const oosEl = document.getElementById('maintInspectionOosInput');
+      if (oosEl) oosEl.value = String(r.outOfServiceItems || '').trim();
 
       const pmI = document.getElementById('maintPmIntervalMilesInput');
       if (pmI) pmI.value = r.pmIntervalMiles != null && r.pmIntervalMiles !== '' ? String(r.pmIntervalMiles) : '';
@@ -21411,6 +21516,38 @@
       hydrateMaintenanceRecordForm(r);
     }
 
+    function maintBuildWorkOrderValidationState(p) {
+      const adot = document.getElementById('accidentDotReportableInput');
+      return {
+        recordType: document.getElementById('recordTypeSelect')?.value || '',
+        repairLocationType: String(document.getElementById('repairLocationTypeInput')?.value || '').trim(),
+        repairLocationDetail: String(document.getElementById('repairLocationSearch')?.value || '').trim(),
+        vendor: String(document.getElementById('vendorInput')?.value || '').trim(),
+        vendorQboId: String(document.getElementById('linkedVendorQboId')?.value || '').trim(),
+        serviceMileage: p.smNum,
+        invoiceTotal: p.invTotal,
+        lineSum: p.lineSum,
+        hasLineMoney: p.hasLineMoney,
+        costLines: p.costLinesPayload || [],
+        serviceType: String(p.serviceType || '').trim(),
+        serviceDate: document.getElementById('serviceDateInput')?.value || '',
+        accidentDate: document.getElementById('accidentDateInput')?.value || '',
+        accidentLocation: String(document.getElementById('accidentLocationInput')?.value || '').trim(),
+        accidentFault:
+          String(document.getElementById('accidentAtFaultSearch')?.value || '').trim() ||
+          String(document.getElementById('accidentAtFaultValue')?.value || '').trim(),
+        accidentDotTouched: adot ? String(adot.dataset.erpTouched || '') === '1' : false,
+        driverId: String(document.getElementById('maintRecordDriverId')?.value || '').trim(),
+        inspectionType: String(document.getElementById('maintInspectionScopeInput')?.value || '').trim(),
+        inspectorName: String(document.getElementById('maintInspectorNameInput')?.value || '').trim(),
+        inspectionResult: String(document.getElementById('maintInspectionResultSelect')?.value || '').trim(),
+        inspectionNextDue: document.getElementById('maintInspectionNextDueInput')?.value || '',
+        inspectionOosItems: String(document.getElementById('maintInspectionOosInput')?.value || '').trim(),
+        vendorInvNo: String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim(),
+        woNo: String(document.getElementById('recordWorkOrderInput')?.value || '').trim()
+      };
+    }
+
     async function saveRecord(postToQbo = false, closeAfter = false) {
       if (!selectedUnit) return false;
 
@@ -21426,34 +21563,15 @@
       resolveMaintRecordDriverSearch();
       resolveAccidentDriverSearch();
 
-      // Required fields by repair location.
+      // Repair location + WO ref (in-house WO auto-generated before validation reads the field).
       const repairLoc = String(document.getElementById('repairLocationTypeInput')?.value || '').trim();
-      if (!repairLoc) {
-        erpNotify(
-          'Select where service is performed: choose a location type (Internal shop, External shop, Roadside, Parts purchase, or Over the road).',
-          'warning'
-        );
-        document.getElementById('repairLocationSelect')?.focus();
-        return false;
-      }
       const repairLocDetail = String(document.getElementById('repairLocationSearch')?.value || '').trim();
-      if (!repairLocDetail) {
-        erpNotify('Enter service location detail (yard, vendor site, bay, or notes).', 'warning');
-        document.getElementById('repairLocationSearch')?.focus();
-        return false;
-      }
       const vendorInvNo = String(document.getElementById('recordVendorInvoiceInput')?.value || '').trim();
       let woNo = String(document.getElementById('recordWorkOrderInput')?.value || '').trim();
-      if (repairLoc === 'external' || repairLoc === 'road-service' || repairLoc === 'parts-purchase') {
-        if (!vendorInvNo && !woNo) {
-          erpNotify('External shop, roadside service, and parts purchases require a vendor invoice # or a reference / WO #.', 'warning');
-          document.getElementById('recordVendorInvoiceInput')?.focus();
-          return false;
-        }
-      }
       if (repairLoc === 'in-house' && !woNo) {
-        // Internal shop: auto-generate a work order number when missing.
-        const d = (document.getElementById('serviceDateInput')?.value || '').replace(/[^0-9]/g, '') || new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const d =
+          (document.getElementById('serviceDateInput')?.value || '').replace(/[^0-9]/g, '') ||
+          new Date().toISOString().slice(0, 10).replace(/-/g, '');
         woNo = `INT-${String(selectedUnit).replace(/[^A-Z0-9_-]/gi, '')}-${d}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
         document.getElementById('recordWorkOrderInput').value = woNo;
       }
@@ -21464,37 +21582,22 @@
         const c = document.getElementById('customServiceTypeInput').value.trim();
         serviceType = document.getElementById('serviceTypeInput').value.trim();
         if (!serviceType) {
-          const lines = collectMaintCostLines();
-          const withDesc = lines.find(l => l.description);
+          const linesEarly = collectMaintCostLines();
+          const withDesc = linesEarly.find(l => l.description);
           if (withDesc) serviceType = withDesc.description;
         }
         if (!serviceType && c) serviceType = c;
-        if (!serviceType) {
-          erpNotify('For Other, enter a service description or a short label in Other — describe.', 'warning');
-          document.getElementById('serviceSearchInput')?.focus();
-          return false;
-        }
       } else {
         serviceType = document.getElementById('serviceTypeInput').value.trim();
         if (!serviceType) {
-          const lines = collectMaintCostLines();
-          const withDesc = lines.find(l => l.description);
+          const linesEarly = collectMaintCostLines();
+          const withDesc = linesEarly.find(l => l.description);
           if (withDesc) serviceType = withDesc.description;
-        }
-        if (!serviceType) {
-          erpNotify('Choose or type the service / maintenance performed (or enter a description on the first cost line).', 'warning');
-          return false;
         }
       }
 
       if (recordType === 'accident') {
         resolveMaintRecordDriverSearch();
-        const mid = (document.getElementById('maintRecordDriverId')?.value || '').trim();
-        if (!mid) {
-          erpNotify('Select the driver for this accident (required).', 'warning');
-          document.getElementById('maintRecordDriverSearch')?.focus();
-          return false;
-        }
       }
 
       recalcMaintCostTotalFromLines();
@@ -21502,15 +21605,6 @@
       const lineSum = costLinesPayload.reduce((s, l) => s + (Number(l.amount) || 0), 0);
       const invTotal = Number(document.getElementById('costInput')?.value || 0);
       const hasLineMoney = costLinesPayload.some(l => Number(l.amount) > 0);
-      if (hasLineMoney && Math.abs(lineSum - invTotal) > 0.02) {
-        erpNotify(
-          `Invoice total ($${invTotal.toFixed(2)}) must equal the sum of cost lines ($${lineSum.toFixed(
-            2
-          )}). Adjust qty × unit $, line amounts, or the invoice total (uncheck “Lock invoice total” to auto-fill from lines).`,
-          'warning'
-        );
-        return false;
-      }
       syncLinkedVendorFromMainVendor();
       const tireLineItems = recordType === 'tire' ? collectTireLineItems() : [];
       const composedNotes = composeRecordNotesForSave();
@@ -21525,19 +21619,28 @@
         smNum = samsaraMi;
         if (smEl) smEl.value = String(Math.round(samsaraMi));
       }
-      if (!Number.isFinite(smNum) || smNum <= 0) {
-        erpNotify(
-          'Enter a valid service mileage (positive number). The field defaults to the Samsara odometer when available — use “Use Samsara” or refresh fleet data.',
-          'warning'
-        );
-        smEl?.focus();
-        return false;
-      }
       const matchesSamsara =
         samsaraMi != null &&
         Number.isFinite(samsaraMi) &&
+        Number.isFinite(smNum) &&
         Math.abs(smNum - samsaraMi) < 0.51;
-      if (matchesSamsara) {
+
+      const woVal = maintBuildWorkOrderValidationState({
+        postToQbo,
+        costLinesPayload,
+        lineSum,
+        invTotal,
+        hasLineMoney,
+        serviceType,
+        smNum
+      });
+      if (typeof validateWorkOrderState === 'function' && typeof applyErpValidationUi === 'function') {
+        const v = validateWorkOrderState(woVal, { postToQbo });
+        applyErpValidationUi('maintValidationBanner', '#maintWorkOrderFormMount', v);
+        if (v.errors && v.errors.length) return false;
+      }
+
+      if (Number.isFinite(smNum) && smNum > 0 && matchesSamsara) {
         const rounded = Math.round(smNum);
         const srcHint = samsaraRec.source ? ` (${samsaraRec.source})` : '';
         if (
@@ -21549,47 +21652,9 @@
           return false;
         }
       }
-      const serviceMileageFinal = String(smNum);
+      const serviceMileageFinal = Number.isFinite(smNum) ? String(smNum) : '';
 
       const headerQbo = deriveMaintHeaderQboFromCostLines(costLinesPayload);
-
-      if (postToQbo) {
-        const qvIdPost = (document.getElementById('linkedVendorQboId')?.value || '').trim();
-        if (!qvIdPost) {
-          erpNotify(
-            'Match the vendor to a QuickBooks vendor (type in the vendor field until it matches your QBO vendor list), then save again.',
-            'warning'
-          );
-          document.getElementById('vendorInput')?.focus();
-          return false;
-        }
-        if (!(invTotal > 0)) {
-          erpNotify('Enter an invoice total greater than zero to post to QuickBooks.', 'warning');
-          document.getElementById('costInput')?.focus();
-          return false;
-        }
-        if (!hasLineMoney) {
-          erpNotify(
-            'Add at least one cost breakdown line with a line amount so QuickBooks receives the correct account or item on each line.',
-            'warning'
-          );
-          return false;
-        }
-        const badQboLine = costLinesPayload.find(l => {
-          const amt = Number(l.amount) || 0;
-          if (amt <= 0) return false;
-          const dm = String(l.detailMode || 'category').trim() === 'item' ? 'item' : 'category';
-          if (dm === 'item') return !String(l.qboItemId || '').trim();
-          return !String(l.qboAccountId || '').trim();
-        });
-        if (badQboLine) {
-          erpNotify(
-            'Each cost line with a dollar amount needs a QuickBooks expense account or item on that row (QBO line under the row). Then try Save & post again.',
-            'warning'
-          );
-          return false;
-        }
-      }
 
       const recordBody = {
         unit: selectedUnit,
@@ -21639,6 +21704,7 @@
         inspectorBadge: (document.getElementById('maintInspectorBadgeInput')?.value || '').trim(),
         inspectionResult: (document.getElementById('maintInspectionResultSelect')?.value || '').trim(),
         inspectionNextDue: document.getElementById('maintInspectionNextDueInput')?.value || '',
+        outOfServiceItems: (document.getElementById('maintInspectionOosInput')?.value || '').trim(),
         lastPmDate: document.getElementById('maintPmLastDateInput')?.value || '',
         lastPmMiles: document.getElementById('maintPmLastMilesInput')?.value || '',
         nextPmDueMiles: document.getElementById('maintPmNextDueMilesInput')?.value || '',
@@ -21657,6 +21723,10 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(recordBody)
           });
+
+      if (typeof applyErpValidationUi === 'function') {
+        applyErpValidationUi('maintValidationBanner', '#maintWorkOrderFormMount', { errors: [], warnings: [] });
+      }
 
       const qbo = saveOut && saveOut.qbo;
       if (postToQbo && qbo && !qbo.ok && !qbo.skipped) {
@@ -21914,7 +21984,7 @@
         if (!saved) {
           maintToneSaveHint(
             hint,
-            'Not saved — review the alert, confirmation, or required fields, then try again.',
+            'Not saved — fix the red banner at the top of the work order (or cancel the mileage confirmation), then try again.',
             'caution'
           );
           return;
@@ -24605,6 +24675,25 @@
       }
     }
 
+    function maintBuildExpenseValidationState() {
+      refreshApDocTotal();
+      const lines = collectApFormWoLines();
+      const lineSum = sumApWoComposerAmounts();
+      const docAmtTxt = document.getElementById('apDocTotalDisplay')?.textContent || '$0.00';
+      const docTotal = Number(String(docAmtTxt).replace(/[^0-9.-]/g, '')) || 0;
+      const hasLineMoney = lines.length > 0 || lineSum > 0.004;
+      return {
+        vendorQboId: String(document.getElementById('apVendorQboId')?.value || '').trim(),
+        unit: String(document.getElementById('apAssetUnit')?.value || '').trim(),
+        txnDate: document.getElementById('apTxnDate')?.value || '',
+        maintRecordType: String(document.getElementById('apMaintRecordType')?.value || '').trim(),
+        lines,
+        docTotal,
+        lineSum,
+        hasLineMoney
+      };
+    }
+
     async function saveApTransaction(opts) {
       opts = opts || {};
       if (opts.workOrderBody) {
@@ -24638,38 +24727,19 @@
         return data;
       }
       const close = !opts || opts.close !== false;
+      const postToQbo = !!(opts && opts.postToQbo);
+      const expSt = maintBuildExpenseValidationState();
+      if (typeof validateExpenseState === 'function' && typeof applyErpValidationUi === 'function') {
+        const ev = validateExpenseState(expSt, { postToQbo });
+        applyErpValidationUi('apValidationBanner', '#erpApDocShellPanel', ev);
+        if (ev.errors && ev.errors.length) return;
+      }
       const vendorId = document.getElementById('apVendorQboId').value;
-      if (!vendorId) {
-        erpNotify('Choose a QuickBooks vendor (type to match the list, then save).', 'warning');
-        return;
-      }
       const unit = document.getElementById('apAssetUnit').value.trim();
-      if (!unit) {
-        erpNotify('Unit / asset is required.', 'warning');
-        return;
-      }
       const loadInv = document.getElementById('apLoadInvoiceNumber').value.trim();
       const vendorInv = document.getElementById('apVendorInvoiceNumber')?.value.trim() || '';
       const internalWo = document.getElementById('apInternalWorkOrderNumber')?.value.trim() || '';
-      const lines = collectApFormWoLines();
-
-      if (!lines.length) {
-        erpNotify('Add at least one line with an amount greater than zero.', 'warning');
-        return;
-      }
-
-      for (const l of lines) {
-        if (l.detailMode === 'category' && !l.qboAccountId) {
-          erpNotify('Each category line needs a resolved QuickBooks account (pick from list).', 'warning');
-          return;
-        }
-        if (l.detailMode === 'item' && !l.qboItemId) {
-          erpNotify('Each item line needs a resolved QuickBooks item.', 'warning');
-          return;
-        }
-      }
-
-      const postToQbo = !!(opts && opts.postToQbo);
+      const lines = expSt.lines;
       resolveApErpDriverSearch();
       const apDriverId = (document.getElementById('apErpDriverId')?.value || '').trim();
       const apDriverSearch = (document.getElementById('apErpDriverSearch')?.value || '').trim();
@@ -24711,6 +24781,9 @@
         if (ictx) void postIntegrityCheckAfterSave(ictx);
       }
 
+      if (typeof applyErpValidationUi === 'function') {
+        applyErpValidationUi('apValidationBanner', '#erpApDocShellPanel', { errors: [], warnings: [] });
+      }
       resetWoForm();
       await loadAll();
       if (postToQbo && woId) {
@@ -24990,6 +25063,10 @@
       fillDataLists();
     } catch (e) {
       console.error('initial fillDataLists', e);
+    }
+    if (typeof setupErpValidationAutoClear === 'function') {
+      setupErpValidationAutoClear('#maintWorkOrderFormMount', 'maintValidationBanner');
+      setupErpValidationAutoClear('#erpApDocShellPanel', 'apValidationBanner');
     }
     try {
       initMaintNotesNumbered();

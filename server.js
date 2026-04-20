@@ -6985,6 +6985,7 @@ function deriveMaintenanceRecordFields(body, prev) {
     inspectorBadge: String(body.inspectorBadge || '').trim().slice(0, 80),
     inspectionResult: String(body.inspectionResult || '').trim().slice(0, 80),
     inspectionNextDue: String(body.inspectionNextDue || '').trim().slice(0, 32),
+    outOfServiceItems: String(body.outOfServiceItems || '').trim().slice(0, 4000),
     lastPmDate: String(body.lastPmDate || '').trim().slice(0, 32),
     lastPmMiles: safeNum(body.lastPmMiles, null),
     nextPmDueMiles: safeNum(body.nextPmDueMiles, null),
@@ -6999,6 +7000,7 @@ function deriveMaintenanceRecordFields(body, prev) {
     'inspectorBadge',
     'inspectionResult',
     'inspectionNextDue',
+    'outOfServiceItems',
     'lastPmDate'
   ].forEach(k => {
     if (!recordCore[k]) delete recordCore[k];

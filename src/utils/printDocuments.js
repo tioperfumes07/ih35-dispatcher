@@ -1,6 +1,9 @@
 /**
- * IH35 ERP — approved print documents (Arial/Helvetica, fixed pt scale).
- * Browser-only IIFE; exposes window.generatePrintWindow, helpers, generateFilename.
+ * IH35 ERP — print documents (Arial, fixed point scale).
+ * Browser IIFE. Primary export:
+ *   generatePrintWindow(documentType, data[, extension])
+ * Opens a clean popup, writes HTML + PRINT_CSS, then triggers print after load.
+ * Also: generatePrintDoc, generateFilename, buildCostSection, erpPrintOpenAndPrint.
  */
 (function (global) {
   'use strict';
@@ -25,7 +28,7 @@
       margin-bottom: 10pt;
     }
     .co-name { font-size: 11pt; font-weight: bold; color: #1a1f36; }
-    .co-sub { font-size: 7pt; color: #555; margin-top: 2pt; line-height: 1.5; }
+    .co-sub { font-size: 6.5pt; color: #555; margin-top: 2pt; line-height: 1.5; }
     .doc-title-box { text-align: right; }
     .doc-title {
       display: inline-block;
@@ -35,7 +38,7 @@
       border: 1.5pt solid #1a1f36;
       padding: 3pt 10pt;
     }
-    .doc-sub { font-size: 7pt; color: #555; margin-top: 3pt; }
+    .doc-sub { font-size: 6.5pt; color: #555; margin-top: 3pt; }
     .section {
       border: 0.5pt solid #ccc;
       margin-bottom: 7pt;
@@ -72,7 +75,7 @@
       min-height: 11pt;
       display: block;
     }
-    .field-value.large { font-size: 11pt; font-weight: bold; }
+    .field-value.large { font-size: 11pt; font-weight: bold; color: #111; }
     .border-left { border-left: 1pt solid #ccc; padding-left: 8pt; }
     table { width: 100%; border-collapse: collapse; font-size: 7pt; margin-bottom: 4pt; }
     thead { display: table-header-group; }
@@ -89,6 +92,7 @@
     tbody tr { page-break-inside: avoid; }
     tbody tr:nth-child(even) { background: #f9f9f9; }
     tbody td {
+      font-size: 7pt;
       padding: 3pt 5pt;
       border: 0.5pt solid #ddd;
       vertical-align: top;
@@ -98,7 +102,7 @@
       font-weight: bold;
       background: #f0f0f0;
       border-top: 1pt solid #999;
-      font-size: 8pt;
+      font-size: 7pt;
     }
     .subtotal-bar {
       display: flex;
@@ -106,7 +110,8 @@
       gap: 20pt;
       padding: 3pt 5pt;
       border-top: 0.5pt solid #ccc;
-      font-size: 8pt;
+      font-size: 7pt;
+      font-weight: bold;
     }
     .grand-total {
       text-align: right;
@@ -117,7 +122,7 @@
       margin-top: 3pt;
     }
     .section-sublabel {
-      font-size: 7pt;
+      font-size: 6.5pt;
       font-weight: bold;
       text-transform: uppercase;
       color: #555;
@@ -126,29 +131,22 @@
     }
     .divider {
       text-align: center;
-      font-size: 7pt;
-      color: #666;
-      padding: 3pt;
-      border-top: 0.5pt dashed #ccc;
-      border-bottom: 0.5pt dashed #ccc;
-      margin: 4pt 0;
-      letter-spacing: 0.05em;
+      font-size: 6.5pt;
+      font-weight: bold;
+      color: #1a1f36;
+      padding: 5pt 3pt;
+      border-top: 0.75pt dashed #999;
+      border-bottom: 0.75pt dashed #999;
+      margin: 6pt 0;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-    }
-    .both-notice {
-      background: #f0f7ff;
-      border: 0.5pt solid #c5d9f7;
-      padding: 3pt 7pt;
-      font-size: 7pt;
-      color: #1557a0;
-      margin-bottom: 5pt;
     }
     .note-box {
       border: 0.5pt solid #ccc;
       padding: 5pt 7pt;
       min-height: 28pt;
-      font-size: 7.5pt;
-      color: #333;
+      font-size: 8pt;
+      color: #111;
       background: #fafafa;
     }
     .map-container { display: flex; gap: 8pt; padding: 0; align-items: flex-start; }
@@ -194,15 +192,15 @@
     }
     .payment-stub { border-top: 1pt dashed #999; margin-top: 10pt; padding-top: 6pt; }
     .stub-header {
-      font-size: 7pt;
+      font-size: 6.5pt;
       font-weight: bold;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #555;
       margin-bottom: 4pt;
     }
-    .stub-row { display: flex; justify-content: space-between; font-size: 8pt; padding: 2pt 0; border-bottom: 0.5pt solid #eee; flex-wrap: wrap; gap: 4pt; }
-    .stub-fill { display: flex; gap: 20pt; font-size: 8pt; margin-top: 4pt; flex-wrap: wrap; }
+    .stub-row { display: flex; justify-content: space-between; font-size: 7pt; padding: 2pt 0; border-bottom: 0.5pt solid #eee; flex-wrap: wrap; gap: 4pt; }
+    .stub-fill { display: flex; gap: 20pt; font-size: 7pt; margin-top: 4pt; flex-wrap: wrap; }
     .zero-balance { color: #137333; font-weight: bold; }
     .mono { font-family: 'Courier New', Courier, monospace; }
     .pill-pass { background: #e8f5e9; color: #137333; border-color: #7cb342; }
@@ -368,7 +366,6 @@
         money(itemSum)
       )}</td><td></td></tr></tbody></table>`;
     } else if (cats.length && items.length) {
-      html += `<div class="both-notice">Both category and item lines present — printing both sections below.</div>`;
       html += `<div class="section-sublabel">Category expense lines</div>${buildCategoryTable(cats)}`;
       html += `<div class="divider">Product / service lines</div>`;
       html += `<div class="section-sublabel">Product / service lines</div>${buildItemTable(items)}`;
@@ -624,23 +621,25 @@
       ];
     } else if (dt === 'expense' || dt === 'maintenance-expense') {
       segments = [
-        sanitizeFilename(d.vendor || d.payee),
+        sanitizeFilename(d.unit || d.unitNumber),
         'Expense',
-        sanitizeFilename(d.refNumber || d.refNo),
-        formatDateForFilename(d.paymentDate)
+        sanitizeFilename(d.serviceType || d.refNumber || d.refNo),
+        sanitizeFilename(d.vendor || d.payee),
+        formatDateForFilename(d.paymentDate || d.txnDate)
       ];
     } else if (dt === 'bill' || dt === 'maintenance-bill' || dt === 'vendor-driver-bill') {
       segments = [
-        sanitizeFilename(d.vendor || d.payee),
+        sanitizeFilename(d.unit || d.unitNumber),
         'Bill',
         sanitizeFilename(d.billNumber || d.vendorInvoice),
+        sanitizeFilename(d.vendor || d.payee),
         formatDateForFilename(d.billDate || d.paymentDate)
       ];
     } else if (dt === 'fuel-expense') {
       segments = [
-        sanitizeFilename(d.vendor || d.payee),
-        'Fuel',
         sanitizeFilename(d.unit),
+        'FuelExpense',
+        sanitizeFilename(d.vendor || d.payee),
         formatDateForFilename(d.txnDate || d.paymentDate)
       ];
     } else if (dt === 'fuel-bill') {
@@ -653,7 +652,7 @@
     } else if (dt === 'payment-receipt' || dt === 'bill-payment') {
       segments = [
         sanitizeFilename(d.vendor),
-        'Payment',
+        'PaymentReceipt',
         sanitizeFilename(d.paymentNumber),
         formatDateForFilename(d.paymentDate)
       ];
@@ -1024,7 +1023,7 @@
     let sec2Inner =
       rows.length === 0
         ? '<p class="co-sub">No fuel lines.</p>'
-        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">Qty (gal)</th><th class="right">$/gal</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
+        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
             Number.isFinite(gal) ? gal.toFixed(3) : '—'
           )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></table>`;
     if (rows.length === 0) {
@@ -1106,7 +1105,7 @@
     const tbl =
       rows.length === 0
         ? '<p class="co-sub">No fuel lines.</p>'
-        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">Qty (gal)</th><th class="right">$/gal</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
+        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
             Number.isFinite(gal) ? gal.toFixed(3) : '—'
           )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></table>`;
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
@@ -1274,9 +1273,9 @@
     try {
       if (typeof global.showErpToast === 'function') global.showErpToast(msg, 'warning');
       else if (typeof global.erpNotify === 'function') global.erpNotify(msg, 'warning');
-      else alert(msg);
+      else console.warn(msg);
     } catch (_) {
-      alert(msg);
+      console.warn(msg);
     }
   }
 
@@ -1299,6 +1298,11 @@
     }
   }
 
+  /**
+   * @param {string} documentType
+   * @param {Record<string, unknown>} data
+   * @param {string} [extension]
+   */
   function generatePrintWindow(documentType, data, extension) {
     const ext = extension || 'pdf';
     const html = generatePrintDoc(documentType, data);
