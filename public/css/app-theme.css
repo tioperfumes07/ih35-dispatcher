@@ -524,6 +524,16 @@ body.erp-maintenance .qb-picker-item__meta {
   min-height: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .erp-drawer__title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    overflow-wrap: anywhere;
+  }
 }
 .erp-drawer__body {
   flex: 1 1 auto;
@@ -1988,6 +1998,7 @@ body.erp-maintenance .shop-col-head {
   background: var(--color-bg-hover);
   min-width: 0;
   min-height: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .shop-col-body {
@@ -2005,6 +2016,7 @@ body.erp-maintenance .shop-row {
   line-height: 1.35;
   min-width: 0;
   min-height: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .shop-row:last-child {
