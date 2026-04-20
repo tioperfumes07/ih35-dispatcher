@@ -253,7 +253,15 @@
         </div>
       </div>
       <div class="erp-module-sidebar__footer">
-        <div class="erp-sb-heading">Connections</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 6px;min-width:0">
+          <div class="erp-sb-heading" style="margin:0">Connections</div>
+          <span class="erp-help-tip">
+            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Sidebar connection lines">?</button>
+            <span class="erp-help-tip__panel" role="tooltip">
+              <strong>QuickBooks</strong>, <strong>Samsara</strong>, and <strong>Last refresh</strong> below update from <code>loadAll()</code> and sync polls. <code>#sidebarQboStatus</code>, <code>#sidebarQboAlertBrief</code>, and <code>#sidebarFleetStatus</code> use <code>textContent</code>; the brief QBO strip can be empty when there is nothing to surface.
+            </span>
+          </span>
+        </div>
         <div id="sidebarQboStatus" class="mini-note">QuickBooks: checking connection…</div>
         <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
         <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: waiting for first refresh…</div>
