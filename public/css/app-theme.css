@@ -1736,15 +1736,7 @@ body.erp-maintenance .qb-memo {
   font-size: 12px;
 }
 
-body.erp-maintenance .wo-line {
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-}
-
-body.erp-maintenance .wo-line:last-child {
-  border-bottom: none;
-}
+/* `.wo-line` marks `<tr>` rows in QBO line tables; block-style borders break real table layout. */
 
 body.erp-maintenance .wo-line-grid {
   display: grid;

@@ -2212,6 +2212,30 @@ body.erp-maintenance .maint-qb-lines-table tbody td {
   min-height: 34px;
 }
 
+/* Real horizontal tables: keep `<tr>` / `<td>` as table display (overrides any legacy row styling). */
+body.erp-maintenance .maint-qb-lines-scroll table.maint-qb-lines-table thead tr,
+body.erp-maintenance .maint-qb-lines-scroll table.maint-qb-lines-table tbody tr,
+body.erp-maintenance .maint-qb-lines-scroll table.ap-wo-qb-table thead tr,
+body.erp-maintenance .maint-qb-lines-scroll table.ap-wo-qb-table tbody tr {
+  display: table-row !important;
+}
+body.erp-maintenance .maint-qb-lines-scroll table.maint-qb-lines-table thead th,
+body.erp-maintenance .maint-qb-lines-scroll table.maint-qb-lines-table tbody td,
+body.erp-maintenance .maint-qb-lines-scroll table.ap-wo-qb-table thead th,
+body.erp-maintenance .maint-qb-lines-scroll table.ap-wo-qb-table tbody td {
+  display: table-cell !important;
+}
+body.erp-maintenance .maint-cost-table-wrap table.maint-cost-table thead tr,
+body.erp-maintenance .maint-cost-table-wrap table.maint-cost-table tbody tr,
+body.erp-maintenance .maint-cost-table-wrap table.maint-cost-table tfoot tr {
+  display: table-row !important;
+}
+body.erp-maintenance .maint-cost-table-wrap table.maint-cost-table thead th,
+body.erp-maintenance .maint-cost-table-wrap table.maint-cost-table tbody td,
+body.erp-maintenance .maint-cost-table-wrap table.maint-cost-table tfoot td {
+  display: table-cell !important;
+}
+
 body.erp-maintenance .maint-qb-lines-table .qb-in {
   width: 100%;
   min-width: 0;

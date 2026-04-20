@@ -118,7 +118,7 @@
                             <th class="maint-qb-th-bill">Billable</th>
                             <th>Customer</th>
                             <th>Class</th>
-                            <th class="maint-qb-th-del"></th>
+                            <th class="maint-qb-th-del" scope="col">Actions</th>
                           </tr>
                         </thead>
                         <tbody id="mbWoCatHost"></tbody>
@@ -272,6 +272,10 @@
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="maintCatModalTitle" onclick="event.stopPropagation()">
       <div id="maintModalFlowTitle" class="hidden"></div>
       <header class="erp-qb-dialog__head">
+        <div class="erp-qb-dialog__head-viewport" data-erp-no-drag="1">
+          <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleMaximize('maintCatModal')" title="90% of viewport">Maximize</button>
+          <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleFullscreen('maintCatModal')" title="Fill viewport">Full screen</button>
+        </div>
         <h3 id="maintCatModalTitle" class="erp-qb-dialog__title">Vehicle type</h3>
         <span class="erp-help-tip" aria-label="Help for vehicle categories">
           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About categories">?</button>
@@ -341,6 +345,10 @@
               Full-window form (QuickBooks-style). Close when you need the fleet tabs underneath.
             </span>
           </span>
+        </div>
+        <div class="maint-workorder-fullmodal__head-viewport" data-erp-no-drag="1">
+          <button type="button" class="btn btn--small secondary" id="maintWoMaxBtn" onclick="maintWoToggleMaximize()" title="90% of viewport" aria-pressed="false">Maximize</button>
+          <button type="button" class="btn btn--small secondary" id="maintWoFsBtn" onclick="maintWoToggleFullscreen()" title="Fill viewport (Esc to exit full screen)" aria-pressed="false">Full screen</button>
         </div>
         <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
       </div>
@@ -1567,7 +1575,7 @@
                                 <th>Position</th>
                                 <th>Part #</th>
                                 <th>Line memo</th>
-                                <th class="maint-qb-th-del"></th>
+                                <th class="maint-qb-th-del" scope="col">Actions</th>
                           </tr>
                         </thead>
                             <tbody id="maintCostCatHost"></tbody>
@@ -1601,7 +1609,7 @@
                                 <th>Position</th>
                                 <th>Part #</th>
                                 <th>Line memo</th>
-                                <th class="maint-qb-th-del"></th>
+                                <th class="maint-qb-th-del" scope="col">Actions</th>
                           </tr>
                             </thead>
                             <tbody id="maintCostItemHost"></tbody>
@@ -3309,7 +3317,7 @@
                             <th>Position</th>
                             <th class="maint-qb-th-partno">Part #</th>
                             <th>Line memo</th>
-                            <th class="maint-qb-th-del"></th>
+                            <th class="maint-qb-th-del" scope="col">Actions</th>
                           </tr>
                         </thead>
                         <tbody id="apWoCatHost"></tbody>
@@ -3335,15 +3343,15 @@
                             <th class="maint-qb-th-sku">SKU</th>
                             <th>Description</th>
                             <th class="maint-qb-th-num">Qty</th>
-                            <th class="maint-qb-th-num">Unit $</th>
-                            <th class="maint-qb-th-num">Total</th>
+                            <th class="maint-qb-th-num">Rate</th>
+                            <th class="maint-qb-th-num">Amount</th>
                             <th class="maint-qb-th-bill">Billable</th>
                             <th>Customer</th>
                             <th>Class</th>
                             <th>Position</th>
                             <th class="maint-qb-th-partno">Part #</th>
                             <th>Line memo</th>
-                            <th class="maint-qb-th-del"></th>
+                            <th class="maint-qb-th-del" scope="col">Actions</th>
                           </tr>
                         </thead>
                         <tbody id="apWoItemHost"></tbody>
@@ -3901,22 +3909,23 @@
                       <table class="maint-cost-table acct-fuel-manual-table" aria-label="Manual fuel cost lines">
                         <thead>
                           <tr>
-                            <th>Description</th>
-                            <th>Line type</th>
-                            <th>Expense account</th>
-                            <th>Product / service</th>
-                            <th class="maint-cost-table__sku">SKU</th>
-                            <th class="maint-cost-table__lock">Lock line $</th>
-                            <th class="maint-cost-table__num">Qty (gal)</th>
-                            <th class="maint-cost-table__num">Unit $</th>
-                            <th class="maint-cost-table__num">Line $</th>
-                            <th class="maint-cost-table__del"></th>
+                            <th class="maint-cost-table__num" scope="col">#</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Line type</th>
+                            <th scope="col">Expense account</th>
+                            <th scope="col">Product / service</th>
+                            <th class="maint-cost-table__sku" scope="col">SKU</th>
+                            <th class="maint-cost-table__lock" scope="col">Lock $</th>
+                            <th class="maint-cost-table__num" scope="col">Qty (gal)</th>
+                            <th class="maint-cost-table__num" scope="col">$/gal</th>
+                            <th class="maint-cost-table__num" scope="col">Amount</th>
+                            <th class="maint-cost-table__del" scope="col">Actions</th>
                           </tr>
                         </thead>
                         <tbody id="fuelManualLines"></tbody>
                         <tfoot>
                           <tr class="maint-cost-table__addrow">
-                            <td colspan="10">
+                            <td colspan="11">
                               <button type="button" class="maint-cost-addline" onclick="addFuelManualLine()">+ Add line</button>
                             </td>
                           </tr>
@@ -6197,6 +6206,9 @@
 
   <template id="fuelManualCostLineTpl">
     <tr class="fuel-m-cost-line">
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <span class="fuel-m-line-idx">1</span>
+      </td>
       <td class="maint-cost-td-desc">
         <input
           class="qb-in maint-field fuel-m-line-desc"
@@ -13582,6 +13594,15 @@
       fuelManualUpdateHeaderTotal();
     }
 
+    function fuelManualRenumberLines() {
+      const host = document.getElementById('fuelManualLines');
+      if (!host) return;
+      host.querySelectorAll('tr.fuel-m-cost-line').forEach((tr, i) => {
+        const sp = tr.querySelector('.fuel-m-line-idx');
+        if (sp) sp.textContent = String(i + 1);
+      });
+    }
+
     function fuelManualUpdateHeaderTotal() {
       const host = document.getElementById('fuelManualLines');
       const out = document.getElementById('fuelManualHeaderTotal');
@@ -13600,6 +13621,7 @@
       const host = document.getElementById('fuelManualLines');
       if (!tpl || !host) return;
       host.appendChild(tpl.content.cloneNode(true));
+      fuelManualRenumberLines();
       const rows = host.querySelectorAll('tr.fuel-m-cost-line');
       const last = rows[rows.length - 1];
       const modeSel = last.querySelector('.fuel-m-line-mode');
@@ -13624,6 +13646,7 @@
         return;
       }
       row.remove();
+      fuelManualRenumberLines();
       fuelManualUpdateHeaderTotal();
     }
 
