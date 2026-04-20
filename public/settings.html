@@ -296,18 +296,120 @@
       }
     }
 
+    const INTEGRITY_THRESHOLD_FIELDS = [
+      { section: 'Tire thresholds', key: 'maxTiresPerUnit90d', label: 'Max tires per unit per 90 days', step: 1 },
+      { section: 'Tire thresholds', key: 'maxSameTirePosition180d', label: 'Max same position replacements per 180 days', step: 1 },
+      { section: 'Tire thresholds', key: 'tireCostAnomalyMult', label: 'Tire cost anomaly multiplier (×)', step: 0.1 },
+      { section: 'Tire thresholds', key: 'maxFleetTiresPerMonth', label: 'Max fleet tires per calendar month', step: 1 },
+      { section: 'Driver thresholds', key: 'maxRepairsPerDriver90d', label: 'Max repairs per driver per 90 days', step: 1 },
+      { section: 'Driver thresholds', key: 'maxAccidentsPerDriver12mo', label: 'Max accidents per driver per 12 months', step: 1 },
+      { section: 'Driver thresholds', key: 'maxRepairCostDriver90d', label: 'Max repair cost per driver per 90 days ($)', step: 100 },
+      { section: 'Driver thresholds', key: 'maxRepairsSameDriverUnit60d', label: 'Max repairs same driver + unit per 60 days', step: 1 },
+      { section: 'Fuel thresholds', key: 'fuelConsumptionIncreasePct', label: 'Fuel consumption increase threshold (%)', step: 1 },
+      { section: 'Fuel thresholds', key: 'unusualGallonsMult', label: 'Unusual gallons per transaction multiplier (×)', step: 0.1 },
+      { section: 'Fuel thresholds', key: 'fuelPriceSpikePct', label: 'Fuel price spike threshold (%)', step: 1 },
+      { section: 'Maintenance thresholds', key: 'serviceCostAnomalyMult', label: 'Service cost anomaly multiplier (×)', step: 0.1 },
+      { section: 'Maintenance thresholds', key: 'maxMonthlyCostPerUnit', label: 'Max monthly cost per unit ($)', step: 100 },
+      { section: 'Maintenance thresholds', key: 'maxServiceRecordsPerUnit60d', label: 'Max service records per unit per 60 days', step: 1 },
+      { section: 'Maintenance thresholds', key: 'vendorInvoiceIncreasePct', label: 'Vendor invoice increase threshold (%)', step: 1 },
+      { section: 'Accident thresholds', key: 'accidentQuarterlyCostUsd', label: 'Quarterly accident cost alert ($)', step: 500 },
+      { section: 'Accident thresholds', key: 'accidentQuarterlyCostYoYPct', label: 'Quarterly accident cost vs prior year (%)', step: 1 }
+    ];
+
+    function renderIntegrityThresholdForm(th) {
+      const host = document.getElementById('intThFields');
+      if (!host) return;
+      const data = th && typeof th === 'object' ? th : {};
+      let cur = '';
+      const parts = [];
+      for (const row of INTEGRITY_THRESHOLD_FIELDS) {
+        if (row.section !== cur) {
+          parts.push(`<div class="erp-int-th-section" style="grid-column:1/-1">${escapeHtml(row.section)}</div>`);
+          cur = row.section;
+        }
+        const v = data[row.key] != null && data[row.key] !== '' ? String(data[row.key]) : '';
+        parts.push(`<div>
+          <label for="intTh_${escapeHtml(row.key)}">${escapeHtml(row.label)}</label>
+          <input id="intTh_${escapeHtml(row.key)}" type="number" step="${row.step}" value="${escapeHtml(v)}" />
+        </div>`);
+      }
+      host.innerHTML = `<div class="erp-int-threshold-grid">${parts.join('')}</div>`;
+    }
+
+    async function loadIntegrityThresholdsForm() {
+      document.getElementById('intThErr').textContent = '';
+      try {
+        const d = await api('/api/integrity/thresholds');
+        renderIntegrityThresholdForm(d.thresholds || {});
+      } catch (e) {
+        document.getElementById('intThErr').textContent = e.message || String(e);
+      }
+    }
+
+    async function saveIntegrityThresholds() {
+      const btn = document.getElementById('btnIntThSave');
+      document.getElementById('intThErr').textContent = '';
+      const run = async () => {
+        const body = {};
+        for (const row of INTEGRITY_THRESHOLD_FIELDS) {
+          const el = document.getElementById('intTh_' + row.key);
+          if (!el) continue;
+          const raw = String(el.value || '').trim();
+          if (raw === '') continue;
+          const n = Number(raw);
+          if (!Number.isFinite(n)) throw new Error('Invalid number for ' + row.label);
+          body[row.key] = n;
+        }
+        await api('/api/integrity/thresholds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        await loadIntegrityThresholdsForm();
+        if (window.showToast) window.showToast('Thresholds saved.', 'success');
+      };
+      try {
+        if (window.erpWithBusy && btn) await window.erpWithBusy(btn, run);
+        else await run();
+      } catch (e) {
+        document.getElementById('intThErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
+    }
+
+    async function resetIntegrityThresholds() {
+      document.getElementById('intThErr').textContent = '';
+      try {
+        await api('/api/integrity/thresholds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reset: true })
+        });
+        await loadIntegrityThresholdsForm();
+        if (window.showToast) window.showToast('Reset to defaults.', 'success');
+      } catch (e) {
+        document.getElementById('intThErr').textContent = e.message || String(e);
+        if (window.showToast) window.showToast(e.message || String(e), 'error');
+      }
+    }
+
     function openAdminTab(tab) {
       const t = String(tab || 'users');
       document.getElementById('adminTabPanelUsers').classList.toggle('hidden', t !== 'users');
       document.getElementById('adminTabPanelEmployees').classList.toggle('hidden', t !== 'employees');
       document.getElementById('adminTabPanelCompany').classList.toggle('hidden', t !== 'company');
+      const intPanel = document.getElementById('adminTabPanelIntegrity');
+      if (intPanel) intPanel.classList.toggle('hidden', t !== 'integrity');
       const bU = document.getElementById('adminTabUsers');
       const bE = document.getElementById('adminTabEmployees');
       const bC = document.getElementById('adminTabCompany');
+      const bI = document.getElementById('adminTabIntegrity');
       if (bU) bU.classList.toggle('primary', t === 'users');
       if (bE) bE.classList.toggle('primary', t === 'employees');
       if (bC) bC.classList.toggle('primary', t === 'company');
+      if (bI) bI.classList.toggle('primary', t === 'integrity');
       if (t === 'company') loadCompanyProfile();
+      if (t === 'integrity') loadIntegrityThresholdsForm();
     }
 
     function fillCompanyForm(p) {
