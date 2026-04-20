@@ -19,6 +19,34 @@
     return '$' + x.toFixed(2);
   }
 
+  function workorderBadgeTitle(rt, label) {
+    const lab = String(label || '').trim();
+    const low = lab.toLowerCase();
+    if (low.includes('repair')) return 'REPAIR ORDER';
+    if (low.includes('maintenance')) return 'MAINTENANCE ORDER';
+    if (low.includes('pm')) return 'PM SERVICE ORDER';
+    if (low.includes('inspection')) return 'INSPECTION RECORD';
+    if (low.includes('accident')) return 'ACCIDENT REPAIR ORDER';
+    if (low.includes('tire')) return 'TIRE SERVICE ORDER';
+    if (low.includes('air bag')) return 'AIR BAG SERVICE';
+    if (low.includes('battery')) return 'BATTERY SERVICE ORDER';
+    if (low.includes('body')) return 'BODY WORK ORDER';
+    const r = String(rt || '').toLowerCase().replace(/-/g, '_');
+    const map = {
+      repair: 'REPAIR ORDER',
+      maintenance_order: 'MAINTENANCE ORDER',
+      maintenance: 'MAINTENANCE ORDER',
+      pm: 'PM SERVICE ORDER',
+      inspection: 'INSPECTION RECORD',
+      accident: 'ACCIDENT REPAIR ORDER',
+      tire: 'TIRE SERVICE ORDER',
+      air_bag: 'AIR BAG SERVICE',
+      battery: 'BATTERY SERVICE ORDER',
+      custom: 'WORK ORDER'
+    };
+    return map[r] || 'WORK ORDER';
+  }
+
   function baseStyles() {
     return `
 @page { size: letter portrait; margin: 0.65in 0.65in 0.85in 0.65in; }
@@ -88,8 +116,19 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
     let tableHtml = '';
     const catLines = lines.filter(l => l.detailMode === 'category');
     const itemLines = lines.filter(l => l.detailMode === 'item');
+    const theadCat = `<thead>${headCat.replace('<tr>', '<tr>').replace('</tr>', '</tr>')}</thead>`.replace(
+      '<thead><tr>',
+      '<thead><tr>'
+    );
+    const theadCatReal = `<thead><tr>${headCat
+      .replace(/^<tr>/, '')
+      .replace(/<\/tr>$/, '')}</tr></thead>`;
+    const theadItemReal = `<thead><tr>${headItem
+      .replace(/^<tr>/, '')
+      .replace(/<\/tr>$/, '')}</tr></thead>`;
+
     if (catLines.length) {
-      tableHtml += `<div class="sec-title">Category lines</div><table class="cost">${headCat}${catLines
+      const body = catLines
         .map((ln, i) => {
           const idx = lines.indexOf(ln) + 1;
           const bill = ln.billable ? 'Yes' : 'No';
@@ -104,10 +143,12 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
               : '<td></td><td></td>'
           }</tr>`;
         })
-        .join('')}</table>`;
+        .join('');
+      tableHtml += `<div class="sec-title">Category lines</div><table class="cost">${theadCatReal}<tbody>${body}</tbody></table>
+        <div class="tot" style="font-size:9pt;margin:2px 0 6px">Category subtotal: ${esc(money(catSum))}</div>`;
     }
     if (itemLines.length) {
-      tableHtml += `<div class="sec-title">Item lines</div><table class="cost">${headItem}${itemLines
+      const body = itemLines
         .map(ln => {
           const idx = lines.indexOf(ln) + 1;
           const bill = ln.billable ? 'Yes' : 'No';
@@ -124,8 +165,11 @@ table.cost tr:nth-child(even) td { background:#f9f9f9; }
               : '<td></td><td></td>'
           }</tr>`;
         })
-        .join('')}</table>`;
+        .join('');
+      tableHtml += `<div class="sec-title">Item lines</div><table class="cost">${theadItemReal}<tbody>${body}</tbody></table>
+        <div class="tot" style="font-size:9pt;margin:2px 0 6px">Item subtotal: ${esc(money(itemSum))}</div>`;
     }
+    void theadCat;
     if (!tableHtml) {
       tableHtml = '<p class="kv"><b>Cost lines:</b> —</p>';
     }
@@ -480,11 +524,12 @@ table.meta th, table.meta td { border:1px solid #ccc; padding:4px 6px; text-alig
       t === 'bill' ||
       t === 'maintenance-expense' ||
       t === 'maintenance-bill' ||
+      t === 'fuel-bill' ||
       t === 'vendor-driver-bill'
     ) {
       return apExpenseBillDoc(data, t);
     }
-    if (t === 'fuel-expense' || t === 'fuel-bill') return fuelManualDoc(data);
+    if (t === 'fuel-expense') return fuelManualDoc(data);
     return genericDoc(t, data);
   }
 

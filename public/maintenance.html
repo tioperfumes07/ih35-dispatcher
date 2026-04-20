@@ -22409,14 +22409,28 @@
 
     function erpIntegritySelectTab(tab) {
       const t = String(tab || 'all');
-      window.__integrityDashTab = t;
-      const wrap = document.getElementById('integrityDashCatTabs');
-      if (wrap) {
-        wrap.querySelectorAll('.erp-int-cat-tab').forEach(btn => {
-          btn.classList.toggle('active', btn.getAttribute('data-int-tab') === t);
-        });
+      const catSel = document.getElementById('integrityDashCategory');
+      const stSel = document.getElementById('integrityDashStatus');
+      if (t === 'resolved') {
+        if (stSel) stSel.value = 'reviewed';
+        if (catSel) catSel.value = 'all';
+      } else {
+        if (stSel) stSel.value = 'active';
+        if (catSel) catSel.value = t;
       }
       loadIntegrityDashboard();
+    }
+
+    function syncIntegrityCatTabsFromSelects() {
+      const wrap = document.getElementById('integrityDashCatTabs');
+      if (!wrap) return;
+      const st = String(document.getElementById('integrityDashStatus')?.value || 'active').toLowerCase();
+      const cat = String(document.getElementById('integrityDashCategory')?.value || 'all').toLowerCase();
+      const tab = st === 'reviewed' ? 'resolved' : cat;
+      window.__integrityDashTab = tab;
+      wrap.querySelectorAll('.erp-int-cat-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-int-tab') === tab);
+      });
     }
 
     function localIsoDate(d) {
@@ -22464,13 +22478,6 @@
     }
 
     async function loadIntegrityDashboard() {
-      const tabSync = String(window.__integrityDashTab || 'all');
-      const wrapSync = document.getElementById('integrityDashCatTabs');
-      if (wrapSync) {
-        wrapSync.querySelectorAll('.erp-int-cat-tab').forEach(btn => {
-          btn.classList.toggle('active', btn.getAttribute('data-int-tab') === tabSync);
-        });
-      }
       const fromEl = document.getElementById('integrityDashDateFrom');
       const toEl = document.getElementById('integrityDashDateTo');
       if (fromEl && !fromEl.value) {
@@ -22482,15 +22489,18 @@
       if (toEl && !toEl.value) toEl.value = localIsoDate(new Date());
       const start = String(fromEl?.value || '').trim();
       const end = String(toEl?.value || '').trim();
-      const tab = String(window.__integrityDashTab || 'all');
-      let cat = 'all';
+      const cat =
+        String(document.getElementById('integrityDashCategory')?.value || 'all')
+          .trim()
+          .toLowerCase() || 'all';
+      const stRaw = String(document.getElementById('integrityDashStatus')?.value || 'active')
+        .trim()
+        .toLowerCase();
       let st = 'active';
-      if (tab === 'resolved') {
-        st = 'reviewed';
-        cat = 'all';
-      } else if (tab !== 'all') {
-        cat = tab;
-      }
+      if (stRaw === 'reviewed') st = 'reviewed';
+      else if (stRaw === 'dismissed') st = 'dismissed';
+      else if (stRaw === 'all') st = 'all';
+      else st = 'active';
       const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
       const qs = new URLSearchParams();
       if (start) qs.set('startDate', start);
@@ -22533,6 +22543,7 @@
           body.innerHTML =
             '<p class="mini-note" style="margin:0">No alerts for these filters (session-dismissed items stay hidden until you refresh the page).</p>';
           void refreshIntegrityNavBadges();
+          syncIntegrityCatTabsFromSelects();
           return;
         }
         const cards = rows
@@ -22573,6 +22584,7 @@
           .join('');
         body.innerHTML = cards;
         void refreshIntegrityNavBadges();
+        syncIntegrityCatTabsFromSelects();
       } catch (e) {
         erpNotify(e.message || String(e), 'error');
       }
