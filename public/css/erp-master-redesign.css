@@ -2795,6 +2795,8 @@ body.fuel-board .panel h2 {
   border-bottom: 1px solid var(--color-border);
   font-weight: 500;
   color: var(--color-text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .panel-body {
@@ -3130,6 +3132,8 @@ body.banking-page p.lead {
   line-height: 1.5;
   color: var(--color-text-label);
   font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.banking-page .panel {
@@ -3591,6 +3595,8 @@ body.hub-page .tag-banking {
 body.hub-page a.card h2 {
   margin: 0 0 10px;
   font-size: 20px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.hub-page a.card p {
@@ -3598,6 +3604,8 @@ body.hub-page a.card p {
   color: var(--color-hub-text-muted);
   font-size: 14px;
   line-height: 1.55;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.hub-page .arrow {
