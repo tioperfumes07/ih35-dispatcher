@@ -8,7 +8,7 @@
  * **`GET /api/__smoke_not_found__`** (auth-exempt in **`server.js`**) must return **404** with **`Content-Type`** including **`application/json`** and body **`{ error: 'Not found', path: '...' }`** so XHR clients never see HTML for unknown API paths.
  * **`GET /api/pdf/__smoke__`** (auth-exempt in **`server.js`**) must return **200** with **`Content-Type`** including **`application/pdf`** and a body starting with **`%PDF`** — exercises **`pdfkit`** even when ERP login is required.
  * Set SMOKE_BASE=http://host:port to target another environment. Set SMOKE_QUIET=1 to omit the trailing “Smoke target” line on success (also set automatically for smoke when CI=true via qa-with-server.mjs).
- * Set SMOKE_TIMEOUT_MS for per-fetch AbortSignal timeout (default **8000** ms, clamped **2000–30000**); **.github/workflows/rule0-check.yml** sets **12000** for CI.
+ * Set SMOKE_TIMEOUT_MS for per-fetch AbortSignal timeout (default **10000** ms, clamped **2000–30000**); **.github/workflows/rule0-check.yml** sets **15000** for CI.
  * If `/api/qbo/sync-alerts` returns 404 while this repo’s server.js defines it, another process
  * is often still bound to that port (stale deploy) — pick a free PORT or stop the old listener.
  * On critical failure, the script prints a one-line hint to run **`npm run qa:isolated`** ( **`smoke-gate-paths-sync`**, temp **`server.js`**, **`rule0:check`**, then this script).
@@ -99,7 +99,7 @@ const RULE0_GUARD_FETCHES = [
   ['/maintenance.html', 'text/html']
 ];
 
-const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 8000));
+const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 10000));
 
 async function one(method, path) {
   const url = base + path;

@@ -139,3 +139,47 @@
   --erp-form-control-font-size: 12px;
   --erp-form-control-min-height: 32px;
 }
+
+/* FIX 5 — uniform 30px single-line inputs on maintenance ERP page */
+body.erp-maintenance input[type='text'],
+body.erp-maintenance input[type='number'],
+body.erp-maintenance input[type='date'],
+body.erp-maintenance input[type='email'],
+body.erp-maintenance input[type='tel'],
+body.erp-maintenance input[type='search'],
+body.erp-maintenance select,
+body.erp-maintenance .form-input,
+body.erp-maintenance .field-input {
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  border: 1px solid #d0d4da !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  color: #1a1f36 !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  line-height: 30px !important;
+}
+
+body.erp-maintenance textarea,
+body.erp-maintenance .form-textarea {
+  height: auto !important;
+  min-height: 72px !important;
+  max-height: none !important;
+  padding: 8px 10px !important;
+  line-height: 1.5 !important;
+  resize: vertical !important;
+}
+
+body.erp-maintenance .maint-input-action-btn {
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  padding: 0 8px !important;
+  font-size: 10px !important;
+  line-height: 22px !important;
+  box-sizing: border-box !important;
+}

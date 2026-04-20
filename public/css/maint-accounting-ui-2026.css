@@ -2200,6 +2200,9 @@ body.erp-maintenance .ap-wo-lines-root {
   body.erp-maintenance #section-accounting #acct-transactions .qb-doc-topbar,
   body.erp-maintenance #section-accounting #acct-fuel-expense .qb-doc-topbar--fuel {
     padding: 6px 10px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 6px;
   }
 
   body.erp-maintenance #section-accounting #acct-transactions .qb-doc-footer--ap,
@@ -2627,5 +2630,439 @@ body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card__val {
   font-size: 20px;
   font-weight: 500;
   margin-top: 6px;
+}
+
+/* —— Resizable modal shell (visual) —— */
+body.erp-maintenance .erp-modal-resize-grip {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  border: 0;
+  background: transparent;
+  color: #d0d4da;
+  cursor: se-resize;
+  z-index: 6;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .erp-dedicated-form-modal__shell,
+body.erp-maintenance .maint-workorder-fullmodal__shell,
+body.erp-maintenance .maint-modal.erp-qb-dialog {
+  position: relative;
+}
+
+body.erp-maintenance .erp-dedicated-form-modal__shell.erp-modal-shell--user-geometry {
+  display: flex;
+  flex-direction: column;
+  max-width: 95vw;
+  max-height: 95vh;
+}
+
+body.erp-maintenance .erp-dedicated-form-modal__shell.erp-modal-shell--user-geometry .erp-dedicated-form-modal__inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body.erp-maintenance .erp-dedicated-form-modal__shell.erp-modal-shell--user-geometry .erp-dedicated-form-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body.erp-maintenance .maint-workorder-fullmodal__shell.erp-modal-shell--user-geometry {
+  display: flex;
+  flex-direction: column;
+  max-width: 95vw;
+  max-height: 95vh;
+}
+
+body.erp-maintenance .maint-workorder-fullmodal__shell.erp-modal-shell--user-geometry .maint-workorder-fullmodal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body.erp-maintenance .maint-modal.erp-qb-dialog.erp-modal-shell--user-geometry .erp-qb-dialog__body {
+  max-height: calc(95vh - 120px);
+  overflow-y: auto;
+}
+
+/* —— WO banner (FIX 2A) —— */
+body.erp-maintenance .maint-wo-banner--spec {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e0e3e8;
+  background: #ffffff;
+}
+
+body.erp-maintenance .maint-wo-banner--spec .maint-wo-banner__title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a1f36;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: #d0d4da;
+}
+
+body.erp-maintenance .maint-wo-banner--spec .maint-wo-banner__unit {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1557a0;
+  margin-left: 4px;
+}
+
+/* —— Vehicle information card (FIX 2B) —— */
+body.erp-maintenance .maint-vehicle-info-box {
+  border: 1px solid var(--color-border, #e0e3e8);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0;
+  margin-bottom: 12px;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__body {
+  padding: 14px 16px 16px;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__title {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e3e8;
+  color: #1a1f36;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__left {
+  flex: 2 1 280px;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__right {
+  flex: 1 1 200px;
+  min-width: 180px;
+  border-left: 1px solid #e0e3e8;
+  padding-left: 16px;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+body.erp-maintenance .maint-field-cell--repair-status-inline {
+  min-width: 160px;
+}
+
+body.erp-maintenance .maint-field-cell--repair-status-inline .qb-in {
+  width: 180px;
+  max-width: 100%;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__ymm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  color: #3c4257;
+  margin-bottom: 8px;
+}
+
+body.erp-maintenance .maint-vehicle-ymm__y {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .maint-vehicle-ymm__mk {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .maint-vehicle-ymm__md {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__mono {
+  font-size: 12px;
+  color: #3c4257;
+  margin-bottom: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+}
+
+body.erp-maintenance .maint-vehicle-id-lbl {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7385;
+}
+
+body.erp-maintenance .maint-vehicle-id-val {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+body.erp-maintenance .maint-vehicle-kpi__lbl {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7385;
+  margin-bottom: 4px;
+}
+
+body.erp-maintenance .maint-vehicle-kpi__val {
+  font-size: 20px;
+  font-weight: 500;
+  color: #1a1f36;
+}
+
+body.erp-maintenance .maint-vehicle-kpi__val--md {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1f36;
+}
+
+body.erp-maintenance .maint-vehicle-kpi__val--danger {
+  color: #b91c1c;
+}
+
+body.erp-maintenance .maint-vehicle-kpi__val--ok {
+  color: #065f46;
+}
+
+body.erp-maintenance .maint-vehicle-kpi__val--warn {
+  color: #b45309;
+}
+
+body.erp-maintenance .maint-vehicle-kpi__badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  background: #dcfce7;
+  color: #166534;
+}
+
+body.erp-maintenance .maint-vehicle-info-box__oplink {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+body.erp-maintenance .maint-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+body.erp-maintenance .maint-status-pill--ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+body.erp-maintenance .maint-status-pill--warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+body.erp-maintenance .maint-status-pill--danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+body.erp-maintenance .maint-status-pill--neutral {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* —— Service information card —— */
+body.erp-maintenance .maint-wo-service-info-card__title {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e3e8;
+  color: #1a1f36;
+}
+
+body.erp-maintenance .maint-wo-svc-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+body.erp-maintenance .maint-wo-svc-row .maint-field-cell {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-wo-svc-row--1 .maint-field-cell--service-location {
+  flex: 1 1 200px;
+}
+
+body.erp-maintenance .maint-wo-svc-row--1 .maint-field-cell--record-type {
+  flex: 0 0 160px;
+}
+
+body.erp-maintenance .maint-wo-svc-row--1 .maint-field-cell--service-type {
+  flex: 2 1 220px;
+}
+
+body.erp-maintenance .maint-wo-svc-row--1 .maint-field-cell--service-date {
+  flex: 0 0 150px;
+}
+
+body.erp-maintenance .maint-wo-svc-row--2 .maint-field-cell--vendor {
+  flex: 1 1 220px;
+}
+
+body.erp-maintenance .maint-wo-svc-row--2 .maint-field-cell--odo {
+  flex: 0 0 160px;
+}
+
+body.erp-maintenance .maint-wo-svc-row--2 .maint-field-cell--planned {
+  flex: 2 1 220px;
+}
+
+body.erp-maintenance .maint-wo-svc-row--3 .maint-field-cell--load {
+  flex: 0 0 160px;
+}
+
+body.erp-maintenance .maint-wo-service-info-card .qb-l {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7385;
+  margin-bottom: 4px;
+  display: block;
+  white-space: nowrap;
+}
+
+body.erp-maintenance .maint-input-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+body.erp-maintenance .maint-inline-hint--10 {
+  font-size: 10px;
+  color: var(--color-text-label, #6b7385);
+  margin-top: 4px;
+}
+
+body.erp-maintenance .maint-fleet-odo-details {
+  margin: 4px 0 10px;
+}
+
+body.erp-maintenance .maint-fleet-odo-details__sum {
+  font-size: 11px;
+  color: #1557a0;
+  cursor: pointer;
+  list-style: none;
+}
+
+body.erp-maintenance .maint-fleet-odo-details__sum::-webkit-details-marker {
+  display: none;
+}
+
+body.erp-maintenance .maint-catalog-suggest-wrap {
+  position: relative;
+  width: 100%;
+}
+
+body.erp-maintenance .maint-catalog-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 40;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #d0d4da;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.erp-maintenance .maint-catalog-suggest__opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 12px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #1a1f36;
+}
+
+body.erp-maintenance .maint-catalog-suggest__opt:hover {
+  background: #f5f6f8;
+}
+
+body.erp-maintenance .maint-catalog-badge,
+body.erp-maintenance .maint-planned-catalog-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #6b7385;
+  background: #eef0f3;
+  vertical-align: middle;
+}
+
+body.erp-maintenance .maint-catalog-add-btn {
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 12px !important;
+  font-size: 12px !important;
+  line-height: 28px !important;
+}
+
+body.erp-maintenance .maint-field-cell__row--catalog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+body.erp-maintenance .maint-field-cell__row--catalog .maint-field--catalog {
+  flex: 1 1 200px;
+  min-width: 0;
 }
 

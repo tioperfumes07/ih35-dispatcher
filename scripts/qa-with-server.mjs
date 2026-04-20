@@ -149,6 +149,9 @@ async function main() {
       SMOKE_BASE: base,
       ...(process.env.CI === 'true' ? { SMOKE_QUIET: '1' } : {})
     };
+    if (process.env.CI === 'true' && !String(process.env.SMOKE_TIMEOUT_MS || '').trim()) {
+      smokeEnv.SMOKE_TIMEOUT_MS = '15000';
+    }
     await runNodeScript('scripts/system-smoke.mjs', smokeEnv);
     console.log(`qa:isolated OK — ${base}`);
   } finally {

@@ -1270,7 +1270,7 @@
                         <span class="qb-l maint-label-optional" style="color:#6b7385">Add to catalog</span>
                         <div class="maint-field-cell__row maint-field-cell__row--catalog">
                           <input id="maintNewCatalogServiceName" class="qb-in maint-field maint-field--catalog" placeholder="New catalog name" maxlength="120" autocomplete="off" />
-                          <button type="button" class="btn btn--secondary maint-catalog-add-btn" onclick="addCatalogServiceType()">Add</button>
+                          <button type="button" class="btn maint-catalog-add-btn" onclick="addCatalogServiceType()">Add</button>
                         </div>
                         <div class="mini-note" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:52ch">
                           <span style="min-width:0;flex:1 1 200px">Feedback for <strong>Add</strong> on new catalog names — all <code>textContent</code> on the host below.</span>
@@ -3370,21 +3370,21 @@
                           <input class="qb-in" type="text" readonly value="Fuel expense" aria-readonly="true" tabindex="0" />
                         </div>
                         <div class="ap-exp-field ap-exp-field--vendor">
-                          <span class="qb-l">Vendor (QuickBooks)</span>
-                          <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
+                          <span class="qb-l">Fuel merchant or card program</span>
+                          <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Pilot, Flying J, Comdata…" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
                           <input type="hidden" id="fuelManualVendorQboId" />
                         </div>
                         <div class="ap-exp-field ap-exp-field--unit">
-                          <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
+                          <span class="qb-l">Unit / truck</span>
                           <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
                           <span class="qb-l">Payment method</span>
-                          <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
+                          <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Fuel card, credit card, cash…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
                           <input type="hidden" id="fuelManualPaymentMethodId" />
                         </div>
                         <div class="ap-exp-field ap-exp-field--bank">
-                          <span class="qb-l">Pay from bank account (QuickBooks)</span>
+                          <span class="qb-l">Payment account</span>
                           <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
                           <input type="hidden" id="fuelManualBankQboId" />
                         </div>
@@ -3466,7 +3466,7 @@
                             <th class="maint-cost-table__sku">SKU</th>
                             <th class="maint-cost-table__lock">Lock line $</th>
                             <th class="maint-cost-table__num">Qty (gal)</th>
-                            <th class="maint-cost-table__num">Unit $</th>
+                            <th class="maint-cost-table__num">$/GAL</th>
                             <th class="maint-cost-table__num">Line $</th>
                             <th class="maint-cost-table__del"></th>
                           </tr>
@@ -8024,6 +8024,12 @@
       if (!force && erpDedicatedFormDirty()) {
         if (!confirm('Discard unsaved changes and close this form?')) return;
       }
+      try {
+        const sh = modal.querySelector('.erp-dedicated-form-modal__shell');
+        const map = { fuel: 'dedicated_fuel', ap: 'dedicated_ap', billpay: 'dedicated_billpay' };
+        const key = map[String(window.__erpDedicatedModalKind || '').trim()] || 'dedicated_default';
+        if (sh && typeof window.erpPersistModalGeometry === 'function') window.erpPersistModalGeometry(sh, key);
+      } catch (_) {}
       erpResetDedicatedModalLayout();
       if (window.__erpDedicatedModalKind === 'ap') {
         const shell = document.getElementById('erpApDocShellPanel');
@@ -8102,6 +8108,13 @@
         erpDedicatedModalBindEscape(true);
         if (!fromHash) window.location.hash = 'accounting-fuel-expense-new';
         syncErpDedicatedModalChrome();
+        requestAnimationFrame(() => {
+          try {
+            if (typeof erpRestoreDedicatedModalGeometry === 'function') {
+              erpRestoreDedicatedModalGeometry(window.__erpDedicatedModalKind);
+            }
+          } catch (_) {}
+        });
         return;
       }
 
@@ -8163,6 +8176,13 @@
       if (!fromHash && hashMap[mode]) window.location.hash = hashMap[mode];
       refreshApDocTotal();
       syncErpDedicatedModalChrome();
+      requestAnimationFrame(() => {
+        try {
+          if (typeof erpRestoreDedicatedModalGeometry === 'function') {
+            erpRestoreDedicatedModalGeometry(window.__erpDedicatedModalKind);
+          }
+        } catch (_) {}
+      });
     }
 
     function erpNewPlaceholder(label) {
@@ -19412,7 +19432,7 @@
               ${voided && r.voidReason ? `<div class="mini-note">Void reason: ${escapeHtml(r.voidReason)}</div>` : ''}
               <div class="mini-note">Vendor: ${escapeHtml(vendorName(r.qboVendorId))}</div>
               <div class="mini-note">Unit: ${escapeHtml(r.unit || '')} | Date: ${escapeHtml(r.serviceDate || '')}</div>
-              ${r.repairLocationType ? `<div class="mini-note">Repair location: ${escapeHtml(r.repairLocationType)}</div>` : ''}
+              ${r.repairLocationType ? `<div class="mini-note">Service location: ${escapeHtml(r.repairLocationType)}</div>` : ''}
               ${r.assetCategory ? `<div class="mini-note">Asset category: ${escapeHtml(r.assetCategory)}</div>` : ''}
               <div class="mini-note">Lines (${lines.length}) total: $${total.toFixed(2)}</div>
               <div class="mini-note">${lineSumm}</div>
@@ -20671,7 +20691,7 @@
           'Vendor QBO ID',
           'Service date',
           'Due date',
-          'Repair location',
+          'Service location',
           'Line count',
           'Total amount',
           'lines_summary',
@@ -20789,6 +20809,11 @@
       if (__wl && !__wl.querySelector('.wo-line')) addWoLine();
     }
     if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
+    try {
+      if (typeof erpInitResizableModals === 'function') erpInitResizableModals();
+    } catch (e) {
+      console.error('erpInitResizableModals', e);
+    }
     syncApDocTitle();
     refreshApDocTotal();
   </script>
