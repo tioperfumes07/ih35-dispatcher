@@ -1,0 +1,123 @@
+#!/usr/bin/env node
+/**
+ * Rule 0 (offline) + HTTP smoke against a **new** `server.js` on an ephemeral port.
+ * Use when `localhost:3400` is another process, or a long-running `server.js` is stale
+ * (older builds may not expose JSON 404 for unknown `/api/*` paths — smoke expects that contract).
+ *
+ * Run: `npm run qa:isolated`
+ */
+import { spawn } from 'node:child_process';
+import net from 'node:net';
+import path from 'node:path';
+import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const root = path.join(__dirname, '..');
+
+function getFreePort() {
+  return new Promise((resolve, reject) => {
+    const s = net.createServer();
+    s.unref?.();
+    s.listen(0, '127.0.0.1', () => {
+      try {
+        const addr = s.address();
+        const p = typeof addr === 'object' && addr ? addr.port : null;
+        s.close((err) => (err ? reject(err) : resolve(p)));
+      } catch (e) {
+        try {
+          s.close();
+        } catch {}
+        reject(e);
+      }
+    });
+    s.on('error', reject);
+  });
+}
+
+async function waitHealth(base, ms = 45000) {
+  const start = Date.now();
+  while (Date.now() - start < ms) {
+    try {
+      const r = await fetch(`${base}/api/health`);
+      if (r.ok) return;
+    } catch {
+      /* still starting */
+    }
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  throw new Error(`Health check failed for ${base} within ${ms}ms`);
+}
+
+function runNodeScript(rel, extraEnv, extraArgs = []) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('node', [path.join(root, rel), ...extraArgs], {
+      cwd: root,
+      env: { ...process.env, ...extraEnv },
+      stdio: 'inherit',
+    });
+    child.on('error', reject);
+    child.on('exit', (code, sig) => {
+      if (code === 0) resolve();
+      else reject(new Error(`${rel} exited with ${code}${sig ? ` (${sig})` : ''}`));
+    });
+  });
+}
+
+function waitUntilHealthy(server, base) {
+  return new Promise((resolve, reject) => {
+    const onExit = (code, sig) => {
+      if (code !== 0 && code !== null) {
+        reject(new Error(`server exited before healthy: ${code}${sig ? ` (${sig})` : ''}`));
+      }
+    };
+    server.once('exit', onExit);
+    waitHealth(base)
+      .then(() => {
+        server.removeListener('exit', onExit);
+        resolve();
+      })
+      .catch((e) => {
+        server.removeListener('exit', onExit);
+        reject(e);
+      });
+  });
+}
+
+async function main() {
+  const port = await getFreePort();
+  const base = `http://127.0.0.1:${port}`;
+  const envPort = { PORT: String(port) };
+
+  const server = spawn('node', ['server.js'], {
+    cwd: root,
+    env: { ...process.env, ...envPort },
+    stdio: 'inherit',
+  });
+
+  try {
+    await waitUntilHealthy(server, base);
+    await runNodeScript('scripts/rule-zero-agent-b-check.mjs', envPort, ['--skip-release-tip']);
+    await runNodeScript('scripts/system-smoke.mjs', { ...envPort, SMOKE_BASE: base });
+    console.log(`qa:isolated OK — ${base}`);
+  } finally {
+    if (server.pid) {
+      try {
+        server.kill('SIGTERM');
+      } catch {
+        /* ignore */
+      }
+      await new Promise((r) => setTimeout(r, 800));
+      try {
+        server.kill('SIGKILL');
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

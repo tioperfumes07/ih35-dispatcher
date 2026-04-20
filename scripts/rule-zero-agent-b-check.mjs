@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Offline Rule 0 check (no server): reads Agent B files from disk and exits 1 if forbidden substrings appear.
- * Run: `npm run rule0:check`. Full gate with HTTP smoke (server must listen): `npm run qa:automated`.
+ * Run: `npm run rule0:check`. Full gate with HTTP smoke (server must listen): `npm run qa:automated`, or ephemeral server: `npm run qa:isolated`.
  * In CI (`CI=true`), success logs stay minimal. Locally, set `RULE0_QUIET=1` to hide the release tip.
  * `npm run qa:automated` invokes this script with `--skip-release-tip` so the tip is not printed twice.
  */
@@ -47,7 +47,7 @@ if (
   process.env.RULE0_QUIET !== '1'
 ) {
   console.log(
-    'rule0:check: OK — with the server up, run `npm run smoke` or `npm run qa:automated` (Rule 0 + smoke) before release.'
+    'rule0:check: OK — with the server up, run `npm run smoke` or `npm run qa:automated` (Rule 0 + smoke), or `npm run qa:isolated` (starts a temp server), before release.'
   );
 }
 
