@@ -1,6 +1,6 @@
 /**
  * IH35 — shared visual language: calm, precise, trustworthy.
- * Load before page-specific <style> blocks so local rules can override.
+ * Load after **`design-tokens.css`** and before page shells (**`erp-master-redesign.css`**, maintenance accounting CSS, etc.) so shared tokens apply first; page shells add **`body.*-page`** / **`body.erp-maintenance`** rules instead of inline **`<style>`** blocks.
  * Color roles: use **`--color-*`** from **`design-tokens.css`**. Rule 0 (Agent B): one hop only — do not chain **`var(--color-… , var(--legacy))`**, duplicate hex on **`--color-*`**, or reintroduce removed patterns. Guards: **`npm run rule0:check`** (disk) + **`scripts/system-smoke.mjs`** (HTTP); list lives in **`scripts/rule-zero-agent-b.mjs`**.
  */
 
