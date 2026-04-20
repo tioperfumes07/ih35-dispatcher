@@ -2,7 +2,7 @@
  * QuickBooks vendor/customer deduplication REST API.
  */
 
-import * as XLSX from '@e965/xlsx';
+import * as XLSX from 'xlsx';
 import { getPool, dbQuery } from '../lib/db.mjs';
 import {
   buildDuplicateGroups,

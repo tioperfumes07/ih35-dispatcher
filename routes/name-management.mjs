@@ -2,7 +2,7 @@
  * Vendor / driver / customer name management (QBO + Samsara + ERP JSON + Postgres drivers).
  */
 
-import * as XLSX from '@e965/xlsx';
+import * as XLSX from 'xlsx';
 import { getPool, dbQuery } from '../lib/db.mjs';
 import {
   applyCustomerNameToErp,

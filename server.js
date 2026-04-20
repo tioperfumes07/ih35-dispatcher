@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
-import * as XLSX from '@e965/xlsx';
+import * as XLSX from 'xlsx';
 import PDFDocument from 'pdfkit';
 import { fileURLToPath } from 'url';
 import { dbQuery, getPool } from './lib/db.mjs';

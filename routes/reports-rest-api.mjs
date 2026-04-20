@@ -7,7 +7,9 @@ import {
   buildReportDataset,
   buildServiceLocationsFilterList,
   buildServiceTypesUsedList,
-  buildFleetUnitsFilterList
+  buildFleetUnitsFilterList,
+  buildVendorsUsedList,
+  buildDriversUsedList
 } from '../lib/reports-datasets.mjs';
 import { wrapStandardReport } from '../lib/reports-envelope.mjs';
 import { flattenQboReportToStandard } from '../lib/qbo-report-flat.mjs';
@@ -477,6 +479,26 @@ export function mountReportsRestApi(app, deps) {
       res.json({ ok: true, generatedAt: new Date().toISOString(), ...buildServiceTypesUsedList(erp) });
     } catch (error) {
       logError?.('api/reports/filters/service-types-used', error);
+      res.status(500).json({ ok: false, error: error?.message || String(error) });
+    }
+  });
+
+  app.get('/api/reports/filters/vendors-used', async (req, res) => {
+    try {
+      const erp = readErp();
+      res.json({ ok: true, generatedAt: new Date().toISOString(), ...buildVendorsUsedList(erp) });
+    } catch (error) {
+      logError?.('api/reports/filters/vendors-used', error);
+      res.status(500).json({ ok: false, error: error?.message || String(error) });
+    }
+  });
+
+  app.get('/api/reports/filters/drivers-used', async (req, res) => {
+    try {
+      const erp = readErp();
+      res.json({ ok: true, generatedAt: new Date().toISOString(), ...buildDriversUsedList(erp) });
+    } catch (error) {
+      logError?.('api/reports/filters/drivers-used', error);
       res.status(500).json({ ok: false, error: error?.message || String(error) });
     }
   });

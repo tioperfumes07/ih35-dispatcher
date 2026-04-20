@@ -85,16 +85,17 @@ function drawComplianceMatrix(doc, startY, cc) {
   return y;
 }
 
+/** Part 4 subsection codes (4A = chronological register above; 4I = service locations page). */
 const BUCKET_DEFS = [
-  ['section4_pm_service', 'PM & scheduled service'],
-  ['section4_maintenance', 'Maintenance (non-PM)'],
-  ['section4_repair', 'Repairs'],
-  ['section4_tire', 'Tires'],
-  ['section4_air_bag', 'Air bags'],
-  ['section4_battery', 'Batteries'],
-  ['section4_body', 'Body / glass'],
-  ['section4_inspection', 'Inspections (non-annual)'],
-  ['section4_other', 'Other']
+  ['section4_pm_service', '4B — PM & scheduled service'],
+  ['section4_maintenance', '4C — Maintenance (non-PM)'],
+  ['section4_repair', '4D — Repairs'],
+  ['section4_tire', '4E — Tires'],
+  ['section4_air_bag', '4F — Air bags'],
+  ['section4_battery', '4G — Batteries'],
+  ['section4_body', '4H — Body / glass'],
+  ['section4_inspection', '4J — Inspections (non-annual)'],
+  ['section4_other', '4K — Other']
 ];
 
 router.get('/api/reports/dot-audit/:unit', (req, res) => {
@@ -110,11 +111,11 @@ router.get('/api/reports/dot-audit/:unit', (req, res) => {
   }
 });
 
-async function streamDotAuditPdf(res, unit, startDate, endDate) {
+async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}) {
   try {
     const erp = readFullErpJson();
     const cp = erp.companyProfile && typeof erp.companyProfile === 'object' ? erp.companyProfile : {};
-    const audit = await buildDotVehicleAuditV1(erp, unit, startDate, endDate, cp);
+    const audit = await buildDotVehicleAuditV1(erp, unit, startDate, endDate, cp, filterQuery);
     const s = audit.sections || {};
     const cc = audit.compliance_checklist || {};
     const legal = String(cp.legalName || 'IH 35 Transportation LLC').trim();
@@ -153,7 +154,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate) {
       'Part 1 — Vehicle identification & registration context',
       'Part 2 — Annual inspection history',
       'Part 3 — Preventive maintenance history',
-      'Part 4 — Repair & maintenance documentation (summary, by category, by location)',
+      'Part 4 — Repair & maintenance (4A register; 4B–4K by category; 4I service locations)',
       'Part 5 — Accident / incident history',
       'Part 6 — DVIR (Samsara live, when configured)',
       'Part 7 — Out of service history',
@@ -244,6 +245,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate) {
     }
 
     y = writeSectionPage(doc, 'Part 4 (continued) — Service locations & spend profile');
+    y = drawSubheading(doc, y, '4I — Service locations (by site) & spend mix');
     const locSum = s.section4_location_summary || {};
     doc.fontSize(10).fillColor('#111').text('Internal vs. external vs. roadside (work orders in period)', 48, y, { width: 500 });
     y += 20;
@@ -265,7 +267,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate) {
           doc.addPage();
           y = 60;
         }
-        y = drawSubheading(doc, y, `${block.locationName || '—'} (${block.locationType || 'type n/a'})`);
+        y = drawSubheading(doc, y, `4I — ${block.locationName || '—'} (${block.locationType || 'type n/a'})`);
         const recs = block.records || [];
         if (!recs.length) {
           doc.fontSize(9).text('No detail rows.', 48, y);
@@ -399,13 +401,15 @@ async function streamDotAuditPdf(res, unit, startDate, endDate) {
 router.get('/api/reports/dot-audit/:unit/pdf', async (req, res) => {
   const unit = String(req.params.unit || '').trim();
   if (!unit) return res.status(400).send('unit required');
-  await streamDotAuditPdf(res, unit, req.query.startDate, req.query.endDate);
+  await streamDotAuditPdf(res, unit, req.query.startDate, req.query.endDate, { ...req.query });
 });
 
 router.post('/api/reports/export/dot-audit-pdf', async (req, res) => {
   const unit = String(req.body?.unitId || req.body?.unit || '').trim();
   if (!unit) return res.status(400).send('unitId required');
-  await streamDotAuditPdf(res, unit, req.body?.startDate, req.body?.endDate);
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  const { unitId: _u1, unit: _u2, startDate: _s, endDate: _e, ...filterRest } = body;
+  await streamDotAuditPdf(res, unit, body.startDate, body.endDate, filterRest);
 });
 
 export default router;
