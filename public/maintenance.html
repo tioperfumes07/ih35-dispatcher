@@ -22392,6 +22392,21 @@
       }
     }
 
+    window.__integrityDashTab = window.__integrityDashTab || 'all';
+    let __integrityDashLastRows = [];
+
+    function erpIntegritySelectTab(tab) {
+      const t = String(tab || 'all');
+      window.__integrityDashTab = t;
+      const wrap = document.getElementById('integrityDashCatTabs');
+      if (wrap) {
+        wrap.querySelectorAll('.erp-int-cat-tab').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-int-tab') === t);
+        });
+      }
+      loadIntegrityDashboard();
+    }
+
     function localIsoDate(d) {
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -22437,6 +22452,13 @@
     }
 
     async function loadIntegrityDashboard() {
+      const tabSync = String(window.__integrityDashTab || 'all');
+      const wrapSync = document.getElementById('integrityDashCatTabs');
+      if (wrapSync) {
+        wrapSync.querySelectorAll('.erp-int-cat-tab').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-int-tab') === tabSync);
+        });
+      }
       const fromEl = document.getElementById('integrityDashDateFrom');
       const toEl = document.getElementById('integrityDashDateTo');
       if (fromEl && !fromEl.value) {
@@ -22519,7 +22541,7 @@
             const reviewBtn = act
               ? `<button type="button" class="btn secondary" onclick="erpIntegrityOpenInvestigate(${JSON.stringify(id)})">Investigate</button>
                  <button type="button" class="btn" onclick="markIntegrityAlertReviewed(${JSON.stringify(id)})">Mark as reviewed</button>
-                 <button type="button" class="erp-int-link erp-int-link--muted" type="button" onclick="erpIntegritySessionDismiss(${JSON.stringify(id)})">Dismiss</button>`
+                 <button type="button" class="erp-int-link erp-int-link--muted" onclick="erpIntegritySessionDismiss(${JSON.stringify(id)})">Dismiss</button>`
               : `<span class="mini-note">Reviewed ${escapeHtml(String(a.reviewedBy || ''))} · ${escapeHtml(String(a.reviewedAt || '').slice(0, 16))}</span>`;
             return `<div class="erp-int-alert-card ${cardMod}">
               <div class="erp-int-alert-top">

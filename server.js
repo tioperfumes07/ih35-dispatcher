@@ -5342,6 +5342,23 @@ app.post('/api/integrity/alert/:id/review', (req, res) => {
   }
 });
 
+app.post('/api/integrity/alert/:id/notes', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const erp = readErp();
+    const id = String(req.params.id || '').trim();
+    const idx = (erp.integrityAlerts || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ ok: false, error: 'Alert not found' });
+    const notes = String((req.body || {}).notes || '').trim().slice(0, 4000);
+    erp.integrityAlerts[idx] = { ...erp.integrityAlerts[idx], notes };
+    writeErp(erp);
+    res.json({ ok: true, alert: erp.integrityAlerts[idx] });
+  } catch (error) {
+    logError('api/integrity/alert/:id/notes', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.get('/api/integrity/thresholds', (_req, res) => {
   try {
     const erp = readErp();
@@ -5355,8 +5372,13 @@ app.post('/api/integrity/thresholds', (req, res) => {
   try {
     if (!requireErpWriteOrAdmin(req, res)) return;
     const erp = readErp();
-    const base = defaultIntegrityThresholds();
     const body = req.body && typeof req.body === 'object' ? req.body : {};
+    if (body.reset === true) {
+      erp.integrityThresholds = {};
+      writeErp(erp);
+      return res.json({ ok: true, thresholds: mergeIntegrityThresholds(erp) });
+    }
+    const base = defaultIntegrityThresholds();
     const next = { ...base };
     for (const k of Object.keys(base)) {
       if (body[k] == null || body[k] === '') continue;
@@ -5393,6 +5415,7 @@ app.get('/api/integrity/export', (req, res) => {
         'Content-Disposition',
         `attachment; filename="integrity-report-${startDate}-to-${endDate}.pdf"`
       );
+      doc.pipe(res);
       doc.fontSize(18).text(`Integrity Report — ${company}`, { underline: true });
       doc.moveDown();
       doc.fontSize(11).fillColor('#444').text(`Date range: ${startDate} through ${endDate}`);
@@ -5405,7 +5428,6 @@ app.get('/api/integrity/export', (req, res) => {
         });
       }
       doc.end();
-      doc.pipe(res);
       return;
     }
 
