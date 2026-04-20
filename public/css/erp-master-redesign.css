@@ -487,9 +487,12 @@ body.erp-maintenance .erp-new-menu__item:hover {
 /* + New → Maintenance: quick tiles (WO, PM, repair, tire, accident) */
 body.erp-maintenance .erp-new-menu__tile-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 4px;
+}
+body.erp-maintenance .erp-new-menu__tile-grid > * {
+  min-width: 0;
 }
 body.erp-maintenance .erp-new-menu__tile {
   display: flex;
@@ -2774,12 +2777,13 @@ body.fuel-board .fleet-summary {
 
 body.fuel-board .fleet-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
   border-top: 1px solid var(--color-border);
 }
 
 body.fuel-board .fleet-col {
+  min-width: 0;
   min-height: 200px;
   border-right: 1px solid var(--color-border);
 }
@@ -2946,9 +2950,12 @@ body.fuel-board .auto-item:hover {
 
 body.fuel-board .detail-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 12px;
   font-size: 13px;
+}
+body.fuel-board .detail-grid > * {
+  min-width: 0;
 }
 
 body.fuel-board .detail-card {
