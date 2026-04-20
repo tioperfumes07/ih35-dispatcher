@@ -439,7 +439,7 @@ body.erp-maintenance .erp-new-menu__col-title {
 /* --- Rule 16: KPI strip --- */
 body.erp-maintenance .mr-kpi-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 12px;
   margin-top: 4px;
 }
