@@ -589,6 +589,10 @@ function sanitizeFuelPurchase(raw) {
   if (fbd) out.fuelBillDueDate = fbd;
   const fbs = String(raw.fuelBillStatementNumber || '').trim().slice(0, 80);
   if (fbs) out.fuelBillStatementNumber = fbs;
+  const drvId = String(raw.driverId || '').trim().slice(0, 80);
+  const drvNm = String(raw.driverName || '').trim().slice(0, 160);
+  if (drvId) out.driverId = drvId;
+  if (drvNm) out.driverName = drvNm;
   return out;
 }
 
@@ -5044,6 +5048,369 @@ app.post('/api/fuel/purchases/:id/expense-draft', (req, res) => {
   }
 });
 
+function buildIntegrityCheckCtx(body) {
+  const b = body && typeof body === 'object' ? body : {};
+  const recordType = String(b.recordType || '').trim();
+  const recordId = String(b.recordId || '').trim();
+  const unitId = String(b.unitId || b.unit || '').trim();
+  const driverId = String(b.driverId || '').trim();
+  const driverName = String(b.driverName || '').trim();
+  const serviceType = String(b.serviceType || '').trim();
+  const date = sliceIsoDate(b.date || b.serviceDate || b.txnDate || '') || new Date().toISOString().slice(0, 10);
+  const amt = safeNum(b.amount, 0);
+  const gallons = b.gallons != null && String(b.gallons).trim() !== '' ? safeNum(b.gallons, null) : null;
+  const recordSubtype = String(b.recordSubtype || b.maintRecordType || '').trim().toLowerCase();
+  const maintRecordType = String(b.maintRecordType || '').trim();
+  const dotReportable =
+    b.dotReportable === true ||
+    String(b.dotReportable || '').toLowerCase() === 'true' ||
+    String(b.dotReportable || '').toLowerCase() === '1';
+  return {
+    recordType,
+    recordId,
+    unitId,
+    unit: unitId,
+    driverId,
+    driverName,
+    amount: amt,
+    serviceType,
+    date,
+    serviceDate: date,
+    recordSubtype,
+    maintRecordType,
+    dotReportable,
+    vendor: String(b.vendor || '').trim(),
+    qboVendorId: String(b.qboVendorId || '').trim(),
+    tirePosition: String(b.tirePosition || '').trim(),
+    tirePositionText: String(b.tirePositionText || '').trim(),
+    lines: Array.isArray(b.lines) ? b.lines : undefined,
+    gallons,
+    pricePerGallon: safeNum(b.pricePerGallon, null),
+    totalCost: safeNum(b.totalCost, null)
+  };
+}
+
+function persistIntegrityAlerts(erp, evaluated, ctx, req) {
+  if (!Array.isArray(erp.integrityAlerts)) erp.integrityAlerts = [];
+  const userEmail = String(req?.authUser?.email || req?.authUser?.name || '').trim();
+  const trig =
+    sliceIsoDate(ctx.date || ctx.serviceDate || '') || new Date().toISOString().slice(0, 10);
+  const rid = String(ctx.recordId || '');
+  for (const a of evaluated || []) {
+    const dedupe = String(a.dedupeKey || `${a.type}:${rid}`);
+    const clash = erp.integrityAlerts.some(
+      x =>
+        String(x.dedupeKey) === dedupe &&
+        String(x.recordId || '') === rid &&
+        String(x.alertType || '') === String(a.type) &&
+        String(x.status || 'active') === 'active'
+    );
+    if (clash) continue;
+    erp.integrityAlerts.push({
+      id: uid('ial'),
+      alertType: a.type,
+      severity: a.severity,
+      message: a.message,
+      details: { ...(a.details || {}), dedupeKey: dedupe },
+      triggeredDate: trig,
+      unitId: ctx.unitId || '',
+      driverId: ctx.driverId || '',
+      driverName: ctx.driverName || '',
+      recordId: rid,
+      recordType: ctx.recordType,
+      status: 'active',
+      reviewedBy: '',
+      reviewedAt: '',
+      notes: '',
+      createdAt: new Date().toISOString(),
+      dedupeKey: dedupe,
+      category: alertCategory(a.type),
+      triggeredByUser: userEmail || undefined
+    });
+  }
+}
+
+app.post('/api/integrity/check', (req, res) => {
+  try {
+    const ctx = buildIntegrityCheckCtx(req.body || {});
+    const erp = readErp();
+    let evaluated = [];
+    try {
+      evaluated = evaluateIntegrityCheck(ctx, erp).alerts || [];
+    } catch (e) {
+      logError('integrity/check evaluate', e);
+      evaluated = [];
+    }
+    if (evaluated.length) {
+      persistIntegrityAlerts(erp, evaluated, ctx, req);
+      writeErp(erp);
+    }
+    res.json({ ok: true, alerts: evaluated });
+  } catch (error) {
+    logError('api/integrity/check', error);
+    res.json({ ok: true, alerts: [] });
+  }
+});
+
+app.get('/api/integrity/counts', (_req, res) => {
+  try {
+    const erp = readErp();
+    const rows = (erp.integrityAlerts || []).filter(x => String(x.status || 'active') === 'active');
+    let red = 0;
+    let amber = 0;
+    for (const x of rows) {
+      if (String(x.severity || '').toUpperCase() === 'RED') red++;
+      else amber++;
+    }
+    res.json({ ok: true, active: rows.length, red, amber });
+  } catch (error) {
+    res.json({ ok: true, active: 0, red: 0, amber: 0 });
+  }
+});
+
+app.get('/api/integrity/dashboard', (req, res) => {
+  try {
+    const erp = readErp();
+    const q = req.query || {};
+    const startDate = sliceIsoDate(q.startDate || '') || new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+    const endDate = sliceIsoDate(q.endDate || '') || new Date().toISOString().slice(0, 10);
+    const category = String(q.category || '').trim().toLowerCase();
+    const severity = String(q.severity || '').trim().toUpperCase();
+    const status = String(q.status || '').trim().toLowerCase();
+    let rows = (erp.integrityAlerts || []).slice();
+    rows = rows.filter(r => {
+      const d = sliceIsoDate(r.triggeredDate || r.createdAt || '');
+      if (d && d < startDate) return false;
+      if (d && d > endDate) return false;
+      return true;
+    });
+    if (category && category !== 'all') {
+      rows = rows.filter(r => String(r.category || '').toLowerCase() === category);
+    }
+    if (severity === 'RED' || severity === 'AMBER') {
+      rows = rows.filter(r => String(r.severity || '').toUpperCase() === severity);
+    }
+    if (status === 'active') rows = rows.filter(r => String(r.status || 'active') === 'active');
+    else if (status === 'reviewed' || status === 'resolved') {
+      rows = rows.filter(r => String(r.status || '') === 'reviewed');
+    } else if (status === 'dismissed') {
+      rows = rows.filter(r => String(r.status || '') === 'dismissed');
+    }
+    rows.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const reviewedThisMonth = (erp.integrityAlerts || []).filter(r => {
+      if (String(r.status || '') !== 'reviewed') return false;
+      const at = String(r.reviewedAt || '').slice(0, 7);
+      const cur = new Date().toISOString().slice(0, 7);
+      return at === cur;
+    }).length;
+    const activeAll = (erp.integrityAlerts || []).filter(x => String(x.status || 'active') === 'active');
+    const kpi = {
+      active: activeAll.length,
+      red: activeAll.filter(x => String(x.severity || '').toUpperCase() === 'RED').length,
+      amber: activeAll.filter(x => String(x.severity || '').toUpperCase() !== 'RED').length,
+      resolvedThisMonth: reviewedThisMonth
+    };
+    res.json({ ok: true, alerts: rows, kpi, thresholds: mergeIntegrityThresholds(erp) });
+  } catch (error) {
+    logError('api/integrity/dashboard', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/integrity/alert/:id/records', (req, res) => {
+  try {
+    const erp = readErp();
+    const id = String(req.params.id || '').trim();
+    const alert = (erp.integrityAlerts || []).find(x => String(x.id) === id);
+    if (!alert) return res.status(404).json({ ok: false, error: 'Alert not found' });
+    const rows = buildInvestigateRecords(alert, erp);
+    res.json({ ok: true, records: rows });
+  } catch (error) {
+    logError('api/integrity/alert/:id/records', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post('/api/integrity/alert/:id/review', (req, res) => {
+  try {
+    const erp = readErp();
+    const id = String(req.params.id || '').trim();
+    const idx = (erp.integrityAlerts || []).findIndex(x => String(x.id) === id);
+    if (idx === -1) return res.status(404).json({ ok: false, error: 'Alert not found' });
+    const body = req.body || {};
+    const by = String(body.reviewedBy || req.authUser?.email || req.authUser?.name || '').trim();
+    const notes = String(body.notes || '').trim().slice(0, 4000);
+    erp.integrityAlerts[idx] = {
+      ...erp.integrityAlerts[idx],
+      status: 'reviewed',
+      reviewedBy: by,
+      reviewedAt: new Date().toISOString(),
+      notes
+    };
+    writeErp(erp);
+    res.json({ ok: true, alert: erp.integrityAlerts[idx] });
+  } catch (error) {
+    logError('api/integrity/alert/:id/review', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/integrity/thresholds', (_req, res) => {
+  try {
+    const erp = readErp();
+    res.json({ ok: true, thresholds: mergeIntegrityThresholds(erp) });
+  } catch (error) {
+    res.json({ ok: true, thresholds: defaultIntegrityThresholds() });
+  }
+});
+
+app.post('/api/integrity/thresholds', (req, res) => {
+  try {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    const erp = readErp();
+    const base = defaultIntegrityThresholds();
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const next = { ...base };
+    for (const k of Object.keys(base)) {
+      if (body[k] == null || body[k] === '') continue;
+      const n = Number(body[k]);
+      if (Number.isFinite(n)) next[k] = n;
+    }
+    erp.integrityThresholds = next;
+    writeErp(erp);
+    res.json({ ok: true, thresholds: mergeIntegrityThresholds(erp) });
+  } catch (error) {
+    logError('api/integrity/thresholds POST', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/integrity/export', (req, res) => {
+  try {
+    const erp = readErp();
+    const q = req.query || {};
+    const fmt = String(q.format || 'xlsx').toLowerCase();
+    const startDate = sliceIsoDate(q.startDate || '') || new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+    const endDate = sliceIsoDate(q.endDate || '') || new Date().toISOString().slice(0, 10);
+    const rows = (erp.integrityAlerts || []).filter(r => {
+      const d = sliceIsoDate(r.triggeredDate || r.createdAt || '');
+      return (!d || (d >= startDate && d <= endDate));
+    });
+    const cp = erp.companyProfile || {};
+    const company = String(cp.legalName || 'IH 35 Transportation LLC');
+
+    if (fmt === 'pdf') {
+      const doc = new PDFDocument({ margin: 48, size: 'LETTER' });
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="integrity-report-${startDate}-to-${endDate}.pdf"`
+      );
+      doc.fontSize(18).text(`Integrity Report — ${company}`, { underline: true });
+      doc.moveDown();
+      doc.fontSize(11).fillColor('#444').text(`Date range: ${startDate} through ${endDate}`);
+      doc.moveDown();
+      doc.fontSize(12).fillColor('#000').text(`Total alerts in range: ${rows.length}`);
+      doc.moveDown();
+      for (const r of rows.slice(0, 120)) {
+        doc.fontSize(10).text(`${r.triggeredDate || ''}  [${r.severity}] ${r.alertType}: ${r.message}`, {
+          paragraphGap: 4
+        });
+      }
+      doc.end();
+      doc.pipe(res);
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const sum = { tires: 0, drivers: 0, accidents: 0, fuel: 0, maintenance: 0, red: 0, amber: 0 };
+    for (const r of rows) {
+      const c = String(r.category || '').toLowerCase();
+      if (c === 'tires') sum.tires++;
+      else if (c === 'drivers') sum.drivers++;
+      else if (c === 'accidents') sum.accidents++;
+      else if (c === 'fuel') sum.fuel++;
+      else sum.maintenance++;
+      if (String(r.severity || '').toUpperCase() === 'RED') sum.red++;
+      else sum.amber++;
+    }
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet([
+        [company],
+        [`Integrity export ${startDate} – ${endDate}`],
+        [],
+        ['Category', 'Count'],
+        ['Tires', sum.tires],
+        ['Drivers', sum.drivers],
+        ['Accidents', sum.accidents],
+        ['Fuel', sum.fuel],
+        ['Maintenance', sum.maintenance],
+        ['RED', sum.red],
+        ['AMBER', sum.amber]
+      ]),
+      'Summary'
+    );
+    const allCols = [
+      'triggeredDate',
+      'category',
+      'severity',
+      'alertType',
+      'message',
+      'unitId',
+      'driverName',
+      'recordId',
+      'recordType',
+      'status',
+      'reviewedBy',
+      'notes'
+    ];
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.json_to_sheet(
+        rows.map(r => {
+          const o = {};
+          for (const k of allCols) o[k] = r[k] != null ? r[k] : '';
+          return o;
+        })
+      ),
+      'All alerts'
+    );
+    const byCat = cat => rows.filter(r => String(r.category || '').toLowerCase() === cat);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('tires')), 'Tire anomalies');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('drivers')), 'Driver anomalies');
+    const accRecs = (erp.records || []).filter(
+      r => String(r.recordType) === 'accident' && sliceIsoDate(r.serviceDate) >= startDate && sliceIsoDate(r.serviceDate) <= endDate
+    );
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.json_to_sheet(
+        accRecs.map(r => ({
+          serviceDate: r.serviceDate,
+          unit: r.unit,
+          driver: r.driverName || r.driverId,
+          cost: r.cost,
+          dotReportable: r.accidentDotReportable ? 'Y' : '',
+          id: r.id
+        }))
+      ),
+      'Accident records'
+    );
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('fuel')), 'Fuel anomalies');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(byCat('maintenance')), 'Maintenance anomalies');
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="integrity-export-${startDate}-to-${endDate}.xlsx"`
+    );
+    res.send(Buffer.from(buf));
+  } catch (error) {
+    logError('api/integrity/export', error);
+    res.status(500).send(error.message);
+  }
+});
+
 app.get('/api/maintenance/service-types', async (_req, res) => {
   try {
     if (!getPool()) {
@@ -6860,6 +7227,9 @@ app.post('/api/work-orders', (req, res) => {
       qboError: '',
       recurringSeriesId: String(body.recurringSeriesId || '').trim() || null,
       createdAt: new Date().toISOString(),
+      driverId: String(body.driverId || '').trim().slice(0, 80) || undefined,
+      driverName: String(body.driverName || '').trim().slice(0, 160) || undefined,
+      maintRecordType: String(body.maintRecordType || '').trim().slice(0, 40) || undefined,
       lines: (body.lines || []).map(line => {
         const base = {
           id: uid('wol'),
