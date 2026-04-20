@@ -3101,6 +3101,9 @@ body.erp-maintenance .maint-form-grid__row--3 {
 body.erp-maintenance .maint-form-grid__row--4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
+body.erp-maintenance .maint-form-grid__row--4.maint-wo-box2__row1 {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
 
 @media (max-width: 900px) {
   body.erp-maintenance .maint-form-grid__row--3 {

@@ -1320,7 +1320,7 @@
                 <div class="form-stack maint-form-stack">
                   <div class="maint-form-grid maint-subcard">
                     <div class="maint-form-grid__row maint-form-grid__row--4 maint-wo-box2__row1">
-                      <div class="maint-field-cell maint-field-cell--grow">
+                      <div class="maint-field-cell maint-wo-box2__row1-loc">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service location <span class="maint-label-req" aria-hidden="true">*</span>
                           <span class="erp-help-tip" aria-label="Help for service location">
                             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service location">?</button>
@@ -1332,16 +1332,21 @@
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Record type
                           <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Record type">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Controls which extra blocks appear (tire map, accident fields, etc.).</span>
+                            <span class="erp-help-tip__panel" role="tooltip">Chooses which detail cards appear (tire map, accident, inspection, PM, driver row for repair/accident, etc.).</span>
                           </span>
                         </span>
                         <div class="erp-wo-record-type-slot">
                           <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()" title="Record type">
                             <option value="maintenance">Maintenance</option>
-                            <option value="tire">Tire</option>
                             <option value="repair">Repair</option>
-                            <option value="accident">Accident</option>
-                            <option value="custom">Custom</option>
+                            <option value="accident">Accident/Collision</option>
+                            <option value="pm_service">PM Service</option>
+                            <option value="inspection">Inspection</option>
+                            <option value="tire">Tire service</option>
+                            <option value="air_bag_service">Air bag service</option>
+                            <option value="battery_service">Battery service</option>
+                            <option value="body_work">Body work</option>
+                            <option value="other">Other</option>
                           </select>
                           <div id="recordTypeSelectReadonly" class="erp-ap-type-readonly hidden" aria-hidden="true"></div>
                         </div>
@@ -1354,7 +1359,7 @@
                         </span>
                         <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service description" autocomplete="off" oninput="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" onblur="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" title="Catalog + free text" />
                         <input id="serviceTypeInput" type="hidden">
-                        <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Custom service type" oninput="toggleRecordFields()" />
+                        <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Other — short label (optional)" oninput="toggleRecordFields()" title="Shown when record type is Other" />
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service date
@@ -1442,7 +1447,7 @@
                         </div>
                       </div>
                     </details>
-                    <div id="maintRecordDriverCell" class="maint-field-cell maint-wo-box2__driver-row" style="margin-top:8px">
+                    <div id="maintRecordDriverCell" class="maint-field-cell maint-wo-box2__driver-row hidden" style="margin-top:8px">
                       <span class="qb-l">Driver <span id="maintWoDriverReqStar" class="maint-label-req hidden" aria-hidden="true">*</span></span>
                       <input type="hidden" id="maintRecordDriverId" value="" />
                       <input id="maintRecordDriverSearch" class="qb-in maint-field" list="maintDriverOptions" placeholder="Select driver (optional)" maxlength="160" autocomplete="off" oninput="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();" onblur="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();" />
@@ -1779,60 +1784,104 @@
                     <input id="tirePositionInput" type="hidden">
                   </div>
 
-                  <div id="accidentFields" class="hidden">
-                    <div class="search-row">
+                  <div id="accidentFields" class="maint-subcard hidden" style="margin-top:10px">
+                    <div class="maint-subcard__head">Accident / collision details</div>
+                    <div class="maint-subcard__body form-stack">
+                      <div class="search-row" style="grid-template-columns:1fr 1fr;align-items:end">
+                        <div>
+                          <span class="qb-l">Accident date</span>
+                          <input id="accidentDateInput" class="qb-in maint-field maint-field--date" type="date" title="Date of the incident" />
+                        </div>
+                        <div>
+                          <span class="qb-l">Fault</span>
+                          <input type="hidden" id="accidentAtFaultValue" value="" />
+                          <input id="accidentAtFaultSearch" class="qb-in maint-field" list="accidentFaultOptions" placeholder="At fault / not at fault / unknown" autocomplete="off" oninput="resolveAccidentFaultSearch()" onblur="resolveAccidentFaultSearch()" />
+                        </div>
+                      </div>
                       <div>
-                        <span class="qb-l">At fault</span>
-                        <input type="hidden" id="accidentAtFaultValue" value="" />
-                        <input id="accidentAtFaultSearch" class="qb-in maint-field" list="accidentFaultOptions" placeholder="At fault / Not at fault" autocomplete="off" oninput="resolveAccidentFaultSearch()" onblur="resolveAccidentFaultSearch()" />
+                        <span class="qb-l">Location</span>
+                        <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Street, city, highway mile marker…" maxlength="240" autocomplete="off" />
                       </div>
-                      <input id="accidentReportNumberInput" class="qb-in maint-field" placeholder="Accident report #">
-                    </div>
-                    <input id="accidentLocationInput" class="qb-in maint-field" placeholder="Accident location">
-                    <div class="search-row" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap;gap:12px">
-                      <div style="flex:1;min-width:200px">
-                        <span class="qb-l">Driver involved in accident <span class="maint-label-req" aria-hidden="true">*</span></span>
-                        <input type="hidden" id="accidentDriverId" value="" />
-                        <input
-                          id="accidentDriverSearch"
-                          class="qb-in maint-field"
-                          list="maintDriverOptions"
-                          placeholder="Select driver"
-                          autocomplete="off"
-                          oninput="resolveAccidentDriverSearch()"
-                          onblur="resolveAccidentDriverSearch()"
-                        />
+                      <div class="search-row" style="grid-template-columns:1fr 1fr;align-items:end">
+                        <div>
+                          <span class="qb-l">Police report #</span>
+                          <input id="accidentReportNumberInput" class="qb-in maint-field" placeholder="Police / agency report #" maxlength="120" autocomplete="off" />
+                        </div>
+                        <div>
+                          <span class="qb-l">Insurance claim #</span>
+                          <input id="insuranceClaimNumberInput" class="qb-in maint-field" placeholder="Claim #" maxlength="120" autocomplete="off" />
+                        </div>
                       </div>
-                      <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:0 0 4px;cursor:pointer;white-space:nowrap">
+                      <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 0;cursor:pointer;white-space:nowrap">
                         <input type="checkbox" id="accidentDotReportableInput" />
                         <span>DOT reportable</span>
                       </label>
-                    </div>
-                    <p class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;max-width:72ch;line-height:1.45">
-                      <span>Accident visit: add part/labor lines under <strong>Cost breakdown</strong>; the service fields above stay the summary label for the visit.</span>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accident costing &amp; QuickBooks lines">?</button>
+                      <span class="erp-help-tip" style="margin-top:6px;display:inline-flex">
+                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accident record">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
-                          Still an <strong>accident</strong> record. Add part/labor under <strong>Cost breakdown</strong> — catalog datalist, optional multi-position, per-line QBO account/item. Top <strong>Service</strong> fields stay the visit label (default <em>Accident Report</em>); line text is what prints.
+                          Add part/labor under <strong>Cost breakdown</strong>. Assign the <strong>driver</strong> in the Driver field above (required for accidents). Service line defaults to <em>Accident Report</em> unless you change it.
                         </span>
                       </span>
-                    </p>
-                    <p class="mini-note" style="margin:4px 0 0">
-                      <button type="button" class="qb-btn-add" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Lists &amp; catalogs → Service types</button>
-                      <button type="button" class="qb-btn-add" style="margin-left:8px" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
-                    </p>
+                    </div>
                   </div>
 
                   <div id="maintInspectionDetailsWrap" class="maint-subcard hidden" style="margin-top: 10px">
                     <div class="maint-subcard__head">Inspection details</div>
                     <div class="maint-subcard__body form-stack">
                       <div>
-                        <span class="qb-l">Inspection type / scope</span>
+                        <span class="qb-l">Inspection type</span>
                         <input id="maintInspectionScopeInput" class="qb-in maint-field" placeholder="e.g. Annual DOT, Level 1, pre-trip…" maxlength="200" autocomplete="off" />
                       </div>
-                      <div>
-                        <span class="qb-l">DOT / citation reference (optional)</span>
-                        <input id="maintInspectionRefInput" class="qb-in maint-field" placeholder="Reference #" maxlength="120" autocomplete="off" />
+                      <div class="search-row" style="grid-template-columns:1fr 1fr;align-items:end">
+                        <div>
+                          <span class="qb-l">Inspector</span>
+                          <input id="maintInspectorNameInput" class="qb-in maint-field" placeholder="Inspector name" maxlength="160" autocomplete="off" />
+                        </div>
+                        <div>
+                          <span class="qb-l">Badge #</span>
+                          <input id="maintInspectorBadgeInput" class="qb-in maint-field" placeholder="Inspector / credential #" maxlength="80" autocomplete="off" />
+                        </div>
+                      </div>
+                      <div class="search-row" style="grid-template-columns:1fr 1fr;align-items:end">
+                        <div>
+                          <span class="qb-l">Result</span>
+                          <select id="maintInspectionResultSelect" class="qb-in maint-field" title="Inspection outcome">
+                            <option value="">— Not set —</option>
+                            <option value="pass">Pass</option>
+                            <option value="pass_w_conditions">Pass w/ conditions</option>
+                            <option value="fail">Fail</option>
+                            <option value="out_of_service">Out of service</option>
+                            <option value="na">N/A</option>
+                          </select>
+                        </div>
+                        <div>
+                          <span class="qb-l">Next due</span>
+                          <input id="maintInspectionNextDueInput" class="qb-in maint-field maint-field--date" type="date" title="Next inspection due date" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="maintPmServiceDetailsWrap" class="maint-subcard hidden" style="margin-top:10px">
+                    <div class="maint-subcard__head">PM service</div>
+                    <div class="maint-subcard__body">
+                      <div class="search-row" style="grid-template-columns:repeat(2, minmax(0, 1fr));align-items:end;gap:10px 12px">
+                        <div>
+                          <span class="qb-l">PM interval (miles)</span>
+                          <input id="maintPmIntervalMilesInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" min="0" placeholder="e.g. 25000" title="Target miles between PM visits" />
+                        </div>
+                        <div>
+                          <span class="qb-l">Last PM date</span>
+                          <input id="maintPmLastDateInput" class="qb-in maint-field maint-field--date" type="date" />
+                        </div>
+                        <div>
+                          <span class="qb-l">Last PM mileage</span>
+                          <input id="maintPmLastMilesInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" min="0" placeholder="Odometer at last PM" />
+                        </div>
+                        <div>
+                          <span class="qb-l">Next PM due (miles)</span>
+                          <input id="maintPmNextDueMilesInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" min="0" placeholder="Odometer when next PM due" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -4933,9 +4982,15 @@
                         <option value="all">All</option>
                         <option value="maintenance">Maintenance</option>
                         <option value="repair">Repair</option>
-                        <option value="tire">Tire</option>
-                        <option value="accident">Accident</option>
-                        <option value="custom">Custom</option>
+                        <option value="accident">Accident/Collision</option>
+                        <option value="pm_service">PM Service</option>
+                        <option value="inspection">Inspection</option>
+                        <option value="tire">Tire service</option>
+                        <option value="air_bag_service">Air bag service</option>
+                        <option value="battery_service">Battery service</option>
+                        <option value="body_work">Body work</option>
+                        <option value="other">Other</option>
+                        <option value="custom">Legacy custom</option>
                       </select>
                     </div>
                     <div style="grid-column:span 3">
@@ -6707,6 +6762,24 @@
           ['body /', 'collision', 'accident', 'glass', 'paint']
         );
       }
+      if (p === 'pm_service' || p === 'pm') {
+        return maintPickServiceFromCatalog(
+          ['PM / preventive maintenance', 'Oil change', 'DOT inspection', 'Annual inspection'],
+          ['preventive', 'dot inspection', 'annual inspection', 'pm /', 'oil change']
+        );
+      }
+      if (p === 'inspection') {
+        return maintPickServiceFromCatalog(
+          ['DOT inspection', 'Annual inspection', 'Inspection'],
+          ['dot', 'annual', 'inspection', 'level']
+        );
+      }
+      if (p === 'body_work') {
+        return maintPickServiceFromCatalog(
+          ['Body / paint / aesthetic', 'Glass', 'Repair'],
+          ['body', 'paint', 'collision', 'glass']
+        );
+      }
       return '';
     }
 
@@ -7237,7 +7310,7 @@
           : recordTypeVal;
       const rt = recordTypeVal;
       const serviceType =
-        rt === 'custom' ? gv('customServiceTypeInput') : gv('serviceSearchInput') || gv('serviceTypeInput');
+        rt === 'other' ? gv('customServiceTypeInput') || gv('serviceSearchInput') || gv('serviceTypeInput') : gv('serviceSearchInput') || gv('serviceTypeInput');
       const repairSel = document.getElementById('repairLocationSelect');
       let serviceLocation = '';
       if (repairSel && repairSel.selectedOptions && repairSel.selectedOptions[0]) {
@@ -7314,14 +7387,25 @@
         plannedService: collectMaintPlannedServiceLines().join('\n'),
         costLines,
         notes: gv('notesInput'),
+        accidentDate: gv('accidentDateInput'),
         accidentLocation: gv('accidentLocationInput'),
         accidentReportNumber: gv('accidentReportNumberInput'),
         accidentFault: gv('accidentAtFaultSearch') || gv('accidentAtFaultValue'),
+        insuranceClaimNumber: gv('insuranceClaimNumberInput'),
         accidentDotReportable: !!document.getElementById('accidentDotReportableInput')?.checked,
         operationalStatus,
         fleetType,
         driverName: driverNm,
         inspectionScope: gv('maintInspectionScopeInput'),
+        inspectionType: gv('maintInspectionScopeInput'),
+        inspectorName: gv('maintInspectorNameInput'),
+        inspectorBadge: gv('maintInspectorBadgeInput'),
+        inspectionResult: gv('maintInspectionResultSelect'),
+        inspectionNextDue: gv('maintInspectionNextDueInput'),
+        pmIntervalMiles: gv('maintPmIntervalMilesInput'),
+        lastPmDate: gv('maintPmLastDateInput'),
+        lastPmMiles: gv('maintPmLastMilesInput'),
+        nextPmDueMiles: gv('maintPmNextDueMilesInput'),
         partsMapSvg
       };
     }
@@ -7373,8 +7457,9 @@
           repairLocationType: document.getElementById('repairLocationTypeInput')?.value || '',
           repairLocationLabel: repairLab,
           serviceType:
-            document.getElementById('recordTypeSelect')?.value === 'custom'
-              ? (document.getElementById('customServiceTypeInput')?.value || '').trim()
+            document.getElementById('recordTypeSelect')?.value === 'other'
+              ? (document.getElementById('customServiceTypeInput')?.value || '').trim() ||
+                (document.getElementById('serviceTypeInput')?.value || '').trim()
               : (document.getElementById('serviceTypeInput')?.value || '').trim(),
           serviceDate: document.getElementById('serviceDateInput')?.value || '',
           serviceMileage: document.getElementById('serviceMileageInput')?.value || '',
@@ -7410,8 +7495,10 @@
                   workOrderNumber: document.getElementById('recordWorkOrderInput')?.value || '',
                   recordType: document.getElementById('recordTypeSelect')?.value || '',
                   serviceType:
-                    document.getElementById('recordTypeSelect')?.value === 'custom'
-                      ? document.getElementById('customServiceTypeInput')?.value || ''
+                    document.getElementById('recordTypeSelect')?.value === 'other'
+                      ? document.getElementById('customServiceTypeInput')?.value ||
+                        document.getElementById('serviceTypeInput')?.value ||
+                        ''
                       : document.getElementById('serviceTypeInput')?.value || '',
                   serviceDate: document.getElementById('serviceDateInput')?.value || ''
                 },
@@ -8033,7 +8120,15 @@
           const d = String(r.serviceDate || '').slice(0, 10);
           if ((from || to) && !inRange(d)) return false;
           const rt = String(r.recordType || '').trim();
-          if (typ !== 'all' && rt !== typ) return false;
+          if (typ !== 'all') {
+            if (typ === 'other') {
+              if (rt !== 'other' && rt !== 'custom') return false;
+            } else if (typ === 'inspection') {
+              const stl = String(r.serviceType || '').toLowerCase();
+              if (rt !== 'inspection' && !(rt === 'custom' && (stl === 'inspection' || stl.includes('inspection'))))
+                return false;
+            } else if (rt !== typ) return false;
+          }
           if (!q) return true;
           const pwHay = plannedWorkDescriptionsFromRecord(r).join(' ');
           const hay = `${r.serviceType || ''} ${r.vendor || ''} ${r.vendorInvoiceNumber || ''} ${r.workOrderNumber || ''} ${r.notes || ''} ${r.loadNumber || ''} ${r.repairStatus || ''} ${pwHay}`.toLowerCase();
@@ -9003,7 +9098,7 @@
           setRepairLocationCode('in-house');
           applyService();
         } else if (p === 'pm') {
-          if (rts) rts.value = 'maintenance';
+          if (rts) rts.value = 'pm_service';
           toggleRecordFields();
           setRepairLocationCode('in-house');
           applyService();
@@ -9018,12 +9113,12 @@
           setRepairLocationCode('in-house');
           applyService();
         } else if (p === 'air_bag') {
-          if (rts) rts.value = 'maintenance';
+          if (rts) rts.value = 'air_bag_service';
           toggleRecordFields();
           setRepairLocationCode('external');
           applyService();
         } else if (p === 'battery') {
-          if (rts) rts.value = 'maintenance';
+          if (rts) rts.value = 'battery_service';
           toggleRecordFields();
           setRepairLocationCode('in-house');
           applyService();
@@ -9033,9 +9128,7 @@
           setRepairLocationCode('external');
           applyService();
         } else if (p === 'inspection') {
-          if (rts) rts.value = 'custom';
-          const cst = document.getElementById('customServiceTypeInput');
-          if (cst) cst.value = 'Inspection';
+          if (rts) rts.value = 'inspection';
           const svc = document.getElementById('serviceSearchInput');
           const sti = document.getElementById('serviceTypeInput');
           if (svc) svc.value = 'Inspection';
@@ -11693,11 +11786,16 @@
         maintenance: 'maintenance-order',
         maintenance_order: 'maintenance-order',
         pm: 'pm-service',
+        pm_service: 'pm-service',
         inspection: 'inspection-record',
         accident: 'accident-repair',
         tire: 'tire-service',
         air_bag: 'airbag-service',
+        air_bag_service: 'airbag-service',
         battery: 'battery-service',
+        battery_service: 'battery-service',
+        body_work: 'body-work',
+        other: 'workorder',
         custom: 'workorder'
       };
       return map[rt] || 'workorder';
@@ -17649,37 +17747,48 @@
       if (drv) {
         n += (n ? '\n\n' : '') + 'Driver (visit):\n' + drv;
       }
-      const inspWrap = document.getElementById('maintInspectionDetailsWrap');
-      if (inspWrap && !inspWrap.classList.contains('hidden')) {
-        const sc = (document.getElementById('maintInspectionScopeInput')?.value || '').trim();
-        const rf = (document.getElementById('maintInspectionRefInput')?.value || '').trim();
-        if (sc || rf) {
-          const bits = [];
-          if (sc) bits.push('Scope: ' + sc);
-          if (rf) bits.push('Reference: ' + rf);
-          n += (n ? '\n\n' : '') + 'Inspection details:\n' + bits.join('\n');
-        }
-      }
       return n;
+    }
+
+    function maintNormalizeRecordTypeForSelect(rtRaw, r) {
+      let rt = String(rtRaw || 'maintenance').trim() || 'maintenance';
+      if (rt === 'custom') {
+        const st = String(r?.serviceType || '').trim().toLowerCase();
+        if (st === 'inspection' || st.includes('inspection')) rt = 'inspection';
+        else rt = 'other';
+      }
+      const legacy = { air_bag: 'air_bag_service', pm: 'pm_service' };
+      if (legacy[rt]) rt = legacy[rt];
+      const sel = document.getElementById('recordTypeSelect');
+      if (sel && !Array.from(sel.options).some(o => o.value === rt)) rt = 'maintenance';
+      return rt;
     }
 
     function toggleRecordFields() {
       const type = document.getElementById('recordTypeSelect').value;
       document.getElementById('tireFields').classList.toggle('hidden', type !== 'tire');
       document.getElementById('accidentFields').classList.toggle('hidden', type !== 'accident');
-      document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'custom');
+      document.getElementById('customServiceTypeInput').classList.toggle('hidden', type !== 'other');
       const inspW = document.getElementById('maintInspectionDetailsWrap');
-      if (inspW) {
-        const keepInsp =
-          type === 'custom' &&
-          String(document.getElementById('customServiceTypeInput')?.value || '')
-            .trim()
-            .toLowerCase() === 'inspection';
-        if (!keepInsp) inspW.classList.add('hidden');
-      }
+      if (inspW) inspW.classList.toggle('hidden', type !== 'inspection');
+      const pmW = document.getElementById('maintPmServiceDetailsWrap');
+      if (pmW) pmW.classList.toggle('hidden', type !== 'pm_service');
       const sameWrap = document.getElementById('recordSameCostServicesWrap');
       if (sameWrap) sameWrap.classList.toggle('hidden', type === 'accident');
       if (type !== 'tire') clearTireExtraLines();
+
+      const dCell = document.getElementById('maintRecordDriverCell');
+      if (dCell) dCell.classList.toggle('hidden', type !== 'repair' && type !== 'accident');
+      const dReq = document.getElementById('maintWoDriverReqStar');
+      if (dReq) dReq.classList.toggle('hidden', type !== 'accident');
+      const drvInp = document.getElementById('maintRecordDriverSearch');
+      if (drvInp) {
+        drvInp.placeholder = type === 'accident' ? 'Select driver (required)' : 'Select driver (optional)';
+        drvInp.setAttribute('aria-required', type === 'accident' ? 'true' : 'false');
+      }
+
+      const det = document.getElementById('maintCostItemDetails');
+      if (det) det.open = type === 'tire';
 
       if (type === 'tire') {
         document.getElementById('serviceSearchInput').value = 'Tires';
@@ -17694,7 +17803,37 @@
         document.getElementById('serviceTypeInput').value = 'Accident Report';
         applyLoadNumberSuggestion(true);
       }
-      if (type !== 'custom' && type !== 'accident') syncPrimaryServiceToFirstCostLine();
+      if (type === 'pm_service') {
+        const svc = document.getElementById('serviceSearchInput');
+        const sti = document.getElementById('serviceTypeInput');
+        if (svc && !(svc.value || '').trim()) svc.value = 'PM / preventive maintenance';
+        if (sti && !(sti.value || '').trim()) sti.value = 'PM / preventive maintenance';
+      }
+      if (type === 'inspection') {
+        const svc = document.getElementById('serviceSearchInput');
+        const sti = document.getElementById('serviceTypeInput');
+        if (svc && !(svc.value || '').trim()) svc.value = 'Inspection';
+        if (sti && !(sti.value || '').trim()) sti.value = 'Inspection';
+      }
+      if (type === 'air_bag_service') {
+        const svc = document.getElementById('serviceSearchInput');
+        const sti = document.getElementById('serviceTypeInput');
+        if (svc && !(svc.value || '').trim()) svc.value = 'Air suspension / air bags';
+        if (sti && !(sti.value || '').trim()) sti.value = 'Air suspension / air bags';
+      }
+      if (type === 'battery_service') {
+        const svc = document.getElementById('serviceSearchInput');
+        const sti = document.getElementById('serviceTypeInput');
+        if (svc && !(svc.value || '').trim()) svc.value = 'Battery service';
+        if (sti && !(sti.value || '').trim()) sti.value = 'Battery service';
+      }
+      if (type === 'body_work') {
+        const svc = document.getElementById('serviceSearchInput');
+        const sti = document.getElementById('serviceTypeInput');
+        if (svc && !(svc.value || '').trim()) svc.value = 'Body / paint / aesthetic';
+        if (sti && !(sti.value || '').trim()) sti.value = 'Body / paint / aesthetic';
+      }
+      if (type !== 'accident') syncPrimaryServiceToFirstCostLine();
       syncMaintWorkOrderHeader();
       renderRepairLocationChips();
     }
@@ -20809,10 +20948,6 @@
       formatMaintRepairStatusMeta(null);
       document.getElementById('accidentAtFaultSearch').value = '';
       document.getElementById('accidentAtFaultValue').value = '';
-      const adS = document.getElementById('accidentDriverSearch');
-      const adI = document.getElementById('accidentDriverId');
-      if (adS) adS.value = '';
-      if (adI) adI.value = '';
       const adot = document.getElementById('accidentDotReportableInput');
       if (adot) adot.checked = false;
       document.getElementById('recordTypeSelect').value = 'maintenance';
@@ -20832,8 +20967,24 @@
       if (dReq) dReq.classList.add('hidden');
       const inspW = document.getElementById('maintInspectionDetailsWrap');
       if (inspW) inspW.classList.add('hidden');
-      document.getElementById('maintInspectionScopeInput') && (document.getElementById('maintInspectionScopeInput').value = '');
-      document.getElementById('maintInspectionRefInput') && (document.getElementById('maintInspectionRefInput').value = '');
+      const pmWrap = document.getElementById('maintPmServiceDetailsWrap');
+      if (pmWrap) pmWrap.classList.add('hidden');
+      const setv = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.value = v;
+      };
+      setv('maintInspectionScopeInput', '');
+      setv('maintInspectorNameInput', '');
+      setv('maintInspectorBadgeInput', '');
+      const irs = document.getElementById('maintInspectionResultSelect');
+      if (irs) irs.value = '';
+      setv('maintInspectionNextDueInput', '');
+      setv('accidentDateInput', '');
+      setv('insuranceClaimNumberInput', '');
+      setv('maintPmIntervalMilesInput', '');
+      setv('maintPmLastDateInput', '');
+      setv('maintPmLastMilesInput', '');
+      setv('maintPmNextDueMilesInput', '');
       window.__erpWoNewMenuPreset = null;
       document.getElementById('linkedTxnTypeSelect').value = 'expense';
       const lnh = document.getElementById('recordLoadNumberHint');
@@ -20850,6 +21001,7 @@
       if (sti) sti.value = '';
       resetMaintPlannedServiceRows();
       renderRepairLocationChips();
+      toggleRecordFields();
     }
 
     async function clearMaintenanceFormNewEntry() {
@@ -21064,13 +21216,14 @@
       updateMaintEditRecordHint();
       erpClearRecordTypeReadonlyWo();
 
-      const rt = String(r.recordType || 'maintenance').trim() || 'maintenance';
+      const rtRaw = String(r.recordType || 'maintenance').trim() || 'maintenance';
+      const rt = maintNormalizeRecordTypeForSelect(rtRaw, r);
       document.getElementById('recordTypeSelect').value = rt;
       toggleRecordFields();
       const st = String(r.serviceType || '').trim();
-      if (rt === 'custom') {
+      if (rt === 'other') {
         const cst = document.getElementById('customServiceTypeInput');
-        if (cst) cst.value = st;
+        if (cst && st) cst.value = st;
       }
       if (st) {
         document.getElementById('serviceSearchInput').value = st;
@@ -21105,26 +21258,40 @@
 
       document.getElementById('accidentAtFaultValue').value = String(r.accidentAtFault || '');
       document.getElementById('accidentAtFaultSearch').value = String(r.accidentAtFault || '');
+      const adt = document.getElementById('accidentDateInput');
+      if (adt) adt.value = String(r.accidentDate || r.serviceDate || '').trim().slice(0, 10);
       document.getElementById('accidentLocationInput').value = String(r.accidentLocation || '');
       document.getElementById('accidentReportNumberInput').value = String(r.accidentReportNumber || '');
-      const adSearch = document.getElementById('accidentDriverSearch');
-      const adId = document.getElementById('accidentDriverId');
-      if (adSearch) adSearch.value = String(r.driverName || '').trim();
-      if (adId) adId.value = String(r.driverId || '').trim();
+      const insCl = document.getElementById('insuranceClaimNumberInput');
+      if (insCl) insCl.value = String(r.insuranceClaimNumber || '').trim();
       const adot = document.getElementById('accidentDotReportableInput');
       if (adot) adot.checked = !!r.accidentDotReportable;
       const mdS = document.getElementById('maintRecordDriverSearch');
       const mdI = document.getElementById('maintRecordDriverId');
       const wn = document.getElementById('maintWoDriverNameInput');
-      if (rt === 'accident') {
-        if (mdS) mdS.value = '';
-        if (mdI) mdI.value = '';
-        if (wn) wn.value = String(r.driverName || '').trim();
-      } else {
-        if (mdS) mdS.value = String(r.driverName || '').trim();
-        if (mdI) mdI.value = String(r.driverId || '').trim();
-        if (wn) wn.value = String(r.driverName || '').trim();
-      }
+      if (mdS) mdS.value = String(r.driverName || '').trim();
+      if (mdI) mdI.value = String(r.driverId || '').trim();
+      if (wn) wn.value = String(r.driverName || '').trim();
+
+      const isc = document.getElementById('maintInspectionScopeInput');
+      if (isc) isc.value = String(r.inspectionScope || '').trim();
+      const inm = document.getElementById('maintInspectorNameInput');
+      if (inm) inm.value = String(r.inspectorName || '').trim();
+      const ibg = document.getElementById('maintInspectorBadgeInput');
+      if (ibg) ibg.value = String(r.inspectorBadge || '').trim();
+      const irs = document.getElementById('maintInspectionResultSelect');
+      if (irs) irs.value = String(r.inspectionResult || '').trim();
+      const ind = document.getElementById('maintInspectionNextDueInput');
+      if (ind) ind.value = String(r.inspectionNextDue || '').trim().slice(0, 10);
+
+      const pmI = document.getElementById('maintPmIntervalMilesInput');
+      if (pmI) pmI.value = r.pmIntervalMiles != null && r.pmIntervalMiles !== '' ? String(r.pmIntervalMiles) : '';
+      const pmLd = document.getElementById('maintPmLastDateInput');
+      if (pmLd) pmLd.value = String(r.lastPmDate || '').trim().slice(0, 10);
+      const pmLm = document.getElementById('maintPmLastMilesInput');
+      if (pmLm) pmLm.value = r.lastPmMiles != null && r.lastPmMiles !== '' ? String(r.lastPmMiles) : '';
+      const pmNd = document.getElementById('maintPmNextDueMilesInput');
+      if (pmNd) pmNd.value = r.nextPmDueMiles != null && r.nextPmDueMiles !== '' ? String(r.nextPmDueMiles) : '';
 
       const rl = String(r.repairLocationType || '').trim();
       if (rl) setRepairLocationCode(rl);
@@ -21293,13 +21460,20 @@
 
       const recordType = document.getElementById('recordTypeSelect').value;
       let serviceType = '';
-      if (recordType === 'custom') {
+      if (recordType === 'other') {
         const c = document.getElementById('customServiceTypeInput').value.trim();
-        if (!c) {
-          erpNotify('Enter a custom service type name.', 'warning');
+        serviceType = document.getElementById('serviceTypeInput').value.trim();
+        if (!serviceType) {
+          const lines = collectMaintCostLines();
+          const withDesc = lines.find(l => l.description);
+          if (withDesc) serviceType = withDesc.description;
+        }
+        if (!serviceType && c) serviceType = c;
+        if (!serviceType) {
+          erpNotify('For Other, enter a service description or a short label in Other — describe.', 'warning');
+          document.getElementById('serviceSearchInput')?.focus();
           return false;
         }
-        serviceType = c;
       } else {
         serviceType = document.getElementById('serviceTypeInput').value.trim();
         if (!serviceType) {
@@ -21314,10 +21488,11 @@
       }
 
       if (recordType === 'accident') {
-        const acid = (document.getElementById('accidentDriverId')?.value || '').trim();
-        if (!acid) {
-          erpNotify('Select the driver involved in this accident', 'warning');
-          document.getElementById('accidentDriverSearch')?.focus();
+        resolveMaintRecordDriverSearch();
+        const mid = (document.getElementById('maintRecordDriverId')?.value || '').trim();
+        if (!mid) {
+          erpNotify('Select the driver for this accident (required).', 'warning');
+          document.getElementById('maintRecordDriverSearch')?.focus();
           return false;
         }
       }
@@ -21455,14 +21630,19 @@
         qboDueDate: document.getElementById('linkedDueDate').value,
         qboDocNumber: document.getElementById('linkedDocNumber').value,
         repairStatus: document.getElementById('recordRepairStatusSelect')?.value || '',
-        driverId:
-          recordType === 'accident'
-            ? (document.getElementById('accidentDriverId')?.value || '').trim()
-            : (document.getElementById('maintRecordDriverId')?.value || '').trim(),
-        driverName:
-          recordType === 'accident'
-            ? (document.getElementById('accidentDriverSearch')?.value || '').trim()
-            : (document.getElementById('maintRecordDriverSearch')?.value || '').trim(),
+        driverId: (document.getElementById('maintRecordDriverId')?.value || '').trim(),
+        driverName: (document.getElementById('maintRecordDriverSearch')?.value || '').trim(),
+        accidentDate: document.getElementById('accidentDateInput')?.value || '',
+        insuranceClaimNumber: (document.getElementById('insuranceClaimNumberInput')?.value || '').trim(),
+        inspectionScope: (document.getElementById('maintInspectionScopeInput')?.value || '').trim(),
+        inspectorName: (document.getElementById('maintInspectorNameInput')?.value || '').trim(),
+        inspectorBadge: (document.getElementById('maintInspectorBadgeInput')?.value || '').trim(),
+        inspectionResult: (document.getElementById('maintInspectionResultSelect')?.value || '').trim(),
+        inspectionNextDue: document.getElementById('maintInspectionNextDueInput')?.value || '',
+        lastPmDate: document.getElementById('maintPmLastDateInput')?.value || '',
+        lastPmMiles: document.getElementById('maintPmLastMilesInput')?.value || '',
+        nextPmDueMiles: document.getElementById('maintPmNextDueMilesInput')?.value || '',
+        pmIntervalMiles: document.getElementById('maintPmIntervalMilesInput')?.value || '',
         accidentDotReportable: !!document.getElementById('accidentDotReportableInput')?.checked
       };
 
@@ -21835,12 +22015,7 @@
       if (apDot) apDot.value = document.getElementById('accidentDotReportableInput')?.checked ? '1' : '';
       const apEds = document.getElementById('apErpDriverSearch');
       const apEdid = document.getElementById('apErpDriverId');
-      if (recType === 'accident') {
-        const aS = document.getElementById('accidentDriverSearch');
-        const aI = document.getElementById('accidentDriverId');
-        if (apEds && aS) apEds.value = (aS.value || '').trim();
-        if (apEdid && aI) apEdid.value = (aI.value || '').trim();
-      } else {
+      {
         const mS = document.getElementById('maintRecordDriverSearch');
         const mI = document.getElementById('maintRecordDriverId');
         if (apEds && mS) apEds.value = (mS.value || '').trim();

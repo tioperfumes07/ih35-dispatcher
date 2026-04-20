@@ -836,7 +836,7 @@
             )}</div></div>`
           : '';
       sec6 = g + pill + oos;
-    } else if (rt === 'pm') {
+    } else if (rt === 'pm' || rt === 'pm_service') {
       sec6 = buildFieldGrid(
         [
           { label: 'Last PM date', value: formatIsoDateShortPlain(d.lastPmDate || '') },

@@ -6977,9 +6977,35 @@ function deriveMaintenanceRecordFields(body, prev) {
     accidentDotReportable:
       body.accidentDotReportable === true ||
       String(body.accidentDotReportable || '').toLowerCase() === 'true' ||
-      String(body.accidentDotReportable || '').toLowerCase() === '1'
+      String(body.accidentDotReportable || '').toLowerCase() === '1',
+    accidentDate: String(body.accidentDate || '').trim().slice(0, 32),
+    insuranceClaimNumber: String(body.insuranceClaimNumber || '').trim().slice(0, 120),
+    inspectionScope: String(body.inspectionScope || '').trim().slice(0, 220),
+    inspectorName: String(body.inspectorName || '').trim().slice(0, 160),
+    inspectorBadge: String(body.inspectorBadge || '').trim().slice(0, 80),
+    inspectionResult: String(body.inspectionResult || '').trim().slice(0, 80),
+    inspectionNextDue: String(body.inspectionNextDue || '').trim().slice(0, 32),
+    lastPmDate: String(body.lastPmDate || '').trim().slice(0, 32),
+    lastPmMiles: safeNum(body.lastPmMiles, null),
+    nextPmDueMiles: safeNum(body.nextPmDueMiles, null),
+    pmIntervalMiles: safeNum(body.pmIntervalMiles, null)
   };
   if (!recordCore.accidentDotReportable) delete recordCore.accidentDotReportable;
+  [
+    'accidentDate',
+    'insuranceClaimNumber',
+    'inspectionScope',
+    'inspectorName',
+    'inspectorBadge',
+    'inspectionResult',
+    'inspectionNextDue',
+    'lastPmDate'
+  ].forEach(k => {
+    if (!recordCore[k]) delete recordCore[k];
+  });
+  ['lastPmMiles', 'nextPmDueMiles', 'pmIntervalMiles'].forEach(k => {
+    if (recordCore[k] == null || !Number.isFinite(recordCore[k])) delete recordCore[k];
+  });
   if (!recordCore.driverId) delete recordCore.driverId;
   if (!recordCore.driverName) delete recordCore.driverName;
   if (tireLineItems.length) recordCore.tireLineItems = tireLineItems;
