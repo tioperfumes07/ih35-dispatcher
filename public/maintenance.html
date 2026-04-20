@@ -8320,6 +8320,27 @@
           erpSbGroup('dedupe', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
       }
+      if (name === 'name-mgmt') {
+        inner.innerHTML =
+          erpSbGroup(
+            'name-mgmt',
+            'nav',
+            'Name management',
+            true,
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;catalog&quot;); openCatalogSubpanel(&quot;name-mgmt&quot;);">Lists → Name management</button>' +
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>'
+          ) +
+          erpSbGroup(
+            'name-mgmt',
+            'tools',
+            'Tools &amp; Data',
+            false,
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers →</button>'
+          ) +
+          erpSbGroup('name-mgmt', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
+        return;
+      }
+      if (name === 'erp') {
         inner.innerHTML =
           erpSbGroup(
             'erp',
@@ -8329,6 +8350,7 @@
             '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>'
           ) +
           erpSbGroup('erp', 'fallback-admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
+      }
     }
 
     function erpCloseNewMenu() {
