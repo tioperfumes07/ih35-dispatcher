@@ -1822,7 +1822,9 @@ body.dispatch-page .stop-block {
 
 body.dispatch-page .stop-card-top {
   display: grid;
-  grid-template-columns: minmax(100px, 120px) minmax(140px, 1fr) minmax(160px, 180px) minmax(200px, 1fr) auto;
+  grid-template-columns:
+    minmax(min(100px, 100%), min(120px, 100%)) minmax(min(140px, 100%), 1fr) minmax(min(160px, 100%), min(180px, 100%))
+    minmax(min(200px, 100%), 1fr) auto;
   gap: 10px;
   align-items: end;
 }
@@ -1863,7 +1865,7 @@ body.dispatch-page .invoice-extra-lines {
 
 body.dispatch-page .invoice-extra-row {
   display: grid;
-  grid-template-columns: minmax(140px, 1.1fr) 110px minmax(120px, 1fr) auto;
+  grid-template-columns: minmax(min(140px, 100%), 1.1fr) min(110px, 100%) minmax(min(120px, 100%), 1fr) auto;
   gap: 8px;
   align-items: end;
   margin-bottom: 10px;
