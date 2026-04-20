@@ -271,7 +271,9 @@ try {
   if (!pass) {
     console.log('   ', row.jsonSnippet);
     if (String(row.jsonSnippet || '').includes('<!DOCTYPE'))
-      console.log('    Hint: port may be an older server — restart `npm start` (JSON 404 for unknown `/api/*`).');
+      console.log(
+        '    Hint: another process may be bound to this port (HTML 404) — restart from this repo (`npm start`) or set `SMOKE_BASE` to the server you intend (e.g. `http://127.0.0.1:<PORT>`). Expect JSON `{ error, path }` for unknown `/api/*`.'
+      );
   }
 } catch (e) {
   criticalFailures++;
