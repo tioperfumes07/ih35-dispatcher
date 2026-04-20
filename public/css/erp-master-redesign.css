@@ -1554,6 +1554,8 @@ body.dispatch-page .maint-banner {
   font-size: 13px;
   line-height: 1.45;
   text-align: left;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.dispatch-page .maint-banner.maint-hide {
@@ -2223,6 +2225,8 @@ body.dispatch-page #dispatchApp .erp-module-sidebar__brand-title {
   font-size: 15px;
   font-weight: 500;
   color: var(--color-text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.dispatch-page #dispatchApp .erp-module-sidebar__collapse {
@@ -2265,6 +2269,8 @@ body.dispatch-page #dispatchApp .dispatch-sidebar-footer__line {
   color: var(--color-text-label);
   font-size: 12px;
   line-height: 1.45;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.dispatch-page #dispatchApp .erp-sb-heading {
@@ -2274,6 +2280,8 @@ body.dispatch-page #dispatchApp .erp-sb-heading {
   color: var(--color-text-label);
   font-weight: 500;
   margin: 12px 0 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.dispatch-page #dispatchApp .erp-module-sidebar__inner .erp-sb-heading:first-child {
@@ -2296,6 +2304,8 @@ body.dispatch-page #dispatchApp .erp-sb-link {
   line-height: 1.35;
   text-decoration: none;
   font-family: inherit;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.dispatch-page #dispatchApp .erp-sb-link:hover {
@@ -2912,6 +2922,7 @@ body.fuel-board .roadmap-note {
   font-size: 12px;
   color: var(--btn-info-text);
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.fuel-board .fuel-erp-write-banner {
@@ -2922,6 +2933,7 @@ body.fuel-board .fuel-erp-write-banner {
   border-radius: var(--radius-card);
   font-size: 12px;
   min-width: 0;
+  overflow-wrap: anywhere;
   border: 1px solid var(--color-warning-border-soft);
   background: var(--pill-yellow-bg);
   color: var(--color-semantic-warning);
@@ -3654,6 +3666,7 @@ body.hub-page .hub-footer-lead {
   color: var(--color-hub-text-muted);
   font-size: 12px;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 body.hub-page .hub-footer-tip {
