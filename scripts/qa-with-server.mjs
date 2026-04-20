@@ -8,6 +8,8 @@
  *
  * Runs **`scripts/smoke-gate-paths-sync.mjs`** first so **`CRITICAL`** and **`SMOKE_GATE_API_PATHS`** cannot drift.
  *
+ * **`npm run qa:automated`** ( **`package.json`** ) runs the same **`smoke-gate-paths-sync`** step before **`rule0:check`** + **`smoke`** when a server is already listening — no child process here.
+ *
  * Sets **`IH35_SMOKE_GATE=1`** on the child **`server.js`** so HTTP smoke passes **`/api/*`** GETs used by **`system-smoke.mjs`** even when ERP login is required (users in **`data/app-users.json`**). Do not set **`IH35_SMOKE_GATE`** on long-lived production listeners unless you intend to relax auth for those read-only probes.
  * When **`CI=true`** (e.g. GitHub Actions), passes **`SMOKE_QUIET=1`** to **`system-smoke.mjs`** so the success footer line is omitted.
  * **`SIGINT`** / **`SIGTERM`**: **`SIGTERM`** the child **`server.js`**, any in-flight **`rule0:check`** / **`smoke`** Node child, then **`process.exit`** (**130** / **143**) so the parent does not hang (installing signal handlers disables the default Ctrl+C exit).
