@@ -3361,7 +3361,15 @@
                       <div class="ap-exp-col ap-exp-col--left">
                         <div class="ap-exp-field">
                           <span class="qb-l">Type</span>
-                          <input class="qb-in" type="text" readonly value="Fuel expense" aria-readonly="true" tabindex="0" />
+                          <input
+                            id="fuelManualTypeDisplay"
+                            class="qb-in"
+                            type="text"
+                            readonly
+                            value="Fuel expense"
+                            aria-readonly="true"
+                            tabindex="0"
+                          />
                         </div>
                         <div class="ap-exp-field ap-exp-field--vendor">
                           <span class="qb-l">Vendor (QuickBooks)</span>
@@ -3372,15 +3380,33 @@
                           <span class="qb-l">Unit / asset (QBO Class = unit name)</span>
                           <input id="fuelManualUnit" class="qb-in" list="unitOptions" placeholder="Unit" autocomplete="off" />
                         </div>
-                        <div class="ap-exp-field">
-                          <span class="qb-l">Payment method</span>
-                          <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
-                          <input type="hidden" id="fuelManualPaymentMethodId" />
+                        <div id="fuelManualBillOnlyFields" class="hidden">
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Terms</span>
+                            <select id="fuelManualQboTermId" class="qb-in">
+                              <option value="">— None —</option>
+                            </select>
+                          </div>
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Due date</span>
+                            <input id="fuelManualDueDate" class="qb-in" type="date" />
+                          </div>
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Supplier bill #</span>
+                            <input id="fuelManualBillStmtNo" class="qb-in" maxlength="80" placeholder="Statement or vendor bill no." autocomplete="off" />
+                          </div>
                         </div>
-                        <div class="ap-exp-field ap-exp-field--bank">
-                          <span class="qb-l">Pay from bank account (QuickBooks)</span>
-                          <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
-                          <input type="hidden" id="fuelManualBankQboId" />
+                        <div id="fuelManualExpenseOnlyFields">
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Payment method</span>
+                            <input id="fuelManualPaymentMethodSearch" class="qb-in" list="paymentMethodOptions" placeholder="Cash, card, check…" autocomplete="off" oninput="resolveFuelManualPaymentMethod()" onblur="resolveFuelManualPaymentMethod()" />
+                            <input type="hidden" id="fuelManualPaymentMethodId" />
+                          </div>
+                          <div class="ap-exp-field ap-exp-field--bank">
+                            <span class="qb-l">Pay from bank account (QuickBooks)</span>
+                            <input id="fuelManualBankSearch" class="qb-in" list="qboBankAccountOptions" placeholder="Checking / credit card" autocomplete="off" oninput="resolveFuelManualBank()" onblur="resolveFuelManualBank()" />
+                            <input type="hidden" id="fuelManualBankQboId" />
+                          </div>
                         </div>
                         <details class="fuel-manual-header-more">
                           <summary class="fuel-manual-header-more__sum">Optional: QBO class &amp; location</summary>
@@ -3416,7 +3442,7 @@
                           <input id="fuelManualInternalWo" class="qb-in" placeholder="Your work order ref" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
-                          <span class="qb-l">Expense # (QBO DocNumber)</span>
+                          <span class="qb-l" id="fuelManualExpenseDocLabel">Expense # (QBO DocNumber)</span>
                           <input id="fuelManualExpenseDoc" class="qb-in" maxlength="24" placeholder="e.g. 4821-0415" autocomplete="off" />
                         </div>
                       </div>
@@ -10354,6 +10380,20 @@
             .join('');
         termSel.value = cur;
       }
+      const fuelTermSel = document.getElementById('fuelManualQboTermId');
+      if (fuelTermSel) {
+        const curF = fuelTermSel.value;
+        const termsF = erp.qboCache?.terms || [];
+        fuelTermSel.innerHTML =
+          '<option value="">— None —</option>' +
+          termsF
+            .map(
+              t =>
+                `<option value="${escapeHtml(String(t.qboId))}">${escapeHtml(t.name || 'Term')}</option>`
+            )
+            .join('');
+        fuelTermSel.value = curF;
+      }
       // QBO “create item” form account pickers
       const incSel = document.getElementById('newItemIncomeAccountId');
       if (incSel) {
@@ -11898,11 +11938,15 @@
         'fuelManualPaymentMethodSearch',
         'fuelManualPaymentMethodId',
         'fuelManualBankSearch',
-        'fuelManualBankQboId'
+        'fuelManualBankQboId',
+        'fuelManualDueDate',
+        'fuelManualBillStmtNo'
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
+      const fuelTerm = document.getElementById('fuelManualQboTermId');
+      if (fuelTerm) fuelTerm.value = '';
       if (!preserveUnit) {
         const u = document.getElementById('fuelManualUnit');
         if (u) u.value = '';
@@ -11916,6 +11960,31 @@
       }
       fuelManualUpdateHeaderTotal();
       syncFuelManualClassFromUnit();
+      syncFuelManualEntryModeUi();
+    }
+
+    function syncFuelManualEntryModeUi() {
+      const mode = String(window.__fuelManualEntryMode || '').toLowerCase();
+      const bill = mode === 'bill';
+      const disp = document.getElementById('fuelManualTypeDisplay');
+      if (disp) disp.value = bill ? 'Fuel bill' : 'Fuel expense';
+      const shell = document.getElementById('erpFuelManualDocShellPanel');
+      if (shell) {
+        if (!mode) {
+          shell.classList.remove('fuel-manual--bill', 'fuel-manual--expense');
+        } else {
+          shell.classList.toggle('fuel-manual--bill', bill);
+          shell.classList.toggle('fuel-manual--expense', !bill);
+        }
+      }
+      const billEl = document.getElementById('fuelManualBillOnlyFields');
+      const expEl = document.getElementById('fuelManualExpenseOnlyFields');
+      if (billEl) billEl.classList.toggle('hidden', !bill);
+      if (expEl) expEl.classList.toggle('hidden', bill);
+      const docLab = document.getElementById('fuelManualExpenseDocLabel');
+      if (docLab) {
+        docLab.textContent = bill ? 'Bill / Doc # (QuickBooks)' : 'Expense # (QBO DocNumber)';
+      }
     }
 
     let __fuelManualFormBound = false;
@@ -11960,18 +12029,23 @@
 
     async function saveManualFuelPurchase(opts) {
       const postToQbo = !!(opts && opts.postToQbo);
+      const billMode = String(window.__fuelManualEntryMode || '').toLowerCase() === 'bill';
       if (postToQbo) {
         if (
           !confirm(
-            'Save each line to the fuel ledger and record each as its own QuickBooks Purchase (expense)?\n\nThis sends one QBO transaction per line using the vendors, accounts, and pay-from bank shown on the row after save.'
+            billMode
+              ? 'Save each line to the fuel ledger and record each as its own QuickBooks Bill?\n\nThis sends one QBO Bill per line when terms, due date, or supplier bill # are stored on the saved row (open balance until paid in QuickBooks).'
+              : 'Save each line to the fuel ledger and record each as its own QuickBooks Purchase (expense)?\n\nThis sends one QBO transaction per line using the vendors, accounts, and pay-from bank shown on the row after save.'
           )
         ) {
           return;
         }
       }
       resolveFuelManualVendor();
-      resolveFuelManualPaymentMethod();
-      resolveFuelManualBank();
+      if (!billMode) {
+        resolveFuelManualPaymentMethod();
+        resolveFuelManualBank();
+      }
       const hint = document.getElementById('fuelManualSaveHint');
       const unit = String(document.getElementById('fuelManualUnit')?.value || '').trim();
       const txnDate = String(document.getElementById('fuelManualDate')?.value || '').trim();
@@ -12001,8 +12075,21 @@
       }
       const gBankIn = document.getElementById('fuelExpBankSearch');
       const gBankId = document.getElementById('fuelExpBankQboId');
-      if (gBankIn && bankSearch) gBankIn.value = bankSearch;
-      if (gBankId && bankId) gBankId.value = bankId;
+      if (!billMode) {
+        if (gBankIn && bankSearch) gBankIn.value = bankSearch;
+        if (gBankId && bankId) gBankId.value = bankId;
+      }
+
+      const fuelBillQboTermId = billMode
+        ? String(document.getElementById('fuelManualQboTermId')?.value || '')
+            .trim()
+            .replace(/\D/g, '')
+            .slice(0, 24)
+        : '';
+      const fuelBillDueDate = billMode ? String(document.getElementById('fuelManualDueDate')?.value || '').trim() : '';
+      const fuelBillStatementNumber = billMode
+        ? String(document.getElementById('fuelManualBillStmtNo')?.value || '').trim()
+        : '';
 
       const lines = [];
       for (const row of lineRows) {
@@ -12077,6 +12164,11 @@
           if (Number.isFinite(ppg) && ppg >= 0) payload.pricePerGallon = ppg;
           if (Number.isFinite(total) && total > 0) payload.totalCost = total;
           if (ln.lineDesc) payload.lineDescription = ln.lineDesc;
+          if (billMode) {
+            if (fuelBillQboTermId) payload.fuelBillQboTermId = fuelBillQboTermId;
+            if (fuelBillDueDate) payload.fuelBillDueDate = fuelBillDueDate;
+            if (fuelBillStatementNumber) payload.fuelBillStatementNumber = fuelBillStatementNumber;
+          }
           const r = await j('/api/fuel/purchases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
@@ -12093,16 +12185,18 @@
             qty: galStr,
             unit: Number.isFinite(ppg) && ppg >= 0 ? String(ppg) : '',
             line: Number.isFinite(total) && total > 0 ? String(total) : '',
-            paymentMethodId: pmId.replace(/[^\w.-]/g, '').slice(0, 48),
-            paymentMethodSearch: pmSearch.slice(0, 120),
-            qboBankAccountId: bankId.replace(/\D/g, '').slice(0, 24),
-            bankSearch: bankSearch.slice(0, 160),
             detailMode: ln.detailMode === 'item' ? 'item' : 'category',
             qboAccountId: String(ln.acctId || '')
               .trim()
               .replace(/\D/g, '')
               .slice(0, 24)
           };
+          if (!billMode) {
+            draftBody.paymentMethodId = pmId.replace(/[^\w.-]/g, '').slice(0, 48);
+            draftBody.paymentMethodSearch = pmSearch.slice(0, 120);
+            draftBody.qboBankAccountId = bankId.replace(/\D/g, '').slice(0, 24);
+            draftBody.bankSearch = bankSearch.slice(0, 160);
+          }
           if (docForLine) draftBody.expenseDocNumber = docForLine;
           try {
             await j('/api/fuel/purchases/' + encodeURIComponent(purchase.id) + '/expense-draft', {

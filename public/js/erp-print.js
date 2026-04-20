@@ -480,12 +480,11 @@ table.meta th, table.meta td { border:1px solid #ccc; padding:4px 6px; text-alig
       t === 'bill' ||
       t === 'maintenance-expense' ||
       t === 'maintenance-bill' ||
-      t === 'fuel-bill' ||
       t === 'vendor-driver-bill'
     ) {
       return apExpenseBillDoc(data, t);
     }
-    if (t === 'fuel-expense') return fuelManualDoc(data);
+    if (t === 'fuel-expense' || t === 'fuel-bill') return fuelManualDoc(data);
     return genericDoc(t, data);
   }
 
