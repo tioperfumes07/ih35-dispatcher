@@ -1109,5 +1109,6 @@ Agent A merges summarized bullets into `ERP_MASTER_REDESIGN_STATUS.md`; do not e
 ## 2026-07-14
 
 - **Rule 1:** `public/css/maint-accounting-ui-2026.css` — **`#maintWorkOrderFormMount .maint-notes-slot__num`** **`font-weight`** **600 → 500** (**`changelog 506`** in **`ERP_MASTER_REDESIGN_STATUS.md`**). **`scripts/system-smoke.mjs`** — failure / footer hints spell out **`smoke-gate-paths-sync`** before the ephemeral full gate.
+- **Tooling:** **`package.json`** — **`npm run qa:automated`** runs **`smoke:gate-sync`** before **`rule0:check`** + **`smoke`** (parity with **`qa:isolated`** when a server is already up). **`README`**, **`ARCHITECTURE`**, **`FINAL_REPORT`** §P0, **`POST_RELEASE_CHECKLIST`** §0, **`PARALLEL_AGENT`**, **`AGENT_COORDINATION`**, and **`rule-zero-agent-b-check.mjs`** aligned; **`AGENT_COORDINATION`** overlap rule **4** restored.
 
-**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_STATUS.md`, `scripts/system-smoke.mjs`, `docs/reports/ERP_MASTER_REDESIGN_PROGRESS_latest.rtf`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.
+**Files:** `public/css/maint-accounting-ui-2026.css`, `docs/ERP_MASTER_REDESIGN_STATUS.md`, `scripts/system-smoke.mjs`, `docs/reports/ERP_MASTER_REDESIGN_PROGRESS_latest.rtf`, `package.json`, `README.md`, `docs/ARCHITECTURE.md`, `docs/ERP_MASTER_REDESIGN_FINAL_REPORT.md`, `docs/ERP_MASTER_REDESIGN_POST_RELEASE_CHECKLIST.md`, `docs/ERP_MASTER_REDESIGN_PARALLEL_AGENT.md`, `docs/AGENT_COORDINATION.md`, `scripts/rule-zero-agent-b-check.mjs`, `docs/ERP_MASTER_REDESIGN_AGENT_B_LOG.md`.

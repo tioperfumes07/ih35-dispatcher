@@ -1,7 +1,7 @@
 {
   "name": "ih35-dispatch-v3-starter",
   "version": "0.1.0",
-  "description": "IH35 dispatch / ERP operations hub — Express app with Rule 0 + HTTP smoke (npm run qa:isolated runs smoke-gate-paths-sync, rule0:check, system-smoke on an ephemeral server).",
+  "description": "IH35 dispatch / ERP operations hub — Express app with Rule 0 + HTTP smoke (npm run qa:automated / qa:isolated run smoke-gate-paths-sync, rule0:check, system-smoke).",
   "type": "module",
   "private": true,
   "engines": {
@@ -14,7 +14,7 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "smoke": "node scripts/system-smoke.mjs",
     "smoke:gate-sync": "node scripts/smoke-gate-paths-sync.mjs",
-    "qa:automated": "node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke",
+    "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke",
     "qa:isolated": "node scripts/qa-with-server.mjs",
     "test": "npm run rule0:check",
     "rule0:check": "node scripts/rule-zero-agent-b-check.mjs",

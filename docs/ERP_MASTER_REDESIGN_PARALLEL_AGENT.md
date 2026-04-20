@@ -39,7 +39,7 @@
 SMOKE_BASE=http://localhost:3400 npm run smoke
 ```
 
-Use **`npm run qa:automated`** for **`rule0:check`** + smoke in one step (server already listening), or **`npm run qa:isolated`** (**`smoke-gate-paths-sync`**, then a fresh `server.js` on a free port with **`IH35_SMOKE_GATE=1`**). Exit code must be **0** before you consider your task done. **GitHub Actions** sets **`SMOKE_TIMEOUT_MS=12000`** for HTTP fetches in **`system-smoke.mjs`** (see **`.github/workflows/rule0-check.yml`**); locally the default is **8000** ms unless you set **`SMOKE_TIMEOUT_MS`**.
+Use **`npm run qa:automated`** for **`smoke-gate-paths-sync`** + **`rule0:check`** + smoke in one step (server already listening), or **`npm run qa:isolated`** (**`smoke-gate-paths-sync`**, then a fresh `server.js` on a free port with **`IH35_SMOKE_GATE=1`**). Exit code must be **0** before you consider your task done. **GitHub Actions** sets **`SMOKE_TIMEOUT_MS=12000`** for HTTP fetches in **`system-smoke.mjs`** (see **`.github/workflows/rule0-check.yml`**); locally the default is **8000** ms unless you set **`SMOKE_TIMEOUT_MS`**.
 
 ---
 
