@@ -449,11 +449,21 @@ export function RepairWorkOrderForm({
     RECORD_OPTS.find((o) => o.value === recordType)?.label ?? recordType
   const repairSummary = description.trim() || selectedService?.service_name || serviceType
 
-  const pills = {
-    recordType: recordLabel,
-    location: locLabel,
-    total: `$${(parseFloat(estimatedCost) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-  }
+  const pills = useMemo(() => {
+    const total = `$${(parseFloat(estimatedCost) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+    if (integritySaveType === 'maintenance_expense') {
+      return { recordType: 'Expense', location: locLabel, total }
+    }
+    if (integritySaveType === 'maintenance_bill') {
+      return { recordType: 'Bill', location: locLabel, total }
+    }
+    return { recordType: recordLabel, location: locLabel, total }
+  }, [integritySaveType, recordLabel, locLabel, estimatedCost])
+
+  useEffect(() => {
+    if (!isLedgerShell) return
+    setTxnDate(serviceDate)
+  }, [isLedgerShell, serviceDate])
 
   const servicePanel = (
     <div>
