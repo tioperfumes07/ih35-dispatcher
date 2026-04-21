@@ -40,6 +40,8 @@ type Props = {
   /** When `token` changes, switches the active maintenance view (e.g. from Accounting). */
   externalNavRequest?: { view: MaintView; token: number } | null
   onExternalNavConsumed?: () => void
+  /** Opens the app-level WO kind picker (same as Accounting + New → work order). */
+  onOpenAppWorkOrder?: () => void
 }
 
 export function MaintenanceWorkspace({
@@ -47,6 +49,7 @@ export function MaintenanceWorkspace({
   onOpenReport,
   externalNavRequest,
   onExternalNavConsumed,
+  onOpenAppWorkOrder,
 }: Props) {
   const [view, setView] = useState<MaintView>('grid')
   const [listsCatalogsTab, setListsCatalogsTab] =
@@ -177,6 +180,15 @@ export function MaintenanceWorkspace({
     <div className="acct-shell maint-workspace">
       <aside className="acct-bills-sidebar" aria-label="Maintenance">
         <p className="acct-kicker">Maintenance</p>
+        {onOpenAppWorkOrder ? (
+          <button
+            type="button"
+            className="btn sm primary maint-workspace__new-wo"
+            onClick={() => onOpenAppWorkOrder()}
+          >
+            + New work order
+          </button>
+        ) : null}
         <h3 className="acct-side-h">Operations</h3>
         <ul className="acct-bills-nav">
           {OPS_NAV.map((n) =>

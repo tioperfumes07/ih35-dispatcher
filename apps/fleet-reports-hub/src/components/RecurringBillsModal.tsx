@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ModalFullscreenToggle } from './ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../hooks/useFullScreen'
+import { useColumnResize } from '../hooks/useColumnResize'
+import { exportDomTableToXlsx } from '../lib/tableExportXlsx'
 import type { BillFrequency } from '../lib/recurringBillDates'
 import {
   formatISODate,
@@ -154,6 +156,8 @@ export function RecurringBillsModal({ open, onClose }: Props) {
     const last = each[each.length - 1] ?? 0
     return `$${t.toFixed(2)} ÷ ${n} → ${n > 1 ? `$${line.toFixed(2)} each, remainder on last → $${last.toFixed(2)}` : `$${last.toFixed(2)}`}`
   }, [amountMode, totalAmount, baseRows, excluded])
+
+  const previewCol = useColumnResize([120, 140, 96, 56])
 
   const startCreate = () => {
     if (visibleRows.length === 0) return
@@ -442,21 +446,74 @@ export function RecurringBillsModal({ open, onClose }: Props) {
             <section className="recurring-panel recurring-panel--preview">
               <div className="preview-head">
                 <h3>Live preview</h3>
-                <span className="muted small">{visibleRows.length} bills</span>
+                <div className="preview-head__actions">
+                  <span className="muted small">{visibleRows.length} bills</span>
+                  <button
+                    type="button"
+                    className="btn sm ghost"
+                    onClick={() =>
+                      exportDomTableToXlsx(
+                        previewCol.tableRef.current,
+                        'RecurringBillsPreview',
+                      )
+                    }
+                  >
+                    Export to Excel
+                  </button>
+                </div>
               </div>
 
               <div className="preview-table-wrap">
-                <table className="preview-table">
+                <table
+                  ref={previewCol.tableRef}
+                  className="preview-table fr-data-table"
+                  style={{ tableLayout: 'fixed', width: '100%' }}
+                >
+                  <colgroup>
+                    {previewCol.widths.map((w, i) => (
+                      <col key={i} style={{ width: w }} />
+                    ))}
+                  </colgroup>
                   <thead>
                     <tr>
-                      <th>Bill #</th>
-                      <th>Date</th>
-                      <th className="num">Amount</th>
-                      <th aria-label="Remove" />
+                      <th
+                        className="fr-th-resizable"
+                        style={{ width: previewCol.widths[0] }}
+                      >
+                        Bill #
+                        <span
+                          className="fr-col-resize"
+                          role="presentation"
+                          onMouseDown={previewCol.onResizeMouseDown(0)}
+                        />
+                      </th>
+                      <th
+                        className="fr-th-resizable"
+                        style={{ width: previewCol.widths[1] }}
+                      >
+                        Date
+                        <span
+                          className="fr-col-resize"
+                          role="presentation"
+                          onMouseDown={previewCol.onResizeMouseDown(1)}
+                        />
+                      </th>
+                      <th
+                        className="fr-th-resizable num"
+                        style={{ width: previewCol.widths[2] }}
+                      >
+                        Amount
+                        <span
+                          className="fr-col-resize"
+                          role="presentation"
+                          onMouseDown={previewCol.onResizeMouseDown(2)}
+                        />
+                      </th>
+                      <th style={{ width: previewCol.widths[3] }} aria-label="Remove" />
                     </tr>
                   </thead>
                   <tbody>
-                    {visibleRows.map((r) => (
+                    {visibleRows.map((r, ri) => (
                       <tr key={r.idx}>
                         <td className="mono">{r.billNo}</td>
                         <td>
@@ -472,6 +529,7 @@ export function RecurringBillsModal({ open, onClose }: Props) {
                             <input
                               className="cell-input"
                               inputMode="decimal"
+                              tabIndex={520 + ri}
                               value={
                                 overrides[r.idx] ?? r.amount.toFixed(2)
                               }
@@ -490,6 +548,7 @@ export function RecurringBillsModal({ open, onClose }: Props) {
                           <button
                             type="button"
                             className="btn-icon"
+                            tabIndex={620 + ri}
                             title="Remove this bill"
                             aria-label={`Remove bill ${r.billNo}`}
                             onClick={() =>
@@ -511,6 +570,9 @@ export function RecurringBillsModal({ open, onClose }: Props) {
                   <p className="empty tiny">All bills removed — increase count or reset.</p>
                 )}
               </div>
+              <p className="muted tiny preview-table-hint">
+                Drag column edges to resize · Tab to navigate
+              </p>
 
               <footer className="preview-footer">
                 <button

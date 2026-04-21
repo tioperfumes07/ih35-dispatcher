@@ -233,6 +233,7 @@ export default function App() {
                 onOpenReport={openReport}
                 externalNavRequest={maintExtNav}
                 onExternalNavConsumed={clearMaintExtNav}
+                onOpenAppWorkOrder={() => setAppWoPickOpen(true)}
               />
             </>
           ) : tab === 'accounting' ? (

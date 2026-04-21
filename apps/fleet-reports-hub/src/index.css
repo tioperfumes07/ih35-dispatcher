@@ -2571,6 +2571,17 @@ nav.tabs {
   align-items: baseline;
 }
 
+.preview-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.preview-table-hint {
+  margin: 6px 0 0;
+}
+
 .preview-table-wrap {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -3490,6 +3501,11 @@ nav.tabs {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.maint-workspace__new-wo {
+  width: 100%;
+  margin-bottom: 10px;
 }
 
 .acct-bills-link.is-active {
