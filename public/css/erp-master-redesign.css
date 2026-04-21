@@ -638,18 +638,21 @@ body.erp-maintenance #qboSyncAlertBar .qbo-sync-actions button {
   font-weight: 500;
 }
 
-/* --- KPI strip (Rule 16 friendly) --- */
+/* --- KPI strip (Rule 16 friendly) — workspace snapshot cards wrap instead of clipping --- */
 body.erp-maintenance .maint-kpi-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(11.25rem, 100%), minmax(0, 1fr)));
-  gap: 0.75rem;
-}
-
-body.erp-maintenance .maint-kpi-cards > * {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 body.erp-maintenance .maint-kpi-card {
+  flex: 1;
+  min-width: min(180px, 100%);
+  max-width: 100%;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
@@ -667,6 +670,8 @@ body.erp-maintenance .maint-kpi-card__label {
   text-transform: uppercase;
   color: var(--color-text-label);
   font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.erp-maintenance .maint-kpi-card__val {
@@ -674,6 +679,8 @@ body.erp-maintenance .maint-kpi-card__val {
   font-weight: 400;
   color: var(--color-text-primary);
   margin-top: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* --- Table safety: horizontal scroll wrapper (opt-in class) --- */
