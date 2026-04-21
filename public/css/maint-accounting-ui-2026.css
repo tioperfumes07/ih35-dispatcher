@@ -3679,3 +3679,35 @@ body.erp-maintenance .maint-action-strip__tabs .maint-action-strip__btn {
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+/* Primary content column + main surface: never wider than viewport (nested flex). */
+body.erp-maintenance #erpApp.erp-master .erp-main-col,
+body.erp-maintenance #erpApp.erp-master .main.erp-main-surface {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Other ERP sections: same flex column + shrink contract as maintenance (no token edits). */
+body.erp-maintenance
+  :is(
+    #section-accounting,
+    #section-tracking,
+    #section-safety,
+    #section-fuel,
+    #section-dashboard,
+    #section-catalog,
+    #section-uploads,
+    #section-reports,
+    #section-dedupe,
+    #section-name-mgmt
+  ).section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}

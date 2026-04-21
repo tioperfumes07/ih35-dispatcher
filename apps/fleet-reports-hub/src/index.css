@@ -4396,8 +4396,8 @@ nav.tabs {
   min-height: 0;
   min-width: 0;
   width: 100%;
-  max-width: none;
-  overflow-x: hidden;
+  max-width: 100%;
+  overflow-x: auto;
   overflow-y: hidden;
 }
 
@@ -4409,8 +4409,9 @@ nav.tabs {
   min-height: 0;
   min-width: 0;
   width: 100%;
-  max-width: none;
-  overflow: hidden;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 .lists-catalogs--hub .lists-catalogs__body {
@@ -5155,12 +5156,17 @@ nav.tabs {
 }
 
 .lists-catalogs__tabs--many {
-  gap: 0;
+  gap: 4px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
 }
 
 .lists-catalogs__tabs--many .integrity-tab {
   font-size: 12px;
   padding: 10px 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Service catalog tables */
@@ -6660,6 +6666,12 @@ nav.tabs {
 .reports-page__body-split--no-sidebar .reports-page__main--accounting {
   flex: 1;
   min-width: 0;
+}
+
+/* Accounting tab: stack dashboard / lists vertically inside scrollable main */
+.reports-page__main--accounting {
+  display: flex;
+  flex-direction: column;
 }
 
 .fr-filter-sidebar {
