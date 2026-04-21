@@ -272,6 +272,9 @@
         openConfirmModal(keep, merge, () => runMergeFlow(keep, merge, card));
       });
     });
+    if (typeof window.ErpColumnResize !== 'undefined' && typeof window.ErpColumnResize.wireTablesInRoot === 'function') {
+      window.ErpColumnResize.wireTablesInRoot(host);
+    }
   }
 
   function dedupeChrome() {
@@ -504,6 +507,9 @@
           alert(JSON.stringify(d.row?.qbo_api_responses || {}, null, 2).slice(0, 4000));
         });
       });
+      if (typeof window.ErpColumnResize !== 'undefined' && typeof window.ErpColumnResize.wireTablesInRoot === 'function') {
+        window.ErpColumnResize.wireTablesInRoot(body);
+      }
     } catch (e) {
       body.innerHTML = `<span class="mini-note">${escapeHtml(e.message || String(e))}</span>`;
     }
@@ -748,6 +754,9 @@
       ${row('Email', A.email || '—', B.email || '—')}
       ${row('Balance', money(A.balance), money(B.balance))}
     </tbody></table>`;
+    if (typeof window.ErpColumnResize !== 'undefined' && typeof window.ErpColumnResize.wireTablesInRoot === 'function') {
+      window.ErpColumnResize.wireTablesInRoot(host);
+    }
     btn.style.display = 'block';
     const keepA = state.manual.keep === 'a';
     btn.textContent = keepA ? 'Keep Record A, merge Record B into it' : 'Keep Record B, merge Record A into it';

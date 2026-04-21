@@ -541,6 +541,15 @@ tr:nth-child(even){background:#f9f9f9}
       { value: 'vehicle', label: 'Unit' },
       { value: 'date', label: 'Date' }
     ];
+    const gbA1 = [
+      { value: 'none', label: 'None (flat list)' },
+      { value: 'vehicle', label: 'Vehicle (unit)' },
+      { value: 'service_type', label: 'Service type' },
+      { value: 'record_type', label: 'Record type' },
+      { value: 'location', label: 'Location' },
+      { value: 'vendor', label: 'Vendor' },
+      { value: 'month', label: 'Month' }
+    ];
     if (datasetId === 'm1-expense-by-service-type')
       return { datasetId, defaultMonths: 12, features: [...fullMaint, 'groupBy'], groupByOptions: gbSvc };
     if (datasetId === 'm2-maintenance-cost-pivot') return { datasetId, defaultMonths: 12, features: [...fullMaint] };
@@ -558,7 +567,7 @@ tr:nth-child(even){background:#f9f9f9}
     if (datasetId === 'a4-pm-schedule')
       return { datasetId, defaultMonths: 3, features: ['units', 'fleetTypes', 'makes', 'recordTypes', 'showOverduePm'] };
     if (datasetId === 'a1-work-order-history')
-      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'defectsOnly', 'groupBy'], groupByOptions: [{ value: 'none', label: 'None (flat list)' }] };
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'defectsOnly', 'groupBy'], groupByOptions: gbA1 };
     if (datasetId === 'a2-cost-by-unit')
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbCostUnit };
     if (datasetId === 'a3-cost-by-service-type')
@@ -567,7 +576,12 @@ tr:nth-child(even){background:#f9f9f9}
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'accidentExtra'] };
     if (datasetId === 'a9-fleet-repair-monthly')
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbMonth };
-    if (datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history' || datasetId === 'a10-inspection-history')
+    if (
+      datasetId === 'a5-tire-history' ||
+      datasetId === 'a6-air-bag-history' ||
+      datasetId === 'a10-inspection-history' ||
+      datasetId === 'a11-parts-positions'
+    )
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbTirePos };
     return { datasetId, defaultMonths: 3, features: [...fullMaint] };
   }
@@ -762,7 +776,8 @@ tr:nth-child(even){background:#f9f9f9}
       badge.hidden = false;
     }
     const r0 = defaultRange();
-    const posField = datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history';
+    const posField =
+      datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history' || datasetId === 'a11-parts-positions';
     if (ttl) ttl.textContent = title || datasetId;
     const fpOpts = FILTER_PANEL_DATASETS.has(datasetId) ? filterPanelOptionsFor(datasetId) : null;
     if (fl) {
@@ -996,8 +1011,13 @@ tr:nth-child(even){background:#f9f9f9}
         let labels = [];
         let values = [];
         if (data.meta.chartSource === 'sections' && Array.isArray(data.meta.sections)) {
-          labels = data.meta.sections.slice(0, 18).map(s => String(s.title ?? s.key ?? '—'));
-          values = data.meta.sections.slice(0, 18).map(s => Number(s.totalCost) || 0);
+          const pairs = data.meta.sections.slice(0, 18).map(s => ({
+            lab: String(s.title ?? s.key ?? '—'),
+            val: Number(s.totalCost) || 0
+          }));
+          pairs.sort((a, b) => b.val - a.val);
+          labels = pairs.map(p => p.lab);
+          values = pairs.map(p => p.val);
         } else if (data.rows && data.rows.length) {
           const xk = data.meta.chartXKey || 'unit';
           const yk = data.meta.chartYKey || 'totalDollars';
@@ -1009,6 +1029,10 @@ tr:nth-child(even){background:#f9f9f9}
           chart.innerHTML = '<canvas height="240"></canvas>';
           const canvas = chart.querySelector('canvas');
           const type = data.meta.chartType === 'pie' ? 'pie' : data.meta.chartType === 'line' ? 'line' : 'bar';
+          const horizBar =
+            datasetId === 'm1-expense-by-service-type' &&
+            type === 'bar' &&
+            data.meta.chartSource === 'sections';
           const cfg =
             type === 'pie'
               ? {
@@ -1044,10 +1068,16 @@ tr:nth-child(even){background:#f9f9f9}
                   options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                      x: { grid: { color: '#eee' } },
-                      y: { grid: { color: '#eee' }, beginAtZero: true }
-                    },
+                    indexAxis: horizBar ? 'y' : 'x',
+                    scales: horizBar
+                      ? {
+                          x: { grid: { color: '#eee' }, beginAtZero: true },
+                          y: { grid: { color: '#eee' }, ticks: { autoSkip: false, font: { size: 10 } } }
+                        }
+                      : {
+                          x: { grid: { color: '#eee' } },
+                          y: { grid: { color: '#eee' }, beginAtZero: true }
+                        },
                     plugins: { legend: { display: false } }
                   }
                 };
@@ -1454,6 +1484,11 @@ tr:nth-child(even){background:#f9f9f9}
         }
         if (it.custom === 'dot-audit-config') {
           repOpenDotAuditConfigurator();
+          return;
+        }
+        if (it.custom === 'integrity-dashboard') {
+          if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar('rep-integrity');
+          else if (typeof openReportsTab === 'function') openReportsTab('rep-integrity', null);
           return;
         }
         if (it.custom === 'scheduled') {

@@ -3531,3 +3531,29 @@ textarea.erp-input--error {
   min-width: 0;
 }
 
+/* --- Resizable column headers (accounting tables only; no palette changes) --- */
+body.erp-maintenance .erp-dedupe-table thead th.erp-col-resize-th,
+body.erp-maintenance .acct-board-mini-table thead th.erp-col-resize-th {
+  position: relative;
+  overflow: hidden;
+}
+
+body.erp-maintenance .erp-col-resize-hit {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 2;
+  background: transparent;
+}
+
+body.erp-maintenance .erp-col-resize-hint {
+  font-size: 9px;
+  text-align: right;
+  margin-top: 3px;
+  padding-right: 2px;
+  color: var(--color-text-muted, var(--color-text-label));
+}
+

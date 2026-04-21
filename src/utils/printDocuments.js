@@ -627,10 +627,27 @@
         sanitizeFilename(d.vendor || d.payee),
         formatDateForFilename(d.paymentDate || d.txnDate)
       ];
-    } else if (dt === 'bill' || dt === 'maintenance-bill' || dt === 'vendor-driver-bill') {
+    } else if (
+      dt === 'bill' ||
+      dt === 'maintenance-bill' ||
+      dt === 'repair-bill' ||
+      dt === 'driver-bill' ||
+      dt === 'vendor-bill' ||
+      dt === 'vendor-driver-bill'
+    ) {
+      const kind =
+        dt === 'maintenance-bill'
+          ? 'MaintBill'
+          : dt === 'repair-bill'
+            ? 'RepairBill'
+            : dt === 'driver-bill'
+              ? 'DriverBill'
+              : dt === 'vendor-bill'
+                ? 'VendorBill'
+                : 'Bill';
       segments = [
         sanitizeFilename(d.unit || d.unitNumber),
-        'Bill',
+        kind,
         sanitizeFilename(d.billNumber || d.vendorInvoice),
         sanitizeFilename(d.vendor || d.payee),
         formatDateForFilename(d.billDate || d.paymentDate)
@@ -1256,7 +1273,15 @@
     const t = String(documentType || '');
     if (WO_TITLE[t]) return buildWorkOrderHtml(t, data);
     if (t === 'expense' || t === 'maintenance-expense') return buildExpenseHtml(data);
-    if (t === 'bill' || t === 'maintenance-bill' || t === 'vendor-driver-bill') return buildBillHtml(data);
+    if (
+      t === 'bill' ||
+      t === 'maintenance-bill' ||
+      t === 'repair-bill' ||
+      t === 'driver-bill' ||
+      t === 'vendor-bill' ||
+      t === 'vendor-driver-bill'
+    )
+      return buildBillHtml(data);
     if (t === 'fuel-bill') return buildFuelBillHtml(data);
     if (t === 'fuel-expense') return buildFuelExpenseHtml(data);
     if (t === 'payment-receipt' || t === 'bill-payment') return buildPaymentReceiptHtml(data);

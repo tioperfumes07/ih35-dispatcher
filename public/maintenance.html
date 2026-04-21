@@ -20405,6 +20405,10 @@
         payBody.innerHTML =
           rows.join('') || '<tr><td colspan="6" class="mini-note">No bill payments logged yet.</td></tr>';
       }
+      if (typeof window.ErpColumnResize !== 'undefined' && typeof window.ErpColumnResize.wireTablesInRoot === 'function') {
+        const __acctStrip = document.getElementById('acctBoardStrip');
+        if (__acctStrip) window.ErpColumnResize.wireTablesInRoot(__acctStrip);
+      }
     }
 
     function refreshAcctBoardStrip() {
@@ -25229,6 +25233,7 @@
     syncApDocTitle();
     refreshApDocTotal();
   </script>
+  <script src="/js/erp-use-column-resize.js"></script>
   <script src="/js/erp-qbo-dedupe.js"></script>
   <script src="/js/erp-name-management.js"></script>
 </body>
