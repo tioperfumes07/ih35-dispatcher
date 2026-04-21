@@ -4605,9 +4605,12 @@
                   <input id="repFiltTo" class="rep-filter-sidebar__in" type="text" inputmode="numeric" placeholder="mm/dd" autocomplete="off" />
                 </div>
               </div>
-              <div class="rep-filter-ms" data-rep-ms="units" aria-label="Units filter"></div>
-              <div class="rep-filter-ms" data-rep-ms="svc" aria-label="Service types filter"></div>
-              <div class="rep-filter-ms" data-rep-ms="rec" aria-label="Record types filter"></div>
+              <label class="rep-filter-sidebar__lbl" for="repMsUnits">Units (multi)</label>
+              <select id="repMsUnits" class="rep-filter-sidebar__multi" multiple size="4" aria-label="Units"></select>
+              <label class="rep-filter-sidebar__lbl" for="repMsSvc">Service type (multi)</label>
+              <select id="repMsSvc" class="rep-filter-sidebar__multi" multiple size="4" aria-label="Service types"></select>
+              <label class="rep-filter-sidebar__lbl" for="repMsRec">Record type (multi)</label>
+              <select id="repMsRec" class="rep-filter-sidebar__multi" multiple size="4" aria-label="Record types"></select>
               <label class="rep-filter-sidebar__lbl" for="repFiltLoc">Location</label>
               <input id="repFiltLoc" class="rep-filter-sidebar__in" type="text" placeholder="State, terminal…" autocomplete="off" />
               <label class="rep-filter-sidebar__lbl" for="repFiltLocType">Location type (WO)</label>
@@ -6403,6 +6406,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
   <script src="/js/erp-export-util.js"></script>
+  <script src="/js/erp-use-column-resize.js"></script>
   <script src="/js/erp-report-filter-panel.js"></script>
   <script src="/js/erp-reports-catalog.js"></script>
   <script src="/js/erp-accounting-ui-enhancements.js"></script>
@@ -25284,7 +25288,6 @@
     syncApDocTitle();
     refreshApDocTotal();
   </script>
-  <script src="/js/erp-use-column-resize.js"></script>
   <script src="/js/erp-qbo-dedupe.js"></script>
   <script src="/js/erp-name-management.js"></script>
 </body>

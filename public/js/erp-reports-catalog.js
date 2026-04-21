@@ -1466,6 +1466,299 @@ tr:nth-child(even){background:#f9f9f9}
     return '<svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2 5h8v2H2V5zm5-3v8H5V2h2z"/></svg>';
   }
 
+  function repUsFromIso(iso) {
+    const s = String(iso || '').trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+    const [y, mo, d] = s.split('-');
+    return `${mo}/${d}/${y}`;
+  }
+
+  function repParseUsToIso(s) {
+    const t = String(s || '').trim();
+    if (!t) return '';
+    const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (!m) return '';
+    const mo = parseInt(m[1], 10);
+    const da = parseInt(m[2], 10);
+    let yr = parseInt(m[3], 10);
+    if (yr < 100) yr += yr >= 70 ? 1900 : 2000;
+    const d = new Date(yr, mo - 1, da);
+    if (d.getFullYear() !== yr || d.getMonth() !== mo - 1 || d.getDate() !== da) return '';
+    return ymd(d);
+  }
+
+  function repVehiclesForFilter() {
+    try {
+      const a =
+        window.__vehiclesCache && window.__vehiclesCache.length
+          ? window.__vehiclesCache
+          : typeof erp !== 'undefined' && erp && Array.isArray(erp.vehicles)
+            ? erp.vehicles
+            : [];
+      const names = (a || []).map(v => String(v.name || v.unit || v.id || '').trim()).filter(Boolean);
+      return [...new Set(names)].sort((x, y) => x.localeCompare(y));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function repGetSelectedTexts(sel) {
+    if (!sel || !sel.selectedOptions) return [];
+    return [...sel.selectedOptions].map(o => String(o.value || o.textContent || '').trim()).filter(Boolean);
+  }
+
+  function repGetSidebarDateIsoRange() {
+    const fs = repParseUsToIso(document.getElementById('repFiltFrom')?.value || '');
+    const fe = repParseUsToIso(document.getElementById('repFiltTo')?.value || '');
+    if (fs && fe) return { start: fs, end: fe };
+    return defaultRange();
+  }
+
+  function repApplyDateQuick() {
+    const dq = document.getElementById('repFiltDateQuick');
+    const v = dq?.value || '30';
+    if (v === 'custom') return;
+    const end = new Date();
+    const st = new Date(end);
+    if (v === '7') st.setDate(st.getDate() - 7);
+    else if (v === '30') st.setDate(st.getDate() - 30);
+    else if (v === 'month') {
+      st.setTime(new Date(end.getFullYear(), end.getMonth(), 1).getTime());
+    }
+    const elF = document.getElementById('repFiltFrom');
+    const elT = document.getElementById('repFiltTo');
+    if (elF) elF.value = repUsFromIso(ymd(st));
+    if (elT) elT.value = repUsFromIso(ymd(end));
+  }
+
+  function repPopulateFilterMultis() {
+    const u = document.getElementById('repMsUnits');
+    if (u && !u.dataset.filled) {
+      u.dataset.filled = '1';
+      u.innerHTML = repVehiclesForFilter().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+    }
+    const sv = document.getElementById('repMsSvc');
+    if (sv && !sv.dataset.filled) {
+      sv.dataset.filled = '1';
+      sv.innerHTML = REP_SERVICE_TYPE_OPTIONS.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+    }
+    const rc = document.getElementById('repMsRec');
+    if (rc && !rc.dataset.filled) {
+      rc.dataset.filled = '1';
+      rc.innerHTML = REP_RECORD_TYPE_OPTIONS.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+    }
+  }
+
+  function repApplySidebarFilters() {
+    const loc = (document.getElementById('repFiltLoc')?.value || '').trim().toLowerCase();
+    const vendor = (document.getElementById('repFiltVendor')?.value || '').trim().toLowerCase();
+    const driver = (document.getElementById('repFiltDriver')?.value || '').trim().toLowerCase();
+    const locType = (document.getElementById('repFiltLocType')?.value || '').trim().toLowerCase();
+    const units = repGetSelectedTexts(document.getElementById('repMsUnits')).map(x => x.toLowerCase());
+    const svcs = repGetSelectedTexts(document.getElementById('repMsSvc')).map(x => x.toLowerCase());
+    const recs = repGetSelectedTexts(document.getElementById('repMsRec')).map(x => x.toLowerCase());
+    document.querySelectorAll('#repCatalogGrid .rep-catalog-card-wrap').forEach(w => {
+      const blob = (w.textContent || '').toLowerCase();
+      let ok = true;
+      if (loc && !blob.includes(loc)) ok = false;
+      if (vendor && !blob.includes(vendor)) ok = false;
+      if (driver && !blob.includes(driver)) ok = false;
+      if (locType && !blob.includes(locType)) ok = false;
+      if (units.length && !units.some(u => blob.includes(u))) ok = false;
+      if (svcs.length && !svcs.some(u => blob.includes(u))) ok = false;
+      if (recs.length && !recs.some(u => blob.includes(u))) ok = false;
+      w.classList.toggle('rep-sidebar-filtered-out', !ok);
+    });
+    const draft = document.querySelector('#repFilterSidebar .rep-filter-sidebar__draft');
+    if (draft) draft.textContent = 'Filters applied to this browser view.';
+    void repRefreshPartsCatalog();
+  }
+
+  let __repPartsLast = [];
+
+  function repPartsStatusBadge(st) {
+    const s = String(st || '');
+    const cls = s === 'Out of stock' ? 'rep-badge--bad' : s === 'Low stock' ? 'rep-badge--warn' : 'rep-badge--ok';
+    return `<span class="${cls}">${escapeHtml(s)}</span>`;
+  }
+
+  function repPartsExport(kind) {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const rows = (__repPartsLast || []).map(r => ({
+      date: r.date,
+      unit: r.unit,
+      woNumber: r.woNumber,
+      partNumber: r.partNumber,
+      description: r.description,
+      serviceType: r.serviceType,
+      amount: r.amount
+    }));
+    const columns = [
+      { key: 'date', label: 'Date' },
+      { key: 'unit', label: 'Unit' },
+      { key: 'woNumber', label: 'WO#' },
+      { key: 'partNumber', label: 'Part #' },
+      { key: 'description', label: 'Description' },
+      { key: 'serviceType', label: 'Service type' },
+      { key: 'amount', label: 'Line $' }
+    ];
+    if (window.ErpExportUtil && typeof window.ErpExportUtil.exportReport === 'function') {
+      void window.ErpExportUtil.exportReport(kind === 'csv' ? 'csv' : 'excel', { title: 'PartsCatalog', columns, rows }, { filename: `PartsCatalog-${stamp}`, filtersApplied: repGetSidebarDateIsoRange() });
+    }
+  }
+
+  async function repRefreshPartsCatalog() {
+    const host = document.getElementById('repPartsCatalogHost');
+    if (!host) return;
+    const { start, end } = repGetSidebarDateIsoRange();
+    const qs = new URLSearchParams({ startDate: start, endDate: end });
+    host.innerHTML = `<div class="rep-parts-catalog__head">
+      <div class="rep-parts-catalog__title">Parts catalog</div>
+      <div class="rep-parts-catalog__actions">
+        <button type="button" class="btn secondary" id="repPartsCsv">Export CSV</button>
+        <button type="button" class="btn btn--primary" id="repPartsAddStub">+ Add part</button>
+        <button type="button" class="rep-parts-fs" id="repPartsFs" title="Full screen">${repCatalogCardSvgExpand()}</button>
+      </div></div>
+      <div class="rep-parts-toolbar">
+        <input type="text" class="rep-filter-sidebar__in" id="repPartsSearch" style="flex:1;min-width:120px" placeholder="Search part name, number, category…" />
+        <select class="rep-filter-sidebar__in" id="repPartsCatSel" style="flex:0 0 120px"><option value="">All categories</option></select>
+        <select class="rep-filter-sidebar__in" id="repPartsStatSel" style="flex:0 0 100px">
+          <option value="">All status</option>
+          <option>In stock</option>
+          <option>Low stock</option>
+          <option>Out of stock</option>
+        </select>
+      </div>
+      <div class="rep-parts-table-wrap"><p class="mini-note" style="padding:10px">Loading…</p></div>`;
+
+    host.querySelector('#repPartsFs')?.addEventListener('click', () => host.classList.toggle('rep-catalog-card-wrap--fs'));
+    host.querySelector('#repPartsAddStub')?.addEventListener('click', () => {
+      if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('custom');
+    });
+    host.querySelector('#repPartsCsv')?.addEventListener('click', () => repPartsExport('csv'));
+    const expBtn = document.createElement('button');
+    expBtn.type = 'button';
+    expBtn.className = 'btn secondary';
+    expBtn.textContent = 'Export Excel';
+    expBtn.style.height = '22px';
+    expBtn.style.fontSize = '9px';
+    expBtn.addEventListener('click', () => repPartsExport('excel'));
+    host.querySelector('.rep-parts-catalog__actions')?.appendChild(expBtn);
+
+    const wrap = host.querySelector('.rep-parts-table-wrap');
+    try {
+      const data = await j('/api/reports/maintenance/parts-positions?' + qs.toString());
+      if (!data) throw new Error('No data');
+      if (data.meta && data.meta.error && !(data.rows && data.rows.length))
+        throw new Error(data.meta.error || 'Load failed');
+      const rows = data.rows || [];
+      __repPartsLast = rows;
+      const m = new Map();
+      for (const r of rows) {
+        const name = String(r.description || r.sku || r.partNumber || '—').trim();
+        const pn = String(r.partNumber || '—').trim();
+        const cat = String(r.serviceType || r.recordCategory || '—').trim();
+        const amt = Number(r.amount) || 0;
+        const key = `${pn}||${name}`;
+        const cur = m.get(key) || { partName: name || '—', partNo: pn || '—', category: cat, n: 0, lastAmt: 0 };
+        cur.n += 1;
+        cur.lastAmt = amt || cur.lastAmt;
+        cur.category = cat || cur.category;
+        m.set(key, cur);
+      }
+      const agg = [...m.values()].map(x => ({
+        partName: x.partName,
+        partNo: x.partNo,
+        category: x.category,
+        stock: '—',
+        unitCost: Number.isFinite(x.lastAmt) ? x.lastAmt.toFixed(2) : '',
+        status: x.n > 2 ? 'In stock' : x.n > 0 ? 'Low stock' : 'Out of stock',
+        lines: x.n
+      }));
+      const cats = [...new Set(agg.map(a => a.category))].sort();
+      const sel = host.querySelector('#repPartsCatSel');
+      if (sel) sel.innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option>${escapeHtml(c)}</option>`).join('');
+      if (!wrap) return;
+      const ths = ['Part name', 'Part #', 'Category', 'Stock', 'Unit cost', 'Status', 'Edit'];
+      wrap.innerHTML = `<table class="rep-parts-table erp-dedupe-table" id="repPartsTable"><thead><tr>${ths
+        .map(h => `<th>${escapeHtml(h)}</th>`)
+        .join('')}</tr></thead><tbody>
+        ${agg
+          .map(
+            a =>
+              `<tr data-cat="${escapeHtml(a.category)}" data-stat="${escapeHtml(a.status)}">
+            <td>${escapeHtml(a.partName)}</td>
+            <td class="mono">${escapeHtml(a.partNo)}</td>
+            <td>${escapeHtml(a.category)}</td>
+            <td>${escapeHtml(a.stock)}</td>
+            <td class="num">${escapeHtml(a.unitCost)}</td>
+            <td>${repPartsStatusBadge(a.status)}</td>
+            <td><button type="button" class="btn btn--small rep-parts-edit">Edit</button></td>
+          </tr>`
+          )
+          .join('')}
+      </tbody></table>
+      <div class="rep-parts-addrow">
+        <span class="mini-note" style="flex-shrink:0;margin:0;font-size:9px;color:var(--color-text-label)">New row:</span>
+        <input class="rep-filter-sidebar__in" id="repPartNewName" style="flex:2;min-width:0" placeholder="Part name" />
+        <input class="rep-filter-sidebar__in" id="repPartNewPn" style="flex:1;min-width:0" placeholder="Part #" />
+        <select class="rep-filter-sidebar__in" id="repPartNewCat" style="flex:0 0 100px"><option value="">Category</option>${cats.map(c => `<option>${escapeHtml(c)}</option>`).join('')}</select>
+        <input class="rep-filter-sidebar__in" id="repPartNewQty" style="max-width:40px" placeholder="Qty" />
+        <input class="rep-filter-sidebar__in" id="repPartNewCost" style="max-width:50px" placeholder="Cost" />
+        <button type="button" class="btn btn--primary" id="repPartAddRow" style="height:18px;font-size:9px;padding:0 8px;line-height:1">+ Add row</button>
+      </div>
+      <div class="rep-parts-foot-hint">Drag column edges to resize · Tab to navigate</div>`;
+
+      wrap.querySelectorAll('.rep-parts-edit').forEach(b => {
+        b.addEventListener('click', () => void repOpenDataset('a11-parts-positions', 'Parts / positions (line detail)'));
+      });
+      function repFilterPartsRows() {
+        const qq = (host.querySelector('#repPartsSearch')?.value || '').trim().toLowerCase();
+        const c = host.querySelector('#repPartsCatSel')?.value || '';
+        const stf = host.querySelector('#repPartsStatSel')?.value || '';
+        wrap.querySelectorAll('tbody tr').forEach(tr => {
+          const t = (tr.textContent || '').toLowerCase();
+          const cat = String(tr.getAttribute('data-cat') || '');
+          const st = String(tr.getAttribute('data-stat') || '');
+          let ok = !qq || t.includes(qq);
+          if (c && cat !== c) ok = false;
+          if (stf && st !== stf) ok = false;
+          tr.style.display = ok ? '' : 'none';
+        });
+      }
+      host.querySelector('#repPartsSearch')?.addEventListener('input', repFilterPartsRows);
+      host.querySelector('#repPartsCatSel')?.addEventListener('change', repFilterPartsRows);
+      host.querySelector('#repPartsStatSel')?.addEventListener('change', repFilterPartsRows);
+      wrap.querySelector('#repPartAddRow')?.addEventListener('click', () => {
+        void repOpenDataset('a11-parts-positions', 'Parts / positions (line detail)');
+      });
+      if (typeof window.ErpColumnResize !== 'undefined' && window.ErpColumnResize.bindToTable) {
+        const tbl = document.getElementById('repPartsTable');
+        if (tbl) window.ErpColumnResize.bindToTable(tbl, { showHint: false });
+      }
+      const hint = host.querySelector('.rep-parts-foot-hint');
+      if (hint && typeof window.ErpColumnResize === 'undefined') hint.textContent = 'Tab to navigate rows · Export for full column set';
+    } catch (e) {
+      if (wrap) wrap.innerHTML = `<p class="mini-note">${escapeHtml(String(e.message || e))}</p>`;
+    }
+  }
+
+  function repInitReportsFiltersAndParts() {
+    const side = document.getElementById('repFilterSidebar');
+    if (!side) return;
+    if (!side.dataset.filtersBound) {
+      side.dataset.filtersBound = '1';
+      const dq = document.getElementById('repFiltDateQuick');
+      dq?.addEventListener('change', () => {
+        if (dq.value !== 'custom') repApplyDateQuick();
+      });
+      repApplyDateQuick();
+      document.getElementById('repFiltApply')?.addEventListener('click', () => repApplySidebarFilters());
+    }
+    repPopulateFilterMultis();
+    void repRefreshPartsCatalog();
+  }
+
   function bindCatalogCardWrap(wrap, it, items) {
     const main = wrap.querySelector('.rep-catalog-card--main');
     const openB = wrap.querySelector('.rep-catalog-card__open');
