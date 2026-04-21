@@ -111,81 +111,78 @@
 
   function Form425CApp() {
     var h = React.createElement;
-    var React_useState = React.useState;
-    var React_useEffect = React.useEffect;
-    var React_useRef = React.useRef;
 
-    var tabState = React_useState('profile');
+    var tabState = React.useState('profile');
     var tab = tabState[0];
     var setTab = tabState[1];
 
-    var profilesState = React_useState({ version: 1, companies: [] });
+    var profilesState = React.useState({ version: 1, companies: [] });
     var profiles = profilesState[0];
     var setProfiles = profilesState[1];
 
-    var banksState = React_useState([]);
+    var banksState = React.useState([]);
     var banks = banksState[0];
     var setBanks = banksState[1];
 
-    var repCoState = React_useState('');
+    var repCoState = React.useState('');
     var repCompany = repCoState[0];
     var setRepCompany = repCoState[1];
 
-    var repMoState = React_useState('');
+    var repMoState = React.useState('');
     var repMonth = repMoState[0];
     var setRepMonth = repMoState[1];
 
-    var qbCoState = React_useState('');
+    var qbCoState = React.useState('');
     var qbCompany = qbCoState[0];
     var setQbCompany = qbCoState[1];
 
-    var pasteState = React_useState('');
+    var pasteState = React.useState('');
     var pasteText = pasteState[0];
     var setPasteText = pasteState[1];
 
-    var lastPasteState = React_useState(null);
+    var lastPasteState = React.useState(null);
     var lastPaste = lastPasteState[0];
     var setLastPaste = lastPasteState[1];
 
-    var lastQboState = React_useState(null);
+    var lastQboState = React.useState(null);
     var lastQbo = lastQboState[0];
     var setLastQbo = lastQboState[1];
 
-    var reportState = React_useState(defaultReportState);
+    var reportState = React.useState(defaultReportState);
     var report = reportState[0];
     var setReport = reportState[1];
 
-    var exDState = React_useState([{ date: '', payee: '', amount: '', memo: '' }]);
+    var exDState = React.useState([{ date: '', payee: '', amount: '', memo: '' }]);
     var exhibitD = exDState[0];
     var setExhibitD = exDState[1];
 
-    var histState = React_useState([]);
+    var histState = React.useState([]);
     var historyList = histState[0];
     var setHistoryList = histState[1];
 
-    var bankMsgState = React_useState('');
+    var bankMsgState = React.useState('');
     var bankLoadMsg = bankMsgState[0];
     var setBankLoadMsg = bankMsgState[1];
 
-    var recMsgState = React_useState('');
+    var recMsgState = React.useState('');
     var receiptMsg = recMsgState[0];
     var setReceiptMsg = recMsgState[1];
 
-    var qbMsgState = React_useState('');
+    var qbMsgState = React.useState('');
     var qbPasteMsg = qbMsgState[0];
     var setQbPasteMsg = qbMsgState[1];
 
-    var mergeMsgState = React_useState('');
+    var mergeMsgState = React.useState('');
     var mergeMsg = mergeMsgState[0];
     var setMergeMsg = mergeMsgState[1];
 
-    var monthPhState = React_useState('');
+    var monthPhState = React.useState('');
     var monthPlaceholder = monthPhState[0];
     var setMonthPlaceholder = monthPhState[1];
 
-    var mergeRef = React_useRef(null);
+    var mergeRef = React.useRef(null);
 
-    React_useEffect(function () {
+    React.useEffect(function () {
       var d = new Date();
       d.setMonth(d.getMonth() - 1);
       var y = d.getFullYear();
@@ -194,7 +191,7 @@
       setMonthPlaceholder(d.toLocaleString(undefined, { month: 'long', year: 'numeric' }));
     }, []);
 
-    React_useEffect(function () {
+    React.useEffect(function () {
       var cancelled = false;
       (async function () {
         try {
@@ -221,7 +218,7 @@
       };
     }, []);
 
-    React_useEffect(function () {
+    React.useEffect(function () {
       refreshHistory();
     }, []);
 
@@ -247,7 +244,7 @@
       applyProfileFromCompany(c);
     }
 
-    React_useEffect(function () {
+    React.useEffect(function () {
       var n = function (v) {
         return parseFloat(String(v == null ? '' : v).replace(/,/g, '')) || 0;
       };
@@ -1881,8 +1878,6 @@
     );
   }
 
-  var rootEl = document.getElementById('form-425c-root');
-  if (rootEl && typeof React !== 'undefined' && typeof ReactDOM !== 'undefined' && ReactDOM.createRoot) {
-    ReactDOM.createRoot(rootEl).render(React.createElement(Form425CApp, null));
-  }
+  window.Form425CApp = Form425CApp;
+  ReactDOM.createRoot(document.getElementById('form-425c-root')).render(React.createElement(Form425CApp, null));
 })();
