@@ -20,6 +20,7 @@
     "smoke:gate-sync": "node scripts/smoke-gate-paths-sync.mjs",
     "test:name-mgmt": "node --test tests/name-management-erp.test.mjs",
     "test:fleet-mileage": "node --test tests/fleet-mileage-settings.test.mjs",
+    "test:integrity-meta": "node --test tests/integrity-engine-export-meta.test.mjs",
     "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke && npm run test:name-mgmt && npm run test:fleet-mileage",
     "qa:isolated": "node scripts/qa-with-server.mjs",
     "test": "npm run rule0:check",
