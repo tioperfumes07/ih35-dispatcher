@@ -12,6 +12,7 @@ import tmsRoutes from './routes/tms.mjs';
 import integrationsRoutes from './routes/integrations.mjs';
 import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
 import { mountScheduledReports, startReportScheduleRunner } from './routes/scheduled-reports.mjs';
+import { createForm425cRouter } from './routes/form-425c-api.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,6 +72,8 @@ async function start() {
   });
 
   mountErpCoreApi(app, { logError: console.error });
+
+  app.use('/api/form-425c', createForm425cRouter({ logError: console.error }));
 
   app.get('/api/live', (_req, res) => {
     res.type('text/plain; charset=utf-8').send('ok');
