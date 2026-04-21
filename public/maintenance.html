@@ -1230,41 +1230,52 @@
             </div>
             <div class="maint-wo-main-aside">
             <div class="maint-wo-workspace maint-section-card maint-wo-box1">
-              <div id="maintWoBox1Head" class="maint-wo-box1__head hidden" aria-live="polite">
-                <div class="maint-wo-box1__title-row">
-                  <span class="maint-wo-box1__title">Work order</span>
-                  <span id="maintWoBannerUnit" class="maint-wo-box1__unit"></span>
+              <div id="maintCard1Top" class="maint-card1-top hidden" aria-live="polite">
+                <div class="maint-card1-top__head">
+                  <div class="maint-card1-top__left">
+                    <span class="maint-card1-top__wo-title">Work order</span>
+                    <span id="maintWoBannerUnit" class="maint-card1-top__unit"></span>
+                  </div>
+                  <div class="maint-card1-top__right">
+                    <div class="maint-field-cell maint-card1-top__ctl">
+                      <span class="qb-l">Service location</span>
+                      <select id="repairLocationSelect" class="qb-in maint-field maint-field--combo" style="height:30px;min-width:160px" onchange="onRepairLocationSelectChange()" title="Service location type">
+                        <option value="">— Choose —</option>
+                        <option value="in-house">Internal shop</option>
+                        <option value="external">External shop</option>
+                        <option value="road-service">Roadside</option>
+                        <option value="parts-purchase">Parts purchase</option>
+                        <option value="over-the-road">Over the road</option>
+                      </select>
+                      <input type="hidden" id="repairLocationTypeInput" value="" />
+                    </div>
+                    <div class="maint-field-cell maint-card1-top__ctl">
+                      <span class="qb-l">Repair status</span>
+                      <select id="recordRepairStatusSelect" class="qb-in maint-field maint-field--combo" style="height:30px;min-width:160px" title="Workflow status stored on this maintenance record" onchange="renderMaintAsideWoSummary()">
+                        <option value="">— Not set —</option>
+                        <option value="queued">Open</option>
+                        <option value="in_progress">In progress</option>
+                        <option value="waiting_parts">Waiting for parts</option>
+                        <option value="finished">Complete</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                      <div id="recordRepairStatusMeta" class="mini-note" style="margin-top:4px" aria-live="polite"></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div id="maintCard1HeaderSlot" class="maint-card1-header-slot hidden" aria-label="Service location and repair status">
-                <div class="maint-field-cell" style="flex:1 1 180px;min-width:160px;max-width:280px">
-                  <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service location type
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service location type">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">High-level context (internal shop, external vendor, roadside, etc.). The free-text <strong>Service location</strong> field in the form names the specific place.</span>
-                    </span>
-                  </span>
-                  <select id="repairLocationSelect" class="qb-in maint-field" style="height:30px;min-width:160px" onchange="onRepairLocationSelectChange()" title="Service location type">
-                    <option value="">— Choose —</option>
-                    <option value="in-house">Internal shop</option>
-                    <option value="external">External shop</option>
-                    <option value="road-service">Roadside</option>
-                    <option value="parts-purchase">Parts purchase</option>
-                    <option value="over-the-road">Over the road</option>
-                  </select>
-                  <input type="hidden" id="repairLocationTypeInput" value="" />
-                </div>
-                <div class="maint-field-cell" style="flex:1 1 180px;min-width:160px;max-width:280px">
-                  <span class="qb-l">Repair status</span>
-                  <select id="recordRepairStatusSelect" class="qb-in maint-field" style="height:30px;min-width:160px" title="Workflow status stored on this maintenance record" onchange="renderMaintAsideWoSummary()">
-                    <option value="">— Not set —</option>
-                    <option value="queued">Open</option>
-                    <option value="in_progress">In progress</option>
-                    <option value="waiting_parts">Waiting for parts</option>
-                    <option value="finished">Complete</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                  <div id="recordRepairStatusMeta" class="mini-note" style="margin-top:4px" aria-live="polite"></div>
+                <div class="maint-card1-top__loc-detail maint-field-cell">
+                  <span class="qb-l">Location name <span class="maint-label-req" aria-hidden="true">*</span></span>
+                  <input
+                    id="repairLocationSearch"
+                    class="qb-in maint-field"
+                    list="repairLocationOptions"
+                    placeholder="e.g. Dallas shop, Love’s #412, Bay 2…"
+                    autocomplete="off"
+                    oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();"
+                    onblur="resolveRepairLocationSearch()"
+                    title="Service location (required)"
+                    aria-required="true"
+                  />
                 </div>
               </div>
               <div class="maint-wo-box1__vehicle-wrap">
@@ -1292,16 +1303,7 @@
                 <div class="maint-wo-form-shell maint-wo-box2">
                 <div class="form-stack maint-form-stack">
                   <div class="maint-form-grid maint-subcard">
-                    <div class="maint-form-grid__row maint-form-grid__row--4 maint-wo-box2__row1">
-                      <div class="maint-field-cell maint-wo-box2__row1-loc">
-                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service location <span class="maint-label-req" aria-hidden="true">*</span>
-                          <span class="erp-help-tip" aria-label="Help for service location">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service location">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Where this visit happened (yard, vendor site, bay, shop name, or short notes). Choose the <strong>service location type</strong> in the header above; this field is required. Prior labels appear in the datalist.</span>
-                          </span>
-                        </span>
-                        <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Service location (required)" aria-required="true" />
-                      </div>
+                    <div class="maint-form-grid__row maint-form-grid__row--3 maint-wo-box2__row1">
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Record type
                           <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Record type">?</button>

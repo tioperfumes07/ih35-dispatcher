@@ -124,7 +124,7 @@ body.erp-maintenance .erp-module-sidebar,
 body.dispatch-page #dispatchApp .erp-module-sidebar {
   flex: 0 1 220px;
   width: min(220px, 100%);
-  min-width: min(200px, 28vw);
+  min-width: clamp(168px, 22vw, 220px);
   max-width: 220px;
 }
 
@@ -193,10 +193,9 @@ body.erp-maintenance .erp-main-body .panel-body {
   min-height: 0;
 }
 
-/* Tab panels: allow vertical scroll when subtabs + content exceed viewport */
+/* Tab panels participate in flex shrink (scroll stays on .erp-main-body or inner frames) */
 body.erp-maintenance .erp-main-body [role='tabpanel'] {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
-  overflow: auto;
 }
