@@ -1962,16 +1962,24 @@ ${extraCss}
     );
     const sel = document.getElementById('repPartsCatFilter');
     const selN = document.getElementById('repPartsNewCat');
-    if (sel) {
-      const cur = sel.value;
-      sel.innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-      if (cur && cats.includes(cur)) sel.value = cur;
-    }
-    if (selN) {
-      const curN = selN.value;
-      selN.innerHTML = '<option value="">Category</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-      if (curN && cats.includes(curN)) selN.value = curN;
-    }
+    const fill = (el, firstLabel) => {
+      if (!el) return;
+      const cur = el.value;
+      el.textContent = '';
+      const o0 = document.createElement('option');
+      o0.value = '';
+      o0.textContent = firstLabel;
+      el.appendChild(o0);
+      for (const c of cats) {
+        const o = document.createElement('option');
+        o.value = c;
+        o.textContent = c;
+        el.appendChild(o);
+      }
+      if (cur && [...el.options].some(op => op.value === cur)) el.value = cur;
+    };
+    fill(sel, 'All categories');
+    fill(selN, 'Category');
   }
 
   function repApplyPartsToolbarFilter() {
@@ -2134,7 +2142,6 @@ ${extraCss}
       document.getElementById('repPartsNewCost').value = '';
       void repRefreshPartsCatalog();
     });
-    void repRefreshPartsCatalog();
   }
 
   window.repRefreshPartsCatalog = repRefreshPartsCatalog;
@@ -2151,17 +2158,48 @@ ${extraCss}
   function renderCatalogGrid() {
     const grid = document.getElementById('repCatalogGrid');
     if (!grid) return;
-    const items = REP_ITEMS.filter(x => x.cat === __repCat);
+    const items = repCatalogItemsForCurrentTab();
     const SUB_ORDER = ['Cost analysis', 'Service history', 'Location analysis', 'Other'];
-    const cardHtml = it => {
+    const cardWrap = it => {
       const kid = 'repk-' + String(it.title.replace(/[^\w]+/g, '-')).slice(0, 48);
-      return `<button type="button" class="rep-catalog-card" id="${kid}" data-rep-title="${escapeHtml(it.title)}" data-rep-k="${escapeHtml(it.keywords)}" data-cat="${escapeHtml(it.cat)}">
+      const blob = repCatalogBlob(it);
+      return `<article class="rep-catalog-card-wrap" data-rep-blob="${escapeHtml(blob)}" data-rep-title="${escapeHtml(it.title)}" data-rep-cat="${escapeHtml(
+        it.cat
+      )}" data-rep-k="${escapeHtml(it.keywords)}">
+        <button type="button" class="rep-catalog-card" id="${kid}" data-rep-title="${escapeHtml(it.title)}" data-rep-k="${escapeHtml(it.keywords)}" data-cat="${escapeHtml(
+        it.cat
+      )}">
           <span class="rep-catalog-card__src">${escapeHtml(it.source)}</span>
           <span class="rep-catalog-card__title">${escapeHtml(it.title)}</span>
           <span class="rep-catalog-card__desc">${escapeHtml(it.desc)}</span>
-        </button>`;
+        </button>
+        <div class="rep-catalog-card__foot">
+          <button type="button" class="rep-catalog-card__open">Open</button>
+          <button type="button" class="rep-catalog-card__fs" title="Full screen" aria-label="Full screen">
+            <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path fill="currentColor" d="M1 1h4v2H3v2H1V1zm6 0h4v4H9V3H7V1zM1 7h2v2h2v2H1V7zm8 0h2v4H7V9h2V7z"/></svg>
+          </button>
+        </div>
+      </article>`;
     };
-    if (__repCat === 'maintenance') {
+    if (__repCat === 'overview') {
+      const byCat = {};
+      for (const it of items) {
+        if (!byCat[it.cat]) byCat[it.cat] = [];
+        byCat[it.cat].push(it);
+      }
+      const parts = [];
+      for (const c of REP_CATS) {
+        const list = byCat[c.id];
+        if (!list || !list.length) continue;
+        parts.push(
+          `<div class="rep-catalog-sub" style="margin-bottom:14px">
+            <div class="rep-catalog-sub__label">${escapeHtml(c.label)}</div>
+            <div class="rep-catalog-subgrid">${list.map(cardWrap).join('')}</div>
+          </div>`
+        );
+      }
+      grid.innerHTML = parts.join('');
+    } else if (__repCat === 'maintenance') {
       const bySub = {};
       for (const it of items) {
         const s = it.subsection || 'Other';
@@ -2174,8 +2212,8 @@ ${extraCss}
         if (!list || !list.length) continue;
         parts.push(
           `<div class="rep-catalog-sub" style="margin-bottom:14px">
-            <h3 class="rep-catalog-sub__title" style="font-size:13px;margin:0 0 8px;color:#1a1f36">${escapeHtml(sub)}</h3>
-            <div class="rep-catalog-subgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${list.map(cardHtml).join('')}</div>
+            <div class="rep-catalog-sub__label">${escapeHtml(sub)}</div>
+            <div class="rep-catalog-subgrid">${list.map(cardWrap).join('')}</div>
           </div>`
         );
         delete bySub[sub];
@@ -2185,64 +2223,24 @@ ${extraCss}
         if (!list.length) continue;
         parts.push(
           `<div class="rep-catalog-sub" style="margin-bottom:14px">
-            <h3 class="rep-catalog-sub__title" style="font-size:13px;margin:0 0 8px;color:#1a1f36">${escapeHtml(sub)}</h3>
-            <div class="rep-catalog-subgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${list.map(cardHtml).join('')}</div>
+            <div class="rep-catalog-sub__label">${escapeHtml(sub)}</div>
+            <div class="rep-catalog-subgrid">${list.map(cardWrap).join('')}</div>
           </div>`
         );
       }
       grid.innerHTML = parts.join('');
     } else {
-      grid.innerHTML = items.map(cardHtml).join('');
+      grid.innerHTML = items.map(cardWrap).join('');
     }
-    grid.querySelectorAll('.rep-catalog-card').forEach(btn => {
-      const t = btn.getAttribute('data-rep-title');
-      const it = items.find(x => x.title === t);
-      if (!it) return;
-      btn.addEventListener('click', () => {
-        if (it.custom === 'new') {
-          if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('custom');
-          return;
-        }
-        if (it.custom === 'dot-audit-config') {
-          repOpenDotAuditConfigurator();
-          return;
-        }
-        if (it.custom === 'integrity-dashboard') {
-          if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar('rep-integrity');
-          else if (typeof openReportsTab === 'function') openReportsTab('rep-integrity', null);
-          return;
-        }
-        if (it.custom === 'scheduled') {
-          if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('scheduled');
-          return;
-        }
-        if (it.legacy) {
-          if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar(it.legacy);
-          return;
-        }
-        if (it.dataset === 'g2-driver-dot-audit') {
-          const id = prompt('Driver id or name slug for DOT driver audit:');
-          if (!id) return;
-          window.open('/api/reports/dot/driver-audit/' + encodeURIComponent(id.trim()), '_blank', 'noopener');
-          return;
-        }
-        if (it.dataset) {
-          void repOpenDataset(it.dataset, it.title);
-          return;
-        }
-        if (it.qbo) {
-          void repOpenQbo(it.qbo, it.title);
-          return;
-        }
-        if (it.dotPdf) repOpenDotPdf();
-      });
-    });
+    grid.querySelectorAll('.rep-catalog-card-wrap').forEach(repBindCatalogWrap);
     const q = (document.getElementById('repToolbarSearch')?.value || '').trim().toLowerCase();
     if (q) {
-      grid.querySelectorAll('.rep-catalog-card').forEach(c => {
-        const t = (c.textContent || '').toLowerCase();
-        const k = (c.getAttribute('data-rep-k') || '').toLowerCase();
-        c.classList.toggle('rep-filter-hidden', !(t.includes(q) || k.includes(q)));
+      grid.querySelectorAll('.rep-catalog-card-wrap').forEach(w => {
+        const inner = w.querySelector('.rep-catalog-card');
+        const keys = (inner?.getAttribute('data-rep-k') || '').toLowerCase();
+        const txt = (w.textContent || '').toLowerCase();
+        const ok = txt.includes(q) || (keys && keys.includes(q));
+        w.classList.toggle('rep-filter-hidden', !ok);
       });
     }
   }
@@ -2252,13 +2250,16 @@ ${extraCss}
     document.querySelectorAll('#repCatTabs .rep-cat-tab').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     renderCatalogGrid();
+    repApplySidebarFilters();
   }
 
   window.repInitReportsHub = function repInitReportsHub() {
     repHookFilterOnce();
     const tabs = document.getElementById('repCatTabs');
     if (!tabs || tabs.dataset.bound === '1') {
+      repInitReportsFiltersAndParts();
       renderCatalogGrid();
+      repApplySidebarFilters();
       return;
     }
     tabs.dataset.bound = '1';
@@ -2269,6 +2270,7 @@ ${extraCss}
     tabs.querySelectorAll('.rep-cat-tab').forEach(b => {
       b.addEventListener('click', () => repSwitchReportCategory(b.getAttribute('data-cat'), b));
     });
+    repInitReportsFiltersAndParts();
     repSwitchReportCategory('overview', tabs.querySelector('.rep-cat-tab'));
   };
 
@@ -2296,8 +2298,9 @@ ${extraCss}
         const ok = match(lab) || match(id);
         btn.classList.toggle('rep-filter-hidden', ql.length > 0 && !ok);
       });
-      document.querySelectorAll('#repCatalogGrid .rep-catalog-card').forEach(card => {
-        const keys = (card.getAttribute('data-rep-k') || '').toLowerCase();
+      document.querySelectorAll('#repCatalogGrid .rep-catalog-card-wrap').forEach(card => {
+        const inner = card.querySelector('.rep-catalog-card');
+        const keys = (inner?.getAttribute('data-rep-k') || '').toLowerCase();
         const ok = match(card.textContent) || (keys && match(keys));
         card.classList.toggle('rep-filter-hidden', ql.length > 0 && !ok);
       });
