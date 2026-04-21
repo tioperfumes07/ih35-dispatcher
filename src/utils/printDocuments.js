@@ -953,7 +953,6 @@
       ],
       4
     );
-    const hasTruck = !!(d.unit || d.driver || d.loadNumber || d.loadInvoice || d.refNumber || d.refNo);
     let sec2 = '';
     if (d.pickupDate || d.deliveryDate || d.emptyMiles || d.loadedMiles) {
       sec2 = buildFieldGrid(
@@ -973,9 +972,10 @@
       { lines: ['Prepared by: _______________________', 'Date: _____________________________'] },
       { lines: ['Approved by: _______________________', 'Date: _____________________________'] }
     ]);
+    const sec1 = pay + `<div style="height:6pt"></div>` + truckRow;
     const body =
       co +
-      buildSection('1', 'Payment information', pay + (hasTruck ? `<div style="height:5pt"></div>` + truckRow : '')) +
+      buildSection('1', 'Payment & trucking', sec1) +
       (sec2 ? buildSection('2', 'Trucking details', sec2) : '') +
       buildSection('3', 'Expense lines', cost) +
       memo +
@@ -1183,17 +1183,15 @@
       ],
       4
     );
-    const qboPill = d.qboStatus ? `<div style="margin-top:6pt"><span class="pill">${esc(d.qboStatus)}</span></div>` : '';
-    const g2 =
-      buildFieldGrid(
-        [
-          { label: 'Payment method', value: d.paymentMethod || '' },
-          { label: 'Account', value: d.account || d.payFromAccount || '' },
-          { label: 'Check #', value: d.checkNumber || d.checkNum || '', mono: true },
-          { label: 'QBO status', value: d.qboStatus ? String(d.qboStatus) : '' }
-        ],
-        4
-      ) + qboPill;
+    const g2 = buildFieldGrid(
+      [
+        { label: 'Payment method', value: d.paymentMethod || '' },
+        { label: 'Account', value: d.account || d.payFromAccount || '' },
+        { label: 'Check #', value: d.checkNumber || d.checkNum || '', mono: true },
+        { label: 'QBO status', value: d.qboStatus ? String(d.qboStatus) : '' }
+      ],
+      4
+    );
     const rows = Array.isArray(d.billsPaid) ? d.billsPaid : [];
     let sumBill = 0;
     let sumPay = 0;
@@ -1224,8 +1222,8 @@
     )}</td><td class="right">${esc(money(sumPay))}</td><td class="right">${esc(money(sumRem))}</td></tr></table>`;
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const sig = buildSignatureBlocks([
-      { lines: ['Authorized by: _____________________', 'Date: ___________________________'] },
-      { lines: ['QBO reference: __________________', 'Memo: ___________________________'] }
+      { lines: ['Prepared by: _______________________', 'Date: _____________________________'] },
+      { lines: ['Approved by: _______________________', 'Date: _____________________________'] }
     ]);
     const body =
       co +
@@ -1246,31 +1244,13 @@
     const sub = `${pick(d.vendor, '—')} · ${pick(first, '')} to ${pick(last, '')}`;
     const co = buildLetterhead(d, 'BILL SERIES SUMMARY', sub);
     const tot = Number(d.totalAmount);
-    const bd0 = bills[0] && bills[0].billDate;
-    const bd1 = bills.length && bills[bills.length - 1].billDate;
-    const du0 = bills[0] && bills[0].dueDate;
-    const du1 = bills.length && bills[bills.length - 1].dueDate;
-    const billSpan =
-      bd0 || bd1
-        ? String(bd0 || '').slice(0, 10) === String(bd1 || '').slice(0, 10)
-          ? formatIsoDateShortPlain(bd0 || bd1)
-          : formatIsoDateShortPlain(bd0) + ' – ' + formatIsoDateShortPlain(bd1)
-        : '';
-    const dueSpan =
-      du0 || du1
-        ? String(du0 || '').slice(0, 10) === String(du1 || '').slice(0, 10)
-          ? formatIsoDateShortPlain(du0 || du1)
-          : formatIsoDateShortPlain(du0) + ' – ' + formatIsoDateShortPlain(du1)
-        : '';
     const s1 =
       buildFieldGrid(
         [
           { label: 'Vendor', value: d.vendor || '' },
           { label: 'Frequency', value: d.frequency || '' },
-          { label: 'Total bills', value: String(bills.length) },
-          { label: 'Bill dates', value: billSpan },
-          { label: 'Due dates', value: dueSpan },
-          { label: 'Total amount', value: Number.isFinite(tot) ? money(tot) : '', large: true }
+          { label: 'Count', value: String(bills.length) },
+          { label: 'Total', value: Number.isFinite(tot) ? money(tot) : '', large: true }
         ],
         4
       ) +
@@ -1291,7 +1271,7 @@
     const tbl = `<table><thead><tr><th>Bill #</th><th>Bill date</th><th>Due date</th><th class="right">Amount</th><th>Status</th></tr></thead><tbody>${bodyRows}<tr class="totals-row"><td>Total</td><td>—</td><td>—</td><td class="right">${esc(
       money(sum)
     )}</td><td>—</td></tr></tbody></table>`;
-    const body = co + buildSection('1', 'Series information', s1) + buildSection('2', 'Bill schedule', tbl);
+    const body = co + buildSection('1', 'Series', s1) + buildSection('2', 'Schedule', tbl);
     return wrapHtml(generateFilename('multiple-bills', d, 'pdf').replace(/\.pdf$/i, ''), body, {
       center: ['BILL SERIES SUMMARY', d.vendor || ''].filter(Boolean).join(' · ')
     }, d);
@@ -1300,7 +1280,7 @@
   function generatePrintDoc(documentType, data) {
     const t = String(documentType || '');
     if (WO_TITLE[t]) return buildWorkOrderHtml(t, data);
-    if (t === 'expense' || t === 'maintenance-expense') return buildExpenseHtml(data);
+    if (t === 'expense' || t === 'maintenance-expense' || t === 'repair-expense') return buildExpenseHtml(data);
     if (
       t === 'bill' ||
       t === 'maintenance-bill' ||
