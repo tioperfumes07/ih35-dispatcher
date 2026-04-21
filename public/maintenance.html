@@ -18,7 +18,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body class="erp-app erp-maintenance">
-  <h1 style="color:green;">REAL FILE EDIT</h1>
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="erpDedicatedFormModal" class="erp-dedicated-form-modal hidden" aria-hidden="true">
     <div class="erp-dedicated-form-modal__backdrop" data-erp-ded-close="1"></div>
@@ -27,7 +26,18 @@
         <div class="erp-dedicated-form-modal__bar">
           <button type="button" class="erp-dedicated-form-modal__x" data-erp-ded-close="1" title="Close">×</button>
           <div class="erp-dedicated-form-modal__bar-center" aria-live="polite">
-            <div id="erpDedModalTitle" class="erp-dedicated-form-modal__title"></div>
+            <div class="erp-ded-modal-title-row" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-width:0">
+              <div id="erpDedModalTitle" class="erp-dedicated-form-modal__title"></div>
+              <div id="erpDedFuelTxnTypeWrap" class="hidden erp-ded-fuel-type-wrap" style="display:none;align-items:center;gap:6px">
+                <label class="qb-l" for="erpDedFuelTxnType" style="margin:0;font-size:11px">Type</label>
+                <select id="erpDedFuelTxnType" class="qb-in erp-ded-fuel-type-sel" aria-label="Fuel transaction type">
+                  <option value="def-bill">DEF bill</option>
+                  <option value="fuel-bill">Fuel bill</option>
+                  <option value="fuel-expense">Fuel expense</option>
+                  <option value="fuel-def-combined">Fuel/DEF combined</option>
+                </select>
+              </div>
+            </div>
             <div class="erp-dedicated-form-modal__total-wrap">
               <span class="erp-dedicated-form-modal__total-lbl" id="erpDedModalTotalLabel">Amount</span>
               <span class="erp-dedicated-form-modal__total-amt" id="erpDedModalTotalAmt">$0.00</span>
@@ -6494,6 +6504,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
   <script src="/js/erp-export-util.js"></script>
   <script src="/js/erp-use-column-resize.js"></script>
+  <script src="/js/erp-fuel-transaction-form.js"></script>
   <script src="/js/erp-report-filter-panel.js"></script>
   <script src="/js/erp-reports-catalog.js"></script>
   <script src="/js/erp-accounting-ui-enhancements.js"></script>
