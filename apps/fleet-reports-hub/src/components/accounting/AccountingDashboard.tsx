@@ -40,6 +40,8 @@ type Props = {
   onListsBootstrapConsumed?: () => void
   /** ERP iframe embed/modal — notify parent window when fuel form closes. */
   erpFuelHost?: boolean
+  /** When ERP embed: open fuel dialog at app level (single FuelTransactionForm). */
+  onFuelOpenFromAccounting?: (t: FuelTransactionType) => void
 }
 
 export function AccountingDashboard({
@@ -49,6 +51,7 @@ export function AccountingDashboard({
   listsBootstrap,
   onListsBootstrapConsumed,
   erpFuelHost = false,
+  onFuelOpenFromAccounting,
 }: Props) {
   const [route, setRoute] = useState<'home' | 'lists'>('home')
   const [listsTab, setListsTab] = useState<ListsCatalogsTab>('fleet-samsara')
@@ -94,23 +97,19 @@ export function AccountingDashboard({
     onListsBootstrapConsumed?.()
   }, [listsBootstrap, onListsBootstrapConsumed])
 
-  const fuelForm = (
+  const openFuel = useCallback(
+    (ft: FuelTransactionType) => {
+      if (erpFuelHost && onFuelOpenFromAccounting) onFuelOpenFromAccounting(ft)
+      else setFuelOpen(ft)
+    },
+    [erpFuelHost, onFuelOpenFromAccounting],
+  )
+
+  const fuelForm = !erpFuelHost ? (
     <FuelTransactionForm
       open={fuelOpen !== null}
       transactionType={fuelOpen ?? 'fuel-bill'}
-      onClose={() => {
-        if (erpFuelHost) {
-          try {
-            window.parent?.postMessage(
-              { source: 'ih35-fleet-hub', type: 'erp-fuel-txn-closed' },
-              '*',
-            )
-          } catch {
-            /* ignore */
-          }
-        }
-        setFuelOpen(null)
-      }}
+      onClose={() => setFuelOpen(null)}
       onOpenVendorDirectory={() => {
         setFuelOpen(null)
         openLists('name-management', 'name-registry')
@@ -120,7 +119,7 @@ export function AccountingDashboard({
         onOpenMaintenanceIntegrity?.()
       }}
     />
-  )
+  ) : null
 
   if (route === 'lists') {
     return (
@@ -201,7 +200,7 @@ export function AccountingDashboard({
                   },
                   ...fuelTransactionTypesAlphabetical().map((ft) => ({
                     label: FUEL_TRANSACTION_TYPE_LABELS[ft],
-                    onClick: () => setFuelOpen(ft),
+                    onClick: () => openFuel(ft),
                   })),
                   {
                     label: 'Lists & catalogs — dedup',
@@ -279,7 +278,7 @@ export function AccountingDashboard({
       </div>
 
       <AccountingHomeHub
-        onOpenFuel={setFuelOpen}
+        onOpenFuel={openFuel}
         onOpenSpecialized={setSpecializedOpen}
         onRequestMaintenanceNav={onRequestMaintenanceNav}
         onOpenRecurring={() => setRecurringOpen(true)}

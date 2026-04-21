@@ -372,6 +372,9 @@ export default function App() {
               listsBootstrap={acctListsBootstrap}
               onListsBootstrapConsumed={() => setAcctListsBootstrap(null)}
               erpFuelHost={erpFuelEmbed || erpFuelModalHost}
+              onFuelOpenFromAccounting={
+                erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
+              }
             />
           ) : (
             <>

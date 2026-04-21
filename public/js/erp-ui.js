@@ -961,4 +961,24 @@
   global.ERP_FLEET_INTEGRITY_LS_KEY = ERP_FLEET_INTEGRITY_LS_KEY;
   global.ERP_FLEET_INTEGRITY_CHANGED_EVENT = ERP_FLEET_INTEGRITY_CHANGED_EVENT;
   global.erpFleetMergeIntegrityApiAlerts = erpFleetMergeIntegrityApiAlerts;
+
+  /**
+   * Open the canonical hub FuelTransactionForm (new tab). Used from fuel.html and ERP helpers.
+   * @param {'fuel-bill'|'fuel-expense'|'def-bill'|'fuel-def-combined'} type
+   */
+  function erpOpenFuelTransactionHub(type) {
+    var t = String(type || 'fuel-bill').trim() || 'fuel-bill';
+    var hubBase =
+      typeof global.__IH35_FLEET_HUB_BASE === 'string' && global.__IH35_FLEET_HUB_BASE
+        ? global.__IH35_FLEET_HUB_BASE
+        : '';
+    var url =
+      hubBase +
+      '/fleet-reports/index.html?erpFuelModal=1&fuelTxnType=' +
+      encodeURIComponent(t);
+    try {
+      global.open(url, '_blank', 'noopener,noreferrer');
+    } catch (_) {}
+  }
+  global.erpOpenFuelTransactionHub = erpOpenFuelTransactionHub;
 })(typeof window !== 'undefined' ? window : globalThis);

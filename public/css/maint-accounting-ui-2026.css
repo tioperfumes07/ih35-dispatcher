@@ -3850,3 +3850,23 @@ button.erp-table-excel-export {
   cursor: pointer;
   font-weight: 600;
 }
+
+/* Fleet hub fuel — Accounting tab embed + dedicated modal iframe */
+body.erp-maintenance .erp-fuel-hub-inline-host {
+  margin: 0 0 14px;
+  min-width: 0;
+}
+
+body.erp-maintenance .erp-fuel-hub-inline-iframe,
+body.erp-maintenance .erp-fuel-ded-hub-iframe {
+  width: 100%;
+  min-height: min(72vh, 780px);
+  border: 0;
+  display: block;
+  border-radius: 6px;
+  background: var(--color-bg-card);
+}
+
+body.erp-maintenance #erpDedicatedFormModalBody .erp-fuel-ded-hub-iframe {
+  min-height: min(88vh, 920px);
+}
