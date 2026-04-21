@@ -460,11 +460,6 @@ export function RepairWorkOrderForm({
     return { recordType: recordLabel, location: locLabel, total }
   }, [integritySaveType, recordLabel, locLabel, estimatedCost])
 
-  useEffect(() => {
-    if (!isLedgerShell) return
-    setTxnDate(serviceDate)
-  }, [isLedgerShell, serviceDate])
-
   const servicePanel = (
     <div>
       <div className="wo-grid3" style={{ marginBottom: 8 }}>
@@ -497,7 +492,13 @@ export function RepairWorkOrderForm({
       </div>
       {selectedService ? (
         <div className="field maint-form__full" style={{ marginBottom: 8 }}>
-          <span className="wo-field-lbl">Service catalog</span>
+          <span className="wo-field-lbl">
+            {isLedgerShell
+              ? integritySaveType === 'maintenance_bill'
+                ? 'Service line (bill)'
+                : 'Service line (expense)'
+              : 'Service catalog'}
+          </span>
           <div className="maint-rwo__svc-readout muted small">
             {selectedService.service_name} · {formatServiceSubtitle(selectedService)} ·{' '}
             {formatServiceCostLine(selectedService)}
@@ -532,6 +533,13 @@ export function RepairWorkOrderForm({
   const shell = (
     <WorkOrderShell
       recordKind={recordKind}
+      ledgerMode={
+        isLedgerShell
+          ? integritySaveType === 'maintenance_bill'
+            ? 'bill'
+            : 'expense'
+          : undefined
+      }
       workOrderNumber={workOrderNumber}
       unitNo={selectedUnit.unitNo}
       unitTitle={selectedUnit.makeModel}
