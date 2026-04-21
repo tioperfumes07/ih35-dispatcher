@@ -4,6 +4,7 @@ import {
 } from '../context/IntegrationConnectionsContext'
 
 function statusDotClass(status: string) {
+  if (status === 'degraded') return 'int-dot int-dot--degraded'
   return `int-dot int-dot--${status}`
 }
 
@@ -23,10 +24,12 @@ export function IntegrationSidebarFooter() {
           <span className="int-footer-label">QBO</span>
           <span className="int-footer-sync muted tiny">
             {qbo.status === 'connected'
-              ? `Last sync ${formatLastSyncTime(qbo.lastSyncAt)}`
-              : qbo.status === 'checking'
-                ? 'Checking…'
-                : 'Disconnected'}
+              ? `Last check ${formatLastSyncTime(qbo.lastSyncAt)}`
+              : qbo.status === 'degraded'
+                ? 'Recent API error'
+                : qbo.status === 'checking'
+                  ? 'Checking…'
+                  : 'Disconnected'}
           </span>
         </li>
         <li className="int-footer-row">

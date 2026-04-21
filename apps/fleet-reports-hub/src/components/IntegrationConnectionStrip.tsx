@@ -5,10 +5,12 @@ export function IntegrationConnectionStrip() {
 
   const qLabel =
     qbo.status === 'connected'
-      ? `QBO · last sync ${formatLastSyncTime(qbo.lastSyncAt)}`
-      : qbo.status === 'checking'
-        ? 'QBO · checking'
-        : 'QBO · disconnected'
+      ? `QBO · last check ${formatLastSyncTime(qbo.lastSyncAt)}`
+      : qbo.status === 'degraded'
+        ? 'QBO · recent API error (see banner or Maintenance → Test connection)'
+        : qbo.status === 'checking'
+          ? 'QBO · checking'
+          : 'QBO · disconnected'
   const sLabel =
     samsara.status === 'connected'
       ? `Samsara · last sync ${formatLastSyncTime(samsara.lastSyncAt)}`
@@ -23,7 +25,7 @@ export function IntegrationConnectionStrip() {
           <>Browser offline · integration checks paused</>
         ) : (
           <>
-            Local demo shell · {qLabel} · {sLabel} · auto recheck every 5 min
+            {qLabel} · {sLabel} · auto recheck every 5 min
           </>
         )}
       </span>

@@ -643,6 +643,11 @@ input[type='date'] {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent);
 }
 
+.int-dot--degraded {
+  background: color-mix(in srgb, var(--warn) 65%, var(--panel));
+  border: 1px solid var(--warn);
+}
+
 .int-dot--checking {
   background: var(--warn);
   animation: int-dot-pulse 1.15s ease-in-out infinite;
