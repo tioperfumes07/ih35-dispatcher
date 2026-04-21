@@ -1412,8 +1412,9 @@ body.erp-maintenance .erp-reports-columns {
 }
 
 body.erp-maintenance .erp-reports-sidebar {
-  flex: 0 0 200px;
-  width: 200px;
+  flex: 0 0 220px;
+  width: 220px;
+  flex-shrink: 0;
   max-width: 100%;
   padding: 10px 10px 12px;
   background: var(--color-bg-card);
@@ -1463,6 +1464,7 @@ body.erp-maintenance .erp-reports-sblink--active {
 body.erp-maintenance .erp-reports-main {
   flex: 1 1 auto;
   min-width: 0;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;

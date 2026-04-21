@@ -1,9 +1,9 @@
 /**
- * IH35 ERP — approved print documents (Arial, fixed point scale).
- * Browser IIFE. Primary export:
- *   generatePrintWindow(documentType, data[, extension])
- * Opens a clean popup, writes HTML + PRINT_CSS, then triggers print after load.
- * Also: generatePrintDoc, generateFilename, buildCostSection, erpPrintOpenAndPrint.
+ * IH35 ERP — approved print documents (Arial, uniform point scale).
+ * Browser IIFE. Primary API: generatePrintWindow(documentType, data[, extension])
+ *
+ * Company profile for letterhead/footer: pass data.companyInfo and/or set window.__erpPrintCompanyInfo
+ * (synced from maintenance ERP payload / company_settings-backed companyProfile).
  */
 (function (global) {
   'use strict';
@@ -17,8 +17,8 @@
       background: #ffffff;
       line-height: 1.4;
     }
-    @page { size: letter portrait; margin: 0.65in 0.65in 0.75in 0.65in; }
-    .pwrap { max-width: 7in; margin: 0 auto 0.55in; padding-bottom: 0.15in; }
+    @page { size: letter portrait; margin: 0.65in; }
+    .pwrap { max-width: 7in; margin: 0 auto 0.55in; padding-bottom: 0.35in; }
     .letterhead {
       display: flex;
       justify-content: space-between;
@@ -38,7 +38,7 @@
       border: 1.5pt solid #1a1f36;
       padding: 3pt 10pt;
     }
-    .doc-sub { font-size: 6.5pt; color: #555; margin-top: 3pt; }
+    .doc-sub { font-size: 7pt; color: #555; margin-top: 3pt; }
     .section {
       border: 0.5pt solid #ccc;
       margin-bottom: 7pt;
@@ -76,7 +76,7 @@
       display: block;
     }
     .field-value.large { font-size: 11pt; font-weight: bold; color: #111; }
-    .border-left { border-left: 1pt solid #ccc; padding-left: 8pt; }
+    .border-left { border-left: 0.5pt solid #ccc; padding-left: 8pt; }
     table { width: 100%; border-collapse: collapse; font-size: 7pt; margin-bottom: 4pt; }
     thead { display: table-header-group; }
     thead tr { background: #1a1f36; }
@@ -101,52 +101,53 @@
     .totals-row td {
       font-weight: bold;
       background: #f0f0f0;
-      border-top: 1pt solid #999;
-      font-size: 7pt;
+      border-top: 0.5pt solid #ccc;
+      font-size: 8pt;
     }
     .subtotal-bar {
       display: flex;
       justify-content: flex-end;
       gap: 20pt;
-      padding: 3pt 5pt;
+      padding: 4pt 5pt;
       border-top: 0.5pt solid #ccc;
-      font-size: 7pt;
+      font-size: 8pt;
       font-weight: bold;
     }
     .grand-total {
       text-align: right;
-      padding: 4pt 5pt;
+      padding: 5pt 5pt 4pt;
       font-size: 10pt;
       font-weight: bold;
       border-top: 1.5pt solid #1a1f36;
-      margin-top: 3pt;
+      margin-top: 4pt;
     }
-    .section-sublabel {
+    .cost-table-label {
       font-size: 6.5pt;
       font-weight: bold;
       text-transform: uppercase;
-      color: #555;
       letter-spacing: 0.05em;
-      margin-bottom: 3pt;
+      color: #555;
+      margin: 6pt 0 3pt;
     }
-    .divider {
-      text-align: center;
-      font-size: 6.5pt;
-      font-weight: bold;
-      color: #1a1f36;
-      padding: 5pt 3pt;
+    .cost-dash-divider {
       border-top: 0.75pt dashed #999;
-      border-bottom: 0.75pt dashed #999;
-      margin: 6pt 0;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      margin: 8pt 0;
+    }
+    .both-notice {
+      font-size: 7pt;
+      color: #1557a0;
+      background: #f0f7ff;
+      border: 0.5pt solid #c5d9f7;
+      padding: 5pt 7pt;
+      margin-bottom: 8pt;
+      line-height: 1.45;
     }
     .note-box {
       border: 0.5pt solid #ccc;
       padding: 5pt 7pt;
       min-height: 28pt;
-      font-size: 8pt;
-      color: #111;
+      font-size: 7.5pt;
+      color: #333;
       background: #fafafa;
     }
     .map-container { display: flex; gap: 8pt; padding: 0; align-items: flex-start; }
@@ -158,7 +159,7 @@
       border: 0.5pt solid #ddd;
     }
     .map-svg-wrap svg { width: 100%; height: auto; display: block; }
-    .map-side { flex: 1; border-left: 1pt solid #ccc; padding-left: 8pt; min-width: 0; }
+    .map-side { flex: 1; border-left: 0.5pt solid #ccc; padding-left: 8pt; min-width: 0; }
     .position-table table thead tr { background: #1a1f36; }
     .position-table table thead th { border-color: #1a1f36; }
     .sig-row { display: flex; gap: 14pt; margin-top: 16pt; border-top: 0.5pt solid #ccc; padding-top: 6pt; }
@@ -176,12 +177,24 @@
       left: 0;
       right: 0;
       border-top: 0.5pt solid #ccc;
-      padding: 3pt 0.65in;
+      padding: 4pt 0.65in;
       font-size: 6.5pt;
       color: #888;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 8pt;
       background: #ffffff;
+    }
+    .page-footer__center { text-align: center; flex: 1; min-width: 0; }
+    .page-footer__pg { flex-shrink: 0; white-space: nowrap; }
+    @media print {
+      .page-footer__pg::after {
+        content: "Page " counter(page) " of " counter(pages);
+      }
+    }
+    @media screen {
+      .page-footer__pg::after { content: "Page 1"; }
     }
     .pill {
       display: inline-block;
@@ -190,17 +203,20 @@
       padding: 1pt 5pt;
       font-size: 7pt;
     }
-    .payment-stub { border-top: 1pt dashed #999; margin-top: 10pt; padding-top: 6pt; }
-    .stub-header {
-      font-size: 6.5pt;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #555;
-      margin-bottom: 4pt;
+    .payment-stub {
+      border-top: 1pt dashed #999;
+      margin-top: 12pt;
+      padding-top: 8pt;
     }
-    .stub-row { display: flex; justify-content: space-between; font-size: 7pt; padding: 2pt 0; border-bottom: 0.5pt solid #eee; flex-wrap: wrap; gap: 4pt; }
-    .stub-fill { display: flex; gap: 20pt; font-size: 7pt; margin-top: 4pt; flex-wrap: wrap; }
+    .stub-header {
+      font-size: 7pt;
+      font-weight: bold;
+      text-align: center;
+      color: #555;
+      margin-bottom: 6pt;
+    }
+    .stub-row { display: flex; justify-content: space-between; font-size: 7pt; padding: 3pt 0; border-bottom: 0.5pt solid #eee; flex-wrap: wrap; gap: 4pt; }
+    .stub-fill { display: flex; gap: 16pt; font-size: 7pt; margin-top: 6pt; flex-wrap: wrap; }
     .zero-balance { color: #137333; font-weight: bold; }
     .mono { font-family: 'Courier New', Courier, monospace; }
     .pill-pass { background: #e8f5e9; color: #137333; border-color: #7cb342; }
@@ -224,7 +240,6 @@
     return '$' + x.toFixed(2);
   }
 
-  /** ISO YYYY-MM-DD → short locale for print tables (plain text; caller uses esc()). */
   function formatIsoDateShortPlain(iso) {
     const s = String(iso == null ? '' : iso)
       .trim()
@@ -246,6 +261,12 @@
     return '';
   }
 
+  function cleanStr(v) {
+    const s = v == null ? '' : String(v).trim();
+    if (!s || s === 'undefined' || s === 'null') return '';
+    return s;
+  }
+
   function getCompanyInfo(data) {
     const d = data && typeof data === 'object' ? data : {};
     const g =
@@ -253,12 +274,12 @@
         ? global.__erpPrintCompanyInfo
         : {};
     const ci = d.companyInfo && typeof d.companyInfo === 'object' ? d.companyInfo : {};
-    const name = pick(ci.companyName, ci.legalName, ci.dbaName, g.companyName, d.companyName, 'IH 35 Transportation LLC');
-    const addr = pick(ci.address, g.address, d.companyAddress);
-    const city = pick(ci.city, g.city);
-    const phone = pick(ci.phone, g.phone, d.companyPhone);
-    const usdot = pick(ci.usdot, g.usdot, d.usdot);
-    const mc = pick(ci.mcNumber, g.mcNumber, d.mcNumber);
+    const name = cleanStr(pick(ci.companyName, ci.legalName, ci.dbaName, g.companyName, d.companyName)) || 'IH 35 Transportation LLC';
+    const addr = cleanStr(pick(ci.address, g.address, d.companyAddress));
+    const city = cleanStr(pick(ci.city, g.city));
+    const phone = cleanStr(pick(ci.phone, g.phone, d.companyPhone));
+    const usdot = cleanStr(pick(ci.usdot, g.usdot, d.usdot));
+    const mc = cleanStr(pick(ci.mcNumber, g.mcNumber, d.mcNumber));
     const lines = [];
     if (addr) lines.push(`<div class="co-sub">${esc(addr)}</div>`);
     if (city) lines.push(`<div class="co-sub">${esc(city)}</div>`);
@@ -270,8 +291,8 @@
     return { name, subHtml: lines.join('') };
   }
 
-  function buildLetterhead(companyInfo, docTitle, docSubtitle) {
-    const c = getCompanyInfo(companyInfo || {});
+  function buildLetterhead(dataOrCompany, docTitle, docSubtitle) {
+    const c = getCompanyInfo(dataOrCompany || {});
     return `<div class="letterhead">
       <div>
         <div class="co-name">${esc(c.name)}</div>
@@ -323,7 +344,7 @@
         )}</td><td>${esc(cls)}</td></tr>`;
       })
       .join('');
-    return `<table><thead><tr><th>#</th><th>Category / account</th><th>Description</th><th class="right">Amount</th><th>Class</th></tr></thead><tbody>${body}</tbody></table>`;
+    return `<table><thead><tr><th>#</th><th>CATEGORY / ACCOUNT</th><th>DESC</th><th class="right">AMOUNT</th><th>CLASS</th></tr></thead><tbody>${body}</tbody></table>`;
   }
 
   function buildItemTable(lines) {
@@ -344,7 +365,7 @@
         )}</td><td class="right">${esc(money(amtLine(ln)))}</td><td>${esc(cls)}</td></tr>`;
       })
       .join('');
-    return `<table><thead><tr><th>#</th><th>Product / service</th><th>SKU</th><th>Description</th><th class="right">Qty</th><th class="right">Rate</th><th class="right">Amount</th><th>Class</th></tr></thead><tbody>${body}</tbody></table>`;
+    return `<table><thead><tr><th>#</th><th>PRODUCT / SERVICE</th><th>SKU</th><th>DESC</th><th class="right">QTY</th><th class="right">RATE</th><th class="right">AMOUNT</th><th>CLASS</th></tr></thead><tbody>${body}</tbody></table>`;
   }
 
   function buildCostSection(categoryLines, itemLines, invoiceTotal) {
@@ -356,24 +377,26 @@
     const grand = Number.isFinite(inv) ? inv : Math.round((catSum + itemSum) * 100) / 100;
     let html = '';
     if (cats.length && !items.length) {
-      html += `<div class="section-sublabel">Category expense lines</div>${buildCategoryTable(cats)}`;
-      html += `<table><tbody><tr class="totals-row"><td colspan="3">Subtotal</td><td class="right">${esc(
+      html += `<div class="cost-table-label">CATEGORY EXPENSE LINES</div>${buildCategoryTable(cats)}`;
+      html += `<table><tbody><tr class="totals-row"><td colspan="4">Subtotal</td><td class="right">${esc(
         money(catSum)
-      )}</td><td></td></tr></tbody></table>`;
+      )}</td></tr></tbody></table>`;
     } else if (!cats.length && items.length) {
-      html += `<div class="section-sublabel">Product / service lines</div>${buildItemTable(items)}`;
+      html += `<div class="cost-table-label">PRODUCT / SERVICE LINES</div>${buildItemTable(items)}`;
       html += `<table><tbody><tr class="totals-row"><td colspan="6">Subtotal</td><td class="right">${esc(
         money(itemSum)
       )}</td><td></td></tr></tbody></table>`;
     } else if (cats.length && items.length) {
-      html += `<div class="section-sublabel">Category expense lines</div>${buildCategoryTable(cats)}`;
-      html += `<div class="divider">Product / service lines</div>`;
-      html += `<div class="section-sublabel">Product / service lines</div>${buildItemTable(items)}`;
+      html +=
+        '<div class="both-notice">This document includes both category expense lines and product/service lines. Review each block; subtotals are shown separately before the grand total.</div>';
+      html += `<div class="cost-table-label">CATEGORY EXPENSE LINES</div>${buildCategoryTable(cats)}`;
+      html += '<div class="cost-dash-divider"></div>';
+      html += `<div class="cost-table-label">PRODUCT / SERVICE LINES</div>${buildItemTable(items)}`;
       html += `<div class="subtotal-bar"><span>Category subtotal: ${esc(money(catSum))}</span><span>Item subtotal: ${esc(
         money(itemSum)
       )}</span></div>`;
     } else {
-      html += `<p class="field-value" style="border:none">No cost lines entered.</p>`;
+      html += `<p class="field-value" style="border:none;font-size:8pt">No cost lines entered.</p>`;
       if (Number.isFinite(inv)) {
         html += `<p class="field-label" style="margin-top:6pt">Invoice total</p><p class="field-value large">${esc(
           money(inv)
@@ -453,9 +476,9 @@
     let g = '';
     boxes.forEach(b => {
       const on = set.has(b.k);
-      const fill = on ? '#333' : 'none';
-      const stroke = on ? '#333' : '#999';
-      const tc = on ? '#fff' : '#666';
+      const fill = on ? '#333333' : 'none';
+      const stroke = on ? '#333333' : '#999';
+      const tc = on ? '#ffffff' : '#666';
       g += `<rect x="${b.x}" y="${b.y}" width="72" height="28" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="0.5"/><text x="${
         b.x + 36
       }" y="${b.y + 18}" text-anchor="middle" font-size="6pt" fill="${tc}">${esc(b.k)}</text>`;
@@ -476,9 +499,9 @@
     ];
     pts.forEach(b => {
       const on = set.has(b.k);
-      const fill = on ? '#333' : 'none';
-      const stroke = on ? '#333' : '#999';
-      const tc = on ? '#fff' : '#666';
+      const fill = on ? '#333333' : 'none';
+      const stroke = on ? '#333333' : '#999';
+      const tc = on ? '#ffffff' : '#666';
       g += `<rect x="${b.x}" y="${b.y}" width="52" height="32" fill="${fill}" stroke="${stroke}" stroke-width="0.5"/><text x="${
         b.x + 26
       }" y="${b.y + 20}" text-anchor="middle" font-size="7pt" fill="${tc}">${esc(b.k)}</text>`;
@@ -488,7 +511,7 @@
 
   function buildFullMapSvg(selected) {
     const tire = buildTireSvg(selected);
-    return `<div style="display:flex;flex-direction:column;gap:6pt">${tire}<div class="section-sublabel" style="margin:0">Air bags / battery (reference)</div>${buildAirbagSvg(
+    return `<div style="display:flex;flex-direction:column;gap:6pt">${tire}<div class="cost-table-label" style="margin:0">AIR BAGS / BATTERY (REFERENCE)</div>${buildAirbagSvg(
       selected
     )}</div>`;
   }
@@ -504,7 +527,7 @@
     else if (mt === 'battery') svg = buildBatterySvg(pos);
     else if (mt === 'full') svg = buildFullMapSvg(pos);
     if (!svg && !pos.length) return '';
-    const list = pos.length ? pos.join(', ') : '—';
+    const list = pos.length ? `Positions: ${pos.map(p => esc(p)).join(', ')}` : 'Positions: —';
     const rows = Array.isArray(positionDetails) ? positionDetails : [];
     const detBody = rows.length
       ? rows
@@ -518,12 +541,10 @@
           .join('')
       : pos.map(p => `<tr><td>${esc(p)}</td><td></td><td></td><td></td><td></td></tr>`).join('');
     return `<div class="map-container">
-      <div class="map-svg-wrap">${svg || '<p class="co-sub">No diagram</p>'}<p class="co-sub" style="margin-top:4pt">Positions serviced: ${esc(
-        list
-      )}</p></div>
+      <div class="map-svg-wrap">${svg || '<p class="co-sub">No diagram</p>'}<p class="co-sub" style="margin-top:4pt;font-size:7pt">${list}</p></div>
       <div class="map-side position-table">
-        <div class="section-sublabel">Position detail</div>
-        <table><thead><tr><th>Position</th><th>Part #</th><th>Description</th><th class="right">Qty</th><th class="right">Amount</th></tr></thead><tbody>${detBody}</tbody></table>
+        <div class="cost-table-label">POSITION DETAIL</div>
+        <table><thead><tr><th>POSITION</th><th>PART#</th><th>DESC</th><th class="right">QTY</th><th class="right">AMOUNT</th></tr></thead><tbody>${detBody}</tbody></table>
       </div>
     </div>`;
   }
@@ -539,36 +560,39 @@
     return `<div class="sig-row">${rows}</div>`;
   }
 
-  function buildPageFooter(leftText, centerText, rightText) {
-    const left = leftText || 'IH 35 Transportation LLC — Confidential';
+  function buildPageFooter(leftText, centerText) {
+    const left = leftText || '';
     const c = centerText || '';
-    const r = rightText || 'Page 1';
-    return `<div class="page-footer"><span>${esc(left)}</span><span style="text-align:center;flex:1;padding:0 6pt">${esc(
-      c
-    )}</span><span>${esc(r)}</span></div>`;
+    return `<div class="page-footer"><span>${esc(left)}</span><span class="page-footer__center">${esc(c)}</span><span class="page-footer__pg"></span></div>`;
   }
 
   function buildPaymentStub(billNumber, vendor, dueDate, amountDue) {
+    const dueDisp = formatIsoDateShortPlain(dueDate);
+    const amt = Number.isFinite(Number(amountDue)) ? money(Number(amountDue)) : cleanStr(amountDue) || '—';
     return `<div class="payment-stub">
-      <div class="stub-header">— Payment stub — Detach and return with payment —</div>
-      <div class="stub-row"><span>Bill #: ${esc(billNumber)}</span><span>Vendor: ${esc(vendor)}</span></div>
-      <div class="stub-row"><span>Due: ${esc(formatIsoDateShortPlain(dueDate))}</span><span>Amount due: ${esc(
-        Number.isFinite(Number(amountDue)) ? money(Number(amountDue)) : String(amountDue || '—')
-      )}</span></div>
-      <div class="stub-fill"><span>Check #: _________________</span><span>Amount paid: $______________</span><span>Date: _____________________</span></div>
+      <div class="stub-header">— Payment stub — Detach and return —</div>
+      <div class="stub-row"><span>Bill# ${esc(billNumber)}</span><span>Vendor: ${esc(vendor)}</span></div>
+      <div class="stub-row"><span>Due date: ${esc(dueDisp)}</span><span>Amount due: ${esc(amt)}</span></div>
+      <div class="stub-fill"><span>Check# _________________</span><span>Amount paid $_______________</span><span>Date _____________________</span></div>
     </div>`;
   }
 
-  function sanitizeFilename(str) {
-    if (!str) return '';
-    return String(str)
+  function sanitizeFilenameSegment(str) {
+    if (str == null || str === '') return '';
+    let s = String(str)
+      .trim()
       .replace(/\s+/g, '-')
       .replace(/[/\\:*?"<>|(),']/g, '')
       .replace(/&/g, 'and')
       .replace(/#/g, 'No')
       .replace(/--+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, 40);
+      .replace(/^-|-$/g, '');
+    if (s.length > 40) s = s.slice(0, 40).replace(/-+$/g, '');
+    return s;
+  }
+
+  function sanitizeFilename(str) {
+    return sanitizeFilenameSegment(str);
   }
 
   function formatDateForFilename(dateStr) {
@@ -606,28 +630,36 @@
     'body-work': 'BODY WORK ORDER'
   };
 
+  function joinFilenameSegments(parts, ext) {
+    const segs = (Array.isArray(parts) ? parts : []).map(s => sanitizeFilenameSegment(s)).filter(Boolean);
+    let base = segs.join('-').replace(/--+/g, '-');
+    if (base.length > 120) base = base.slice(0, 120).replace(/-+$/g, '');
+    return base + '.' + (ext || 'pdf');
+  }
+
   function generateFilename(documentType, data, extension) {
     const ext = extension || 'pdf';
     const d = data || {};
-    let segments = [];
     const dt = String(documentType || '');
     if (WO_TITLE[dt]) {
-      segments = [
-        sanitizeFilename(d.unit || d.unitNumber),
-        WO_FILE_LABEL[dt] || 'WorkOrder',
-        sanitizeFilename(d.serviceType),
-        sanitizeFilename(d.vendor),
-        formatDateForFilename(d.serviceDate)
-      ];
-    } else if (dt === 'expense' || dt === 'maintenance-expense') {
-      segments = [
-        sanitizeFilename(d.unit || d.unitNumber),
-        'Expense',
-        sanitizeFilename(d.serviceType || d.refNumber || d.refNo),
-        sanitizeFilename(d.vendor || d.payee),
-        formatDateForFilename(d.paymentDate || d.txnDate)
-      ];
-    } else if (
+      return joinFilenameSegments(
+        [
+          d.unit || d.unitNumber,
+          WO_FILE_LABEL[dt] || 'WorkOrder',
+          d.serviceType,
+          d.vendor,
+          formatDateForFilename(d.serviceDate)
+        ],
+        ext
+      );
+    }
+    if (dt === 'expense' || dt === 'maintenance-expense' || dt === 'repair-expense') {
+      return joinFilenameSegments(
+        [d.vendor || d.payee, 'Expense', pick(d.refNo, d.refNumber, d.vendorInvoice, d.shopWo), formatDateForFilename(d.paymentDate || d.txnDate)],
+        ext
+      );
+    }
+    if (
       dt === 'bill' ||
       dt === 'maintenance-bill' ||
       dt === 'repair-bill' ||
@@ -635,70 +667,51 @@
       dt === 'vendor-bill' ||
       dt === 'vendor-driver-bill'
     ) {
-      const kind =
-        dt === 'maintenance-bill'
-          ? 'MaintBill'
-          : dt === 'repair-bill'
-            ? 'RepairBill'
-            : dt === 'driver-bill'
-              ? 'DriverBill'
-              : dt === 'vendor-bill'
-                ? 'VendorBill'
-                : 'Bill';
-      segments = [
-        sanitizeFilename(d.unit || d.unitNumber),
-        kind,
-        sanitizeFilename(d.billNumber || d.vendorInvoice),
-        sanitizeFilename(d.vendor || d.payee),
-        formatDateForFilename(d.billDate || d.paymentDate)
-      ];
-    } else if (dt === 'fuel-expense') {
-      segments = [
-        sanitizeFilename(d.unit),
-        'FuelExpense',
-        sanitizeFilename(d.vendor || d.payee),
-        formatDateForFilename(d.txnDate || d.paymentDate)
-      ];
-    } else if (dt === 'fuel-bill') {
-      segments = [
-        sanitizeFilename(d.vendor || d.payee),
-        'FuelBill',
-        sanitizeFilename(d.billNumber || d.vendorInvoice),
-        formatDateForFilename(d.billDate || d.paymentDate)
-      ];
-    } else if (dt === 'payment-receipt' || dt === 'bill-payment') {
-      segments = [
-        sanitizeFilename(d.vendor),
-        'PaymentReceipt',
-        sanitizeFilename(d.paymentNumber),
-        formatDateForFilename(d.paymentDate)
-      ];
-    } else if (dt === 'multiple-bills') {
+      return joinFilenameSegments(
+        [d.vendor || d.payee, 'Bill', pick(d.billNumber, d.vendorInvoice), formatDateForFilename(d.billDate || d.paymentDate || d.txnDate)],
+        ext
+      );
+    }
+    if (dt === 'fuel-expense') {
+      return joinFilenameSegments(
+        [d.vendor || d.payee, 'Fuel', d.unit, formatDateForFilename(d.txnDate || d.paymentDate)],
+        ext
+      );
+    }
+    if (dt === 'fuel-bill') {
+      return joinFilenameSegments(
+        [d.vendor || d.payee, 'FuelBill', pick(d.billNumber, d.vendorInvoice), formatDateForFilename(d.billDate || d.paymentDate || d.txnDate)],
+        ext
+      );
+    }
+    if (dt === 'payment-receipt' || dt === 'bill-payment') {
+      return joinFilenameSegments(
+        [d.vendor || d.payee, 'Payment', pick(d.paymentNumber, d.checkNum, d.checkNumber), formatDateForFilename(d.paymentDate)],
+        ext
+      );
+    }
+    if (dt === 'multiple-bills') {
       const bills = Array.isArray(d.bills) ? d.bills : [];
       const firstNum = bills[0] && bills[0].billNumber;
       const lastNum = bills.length ? bills[bills.length - 1].billNumber : '';
-      segments = [
-        sanitizeFilename(d.vendor),
-        'Bills',
-        sanitizeFilename(firstNum),
-        'to',
-        sanitizeFilename(lastNum),
-        formatDateForFilename(new Date().toISOString())
-      ];
-    } else {
-      segments = [sanitizeFilename(dt), formatDateForFilename(new Date().toISOString())];
+      const span =
+        firstNum && lastNum
+          ? String(firstNum) === String(lastNum)
+            ? String(firstNum)
+            : `${String(firstNum)}-to-${String(lastNum)}`
+          : pick(firstNum, lastNum);
+      return joinFilenameSegments([d.vendor, 'Bills', span, formatDateForFilename(new Date().toISOString())], ext);
     }
-    let base = segments.filter(Boolean).join('-');
-    if (base.length > 120) base = base.slice(0, 120);
-    return base + '.' + ext;
+    return joinFilenameSegments([dt, formatDateForFilename(new Date().toISOString())], ext);
   }
 
-  function wrapHtml(title, inner, footerParts) {
-    const f = footerParts || {};
+  function wrapHtml(title, inner, footerMeta, letterData) {
+    const fm = footerMeta || {};
+    const companyName = cleanStr(fm.company) || getCompanyInfo(letterData || {}).name;
+    const center = fm.center || '';
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>${esc(title)}</title><style>${PRINT_CSS}</style></head><body><div class="pwrap">${inner}</div>${buildPageFooter(
-      f.left,
-      f.center,
-      f.right
+      companyName,
+      center
     )}</body></html>`;
   }
 
@@ -756,7 +769,7 @@
     const rightCol = `<div class="field"><span class="field-label">Odometer at service</span><span class="field-value large">${esc(
       d.odometer || ''
     )}</span></div>
-      <div class="field"><span class="field-label">Fuel level</span><span class="field-value">${esc(fuelDisp || '—')}</span></div>
+      <div class="field"><span class="field-label">Fuel</span><span class="field-value">${esc(fuelDisp || '—')}</span></div>
       <div class="field"><span class="field-label">Operational status</span><span class="field-value" style="border:none">${opPill}</span></div>
       <div class="field"><span class="field-label">Repair status</span><span class="field-value">${esc(d.repairStatus || '')}</span></div>`;
     const sec1 = `<div class="grid2"><div>${leftCol}</div><div class="border-left">${rightCol}</div></div>`;
@@ -764,14 +777,14 @@
       [
         { label: 'Record type', value: d.recordTypeLabel || d.recordType || '' },
         { label: 'Service type', value: d.serviceType || '' },
-        { label: 'Service date', value: formatIsoDateShortPlain(d.serviceDate || '') }
+        { label: 'Date', value: formatIsoDateShortPlain(d.serviceDate || '') }
       ],
       3
     );
     const row2 = buildFieldGrid(
       [
         { label: 'Service location', value: d.serviceLocation || '' },
-        { label: 'Location detail', value: d.locationDetail || '' },
+        { label: 'Detail', value: d.locationDetail || '' },
         { label: 'Vendor', value: d.vendor || '' }
       ],
       3
@@ -779,16 +792,20 @@
     const row3 = buildFieldGrid(
       [
         { label: 'Driver', value: d.driver || d.driverName || '' },
-        { label: 'Vendor invoice #', value: d.vendorInvoice || '' },
-        { label: 'Reference / WO #', value: d.referenceWO || d.vendorReferenceNumber || '' },
-        { label: 'Invoice total', value: Number.isFinite(Number(d.invoiceTotal)) ? money(Number(d.invoiceTotal)) : '' }
+        { label: 'Vendor inv#', value: d.vendorInvoice || '' },
+        { label: 'Ref / WO#', value: d.referenceWO || d.vendorReferenceNumber || '' },
+        {
+          label: 'Invoice total',
+          value: Number.isFinite(Number(d.invoiceTotal)) ? money(Number(d.invoiceTotal)) : '',
+          large: Number.isFinite(Number(d.invoiceTotal))
+        }
       ],
       4
     );
     let sec2 = row1 + `<div style="height:5pt"></div>` + row2 + `<div style="height:5pt"></div>` + row3;
     const planned = pick(d.plannedWork, d.plannedService);
     if (planned) {
-      sec2 += `<div class="field" style="margin-top:6pt"><span class="field-label">Planned service / repair</span><div class="note-box">${esc(
+      sec2 += `<div class="field" style="margin-top:6pt"><span class="field-label">Planned service</span><div class="note-box">${esc(
         planned
       )}</div></div>`;
     }
@@ -806,7 +823,8 @@
     let sec6 = '';
     const rt = String(d.recordType || '').toLowerCase();
     if (rt === 'accident') {
-      const dot = d.accidentDotReportable ? 'YES — DOT REPORTABLE' : 'No';
+      const dotYes = !!d.accidentDotReportable;
+      const dotPill = `<span class="pill${dotYes ? ' pill-warn' : ''}">${esc(dotYes ? 'DOT reportable' : 'Not DOT reportable')}</span>`;
       const g1 = buildFieldGrid(
         [
           { label: 'Accident date', value: formatIsoDateShortPlain(d.accidentDate || '') },
@@ -819,16 +837,19 @@
       const g2 = buildFieldGrid(
         [
           { label: 'Fault', value: d.accidentFault || '' },
-          { label: 'DOT reportable', value: dot },
           { label: 'Estimated damage $', value: d.estimatedDamage != null ? money(d.estimatedDamage) : '' },
-          { label: 'Actual repair $', value: d.actualRepair != null ? money(d.actualRepair) : '' }
+          { label: 'Actual repair $', value: d.actualRepair != null ? money(d.actualRepair) : '' },
+          { label: 'DOT (summary)', value: dotYes ? 'Reportable' : 'Not reportable' }
         ],
         4
       );
-      const third = d.thirdPartyInfo ? `<div class="field" style="margin-top:6pt"><span class="field-label">Third party information</span><div class="note-box">${esc(
-        d.thirdPartyInfo
-      )}</div></div>` : '';
-      sec6 = g1 + g2 + third;
+      const dotRow = `<div class="field" style="margin-top:6pt"><span class="field-label">DOT</span><span class="field-value" style="border:none;padding:0;min-height:0">${dotPill}</span></div>`;
+      const third = d.thirdPartyInfo
+        ? `<div class="field" style="margin-top:6pt"><span class="field-label">Third party information</span><div class="note-box">${esc(
+            d.thirdPartyInfo
+          )}</div></div>`
+        : '';
+      sec6 = g1 + g2 + dotRow + third;
     } else if (rt === 'inspection' || String(d.serviceType || '').toLowerCase().includes('inspection')) {
       const result = (d.inspectionResult || '').toUpperCase();
       let pillClass = 'pill';
@@ -838,16 +859,16 @@
       const g = buildFieldGrid(
         [
           { label: 'Inspection type', value: d.inspectionType || d.inspectionScope || '' },
-          { label: 'Inspector name', value: d.inspectorName || '' },
+          { label: 'Inspector', value: d.inspectorName || '' },
           { label: 'Badge #', value: d.inspectorBadge || '' },
-          { label: 'Next due date', value: formatIsoDateShortPlain(d.inspectionNextDue || '') }
+          { label: 'Next due', value: formatIsoDateShortPlain(d.inspectionNextDue || '') }
         ],
         4
       );
       const pill = result ? `<p style="margin-top:6pt"><span class="${pillClass}">${esc(result)}</span></p>` : '';
       const oos =
         d.outOfServiceItems && String(d.outOfServiceItems).trim()
-          ? `<div class="field" style="margin-top:6pt"><span class="field-label">Out of service items</span><div class="note-box">${esc(
+          ? `<div class="field" style="margin-top:6pt"><span class="field-label">OOS items (fail)</span><div class="note-box">${esc(
               d.outOfServiceItems
             )}</div></div>`
           : '';
@@ -855,10 +876,10 @@
     } else if (rt === 'pm' || rt === 'pm_service') {
       sec6 = buildFieldGrid(
         [
-          { label: 'Last PM date', value: formatIsoDateShortPlain(d.lastPmDate || '') },
+          { label: 'Last PM', value: formatIsoDateShortPlain(d.lastPmDate || '') },
           { label: 'Last PM mileage', value: d.lastPmMiles != null ? String(d.lastPmMiles) : '' },
-          { label: 'Next PM due miles', value: d.nextPmDueMiles != null ? String(d.nextPmDueMiles) : '' },
-          { label: 'Interval miles', value: d.pmIntervalMiles != null ? String(d.pmIntervalMiles) : '' }
+          { label: 'Next PM due (mi)', value: d.nextPmDueMiles != null ? String(d.nextPmDueMiles) : '' },
+          { label: 'Interval (mi)', value: d.pmIntervalMiles != null ? String(d.pmIntervalMiles) : '' }
         ],
         4
       );
@@ -886,31 +907,28 @@
         ]
       }
     ]);
-    const parts = [co, buildSection('1', 'Vehicle information', sec1), buildSection('2', 'Service information', sec2), buildSection('3', 'Cost breakdown', sec3)];
-    if (sec4) parts.push(buildSection('4', 'Parts / position diagram', sec4));
+    const parts = [co, buildSection('1', 'Vehicle', sec1), buildSection('2', 'Service', sec2), buildSection('3', 'Cost breakdown', sec3)];
+    if (sec4) parts.push(buildSection('4', 'Position map', sec4));
     if (sec5) parts.push(buildSection('5', 'Notes', sec5));
     if (sec6) {
-      const lab =
-        rt === 'accident' ? 'Accident information' : rt === 'pm' ? 'PM details' : 'Inspection results';
+      const lab = rt === 'accident' ? 'Accident' : rt === 'pm' || rt === 'pm_service' ? 'PM service' : 'Inspection';
       parts.push(buildSection('6', lab, sec6));
     }
     parts.push(sig);
     const fn = generateFilename(dt, d, 'pdf').replace(/\.pdf$/i, '');
-    const foot = {
-      center: [title, pick(d.unit, d.unitNumber, '—'), formatIsoDateShortPlain(pick(d.serviceDate, ''))].filter(Boolean).join(' · ')
-    };
-    return wrapHtml(fn, parts.join(''), foot);
+    const footCenter = [title, pick(d.unit, d.unitNumber, '—'), formatIsoDateShortPlain(pick(d.serviceDate, ''))].filter(Boolean).join(' · ');
+    return wrapHtml(fn, parts.join(''), { center: footCenter }, d);
   }
 
   function buildExpenseHtml(data) {
     const d = data || {};
-    const ref = pick(d.refNumber, d.refNo, d.vendorInvoice, '—');
-    const sub = `Ref #: ${ref} · ${formatIsoDateShortPlain(pick(d.paymentDate, ''))}`;
+    const ref = pick(d.refNumber, d.refNo, d.vendorInvoice, d.shopWo, '—');
+    const sub = `Ref #: ${ref} · ${formatIsoDateShortPlain(pick(d.paymentDate, d.txnDate, ''))}`;
     const co = buildLetterhead(d, 'EXPENSE RECORD', sub);
     const pay = buildFieldGrid(
       [
         { label: 'Payee / vendor', value: d.vendor || d.payee || '' },
-        { label: 'Payment date', value: formatIsoDateShortPlain(d.paymentDate || '') },
+        { label: 'Payment date', value: formatIsoDateShortPlain(d.paymentDate || d.txnDate || '') },
         { label: 'Payment method', value: d.paymentMethod || '' },
         { label: 'Payment account', value: d.paymentAccount || '' }
       ],
@@ -925,36 +943,18 @@
       ],
       4
     );
-    const hasTruck = !!(d.unit || d.driver || d.loadNumber || d.loadInvoice || d.refNumber || d.refNo);
-    let sec2 = '';
-    if (d.pickupDate || d.deliveryDate || d.emptyMiles || d.loadedMiles) {
-      sec2 = buildFieldGrid(
-        [
-          { label: 'Pick up date', value: formatIsoDateShortPlain(d.pickupDate || '') },
-          { label: 'Delivery date', value: formatIsoDateShortPlain(d.deliveryDate || '') },
-          { label: 'Empty miles', value: d.emptyMiles != null ? String(d.emptyMiles) : '' },
-          { label: 'Loaded miles', value: d.loadedMiles != null ? String(d.loadedMiles) : '' }
-        ],
-        4
-      );
-    }
+    const sec1 = pay + `<div style="height:6pt"></div>` + truckRow;
     const { categoryLines, itemLines } = normCostFromMixed(d.costLines || []);
     const cost = buildCostSection(categoryLines, itemLines, d.balanceDue != null ? d.balanceDue : d.invoiceTotal);
-    const memo = pick(d.memo) ? buildSection('4', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
+    const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const sig = buildSignatureBlocks([
       { lines: ['Prepared by: _______________________', 'Date: _____________________________'] },
       { lines: ['Approved by: _______________________', 'Date: _____________________________'] }
     ]);
     const body =
-      co +
-      buildSection('1', 'Payment information', pay + (hasTruck ? `<div style="height:5pt"></div>` + truckRow : '')) +
-      (sec2 ? buildSection('2', 'Trucking details', sec2) : '') +
-      buildSection('3', 'Expense lines', cost) +
-      memo +
-      sig;
-    return wrapHtml(generateFilename('expense', d, 'pdf').replace(/\.pdf$/i, ''), body, {
-      center: ['EXPENSE RECORD', ref, formatIsoDateShortPlain(d.paymentDate || '')].filter(Boolean).join(' · ')
-    });
+      co + buildSection('1', 'Payment & trucking', sec1) + buildSection('2', 'Cost lines', cost) + memo + sig;
+    const footCenter = ['EXPENSE RECORD', ref, formatIsoDateShortPlain(d.paymentDate || d.txnDate || '')].filter(Boolean).join(' · ');
+    return wrapHtml(generateFilename('expense', d, 'pdf').replace(/\.pdf$/i, ''), body, { center: footCenter }, d);
   }
 
   function buildBillHtml(data) {
@@ -967,21 +967,22 @@
     const s1 = buildFieldGrid(
       [
         { label: 'Vendor', value: d.vendor || d.payee || '' },
-        { label: 'Bill date', value: formatIsoDateShortPlain(pick(d.billDate, d.paymentDate)) },
+        { label: 'Bill date', value: formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, d.txnDate)) },
         { label: 'Due date', value: formatIsoDateShortPlain(d.dueDate || '') },
         { label: 'Terms', value: d.terms || '' }
       ],
       4
     );
-    const extra = `<div style="margin-top:5pt;text-align:right;font-size:11pt;font-weight:bold">Balance due: ${esc(balDisp)}</div>`;
+    const extra = `<div style="margin-top:6pt;text-align:right"><span class="field-value large" style="display:inline;border:none">Balance due: ${esc(
+      balDisp
+    )}</span></div>`;
     const { categoryLines, itemLines } = normCostFromMixed(d.costLines || []);
     const cost = buildCostSection(categoryLines, itemLines, Number.isFinite(bal) ? bal : d.invoiceTotal);
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const stub = buildPaymentStub(billNo, d.vendor || d.payee || '', d.dueDate || '', Number.isFinite(bal) ? bal : 0);
-    const body = co + buildSection('1', 'Bill information', s1 + extra) + buildSection('2', 'Bill lines', cost) + memo + stub;
-    return wrapHtml(generateFilename('bill', d, 'pdf').replace(/\.pdf$/i, ''), body, {
-      center: ['BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, ''))].filter(Boolean).join(' · ')
-    });
+    const body = co + buildSection('1', 'Bill information', s1 + extra) + buildSection('2', 'Cost lines', cost) + memo + stub;
+    const footCenter = ['BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, d.txnDate, ''))].filter(Boolean).join(' · ');
+    return wrapHtml(generateFilename('bill', d, 'pdf').replace(/\.pdf$/i, ''), body, { center: footCenter }, d);
   }
 
   function buildFuelBillHtml(data) {
@@ -1013,12 +1014,14 @@
       [
         { label: 'Terms', value: d.terms || '' },
         { label: 'Due date', value: formatIsoDateShortPlain(d.dueDate || '') },
-        { label: 'Bill #', value: billNo },
+        { label: 'Bill #', value: billNo, mono: true },
         { label: 'Statement #', value: d.statementNumber || d.expenseDoc || '' }
       ],
       4
     );
-    const balRow = `<div style="margin-top:6pt;text-align:right;font-size:11pt;font-weight:bold">Balance due: ${esc(balDisp)}</div>`;
+    const balRow = `<div style="margin-top:6pt;text-align:right"><span class="field-value large" style="display:inline;border:none">Balance due: ${esc(
+      balDisp
+    )}</span></div>`;
     const sec1 = rowA + rowB + rowC + balRow;
     const rows = Array.isArray(d.fuelLines) ? d.fuelLines : [];
     let gal = 0;
@@ -1040,7 +1043,7 @@
     let sec2Inner =
       rows.length === 0
         ? '<p class="co-sub">No fuel lines.</p>'
-        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
+        : `<table><thead><tr><th>#</th><th>DESC</th><th>ACCOUNT</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">AMOUNT</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Totals</td><td class="right">${esc(
             Number.isFinite(gal) ? gal.toFixed(3) : '—'
           )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></table>`;
     if (rows.length === 0) {
@@ -1051,18 +1054,17 @@
     }
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const stub = buildPaymentStub(billNo, d.vendor || d.payee || '', d.dueDate || '', Number.isFinite(bal) ? bal : 0);
-    const bodyHtml =
-      co +
-      buildSection('1', 'Fuel transaction', sec1) +
-      buildSection('2', 'Fuel cost lines', sec2Inner) +
-      memo +
-      stub;
+    const bodyHtml = co + buildSection('1', 'Fuel transaction', sec1) + buildSection('2', 'Fuel lines', sec2Inner) + memo + stub;
     return wrapHtml(generateFilename('fuel-bill', d, 'pdf').replace(/\.pdf$/i, ''), bodyHtml, {
-      center: ['FUEL BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, ''))].filter(Boolean).join(' · ')
-    });
+      center: ['FUEL BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, d.txnDate, ''))].filter(Boolean).join(' · ')
+    }, d);
   }
 
-  function buildFuelTxnBlock(d, includeExtraRow) {
+  function buildFuelExpenseHtml(data) {
+    const d = data || {};
+    const ref = pick(d.expenseNumber, d.expenseDoc, d.vendorInvoice, '—');
+    const sub = `Ref #: ${ref} · ${formatIsoDateShortPlain(pick(d.txnDate, d.paymentDate, ''))}`;
+    const co = buildLetterhead(d, 'FUEL EXPENSE', sub);
     const rowA = buildFieldGrid(
       [
         { label: 'Vendor / merchant', value: d.vendor || d.payee || '' },
@@ -1081,27 +1083,7 @@
       ],
       4
     );
-    let x = rowA + rowB;
-    if (includeExtraRow) {
-      x += buildFieldGrid(
-        [
-          { label: 'Terms', value: d.terms || '' },
-          { label: 'Due date', value: formatIsoDateShortPlain(d.dueDate || '') },
-          { label: 'Bill #', value: d.billNumber || '' },
-          { label: 'Statement #', value: d.statementNumber || d.expenseDoc || '' }
-        ],
-        4
-      );
-    }
-    return buildSection('1', 'Fuel transaction', x);
-  }
-
-  function buildFuelExpenseHtml(data) {
-    const d = data || {};
-    const ref = pick(d.expenseNumber, d.expenseDoc, d.vendorInvoice, '—');
-    const sub = `Ref #: ${ref} · ${formatIsoDateShortPlain(pick(d.txnDate, d.paymentDate, ''))}`;
-    const co = buildLetterhead(d, 'FUEL EXPENSE', sub);
-    const sec1 = buildFuelTxnBlock(d, false);
+    const sec1 = rowA + rowB;
     const rows = Array.isArray(d.fuelLines) ? d.fuelLines : [];
     let gal = 0;
     let amt = 0;
@@ -1122,7 +1104,7 @@
     const tbl =
       rows.length === 0
         ? '<p class="co-sub">No fuel lines.</p>'
-        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
+        : `<table><thead><tr><th>#</th><th>DESC</th><th>ACCOUNT</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">AMOUNT</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Totals</td><td class="right">${esc(
             Number.isFinite(gal) ? gal.toFixed(3) : '—'
           )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></table>`;
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
@@ -1130,10 +1112,10 @@
       { lines: ['Prepared by: _______________________', 'Date: _____________________________'] },
       { lines: ['Approved by: _______________________', 'Date: _____________________________'] }
     ]);
-    const bodyHtml = co + sec1 + buildSection('2', 'Fuel cost lines', tbl) + memo + sig;
+    const bodyHtml = co + buildSection('1', 'Transaction', sec1) + buildSection('2', 'Fuel lines', tbl) + memo + sig;
     return wrapHtml(generateFilename('fuel-expense', d, 'pdf').replace(/\.pdf$/i, ''), bodyHtml, {
       center: ['FUEL EXPENSE', d.unit || '', formatIsoDateShortPlain(d.txnDate || d.paymentDate || '')].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function parseMoneyCell(s) {
@@ -1148,24 +1130,22 @@
     const paidDisp = Number.isFinite(Number(d.totalPaid)) ? money(Number(d.totalPaid)) : pick(d.amountDisplay, '');
     const g1 = buildFieldGrid(
       [
-        { label: 'Payment #', value: pick(d.paymentNumber, d.checkNum, ''), large: false, mono: true },
+        { label: 'Payment #', value: pick(d.paymentNumber, d.checkNum, ''), mono: true },
         { label: 'Payment date', value: formatIsoDateShortPlain(d.paymentDate || '') },
         { label: 'Vendor', value: d.vendor || '' },
         { label: 'Total paid', value: paidDisp, large: true }
       ],
       4
     );
-    const qboPill = d.qboStatus ? `<div style="margin-top:6pt"><span class="pill">${esc(d.qboStatus)}</span></div>` : '';
-    const g2 =
-      buildFieldGrid(
-        [
-          { label: 'Payment method', value: d.paymentMethod || '' },
-          { label: 'Account', value: d.account || d.payFromAccount || '' },
-          { label: 'Check #', value: d.checkNumber || d.checkNum || '', mono: true },
-          { label: 'QBO status', value: d.qboStatus ? String(d.qboStatus) : '' }
-        ],
-        4
-      ) + qboPill;
+    const g2 = buildFieldGrid(
+      [
+        { label: 'Payment method', value: d.paymentMethod || '' },
+        { label: 'Account', value: d.account || d.payFromAccount || '' },
+        { label: 'Check #', value: d.checkNumber || d.checkNum || '', mono: true },
+        { label: 'QBO status', value: d.qboStatus ? String(d.qboStatus) : '' }
+      ],
+      4
+    );
     const rows = Array.isArray(d.billsPaid) ? d.billsPaid : [];
     let sumBill = 0;
     let sumPay = 0;
@@ -1182,32 +1162,27 @@
             const remCell =
               Number.isFinite(rm) && Math.abs(rm) < 0.005
                 ? `<td class="right zero-balance">${esc(money(0))}</td>`
-                : `<td class="right">${esc(r.remaining || '')}</td>`;
+                : `<td class="right">${esc(Number.isFinite(rm) ? money(rm) : r.remaining || '')}</td>`;
             return `<tr><td class="mono">${esc(r.billNumber || r.docNumber || '')}</td><td>${esc(
               formatIsoDateShortPlain(r.billDate || '')
-            )}</td><td>${esc(r.description || '')}</td><td class="right">${esc(r.billAmount || '')}</td><td class="right">${esc(
-              r.amountPaid || ''
-            )}</td>${remCell}</tr>`;
+            )}</td><td>${esc(r.description || '')}</td><td class="right">${esc(
+              Number.isFinite(ba) ? money(ba) : r.billAmount || ''
+            )}</td><td class="right">${esc(Number.isFinite(pa) ? money(pa) : r.amountPaid || '')}</td>${remCell}</tr>`;
           })
           .join('')
       : '<tr><td colspan="6" class="co-sub">No bills selected.</td></tr>';
-    const tbl = `<table><thead><tr><th>Bill #</th><th>Bill date</th><th>Description</th><th class="right">Bill amount</th><th class="right">Payment applied</th><th class="right">Remaining</th></tr></thead><tbody>${tb}</tbody><tr class="totals-row"><td colspan="3">Total payment applied</td><td class="right">${esc(
+    const tbl = `<table><thead><tr><th>BILL#</th><th>BILL DATE</th><th>DESC</th><th class="right">BILL AMT</th><th class="right">PAYMENT</th><th class="right">REMAINING</th></tr></thead><tbody>${tb}</tbody><tr class="totals-row"><td colspan="3">Totals</td><td class="right">${esc(
       money(sumBill)
     )}</td><td class="right">${esc(money(sumPay))}</td><td class="right">${esc(money(sumRem))}</td></tr></table>`;
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const sig = buildSignatureBlocks([
-      { lines: ['Authorized by: _____________________', 'Date: ___________________________'] },
-      { lines: ['QBO reference: __________________', 'Memo: ___________________________'] }
+      { lines: ['Prepared by: _______________________', 'Date: _____________________________'] },
+      { lines: ['Approved by: _______________________', 'Date: _____________________________'] }
     ]);
-    const body =
-      co +
-      buildSection('1', 'Payment details', g1 + `<div style="height:5pt"></div>` + g2) +
-      buildSection('2', 'Bills paid', tbl) +
-      memo +
-      sig;
+    const body = co + buildSection('1', 'Payment details', g1 + `<div style="height:5pt"></div>` + g2) + buildSection('2', 'Bills paid', tbl) + memo + sig;
     return wrapHtml(generateFilename('payment-receipt', d, 'pdf').replace(/\.pdf$/i, ''), body, {
       center: ['PAYMENT RECEIPT', d.vendor || '', formatIsoDateShortPlain(d.paymentDate || '')].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function buildMultipleBillsHtml(data) {
@@ -1215,40 +1190,24 @@
     const bills = Array.isArray(d.bills) ? d.bills : [];
     const first = bills[0] && bills[0].billNumber;
     const last = bills.length && bills[bills.length - 1].billNumber;
-    const sub = `${pick(d.vendor, '—')} · ${pick(first, '')} to ${pick(last, '')}`;
+    const sub = `${pick(d.vendor, '—')} · ${pick(first, '')}–${pick(last, '')}`;
     const co = buildLetterhead(d, 'BILL SERIES SUMMARY', sub);
     const tot = Number(d.totalAmount);
-    const bd0 = bills[0] && bills[0].billDate;
-    const bd1 = bills.length && bills[bills.length - 1].billDate;
-    const du0 = bills[0] && bills[0].dueDate;
-    const du1 = bills.length && bills[bills.length - 1].dueDate;
-    const billSpan =
-      bd0 || bd1
-        ? String(bd0 || '').slice(0, 10) === String(bd1 || '').slice(0, 10)
-          ? formatIsoDateShortPlain(bd0 || bd1)
-          : formatIsoDateShortPlain(bd0) + ' – ' + formatIsoDateShortPlain(bd1)
+    const s1 = buildFieldGrid(
+      [
+        { label: 'Vendor', value: d.vendor || '' },
+        { label: 'Frequency', value: d.frequency || '' },
+        { label: 'Count', value: String(bills.length) },
+        { label: 'Total', value: Number.isFinite(tot) ? money(tot) : '', large: true }
+      ],
+      4
+    );
+    const descNote =
+      d.description && String(d.description).trim()
+        ? `<div class="field" style="margin-top:6pt"><span class="field-label">Description</span><div class="note-box">${esc(
+            d.description
+          )}</div></div>`
         : '';
-    const dueSpan =
-      du0 || du1
-        ? String(du0 || '').slice(0, 10) === String(du1 || '').slice(0, 10)
-          ? formatIsoDateShortPlain(du0 || du1)
-          : formatIsoDateShortPlain(du0) + ' – ' + formatIsoDateShortPlain(du1)
-        : '';
-    const s1 =
-      buildFieldGrid(
-        [
-          { label: 'Vendor', value: d.vendor || '' },
-          { label: 'Frequency', value: d.frequency || '' },
-          { label: 'Total bills', value: String(bills.length) },
-          { label: 'Bill dates', value: billSpan },
-          { label: 'Due dates', value: dueSpan },
-          { label: 'Total amount', value: Number.isFinite(tot) ? money(tot) : '', large: true }
-        ],
-        4
-      ) +
-      (d.description ? `<div class="field" style="margin-top:6pt"><span class="field-label">Description</span><div class="note-box">${esc(
-        d.description
-      )}</div></div>` : '');
     const bodyRows = bills
       .map(b => {
         const st = b.status || (b.past ? 'Past' : 'Scheduled');
@@ -1260,19 +1219,19 @@
       })
       .join('');
     const sum = bills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
-    const tbl = `<table><thead><tr><th>Bill #</th><th>Bill date</th><th>Due date</th><th class="right">Amount</th><th>Status</th></tr></thead><tbody>${bodyRows}<tr class="totals-row"><td>Total</td><td>—</td><td>—</td><td class="right">${esc(
+    const tbl = `<table><thead><tr><th>BILL#</th><th>BILL DATE</th><th>DUE DATE</th><th class="right">AMOUNT</th><th>STATUS</th></tr></thead><tbody>${bodyRows}<tr class="totals-row"><td>Total</td><td>—</td><td>—</td><td class="right">${esc(
       money(sum)
     )}</td><td>—</td></tr></tbody></table>`;
-    const body = co + buildSection('1', 'Series information', s1) + buildSection('2', 'Bill schedule', tbl);
+    const body = co + buildSection('1', 'Series', s1 + descNote) + buildSection('2', 'Schedule', tbl);
     return wrapHtml(generateFilename('multiple-bills', d, 'pdf').replace(/\.pdf$/i, ''), body, {
       center: ['BILL SERIES SUMMARY', d.vendor || ''].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function generatePrintDoc(documentType, data) {
     const t = String(documentType || '');
     if (WO_TITLE[t]) return buildWorkOrderHtml(t, data);
-    if (t === 'expense' || t === 'maintenance-expense') return buildExpenseHtml(data);
+    if (t === 'expense' || t === 'maintenance-expense' || t === 'repair-expense') return buildExpenseHtml(data);
     if (
       t === 'bill' ||
       t === 'maintenance-bill' ||
@@ -1289,8 +1248,11 @@
     return wrapHtml(
       t || 'document',
       buildLetterhead(data, String(t || 'DOCUMENT').toUpperCase(), '') +
-        `<div class="note-box"><pre style="white-space:pre-wrap;font:inherit">${esc(JSON.stringify(data, null, 2).slice(0, 4000))}</pre></div>`,
-      { center: String(t || 'DOCUMENT').toUpperCase() }
+        `<div class="note-box"><pre style="white-space:pre-wrap;font:inherit;font-size:7.5pt">${esc(
+          JSON.stringify(data, null, 2).slice(0, 4000)
+        )}</pre></div>`,
+      { center: String(t || 'DOCUMENT').toUpperCase() },
+      data
     );
   }
 
@@ -1304,7 +1266,6 @@
     }
   }
 
-  /** After `document.write` + `close()`, some browsers never fire `load`; `readyState` is often already `complete`. */
   function schedulePopupPrint(win) {
     const run = function () {
       setTimeout(function () {
@@ -1323,11 +1284,6 @@
     }
   }
 
-  /**
-   * @param {string} documentType
-   * @param {Record<string, unknown>} data
-   * @param {string} [extension]
-   */
   function generatePrintWindow(documentType, data, extension) {
     const ext = extension || 'pdf';
     const html = generatePrintDoc(documentType, data);

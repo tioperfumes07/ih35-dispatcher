@@ -233,7 +233,7 @@
 
   function paintDetail(host) {
     if (!state.selected) {
-      host.innerHTML = '<p class="muted" style="text-align:center;padding:40px 12px;font-size:13px">Select a record from the list.</p>';
+      host.innerHTML = '<p class="muted" style="box-sizing:border-box;width:100%;text-align:center;padding:40px 12px;font-size:13px;margin:0">Select a record from the list.</p>';
       return;
     }
     const d = state.detail;
@@ -513,17 +513,18 @@
     const loaded = state.loadedAt ? new Date(state.loadedAt).toLocaleString() : '—';
     host.innerHTML = `
       <style>
-        .nm-wrap{max-width:1200px;margin:0 auto;padding:12px 16px 32px;font-family:inherit}
+        .nm-wrap{display:flex;flex-direction:column;flex:1;min-height:0;min-width:0;width:100%;height:100%;box-sizing:border-box;padding:12px 0 32px;font-family:inherit}
+        .nm-head{flex:0 0 auto;padding:0 16px}
         .nm-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
         .nm-seg{display:inline-flex;border:1px solid #d0d4da;border-radius:6px;overflow:hidden}
         .nm-seg button{border:none;background:#fff;padding:8px 14px;cursor:pointer;font-size:13px}
         .nm-seg button.nm-seg--on{background:#e8f0fe;font-weight:600}
         .nm-banner{background:#fef7e0;border:1px solid #f5c67f;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px}
-        .nm-layout{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
-        .nm-layout-left{flex:1 1 300px;min-width:280px;max-width:420px;border:1px solid #e0e3e8;border-radius:8px;background:#fff}
-        .nm-layout-right{flex:2 1 400px;min-width:300px}
+        .nm-layout{display:flex;flex:1;min-height:0;min-width:0;width:100%;height:100%;align-items:stretch;gap:16px;flex-wrap:nowrap}
+        .nm-layout-left{width:320px;flex-shrink:0;overflow-y:auto;box-sizing:border-box;padding:12px;border:1px solid #e0e3e8;border-radius:8px;background:#fff}
+        .nm-layout-right{flex:1;min-width:0;overflow:auto;padding:24px;box-sizing:border-box}
         .nm-search{width:100%;height:34px;border:1px solid #d0d4da;border-radius:4px;padding:0 10px;box-sizing:border-box}
-        .nm-list{max-height:520px;overflow:auto}
+        .nm-list{min-height:0}
         .nm-list-item{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid #f1f3f4;cursor:pointer;gap:10px}
         .nm-list-item--sel{background:#e8f0fe;border-left:3px solid #1557a0}
         .nm-av{width:28px;height:28px;border-radius:50%;background:#e8f0fe;color:#1557a0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
@@ -541,6 +542,7 @@
         .nm-modal--history{width:min(980px,96vw)}
       </style>
       <div class="nm-wrap">
+        <div class="nm-head">
         <h1 style="font-size:22px;margin:0 0 4px">Vendor &amp; driver name management</h1>
         <p class="muted" style="margin:0 0 12px;font-size:13px">Keep names consistent across QuickBooks, Samsara, and ERP records.</p>
         <div class="nm-top">
@@ -555,6 +557,7 @@
         <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn btn--small btn--ghost" id="nmBulkBtn">Bulk standardize (mismatches)</button>
           <button type="button" class="btn btn--small btn--ghost" id="nmHistAllBtn">Full rename history</button>
+        </div>
         </div>
         <div class="nm-layout">
           <div class="nm-layout-left"></div>

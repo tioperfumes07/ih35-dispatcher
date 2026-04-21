@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { milesToRoundMonths, breakdownTimeFromMilesRemaining, clampFleetAvgMilesPerMonth } from '../lib/fleet-mileage-settings.mjs';
+import { milesToFloorMonths, breakdownTimeFromMilesRemaining, clampFleetAvgMilesPerMonth } from '../lib/fleet-mileage-settings.mjs';
 
-test('milesToRoundMonths uses ROUND and min 1', () => {
-  assert.equal(milesToRoundMonths(25000, 12000), 2);
-  assert.equal(milesToRoundMonths(50000, 12000), 4);
-  assert.equal(milesToRoundMonths(150000, 12000), 13);
-  assert.equal(milesToRoundMonths(40000, 12000), 3);
-  assert.equal(milesToRoundMonths(200000, 12000), 17);
+test('milesToFloorMonths uses FLOOR and min 1', () => {
+  assert.equal(milesToFloorMonths(25000, 12000), 2);
+  assert.equal(milesToFloorMonths(50000, 12000), 4);
+  assert.equal(milesToFloorMonths(150000, 12000), 12);
+  assert.equal(milesToFloorMonths(40000, 12000), 3);
+  assert.equal(milesToFloorMonths(200000, 12000), 16);
 });
 
 test('clampFleetAvgMilesPerMonth enforces bounds', () => {

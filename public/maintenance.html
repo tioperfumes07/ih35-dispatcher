@@ -2039,20 +2039,25 @@
               </div>
               <div id="maintRmSubpaneDue" class="hidden">
                 <p class="mini-note" style="margin:0 0 8px">
-                  Same PM logic as <strong>Reports → PM schedule</strong> (miles remaining, weeks at fleet pace, status colors). Use <strong>Refresh due schedule</strong> after odometer or fleet average changes.
+                  Same PM logic as <strong>Reports → PM schedule</strong> (miles remaining, fleet-pace ETA: months / weeks / days, status colors). Use <strong>Refresh due schedule</strong> after odometer or fleet average changes.
                 </p>
                 <button type="button" class="btn" onclick="loadMaintRmDueSchedule()" style="margin-bottom:10px">Refresh due schedule</button>
                 <div id="maintRmDueScheduleHost" class="mini-note">Open <strong>Due schedule</strong> and press Refresh to load.</div>
                 <details class="maint-plain-schedule" style="margin-top:16px">
                   <summary style="cursor:pointer;font-weight:600;font-size:13px">Plain language schedule</summary>
                   <div class="mini-note" style="margin-top:10px;line-height:1.55;max-width:68ch">
+                    <p style="margin:0 0 10px">
+                      At the fleet pace in <strong>Settings → Fleet defaults</strong> (default <strong>12,000</strong> mi/truck/mo), calendar hints use
+                      <strong>floor(miles ÷ fleet average)</strong>, minimum 1 month. Examples: 25k ≈ 2 mo; 50k ≈ 4 mo; 100k ≈ 8 mo; 200k ≈ 16 mo; 250k ≈ 20 mo;
+                      500k ≈ 41 mo. See <strong>Lists → Service types</strong> for the full catalog (including Volvo / Peterbilt overrides).
+                    </p>
                     <p style="margin:0 0 10px"><strong>Every 2 months</strong> (or 25,000 miles): engine oil and filter; fuel filters (primary + secondary); brake adjustment all axles; fifth wheel lubrication and inspection; steering linkage inspection; lights and safety equipment check.</p>
                     <p style="margin:0 0 10px"><strong>Every 4 months</strong> (or 50,000 miles): all 2-month items plus air filter; brake lining thickness; tire rotation and tread depth; battery load test; coolant concentration (SCA).</p>
                     <p style="margin:0 0 10px"><strong>Every 8 months</strong> (or 100,000 miles): all 4-month items plus wheel bearing inspection; cab air suspension; wheel end / hub oil; belt and tensioner; alignment; exhaust inspection.</p>
                     <p style="margin:0 0 10px"><strong>Every 12 months</strong> (or 150,000 miles): all 8-month items plus air dryer cartridge; annual DOT inspection; complete brake inspection; fuel tank and lines; full chassis lube.</p>
-                    <p style="margin:0 0 10px"><strong>Every 18 months</strong> (or 200,000 miles): all 12-month items plus EGR cleaning; DPF inspection/cleaning as needed; cooling system flush if needed.</p>
-                    <p style="margin:0 0 10px"><strong>Every 21 months</strong> (or 250,000 miles): differential / axle oil; transfer case if applicable.</p>
-                    <p style="margin:0"><strong>Every 42 months</strong> (or 500,000 miles): transmission fluid/filter if applicable; injector service; major engine inspection.</p>
+                    <p style="margin:0 0 10px"><strong>Every 16 months</strong> (or 200,000 miles): all 12-month items plus EGR cleaning; DPF inspection/cleaning as needed; cooling system flush if needed.</p>
+                    <p style="margin:0 0 10px"><strong>Every 20 months</strong> (or 250,000 miles): differential / axle oil; alternator; transfer case if applicable.</p>
+                    <p style="margin:0"><strong>Every 41 months</strong> (or 500,000 miles): transmission fluid/filter if applicable; injector service; DPF/SCR replacement class items; major engine inspection.</p>
                   </div>
                 </details>
               </div>
@@ -12862,7 +12867,7 @@
       const txt = (avg, extra) =>
         `Fleet average: <strong>${Number(avg).toLocaleString(
           'en-US'
-        )}</strong> miles per truck per month. ${extra || 'Time estimates use this pace (FLOOR months from miles).'} <a href="/settings.html" class="linkish">Change in Settings → Company</a>.`;
+        )}</strong> miles per truck per month. ${extra || 'All time estimates based on this rate.'} <a href="/settings.html#fleet-defaults" class="linkish">Change →</a>`;
       const ids = ['erpFleetMileageBannerRm', 'erpFleetMileageBannerRep', 'erpFleetMileageBannerCat'];
       try {
         const d = await j('/api/maintenance/fleet-mileage-settings');

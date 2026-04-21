@@ -45,11 +45,13 @@ body.erp-maintenance .erp-main-body .erp-reports-main {
   min-height: 0;
 }
 
-/* Rule 14 target width (~180px), still collapses on narrow viewports (see redesign 900px breakpoint). */
+/* Report nav list: fixed column so the hub + tabs never slide under the sidebar on mid-width windows. */
 body.erp-maintenance .erp-reports-sidebar {
-  flex: 0 0 min(11.25rem, 100%);
-  width: min(11.25rem, 100%);
+  flex: 0 0 220px;
+  width: 220px;
+  flex-shrink: 0;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Maintenance modals: match centered modal pattern + notched devices. */
@@ -1496,33 +1498,24 @@ body.erp-maintenance #acct-bill-pay .mr-bp-log-wrap {
    Rule 18 — Reports hub: category tiles above subtabs
    ============================================================================= */
 body.erp-maintenance .erp-reports-hub {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   padding: 4px 2px 2px;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 4px;
   min-width: 0;
 }
 
-@media (max-width: 1100px) {
-  body.erp-maintenance .erp-reports-hub {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 520px) {
-  body.erp-maintenance .erp-reports-hub {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 body.erp-maintenance .erp-reports-hub__card {
+  flex: 1 1 200px;
+  min-width: min(100%, 200px);
+  max-width: 100%;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-bg-header);
   padding: 10px 10px 8px;
-  min-width: 0;
+  box-sizing: border-box;
 }
 
 body.erp-maintenance .erp-reports-hub__label {
@@ -1647,7 +1640,7 @@ body.erp-maintenance .erp-reports-roadmap {
   }
 
   body.erp-maintenance #section-reports .erp-reports-hub {
-    gap: 8px;
+    gap: 12px;
     padding: 2px max(2px, env(safe-area-inset-left, 0px)) 0 max(2px, env(safe-area-inset-right, 0px));
   }
 
@@ -2997,7 +2990,9 @@ body.erp-maintenance .rep-catalog-stage .rep-cat-tabs--bar {
   flex-shrink: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  align-items: flex-end;
+  gap: 0 4px;
+  row-gap: 6px;
   margin: 0 0 8px;
   padding: 0;
   border-bottom: 1px solid var(--color-border);
@@ -3937,6 +3932,18 @@ body.erp-maintenance #erpApp.erp-master #repIntegrityBody.erp-int-dash-card-host
 }
 body.erp-maintenance #erpApp.erp-master #repIntegrityBody.erp-int-dash-card-host > .erp-int-alert-card {
   margin: 0;
+}
+
+/* Integrity tab: any wide <table> (e.g. FROM / TO / …) scrolls horizontally; auto layout preserves column content. */
+body.erp-maintenance #section-reports #rep-integrity .erp-int-dash-card-host.erp-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+body.erp-maintenance #section-reports #rep-integrity .erp-table-scroll table {
+  table-layout: auto;
+  width: max-content;
+  max-width: none;
+  min-width: 100%;
 }
 
 /* =============================================================================

@@ -376,7 +376,7 @@ tr:nth-child(even){background:#f9f9f9}
     const keys = columns.map(c => c.key);
     const th = columns
       .map(c => {
-        if (c.key === 'weeksRemainingDisplay') {
+        if (c.key === 'fleetPaceEta') {
           return `<th data-k="${escapeHtml(c.key)}">${escapeHtml(c.label)}<div class="rep-pm-head-note">Based on fleet avg ${fa.toLocaleString(
             'en-US'
           )} mi/month</div></th>`;
@@ -391,7 +391,7 @@ tr:nth-child(even){background:#f9f9f9}
           .map(k => {
             const raw = r[k];
             const isOverdueWeeks =
-              k === 'weeksRemainingDisplay' && String(r.status || '') === 'red' && String(raw).toLowerCase().includes('overdue');
+              k === 'fleetPaceEta' && String(r.status || '') === 'red' && String(raw).toLowerCase().includes('overdue');
             const inner = isOverdueWeeks
               ? `<span class="rep-pm-weeks-overdue">${escapeHtml(String(raw ?? ''))}</span>`
               : escapeHtml(String(raw ?? ''));
