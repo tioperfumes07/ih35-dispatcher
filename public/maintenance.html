@@ -3178,6 +3178,7 @@
               <span id="apTxnQboBannerText"></span>
             </div>
             <div id="apValidationBanner" class="erp-validation-banner hidden" role="region" aria-live="polite"></div>
+            <div id="apDriverIntegrityStrip" class="maint-driver-integrity-strip hidden" aria-live="polite"></div>
             <div class="panel-body form-stack qb-doc-body">
               <div class="ap-expense-form">
                 <div class="ap-exp-grid">
@@ -3210,10 +3211,10 @@
                         id="apErpDriverSearch"
                         class="qb-in"
                         list="maintDriverOptions"
-                        placeholder="Select driver (optional)"
+                        placeholder="Driver (assign for integrity)"
                         autocomplete="off"
-                        oninput="resolveApErpDriverSearch()"
-                        onblur="resolveApErpDriverSearch()"
+                        oninput="resolveApErpDriverSearch(); erpRefreshApDriverIntegrityStrip();"
+                        onblur="resolveApErpDriverSearch(); erpRefreshApDriverIntegrityStrip();"
                       />
                     </div>
                     <div class="ap-exp-field hidden" id="apAccidentDotWrap">
@@ -3870,6 +3871,7 @@
                     </div>
                   </div>
                 </div>
+                <div id="fuelDriverIntegrityStrip" class="maint-driver-integrity-strip hidden" aria-live="polite"></div>
                 <div class="panel-body form-stack qb-doc-body">
                   <div
                     class="erp-fuel-txn-header fuel-manual-header-bar"
@@ -3963,10 +3965,10 @@
                               id="fuelManualDriverSearch"
                               class="qb-in"
                               list="maintDriverOptions"
-                              placeholder="Driver name (from vendors)"
+                              placeholder="Driver (assign for integrity)"
                               autocomplete="off"
-                              oninput="resolveFuelManualDriverSearch()"
-                              onblur="resolveFuelManualDriverSearch()"
+                              oninput="resolveFuelManualDriverSearch(); erpRefreshFuelDriverIntegrityStrip();"
+                              onblur="resolveFuelManualDriverSearch(); erpRefreshFuelDriverIntegrityStrip();"
                             />
                           </div>
                         </div>
