@@ -199,13 +199,15 @@
             <input id="coIfta" />
             <label>State of operations (home state)</label>
             <input id="coHomeState" maxlength="8" />
+            <h3 id="fleet-defaults" style="font-size:14px;margin:16px 0 8px">Fleet defaults</h3>
             <label>PM interval (miles)</label>
             <input id="coPmMiles" type="number" min="1000" step="500" />
             <label>Average miles per truck per month</label>
             <input id="coFleetAvgMo" type="number" min="1000" max="30000" step="100" />
             <p class="mini-note" style="margin:0 0 8px;max-width:52ch">
-              Used to convert mileage intervals to estimated months (PM schedule, predictors, catalog). Stored in Postgres
-              <code>erp_fleet_defaults</code>. Saving updates month columns across service types, vehicle schedules, and parts reference.
+              Used for PM ETA (months / weeks / days), service catalog months, parts reference months, maintenance predictor, and 12‑month cost forecast projections. Stored in Postgres
+              <code>erp_fleet_defaults</code> as <code>fleet_avg_miles_per_month</code> (default 12,000). Saving recalculates month columns as
+              <strong>floor(miles ÷ this value)</strong>, minimum 1, across service types, vehicle schedules, and parts reference.
             </p>
             <button type="button" id="btnFleetAvgSave" onclick="saveFleetAvgMilesPerMonth()">Save fleet pace</button>
             <label>Random drug test program note</label>
