@@ -383,8 +383,20 @@
           appendRow('warn', 'QuickBooks: not configured on server.');
           worst = Math.max(worst, 1);
         } else if (qj.connected) {
-          const nm = qj.companyName ? String(qj.companyName) : '';
-          appendRow('ok', 'QuickBooks: connected' + (nm ? ' — ' + nm : '') + '.');
+          const err = typeof qj.lastRefreshError === 'string' ? qj.lastRefreshError.trim() : '';
+          if (err) {
+            const short = err.length > 160 ? err.slice(0, 157) + '…' : err;
+            appendRow(
+              'warn',
+              'QuickBooks: session saved — last Intuit error: ' +
+                short +
+                ' (use Test connection or re-authorize in Settings).'
+            );
+            worst = Math.max(worst, 1);
+          } else {
+            const nm = qj.companyName ? String(qj.companyName) : '';
+            appendRow('ok', 'QuickBooks: connected' + (nm ? ' — ' + nm : '') + '.');
+          }
         } else {
           appendRow('warn', 'QuickBooks: not connected — open Settings to authorize.');
           worst = Math.max(worst, 1);

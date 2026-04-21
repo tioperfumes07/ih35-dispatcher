@@ -2,8 +2,6 @@
  * Core read-only ERP HTTP surfaces expected by the maintenance shell and `scripts/system-smoke.mjs`.
  */
 
-import fs from 'fs';
-import path from 'path';
 import { getPool, dbQuery } from '../lib/db.mjs';
 import { DEDUPE_SUPPORT_TABLE_NAMES } from '../lib/ensure-app-database-objects.mjs';
 import { readFullErpJson, writeFullErpJson } from '../lib/read-erp.mjs';
@@ -23,26 +21,34 @@ import {
   clampFleetAvgMilesPerMonth
 } from '../lib/fleet-mileage-settings.mjs';
 import { MAINTENANCE_SERVICE_CATALOG_SEEDS } from '../lib/maintenance-service-catalog.mjs';
-import { DATA_DIR } from '../lib/data-dirs.mjs';
+import { readQboStore } from '../lib/qbo-attachments.mjs';
 
-const QBO_TOKENS = path.join(DATA_DIR, 'qbo_tokens.json');
-
-function readQboStore() {
-  try {
-    if (!fs.existsSync(QBO_TOKENS)) return { tokens: null };
-    return JSON.parse(fs.readFileSync(QBO_TOKENS, 'utf8'));
-  } catch {
-    return { tokens: null };
-  }
-}
+const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
 
 function qboConnectionFlags() {
   const s = readQboStore();
   const tok = s?.tokens;
-  const connected = Boolean(tok?.refresh_token && tok?.access_token);
+  const realmId = tok?.realmId || tok?.realm_id;
+  /** OAuth looks complete (company linked). Access token may still be expired — refresh runs on demand. */
+  const connected = Boolean(tok?.refresh_token && realmId);
   const configured =
     Boolean(process.env.QBO_CLIENT_ID && process.env.QBO_CLIENT_SECRET) || Boolean(tok?.refresh_token);
-  return { configured, connected, companyName: s?.companyName || s?.company_name || '' };
+
+  const h = s?.connectionHealth;
+  const lastErr = typeof h?.lastError === 'string' ? h.lastError.trim() : '';
+  const lastAt = h?.lastErrorAt ? Date.parse(String(h.lastErrorAt)) : NaN;
+  const errRecent =
+    lastErr &&
+    Number.isFinite(lastAt) &&
+    Date.now() - lastAt < QBO_ERR_STALE_MS;
+
+  return {
+    configured,
+    connected,
+    companyName: s?.companyName || s?.company_name || '',
+    lastRefreshError: errRecent ? lastErr : undefined,
+    lastRefreshErrorAt: errRecent ? String(h.lastErrorAt) : undefined
+  };
 }
 
 /**
@@ -115,12 +121,14 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/qbo/status', (_req, res) => {
-    const { configured, connected, companyName } = qboConnectionFlags();
+    const { configured, connected, companyName, lastRefreshError, lastRefreshErrorAt } = qboConnectionFlags();
     res.json({
       ok: true,
       configured,
       connected,
       companyName: companyName || undefined,
+      lastRefreshError: lastRefreshError || undefined,
+      lastRefreshErrorAt: lastRefreshErrorAt || undefined,
       catalogUiPollMinutes: 0,
       catalogLastSyncedAt: null
     });

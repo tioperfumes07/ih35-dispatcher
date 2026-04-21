@@ -10,8 +10,8 @@ export function IntegrationOfflineBanner() {
     recheckAll,
   } = useIntegrationConnections()
 
-  const anyDisconnected =
-    qbo.status === 'disconnected' || samsara.status === 'disconnected'
+  const qboNeedsAttention = qbo.status === 'disconnected' || qbo.status === 'degraded'
+  const anyDisconnected = qboNeedsAttention || samsara.status === 'disconnected'
   const showOfflineBanner = !networkOnline
   const showUserCheckingBanner =
     networkOnline && isProbing && userInitiatedProbe
@@ -50,12 +50,14 @@ export function IntegrationOfflineBanner() {
         )}
         {showDisconnectBanner && (
           <p className="integration-banner__text">
-            {qbo.status === 'disconnected' && samsara.status === 'disconnected'
-              ? 'QuickBooks Online and Samsara are disconnected.'
-              : qbo.status === 'disconnected'
-                ? 'QuickBooks Online is disconnected.'
-                : 'Samsara is disconnected.'}{' '}
-            Data may be stale until reconnected.
+            {qbo.status === 'degraded'
+              ? 'QuickBooks Online reported a recent API error (for example token refresh failed). Use Maintenance → Test connection or re-authorize in Settings.'
+              : qbo.status === 'disconnected' && samsara.status === 'disconnected'
+                ? 'QuickBooks Online and Samsara are disconnected.'
+                : qbo.status === 'disconnected'
+                  ? 'QuickBooks Online is disconnected.'
+                  : 'Samsara is disconnected.'}{' '}
+            {qbo.status === 'degraded' ? '' : 'Data may be stale until reconnected.'}
           </p>
         )}
         {(showOfflineBanner || showDisconnectBanner) && (

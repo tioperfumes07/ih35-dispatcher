@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 
-export type IntegrationConnStatus = 'connected' | 'disconnected' | 'checking'
+export type IntegrationConnStatus = 'connected' | 'disconnected' | 'checking' | 'degraded'
 
 export type IntegrationServiceState = {
   status: IntegrationConnStatus
@@ -87,7 +87,7 @@ export function IntegrationConnectionsProvider({ children }: { children: ReactNo
         return
       }
 
-      await delay(550 + Math.floor(Math.random() * 350))
+      await delay(80)
       if (gen !== probeGeneration.current) {
         setUserInitiatedProbe(false)
         return
@@ -99,14 +99,52 @@ export function IntegrationConnectionsProvider({ children }: { children: ReactNo
       }
 
       const now = Date.now()
-      setQbo(() => ({
-        status: 'connected',
-        lastSyncAt: now,
-      }))
-      setSamsara(() => ({
-        status: 'connected',
-        lastSyncAt: now,
-      }))
+      try {
+        const [qRes, hRes] = await Promise.all([
+          fetch('/api/qbo/status', { headers: { Accept: 'application/json' } }),
+          fetch('/api/health', { headers: { Accept: 'application/json' } }),
+        ])
+        const qJson = qRes.ok ? await qRes.json().catch(() => null) : null
+        const hJson = hRes.ok ? await hRes.json().catch(() => null) : null
+
+        if (gen !== probeGeneration.current) {
+          setUserInitiatedProbe(false)
+          return
+        }
+
+        let qboStatus: IntegrationConnStatus = 'disconnected'
+        if (qRes.ok && qJson && typeof qJson === 'object') {
+          if (qJson.configured && qJson.connected) {
+            if (typeof qJson.lastRefreshError === 'string' && qJson.lastRefreshError.trim()) {
+              qboStatus = 'degraded'
+            } else {
+              qboStatus = 'connected'
+            }
+          }
+        }
+
+        let samStatus: IntegrationConnStatus = 'disconnected'
+        if (hRes.ok && hJson && typeof hJson === 'object' && hJson.hasSamsaraToken) {
+          samStatus = 'connected'
+        }
+
+        setQbo((prev) => ({
+          status: qboStatus,
+          lastSyncAt: qboStatus === 'connected' || qboStatus === 'degraded' ? now : prev.lastSyncAt,
+        }))
+        setSamsara(() => ({
+          status: samStatus,
+          lastSyncAt: samStatus === 'connected' ? now : null,
+        }))
+      } catch {
+        if (gen !== probeGeneration.current) {
+          setUserInitiatedProbe(false)
+          return
+        }
+        applyOffline()
+        return
+      }
+
       setIsProbing(false)
       setUserInitiatedProbe(false)
     },
