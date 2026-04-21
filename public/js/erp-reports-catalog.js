@@ -1109,7 +1109,7 @@ ${extraCss}
         chart.classList.remove('hidden');
         const benchPct = Number(data.meta.benchmarkRepairPct);
         const pctLabel = Number.isFinite(benchPct) ? benchPct : 30;
-        chart.innerHTML = `<canvas height="260"></canvas><p class="mini-note" style="margin:6px 0 0">Dashed line: ${pctLabel}% of period total spend (repair benchmark band).</p>`;
+        chart.innerHTML = `<canvas height="260"></canvas><p class="mini-note" style="margin:6px 0 0">Red <strong>Repair</strong> is stacked from the baseline first. Dashed line = repair $ ceiling if repair were exactly ${pctLabel}% of period total (compare repair height to the line).</p>`;
         const canvas = chart.querySelector('canvas');
         const labels = data.rows.map(r => String(r.month ?? '—'));
         const series = data.meta.chartSeries || [];
@@ -1123,7 +1123,7 @@ ${extraCss}
         const pct = (Number.isFinite(benchPct) ? benchPct : 30) / 100;
         const benchLine = {
           type: 'line',
-          label: `${pctLabel}% of total (benchmark)`,
+          label: `Repair ceiling (${pctLabel}% of total $)`,
           data: data.rows.map(r => (Number(r.totalDollars) || 0) * pct),
           borderColor: '#6200ea',
           borderWidth: 2,

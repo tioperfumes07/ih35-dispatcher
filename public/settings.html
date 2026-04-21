@@ -204,7 +204,8 @@
             <label>Average miles per truck per month</label>
             <input id="coFleetAvgMo" type="number" min="1000" max="30000" step="100" />
             <p class="mini-note" style="margin:0 0 8px;max-width:52ch">
-              Used to convert mileage intervals to estimated months (PM schedule, predictors, catalog). Stored in Postgres
+              Used to convert mileage intervals to estimated months (PM schedule, predictors, catalog). Stored month columns use
+              <strong>FLOOR(miles ÷ this pace)</strong>, minimum 1, then a few catalog overrides. Stored in Postgres
               <code>erp_fleet_defaults</code>. Saving updates month columns across service types, vehicle schedules, and parts reference.
             </p>
             <button type="button" id="btnFleetAvgSave" onclick="saveFleetAvgMilesPerMonth()">Save fleet pace</button>

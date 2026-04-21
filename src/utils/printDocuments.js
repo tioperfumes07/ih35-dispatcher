@@ -17,8 +17,8 @@
       background: #ffffff;
       line-height: 1.4;
     }
-    @page { size: letter portrait; margin: 0.65in 0.65in 0.75in 0.65in; }
-    .pwrap { max-width: 7in; margin: 0 auto 0.55in; padding-bottom: 0.15in; }
+    @page { size: letter portrait; margin: 0.65in; }
+    .pwrap { max-width: 7in; margin: 0 auto 0.55in; padding-bottom: 0.35in; }
     .letterhead {
       display: flex;
       justify-content: space-between;
@@ -38,7 +38,7 @@
       border: 1.5pt solid #1a1f36;
       padding: 3pt 10pt;
     }
-    .doc-sub { font-size: 6.5pt; color: #555; margin-top: 3pt; }
+    .doc-sub { font-size: 7pt; color: #555; margin-top: 3pt; }
     .section {
       border: 0.5pt solid #ccc;
       margin-bottom: 7pt;
@@ -76,7 +76,7 @@
       display: block;
     }
     .field-value.large { font-size: 11pt; font-weight: bold; color: #111; }
-    .border-left { border-left: 1pt solid #ccc; padding-left: 8pt; }
+    .border-left { border-left: 0.5pt solid #ccc; padding-left: 8pt; }
     table { width: 100%; border-collapse: collapse; font-size: 7pt; margin-bottom: 4pt; }
     thead { display: table-header-group; }
     thead tr { background: #1a1f36; }
@@ -101,16 +101,16 @@
     .totals-row td {
       font-weight: bold;
       background: #f0f0f0;
-      border-top: 1pt solid #999;
-      font-size: 7pt;
+      border-top: 0.5pt solid #ccc;
+      font-size: 8pt;
     }
     .subtotal-bar {
       display: flex;
       justify-content: flex-end;
       gap: 20pt;
-      padding: 3pt 5pt;
+      padding: 4pt 5pt;
       border-top: 0.5pt solid #ccc;
-      font-size: 7pt;
+      font-size: 8pt;
       font-weight: bold;
     }
     .grand-total {
@@ -145,9 +145,30 @@
       border: 0.5pt solid #ccc;
       padding: 5pt 7pt;
       min-height: 28pt;
-      font-size: 8pt;
-      color: #111;
+      font-size: 7.5pt;
+      color: #333;
       background: #fafafa;
+    }
+    .both-notice {
+      font-size: 7pt;
+      color: #1557a0;
+      background: #f0f7ff;
+      border: 0.5pt solid #c5d9f7;
+      padding: 5pt 7pt;
+      margin-bottom: 8pt;
+      line-height: 1.45;
+    }
+    .cost-table-label {
+      font-size: 6.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #555;
+      margin: 6pt 0 3pt;
+    }
+    .cost-dash-divider {
+      border-top: 0.75pt dashed #999;
+      margin: 8pt 0;
     }
     .map-container { display: flex; gap: 8pt; padding: 0; align-items: flex-start; }
     .map-svg-wrap {
@@ -158,7 +179,7 @@
       border: 0.5pt solid #ddd;
     }
     .map-svg-wrap svg { width: 100%; height: auto; display: block; }
-    .map-side { flex: 1; border-left: 1pt solid #ccc; padding-left: 8pt; min-width: 0; }
+    .map-side { flex: 1; border-left: 0.5pt solid #ccc; padding-left: 8pt; min-width: 0; }
     .position-table table thead tr { background: #1a1f36; }
     .position-table table thead th { border-color: #1a1f36; }
     .sig-row { display: flex; gap: 14pt; margin-top: 16pt; border-top: 0.5pt solid #ccc; padding-top: 6pt; }
@@ -175,13 +196,36 @@
       bottom: 0;
       left: 0;
       right: 0;
+      z-index: 100;
       border-top: 0.5pt solid #ccc;
-      padding: 3pt 0.65in;
+      padding: 4pt 0.65in;
       font-size: 6.5pt;
       color: #888;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 8pt;
       background: #ffffff;
+    }
+    .page-footer__mid {
+      text-align: center;
+      flex: 1;
+      min-width: 0;
+      padding: 0 6pt;
+    }
+    .page-footer__pg {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    @media print {
+      .page-footer__pg::after {
+        content: "Page " counter(page) " of " counter(pages);
+      }
+    }
+    @media screen {
+      .page-footer__pg::after {
+        content: "Page 1";
+      }
     }
     .pill {
       display: inline-block;
@@ -546,36 +590,41 @@
     return `<div class="sig-row">${rows}</div>`;
   }
 
-  function buildPageFooter(leftText, centerText, rightText) {
-    const left = leftText || 'IH 35 Transportation LLC — Confidential';
+  function buildPageFooter(companyName, centerText) {
+    const left = companyName || 'IH 35 Transportation LLC';
     const c = centerText || '';
-    const r = rightText || 'Page 1';
-    return `<div class="page-footer"><span>${esc(left)}</span><span style="text-align:center;flex:1;padding:0 6pt">${esc(
+    return `<div class="page-footer"><span>${esc(left)}</span><span class="page-footer__mid">${esc(
       c
-    )}</span><span>${esc(r)}</span></div>`;
+    )}</span><span class="page-footer__pg"></span></div>`;
   }
 
   function buildPaymentStub(billNumber, vendor, dueDate, amountDue) {
     return `<div class="payment-stub">
-      <div class="stub-header">— Payment stub — Detach and return with payment —</div>
-      <div class="stub-row"><span>Bill #: ${esc(billNumber)}</span><span>Vendor: ${esc(vendor)}</span></div>
-      <div class="stub-row"><span>Due: ${esc(formatIsoDateShortPlain(dueDate))}</span><span>Amount due: ${esc(
+      <div class="stub-header">— Payment stub — Detach and return —</div>
+      <div class="stub-row"><span>Bill# ${esc(billNumber)}</span><span>Vendor: ${esc(vendor)}</span></div>
+      <div class="stub-row"><span>Due date: ${esc(formatIsoDateShortPlain(dueDate))}</span><span>Amount due: ${esc(
         Number.isFinite(Number(amountDue)) ? money(Number(amountDue)) : String(amountDue || '—')
       )}</span></div>
-      <div class="stub-fill"><span>Check #: _________________</span><span>Amount paid: $______________</span><span>Date: _____________________</span></div>
+      <div class="stub-fill"><span>Check# _________________</span><span>Amount paid $_______________</span><span>Date _____________________</span></div>
     </div>`;
   }
 
-  function sanitizeFilename(str) {
-    if (!str) return '';
-    return String(str)
+  function sanitizeFilenameSegment(str) {
+    if (str == null || str === '') return '';
+    let s = String(str)
+      .trim()
       .replace(/\s+/g, '-')
       .replace(/[/\\:*?"<>|(),']/g, '')
       .replace(/&/g, 'and')
       .replace(/#/g, 'No')
       .replace(/--+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, 40);
+      .replace(/^-|-$/g, '');
+    if (s.length > 40) s = s.slice(0, 40).replace(/-+$/g, '');
+    return s;
+  }
+
+  function sanitizeFilename(str) {
+    return sanitizeFilenameSegment(str);
   }
 
   function formatDateForFilename(dateStr) {
@@ -619,19 +668,12 @@
     let segments = [];
     const dt = String(documentType || '');
     if (WO_TITLE[dt]) {
+      segments = [d.unit || d.unitNumber, WO_FILE_LABEL[dt] || 'WorkOrder', d.serviceType, d.vendor, formatDateForFilename(d.serviceDate)];
+    } else if (dt === 'expense' || dt === 'maintenance-expense' || dt === 'repair-expense') {
       segments = [
-        sanitizeFilename(d.unit || d.unitNumber),
-        WO_FILE_LABEL[dt] || 'WorkOrder',
-        sanitizeFilename(d.serviceType),
-        sanitizeFilename(d.vendor),
-        formatDateForFilename(d.serviceDate)
-      ];
-    } else if (dt === 'expense' || dt === 'maintenance-expense') {
-      segments = [
-        sanitizeFilename(d.unit || d.unitNumber),
+        d.vendor || d.payee,
         'Expense',
-        sanitizeFilename(d.serviceType || d.refNumber || d.refNo),
-        sanitizeFilename(d.vendor || d.payee),
+        pick(d.refNo, d.refNumber, d.vendorInvoice, d.shopWo),
         formatDateForFilename(d.paymentDate || d.txnDate)
       ];
     } else if (
@@ -642,81 +684,47 @@
       dt === 'vendor-bill' ||
       dt === 'vendor-driver-bill'
     ) {
-      const kind =
-        dt === 'maintenance-bill'
-          ? 'MaintBill'
-          : dt === 'repair-bill'
-            ? 'RepairBill'
-            : dt === 'driver-bill'
-              ? 'DriverBill'
-              : dt === 'vendor-bill'
-                ? 'VendorBill'
-                : 'Bill';
-      segments = [
-        sanitizeFilename(d.unit || d.unitNumber),
-        kind,
-        sanitizeFilename(d.billNumber || d.vendorInvoice),
-        sanitizeFilename(d.vendor || d.payee),
-        formatDateForFilename(d.billDate || d.paymentDate)
-      ];
+      segments = [d.vendor || d.payee, 'Bill', pick(d.billNumber, d.vendorInvoice), formatDateForFilename(d.billDate || d.paymentDate || d.txnDate)];
     } else if (dt === 'fuel-expense') {
-      segments = [
-        sanitizeFilename(d.unit),
-        'FuelExpense',
-        sanitizeFilename(d.vendor || d.payee),
-        formatDateForFilename(d.txnDate || d.paymentDate)
-      ];
+      segments = [d.vendor || d.payee, 'Fuel', d.unit, formatDateForFilename(d.txnDate || d.paymentDate)];
     } else if (dt === 'fuel-bill') {
-      segments = [
-        sanitizeFilename(d.vendor || d.payee),
-        'FuelBill',
-        sanitizeFilename(d.billNumber || d.vendorInvoice),
-        formatDateForFilename(d.billDate || d.paymentDate)
-      ];
+      segments = [d.vendor || d.payee, 'FuelBill', pick(d.billNumber, d.vendorInvoice), formatDateForFilename(d.billDate || d.paymentDate || d.txnDate)];
     } else if (dt === 'payment-receipt' || dt === 'bill-payment') {
-      segments = [
-        sanitizeFilename(d.vendor),
-        'PaymentReceipt',
-        sanitizeFilename(d.paymentNumber),
-        formatDateForFilename(d.paymentDate)
-      ];
+      segments = [d.vendor || d.payee, 'Payment', pick(d.paymentNumber, d.checkNum, d.checkNumber), formatDateForFilename(d.paymentDate)];
     } else if (dt === 'multiple-bills') {
       const bills = Array.isArray(d.bills) ? d.bills : [];
       const firstNum = bills[0] && bills[0].billNumber;
       const lastNum = bills.length ? bills[bills.length - 1].billNumber : '';
-      segments = [
-        sanitizeFilename(d.vendor),
-        'Bills',
-        sanitizeFilename(firstNum),
-        'to',
-        sanitizeFilename(lastNum),
-        formatDateForFilename(new Date().toISOString())
-      ];
-    } else {
-      segments = [sanitizeFilename(dt), formatDateForFilename(new Date().toISOString())];
-    }
-<<<<<<< Updated upstream
-    let base = segments.filter(Boolean).join('-');
-    if (base.length > 120) base = base.slice(0, 120);
-    return base + '.' + ext;
-=======
-    if (dt === 'report') {
+      const span =
+        firstNum && lastNum
+          ? String(firstNum) === String(lastNum)
+            ? String(firstNum)
+            : `${String(firstNum)}-to-${String(lastNum)}`
+          : pick(firstNum, lastNum);
+      segments = [d.vendor, 'Bills', span, formatDateForFilename(new Date().toISOString())];
+    } else if (dt === 'report') {
       const sd = formatDateForFilename(d.startDate);
       const ed = formatDateForFilename(d.endDate);
       const range = sd && ed && sd !== ed ? `${sd}-to-${ed}` : sd || ed || formatDateForFilename(new Date().toISOString());
-      const unitSeg = cleanStr(d.unitFilter) || '';
-      return joinFilenameSegments(['Report', d.reportName || 'Dataset', unitSeg, range], ext);
+      segments = ['Report', d.reportName || 'Dataset', d.unitFilter || '', range];
+    } else {
+      segments = [dt, formatDateForFilename(new Date().toISOString())];
     }
-    return joinFilenameSegments([dt, formatDateForFilename(new Date().toISOString())], ext);
->>>>>>> Stashed changes
+    let base = segments
+      .map(x => (x == null || x === '' ? '' : sanitizeFilenameSegment(String(x))))
+      .filter(Boolean)
+      .join('-')
+      .replace(/--+/g, '-');
+    if (base.length > 120) base = base.slice(0, 120).replace(/-+$/g, '');
+    return base + '.' + ext;
   }
 
-  function wrapHtml(title, inner, footerParts) {
+  function wrapHtml(title, inner, footerParts, letterData) {
     const f = footerParts || {};
+    const company = cleanStr(f.left) || getCompanyInfo(letterData || {}).name;
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>${esc(title)}</title><style>${PRINT_CSS}</style></head><body><div class="pwrap">${inner}</div>${buildPageFooter(
-      f.left,
-      f.center,
-      f.right
+      company,
+      f.center
     )}</body></html>`;
   }
 
@@ -917,7 +925,7 @@
     const foot = {
       center: [title, pick(d.unit, d.unitNumber, '—'), formatIsoDateShortPlain(pick(d.serviceDate, ''))].filter(Boolean).join(' · ')
     };
-    return wrapHtml(fn, parts.join(''), foot);
+    return wrapHtml(fn, parts.join(''), foot, d);
   }
 
   function buildExpenseHtml(data) {
@@ -972,7 +980,7 @@
       sig;
     return wrapHtml(generateFilename('expense', d, 'pdf').replace(/\.pdf$/i, ''), body, {
       center: ['EXPENSE RECORD', ref, formatIsoDateShortPlain(d.paymentDate || '')].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function buildBillHtml(data) {
@@ -999,7 +1007,7 @@
     const body = co + buildSection('1', 'Bill information', s1 + extra) + buildSection('2', 'Bill lines', cost) + memo + stub;
     return wrapHtml(generateFilename('bill', d, 'pdf').replace(/\.pdf$/i, ''), body, {
       center: ['BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, ''))].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function buildFuelBillHtml(data) {
@@ -1077,7 +1085,7 @@
       stub;
     return wrapHtml(generateFilename('fuel-bill', d, 'pdf').replace(/\.pdf$/i, ''), bodyHtml, {
       center: ['FUEL BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, ''))].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function buildFuelTxnBlock(d, includeExtraRow) {
@@ -1151,7 +1159,7 @@
     const bodyHtml = co + sec1 + buildSection('2', 'Fuel cost lines', tbl) + memo + sig;
     return wrapHtml(generateFilename('fuel-expense', d, 'pdf').replace(/\.pdf$/i, ''), bodyHtml, {
       center: ['FUEL EXPENSE', d.unit || '', formatIsoDateShortPlain(d.txnDate || d.paymentDate || '')].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function parseMoneyCell(s) {
@@ -1225,7 +1233,7 @@
       sig;
     return wrapHtml(generateFilename('payment-receipt', d, 'pdf').replace(/\.pdf$/i, ''), body, {
       center: ['PAYMENT RECEIPT', d.vendor || '', formatIsoDateShortPlain(d.paymentDate || '')].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function buildMultipleBillsHtml(data) {
@@ -1284,7 +1292,7 @@
     const body = co + buildSection('1', 'Series information', s1) + buildSection('2', 'Bill schedule', tbl);
     return wrapHtml(generateFilename('multiple-bills', d, 'pdf').replace(/\.pdf$/i, ''), body, {
       center: ['BILL SERIES SUMMARY', d.vendor || ''].filter(Boolean).join(' · ')
-    });
+    }, d);
   }
 
   function generatePrintDoc(documentType, data) {
@@ -1308,7 +1316,8 @@
       t || 'document',
       buildLetterhead(data, String(t || 'DOCUMENT').toUpperCase(), '') +
         `<div class="note-box"><pre style="white-space:pre-wrap;font:inherit">${esc(JSON.stringify(data, null, 2).slice(0, 4000))}</pre></div>`,
-      { center: String(t || 'DOCUMENT').toUpperCase() }
+      { center: String(t || 'DOCUMENT').toUpperCase() },
+      data
     );
   }
 

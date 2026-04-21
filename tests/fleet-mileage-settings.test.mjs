@@ -1,25 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  milesToFloorMonths,
   milesToRoundMonths,
   breakdownTimeFromMilesRemaining,
   clampFleetAvgMilesPerMonth,
   formatIntervalDualLine
 } from '../lib/fleet-mileage-settings.mjs';
 
-test('milesToRoundMonths uses ROUND (matches catalog SQL) and min 1 when miles > 0', () => {
-  assert.equal(milesToRoundMonths(25000, 12000), 2);
-  assert.equal(milesToRoundMonths(50000, 12000), 4);
-  assert.equal(milesToRoundMonths(150000, 12000), 13);
-  assert.equal(milesToRoundMonths(40000, 12000), 3);
-  assert.equal(milesToRoundMonths(200000, 12000), 17);
+test('milesToFloorMonths uses FLOOR (matches catalog SQL) and min 1 when miles > 0', () => {
+  assert.equal(milesToFloorMonths(25000, 12000), 2);
+  assert.equal(milesToFloorMonths(50000, 12000), 4);
+  assert.equal(milesToFloorMonths(150000, 12000), 12);
+  assert.equal(milesToFloorMonths(40000, 12000), 3);
+  assert.equal(milesToFloorMonths(200000, 12000), 16);
 });
 
-test('milesToRoundMonths returns null for missing or non-positive miles', () => {
-  assert.equal(milesToRoundMonths(null, 12000), null);
-  assert.equal(milesToRoundMonths('', 12000), null);
-  assert.equal(milesToRoundMonths(0, 12000), null);
-  assert.equal(milesToRoundMonths(-100, 12000), null);
+test('milesToRoundMonths is deprecated alias of milesToFloorMonths', () => {
+  assert.equal(milesToRoundMonths(150000, 12000), milesToFloorMonths(150000, 12000));
+});
+
+test('milesToFloorMonths returns null for missing or non-positive miles', () => {
+  assert.equal(milesToFloorMonths(null, 12000), null);
+  assert.equal(milesToFloorMonths('', 12000), null);
+  assert.equal(milesToFloorMonths(0, 12000), null);
+  assert.equal(milesToFloorMonths(-100, 12000), null);
 });
 
 test('clampFleetAvgMilesPerMonth enforces bounds', () => {

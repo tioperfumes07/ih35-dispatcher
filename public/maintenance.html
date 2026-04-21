@@ -84,8 +84,8 @@
         <div class="erp-mb-modal__chrome" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary erp-mb-modal__chrome-fs" id="erpMbMaxBtn" onclick="erpMbToggleMaximize()" title="90% of viewport">Maximize</button>
           <button type="button" class="btn btn--small secondary erp-mb-modal__chrome-fs" id="erpMbFsBtn" onclick="erpMbToggleFullscreen()" title="Fill entire viewport">Full screen</button>
-          <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         </div>
+        <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         <button type="button" class="erp-mb-modal__x" data-erp-mb-close="1" aria-label="Close">×</button>
       </div>
       <div id="mbMainFlow">
@@ -363,8 +363,8 @@
         <div class="maint-workorder-fullmodal__head-viewport" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary" id="maintWoMaxBtn" onclick="maintWoToggleMaximize()" title="90% of viewport" aria-pressed="false">Maximize</button>
           <button type="button" class="btn btn--small secondary" id="maintWoFsBtn" onclick="maintWoToggleFullscreen()" title="Fill viewport (Esc to exit full screen)" aria-pressed="false">Full screen</button>
-          <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         </div>
+        <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
       </div>
       <div id="maintWorkOrderModalBody" class="maint-workorder-fullmodal__body"></div>
@@ -4557,7 +4557,7 @@
             border-left: 3px solid #6b7385;
           }
         </style>
-        <div class="erp-reports-shell">
+        <div class="erp-reports-shell erp-reports-shell--v2">
           <header class="erp-reports-toolbar" role="banner">
             <div class="erp-reports-toolbar__title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
               <span>Reports</span>
@@ -4593,8 +4593,132 @@
           </div>
           <div id="repRoadmapBanner" class="mini-note erp-reports-roadmap hidden" role="status" aria-live="polite"></div>
           <div id="erpFleetMileageBannerRep" class="mini-note print-hide-actions" style="display:none;margin:0 0 10px;padding:8px 12px;border-radius:6px;border:1px solid #c5d9f7;background:#f0f7ff;color:#1557a0;font-size:11px;line-height:1.45"></div>
-          <div id="repCatTabs" class="rep-cat-tabs erp-tab-bar print-hide-actions" role="tablist" aria-label="Report categories"></div>
-          <div id="repCatalogGrid" class="rep-catalog-grid print-hide-actions" aria-live="polite"></div>
+          <header class="erp-reports-pagehead print-hide-actions" aria-labelledby="erpReportsFleetTitle">
+            <h2 id="erpReportsFleetTitle" class="erp-reports-pagehead__title">Fleet reports</h2>
+            <p class="erp-reports-pagehead__sub">Cards by domain, live search, shared filters, exports.</p>
+          </header>
+          <div id="repCatTabs" class="rep-cat-tabs rep-cat-tabs--bar erp-tab-bar print-hide-actions" role="tablist" aria-label="Report categories"></div>
+          <div class="erp-reports-catalog-shell print-hide-actions">
+            <aside id="repFilterSidebar" class="rep-filter-sidebar" aria-label="Report filters">
+              <div class="rep-filter-sidebar__head">
+                <div class="rep-filter-sidebar__title">Filters</div>
+                <div class="rep-filter-sidebar__sub">Draft until you apply.</div>
+              </div>
+              <div class="rep-filter-field">
+                <label class="rep-filter-field__lbl" for="repDateQuick">Date quick</label>
+                <select id="repDateQuick" class="rep-filter-inp">
+                  <option value="30" selected>Last 30 days</option>
+                  <option value="7">Last 7 days</option>
+                  <option value="month">This month</option>
+                  <option value="custom">Custom range</option>
+                </select>
+              </div>
+              <div class="rep-filter-field">
+                <span class="rep-filter-field__lbl">From / To</span>
+                <div class="rep-filter-field__row">
+                  <input type="text" class="rep-filter-inp" id="repDateFrom" placeholder="mm/dd" inputmode="numeric" autocomplete="off" />
+                  <input type="text" class="rep-filter-inp" id="repDateTo" placeholder="mm/dd" inputmode="numeric" autocomplete="off" />
+                </div>
+              </div>
+              <div class="rep-filter-field">
+                <span class="rep-filter-field__lbl">Units (multi)</span>
+                <div id="repMsUnits" class="rep-filter-ms-mount"></div>
+              </div>
+              <div class="rep-filter-field">
+                <span class="rep-filter-field__lbl">Service type (multi)</span>
+                <div id="repMsSvcType" class="rep-filter-ms-mount"></div>
+              </div>
+              <div class="rep-filter-field">
+                <span class="rep-filter-field__lbl">Record type (multi)</span>
+                <div id="repMsRecType" class="rep-filter-ms-mount"></div>
+              </div>
+              <div class="rep-filter-field">
+                <label class="rep-filter-field__lbl" for="repFlLocation">Location</label>
+                <input type="text" class="rep-filter-inp" id="repFlLocation" placeholder="State, terminal..." autocomplete="off" />
+              </div>
+              <div class="rep-filter-field">
+                <label class="rep-filter-field__lbl" for="repLocTypeWo">Location type (WO)</label>
+                <select id="repLocTypeWo" class="rep-filter-inp">
+                  <option value="">Any</option>
+                  <option value="terminal">Terminal</option>
+                  <option value="shop">Shop</option>
+                  <option value="roadside">Roadside</option>
+                </select>
+              </div>
+              <div class="rep-filter-field">
+                <label class="rep-filter-field__lbl" for="repFlVendor">Vendor</label>
+                <input type="text" class="rep-filter-inp" id="repFlVendor" placeholder="Vendor contains..." autocomplete="off" />
+              </div>
+              <div class="rep-filter-field">
+                <label class="rep-filter-field__lbl" for="repFlDriver">Driver</label>
+                <input type="text" class="rep-filter-inp" id="repFlDriver" placeholder="Driver name..." autocomplete="off" />
+              </div>
+              <button type="button" class="btn rep-filter-apply" id="repFlApply">Apply filters</button>
+            </aside>
+            <div class="rep-catalog-stage">
+              <div id="repCatalogGrid" class="rep-catalog-grid" aria-live="polite"></div>
+              <div id="repPartsCatalogHost" class="rep-parts-catalog">
+                <div class="rep-parts-catalog__head">
+                  <span class="rep-parts-catalog__head-title">Parts catalog</span>
+                  <div class="rep-parts-catalog__head-actions">
+                    <button type="button" class="btn rep-parts-toolbar-btn" id="repPartsExportXlsx">Export to Excel</button>
+                    <button type="button" class="btn rep-parts-toolbar-btn rep-parts-toolbar-btn--primary" id="repPartsAddPartBtn">+ Add part</button>
+                    <button type="button" class="rep-parts-fs" id="repPartsFullscreenBtn" title="Full screen" aria-label="Full screen">
+                      <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true">
+                        <path fill="currentColor" d="M1 1h4v2H3v2H1V1zm6 0h4v4H9V3H7V1zM1 7h2v2h2v2H1V7zm8 0h2v4H7V9h2V7z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="rep-parts-catalog__toolbar">
+                  <input
+                    type="search"
+                    class="rep-filter-inp rep-parts-search"
+                    id="repPartsSearch"
+                    placeholder="Search part name, number, category..."
+                    autocomplete="off"
+                  />
+                  <select class="rep-filter-inp rep-parts-cat" id="repPartsCatFilter"><option value="">All categories</option></select>
+                  <select class="rep-filter-inp rep-parts-status" id="repPartsStatusFilter">
+                    <option value="">All status</option>
+                    <option value="in">In stock</option>
+                    <option value="low">Low stock</option>
+                    <option value="out">Out of stock</option>
+                  </select>
+                </div>
+                <div class="rep-parts-table-scroll">
+                  <table class="rep-parts-table" id="repPartsTable">
+                    <thead>
+                      <tr>
+                        <th>Part name</th>
+                        <th>Part #</th>
+                        <th>Category</th>
+                        <th>Stock</th>
+                        <th>Unit cost</th>
+                        <th>Status</th>
+                        <th>Edit</th>
+                      </tr>
+                    </thead>
+                    <tbody id="repPartsTbody">
+                      <tr>
+                        <td colspan="7" class="mini-note">Loading…</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="rep-parts-catalog__newrow" id="repPartsNewRowStrip">
+                  <span class="rep-parts-newrow__lbl">New row:</span>
+                  <input type="text" class="rep-parts-cell-inp rep-parts-new-name" id="repPartsNewName" placeholder="Part name" />
+                  <input type="text" class="rep-parts-cell-inp rep-parts-new-num" id="repPartsNewNum" placeholder="#" />
+                  <select class="rep-parts-cell-inp rep-parts-new-cat" id="repPartsNewCat"><option value="">Category</option></select>
+                  <input type="text" class="rep-parts-cell-inp rep-parts-new-qty" id="repPartsNewQty" placeholder="Qty" />
+                  <input type="text" class="rep-parts-cell-inp rep-parts-new-cost" id="repPartsNewCost" placeholder="$" />
+                  <button type="button" class="btn rep-parts-add-row-btn" id="repPartsAddRowBtn">+ Add row</button>
+                </div>
+                <div class="rep-parts-catalog__hint">Drag column edges to resize · Tab to navigate</div>
+              </div>
+            </div>
+          </div>
           <div class="erp-reports-columns">
             <aside class="erp-reports-sidebar" aria-label="Report categories">
               <details class="mr-rep-nav-group sidebar-group" open>
@@ -6369,6 +6493,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
   <script src="/js/erp-export-util.js"></script>
+  <script src="/js/erp-use-column-resize.js"></script>
   <script src="/js/erp-report-filter-panel.js"></script>
   <script src="/js/erp-reports-catalog.js"></script>
   <script src="/js/erp-accounting-ui-enhancements.js"></script>
@@ -25268,7 +25393,6 @@
     syncApDocTitle();
     refreshApDocTotal();
   </script>
-  <script src="/js/erp-use-column-resize.js"></script>
   <script src="/js/erp-qbo-dedupe.js"></script>
   <script src="/js/erp-name-management.js"></script>
 </body>
