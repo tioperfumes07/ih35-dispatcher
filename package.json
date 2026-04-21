@@ -28,7 +28,6 @@
     "git:sync": "bash scripts/git-auto-sync.sh"
   },
   "dependencies": {
-    "xlsx": "npm:@e965/xlsx@^0.20.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -36,6 +35,10 @@
     "node-cron": "^3.0.3",
     "pdf-parse": "^1.1.4",
     "pdfkit": "^0.18.0",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "xlsx": "npm:@e965/xlsx@^0.20.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
   }
 }
