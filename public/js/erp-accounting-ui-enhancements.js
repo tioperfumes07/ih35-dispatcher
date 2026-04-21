@@ -546,12 +546,20 @@
   function erpOpenAcctWorkflowModal(which) {
     const w = String(which || '').trim();
     const norm = w === 'journal' || w === 'journal-entry' ? 'journal-entry' : w;
+    if (norm === 'fuel-fast-entry') {
+      if (typeof global.erpOpenDedicatedAccountingForm === 'function') {
+        global.erpOpenDedicatedAccountingForm('fuel-expense', {
+          fuelVariant: 'fast-entry',
+          fuelTxnType: 'fuel-def-combined'
+        });
+        return;
+      }
+    }
     const map = {
       'journal-entry': { layout: 'journal', html: journalHtml },
       transfer: { layout: 'transfer', html: transferHtml },
       'driver-settlement': { layout: 'driver-settlement', html: driverSettlementHtml },
-      'load-tms': { layout: 'load-tms', html: loadTmsHtml },
-      'fuel-fast-entry': { layout: 'fuel', html: fuelFastEntryHtml }
+      'load-tms': { layout: 'load-tms', html: loadTmsHtml }
     };
     const spec = map[norm];
     if (!spec) return;
