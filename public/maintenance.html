@@ -7677,8 +7677,9 @@
       const vInp = document.getElementById('recordVendorInvoiceInput');
       const woInp = document.getElementById('recordWorkOrderInput');
       if (!ban || !vWrap || !woWrap) return;
-      ban.classList.remove('hidden');
+      if (selectedUnit) ban.classList.remove('hidden');
       if (!selectedUnit) {
+        ban.classList.add('hidden');
         if (unitLine) unitLine.textContent = 'Select an asset to attach this work order';
         vWrap.classList.remove('hidden');
         woWrap.classList.remove('hidden');
