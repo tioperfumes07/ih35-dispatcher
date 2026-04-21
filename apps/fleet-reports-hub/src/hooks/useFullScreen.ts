@@ -1,6 +1,9 @@
 import { useCallback, useState, type CSSProperties } from 'react'
 
-/** Viewport-sized modal state (not the browser Fullscreen API). */
+/**
+ * Viewport-sized modal state (not the browser Fullscreen API).
+ * Used by WorkOrderShell, fuel modals, and WO pickers — keep a single implementation here.
+ */
 export function useFullScreen() {
   const [isFullScreen, setIsFullScreen] = useState(false)
   const toggle = useCallback(() => setIsFullScreen((p) => !p), [])
