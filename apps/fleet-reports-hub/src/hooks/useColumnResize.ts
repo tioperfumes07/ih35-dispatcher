@@ -1,3 +1,7 @@
+/**
+ * Column resize for hub data tables (Packet 3 — canonical behavior).
+ * ERP parity: `public/js/erp-ui.js` → `erpInitColumnResize` / `erpInitFleetTableChrome`.
+ */
 import {
   useCallback,
   useEffect,

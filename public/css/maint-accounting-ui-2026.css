@@ -3750,3 +3750,22 @@ body.erp-maintenance
   max-width: 100%;
   overflow: hidden;
 }
+
+/* Packet 3 — erp-ui.js column resize handles (maintenance.html + other ERP shells) */
+body.erp-app th .erp-col-resize-handle:hover,
+body.erp-maintenance th .erp-col-resize-handle:hover {
+  background: color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+
+button.erp-table-excel-export {
+  height: 22px;
+  font-size: 9px;
+  line-height: 1;
+  padding: 0 10px;
+  background: #217346;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 600;
+}

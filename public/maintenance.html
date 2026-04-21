@@ -12797,6 +12797,15 @@
           uploadCenterPaintConnectionCards();
         });
         applyNavHash({ fromLoadAll: true });
+        requestAnimationFrame(() => {
+          try {
+            if (typeof erpInitFleetTableChrome === 'function') {
+              erpInitFleetTableChrome(document.getElementById('erpApp') || document.body);
+            }
+          } catch (e) {
+            console.warn('erpInitFleetTableChrome', e);
+          }
+        });
         if (activeSection === 'reports') loadReportsData();
         const repTeamPanel = document.getElementById('rep-team');
         if (activeSection === 'reports' && repTeamPanel && !repTeamPanel.classList.contains('hidden')) {
@@ -12812,6 +12821,15 @@
         }
         try {
           applyNavHash({ fromLoadAll: true });
+          requestAnimationFrame(() => {
+            try {
+              if (typeof erpInitFleetTableChrome === 'function') {
+                erpInitFleetTableChrome(document.getElementById('erpApp') || document.body);
+              }
+            } catch (e) {
+              console.warn('erpInitFleetTableChrome', e);
+            }
+          });
         } catch (e2) {
           console.error('applyNavHash after load failure', e2);
         }

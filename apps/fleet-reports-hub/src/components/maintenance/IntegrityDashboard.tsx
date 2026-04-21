@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { exportDomTableToXlsx } from '../../lib/tableExportXlsx'
 import { useColumnResize } from '../../hooks/useColumnResize'
+import { useTableTabOrder } from '../../hooks/useTableTabOrder'
+import { TableResizeHintFooter } from '../table/TableResizeHintFooter'
 // Open alerts: MaintenanceWorkspace polls the store every 60s for the snapshot KPI strip; this view uses refreshKey.
 import type { IntegrityAlert } from '../../types/integrity'
 import { loadStoredAlerts, markAlertReviewed } from '../../api/postIntegrityCheck'
@@ -40,6 +42,8 @@ export function IntegrityDashboard({ refreshKey, onAlertsChanged }: Props) {
     if (tab === 'all') return alerts.filter((a) => !a.reviewedAt)
     return alerts.filter((a) => !a.reviewedAt && a.category === tab)
   }, [alerts, tab])
+
+  useTableTabOrder(triggerCol.tableRef, [detail?.id, detail?.triggeringRecords?.length])
 
   const kpis = useMemo(() => {
     const open = alerts.filter((a) => !a.reviewedAt)
@@ -237,7 +241,7 @@ export function IntegrityDashboard({ refreshKey, onAlertsChanged }: Props) {
           <div className="bill-pay__table-toolbar">
             <button
               type="button"
-              className="btn sm"
+              className="btn sm fr-table-excel-export"
               onClick={() =>
                 exportDomTableToXlsx(
                   triggerCol.tableRef.current,
@@ -306,9 +310,7 @@ export function IntegrityDashboard({ refreshKey, onAlertsChanged }: Props) {
                 ))}
               </tbody>
             </table>
-            <p className="muted tiny" style={{ marginTop: 6 }}>
-              Drag column edges to resize
-            </p>
+            <TableResizeHintFooter />
           </div>
         </MaintModalShell>
       )}

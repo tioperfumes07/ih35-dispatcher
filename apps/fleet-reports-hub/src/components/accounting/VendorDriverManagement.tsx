@@ -9,7 +9,9 @@ import {
 } from '../../lib/nameManagementApi'
 import { BulkStandardizeModal } from './BulkStandardizeModal'
 import { useColumnResize } from '../../hooks/useColumnResize'
+import { useTableTabOrder } from '../../hooks/useTableTabOrder'
 import { exportDomTableToXlsx, exportJsonRowsToXlsx } from '../../lib/tableExportXlsx'
+import { TableResizeHintFooter } from '../table/TableResizeHintFooter'
 import {
   emptyAddress,
   getStoredEntityAddress,
@@ -99,6 +101,8 @@ export function VendorDriverManagement() {
   }, [selectedId])
 
   const ent = detail?.entity as Ent | undefined
+
+  useTableTabOrder(sysTableResize.tableRef, [detail?.entity?.id])
 
   const previewLines = useMemo(() => {
     if (!ent || !canonical.trim()) return []
@@ -242,7 +246,12 @@ export function VendorDriverManagement() {
                 <option value="renamed">Recently renamed</option>
               </select>
             </label>
-            <button type="button" className="btn sm" disabled={!list.length} onClick={exportRegistryList}>
+            <button
+              type="button"
+              className="btn sm fr-table-excel-export"
+              disabled={!list.length}
+              onClick={exportRegistryList}
+            >
               Export list to Excel
             </button>
           </div>
@@ -281,7 +290,7 @@ export function VendorDriverManagement() {
               <div style={{ marginBottom: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  className="btn sm"
+                  className="btn sm fr-table-excel-export"
                   onClick={() =>
                     exportDomTableToXlsx(sysTableResize.tableRef.current, 'NameMgmtSystems')
                   }
@@ -349,9 +358,7 @@ export function VendorDriverManagement() {
                   ))}
                 </tbody>
               </table>
-              <p className="muted tiny" style={{ marginTop: 6 }}>
-                Drag column edges to resize
-              </p>
+              <TableResizeHintFooter />
 
               <div className="nm-address-block">
                 <h4 className="nm-detail__h">Mailing address (vendor / customer)</h4>
