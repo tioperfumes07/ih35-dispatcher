@@ -1377,7 +1377,8 @@ body.erp-maintenance .table-wrap {
 }
 
 body.erp-maintenance .table-wrap > table {
-  min-width: min(1240px, max(100%, 720px));
+  width: 100%;
+  min-width: min(100%, max-content);
 }
 
 body.erp-maintenance .table-wrap th,
@@ -1428,7 +1429,8 @@ body.erp-maintenance .st-settlement-wrap {
   min-height: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--color-bg-card);
   box-shadow: var(--shadow-sm);
 }

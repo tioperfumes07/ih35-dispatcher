@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { milesToFloorMonths, breakdownTimeFromMilesRemaining, clampFleetAvgMilesPerMonth } from '../lib/fleet-mileage-settings.mjs';
+import {
+  milesToFloorMonths,
+  breakdownTimeFromMilesRemaining,
+  clampFleetAvgMilesPerMonth,
+  formatFleetPaceDueLabel
+} from '../lib/fleet-mileage-settings.mjs';
 
 test('milesToFloorMonths uses FLOOR and min 1', () => {
   assert.equal(milesToFloorMonths(25000, 12000), 2);
@@ -20,4 +25,11 @@ test('breakdownTimeFromMilesRemaining uses months when far out', () => {
   const r = breakdownTimeFromMilesRemaining(50000, 12000);
   assert.equal(r.time_unit, 'months');
   assert.ok(r.months_remaining > 4);
+});
+
+test('formatFleetPaceDueLabel tiers months / weeks / days', () => {
+  assert.match(formatFleetPaceDueLabel(50000, 12000), /months/);
+  assert.match(formatFleetPaceDueLabel(8000, 12000), /weeks/);
+  assert.match(formatFleetPaceDueLabel(2000, 12000), /days/);
+  assert.match(formatFleetPaceDueLabel(-25000, 12000), /overdue/);
 });
