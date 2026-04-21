@@ -33,7 +33,8 @@ type IntegrationConnectionsContextValue = {
 const IntegrationConnectionsContext =
   createContext<IntegrationConnectionsContextValue | null>(null)
 
-const FIVE_MIN_MS = 5 * 60 * 1000
+/** Background probe interval (matches ERP strip ~12 min). */
+const FIVE_MIN_MS = 12 * 60 * 1000
 
 function delay(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms))

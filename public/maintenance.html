@@ -564,17 +564,6 @@
           <div id="erpQboDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--qbo hidden" role="status"></div>
           <div id="erpSamsaraDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--samsara hidden" role="status"></div>
         </div>
-        <div class="erp-main-banner-hints print-hide-actions" style="margin:8px 0 4px;display:flex;flex-direction:column;gap:6px">
-        <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
-          <span style="min-width:0;flex:1 1 220px"><strong>401</strong> + <code>authRequired</code> → red strip above when needed; <code>loadAll()</code> hides it after a good refresh.</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Auth banner">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              <code>j()</code> paints <code>#authBanner</code> on 401 so users can open <strong>Settings</strong>. <code>loadAll()</code> clears it (<code>textContent</code> + <code>hidden</code>) after a successful refresh.
-            </span>
-          </span>
-        </div>
-        </div>
         <header class="topbar erp-topbar">
           <div class="erp-topbar__lead">
             <div class="erp-new-wrap">
@@ -4989,20 +4978,20 @@
               <details class="mr-rep-nav-group sidebar-group" open>
                 <summary class="mr-rep-nav-group__head sidebar-group-header">Maintenance <span class="mr-rep-nav-group__chev" aria-hidden="true">▼</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="spend unit maintenance cost work order" onclick="openReportsTabFromSidebar('rep-maint')">Spend by unit</button>
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="parts positions tires detailed breakdown" onclick="openReportsTabFromSidebar('rep-maint-detail')">Detailed (parts / positions)</button>
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="work order history saved maintenance" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'));">Work order history</button>
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="pm schedule preventive maintenance" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]')); openMaintMainTab('rm', document.querySelector('#maintMainSubtabs [data-maint-main=rm]'));">PM schedule</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="cost by unit rollup" onclick="openReportsTabFromSidebar('rep-maint')">Cost by unit</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="parts positions tires detailed breakdown" onclick="openReportsTabFromSidebar('rep-maint-detail')">Detailed (parts / positions)</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="pm schedule preventive maintenance" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]')); openMaintMainTab('rm', document.querySelector('#maintMainSubtabs [data-maint-main=rm]'));">PM schedule</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="spend unit maintenance cost work order" onclick="openReportsTabFromSidebar('rep-maint')">Spend by unit</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="work order history saved maintenance" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'));">Work order history</button>
                 </div>
               </details>
               <details class="mr-rep-nav-group sidebar-group">
                 <summary class="mr-rep-nav-group__head sidebar-group-header">Accounting <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTabFromSidebar('rep-qbo')">QuickBooks activity</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="erp sync qbo quickbooks reconcile" onclick="openReportsTabFromSidebar('rep-sync')">ERP ↔ QBO sync</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="expense history ap" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'));">Expense history</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="fuel expense def ledger" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'));">Fuel expense history</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTabFromSidebar('rep-qbo')">QuickBooks activity</button>
                 </div>
               </details>
               <details class="mr-rep-nav-group sidebar-group">
@@ -5015,16 +5004,16 @@
               <details class="mr-rep-nav-group sidebar-group">
                 <summary class="mr-rep-nav-group__head sidebar-group-header">Fuel &amp; energy <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="ifta fuel tax" onclick="openReportsTabFromSidebar('rep-ifta')">IFTA &amp; compliance</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="dynamic fuel charts" onclick="openReportsTabFromSidebar('rep-dynamic')">Dynamic charts</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="ifta fuel tax" onclick="openReportsTabFromSidebar('rep-ifta')">IFTA &amp; compliance</button>
                 </div>
               </details>
               <details class="mr-rep-nav-group sidebar-group">
                 <summary class="mr-rep-nav-group__head sidebar-group-header">DOT compliance <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
                 <div class="mr-rep-nav-group__body">
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="dot audit overview fleet" onclick="openReportsTabFromSidebar('rep-overview')">DOT audit file</button>
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="fleet overview board" onclick="openReportsTabFromSidebar('rep-overview')">Fleet overview</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="driver qualification team" onclick="openReportsTabFromSidebar('rep-team')">Driver qualification</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="fleet overview board" onclick="openReportsTabFromSidebar('rep-overview')">Fleet overview</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="integrity anomaly monitoring" onclick="openReportsTabFromSidebar('rep-integrity')">Integrity dashboard</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="integrity export excel pdf" onclick="integrityExportReport('xlsx')">Integrity report (Excel)</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="integrity export pdf" onclick="integrityExportReport('pdf')">Integrity report (PDF)</button>
@@ -5033,9 +5022,9 @@
               <details class="mr-rep-nav-group sidebar-group">
                 <summary class="mr-rep-nav-group__head sidebar-group-header">Operations <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
                 <div class="mr-rep-nav-group__body">
-                  <button type="button" class="erp-reports-sblink sidebar-child-item" id="repSidebarTmsLoads" data-rep-k="tms loads pipeline postgres trips" onclick="openReportsTabFromSidebar('rep-tms')">TMS loads</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" id="repSidebarSettlement" data-rep-k="settlement pnl profit load trip invoice rollup" onclick="openReportsTabFromSidebar('rep-settlement')">Settlement / P&amp;L by load</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="team security users roles audit" onclick="openReportsTabFromSidebar('rep-team')">Team &amp; security</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" id="repSidebarTmsLoads" data-rep-k="tms loads pipeline postgres trips" onclick="openReportsTabFromSidebar('rep-tms')">TMS loads</button>
                 </div>
               </details>
             </aside>
@@ -8893,28 +8882,28 @@
     function erpSbToolsDataBlock(includeBankCsv) {
       let s =
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
-        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'service\');">Service types (database)</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'vendors\');">Vendors &amp; driver payees</button>';
       if (includeBankCsv) {
-        s +=
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV (matching)</button>';
+        s =
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV (matching)</button>' + s;
       }
       return s;
     }
 
     function erpSbAccountingToolsDataBody() {
       return (
-        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
-        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV matching</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="window.open(\'https://cloud.samsara.com\',\'_blank\',\'noopener\');">Samsara Cloud</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'service\');">Service types database</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/settings.html\'">Settings &amp; users</button>' +
@@ -9073,9 +9062,9 @@
       }
       if (name === 'tracking') {
         const trackLiveBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Vehicles</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-drivers&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-drivers\\\']&quot;));">Drivers</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-map\\\']&quot;));">Live map</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-map\\\']&quot;));">Live map</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Vehicles</button>';
         const trackOpsBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-idle&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-idle\\\']&quot;));">Yard &amp; idle</button>';
@@ -9087,30 +9076,31 @@
       }
       if (name === 'accounting') {
         const expensesBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;, { fuelVariant: &quot;fuel-expense&quot;, fuelTxnType: &quot;fuel-expense&quot; })">Fuel expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewExpense()">Expense</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;, { fuelVariant: &quot;fuel-expense&quot;, fuelTxnType: &quot;fuel-expense&quot; })">Fuel expense</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;repair-expense&quot;)">Repair expense</button>';
         const billsBody =
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;def-bill&quot;)">DEF bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;driver-bill&quot;)">Driver bill</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-bill&quot;)">Fuel bill</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenRepairBill()">Repair bill</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenMultiBillsModal()">Multiple bills</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;driver-bill&quot;)">Driver bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenRepairBill()">Repair bill</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-bill&quot;)">Vendor bill</button>';
         const billPayBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpNewPayBills()">Bill payment</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Payment history</button>';
         const specializedBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel/DEF combined</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewDriverSettlement()">Driver settlement</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;journal-entry&quot;)">Journal entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;transfer&quot;)">Transfer</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-expense-history" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-history" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-fuel-expense" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewDriverSettlement()">Driver settlement</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-expense-history" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-fuel-expense" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel/DEF combined</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;journal-entry&quot;)">Journal entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;transfer&quot;)">Transfer</button>';
         const qbBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-qbo-rollback" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctQboRollbackStub&quot;));">QBO rollback &amp; imports</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-qbo" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
@@ -12094,6 +12084,10 @@
           company?.CompanyInfo?.CompanyName ||
           company?.QueryResponse?.CompanyInfo?.[0]?.CompanyName ||
           'Connected';
+        await fetch('/api/qbo/clear-connection-health', { method: 'POST', headers: { Accept: 'application/json' } }).catch(
+          function () {}
+        );
+        if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
         showErpToast('QuickBooks connected successfully — ' + companyName, 'success');
       } catch (e) {
         showErpToast('QuickBooks test failed: ' + (e && e.message ? e.message : String(e)), 'error');

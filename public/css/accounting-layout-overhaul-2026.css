@@ -247,7 +247,7 @@ body.erp-maintenance .erp-toast-host {
 
 body.erp-maintenance .erp-toast {
   pointer-events: auto !important;
-  max-width: 380px !important;
+  max-width: min(320px, calc(100vw - 24px)) !important;
 }
 
 /* --- Banners / vendor bar / dropdown stacks --- */

@@ -384,7 +384,12 @@
 
     async function paintStrip() {
       el.textContent = '';
-      el.classList.remove('erp-connection-strip--ok', 'erp-connection-strip--warn', 'erp-connection-strip--muted');
+      el.classList.remove(
+        'erp-connection-strip--ok',
+        'erp-connection-strip--warn',
+        'erp-connection-strip--muted',
+        'erp-connection-strip--compact'
+      );
       let worst = 0;
       try {
         const [rq, rh] = await Promise.all([
@@ -394,49 +399,66 @@
         const qj = rq.ok ? await rq.json().catch(() => ({})) : null;
         const hj = rh.ok ? await rh.json().catch(() => ({})) : null;
 
+        /** @type {{ kind: 'ok'|'warn'|'bad', text: string, sev: number } | null} */
+        let qRow = null;
         if (!rq.ok) {
-          appendRow('bad', stripLoadFailed);
-          worst = 2;
+          qRow = { kind: 'bad', text: stripLoadFailed, sev: 2 };
         } else if (!qj || typeof qj !== 'object') {
-          appendRow('bad', 'QuickBooks: status unavailable.');
-          worst = 2;
+          qRow = { kind: 'bad', text: 'QuickBooks: status unavailable.', sev: 2 };
         } else if (!qj.configured) {
-          appendRow('warn', 'QuickBooks: not configured on server.');
-          worst = Math.max(worst, 1);
+          qRow = { kind: 'warn', text: 'QuickBooks: not configured on server.', sev: 1 };
         } else if (qj.connected) {
           const err = typeof qj.lastRefreshError === 'string' ? qj.lastRefreshError.trim() : '';
           if (err) {
-            const short = err.length > 160 ? err.slice(0, 157) + '…' : err;
-            appendRow(
-              'warn',
-              'QuickBooks: session saved — last Intuit error: ' +
+            const short = err.length > 120 ? err.slice(0, 117) + '…' : err;
+            qRow = {
+              kind: 'warn',
+              text:
+                'QuickBooks: last error — ' +
                 short +
-                ' (use Test connection or re-authorize in Settings).'
-            );
-            worst = Math.max(worst, 1);
+                ' (Test connection or re-authorize).',
+              sev: 1
+            };
           } else {
             const nm = qj.companyName ? String(qj.companyName) : '';
-            appendRow('ok', 'QuickBooks: connected' + (nm ? ' — ' + nm : '') + '.');
+            qRow = {
+              kind: 'ok',
+              text: 'QuickBooks connected' + (nm ? ' — ' + nm : '') + '.',
+              sev: 0
+            };
           }
         } else {
-          appendRow('warn', 'QuickBooks: not connected — open Settings to authorize.');
-          worst = Math.max(worst, 1);
+          qRow = { kind: 'warn', text: 'QuickBooks: not connected — open Settings to authorize.', sev: 1 };
         }
 
+        /** @type {{ kind: 'ok'|'warn'|'bad', text: string, sev: number } | null} */
+        let sRow = null;
         if (!rh.ok) {
-          appendRow('bad', 'Samsara: could not load health status.');
-          worst = 2;
+          sRow = { kind: 'bad', text: 'Samsara: could not load health status.', sev: 2 };
         } else if (!hj || typeof hj !== 'object') {
-          appendRow('warn', 'Samsara: status unavailable.');
-          worst = Math.max(worst, 1);
+          sRow = { kind: 'warn', text: 'Samsara: status unavailable.', sev: 1 };
         } else if (!hj.hasSamsaraToken) {
-          appendRow('warn', 'Samsara: API token not configured on server.');
-          worst = Math.max(worst, 1);
+          sRow = { kind: 'warn', text: 'Samsara: API token not configured on server.', sev: 1 };
         } else {
           const nVeh = Number(hj.samsaraVehicles);
           const tail =
-            Number.isFinite(nVeh) && nVeh >= 0 ? ' Last snapshot vehicles: ' + nVeh + '.' : '';
-          appendRow('ok', 'Samsara: token present on server.' + tail);
+            Number.isFinite(nVeh) && nVeh >= 0 ? ' · last snapshot: ' + nVeh + ' vehicles' : '';
+          sRow = { kind: 'ok', text: 'Samsara token on server' + tail + '.', sev: 0 };
+        }
+
+        worst = Math.max(qRow ? qRow.sev : 0, sRow ? sRow.sev : 0);
+        const compactOk =
+          worst === 0 && qRow && sRow && qRow.kind === 'ok' && sRow.kind === 'ok' && qj && hj;
+        if (compactOk) {
+          el.classList.add('erp-connection-strip--compact');
+          const nm = qj.companyName ? String(qj.companyName) : '';
+          const nVeh = Number(hj.samsaraVehicles);
+          const veh =
+            Number.isFinite(nVeh) && nVeh >= 0 ? ' · Samsara snapshot: ' + nVeh + ' vehicles' : ' · Samsara: token OK';
+          appendRow('ok', 'Integrations · QuickBooks connected' + (nm ? ' — ' + nm : '') + veh + '.');
+        } else {
+          if (qRow) appendRow(qRow.kind, qRow.text);
+          if (sRow) appendRow(sRow.kind, sRow.text);
         }
 
         if (worst >= 2) el.classList.add('erp-connection-strip--muted');
@@ -457,7 +479,7 @@
     await paintStrip();
     el._erpStripTimer = global.setInterval(() => {
       void paintStrip();
-    }, 300000);
+    }, 720000);
   }
 
   global.erpMountConnectionStrip = erpMountConnectionStrip;

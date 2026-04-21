@@ -1915,12 +1915,12 @@ body.erp-maintenance button.maint-action-strip__btn--primary.erp-btn--busy::afte
    ============================================================================= */
 .erp-toast-host {
   position: fixed;
-  top: max(14px, env(safe-area-inset-top, 0px));
-  right: max(14px, env(safe-area-inset-right, 0px));
+  top: max(72px, env(safe-area-inset-top, 0px));
+  right: max(10px, env(safe-area-inset-right, 0px));
   z-index: 2000;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 4px;
   pointer-events: none;
   box-sizing: border-box;
 }
@@ -1929,15 +1929,15 @@ body.erp-maintenance button.maint-action-strip__btn--primary.erp-btn--busy::afte
   pointer-events: auto;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: 7px;
-  padding: 10px 14px;
-  font-size: 12px;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
   box-shadow: var(--shadow-toast);
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-width: min(260px, calc(100vw - 28px));
-  max-width: min(380px, calc(100vw - 28px));
+  gap: 6px;
+  min-width: min(220px, calc(100vw - 24px));
+  max-width: min(320px, calc(100vw - 24px));
   box-sizing: border-box;
 }
 
@@ -2048,10 +2048,10 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   margin: 0 0 10px;
 }
 .erp-connection-strip {
-  font-size: 12px;
-  line-height: 1.45;
-  padding: 8px max(14px, env(safe-area-inset-right, 0px)) 8px max(14px, env(safe-area-inset-left, 0px));
-  margin: 0 0 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 5px max(12px, env(safe-area-inset-right, 0px)) 5px max(12px, env(safe-area-inset-left, 0px));
+  margin: 0 0 8px;
   border-radius: var(--radius-card, 8px);
   border: 1px solid var(--color-border);
   background: var(--color-bg-card);
@@ -2065,7 +2065,11 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
 .erp-connection-strip.erp-connection-strip--rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+}
+
+.erp-connection-strip--compact.erp-connection-strip--rows {
+  gap: 0;
 }
 
 .erp-connection-strip__row {
@@ -2074,6 +2078,11 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   gap: 7px;
   min-width: 0;
   font-size: 11px;
+}
+
+.erp-connection-strip--compact .erp-connection-strip__row {
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .erp-connection-strip__dot {
@@ -2167,9 +2176,10 @@ body.hub-page .erp-help-tip__btn:focus-visible {
 }
 
 .erp-connection-strip--ok {
-  border-color: var(--color-success-border-soft);
-  background: var(--pill-green-bg);
-  color: var(--pill-green-text);
+  border-color: var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-label);
+  border-left: 3px solid var(--btn-primary-save-bg);
 }
 .erp-connection-strip--warn {
   border-color: var(--color-warning-border-soft);
