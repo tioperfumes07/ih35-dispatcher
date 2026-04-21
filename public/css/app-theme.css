@@ -1632,7 +1632,7 @@ body.erp-maintenance .track-card.active {
 body.erp-maintenance .track-list {
   display: grid;
   gap: 8px;
-  max-height: 820px;
+  max-height: none;
   overflow: auto;
   min-width: 0;
   min-height: 0;
@@ -2449,18 +2449,20 @@ body.erp-maintenance .tracking-sub.hidden {
 }
 
 body.erp-maintenance #erpTrackingMap {
-  height: min(560px, calc(100vh - 220px));
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  min-height: 0;
+  min-height: min(42dvh, 100%);
+  height: auto;
+  flex: 1 1 auto;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
 }
 
 body.erp-maintenance .safety-table-wrap {
-  overflow: auto;
-  max-height: min(640px, 72vh);
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: min(72vh, 100%);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-bg-card);
@@ -2474,17 +2476,20 @@ body.erp-maintenance .safety-table-wrap table {
 }
 
 body.erp-maintenance .safety-active-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: stretch;
   min-width: 0;
   min-height: 0;
 }
 
 body.erp-maintenance .safety-active-grid > div {
+  flex: 1 1 280px;
   min-width: 0;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 body.erp-maintenance .shop-col-head-row {
@@ -4083,8 +4088,8 @@ body.erp-maintenance #section-safety .panel-head > div {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  body.erp-maintenance .safety-active-grid {
-    grid-template-columns: minmax(0, 1fr);
+  body.erp-maintenance .safety-active-grid > div {
+    flex: 1 1 100%;
   }
 
   /* Rule 1 — Shop board (Maintenance + Tracking embed) + ops toolbars: denser chrome on tablets. */
@@ -4117,9 +4122,8 @@ body.erp-maintenance #section-safety .panel-head > div {
     gap: 8px;
   }
 
-  /* Rule 1 — Vehicle tracking: fleet KPI strip 2×2 + primary subtabs + filter rows. */
+  /* Vehicle tracking: KPI strip uses flex-wrap (see erp-master-spec); tighter gap on small viewports. */
   body.erp-maintenance #section-tracking .erp-ops-kpi-strip.grid-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -4153,7 +4157,7 @@ body.erp-maintenance #section-safety .panel-head > div {
   }
 
   body.erp-maintenance #section-safety .safety-table-wrap {
-    max-height: min(560px, 58vh);
+    max-height: min(65vh, 100%);
   }
 
   body.erp-maintenance #section-safety .safety-active-grid {
