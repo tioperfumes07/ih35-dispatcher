@@ -4023,16 +4023,16 @@
                   <div class="erp-qb-cost-shell erp-qb-cost-shell--embedded">
                     <div class="erp-qb-cost-shell__headrow">
                       <div class="erp-qb-cost-shell__label erp-qb-cost-shell__label--with-tip">
-                        <span>Cost lines (same shape as maintenance)</span>
+                        <span>Fuel cost lines</span>
                         <span class="erp-help-tip">
                           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
-                            <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product + gal × $/gal). Catalog or free text. <strong>Lock line $</strong> to back-calc gallons from a fixed total.
+                            <strong>Category</strong> rows use an expense account. <strong>Item</strong> rows use a QuickBooks product (gallons × $/gal). <strong>Lock line $</strong> fixes the total and back-calculates rate when needed.
                           </span>
                         </span>
                       </div>
-                      <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new fuel cost lines">
-                        <span class="erp-qb-cost-global__label">New lines</span>
+                      <div class="erp-qb-cost-global" role="group" aria-label="Default fuel line table for starter rows">
+                        <span class="erp-qb-cost-global__label">New lines go to</span>
                         <label class="erp-qb-cost-global__opt"
                           ><input type="radio" name="fuelManualCostGlobalMode" value="category" checked /> Category</label
                         >
@@ -4040,39 +4040,71 @@
                           ><input type="radio" name="fuelManualCostGlobalMode" value="item" /> Item</label
                         >
                         <span class="erp-help-tip erp-qb-cost-global__tip">
-                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Line type default">?</button>
+                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Default table">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
-                            Default for <strong>new</strong> manual fuel rows. Existing rows keep their own line type selector.
+                            When the form adds a starter line, rows use this table. Each block also has its own <strong>Add</strong> and <strong>Clear table</strong> actions.
                           </span>
                         </span>
                       </div>
                     </div>
-                    <div class="maint-cost-table-wrap">
-                      <table class="maint-cost-table acct-fuel-manual-table" aria-label="Manual fuel cost lines">
-                        <thead>
-                          <tr>
-                            <th class="maint-cost-table__num" scope="col">#</th>
-                            <th scope="col">Description</th>
-                            <th scope="col">Line type</th>
-                            <th scope="col">Expense account</th>
-                            <th scope="col">Product / service</th>
-                            <th class="maint-cost-table__sku" scope="col">SKU</th>
-                            <th class="maint-cost-table__lock" scope="col">Lock $</th>
-                            <th class="maint-cost-table__num" scope="col">Qty (gal)</th>
-                            <th class="maint-cost-table__num" scope="col">$/gal</th>
-                            <th class="maint-cost-table__num" scope="col">Amount</th>
-                            <th class="maint-cost-table__del" scope="col">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody id="fuelManualLines"></tbody>
-                        <tfoot>
-                          <tr class="maint-cost-table__addrow">
-                            <td colspan="11">
-                              <button type="button" class="maint-cost-addline" onclick="addFuelManualLine()">+ Add line</button>
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
+                    <div class="erp-fuel-dual-cost-shell" style="display:flex;flex-direction:column;gap:16px">
+                      <div class="maint-cost-table-wrap">
+                        <div class="mini-note" style="margin:0 0 6px;font-weight:600">Category details (expense account)</div>
+                        <table class="maint-cost-table acct-fuel-manual-table acct-fuel-manual-table--cat" aria-label="Manual fuel category lines">
+                          <thead>
+                            <tr>
+                              <th class="maint-cost-table__num" scope="col">#</th>
+                              <th scope="col">Description</th>
+                              <th scope="col">Expense account</th>
+                              <th class="maint-cost-table__lock" scope="col">Lock $</th>
+                              <th class="maint-cost-table__num" scope="col">Qty (gal)</th>
+                              <th class="maint-cost-table__num" scope="col">$/gal</th>
+                              <th class="maint-cost-table__num" scope="col">Amount</th>
+                              <th class="maint-cost-table__del" scope="col">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="fuelManualCatLines"></tbody>
+                          <tfoot>
+                            <tr class="maint-cost-table__addrow">
+                              <td colspan="8">
+                                <button type="button" class="maint-cost-addline" onclick="addFuelManualCatLine()">+ Add category line</button>
+                                <button type="button" class="btn btn--ghost btn--small" style="margin-left:8px" onclick="clearFuelManualCatLines()">
+                                  Clear table
+                                </button>
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                      <div class="maint-cost-table-wrap">
+                        <div class="mini-note" style="margin:0 0 6px;font-weight:600">Item details (QuickBooks product)</div>
+                        <table class="maint-cost-table acct-fuel-manual-table acct-fuel-manual-table--item" aria-label="Manual fuel item lines">
+                          <thead>
+                            <tr>
+                              <th class="maint-cost-table__num" scope="col">#</th>
+                              <th scope="col">Description</th>
+                              <th scope="col">Product / service</th>
+                              <th class="maint-cost-table__sku" scope="col">SKU</th>
+                              <th class="maint-cost-table__lock" scope="col">Lock $</th>
+                              <th class="maint-cost-table__num" scope="col">Qty (gal)</th>
+                              <th class="maint-cost-table__num" scope="col">$/gal</th>
+                              <th class="maint-cost-table__num" scope="col">Amount</th>
+                              <th class="maint-cost-table__del" scope="col">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="fuelManualItemLines"></tbody>
+                          <tfoot>
+                            <tr class="maint-cost-table__addrow">
+                              <td colspan="9">
+                                <button type="button" class="maint-cost-addline" onclick="addFuelManualItemLine()">+ Add item line</button>
+                                <button type="button" class="btn btn--ghost btn--small" style="margin-left:8px" onclick="clearFuelManualItemLines()">
+                                  Clear table
+                                </button>
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
                     </div>
                   </div>
                   <div
@@ -4118,6 +4150,7 @@
                     <button type="button" onclick="resetManualFuelForm(false)">Clear</button>
                   </div>
                   <div class="qb-doc-footer__right" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                    <button type="button" class="btn btn--ghost" onclick="exportFuelManualLinesExcel()">Export lines (Excel)</button>
                     <button type="button" class="btn" onclick="saveManualFuelPurchase()">Save to fuel ledger</button>
                     <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase({ postToQbo: true })">
                       Confirm &amp; record to QuickBooks
@@ -6536,8 +6569,8 @@
     </tr>
   </template>
 
-  <template id="fuelManualCostLineTpl">
-    <tr class="fuel-m-cost-line">
+  <template id="fuelManualCatLineTpl">
+    <tr class="fuel-m-cost-line fuel-m-line--category">
       <td class="maint-cost-table__num maint-cost-td-num">
         <span class="fuel-m-line-idx">1</span>
       </td>
@@ -6548,12 +6581,6 @@
           placeholder="Description (catalog or free text)"
           autocomplete="off"
         />
-      </td>
-      <td class="fuel-m-td-type">
-        <select class="qb-in maint-field fuel-m-line-mode" onchange="toggleFuelManualLineMode(this)">
-          <option value="category">Category</option>
-          <option value="item">Item</option>
-        </select>
       </td>
       <td class="fuel-m-td-cat fuel-m-td-wide">
         <input
@@ -6566,7 +6593,41 @@
         />
         <input type="hidden" class="fuel-m-line-acct-id" />
       </td>
-      <td class="fuel-m-td-item fuel-m-td-wide hidden">
+      <td class="fuel-m-td-lock">
+        <label class="fuel-m-line-lock-lbl">
+          <input type="checkbox" class="fuel-m-line-lock" />
+          <span class="fuel-m-line-lock-lbl__txt">Lock</span>
+        </label>
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field fuel-m-line-gal" type="number" step="0.001" min="0" placeholder="0" />
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field fuel-m-line-ppg" type="number" step="0.0001" min="0" placeholder="0" />
+      </td>
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <input class="qb-in maint-field fuel-m-line-total" type="number" step="0.01" min="0" placeholder="0.00" />
+      </td>
+      <td class="maint-cost-table__del maint-cost-td-del">
+        <button type="button" class="qb-btn-del" onclick="removeFuelManualLine(this)" title="Remove line">×</button>
+      </td>
+    </tr>
+  </template>
+
+  <template id="fuelManualItemLineTpl">
+    <tr class="fuel-m-cost-line fuel-m-line--item">
+      <td class="maint-cost-table__num maint-cost-td-num">
+        <span class="fuel-m-line-idx">1</span>
+      </td>
+      <td class="maint-cost-td-desc">
+        <input
+          class="qb-in maint-field fuel-m-line-desc"
+          list="fuelCatalogOptions"
+          placeholder="Description (catalog or free text)"
+          autocomplete="off"
+        />
+      </td>
+      <td class="fuel-m-td-item fuel-m-td-wide">
         <input
           class="qb-in maint-field fuel-m-line-item-search"
           list="qboProductServiceOptions"
@@ -6577,14 +6638,8 @@
         />
         <input type="hidden" class="fuel-m-line-item-id" />
       </td>
-      <td class="fuel-m-td-item fuel-m-td-sku hidden">
-        <input
-          class="qb-in maint-field fuel-m-line-item-sku"
-          type="text"
-          readonly
-          placeholder="—"
-          tabindex="-1"
-        />
+      <td class="fuel-m-td-item fuel-m-td-sku">
+        <input class="qb-in maint-field fuel-m-line-item-sku" type="text" readonly placeholder="—" tabindex="-1" />
       </td>
       <td class="fuel-m-td-lock">
         <label class="fuel-m-line-lock-lbl">
@@ -14253,60 +14308,168 @@
       fuelManualUpdateHeaderTotal();
     }
 
+    function fuelManualAllLineCount() {
+      const catHost = document.getElementById('fuelManualCatLines');
+      const itemHost = document.getElementById('fuelManualItemLines');
+      return (
+        (catHost ? catHost.querySelectorAll('tr.fuel-m-cost-line').length : 0) +
+        (itemHost ? itemHost.querySelectorAll('tr.fuel-m-cost-line').length : 0)
+      );
+    }
+
     function fuelManualRenumberLines() {
-      const host = document.getElementById('fuelManualLines');
-      if (!host) return;
-      host.querySelectorAll('tr.fuel-m-cost-line').forEach((tr, i) => {
-        const sp = tr.querySelector('.fuel-m-line-idx');
-        if (sp) sp.textContent = String(i + 1);
+      const catHost = document.getElementById('fuelManualCatLines');
+      const itemHost = document.getElementById('fuelManualItemLines');
+      [catHost, itemHost].forEach(host => {
+        if (!host) return;
+        host.querySelectorAll('tr.fuel-m-cost-line').forEach((tr, i) => {
+          const sp = tr.querySelector('.fuel-m-line-idx');
+          if (sp) sp.textContent = String(i + 1);
+        });
       });
     }
 
     function fuelManualUpdateHeaderTotal() {
-      const host = document.getElementById('fuelManualLines');
+      const catHost = document.getElementById('fuelManualCatLines');
+      const itemHost = document.getElementById('fuelManualItemLines');
       const out = document.getElementById('fuelManualHeaderTotal');
-      if (!host || !out) return;
+      if (!out) return;
       let sum = 0;
-      host.querySelectorAll('.fuel-m-line-total').forEach(el => {
-        const v = Number(el.value);
-        if (Number.isFinite(v) && v > 0) sum += v;
-      });
+      const addFrom = host => {
+        if (!host) return;
+        host.querySelectorAll('.fuel-m-line-total').forEach(el => {
+          const v = Number(el.value);
+          if (Number.isFinite(v) && v > 0) sum += v;
+        });
+      };
+      addFrom(catHost);
+      addFrom(itemHost);
       out.textContent = '$' + sum.toFixed(2);
       syncErpDedicatedModalChrome();
     }
 
-    function addFuelManualLine() {
-      const tpl = document.getElementById('fuelManualCostLineTpl');
-      const host = document.getElementById('fuelManualLines');
+    function addFuelManualCatLine() {
+      const tpl = document.getElementById('fuelManualCatLineTpl');
+      const host = document.getElementById('fuelManualCatLines');
       if (!tpl || !host) return;
       host.appendChild(tpl.content.cloneNode(true));
       fuelManualRenumberLines();
-      const rows = host.querySelectorAll('tr.fuel-m-cost-line');
-      const last = rows[rows.length - 1];
-      const modeSel = last.querySelector('.fuel-m-line-mode');
-      if (modeSel) {
-        const g =
-          document.querySelector('input[name=fuelManualCostGlobalMode]:checked')?.value === 'item' ? 'item' : 'category';
-        modeSel.value = g;
-        delete modeSel.dataset.lastMode;
-        toggleFuelManualLineMode(modeSel);
-        modeSel.dataset.lastMode = modeSel.value;
-      }
+      fuelManualUpdateHeaderTotal();
+    }
+
+    function addFuelManualItemLine() {
+      const tpl = document.getElementById('fuelManualItemLineTpl');
+      const host = document.getElementById('fuelManualItemLines');
+      if (!tpl || !host) return;
+      host.appendChild(tpl.content.cloneNode(true));
+      fuelManualRenumberLines();
+      fuelManualUpdateHeaderTotal();
+    }
+
+    function addFuelManualLine() {
+      const g =
+        document.querySelector('input[name=fuelManualCostGlobalMode]:checked')?.value === 'item' ? 'item' : 'category';
+      if (g === 'item') addFuelManualItemLine();
+      else addFuelManualCatLine();
+    }
+
+    function clearFuelManualCatLines() {
+      const host = document.getElementById('fuelManualCatLines');
+      if (!host) return;
+      host.innerHTML = '';
+      fuelManualRenumberLines();
+      fuelManualUpdateHeaderTotal();
+    }
+
+    function clearFuelManualItemLines() {
+      const host = document.getElementById('fuelManualItemLines');
+      if (!host) return;
+      host.innerHTML = '';
+      fuelManualRenumberLines();
       fuelManualUpdateHeaderTotal();
     }
 
     function removeFuelManualLine(btn) {
-      const host = document.getElementById('fuelManualLines');
       const row = btn && btn.closest ? btn.closest('tr.fuel-m-cost-line') : null;
-      if (!host || !row) return;
-      const rows = host.querySelectorAll('tr.fuel-m-cost-line');
-      if (rows.length <= 1) {
-        erpNotify('Keep at least one line.', 'warning');
+      if (!row) return;
+      if (fuelManualAllLineCount() <= 1) {
+        erpNotify('Keep at least one line (category or item).', 'warning');
         return;
       }
       row.remove();
       fuelManualRenumberLines();
       fuelManualUpdateHeaderTotal();
+    }
+
+    async function exportFuelManualLinesExcel() {
+      if (!window.ErpExportUtil || typeof window.ErpExportUtil.exportReport !== 'function') {
+        erpNotify('Export helper not loaded. Refresh the page.', 'warning');
+        return;
+      }
+      const catHost = document.getElementById('fuelManualCatLines');
+      const itemHost = document.getElementById('fuelManualItemLines');
+      const rows = [];
+      const stamp = new Date().toISOString().slice(0, 10);
+      const pushFrom = (host, section) => {
+        if (!host) return;
+        host.querySelectorAll('tr.fuel-m-cost-line').forEach((tr, i) => {
+          rows.push({
+            section,
+            rowInSection: i + 1,
+            description: String(tr.querySelector('.fuel-m-line-desc')?.value || '').trim(),
+            expenseAccount: String(tr.querySelector('.fuel-m-line-acct-search')?.value || '').trim(),
+            item: String(tr.querySelector('.fuel-m-line-item-search')?.value || '').trim(),
+            sku: String(tr.querySelector('.fuel-m-line-item-sku')?.value || '').trim(),
+            lockLine: tr.querySelector('.fuel-m-line-lock')?.checked ? 'Y' : '',
+            gallons: tr.querySelector('.fuel-m-line-gal')?.value ?? '',
+            pricePerGal: tr.querySelector('.fuel-m-line-ppg')?.value ?? '',
+            amount: tr.querySelector('.fuel-m-line-total')?.value ?? ''
+          });
+        });
+      };
+      pushFrom(catHost, 'Category');
+      pushFrom(itemHost, 'Item');
+      if (!rows.length) {
+        erpNotify('Add at least one line before exporting.', 'warning');
+        return;
+      }
+      let amtSum = 0;
+      rows.forEach(r => {
+        const n = Number(r.amount);
+        if (Number.isFinite(n) && n > 0) amtSum += n;
+      });
+      try {
+        await window.ErpExportUtil.exportReport(
+          'excel',
+          {
+            title: 'Fuel manual lines',
+            columns: [
+              { key: 'section', label: 'Table' },
+              { key: 'rowInSection', label: '#' },
+              { key: 'description', label: 'Description' },
+              { key: 'expenseAccount', label: 'Expense account' },
+              { key: 'item', label: 'Product / service' },
+              { key: 'sku', label: 'SKU' },
+              { key: 'lockLine', label: 'Lock $' },
+              { key: 'gallons', label: 'Qty (gal)' },
+              { key: 'pricePerGal', label: '$/gal' },
+              { key: 'amount', label: 'Amount' }
+            ],
+            rows,
+            totals: { amount: amtSum ? amtSum.toFixed(2) : '' }
+          },
+          {
+            filename: `fuel-manual-lines_${stamp}`,
+            filtersApplied: {
+              unit: String(document.getElementById('fuelManualUnit')?.value || '').trim(),
+              vendor: String(document.getElementById('fuelManualVendorSearch')?.value || '').trim(),
+              txnDate: String(document.getElementById('fuelManualDate')?.value || '').trim()
+            }
+          }
+        );
+      } catch (e) {
+        erpNotify(e.message || String(e), 'error');
+      }
     }
 
     function resolveFuelManualVendor() {
@@ -14365,11 +14528,11 @@
       if (pd) pd.value = document.getElementById('fuelManualDate')?.value || new Date().toISOString().slice(0, 10);
       const due = document.getElementById('fuelManualDueDate');
       if (due) due.value = document.getElementById('fuelManualDate')?.value || new Date().toISOString().slice(0, 10);
-      const host = document.getElementById('fuelManualLines');
-      if (host) {
-        host.innerHTML = '';
-        addFuelManualLine();
-      }
+      const catHost = document.getElementById('fuelManualCatLines');
+      const itemHost = document.getElementById('fuelManualItemLines');
+      if (catHost) catHost.innerHTML = '';
+      if (itemHost) itemHost.innerHTML = '';
+      addFuelManualCatLine();
       fuelManualUpdateHeaderTotal();
       syncFuelManualClassFromUnit();
       const ub = document.getElementById('fuelManualUnitBadge');
@@ -14383,29 +14546,31 @@
     let __fuelManualFormBound = false;
     function bindFuelManualFormOnce() {
       fuelExpensePopulateManualClassSelect();
-      const host = document.getElementById('fuelManualLines');
-      if (host && !host.dataset.fuelManBound) {
-        host.dataset.fuelManBound = '1';
-        host.addEventListener('input', e => {
-          const t = e.target;
-          if (!t || !t.classList) return;
-          if (
-            t.classList.contains('fuel-m-line-gal') ||
-            t.classList.contains('fuel-m-line-ppg') ||
-            t.classList.contains('fuel-m-line-total')
-          ) {
-            const row = t.closest('tr.fuel-m-cost-line');
-            if (row) recalcFuelManualSingleLine(row, t);
-          }
-        });
-        host.addEventListener('change', e => {
-          const t = e.target;
-          if (t && t.classList && t.classList.contains('fuel-m-line-lock')) {
-            const row = t.closest('tr.fuel-m-cost-line');
-            if (row) recalcFuelManualSingleLine(row, t);
-          }
-        });
-      }
+      ['fuelManualCatLines', 'fuelManualItemLines'].forEach(hostId => {
+        const host = document.getElementById(hostId);
+        if (host && !host.dataset.fuelManBound) {
+          host.dataset.fuelManBound = '1';
+          host.addEventListener('input', e => {
+            const t = e.target;
+            if (!t || !t.classList) return;
+            if (
+              t.classList.contains('fuel-m-line-gal') ||
+              t.classList.contains('fuel-m-line-ppg') ||
+              t.classList.contains('fuel-m-line-total')
+            ) {
+              const row = t.closest('tr.fuel-m-cost-line');
+              if (row) recalcFuelManualSingleLine(row, t);
+            }
+          });
+          host.addEventListener('change', e => {
+            const t = e.target;
+            if (t && t.classList && t.classList.contains('fuel-m-line-lock')) {
+              const row = t.closest('tr.fuel-m-cost-line');
+              if (row) recalcFuelManualSingleLine(row, t);
+            }
+          });
+        }
+      });
       if (__fuelManualFormBound) return;
       __fuelManualFormBound = true;
       const uEl = document.getElementById('fuelManualUnit');
@@ -14449,19 +14614,23 @@
         });
         d.dataset.fuelLastDate = d.value || '';
       }
-      if (host && !host.querySelector('tr.fuel-m-cost-line')) addFuelManualLine();
+      const anyLine =
+        document.querySelector('#fuelManualCatLines tr.fuel-m-cost-line') ||
+        document.querySelector('#fuelManualItemLines tr.fuel-m-cost-line');
+      if (!anyLine) addFuelManualLine();
       else fuelManualUpdateHeaderTotal();
       syncFuelManualClassFromUnit();
-      const fTbl = document.querySelector('.acct-fuel-manual-table');
-      if (
-        fTbl &&
-        window.ErpColumnResize &&
-        typeof window.ErpColumnResize.bindToTable === 'function' &&
-        !fTbl.dataset.erpFuelColResize
-      ) {
-        fTbl.dataset.erpFuelColResize = '1';
-        fTbl.__erpColResizeDispose = window.ErpColumnResize.bindToTable(fTbl, { showHint: false });
-      }
+      document.querySelectorAll('#acct-fuel-expense .acct-fuel-manual-table').forEach(fTbl => {
+        if (
+          fTbl &&
+          window.ErpColumnResize &&
+          typeof window.ErpColumnResize.bindToTable === 'function' &&
+          !fTbl.dataset.erpFuelColResize
+        ) {
+          fTbl.dataset.erpFuelColResize = '1';
+          fTbl.__erpColResizeDispose = window.ErpColumnResize.bindToTable(fTbl, { showHint: false });
+        }
+      });
     }
 
     async function saveManualFuelPurchase(opts) {
@@ -14503,8 +14672,12 @@
       const pmSearch = String(document.getElementById('fuelManualPaymentMethodSearch')?.value || '').trim();
       const bankId = String(document.getElementById('fuelManualBankQboId')?.value || '').trim();
       const bankSearch = String(document.getElementById('fuelManualBankSearch')?.value || '').trim();
-      const host = document.getElementById('fuelManualLines');
-      const lineRows = host ? Array.from(host.querySelectorAll('tr.fuel-m-cost-line')) : [];
+      const catHost = document.getElementById('fuelManualCatLines');
+      const itemHost = document.getElementById('fuelManualItemLines');
+      const lineRows = [
+        ...(catHost ? Array.from(catHost.querySelectorAll('tr.fuel-m-cost-line')) : []),
+        ...(itemHost ? Array.from(itemHost.querySelectorAll('tr.fuel-m-cost-line')) : [])
+      ];
       if (!unit) {
         erpNotify('Enter truck / unit.', 'warning');
         return;
@@ -14528,7 +14701,7 @@
         resolveFuelManualLineItem(row.querySelector('.fuel-m-line-item-search'));
         const lineDesc = String(row.querySelector('.fuel-m-line-desc')?.value || '').trim();
         const productType = inferFuelProductTypeFromDesc(lineDesc);
-        const mode = String(row.querySelector('.fuel-m-line-mode')?.value || 'category').trim();
+        const mode = row.classList.contains('fuel-m-line--item') ? 'item' : 'category';
         const gal = Number(row.querySelector('.fuel-m-line-gal')?.value);
         const ppg = Number(row.querySelector('.fuel-m-line-ppg')?.value);
         const total = Number(row.querySelector('.fuel-m-line-total')?.value);
@@ -19929,10 +20102,9 @@
 
     function erpCollectFuelDedicatedPrintData() {
       const gv = id => String(document.getElementById(id)?.value ?? '').trim();
-      const rows = Array.from(document.querySelectorAll('#fuelManualLines tr.fuel-m-cost-line'));
-      const fuelLines = rows.map(row => ({
+      const rowToPrint = (row, mode) => ({
         description: (row.querySelector('.fuel-m-line-desc')?.value || '').trim(),
-        mode: (row.querySelector('.fuel-m-line-mode')?.value || '').trim(),
+        mode,
         categoryLabel: (row.querySelector('.fuel-m-line-acct-search')?.value || '').trim(),
         itemLabel: (row.querySelector('.fuel-m-line-item-search')?.value || '').trim(),
         sku: (row.querySelector('.fuel-m-line-item-sku')?.value || '').trim(),
@@ -19940,7 +20112,13 @@
         gallons: row.querySelector('.fuel-m-line-gal')?.value || '',
         ppg: row.querySelector('.fuel-m-line-ppg')?.value || '',
         amount: row.querySelector('.fuel-m-line-total')?.value || ''
-      }));
+      });
+      const fuelLines = [
+        ...Array.from(document.querySelectorAll('#fuelManualCatLines tr.fuel-m-cost-line')).map(r =>
+          rowToPrint(r, 'category')
+        ),
+        ...Array.from(document.querySelectorAll('#fuelManualItemLines tr.fuel-m-cost-line')).map(r => rowToPrint(r, 'item'))
+      ];
       const clsSel = document.getElementById('fuelManualClassSel');
       const classLabel =
         clsSel && clsSel.selectedOptions && clsSel.selectedOptions[0]
