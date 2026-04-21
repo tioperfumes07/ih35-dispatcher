@@ -637,7 +637,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  className="wo-mini-btn wo-bar-btn--excel"
+                  className="wo-mini-btn wo-bar-btn--excel fr-table-excel-export"
                   onClick={() =>
                     exportDomTableToXlsx(
                       partsLineCol.tableRef.current,
@@ -810,7 +810,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
             </button>
             <button
               type="button"
-              className="wo-mini-btn wo-bar-btn--excel"
+              className="wo-mini-btn wo-bar-btn--excel fr-table-excel-export"
               onClick={() =>
                 exportDomTableToXlsx(
                   catCol.tableRef.current,
@@ -1028,7 +1028,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
             </button>
             <button
               type="button"
-              className="wo-mini-btn wo-bar-btn--excel"
+              className="wo-mini-btn wo-bar-btn--excel fr-table-excel-export"
               onClick={() =>
                 exportDomTableToXlsx(
                   itemCol.tableRef.current,
@@ -1214,7 +1214,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
           </button>
           <button
             type="button"
-            className="wo-bar-btn wo-bar-btn--excel"
+            className="wo-bar-btn wo-bar-btn--excel fr-table-excel-export"
             onClick={() => {
               const stem = workOrderExportStem(props.workOrderNumber)
               exportJsonSheetsToXlsx(

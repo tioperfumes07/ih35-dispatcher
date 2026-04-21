@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 import type { MaintFleetCategory, MaintFleetUnit } from '../../data/maintFleetUnits'
 import { useColumnResize } from '../../hooks/useColumnResize'
+import { useTableTabOrder } from '../../hooks/useTableTabOrder'
 import { exportDomTableToXlsx } from '../../lib/tableExportXlsx'
 import { ResizeTableTh } from '../table/ResizeTableTh'
+import { TableResizeHintFooter } from '../table/TableResizeHintFooter'
 
 type Props = {
   units: MaintFleetUnit[]
@@ -35,13 +37,15 @@ export function MaintUnitFleetTable({
     return base
   }, [units, fleetFilter])
 
+  useTableTabOrder(col.tableRef, [rows])
+
   return (
     <div className="maint-fleet-table" role="region" aria-label="Fleet units table">
       <div className="maint-fleet-table__toolbar">
         <span className="acct-kicker">Fleet table</span>
         <button
           type="button"
-          className="btn sm ghost"
+          className="fr-table-excel-export"
           onClick={() => exportDomTableToXlsx(col.tableRef.current, 'FleetUnits')}
         >
           Export to Excel
@@ -102,9 +106,7 @@ export function MaintUnitFleetTable({
           </tbody>
         </table>
       </div>
-      <p className="muted tiny maint-fleet-table__hint">
-        Drag column edges to resize · Tab to navigate · Double-click a row to open work order
-      </p>
+      <TableResizeHintFooter extra="Double-click a row to open work order" />
     </div>
   )
 }

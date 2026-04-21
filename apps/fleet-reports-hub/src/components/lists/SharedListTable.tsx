@@ -7,7 +7,9 @@ import {
   type ReactNode,
 } from 'react'
 import { useColumnResize } from '../../hooks/useColumnResize'
+import { useTableTabOrder } from '../../hooks/useTableTabOrder'
 import { exportJsonRowsToXlsx } from '../../lib/tableExportXlsx'
+import { TableResizeHintFooter } from '../table/TableResizeHintFooter'
 
 export type SharedListColumn<T extends Record<string, unknown>> = {
   id: string
@@ -101,6 +103,8 @@ export function SharedListTable<T extends Record<string, unknown>>({
     return filtered.slice(start, start + pageSize)
   }, [filtered, pageSafe, pageSize])
 
+  useTableTabOrder(col.tableRef, [slice, columns, pageSafe, pageSize])
+
   useEffect(() => {
     setPage(1)
   }, [q, status, pageSize, filtered.length])
@@ -148,7 +152,7 @@ export function SharedListTable<T extends Record<string, unknown>>({
           {toolbarExtra}
           <button
             type="button"
-            className="btn sm ghost shared-list__head-btn"
+            className="shared-list__head-btn fr-table-excel-export"
             onClick={onExportExcel ?? defaultExport}
           >
             Export to Excel
@@ -278,9 +282,7 @@ export function SharedListTable<T extends Record<string, unknown>>({
           </tbody>
         </table>
       </div>
-      <p className="muted tiny" style={{ margin: '6px 0 0' }}>
-        Drag column edges to resize · Tab to navigate
-      </p>
+      <TableResizeHintFooter />
 
       {addRowFields ? <div className="shared-list__addrow">{addRowFields}</div> : null}
 

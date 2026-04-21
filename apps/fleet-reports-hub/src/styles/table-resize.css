@@ -11,3 +11,38 @@
   width: 5px;
   cursor: col-resize;
 }
+
+.fr-col-resize:hover {
+  background: color-mix(in srgb, var(--border) 45%, transparent);
+}
+
+/* Packet 3 — Excel export control (SheetJS downloads) */
+button.fr-table-excel-export {
+  height: 22px;
+  font-size: 9px;
+  line-height: 1;
+  padding: 0 10px;
+  background: #217346;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button.fr-table-excel-export:hover {
+  filter: brightness(1.06);
+}
+
+button.fr-table-excel-export:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fr-table-resize-hint {
+  margin: 6px 0 0;
+  font-size: 9px;
+  line-height: 1.35;
+  color: var(--muted);
+  text-align: right;
+}
