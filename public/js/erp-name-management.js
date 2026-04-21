@@ -306,6 +306,9 @@
         <summary style="cursor:pointer;font-weight:600">Rename history (this record)</summary>
         <div id="nmRowHistory" class="mini-note" style="margin-top:8px">Loading…</div>
       </details>`;
+    if (typeof window.ErpColumnResize !== 'undefined' && typeof window.ErpColumnResize.wireTablesInRoot === 'function') {
+      window.ErpColumnResize.wireTablesInRoot(host);
+    }
     const inp = document.getElementById('nmCanonInput');
     if (inp) {
       inp.oninput = () => paintPreview();
@@ -615,6 +618,9 @@
         </div>
       </div>`;
     document.body.appendChild(backdrop);
+    if (typeof window.ErpColumnResize !== 'undefined' && typeof window.ErpColumnResize.wireTablesInRoot === 'function') {
+      window.ErpColumnResize.wireTablesInRoot(backdrop);
+    }
     backdrop.querySelector('[data-close]').addEventListener('click', () => nmRemoveBackdrop(backdrop));
     backdrop.querySelector('#nmBulkAll')?.addEventListener('change', ev => {
       backdrop.querySelectorAll('.nm-bulk-cb').forEach(c => {
@@ -759,6 +765,10 @@
         }
         if (meta) meta.textContent = `Total matching: ${data.total ?? rows.length} (showing up to ${rows.length})`;
         backdrop.dataset.histQuery = p.toString();
+        if (typeof window.ErpColumnResize !== 'undefined' && typeof window.ErpColumnResize.wireTablesInRoot === 'function') {
+          const hw = backdrop.querySelector('#nmHistWrap');
+          if (hw) window.ErpColumnResize.wireTablesInRoot(hw);
+        }
       } catch (err) {
         if (body) body.innerHTML = `<tr><td colspan="9">${esc(err.message || err)}</td></tr>`;
         if (meta) meta.textContent = '';

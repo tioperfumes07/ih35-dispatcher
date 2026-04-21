@@ -9,14 +9,9 @@
   var MIN_W = 40;
 
   /**
+   * Count-based column widths + drag resize (no React).
    * @param {number} columnCount
    * @param {(number|null|undefined)[]=} defaultWidths
-   * @returns {{
-   *   widths: (number|null)[],
-   *   setWidths: (updater: ((prev: (number|null)[]) => (number|null)[]) | (number|null)[]) => void,
-   *   startResize: (colIndex: number, e: MouseEvent, duringMove?: () => void) => void,
-   *   widthStyleFor: (i: number) => Partial<CSSStyleDeclaration>
-   * }}
    */
   function useColumnResize(columnCount, defaultWidths) {
     var n = Math.max(0, columnCount | 0);
