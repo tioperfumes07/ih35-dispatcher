@@ -1069,7 +1069,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
                     className="wo-input"
                     readOnly
                     aria-readonly
-                    value={ledger === null ? '' : props.ledgerMode === 'bill' ? 'Bill' : 'Expense'}
+                    value={props.ledgerMode === 'bill' ? 'Bill' : 'Expense'}
                   />
                 </label>
               ) : (
@@ -1099,7 +1099,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               />
             </div>
             <label className="field">
-              <span className="wo-field-lbl">Date</span>
+              <span className="wo-field-lbl">{ledger ? ledger.fTxnDateLbl : 'Date'}</span>
               <input
                 className="wo-input"
                 type="date"
@@ -1117,7 +1117,9 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
             />
           </label>
           <div className="wo-note-box">
-            Post to QuickBooks syncs this WO as an expense or bill. Confirm vendor and category lines before posting.
+            {ledger
+              ? ledger.fNote
+              : 'Post to QuickBooks syncs this WO as an expense or bill. Confirm vendor and category lines before posting.'}
           </div>
           <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="wo-field-lbl" style={{ margin: 0 }}>
