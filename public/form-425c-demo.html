@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IH35 — Form 425C sample (March 2026 · Trucking)</title>
+  <link rel="stylesheet" href="/css/design-tokens.css" />
+  <link rel="stylesheet" href="/css/app-theme.css" />
+  <link rel="stylesheet" href="/css/board-nav.css" />
+  <style>
+    body.demo425 { margin: 0; background: #f4f6f8; font-family: Arial, Helvetica, sans-serif; font-size: 7.8pt; color: #111; }
+    .demo-wrap { max-width: 900px; margin: 0 auto; padding: 14px 16px 40px; }
+    .demo-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+    .demo-tabs button { font: inherit; font-size: 7.8pt; padding: 6px 10px; border: 1px solid transparent; border-radius: 6px 6px 0 0; background: transparent; cursor: pointer; }
+    .demo-tabs button.active { background: #fff; border-color: #ccc; border-bottom-color: #fff; font-weight: 700; }
+    .demo-panel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+    .demo-panel.active { display: block; }
+    .part-h { color: #0d2d5c; font-size: 7.8pt; font-weight: 700; margin: 14px 0 6px; }
+    .demo-paper table { width: 100%; border-collapse: collapse; font-size: 7.8pt; }
+    .demo-paper th, .demo-paper td { border: 1px solid #999; padding: 4px 6px; vertical-align: top; }
+    .demo-paper th { background: #eef2f7; font-weight: 600; }
+    .demo-paper .c-date { text-align: center; }
+    .demo-paper .c-num { text-align: right; font-variant-numeric: tabular-nums; }
+    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin: 8px 0; }
+    .demo-grid label { display: flex; flex-direction: column; gap: 2px; font-size: 7.8pt; color: #333; }
+    .demo-grid span.val { border-bottom: 1px solid #333; min-height: 1.2em; padding: 2px 0; }
+    @media print {
+      .no-print { display: none !important; }
+      .demo-panel { display: block !important; border: none; page-break-before: always; }
+      .demo-panel:first-of-type { page-break-before: auto; }
+      body.demo425 { background: #fff; }
+    }
+  </style>
+</head>
+<body class="demo425 hub-page">
+  <div id="boardNavMount"></div>
+  <script src="/js/board-nav.js" defer></script>
+  <div class="demo-wrap">
+    <p class="no-print" style="font-size:11px"><a href="/">← Company home</a> · <a href="/form-425c.html">425C workspace</a></p>
+    <header style="text-align:center;margin-bottom:10px">
+      <div style="font-size:14pt;font-weight:700;color:#0d2d5c">IH 35 GROUP</div>
+      <div style="font-size:7.8pt;color:#555">IH 35 Trucking LLC · IH 35 Transportation LLC · Laredo, Texas</div>
+      <div style="font-size:8pt;font-weight:700;color:#0d2d5c;margin-top:8px">Form 425C — Sample monthly operating report (read-only)</div>
+      <div style="font-size:7.8pt;color:#666">March 2026 · IH 35 Trucking LLC · Demonstration only</div>
+    </header>
+
+    <div class="demo-tabs no-print" role="tablist">
+      <button type="button" class="active" data-tab="form" role="tab">Form 425C</button>
+      <button type="button" data-tab="exc" role="tab">Exhibit C</button>
+      <button type="button" data-tab="exd" role="tab">Exhibit D</button>
+    </div>
+
+    <section id="panel-form" class="demo-panel active demo-paper">
+      <p style="font-size:7.8pt;color:#555;margin:0 0 8px"><strong>Official Form 425C</strong> · Monthly Operating Report (excerpt — sample values)</p>
+      <div class="demo-grid">
+        <label>Month <span class="val">March 2026</span></label>
+        <label>Date filed <span class="val c-date">2026-04-15</span></label>
+        <label>Debtor <span class="val">IH 35 Trucking LLC</span></label>
+        <label>Case no. <span class="val">24-1XXXX</span></label>
+      </div>
+
+      <div class="part-h">Part 1 — Questionnaire (representative answers)</div>
+      <p style="margin:4px 0;font-size:7.8pt">Lines 1–9: Yes · Lines 10–18: No (sample)</p>
+
+      <div class="part-h">Part 2 — Cash summary (lines 19–23)</div>
+      <table aria-label="Cash summary">
+        <tr><th style="width:70%">Description</th><th class="c-num">Amount</th></tr>
+        <tr><td>19. Opening balance (all accounts)</td><td class="c-num">51,714.22</td></tr>
+        <tr><td>20. Total receipts (Exhibit C)</td><td class="c-num">148,320.00</td></tr>
+        <tr><td>21. Total disbursements (Exhibit D)</td><td class="c-num">129,875.44</td></tr>
+        <tr><td>22. Net cash flow</td><td class="c-num">18,444.56</td></tr>
+        <tr><td>23. Ending cash</td><td class="c-num">70,158.78</td></tr>
+      </table>
+
+      <div class="part-h">Parts 3–6 (sample)</div>
+      <table>
+        <tr><th>Line</th><th>Description</th><th class="c-num">Value</th></tr>
+        <tr><td>24</td><td>Payables</td><td class="c-num">42,180.50</td></tr>
+        <tr><td>25</td><td>Receivables</td><td class="c-num">38,905.00</td></tr>
+        <tr><td>26–27</td><td>Employees (filed / current)</td><td class="c-num">18 / 18</td></tr>
+        <tr><td>28–31</td><td>Professional fees (sample)</td><td class="c-num">12,400.00</td></tr>
+      </table>
+
+      <div class="part-h">Part 7 — Projections (equal column width)</div>
+      <table style="table-layout:fixed">
+        <colgroup><col style="width:25%" /><col style="width:25%" /><col style="width:25%" /><col style="width:25%" /></colgroup>
+        <tr>
+          <th>Line</th>
+          <th class="c-date">Prior month</th>
+          <th class="c-date">This month</th>
+          <th class="c-date">Next month (proj.)</th>
+        </tr>
+        <tr><td>32 · Receipts</td><td class="c-num">142,100.00</td><td class="c-num">148,320.00</td><td class="c-num">151,000.00</td></tr>
+        <tr><td>33 · Disbursements</td><td class="c-num">126,400.00</td><td class="c-num">129,875.44</td><td class="c-num">131,200.00</td></tr>
+        <tr><td>34 · Payroll</td><td class="c-num">38,200.00</td><td class="c-num">39,050.00</td><td class="c-num">39,500.00</td></tr>
+        <tr><td>35 · Fleet / fuel</td><td class="c-num">52,800.00</td><td class="c-num">54,120.00</td><td class="c-num">55,000.00</td></tr>
+        <tr><td>36 · Insurance / compliance</td><td class="c-num">8,950.00</td><td class="c-num">9,200.00</td><td class="c-num">9,200.00</td></tr>
+        <tr><td>37 · Other</td><td class="c-num">—</td><td class="c-num">—</td><td class="c-num">—</td></tr>
+      </table>
+    </section>
+
+    <section id="panel-exc" class="demo-panel demo-paper">
+      <div class="part-h">Exhibit C — Cash receipts (11 sample invoices / deposits)</div>
+      <table>
+        <thead>
+          <tr>
+            <th class="c-date">Date</th>
+            <th>Customer / ref.</th>
+            <th class="c-num">Amount</th>
+            <th>WF account</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="c-date">2026-03-03</td><td>INV-240315 · Lone Star Produce</td><td class="c-num">12,450.00</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-05</td><td>INV-240322 · Border Freight Brokers</td><td class="c-num">8,920.50</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-06</td><td>INV-240328 · Rio Grande Cold Chain</td><td class="c-num">15,200.00</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-10</td><td>INV-240331 · Alamo Distribution LLC</td><td class="c-num">9,875.25</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-12</td><td>INV-240340 · Webb County Milling</td><td class="c-num">11,040.00</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-14</td><td>INV-240341 · Nuevo Laredo Imports (USD)</td><td class="c-num">18,330.75</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-17</td><td>INV-240350 · Gulf Coast Shippers Coop</td><td class="c-num">7,655.00</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-19</td><td>INV-240355 · IH 35 Transportation LLC (rebill)</td><td class="c-num">22,100.00</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-21</td><td>SR-8821 · Fuel surcharge true-up</td><td class="c-num">6,420.00</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-24</td><td>INV-240360 · Del Rio Cold Storage</td><td class="c-num">13,880.00</td><td>WF-3500</td></tr>
+          <tr><td class="c-date">2026-03-28</td><td>INV-240368 · Corpus Consolidators</td><td class="c-num">22,448.50</td><td>WF-3500</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><th colspan="2" style="text-align:right">Total receipts</th><th class="c-num">148,320.00</th><th></th></tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <section id="panel-exd" class="demo-panel demo-paper">
+      <div class="part-h">Exhibit D — Disbursements (19 sample payments)</div>
+      <table>
+        <thead>
+          <tr>
+            <th class="c-date">Date</th>
+            <th>Payee</th>
+            <th class="c-num">Amount</th>
+            <th>Memo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="c-date">2026-03-01</td><td>Pilot Travel Centers</td><td class="c-num">4,210.88</td><td>Fuel card batch</td></tr>
+          <tr><td class="c-date">2026-03-02</td><td>Love’s Travel Stop</td><td class="c-num">3,842.10</td><td>Fuel</td></tr>
+          <tr><td class="c-date">2026-03-03</td><td>TA Petro Laredo</td><td class="c-num">2,905.44</td><td>Fuel</td></tr>
+          <tr><td class="c-date">2026-03-04</td><td>International Truck Parts</td><td class="c-num">6,770.00</td><td>PM service kits</td></tr>
+          <tr><td class="c-date">2026-03-05</td><td>Freightliner San Antonio</td><td class="c-num">9,420.50</td><td>Repairs unit 412</td></tr>
+          <tr><td class="c-date">2026-03-06</td><td>Great West Casualty</td><td class="c-num">8,950.00</td><td>Insurance installment</td></tr>
+          <tr><td class="c-date">2026-03-07</td><td>ATBS Tax &amp; Accounting</td><td class="c-num">1,850.00</td><td>Monthly fee</td></tr>
+          <tr><td class="c-date">2026-03-10</td><td>Shell Fleet Plus</td><td class="c-num">5,640.22</td><td>Fuel</td></tr>
+          <tr><td class="c-date">2026-03-11</td><td>Valero Wholesale Fuel</td><td class="c-num">7,105.00</td><td>Bulk DEF + fuel</td></tr>
+          <tr><td class="c-date">2026-03-12</td><td>Enterprise Fleet Mgmt</td><td class="c-num">2,310.00</td><td>Lease / admin</td></tr>
+          <tr><td class="c-date">2026-03-14</td><td>Bridgestone Bandag</td><td class="c-num">4,888.30</td><td>Tires 8 units</td></tr>
+          <tr><td class="c-date">2026-03-15</td><td>IH 35 Transportation LLC</td><td class="c-num">12,000.00</td><td>Shared services</td></tr>
+          <tr><td class="c-date">2026-03-16</td><td>TXU Energy</td><td class="c-num">1,420.55</td><td>Yard electricity</td></tr>
+          <tr><td class="c-date">2026-03-18</td><td>City of Laredo — permits</td><td class="c-num">640.00</td><td>Oversize permits</td></tr>
+          <tr><td class="c-date">2026-03-19</td><td>ADP Payroll</td><td class="c-num">28,757.20</td><td>Payroll + taxes</td></tr>
+          <tr><td class="c-date">2026-03-20</td><td>Comdata EFS</td><td class="c-num">6,110.25</td><td>Fuel clearing</td></tr>
+          <tr><td class="c-date">2026-03-22</td><td>Blue Cross TX</td><td class="c-num">9,880.00</td><td>Health premium</td></tr>
+          <tr><td class="c-date">2026-03-25</td><td>U.S. Trustee / quarterly</td><td class="c-num">775.00</td><td>UST fee</td></tr>
+          <tr><td class="c-date">2026-03-27</td><td>Counsel — chapter 11</td><td class="c-num">12,400.00</td><td>Professional fees</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><th colspan="2" style="text-align:right">Total disbursements</th><th class="c-num">129,875.44</th><th></th></tr>
+        </tfoot>
+      </table>
+    </section>
+  </div>
+  <script>
+    document.querySelectorAll('.demo-tabs button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.demo-tabs button').forEach(function (b) {
+          b.classList.toggle('active', b === btn);
+        });
+        var id = btn.getAttribute('data-tab');
+        document.querySelectorAll('.demo-panel').forEach(function (p) { p.classList.remove('active'); });
+        document.getElementById('panel-' + id).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
