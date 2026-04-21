@@ -155,7 +155,7 @@ p {
 nav.tabs.reports-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  gap: 4px;
   overflow: visible;
   width: 100%;
   min-width: 0;
@@ -163,6 +163,7 @@ nav.tabs.reports-tabs {
 
 nav.tabs.reports-tabs .reports-tab {
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .reports-page {
@@ -210,7 +211,7 @@ nav.tabs.reports-tabs .reports-tab {
 .reports-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  gap: 4px;
   margin-top: 14px;
   padding: 0;
   border: none;
@@ -222,6 +223,7 @@ nav.tabs.reports-tabs .reports-tab {
 
 .reports-tab {
   flex: 0 1 auto;
+  flex-shrink: 0;
   min-width: 0;
   margin: 0;
   padding: 10px 14px 12px;
@@ -829,6 +831,14 @@ nav.tabs {
   max-width: 100%;
   gap: 18px;
   align-items: stretch;
+}
+
+/* Fleet hub (App.tsx): shared .layout class + column shell — overrides generic row gap */
+.app--fleet-reports > .layout.fleet-reports-layout {
+  flex-direction: column;
+  gap: 0;
+  align-items: stretch;
+  align-content: stretch;
 }
 
 @media (max-width: 960px) {
@@ -3501,6 +3511,21 @@ nav.tabs {
 }
 
 /* Maintenance workspace + integrity */
+/* Maintenance workspace: fill main column, allow inner scroll */
+.acct-shell.maint-workspace {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+  overflow: hidden;
+}
+
+.acct-shell.maint-workspace .acct-main-col {
+  min-height: 0;
+}
+
 .maint-workspace .acct-bills-link {
   display: flex;
   align-items: center;
@@ -4769,6 +4794,25 @@ nav.tabs {
   padding: 24px;
 }
 
+@media (max-width: 960px) {
+  .name-mgmt-page .nm-layout {
+    flex-direction: column;
+  }
+
+  .name-mgmt-page .nm-list {
+    width: 100%;
+    max-width: none;
+    flex: 0 0 auto;
+    height: auto;
+    max-height: min(50vh, 420px);
+  }
+
+  .name-mgmt-page .nm-detail {
+    height: auto;
+    min-height: min(40vh, 320px);
+  }
+}
+
 .nm-page__head {
   display: flex;
   flex-wrap: wrap;
@@ -5694,6 +5738,7 @@ nav.tabs {
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .maint-rwo__link:hover {
@@ -6522,7 +6567,7 @@ nav.tabs {
 }
 
 .reports-page--redesign .reports-tabs {
-  gap: 0;
+  gap: 4px;
 }
 
 .reports-page--redesign .reports-tab {
@@ -6599,9 +6644,10 @@ nav.tabs {
   flex: 1;
   min-height: 0;
   min-width: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
+  max-width: 100%;
   align-items: stretch;
 }
 

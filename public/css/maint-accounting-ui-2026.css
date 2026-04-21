@@ -3640,3 +3640,42 @@ body.erp-maintenance #erpFuelManualDocShellPanel .acct-fuel-manual-table .qb-in.
   padding: 3px 6px;
   box-sizing: border-box;
 }
+
+/* --------------------------------------------------------------------------
+   Global responsive layout (fleet-reports-hub parity): fill viewport, fluid
+   main columns, horizontal scroll for wide tables. Uses existing ERP vars
+   only — do not edit app-theme.css.
+   -------------------------------------------------------------------------- */
+
+body.erp-maintenance #erpApp.erp-master {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+body.erp-maintenance #section-maintenance.section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+body.erp-maintenance .erp-table-scroll,
+body.erp-maintenance .table-wrap.erp-table-scroll,
+body.erp-maintenance .shop-tab-panel .erp-table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-action-strip__tabs .maint-action-strip__btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
