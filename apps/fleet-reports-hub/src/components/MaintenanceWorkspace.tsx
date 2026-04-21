@@ -60,6 +60,8 @@ type Props = {
   onExternalNavConsumed?: () => void
   /** Opens the app-level WO kind picker (same as Accounting + New → work order). */
   onOpenAppWorkOrder?: () => void
+  /** ERP maintenance.html record tab — minimal chrome, repair WO only. */
+  erpRecordEmbed?: boolean
 }
 
 export function MaintenanceWorkspace({
@@ -68,6 +70,7 @@ export function MaintenanceWorkspace({
   externalNavRequest,
   onExternalNavConsumed,
   onOpenAppWorkOrder,
+  erpRecordEmbed,
 }: Props) {
   const [view, setView] = useState<MaintView>(readErpEmbedRepairInitialView)
   const [listsCatalogsTab, setListsCatalogsTab] =
@@ -194,6 +197,22 @@ export function MaintenanceWorkspace({
   const LISTS_NAV: { tab: ListsCatalogsTab; list: ListsCatalogListId; label: string }[] = [
     ...LISTS_NAV_SRC,
   ].sort((a, b) => a.label.localeCompare(b.label))
+
+  const notifyErpParentAfterSave = () => {
+    if (!erpRecordEmbed) return
+    try {
+      window.parent?.postMessage(
+        {
+          source: 'ih35-fleet-hub',
+          type: 'maint-repair-wo-saved',
+          unitId: repairTabUnitId,
+        },
+        '*',
+      )
+    } catch {
+      /* ignore */
+    }
+  }
 
   const navBtn = (id: MaintView, label: string, extra?: ReactNode) => (
     <li key={id}>
