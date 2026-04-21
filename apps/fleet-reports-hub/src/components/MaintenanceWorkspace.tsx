@@ -6,8 +6,6 @@ import { openAlertCount } from '../api/postIntegrityCheck'
 import type { IntegrityAlert } from '../types/integrity'
 import { RepairWorkOrderForm } from './maintenance/RepairWorkOrderForm'
 import { AccidentWorkOrderForm } from './maintenance/AccidentWorkOrderForm'
-import { MaintenanceExpenseForm } from './maintenance/MaintenanceExpenseForm'
-import { MaintenanceBillForm } from './maintenance/MaintenanceBillForm'
 import { IntegrityDashboard } from './maintenance/IntegrityDashboard'
 import { IntegrityThresholdSettings } from './maintenance/IntegrityThresholdSettings'
 import { PostSaveIntegrityPanel } from './maintenance/PostSaveIntegrityPanel'
@@ -280,9 +278,19 @@ export function MaintenanceWorkspace({
           <AccidentWorkOrderForm onIntegrityBatch={onBatch} />
         )}
         {view === 'expense' && (
-          <MaintenanceExpenseForm onIntegrityBatch={onBatch} />
+          <RepairWorkOrderForm
+            integritySaveType="maintenance_expense"
+            onIntegrityBatch={onBatch}
+            onViewAllIntegrity={goToIntegrityView}
+          />
         )}
-        {view === 'bill' && <MaintenanceBillForm onIntegrityBatch={onBatch} />}
+        {view === 'bill' && (
+          <RepairWorkOrderForm
+            integritySaveType="maintenance_bill"
+            onIntegrityBatch={onBatch}
+            onViewAllIntegrity={goToIntegrityView}
+          />
+        )}
         {view === 'integrity' && (
           <div id="maint-integrity-root" className="maint-integrity-anchor">
             <IntegrityDashboard

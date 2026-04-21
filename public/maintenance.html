@@ -2013,8 +2013,8 @@
             </div>
             <div class="panel-body">
               <div class="maint-rm-subtabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;border-bottom:1px solid var(--color-border);padding-bottom:8px">
-                <button type="button" class="btn secondary maint-rm-subtab active" data-maint-rm-sub="alerts" onclick="maintRmSwitchSubtab('alerts', this)">Integrity alerts</button>
                 <button type="button" class="btn secondary maint-rm-subtab" data-maint-rm-sub="due" onclick="maintRmSwitchSubtab('due', this)">Due schedule</button>
+                <button type="button" class="btn secondary maint-rm-subtab active" data-maint-rm-sub="alerts" onclick="maintRmSwitchSubtab('alerts', this)">Integrity alerts</button>
               </div>
               <div id="maintRmSubpaneAlerts">
               <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Security alerts filters" style="padding-top:0;margin-bottom:10px">
@@ -2882,11 +2882,11 @@
 
       <section id="section-accounting" class="section">
         <div id="acctNavTabStubs" class="subtabs erp-tab-bar" role="tablist" aria-label="Accounting views">
-          <button type="button" class="subtab" role="tab" id="acctLogsDdTrigger" onclick="openAccountingTab('acct-expense-history', this)">Expense history</button>
           <button type="button" class="subtab" role="tab" id="acctBillHistTrigger" onclick="openAccountingTab('acct-bill-history', this)">Bill history</button>
+          <button type="button" class="subtab" role="tab" id="acctBillPayStub" onclick="openAccountingTab('acct-bill-pay', this)">Bill payment</button>
+          <button type="button" class="subtab" role="tab" id="acctLogsDdTrigger" onclick="openAccountingTab('acct-expense-history', this)">Expense history</button>
           <button type="button" class="subtab" role="tab" id="acctFuelDdTrigger" onclick="openAccountingTab('acct-fuel-expense', this)">Fuel &amp; DEF</button>
           <button type="button" class="subtab active" role="tab" id="acctStubTrans" onclick="openAccountingTab('acct-transactions', this)">Maintenance expenses</button>
-          <button type="button" class="subtab" role="tab" id="acctBillPayStub" onclick="openAccountingTab('acct-bill-pay', this)">Bill payment</button>
           <button type="button" class="subtab" role="tab" id="acctQboRollbackStub" onclick="openAccountingTab('acct-qbo-rollback', this)">QBO rollback</button>
           <button type="button" class="subtab" role="tab" id="acctQbDdTrigger" onclick="openAccountingTab('acct-qbo', this)">QuickBooks live master</button>
         </div>
@@ -3064,13 +3064,13 @@
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Tools &amp; data</h3>
             <div class="acct-dash-tools-grid">
-              <button type="button" onclick="openDedupeTool()">Find &amp; merge duplicates</button>
-              <button type="button" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>
               <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
               <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
+              <button type="button" onclick="openDedupeTool()">Find &amp; merge duplicates</button>
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
+              <button type="button" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>
               <button type="button" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types database</button>
               <button type="button" onclick="location.href='/settings.html'">Settings &amp; users</button>
@@ -5686,11 +5686,11 @@
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
               <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; Samsara</button>
+              <button type="button" class="subtab" data-cat-sub="name-mgmt" onclick="openCatalogSubpanel('name-mgmt', this)">Name management</button>
               <button type="button" class="subtab" data-cat-sub="operational" onclick="openCatalogSubpanel('operational', this)">Operational status</button>
               <button type="button" class="subtab" data-cat-sub="qbo" onclick="openCatalogSubpanel('qbo', this)">QuickBooks items &amp; accounts</button>
               <button type="button" class="subtab active" data-cat-sub="service" onclick="openCatalogSubpanel('service', this)">Service types (DB)</button>
               <button type="button" class="subtab" data-cat-sub="vendors" onclick="openCatalogSubpanel('vendors', this)">Vendors &amp; drivers</button>
-              <button type="button" class="subtab" data-cat-sub="name-mgmt" onclick="openCatalogSubpanel('name-mgmt', this)">Name management</button>
             </div>
             <div id="catalog-panel-service" class="catalog-subpanel active">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
@@ -8883,6 +8883,7 @@
       let s =
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'name-mgmt\');">Name management</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
@@ -8901,6 +8902,7 @@
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'name-mgmt\');">Name management</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
@@ -8920,9 +8922,9 @@
 
     function erpSbSettingsBlock() {
       return (
-        '<button type="button" class="erp-sb-link erp-sb-link--muted sidebar-child-item" onclick="location.href=\'/settings.html\'">Settings &amp; users</button>' +
         '<button type="button" class="erp-sb-link erp-sb-link--muted sidebar-child-item" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
-        '<button type="button" class="erp-sb-link erp-sb-link--muted sidebar-child-item" onclick="window.open(\'https://cloud.samsara.com\',\'_blank\',\'noopener\');">Samsara Cloud</button>'
+        '<button type="button" class="erp-sb-link erp-sb-link--muted sidebar-child-item" onclick="window.open(\'https://cloud.samsara.com\',\'_blank\',\'noopener\');">Samsara Cloud</button>' +
+        '<button type="button" class="erp-sb-link erp-sb-link--muted sidebar-child-item" onclick="location.href=\'/settings.html\'">Settings &amp; users</button>'
       );
     }
 
@@ -9146,11 +9148,11 @@
             'Sub-tabs',
             true,
             '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;fleet&quot;);">Fleet &amp; Samsara writes</button>' +
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;name-mgmt&quot;);">Name management</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;operational&quot;);">Operational labels</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
-              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>' +
-              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;name-mgmt&quot;);">Name management</button>'
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;vendors&quot;);">Vendors &amp; driver payees</button>'
           ) +
           erpSbGroup('catalog', 'module-admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;

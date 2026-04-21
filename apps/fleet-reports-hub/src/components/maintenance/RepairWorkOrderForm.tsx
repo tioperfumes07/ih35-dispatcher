@@ -51,7 +51,11 @@ type Props = {
   onRequestCreateWorkOrder?: () => void
   /** Double-click unit in list: select unit and open the same modal (Maintenance board). */
   onUnitOpenRecordModal?: (unitId: string) => void
-  integritySaveType?: 'repair_work_order' | 'accident_work_order'
+  integritySaveType?:
+    | 'repair_work_order'
+    | 'accident_work_order'
+    | 'maintenance_expense'
+    | 'maintenance_bill'
   /** When opening from + New, maps to service location for WO prefix (IWO/EWO/RSWO). */
   initialShellKind?: WorkOrderShellKind
 }
@@ -99,11 +103,19 @@ export function RepairWorkOrderForm({
   integritySaveType = 'repair_work_order',
   initialShellKind,
 }: Props) {
+  const isLedgerShell =
+    integritySaveType === 'maintenance_expense' ||
+    integritySaveType === 'maintenance_bill'
   const vendorOptions = useVendorComboOptions()
   const [qboItems, setQboItems] = useState<QboItemRow[]>([])
   const isUnitControlled =
     controlledUnitId !== undefined && typeof onUnitIdChange === 'function'
-  const [internalUnitId, setInternalUnitId] = useState(initialUnitId ?? '101')
+  const [internalUnitId, setInternalUnitId] = useState(() => {
+    if (initialUnitId) return initialUnitId
+    if (integritySaveType === 'maintenance_expense') return '118'
+    if (integritySaveType === 'maintenance_bill') return '415'
+    return '101'
+  })
   const unitId = isUnitControlled ? controlledUnitId! : internalUnitId
   const setUnitId = (id: string) => {
     if (isUnitControlled) onUnitIdChange!(id)
@@ -112,13 +124,26 @@ export function RepairWorkOrderForm({
   const [fleetFilter, setFleetFilter] = useState<MaintFleetCategory | 'all'>('all')
   const [driverId, setDriverId] = useState('')
   const [driverName, setDriverName] = useState('') // payee vendor display name
-  const [recordType, setRecordType] = useState('repair')
-  const [serviceType, setServiceType] = useState('corrective')
+  const [recordType, setRecordType] = useState(() => {
+    if (integritySaveType === 'accident_work_order') return 'accident'
+    if (isLedgerShell) return 'work_order'
+    return 'repair'
+  })
+  const [serviceType, setServiceType] = useState(() => {
+    if (integritySaveType === 'maintenance_expense') return 'oil_change'
+    if (integritySaveType === 'maintenance_bill') return 'pm_b'
+    return 'corrective'
+  })
   const [repairStatus, setRepairStatus] = useState('open')
   const [serviceLocation, setServiceLocation] = useState('dallas-shop')
   const [vendor, setVendor] = useState('')
   const [description, setDescription] = useState(initialDescription ?? '')
-  const [estimatedCost, setEstimatedCost] = useState(initialEstimatedCost ?? '8500')
+  const [estimatedCost, setEstimatedCost] = useState(() => {
+    if (initialEstimatedCost != null && initialEstimatedCost !== '') return initialEstimatedCost
+    if (integritySaveType === 'maintenance_expense') return '420'
+    if (integritySaveType === 'maintenance_bill') return '6200'
+    return '8500'
+  })
   const [vehicleMakeKey, setVehicleMakeKey] = useState('freightliner_cascadia')
   const [currentOdometer, setCurrentOdometer] = useState(418200)
   const [saving, setSaving] = useState(false)
@@ -135,16 +160,26 @@ export function RepairWorkOrderForm({
   const [suggestedLoad] = useState('—')
   const [plannedLines, setPlannedLines] = useState<PlannedLine[]>([{ id: 'p1', text: '', tag: '' }])
   const [partLines, setPartLines] = useState<PartLine[]>([])
-  const [categoryLines, setCategoryLines] = useState<CategoryLine[]>([
-    {
-      id: 'c1',
-      category: 'R&M',
-      description: '',
-      amount: '8500',
-      billable: true,
-      customer: '',
-    },
-  ])
+  const [categoryLines, setCategoryLines] = useState<CategoryLine[]>(() => {
+    const amt =
+      initialEstimatedCost != null && initialEstimatedCost !== ''
+        ? initialEstimatedCost
+        : integritySaveType === 'maintenance_expense'
+          ? '420'
+          : integritySaveType === 'maintenance_bill'
+            ? '6200'
+            : '8500'
+    return [
+      {
+        id: 'c1',
+        category: 'R&M',
+        description: '',
+        amount: amt,
+        billable: true,
+        customer: '',
+      },
+    ]
+  })
   const [itemLines, setItemLines] = useState<ItemLine[]>([
     {
       id: 'i1',
@@ -158,8 +193,12 @@ export function RepairWorkOrderForm({
       customer: '',
     },
   ])
-  const [txnType, setTxnType] = useState('expense')
-  const [expenseBillNo, setExpenseBillNo] = useState('')
+  const [txnType, setTxnType] = useState(() =>
+    integritySaveType === 'maintenance_bill' ? 'bill' : 'expense',
+  )
+  const [expenseBillNo, setExpenseBillNo] = useState(() =>
+    integritySaveType === 'maintenance_bill' ? 'VEND-9921' : '',
+  )
   const [paymentMethod, setPaymentMethod] = useState('ACH')
   const [txnDate, setTxnDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [payFromAccount, setPayFromAccount] = useState('Operating checking · …4401')
@@ -182,9 +221,7 @@ export function RepairWorkOrderForm({
   }, [initialUnitId, isUnitControlled])
 
   useEffect(() => {
-    if (integritySaveType === 'accident_work_order') {
-      setRecordType('accident')
-    }
+    if (integritySaveType === 'accident_work_order') setRecordType('accident')
   }, [integritySaveType])
 
   useEffect(() => {
@@ -332,7 +369,7 @@ export function RepairWorkOrderForm({
     setSaveVis('loading')
     try {
       const saveId = crypto.randomUUID()
-      const payload =
+      const payload: Record<string, unknown> =
         integritySaveType === 'accident_work_order'
           ? {
               unitId,
@@ -345,21 +382,48 @@ export function RepairWorkOrderForm({
               serviceName: selectedService?.service_name,
               workOrderNumber,
             }
-          : {
-              unitId,
-              driverId,
-              driverName,
-              serviceType,
-              serviceName: selectedService?.service_name ?? serviceType,
-              description,
-              estimatedCost: parseFloat(estimatedCost) || 0,
-              recordType,
-              serviceLocation,
-              repairStatus,
-              workOrderNumber,
-              vendor: vendorDisplay,
-              vendorPartyId: vendor,
-            }
+          : integritySaveType === 'maintenance_expense'
+            ? {
+                unitId,
+                driverId,
+                driverName,
+                category: selectedService?.service_name ?? serviceType,
+                serviceKey: serviceType,
+                serviceName: selectedService?.service_name,
+                amount: parseFloat(estimatedCost) || 0,
+                expenseDate: serviceDate,
+                vendor: vendorDisplay,
+                vendorPartyId: vendor,
+              }
+            : integritySaveType === 'maintenance_bill'
+              ? {
+                  unitId,
+                  driverId,
+                  driverName,
+                  billNumber: expenseBillNo,
+                  amount: parseFloat(estimatedCost) || 0,
+                  billDate: serviceDate,
+                  vendor: vendorDisplay,
+                  vendorPartyId: vendor,
+                  serviceKey: serviceType,
+                  serviceName: selectedService?.service_name,
+                  billedServiceLabel: selectedService?.service_name ?? serviceType,
+                }
+              : {
+                  unitId,
+                  driverId,
+                  driverName,
+                  serviceType,
+                  serviceName: selectedService?.service_name ?? serviceType,
+                  description,
+                  estimatedCost: parseFloat(estimatedCost) || 0,
+                  recordType,
+                  serviceLocation,
+                  repairStatus,
+                  workOrderNumber,
+                  vendor: vendorDisplay,
+                  vendorPartyId: vendor,
+                }
       await new Promise((r) => setTimeout(r, 200))
       const res = await postIntegrityCheck({
         saveType: integritySaveType,
@@ -368,7 +432,7 @@ export function RepairWorkOrderForm({
       })
       mergeAlertsIntoStore(res.alerts)
       onIntegrityBatch(res.alerts)
-      bumpWorkOrderDupSeq(woDupKey)
+      if (!isLedgerShell) bumpWorkOrderDupSeq(woDupKey)
       setSaveVis('success')
       window.setTimeout(() => setSaveVis('idle'), 1600)
     } catch {
@@ -552,6 +616,29 @@ export function RepairWorkOrderForm({
       }
     />
   )
+
+  if (isLedgerShell) {
+    return (
+      <div
+        className={
+          'maint-rwo maint-rwo--ledger-shell' +
+          (variant === 'modal' ? ' maint-rwo--modal-shell' : '')
+        }
+        aria-label={
+          integritySaveType === 'maintenance_expense'
+            ? 'Maintenance expense'
+            : 'Maintenance bill'
+        }
+      >
+        <div
+          className="maint-rwo__scroll"
+          style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+        >
+          {shell}
+        </div>
+      </div>
+    )
+  }
 
   if (variant === 'modal') {
     return (
