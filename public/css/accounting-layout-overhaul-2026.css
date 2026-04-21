@@ -80,8 +80,9 @@ body.erp-maintenance #section-accounting .subtabs.erp-tab-bar .subtab.active {
   font-weight: 500 !important;
 }
 
-/* Reports + other tablists in maintenance (not WO action strip — that row wraps in maint-accounting / maint-overhaul) */
-body.erp-maintenance .rep-cat-tabs,
+/* Reports + other tablists in maintenance (not WO action strip — that row wraps in maint-accounting / maint-overhaul).
+   Exclude .rep-cat-tabs--bar (Fleet reports domain tabs — must wrap). */
+body.erp-maintenance .rep-cat-tabs:not(.rep-cat-tabs--bar),
 body.erp-maintenance #maintMainSubtabs {
   display: flex !important;
   flex-wrap: nowrap !important;
