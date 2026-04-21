@@ -2735,6 +2735,70 @@ body.erp-maintenance .maint-kpi-card__val {
   color: var(--color-text-primary);
 }
 
+body.erp-maintenance .maint-kpi-card--integrity {
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.erp-maintenance .maint-kpi-card__val--integrity.maint-kpi-card__val--danger {
+  color: var(--color-semantic-error);
+}
+
+body.erp-maintenance .maint-kpi-card__val--integrity.maint-kpi-card__val--amber {
+  color: #b86b00;
+}
+
+body.erp-maintenance .maint-dash-int-mini {
+  margin-top: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 11px;
+  line-height: 1.35;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0;
+  min-height: 0;
+  background: color-mix(in srgb, var(--color-bg-page) 55%, var(--color-bg-card));
+}
+
+body.erp-maintenance .maint-dash-int-row {
+  padding: 8px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-dash-int-row:last-child {
+  border-bottom: none;
+}
+
+body.erp-maintenance .maint-dash-int-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+body.erp-maintenance .maint-dash-int-row__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+body.erp-maintenance .maint-dash-int-row__desc {
+  margin: 3px 0 0;
+  line-height: 1.35;
+  color: var(--color-text-body);
+}
+
+body.erp-maintenance .maint-dash-int-foot {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 body.erp-maintenance .maint-wo-workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(min(220px, 100%), min(300px, 100%));
