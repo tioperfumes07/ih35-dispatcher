@@ -4053,6 +4053,7 @@
                         <table class="maint-cost-table acct-fuel-manual-table acct-fuel-manual-table--cat" aria-label="Manual fuel category lines">
                           <thead>
                             <tr>
+                              <th class="fuel-m-th-drag" scope="col" aria-label="Reorder rows"></th>
                               <th class="maint-cost-table__num" scope="col">#</th>
                               <th scope="col">Description</th>
                               <th scope="col">Expense account</th>
@@ -4066,7 +4067,7 @@
                           <tbody id="fuelManualCatLines"></tbody>
                           <tfoot>
                             <tr class="maint-cost-table__addrow">
-                              <td colspan="8">
+                              <td colspan="9">
                                 <button type="button" class="maint-cost-addline" onclick="addFuelManualCatLine()">+ Add category line</button>
                                 <button type="button" class="btn btn--ghost btn--small" style="margin-left:8px" onclick="clearFuelManualCatLines()">
                                   Clear table
@@ -4081,6 +4082,7 @@
                         <table class="maint-cost-table acct-fuel-manual-table acct-fuel-manual-table--item" aria-label="Manual fuel item lines">
                           <thead>
                             <tr>
+                              <th class="fuel-m-th-drag" scope="col" aria-label="Reorder rows"></th>
                               <th class="maint-cost-table__num" scope="col">#</th>
                               <th scope="col">Description</th>
                               <th scope="col">Product / service</th>
@@ -4095,7 +4097,7 @@
                           <tbody id="fuelManualItemLines"></tbody>
                           <tfoot>
                             <tr class="maint-cost-table__addrow">
-                              <td colspan="9">
+                              <td colspan="10">
                                 <button type="button" class="maint-cost-addline" onclick="addFuelManualItemLine()">+ Add item line</button>
                                 <button type="button" class="btn btn--ghost btn--small" style="margin-left:8px" onclick="clearFuelManualItemLines()">
                                   Clear table
@@ -4151,8 +4153,55 @@
                   </div>
                   <div class="qb-doc-footer__right" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                     <button type="button" class="btn btn--ghost" onclick="exportFuelManualLinesExcel()">Export lines (Excel)</button>
-                    <button type="button" class="btn" onclick="saveManualFuelPurchase()">Save to fuel ledger</button>
-                    <button type="button" class="qb-btn-primary" onclick="saveManualFuelPurchase({ postToQbo: true })">
+                    <div class="maint-save-toolbar--qb fuel-manual-save-toolbar" aria-label="Save to fuel ledger options">
+                      <div class="qb-split qb-split--neutral">
+                        <button
+                          type="button"
+                          id="fuelManualSaveLedgerBtn"
+                          class="qb-split__main"
+                          title="Save to the fuel ledger. Use ▾ for Save &amp; close or Save &amp; clear form."
+                          onclick="maintCloseSplitMenus(); fuelManualSaveLedgerWithBusy(event, {})"
+                        >
+                          Save to fuel ledger
+                        </button>
+                        <button
+                          type="button"
+                          id="fuelManualSaveLedgerCaret"
+                          class="qb-split__caret"
+                          onclick="fuelToggleLedgerSaveSplitMenu(event, this)"
+                          aria-haspopup="menu"
+                          aria-controls="fuelManualSaveLedgerMenu"
+                          aria-expanded="false"
+                          aria-label="More save options"
+                          title="Save &amp; close, or save &amp; clear the whole form"
+                        >
+                          ▾
+                        </button>
+                        <div id="fuelManualSaveLedgerMenu" class="qb-split__menu" hidden role="menu" aria-label="Additional save actions">
+                          <button
+                            type="button"
+                            class="qb-split__menu-item"
+                            role="menuitem"
+                            onclick="fuelSaveLedgerFromSplitMenu(event, { afterSave: 'close' })"
+                          >
+                            Save &amp; close
+                          </button>
+                          <button
+                            type="button"
+                            class="qb-split__menu-item"
+                            role="menuitem"
+                            onclick="fuelSaveLedgerFromSplitMenu(event, { afterSave: 'clear' })"
+                          >
+                            Save &amp; clear form
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="qb-btn-primary"
+                      onclick="maintCloseSplitMenus(); fuelManualSaveLedgerWithBusy(event, { postToQbo: true })"
+                    >
                       Confirm &amp; record to QuickBooks
                     </button>
                     <span id="fuelManualSaveHint" class="mini-note" style="margin:0"></span>
@@ -6571,6 +6620,9 @@
 
   <template id="fuelManualCatLineTpl">
     <tr class="fuel-m-cost-line fuel-m-line--category">
+      <td class="fuel-m-drag-cell maint-cost-td-num">
+        <span class="fuel-m-drag-handle" draggable="true" title="Drag to reorder rows" aria-label="Drag to reorder">⋮⋮</span>
+      </td>
       <td class="maint-cost-table__num maint-cost-td-num">
         <span class="fuel-m-line-idx">1</span>
       </td>
