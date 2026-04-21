@@ -246,6 +246,12 @@
     return '';
   }
 
+  function cleanStr(v) {
+    const s = v == null ? '' : String(v).trim();
+    if (!s || s === 'undefined' || s === 'null') return '';
+    return s;
+  }
+
   function getCompanyInfo(data) {
     const d = data && typeof data === 'object' ? data : {};
     const g =
@@ -253,12 +259,13 @@
         ? global.__erpPrintCompanyInfo
         : {};
     const ci = d.companyInfo && typeof d.companyInfo === 'object' ? d.companyInfo : {};
-    const name = pick(ci.companyName, ci.legalName, ci.dbaName, g.companyName, d.companyName, 'IH 35 Transportation LLC');
-    const addr = pick(ci.address, g.address, d.companyAddress);
-    const city = pick(ci.city, g.city);
-    const phone = pick(ci.phone, g.phone, d.companyPhone);
-    const usdot = pick(ci.usdot, g.usdot, d.usdot);
-    const mc = pick(ci.mcNumber, g.mcNumber, d.mcNumber);
+    const name =
+      cleanStr(pick(ci.companyName, ci.legalName, ci.dbaName, g.companyName, d.companyName)) || 'IH 35 Transportation LLC';
+    const addr = cleanStr(pick(ci.address, g.address, d.companyAddress));
+    const city = cleanStr(pick(ci.city, g.city));
+    const phone = cleanStr(pick(ci.phone, g.phone, d.companyPhone));
+    const usdot = cleanStr(pick(ci.usdot, g.usdot, d.usdot));
+    const mc = cleanStr(pick(ci.mcNumber, g.mcNumber, d.mcNumber));
     const lines = [];
     if (addr) lines.push(`<div class="co-sub">${esc(addr)}</div>`);
     if (city) lines.push(`<div class="co-sub">${esc(city)}</div>`);
