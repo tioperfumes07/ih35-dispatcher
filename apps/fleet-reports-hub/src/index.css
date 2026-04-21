@@ -6281,6 +6281,23 @@ nav.tabs {
   background: var(--panel-2);
 }
 
+.maint-combo__opt--addnew .maint-combo__opt-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.maint-combo__opt--addnew .maint-combo__opt-label::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
 .maint-combo__empty {
   padding: 8px 10px;
 }
