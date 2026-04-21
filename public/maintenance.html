@@ -4582,8 +4582,53 @@
           </div>
           <div id="repRoadmapBanner" class="mini-note erp-reports-roadmap hidden" role="status" aria-live="polite"></div>
           <div id="erpFleetMileageBannerRep" class="mini-note print-hide-actions" style="display:none;margin:0 0 10px;padding:8px 12px;border-radius:6px;border:1px solid #c5d9f7;background:#f0f7ff;color:#1557a0;font-size:11px;line-height:1.45"></div>
-          <div id="repCatTabs" class="rep-cat-tabs erp-tab-bar print-hide-actions" role="tablist" aria-label="Report categories"></div>
-          <div id="repCatalogGrid" class="rep-catalog-grid print-hide-actions" aria-live="polite"></div>
+          <div class="erp-reports-catalog-shell print-hide-actions">
+            <aside id="repFilterSidebar" class="rep-filter-sidebar" aria-label="Report filters">
+              <div class="rep-filter-sidebar__head">
+                <div class="rep-filter-sidebar__h">Filters</div>
+                <div class="rep-filter-sidebar__draft mini-note">Draft until you apply.</div>
+              </div>
+              <label class="rep-filter-sidebar__lbl" for="repFiltDateQuick">Date quick</label>
+              <select id="repFiltDateQuick" class="rep-filter-sidebar__in">
+                <option value="30">Last 30 days</option>
+                <option value="7">Last 7 days</option>
+                <option value="month">This month</option>
+                <option value="custom">Custom range</option>
+              </select>
+              <div class="rep-filter-sidebar__row2">
+                <div class="rep-filter-sidebar__half">
+                  <label class="rep-filter-sidebar__lbl" for="repFiltFrom">From</label>
+                  <input id="repFiltFrom" class="rep-filter-sidebar__in" type="text" inputmode="numeric" placeholder="mm/dd" autocomplete="off" />
+                </div>
+                <div class="rep-filter-sidebar__half">
+                  <label class="rep-filter-sidebar__lbl" for="repFiltTo">To</label>
+                  <input id="repFiltTo" class="rep-filter-sidebar__in" type="text" inputmode="numeric" placeholder="mm/dd" autocomplete="off" />
+                </div>
+              </div>
+              <div class="rep-filter-ms" data-rep-ms="units" aria-label="Units filter"></div>
+              <div class="rep-filter-ms" data-rep-ms="svc" aria-label="Service types filter"></div>
+              <div class="rep-filter-ms" data-rep-ms="rec" aria-label="Record types filter"></div>
+              <label class="rep-filter-sidebar__lbl" for="repFiltLoc">Location</label>
+              <input id="repFiltLoc" class="rep-filter-sidebar__in" type="text" placeholder="State, terminal…" autocomplete="off" />
+              <label class="rep-filter-sidebar__lbl" for="repFiltLocType">Location type (WO)</label>
+              <select id="repFiltLocType" class="rep-filter-sidebar__in">
+                <option value="">Any</option>
+                <option value="terminal">Terminal</option>
+                <option value="shop">Shop</option>
+                <option value="roadside">Roadside</option>
+              </select>
+              <label class="rep-filter-sidebar__lbl" for="repFiltVendor">Vendor</label>
+              <input id="repFiltVendor" class="rep-filter-sidebar__in" type="text" placeholder="Vendor contains…" autocomplete="off" />
+              <label class="rep-filter-sidebar__lbl" for="repFiltDriver">Driver</label>
+              <input id="repFiltDriver" class="rep-filter-sidebar__in" type="text" placeholder="Driver name…" autocomplete="off" />
+              <button type="button" class="btn btn--small" id="repFiltApply" style="margin-top:4px;width:100%">Apply filters</button>
+            </aside>
+            <div class="rep-catalog-stage">
+              <div id="repCatTabs" class="rep-cat-tabs rep-cat-tabs--bar erp-tab-bar" role="tablist" aria-label="Report categories"></div>
+              <div id="repCatalogGrid" class="rep-catalog-grid" aria-live="polite"></div>
+              <section id="repPartsCatalogHost" class="rep-parts-catalog" aria-label="Parts catalog"></section>
+            </div>
+          </div>
           <div class="erp-reports-columns">
             <aside class="erp-reports-sidebar" aria-label="Report categories">
               <details class="mr-rep-nav-group sidebar-group" open>
