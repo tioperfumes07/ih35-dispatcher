@@ -565,7 +565,11 @@ tr:nth-child(even){background:#f9f9f9}
         features: ['dateRange', 'recordTypes', 'locationCategories', 'locationNames', 'makes', 'sortBy']
       };
     if (datasetId === 'a4-pm-schedule')
-      return { datasetId, defaultMonths: 3, features: ['units', 'fleetTypes', 'makes', 'recordTypes', 'showOverduePm'] };
+      return {
+        datasetId,
+        defaultMonths: 3,
+        features: ['units', 'fleetTypes', 'makes', 'recordTypes', 'pmStatusPick', 'showOverduePm']
+      };
     if (datasetId === 'a1-work-order-history')
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'defectsOnly', 'groupBy'], groupByOptions: gbA1 };
     if (datasetId === 'a2-cost-by-unit')

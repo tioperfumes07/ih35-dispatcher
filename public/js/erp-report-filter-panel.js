@@ -1011,6 +1011,12 @@
         if (o) o.checked = false;
         const dm = root.querySelector('.erp-rfp-duemiles');
         if (dm) dm.value = '';
+      } else if (k === 'pmStatus') {
+        root.querySelectorAll('.erp-rfp-pmst-cb').forEach(cb => {
+          if (cb.value === v) cb.checked = false;
+        });
+        const pa = root.querySelector('.erp-rfp-pmst-all');
+        if (pa) pa.checked = false;
       } else if (k === 'accidentFault') {
         root.querySelectorAll('.erp-rfp-af-cb').forEach(cb => {
           if (cb.value === v) cb.checked = false;
