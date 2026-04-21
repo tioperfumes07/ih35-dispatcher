@@ -867,4 +867,26 @@
   global.erpWireTableTabOrder = erpWireTableTabOrder;
   global.erpExportDomTableToXlsx = erpExportDomTableToXlsx;
   global.erpInitFleetTableChrome = erpInitFleetTableChrome;
+
+  /**
+   * ERP maintenance — Reports tab embeds the same React hub as `/fleet-reports/index.html`.
+   */
+  function erpEnsureFleetReportsHubIframe() {
+    var iframe = document.getElementById('erpFleetReportsHubIframe');
+    if (!iframe || !(iframe instanceof HTMLIFrameElement)) return;
+    var cur = '';
+    try {
+      cur = String(iframe.getAttribute('src') || iframe.src || '');
+    } catch (_) {
+      cur = '';
+    }
+    if (cur && cur.indexOf('about:blank') < 0 && cur.indexOf('fleet-reports') >= 0) return;
+    var hubBase =
+      typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE
+        ? window.__IH35_FLEET_HUB_BASE
+        : '';
+    iframe.src = hubBase + '/fleet-reports/index.html';
+  }
+
+  global.erpEnsureFleetReportsHubIframe = erpEnsureFleetReportsHubIframe;
 })(typeof window !== 'undefined' ? window : globalThis);

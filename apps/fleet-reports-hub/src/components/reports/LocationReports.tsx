@@ -234,9 +234,11 @@ export function InternalExternalAnalysisReport({ filters }: { filters: ReportFil
 
   const exportInternalExternal = () => {
     const rows: object[] = []
-    internal.byCat.forEach((v, k) => rows.push({ side: 'Internal', category: k, amountUsd: v }))
-    external.byCat.forEach((v, k) =>
-      rows.push({ side: 'External & field', category: k, amountUsd: v }),
+    internal.byCat.forEach((amount, category) =>
+      rows.push({ side: 'Internal', category, amountUsd: amount }),
+    )
+    external.byCat.forEach((amount, category) =>
+      rows.push({ side: 'External & field', category, amountUsd: amount }),
     )
     exportJsonRowsToXlsx(rows, 'InternalExternalAnalysis')
   }

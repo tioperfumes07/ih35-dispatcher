@@ -7,7 +7,7 @@ import { ModalFullscreenToggle } from './ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../hooks/useFullScreen'
 import type { ReportDef, ReportFilters } from '../types'
 import { buildMockRows, chartBarsFromRows } from '../lib/mockRows'
-import { exportCsv, exportExcel, exportPdfPrint } from '../lib/exportReport'
+import { exportCsv, exportPdfPrint } from '../lib/exportReport'
 import {
   AllLocationsSummaryReport,
   Dot4iServiceLocationsReport,
@@ -151,13 +151,6 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
                     onClick={() => exportPdfPrint(report, filters, sorted)}
                   >
                     PDF
-                  </button>
-                  <button
-                    type="button"
-                    className="btn sm ghost"
-                    onClick={() => void exportExcel(report, filters, sorted)}
-                  >
-                    Excel (structured)
                   </button>
                 </div>
               </section>
