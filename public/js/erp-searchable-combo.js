@@ -56,12 +56,11 @@
         hide();
         return;
       }
+      list._erpScomboRows = rows;
       list.innerHTML = rows
         .map(
           (o, i) =>
-            `<button type="button" class="erp-scombo-item" role="option" data-ix="${i}" data-v="${String(o.value).replace(/"/g, '&quot;')}">${String(
-              o.label
-            )
+            `<button type="button" class="erp-scombo-item" role="option" data-ix="${i}">${String(o.label)
               .replace(/&/g, '&amp;')
               .replace(/</g, '&lt;')}</button>`
         )
@@ -73,7 +72,9 @@
       const b = ev.target && ev.target.closest && ev.target.closest('button.erp-scombo-item');
       if (!b) return;
       ev.preventDefault();
-      input.value = b.getAttribute('data-v') || b.textContent || '';
+      const ix = Number(b.getAttribute('data-ix'));
+      const row = Array.isArray(list._erpScomboRows) ? list._erpScomboRows[ix] : null;
+      input.value = row ? String(row.value != null ? row.value : row.label || '') : String(b.textContent || '').trim();
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
       hide();

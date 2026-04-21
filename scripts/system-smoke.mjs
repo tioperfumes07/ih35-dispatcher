@@ -43,7 +43,7 @@ const PDF_SMOKE_PATH = '/api/pdf/__smoke__';
 
 /** Static ERP shells (HTML) — catches broken public paths or 500 on page boot. Second value: one substring or all of a list must be present. */
 const HTML_PAGES = [
-  ['/index.html', ['hub-page', 'erpConnectionStrip', '/js/erp-ui.js']],
+  ['/index.html', ['hub-page', 'erpConnectionStrip', 'erp-responsive-global-2026.css', '/js/erp-ui.js']],
   [
     '/maintenance.html',
     [
@@ -74,13 +74,14 @@ const HTML_PAGES = [
       'printDocuments.js',
       'erp-multi-bills.js',
       'erpOpenMultiBillsModal',
-      'id="erpMultiBillsModal"'
+      'id="erpMultiBillsModal"',
+      'erp-responsive-global-2026.css'
     ]
   ],
-  ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
-  ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],
-  ['/banking.html', ['banking-page', 'erpConnectionStrip']],
-  ['/settings.html', ['settings-page', 'erpConnectionStrip']],
+  ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip', 'erp-responsive-global-2026.css']],
+  ['/fuel.html', ['fuel-board', 'erpConnectionStrip', 'erp-responsive-global-2026.css']],
+  ['/banking.html', ['banking-page', 'erpConnectionStrip', 'erp-responsive-global-2026.css']],
+  ['/settings.html', ['settings-page', 'erpConnectionStrip', 'erp-responsive-global-2026.css']],
   ['/tracking.html', ['maintenance.html#tracking', 'viewport-fit=cover']]
 ];
 
@@ -95,6 +96,7 @@ const STATIC_TEXT = [
     'IH35 ERP — Master redesign spec (Rules 0–22; maintenance is the reference surface).'
   ],
   ['/css/board-nav.css', 'Persistent operations bar'],
+  ['/css/erp-responsive-global-2026.css', 'IH35 ERP — global responsive layout (2026).'],
   ['/js/erp-ui.js', 'IH35 ERP — shared UI helpers', '*/*'],
   ['/js/board-nav.js', 'Fuel & route planning', '*/*'],
   ['/src/utils/printDocuments.js', 'IH35 ERP — approved print documents', '*/*'],

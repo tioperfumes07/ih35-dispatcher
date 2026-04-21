@@ -1128,6 +1128,14 @@
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Assigned / working</div><div class="maint-kpi-card__val" id="maintDashAssignedAssets">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Maintenance past due</div><div class="maint-kpi-card__val" id="maintDashPastDue">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--integrity">
+                <div class="maint-kpi-card__label">Integrity Alerts</div>
+                <div id="maintDashIntegrityHeadline" class="maint-kpi-card__val maint-kpi-card__val--integrity" aria-live="polite">—</div>
+                <div id="maintDashIntegrityMiniList" class="maint-dash-int-mini" aria-live="polite"></div>
+                <div class="maint-dash-int-foot">
+                  <button type="button" class="erp-int-link" onclick="openMaintIntegrityReportsFullView()">View all</button>
+                </div>
+              </div>
             </div>
             <div id="maintDashSummaryLine" class="maint-kpi-strip__meta mini-note"></div>
             <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--color-text-label)"></div>
@@ -12203,6 +12211,7 @@
           loadTeamSecurityPanel();
         }
         await refreshFleetMileageBanner();
+        void refreshMaintWorkspaceIntegrityWidget();
       } catch (e) {
         console.error(e);
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
