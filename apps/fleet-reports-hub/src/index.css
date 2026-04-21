@@ -7775,7 +7775,7 @@ nav.tabs {
 }
 
 .fuel-txn-bar-btn.modal-fs-toggle .modal-fs-toggle__icon {
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1;
 }
 
@@ -7923,16 +7923,32 @@ nav.tabs {
   color: var(--accent);
 }
 
+.fuel-txn-unit-badge--info,
+.fuel-txn-class-badge--info {
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel-2));
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.fuel-txn-divider {
+  height: 0;
+  margin: 0 0 14px;
+  border: 0;
+  border-top: 0.5px solid var(--border);
+}
+
 .fuel-txn-pdf-strip {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  min-height: 24px;
   padding: 7px 10px;
   margin-bottom: 14px;
   border: 0.5px dashed var(--border);
   border-radius: 4px;
   background: var(--panel-2);
+  font-size: 11px;
 }
 
 .fuel-txn-pdf-strip__icon {
@@ -7947,9 +7963,10 @@ nav.tabs {
   min-width: 140px;
 }
 
-.fuel-txn-pdf-strip .btn {
-  height: 28px !important;
-  min-height: 28px !important;
+.fuel-txn-pdf-strip .btn,
+.fuel-txn-pdf-strip__btn {
+  height: 24px !important;
+  min-height: 24px !important;
   font-size: 11px !important;
   border-radius: 4px !important;
 }
@@ -8008,7 +8025,7 @@ nav.tabs {
 }
 
 .fuel-txn-tr td {
-  height: 28px;
+  height: 24px;
   vertical-align: middle;
   border-bottom: 1px solid var(--border);
 }
@@ -8141,10 +8158,12 @@ nav.tabs {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 10px 14px;
+  min-height: 28px;
+  padding: 6px 14px;
   border-top: 1px solid var(--border);
   background: var(--panel-2);
   flex-shrink: 0;
+  font-size: 11px;
 }
 
 .fuel-txn-bottom__left {
@@ -8169,6 +8188,9 @@ nav.tabs {
   border-top-right-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-right: none !important;
+  background: #2e7d32 !important;
+  color: #fff !important;
+  border-color: #2e7d32 !important;
 }
 
 .fuel-txn-save-split__caret {
@@ -8176,7 +8198,16 @@ nav.tabs {
   border-bottom-left-radius: 0 !important;
   min-width: 32px !important;
   padding: 0 6px !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-left: 1px solid #fff !important;
+  background: #2e7d32 !important;
+  color: #fff !important;
+  border-color: #2e7d32 !important;
+}
+
+.fuel-txn-post-qbo {
+  background: #0969da !important;
+  color: #fff !important;
+  border-color: #0969da !important;
 }
 
 .fuel-txn-save-menu {
