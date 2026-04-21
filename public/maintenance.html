@@ -10123,13 +10123,78 @@
       return fn ? fn.call(document) : Promise.reject(new Error('no exit fullscreen'));
     }
 
+    /**
+     * Browser fullscreen on the dedicated modal shell leaves global <datalist> nodes outside the
+     * fullscreen subtree (they live before #erpApp). Chrome/Safari then often fail to show vendor /
+     * bank / etc. suggestions. Temporarily append those datalists into the shell while fullscreen.
+     */
+    window.__erpDedicatedDatalistRehome = window.__erpDedicatedDatalistRehome || [];
+    const ERP_DEDICATED_DATALIST_IDS = [
+      'unitOptions',
+      'serviceOptions',
+      'qboVendorOptions',
+      'qboItemOptions',
+      'qboAccountOptions',
+      'qboAccountExpenseOptions',
+      'qboExpenseCategoryOptions',
+      'fuelCatalogOptions',
+      'settlementLoadHints',
+      'qboProductServiceOptions',
+      'paymentMethodOptions',
+      'qboBankAccountOptions',
+      'qboCustomerOptions',
+      'qboClassOptions',
+      'loadNumberOptions',
+      'maintDriverOptions',
+      'repairLocationOptions',
+      'accidentFaultOptions',
+      'tireConditionOptions'
+    ];
+
+    function erpRehomeDatalistsForDedicatedShell(shell, entering) {
+      if (!shell) return;
+      if (entering) {
+        if (shell.dataset.erpDatalistsRehomed === '1') return;
+        ERP_DEDICATED_DATALIST_IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el || String(el.tagName).toUpperCase() !== 'DATALIST' || shell.contains(el)) return;
+          const parent = el.parentNode;
+          const next = el.nextSibling;
+          window.__erpDedicatedDatalistRehome.push({ el, parent, next });
+          shell.appendChild(el);
+        });
+        if (window.__erpDedicatedDatalistRehome.length) shell.dataset.erpDatalistsRehomed = '1';
+        return;
+      }
+      delete shell.dataset.erpDatalistsRehomed;
+      const stack = window.__erpDedicatedDatalistRehome;
+      if (!stack || !stack.length) return;
+      while (stack.length) {
+        const row = stack.pop();
+        const { el, parent, next } = row;
+        if (!el || !parent) continue;
+        try {
+          if (next && next.parentNode === parent) parent.insertBefore(el, next);
+          else parent.appendChild(el);
+        } catch (_) {
+          try {
+            const app = document.getElementById('erpApp');
+            if (app && app.parentNode) app.parentNode.insertBefore(el, app);
+            else document.body.appendChild(el);
+          } catch (__) {}
+        }
+      }
+    }
+
     function erpSyncDedicatedModalFullscreenUi() {
       const modal = document.getElementById('erpDedicatedFormModal');
       const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
       const fsBtn = document.getElementById('erpDedModalFsBtn');
-      if (!fsBtn || !shell) return;
-      if (!modal || modal.classList.contains('hidden')) return;
+      if (!shell) return;
       const inFs = erpGetFullscreenElement() === shell;
+      erpRehomeDatalistsForDedicatedShell(shell, !!(inFs && modal && !modal.classList.contains('hidden')));
+      if (!fsBtn) return;
+      if (!modal || modal.classList.contains('hidden')) return;
       fsBtn.textContent = inFs ? 'Exit full screen' : 'Full screen';
       fsBtn.setAttribute('aria-pressed', inFs ? 'true' : 'false');
     }
