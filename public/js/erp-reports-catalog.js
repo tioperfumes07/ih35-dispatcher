@@ -15,6 +15,21 @@
     );
   }
 
+  /** Collapse `URLSearchParams` into a JSON-friendly object for Excel/PDF export headers. */
+  function searchParamsToFilterRecord(sp) {
+    const out = {};
+    if (!(sp instanceof URLSearchParams)) return out;
+    const multi = {};
+    for (const [k, v] of sp.entries()) {
+      if (!multi[k]) multi[k] = [];
+      multi[k].push(v);
+    }
+    for (const [k, arr] of Object.entries(multi)) {
+      out[k] = arr.length === 1 ? arr[0] : arr;
+    }
+    return out;
+  }
+
   const SAM = 'Samsara';
   const QBO = 'QuickBooks';
   const ERP = 'ERP';
@@ -298,14 +313,14 @@ tr:nth-child(even){background:#f9f9f9}
             columns: st.columns,
             rows: st.rows,
             totals: st.totals || {},
-            filters: { startDate: st.startDate, endDate: st.endDate, unit: st.unitTag },
+            filters: st.filtersApplied || { startDate: st.startDate, endDate: st.endDate, unit: st.unitTag },
             groupedSections: st.groupedSections || null
           },
           {
             filename: st.title || 'Report',
             companyName: 'IH 35 Transportation LLC',
             dateRange: `${st.startDate || ''} to ${st.endDate || ''}`,
-            filtersApplied: { startDate: st.startDate, endDate: st.endDate, unit: st.unitTag }
+            filtersApplied: st.filtersApplied || { startDate: st.startDate, endDate: st.endDate, unit: st.unitTag }
           }
         );
         return;
@@ -1156,7 +1171,8 @@ tr:nth-child(even){background:#f9f9f9}
         endDate: e,
         unitTag: u,
         reportLayout: layout || 'tabular',
-        groupedSections: layout === 'grouped' && Array.isArray(data.meta.sections) ? data.meta.sections : null
+        groupedSections: layout === 'grouped' && Array.isArray(data.meta.sections) ? data.meta.sections : null,
+        filtersApplied: searchParamsToFilterRecord(sp)
       };
       repSaveRecent(datasetId, data.title || title);
     };
@@ -1343,6 +1359,8 @@ tr:nth-child(even){background:#f9f9f9}
           <label><input type="checkbox" class="rep-dot-sec-cb" value="dvir_history" checked /> DVIR history</label>
           <label><input type="checkbox" class="rep-dot-sec-cb" value="out_of_service" checked /> Out of service</label>
           <label><input type="checkbox" class="rep-dot-sec-cb" value="tire_records" checked /> Tire records</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4_air_bag" checked /> Air bag history (4E)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4_battery" checked /> Battery history (4F)</label>
         </div>
         <div class="qb-l" style="margin-top:10px">Group work orders (PDF part 4 buckets)</div>
         <label style="font-size:12px"><input type="radio" name="repDotCfgGroupBy" value="service_type" checked /> By service type</label>
