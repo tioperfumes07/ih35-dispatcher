@@ -310,6 +310,11 @@
   resize: vertical;
 }
 
+.wo-input[readonly] {
+  cursor: default;
+  opacity: 0.92;
+}
+
 .wo-grid5 {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
