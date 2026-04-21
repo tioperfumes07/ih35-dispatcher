@@ -3721,9 +3721,8 @@ body.dispatch-page .modal.erp-modal-chrome--layout-fullscreen .modal-body {
 .nm-modal.erp-modal-chrome--layout-fullscreen,
 .vbp-modal.erp-modal-chrome--layout-fullscreen,
 .erp-dedupe-modal__card.erp-modal-chrome--layout-fullscreen {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 #erpMultiBillsModal .erp-mb-modal__dialog.erp-modal-chrome--layout-fullscreen {
@@ -3828,4 +3827,11 @@ body.erp-maintenance .maint-workorder-fullmodal__shell.erp-modal-chrome--layout-
 .erp-drawer.erp-modal-chrome--layout-fullscreen .erp-drawer__body {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.erp-drawer__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }

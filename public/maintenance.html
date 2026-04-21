@@ -25,13 +25,6 @@
       <div class="erp-dedicated-form-modal__inner">
         <div class="erp-dedicated-form-modal__bar">
           <button type="button" class="erp-dedicated-form-modal__x" data-erp-ded-close="1" title="Close">×</button>
-          <button
-            type="button"
-            class="btn btn--small secondary erp-modal-expand-btn"
-            data-erp-modal-expand-btn
-            title="Expand to full viewport (layout)"
-            aria-pressed="false"
-          >⛶</button>
           <div class="erp-dedicated-form-modal__bar-center" aria-live="polite">
             <div id="erpDedModalTitle" class="erp-dedicated-form-modal__title"></div>
             <div class="erp-dedicated-form-modal__total-wrap">
@@ -9671,6 +9664,7 @@
         void erpExitDocumentFullscreen().catch(() => {});
         return;
       }
+      if (typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       void erpRequestElementFullscreen(shell).catch(() => {
         if (typeof erpNotify === 'function') {
           erpNotify('Full screen is not available in this browser or was blocked.', 'info');
@@ -9683,6 +9677,7 @@
       const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
       if (!modal || modal.classList.contains('hidden') || !shell) return;
       const on = !shell.classList.contains('erp-dedicated-form-modal__shell--maximized');
+      if (on && typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       shell.classList.toggle('erp-dedicated-form-modal__shell--maximized', on);
       modal.classList.toggle('erp-dedicated-form-modal--maximized', on);
       const btn = document.getElementById('erpDedModalMaxBtn');
