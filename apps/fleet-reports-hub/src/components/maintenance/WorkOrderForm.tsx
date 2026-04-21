@@ -37,6 +37,8 @@ const UNIT_LIST_COLLAPSE_LS = 'fleet-reports:maint-unit-list-collapsed'
 
 type Props = {
   onIntegrityBatch: (alerts: import('../../types/integrity').IntegrityAlert[]) => void
+  /** After a successful save (integrity check path). Used by ERP record-tab iframe to notify parent. */
+  onAfterSaveSuccess?: () => void
   onViewAllIntegrity?: () => void
   variant?: 'workspace' | 'modal'
   initialUnitId?: string
@@ -94,6 +96,7 @@ const LOCATION_OPTS: ComboOption[] = [
  */
 export function WorkOrderForm({
   onIntegrityBatch,
+  onAfterSaveSuccess,
   onViewAllIntegrity,
   variant = 'workspace',
   initialUnitId,
@@ -437,6 +440,7 @@ export function WorkOrderForm({
       mergeAlertsIntoStore(res.alerts)
       onIntegrityBatch(res.alerts)
       if (!isLedgerShell) bumpWorkOrderDupSeq(woDupKey)
+      onAfterSaveSuccess?.()
       setSaveVis('success')
       window.setTimeout(() => setSaveVis('idle'), 1600)
     } catch {
