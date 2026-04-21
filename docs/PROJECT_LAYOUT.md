@@ -21,6 +21,8 @@ This repository is the **single source of truth** for the IH35 dispatch / ERP st
 
 The hub home page links to **`/fleet-reports/`** after a successful `build:fleet`.
 
+**API note:** The React app calls **`/api/...`** on the same origin. The minimal `server.js` in this repo does not yet forward those to `apps/fleet-reports-hub/server`. For full functionality today, either run the hub API (`npm run dev:fleet:api` on **8787**) while using Vite dev, or add an Express proxy from this server to that API process in production.
+
 ## Why `public/` and `apps/` both exist
 
 - **`public/`** — classic server-rendered / large HTML + JS bundles (your migrated “main file” experience under Node).
