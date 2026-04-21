@@ -72,6 +72,11 @@ function SectionCard(props: {
 export type WorkOrderShellProps = {
   /** WO number prefix (IWO / EWO / RSWO). Spec text calls this `recordType`; kept as recordKind to avoid clashing with service record type. */
   recordKind: WorkOrderShellKind
+  /**
+   * Maintenance ledger (expense vs bill): top bar title, section labels, locked TXN type,
+   * and QuickBooks footer copy — without changing theme tokens.
+   */
+  ledgerMode?: 'expense' | 'bill'
   workOrderNumber: string
   unitNo: string
   unitTitle: string
@@ -200,6 +205,35 @@ function itemLinesToExportRows(lines: ItemLine[]) {
 
 export function WorkOrderShell(props: WorkOrderShellProps) {
   const titleId = useId()
+  const ledger = useMemo(() => {
+    if (props.ledgerMode === 'expense') {
+      return {
+        topTitle: 'Maintenance expense',
+        topHint:
+          'Tie spend to unit, service type, and vendor. Integrity runs on save using the expense date in section A.',
+        sectionA: 'Expense header',
+        serviceDateLbl: 'Expense date',
+        refLbl: 'Reference # (optional)',
+        fTxnDateLbl: 'Posting date',
+        fNote:
+          'Save posts a maintenance_expense payload. The date in section A is the expense date sent to integrity.',
+      } as const
+    }
+    if (props.ledgerMode === 'bill') {
+      return {
+        topTitle: 'Maintenance bill',
+        topHint:
+          'Vendor AP-style entry: bill number, amount, and service line. Integrity uses section A as the bill date.',
+        sectionA: 'Bill header',
+        serviceDateLbl: 'Bill date',
+        refLbl: 'Vendor bill #',
+        fTxnDateLbl: 'Posting date',
+        fNote:
+          'Save posts a maintenance_bill payload. Bill date and vendor bill # must align with vendor records.',
+      } as const
+    }
+    return null
+  }, [props.ledgerMode])
   const catCol = useColumnResize([40, 120, 160, 72, 56, 100, 72, 56])
   const itemCol = useColumnResize([40, 140, 72, 160, 44, 56, 56, 56, 56, 100, 72, 56])
   const partsLineCol = useColumnResize([200, 120, 64, 96])
@@ -264,16 +298,19 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
       style={props.shellFullScreen ? MODAL_FULLSCREEN_STYLE : undefined}
       aria-labelledby={titleId}
     >
-      <header className="wo-topbar">
-        <div className="wo-topbar__left">
-          <span className="wo-topbar__title" id={titleId}>
-            Create work order
-          </span>
-          <span className="wo-wo-badge">{props.workOrderNumber}</span>
-          <span className="wo-pill">{props.unitNo}</span>
-          <span className="wo-pill">{props.pills.recordType}</span>
-          <span className="wo-pill">{props.pills.location}</span>
-          <span className="wo-pill">{props.pills.total}</span>
+      <header className={'wo-topbar' + (ledger ? ' wo-topbar--ledger' : '')}>
+        <div className="wo-topbar__left-col">
+          <div className="wo-topbar__left">
+            <span className="wo-topbar__title" id={titleId}>
+              {ledger ? ledger.topTitle : 'Create work order'}
+            </span>
+            <span className="wo-wo-badge">{props.workOrderNumber}</span>
+            <span className="wo-pill">{props.unitNo}</span>
+            <span className="wo-pill">{props.pills.recordType}</span>
+            <span className="wo-pill">{props.pills.location}</span>
+            <span className="wo-pill">{props.pills.total}</span>
+          </div>
+          {ledger ? <p className="wo-topbar__ledger-hint">{ledger.topHint}</p> : null}
         </div>
         <div className="wo-topbar__actions">
           <span className="wo-fs-wrap">
@@ -333,7 +370,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
       <div className="wo-scroll">
         <SectionCard
           sid="A"
-          label={`A — Service information · ${props.workOrderNumber}`}
+          label={`A — ${ledger ? ledger.sectionA : 'Service information'} · ${props.workOrderNumber}`}
           extraHead={null}
         >
           {props.catalogError ? (
@@ -376,7 +413,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               />
             </div>
             <label className="field">
-              <span className="wo-field-lbl">Service date</span>
+              <span className="wo-field-lbl">{ledger ? ledger.serviceDateLbl : 'Service date'}</span>
               <input
                 className="wo-input"
                 type="date"
@@ -1013,18 +1050,39 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
           </div>
         </SectionCard>
 
-        <SectionCard sid="F" label="F — QuickBooks posting header">
+        <SectionCard
+          sid="F"
+          label={
+            ledger
+              ? props.ledgerMode === 'expense'
+                ? 'F — QuickBooks expense header'
+                : 'F — QuickBooks bill header'
+              : 'F — QuickBooks posting header'
+          }
+        >
           <div className="wo-grid-f">
             <div>
-              <SearchableCombo
-                label="TXN type"
-                value={props.txnType}
-                onChange={props.onTxnType}
-                options={TXN_OPTS}
-              />
+              {ledger ? (
+                <label className="field">
+                  <span className="wo-field-lbl">TXN type</span>
+                  <input
+                    className="wo-input"
+                    readOnly
+                    aria-readonly
+                    value={ledger === null ? '' : props.ledgerMode === 'bill' ? 'Bill' : 'Expense'}
+                  />
+                </label>
+              ) : (
+                <SearchableCombo
+                  label="TXN type"
+                  value={props.txnType}
+                  onChange={props.onTxnType}
+                  options={TXN_OPTS}
+                />
+              )}
             </div>
             <label className="field">
-              <span className="wo-field-lbl">Expense / bill #</span>
+              <span className="wo-field-lbl">{ledger ? ledger.refLbl : 'Expense / bill #'}</span>
               <input
                 className="wo-input"
                 value={props.expenseBillNo}
