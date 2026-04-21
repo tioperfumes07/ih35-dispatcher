@@ -1162,7 +1162,7 @@
               </div>
             </div>
             <div class="maint-action-strip__fleet">
-              <span class="maint-fleet-inline__label">Fleet</span>
+              <span class="maint-fleet-inline__label">FLEET</span>
               <span id="maintActionFleetPills" class="maint-action-strip__pills" style="display:inline-flex;flex-wrap:nowrap;gap:6px;align-items:center"></span>
             </div>
           </div>
@@ -8659,7 +8659,7 @@
             mt('record', 'Create work order') +
               mt('fleet', 'Fleet table') +
               mt('rm', 'R&amp;M status') +
-              mt('shop-loc', 'Service / location')
+              mt('shop-loc', 'Shop/location')
           ) +
           erpSbGroup(
             'maintenance',
@@ -23735,48 +23735,46 @@
       if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar('rep-integrity');
     }
 
-    async function refreshMaintWorkspaceIntegrityWidget() {
+    /** Paints Maintenance KPI integrity widget from a `/api/integrity/dashboard` payload (same filters as Reports). */
+    function paintMaintWorkspaceIntegrityFromDashboard(d) {
       const headEl = document.getElementById('maintDashIntegrityHeadline');
       const listEl = document.getElementById('maintDashIntegrityMiniList');
-      if (!headEl || !listEl) return;
-      const qs = buildIntegrityDashboardQueryForMaintWidget();
-      try {
-        const d = await j('/api/integrity/dashboard?' + qs.toString());
-        const kpi = d.kpi || {};
-        const red = Number(kpi.red) || 0;
-        const amb = Number(kpi.amber) || 0;
-        const active = Number(kpi.active) || 0;
-        let headline;
-        if (red > 0) headline = `${red} error${red === 1 ? '' : 's'}`;
-        else if (amb > 0) headline = `${amb} review${amb === 1 ? '' : 's'}`;
-        else if (active > 0) headline = `${active} active`;
-        else headline = '0 alerts';
-        headEl.textContent = headline;
-        headEl.classList.toggle('maint-kpi-card__val--danger', red > 0);
-        headEl.classList.toggle('maint-kpi-card__val--amber', red === 0 && amb > 0);
+      if (!headEl || !listEl || !d || typeof d !== 'object') return;
+      const kpi = d.kpi || {};
+      const red = Number(kpi.red) || 0;
+      const amb = Number(kpi.amber) || 0;
+      const active = Number(kpi.active) || 0;
+      let headline;
+      if (red > 0) headline = `${red} error${red === 1 ? '' : 's'}`;
+      else if (amb > 0) headline = `${amb} review${amb === 1 ? '' : 's'}`;
+      else if (active > 0) headline = `${active} active`;
+      else headline = '0 alerts';
+      headEl.textContent = headline;
+      headEl.classList.toggle('maint-kpi-card__val--danger', red > 0);
+      headEl.classList.toggle('maint-kpi-card__val--amber', red === 0 && amb > 0);
 
-        window.__integrityDashSessionDismiss = window.__integrityDashSessionDismiss || new Set();
-        const sess = window.__integrityDashSessionDismiss;
-        const rowsAll = Array.isArray(d.alerts) ? d.alerts : [];
-        const rows = rowsAll.filter(a => !sess.has(String(a.id || '')));
-        const top5 = rows
-          .slice()
-          .sort((a, b) => maintIntegrityAlertRecencyTs(b) - maintIntegrityAlertRecencyTs(a))
-          .slice(0, 5);
-        if (!top5.length) {
-          listEl.innerHTML =
-            '<div class="maint-dash-int-row maint-dash-int-row--empty mini-note" style="margin:0">No open alerts for current filters.</div>';
-        } else {
-          listEl.innerHTML = top5
-            .map(a => {
-              const catLab = escapeHtml(String(a.category || '—').trim() || '—');
-              const sevU = String(a.severity || '').toUpperCase();
-              const sevClass = sevU === 'RED' ? 'erp-int-pill--high' : 'erp-int-pill--review';
-              const sevHtml = `<span class="erp-int-pill ${sevClass}">${escapeHtml(sevU || '—')}</span>`;
-              const title = escapeHtml(String(a.shortTitle || a.alertType || 'Alert').trim());
-              const msg = String(a.message || '').trim();
-              const shortDesc = escapeHtml(msg.length > 100 ? msg.slice(0, 97) + '…' : msg);
-              return `<div class="maint-dash-int-row">
+      window.__integrityDashSessionDismiss = window.__integrityDashSessionDismiss || new Set();
+      const sess = window.__integrityDashSessionDismiss;
+      const rowsAll = Array.isArray(d.alerts) ? d.alerts : [];
+      const rows = rowsAll.filter(a => !sess.has(String(a.id || '')));
+      const top5 = rows
+        .slice()
+        .sort((a, b) => maintIntegrityAlertRecencyTs(b) - maintIntegrityAlertRecencyTs(a))
+        .slice(0, 5);
+      if (!top5.length) {
+        listEl.innerHTML =
+          '<div class="maint-dash-int-row maint-dash-int-row--empty mini-note" style="margin:0">No open alerts for current filters.</div>';
+      } else {
+        listEl.innerHTML = top5
+          .map(a => {
+            const catLab = escapeHtml(String(a.category || '—').trim() || '—');
+            const sevU = String(a.severity || '').toUpperCase();
+            const sevClass = sevU === 'RED' ? 'erp-int-pill--high' : 'erp-int-pill--review';
+            const sevHtml = `<span class="erp-int-pill ${sevClass}">${escapeHtml(sevU || '—')}</span>`;
+            const title = escapeHtml(String(a.shortTitle || a.alertType || 'Alert').trim());
+            const msg = String(a.message || '').trim();
+            const shortDesc = escapeHtml(msg.length > 100 ? msg.slice(0, 97) + '…' : msg);
+            return `<div class="maint-dash-int-row">
                 <div class="maint-dash-int-row__meta">
                   <span class="erp-int-pill erp-int-pill--cat">${catLab}</span>
                   ${sevHtml}
@@ -23784,9 +23782,19 @@
                 <div class="maint-dash-int-row__title">${title}</div>
                 <div class="maint-dash-int-row__desc mini-note">${shortDesc}</div>
               </div>`;
-            })
-            .join('');
-        }
+          })
+          .join('');
+      }
+    }
+
+    async function refreshMaintWorkspaceIntegrityWidget() {
+      const headEl = document.getElementById('maintDashIntegrityHeadline');
+      const listEl = document.getElementById('maintDashIntegrityMiniList');
+      if (!headEl || !listEl) return;
+      const qs = buildIntegrityDashboardQueryForMaintWidget();
+      try {
+        const d = await j('/api/integrity/dashboard?' + qs.toString());
+        paintMaintWorkspaceIntegrityFromDashboard(d);
         void refreshIntegrityNavBadges();
       } catch (e) {
         headEl.textContent = '—';
@@ -23930,6 +23938,7 @@
               <div class="erp-int-kpi-card__val">${kpi.resolvedThisMonth ?? 0}</div>
             </div>`;
         }
+        paintMaintWorkspaceIntegrityFromDashboard(d);
         const rowsAll = d.alerts || [];
         __integrityDashLastRows = rowsAll;
         window.__integrityDashSessionDismiss = window.__integrityDashSessionDismiss || new Set();

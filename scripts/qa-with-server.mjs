@@ -179,7 +179,7 @@ async function main() {
     await runNpmScript('test:name-mgmt');
     await runNpmScript('test:fleet-mileage');
     await runNpmScript('test:integrity-meta');
-    console.log(`qa:isolated OK — ${base} (layout test + smoke + rule0 + unit tests)`);
+    console.log(`qa:isolated OK — ${base} (rule0 + layout + smoke + unit tests)`);
   } finally {
     process.removeListener('SIGINT', onSigInt);
     process.removeListener('SIGTERM', onSigTerm);
