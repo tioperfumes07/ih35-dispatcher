@@ -9645,7 +9645,7 @@
       if (star) star.classList.toggle('hidden', !isAcc);
       const inp = document.getElementById('apErpDriverSearch');
       if (inp) {
-        inp.placeholder = isAcc ? 'Select driver (required)' : 'Select driver (optional)';
+        inp.placeholder = isAcc ? 'Driver (required — accident / DOT)' : 'Driver (assign for integrity)';
         inp.setAttribute('aria-required', isAcc ? 'true' : 'false');
       }
       const dotWrap = document.getElementById('apAccidentDotWrap');
@@ -9660,6 +9660,11 @@
         if (dotHid) dotHid.value = '';
       } else if (dotCb && dotHid && dotHid.value === '1' && !dotCb.dataset.erpTouched) {
         dotCb.checked = true;
+      }
+      try {
+        erpRefreshApDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
       }
     }
 
@@ -10569,6 +10574,14 @@
         const shell = document.getElementById('erpFuelManualDocShellPanel');
         shell?.classList.remove('fuel-manual-shell-inline-hidden');
         mount.appendChild(shell);
+        requestAnimationFrame(() => {
+          try {
+            bindFuelManualFormOnce();
+            erpRefreshFuelDriverIntegrityStrip();
+          } catch (_) {
+            /* ignore */
+          }
+        });
         const acc = document.getElementById('erpFuelDocTitleAccent');
         if (acc) {
           acc.innerHTML = ERP_PUMP_ICON;
@@ -11111,6 +11124,14 @@
       erpSyncAccountingTabHash(id);
       paintAccountingSidebarActive(id);
       requestAnimationFrame(() => syncAcctDashFromQboPayload());
+      requestAnimationFrame(() => {
+        try {
+          erpRefreshApDriverIntegrityStrip();
+          erpRefreshFuelDriverIntegrityStrip();
+        } catch (_) {
+          /* ignore */
+        }
+      });
     }
 
     let reportsSummaryCache = null;
@@ -12906,6 +12927,11 @@
       const hid = document.getElementById('apErpDriverId');
       if (!inp || !hid) return;
       hid.value = resolveDriverNameToId(inp.value);
+      try {
+        erpRefreshApDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     function resolveFuelManualDriverSearch() {
@@ -12913,6 +12939,11 @@
       const hid = document.getElementById('fuelManualDriverId');
       if (!inp || !hid) return;
       hid.value = resolveDriverNameToId(inp.value);
+      try {
+        erpRefreshFuelDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     async function refreshIntegrityNavBadges() {
@@ -12984,6 +13015,14 @@
           : lines.join('');
     }
 
+    function erpDriverIntegrityBannerOkHtml() {
+      return '<div class="erp-validation-banner maint-driver-int-banner" role="status"><div class="erp-validation-banner__block erp-validation-banner__block--ok">Driver recorded on this entry.</div></div>';
+    }
+
+    function erpDriverIntegrityBannerWarnHtml() {
+      return '<div class="erp-validation-banner maint-driver-int-banner" role="alert"><div class="erp-validation-banner__block erp-validation-banner__block--warn maint-driver-int-banner__row"><span>Integrity: no driver assigned — assign below to log accountability for this service record.</span><button type="button" class="erp-validation-banner__link maint-driver-int-banner__link" onclick="erpOpenReportsIntegrityFromMaintKpi(event)">View all →</button></div></div>';
+    }
+
     function erpRefreshMaintDriverIntegrityStrip() {
       const host = document.getElementById('maintDriverIntegrityStrip');
       if (!host) return;
@@ -12998,13 +13037,46 @@
         return;
       }
       const nm = String(document.getElementById('maintRecordDriverSearch')?.value || '').trim();
-      if (nm) {
-        host.innerHTML =
-          '<div class="erp-validation-banner maint-driver-int-banner" role="status"><div class="erp-validation-banner__block erp-validation-banner__block--ok">Driver recorded on this entry.</div></div>';
-      } else {
-        host.innerHTML =
-          '<div class="erp-validation-banner maint-driver-int-banner" role="alert"><div class="erp-validation-banner__block erp-validation-banner__block--warn maint-driver-int-banner__row"><span>Integrity: no driver assigned — assign below to log accountability for this service record.</span><button type="button" class="erp-validation-banner__link maint-driver-int-banner__link" onclick="erpOpenReportsIntegrityFromMaintKpi(event)">View all →</button></div></div>';
+      host.innerHTML = nm ? erpDriverIntegrityBannerOkHtml() : erpDriverIntegrityBannerWarnHtml();
+      host.classList.remove('hidden');
+    }
+
+    function erpRefreshFuelDriverIntegrityStrip() {
+      const host = document.getElementById('fuelDriverIntegrityStrip');
+      if (!host) return;
+      const tab = document.getElementById('acct-fuel-expense');
+      const shell = document.getElementById('erpFuelManualDocShellPanel');
+      const inp = document.getElementById('fuelManualDriverSearch');
+      const acctSec = document.getElementById('section-accounting');
+      if (
+        !inp ||
+        !tab ||
+        tab.classList.contains('hidden') ||
+        (acctSec && acctSec.classList.contains('hidden')) ||
+        (shell && shell.classList.contains('fuel-manual-shell-inline-hidden'))
+      ) {
+        host.innerHTML = '';
+        host.classList.add('hidden');
+        return;
       }
+      const nm = String(inp.value || '').trim();
+      host.innerHTML = nm ? erpDriverIntegrityBannerOkHtml() : erpDriverIntegrityBannerWarnHtml();
+      host.classList.remove('hidden');
+    }
+
+    function erpRefreshApDriverIntegrityStrip() {
+      const host = document.getElementById('apDriverIntegrityStrip');
+      if (!host) return;
+      const inp = document.getElementById('apErpDriverSearch');
+      const tab = document.getElementById('acct-transactions');
+      const acctSec = document.getElementById('section-accounting');
+      if (!inp || !tab || tab.classList.contains('hidden') || (acctSec && acctSec.classList.contains('hidden'))) {
+        host.innerHTML = '';
+        host.classList.add('hidden');
+        return;
+      }
+      const nm = String(inp.value || '').trim();
+      host.innerHTML = nm ? erpDriverIntegrityBannerOkHtml() : erpDriverIntegrityBannerWarnHtml();
       host.classList.remove('hidden');
     }
 
@@ -15138,6 +15210,11 @@
           (document.getElementById('fuelManualTxnTypeSel') && document.getElementById('fuelManualTxnTypeSel').value) ||
           'fuel-expense';
         erpApplyFuelTransactionType(cur);
+      }
+      try {
+        erpRefreshFuelDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
       }
     }
 
