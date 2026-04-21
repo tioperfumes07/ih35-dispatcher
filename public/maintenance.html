@@ -12493,10 +12493,7 @@
     }
 
     function resolveAccidentDriverSearch() {
-      const inp = document.getElementById('accidentDriverSearch');
-      const hid = document.getElementById('accidentDriverId');
-      if (!inp || !hid) return;
-      hid.value = resolveDriverNameToId(inp.value);
+      resolveMaintRecordDriverSearch();
     }
 
     function resolveApErpDriverSearch() {
