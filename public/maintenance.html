@@ -4853,6 +4853,15 @@
             <h2 id="erpReportsFleetTitle" class="erp-reports-pagehead__title">Fleet reports</h2>
             <p class="erp-reports-pagehead__sub">Cards by domain, live search, shared filters, exports.</p>
           </header>
+          <div class="erp-reports-hub-embed-wrap print-hide-actions" role="region" aria-label="Fleet reports hub">
+            <iframe
+              id="erpFleetReportsHubIframe"
+              class="erp-reports-hub-iframe"
+              title="Fleet reports — same experience as /fleet-reports/"
+              src="about:blank"
+              loading="lazy"
+            ></iframe>
+          </div>
           <div id="repCatTabs" class="rep-cat-tabs rep-cat-tabs--bar erp-tab-bar print-hide-actions" role="tablist" aria-label="Report categories"></div>
           <div class="erp-reports-catalog-shell print-hide-actions">
             <aside id="repFilterSidebar" class="rep-filter-sidebar" aria-label="Report filters">
@@ -10702,6 +10711,7 @@
       if (name === 'reports') {
         loadReportsData();
         if (typeof repInitReportsHub === 'function') repInitReportsHub();
+        if (typeof erpEnsureFleetReportsHubIframe === 'function') erpEnsureFleetReportsHubIframe();
         const rs = document.getElementById('repToolbarSearch');
         if (rs) {
           rs.value = '';

@@ -131,7 +131,7 @@ export function MultiSelectField({
               onMouseDown={(e) => e.preventDefault()}
               onClick={addCustom}
             >
-              {`+ Add custom [${q.trim()}]`}
+              + Add custom
             </button>
           ) : null}
         </div>

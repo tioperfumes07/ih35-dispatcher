@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useColumnResize } from '../../hooks/useColumnResize'
-import { exportDomTableToXlsx } from '../../lib/tableExportXlsx'
+import { exportDomTableToXlsx, exportJsonRowsToXlsx } from '../../lib/tableExportXlsx'
 import type { ReportFilters } from '../../types'
 import type { ServiceLocationRecord, ServiceLocationType } from '../../data/serviceLocationRecords'
 import { SERVICE_LOCATION_RECORDS } from '../../data/serviceLocationRecords'
@@ -104,6 +104,30 @@ export function WorkByServiceLocationReport({
         Uses shared <strong>Filters</strong> (dates, units, service types, location text,{' '}
         <strong>location type</strong>, vendor, driver, make, cost band).
       </p>
+      <div className="bill-pay__table-toolbar">
+        <button
+          type="button"
+          className="btn sm"
+          onClick={() =>
+            exportJsonRowsToXlsx(
+              data.map((r) => ({
+                date: r.date,
+                unitId: r.unitId,
+                driver: r.driver,
+                vendor: r.vendor,
+                recordType: r.recordType,
+                serviceType: r.serviceType,
+                cost: r.cost,
+                location: r.locationName,
+                locationType: r.locationType,
+              })),
+              'WorkByServiceLocation',
+            )
+          }
+        >
+          Export to Excel
+        </button>
+      </div>
       <div className="loc-summary-cards">
         <div className="loc-card">
           <span className="loc-card__k">Total locations</span>
@@ -208,12 +232,28 @@ export function InternalExternalAnalysisReport({ filters }: { filters: ReportFil
       }))
   }
 
+  const exportInternalExternal = () => {
+    const rows: object[] = []
+    internal.byCat.forEach((amount, category) =>
+      rows.push({ side: 'Internal', category, amountUsd: amount }),
+    )
+    external.byCat.forEach((amount, category) =>
+      rows.push({ side: 'External & field', category, amountUsd: amount }),
+    )
+    exportJsonRowsToXlsx(rows, 'InternalExternalAnalysis')
+  }
+
   return (
     <div className="loc-report">
       <p className="muted small">
         <strong>Internal</strong> vs <strong>all non-internal</strong> (external + roadside + dealer). Filters
         apply to the same WO set as other location reports.
       </p>
+      <div className="bill-pay__table-toolbar">
+        <button type="button" className="btn sm" onClick={exportInternalExternal}>
+          Export to Excel
+        </button>
+      </div>
       <div className="loc-ix-grid">
         <div className="loc-ix-col">
           <h3 className="loc-ix-h">Internal</h3>

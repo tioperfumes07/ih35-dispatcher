@@ -60,7 +60,9 @@ export function PartsCatalogPanel() {
   const { isFullScreen, toggle } = useFullScreen()
   const col = useColumnResize([160, 88, 100, 64, 80, 88, 72])
   const newNameRef = useRef<HTMLInputElement>(null)
-  const [rows, setRows] = useState<DisplayRow[]>([])
+  const [rows, setRows] = useState<DisplayRow[]>(() =>
+    mergePartsCatalog([], PARTS_CATALOG_SEED),
+  )
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
   const [usedFallback, setUsedFallback] = useState(false)
