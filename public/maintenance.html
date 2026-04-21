@@ -3197,7 +3197,7 @@
                       <input id="apAssetUnit" class="qb-in" list="unitOptions" placeholder="Unit">
                     </div>
                     <div class="ap-exp-field">
-                      <span class="qb-l">Driver</span>
+                      <span class="qb-l">Driver <span id="apErpDriverReqStar" class="maint-label-req hidden" aria-hidden="true">*</span></span>
                       <input type="hidden" id="apErpDriverId" value="" />
                       <input type="hidden" id="apMaintRecordType" value="" />
                       <input type="hidden" id="apAccidentDotReportable" value="" />
@@ -3210,6 +3210,17 @@
                         oninput="resolveApErpDriverSearch()"
                         onblur="resolveApErpDriverSearch()"
                       />
+                    </div>
+                    <div class="ap-exp-field hidden" id="apAccidentDotWrap">
+                      <label class="qb-l" style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:0">
+                        <input
+                          type="checkbox"
+                          id="apAccidentDotReportableCb"
+                          onchange="this.dataset.erpTouched='1'; const h=document.getElementById('apAccidentDotReportable'); if(h) h.value=this.checked?'1':'';"
+                        />
+                        <span>DOT reportable accident</span>
+                      </label>
+                      <p class="mini-note" style="margin:4px 0 0">Toggle to record whether this crash meets DOT reportability; required to save accident-type bills/expenses.</p>
                     </div>
                     <div class="ap-exp-field hidden" id="apDriverFieldWrap">
                       <span class="qb-l">Driver (QBO customer on first line)</span>
@@ -9522,6 +9533,33 @@
         if (locSearch && !String(locSearch.value || '').trim()) locSearch.value = '';
       }
       erpSyncApRepairLocationHidden();
+      syncApMaintRecordTypeDependentUi();
+    }
+
+    /** Driver + DOT accident controls on the AP composer (mirrors maintenance work order rules). */
+    function syncApMaintRecordTypeDependentUi() {
+      const mrt = String(document.getElementById('apMaintRecordType')?.value || '').trim().toLowerCase();
+      const isAcc = mrt === 'accident';
+      const star = document.getElementById('apErpDriverReqStar');
+      if (star) star.classList.toggle('hidden', !isAcc);
+      const inp = document.getElementById('apErpDriverSearch');
+      if (inp) {
+        inp.placeholder = isAcc ? 'Select driver (required)' : 'Select driver (optional)';
+        inp.setAttribute('aria-required', isAcc ? 'true' : 'false');
+      }
+      const dotWrap = document.getElementById('apAccidentDotWrap');
+      const dotCb = document.getElementById('apAccidentDotReportableCb');
+      const dotHid = document.getElementById('apAccidentDotReportable');
+      if (dotWrap) dotWrap.classList.toggle('hidden', !isAcc);
+      if (!isAcc) {
+        if (dotCb) {
+          dotCb.checked = false;
+          delete dotCb.dataset.erpTouched;
+        }
+        if (dotHid) dotHid.value = '';
+      } else if (dotCb && dotHid && dotHid.value === '1' && !dotCb.dataset.erpTouched) {
+        dotCb.checked = true;
+      }
     }
 
     function erpApplyApDedicatedUiAfterOpen(mode) {
@@ -9556,6 +9594,7 @@
         apLocSel._erpBound = true;
         apLocSel.addEventListener('change', erpSyncApRepairLocationHidden);
       }
+      syncApMaintRecordTypeDependentUi();
       if (typeof syncErpDedicatedModalChrome === 'function') syncErpDedicatedModalChrome();
     }
 
