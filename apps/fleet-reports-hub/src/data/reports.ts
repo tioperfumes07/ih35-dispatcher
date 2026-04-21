@@ -505,16 +505,16 @@ export const REPORTS: ReportDef[] = [
   },
 ]
 
-/** Top report category tabs — order matches Fleet reports hub spec. */
+/** Top tabs: Overview first (default), then alphabetical by label. */
 const TABS_SOURCE: { id: ReportCategory; label: string }[] = [
   { id: 'overview', label: 'Overview' },
-  { id: 'maintenance', label: 'Maintenance' },
   { id: 'accounting', label: 'Accounting' },
-  { id: 'safety', label: 'Safety & HOS' },
-  { id: 'fuel', label: 'Fuel & Energy' },
-  { id: 'operations', label: 'Operations' },
-  { id: 'dot', label: 'DOT Compliance' },
   { id: 'custom', label: 'Custom' },
+  { id: 'dot', label: 'DOT Compliance' },
+  { id: 'fuel', label: 'Fuel & Energy' },
+  { id: 'maintenance', label: 'Maintenance' },
+  { id: 'operations', label: 'Operations' },
+  { id: 'safety', label: 'Safety & HOS' },
 ]
 
 /** Top report category tabs — fixed order (Fleet reports hub layout). */
@@ -525,20 +525,20 @@ export const MOCK_UNITS = ['101', '102', '204', '305', '412', '530']
 
 /** Default service-type list (order preserved; merged with live catalog in UI). */
 export const MOCK_SERVICE_TYPES = [
-  'PM-A',
-  'PM-B',
   'Corrective',
-  'Tire',
   'DOT',
   'Electrical',
+  'PM-A',
+  'PM-B',
+  'Tire + DB',
   'Body repair',
   'Oil change',
 ]
-/** Default record-type options for Reports filters (single select + Any). */
+/** Default record-type options for Reports filters (multi + custom). */
 export const MOCK_RECORD_TYPES = [
-  'Work order',
-  'Repair order',
-  'PM service',
-  'Inspection',
   'Bill',
+  'Inspection',
+  'PM service',
+  'Repair order',
+  'Work order',
 ]

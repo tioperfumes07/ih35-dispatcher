@@ -31,7 +31,13 @@ export async function fetchPartsCatalog(q?: string, category?: string) {
   if (q) sp.set('q', q)
   if (category) sp.set('category', category)
   const res = await fetch(`/api/catalog/parts?${sp}`)
-  const data = (await res.json()) as { parts?: PartRefApiRow[]; error?: string }
+  const raw = await res.text()
+  let data: { parts?: PartRefApiRow[]; error?: string }
+  try {
+    data = JSON.parse(raw) as { parts?: PartRefApiRow[]; error?: string }
+  } catch {
+    throw new Error(res.ok ? 'Invalid JSON from /api/catalog/parts' : raw.slice(0, 120) || res.statusText)
+  }
   if (!res.ok) throw new Error(data.error || res.statusText)
   return data.parts ?? []
 }

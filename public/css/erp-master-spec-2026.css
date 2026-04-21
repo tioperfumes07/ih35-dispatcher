@@ -3870,3 +3870,45 @@ body.erp-maintenance .modal.erp-modal-chrome--layout-fullscreen .modal-body {
   gap: 8px;
   flex-shrink: 0;
 }
+
+/* Packet 5 — Reports tab: canonical hub iframe (legacy catalog DOM kept for erp-reports-catalog.js). */
+body.erp-maintenance #section-reports .erp-reports-shell--v2 {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+body.erp-maintenance #section-reports .erp-reports-hub-embed-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: min(72vh, 960px);
+  width: 100%;
+  box-sizing: border-box;
+}
+body.erp-maintenance #section-reports .erp-reports-hub-iframe {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 480px;
+  border: 0;
+  background: var(--panel, #f6f8fa);
+}
+body.erp-maintenance #section-reports .rep-cat-tabs,
+body.erp-maintenance #section-reports .erp-reports-catalog-shell,
+body.erp-maintenance #section-reports .erp-reports-sidebar,
+body.erp-maintenance #section-reports nav.erp-reports-hub,
+body.erp-maintenance #section-reports #repMainSubtabs,
+body.erp-maintenance #section-reports .erp-reports-main > .reports-tab {
+  display: none !important;
+}
+body.erp-maintenance #section-reports .erp-reports-columns {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+body.erp-maintenance #section-reports .erp-reports-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
