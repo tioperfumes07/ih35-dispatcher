@@ -4,6 +4,7 @@
 
 import * as XLSX from 'xlsx';
 import { getPool, dbQuery } from '../lib/db.mjs';
+import { ensureDedupeWritePathObjects } from '../lib/ensure-app-database-objects.mjs';
 import {
   buildDuplicateGroups,
   mapQboVendorRow,
@@ -120,6 +121,16 @@ export function mountDedupeRoutes(app, deps) {
       res.status(503).json({
         ok: false,
         error: 'DATABASE_URL is not configured. Merge audit logging and skip persistence require Postgres.'
+      });
+      return false;
+    }
+    try {
+      await ensureDedupeWritePathObjects();
+    } catch (e) {
+      logError('requireDedupeDbForWrite', e);
+      res.status(503).json({
+        ok: false,
+        error: e?.message || 'Postgres tables for merge audit could not be initialized.'
       });
       return false;
     }
@@ -339,6 +350,7 @@ export function mountDedupeRoutes(app, deps) {
       const b = sorted[sorted.length - 1];
       const by = maintAuthUserLabel(req);
       if (getPool()) {
+        await ensureDedupeWritePathObjects();
         await dbQuery(
           `INSERT INTO dedup_skipped (record_type, qbo_id_a, qbo_id_b, skipped_by, reason, group_signature)
            VALUES ($1,$2,$3,$4,$5,$6)
