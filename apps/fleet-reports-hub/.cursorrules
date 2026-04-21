@@ -1,0 +1,66 @@
+# Preview rules (fleet-reports-hub)
+
+## Rule 1 — Ask before any preview
+
+Before showing any preview, diagram, or visual mockup, ask the user exactly:
+
+**"Would you like me to show a visual preview of this first?"**
+
+- Only show a preview if the user says yes.
+- Never show ASCII box diagrams, text trees, or code-only previews as a substitute for a real visual.
+
+## Rule 2 — Previews are real HTML files, not ASCII
+
+When the user **requests** a preview:
+
+- Generate a **real `.html` file`** that opens in a browser — not ASCII art, box diagrams, text trees, or pseudocode layouts.
+- Location: `previews/`
+- Name format: `preview-{feature-name}-{YYYY-MM-DD}.html` (use kebab-case for feature-name).
+- The file must:
+  - Use real UI elements: inputs, buttons, tables, cards, labels — sized and styled proportionally.
+  - Link the app stylesheet for tokens: `<link rel="stylesheet" href="../src/index.css">` (adjust relative path from `previews/` as needed so variables match the app).
+  - Keep inputs only slightly taller than their text (e.g. height ≈ `font-size + 8px` max for compact fields; labels ~9–10px uppercase muted per project norms).
+  - **Use only existing CSS variables / theme from the app** — do not invent new palette colors.
+- Tell the user the full path to open the file (browser or local static server).
+
+## Rule 3 — Preview HTML structure
+
+Every preview HTML file must include:
+
+- `<!DOCTYPE html>`, `<html lang="en">`, charset + viewport meta.
+- `<title>Preview — {Feature Name}</title>`
+- Styles: prefer linking `../src/index.css` plus minimal page-local overrides only where needed for the mock layout.
+- `<body>` with real styled markup for the feature being previewed.
+
+## Rule 4 — Never use these as a “preview”
+
+Do **not** present as a preview:
+
+- ASCII box drawings (┌─┐│└─┘)
+- Text-based tree structures
+- Pseudocode layout descriptions
+- Plain bullet lists pretending to be a UI mock
+- Code snippets **as a substitute** for a rendered visual
+
+If a real HTML preview cannot be produced, say:
+
+**"I cannot generate a visual preview for this — would you like me to proceed directly to implementation?"**
+
+## Rule 5 — Workflow for new features / redesigns
+
+1. Describe the plan in plain language (no ASCII diagrams).
+2. Ask: **"Would you like a visual preview before I build?"**
+3. If **yes** → write the preview HTML under `previews/` and give the path; wait for feedback.
+4. If **approved** → implement in the codebase.
+5. If **changes** → update the preview HTML first, re-confirm, then implement.
+6. Only then → commit (per user / branch policy).
+
+## Rule 6 — Short reminder (also enforce Rules 1–5)
+
+- Never show ASCII diagrams or text-tree previews as previews.
+- Always ask the user before showing any preview.
+- Previews must be real rendered HTML files in `previews/`.
+- All UI elements must be proportional to their text size.
+- Use existing app colors only — never invent new colors.
+- Follow this order: plan → ask → preview → approve → build.
+- Never auto-generate a preview without being asked.

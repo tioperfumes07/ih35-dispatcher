@@ -1,0 +1,13 @@
+/* Shared column resize handle for data tables (no palette tokens). */
+.fr-data-table th.fr-th-resizable {
+  position: relative;
+}
+
+.fr-col-resize {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+}

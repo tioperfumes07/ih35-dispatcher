@@ -1,0 +1,21 @@
+import { useCallback, useState, type CSSProperties } from 'react'
+
+/** Viewport-sized modal state (not the browser Fullscreen API). */
+export function useFullScreen() {
+  const [isFullScreen, setIsFullScreen] = useState(false)
+  const toggle = useCallback(() => setIsFullScreen((p) => !p), [])
+  return { isFullScreen, toggle }
+}
+
+/** Full-viewport panel styles for modal shells (pair with `ModalFullscreenToggle`). */
+export const MODAL_FULLSCREEN_STYLE: CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100vw',
+  height: '100vh',
+  borderRadius: 0,
+  zIndex: 9999,
+  maxWidth: '100vw',
+  maxHeight: '100vh',
+}

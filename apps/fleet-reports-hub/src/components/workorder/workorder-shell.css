@@ -1,0 +1,558 @@
+/* Work order shell — uses app tokens from index.css only (no new palette). */
+.wo-shell-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.wo-shell-root--fs {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  border-radius: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+.wo-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-2);
+  flex-wrap: wrap;
+}
+
+.wo-topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.wo-topbar__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wo-wo-badge {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(91, 140, 255, 0.12);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+.wo-pill {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.wo-pill--kind {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.wo-topbar__actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.wo-fs-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wo-fs-lbl {
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.wo-ico-btn {
+  height: 22px;
+  min-width: 28px;
+  padding: 0 6px;
+  font-size: 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.wo-ico-btn.modal-fs-toggle {
+  width: auto;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 4px;
+}
+
+.wo-ico-btn.modal-fs-toggle .modal-fs-toggle__icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.wo-close-btn {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.wo-unit-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  flex-wrap: wrap;
+}
+
+.wo-unit-card__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.wo-unit-badge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(91, 140, 255, 0.12);
+  color: var(--accent);
+}
+
+.wo-unit-card__stats {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wo-integrity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(251, 191, 36, 0.1);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--warn);
+}
+
+.wo-integrity a {
+  color: var(--accent);
+  font-size: 10px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.wo-integrity a:hover {
+  text-decoration: underline;
+}
+
+.wo-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wo-sec {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+.wo-sec--fs {
+  position: fixed;
+  inset: 16px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+}
+
+.wo-sec__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.wo-sec__label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.wo-sec__badge-ok {
+  margin-left: 6px;
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.wo-sec__body {
+  padding: 8px;
+  background: var(--panel-2);
+}
+
+.wo-field-lbl {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.wo-input,
+.wo-select,
+.wo-textarea {
+  width: 100%;
+  height: 22px;
+  font-size: 10px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.wo-textarea {
+  height: auto;
+  min-height: 34px;
+  padding: 4px 6px;
+  resize: vertical;
+}
+
+.wo-grid5 {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.wo-grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.wo-grid4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.wo-grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 960px) {
+  .wo-grid5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .wo-grid4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.wo-inline-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.wo-inline-row .wo-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.wo-mini-btn {
+  height: 22px;
+  font-size: 9px;
+  padding: 0 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wo-driver-ok {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid var(--ok);
+  color: var(--ok);
+  font-size: 10px;
+}
+
+.wo-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 800px) {
+  .wo-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wo-planned-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.wo-drag {
+  cursor: grab;
+  color: var(--muted);
+  font-size: 12px;
+  user-select: none;
+}
+
+.wo-parts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.wo-parts-table th,
+.wo-parts-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 4px 4px;
+}
+
+.wo-parts-table th {
+  position: relative;
+  text-align: left;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.wo-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.wo-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.wo-data-table th,
+.wo-data-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 2px 4px;
+  vertical-align: middle;
+}
+
+.wo-data-table th {
+  position: relative;
+  text-align: left;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: var(--panel);
+}
+
+.wo-col-resize {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+}
+
+.wo-table-hint {
+  font-size: 9px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
+.wo-class-chip {
+  display: inline-block;
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(91, 140, 255, 0.12);
+  color: var(--accent);
+}
+
+.wo-note-box {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(91, 140, 255, 0.08);
+  color: var(--text);
+  font-size: 10px;
+  margin-top: 6px;
+}
+
+.wo-grid-f {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.wo-memo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.wo-attach {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.wo-bottombar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--panel-2);
+}
+
+.wo-bottombar__btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.wo-bar-btn {
+  height: 22px;
+  font-size: 9px;
+  padding: 0 8px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.wo-bar-btn--primary {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.wo-bar-btn--info {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.wo-bar-btn--excel {
+  color: #217346;
+  border-color: #217346;
+}
+
+.wo-mini-btn.wo-bar-btn--excel {
+  color: #217346;
+  border-color: #217346;
+}
+
+.wo-bar-status {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.wo-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 10px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.wo-totals-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 10px;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.wo-totals-bar strong {
+  color: var(--ok);
+}
+
+.wo-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Wide modal host for WorkOrderShell (layout only; inherits .maint-modal surface from index). */
+.maint-modal.maint-modal--wo-shell {
+  width: min(1180px, 100%);
+  max-height: min(94vh, 1200px);
+}

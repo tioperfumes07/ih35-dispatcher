@@ -10,6 +10,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "dev:fleet": "npm --prefix apps/fleet-reports-hub run dev",
+    "dev:fleet:api": "npm --prefix apps/fleet-reports-hub run dev:api",
+    "build:fleet": "VITE_BASE=/fleet-reports/ npm --prefix apps/fleet-reports-hub run build && rm -rf public/fleet-reports && mkdir -p public/fleet-reports && cp -R apps/fleet-reports-hub/dist/. public/fleet-reports/",
     "db:test": "node scripts/db-test.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:ensure-support": "node scripts/ensure-support-tables.mjs",

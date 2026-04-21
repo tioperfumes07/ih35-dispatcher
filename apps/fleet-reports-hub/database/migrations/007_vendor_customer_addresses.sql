@@ -1,0 +1,18 @@
+-- Vendor & customer mailing / contact fields (ERP / QBO alignment).
+-- Numbered 007 to avoid clashing with existing 002_* migrations in this repo.
+
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS street_address TEXT;
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS state TEXT;
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS zip TEXT;
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'USA';
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS email TEXT;
+
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS street_address TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS state TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'USA';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS email TEXT;
