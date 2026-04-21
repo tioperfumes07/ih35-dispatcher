@@ -3992,9 +3992,9 @@
                     style="margin:0 16px 14px;padding:7px 10px;border-radius:4px;border:0.5px dashed var(--color-border);background:var(--color-bg-header);display:flex;flex-wrap:wrap;align-items:center;gap:10px"
                   >
                     <span aria-hidden="true" style="font-size:14px">📄</span>
-                    <span class="mini-note" style="margin:0;flex:1 1 200px;font-size:11px"
-                      >Vendor invoice PDF — upload to auto-extract and fill lines</span
-                    >
+                    <span class="mini-note" style="margin:0;flex:1 1 200px;font-size:11px">
+                      Vendor invoice PDF — upload to auto-extract and fill lines
+                    </span>
                     <input type="file" id="fuelManualPdfInput" accept=".pdf,application/pdf" class="hidden" />
                     <button type="button" class="btn btn--small secondary" onclick="document.getElementById('fuelManualPdfInput')?.click()">
                       Choose file
@@ -4058,18 +4058,41 @@
                       </table>
                     </div>
                   </div>
-                  <div class="qb-doc-memo-row fuel-manual-memo-row">
-                    <div>
-                      <span class="qb-l">Memo (QuickBooks private note)</span>
-                      <textarea id="fuelManualMemo" class="qb-memo" rows="2" placeholder="e.g. Pilot 35 · card last 4"></textarea>
-                    </div>
-                    <div class="fuel-manual-memo-aside" style="align-self:end;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                      <span class="erp-help-tip">
+                  <div
+                    class="qb-doc-memo-row fuel-manual-memo-row"
+                    style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start"
+                  >
+                    <div style="min-width:0">
+                      <span class="qb-l">Memo</span>
+                      <textarea
+                        id="fuelManualMemo"
+                        class="qb-memo"
+                        rows="2"
+                        style="min-height:52px;font-size:12px"
+                        placeholder="Notes for QuickBooks (header)"
+                      ></textarea>
+                      <span class="erp-help-tip" style="margin-top:6px;display:inline-flex">
                         <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Lines &amp; posting">?</button>
                         <span class="erp-help-tip__panel" role="tooltip">
                           Shared header; each line = one ledger row. Extra lines append <code>-L2</code>, <code>-L3</code>… to DocNumber when an expense # is set. Payment method + pay-from stored per row for posting.
                         </span>
                       </span>
+                    </div>
+                    <div
+                      class="erp-fuel-attach-box"
+                      style="min-width:0;border:0.5px dashed var(--color-border);border-radius:4px;padding:10px;background:var(--color-bg-card)"
+                    >
+                      <span class="qb-l">Attachments</span>
+                      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px">
+                        <input type="file" id="fuelManualAttachInput" multiple class="hidden" />
+                        <button type="button" class="btn btn--small secondary" onclick="document.getElementById('fuelManualAttachInput')?.click()">
+                          Choose files
+                        </button>
+                        <span class="mini-note" style="margin:0">Multiple files ok</span>
+                      </div>
+                      <p class="mini-note" style="margin:8px 0 0;font-size:10px;color:var(--color-text-label)">
+                        Saved with ERP work order before QBO post.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -9707,12 +9730,14 @@
           ft('fuelManualMemo') ||
           ft('fuelManualLoadInvoice') ||
           ft('fuelManualVendorInvoice') ||
-          ft('fuelManualInternalWo') ||
           ft('fuelManualExpenseDoc') ||
           ft('fuelManualLocation') ||
           ft('fuelManualPaymentMethodSearch') ||
           ft('fuelManualBankSearch') ||
           ft('fuelManualDriverSearch') ||
+          ft('fuelManualDueDate') ||
+          ft('fuelManualPaymentDate') ||
+          (document.getElementById('fuelManualTerms')?.value || '').trim() ||
           (document.getElementById('fuelManualClassSel')?.value || '').trim() ||
           totalNum > 0.005
         );
@@ -14253,6 +14278,7 @@
       const m = findBestNameMatch(cacheVendors(), raw);
       const hid = document.getElementById('fuelManualVendorQboId');
       if (hid) hid.value = m ? m.qboId : '';
+      if (typeof erpHydrateFuelVendorAddressFromApi === 'function') void erpHydrateFuelVendorAddressFromApi();
     }
 
     function resolveFuelManualPaymentMethod() {
@@ -14279,23 +14305,30 @@
         'fuelManualExpenseDoc',
         'fuelManualLoadInvoice',
         'fuelManualVendorInvoice',
-        'fuelManualInternalWo',
         'fuelManualPaymentMethodSearch',
         'fuelManualPaymentMethodId',
         'fuelManualBankSearch',
         'fuelManualBankQboId',
         'fuelManualDriverSearch',
-        'fuelManualDriverId'
+        'fuelManualDriverId',
+        'fuelManualDueDate',
+        'fuelManualPaymentDate'
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
+      const terms = document.getElementById('fuelManualTerms');
+      if (terms) terms.selectedIndex = 0;
       if (!preserveUnit) {
         const u = document.getElementById('fuelManualUnit');
         if (u) u.value = '';
       }
       const d = document.getElementById('fuelManualDate');
       if (d) d.value = new Date().toISOString().slice(0, 10);
+      const pd = document.getElementById('fuelManualPaymentDate');
+      if (pd) pd.value = document.getElementById('fuelManualDate')?.value || new Date().toISOString().slice(0, 10);
+      const due = document.getElementById('fuelManualDueDate');
+      if (due) due.value = document.getElementById('fuelManualDate')?.value || new Date().toISOString().slice(0, 10);
       const host = document.getElementById('fuelManualLines');
       if (host) {
         host.innerHTML = '';
@@ -14366,6 +14399,15 @@
       const unit = String(document.getElementById('fuelManualUnit')?.value || '').trim();
       const txnDate = String(document.getElementById('fuelManualDate')?.value || '').trim();
       const memo = String(document.getElementById('fuelManualMemo')?.value || '').trim();
+      const dueD = String(document.getElementById('fuelManualDueDate')?.value || '').trim();
+      const termsT = String(document.getElementById('fuelManualTerms')?.value || '').trim();
+      const payD = String(document.getElementById('fuelManualPaymentDate')?.value || '').trim();
+      const memoParts = [];
+      if (memo) memoParts.push(memo);
+      if (termsT) memoParts.push('Terms: ' + termsT);
+      if (dueD) memoParts.push('Due date: ' + dueD);
+      if (payD && payD !== txnDate) memoParts.push('Payment date: ' + payD);
+      const memoEffective = memoParts.join('\n');
       const loc = String(document.getElementById('fuelManualLocation')?.value || '').trim();
       const vendorText = String(document.getElementById('fuelManualVendorSearch')?.value || '').trim();
       const baseDocRaw = String(document.getElementById('fuelManualExpenseDoc')?.value || '').trim();
@@ -14440,7 +14482,6 @@
       const nLines = lines.length;
       const loadInvH = String(document.getElementById('fuelManualLoadInvoice')?.value || '').trim();
       const fvInvH = String(document.getElementById('fuelManualVendorInvoice')?.value || '').trim();
-      const intWoH = String(document.getElementById('fuelManualInternalWo')?.value || '').trim();
       try {
         if (hint) hint.textContent = postToQbo ? 'Saving…' : 'Saving…';
         clearMaintIntegrityInlinePanel();
@@ -14456,12 +14497,11 @@
             txnDate,
             productType: ln.productType,
             manual: true,
-            memo,
+            memo: memoEffective,
             location: loc
           };
           if (loadInvH) payload.loadInvoiceNumber = loadInvH;
           if (fvInvH) payload.vendorInvoiceNumber = fvInvH;
-          if (intWoH) payload.internalWorkOrderNumber = intWoH;
           if (vendorText) payload.vendor = vendorText;
           if (docForLine) payload.expenseDocNumber = docForLine;
           if (Number.isFinite(gal) && gal > 0) payload.gallons = gal;
@@ -19838,7 +19878,7 @@
         loadInvoice: gv('fuelManualLoadInvoice'),
         loadNumber: gv('fuelManualLoadInvoice'),
         vendorInvoice: gv('fuelManualVendorInvoice'),
-        shopWo: gv('fuelManualInternalWo'),
+        shopWo: '',
         expenseDoc: gv('fuelManualExpenseDoc'),
         expenseNumber: gv('fuelManualExpenseDoc'),
         classLabel,
