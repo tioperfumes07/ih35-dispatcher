@@ -3526,6 +3526,15 @@ nav.tabs {
   min-height: 0;
 }
 
+/* ERP maintenance.html record-tab iframe: single column, no ops sidebar */
+.acct-shell.maint-workspace.maint-workspace--erp-embed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.reports-page--erp-record-embed .reports-page__main.main {
+  padding-top: 8px;
+}
+
 .maint-workspace .acct-bills-link {
   display: flex;
   align-items: center;

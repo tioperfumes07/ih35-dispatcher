@@ -234,63 +234,70 @@ export function MaintenanceWorkspace({
   )
 
   return (
-    <div className="acct-shell maint-workspace">
-      <aside className="acct-bills-sidebar" aria-label="Maintenance">
-        <p className="acct-kicker">Maintenance</p>
-        {onOpenAppWorkOrder ? (
-          <button
-            type="button"
-            className="btn sm primary maint-workspace__new-wo"
-            onClick={() => onOpenAppWorkOrder()}
-          >
-            + New work order
-          </button>
-        ) : null}
-        <h3 className="acct-side-h">Operations</h3>
-        <ul className="acct-bills-nav">
-          {OPS_NAV.map((n) =>
-            n.id === 'integrity'
-              ? navBtn(
-                  'integrity',
-                  n.label,
-                  badge > 0 ? (
-                    <span className="nav-badge" aria-label={`${badge} open alerts`}>
-                      {badge > 99 ? '99+' : badge}
-                    </span>
-                  ) : null,
-                )
-              : navBtn(n.id, n.label),
-          )}
-        </ul>
-        <p className="acct-kicker" style={{ marginTop: 14 }}>
-          Tools &amp; data
-        </p>
-        <ul className="acct-bills-nav">
-          {LISTS_NAV.map((n) => (
-            <li key={n.label}>
-              <button
-                type="button"
-                className={
-                  view === 'lists-catalogs' && listsSidebarKey === `${n.tab}:${n.list}`
-                    ? 'acct-bills-link is-active'
-                    : 'acct-bills-link'
-                }
-                onClick={() => {
-                  setListsCatalogsTab(n.tab)
-                  setListsDeepLink(n.list)
-                  setListsSidebarKey(`${n.tab}:${n.list}`)
-                  setView('lists-catalogs')
-                }}
-              >
-                {n.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
+    <div
+      className={
+        'acct-shell maint-workspace' + (erpRecordEmbed ? ' maint-workspace--erp-embed' : '')
+      }
+    >
+      {!erpRecordEmbed ? (
+        <aside className="acct-bills-sidebar" aria-label="Maintenance">
+          <p className="acct-kicker">Maintenance</p>
+          {onOpenAppWorkOrder ? (
+            <button
+              type="button"
+              className="btn sm primary maint-workspace__new-wo"
+              onClick={() => onOpenAppWorkOrder()}
+            >
+              + New work order
+            </button>
+          ) : null}
+          <h3 className="acct-side-h">Operations</h3>
+          <ul className="acct-bills-nav">
+            {OPS_NAV.map((n) =>
+              n.id === 'integrity'
+                ? navBtn(
+                    'integrity',
+                    n.label,
+                    badge > 0 ? (
+                      <span className="nav-badge" aria-label={`${badge} open alerts`}>
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    ) : null,
+                  )
+                : navBtn(n.id, n.label),
+            )}
+          </ul>
+          <p className="acct-kicker" style={{ marginTop: 14 }}>
+            Tools &amp; data
+          </p>
+          <ul className="acct-bills-nav">
+            {LISTS_NAV.map((n) => (
+              <li key={n.label}>
+                <button
+                  type="button"
+                  className={
+                    view === 'lists-catalogs' && listsSidebarKey === `${n.tab}:${n.list}`
+                      ? 'acct-bills-link is-active'
+                      : 'acct-bills-link'
+                  }
+                  onClick={() => {
+                    setListsCatalogsTab(n.tab)
+                    setListsDeepLink(n.list)
+                    setListsSidebarKey(`${n.tab}:${n.list}`)
+                    setView('lists-catalogs')
+                  }}
+                >
+                  {n.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      ) : null}
       <div className="acct-main-col">
-        {/* Snapshot KPI row + integrity strip: responsive flex-wrap in index.css (Tasks 4 & 6). */}
-        <WorkspaceSnapshot onViewAllIntegrity={goToIntegrityView} />
+        {!erpRecordEmbed ? (
+          <WorkspaceSnapshot onViewAllIntegrity={goToIntegrityView} />
+        ) : null}
 
         <PostSaveIntegrityPanel
           alerts={lastIntegrity}
@@ -330,6 +337,7 @@ export function MaintenanceWorkspace({
               setWoModalOpen(true)
             }}
             onIntegrityBatch={onBatch}
+            onAfterSaveSuccess={notifyErpParentAfterSave}
             onViewAllIntegrity={goToIntegrityView}
           />
         )}
@@ -396,6 +404,7 @@ export function MaintenanceWorkspace({
                 initialShellKind="IWO"
                 onClose={() => setWoModalOpen(false)}
                 onIntegrityBatch={onBatch}
+                onAfterSaveSuccess={notifyErpParentAfterSave}
                 onViewAllIntegrity={goToIntegrityView}
               />
             </div>

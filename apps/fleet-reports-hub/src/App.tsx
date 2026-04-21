@@ -50,8 +50,15 @@ function readInitialReportTab(): ReportCategory {
   return 'overview'
 }
 
+function readErpRecordEmbedFlag(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('erpWoEmbed') === '1'
+}
+
 export default function App() {
   const [tab, setTab] = useState<ReportCategory>(readInitialReportTab)
+  /** True for the session when opened from ERP record-tab iframe (?erpWoEmbed=1), after URL cleanup. */
+  const [erpRecordEmbed] = useState(readErpRecordEmbedFlag)
   const [search, setSearch] = useState('')
   const [draftFilters, setDraftFilters] = useState<ReportFilters>(defaultFilters)
   const [appliedFilters, setAppliedFilters] = useState<ReportFilters>(
@@ -174,43 +181,56 @@ export default function App() {
 
   return (
     <IntegrationConnectionsProvider>
-    <div className="app app--fleet-reports">
+    <div
+      className={
+        'app app--fleet-reports' + (erpRecordEmbed ? ' app--erp-record-embed' : '')
+      }
+    >
       <div className="layout fleet-reports-layout">
-      <div className={`reports-page reports-page--redesign reports-page--tab-${tab}`}>
-        <header className="reports-page__header">
-          <h1 className="reports-page__title">Fleet reports</h1>
-          <p className="reports-page__subtitle">
-            Cards by domain, live search, shared filters, exports.
-          </p>
-          <nav
-            className="tabs reports-tabs"
-            role="tablist"
-            aria-label="Report categories"
-          >
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={t.id === tab}
-                className={t.id === tab ? 'reports-tab reports-tab--active' : 'reports-tab'}
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </nav>
-        </header>
+      <div
+        className={
+          `reports-page reports-page--redesign reports-page--tab-${tab}` +
+          (erpRecordEmbed ? ' reports-page--erp-record-embed' : '')
+        }
+      >
+        {!erpRecordEmbed ? (
+          <header className="reports-page__header">
+            <h1 className="reports-page__title">Fleet reports</h1>
+            <p className="reports-page__subtitle">
+              Cards by domain, live search, shared filters, exports.
+            </p>
+            <nav
+              className="tabs reports-tabs"
+              role="tablist"
+              aria-label="Report categories"
+            >
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={t.id === tab}
+                  className={t.id === tab ? 'reports-tab reports-tab--active' : 'reports-tab'}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+          </header>
+        ) : null}
 
         <IntegrationOfflineBanner />
 
         <div
           className={
             'reports-page__body-split' +
-            (tab === 'accounting' ? ' reports-page__body-split--no-sidebar' : '')
+            (tab === 'accounting' || (tab === 'maintenance' && erpRecordEmbed)
+              ? ' reports-page__body-split--no-sidebar'
+              : '')
           }
         >
-          {tab !== 'accounting' ? (
+          {tab !== 'accounting' && !(tab === 'maintenance' && erpRecordEmbed) ? (
             <FilterSidebar
               draft={draftFilters}
               applied={appliedFilters}
@@ -248,19 +268,22 @@ export default function App() {
 
           {tab === 'maintenance' ? (
             <>
-              <div className="chips-inline maint-applied-filters" aria-label="Applied filters summary">
-                {appliedChips(appliedFilters).map((c) => (
-                  <span key={c} className="chip sm">
-                    {c}
-                  </span>
-                ))}
-              </div>
+              {!erpRecordEmbed ? (
+                <div className="chips-inline maint-applied-filters" aria-label="Applied filters summary">
+                  {appliedChips(appliedFilters).map((c) => (
+                    <span key={c} className="chip sm">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               <MaintenanceWorkspace
                 tabReports={maintenanceListReports}
                 onOpenReport={openReport}
                 externalNavRequest={maintExtNav}
                 onExternalNavConsumed={clearMaintExtNav}
                 onOpenAppWorkOrder={() => setAppWoPickOpen(true)}
+                erpRecordEmbed={erpRecordEmbed}
               />
             </>
           ) : tab === 'accounting' ? (
@@ -317,7 +340,7 @@ export default function App() {
 
       <div className="toast-host" id="toast-host" aria-live="polite" />
 
-      <IntegrationConnectionStrip />
+      {!erpRecordEmbed ? <IntegrationConnectionStrip /> : null}
 
       {active && (
         <ReportViewer

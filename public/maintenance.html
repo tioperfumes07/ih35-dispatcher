@@ -7348,6 +7348,22 @@
       return document.getElementById('maintWorkOrderFormMount');
     }
 
+    /** One-time: when Fleet hub (record iframe) saves, refresh ERP in-memory data + unit panel. */
+    function ensureMaintRecordHubPostMessageBridge() {
+      if (window.__ih35MaintRecordHubBridge) return;
+      window.__ih35MaintRecordHubBridge = true;
+      window.addEventListener('message', function (ev) {
+        const d = ev.data;
+        if (!d || d.source !== 'ih35-fleet-hub' || d.type !== 'maint-repair-wo-saved') return;
+        const iframe = document.getElementById('maintRecordHubWoIframe');
+        if (!iframe || iframe.contentWindow !== ev.source) return;
+        if (typeof loadAll === 'function') void loadAll();
+        try {
+          if (typeof renderSelectedUnit === 'function') renderSelectedUnit();
+        } catch (_) {}
+      });
+    }
+
     /** Create record tab: Fleet hub iframe (WorkOrderShell) for the selected unit; legacy WO DOM stays for scripts. */
     function syncMaintRecordHubIframe(unitName) {
       const host = document.getElementById('maintRecordHubIframeHost');
@@ -7363,6 +7379,7 @@
         fa.classList.remove('maint-wo-record-hub-active');
         return;
       }
+      ensureMaintRecordHubPostMessageBridge();
       const hubBase =
         (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
       const enc = encodeURIComponent(u);
