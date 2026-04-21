@@ -354,6 +354,7 @@
         <div class="maint-workorder-fullmodal__head-viewport" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary" id="maintWoMaxBtn" onclick="maintWoToggleMaximize()" title="90% of viewport" aria-pressed="false">Maximize</button>
           <button type="button" class="btn btn--small secondary" id="maintWoFsBtn" onclick="maintWoToggleFullscreen()" title="Fill viewport (Esc to exit full screen)" aria-pressed="false">Full screen</button>
+          <button type="button" class="btn btn--small secondary" onclick="maintPrintWorkOrderView()" title="Print / PDF">Print</button>
         </div>
         <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
       </div>
@@ -1943,7 +1944,7 @@
                       <button
                         type="button"
                         id="maintBtnSavePostQbo"
-                        class="btn btn--primary"
+                        class="btn btn--primary maint-qbo-post-btn"
                         onclick="maintCloseSplitMenus(); maintSaveRecordWithActionBusy('save_post', event)"
                       >
                         Post to QuickBooks
@@ -7274,6 +7275,19 @@
       if (sl && sl.classList.contains('active')) renderMaintLocationBoard();
     }
 
+    function openMaintCreateWorkOrderView(btn) {
+      const b =
+        btn ||
+        document.querySelector('.maint-action-strip .maint-nav-tab[data-maint-main="record"]') ||
+        document.querySelector('#maintMainSubtabs .maint-nav-tab[data-maint-main="record"]');
+      try {
+        openMaintMainTab('record', b, {});
+      } catch (err) {
+        console.error('openMaintCreateWorkOrderView', err);
+        if (typeof erpNotify === 'function') erpNotify('Unable to open the work order view.', 'error');
+      }
+    }
+
     function openMaintMainTab(tab, btn, opts) {
       const o = opts || {};
       const map = {
@@ -7545,7 +7559,7 @@
       } catch (e) {
         console.warn('Standalone WO print failed', e);
         maintPreparePrintWorkOrderOnly();
-        const el = document.getElementById('maintWoBox1Head');
+        const el = document.getElementById('maintCard1Top');
         if (el) {
           try {
             el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -7654,7 +7668,7 @@
     }
 
     function syncMaintWorkOrderHeader() {
-      const ban = document.getElementById('maintWoBox1Head');
+      const ban = document.getElementById('maintCard1Top');
       const unitLine = document.getElementById('maintWoBannerUnit');
       const vWrap = document.getElementById('maintVendorInvFieldWrap');
       const woWrap = document.getElementById('maintWoNumberFieldWrap');
@@ -11431,11 +11445,11 @@
         <span class="kv"><span class="kv-l">Location:</span><span class="kv-v">${escapeHtml(loc)}</span></span>
         <span class="kv"><span class="kv-l">Repair:</span><span class="kv-v">${escapeHtml(repair)}</span></span>`;
       const barInner = `
-        <span class="maint-wo-summary-pill"><b>Unit</b> <span class="maint-wo-summary-pill__val--unit">${escapeHtml(unit)}</span></span>
-        <span class="maint-wo-summary-pill"><b>WO #</b> ${escapeHtml(wo)}</span>
-        <span class="maint-wo-summary-pill"><b>Total</b> ${escapeHtml(cost)}</span>
-        <span class="maint-wo-summary-pill"><b>Location</b> ${escapeHtml(loc)}</span>
-        <span class="maint-wo-summary-pill"><b>Repair</b> ${escapeHtml(repair)}</span>`;
+        <span class="maint-wo-summary-pill maint-wo-summary-pill--unitonly"><span class="maint-wo-summary-pill__val--unit">${escapeHtml(unit)}</span></span>
+        <span class="maint-wo-summary-pill"><span class="maint-wo-summary-pill__k">WO#</span> ${escapeHtml(wo)}</span>
+        <span class="maint-wo-summary-pill"><span class="maint-wo-summary-pill__k">Total</span> ${escapeHtml(cost)}</span>
+        <span class="maint-wo-summary-pill"><span class="maint-wo-summary-pill__k">Location</span> ${escapeHtml(loc)}</span>
+        <span class="maint-wo-summary-pill"><span class="maint-wo-summary-pill__k">Repair status</span> ${escapeHtml(repair)}</span>`;
       if (host) host.innerHTML = asideInner;
       if (bar) {
         if (!selectedUnit) bar.classList.add('hidden');
@@ -20013,7 +20027,7 @@
         ph?.classList.remove('hidden');
         fa?.classList.add('hidden');
         document.getElementById('maintWoSummaryBar')?.classList.add('hidden');
-        document.getElementById('maintCard1HeaderSlot')?.classList.add('hidden');
+        document.getElementById('maintCard1Top')?.classList.add('hidden');
         document.getElementById('selectedUnitInfo').innerHTML = '';
         const cardEl = document.getElementById('maintAssetHeaderCard');
         if (cardEl) {
@@ -20032,7 +20046,7 @@
       fa?.classList.remove('maint-wo-form-animate');
       void fa?.offsetWidth;
       fa?.classList.add('maint-wo-form-animate');
-      document.getElementById('maintCard1HeaderSlot')?.classList.remove('hidden');
+      document.getElementById('maintCard1Top')?.classList.remove('hidden');
 
       closeMaintAssetStatusPanel();
 

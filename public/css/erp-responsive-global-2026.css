@@ -118,9 +118,8 @@ body.hub-page footer {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Module sidebar: allow slight shrink on very narrow desktops (fluid rail)   */
+/* Dispatch loads page: sidebar matches maintenance fluid cap (no accounting CSS) */
 /* -------------------------------------------------------------------------- */
-body.erp-maintenance .erp-module-sidebar,
 body.dispatch-page #dispatchApp .erp-module-sidebar {
   flex: 0 1 220px;
   width: min(220px, 100%);

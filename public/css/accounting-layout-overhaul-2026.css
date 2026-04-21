@@ -438,10 +438,11 @@ body.erp-maintenance .erp-acct-warn[hidden] {
   display: none !important;
 }
 
-/* Module sidebar width + ellipsis (accounting section open) */
+/* Module sidebar width + ellipsis (accounting section open) — fluid within cap */
 body.erp-maintenance .erp-module-sidebar {
-  width: 220px !important;
-  min-width: 220px !important;
+  flex: 0 1 220px;
+  width: min(220px, 100%) !important;
+  min-width: clamp(168px, 22vw, 220px) !important;
   max-width: 220px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
