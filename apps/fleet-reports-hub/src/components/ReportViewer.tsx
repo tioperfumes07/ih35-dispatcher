@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { exportDomTableToXlsx } from '../lib/tableExportXlsx'
 import { useColumnResize } from '../hooks/useColumnResize'
+import { useTableTabOrder } from '../hooks/useTableTabOrder'
+import { TableResizeHintFooter } from './table/TableResizeHintFooter'
 import { ModalFullscreenToggle } from './ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../hooks/useFullScreen'
 import type { ReportDef, ReportFilters } from '../types'
@@ -56,6 +58,8 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
   )
 
   const empty = !custom && total === 0
+
+  useTableTabOrder(dataCol.tableRef, [sorted, empty])
 
   const locationBody =
     custom === 'location_work_by_service' ? (
@@ -127,7 +131,7 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
                 <div className="exports">
                   <button
                     type="button"
-                    className="btn sm ghost"
+                    className="btn sm ghost fr-table-excel-export"
                     onClick={() =>
                       exportDomTableToXlsx(dataCol.tableRef.current, `Report-${report.id}`)
                     }
@@ -276,11 +280,7 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
                     </tfoot>
                   </table>
                 )}
-                {!empty ? (
-                  <p className="muted tiny" style={{ marginTop: 6 }}>
-                    Drag column edges to resize
-                  </p>
-                ) : null}
+                {!empty ? <TableResizeHintFooter /> : null}
               </section>
 
               <footer className="pager">
