@@ -20617,6 +20617,11 @@
       if (apEdid) apEdid.value = '';
       if (apMrt) apMrt.value = '';
       if (apDot) apDot.value = '';
+      const apDotCb = document.getElementById('apAccidentDotReportableCb');
+      if (apDotCb) {
+        apDotCb.checked = false;
+        delete apDotCb.dataset.erpTouched;
+      }
       clearWoLines();
       syncApDocTitle();
       refreshApDocTotal();
@@ -20627,6 +20632,7 @@
         __apb.innerHTML = '';
         __apb.classList.remove('erp-validation-banner--shake');
       }
+      syncApMaintRecordTypeDependentUi();
     }
 
     function resolveWoLineAccount(input) {
