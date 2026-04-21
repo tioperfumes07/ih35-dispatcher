@@ -1136,10 +1136,10 @@
           <div class="maint-action-strip" aria-label="Maintenance actions">
             <div class="maint-action-strip__top">
               <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
-                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
+                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintCreateWorkOrderView(this)">Create work order</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
-                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop/location</button>
               </div>
               <div class="maint-action-strip__right" aria-live="polite">
                 <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"></span>
@@ -1157,10 +1157,10 @@
             </div>
           </div>
           <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
-            <button type="button" class="maint-nav-tab active" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
+            <button type="button" class="maint-nav-tab active" data-maint-main="record" tabindex="-1" onclick="openMaintCreateWorkOrderView(this)">Create work order</button>
             <button type="button" class="maint-nav-tab" data-maint-main="fleet" tabindex="-1" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
             <button type="button" class="maint-nav-tab" data-maint-main="rm" tabindex="-1" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
-            <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
+            <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Shop/location</button>
           </div>
         <div id="maintMainTabRecord" class="maint-main-tab-panel active">
         <div id="maintWorkOrderFormMount">
@@ -4508,7 +4508,7 @@
       </section>
 
       <section id="section-name-mgmt" class="section">
-        <div id="erpNameMgmtRoot" style="min-height:320px"></div>
+        <div id="erpNameMgmtRoot"></div>
       </section>
 
       <section id="section-reports" class="section">
@@ -6402,6 +6402,7 @@
   <script src="/js/board-nav.js"></script>
   <script src="/js/erp-ui.js"></script>
   <script src="/js/erp-modal-chrome.js"></script>
+  <script src="/js/erp-searchable-combo.js"></script>
   <script src="/js/erp-filename-util.js"></script>
   <script src="/src/utils/printDocuments.js"></script>
   <script src="/src/utils/workOrderValidation.js"></script>
@@ -7329,7 +7330,7 @@
         const keys = cols.map(c => c.key);
         const th = cols
           .map(c => {
-            if (c.key === 'weeksRemainingDisplay') {
+            if (c.key === 'fleetPaceEta') {
               return `<th>${escapeHtml(c.label)}<div style="font-size:10px;font-weight:400;color:#888;margin-top:2px">Based on fleet avg ${fa.toLocaleString(
                 'en-US'
               )} mi/month</div></th>`;
@@ -7344,7 +7345,7 @@
               .map(k => {
                 const raw = r[k];
                 const isOd =
-                  k === 'weeksRemainingDisplay' &&
+                  k === 'fleetPaceEta' &&
                   String(r.status || '') === 'red' &&
                   String(raw || '')
                     .toLowerCase()
@@ -12896,22 +12897,28 @@
         const d = await j('/api/maintenance/service-interval-catalog');
         const avg = d.fleet_avg_miles_per_month ?? 12000;
         const rows = (d.service_types || []).map(st => {
-          const mi = st.interval_miles != null ? `${Number(st.interval_miles).toLocaleString('en-US')} mi` : '—';
-          const mo =
-            st.interval_months != null
-              ? `≈ ${st.interval_months} mo @ ${Number(avg).toLocaleString('en-US')} mi/mo`
-              : 'Time / as needed';
+          const miNum = st.interval_miles != null ? Number(st.interval_miles) : null;
+          const moNum = st.interval_months != null ? Number(st.interval_months) : null;
+          const mi = miNum != null ? `${miNum.toLocaleString('en-US')} mi` : '—';
+          const intervalLine =
+            miNum != null && moNum != null
+              ? `Every ${miNum.toLocaleString('en-US')} mi (≈ ${moNum} months at fleet avg)`
+              : miNum != null
+                ? `Every ${miNum.toLocaleString('en-US')} mi`
+                : moNum != null
+                  ? `≈ ${moNum} months (time-based)`
+                  : 'Time / as needed';
           const mm =
             st.vehicle_make || st.vehicle_model
               ? ` <span style="color:#666">(${escapeHtml([st.vehicle_make, st.vehicle_model].filter(Boolean).join(' '))})</span>`
               : '';
-          return `<tr><td>${escapeHtml(st.name)}${mm}</td><td style="font-weight:600">${mi}</td><td style="font-size:11px;color:#555">${mo}</td></tr>`;
+          return `<tr><td>${escapeHtml(st.name)}${mm}</td><td colspan="2" style="font-size:12px;line-height:1.45">${escapeHtml(intervalLine)}</td></tr>`;
         });
         el.innerHTML =
           `<p class="mini-note" style="margin:0 0 6px">Fleet pace: <strong>${Number(avg).toLocaleString(
             'en-US'
-          )}</strong> mi/mo. Stacked: miles (bold) + estimated months.</p>` +
-          `<div class="erp-table-scroll" style="max-height:280px"><table class="catalog-admin-table"><thead><tr><th>Service</th><th>Interval (miles)</th><th>Months (est.)</th></tr></thead><tbody>${rows.join(
+          )}</strong> mi/mo. Format: <code>Every X mi (≈ Y months at fleet avg)</code>; months = floor(miles ÷ fleet pace).</p>` +
+          `<div class="erp-table-scroll" style="max-height:280px"><table class="catalog-admin-table"><thead><tr><th>Service</th><th colspan="2">Interval</th></tr></thead><tbody>${rows.join(
             ''
           )}</tbody></table></div>`;
       } catch (e) {
@@ -17117,7 +17124,7 @@
       const d = document.getElementById('nmCatalogDedupePane');
       const r = document.getElementById('nmCatalogRenamePane');
       if (d) d.style.display = 'none';
-      if (r) r.style.display = '';
+      if (r) r.style.display = 'flex';
       if (typeof window.erpNameMgmtInit === 'function') window.erpNameMgmtInit({ catalog: true });
     }
 

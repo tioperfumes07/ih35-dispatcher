@@ -520,9 +520,14 @@
         .nm-seg button{border:none;background:#fff;padding:8px 14px;cursor:pointer;font-size:13px}
         .nm-seg button.nm-seg--on{background:#e8f0fe;font-weight:600}
         .nm-banner{background:#fef7e0;border:1px solid #f5c67f;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px}
-        .nm-layout{display:flex;flex:1;min-height:0;min-width:0;width:100%;height:100%;align-items:stretch;gap:16px;flex-wrap:nowrap}
+        .nm-layout{display:flex;flex:1;min-height:0;min-width:0;width:100%;height:100%;align-items:stretch;gap:16px;flex-wrap:nowrap;padding:0 16px;box-sizing:border-box}
         .nm-layout-left{width:320px;flex-shrink:0;overflow-y:auto;box-sizing:border-box;padding:12px;border:1px solid #e0e3e8;border-radius:8px;background:#fff}
         .nm-layout-right{flex:1;min-width:0;overflow:auto;padding:24px;box-sizing:border-box}
+        @media (max-width:720px){
+          .nm-layout{flex-wrap:wrap}
+          .nm-layout-left{width:100%;max-width:100%}
+          .nm-layout-right{flex:1 1 100%;min-width:0}
+        }
         .nm-search{width:100%;height:34px;border:1px solid #d0d4da;border-radius:4px;padding:0 10px;box-sizing:border-box}
         .nm-list{min-height:0}
         .nm-list-item{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid #f1f3f4;cursor:pointer;gap:10px}

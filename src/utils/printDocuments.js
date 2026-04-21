@@ -176,6 +176,7 @@
       bottom: 0;
       left: 0;
       right: 0;
+      z-index: 100;
       border-top: 0.5pt solid #ccc;
       padding: 4pt 0.65in;
       font-size: 6.5pt;
@@ -838,10 +839,9 @@
         [
           { label: 'Fault', value: d.accidentFault || '' },
           { label: 'Estimated damage $', value: d.estimatedDamage != null ? money(d.estimatedDamage) : '' },
-          { label: 'Actual repair $', value: d.actualRepair != null ? money(d.actualRepair) : '' },
-          { label: 'DOT (summary)', value: dotYes ? 'Reportable' : 'Not reportable' }
+          { label: 'Actual repair $', value: d.actualRepair != null ? money(d.actualRepair) : '' }
         ],
-        4
+        3
       );
       const dotRow = `<div class="field" style="margin-top:6pt"><span class="field-label">DOT</span><span class="field-value" style="border:none;padding:0;min-height:0">${dotPill}</span></div>`;
       const third = d.thirdPartyInfo

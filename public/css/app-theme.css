@@ -3917,8 +3917,9 @@ body.erp-maintenance #section-reports #repMainSubtabs {
 
 body.erp-maintenance #section-reports #repMainSubtabs > .subtab,
 body.erp-maintenance #section-reports #repMainSubtabs > .nav-dropdown {
-  flex: 1 1 auto;
-  min-width: min(100%, 168px);
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
   min-height: 0;
 }
 
@@ -3956,6 +3957,32 @@ body.erp-maintenance #section-uploads > .panel,
 body.erp-maintenance #section-uploads > .panel > .panel-body {
   min-width: 0;
   min-height: 0;
+}
+
+/* Vendor & driver name management — full-width hosts + catalog rename pane flex chain */
+body.erp-maintenance #erpNameMgmtRoot,
+body.erp-maintenance #erpNameMgmtRootCatalog {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+body.erp-maintenance #nmCatalogRenamePane {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+body.erp-maintenance #catalog-panel-name-mgmt.catalog-subpanel.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
 }
 
 body.erp-maintenance #section-dashboard .panel-head > div,

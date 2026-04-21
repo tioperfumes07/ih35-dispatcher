@@ -1,0 +1,202 @@
+/**
+ * IH35 ERP — global responsive layout (2026).
+ * Load last (after board-nav and page-specific CSS). Complements
+ * erp-master-redesign / app-theme: dynamic viewport height, fluid shell
+ * widths, and overflow:auto on primary data regions.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Dynamic viewport (mobile URL bar); fallbacks stay in redesign rules        */
+/* -------------------------------------------------------------------------- */
+@supports (height: 100dvh) {
+  html {
+    min-height: 100dvh;
+  }
+
+  body.erp-maintenance,
+  body.dispatch-page {
+    min-height: 100dvh;
+  }
+
+  body.erp-maintenance #erpApp.erp-master,
+  body.dispatch-page #dispatchApp.erp-master {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  body.fuel-board,
+  body.banking-page,
+  body.settings-page,
+  body.hub-page {
+    min-height: 100dvh;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* ERP app roots: shrink in narrow viewports, stretch in main axis            */
+/* -------------------------------------------------------------------------- */
+body.erp-maintenance #erpApp.erp-master,
+body.dispatch-page #dispatchApp.erp-master {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Every top-level ERP section fills the scroll column when active */
+body.erp-maintenance .erp-main-body > .section.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+/* Dispatch board wrap participates in flex column */
+body.dispatch-page #dispatchApp .erp-main-surface.main,
+body.dispatch-page #dispatchApp .erp-main-col {
+  min-width: 0;
+}
+
+body.dispatch-page #dispatchApp .wrap.dispatch-board-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Satellite pages — column flex so main regions get flex:1 + min-height:0   */
+/* -------------------------------------------------------------------------- */
+body.fuel-board {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+body.fuel-board > .topbar,
+body.fuel-board > .roadmap-note,
+body.fuel-board > .fuel-erp-write-banner {
+  flex-shrink: 0;
+}
+
+body.fuel-board > .erp-connection-strip,
+body.fuel-board > .erp-disconnect-banners {
+  flex-shrink: 0;
+}
+
+body.fuel-board > .layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+body.banking-page .wrap,
+body.settings-page .wrap {
+  width: 100%;
+  max-width: min(1120px, 100%);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body.settings-page .wrap {
+  max-width: min(640px, 100%);
+}
+
+/* Hub: card grid uses full width up to cap */
+body.hub-page .grid {
+  width: 100%;
+  max-width: min(1100px, 100%);
+  box-sizing: border-box;
+}
+
+body.hub-page footer {
+  width: 100%;
+  max-width: min(1100px, 100%);
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Module sidebar: allow slight shrink on very narrow desktops (fluid rail)   */
+/* -------------------------------------------------------------------------- */
+body.erp-maintenance .erp-module-sidebar,
+body.dispatch-page #dispatchApp .erp-module-sidebar {
+  flex: 0 1 220px;
+  width: min(220px, 100%);
+  min-width: min(200px, 28vw);
+  max-width: 220px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mega menu + floated menu — fr columns, no fixed 860px row width            */
+/* -------------------------------------------------------------------------- */
+body.erp-maintenance #erpApp.erp-master .erp-new-menu__cols--4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  width: 100%;
+  max-width: min(860px, 100%);
+}
+
+body.erp-maintenance #erpApp.erp-master .erp-new-menu.erp-new-menu--floated {
+  width: min(860px, 100%) !important;
+  max-width: calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Table / settlement frames — prefer auto so content stays reachable         */
+/* -------------------------------------------------------------------------- */
+body.erp-maintenance .st-settlement-wrap {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.erp-maintenance .erp-table-scroll {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Catalog add card: do not clip tall forms */
+body.erp-maintenance .catalog-add-card {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+/* Wide data tables: grow with content, never narrower than the scroll frame */
+body.erp-maintenance .table-wrap > table {
+  width: 100%;
+  min-width: min(100%, max-content);
+}
+
+/* Work order workspace columns: scroll instead of clipping */
+body.erp-maintenance .maint-wo-col-units,
+body.erp-maintenance .maint-wo-col-form,
+body.erp-maintenance .maint-wo-form-stack-inner,
+body.erp-maintenance .maint-wo-main-aside,
+body.erp-maintenance .maint-wo-workspace {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.erp-maintenance .maint-wo-col-units {
+  flex: 0 1 min(240px, 34vw);
+  width: auto;
+  min-width: min(200px, 40vw);
+  max-width: 260px;
+}
+
+/* Generic panel bodies inside maintenance main column */
+body.erp-maintenance .erp-main-body .panel-body {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Tab panels: allow vertical scroll when subtabs + content exceed viewport */
+body.erp-maintenance .erp-main-body [role='tabpanel'] {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+}

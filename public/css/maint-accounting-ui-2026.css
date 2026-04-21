@@ -716,13 +716,17 @@ body.erp-maintenance .qb-btn-add.maint-line-clear {
   font-weight: 500;
 }
 
-/* Rule 1: reports tile hub (spec flex/grid) — shrink inside .erp-reports-main. */
+/* Rule 1: reports tile hub — shrink inside .erp-reports-main; cards keep a wrap width so labels do not pile on one row. */
 body.erp-maintenance #section-reports .erp-reports-hub,
 body.erp-maintenance #section-reports .erp-reports-hub__tiles,
 body.erp-maintenance #section-reports .erp-reports-hub__tiles--dense,
-body.erp-maintenance #section-reports .erp-reports-hub__card,
 body.erp-maintenance #section-reports .erp-reports-hub__tile {
   min-width: 0;
+  min-height: 0;
+}
+
+body.erp-maintenance #section-reports .erp-reports-hub__card {
+  min-width: min(100%, 200px);
   min-height: 0;
 }
 

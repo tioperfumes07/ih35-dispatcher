@@ -99,51 +99,8 @@
     });
   }
 
-  function mirrorSelectWithSearchInput(select, label) {
-    if (!select || select.dataset.erpScomboMirror === '1') return;
-    select.dataset.erpScomboMirror = '1';
-    const lab = document.createElement('label');
-    lab.className = 'qb-l erp-scombo-native-lbl';
-    if (label) lab.textContent = label;
-    const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.className = 'qb-in maint-field erp-scombo-mirror-input';
-    inp.setAttribute('autocomplete', 'off');
-    inp.setAttribute('aria-label', label || select.getAttribute('aria-label') || 'Search');
-    select.classList.add('erp-scombo-native-hidden');
-    const row = document.createElement('div');
-    row.className = 'maint-field-cell erp-scombo-mirror-row';
-    if (lab.textContent) row.appendChild(lab);
-    row.appendChild(inp);
-    select.parentNode.insertBefore(row, select);
-    row.appendChild(select);
-
-    function syncFromSelect() {
-      const o = select.selectedOptions && select.selectedOptions[0];
-      inp.value = o ? String(o.textContent || '').trim() : '';
-    }
-    syncFromSelect();
-    select.addEventListener('change', syncFromSelect);
-
-    attachFloatingList(inp, () => optsFromSelect(select));
-
-    inp.addEventListener('input', () => {
-      const q = norm(inp.value);
-      const opts = optsFromSelect(select);
-      const hit = opts.find(o => norm(o.label) === q || norm(o.value) === q);
-      if (hit) {
-        select.value = hit.value;
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    });
-    inp.addEventListener('blur', () => {
-      syncFromSelect();
-    });
-  }
-
   global.erpSearchableCombo = {
     attachFloatingList,
-    mirrorSelectWithSearchInput,
     optionsFromInputList: inp => optsFromDatalist(inp)
   };
 })(typeof window !== 'undefined' ? window : globalThis);

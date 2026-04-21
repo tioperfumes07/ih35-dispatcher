@@ -42,7 +42,10 @@ body.erp-maintenance .erp-main-body .erp-reports-columns {
 }
 
 body.erp-maintenance .erp-main-body .erp-reports-main {
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
+  overflow: auto;
 }
 
 /* Report nav list: fixed column so the hub + tabs never slide under the sidebar on mid-width windows. */
