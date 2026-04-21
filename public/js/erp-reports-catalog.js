@@ -715,6 +715,13 @@ ${extraCss}
     return map[t] || '#1557a0';
   }
 
+  function escapeAttr(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
   function renderServiceTypeMixBar(mix, totalCost) {
     const arr = Array.isArray(mix) ? mix.filter(x => x && Number(x.total) > 0) : [];
     const tot = Number(totalCost) > 0 ? Number(totalCost) : arr.reduce((s, x) => s + (Number(x.total) || 0), 0);
@@ -985,6 +992,14 @@ ${extraCss}
 
     let lastPanelSp = null;
     const run = async fromPanel => {
+      if (window.__repM5Charts) {
+        window.__repM5Charts.forEach(c => {
+          try {
+            c.destroy();
+          } catch (_) {}
+        });
+        window.__repM5Charts = null;
+      }
       const sp = fromPanel instanceof URLSearchParams ? new URLSearchParams(fromPanel.toString()) : new URLSearchParams();
       const pend = window.__repPendingExtraParams;
       if (pend && pend.datasetId === datasetId && pend.params && typeof pend.params === 'object') {
@@ -1100,17 +1115,83 @@ ${extraCss}
             ],
             data.meta.external.rows || []
           );
+          const roadRows = data.meta.roadside && Array.isArray(data.meta.roadside.rows) ? data.meta.roadside.rows : [];
+          const roadTbl =
+            roadRows.length > 0
+              ? `<div style="margin-top:14px"><h4 style="margin:0 0 6px;font-size:13px">Roadside</h4>${renderSortableTable(
+                  [
+                    { key: 'serviceType', label: 'Service type' },
+                    { key: 'count', label: 'Count' },
+                    { key: 'totalCost', label: 'Total $' }
+                  ],
+                  roadRows
+                )}</div>`
+              : '';
+          const charts =
+            datasetId === 'm5-internal-external'
+              ? `<div class="rep-m5-bar-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;max-width:960px">
+                  <div><div class="mini-note" style="margin-bottom:4px">Internal — top services ($)</div><canvas class="rep-m5-canvas-int" height="200" style="max-width:100%"></canvas></div>
+                  <div><div class="mini-note" style="margin-bottom:4px">External — top vendors ($)</div><canvas class="rep-m5-canvas-ext" height="200" style="max-width:100%"></canvas></div>
+                </div>`
+              : '';
           const hint = data.meta?.inHouseHint
             ? `<p class="mini-note" style="margin:0 0 10px;max-width:920px">${escapeHtml(String(data.meta.inHouseHint))}</p>`
             : '';
           host.innerHTML =
             renderSummaryCards(data.meta.summaryCards || [], false) +
             hint +
+            charts +
             `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
               <div><h4 style="margin:0 0 6px;font-size:13px">Internal shop</h4>${left}</div>
               <div><h4 style="margin:0 0 6px;font-size:13px">External vendors</h4>${right}</div>
-            </div>`;
+            </div>` +
+            roadTbl;
           bindSortable(host);
+          if (datasetId === 'm5-internal-external' && window.Chart) {
+            if (window.__repM5Charts) {
+              window.__repM5Charts.forEach(c => {
+                try {
+                  c.destroy();
+                } catch (_) {}
+              });
+            }
+            window.__repM5Charts = [];
+            const horizBar = (canvas, labels, values, color) => {
+              if (!canvas || !labels.length || !values.some(v => Number(v) > 0)) return;
+              const chart = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                  labels,
+                  datasets: [{ label: '$', data: values, backgroundColor: color }]
+                },
+                options: {
+                  indexAxis: 'y',
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    x: { beginAtZero: true, grid: { color: '#eee' } },
+                    y: { grid: { display: false } }
+                  }
+                }
+              });
+              window.__repM5Charts.push(chart);
+            };
+            const intSlice = (data.meta.internal.rows || []).slice(0, 10);
+            horizBar(
+              host.querySelector('.rep-m5-canvas-int'),
+              intSlice.map(r => String(r.serviceType || '—')),
+              intSlice.map(r => Number(r.totalCost) || 0),
+              '#1a7a3c'
+            );
+            const extSlice = (data.meta.external.rows || []).slice(0, 10);
+            horizBar(
+              host.querySelector('.rep-m5-canvas-ext'),
+              extSlice.map(r => String(r.vendor || '—')),
+              extSlice.map(r => Number(r.totalCost) || 0),
+              '#1557a0'
+            );
+          }
         } else if (data.rows && data.rows.length) {
           if (datasetId === 'a4-pm-schedule') {
             host.innerHTML = renderPmScheduleTable(data.columns, data.rows, data.meta?.fleetAvgMilesPerMonth);
