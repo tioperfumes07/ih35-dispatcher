@@ -14598,6 +14598,79 @@
       if (typeof erpHydrateFuelVendorAddressFromApi === 'function') void erpHydrateFuelVendorAddressFromApi();
     }
 
+    function bindFuelManualRowDragHost(tbody) {
+      if (!tbody || tbody.dataset.fuelRowDragBound) return;
+      tbody.dataset.fuelRowDragBound = '1';
+      let dragRow = null;
+      tbody.addEventListener('dragstart', e => {
+        const h = e.target.closest('.fuel-m-drag-handle');
+        if (!h || !tbody.contains(h)) return;
+        const tr = h.closest('tr.fuel-m-cost-line');
+        if (!tr || tr.parentElement !== tbody) return;
+        dragRow = tr;
+        try {
+          e.dataTransfer.setData('text/plain', 'fuel-manual-row');
+          e.dataTransfer.effectAllowed = 'move';
+        } catch (_) {}
+        tr.classList.add('fuel-m-row--dragging');
+      });
+      tbody.addEventListener('dragend', () => {
+        if (dragRow) dragRow.classList.remove('fuel-m-row--dragging');
+        dragRow = null;
+      });
+      tbody.addEventListener('dragover', e => {
+        if (!dragRow) return;
+        const tr = e.target.closest('tr.fuel-m-cost-line');
+        if (!tr || tr.parentElement !== tbody || tr === dragRow) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+      tbody.addEventListener('drop', e => {
+        if (!dragRow) return;
+        const tr = e.target.closest('tr.fuel-m-cost-line');
+        if (!tr || tr.parentElement !== tbody || tr === dragRow) return;
+        e.preventDefault();
+        const box = tr.getBoundingClientRect();
+        const before = e.clientY < box.top + box.height / 2;
+        if (before) tbody.insertBefore(dragRow, tr);
+        else tbody.insertBefore(dragRow, tr.nextSibling);
+        fuelManualRenumberLines();
+      });
+    }
+
+    function fuelToggleLedgerSaveSplitMenu(ev, caretBtn) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const wrap = caretBtn.closest('.qb-split');
+      const menu = wrap && wrap.querySelector('.qb-split__menu');
+      if (!menu) return;
+      const wasOpen = !menu.hidden;
+      maintCloseSplitMenus();
+      if (!wasOpen) {
+        menu.hidden = false;
+        caretBtn.setAttribute('aria-expanded', 'true');
+        queueMicrotask(() => {
+          const pick = menu.querySelector('.qb-split__menu-item');
+          if (pick && typeof pick.focus === 'function') pick.focus();
+        });
+      }
+    }
+
+    async function fuelSaveLedgerFromSplitMenu(ev, extra) {
+      const btn = ev && ev.currentTarget instanceof HTMLElement ? ev.currentTarget : null;
+      maintCloseSplitMenus();
+      const run = async () => saveManualFuelPurchase({ ...(extra || {}) });
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
+    }
+
+    async function fuelManualSaveLedgerWithBusy(ev, extra) {
+      const btn = ev && ev.currentTarget instanceof HTMLElement ? ev.currentTarget : null;
+      const run = async () => saveManualFuelPurchase({ ...(extra || {}) });
+      if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
+      return run();
+    }
+
     let __fuelManualFormBound = false;
     function bindFuelManualFormOnce() {
       fuelExpensePopulateManualClassSelect();
