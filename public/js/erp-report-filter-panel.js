@@ -389,6 +389,21 @@
         : ''
     }
     ${
+      show.has('pmStatusPick')
+        ? `<div style="grid-column:1/-1">
+        <div class="qb-l">PM status (row color)</div>
+        <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-all" checked /> All statuses</label>
+        <div class="erp-rfp-pmst" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="red" checked /> Overdue</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="amber" checked /> Due soon</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="blue" checked /> Upcoming</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="green" checked /> OK</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="gray" checked /> No PM / unknown miles</label>
+        </div>
+      </div>`
+        : ''
+    }
+    ${
       show.has('showOverduePm')
         ? `<div>
         <label style="font-size:12px"><input type="checkbox" class="erp-rfp-overdue" /> Show only overdue (PM)</label>
@@ -483,6 +498,12 @@
         if (mn) sp.set('costMin', mn);
         if (mx) sp.set('costMax', mx);
       }
+      if (show.has('pmStatusPick')) {
+        const pmAll = root.querySelector('.erp-rfp-pmst-all')?.checked;
+        if (!pmAll) {
+          root.querySelectorAll('.erp-rfp-pmst-cb:checked').forEach(cb => sp.append('pmStatus', cb.value));
+        }
+      }
       if (show.has('showOverduePm')) {
         if (root.querySelector('.erp-rfp-overdue')?.checked) sp.set('showOverdue', 'true');
         const dm = root.querySelector('.erp-rfp-duemiles')?.value;
@@ -550,7 +571,8 @@
         accidentFault: 'Fault',
         dotReportable: 'DOT reportable',
         insuranceClaim: 'Insurance',
-        defectsOnly: 'Defects only'
+        defectsOnly: 'Defects only',
+        pmStatus: 'PM status'
       };
       const lab = pretty[key] || key;
       return `${lab}: ${String(val).slice(0, 48)}`;
@@ -903,6 +925,21 @@
     root.querySelectorAll('.erp-rfp-sortby, .erp-rfp-sortdir, .erp-rfp-groupby').forEach(el => el.addEventListener('change', paintChips));
     root.querySelectorAll('.erp-rfp-af-cb, .erp-rfp-dot-cb, .erp-rfp-ins-cb, .erp-rfp-defonly').forEach(el =>
       el.addEventListener('change', paintChips)
+    );
+    root.querySelector('.erp-rfp-pmst-all')?.addEventListener('change', e => {
+      const on = e.target.checked;
+      root.querySelectorAll('.erp-rfp-pmst-cb').forEach(cb => {
+        cb.checked = on;
+      });
+      paintChips();
+    });
+    root.querySelectorAll('.erp-rfp-pmst-cb').forEach(cb =>
+      cb.addEventListener('change', () => {
+        const allOn = [...root.querySelectorAll('.erp-rfp-pmst-cb')].every(x => x.checked);
+        const pa = root.querySelector('.erp-rfp-pmst-all');
+        if (pa) pa.checked = allOn;
+        paintChips();
+      })
     );
 
     root.querySelector('.erp-rfp__chips')?.addEventListener('click', ev => {
