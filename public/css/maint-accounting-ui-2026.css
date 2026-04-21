@@ -484,6 +484,33 @@ body.erp-maintenance .maint-wo-form-stack-inner {
   min-height: 0;
 }
 
+/* ERP Create record tab: Fleet hub iframe; legacy WO markup stays in DOM for existing scripts. */
+body.erp-maintenance #maintRecordHubIframeHost.maint-record-hub-iframe-host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+body.erp-maintenance #maintRecordHubIframeHost.maint-record-hub-iframe-host[hidden] {
+  display: none !important;
+}
+body.erp-maintenance #maintWoFormArea.maint-wo-record-hub-active > #maintValidationBanner,
+body.erp-maintenance #maintWoFormArea.maint-wo-record-hub-active > .maint-wo-snapshot-dock,
+body.erp-maintenance #maintWoFormArea.maint-wo-record-hub-active > .maint-wo-main-aside {
+  display: none !important;
+}
+body.erp-maintenance #maintRecordHubWoIframe.maint-record-hub-wo-iframe {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: min(720px, 70vh);
+  border: 0;
+  box-sizing: border-box;
+  background: var(--color-bg-page);
+}
+
 body.erp-maintenance .maint-form-actions--sticky {
   position: sticky;
   bottom: 0;

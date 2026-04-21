@@ -32,6 +32,26 @@ export type MaintView =
   | 'maint-intel'
   | 'lists-catalogs'
 
+function readErpEmbedRepairInitialView(): MaintView {
+  if (typeof window === 'undefined') return 'grid'
+  const p = new URLSearchParams(window.location.search)
+  return p.get('erpWoEmbed') === '1' ? 'repair-wo' : 'grid'
+}
+
+function readErpEmbedRepairUnitId(): string {
+  if (typeof window === 'undefined') return '101'
+  const p = new URLSearchParams(window.location.search)
+  if (p.get('erpWoEmbed') !== '1') return '101'
+  const raw = p.get('erpUnitId')
+  if (raw == null || raw === '') return '101'
+  try {
+    const s = decodeURIComponent(raw.replace(/\+/g, ' ')).trim()
+    return s || '101'
+  } catch {
+    return String(raw).trim() || '101'
+  }
+}
+
 type Props = {
   tabReports: ReportDef[]
   onOpenReport: (r: ReportDef) => void
@@ -49,7 +69,7 @@ export function MaintenanceWorkspace({
   onExternalNavConsumed,
   onOpenAppWorkOrder,
 }: Props) {
-  const [view, setView] = useState<MaintView>('grid')
+  const [view, setView] = useState<MaintView>(readErpEmbedRepairInitialView)
   const [listsCatalogsTab, setListsCatalogsTab] =
     useState<ListsCatalogsTab>('fleet-samsara')
   const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(null)
@@ -59,7 +79,7 @@ export function MaintenanceWorkspace({
   )
   const [badge, setBadge] = useState(0)
   const [dashKey, setDashKey] = useState(0)
-  const [repairTabUnitId, setRepairTabUnitId] = useState('101')
+  const [repairTabUnitId, setRepairTabUnitId] = useState(readErpEmbedRepairUnitId)
   const [woModalOpen, setWoModalOpen] = useState(false)
   const [woModalKey, setWoModalKey] = useState(0)
   const consumeExtNavRef = useRef(onExternalNavConsumed)
@@ -68,6 +88,26 @@ export function MaintenanceWorkspace({
   useEffect(() => {
     seedIntegrityDemoIfEmpty()
     setBadge(openAlertCount())
+  }, [])
+
+  /** ERP Create record tab loads this app in an iframe with ?erpWoEmbed=1&erpUnitId=… */
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('erpWoEmbed') !== '1') return
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('erpWoEmbed')
+      url.searchParams.delete('erpUnitId')
+      const qs = url.searchParams.toString()
+      window.history.replaceState(
+        {},
+        '',
+        url.pathname + (qs ? `?${qs}` : '') + url.hash,
+      )
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   useEffect(() => {

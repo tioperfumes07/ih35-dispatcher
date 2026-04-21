@@ -1222,7 +1222,7 @@
                 <span class="erp-help-tip">
                   <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Unit list for work orders">?</button>
                   <span class="erp-help-tip__panel" role="tooltip">
-                    Pick a unit to load the WO form. <strong>Find unit</strong>, service filter, and <strong>Maintenance Table</strong> narrow rows. <strong>▼</strong> collapses the column.
+                    Pick a unit to open the Fleet hub work order (same <code>WorkOrderShell</code> as Accounting). <strong>Find unit</strong>, service filter, and <strong>Maintenance Table</strong> narrow rows. <strong>▼</strong> collapses the column.
                   </span>
                 </span>
               </div>
@@ -1247,6 +1247,14 @@
           <div class="maint-wo-col-form">
             <div id="maintWoNoUnitPlaceholder" class="maint-wo-placeholder">Select a unit from the list to create or view a work order.</div>
             <div id="maintWoFormArea" class="hidden maint-wo-form-stack-inner">
+            <div id="maintRecordHubIframeHost" class="maint-record-hub-iframe-host" hidden>
+              <iframe
+                id="maintRecordHubWoIframe"
+                class="maint-hub-wo-iframe maint-record-hub-wo-iframe"
+                title="Work order — Fleet hub"
+                loading="lazy"
+              ></iframe>
+            </div>
             <div id="maintValidationBanner" class="erp-validation-banner hidden" role="region" aria-live="polite"></div>
             <div class="maint-wo-snapshot-dock">
               <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
@@ -7338,6 +7346,29 @@
 
     function getMaintWorkOrderFormMount() {
       return document.getElementById('maintWorkOrderFormMount');
+    }
+
+    /** Create record tab: Fleet hub iframe (WorkOrderShell) for the selected unit; legacy WO DOM stays for scripts. */
+    function syncMaintRecordHubIframe(unitName) {
+      const host = document.getElementById('maintRecordHubIframeHost');
+      const iframe = document.getElementById('maintRecordHubWoIframe');
+      const fa = document.getElementById('maintWoFormArea');
+      if (!host || !iframe || !fa) return;
+      const u = String(unitName || '').trim();
+      if (!u) {
+        host.hidden = true;
+        try {
+          iframe.src = 'about:blank';
+        } catch (_) {}
+        fa.classList.remove('maint-wo-record-hub-active');
+        return;
+      }
+      const hubBase =
+        (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
+      const enc = encodeURIComponent(u);
+      iframe.src = `${hubBase}/fleet-reports/index.html?erpWoEmbed=1&erpUnitId=${enc}`;
+      host.hidden = false;
+      fa.classList.add('maint-wo-record-hub-active');
     }
 
     function dockMaintWorkOrderFormToRecordPanel() {
@@ -20882,6 +20913,7 @@
       const ph = document.getElementById('maintWoNoUnitPlaceholder');
       const fa = document.getElementById('maintWoFormArea');
       if (!v) {
+        syncMaintRecordHubIframe('');
         ph?.classList.remove('hidden');
         fa?.classList.add('hidden');
         document.getElementById('maintWoSummaryBar')?.classList.add('hidden');
@@ -20904,6 +20936,7 @@
       fa?.classList.remove('maint-wo-form-animate');
       void fa?.offsetWidth;
       fa?.classList.add('maint-wo-form-animate');
+      syncMaintRecordHubIframe(v.name);
       document.getElementById('maintCard1HeaderSlot')?.classList.remove('hidden');
 
       closeMaintAssetStatusPanel();

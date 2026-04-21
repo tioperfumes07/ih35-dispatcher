@@ -43,8 +43,15 @@ function matchesSearch(r: ReportDef, q: string) {
   )
 }
 
+function readInitialReportTab(): ReportCategory {
+  if (typeof window === 'undefined') return 'overview'
+  const p = new URLSearchParams(window.location.search)
+  if (p.get('erpWoModal') === '1' || p.get('erpWoEmbed') === '1') return 'maintenance'
+  return 'overview'
+}
+
 export default function App() {
-  const [tab, setTab] = useState<ReportCategory>('overview')
+  const [tab, setTab] = useState<ReportCategory>(readInitialReportTab)
   const [search, setSearch] = useState('')
   const [draftFilters, setDraftFilters] = useState<ReportFilters>(defaultFilters)
   const [appliedFilters, setAppliedFilters] = useState<ReportFilters>(
@@ -96,7 +103,10 @@ export default function App() {
     if (tab !== 'maintenance') setMaintExtNav(null)
   }, [tab])
 
-  /** ERP maintenance full-window modal loads hub via iframe with ?erpWoModal=1 */
+  /**
+   * ERP maintenance full-window modal loads hub via iframe with ?erpWoModal=1.
+   * Record-tab embed uses ?erpWoEmbed=1 (tab is set synchronously via readInitialReportTab).
+   */
   useEffect(() => {
     if (typeof window === 'undefined') return
     const p = new URLSearchParams(window.location.search)
