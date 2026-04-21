@@ -3625,3 +3625,18 @@ body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .fuel-m
 body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .fuel-m-row--dragging {
   opacity: 0.65;
 }
+
+/* Inline fuel manual doc shell — header controls slightly taller than line grid (parity with dedicated modal line height) */
+body.erp-maintenance #erpFuelManualDocShellPanel .erp-fuel-txn-header .qb-in,
+body.erp-maintenance #erpFuelManualDocShellPanel .qb-doc-head .erp-ded-fuel-type-sel,
+body.erp-maintenance #erpFuelManualDocShellPanel .fuel-manual-header-more__body .qb-in {
+  min-height: 32px;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #erpFuelManualDocShellPanel .acct-fuel-manual-table .qb-in.maint-field {
+  min-height: 24px;
+  font-size: 11px;
+  padding: 3px 6px;
+  box-sizing: border-box;
+}

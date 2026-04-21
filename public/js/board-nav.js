@@ -141,15 +141,18 @@
     strip.id = 'board-nav-strip';
     strip.className = 'board-nav-strip';
     strip.innerHTML =
-      BOARDS.map(
-        b => `
+      BOARDS.map(b => {
+        const links = [...b.links].sort((a, c) =>
+          a.label.localeCompare(c.label, undefined, { sensitivity: 'base', numeric: true })
+        );
+        return `
       <div class="board-nav-item" data-board="${b.id}">
         <button type="button" class="board-nav-trigger" data-board="${b.id}" data-href="${b.href.replace(/"/g, '&quot;')}">${b.label}</button>
         <div class="board-nav-dd">
-          ${b.links.map(l => `<a href="${l.href.replace(/"/g, '&quot;')}">${escapeNav(l.label)}</a>`).join('')}
+          ${links.map(l => `<a href="${l.href.replace(/"/g, '&quot;')}">${escapeNav(l.label)}</a>`).join('')}
         </div>
-      </div>`
-      ).join('') +
+      </div>`;
+      }).join('') +
       '<span class="board-nav-hint">Double-click a name to go there · Single-click opens shortcuts</span>';
 
     inner.appendChild(strip);
