@@ -13125,15 +13125,13 @@
       const host = document.getElementById('fuelDriverIntegrityStrip');
       if (!host) return;
       const tab = document.getElementById('acct-fuel-expense');
-      const shell = document.getElementById('erpFuelManualDocShellPanel');
       const inp = document.getElementById('fuelManualDriverSearch');
       const acctSec = document.getElementById('section-accounting');
       if (
         !inp ||
         !tab ||
         tab.classList.contains('hidden') ||
-        (acctSec && acctSec.classList.contains('hidden')) ||
-        (shell && shell.classList.contains('fuel-manual-shell-inline-hidden'))
+        (acctSec && acctSec.classList.contains('hidden'))
       ) {
         host.innerHTML = '';
         host.classList.add('hidden');
