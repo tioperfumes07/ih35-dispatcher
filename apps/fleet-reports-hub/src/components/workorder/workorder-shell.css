@@ -11,6 +11,27 @@
   overflow-y: auto;
 }
 
+/* SearchableCombo defaults are taller; tighten inside WO shell only. */
+.wo-shell-root .maint-combo__label > span:first-child {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.wo-shell-root .maint-combo__input {
+  height: 22px;
+  font-size: 10px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
 .wo-shell-root--fs {
   position: fixed;
   inset: 0;
