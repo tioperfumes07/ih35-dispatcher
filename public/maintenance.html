@@ -23025,11 +23025,19 @@
       const apDot = document.getElementById('apAccidentDotReportable');
       const maintDotInp = document.getElementById('accidentDotReportableInput');
       const apDotCb = document.getElementById('apAccidentDotReportableCb');
-      if (apDot) apDot.value = maintDotInp?.checked ? '1' : '';
-      if (apDotCb && maintDotInp) {
-        apDotCb.checked = !!maintDotInp.checked;
-        if (String(maintDotInp.dataset.erpTouched || '') === '1') apDotCb.dataset.erpTouched = '1';
-        else if (!maintDotInp.checked) delete apDotCb.dataset.erpTouched;
+      if (recType === 'accident') {
+        if (apDot) apDot.value = maintDotInp?.checked ? '1' : '';
+        if (apDotCb && maintDotInp) {
+          apDotCb.checked = !!maintDotInp.checked;
+          if (String(maintDotInp.dataset.erpTouched || '') === '1') apDotCb.dataset.erpTouched = '1';
+          else if (!maintDotInp.checked) delete apDotCb.dataset.erpTouched;
+        }
+      } else {
+        if (apDot) apDot.value = '';
+        if (apDotCb) {
+          apDotCb.checked = false;
+          delete apDotCb.dataset.erpTouched;
+        }
       }
       const apEds = document.getElementById('apErpDriverSearch');
       const apEdid = document.getElementById('apErpDriverId');
