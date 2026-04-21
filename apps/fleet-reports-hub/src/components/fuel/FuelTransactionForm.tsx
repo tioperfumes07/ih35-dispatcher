@@ -27,10 +27,10 @@ import { mergeAlertsIntoStore, postIntegrityCheck } from '../../api/postIntegrit
 
 const TERMS_OPTS = [
   { value: '', label: '— None —' },
+  { value: 'receipt', label: 'Due on receipt' },
   { value: 'net15', label: 'Net 15' },
   { value: 'net30', label: 'Net 30' },
   { value: 'net60', label: 'Net 60' },
-  { value: 'receipt', label: 'Due on receipt' },
 ]
 
 /** Demo QBO-style items when `/api/accounting/qbo-items` is empty or offline. */
@@ -265,6 +265,26 @@ export function FuelTransactionForm({
     exportJsonRowsToXlsx(rows, `FuelTxn-${txType}`, 'Lines')
   }
 
+  const resetEntireForm = () => {
+    setVendor('')
+    setPayFrom('')
+    setPaymentDate(new Date().toISOString().slice(0, 10))
+    setPaymentMethod('')
+    setUnitNo('')
+    setDriver('')
+    setBillExpenseNo('')
+    setInvDate(new Date().toISOString().slice(0, 10))
+    setDueDate(new Date().toISOString().slice(0, 10))
+    setTerms('')
+    setVendorInvoiceNo('')
+    setLoadInvoiceNo('')
+    setMemo('')
+    setAddrOverride(null)
+    setAddrEditing(false)
+    clearCat()
+    clearItem()
+  }
+
   const runSave = (choice: SaveMenuChoice) => {
     setDefaultSaveChoice(choice)
     setSaveMenuOpen(false)
@@ -299,9 +319,7 @@ export function FuelTransactionForm({
       }
     })()
     if (choice === 'save-close') onClose()
-    if (choice === 'save-new') {
-      /* keep form open for another entry */
-    }
+    if (choice === 'save-new') resetEntireForm()
   }
 
   const printForm = () => window.print()
@@ -511,7 +529,7 @@ export function FuelTransactionForm({
             <div className="fuel-txn-header-grid__left">
               <div className="fuel-txn-row2">
                 <label className="fuel-txn__field fuel-txn__field--grow">
-                  <span className="fuel-txn__lbl">Vendor (QuickBooks)</span>
+                  <span className="fuel-txn__lbl">Vendor</span>
                   <input
                     className="fuel-txn__inp"
                     value={vendor}
@@ -524,7 +542,7 @@ export function FuelTransactionForm({
                   />
                 </label>
                 <label className="fuel-txn__field fuel-txn__field--grow">
-                  <span className="fuel-txn__lbl">Pay from account (QuickBooks)</span>
+                  <span className="fuel-txn__lbl">Pay from account</span>
                   <input
                     className="fuel-txn__inp"
                     value={payFrom}
@@ -537,7 +555,7 @@ export function FuelTransactionForm({
               <div className="fuel-txn-addr-box">
                 {addrBlock}
                 <p className="fuel-txn-addr-hint muted tiny">
-                  Address stored in vendor database · editable per transaction
+                  Address from vendor database · editable per transaction
                 </p>
               </div>
 
@@ -568,7 +586,7 @@ export function FuelTransactionForm({
                   {unitNo.trim() ? (
                     <>
                       <div className="fuel-txn-unit-row">
-                        <span className="fuel-txn-unit-badge">{unitNo.trim()}</span>
+                        <span className="fuel-txn-unit-badge fuel-txn-unit-badge--info">{unitNo.trim()}</span>
                         <button type="button" className="fuel-txn__link" onClick={() => setUnitNo('')}>
                           Change
                         </button>
@@ -670,17 +688,17 @@ export function FuelTransactionForm({
             </div>
           </div>
 
+          <div className="fuel-txn-divider" role="separator" aria-hidden="true" />
+
           <div className="fuel-txn-pdf-strip">
             <span className="fuel-txn-pdf-strip__icon" aria-hidden>
               PDF
             </span>
-            <span className="fuel-txn-pdf-strip__txt">
-              Vendor invoice PDF — upload to auto-extract and fill lines
-            </span>
-            <button type="button" className="btn sm">
+            <span className="fuel-txn-pdf-strip__txt">Vendor invoice PDF</span>
+            <button type="button" className="btn sm fuel-txn-pdf-strip__btn">
               Choose file
             </button>
-            <button type="button" className="btn sm success">
+            <button type="button" className="btn sm success fuel-txn-pdf-strip__btn">
               Extract &amp; fill lines
             </button>
           </div>
@@ -801,7 +819,7 @@ export function FuelTransactionForm({
                         />
                       </td>
                       <td>
-                        <span className="fuel-txn-class-badge">{classBadge}</span>
+                        <span className="fuel-txn-class-badge fuel-txn-class-badge--info">{classBadge}</span>
                       </td>
                       <td>
                         <input
@@ -876,10 +894,10 @@ export function FuelTransactionForm({
                   ])
                 }
               >
-                Add category line
+                Add lines
               </button>
               <button type="button" className="btn sm danger ghost" onClick={clearCat}>
-                Clear category lines
+                Clear lines
               </button>
               <span className="fuel-txn-table-hint muted tiny">
                 Drag column edges to resize · Tab to navigate
@@ -1045,7 +1063,7 @@ export function FuelTransactionForm({
                         />
                       </td>
                       <td>
-                        <span className="fuel-txn-class-badge">{classBadge}</span>
+                        <span className="fuel-txn-class-badge fuel-txn-class-badge--info">{classBadge}</span>
                       </td>
                       <td>
                         <input
@@ -1123,10 +1141,10 @@ export function FuelTransactionForm({
                   ])
                 }
               >
-                Add item line
+                Add lines
               </button>
               <button type="button" className="btn sm danger ghost" onClick={clearItem}>
-                Clear item lines
+                Clear lines
               </button>
               <span className="fuel-txn-table-hint muted tiny">
                 Drag column edges to resize · Tab to navigate
@@ -1223,7 +1241,7 @@ export function FuelTransactionForm({
                 </ul>
               ) : null}
             </div>
-            <button type="button" className="btn primary fuel-txn-bar-btn">
+            <button type="button" className="btn primary fuel-txn-bar-btn fuel-txn-post-qbo">
               Post to QuickBooks
             </button>
             <span className="fuel-txn-bottom__div" aria-hidden />

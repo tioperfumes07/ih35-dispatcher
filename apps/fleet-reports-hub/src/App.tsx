@@ -21,6 +21,7 @@ import { FuelTransactionForm } from './components/fuel/FuelTransactionForm'
 import {
   FUEL_TRANSACTION_TYPE_LABELS,
   fuelTransactionTypesAlphabetical,
+  parseFuelTransactionTypeParam,
   type FuelTransactionType,
 } from './types/fuelTransaction'
 import { WorkOrderForm } from './components/maintenance/WorkOrderForm'
@@ -47,6 +48,7 @@ function readInitialReportTab(): ReportCategory {
   if (typeof window === 'undefined') return 'overview'
   const p = new URLSearchParams(window.location.search)
   if (p.get('erpWoModal') === '1' || p.get('erpWoEmbed') === '1') return 'maintenance'
+  if (p.get('erpFuelEmbed') === '1' || p.get('erpFuelModal') === '1') return 'accounting'
   return 'overview'
 }
 
@@ -60,12 +62,24 @@ function readErpWoModalHostFlag(): boolean {
   return new URLSearchParams(window.location.search).get('erpWoModal') === '1'
 }
 
+function readErpFuelEmbedFlag(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('erpFuelEmbed') === '1'
+}
+
+function readErpFuelModalHostFlag(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('erpFuelModal') === '1'
+}
+
 export default function App() {
   const [tab, setTab] = useState<ReportCategory>(readInitialReportTab)
   /** True for the session when opened from ERP record-tab iframe (?erpWoEmbed=1), after URL cleanup. */
   const [erpRecordEmbed] = useState(readErpRecordEmbedFlag)
   /** True for the session when opened from ERP full-window WO modal (?erpWoModal=1), after URL cleanup. */
   const [erpWoModalHost] = useState(readErpWoModalHostFlag)
+  const [erpFuelEmbed] = useState(readErpFuelEmbedFlag)
+  const [erpFuelModalHost] = useState(readErpFuelModalHostFlag)
   const [search, setSearch] = useState('')
   const [draftFilters, setDraftFilters] = useState<ReportFilters>(defaultFilters)
   const [appliedFilters, setAppliedFilters] = useState<ReportFilters>(
@@ -164,6 +178,28 @@ export default function App() {
     }
   }, [])
 
+  /** ERP Accounting fuel tab iframe (?erpFuelEmbed=1) or dedicated modal (?erpFuelModal=1) — open hub FuelTransactionForm only. */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams(window.location.search)
+    const embed = p.get('erpFuelEmbed') === '1'
+    const modal = p.get('erpFuelModal') === '1'
+    if (!embed && !modal) return
+    const ft = parseFuelTransactionTypeParam(p.get('fuelTxnType'))
+    setTab('accounting')
+    setFuelPlannerTxn(ft ?? 'fuel-bill')
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('erpFuelEmbed')
+      url.searchParams.delete('erpFuelModal')
+      url.searchParams.delete('fuelTxnType')
+      const qs = url.searchParams.toString()
+      window.history.replaceState({}, '', url.pathname + (qs ? `?${qs}` : '') + url.hash)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
   const recent = useRecentReports('fleet-reports:recent')
   const { rows: serviceCatalogRows } = useServiceCatalogRows('all')
   const catalogServiceNames = useMemo(
@@ -217,7 +253,9 @@ export default function App() {
     <IntegrationConnectionsProvider>
     <div
       className={
-        'app app--fleet-reports' + (erpRecordEmbed ? ' app--erp-record-embed' : '')
+        'app app--fleet-reports' +
+        (erpRecordEmbed ? ' app--erp-record-embed' : '') +
+        (erpFuelEmbed || erpFuelModalHost ? ' app--erp-fuel-host' : '')
       }
     >
       <div className="layout fleet-reports-layout">
@@ -227,7 +265,7 @@ export default function App() {
           (erpRecordEmbed ? ' reports-page--erp-record-embed' : '')
         }
       >
-        {!erpRecordEmbed ? (
+        {!erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
           <header className="reports-page__header">
             <h1 className="reports-page__title">Fleet reports</h1>
             <p className="reports-page__subtitle">
@@ -259,12 +297,18 @@ export default function App() {
         <div
           className={
             'reports-page__body-split' +
-            (tab === 'accounting' || (tab === 'maintenance' && erpRecordEmbed)
+            (tab === 'accounting' ||
+            (tab === 'maintenance' && erpRecordEmbed) ||
+            erpFuelEmbed ||
+            erpFuelModalHost
               ? ' reports-page__body-split--no-sidebar'
               : '')
           }
         >
-          {tab !== 'accounting' && !(tab === 'maintenance' && erpRecordEmbed) ? (
+          {tab !== 'accounting' &&
+          !(tab === 'maintenance' && erpRecordEmbed) &&
+          !erpFuelEmbed &&
+          !erpFuelModalHost ? (
             <FilterSidebar
               draft={draftFilters}
               applied={appliedFilters}
@@ -327,6 +371,7 @@ export default function App() {
               onNewWorkOrder={() => setAppWoPickOpen(true)}
               listsBootstrap={acctListsBootstrap}
               onListsBootstrapConsumed={() => setAcctListsBootstrap(null)}
+              erpFuelHost={erpFuelEmbed || erpFuelModalHost}
             />
           ) : (
             <>
@@ -375,7 +420,9 @@ export default function App() {
 
       <div className="toast-host" id="toast-host" aria-live="polite" />
 
-      {!erpRecordEmbed ? <IntegrationConnectionStrip /> : null}
+      {!erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
+        <IntegrationConnectionStrip />
+      ) : null}
 
       {active && (
         <ReportViewer
@@ -463,7 +510,19 @@ export default function App() {
       <FuelTransactionForm
         open={fuelPlannerTxn !== null}
         transactionType={fuelPlannerTxn ?? 'fuel-bill'}
-        onClose={() => setFuelPlannerTxn(null)}
+        onClose={() => {
+          if (erpFuelEmbed || erpFuelModalHost) {
+            try {
+              window.parent?.postMessage(
+                { source: 'ih35-fleet-hub', type: 'erp-fuel-txn-closed' },
+                '*',
+              )
+            } catch {
+              /* ignore */
+            }
+          }
+          setFuelPlannerTxn(null)
+        }}
         onOpenVendorDirectory={() => {
           setFuelPlannerTxn(null)
           setTab('accounting')

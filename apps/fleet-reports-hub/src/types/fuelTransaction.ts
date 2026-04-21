@@ -25,3 +25,11 @@ export function fuelTransactionTypesAlphabetical(): FuelTransactionType[] {
     FUEL_TRANSACTION_TYPE_LABELS[a].localeCompare(FUEL_TRANSACTION_TYPE_LABELS[b]),
   )
 }
+
+const FUEL_TXN_TYPE_SET = new Set<FuelTransactionType>(FUEL_TRANSACTION_TYPE_OPTIONS)
+
+/** ERP / deep-link query `fuelTxnType` → hub enum, or null if unknown. */
+export function parseFuelTransactionTypeParam(raw: string | null | undefined): FuelTransactionType | null {
+  const v = String(raw ?? '').trim() as FuelTransactionType
+  return FUEL_TXN_TYPE_SET.has(v) ? v : null
+}

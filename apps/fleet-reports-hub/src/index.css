@@ -7617,6 +7617,11 @@ nav.tabs {
   align-items: center;
 }
 
+/* ERP embed/modal: only the fuel shell (header + connection strip hidden from App). */
+.app--erp-fuel-host .reports-page__main--accounting {
+  min-height: min(100vh, 900px);
+}
+
 /* Fuel transaction form (QBO-style) — tokens only */
 .fuel-txn-backdrop {
   position: fixed;
@@ -7659,12 +7664,14 @@ nav.tabs {
 
 .fuel-txn-topbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
+  min-height: 28px;
+  padding: 6px 14px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  font-size: 11px;
 }
 
 .fuel-txn-topbar__left {
@@ -7680,6 +7687,7 @@ nav.tabs {
   flex-wrap: wrap;
   gap: 6px;
   justify-content: flex-end;
+  align-items: center;
 }
 
 .fuel-txn-integrity {
@@ -7725,8 +7733,9 @@ nav.tabs {
 
 .fuel-txn-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .fuel-txn-type-sel {
@@ -7735,13 +7744,16 @@ nav.tabs {
 
 .fuel-txn-balance {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
   margin-left: 8px;
 }
 
 .fuel-txn-balance__val {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .fuel-txn-bar-btn {
@@ -7754,10 +7766,10 @@ nav.tabs {
 }
 
 .fuel-txn-bar-btn.modal-fs-toggle {
-  width: 18px !important;
-  height: 18px !important;
-  min-width: 18px !important;
-  min-height: 18px !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
   padding: 0 !important;
   border-radius: 3px !important;
 }
@@ -7788,7 +7800,7 @@ nav.tabs {
 .fuel-txn-header-grid {
   display: grid;
   grid-template-columns: 1fr 280px;
-  gap: 16px 20px;
+  gap: 24px;
   margin-bottom: 14px;
 }
 

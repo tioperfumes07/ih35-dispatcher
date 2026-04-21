@@ -38,6 +38,8 @@ type Props = {
   /** When set (e.g. from Fuel tab vendor link), open Lists & catalogs on the given list once. */
   listsBootstrap?: AccountingListsBootstrap | null
   onListsBootstrapConsumed?: () => void
+  /** ERP iframe embed/modal — notify parent window when fuel form closes. */
+  erpFuelHost?: boolean
 }
 
 export function AccountingDashboard({
@@ -46,6 +48,7 @@ export function AccountingDashboard({
   onNewWorkOrder,
   listsBootstrap,
   onListsBootstrapConsumed,
+  erpFuelHost = false,
 }: Props) {
   const [route, setRoute] = useState<'home' | 'lists'>('home')
   const [listsTab, setListsTab] = useState<ListsCatalogsTab>('fleet-samsara')
@@ -95,7 +98,19 @@ export function AccountingDashboard({
     <FuelTransactionForm
       open={fuelOpen !== null}
       transactionType={fuelOpen ?? 'fuel-bill'}
-      onClose={() => setFuelOpen(null)}
+      onClose={() => {
+        if (erpFuelHost) {
+          try {
+            window.parent?.postMessage(
+              { source: 'ih35-fleet-hub', type: 'erp-fuel-txn-closed' },
+              '*',
+            )
+          } catch {
+            /* ignore */
+          }
+        }
+        setFuelOpen(null)
+      }}
       onOpenVendorDirectory={() => {
         setFuelOpen(null)
         openLists('name-management', 'name-registry')
