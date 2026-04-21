@@ -23021,7 +23021,14 @@
       const apMrt = document.getElementById('apMaintRecordType');
       if (apMrt) apMrt.value = recType;
       const apDot = document.getElementById('apAccidentDotReportable');
-      if (apDot) apDot.value = document.getElementById('accidentDotReportableInput')?.checked ? '1' : '';
+      const maintDotInp = document.getElementById('accidentDotReportableInput');
+      const apDotCb = document.getElementById('apAccidentDotReportableCb');
+      if (apDot) apDot.value = maintDotInp?.checked ? '1' : '';
+      if (apDotCb && maintDotInp) {
+        apDotCb.checked = !!maintDotInp.checked;
+        if (String(maintDotInp.dataset.erpTouched || '') === '1') apDotCb.dataset.erpTouched = '1';
+        else if (!maintDotInp.checked) delete apDotCb.dataset.erpTouched;
+      }
       const apEds = document.getElementById('apErpDriverSearch');
       const apEdid = document.getElementById('apErpDriverId');
       {
@@ -23031,6 +23038,7 @@
         if (apEdid && mI) apEdid.value = (mI.value || '').trim();
       }
       resolveApErpDriverSearch();
+      syncApMaintRecordTypeDependentUi();
 
       const catHost = document.getElementById('apWoCatHost');
       const itemHost = document.getElementById('apWoItemHost');
@@ -25638,16 +25646,24 @@
       const docAmtTxt = document.getElementById('apDocTotalDisplay')?.textContent || '$0.00';
       const docTotal = Number(String(docAmtTxt).replace(/[^0-9.-]/g, '')) || 0;
       const hasLineMoney = lines.length > 0 || lineSum > 0.004;
+      const apDotCb = document.getElementById('apAccidentDotReportableCb');
       return {
         vendorQboId: String(document.getElementById('apVendorQboId')?.value || '').trim(),
         unit: String(document.getElementById('apAssetUnit')?.value || '').trim(),
         txnDate: document.getElementById('apTxnDate')?.value || '',
         maintRecordType: String(document.getElementById('apMaintRecordType')?.value || '').trim(),
         driverErpId: String(document.getElementById('apErpDriverId')?.value || '').trim(),
+        driverSearchText: String(document.getElementById('apErpDriverSearch')?.value || '').trim(),
         dedicatedApPreset: String(window.__erpDedicatedApPreset || '').trim(),
         repairLocationType: String(document.getElementById('woRepairLocationType')?.value || '').trim(),
         repairLocationLabel: String(document.getElementById('apRepairLocationSearch')?.value || '').trim(),
+        serviceType: String(
+          document.getElementById('apServiceTypeInput')?.value || document.getElementById('apServiceSearchInput')?.value || ''
+        ).trim(),
+        vendorInvNo: String(document.getElementById('apVendorInvoiceNumber')?.value || '').trim(),
+        internalWoNo: String(document.getElementById('apInternalWorkOrderNumber')?.value || '').trim(),
         driverHeaderName: String(document.getElementById('apHeaderDriverSearch')?.value || '').trim(),
+        accidentDotTouched: apDotCb ? String(apDotCb.dataset.erpTouched || '') === '1' : false,
         lines,
         docTotal,
         lineSum,
@@ -25705,9 +25721,17 @@
       const apDriverId = (document.getElementById('apErpDriverId')?.value || '').trim();
       const apDriverSearch = (document.getElementById('apErpDriverSearch')?.value || '').trim();
       const apMaintType = (document.getElementById('apMaintRecordType')?.value || '').trim();
+      const apDotWrap = document.getElementById('apAccidentDotWrap');
+      const apDotCbEl = document.getElementById('apAccidentDotReportableCb');
       const apDotRaw = (document.getElementById('apAccidentDotReportable')?.value || '').trim();
-      const accidentDotForBody =
-        apMaintType === 'accident' && (apDotRaw === '1' || String(apDotRaw).toLowerCase() === 'true');
+      let accidentDotForBody = false;
+      if (apMaintType === 'accident') {
+        if (apDotWrap && !apDotWrap.classList.contains('hidden') && apDotCbEl) {
+          accidentDotForBody = !!apDotCbEl.checked;
+        } else {
+          accidentDotForBody = apDotRaw === '1' || String(apDotRaw).toLowerCase() === 'true';
+        }
+      }
       const data = await j('/api/work-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
