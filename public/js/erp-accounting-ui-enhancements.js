@@ -235,14 +235,14 @@
       ) +
       '<div class="erp-acct-workflow-section">' +
       '<div class="erp-acct-field-grid">' +
-      '<div class="erp-acct-field"><span class="qb-l">Transfer date</span><input type="date" class="qb-in" id="trDate" value="' +
-      today +
-      '" /></div>' +
       '<div class="erp-acct-field"><span class="qb-l">From account</span><select class="qb-in" id="trFrom"><option value="a1">Operating · …1020</option><option value="a2">Payroll · …1030</option></select></div>' +
       '<div class="erp-acct-field"><span class="qb-l">To account</span><select class="qb-in" id="trTo"><option value="a2">Payroll · …1030</option><option value="a1">Operating · …1020</option></select></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Amount</span><input class="qb-in" id="trAmt" inputmode="decimal" placeholder="0.00" /></div>' +
       '<div class="erp-acct-field" style="flex:2 1 220px"><span class="qb-l">Memo</span><input class="qb-in" id="trMemo" placeholder="Optional" /></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Reference #</span><input class="qb-in" id="trRef" placeholder="Optional" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Transfer date</span><input type="date" class="qb-in" id="trDate" value="' +
+      today +
+      '" /></div>' +
       '</div>' +
       '<p class="erp-acct-warn" id="trSame" hidden>Cannot transfer to the same account.</p>' +
       '<div class="mini-note" id="trBal" style="margin-top:10px;line-height:1.5">From: — balance after: —<br/>To: — balance after: —</div>' +
@@ -292,7 +292,9 @@
       ['Fuel advance', 'Insurance', 'ELD/Equipment', 'Escrow', 'Loan payment', 'Custom']
         .map(
           x =>
-            '<button type="button" class="erp-df-chip" disabled title="Coming soon">' +
+            '<button type="button" class="erp-acct-btn erp-acct-btn--muted erp-ds-ded" data-erp-ds-ded="' +
+            esc(x) +
+            '">' +
             esc(x) +
             '</button>'
         )
@@ -338,12 +340,11 @@
       '<div class="erp-acct-field-grid" style="margin-top:10px">' +
       '<div class="erp-acct-field" style="flex:2 1 200px"><span class="qb-l">Origin</span><input class="qb-in" placeholder="City / location" /></div>' +
       '<div class="erp-acct-field" style="flex:2 1 200px"><span class="qb-l">Destination</span><input class="qb-in" placeholder="City / location" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Empty miles</span><input class="qb-in" inputmode="numeric" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Loaded miles</span><input class="qb-in" inputmode="numeric" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Miles</span><input class="qb-in" inputmode="decimal" placeholder="Loaded + empty" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Invoice #</span><input class="qb-in" placeholder="Customer invoice" /></div>' +
       '</div>' +
       '<div class="erp-acct-field-grid" style="margin-top:10px">' +
       '<div class="erp-acct-field"><span class="qb-l">Settlement #</span><input class="qb-in" disabled placeholder="If settled" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Invoice #</span><input class="qb-in" placeholder="Customer invoice" /></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Reference #</span><input class="qb-in" placeholder="BOL, etc." /></div>' +
       '<div class="erp-acct-field" style="flex:2 1 220px"><span class="qb-l">Notes</span><input class="qb-in" placeholder="Notes" /></div>' +
       '</div></div>' +
@@ -411,6 +412,97 @@
     recalc();
   }
 
+  function wireFuelFast(modalBody) {
+    const table = modalBody.querySelector('#feCostTable');
+    const add = modalBody.querySelector('#feAddLine');
+    const clear = modalBody.querySelector('#feClear');
+
+    function rowHtml() {
+      return (
+        '<tr><td><input class="qb-in fe-qty num" inputmode="decimal" placeholder="0" /></td>' +
+        '<td><input class="qb-in fe-rate num" inputmode="decimal" placeholder="0.0000" /></td>' +
+        '<td><input class="qb-in fe-line num" readonly placeholder="—" /></td><td><button type="button" class="erp-acct-btn erp-acct-btn--muted fe-rm">Remove</button></td></tr>'
+      );
+    }
+
+    function recalcRow(tr) {
+      if (!tr) return;
+      const q = tr.querySelector('.fe-qty');
+      const r = tr.querySelector('.fe-rate');
+      const ln = tr.querySelector('.fe-line');
+      const gal = parseMoney(q && q.value);
+      const rate = parseMoney(r && r.value);
+      const tot = gal * rate;
+      if (ln) ln.value = tot > 0 ? tot.toFixed(2) : '';
+    }
+
+    function bindRow(tr) {
+      tr.querySelectorAll('.fe-qty, .fe-rate').forEach(inp => {
+        inp.addEventListener('input', () => recalcRow(tr));
+      });
+      const rm = tr.querySelector('.fe-rm');
+      if (rm)
+        rm.addEventListener('click', () => {
+          const tb = table && table.querySelector('tbody');
+          if (!tb) return;
+          if (tb.querySelectorAll('tr').length <= 1) {
+            tr.querySelectorAll('.fe-qty, .fe-rate, .fe-line').forEach(el => {
+              el.value = '';
+            });
+            recalcRow(tr);
+            return;
+          }
+          tr.remove();
+        });
+      recalcRow(tr);
+    }
+
+    if (table) {
+      const first = table.querySelector('tbody tr');
+      if (first) bindRow(first);
+    }
+    if (add && table) {
+      add.addEventListener('click', () => {
+        const tb = table.querySelector('tbody');
+        if (!tb) return;
+        tb.insertAdjacentHTML('beforeend', rowHtml());
+        const last = tb.querySelector('tr:last-child');
+        bindRow(last);
+      });
+    }
+    if (clear && modalBody) {
+      clear.addEventListener('click', () => {
+        modalBody.querySelectorAll('#feType, #feDate, #feVendor, #feUnit, #fePayMethod, #feLoadInv, #feVendorInv, #feShopWo, #feExpenseNo, #feBank, #feMemo').forEach(el => {
+          if (!el) return;
+          if (el.tagName === 'SELECT') el.selectedIndex = 0;
+          else el.value = '';
+        });
+        const tb = table && table.querySelector('tbody');
+        if (tb) {
+          tb.innerHTML = rowHtml().replace(/^<tr/, '<tr').replace(/<\/tr>$/, '</tr>');
+          const tr = tb.querySelector('tr');
+          bindRow(tr);
+        }
+      });
+    }
+    modalBody.addEventListener('input', ev => {
+      const t = ev.target;
+      if (t && t.classList && t.classList.contains('fe-qty')) recalcRow(t.closest('tr'));
+      if (t && t.classList && t.classList.contains('fe-rate')) recalcRow(t.closest('tr'));
+    });
+  }
+
+  function wireDriverSettlementDedupe(modalBody) {
+    modalBody.querySelectorAll('.erp-ds-ded').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const label = btn.getAttribute('data-erp-ds-ded') || btn.textContent || '';
+        if (typeof global.erpNotify === 'function') {
+          global.erpNotify('Deduction row for "' + label + '" will append here when settlements API is wired.', 'info');
+        }
+      });
+    });
+  }
+
   function wireTransfer(modalBody) {
     const fromSel = modalBody.querySelector('#trFrom');
     const toSel = modalBody.querySelector('#trTo');
@@ -450,7 +542,7 @@
     paint();
   }
 
-  /** @param {'journal'|'journal-entry'|'transfer'|'driver-settlement'|'load-tms'} which */
+  /** @param {'journal'|'journal-entry'|'transfer'|'driver-settlement'|'load-tms'|'fuel-fast-entry'} which */
   function erpOpenAcctWorkflowModal(which) {
     const w = String(which || '').trim();
     const norm = w === 'journal' || w === 'journal-entry' ? 'journal-entry' : w;
@@ -458,7 +550,8 @@
       'journal-entry': { layout: 'journal', html: journalHtml },
       transfer: { layout: 'transfer', html: transferHtml },
       'driver-settlement': { layout: 'driver-settlement', html: driverSettlementHtml },
-      'load-tms': { layout: 'load-tms', html: loadTmsHtml }
+      'load-tms': { layout: 'load-tms', html: loadTmsHtml },
+      'fuel-fast-entry': { layout: 'fuel', html: fuelFastEntryHtml }
     };
     const spec = map[norm];
     if (!spec) return;
@@ -487,15 +580,20 @@
 
     const bar = global.syncErpDedicatedModalChrome;
     if (typeof bar === 'function') bar();
-    if (typeof global.erpRestoreDedicatedModalGeometry === 'function') global.erpRestoreDedicatedModalGeometry('ledger');
+    const geomKind = spec.layout === 'fuel' ? 'fuel' : 'ledger';
+    if (typeof global.erpRestoreDedicatedModalGeometry === 'function')
+      global.erpRestoreDedicatedModalGeometry(geomKind);
 
     wireChips(mount.querySelector('[data-erp-df-prefix="je_hist"]'), () => {});
     wireChips(mount.querySelector('[data-erp-df-prefix="tr_hist"]'), () => {});
     wireChips(mount.querySelector('[data-erp-df-prefix="ds_hist"]'), () => {});
     wireChips(mount.querySelector('[data-erp-df-prefix="lt_hist"]'), () => {});
+    wireChips(mount.querySelector('[data-erp-df-prefix="fe_hist"]'), () => {});
 
     if (spec.layout === 'journal') wireJournal(mount);
     if (spec.layout === 'transfer') wireTransfer(mount);
+    if (spec.layout === 'fuel') wireFuelFast(mount);
+    if (spec.layout === 'driver-settlement') wireDriverSettlementDedupe(mount);
   }
 
   global.erpDfRangeForChip = erpDfRangeForChip;
