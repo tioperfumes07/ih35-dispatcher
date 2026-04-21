@@ -264,14 +264,19 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
     const locSum = s.section4_location_summary || {};
     doc.fontSize(10).fillColor('#111').text('Internal vs. external vs. roadside (work orders in period)', 48, y, { width: 500 });
     y += 20;
-    doc
-      .fontSize(10)
-      .text(
-        `Estimated mix — Internal: ${locSum.pct_internal ?? '—'}% · External shop: ${locSum.pct_external ?? '—'}% · Roadside: ${locSum.pct_roadside ?? '—'}%`,
-        48,
-        y,
-        { width: 500 }
-      );
+    doc.fontSize(10).text(
+      `Spend mix — Internal: ${locSum.pct_internal ?? '—'}% · External: ${locSum.pct_external ?? '—'}% · Roadside: ${locSum.pct_roadside ?? '—'}%`,
+      48,
+      y,
+      { width: 500 }
+    );
+    y += 18;
+    doc.fontSize(9).fillColor('#555').text(
+      `Visit mix (records) — Internal: ${locSum.pct_internal_records ?? '—'}% · External: ${locSum.pct_external_records ?? '—'}% · Roadside: ${locSum.pct_roadside_records ?? '—'}%`,
+      48,
+      y,
+      { width: 500 }
+    );
     y += 28;
     const locs = s.section4i_service_locations || [];
     if (!locs.length) {
