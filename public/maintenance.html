@@ -10166,11 +10166,9 @@
         if (window.__erpDedicatedDatalistRehome.length) shell.dataset.erpDatalistsRehomed = '1';
         return;
       }
-      document
-        .querySelectorAll('.erp-dedicated-form-modal__shell, .maint-workorder-fullmodal__shell')
-        .forEach(s => {
-          delete s.dataset.erpDatalistsRehomed;
-        });
+      document.querySelectorAll('[data-erp-datalists-rehomed]').forEach(s => {
+        delete s.dataset.erpDatalistsRehomed;
+      });
       const stack = window.__erpDedicatedDatalistRehome;
       if (!stack || !stack.length) return;
       while (stack.length) {
@@ -10190,18 +10188,28 @@
       }
     }
 
-    /** Keep global QBO datalists under the same fullscreen subtree as the focused form (dedicated AP/fuel or WO). */
+    /**
+     * Reparent shared datalists into `document.fullscreenElement` whenever that node is part of this
+     * page’s UI. Covers: dedicated expense/bill/fuel modal, full-window work order, and every
+     * `.maint-modal.erp-qb-dialog` that uses browser full screen (vehicle type, shop queue, delay, …).
+     */
     function erpSyncFullscreenDatalistRehome() {
       const fsEl = erpGetFullscreenElement();
-      const dedShell = document.querySelector('#erpDedicatedFormModal .erp-dedicated-form-modal__shell');
-      const dedModal = document.getElementById('erpDedicatedFormModal');
-      const woShell = document.querySelector('#maintWorkOrderModal .maint-workorder-fullmodal__shell');
-      const woModal = document.getElementById('maintWorkOrderModal');
-      const dedOk = dedShell && dedModal && !dedModal.classList.contains('hidden') && fsEl === dedShell;
-      const woOk = woShell && woModal && !woModal.classList.contains('hidden') && fsEl === woShell;
-      if (dedOk) erpRehomeGlobalDatalistsForShell(dedShell, true);
-      else if (woOk) erpRehomeGlobalDatalistsForShell(woShell, true);
-      else erpRehomeGlobalDatalistsForShell(null, false);
+      if (!fsEl || fsEl.nodeType !== Node.ELEMENT_NODE) {
+        erpRehomeGlobalDatalistsForShell(null, false);
+        return;
+      }
+      const tag = String(fsEl.tagName || '').toLowerCase();
+      if (tag === 'video' || tag === 'iframe') {
+        erpRehomeGlobalDatalistsForShell(null, false);
+        return;
+      }
+      const body = document.body;
+      if (body && body.classList.contains('erp-maintenance') && body.contains(fsEl)) {
+        erpRehomeGlobalDatalistsForShell(fsEl, true);
+      } else {
+        erpRehomeGlobalDatalistsForShell(null, false);
+      }
     }
 
     function erpSyncDedicatedModalFullscreenUi() {
