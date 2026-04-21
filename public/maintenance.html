@@ -9521,6 +9521,8 @@
       if (locWrap) locWrap.classList.toggle('hidden', !showLoc);
       if (!showLoc) {
         if (mrt && ['repair', 'maintenance'].includes(String(mrt.value || '').trim())) mrt.value = '';
+        erpSyncApRepairLocationHidden();
+        syncApMaintRecordTypeDependentUi();
         return;
       }
       if (mode === 'repair-bill' || mode === 'repair-expense') {
