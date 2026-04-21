@@ -15,11 +15,14 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "smoke": "node scripts/system-smoke.mjs",
     "smoke:gate-sync": "node scripts/smoke-gate-paths-sync.mjs",
+    "test:layout": "node --test tests/layout-responsive-erp.test.mjs",
+    "test:playwright": "playwright test",
+    "test:playwright:install": "playwright install chromium",
     "test:name-mgmt": "node --test tests/name-management-erp.test.mjs",
     "test:fleet-mileage": "node --test tests/fleet-mileage-settings.test.mjs",
     "test:integrity-meta": "node --test tests/integrity-engine-export-meta.test.mjs",
     "test:qbo-dedupe-purchase": "node --test tests/qbo-dedupe-purchase-scan.test.mjs",
-    "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke && npm run test:name-mgmt && npm run test:fleet-mileage && npm run test:integrity-meta && npm run test:qbo-dedupe-purchase",
+    "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run test:layout && npm run smoke && npm run test:name-mgmt && npm run test:fleet-mileage && npm run test:integrity-meta && npm run test:qbo-dedupe-purchase",
     "qa:isolated": "node scripts/qa-with-server.mjs",
     "test": "npm run rule0:check",
     "rule0:check": "node scripts/rule-zero-agent-b-check.mjs",
@@ -36,5 +39,8 @@
     "pdf-parse": "^1.1.4",
     "pdfkit": "^0.18.0",
     "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
   }
 }
