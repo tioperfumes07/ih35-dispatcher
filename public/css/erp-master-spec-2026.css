@@ -2798,8 +2798,8 @@ body.erp-maintenance .rep-cat-tab.active {
 }
 body.erp-maintenance .rep-catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
   margin: 0 0 16px;
 }
 body.erp-maintenance .rep-catalog-card {
@@ -2885,6 +2885,20 @@ body.erp-maintenance .erp-reports-catalog-shell {
   min-height: 0;
   width: 100%;
   overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  body.erp-maintenance .erp-reports-catalog-shell {
+    flex-direction: column;
+  }
+
+  body.erp-maintenance .rep-filter-sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: 42vh;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
 }
 
 body.erp-maintenance .rep-filter-sidebar {

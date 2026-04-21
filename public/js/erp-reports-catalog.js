@@ -39,11 +39,24 @@
     { id: 'maintenance', label: 'Maintenance' },
     { id: 'accounting', label: 'Accounting' },
     { id: 'safety', label: 'Safety & HOS' },
-    { id: 'fuel', label: 'Fuel & energy' },
+    { id: 'fuel', label: 'Fuel & Energy' },
     { id: 'operations', label: 'Operations' },
-    { id: 'dot', label: 'DOT compliance' },
+    { id: 'dot', label: 'DOT Compliance' },
     { id: 'custom', label: 'Custom' }
   ];
+
+  const REP_SERVICE_TYPE_OPTIONS = [
+    'PM-A',
+    'PM-B',
+    'Corrective',
+    'Tire',
+    'DOT',
+    'Electrical',
+    'Body repair',
+    'Oil change'
+  ];
+
+  const REP_RECORD_TYPE_OPTIONS = ['Work order', 'Repair order', 'PM service', 'Inspection', 'Bill'];
 
   /** @type {{cat:string,title:string,desc:string,source:string,keywords:string,dataset?:string,qbo?:string,legacy?:string,dotPdf?:boolean,custom?:string}[]} */
   const REP_ITEMS = [];
@@ -1449,6 +1462,64 @@ tr:nth-child(even){background:#f9f9f9}
     window.open('/api/reports/dot-audit/' + encodeURIComponent(u.trim()) + '/pdf' + qs, '_blank', 'noopener');
   }
 
+  function repCatalogCardSvgExpand() {
+    return '<svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2 5h8v2H2V5zm5-3v8H5V2h2z"/></svg>';
+  }
+
+  function bindCatalogCardWrap(wrap, it, items) {
+    const main = wrap.querySelector('.rep-catalog-card--main');
+    const openB = wrap.querySelector('.rep-catalog-card__open');
+    const fsB = wrap.querySelector('.rep-catalog-card__fs');
+    const go = () => {
+      if (!it) return;
+      if (it.custom === 'new') {
+        if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('custom');
+        return;
+      }
+      if (it.custom === 'dot-audit-config') {
+        repOpenDotAuditConfigurator();
+        return;
+      }
+      if (it.custom === 'integrity-dashboard') {
+        if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar('rep-integrity');
+        else if (typeof openReportsTab === 'function') openReportsTab('rep-integrity', null);
+        return;
+      }
+      if (it.custom === 'scheduled') {
+        if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('scheduled');
+        return;
+      }
+      if (it.legacy) {
+        if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar(it.legacy);
+        return;
+      }
+      if (it.dataset === 'g2-driver-dot-audit') {
+        const id = prompt('Driver id or name slug for DOT driver audit:');
+        if (!id) return;
+        window.open('/api/reports/dot/driver-audit/' + encodeURIComponent(id.trim()), '_blank', 'noopener');
+        return;
+      }
+      if (it.dataset) {
+        void repOpenDataset(it.dataset, it.title);
+        return;
+      }
+      if (it.qbo) {
+        void repOpenQbo(it.qbo, it.title);
+        return;
+      }
+      if (it.dotPdf) repOpenDotPdf();
+    };
+    main?.addEventListener('click', go);
+    openB?.addEventListener('click', e => {
+      e.stopPropagation();
+      go();
+    });
+    fsB?.addEventListener('click', e => {
+      e.stopPropagation();
+      wrap.classList.toggle('rep-catalog-card-wrap--fs');
+    });
+  }
+
   function renderCatalogGrid() {
     const grid = document.getElementById('repCatalogGrid');
     if (!grid) return;
@@ -1456,11 +1527,17 @@ tr:nth-child(even){background:#f9f9f9}
     const SUB_ORDER = ['Cost analysis', 'Service history', 'Location analysis', 'Other'];
     const cardHtml = it => {
       const kid = 'repk-' + String(it.title.replace(/[^\w]+/g, '-')).slice(0, 48);
-      return `<button type="button" class="rep-catalog-card" id="${kid}" data-rep-title="${escapeHtml(it.title)}" data-rep-k="${escapeHtml(it.keywords)}" data-cat="${escapeHtml(it.cat)}">
+      return `<article class="rep-catalog-card-wrap" data-rep-title="${escapeHtml(it.title)}" data-rep-k="${escapeHtml(it.keywords)}" data-cat="${escapeHtml(it.cat)}">
+        <button type="button" class="rep-catalog-card rep-catalog-card--main" id="${kid}" data-rep-title="${escapeHtml(it.title)}">
           <span class="rep-catalog-card__src">${escapeHtml(it.source)}</span>
           <span class="rep-catalog-card__title">${escapeHtml(it.title)}</span>
           <span class="rep-catalog-card__desc">${escapeHtml(it.desc)}</span>
-        </button>`;
+        </button>
+        <div class="rep-catalog-card__foot">
+          <button type="button" class="rep-catalog-card__open">Open</button>
+          <button type="button" class="rep-catalog-card__fs" title="Expand">${repCatalogCardSvgExpand()}</button>
+        </div>
+      </article>`;
     };
     if (__repCat === 'maintenance') {
       const bySub = {};
@@ -1475,7 +1552,7 @@ tr:nth-child(even){background:#f9f9f9}
         if (!list || !list.length) continue;
         parts.push(
           `<div class="rep-catalog-sub" style="margin-bottom:14px">
-            <h3 class="rep-catalog-sub__title" style="font-size:13px;margin:0 0 8px;color:#1a1f36">${escapeHtml(sub)}</h3>
+            <h3 class="rep-catalog-sub__title rep-catalog-sub__label">${escapeHtml(sub)}</h3>
             <div class="rep-catalog-subgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${list.map(cardHtml).join('')}</div>
           </div>`
         );
@@ -1486,7 +1563,7 @@ tr:nth-child(even){background:#f9f9f9}
         if (!list.length) continue;
         parts.push(
           `<div class="rep-catalog-sub" style="margin-bottom:14px">
-            <h3 class="rep-catalog-sub__title" style="font-size:13px;margin:0 0 8px;color:#1a1f36">${escapeHtml(sub)}</h3>
+            <h3 class="rep-catalog-sub__title rep-catalog-sub__label">${escapeHtml(sub)}</h3>
             <div class="rep-catalog-subgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${list.map(cardHtml).join('')}</div>
           </div>`
         );
@@ -1495,55 +1572,18 @@ tr:nth-child(even){background:#f9f9f9}
     } else {
       grid.innerHTML = items.map(cardHtml).join('');
     }
-    grid.querySelectorAll('.rep-catalog-card').forEach(btn => {
-      const t = btn.getAttribute('data-rep-title');
-      const it = items.find(x => x.title === t);
-      if (!it) return;
-      btn.addEventListener('click', () => {
-        if (it.custom === 'new') {
-          if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('custom');
-          return;
-        }
-        if (it.custom === 'dot-audit-config') {
-          repOpenDotAuditConfigurator();
-          return;
-        }
-        if (it.custom === 'integrity-dashboard') {
-          if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar('rep-integrity');
-          else if (typeof openReportsTab === 'function') openReportsTab('rep-integrity', null);
-          return;
-        }
-        if (it.custom === 'scheduled') {
-          if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('scheduled');
-          return;
-        }
-        if (it.legacy) {
-          if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar(it.legacy);
-          return;
-        }
-        if (it.dataset === 'g2-driver-dot-audit') {
-          const id = prompt('Driver id or name slug for DOT driver audit:');
-          if (!id) return;
-          window.open('/api/reports/dot/driver-audit/' + encodeURIComponent(id.trim()), '_blank', 'noopener');
-          return;
-        }
-        if (it.dataset) {
-          void repOpenDataset(it.dataset, it.title);
-          return;
-        }
-        if (it.qbo) {
-          void repOpenQbo(it.qbo, it.title);
-          return;
-        }
-        if (it.dotPdf) repOpenDotPdf();
-      });
+    grid.querySelectorAll('.rep-catalog-card-wrap').forEach(wrap => {
+      const t = wrap.getAttribute('data-rep-title');
+      const flat = REP_ITEMS.filter(x => x.cat === __repCat);
+      const it = flat.find(x => x.title === t);
+      bindCatalogCardWrap(wrap, it, flat);
     });
     const q = (document.getElementById('repToolbarSearch')?.value || '').trim().toLowerCase();
     if (q) {
-      grid.querySelectorAll('.rep-catalog-card').forEach(c => {
-        const t = (c.textContent || '').toLowerCase();
-        const k = (c.getAttribute('data-rep-k') || '').toLowerCase();
-        c.classList.toggle('rep-filter-hidden', !(t.includes(q) || k.includes(q)));
+      grid.querySelectorAll('.rep-catalog-card-wrap').forEach(w => {
+        const t = (w.textContent || '').toLowerCase();
+        const k = (w.getAttribute('data-rep-k') || '').toLowerCase();
+        w.classList.toggle('rep-filter-hidden', !(t.includes(q) || k.includes(q)));
       });
     }
   }
@@ -1560,6 +1600,7 @@ tr:nth-child(even){background:#f9f9f9}
     const tabs = document.getElementById('repCatTabs');
     if (!tabs || tabs.dataset.bound === '1') {
       renderCatalogGrid();
+      repInitReportsFiltersAndParts();
       return;
     }
     tabs.dataset.bound = '1';
@@ -1571,6 +1612,7 @@ tr:nth-child(even){background:#f9f9f9}
       b.addEventListener('click', () => repSwitchReportCategory(b.getAttribute('data-cat'), b));
     });
     repSwitchReportCategory('overview', tabs.querySelector('.rep-cat-tab'));
+    repInitReportsFiltersAndParts();
   };
 
   window.repDynamicBack = repDynamicBack;
@@ -1597,7 +1639,7 @@ tr:nth-child(even){background:#f9f9f9}
         const ok = match(lab) || match(id);
         btn.classList.toggle('rep-filter-hidden', ql.length > 0 && !ok);
       });
-      document.querySelectorAll('#repCatalogGrid .rep-catalog-card').forEach(card => {
+      document.querySelectorAll('#repCatalogGrid .rep-catalog-card-wrap').forEach(card => {
         const keys = (card.getAttribute('data-rep-k') || '').toLowerCase();
         const ok = match(card.textContent) || (keys && match(keys));
         card.classList.toggle('rep-filter-hidden', ql.length > 0 && !ok);
