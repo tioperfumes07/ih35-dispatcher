@@ -25,6 +25,13 @@
       <div class="erp-dedicated-form-modal__inner">
         <div class="erp-dedicated-form-modal__bar">
           <button type="button" class="erp-dedicated-form-modal__x" data-erp-ded-close="1" title="Close">×</button>
+          <button
+            type="button"
+            class="btn btn--small secondary erp-modal-expand-btn"
+            data-erp-modal-expand-btn
+            title="Expand to full viewport (layout)"
+            aria-pressed="false"
+          >⛶</button>
           <div class="erp-dedicated-form-modal__bar-center" aria-live="polite">
             <div id="erpDedModalTitle" class="erp-dedicated-form-modal__title"></div>
             <div class="erp-dedicated-form-modal__total-wrap">
@@ -77,6 +84,7 @@
         <div class="erp-mb-modal__chrome" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary erp-mb-modal__chrome-fs" id="erpMbMaxBtn" onclick="erpMbToggleMaximize()" title="90% of viewport">Maximize</button>
           <button type="button" class="btn btn--small secondary erp-mb-modal__chrome-fs" id="erpMbFsBtn" onclick="erpMbToggleFullscreen()" title="Fill entire viewport">Full screen</button>
+          <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         </div>
         <button type="button" class="erp-mb-modal__x" data-erp-mb-close="1" aria-label="Close">×</button>
       </div>
@@ -275,6 +283,7 @@
         <div class="erp-qb-dialog__head-viewport" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleMaximize('maintCatModal')" title="90% of viewport">Maximize</button>
           <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleFullscreen('maintCatModal')" title="Fill viewport">Full screen</button>
+          <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         </div>
         <h3 id="maintCatModalTitle" class="erp-qb-dialog__title">Vehicle type</h3>
         <span class="erp-help-tip" aria-label="Help for vehicle categories">
@@ -304,6 +313,7 @@
         <div class="erp-qb-dialog__head-viewport" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleMaximize('shopQueueAddModal')" title="90% of viewport">Maximize</button>
           <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleFullscreen('shopQueueAddModal')" title="Fill viewport">Full screen</button>
+          <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         </div>
         <h3 id="shopQueueAddModalTitle" class="erp-qb-dialog__title">Add to shop queue</h3>
         <span class="erp-help-tip" aria-label="Help for shop queues">
@@ -353,6 +363,7 @@
         <div class="maint-workorder-fullmodal__head-viewport" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary" id="maintWoMaxBtn" onclick="maintWoToggleMaximize()" title="90% of viewport" aria-pressed="false">Maximize</button>
           <button type="button" class="btn btn--small secondary" id="maintWoFsBtn" onclick="maintWoToggleFullscreen()" title="Fill viewport (Esc to exit full screen)" aria-pressed="false">Full screen</button>
+          <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         </div>
         <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
       </div>
@@ -365,6 +376,7 @@
         <div class="erp-qb-dialog__head-viewport" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleMaximize('shopDelayModal')" title="90% of viewport">Maximize</button>
           <button type="button" class="btn btn--small secondary" onclick="erpMaintDialogToggleFullscreen('shopDelayModal')" title="Fill viewport">Full screen</button>
+          <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
         </div>
         <h3 id="shopDelayModalTitle" class="erp-qb-dialog__title">Past estimated time — bottleneck</h3>
         <span class="erp-help-tip" aria-label="Help for delay reasons">
@@ -501,7 +513,10 @@
       <aside id="erpDrawer" class="erp-drawer" aria-hidden="true">
         <div class="erp-drawer__head">
           <div class="erp-drawer__title" id="erpDrawerTitle">Create</div>
-          <button type="button" class="erp-drawer__close" onclick="closeErpDrawer()">Close</button>
+          <div class="erp-drawer__head-actions">
+            <button type="button" class="btn btn--small secondary erp-modal-expand-btn" data-erp-modal-expand-btn title="Expand to full viewport (layout)" aria-pressed="false">⛶</button>
+            <button type="button" class="erp-drawer__close" onclick="closeErpDrawer()">Close</button>
+          </div>
         </div>
         <div class="erp-drawer__body" style="display:flex;flex-direction:column;min-height:0">
           <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;flex-shrink:0;line-height:1.45;color:var(--color-text-body)">

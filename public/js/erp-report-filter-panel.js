@@ -412,6 +412,15 @@
       </div>`
         : ''
     }
+    ${
+      show.has('partPositionsPick')
+        ? `<div style="grid-column:1/-1">
+        <div class="qb-l">Part / axle positions (optional)</div>
+        <span class="mini-note">One value per line — matches tire position, position text, or part position on lines.</span>
+        <textarea class="qb-in erp-rfp-pos-lines" rows="3" style="width:100%;max-width:560px;margin-top:4px;font-size:12px;resize:vertical" placeholder="e.g. LFO&#10;steer L"></textarea>
+      </div>`
+        : ''
+    }
     <div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px">
       <button type="button" class="btn erp-rfp-apply" style="background:#1b5e20;color:#fff;border-color:#1b5e20">Apply filters</button>
       <span class="erp-rfp-spin hidden mini-note">Loading…</span>
@@ -535,6 +544,13 @@
       if (show.has('defectsOnly') && root.querySelector('.erp-rfp-defonly')?.checked) {
         sp.set('defectsOnly', 'true');
       }
+      if (show.has('partPositionsPick')) {
+        const raw = root.querySelector('.erp-rfp-pos-lines')?.value || '';
+        raw.split('\n').forEach(line => {
+          const t = String(line).trim();
+          if (t) sp.append('positions', t);
+        });
+      }
       return sp;
     }
 
@@ -572,7 +588,8 @@
         dotReportable: 'DOT reportable',
         insuranceClaim: 'Insurance',
         defectsOnly: 'Defects only',
-        pmStatus: 'PM status'
+        pmStatus: 'PM status',
+        positions: 'Position'
       };
       const lab = pretty[key] || key;
       return `${lab}: ${String(val).slice(0, 48)}`;
@@ -922,6 +939,7 @@
       el.addEventListener('input', paintChips);
       el.addEventListener('change', paintChips);
     });
+    root.querySelector('.erp-rfp-pos-lines')?.addEventListener('input', paintChips);
     root.querySelectorAll('.erp-rfp-sortby, .erp-rfp-sortdir, .erp-rfp-groupby').forEach(el => el.addEventListener('change', paintChips));
     root.querySelectorAll('.erp-rfp-af-cb, .erp-rfp-dot-cb, .erp-rfp-ins-cb, .erp-rfp-defonly').forEach(el =>
       el.addEventListener('change', paintChips)
@@ -1032,6 +1050,15 @@
       } else if (k === 'defectsOnly') {
         const d = root.querySelector('.erp-rfp-defonly');
         if (d) d.checked = false;
+      } else if (k === 'positions') {
+        const ta = root.querySelector('.erp-rfp-pos-lines');
+        if (ta) {
+          const next = ta.value
+            .split('\n')
+            .map(s => s.trim())
+            .filter(s => s && s !== v);
+          ta.value = next.join('\n');
+        }
       }
       paintChips();
     });

@@ -655,12 +655,11 @@ ${extraCss}
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'accidentExtra'] };
     if (datasetId === 'a9-fleet-repair-monthly')
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbMonth };
-    if (
-      datasetId === 'a5-tire-history' ||
-      datasetId === 'a6-air-bag-history' ||
-      datasetId === 'a10-inspection-history' ||
-      datasetId === 'a11-parts-positions'
-    )
+    if (datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history' || datasetId === 'a11-parts-positions')
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy', 'partPositionsPick'], groupByOptions: gbTirePos };
+    if (datasetId === 'a7-battery-history')
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'partPositionsPick'] };
+    if (datasetId === 'a10-inspection-history')
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbTirePos };
     return { datasetId, defaultMonths: 3, features: [...fullMaint] };
   }
@@ -710,6 +709,12 @@ ${extraCss}
         const cols = sec.columns || [];
         const rows = sec.rows || [];
         const body = rows.length ? renderSortableTable(cols, rows, maintRowClassFromRow) : '<p class="mini-note">No rows in this group.</p>';
+        const mixRow =
+          Array.isArray(sec.serviceTypeMix) && sec.serviceTypeMix.length
+            ? `<div class="mini-note" style="margin:6px 0 8px">Service spend mix: ${sec.serviceTypeMix
+                .map(x => `${escapeHtml(String(x.name))} $${Number(x.total || 0).toFixed(2)}`)
+                .join(' · ')}</div>`
+            : '';
         const pill =
           sec.categoryPill || sec.locationPill
             ? `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:#ede7f6;color:#4527a0">${escapeHtml(
@@ -728,7 +733,7 @@ ${extraCss}
         const slug = 'rep-grp-' + String(sec.title || sec.key || 'sec')
           .replace(/[^\w.-]+/g, '-')
           .slice(0, 96);
-        return bar(border, sec.title || sec.key, sec.recordCount ?? rows.length, sec.totalCost ?? 0, sec.avgCost ?? 0, body + subTot, pill, slug);
+        return bar(border, sec.title || sec.key, sec.recordCount ?? rows.length, sec.totalCost ?? 0, sec.avgCost ?? 0, mixRow + body + subTot, pill, slug);
       })
       .join('');
   }
@@ -855,10 +860,20 @@ ${extraCss}
       badge.hidden = false;
     }
     const r0 = defaultRange();
-    const posField =
-      datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history' || datasetId === 'a11-parts-positions';
+    const datasetsWithOptionalPosition =
+      datasetId === 'a5-tire-history' ||
+      datasetId === 'a6-air-bag-history' ||
+      datasetId === 'a10-inspection-history' ||
+      datasetId === 'a11-parts-positions';
+    const showPositionChips =
+      datasetId === 'a5-tire-history' ||
+      datasetId === 'a6-air-bag-history' ||
+      datasetId === 'a11-parts-positions' ||
+      datasetId === 'a7-battery-history';
     if (ttl) ttl.textContent = title || datasetId;
     const fpOpts = FILTER_PANEL_DATASETS.has(datasetId) ? filterPanelOptionsFor(datasetId) : null;
+    const panelHasPosPick = !!(fpOpts && Array.isArray(fpOpts.features) && fpOpts.features.includes('partPositionsPick'));
+    const appendLegacyPositionInput = datasetsWithOptionalPosition && (!fpOpts || !panelHasPosPick);
     if (fl) {
       if (window.ErpReportFilterPanel && fpOpts) {
         fl.innerHTML = '';
@@ -866,7 +881,7 @@ ${extraCss}
           onApply: sp => run(sp),
           onReady: sp => run(sp)
         });
-        if (posField) {
+        if (appendLegacyPositionInput) {
           const wrap = document.createElement('div');
           wrap.style.marginTop = '8px';
           wrap.innerHTML =
@@ -878,7 +893,7 @@ ${extraCss}
         <div><label class="qb-l">Start</label><input type="date" class="qb-in" id="repDfStart" value="${r0.start}" /></div>
         <div><label class="qb-l">End</label><input type="date" class="qb-in" id="repDfEnd" value="${r0.end}" /></div>
         <div><label class="qb-l">Unit</label><input type="text" class="qb-in" id="repDfUnit" placeholder="Optional" /></div>
-        ${posField ? '<div><label class="qb-l">Position</label><input type="text" class="qb-in" id="repDfPosition" placeholder="Optional" /></div>' : ''}
+        ${datasetsWithOptionalPosition ? '<div><label class="qb-l">Position</label><input type="text" class="qb-in" id="repDfPosition" placeholder="Optional" /></div>' : ''}
         <div style="align-self:flex-end"><button type="button" class="btn" id="repDfRun">Run</button></div>
       `;
       }
@@ -912,8 +927,18 @@ ${extraCss}
         if (u) sp.set('unit', u);
         if (p) sp.set('position', p);
       } else {
-        const p = document.getElementById('repDfPosition')?.value || '';
-        if (p) sp.set('position', p);
+        const ta = fl?.querySelector('.erp-rfp-pos-lines');
+        if (ta) {
+          sp.delete('positions');
+          sp.delete('position');
+          ta.value.split('\n').forEach(line => {
+            const t = String(line).trim();
+            if (t) sp.append('positions', t);
+          });
+        } else {
+          const p = document.getElementById('repDfPosition')?.value || '';
+          if (p) sp.set('position', p);
+        }
       }
       const rest = DATASET_REST[datasetId];
       const url = rest ? `${rest}?${sp.toString()}` : `/api/reports/dataset?id=${encodeURIComponent(datasetId)}&${sp.toString()}`;
@@ -996,8 +1021,12 @@ ${extraCss}
             ],
             data.meta.external.rows || []
           );
+          const hint = data.meta?.inHouseHint
+            ? `<p class="mini-note" style="margin:0 0 10px;max-width:920px">${escapeHtml(String(data.meta.inHouseHint))}</p>`
+            : '';
           host.innerHTML =
             renderSummaryCards(data.meta.summaryCards || [], false) +
+            hint +
             `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
               <div><h4 style="margin:0 0 6px;font-size:13px">Internal shop</h4>${left}</div>
               <div><h4 style="margin:0 0 6px;font-size:13px">External vendors</h4>${right}</div>
@@ -1032,7 +1061,7 @@ ${extraCss}
           host.innerHTML = '<p class="mini-note">No rows.</p>';
         }
       }
-      if (data.meta && Array.isArray(data.meta.positions) && tmap && posField) {
+      if (data.meta && Array.isArray(data.meta.positions) && tmap && showPositionChips) {
         tmap.classList.remove('hidden');
         tmap.innerHTML =
           '<div class="mini-note" style="margin-bottom:6px">Filter by position</div><div class="rep-pos-chips">' +
@@ -1042,13 +1071,28 @@ ${extraCss}
           '</div>';
         tmap.querySelectorAll('button.chip').forEach(btn => {
           btn.addEventListener('click', () => {
+            const chip = (btn.textContent || '').trim();
+            const ta = fl?.querySelector('.erp-rfp-pos-lines');
             const inp = document.getElementById('repDfPosition');
-            if (inp) inp.value = btn.textContent || '';
+            if (ta) {
+              const cur = ta.value.split('\n').map(s => s.trim()).filter(Boolean);
+              if (chip && !cur.includes(chip)) cur.push(chip);
+              ta.value = cur.join('\n');
+            } else if (inp) {
+              inp.value = chip;
+            }
             const merged =
               lastPanelSp instanceof URLSearchParams
                 ? new URLSearchParams(lastPanelSp.toString())
                 : new URLSearchParams();
-            if (inp && inp.value) merged.set('position', inp.value);
+            if (ta) {
+              merged.delete('positions');
+              merged.delete('position');
+              ta.value.split('\n').forEach(line => {
+                const t = String(line).trim();
+                if (t) merged.append('positions', t);
+              });
+            } else if (inp?.value) merged.set('position', inp.value);
             run(merged).catch(err => {
               if (host) host.innerHTML = `<p class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(err.message)}</p>`;
             });
@@ -1063,19 +1107,34 @@ ${extraCss}
       }
       if (datasetId === 'm3-repair-vs-maintenance' && data.meta?.chartStacked && window.Chart && chart && data.rows && data.rows.length) {
         chart.classList.remove('hidden');
-        chart.innerHTML = '<canvas height="260"></canvas><p class="mini-note" style="margin:6px 0 0">Benchmark: repair under 30% of total spend.</p>';
+        const benchPct = Number(data.meta.benchmarkRepairPct);
+        const pctLabel = Number.isFinite(benchPct) ? benchPct : 30;
+        chart.innerHTML = `<canvas height="260"></canvas><p class="mini-note" style="margin:6px 0 0">Dashed line: ${pctLabel}% of period total spend (repair benchmark band).</p>`;
         const canvas = chart.querySelector('canvas');
         const labels = data.rows.map(r => String(r.month ?? '—'));
         const series = data.meta.chartSeries || [];
-        const datasets = series.map(s => ({
+        const barDatasets = series.map(s => ({
+          type: 'bar',
           label: s.label,
           data: data.rows.map(r => Number(r[s.key]) || 0),
           backgroundColor: s.color || '#1557a0',
           stack: 's'
         }));
+        const pct = (Number.isFinite(benchPct) ? benchPct : 30) / 100;
+        const benchLine = {
+          type: 'line',
+          label: `${pctLabel}% of total (benchmark)`,
+          data: data.rows.map(r => (Number(r.totalDollars) || 0) * pct),
+          borderColor: '#6200ea',
+          borderWidth: 2,
+          borderDash: [6, 4],
+          fill: false,
+          pointRadius: 0,
+          order: 99
+        };
         window.__repDynChart = new Chart(canvas.getContext('2d'), {
           type: 'bar',
-          data: { labels, datasets },
+          data: { labels, datasets: [...barDatasets, benchLine] },
           options: {
             responsive: true,
             maintainAspectRatio: false,

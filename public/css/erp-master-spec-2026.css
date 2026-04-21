@@ -3679,3 +3679,153 @@ body.dispatch-page .modal:-webkit-full-screen {
   max-height: none !important;
   border-radius: 0;
 }
+
+/* Layout “full viewport” (toggle ⛶ / ⊡) — fixed shell, preserves DOM + scroll */
+.erp-modal-expand-btn {
+  font-size: 15px;
+  line-height: 1;
+  padding: 6px 12px;
+  min-width: 40px;
+}
+
+body.dispatch-page .modal.erp-modal-chrome--layout-fullscreen,
+.nm-modal.erp-modal-chrome--layout-fullscreen,
+.vbp-modal.erp-modal-chrome--layout-fullscreen,
+.erp-dedupe-modal__card.erp-modal-chrome--layout-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  box-sizing: border-box;
+}
+
+body.dispatch-page .modal.erp-modal-chrome--layout-fullscreen {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.dispatch-page .modal.erp-modal-chrome--layout-fullscreen .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.nm-modal.erp-modal-chrome--layout-fullscreen,
+.vbp-modal.erp-modal-chrome--layout-fullscreen,
+.erp-dedupe-modal__card.erp-modal-chrome--layout-fullscreen {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#erpMultiBillsModal .erp-mb-modal__dialog.erp-modal-chrome--layout-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#erpMultiBillsModal .erp-mb-modal__dialog.erp-modal-chrome--layout-fullscreen .erp-mb-panels {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+body.erp-maintenance .erp-dedicated-form-modal__shell.erp-modal-chrome--layout-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  resize: none !important;
+  justify-self: unset !important;
+  align-self: unset !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.erp-maintenance .erp-dedicated-form-modal__shell.erp-modal-chrome--layout-fullscreen .erp-dedicated-form-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+body.erp-maintenance .maint-modal.erp-qb-dialog.erp-modal-chrome--layout-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  resize: none !important;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .maint-workorder-fullmodal__shell.erp-modal-chrome--layout-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.erp-maintenance .maint-workorder-fullmodal__shell.erp-modal-chrome--layout-fullscreen .maint-workorder-fullmodal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.erp-drawer.erp-modal-chrome--layout-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100vh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  transform: none !important;
+  resize: none !important;
+  transition: none;
+}
+.erp-drawer.erp-modal-chrome--layout-fullscreen .erp-drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
