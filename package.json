@@ -13,6 +13,7 @@
     "dev": "node --watch server.js",
     "db:test": "node scripts/db-test.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
+    "db:ensure-support": "node scripts/ensure-support-tables.mjs",
     "smoke": "node scripts/system-smoke.mjs",
     "smoke:gate-sync": "node scripts/smoke-gate-paths-sync.mjs",
     "test:layout": "node --test tests/layout-responsive-erp.test.mjs",

@@ -5343,7 +5343,6 @@
                     <option value="accidents">Accidents</option>
                     <option value="fuel">Fuel</option>
                     <option value="maintenance">Maintenance</option>
-                    <option value="samsara">Samsara / telematics</option>
                     <option value="predictive">Predictive</option>
                   </select>
                 </div>
@@ -5380,7 +5379,6 @@
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="accidents" aria-selected="false" onclick="erpIntegritySelectTab('accidents')">Accidents</button>
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="fuel" aria-selected="false" onclick="erpIntegritySelectTab('fuel')">Fuel</button>
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="maintenance" aria-selected="false" onclick="erpIntegritySelectTab('maintenance')">Maintenance</button>
-                <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="samsara" aria-selected="false" onclick="erpIntegritySelectTab('samsara')">Samsara</button>
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="predictive" aria-selected="false" onclick="erpIntegritySelectTab('predictive')">Predictive</button>
                 <button type="button" class="erp-int-cat-tab" role="tab" data-int-tab="resolved" aria-selected="false" onclick="erpIntegritySelectTab('resolved')">Resolved</button>
               </div>
@@ -9962,7 +9960,15 @@
         'purchase-order-bill'
       ]);
       if (locked.has(mode)) ui.typeReadonlyLabel = labels[mode] || '';
-      if (mode === 'repair-expense' || mode === 'repair-bill' || mode === 'driver-bill') ui.showDriverRow = true;
+      if (
+        mode === 'repair-expense' ||
+        mode === 'repair-bill' ||
+        mode === 'driver-bill' ||
+        mode === 'maintenance-expense' ||
+        mode === 'maintenance-bill'
+      ) {
+        ui.showDriverRow = true;
+      }
       if (
         mode === 'maintenance-expense' ||
         mode === 'maintenance-bill' ||
@@ -12335,17 +12341,15 @@
         const c = await j('/api/integrity/counts');
         const red = Number(c.red) || 0;
         const amb = Number(c.amber) || 0;
+        const tot = Number(c.active) || red + amb;
         const dot = document.getElementById('navMaintIntegrityDot');
-        if (dot) dot.classList.toggle('hidden', red === 0);
+        if (dot) dot.classList.toggle('hidden', tot === 0);
         const sb = document.getElementById('maintIntegritySidebarBadge');
         if (sb) {
-          if (red > 0) {
-            sb.textContent = String(red);
-            sb.className = 'erp-sb-badge erp-sb-badge--danger';
-            sb.classList.remove('hidden');
-          } else if (amb > 0) {
-            sb.textContent = String(amb);
-            sb.className = 'erp-sb-badge erp-sb-badge--amber';
+          if (tot > 0) {
+            sb.textContent = String(tot);
+            sb.className =
+              red > 0 ? 'erp-sb-badge erp-sb-badge--danger' : 'erp-sb-badge erp-sb-badge--amber';
             sb.classList.remove('hidden');
           } else {
             sb.textContent = '';
@@ -12397,7 +12401,7 @@
         .join('');
       if (!items) return;
       host.innerHTML = `
-        <div class="erp-integrity-inline" role="status">
+        <div class="erp-integrity-inline erp-integrity-inline--amber" role="status">
           <div class="erp-integrity-inline__icon" aria-hidden="true">⚠</div>
           <div class="erp-integrity-inline__body">
             <div class="erp-integrity-inline__title">Integrity alert</div>
@@ -18077,12 +18081,17 @@
       if (type !== 'tire') clearTireExtraLines();
 
       const dCell = document.getElementById('maintRecordDriverCell');
-      if (dCell) dCell.classList.toggle('hidden', type !== 'repair' && type !== 'accident');
+      if (dCell) dCell.classList.toggle('hidden', type !== 'repair' && type !== 'accident' && type !== 'maintenance');
       const dReq = document.getElementById('maintWoDriverReqStar');
       if (dReq) dReq.classList.toggle('hidden', type !== 'accident');
       const drvInp = document.getElementById('maintRecordDriverSearch');
       if (drvInp) {
-        drvInp.placeholder = type === 'accident' ? 'Select driver (required)' : 'Select driver (optional)';
+        drvInp.placeholder =
+          type === 'accident'
+            ? 'Select driver (required)'
+            : type === 'repair' || type === 'maintenance'
+              ? 'Select driver (recommended)'
+              : 'Select driver (optional)';
         drvInp.setAttribute('aria-required', type === 'accident' ? 'true' : 'false');
       }
 
@@ -23719,7 +23728,11 @@
     async function integrityExportReport(fmt) {
       const f = String(fmt || 'xlsx').toLowerCase();
       const qs = new URLSearchParams();
-      qs.set('format', f === 'pdf' ? 'pdf' : 'xlsx');
+      const serverFmt = f === 'pdf' || f === 'xlsx' ? 'csv' : f;
+      if (serverFmt === 'csv' && (f === 'pdf' || f === 'xlsx')) {
+        erpNotify('Downloading CSV (Excel/PDF export is not available on this server build).', 'warning');
+      }
+      qs.set('format', serverFmt);
       const { start, end } = integrityReportDateRange();
       if (start) qs.set('startDate', start);
       if (end) qs.set('endDate', end);
@@ -23739,7 +23752,7 @@
         const blob = await r.blob();
         const cd = r.headers.get('Content-Disposition') || '';
         const m = cd.match(/filename="?([^";]+)"?/i);
-        const name = m ? m[1].trim() : `integrity-export.${f === 'pdf' ? 'pdf' : 'xlsx'}`;
+        const name = m ? m[1].trim() : `integrity-export.${serverFmt === 'csv' ? 'csv' : f === 'pdf' ? 'pdf' : 'xlsx'}`;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = name;
@@ -23751,7 +23764,8 @@
     }
 
     function erpIntegritySelectTab(tabId) {
-      const id = String(tabId || 'all').toLowerCase();
+      const raw = String(tabId || 'all').toLowerCase();
+      const id = raw === 'samsara' ? 'predictive' : raw;
       window.__integrityDashTab = id;
       const catSel = document.getElementById('integrityDashCategory');
       const statSel = document.getElementById('integrityDashStatus');
@@ -23779,7 +23793,7 @@
       const st = String(statSel?.value || 'active').trim().toLowerCase();
       let active = 'all';
       if ((st === 'reviewed' || st === 'resolved') && cat === 'all') active = 'resolved';
-      else if (cat && cat !== 'all') active = cat;
+      else if (cat && cat !== 'all') active = cat === 'samsara' ? 'predictive' : cat;
       else active = 'all';
       window.__integrityDashTab = active;
       const pillIds = new Set([
@@ -23789,7 +23803,6 @@
         'accidents',
         'fuel',
         'maintenance',
-        'samsara',
         'predictive',
         'resolved'
       ]);
@@ -24990,6 +25003,7 @@
         unit: String(document.getElementById('apAssetUnit')?.value || '').trim(),
         txnDate: document.getElementById('apTxnDate')?.value || '',
         maintRecordType: String(document.getElementById('apMaintRecordType')?.value || '').trim(),
+        driverErpId: String(document.getElementById('apErpDriverId')?.value || '').trim(),
         dedicatedApPreset: String(window.__erpDedicatedApPreset || '').trim(),
         repairLocationType: String(document.getElementById('woRepairLocationType')?.value || '').trim(),
         repairLocationLabel: String(document.getElementById('apRepairLocationSearch')?.value || '').trim(),

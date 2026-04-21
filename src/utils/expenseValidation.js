@@ -18,6 +18,7 @@
    * @property {string} [repairLocationType]
    * @property {string} [repairLocationLabel]
    * @property {string} [driverHeaderName]
+   * @property {string} [driverErpId]
    * @property {Array<{amount?: number, detailMode?: string, qboAccountId?: string, qboItemId?: string, partPosition?: string}>} lines
    * @property {number} docTotal
    * @property {number} lineSum
@@ -89,6 +90,9 @@
     }
 
     const mrt = String(s.maintRecordType || '').trim();
+    if (mrt === 'accident' && !String(s.driverErpId || '').trim()) {
+      pushErr('apErpDriverSearch', 'ap_acc_driver', 'Driver is required for accident maintenance bills/expenses.');
+    }
     if (mrt === 'tire') {
       const hasPos = lines.some(l => String(l.partPosition || '').trim());
       if (!hasPos) {
