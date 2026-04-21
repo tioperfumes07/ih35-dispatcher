@@ -14336,6 +14336,12 @@
       }
       fuelManualUpdateHeaderTotal();
       syncFuelManualClassFromUnit();
+      const ub = document.getElementById('fuelManualUnitBadge');
+      if (ub) {
+        ub.textContent = '';
+        ub.classList.add('hidden');
+      }
+      if (typeof erpHydrateFuelVendorAddressFromApi === 'function') void erpHydrateFuelVendorAddressFromApi();
     }
 
     let __fuelManualFormBound = false;
@@ -14369,10 +14375,44 @@
       const uEl = document.getElementById('fuelManualUnit');
       if (uEl && !uEl.dataset.fuelClassSync) {
         uEl.dataset.fuelClassSync = '1';
-        ['input', 'change', 'blur'].forEach(ev => uEl.addEventListener(ev, () => syncFuelManualClassFromUnit()));
+        ['input', 'change', 'blur'].forEach(ev =>
+          uEl.addEventListener(ev, () => {
+            syncFuelManualClassFromUnit();
+            syncFuelManualUnitBadge();
+          })
+        );
       }
+      function syncFuelManualUnitBadge() {
+        const u = document.getElementById('fuelManualUnit');
+        const b = document.getElementById('fuelManualUnitBadge');
+        if (!u || !b) return;
+        const t = String(u.value || '').trim();
+        if (t) {
+          b.textContent = t;
+          b.classList.remove('hidden');
+        } else {
+          b.textContent = '';
+          b.classList.add('hidden');
+        }
+      }
+      syncFuelManualUnitBadge();
       const d = document.getElementById('fuelManualDate');
       if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+      const pd0 = document.getElementById('fuelManualPaymentDate');
+      if (pd0 && !pd0.value && d && d.value) pd0.value = d.value;
+      const due0 = document.getElementById('fuelManualDueDate');
+      if (due0 && !due0.value && d && d.value) due0.value = d.value;
+      if (d && !d.dataset.fuelPaySync) {
+        d.dataset.fuelPaySync = '1';
+        d.addEventListener('change', () => {
+          const p = document.getElementById('fuelManualPaymentDate');
+          if (p) p.value = d.value || '';
+          const du = document.getElementById('fuelManualDueDate');
+          if (du && (!du.value || du.value === d.dataset.fuelLastDate)) du.value = d.value || '';
+          d.dataset.fuelLastDate = d.value || '';
+        });
+        d.dataset.fuelLastDate = d.value || '';
+      }
       if (host && !host.querySelector('tr.fuel-m-cost-line')) addFuelManualLine();
       else fuelManualUpdateHeaderTotal();
       syncFuelManualClassFromUnit();
