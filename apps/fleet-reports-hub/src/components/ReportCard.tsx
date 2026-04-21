@@ -79,6 +79,7 @@ export function ReportCard({ report, onOpen }: Props) {
             isFullScreen={fs.isFullScreen}
             onToggle={fs.toggle}
             className="fr-report-card__fs"
+            glyph="corners"
           />
         </span>
       </footer>
