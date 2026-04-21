@@ -1,11 +1,41 @@
 /**
  * Form 425C workspace — scoped to this page only.
  * Uses design tokens from design-tokens.css / app-theme.css.
+ * Light tool surface (do not use body.hub-page — it forces dark theme text).
  */
+
+body.form-425c-page {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--color-bg-page);
+  color: var(--color-text-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.form-425c-page a {
+  color: var(--color-border-focus);
+}
+
+body.form-425c-page a:hover {
+  color: var(--btn-post-qbo-hover);
+}
+
+#form-425c-root {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
 #form-425c-root,
 #form-425c-root .form-425c-root {
   --f425-part-color: var(--color-app-frame-border, #1e3a5a);
+}
+
+#form-425c-root .form-425c-root {
+  color: var(--color-text-body);
 }
 
 #form-425c-root .form-425c-wrap {
@@ -139,6 +169,7 @@
   padding: var(--space-sm, 6px) var(--space-sm, 8px);
   text-align: left;
   vertical-align: top;
+  color: var(--color-text-body);
 }
 
 #form-425c-root table.f425-table th {
@@ -181,6 +212,28 @@
 
 #form-425c-root .f425-money {
   font-variant-numeric: tabular-nums;
+}
+
+/* Narrow viewports: stack tabs and keep panels within width */
+@media (max-width: 720px) {
+  #form-425c-root .form-425c-wrap {
+    padding-left: max(var(--space-md, 12px), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--space-md, 12px), env(safe-area-inset-right, 0px));
+  }
+
+  #form-425c-root .f425-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #form-425c-root table.f425-table {
+    font-size: var(--font-sm, 11px);
+  }
+
+  #form-425c-root table.f425-table th,
+  #form-425c-root table.f425-table td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }
 
 @media print {
