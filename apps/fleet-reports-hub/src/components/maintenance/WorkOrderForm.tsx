@@ -563,7 +563,6 @@ export function WorkOrderForm({
       onToggleShellFullScreen={() => setShellFullScreen((v) => !v)}
       onClose={variant === 'modal' ? onClose : undefined}
       integrity={{
-        showDriverBar: !driverName.trim(),
         onViewAllIntegrity,
       }}
       catalogError={catalogError}

@@ -86,7 +86,7 @@ export type WorkOrderShellProps = {
   shellFullScreen: boolean
   onToggleShellFullScreen: () => void
   onClose?: () => void
-  integrity: { showDriverBar: boolean; onViewAllIntegrity?: () => void }
+  integrity: { onViewAllIntegrity?: () => void }
   catalogError: string | null
   /** Service / catalog panel (existing ServiceWorkOrderInfoPanel host) */
   servicePanel: ReactNode
@@ -350,8 +350,12 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
         </div>
       </div>
 
-      {props.integrity.showDriverBar ? (
-        <div className="wo-integrity">
+      {props.driverName.trim() ? (
+        <div className="wo-integrity wo-integrity--ok" role="status">
+          Driver recorded on this entry.
+        </div>
+      ) : (
+        <div className="wo-integrity wo-integrity--warn" role="alert">
           <span>
             Integrity: no driver assigned — assign below to log accountability for this service record.
           </span>
@@ -365,7 +369,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
             </button>
           ) : null}
         </div>
-      ) : null}
+      )}
 
       <div className="wo-scroll">
         <SectionCard
@@ -497,12 +501,6 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               <input className="wo-input" readOnly value={props.suggestedLoad} />
             </label>
           </div>
-          {props.driverName.trim() ? (
-            <div className="wo-driver-ok">
-              Driver recorded on this entry — applies to all service types: repairs, PM, work orders, accidents,
-              inspections.
-            </div>
-          ) : null}
         </SectionCard>
 
         <SectionCard sid="C" label="C — Planned work & parts">

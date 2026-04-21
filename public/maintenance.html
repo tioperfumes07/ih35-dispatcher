@@ -1149,6 +1149,12 @@
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Assigned / working</div><div class="maint-kpi-card__val" id="maintDashAssignedAssets">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Maintenance past due</div><div class="maint-kpi-card__val" id="maintDashPastDue">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--integrity" id="maintDashIntegrityCard" aria-label="Integrity alerts from fleet store">
+                <div class="maint-kpi-card__label">Integrity alerts</div>
+                <div class="maint-kpi-card__val" id="maintDashIntegrityAlerts">0</div>
+                <ul id="maintDashIntegrityAlertsList" class="maint-dash-int-alerts"></ul>
+                <button type="button" class="maint-dash-int-viewall" onclick="erpOpenReportsIntegrityFromMaintKpi(event)">View all →</button>
+              </div>
             </div>
             <div id="maintDashSummaryLine" class="maint-kpi-strip__meta mini-note"></div>
             <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--color-text-label)"></div>
@@ -1256,6 +1262,7 @@
               ></iframe>
             </div>
             <div id="maintValidationBanner" class="erp-validation-banner hidden" role="region" aria-live="polite"></div>
+            <div id="maintDriverIntegrityStrip" class="maint-driver-integrity-strip hidden" aria-live="polite"></div>
             <div class="maint-wo-snapshot-dock">
               <div id="maintWoSummaryBar" class="maint-wo-summary-bar hidden" aria-live="polite"></div>
             </div>
@@ -1455,7 +1462,7 @@
                     <div id="maintRecordDriverCell" class="maint-field-cell maint-wo-box2__driver-row hidden" style="margin-top:8px">
                       <span class="qb-l">Driver <span id="maintWoDriverReqStar" class="maint-label-req hidden" aria-hidden="true">*</span></span>
                       <input type="hidden" id="maintRecordDriverId" value="" />
-                      <input id="maintRecordDriverSearch" class="qb-in maint-field" list="maintDriverOptions" placeholder="Select driver (optional)" maxlength="160" autocomplete="off" oninput="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();" onblur="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine();" />
+                      <input id="maintRecordDriverSearch" class="qb-in maint-field" list="maintDriverOptions" placeholder="Driver (assign for integrity)" maxlength="160" autocomplete="off" oninput="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine(); erpRefreshMaintDriverIntegrityStrip();" onblur="resolveMaintRecordDriverSearch(); erpSyncMaintWoDriverToFirstCostLine(); erpRefreshMaintDriverIntegrityStrip();" />
                       <input type="hidden" id="maintWoDriverNameInput" value="" />
                       <div id="maintDriverRepairHint" class="mini-note maint-field-hint maint-driver-repair-hint hidden" aria-live="polite"></div>
                     </div>
@@ -12876,6 +12883,11 @@
       if (!inp || !hid) return;
       hid.value = resolveDriverNameToId(inp.value);
       if (syncNm) syncNm.value = String(inp.value || '').trim();
+      try {
+        erpRefreshMaintDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     function resolveAccidentDriverSearch() {
@@ -12920,6 +12932,73 @@
         const dot = document.getElementById('navMaintIntegrityDot');
         if (dot) dot.classList.add('hidden');
       }
+    }
+
+    /** Option B — vanilla JS + `fleet:integrity-alerts` (same key as Fleet hub). PR: ERP maintenance KPI uses localStorage parity, not an embedded React bundle. */
+    function erpOpenReportsIntegrityFromMaintKpi(ev) {
+      if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+      try {
+        const navBtn = document.querySelector('.nav-btn[data-section="reports"]');
+        if (typeof openSection === 'function') openSection('reports', navBtn);
+        if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar('rep-integrity');
+        else if (typeof openReportsTab === 'function')
+          openReportsTab('rep-integrity', document.getElementById('repOpsDdTrigger'));
+      } catch (_) {
+        /* ignore */
+      }
+    }
+
+    function renderMaintIntegrityKpiFromLocalStorage() {
+      const valEl = document.getElementById('maintDashIntegrityAlerts');
+      const listEl = document.getElementById('maintDashIntegrityAlertsList');
+      if (!valEl || !listEl) return;
+      let all = [];
+      try {
+        all = JSON.parse(localStorage.getItem('fleet:integrity-alerts') || '[]');
+      } catch (_) {
+        all = [];
+      }
+      if (!Array.isArray(all)) all = [];
+      const open = all.filter(a => a && !a.reviewedAt);
+      valEl.textContent = String(open.length);
+      valEl.classList.toggle('maint-kpi-card__val--danger', open.length > 0);
+      const sorted = [...open].sort((a, b) =>
+        String(b.createdAt || '').localeCompare(String(a.createdAt || ''))
+      );
+      const lines = sorted.slice(0, 5).map(a => {
+        const raw = String(a.category || 'maintenance').trim();
+        const cat = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : 'Maintenance';
+        const sev = a.severity === 'red' ? 'Error' : a.severity === 'amber' ? 'Warning' : String(a.severity || '');
+        return `<li class="maint-dash-int-li">${escapeHtml(cat)} · ${escapeHtml(sev)}</li>`;
+      });
+      listEl.innerHTML =
+        lines.length === 0
+          ? '<li class="maint-dash-int-li maint-dash-int-li--empty">No open alerts.</li>'
+          : lines.join('');
+    }
+
+    function erpRefreshMaintDriverIntegrityStrip() {
+      const host = document.getElementById('maintDriverIntegrityStrip');
+      if (!host) return;
+      const formArea = document.getElementById('maintWoFormArea');
+      if (
+        !formArea ||
+        formArea.classList.contains('hidden') ||
+        formArea.classList.contains('maint-wo-record-hub-active')
+      ) {
+        host.innerHTML = '';
+        host.classList.add('hidden');
+        return;
+      }
+      const nm = String(document.getElementById('maintRecordDriverSearch')?.value || '').trim();
+      if (nm) {
+        host.innerHTML =
+          '<div class="erp-validation-banner maint-driver-int-banner" role="status"><div class="erp-validation-banner__block erp-validation-banner__block--ok">Driver recorded on this entry.</div></div>';
+      } else {
+        host.innerHTML =
+          '<div class="erp-validation-banner maint-driver-int-banner" role="alert"><div class="erp-validation-banner__block erp-validation-banner__block--warn maint-driver-int-banner__row"><span>Integrity: no driver assigned — assign below to log accountability for this service record.</span><button type="button" class="erp-validation-banner__link maint-driver-int-banner__link" onclick="erpOpenReportsIntegrityFromMaintKpi(event)">View all →</button></div></div>';
+      }
+      host.classList.remove('hidden');
     }
 
     const __integrityDismissedSession = new Set();
@@ -12994,6 +13073,14 @@
         });
         const alerts = (data && data.alerts) || [];
         if (alerts.length) renderMaintIntegrityInlinePanel(alerts);
+        if (alerts.length && typeof window.erpFleetMergeIntegrityApiAlerts === 'function') {
+          window.erpFleetMergeIntegrityApiAlerts(alerts);
+        }
+        try {
+          renderMaintIntegrityKpiFromLocalStorage();
+        } catch (_) {
+          /* ignore */
+        }
         void refreshIntegrityNavBadges();
       } catch (_) {
         /* non-blocking */
@@ -16460,6 +16547,12 @@
           `saved maint. expense txs: ${(erp.apTransactions || []).length}`,
           `tire alerts: ${tireAlerts.length}`
         ].join(' · ');
+      }
+
+      try {
+        renderMaintIntegrityKpiFromLocalStorage();
+      } catch (_) {
+        /* ignore */
       }
 
       document.getElementById('dashboardSummaryCards').innerHTML = `
@@ -20978,6 +21071,11 @@
         syncMaintWorkOrderHeader();
         renderRepairLocationChips();
         renderMaintAsideWoSummary();
+        try {
+          erpRefreshMaintDriverIntegrityStrip();
+        } catch (_) {
+          /* ignore */
+        }
         return;
       }
       ph?.classList.add('hidden');
@@ -21130,6 +21228,11 @@
       applyLoadNumberSuggestion(false);
       syncMaintWorkOrderHeader();
       renderRepairLocationChips();
+      try {
+        erpRefreshMaintDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     function latestFuelPurchaseForUnit(unitName) {
@@ -22243,6 +22346,11 @@
         __mvb2.innerHTML = '';
         __mvb2.classList.remove('erp-validation-banner--shake');
       }
+      try {
+        erpRefreshMaintDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     async function clearMaintenanceFormNewEntry() {
@@ -22641,6 +22749,11 @@
       openMaintMainTab('record', document.querySelector('#maintMainSubtabs [data-maint-main="record"]'));
       } finally {
         __hydratingMaintenanceRecord = false;
+        try {
+          erpRefreshMaintDriverIntegrityStrip();
+        } catch (_) {
+          /* ignore */
+        }
       }
     }
 
@@ -26281,6 +26394,16 @@
     }
     loadAll();
     setInterval(loadAll, AUTO_REFRESH_MS);
+    if (!window.__maintIntegrityKpiInterval) {
+      window.__maintIntegrityKpiInterval = true;
+      setInterval(() => {
+        try {
+          renderMaintIntegrityKpiFromLocalStorage();
+        } catch (_) {
+          /* ignore */
+        }
+      }, 60000);
+    }
     if (typeof erpInitResizableModals === 'function') {
       try {
         erpInitResizableModals();

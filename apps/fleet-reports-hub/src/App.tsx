@@ -113,6 +113,14 @@ export default function App() {
 
   const clearMaintExtNav = useCallback(() => setMaintExtNav(null), [])
 
+  const openMaintenanceIntegrityView = useCallback(() => {
+    setTab('maintenance')
+    setMaintExtNav((prev) => ({
+      view: 'integrity',
+      token: (prev?.token ?? 0) + 1,
+    }))
+  }, [])
+
   const notifyErpWoModalParentAfterSave = useCallback(
     ({ unitId }: { unitId: string }) => {
       if (!erpWoModalHost) return
@@ -315,6 +323,7 @@ export default function App() {
           ) : tab === 'accounting' ? (
             <AccountingDashboard
               onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
+              onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
               onNewWorkOrder={() => setAppWoPickOpen(true)}
               listsBootstrap={acctListsBootstrap}
               onListsBootstrapConsumed={() => setAcctListsBootstrap(null)}
@@ -463,6 +472,10 @@ export default function App() {
             tab: 'name-management',
             list: 'name-registry',
           })
+        }}
+        onViewAllIntegrity={() => {
+          setFuelPlannerTxn(null)
+          openMaintenanceIntegrityView()
         }}
       />
 

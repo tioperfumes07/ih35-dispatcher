@@ -219,7 +219,10 @@ export function evaluateIntegrityChecks(
 
   /** Fuel */
   const amt = Number(p.amount ?? 0)
-  if (req.saveType === 'maintenance_expense' && isFuelLinkedMaintenanceExpense(p)) {
+  const fuelCtx =
+    req.saveType === 'fuel_transaction' ||
+    (req.saveType === 'maintenance_expense' && isFuelLinkedMaintenanceExpense(p))
+  if (fuelCtx) {
     if ((seed % 11) !== 10)
       out.push(
         alert(

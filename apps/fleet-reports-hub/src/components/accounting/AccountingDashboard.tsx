@@ -31,6 +31,8 @@ export type AccountingListsBootstrap = {
 
 type Props = {
   onRequestMaintenanceNav: (target: AccountingMaintNavTarget) => void
+  /** Fuel / integrity “View all” → Maintenance → Integrity in the hub. */
+  onOpenMaintenanceIntegrity?: () => void
   /** Top nav "+ New" → work order / service record (app-level modal). */
   onNewWorkOrder?: () => void
   /** When set (e.g. from Fuel tab vendor link), open Lists & catalogs on the given list once. */
@@ -40,6 +42,7 @@ type Props = {
 
 export function AccountingDashboard({
   onRequestMaintenanceNav,
+  onOpenMaintenanceIntegrity,
   onNewWorkOrder,
   listsBootstrap,
   onListsBootstrapConsumed,
@@ -96,6 +99,10 @@ export function AccountingDashboard({
       onOpenVendorDirectory={() => {
         setFuelOpen(null)
         openLists('name-management', 'name-registry')
+      }}
+      onViewAllIntegrity={() => {
+        setFuelOpen(null)
+        onOpenMaintenanceIntegrity?.()
       }}
     />
   )

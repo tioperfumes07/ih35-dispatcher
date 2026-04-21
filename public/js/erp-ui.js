@@ -889,4 +889,75 @@
   }
 
   global.erpEnsureFleetReportsHubIframe = erpEnsureFleetReportsHubIframe;
+
+  /** Same localStorage key as apps/fleet-reports-hub (`postIntegrityCheck.ts`). */
+  var ERP_FLEET_INTEGRITY_LS_KEY = 'fleet:integrity-alerts';
+  var ERP_FLEET_INTEGRITY_CHANGED_EVENT = 'fleet-integrity-alerts-changed';
+
+  function erpFleetHubCategory(cat) {
+    var c = String(cat || 'maintenance').toLowerCase();
+    if (
+      c === 'tires' ||
+      c === 'drivers' ||
+      c === 'accidents' ||
+      c === 'fuel' ||
+      c === 'maintenance' ||
+      c === 'predictive'
+    )
+      return c;
+    return 'maintenance';
+  }
+
+  function erpFleetHubSeverity(sev) {
+    var u = String(sev || '').toUpperCase();
+    return u === 'RED' ? 'red' : 'amber';
+  }
+
+  function erpFleetApiRowToHubAlert(a) {
+    if (!a || typeof a !== 'object') return null;
+    var typ = String(a.alertType || a.type || 'M1').trim();
+    var code = /^[A-Za-z][0-9]$/.test(typ.slice(0, 2)) ? typ.slice(0, 2).toUpperCase() : 'M1';
+    var sev = erpFleetHubSeverity(a.severity);
+    var cat = erpFleetHubCategory(a.category);
+    var msg = String(a.message || a.shortTitle || '').trim() || 'Integrity alert';
+    var id0 = a.id != null ? String(a.id).trim() : '';
+    var id = id0 || code + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    return {
+      id: id,
+      checkCode: code,
+      category: cat,
+      severity: sev,
+      title: String(a.shortTitle || typ || 'Alert'),
+      message: msg,
+      triggeringRecords: [{ id: '1', label: msg, unit: a.unitId || undefined }],
+      createdAt: String(a.createdAt || a.triggeredDate || new Date().toISOString()),
+    };
+  }
+
+  /** Merge POST /api/integrity/check rows into the hub-compatible store (TMS + ERP parity). */
+  function erpFleetMergeIntegrityApiAlerts(rows) {
+    if (!rows || !rows.length) return;
+    var mapped = rows.map(erpFleetApiRowToHubAlert).filter(Boolean);
+    if (!mapped.length) return;
+    var existing = [];
+    try {
+      existing = JSON.parse(global.localStorage.getItem(ERP_FLEET_INTEGRITY_LS_KEY) || '[]');
+    } catch (_) {
+      existing = [];
+    }
+    if (!Array.isArray(existing)) existing = [];
+    var next = mapped.concat(existing).slice(0, 200);
+    try {
+      global.localStorage.setItem(ERP_FLEET_INTEGRITY_LS_KEY, JSON.stringify(next));
+    } catch (_) {
+      return;
+    }
+    try {
+      global.dispatchEvent(new CustomEvent(ERP_FLEET_INTEGRITY_CHANGED_EVENT));
+    } catch (_) {}
+  }
+
+  global.ERP_FLEET_INTEGRITY_LS_KEY = ERP_FLEET_INTEGRITY_LS_KEY;
+  global.ERP_FLEET_INTEGRITY_CHANGED_EVENT = ERP_FLEET_INTEGRITY_CHANGED_EVENT;
+  global.erpFleetMergeIntegrityApiAlerts = erpFleetMergeIntegrityApiAlerts;
 })(typeof window !== 'undefined' ? window : globalThis);

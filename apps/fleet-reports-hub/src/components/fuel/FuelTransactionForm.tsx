@@ -23,6 +23,7 @@ import {
 import { fetchQboItems } from '../../lib/qboItemsApi'
 import type { QboItemRow } from '../../lib/qboItemsApi'
 import { SearchableCombo, type ComboOption } from '../maintenance/SearchableCombo'
+import { mergeAlertsIntoStore, postIntegrityCheck } from '../../api/postIntegrityCheck'
 
 const TERMS_OPTS = [
   { value: '', label: '— None —' },
@@ -85,6 +86,8 @@ export type FuelTransactionFormProps = {
   onClose: () => void
   /** Optional: parent can navigate to vendor directory (e.g. name management). */
   onOpenVendorDirectory?: () => void
+  /** Navigate to Maintenance → Integrity (same as work order shell “View all →”). */
+  onViewAllIntegrity?: () => void
 }
 
 type SaveMenuChoice = 'save' | 'save-close' | 'save-new'
@@ -94,6 +97,7 @@ export function FuelTransactionForm({
   transactionType: initialType,
   onClose,
   onOpenVendorDirectory,
+  onViewAllIntegrity,
 }: FuelTransactionFormProps) {
   const titleId = useId()
   const { isFullScreen, toggle: toggleFs } = useFullScreen()
@@ -270,6 +274,30 @@ export function FuelTransactionForm({
         saveVendorAddressByName(vendor, { ...toStore, country: toStore.country || 'USA' })
       }
     }
+    const saveId =
+      billExpenseNo.trim() ||
+      `fuel-${txType}-${invDate.replace(/[^0-9]/g, '')}-${Math.random().toString(36).slice(2, 8)}`
+    void (async () => {
+      try {
+        const res = await postIntegrityCheck({
+          saveType: 'fuel_transaction',
+          saveId,
+          payload: {
+            unit: unitNo.trim(),
+            unitId: unitNo.trim(),
+            driverName: driver.trim(),
+            driver: driver.trim(),
+            amount: balanceDue,
+            vendor: vendor.trim(),
+            transactionType: txType,
+            paymentDate: paymentDate.trim(),
+          },
+        })
+        mergeAlertsIntoStore(res.alerts)
+      } catch {
+        /* non-blocking */
+      }
+    })()
     if (choice === 'save-close') onClose()
     if (choice === 'save-new') {
       /* keep form open for another entry */
@@ -461,6 +489,23 @@ export function FuelTransactionForm({
           </div>
         </header>
 
+        {driver.trim() ? (
+          <div className="fuel-txn-integrity fuel-txn-integrity--ok" role="status">
+            Driver recorded on this entry.
+          </div>
+        ) : (
+          <div className="fuel-txn-integrity fuel-txn-integrity--warn" role="alert">
+            <span>
+              Integrity: no driver assigned — assign below to log accountability for this service record.
+            </span>
+            {onViewAllIntegrity ? (
+              <button type="button" className="fuel-txn-integrity__link" onClick={() => onViewAllIntegrity()}>
+                View all →
+              </button>
+            ) : null}
+          </div>
+        )}
+
         <div className="fuel-txn-scroll">
           <div className="fuel-txn-header-grid">
             <div className="fuel-txn-header-grid__left">
@@ -543,7 +588,7 @@ export function FuelTransactionForm({
                   )}
                 </div>
                 <label className="fuel-txn__field">
-                  <span className="fuel-txn__lbl">Driver</span>
+                  <span className="fuel-txn__lbl">Driver (integrity)</span>
                   <input
                     className="fuel-txn__inp"
                     value={driver}

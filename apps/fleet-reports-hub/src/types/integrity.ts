@@ -65,6 +65,7 @@ export type IntegrityCheckRequest = {
     | 'accident_work_order'
     | 'maintenance_expense'
     | 'maintenance_bill'
+    | 'fuel_transaction'
     | 'generic'
   saveId?: string
   payload: Record<string, unknown>

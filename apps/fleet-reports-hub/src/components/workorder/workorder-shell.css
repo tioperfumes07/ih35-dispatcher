@@ -204,10 +204,23 @@
   justify-content: space-between;
   gap: 8px;
   padding: 6px 10px;
-  background: rgba(251, 191, 36, 0.1);
-  border-bottom: 1px solid var(--border);
   font-size: 10px;
+}
+
+.wo-integrity--warn {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid var(--warn);
+  border-radius: 6px;
+  margin: 0 8px 8px;
   color: var(--warn);
+}
+
+.wo-integrity--ok {
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid var(--ok);
+  border-radius: 6px;
+  margin: 0 8px 8px;
+  color: var(--ok);
 }
 
 .wo-integrity a {
@@ -218,6 +231,21 @@
 }
 
 .wo-integrity a:hover {
+  text-decoration: underline;
+}
+
+.wo-integrity .wo-link {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 600;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: none;
+  margin-left: auto;
+}
+
+.wo-integrity .wo-link:hover {
   text-decoration: underline;
 }
 
@@ -370,16 +398,6 @@
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
-}
-
-.wo-driver-ok {
-  margin-top: 6px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(74, 222, 128, 0.12);
-  border: 1px solid var(--ok);
-  color: var(--ok);
-  font-size: 10px;
 }
 
 .wo-split {

@@ -68,7 +68,13 @@ export function WorkspaceSnapshot({ onViewAllIntegrity }: Props) {
         </div>
         <div className="acct-dash__kpi maint-ws-snapshot-integrity-kpi">
           <span className="acct-dash__kpi-label">Integrity Alerts</span>
-          <span className="acct-dash__kpi-val" aria-live="polite">
+          <span
+            className={
+              'acct-dash__kpi-val maint-ws-snapshot-integrity-kpi__headline' +
+              (openCount > 0 ? ' maint-ws-snapshot-integrity-kpi__headline--danger' : '')
+            }
+            aria-live="polite"
+          >
             {openCount}
           </span>
           <ul
