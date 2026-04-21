@@ -622,6 +622,7 @@
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill-payment')">Driver bill payment</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('item-receipt')">Item receipt</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('form-425c')">Form 425C (monthly operating report)</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('purchase-order')">Purchase order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-credit')">Vendor credit</button>
@@ -9434,6 +9435,10 @@
       if (k === 'purchase-order') return erpOpenDedicatedAccountingForm('purchase-order-bill');
       if (k === 'transfer') return erpOpenLedgerStubModal('transfer');
       if (k === 'journal-entry') return erpOpenLedgerStubModal('journal');
+      if (k === 'form-425c') {
+        window.location.href = '/form-425c';
+        return;
+      }
       if (k === 'find-merge-dupes') {
         erpCloseNewMenu();
         if (typeof openDedupeTool === 'function') return openDedupeTool();
