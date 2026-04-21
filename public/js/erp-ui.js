@@ -764,8 +764,104 @@
     erpRestoreModalRect(shell, key, { minW: 520, minH: 400 });
   }
 
+  /** Packet 3 — column resize + tab order + DOM→Excel (SheetJS on maintenance.html via CDN). */
+  var __erpColResizeHandles = new WeakMap();
+
+  function erpInitColumnResize(table) {
+    if (!table || !(table instanceof HTMLTableElement)) return;
+    var prev = __erpColResizeHandles.get(table);
+    if (prev) {
+      prev.forEach(function (h) {
+        try {
+          h.remove();
+        } catch (_) {}
+      });
+    }
+    var handles = [];
+    var ths = table.querySelectorAll('thead tr:last-child th');
+    if (!ths.length) ths = table.querySelectorAll('tr:first-child th');
+    if (ths.length < 2) {
+      __erpColResizeHandles.set(table, handles);
+      return;
+    }
+    ths.forEach(function (th) {
+      th.style.position = 'relative';
+      var handle = document.createElement('div');
+      handle.className = 'erp-col-resize-handle';
+      handle.setAttribute('role', 'presentation');
+      handle.style.cssText =
+        'position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:1';
+      handle.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var startX = e.clientX;
+        var startW = th.offsetWidth;
+        function onMove(ev) {
+          th.style.width = Math.max(40, startW + ev.clientX - startX) + 'px';
+          th.style.minWidth = th.style.width;
+        }
+        function onUp() {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+      th.appendChild(handle);
+      handles.push(handle);
+    });
+    __erpColResizeHandles.set(table, handles);
+  }
+
+  function erpWireTableTabOrder(table) {
+    if (!table || !(table instanceof HTMLTableElement)) return;
+    var sel =
+      'tbody input:not([type="hidden"]):not([disabled]), tbody select:not([disabled]), tbody textarea:not([disabled]), tbody button:not([disabled])';
+    var cells = table.querySelectorAll(sel);
+    var i = 1;
+    cells.forEach(function (el) {
+      if (!(el instanceof HTMLElement)) return;
+      if (el.closest('[data-skip-tab-order]')) return;
+      if (el.getAttribute('tabindex') === '-1') return;
+      if (el.hasAttribute('data-fr-preserve-tabindex')) return;
+      el.tabIndex = i++;
+    });
+  }
+
+  function erpExportDomTableToXlsx(table, baseFileName) {
+    var XLSX = global.XLSX;
+    if (!XLSX || !table) return;
+    var day = new Date().toISOString().slice(0, 10);
+    var safe = String(baseFileName || 'Export').replace(/[^\w.-]+/g, '_');
+    var ws = XLSX.utils.table_to_sheet(table, { raw: true });
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Export');
+    XLSX.writeFile(wb, safe + '-' + day + '.xlsx');
+  }
+
+  /**
+   * Re-run after dynamic table renders (e.g. loadAll). Idempotent per table element.
+   * @param {ParentNode | null} [root]
+   */
+  function erpInitFleetTableChrome(root) {
+    var el = root && root.querySelectorAll ? root : document.body;
+    el.querySelectorAll('table').forEach(function (table) {
+      if (!(table instanceof HTMLTableElement)) return;
+      if (table.closest('[data-erp-no-table-chrome]')) return;
+      var thCount = table.querySelectorAll('thead th').length;
+      if (!thCount) return;
+      if (thCount < 2) return;
+      erpInitColumnResize(table);
+      erpWireTableTabOrder(table);
+    });
+  }
+
   global.erpInitResizableModals = erpInitResizableModals;
   global.erpRestoreDedicatedModalGeometry = erpRestoreDedicatedModalGeometry;
   global.erpWireResizableModalShell = erpWireResizableModalShell;
   global.erpRestoreModalRect = erpRestoreModalRect;
+  global.erpInitColumnResize = erpInitColumnResize;
+  global.erpWireTableTabOrder = erpWireTableTabOrder;
+  global.erpExportDomTableToXlsx = erpExportDomTableToXlsx;
+  global.erpInitFleetTableChrome = erpInitFleetTableChrome;
 })(typeof window !== 'undefined' ? window : globalThis);
