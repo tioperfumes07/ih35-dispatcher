@@ -4,7 +4,7 @@
  * Rule 22 — inline “?” help panels (`erpHelpTipToggle`); style in `erp-master-spec-2026.css`.
  * Rule 19 — toasts (`showToast`); host `#erpToastHost` + styles in `erp-master-spec-2026.css`.
  * `erpNotify` — toast-first replacement for `alert()` (inference for type when omitted); falls back to `alert` if toasts unavailable.
- * Rule 24 — `erpMountConnectionStrip(id)` reads `GET /api/qbo/status` and `GET /api/health` (read-only) into a two-row strip: QuickBooks + Samsara. Refreshes every five minutes while the page stays open. Non-2xx QBO status uses muted “could not load status.”
+ * Rule 24 — `erpMountConnectionStrip(id)` reads `GET /api/qbo/status` and `GET /api/health` (read-only). When both integrations look healthy, one compact line is shown. Refreshes every 12 minutes while the page stays open. Non-2xx QBO status uses muted “could not load status.”
  */
 (function (global) {
   'use strict';
@@ -182,9 +182,23 @@
    * @param {string} message
    * @param {'success'|'error'|'warning'|'info'} [type]
    */
+  const __erpToastDedupe = new Map();
+  const MAX_ERP_TOASTS = 3;
+  const ERP_TOAST_DEDUPE_MS = 2800;
+
   function showToast(message, type) {
     const text = String(message || '').trim();
     if (!text) return;
+    const t = String(type || 'success').toLowerCase();
+    const dedupeKey = t + '\u0000' + text;
+    const prev = __erpToastDedupe.get(dedupeKey);
+    const now = Date.now();
+    if (prev && now - prev < ERP_TOAST_DEDUPE_MS) return;
+    __erpToastDedupe.set(dedupeKey, now);
+    for (const [k, ts] of __erpToastDedupe) {
+      if (now - ts > 60000) __erpToastDedupe.delete(k);
+    }
+
     let host = document.getElementById('erpToastHost');
     if (!host) {
       host = document.createElement('div');
@@ -193,10 +207,13 @@
       host.setAttribute('aria-live', 'polite');
       document.body.appendChild(host);
     }
+    while (host.childElementCount >= MAX_ERP_TOASTS) {
+      host.removeChild(host.firstChild);
+    }
+
     const row = document.createElement('div');
     row.className = 'erp-toast';
     const dot = document.createElement('span');
-    const t = String(type || 'success').toLowerCase();
     dot.className =
       'erp-toast__dot' +
       (t === 'error' ? ' erp-toast__dot--err' : '') +
@@ -215,16 +232,20 @@
     row.appendChild(msg);
     row.appendChild(x);
     host.appendChild(row);
-    const timer = global.setTimeout(() => {
+
+    const ttl =
+      t === 'error' ? 4000 : t === 'warning' ? 4500 : t === 'info' ? 3800 : 3200;
+    let timer = global.setTimeout(() => {
       row.remove();
-    }, 5000);
-    row.addEventListener(
-      'mouseenter',
-      () => {
-        global.clearTimeout(timer);
-      },
-      { once: true }
-    );
+    }, ttl);
+    row.addEventListener('mouseenter', () => {
+      global.clearTimeout(timer);
+    });
+    row.addEventListener('mouseleave', () => {
+      timer = global.setTimeout(() => {
+        row.remove();
+      }, Math.min(6000, ttl));
+    });
   }
 
   global.showToast = showToast;
