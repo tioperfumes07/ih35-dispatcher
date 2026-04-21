@@ -1773,6 +1773,121 @@ body.erp-maintenance #erpTrackingMap {
 }
 
 /* =============================================================================
+   Vehicle Tracking + Safety — map/list split, KPI reflow, table scroll
+   ============================================================================= */
+body.erp-maintenance #section-tracking.section.active,
+body.erp-maintenance #section-safety.section.active {
+  min-height: 0;
+}
+
+body.erp-maintenance #section-tracking.section.active > .tracking-sub:not(.hidden),
+body.erp-maintenance #section-safety.section.active > .tracking-sub:not(.hidden) {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body.erp-maintenance #section-tracking.section.active > div:first-child,
+body.erp-maintenance #section-tracking.section.active > .grid,
+body.erp-maintenance #section-tracking.section.active > .subtabs {
+  flex-shrink: 0;
+}
+
+body.erp-maintenance #section-safety.section.active > .subtabs {
+  flex-shrink: 0;
+}
+
+body.erp-maintenance #section-tracking .grid.grid-4.erp-kpi-grid.erp-ops-kpi-strip,
+body.erp-maintenance #section-tracking .erp-ops-kpi-strip.grid-4 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+body.erp-maintenance #section-tracking .erp-ops-kpi-strip > .metric {
+  flex: 1 1 11rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #section-safety .erp-ops-kpi-strip,
+body.erp-maintenance #section-safety .grid.grid-4.erp-kpi-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+body.erp-maintenance #section-safety .erp-ops-kpi-strip > .metric,
+body.erp-maintenance #section-safety .grid.grid-4.erp-kpi-grid > .metric {
+  flex: 1 1 11rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #section-tracking #tr-map .track-grid.erp-ops-split {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: min(50vh, 100%);
+  gap: 12px;
+}
+
+body.erp-maintenance #section-tracking #tr-map .track-grid.erp-ops-split > .panel {
+  flex: 1 1 17.5rem;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body.erp-maintenance #section-tracking #tr-map .track-grid.erp-ops-split > .panel > .panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+body.erp-maintenance #section-tracking #tr-map .track-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+}
+
+body.erp-maintenance #section-tracking #tr-map #erpTrackingMap {
+  flex: 1 1 auto;
+  min-height: min(38vh, 100%);
+  height: auto;
+  max-height: none;
+}
+
+body.erp-maintenance #section-safety .safety-active-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+body.erp-maintenance #section-safety .safety-active-grid .safety-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+body.erp-maintenance #section-safety .tracking-sub:not(.hidden) > .safety-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+}
+
+/* =============================================================================
    Rule 10 — Maintenance expense doc shell (Accounting → AP form)
    ============================================================================= */
 body.erp-maintenance #acct-transactions .qb-doc-shell--ap-spec {

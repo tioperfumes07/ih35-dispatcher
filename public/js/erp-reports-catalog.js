@@ -1576,6 +1576,570 @@ ${extraCss}
     if (typeof openReportsTab === 'function') openReportsTab('rep-dynamic', null);
   }
 
+  function repFmtUsFromDate(d) {
+    const x = d instanceof Date ? d : new Date(d);
+    if (Number.isNaN(x.getTime())) return '';
+    return `${pad2(x.getMonth() + 1)}/${pad2(x.getDate())}`;
+  }
+
+  function repParseUsToIso(s) {
+    const m = String(s || '')
+      .trim()
+      .match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+    if (!m) return '';
+    const mo = parseInt(m[1], 10);
+    const da = parseInt(m[2], 10);
+    let yr = m[3] != null && String(m[3]).trim() !== '' ? parseInt(m[3], 10) : new Date().getFullYear();
+    if (yr < 100) yr += 2000;
+    const dt = new Date(yr, mo - 1, da);
+    if (dt.getMonth() !== mo - 1 || dt.getDate() !== da) return '';
+    return ymd(dt);
+  }
+
+  function repSyncDateInputsFromQuick() {
+    const quick = document.getElementById('repDateQuick')?.value || '30';
+    const fromI = document.getElementById('repDateFrom');
+    const toI = document.getElementById('repDateTo');
+    if (!fromI || !toI) return;
+    if (quick === 'custom') return;
+    const end = new Date();
+    end.setHours(0, 0, 0, 0);
+    let start = new Date(end);
+    if (quick === '7') start.setDate(start.getDate() - 7);
+    else if (quick === 'month') start = new Date(end.getFullYear(), end.getMonth(), 1);
+    else start.setDate(start.getDate() - 30);
+    fromI.value = repFmtUsFromDate(start);
+    toI.value = repFmtUsFromDate(end);
+  }
+
+  function repGetSidebarDateIsoRange() {
+    const quick = document.getElementById('repDateQuick')?.value || '30';
+    if (quick === 'custom') {
+      const a = repParseUsToIso(document.getElementById('repDateFrom')?.value || '');
+      const b = repParseUsToIso(document.getElementById('repDateTo')?.value || '');
+      if (a && b) return a <= b ? { start: a, end: b } : { start: b, end: a };
+    } else {
+      repSyncDateInputsFromQuick();
+    }
+    const end = new Date();
+    end.setHours(0, 0, 0, 0);
+    let start = new Date(end);
+    const q = document.getElementById('repDateQuick')?.value || '30';
+    if (q === '7') start.setDate(start.getDate() - 7);
+    else if (q === 'month') start = new Date(end.getFullYear(), end.getMonth(), 1);
+    else start.setDate(start.getDate() - 30);
+    return { start: ymd(start), end: ymd(end) };
+  }
+
+  function repCatalogBlob(it) {
+    return [it.title, it.desc, it.keywords, it.cat, it.source, it.subsection || '', it.dataset || '', it.legacy || '', it.qbo || '']
+      .join(' ')
+      .toLowerCase();
+  }
+
+  function repDefaultUnitsOptions() {
+    const demo = ['Unit 101', 'Unit 102', 'Unit 204', 'Unit 305', 'Unit 412', 'Unit 530'];
+    let veh = [];
+    try {
+      veh = (window.__vehiclesCache || []).length ? window.__vehiclesCache : typeof erp !== 'undefined' && Array.isArray(erp.vehicles) ? erp.vehicles : [];
+    } catch (_) {
+      veh = [];
+    }
+    const names = [];
+    for (const v of veh) {
+      const n = String(v?.name || v?.unit || '').trim();
+      if (n) names.push(n);
+    }
+    return [...new Set([...demo, ...names])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }
+
+  function repMountMultiSelect(mountEl, opts) {
+    if (!mountEl) return null;
+    const allowCustom = !!opts.allowCustom;
+    let allOpts = [...new Set((opts.initialOptions || []).filter(Boolean))];
+    const selected = new Set();
+    let searchQ = '';
+    const root = document.createElement('div');
+    root.className = 'rep-filter-ms';
+    root.innerHTML = `<input type="text" class="rep-filter-ms__search" placeholder="Search or add..." aria-label="Filter options" />
+    <div class="rep-filter-ms__chips"></div>
+    <div class="rep-filter-ms__opts"></div>
+    <div class="rep-filter-ms__add hidden" role="button" tabindex="0"></div>`;
+    mountEl.innerHTML = '';
+    mountEl.appendChild(root);
+    const inp = root.querySelector('.rep-filter-ms__search');
+    const chips = root.querySelector('.rep-filter-ms__chips');
+    const optsBox = root.querySelector('.rep-filter-ms__opts');
+    const addRow = root.querySelector('.rep-filter-ms__add');
+    const norm = s => String(s || '')
+      .trim()
+      .toLowerCase();
+    function filteredOpts() {
+      const q = norm(searchQ);
+      return allOpts.filter(o => !q || norm(o).includes(q)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
+    function renderChips() {
+      chips.innerHTML = [...selected]
+        .map(v => {
+          const enc = encodeURIComponent(v);
+          return `<span class="rep-filter-ms__chip" data-v="${enc}">${escapeHtml(v)}<button type="button" aria-label="Remove">×</button></span>`;
+        })
+        .join('');
+      chips.querySelectorAll('.rep-filter-ms__chip button').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const wrap = btn.closest('.rep-filter-ms__chip');
+          let raw = '';
+          try {
+            raw = decodeURIComponent(wrap?.getAttribute('data-v') || '');
+          } catch (_) {
+            raw = wrap?.getAttribute('data-v') || '';
+          }
+          selected.delete(raw);
+          renderChips();
+          renderOpts();
+        });
+      });
+    }
+    function toggleOpt(v) {
+      if (selected.has(v)) selected.delete(v);
+      else selected.add(v);
+      renderChips();
+      renderOpts();
+    }
+    function renderOpts() {
+      const list = filteredOpts();
+      optsBox.innerHTML = list
+        .map(v => {
+          const on = selected.has(v);
+          return `<label class="rep-filter-ms__opt"><input type="checkbox"${on ? ' checked' : ''}/><span>${escapeHtml(v)}</span></label>`;
+        })
+        .join('');
+      optsBox.querySelectorAll('label').forEach((lab, i) => {
+        const v = list[i];
+        const cb = lab.querySelector('input');
+        if (cb)
+          cb.onchange = () => {
+            toggleOpt(v);
+          };
+      });
+      const qtrim = inp.value.trim();
+      const qc = norm(qtrim);
+      const exists = qc && allOpts.some(o => norm(o) === qc);
+      if (allowCustom && qc && !exists) {
+        addRow.classList.remove('hidden');
+        addRow.textContent = '+ Add custom ' + qtrim;
+      } else {
+        addRow.classList.add('hidden');
+      }
+    }
+    inp.addEventListener('input', () => {
+      searchQ = inp.value;
+      renderOpts();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!addRow.classList.contains('hidden')) {
+          const v = inp.value.trim();
+          if (!v) return;
+          if (!allOpts.includes(v)) allOpts.push(v);
+          selected.add(v);
+          inp.value = '';
+          searchQ = '';
+          renderChips();
+          renderOpts();
+        }
+      }
+    });
+    addRow.addEventListener('click', () => {
+      const v = inp.value.trim();
+      if (!v) return;
+      if (!allOpts.includes(v)) allOpts.push(v);
+      selected.add(v);
+      inp.value = '';
+      searchQ = '';
+      renderChips();
+      renderOpts();
+    });
+    renderChips();
+    renderOpts();
+    return {
+      getSelected: () => [...selected],
+      getAllOptions: () => [...allOpts]
+    };
+  }
+
+  function repExecuteCatalogAction(it) {
+    if (!it) return;
+    if (it.custom === 'new') {
+      if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('custom');
+      return;
+    }
+    if (it.custom === 'dot-audit-config') {
+      repOpenDotAuditConfigurator();
+      return;
+    }
+    if (it.custom === 'integrity-dashboard') {
+      if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar('rep-integrity');
+      else if (typeof openReportsTab === 'function') openReportsTab('rep-integrity', null);
+      return;
+    }
+    if (it.custom === 'scheduled') {
+      if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('scheduled');
+      return;
+    }
+    if (it.legacy) {
+      if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar(it.legacy);
+      return;
+    }
+    if (it.dataset === 'g2-driver-dot-audit') {
+      const id = prompt('Driver id or name slug for DOT driver audit:');
+      if (!id) return;
+      window.open('/api/reports/dot/driver-audit/' + encodeURIComponent(id.trim()), '_blank', 'noopener');
+      return;
+    }
+    if (it.dataset) {
+      void repOpenDataset(it.dataset, it.title);
+      return;
+    }
+    if (it.qbo) {
+      void repOpenQbo(it.qbo, it.title);
+      return;
+    }
+    if (it.dotPdf) repOpenDotPdf();
+  }
+
+  function repCatalogItemsForCurrentTab() {
+    if (__repCat === 'overview') return REP_ITEMS.slice();
+    return REP_ITEMS.filter(x => x.cat === __repCat);
+  }
+
+  function repBindCatalogWrap(wrap) {
+    const t = wrap.getAttribute('data-rep-title');
+    const it = REP_ITEMS.find(x => x.title === t);
+    if (!it) return;
+    const run = e => {
+      if (e) e.preventDefault();
+      repExecuteCatalogAction(it);
+    };
+    wrap.querySelector('.rep-catalog-card')?.addEventListener('click', run);
+    wrap.querySelector('.rep-catalog-card__open')?.addEventListener('click', e => {
+      e.stopPropagation();
+      run(e);
+    });
+    wrap.querySelector('.rep-catalog-card__fs')?.addEventListener('click', e => {
+      e.stopPropagation();
+      const el = wrap;
+      if (typeof erpRequestElementFullscreen === 'function') {
+        const cur = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+        if (cur === el) {
+          const ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+          if (ex) ex.call(document).catch(() => {});
+        } else {
+          void erpRequestElementFullscreen(el).catch(() => {});
+        }
+      }
+    });
+  }
+
+  function repApplySidebarFilters() {
+    const loc = (document.getElementById('repFlLocation')?.value || '').trim().toLowerCase();
+    const vend = (document.getElementById('repFlVendor')?.value || '').trim().toLowerCase();
+    const drv = (document.getElementById('repFlDriver')?.value || '').trim().toLowerCase();
+    const locType = (document.getElementById('repLocTypeWo')?.value || '').trim().toLowerCase();
+    const units = __repMsUnits ? __repMsUnits.getSelected() : [];
+    const svcs = __repMsSvc ? __repMsSvc.getSelected() : [];
+    const recs = __repMsRec ? __repMsRec.getSelected() : [];
+    document.querySelectorAll('#repCatalogGrid .rep-catalog-card-wrap').forEach(wrap => {
+      const blob = (wrap.getAttribute('data-rep-blob') || '') + ' ' + (wrap.textContent || '');
+      const b = blob.toLowerCase();
+      let ok = true;
+      if (loc && !b.includes(loc)) ok = false;
+      if (vend && !b.includes(vend)) ok = false;
+      if (drv && !b.includes(drv)) ok = false;
+      if (locType) {
+        const hit =
+          (locType === 'terminal' && b.includes('terminal')) ||
+          (locType === 'shop' && (b.includes('shop') || b.includes('vendor'))) ||
+          (locType === 'roadside' && b.includes('road'));
+        if (!hit) ok = false;
+      }
+      if (ok && units.length) {
+        const hitU = units.some(u => {
+          const t = String(u || '')
+            .trim()
+            .toLowerCase();
+          if (!t) return false;
+          if (b.includes(t)) return true;
+          const num = t.replace(/^unit\s*/i, '').trim();
+          return Boolean(num && b.includes(num));
+        });
+        if (!hitU) ok = false;
+      }
+      if (ok && svcs.length) {
+        const hitS = svcs.some(s => {
+          const t = String(s || '')
+            .trim()
+            .toLowerCase();
+          return t && b.includes(t);
+        });
+        if (!hitS) ok = false;
+      }
+      if (ok && recs.length) {
+        const hitR = recs.some(s => {
+          const t = String(s || '')
+            .trim()
+            .toLowerCase();
+          return t && b.includes(t);
+        });
+        if (!hitR) ok = false;
+      }
+      wrap.classList.toggle('rep-sidebar-filtered-out', !ok);
+    });
+    if (typeof window.repRefreshPartsCatalog === 'function') void window.repRefreshPartsCatalog();
+  }
+
+  function repBadgeStatus(n) {
+    if (n >= 5) return { cls: 'rep-badge--ok', label: 'In stock', key: 'in' };
+    if (n >= 2) return { cls: 'rep-badge--warn', label: 'Low stock', key: 'low' };
+    return { cls: 'rep-badge--bad', label: 'Out of stock', key: 'out' };
+  }
+
+  function repAggregatePartsFromRows(rows) {
+    const map = new Map();
+    for (const r of rows || []) {
+      const pn = String(r.partNumber || '').trim() || '—';
+      const name = String(r.description || r.sku || '').trim() || pn;
+      const cat = String(r.serviceType || r.recordCategory || '').trim() || '—';
+      const key = pn + '\t' + name;
+      let g = map.get(key);
+      if (!g) {
+        g = { partName: name, partNo: pn, category: cat, count: 0, costSum: 0 };
+        map.set(key, g);
+      }
+      g.count += 1;
+      g.costSum += Number(r.amount) || 0;
+      if (cat && cat !== '—' && (g.category === '—' || !g.category)) g.category = cat;
+    }
+    const out = [];
+    for (const g of map.values()) {
+      const avg = g.count ? Math.round((g.costSum / g.count) * 100) / 100 : 0;
+      const st = repBadgeStatus(g.count);
+      out.push({
+        partName: g.partName,
+        partNo: g.partNo,
+        category: g.category,
+        stock: g.count,
+        unitCost: avg,
+        statusKey: st.key,
+        statusLabel: st.label,
+        statusCls: st.cls
+      });
+    }
+    for (const m of __repPartsManual || []) {
+      if (!m || !m.partName) continue;
+      const st = repBadgeStatus(Number(m.stock) || 1);
+      out.push({
+        partName: m.partName,
+        partNo: m.partNo || '—',
+        category: m.category || '—',
+        stock: Number(m.stock) || 1,
+        unitCost: Number(m.unitCost) || 0,
+        statusKey: st.key,
+        statusLabel: st.label,
+        statusCls: st.cls,
+        manual: 1
+      });
+    }
+    out.sort((a, b) => String(a.partName).localeCompare(String(b.partName), undefined, { numeric: true }));
+    return out;
+  }
+
+  function repPopulatePartsCategorySelects(rows) {
+    const cats = [...new Set((rows || []).map(r => String(r.category || '').trim()).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true })
+    );
+    const sel = document.getElementById('repPartsCatFilter');
+    const selN = document.getElementById('repPartsNewCat');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      if (cur && cats.includes(cur)) sel.value = cur;
+    }
+    if (selN) {
+      const curN = selN.value;
+      selN.innerHTML = '<option value="">Category</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      if (curN && cats.includes(curN)) selN.value = curN;
+    }
+  }
+
+  function repApplyPartsToolbarFilter() {
+    const q = (document.getElementById('repPartsSearch')?.value || '').trim().toLowerCase();
+    const cf = document.getElementById('repPartsCatFilter')?.value || '';
+    const sf = document.getElementById('repPartsStatusFilter')?.value || '';
+    document.querySelectorAll('#repPartsTbody tr[data-part-row]').forEach(tr => {
+      const blob = (tr.getAttribute('data-search') || '').toLowerCase();
+      const st = tr.getAttribute('data-status') || '';
+      const cat = tr.getAttribute('data-category') || '';
+      let ok = true;
+      if (q && !blob.includes(q)) ok = false;
+      if (cf && cat !== cf) ok = false;
+      if (sf && st !== sf) ok = false;
+      tr.classList.toggle('hidden', !ok);
+    });
+  }
+
+  async function repRefreshPartsCatalog() {
+    const tbody = document.getElementById('repPartsTbody');
+    const tbl = document.getElementById('repPartsTable');
+    if (!tbody || !tbl) return;
+    const { start, end } = repGetSidebarDateIsoRange();
+    const qs = new URLSearchParams();
+    qs.set('startDate', start);
+    qs.set('endDate', end);
+    tbody.innerHTML = `<tr><td colspan="7" class="mini-note">Loading…</td></tr>`;
+    try {
+      const data = await j('/api/reports/maintenance/parts-positions?' + qs.toString());
+      if (!data) throw new Error('No data');
+      if (data.meta && data.meta.error && !(data.rows && data.rows.length)) throw new Error(data.meta.error || 'Load failed');
+      const rows = data.rows || [];
+      window.__repPartsAggRows = repAggregatePartsFromRows(rows);
+      repPopulatePartsCategorySelects(window.__repPartsAggRows);
+      if (!window.__repPartsAggRows.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="mini-note">No part lines in this range.</td></tr>`;
+      } else {
+        tbody.innerHTML = window.__repPartsAggRows
+          .map(r => {
+            const searchBlob = `${r.partName} ${r.partNo} ${r.category}`.toLowerCase();
+            return `<tr data-part-row="1" data-search="${escapeHtml(searchBlob)}" data-status="${escapeHtml(r.statusKey)}" data-category="${escapeHtml(
+              r.category
+            )}">
+            <td>${escapeHtml(r.partName)}</td>
+            <td>${escapeHtml(r.partNo)}</td>
+            <td>${escapeHtml(r.category)}</td>
+            <td>${escapeHtml(String(r.stock))}</td>
+            <td>${escapeHtml(String(r.unitCost))}</td>
+            <td><span class="${escapeHtml(r.statusCls)}">${escapeHtml(r.statusLabel)}</span></td>
+            <td><button type="button" class="btn rep-parts-toolbar-btn" data-edit-parts="1">Edit</button></td>
+          </tr>`;
+          })
+          .join('');
+        tbody.querySelectorAll('button[data-edit-parts]').forEach(btn => {
+          btn.addEventListener('click', () => void repOpenDataset('a11-parts-positions', 'Parts / positions (line detail)'));
+        });
+      }
+      if (typeof tbl.__erpColResizeDispose === 'function') tbl.__erpColResizeDispose();
+      if (window.ErpColumnResize && typeof window.ErpColumnResize.bindToTable === 'function') {
+        window.ErpColumnResize.bindToTable(tbl, { showHint: false });
+      }
+      repApplyPartsToolbarFilter();
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="7" class="mini-note" style="color:var(--color-semantic-error)">${escapeHtml(String(e.message || e))}</td></tr>`;
+    }
+  }
+
+  function repInitReportsFiltersAndParts() {
+    const sb = document.getElementById('repFilterSidebar');
+    if (!sb || sb.dataset.repFilterInit === '1') return;
+    sb.dataset.repFilterInit = '1';
+    repSyncDateInputsFromQuick();
+    document.getElementById('repDateQuick')?.addEventListener('change', () => {
+      repSyncDateInputsFromQuick();
+    });
+    __repMsUnits = repMountMultiSelect(document.getElementById('repMsUnits'), {
+      allowCustom: true,
+      initialOptions: repDefaultUnitsOptions()
+    });
+    __repMsSvc = repMountMultiSelect(document.getElementById('repMsSvcType'), {
+      allowCustom: true,
+      initialOptions: REP_SERVICE_TYPE_DEFAULTS.slice()
+    });
+    __repMsRec = repMountMultiSelect(document.getElementById('repMsRecType'), {
+      allowCustom: true,
+      initialOptions: REP_RECORD_TYPE_DEFAULTS.slice()
+    });
+    document.getElementById('repFlApply')?.addEventListener('click', () => repApplySidebarFilters());
+    document.getElementById('repPartsSearch')?.addEventListener('input', repApplyPartsToolbarFilter);
+    document.getElementById('repPartsCatFilter')?.addEventListener('change', repApplyPartsToolbarFilter);
+    document.getElementById('repPartsStatusFilter')?.addEventListener('change', repApplyPartsToolbarFilter);
+    document.getElementById('repPartsExportXlsx')?.addEventListener('click', async () => {
+      try {
+        const rows = (window.__repPartsAggRows || []).map(r => ({
+          partName: r.partName,
+          partNo: r.partNo,
+          category: r.category,
+          stock: r.stock,
+          unitCost: r.unitCost,
+          status: r.statusLabel
+        }));
+        if (!rows.length && typeof erpNotify === 'function') {
+          erpNotify('Nothing to export yet.', 'warning');
+          return;
+        }
+        const stamp = new Date().toISOString().slice(0, 10);
+        if (window.ErpExportUtil && typeof window.ErpExportUtil.exportReport === 'function') {
+          await window.ErpExportUtil.exportReport(
+            'excel',
+            {
+              title: 'Parts catalog',
+              columns: [
+                { key: 'partName', label: 'Part name' },
+                { key: 'partNo', label: 'Part #' },
+                { key: 'category', label: 'Category' },
+                { key: 'stock', label: 'Stock' },
+                { key: 'unitCost', label: 'Unit cost' },
+                { key: 'status', label: 'Status' }
+              ],
+              rows,
+              totals: {},
+              filters: { startDate: repGetSidebarDateIsoRange().start, endDate: repGetSidebarDateIsoRange().end }
+            },
+            { filename: `PartsCatalog-${stamp}` }
+          );
+        }
+      } catch (e) {
+        if (typeof erpNotify === 'function') erpNotify(String(e.message || e), 'error');
+      }
+    });
+    document.getElementById('repPartsAddPartBtn')?.addEventListener('click', () => {
+      if (typeof repReportsRoadmapMsg === 'function') repReportsRoadmapMsg('custom');
+      else if (typeof erpNotify === 'function') erpNotify('Add part: use Maintenance work orders or roadmap.', 'info');
+    });
+    document.getElementById('repPartsFullscreenBtn')?.addEventListener('click', () => {
+      const host = document.getElementById('repPartsCatalogHost');
+      if (!host || typeof erpRequestElementFullscreen !== 'function') return;
+      const cur = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+      if (cur === host) {
+        const ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+        if (ex) ex.call(document).catch(() => {});
+      } else {
+        void erpRequestElementFullscreen(host).catch(() => {});
+      }
+    });
+    document.getElementById('repPartsAddRowBtn')?.addEventListener('click', () => {
+      const name = document.getElementById('repPartsNewName')?.value?.trim();
+      if (!name) {
+        if (typeof erpNotify === 'function') erpNotify('Enter a part name.', 'warning');
+        return;
+      }
+      const partNo = document.getElementById('repPartsNewNum')?.value?.trim() || '—';
+      const cat = document.getElementById('repPartsNewCat')?.value?.trim() || '—';
+      const stock = parseInt(document.getElementById('repPartsNewQty')?.value || '1', 10) || 1;
+      const unitCost = parseFloat(String(document.getElementById('repPartsNewCost')?.value || '0').replace(/[^0-9.-]/g, '')) || 0;
+      __repPartsManual.push({ partName: name, partNo, category: cat, stock, unitCost });
+      document.getElementById('repPartsNewName').value = '';
+      document.getElementById('repPartsNewNum').value = '';
+      document.getElementById('repPartsNewQty').value = '';
+      document.getElementById('repPartsNewCost').value = '';
+      void repRefreshPartsCatalog();
+    });
+    void repRefreshPartsCatalog();
+  }
+
+  window.repRefreshPartsCatalog = repRefreshPartsCatalog;
+  window.repInitReportsFiltersAndParts = repInitReportsFiltersAndParts;
+
   function repOpenDotPdf() {
     const u = prompt('Enter unit number (vehicle name) for DOT audit PDF:');
     if (!u) return;
