@@ -102,8 +102,9 @@
       if (!s.accidentDotTouched) {
         pushErr('accidentDotReportableInput', 'acc_dot_ack', 'Confirm DOT reportable status (toggle the checkbox).');
       }
-      if (!String(s.driverId || '').trim()) {
-        pushErr('maintRecordDriverSearch', 'acc_driver', 'Driver is required for accident.');
+      const driverNamed = String(s.driverName || '').trim();
+      if (!String(s.driverId || '').trim() && !driverNamed) {
+        pushErr('maintRecordDriverSearch', 'acc_driver', 'Driver is required for accident (select a catalog driver or type a name).');
       }
     }
 
