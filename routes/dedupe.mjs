@@ -407,6 +407,7 @@ export function mountDedupeRoutes(app, deps) {
       } catch (e) {
         status = 'failed';
         errText = e?.message || String(e);
+        await ensureDedupeWritePathObjects();
         await dbQuery(
           `INSERT INTO merge_log (merge_type, kept_qbo_id, kept_name, merged_qbo_id, merged_name, merged_by, transactions_transferred, erp_records_updated, qbo_api_responses, status, error_details)
            VALUES ('vendor',$1,$2,$3,$4,$5,0,0,$6,'failed',$7)`,
@@ -423,6 +424,7 @@ export function mountDedupeRoutes(app, deps) {
 
       if (partial) status = 'partial_error';
 
+      await ensureDedupeWritePathObjects();
       await dbQuery(
         `INSERT INTO merge_log (merge_type, kept_qbo_id, kept_name, merged_qbo_id, merged_name, merged_by, transactions_transferred, erp_records_updated, qbo_api_responses, status, error_details)
          VALUES ('vendor',$1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
@@ -493,6 +495,7 @@ export function mountDedupeRoutes(app, deps) {
         qboResponses.steps = result.audit;
       } catch (e) {
         const errText = e?.message || String(e);
+        await ensureDedupeWritePathObjects();
         await dbQuery(
           `INSERT INTO merge_log (merge_type, kept_qbo_id, kept_name, merged_qbo_id, merged_name, merged_by, transactions_transferred, erp_records_updated, qbo_api_responses, status, error_details)
            VALUES ('customer',$1,$2,$3,$4,$5,0,0,$6,'failed',$7)`,
@@ -503,6 +506,7 @@ export function mountDedupeRoutes(app, deps) {
 
       let partial = result.audit.some(x => x.ok === false);
       let st = partial ? 'partial_error' : 'success';
+      await ensureDedupeWritePathObjects();
       await dbQuery(
         `INSERT INTO merge_log (merge_type, kept_qbo_id, kept_name, merged_qbo_id, merged_name, merged_by, transactions_transferred, erp_records_updated, qbo_api_responses, status, error_details)
          VALUES ('customer',$1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
