@@ -2705,15 +2705,17 @@ body.erp-maintenance .maint-board-stage {
 body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   gap: 16px;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
   box-sizing: border-box;
 }
 body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card {
   flex: 1;
-  min-width: 180px;
+  min-width: min(180px, 100%);
   max-width: 100%;
   box-sizing: border-box;
 }

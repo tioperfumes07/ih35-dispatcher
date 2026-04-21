@@ -35,7 +35,8 @@ body.erp-maintenance .maint-action-strip__tabs {
 
 body.erp-maintenance .maint-action-strip__tabs .maint-action-strip__btn {
   flex: 1;
-  min-width: 160px;
+  min-width: min(160px, 100%);
+  max-width: 100%;
   box-sizing: border-box;
 }
 
@@ -97,7 +98,8 @@ body.erp-maintenance .maint-action-strip .erp-help-tip__btn:hover {
 
 body.erp-maintenance .maint-action-strip__btn {
   height: var(--erp-maint-strip-control-height, 30px);
-  min-width: 9.5rem;
+  min-width: min(160px, 100%);
+  max-width: 100%;
   padding: 0 12px;
   font-size: var(--erp-maint-strip-font-size, 12px);
   font-weight: 500;
@@ -2958,15 +2960,17 @@ body.erp-maintenance #section-dashboard .metric-value {
 body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   gap: 16px;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }
 
 body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card {
   flex: 1;
-  min-width: 180px;
+  min-width: min(180px, 100%);
   max-width: 100%;
   min-height: 92px;
   display: flex;

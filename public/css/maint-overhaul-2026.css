@@ -23,6 +23,7 @@ body.erp-maintenance #section-maintenance > .maint-kpi-strip.maint-kpi-strip--co
 body.erp-maintenance #section-maintenance > .maint-kpi-strip.maint-kpi-strip--compact .maint-kpi-cards {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   gap: 16px;
   width: 100%;
   max-width: 100%;
@@ -32,7 +33,7 @@ body.erp-maintenance #section-maintenance > .maint-kpi-strip.maint-kpi-strip--co
 
 body.erp-maintenance #section-maintenance > .maint-kpi-strip.maint-kpi-strip--compact .maint-kpi-card {
   flex: 1;
-  min-width: 180px;
+  min-width: min(180px, 100%);
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -42,7 +43,7 @@ body.erp-maintenance #section-maintenance .maint-action-strip .maint-action-stri
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  width: 100%;
+  flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
@@ -51,7 +52,7 @@ body.erp-maintenance #section-maintenance .maint-action-strip .maint-action-stri
 
 body.erp-maintenance #section-maintenance .maint-action-strip .maint-action-strip__tabs .maint-action-strip__btn {
   flex: 1;
-  min-width: 160px;
+  min-width: min(160px, 100%);
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -100,7 +101,8 @@ body.erp-maintenance .maint-action-strip__tabs {
 
 body.erp-maintenance .maint-action-strip__btn {
   flex: 1;
-  min-width: 160px;
+  min-width: min(160px, 100%);
+  max-width: 100%;
   box-sizing: border-box;
 }
 

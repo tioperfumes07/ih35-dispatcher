@@ -144,6 +144,49 @@
     );
   }
 
+  function fuelFastEntryHtml() {
+    const today = isoFromDate(new Date());
+    return (
+      workflowShellTop(
+        'Layout preview for Fuel & DEF fast entry. Clear resets the composer; Save / QBO actions stay disabled until the ledger API hooks this surface.'
+      ) +
+      '<div class="erp-acct-workflow-section">' +
+      '<div class="erp-acct-workflow-h">Header</div>' +
+      '<div class="erp-acct-field-grid erp-fe-head">' +
+      '<div class="erp-acct-field"><span class="qb-l">Type</span><select class="qb-in" id="feType"><option>Diesel</option><option>DEF</option><option>Reefer</option></select></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Txn date</span><input type="date" class="qb-in" id="feDate" value="' +
+      today +
+      '" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Vendor</span><input class="qb-in" list="qboVendorOptions" id="feVendor" placeholder="QuickBooks vendor" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Unit</span><input class="qb-in" list="unitOptions" id="feUnit" placeholder="Unit / asset" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Payment method</span><input class="qb-in" list="paymentMethodOptions" id="fePayMethod" placeholder="Card, ACH…" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Load / inv #</span><input class="qb-in" id="feLoadInv" placeholder="Load or invoice" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Vendor inv #</span><input class="qb-in" id="feVendorInv" placeholder="Supplier #" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Shop / WO #</span><input class="qb-in" id="feShopWo" placeholder="Internal WO" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Expense #</span><input class="qb-in" id="feExpenseNo" placeholder="Doc number" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Pay from bank</span><input class="qb-in" list="qboBankAccountOptions" id="feBank" placeholder="Bank account" /></div>' +
+      '</div></div>' +
+      '<div class="erp-acct-workflow-section">' +
+      '<div class="erp-acct-workflow-h">Cost lines</div>' +
+      '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table" id="feCostTable">' +
+      '<thead><tr><th class="num">Qty (gal)</th><th class="num">$/gal</th><th class="num">Line $</th><th></th></tr></thead><tbody>' +
+      '<tr><td><input class="qb-in fe-qty num" inputmode="decimal" placeholder="0" /></td><td><input class="qb-in fe-rate num" inputmode="decimal" placeholder="0.0000" /></td><td><input class="qb-in fe-line num" readonly placeholder="—" /></td><td><button type="button" class="erp-acct-btn erp-acct-btn--muted fe-rm" disabled>Remove</button></td></tr>' +
+      '</tbody></table></div>' +
+      '<div style="margin-top:8px"><button type="button" class="erp-acct-btn erp-acct-btn--muted" id="feAddLine">Add line</button></div></div>' +
+      '<div class="erp-acct-workflow-section">' +
+      '<div class="erp-acct-field" style="max-width:100%"><span class="qb-l">Memo</span><textarea class="qb-memo" id="feMemo" rows="2" style="width:100%;min-width:0;resize:vertical;box-sizing:border-box" placeholder="Notes for auditors…"></textarea></div></div>' +
+      renderDateBarHtml('fe_hist', '') +
+      '<div class="erp-acct-workflow-section"><div class="erp-acct-workflow-h">History</div>' +
+      '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table"><thead><tr><th>Date</th><th>Vendor</th><th>Unit</th><th class="num">Gallons</th><th class="num">Total</th><th>QBO</th></tr></thead><tbody><tr><td colspan="6" class="mini-note">Apply the date bar to scope preview rows when the fuel API is connected.</td></tr></tbody></table></div></div>' +
+      '<div class="erp-acct-workflow-foot">' +
+      '<button type="button" class="erp-acct-btn" data-erp-ded-close="1">Cancel</button>' +
+      '<button type="button" class="erp-acct-btn erp-acct-btn--muted" id="feClear">Clear</button>' +
+      '<button type="button" class="erp-acct-btn erp-acct-btn--green" disabled title="Coming soon">Save to ledger</button>' +
+      '<button type="button" class="erp-acct-btn erp-acct-btn--blue" disabled title="Coming soon">Confirm to QBO</button>' +
+      '</div></div>'
+    );
+  }
+
   function journalHtml() {
     const today = isoFromDate(new Date());
     return (
