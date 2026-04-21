@@ -3,6 +3,18 @@
  * Uses: j(), escapeHtml(), openReportsTab(), openReportsTabFromSidebar(), repReportsRoadmapMsg(), erpNotify(), authFetchHeaders().
  */
 (function () {
+  /** One-shot extra query params applied on next dataset open (e.g. drill-down from location summary). */
+  window.__repPendingExtraParams = window.__repPendingExtraParams || null;
+
+  function slugifyRepSectionId(t) {
+    return (
+      'rep-grp-' +
+      String(t || 'sec')
+        .replace(/[^\w.-]+/g, '-')
+        .slice(0, 96)
+    );
+  }
+
   const SAM = 'Samsara';
   const QBO = 'QuickBooks';
   const ERP = 'ERP';
@@ -278,7 +290,8 @@ tr:nth-child(even){background:#f9f9f9}
             columns: st.columns,
             rows: st.rows,
             totals: st.totals || {},
-            filters: { startDate: st.startDate, endDate: st.endDate, unit: st.unitTag }
+            filters: { startDate: st.startDate, endDate: st.endDate, unit: st.unitTag },
+            groupedSections: st.groupedSections || null
           },
           {
             filename: st.title || 'Report',
@@ -354,14 +367,44 @@ tr:nth-child(even){background:#f9f9f9}
     return `<table class="rep-dyn-table rep-pm-schedule-table" style="min-width:520px;font-size:12px;width:100%"><thead><tr>${th}</tr></thead><tbody>${tr || ''}</tbody></table>`;
   }
 
-  function renderSortableTable(columns, rows) {
+  const RECORD_TYPE_ROW_CLASS = {
+    pm_service: 'rep-row-rt rep-row-rt--pm',
+    maintenance: 'rep-row-rt rep-row-rt--maint',
+    repair: 'rep-row-rt rep-row-rt--repair',
+    inspection: 'rep-row-rt rep-row-rt--insp',
+    tire: 'rep-row-rt rep-row-rt--tire',
+    air_bag: 'rep-row-rt rep-row-rt--airbag',
+    battery: 'rep-row-rt rep-row-rt--battery',
+    accident: 'rep-row-rt rep-row-rt--accident',
+    body: 'rep-row-rt rep-row-rt--body',
+    other: 'rep-row-rt rep-row-rt--other'
+  };
+
+  function maintRowClassFromRow(r) {
+    const k = String(r.recordCategory || r.recordCategoryKey || '').trim().toLowerCase();
+    if (k && RECORD_TYPE_ROW_CLASS[k]) return RECORD_TYPE_ROW_CLASS[k];
+    const blob = `${r.recordType || ''} ${r.recordCategory || ''}`.toLowerCase();
+    if (blob.includes('pm')) return RECORD_TYPE_ROW_CLASS.pm_service;
+    if (blob.includes('inspect')) return RECORD_TYPE_ROW_CLASS.inspection;
+    if (blob.includes('tire')) return RECORD_TYPE_ROW_CLASS.tire;
+    if (blob.includes('air')) return RECORD_TYPE_ROW_CLASS.air_bag;
+    if (blob.includes('battery')) return RECORD_TYPE_ROW_CLASS.battery;
+    if (blob.includes('accident') || blob.includes('collision')) return RECORD_TYPE_ROW_CLASS.accident;
+    if (blob.includes('body')) return RECORD_TYPE_ROW_CLASS.body;
+    if (blob.includes('repair')) return RECORD_TYPE_ROW_CLASS.repair;
+    if (blob.includes('maint')) return RECORD_TYPE_ROW_CLASS.maintenance;
+    return '';
+  }
+
+  function renderSortableTable(columns, rows, rowClassFn) {
     const keys = columns.map(c => c.key);
     const th = columns.map(c => `<th data-k="${escapeHtml(c.key)}">${escapeHtml(c.label)}</th>`).join('');
     const tr = (rows || [])
-      .map(
-        r =>
-          `<tr>${keys.map(k => `<td>${escapeHtml(String(r[k] ?? ''))}</td>`).join('')}</tr>`
-      )
+      .map(r => {
+        const rc = rowClassFn ? rowClassFn(r) : '';
+        const cls = rc ? ` class="${rc}"` : '';
+        return `<tr${cls}>${keys.map(k => `<td>${escapeHtml(String(r[k] ?? ''))}</td>`).join('')}</tr>`;
+      })
       .join('');
     return `<table class="rep-dyn-table" style="min-width:520px;font-size:12px;width:100%"><thead><tr>${th}</tr></thead><tbody>${tr || ''}</tbody></table>`;
   }
@@ -443,14 +486,17 @@ tr:nth-child(even){background:#f9f9f9}
   ]);
 
   function filterPanelOptionsFor(datasetId) {
-    const base = [
+    const fullMaint = [
       'dateRange',
       'units',
       'recordTypes',
       'locationCategories',
+      'locationNames',
       'vendors',
       'drivers',
       'serviceTypesPick',
+      'fleetTypes',
+      'makes',
       'costRange',
       'sortBy'
     ];
@@ -471,35 +517,85 @@ tr:nth-child(even){background:#f9f9f9}
       { value: 'vehicle', label: 'Vehicle' },
       { value: 'service_type', label: 'Service type' }
     ];
+    const gbCostUnit = [
+      { value: 'vehicle', label: 'Vehicle (unit)' },
+      { value: 'make', label: 'Make' },
+      { value: 'fleet_type', label: 'Fleet type' }
+    ];
+    const gbCostSvc = [
+      { value: 'service_type', label: 'Service type' },
+      { value: 'category', label: 'Category (rollup)' },
+      { value: 'record_type', label: 'Record type' }
+    ];
+    const gbTirePos = [
+      { value: 'position', label: 'Position' },
+      { value: 'vehicle', label: 'Unit' },
+      { value: 'date', label: 'Date' }
+    ];
     if (datasetId === 'm1-expense-by-service-type')
-      return { datasetId, defaultMonths: 12, features: [...base, 'groupBy'], groupByOptions: gbSvc };
-    if (datasetId === 'm2-maintenance-cost-pivot') return { datasetId, defaultMonths: 12, features: [...base] };
+      return { datasetId, defaultMonths: 12, features: [...fullMaint, 'groupBy'], groupByOptions: gbSvc };
+    if (datasetId === 'm2-maintenance-cost-pivot') return { datasetId, defaultMonths: 12, features: [...fullMaint] };
     if (datasetId === 'm3-repair-vs-maintenance')
-      return { datasetId, defaultMonths: 12, features: [...base, 'groupBy'], groupByOptions: gbMonth };
+      return { datasetId, defaultMonths: 12, features: [...fullMaint, 'groupBy'], groupByOptions: gbMonth };
     if (datasetId === 'm4-work-by-location')
-      return { datasetId, defaultMonths: 12, features: [...base, 'groupBy'], groupByOptions: gbLoc };
-    if (datasetId === 'm5-internal-external') return { datasetId, defaultMonths: 12, features: [...base] };
+      return { datasetId, defaultMonths: 12, features: [...fullMaint, 'groupBy'], groupByOptions: gbLoc };
+    if (datasetId === 'm5-internal-external') return { datasetId, defaultMonths: 12, features: [...fullMaint] };
     if (datasetId === 'm6-location-summary')
       return {
         datasetId,
         defaultMonths: 12,
-        features: ['dateRange', 'recordTypes', 'locationCategories', 'vendors', 'drivers', 'serviceTypesPick', 'sortBy']
+        features: ['dateRange', 'recordTypes', 'locationCategories', 'locationNames', 'makes', 'sortBy']
       };
-    if (datasetId === 'a4-pm-schedule') return { datasetId, defaultMonths: 3, features: ['units', 'showOverduePm'] };
-    return { datasetId, defaultMonths: 3, features: [...base] };
+    if (datasetId === 'a4-pm-schedule')
+      return { datasetId, defaultMonths: 3, features: ['units', 'fleetTypes', 'makes', 'recordTypes', 'showOverduePm'] };
+    if (datasetId === 'a1-work-order-history')
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'defectsOnly', 'groupBy'], groupByOptions: [{ value: 'none', label: 'None (flat list)' }] };
+    if (datasetId === 'a2-cost-by-unit')
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbCostUnit };
+    if (datasetId === 'a3-cost-by-service-type')
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbCostSvc };
+    if (datasetId === 'a8-accident-collision')
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'accidentExtra'] };
+    if (datasetId === 'a9-fleet-repair-monthly')
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbMonth };
+    if (datasetId === 'a5-tire-history' || datasetId === 'a6-air-bag-history' || datasetId === 'a10-inspection-history')
+      return { datasetId, defaultMonths: 3, features: [...fullMaint, 'groupBy'], groupByOptions: gbTirePos };
+    return { datasetId, defaultMonths: 3, features: [...fullMaint] };
+  }
+
+  function sectionBorderFromRecordCategory(cat) {
+    const k = String(cat || '').toLowerCase();
+    const map = {
+      pm_service: '#1a7a3c',
+      maintenance: '#1557a0',
+      repair: '#c5221f',
+      inspection: '#6200ea',
+      tire: '#f9ab00',
+      air_bag: '#00897b',
+      battery: '#e65100',
+      accident: '#b71c1c',
+      body: '#6a1b9a',
+      other: '#6b7385'
+    };
+    return map[k] || '#1557a0';
   }
 
   function renderGroupedSections(sections) {
-    const bar = (border, title, count, total, avg, bodyHtml) =>
-      `<details open class="rep-grp-sec" style="margin-bottom:10px;border:1px solid #e0e3eb;border-radius:8px;overflow:hidden">
+    const bar = (border, title, count, total, avg, bodyHtml, extraHead, secId) =>
+      `<details open class="rep-grp-sec" id="${escapeHtml(secId)}" style="margin-bottom:10px;border:1px solid #e0e3eb;border-radius:8px;overflow:hidden;scroll-margin-top:72px">
         <summary style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f1f3f4;border-left:4px solid ${border}">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="width:10px;height:10px;border-radius:50%;background:${border};flex-shrink:0" aria-hidden="true"></span>
             <span style="font-weight:600;font-size:13px;color:#1a1f36">${escapeHtml(title)}</span>
+            ${extraHead || ''}
             <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:#e8f0fe;color:#1557a0">${count} records</span>
           </div>
+          <div style="display:flex;align-items:center;gap:10px">
           <div style="text-align:right">
             <div style="font-size:14px;font-weight:500;color:#1a1f36">$${Number(total || 0).toFixed(2)}</div>
             <div style="font-size:11px;color:#6b7385">avg $${Number(avg || 0).toFixed(2)}</div>
+          </div>
+          <span class="rep-grp-chev" aria-hidden="true" style="font-size:12px;color:#6b7385">▼</span>
           </div>
         </summary>
         <div style="padding:8px">${bodyHtml}</div>
@@ -508,25 +604,49 @@ tr:nth-child(even){background:#f9f9f9}
     let i = 0;
     return (sections || [])
       .map(sec => {
-        const border = colors[i++ % colors.length];
+        const border = sec.recordCategory ? sectionBorderFromRecordCategory(sec.recordCategory) : colors[i++ % colors.length];
         const cols = sec.columns || [];
         const rows = sec.rows || [];
-        const body = rows.length ? renderSortableTable(cols, rows) : '<p class="mini-note">No rows in this group.</p>';
-        return bar(border, sec.title || sec.key, sec.recordCount ?? rows.length, sec.totalCost ?? 0, sec.avgCost ?? 0, body);
+        const body = rows.length ? renderSortableTable(cols, rows, maintRowClassFromRow) : '<p class="mini-note">No rows in this group.</p>';
+        const pill =
+          sec.categoryPill || sec.locationPill
+            ? `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:#ede7f6;color:#4527a0">${escapeHtml(
+                String(sec.categoryPill || sec.locationPill || '')
+              )}</span>`
+            : '';
+        const keys = cols.map(c => c.key);
+        const subTot =
+          rows.length && keys.some(k => /amount|total|cost|dollars|repair/i.test(k))
+            ? (() => {
+                const numKey = keys.find(k => /amount|total|cost|dollars|repair|actualrepair/i.test(k)) || keys[keys.length - 1];
+                const st = rows.reduce((s, r) => s + (Number(r[numKey]) || 0), 0);
+                return `<div class="mini-note" style="margin-top:6px;text-align:right;font-weight:600">Sub-total: $${st.toFixed(2)}</div>`;
+              })()
+            : '';
+        const slug = 'rep-grp-' + String(sec.title || sec.key || 'sec')
+          .replace(/[^\w.-]+/g, '-')
+          .slice(0, 96);
+        return bar(border, sec.title || sec.key, sec.recordCount ?? rows.length, sec.totalCost ?? 0, sec.avgCost ?? 0, body + subTot, pill, slug);
       })
       .join('');
   }
 
-  function renderSummaryCards(cards) {
+  function renderSummaryCards(cards, clickable) {
     if (!cards || !cards.length) return '';
     const cells = cards
-      .map(
-        c =>
-          `<div style="padding:10px;border:1px solid #e0e3eb;border-radius:8px;background:#fff">
+      .map((c, idx) => {
+        const slug =
+          'rep-grp-' +
+          String(c.scrollKey || c.label || idx)
+            .replace(/[^\w.-]+/g, '-')
+            .slice(0, 96);
+        const cursor = clickable ? 'cursor:pointer' : '';
+        const valColor = c.costColor || '#1557a0';
+        return `<div class="rep-grp-summary-card" data-scroll="${escapeHtml(slug)}" style="padding:10px;border:1px solid #e0e3eb;border-radius:8px;background:#fff;${cursor}">
           <div style="font-size:11px;color:#6b7385">${escapeHtml(c.label || '')}</div>
-          <div style="font-weight:600;font-size:13px;margin-top:4px;color:#1a1f36">${escapeHtml(c.value || '')}</div>
-        </div>`
-      )
+          <div style="font-weight:600;font-size:13px;margin-top:4px;color:${valColor}">${escapeHtml(c.value || '')}</div>
+        </div>`;
+      })
       .join('');
     return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px">${cells}</div>`;
   }
@@ -669,6 +789,15 @@ tr:nth-child(even){background:#f9f9f9}
     let lastPanelSp = null;
     const run = async fromPanel => {
       const sp = fromPanel instanceof URLSearchParams ? new URLSearchParams(fromPanel.toString()) : new URLSearchParams();
+      const pend = window.__repPendingExtraParams;
+      if (pend && pend.datasetId === datasetId && pend.params && typeof pend.params === 'object') {
+        window.__repPendingExtraParams = null;
+        for (const [k, v] of Object.entries(pend.params)) {
+          if (v == null) continue;
+          if (Array.isArray(v)) v.forEach(x => sp.append(k, String(x)));
+          else sp.set(k, String(v));
+        }
+      }
       if (fromPanel instanceof URLSearchParams) lastPanelSp = new URLSearchParams(sp.toString());
       if (!(fromPanel instanceof URLSearchParams)) {
         const s = document.getElementById('repDfStart')?.value || '';
@@ -698,25 +827,50 @@ tr:nth-child(even){background:#f9f9f9}
           if (!data.meta.sections.length) {
             host.innerHTML = '<p class="mini-note">No rows.</p>';
           } else {
-          const cards = (data.meta.summaryCards || []).map(c => ({ label: c.label, value: c.value }));
-          const top = renderSummaryCards(cards);
-          const secHtml = renderGroupedSections(data.meta.sections);
-          const expandBar = `<div style="margin:8px 0">
+            const groupCards = (data.meta.sections || []).map(sec => {
+              const slug = slugifyRepSectionId(sec.title || sec.key || 'sec');
+              const tot = Number(sec.totalCost) || 0;
+              const cnt = Number(sec.recordCount) || (sec.rows && sec.rows.length) || 0;
+              const costColor = tot > 7500 ? '#c62828' : '#1557a0';
+              return {
+                label: String(sec.title || sec.key || 'Group'),
+                value: `${cnt} rec · $${tot.toFixed(2)}`,
+                scrollKey: slug,
+                costColor
+              };
+            });
+            const metaCards = (data.meta.summaryCards || []).map(c => ({ label: c.label, value: c.value, scrollKey: '' }));
+            const top = renderSummaryCards([...metaCards, ...groupCards], true);
+            const secHtml = renderGroupedSections(data.meta.sections);
+            const expandBar = `<div style="margin:8px 0">
             <button type="button" class="btn btn--sm" id="repExpandAll">Expand all sections</button>
             <button type="button" class="btn btn--sm" id="repCollapseAll" style="margin-left:6px">Collapse all sections</button>
           </div>`;
-          host.innerHTML = top + expandBar + (secHtml || '<p class="mini-note">No rows.</p>');
-          host.querySelector('#repExpandAll')?.addEventListener('click', () => {
-            host.querySelectorAll('details.rep-grp-sec').forEach(d => {
-              d.open = true;
+            host.innerHTML = top + expandBar + (secHtml || '<p class="mini-note">No rows.</p>');
+            host.querySelectorAll('.rep-grp-summary-card[data-scroll]').forEach(el => {
+              el.addEventListener('click', () => {
+                const id = el.getAttribute('data-scroll');
+                if (!id) return;
+                document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              });
             });
-          });
-          host.querySelector('#repCollapseAll')?.addEventListener('click', () => {
             host.querySelectorAll('details.rep-grp-sec').forEach(d => {
-              d.open = false;
+              d.addEventListener('toggle', () => {
+                const chev = d.querySelector('.rep-grp-chev');
+                if (chev) chev.textContent = d.open ? '▼' : '▶';
+              });
             });
-          });
-          bindSortable(host);
+            host.querySelector('#repExpandAll')?.addEventListener('click', () => {
+              host.querySelectorAll('details.rep-grp-sec').forEach(d => {
+                d.open = true;
+              });
+            });
+            host.querySelector('#repCollapseAll')?.addEventListener('click', () => {
+              host.querySelectorAll('details.rep-grp-sec').forEach(d => {
+                d.open = false;
+              });
+            });
+            bindSortable(host);
           }
         } else if (layout === 'pivot' && data.meta.pivotMonths) {
           const months = data.meta.pivotMonths;
@@ -740,7 +894,7 @@ tr:nth-child(even){background:#f9f9f9}
             data.meta.external.rows || []
           );
           host.innerHTML =
-            renderSummaryCards(data.meta.summaryCards || []) +
+            renderSummaryCards(data.meta.summaryCards || [], false) +
             `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
               <div><h4 style="margin:0 0 6px;font-size:13px">Internal shop</h4>${left}</div>
               <div><h4 style="margin:0 0 6px;font-size:13px">External vendors</h4>${right}</div>
@@ -750,7 +904,25 @@ tr:nth-child(even){background:#f9f9f9}
           if (datasetId === 'a4-pm-schedule') {
             host.innerHTML = renderPmScheduleTable(data.columns, data.rows, data.meta?.fleetAvgMilesPerMonth);
           } else {
-            host.innerHTML = renderSortableTable(data.columns, data.rows);
+            host.innerHTML = renderSortableTable(data.columns, data.rows, maintRowClassFromRow);
+            if (datasetId === 'm6-location-summary' && data.columns && data.columns[0]?.key === 'locationName') {
+              host.querySelectorAll('tbody tr').forEach(tr => {
+                const cell = tr.querySelector('td');
+                const name = (cell && cell.textContent ? cell.textContent : '').trim();
+                if (!name || !cell) return;
+                cell.style.cursor = 'pointer';
+                cell.style.color = '#1557a0';
+                cell.style.textDecoration = 'underline';
+                cell.title = 'Open work by service location for this site';
+                cell.addEventListener('click', () => {
+                  window.__repPendingExtraParams = {
+                    datasetId: 'm4-work-by-location',
+                    params: { locations: [name] }
+                  };
+                  void repOpenDataset('m4-work-by-location', 'Work by service location');
+                });
+              });
+            }
           }
           bindSortable(host);
         } else {
@@ -870,7 +1042,20 @@ tr:nth-child(even){background:#f9f9f9}
                     plugins: { legend: { display: false } }
                   }
                 };
-          window.__repDynChart = new Chart(canvas.getContext('2d'), cfg);
+          const chartInst = new Chart(canvas.getContext('2d'), cfg);
+          window.__repDynChart = chartInst;
+          if (data.meta.chartSource === 'sections' && data.meta.reportLayout === 'grouped') {
+            canvas.style.cursor = 'pointer';
+            canvas.onclick = ev => {
+              const pts = chartInst.getElementsAtEventForMode(ev, 'nearest', { intersect: true }, true);
+              if (!pts || !pts.length) return;
+              const i = pts[0].index;
+              const lab = labels[i];
+              if (!lab) return;
+              const id = slugifyRepSectionId(lab);
+              document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+          }
         }
       } else if (
         (datasetId === 'a2-cost-by-unit' || datasetId === 'a3-cost-by-service-type' || datasetId === 'd1-fuel-cost-by-unit') &&
@@ -927,7 +1112,8 @@ tr:nth-child(even){background:#f9f9f9}
         startDate: s,
         endDate: e,
         unitTag: u,
-        reportLayout: layout || 'tabular'
+        reportLayout: layout || 'tabular',
+        groupedSections: layout === 'grouped' && Array.isArray(data.meta.sections) ? data.meta.sections : null
       };
       repSaveRecent(datasetId, data.title || title);
     };
@@ -1027,6 +1213,46 @@ tr:nth-child(even){background:#f9f9f9}
     if (typeof openReportsTab === 'function') openReportsTab('rep-dynamic', null);
   }
 
+  function repDotCfgAppendList(qs, key, raw) {
+    const parts = String(raw || '')
+      .split(/[\n,]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    for (const p of parts) qs.append(key, p);
+  }
+
+  function repDotCfgBuildQuery() {
+    const qs = new URLSearchParams();
+    const s = document.getElementById('repDotCfgStart')?.value || '';
+    const e = document.getElementById('repDotCfgEnd')?.value || '';
+    if (s) qs.set('startDate', s);
+    if (e) qs.set('endDate', e);
+    const mode = document.querySelector('input[name="repDotCfgScope"]:checked')?.value || 'single';
+    if (mode === 'fleet') {
+      const ids = document.getElementById('repDotCfgUnitIds')?.value || '';
+      if (ids.trim()) repDotCfgAppendList(qs, 'unitIds', ids);
+      else qs.set('all', 'true');
+    } else {
+      const u = document.getElementById('repDotCfgUnit')?.value?.trim();
+      if (u) qs.set('unitHint', u);
+    }
+    const gb = document.querySelector('input[name="repDotCfgGroupBy"]:checked')?.value || 'service_type';
+    qs.set('groupBy', gb);
+    const fmt = document.querySelector('input[name="repDotCfgFormat"]:checked')?.value || 'full';
+    qs.set('reportFormat', fmt);
+    document.querySelectorAll('.rep-dot-sec-cb:checked').forEach(cb => qs.append('sections', cb.value));
+    repDotCfgAppendList(qs, 'recordTypes', document.getElementById('repDotCfgRecTypes')?.value);
+    repDotCfgAppendList(qs, 'serviceTypes', document.getElementById('repDotCfgSvcTypes')?.value);
+    repDotCfgAppendList(qs, 'locations', document.getElementById('repDotCfgLocs')?.value);
+    repDotCfgAppendList(qs, 'vendors', document.getElementById('repDotCfgVendors')?.value);
+    if (document.getElementById('repDotCfgDefects')?.checked) qs.set('defectsOnly', 'true');
+    if (document.getElementById('repDotCfgPosted')?.checked) qs.set('postedQbo', 'y');
+    if (document.getElementById('repDotCfgDotAcc')?.checked) qs.append('dotReportable', 'y');
+    const ie = document.getElementById('repDotCfgIncludeEmpty');
+    if (ie && !ie.checked) qs.set('includeEmpty', 'false');
+    return qs;
+  }
+
   function repOpenDotAuditConfigurator() {
     const host = document.getElementById('repDynamicTableHost');
     const fl = document.getElementById('repDynamicFilters');
@@ -1037,43 +1263,120 @@ tr:nth-child(even){background:#f9f9f9}
       const r = defaultRange();
       const y = new Date();
       const yEnd = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
-      fl.innerHTML = `<div class="form-stack" style="max-width:560px">
-        <label class="qb-l">Unit number</label>
+      const y12 = new Date();
+      y12.setMonth(y12.getMonth() - 12);
+      const start12 = `${y12.getFullYear()}-${String(y12.getMonth() + 1).padStart(2, '0')}-${String(y12.getDate()).padStart(2, '0')}`;
+      fl.innerHTML = `<div class="form-stack" style="max-width:720px;line-height:1.45">
+        <div class="qb-l">Vehicle scope</div>
+        <label style="font-size:12px"><input type="radio" name="repDotCfgScope" value="single" checked /> Single unit (PDF + JSON)</label>
+        <label style="font-size:12px;margin-left:12px"><input type="radio" name="repDotCfgScope" value="fleet" /> Fleet audit (JSON only)</label>
+        <label class="qb-l" style="margin-top:8px">Unit number</label>
         <input type="text" class="qb-in" id="repDotCfgUnit" placeholder="e.g. 101" />
-        <label class="qb-l">Date range</label>
+        <label class="qb-l">Fleet unit ids (comma / newline) — optional</label>
+        <textarea class="qb-memo" id="repDotCfgUnitIds" rows="2" placeholder="Leave blank + fleet scope = all units with work orders"></textarea>
+        <div class="qb-l" style="margin-top:10px">Date range</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input type="date" class="qb-in" id="repDotCfgStart" value="${r.start}" />
+          <input type="date" class="qb-in" id="repDotCfgStart" value="${start12}" />
           <span class="mini-note">to</span>
           <input type="date" class="qb-in" id="repDotCfgEnd" value="${yEnd}" />
         </div>
-        <p class="mini-note" style="margin:8px 0 0">Vehicle JSON and PDF both honor the same date range; add optional query params on the JSON URL (vendors, drivers, serviceTypes, recordTypes, etc.) — the PDF route forwards the same query string to the audit builder.</p>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
+          ${['Last 12 months', 'Last 24 months', 'Last 3 years', 'Year to date', 'Custom']
+            .map(
+              lab =>
+                `<button type="button" class="chip rep-dot-date-chip" data-preset="${lab.toLowerCase().replace(/\s+/g, '_')}">${lab}</button>`
+            )
+            .join('')}
+        </div>
+        <div class="qb-l" style="margin-top:10px">Sections to include</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;font-size:12px">
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="vehicle_info" checked /> Vehicle identification</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="annual_inspections" checked /> Annual inspections</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="pm_history" checked /> PM / preventive history</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="repair_history" checked /> Repair register (chronological)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="work_orders_by_type" checked /> WO buckets by service type (4A–4H)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4i_service_locations" checked /> Service locations (4I)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="accident_history" checked /> Accident history</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="dvir_history" checked /> DVIR history</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="out_of_service" checked /> Out of service</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="tire_records" checked /> Tire records</label>
+        </div>
+        <div class="qb-l" style="margin-top:10px">Group work orders (PDF part 4 buckets)</div>
+        <label style="font-size:12px"><input type="radio" name="repDotCfgGroupBy" value="service_type" checked /> By service type</label>
+        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgGroupBy" value="date" /> Chronological (hide category buckets)</label>
+        <div class="qb-l" style="margin-top:10px">Service filters (optional)</div>
+        <span class="mini-note">Comma or newline separated lists → query params.</span>
+        <label class="qb-l">Record types</label><input type="text" class="qb-in" id="repDotCfgRecTypes" placeholder="e.g. repair, pm_service" />
+        <label class="qb-l">Service types</label><input type="text" class="qb-in" id="repDotCfgSvcTypes" placeholder="Oil change, Brakes…" />
+        <label class="qb-l">Locations</label><input type="text" class="qb-in" id="repDotCfgLocs" placeholder="Shop name…" />
+        <label class="qb-l">Vendors</label><input type="text" class="qb-in" id="repDotCfgVendors" placeholder="Vendor name…" />
+        <div class="qb-l" style="margin-top:10px">Show only</div>
+        <label style="font-size:12px"><input type="checkbox" id="repDotCfgDefects" /> Records with defects / issues</label>
+        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgPosted" /> Posted to QuickBooks</label>
+        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgDotAcc" /> DOT-reportable accidents only</label>
+        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgIncludeEmpty" checked /> Include empty section shells</label>
+        <div class="qb-l" style="margin-top:10px">Format</div>
+        <label style="font-size:12px"><input type="radio" name="repDotCfgFormat" value="full" checked /> Full detail</label>
+        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgFormat" value="summary" /> Summary</label>
+        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgFormat" value="compliance" /> Compliance focus</label>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn" id="repDotCfgPreview">Preview JSON</button>
+          <button type="button" class="btn" style="background:#1557a0;color:#fff;border-color:#1557a0" id="repDotCfgPreviewPdf">Preview PDF</button>
           <button type="button" class="btn" style="background:#1b5e20;color:#fff;border-color:#1b5e20" id="repDotCfgPdf">Generate PDF</button>
         </div>
       </div>`;
+      const setDates = (start, end) => {
+        const si = document.getElementById('repDotCfgStart');
+        const ei = document.getElementById('repDotCfgEnd');
+        if (si) si.value = start;
+        if (ei) ei.value = end;
+      };
+      fl.querySelectorAll('.rep-dot-date-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pr = btn.getAttribute('data-preset') || '';
+          const end = new Date();
+          const endS = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+          let st = new Date(end);
+          if (pr === 'last_12_months') st.setMonth(st.getMonth() - 12);
+          else if (pr === 'last_24_months') st.setMonth(st.getMonth() - 24);
+          else if (pr === 'last_3_years') st.setFullYear(st.getFullYear() - 3);
+          else if (pr === 'year_to_date') st = new Date(end.getFullYear(), 0, 1);
+          else if (pr === 'custom') return;
+          const startS = `${st.getFullYear()}-${String(st.getMonth() + 1).padStart(2, '0')}-${String(st.getDate()).padStart(2, '0')}`;
+          setDates(startS, endS);
+        });
+      });
       document.getElementById('repDotCfgPreview')?.addEventListener('click', () => {
+        const qs = repDotCfgBuildQuery();
+        const mode = document.querySelector('input[name="repDotCfgScope"]:checked')?.value || 'single';
+        if (mode === 'fleet') {
+          window.open('/api/reports/dot/fleet-audit?' + qs.toString(), '_blank', 'noopener');
+          return;
+        }
         const u = document.getElementById('repDotCfgUnit')?.value?.trim();
         if (!u) return alert('Enter a unit.');
-        const s = document.getElementById('repDotCfgStart')?.value || '';
-        const e = document.getElementById('repDotCfgEnd')?.value || '';
-        const qs = new URLSearchParams();
-        if (s) qs.set('startDate', s);
-        if (e) qs.set('endDate', e);
         window.open('/api/reports/dot/vehicle-audit/' + encodeURIComponent(u) + '?' + qs.toString(), '_blank', 'noopener');
       });
       document.getElementById('repDotCfgPdf')?.addEventListener('click', () => {
+        const mode = document.querySelector('input[name="repDotCfgScope"]:checked')?.value || 'single';
+        if (mode === 'fleet') return alert('PDF is per vehicle — choose single unit or open fleet JSON.');
         const u = document.getElementById('repDotCfgUnit')?.value?.trim();
         if (!u) return alert('Enter a unit.');
-        const s = document.getElementById('repDotCfgStart')?.value || '';
-        const e = document.getElementById('repDotCfgEnd')?.value || '';
-        const qs = new URLSearchParams();
-        if (s) qs.set('startDate', s);
-        if (e) qs.set('endDate', e);
+        const qs = repDotCfgBuildQuery();
+        window.open('/api/reports/dot-audit/' + encodeURIComponent(u) + '/pdf?' + qs.toString(), '_blank', 'noopener');
+      });
+      document.getElementById('repDotCfgPreviewPdf')?.addEventListener('click', () => {
+        const mode = document.querySelector('input[name="repDotCfgScope"]:checked')?.value || 'single';
+        if (mode === 'fleet') return alert('PDF is per vehicle — choose single unit.');
+        const u = document.getElementById('repDotCfgUnit')?.value?.trim();
+        if (!u) return alert('Enter a unit.');
+        const qs = repDotCfgBuildQuery();
         window.open('/api/reports/dot-audit/' + encodeURIComponent(u) + '/pdf?' + qs.toString(), '_blank', 'noopener');
       });
     }
-    if (host) host.innerHTML = '<p class="mini-note">Choose a vehicle and date range, then preview JSON or open the PDF.</p>';
+    if (host)
+      host.innerHTML =
+        '<p class="mini-note">Configure filters, then <strong>Preview JSON</strong> (vehicle or fleet) or <strong>Generate PDF</strong> (single unit). Query params are forwarded to the audit builder.</p>';
     if (typeof openReportsTab === 'function') openReportsTab('rep-dynamic', null);
   }
 

@@ -148,23 +148,47 @@
         if (!window.XLSX) throw new Error('Excel export requires the XLSX script (see maintenance.html).');
         const XLSX = window.XLSX;
         const wb = XLSX.utils.book_new();
-        const hdr = [
-          [options.companyName || 'IH 35 Transportation LLC'],
-          [title],
-          [`Date range: ${options.dateRange || ''}`],
-          [`Filters: ${JSON.stringify(options.filtersApplied || reportData.filters || {})}`],
-          [`Generated: ${generatedLabel()}`],
-          [],
-          labels
-        ];
-        const dataRows = rows.map(row => keys.map(k => formatExportCell(row[k])));
-        const totalRow = keys.map((k, i) => (i === 0 ? 'Totals' : formatExportCell(reportData.totals?.[k] ?? '')));
-        const aoa = hdr.concat(dataRows).concat(reportData.totals && Object.keys(reportData.totals).length ? [totalRow] : []);
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        try {
-          ws['!views'] = [{ state: 'frozen', ySplit: 6, topLeftCell: 'A7', activeCell: 'A7' }];
-        } catch (_) {}
-        XLSX.utils.book_append_sheet(wb, ws, 'Report data');
+        const grouped = Array.isArray(reportData.groupedSections) ? reportData.groupedSections : null;
+        if (grouped && grouped.length) {
+          for (const sec of grouped) {
+            const secTitle = String(sec.title || sec.key || 'Section').slice(0, 28) || 'Section';
+            const scols = sec.columns || columns;
+            const skeys = scols.map(c => c.key || c.label).filter(Boolean);
+            const slabels = scols.map(c => String(c.label || c.key || ''));
+            const srows = Array.isArray(sec.rows) ? sec.rows : [];
+            const secHdr = [
+              [options.companyName || 'IH 35 Transportation LLC'],
+              [title + ' — ' + secTitle],
+              [`Date range: ${options.dateRange || ''}`],
+              [`Filters: ${JSON.stringify(options.filtersApplied || reportData.filters || {})}`],
+              [`Generated: ${generatedLabel()}`],
+              [],
+              slabels
+            ];
+            const secDataRows = srows.map(row => skeys.map(k => formatExportCell(row[k])));
+            const aoa = secHdr.concat(secDataRows);
+            const sheetName = secTitle.replace(/[[\]:*?/\\]/g, '_').slice(0, 31) || 'Sheet';
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), sheetName);
+          }
+        } else {
+          const hdr = [
+            [options.companyName || 'IH 35 Transportation LLC'],
+            [title],
+            [`Date range: ${options.dateRange || ''}`],
+            [`Filters: ${JSON.stringify(options.filtersApplied || reportData.filters || {})}`],
+            [`Generated: ${generatedLabel()}`],
+            [],
+            labels
+          ];
+          const dataRows = rows.map(row => keys.map(k => formatExportCell(row[k])));
+          const totalRow = keys.map((k, i) => (i === 0 ? 'Totals' : formatExportCell(reportData.totals?.[k] ?? '')));
+          const aoa = hdr.concat(dataRows).concat(reportData.totals && Object.keys(reportData.totals).length ? [totalRow] : []);
+          const ws = XLSX.utils.aoa_to_sheet(aoa);
+          try {
+            ws['!views'] = [{ state: 'frozen', ySplit: 6, topLeftCell: 'A7', activeCell: 'A7' }];
+          } catch (_) {}
+          XLSX.utils.book_append_sheet(wb, ws, 'Report data');
+        }
         const totAoa = [['Metric', 'Value']].concat(
           Object.entries(reportData.totals || {}).map(([k, v]) => [k, formatExportCell(v)])
         );

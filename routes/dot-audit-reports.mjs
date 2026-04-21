@@ -98,17 +98,17 @@ function drawComplianceMatrix(doc, startY, cc) {
   return y;
 }
 
-/** Part 4 subsection codes (4A = chronological register above; 4I = service locations page). */
+/** Part 4 subsection codes (4A = chronological register; 4A–4H = ERP buckets; 4I = service locations). */
 const BUCKET_DEFS = [
-  ['section4_pm_service', '4B — PM & scheduled service'],
-  ['section4_maintenance', '4C — Maintenance (non-PM)'],
-  ['section4_repair', '4D — Repairs'],
-  ['section4_tire', '4E — Tires'],
-  ['section4_air_bag', '4F — Air bags'],
-  ['section4_battery', '4G — Batteries'],
-  ['section4_body', '4H — Body / glass'],
-  ['section4_inspection', '4J — Inspections (non-annual)'],
-  ['section4_other', '4K — Other']
+  ['section4_pm_service', '4A — PM service history'],
+  ['section4_maintenance', '4B — Maintenance history'],
+  ['section4_repair', '4C — Repair history'],
+  ['section4_tire', '4D — Tire service history'],
+  ['section4_air_bag', '4E — Air bag service history'],
+  ['section4_battery', '4F — Battery service history'],
+  ['section4_body', '4G — Body work history'],
+  ['section4_inspection', '4H — Inspection history (non-annual)'],
+  ['section4_other', 'Other — Uncategorized work orders']
 ];
 
 router.get('/api/reports/dot-audit/:unit', (req, res) => {
@@ -167,7 +167,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
       'Part 1 — Vehicle identification & registration context',
       'Part 2 — Annual inspection history',
       'Part 3 — Preventive maintenance history',
-      'Part 4 — Repair & maintenance (4A register; 4B–4K by category; 4I service locations)',
+      'Part 4 — Repair & maintenance (4A register; 4A–4H by category; 4I service locations)',
       'Part 5 — Accident / incident history',
       'Part 6 — DVIR (Samsara live, when configured)',
       'Part 7 — Out of service history',
@@ -236,7 +236,9 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
     y = writeSectionPage(doc, 'Part 4 (continued) — Work by category');
     doc.fontSize(9).fillColor('#555').text('Each subsection lists work orders classified from ERP line items and service types.', 48, y, { width: 500 });
     y += 36;
+    const skipBuckets = audit.meta && audit.meta.dotPdfSkipBuckets;
     for (const [key, label] of BUCKET_DEFS) {
+      if (skipBuckets) break;
       const rows = s[key] || [];
       if (y > 720) {
         doc.addPage();
@@ -244,7 +246,7 @@ async function streamDotAuditPdf(res, unit, startDate, endDate, filterQuery = {}
       }
       y = drawSubheading(doc, y, label);
       if (!rows.length) {
-        doc.fontSize(9).fillColor('#666').text('No rows in this category for the selected filters.', 48, y, { width: 480 });
+        doc.fontSize(9).fillColor('#666').text('No records in this period.', 48, y, { width: 480 });
         y += 22;
         continue;
       }

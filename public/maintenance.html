@@ -4488,6 +4488,41 @@
       </section>
 
       <section id="section-reports" class="section">
+        <style>
+          #section-reports .rep-grp-summary-card[data-scroll]:hover {
+            box-shadow: 0 1px 4px rgba(21, 87, 160, 0.18);
+          }
+          #section-reports tr.rep-row-rt--pm td:first-child {
+            border-left: 3px solid #1a7a3c;
+          }
+          #section-reports tr.rep-row-rt--maint td:first-child {
+            border-left: 3px solid #1557a0;
+          }
+          #section-reports tr.rep-row-rt--repair td:first-child {
+            border-left: 3px solid #c5221f;
+          }
+          #section-reports tr.rep-row-rt--insp td:first-child {
+            border-left: 3px solid #6200ea;
+          }
+          #section-reports tr.rep-row-rt--tire td:first-child {
+            border-left: 3px solid #f9ab00;
+          }
+          #section-reports tr.rep-row-rt--airbag td:first-child {
+            border-left: 3px solid #00897b;
+          }
+          #section-reports tr.rep-row-rt--battery td:first-child {
+            border-left: 3px solid #e65100;
+          }
+          #section-reports tr.rep-row-rt--accident td:first-child {
+            border-left: 3px solid #b71c1c;
+          }
+          #section-reports tr.rep-row-rt--body td:first-child {
+            border-left: 3px solid #6a1b9a;
+          }
+          #section-reports tr.rep-row-rt--other td:first-child {
+            border-left: 3px solid #6b7385;
+          }
+        </style>
         <div class="erp-reports-shell">
           <header class="erp-reports-toolbar" role="banner">
             <div class="erp-reports-toolbar__title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
@@ -9029,8 +9064,11 @@
       if (ui.serviceRepairHint) {
         const svc = document.getElementById('apServiceSearchInput');
         if (svc && !(svc.value || '').trim()) {
-          svc.value = 'Repair';
-          if (typeof resolveApServiceSearch === 'function') resolveApServiceSearch();
+          /* Do not auto-fill generic "Repair" — it collides with maintenance/repair catalog noise; user picks service line explicitly. */
+          if (mode !== 'repair-bill' && mode !== 'repair-expense') {
+            svc.value = 'Repair';
+            if (typeof resolveApServiceSearch === 'function') resolveApServiceSearch();
+          }
         }
       }
       if (typeof syncErpDedicatedModalChrome === 'function') syncErpDedicatedModalChrome();
@@ -19503,10 +19541,15 @@
         if (txn === 'bill') {
           if (preset === 'fuel-bill') type = 'fuel-bill';
           else if (preset === 'maintenance-bill') type = 'maintenance-bill';
+          else if (preset === 'repair-bill') type = 'repair-bill';
           else if (preset === 'vendor-driver-bill') type = 'vendor-driver-bill';
+          else if (preset === 'driver-bill') type = 'driver-bill';
+          else if (preset === 'vendor-bill') type = 'vendor-bill';
           else type = 'bill';
         } else if (preset === 'maintenance-expense') {
           type = 'maintenance-expense';
+        } else if (preset === 'repair-expense') {
+          type = 'repair-expense';
         }
         window.generatePrintWindow(type, data);
       } catch (e) {
