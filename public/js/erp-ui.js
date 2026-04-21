@@ -874,13 +874,13 @@
   function erpEnsureFleetReportsHubIframe() {
     var iframe = document.getElementById('erpFleetReportsHubIframe');
     if (!iframe || !(iframe instanceof HTMLIFrameElement)) return;
-    var cur = '';
+    var href = '';
     try {
-      cur = String(iframe.getAttribute('src') || iframe.src || '');
+      href = String(iframe.src || iframe.getAttribute('src') || '');
     } catch (_) {
-      cur = '';
+      href = '';
     }
-    if (cur && cur.indexOf('about:blank') < 0 && cur.indexOf('fleet-reports') >= 0) return;
+    if (href.indexOf('fleet-reports') >= 0) return;
     var hubBase =
       typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE
         ? window.__IH35_FLEET_HUB_BASE
