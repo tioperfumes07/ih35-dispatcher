@@ -94,8 +94,25 @@
     if (t === 'expense' || t === 'maintenance-expense') {
       return `${collapseJoin([vendor, 'MaintExp', unit, date])}.${ext}`;
     }
-    if (t === 'bill' || t === 'maintenance-bill' || t === 'vendor-driver-bill') {
-      return `${collapseJoin([vendor, 'Bill', billNo || wo, date])}.${ext}`;
+    if (
+      t === 'bill' ||
+      t === 'maintenance-bill' ||
+      t === 'repair-bill' ||
+      t === 'driver-bill' ||
+      t === 'vendor-bill' ||
+      t === 'vendor-driver-bill'
+    ) {
+      const kind =
+        t === 'maintenance-bill'
+          ? 'MaintBill'
+          : t === 'repair-bill'
+            ? 'RepairBill'
+            : t === 'driver-bill'
+              ? 'DriverBill'
+              : t === 'vendor-bill'
+                ? 'VendorBill'
+                : 'Bill';
+      return `${collapseJoin([vendor, kind, billNo || wo, date])}.${ext}`;
     }
     if (t === 'fuel-bill') {
       return `${collapseJoin([vendor, 'FuelBill', billNo, date])}.${ext}`;
