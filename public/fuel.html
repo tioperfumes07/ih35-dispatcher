@@ -50,6 +50,20 @@
     <button type="button" onclick="clearErpWriteSecret()">Clear</button>
   </div>
 
+  <div
+    class="fuel-planner-hub-acct-strip"
+    style="margin:0 12px 12px;padding:8px 12px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg-header);display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11px;line-height:1.35"
+    role="region"
+    aria-label="Open Fleet hub fuel transaction form"
+  >
+    <span style="font-weight:600;color:var(--color-text-body)">Fuel bills / DEF (QuickBooks)</span>
+    <span class="mini-note" style="margin:0;max-width:48ch">Same <strong>FuelTransactionForm</strong> as the fleet hub — opens in a new tab.</span>
+    <button type="button" class="btn btn--small" onclick="openFuelHubFuelTxn('def-bill')">DEF bill</button>
+    <button type="button" class="btn btn--small" onclick="openFuelHubFuelTxn('fuel-bill')">Fuel bill</button>
+    <button type="button" class="btn btn--small" onclick="openFuelHubFuelTxn('fuel-expense')">Fuel expense</button>
+    <button type="button" class="btn btn--small" onclick="openFuelHubFuelTxn('fuel-def-combined')">Fuel/DEF combined</button>
+  </div>
+
   <div class="layout">
     <div class="panel">
       <h2>Fleet</h2>
@@ -135,7 +149,7 @@
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
         <div>
           <div class="small">Date</div>
-          <input id="fuelTxnDate" type="date">
+          <input id="fuelPurchaseDate" type="date">
         </div>
         <div>
           <div class="small">Gallons</div>
@@ -906,7 +920,7 @@
       const boardRow = boardRows.find(r => r.unit === unit);
       const payload = {
         unit,
-        txnDate: document.getElementById('fuelTxnDate')?.value || new Date().toISOString().slice(0, 10),
+        txnDate: document.getElementById('fuelPurchaseDate')?.value || new Date().toISOString().slice(0, 10),
         gallons: parseNumInput('fuelGallons'),
         pricePerGallon: parseNumInput('fuelPpg'),
         totalCost: parseNumInput('fuelTotal'),
@@ -1176,6 +1190,20 @@
       };
       if (window.erpWithBusy && btn) return window.erpWithBusy(btn, run);
       return run();
+    }
+
+    function openFuelHubFuelTxn(t) {
+      var type = String(t || 'fuel-bill').trim() || 'fuel-bill';
+      if (typeof window.erpOpenFuelTransactionHub === 'function') {
+        window.erpOpenFuelTransactionHub(type);
+        return;
+      }
+      var b = typeof window.__IH35_FLEET_HUB_BASE === 'string' ? window.__IH35_FLEET_HUB_BASE : '';
+      window.open(
+        b + '/fleet-reports/index.html?erpFuelModal=1&fuelTxnType=' + encodeURIComponent(type),
+        '_blank',
+        'noopener,noreferrer',
+      );
     }
 
     window.addEventListener('load', () => {

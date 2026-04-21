@@ -3815,10 +3815,26 @@
             </div>
             <div id="fuelExpenseQboBanner" class="mini-note fuel-expense-qbo-banner" style="display:none;margin:0 0 12px"></div>
             <div class="panel-body form-stack fuel-expense-stack">
+              <div
+                id="erpFuelHubInlineHost"
+                class="erp-fuel-hub-inline-host"
+                aria-label="Fleet hub — fuel bills and expenses"
+              >
+                <p class="mini-note" style="margin:0 0 8px;font-size:11px;line-height:1.45;color:var(--color-text-label)">
+                  Canonical <strong>FuelTransactionForm</strong> from <code>/fleet-reports/</code> (same as Accounting + New and Fuel &amp; Energy in the hub). Ledger grid and Relay tools stay below.
+                </p>
+                <iframe
+                  id="erpFuelHubInlineIframe"
+                  class="erp-fuel-hub-inline-iframe"
+                  title="Fuel bill / expense — Fleet hub"
+                  loading="lazy"
+                  src="about:blank"
+                ></iframe>
+              </div>
               <div id="erpFuelManualPlaceholder" class="erp-dom-placeholder" aria-hidden="true"></div>
               <div
                 id="erpFuelManualDocShellPanel"
-                class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec qb-doc-shell--fuel-spec fuel-manual-shell-inline-hidden"
+                class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec qb-doc-shell--fuel-spec fuel-manual-shell-inline-hidden erp-fuel-legacy-manual-shell"
                 style="margin:0 0 14px"
               >
                 <div class="qb-doc-topbar qb-doc-topbar--fuel">
@@ -3931,7 +3947,7 @@
                           <div id="fuelManualVendorAddressLine3" class="mini-note" style="margin:0;line-height:1.45;font-size:11px"></div>
                         </div>
                         <p id="fuelManualVendorAddressHint" class="mini-note" style="margin:0;font-size:10px;color:var(--color-text-label)">
-                          Address stored in vendor database · editable per transaction
+                          Address from vendor database · editable per transaction
                         </p>
                         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
                           <div class="ap-exp-field" style="flex:1 1 160px;min-width:0">
@@ -3966,28 +3982,25 @@
                               id="fuelManualDriverSearch"
                               class="qb-in"
                               list="maintDriverOptions"
-                              placeholder="Driver (assign for integrity)"
+                              placeholder="Driver name (from vendors)"
                               autocomplete="off"
                               oninput="resolveFuelManualDriverSearch(); erpRefreshFuelDriverIntegrityStrip();"
                               onblur="resolveFuelManualDriverSearch(); erpRefreshFuelDriverIntegrityStrip();"
                             />
                           </div>
                         </div>
-                        <details class="fuel-manual-header-more">
-                          <summary class="fuel-manual-header-more__sum">Optional: QBO class &amp; location</summary>
-                          <div class="fuel-manual-header-more__body">
-                            <div class="ap-exp-field">
-                              <span class="qb-l">QuickBooks class</span>
-                              <select id="fuelManualClassSel" class="qb-in">
-                                <option value="">— Match unit name —</option>
-                              </select>
-                            </div>
-                            <div class="ap-exp-field">
-                              <span class="qb-l">Location / site</span>
-                              <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
-                            </div>
+                        <div class="hidden" aria-hidden="true">
+                          <div class="ap-exp-field">
+                            <span class="qb-l">QuickBooks class</span>
+                            <select id="fuelManualClassSel" class="qb-in">
+                              <option value="">— Match unit name —</option>
+                            </select>
                           </div>
-                        </details>
+                          <div class="ap-exp-field">
+                            <span class="qb-l">Location / site</span>
+                            <input id="fuelManualLocation" class="qb-in" placeholder="City, store, lane…" autocomplete="off" />
+                          </div>
+                        </div>
                       </div>
                       <div class="erp-fuel-txn-header__right" style="display:flex;flex-direction:column;gap:12px;min-width:0">
                         <div class="ap-exp-field">
@@ -7369,12 +7382,40 @@
     }
 
     /** One-time: when Fleet hub (record tab or full-window WO iframe) saves, refresh ERP data + unit panel. */
+    /** Fleet hub fuel form embedded on Accounting → Fuel (reload after close for a fresh shell). */
+    function syncErpFuelHubInlineIframe() {
+      const iframe = document.getElementById('erpFuelHubInlineIframe');
+      if (!iframe || !(iframe instanceof HTMLIFrameElement)) return;
+      const hubBase =
+        (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
+      const ft = String(window.__erpFuelTransactionType || 'fuel-bill').trim() || 'fuel-bill';
+      iframe.src =
+        hubBase +
+        '/fleet-reports/index.html?erpFuelEmbed=1&fuelTxnType=' +
+        encodeURIComponent(ft) +
+        '&_=' +
+        String(Date.now());
+      if (typeof ensureMaintFleetHubPostMessageBridge === 'function') ensureMaintFleetHubPostMessageBridge();
+    }
+
     function ensureMaintFleetHubPostMessageBridge() {
       if (window.__ih35MaintFleetHubBridge) return;
       window.__ih35MaintFleetHubBridge = true;
       window.addEventListener('message', function (ev) {
         const d = ev.data;
-        if (!d || d.source !== 'ih35-fleet-hub' || d.type !== 'maint-repair-wo-saved') return;
+        if (!d || d.source !== 'ih35-fleet-hub') return;
+        if (d.type === 'erp-fuel-txn-closed') {
+          const ded = document.getElementById('erpFuelDedHubIframe');
+          const inl = document.getElementById('erpFuelHubInlineIframe');
+          if (ded && ded.contentWindow === ev.source) {
+            if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
+          }
+          if (inl && inl.contentWindow === ev.source && typeof syncErpFuelHubInlineIframe === 'function') {
+            syncErpFuelHubInlineIframe();
+          }
+          return;
+        }
+        if (d.type !== 'maint-repair-wo-saved') return;
         const rec = document.getElementById('maintRecordHubWoIframe');
         const mod = document.getElementById('maintHubWoIframe');
         const fromRec = rec && rec.contentWindow === ev.source;
@@ -10021,6 +10062,7 @@
 
     function erpDedicatedFormDirty() {
       if (window.__erpDedicatedModalKind === 'fuel') {
+        if (document.getElementById('erpFuelDedHubIframe')) return false;
         const totalTxt = document.getElementById('fuelManualHeaderTotal')?.textContent || '$0.00';
         const totalNum = Number(String(totalTxt).replace(/[^0-9.-]/g, '')) || 0;
         const ft = id => (document.getElementById(id)?.value || '').trim();
@@ -10432,10 +10474,8 @@
         window.__erpLedgerStubWhich = '';
       }
       if (window.__erpDedicatedModalKind === 'fuel') {
-        const shell = document.getElementById('erpFuelManualDocShellPanel');
-        const ph = document.getElementById('erpFuelManualPlaceholder');
-        if (shell && ph && ph.parentNode) ph.parentNode.insertBefore(shell, ph.nextSibling);
-        shell?.classList.add('fuel-manual-shell-inline-hidden');
+        const mount = document.getElementById('erpDedicatedFormModalBody');
+        if (mount) mount.innerHTML = '';
         const acc = document.getElementById('erpFuelDocTitleAccent');
         if (acc) {
           acc.innerHTML = '';
@@ -10598,9 +10638,20 @@
         openSection('accounting', acctBtn);
         const trig = document.getElementById('acctFuelDdTrigger');
         openAccountingTab('acct-fuel-expense', trig);
-        const shell = document.getElementById('erpFuelManualDocShellPanel');
-        shell?.classList.remove('fuel-manual-shell-inline-hidden');
-        mount.appendChild(shell);
+        const hubBase =
+          (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
+        mount.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.id = 'erpFuelDedHubIframe';
+        iframe.className = 'erp-fuel-ded-hub-iframe';
+        iframe.title = 'Fuel bill / expense — Fleet hub';
+        iframe.setAttribute('loading', 'eager');
+        iframe.src =
+          hubBase +
+          '/fleet-reports/index.html?erpFuelModal=1&fuelTxnType=' +
+          encodeURIComponent(ftt);
+        mount.appendChild(iframe);
+        if (typeof ensureMaintFleetHubPostMessageBridge === 'function') ensureMaintFleetHubPostMessageBridge();
         requestAnimationFrame(() => {
           try {
             bindFuelManualFormOnce();
@@ -15548,6 +15599,7 @@
           delete window.__pendingFuelManualUnit;
           syncFuelManualClassFromUnit();
         }
+        if (typeof syncErpFuelHubInlineIframe === 'function') syncErpFuelHubInlineIframe();
       } catch (e) {
         if (st) st.textContent = e.message || String(e);
         if (tb) tb.innerHTML = '<tr><td colspan="18" class="mini-note">Failed to load.</td></tr>';
