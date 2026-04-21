@@ -14,6 +14,10 @@
    * @property {string} unit
    * @property {string} txnDate
    * @property {string} [maintRecordType]
+   * @property {string} [dedicatedApPreset]
+   * @property {string} [repairLocationType]
+   * @property {string} [repairLocationLabel]
+   * @property {string} [driverHeaderName]
    * @property {Array<{amount?: number, detailMode?: string, qboAccountId?: string, qboItemId?: string, partPosition?: string}>} lines
    * @property {number} docTotal
    * @property {number} lineSum
@@ -42,6 +46,24 @@
     }
     if (!String(s.unit || '').trim()) {
       pushErr('apAssetUnit', 'ap_unit', 'Unit / asset is required.');
+    }
+
+    const preset = String(s.dedicatedApPreset || '').trim();
+    if (preset === 'driver-bill' && !String(s.driverHeaderName || '').trim()) {
+      pushErr('apHeaderDriverSearch', 'ap_driver_bill', 'Driver bill — choose the driver on the Driver (QBO customer) row.');
+    }
+    if (preset === 'repair-bill') {
+      if (!String(s.repairLocationType || '').trim()) {
+        pushErr('apRepairLocationSelect', 'ap_repair_loc_type', 'Repair bill — choose a service location type.');
+      }
+      if (!String(s.repairLocationLabel || '').trim()) {
+        pushErr('apRepairLocationSearch', 'ap_repair_loc_name', 'Repair bill — enter the service location (shop or site name).');
+      }
+    }
+    if (preset === 'maintenance-bill') {
+      if (!String(s.repairLocationType || '').trim()) {
+        pushErr('apRepairLocationSelect', 'ap_maint_loc_type', 'Maintenance bill — choose a service location type.');
+      }
     }
 
     const lines = Array.isArray(s.lines) ? s.lines : [];

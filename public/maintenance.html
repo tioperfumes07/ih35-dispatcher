@@ -3224,6 +3224,26 @@
                       <span class="qb-l">Internal WO #</span>
                       <input id="apInternalWorkOrderNumber" class="qb-in" placeholder="Your work order ref">
                     </div>
+                    <div class="ap-exp-field hidden" id="apServiceLocationWrap">
+                      <span class="qb-l">Service location type</span>
+                      <select id="apRepairLocationSelect" class="qb-in" title="Where work was performed">
+                        <option value="">— Choose —</option>
+                        <option value="in-house">Internal shop</option>
+                        <option value="external">External shop / vendor</option>
+                        <option value="road-service">Roadside repair</option>
+                        <option value="parts-purchase">Parts purchase</option>
+                        <option value="over-the-road">Mobile / over the road</option>
+                      </select>
+                      <span class="qb-l" style="margin-top:6px;display:block">Service location (site / vendor name)</span>
+                      <input
+                        id="apRepairLocationSearch"
+                        class="qb-in"
+                        list="repairLocationOptions"
+                        placeholder="e.g. Dallas shop, vendor bay…"
+                        autocomplete="off"
+                        title="Specific service location"
+                      />
+                    </div>
                     <div class="ap-exp-field hidden" id="apWrapDue">
                       <span class="qb-l">Due</span>
                       <input id="apDueDate" class="qb-in" type="date">
@@ -9044,6 +9064,36 @@
       window.setTimeout(() => el.classList.remove('erp-ap-asset-unit--pulse'), 3200);
     }
 
+    function erpSyncApRepairLocationHidden() {
+      const sel = document.getElementById('apRepairLocationSelect');
+      const hid = document.getElementById('woRepairLocationType');
+      if (sel && hid) hid.value = String(sel.value || '').trim();
+    }
+
+    /** Maintenance / repair bills need explicit WO record type + service location for ERP + reports. */
+    function erpPrimeDedicatedApMaintHints(mode) {
+      const mrt = document.getElementById('apMaintRecordType');
+      const locWrap = document.getElementById('apServiceLocationWrap');
+      const locSel = document.getElementById('apRepairLocationSelect');
+      const locSearch = document.getElementById('apRepairLocationSearch');
+      const showLoc = mode === 'repair-bill' || mode === 'maintenance-bill' || mode === 'repair-expense' || mode === 'maintenance-expense';
+      if (locWrap) locWrap.classList.toggle('hidden', !showLoc);
+      if (!showLoc) {
+        if (mrt && ['repair', 'maintenance'].includes(String(mrt.value || '').trim())) mrt.value = '';
+        return;
+      }
+      if (mode === 'repair-bill' || mode === 'repair-expense') {
+        if (mrt) mrt.value = 'repair';
+        if (locSel) locSel.value = 'external';
+        if (locSearch && !String(locSearch.value || '').trim()) locSearch.value = '';
+      } else if (mode === 'maintenance-bill' || mode === 'maintenance-expense') {
+        if (mrt) mrt.value = 'maintenance';
+        if (locSel) locSel.value = 'in-house';
+        if (locSearch && !String(locSearch.value || '').trim()) locSearch.value = '';
+      }
+      erpSyncApRepairLocationHidden();
+    }
+
     function erpApplyApDedicatedUiAfterOpen(mode) {
       const wrap = document.getElementById('apDriverFieldWrap');
       if (wrap) wrap.classList.add('hidden');
@@ -9069,6 +9119,12 @@
             if (typeof resolveApServiceSearch === 'function') resolveApServiceSearch();
           }
         }
+      }
+      erpPrimeDedicatedApMaintHints(mode);
+      const apLocSel = document.getElementById('apRepairLocationSelect');
+      if (apLocSel && !apLocSel._erpBound) {
+        apLocSel._erpBound = true;
+        apLocSel.addEventListener('change', erpSyncApRepairLocationHidden);
       }
       if (typeof syncErpDedicatedModalChrome === 'function') syncErpDedicatedModalChrome();
     }
@@ -19728,6 +19784,10 @@
       const termEl = document.getElementById('apQboTermId');
       if (termEl) termEl.value = '';
       document.getElementById('woRepairLocationType').value = '';
+      const apRls = document.getElementById('apRepairLocationSelect');
+      const apRlx = document.getElementById('apRepairLocationSearch');
+      if (apRls) apRls.value = '';
+      if (apRlx) apRlx.value = '';
       const abs = document.getElementById('apBankAccountSearch');
       const abid = document.getElementById('apBankAccountQboId');
       if (abs) abs.value = '';
@@ -24759,6 +24819,10 @@
         unit: String(document.getElementById('apAssetUnit')?.value || '').trim(),
         txnDate: document.getElementById('apTxnDate')?.value || '',
         maintRecordType: String(document.getElementById('apMaintRecordType')?.value || '').trim(),
+        dedicatedApPreset: String(window.__erpDedicatedApPreset || '').trim(),
+        repairLocationType: String(document.getElementById('woRepairLocationType')?.value || '').trim(),
+        repairLocationLabel: String(document.getElementById('apRepairLocationSearch')?.value || '').trim(),
+        driverHeaderName: String(document.getElementById('apHeaderDriverSearch')?.value || '').trim(),
         lines,
         docTotal,
         lineSum,
@@ -24826,6 +24890,9 @@
           unit,
           assetCategory: activeAssetCategory,
           repairLocationType: document.getElementById('woRepairLocationType').value || '',
+          ...(String(document.getElementById('apRepairLocationSearch')?.value || '').trim()
+            ? { repairLocationLabel: String(document.getElementById('apRepairLocationSearch').value).trim() }
+            : {}),
           serviceDate: document.getElementById('apTxnDate').value,
           txnType: document.getElementById('apTxnType').value,
           dueDate: document.getElementById('apDueDate').value,

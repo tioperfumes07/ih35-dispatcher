@@ -35,6 +35,7 @@ const TABULAR_PATHS = [
   ['maintenance/accident-history', 'a8-accident-collision'],
   ['maintenance/fleet-repair-summary', 'a9-fleet-repair-monthly'],
   ['maintenance/inspection-history', 'a10-inspection-history'],
+  ['maintenance/parts-positions', 'a11-parts-positions'],
   ['maintenance/by-service-type', 'm1-expense-by-service-type'],
   ['maintenance/cost-pivot', 'm2-maintenance-cost-pivot'],
   ['maintenance/repair-vs-maintenance', 'm3-repair-vs-maintenance'],

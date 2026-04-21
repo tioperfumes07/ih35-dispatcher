@@ -58,6 +58,10 @@
   add('maintenance', 'Work order history', 'Filters + totals', ERP, 'work order history wo', { dataset: 'a1-work-order-history', subsection: 'Service history' });
   add('maintenance', 'PM schedule', 'Miles-based status colors', ERP, 'pm preventive schedule', { dataset: 'a4-pm-schedule', subsection: 'Service history' });
   add('maintenance', 'Inspection history', 'DOT / shop inspections', ERP, 'inspection history', { dataset: 'a10-inspection-history', subsection: 'Service history' });
+  add('maintenance', 'Parts / positions (line detail)', 'Tire, item, and part# lines', ERP, 'parts positions line detail', {
+    dataset: 'a11-parts-positions',
+    subsection: 'Service history'
+  });
   add('maintenance', 'Tire history', 'Position map filter', ERP, 'tire position', { dataset: 'a5-tire-history', subsection: 'Service history' });
   add('maintenance', 'Air bag history', 'Position map', ERP, 'air bag suspension', { dataset: 'a6-air-bag-history', subsection: 'Service history' });
   add('maintenance', 'Battery history', 'Parts + cost', ERP, 'battery', { dataset: 'a7-battery-history', subsection: 'Service history' });
@@ -134,6 +138,9 @@
   add('dot', 'Driver qualification (DOT)', '391 file status', ERP, 'driver qualification dot', { dataset: 'g1-driver-qualification' });
   add('dot', 'Driver DOT audit file', 'Per-driver packet (shell)', ERP, 'driver dot audit', { dataset: 'g2-driver-dot-audit' });
   add('dot', 'Drug & alcohol testing log', 'FMCSA program', ERP, 'drug alcohol testing', { dataset: 'g3-drug-alcohol-testing' });
+  add('dot', 'Integrity dashboard', 'Open compliance hub', ERP, 'integrity compliance dashboard', {
+    custom: 'integrity-dashboard'
+  });
   add('dot', 'IFTA quarterly (jurisdiction)', 'Fuel + miles', ERP, 'ifta quarterly', { dataset: 'd4-ifta-mileage' });
 
   add('custom', '+ New custom report', 'Roadmap — builder', ERP, 'custom report new', { custom: 'new' });
@@ -166,6 +173,7 @@
     'a8-accident-collision': '/api/reports/maintenance/accident-history',
     'a9-fleet-repair-monthly': '/api/reports/maintenance/fleet-repair-summary',
     'a10-inspection-history': '/api/reports/maintenance/inspection-history',
+    'a11-parts-positions': '/api/reports/maintenance/parts-positions',
     'm1-expense-by-service-type': '/api/reports/maintenance/by-service-type',
     'm2-maintenance-cost-pivot': '/api/reports/maintenance/cost-pivot',
     'm3-repair-vs-maintenance': '/api/reports/maintenance/repair-vs-maintenance',
@@ -477,6 +485,7 @@ tr:nth-child(even){background:#f9f9f9}
     'a8-accident-collision',
     'a9-fleet-repair-monthly',
     'a10-inspection-history',
+    'a11-parts-positions',
     'm1-expense-by-service-type',
     'm2-maintenance-cost-pivot',
     'm3-repair-vs-maintenance',

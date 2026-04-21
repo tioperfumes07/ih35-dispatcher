@@ -2698,11 +2698,19 @@ body.erp-maintenance .maint-board-stage {
 }
 
 body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-cards {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
   min-width: 0;
   min-height: 0;
+  box-sizing: border-box;
+}
+body.erp-maintenance .maint-kpi-strip--compact .maint-kpi-card {
+  flex: 1;
+  min-width: 180px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 body.erp-maintenance .maint-kpi-card {
   border: 1px solid var(--color-border);
