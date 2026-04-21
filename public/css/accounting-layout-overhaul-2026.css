@@ -81,7 +81,7 @@ body.erp-maintenance #section-accounting .subtabs.erp-tab-bar .subtab.active {
 }
 
 /* Reports + other tablists in maintenance (not WO action strip — that row wraps in maint-accounting / maint-overhaul) */
-body.erp-maintenance .rep-cat-tabs,
+body.erp-maintenance .rep-cat-tabs:not(.rep-cat-tabs--bar),
 body.erp-maintenance #maintMainSubtabs {
   display: flex !important;
   flex-wrap: nowrap !important;

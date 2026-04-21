@@ -407,19 +407,21 @@
     const grand = Number.isFinite(inv) ? inv : Math.round((catSum + itemSum) * 100) / 100;
     let html = '';
     if (cats.length && !items.length) {
-      html += `<div class="section-sublabel">Category expense lines</div>${buildCategoryTable(cats)}`;
-      html += `<table><tbody><tr class="totals-row"><td colspan="3">Subtotal</td><td class="right">${esc(
+      html += `<div class="cost-table-label">Category expense lines</div>${buildCategoryTable(cats)}`;
+      html += `<table><tbody><tr class="totals-row"><td colspan="4">Subtotal</td><td class="right">${esc(
         money(catSum)
-      )}</td><td></td></tr></tbody></table>`;
+      )}</td></tr></tbody></table>`;
     } else if (!cats.length && items.length) {
-      html += `<div class="section-sublabel">Product / service lines</div>${buildItemTable(items)}`;
+      html += `<div class="cost-table-label">Product / service lines</div>${buildItemTable(items)}`;
       html += `<table><tbody><tr class="totals-row"><td colspan="6">Subtotal</td><td class="right">${esc(
         money(itemSum)
       )}</td><td></td></tr></tbody></table>`;
     } else if (cats.length && items.length) {
-      html += `<div class="section-sublabel">Category expense lines</div>${buildCategoryTable(cats)}`;
-      html += `<div class="divider">Product / service lines</div>`;
-      html += `<div class="section-sublabel">Product / service lines</div>${buildItemTable(items)}`;
+      html +=
+        '<div class="both-notice">This document includes both category expense lines and product/service lines. Subtotals are shown separately before the grand total.</div>';
+      html += `<div class="cost-table-label">Category expense lines</div>${buildCategoryTable(cats)}`;
+      html += '<div class="cost-dash-divider"></div>';
+      html += `<div class="cost-table-label">Product / service lines</div>${buildItemTable(items)}`;
       html += `<div class="subtotal-bar"><span>Category subtotal: ${esc(money(catSum))}</span><span>Item subtotal: ${esc(
         money(itemSum)
       )}</span></div>`;
@@ -504,9 +506,9 @@
     let g = '';
     boxes.forEach(b => {
       const on = set.has(b.k);
-      const fill = on ? '#333' : 'none';
-      const stroke = on ? '#333' : '#999';
-      const tc = on ? '#fff' : '#666';
+      const fill = on ? '#333333' : 'none';
+      const stroke = on ? '#333333' : '#999';
+      const tc = on ? '#ffffff' : '#666';
       g += `<rect x="${b.x}" y="${b.y}" width="72" height="28" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="0.5"/><text x="${
         b.x + 36
       }" y="${b.y + 18}" text-anchor="middle" font-size="6pt" fill="${tc}">${esc(b.k)}</text>`;
@@ -527,9 +529,9 @@
     ];
     pts.forEach(b => {
       const on = set.has(b.k);
-      const fill = on ? '#333' : 'none';
-      const stroke = on ? '#333' : '#999';
-      const tc = on ? '#fff' : '#666';
+      const fill = on ? '#333333' : 'none';
+      const stroke = on ? '#333333' : '#999';
+      const tc = on ? '#ffffff' : '#666';
       g += `<rect x="${b.x}" y="${b.y}" width="52" height="32" fill="${fill}" stroke="${stroke}" stroke-width="0.5"/><text x="${
         b.x + 26
       }" y="${b.y + 20}" text-anchor="middle" font-size="7pt" fill="${tc}">${esc(b.k)}</text>`;
@@ -555,7 +557,7 @@
     else if (mt === 'battery') svg = buildBatterySvg(pos);
     else if (mt === 'full') svg = buildFullMapSvg(pos);
     if (!svg && !pos.length) return '';
-    const list = pos.length ? pos.join(', ') : '—';
+    const list = pos.length ? `Positions: ${pos.map(p => esc(p)).join(', ')}` : 'Positions: —';
     const rows = Array.isArray(positionDetails) ? positionDetails : [];
     const detBody = rows.length
       ? rows
@@ -573,7 +575,7 @@
         list
       )}</p></div>
       <div class="map-side position-table">
-        <div class="section-sublabel">Position detail</div>
+        <div class="cost-table-label">Position detail</div>
         <table><thead><tr><th>Position</th><th>Part #</th><th>Description</th><th class="right">Qty</th><th class="right">Amount</th></tr></thead><tbody>${detBody}</tbody></table>
       </div>
     </div>`;

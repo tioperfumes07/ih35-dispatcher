@@ -7422,6 +7422,11 @@
                 'en-US'
               )} mi/month</div></th>`;
             }
+            if (c.key === 'approxMonthsRemaining') {
+              return `<th>${escapeHtml(c.label)}<div style="font-size:10px;font-weight:400;color:#888;margin-top:2px">Miles remaining ÷ fleet avg (${fa.toLocaleString(
+                'en-US'
+              )} mi/mo)</div></th>`;
+            }
             return `<th>${escapeHtml(c.label)}</th>`;
           })
           .join('');
