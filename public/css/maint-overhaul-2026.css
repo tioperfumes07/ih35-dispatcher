@@ -12,7 +12,49 @@ body.erp-maintenance #section-maintenance > .maint-kpi-strip {
   margin-bottom: 12px;
 }
 
-/* Workspace snapshot KPI row: see maint-accounting-ui-2026.css (.maint-kpi-strip--compact) */
+/* --- Workspace snapshot KPI row (Maintenance): wrap + min widths; override earlier grid rules --- */
+body.erp-maintenance #section-maintenance > .maint-kpi-strip.maint-kpi-strip--compact .maint-kpi-strip__body {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #section-maintenance > .maint-kpi-strip.maint-kpi-strip--compact .maint-kpi-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #section-maintenance > .maint-kpi-strip.maint-kpi-strip--compact .maint-kpi-card {
+  flex: 1;
+  min-width: 180px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* --- Primary maintenance action tabs (Create WO / Fleet / R&M / Service): same wrap contract --- */
+body.erp-maintenance #section-maintenance .maint-action-strip .maint-action-strip__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+body.erp-maintenance #section-maintenance .maint-action-strip .maint-action-strip__tabs .maint-action-strip__btn {
+  flex: 1;
+  min-width: 160px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
 /* --- Page shell --- */
 body.erp-maintenance .maint-page-shell {
