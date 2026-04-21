@@ -1,0 +1,205 @@
+/**
+ * Form 425C workspace — scoped to this page only.
+ * Uses design tokens from design-tokens.css / app-theme.css.
+ */
+
+#form-425c-root,
+#form-425c-root .form-425c-root {
+  --f425-part-color: var(--color-app-frame-border, #1e3a5a);
+}
+
+#form-425c-root .form-425c-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-md, 12px) var(--space-lg, 16px) var(--space-3xl, 48px);
+}
+
+#form-425c-root .f425-tabs {
+  display: flex;
+  gap: var(--space-sm, 8px);
+  flex-wrap: wrap;
+  margin: var(--space-md, 12px) 0;
+  border-bottom: 1px solid var(--color-border, #e0e3e8);
+  padding-bottom: var(--space-sm, 8px);
+}
+
+#form-425c-root .f425-tabs button {
+  padding: var(--space-sm, 8px) 14px;
+  border-radius: var(--radius-md, 8px) var(--radius-md, 8px) 0 0;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-md, 13px);
+  color: var(--color-text-body, #3c4257);
+}
+
+#form-425c-root .f425-tabs button.active {
+  background: var(--color-bg-card, #fff);
+  border-color: var(--color-border, #e0e3e8);
+  border-bottom-color: transparent;
+  font-weight: 600;
+}
+
+#form-425c-root .f425-panel {
+  display: none;
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #e0e3e8);
+  border-radius: var(--radius-md, 10px);
+  padding: var(--space-md, 16px) 18px;
+  margin-bottom: var(--space-md, 16px);
+}
+
+#form-425c-root .f425-panel.active {
+  display: block;
+}
+
+#form-425c-root .f425-h2 {
+  font-size: var(--font-xl, 15px);
+  margin: 0 0 var(--space-md, 12px);
+  color: var(--color-text-primary, #1a1f36);
+}
+
+#form-425c-root .f425-h3 {
+  font-size: var(--font-lg, 14px);
+  margin: 18px 0 var(--space-sm, 8px);
+  color: var(--f425-part-color);
+  font-weight: 700;
+}
+
+#form-425c-root .f425-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px var(--space-lg, 16px);
+  align-items: end;
+}
+
+#form-425c-root .f425-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs, 4px);
+  font-size: var(--font-base, 12px);
+  color: var(--color-text-label, #6b7385);
+}
+
+#form-425c-root .f425-grid input,
+#form-425c-root .f425-grid select,
+#form-425c-root .f425-grid textarea {
+  padding: var(--space-sm, 8px) 10px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--color-border-input, #d0d4da);
+  font: inherit;
+  background: var(--color-bg-card, #fff);
+  color: var(--color-text-primary, #1a1f36);
+}
+
+#form-425c-root .f425-company-card {
+  border: 1px dashed var(--color-border, #e0e3e8);
+  border-radius: var(--radius-md, 10px);
+  padding: 14px;
+  margin-bottom: var(--space-md, 16px);
+  background: var(--color-bg-header, #f1f3f4);
+}
+
+#form-425c-root .f425-company-card h3 {
+  margin: 0 0 10px;
+  font-size: var(--font-xl, 15px);
+  color: var(--color-text-primary, #1a1f36);
+}
+
+#form-425c-root .f425-bank-pick {
+  max-height: 200px;
+  overflow: auto;
+  border: 1px solid var(--color-border, #e0e3e8);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-sm, 8px);
+  background: var(--color-bg-card, #fff);
+  font-size: var(--font-base, 12px);
+}
+
+#form-425c-root .f425-bank-pick label {
+  display: flex;
+  gap: var(--space-sm, 8px);
+  align-items: center;
+  margin: var(--space-xs, 4px) 0;
+  cursor: pointer;
+  color: var(--color-text-body, #3c4257);
+}
+
+#form-425c-root table.f425-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-base, 12px);
+  margin-top: 10px;
+}
+
+#form-425c-root table.f425-table th,
+#form-425c-root table.f425-table td {
+  border: 1px solid var(--color-border, #e0e3e8);
+  padding: var(--space-sm, 6px) var(--space-sm, 8px);
+  text-align: left;
+  vertical-align: top;
+}
+
+#form-425c-root table.f425-table th {
+  background: var(--color-bg-header, #f1f3f4);
+  color: var(--color-text-primary, #1a1f36);
+}
+
+#form-425c-root .f425-proj-table input {
+  border: 1px solid var(--color-border-input, #d0d4da);
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--space-xs, 4px) var(--space-sm, 6px);
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#form-425c-root .f425-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm, 8px);
+  margin: var(--space-md, 12px) 0;
+}
+
+#form-425c-root .f425-note {
+  font-size: var(--font-base, 12px);
+  color: var(--color-text-label, #6b7385);
+  line-height: 1.45;
+  margin: var(--space-sm, 8px) 0;
+}
+
+#form-425c-root .f425-yn-row {
+  display: flex;
+  gap: var(--space-md, 16px);
+  flex-wrap: wrap;
+  align-items: center;
+  margin: var(--space-sm, 6px) 0;
+  font-size: var(--font-md, 13px);
+  color: var(--color-text-body, #3c4257);
+}
+
+#form-425c-root .f425-money {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  #form-425c-root .no-print {
+    display: none !important;
+  }
+  #form-425c-root .f425-panel {
+    display: block !important;
+    border: none;
+    padding: 0;
+  }
+  body.form-425c-page {
+    background: var(--color-bg-card, #fff);
+  }
+}
+
+/* Highlight Form 425C in board nav when on this page */
+body.form-425c-page .board-nav-wrap a[href='/form-425c.html'] {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

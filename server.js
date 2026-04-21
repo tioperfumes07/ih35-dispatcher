@@ -85,6 +85,10 @@ async function start() {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
 
+  app.get('/form-425c', (_req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'form-425c.html'));
+  });
+
   app.get('/health', (_req, res) => {
     res.json({
       ok: true,

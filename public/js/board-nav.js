@@ -63,6 +63,7 @@
         { label: 'QBO rollback & imports', href: '/maintenance.html#accounting-rollback' },
         { label: 'QuickBooks live master', href: '/maintenance.html#accounting-qbo-master' },
         { label: 'Bank & expense matching', href: '/banking.html' },
+        { label: 'Form 425C (monthly operating report)', href: '/form-425c.html' },
         { label: 'Driver bill pay', href: '/maintenance.html#accounting-driver-bill-pay' },
         { label: 'Fuel bill (dedicated)', href: '/maintenance.html#accounting-fuel-bill-new' },
         { label: 'Fuel expense (dedicated)', href: '/maintenance.html#accounting-fuel-expense-new' },

@@ -1,8 +1,9 @@
 /**
- * Form 425C workspace — profiles, QB paste, full report, ZIP package, history.
+ * Form 425C — React (UMD) via React.createElement only. No build step.
  */
 (function () {
-  const Q_LINES = [
+  'use strict';
+  var Q_LINES = [
     [1, 'Did the business operate during the entire reporting period?'],
     [2, 'Do you plan to continue to operate the business next month?'],
     [3, 'Have you paid all of your bills on time?'],
@@ -22,8 +23,7 @@
     [17, 'Paid pre-petition bills?'],
     [18, 'Allowed pre-petition checks to clear?']
   ];
-
-  const PROJ_ROWS = [
+  var PROJ_ROWS = [
     ['32', 'Projected gross receipts / cash inflows'],
     ['33', 'Projected total cash disbursements'],
     ['34', 'Projected payroll & benefits'],
@@ -31,8 +31,7 @@
     ['36', 'Projected insurance & professional fees'],
     ['37', 'Other material items (describe in notes)']
   ];
-
-  const ATTACH_KEYS = [
+  var ATTACH_KEYS = [
     ['pl', 'Profit & loss (month)'],
     ['bs', 'Balance sheet'],
     ['bankStmt', 'Bank statements (all DIP accounts)'],
@@ -44,966 +43,1846 @@
     ['other', 'Other exhibits (attach description in notes)']
   ];
 
-  let profilesState = { version: 1, companies: [] };
-  let bankAccountsCache = [];
-  /** @type {{ rows: any[], total: number } | null} */
-  let lastQBPasteResult = null;
-  let lastQboReceiptsData = null;
-
   function escapeHtml(s) {
-    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-  function escapeAttr(s) {
-    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-  }
-
-  function tabInit() {
-    document.querySelectorAll('.f425-tabs button').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.f425-tabs button').forEach((b) => {
-          b.classList.toggle('active', b === btn);
-          b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
-        });
-        const id = btn.getAttribute('data-tab');
-        document.querySelectorAll('.f425-panel').forEach((p) => p.classList.remove('active'));
-        const panel = document.getElementById('panel-' + id);
-        if (panel) panel.classList.add('active');
-      });
-    });
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
-  function renderQuestions() {
-    const host = document.getElementById('qBlock');
-    if (!host) return;
-    host.innerHTML = Q_LINES.map(([n, txt]) => {
-      return (
-        '<div class="f425-yn-row">' +
-        '<span style="min-width:220px">' +
-        n +
-        '. ' +
-        escapeHtml(txt) +
-        '</span>' +
-        '<label><input type="radio" name="q' +
-        n +
-        '" value="Yes" /> Yes</label>' +
-        '<label><input type="radio" name="q' +
-        n +
-        '" value="No" /> No</label>' +
-        '<label><input type="radio" name="q' +
-        n +
-        '" value="N/A" /> N/A</label>' +
-        '</div>'
-      );
-    }).join('');
-  }
-
-  function renderDefaultQuestionnaireEditors(c) {
-    const dq = c.defaultQuestionnaire || {};
-    return (
-      '<details style="margin-top:12px"><summary class="f425-note" style="cursor:pointer;font-weight:600">Default questionnaire (lines 1–18) — applied when you click “Apply profile defaults” on the Form tab</summary>' +
-      '<div style="margin-top:10px;padding:10px;border:1px solid var(--color-border,#ddd);border-radius:8px;background:#fff">' +
-      Q_LINES.map(([n]) => {
-        const v = dq[String(n)] || 'Yes';
-        const ys = v === 'Yes' ? ' checked' : '';
-        const ns = v === 'No' ? ' checked' : '';
-        const nas = v === 'N/A' ? ' checked' : '';
-        return (
-          '<div class="f425-yn-row" style="font-size:12px">' +
-          '<span style="min-width:140px">Line ' +
-          n +
-          '</span>' +
-          '<label><input type="radio" name="defq-' +
-          escapeAttr(c.id) +
-          '-' +
-          n +
-          '" value="Yes"' +
-          ys +
-          ' /> Yes</label>' +
-          '<label><input type="radio" name="defq-' +
-          escapeAttr(c.id) +
-          '-' +
-          n +
-          '" value="No"' +
-          ns +
-          ' /> No</label>' +
-          '<label><input type="radio" name="defq-' +
-          escapeAttr(c.id) +
-          '-' +
-          n +
-          '" value="N/A"' +
-          nas +
-          ' /> N/A</label>' +
-          '</div>'
-        );
-      }).join('') +
-      '</div></details>'
-    );
-  }
-
-  function renderProfileEditors() {
-    const host = document.getElementById('profileEditors');
-    if (!host) return;
-    host.innerHTML = (profilesState.companies || [])
-      .map((c) => {
-        const hints = (c.bankPasteHints || []).join(', ');
-        return (
-          '<div class="f425-company-card" data-cid="' +
-          escapeAttr(c.id) +
-          '">' +
-          '<h3>' +
-          escapeHtml(c.displayName || c.id) +
-          ' <code style="font-weight:400">' +
-          escapeHtml(c.id) +
-          '</code></h3>' +
-          '<div class="f425-grid">' +
-          '<label>Display name <input data-f="displayName" value="' +
-          escapeAttr(c.displayName) +
-          '" /></label>' +
-          '<label>Debtor name (425C header) <input data-f="debtorName" value="' +
-          escapeAttr(c.debtorName) +
-          '" /></label>' +
-          '<label>Case number <input data-f="caseNumber" value="' +
-          escapeAttr(c.caseNumber) +
-          '" /></label>' +
-          '<label>Court district <input data-f="courtDistrict" value="' +
-          escapeAttr(c.courtDistrict) +
-          '" /></label>' +
-          '<label>Court division <input data-f="courtDivision" value="' +
-          escapeAttr(c.courtDivision) +
-          '" /></label>' +
-          '<label>NAICS <input data-f="naicsCode" value="' +
-          escapeAttr(c.naicsCode) +
-          '" /></label>' +
-          '<label>Line of business <input data-f="lineOfBusiness" value="' +
-          escapeAttr(c.lineOfBusiness) +
-          '" /></label>' +
-          '<label>Responsible party <input data-f="responsiblePartyName" value="' +
-          escapeAttr(c.responsiblePartyName) +
-          '" /></label>' +
-          '</div>' +
-          '<label style="display:block;margin-top:10px;font-size:12px;color:#555">QB paste filter hints (comma-separated substrings, e.g. Wells Fargo, WF-1, 3500)' +
-          '<textarea data-f="bankPasteHints" rows="2" style="width:100%;margin-top:4px;padding:8px;border-radius:6px;border:1px solid var(--color-border-input,#bbb);font:inherit">' +
-          escapeHtml(hints) +
-          '</textarea></label>' +
-          '<p class="f425-note">Select QuickBooks <strong>Bank</strong> accounts for this debtor (Transportation: three WF · Trucking: one WF, e.g. 3500).</p>' +
-          '<div class="f425-bank-pick" data-bank-pick="' +
-          escapeAttr(c.id) +
-          '">' +
-          renderBankChecks(c) +
-          '</div>' +
-          '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px">' +
-          '<input type="checkbox" data-f="includeUnclassified" ' +
-          (c.includeUnclassifiedDepositLines ? 'checked' : '') +
-          ' />' +
-          'Include deposit lines with no linked txn (review manually)' +
-          '</label>' +
-          '<label style="display:flex;align-items:center;gap:8px;font-size:13px">' +
-          '<input type="checkbox" data-f="includeJE" ' +
-          (c.includeJournalEntryDepositLines ? 'checked' : '') +
-          ' />' +
-          'Include lines linked to JournalEntry' +
-          '</label>' +
-          renderDefaultQuestionnaireEditors(c) +
-          '</div>'
-        );
-      })
-      .join('');
-  }
-
-  function renderBankChecks(c) {
-    if (!bankAccountsCache.length) {
-      return '<span class="f425-note">Click <strong>Refresh QuickBooks bank list</strong> to map accounts.</span>';
-    }
-    const set = new Set((c.bankAccountQboIds || []).map(String));
-    return bankAccountsCache
-      .map((a) => {
-        return (
-          '<label>' +
-          '<input type="checkbox" value="' +
-          escapeAttr(a.id) +
-          '" ' +
-          (set.has(String(a.id)) ? 'checked' : '') +
-          ' />' +
-          '<span>' +
-          escapeHtml(a.name) +
-          ' <code>' +
-          escapeHtml(a.id) +
-          '</code>' +
-          (a.currentBalance != null ? ' · Bal ' + escapeHtml(String(a.currentBalance)) : '') +
-          '</span>' +
-          '</label>'
-        );
-      })
-      .join('');
-  }
-
-  function collectDefaultQuestionnaireFromCard(card, cid) {
-    const o = {};
-    for (let n = 1; n <= 18; n++) {
-      const sel = card.querySelector('input[name="defq-' + cid + '-' + n + '"]:checked');
-      o[String(n)] = sel ? sel.value : 'Yes';
+  function defaultProjections() {
+    var o = {};
+    for (var i = 0; i < PROJ_ROWS.length; i++) {
+      var c = PROJ_ROWS[i][0];
+      o[c] = { prior: '', current: '', next: '' };
     }
     return o;
   }
 
-  function collectProfilesFromDom() {
-    const companies = [];
-    document.querySelectorAll('.f425-company-card').forEach((card) => {
-      const id = card.getAttribute('data-cid');
-      const get = (sel) => card.querySelector(sel);
-      const ids = [];
-      const labels = [];
-      card.querySelectorAll('.f425-bank-pick input[type=checkbox]:checked').forEach((cb) => {
-        ids.push(cb.value);
-        const lab = bankAccountsCache.find((x) => x.id === cb.value);
-        labels.push(lab ? lab.name : cb.value);
-      });
-      const hintsRaw = get('[data-f=bankPasteHints]')?.value || '';
-      const bankPasteHints = hintsRaw
-        .split(/[,;\n]+/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-      companies.push({
-        id,
-        displayName: get('[data-f=displayName]')?.value?.trim() || '',
-        debtorName: get('[data-f=debtorName]')?.value?.trim() || '',
-        caseNumber: get('[data-f=caseNumber]')?.value?.trim() || '',
-        courtDistrict: get('[data-f=courtDistrict]')?.value?.trim() || '',
-        courtDivision: get('[data-f=courtDivision]')?.value?.trim() || '',
-        naicsCode: get('[data-f=naicsCode]')?.value?.trim() || '',
-        lineOfBusiness: get('[data-f=lineOfBusiness]')?.value?.trim() || '',
-        responsiblePartyName: get('[data-f=responsiblePartyName]')?.value?.trim() || '',
-        bankAccountQboIds: ids,
-        bankAccountLabels: labels,
-        bankPasteHints,
-        defaultQuestionnaire: collectDefaultQuestionnaireFromCard(card, id),
-        includeUnclassifiedDepositLines: !!get('[data-f=includeUnclassified]')?.checked,
-        includeJournalEntryDepositLines: !!get('[data-f=includeJE]')?.checked
-      });
-    });
-    return { version: 1, companies };
-  }
-
-  function syncReportSelectors() {
-    const sel = document.getElementById('repCompany');
-    const selQb = document.getElementById('qbCompany');
-    if (!sel) return;
-    const cur = sel.value;
-    const opts = (profilesState.companies || [])
-      .map((c) => '<option value="' + escapeAttr(c.id) + '">' + escapeHtml(c.displayName || c.id) + '</option>')
-      .join('');
-    sel.innerHTML = opts;
-    if (selQb) {
-      const curQ = selQb.value;
-      selQb.innerHTML = opts;
-      if (curQ && [...selQb.options].some((o) => o.value === curQ)) selQb.value = curQ;
-      else if (cur) selQb.value = cur;
-    }
-    if (cur && [...sel.options].some((o) => o.value === cur)) sel.value = cur;
-    applyProfileToPaper();
-  }
-
-  function getSelectedCompany() {
-    const id = document.getElementById('repCompany')?.value;
-    return (profilesState.companies || []).find((x) => x.id === id) || null;
-  }
-
-  function applyProfileToPaper() {
-    const c = getSelectedCompany();
-    if (!c) return;
-    const el = (id) => document.getElementById(id);
-    if (el('paperDebtor')) el('paperDebtor').value = c.debtorName || '';
-    if (el('paperCase')) el('paperCase').value = c.caseNumber || '';
-    if (el('paperCourt')) el('paperCourt').value = [c.courtDistrict, c.courtDivision].filter(Boolean).join(' · ');
-    if (el('paperNaics')) el('paperNaics').value = c.naicsCode || '';
-    if (el('paperLob')) el('paperLob').value = c.lineOfBusiness || '';
-    if (el('paperRp')) el('paperRp').value = c.responsiblePartyName || '';
-  }
-
-  function applyDefaultQuestionnaireFromProfile() {
-    const c = getSelectedCompany();
-    if (!c || !c.defaultQuestionnaire) return;
-    const dq = c.defaultQuestionnaire;
-    for (let n = 1; n <= 18; n++) {
-      const v = dq[String(n)];
-      if (!v) continue;
-      const inp = document.querySelector('input[name="q' + n + '"][value="' + v + '"]');
-      if (inp) inp.checked = true;
-    }
-  }
-
-  function parseMoneyInput(id) {
-    const el = document.getElementById(id);
-    if (!el) return 0;
-    return parseFloat(String(el.value || '').replace(/,/g, '')) || 0;
-  }
-
-  function recalcCash() {
-    const o19 = parseMoneyInput('line19');
-    const o20 = parseMoneyInput('line20');
-    const o21 = parseMoneyInput('line21');
-    const flow = Math.round((o20 - o21) * 100) / 100;
-    const end = Math.round((o19 + flow) * 100) / 100;
-    const l22 = document.getElementById('line22');
-    const l23 = document.getElementById('line23');
-    if (l22) l22.value = flow ? String(flow) : '';
-    if (l23) l23.value = end ? String(end) : '';
-  }
-
-  function readQuestionnaire() {
-    const o = {};
-    for (let n = 1; n <= 18; n++) {
-      const sel = document.querySelector('input[name="q' + n + '"]:checked');
-      o[String(n)] = sel ? sel.value : '';
+  function defaultAttachments() {
+    var o = {};
+    for (var i = 0; i < ATTACH_KEYS.length; i++) {
+      o[ATTACH_KEYS[i][0]] = false;
     }
     return o;
   }
 
-  function setQuestionnaire(o) {
-    if (!o) return;
-    for (let n = 1; n <= 18; n++) {
-      const v = o[String(n)];
-      if (!v) continue;
-      const inp = document.querySelector('input[name="q' + n + '"][value="' + v + '"]');
-      if (inp) inp.checked = true;
-    }
-  }
-
-  function readProjections() {
-    const rows = [];
-    PROJ_ROWS.forEach(([code]) => {
-      rows.push({
-        line: code,
-        prior: document.getElementById('proj-' + code + '-prior')?.value ?? '',
-        current: document.getElementById('proj-' + code + '-cur')?.value ?? '',
-        next: document.getElementById('proj-' + code + '-next')?.value ?? ''
-      });
-    });
-    return rows;
-  }
-
-  function setProjections(rows) {
-    const byLine = {};
-    (rows || []).forEach((r) => {
-      byLine[r.line] = r;
-    });
-    PROJ_ROWS.forEach(([code]) => {
-      const r = byLine[code] || {};
-      const a = document.getElementById('proj-' + code + '-prior');
-      const b = document.getElementById('proj-' + code + '-cur');
-      const c = document.getElementById('proj-' + code + '-next');
-      if (a) a.value = r.prior ?? '';
-      if (b) b.value = r.current ?? '';
-      if (c) c.value = r.next ?? '';
-    });
-  }
-
-  function readAttachments() {
-    const o = {};
-    ATTACH_KEYS.forEach(([k]) => {
-      o[k] = !!document.getElementById('att-' + k)?.checked;
-    });
-    return o;
-  }
-
-  function setAttachments(o) {
-    ATTACH_KEYS.forEach(([k]) => {
-      const el = document.getElementById('att-' + k);
-      if (el) el.checked = !!o?.[k];
-    });
-  }
-
-  function exhibitDRowsFromDom() {
-    const tb = document.getElementById('exhibitDBody');
-    if (!tb) return [];
-    return [...tb.querySelectorAll('tr[data-drow]')].map((tr) => ({
-      date: tr.querySelector('[data-d="date"]')?.value ?? '',
-      payee: tr.querySelector('[data-d="payee"]')?.value ?? '',
-      amount: tr.querySelector('[data-d="amount"]')?.value ?? '',
-      memo: tr.querySelector('[data-d="memo"]')?.value ?? ''
-    }));
-  }
-
-  function renderExhibitD(rows) {
-    const tb = document.getElementById('exhibitDBody');
-    if (!tb) return;
-    const list = rows && rows.length ? rows : [{ date: '', payee: '', amount: '', memo: '' }];
-    tb.innerHTML = list
-      .map(
-        (r, i) =>
-          '<tr data-drow="' +
-          i +
-          '">' +
-          '<td><input data-d="date" type="text" value="' +
-          escapeAttr(r.date) +
-          '" style="width:100%;box-sizing:border-box" /></td>' +
-          '<td><input data-d="payee" type="text" value="' +
-          escapeAttr(r.payee) +
-          '" style="width:100%;box-sizing:border-box" /></td>' +
-          '<td><input data-d="amount" class="f425-money" type="text" inputmode="decimal" value="' +
-          escapeAttr(r.amount) +
-          '" style="width:100%;box-sizing:border-box" /></td>' +
-          '<td><input data-d="memo" type="text" value="' +
-          escapeAttr(r.memo) +
-          '" style="width:100%;box-sizing:border-box" /></td>' +
-          '<td class="no-print"><button type="button" class="btn secondary btn-exd-del" data-i="' +
-          i +
-          '">Remove</button></td>' +
-          '</tr>'
-      )
-      .join('');
-    tb.querySelectorAll('.btn-exd-del').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const tr = btn.closest('tr');
-        if (tr && tb.rows.length > 1) tr.remove();
-      });
-    });
-    tb.querySelectorAll('[data-d="amount"]').forEach((inp) => inp.addEventListener('input', syncLine21FromExhibitD));
-  }
-
-  function syncLine21FromExhibitD() {
-    let sum = 0;
-    exhibitDRowsFromDom().forEach((r) => {
-      sum += parseFloat(String(r.amount || '').replace(/,/g, '')) || 0;
-    });
-    sum = Math.round(sum * 100) / 100;
-    const l21 = document.getElementById('line21');
-    if (l21) l21.value = sum ? String(sum) : '';
-    recalcCash();
-  }
-
-  function renderExhibitCFromLines(lines, sourceLabel) {
-    const tb = document.getElementById('exhibitCBody');
-    if (!tb) return;
-    if (!(lines || []).length) {
-      tb.innerHTML =
-        '<tr><td colspan="5" class="f425-note">Load from QuickBooks or paste a Deposit Detail export on the <strong>QB import</strong> tab.</td></tr>';
-      return;
-    }
-    const isPaste = sourceLabel === 'paste';
-    tb.innerHTML = lines
-      .map((row) => {
-        if (isPaste) {
-          return (
-            '<tr>' +
-            '<td>' +
-            escapeHtml(row.date) +
-            '</td>' +
-            '<td>' +
-            escapeHtml(row.split || '') +
-            '</td>' +
-            '<td class="f425-money">' +
-            escapeHtml(String(row.amount)) +
-            '</td>' +
-            '<td>' +
-            escapeHtml(row.type || '') +
-            '</td>' +
-            '<td>' +
-            escapeHtml([row.name, row.memo].filter(Boolean).join(' · ')) +
-            '</td>' +
-            '</tr>'
-          );
-        }
-        return (
-          '<tr>' +
-          '<td>' +
-          escapeHtml(row.depositTxnDate) +
-          '</td>' +
-          '<td>' +
-          escapeHtml(row.bankAccountName || row.bankAccountId) +
-          '</td>' +
-          '<td class="f425-money">' +
-          escapeHtml(String(row.lineAmount)) +
-          '</td>' +
-          '<td>' +
-          escapeHtml((row.linkedTxnTypes || []).join(', ')) +
-          '</td>' +
-          '<td>' +
-          escapeHtml(String(row.depositId)) +
-          '</td>' +
-          '</tr>'
-        );
-      })
-      .join('');
-  }
-
-  function gatherReportPayload() {
-    const el = (id) => document.getElementById(id)?.value ?? '';
+  function defaultReportState() {
     return {
-      questionnaire: readQuestionnaire(),
-      paper: {
-        monthLabel: el('paperMonth'),
-        filedDate: el('paperFiled'),
-        lineOfBusiness: el('paperLob'),
-        naicsCode: el('paperNaics'),
-        responsibleParty: el('paperRp'),
-        debtorName: el('paperDebtor'),
-        caseNumber: el('paperCase'),
-        court: el('paperCourt')
-      },
-      cash: {
-        line19: el('line19'),
-        line20: el('line20'),
-        line21: el('line21'),
-        line22: el('line22'),
-        line23: el('line23')
-      },
-      parts34: {
-        line24: el('line24'),
-        line25: el('line25'),
-        line26: el('line26'),
-        line27: el('line27'),
-        line28: el('line28'),
-        line29: el('line29'),
-        line30: el('line30'),
-        line31: el('line31')
-      },
-      projections: readProjections(),
-      attachments: readAttachments(),
-      exhibitC: {
-        source: lastQboReceiptsData ? 'qbo' : lastQBPasteResult ? 'paste' : null,
-        qbo: lastQboReceiptsData,
-        paste: lastQBPasteResult,
-        displayLines: lastQboReceiptsData?.exhibitCLines || lastQBPasteResult?.rows || []
-      },
-      exhibitD: exhibitDRowsFromDom(),
-      notes: el('paperNotes')
+      paperMonth: '',
+      paperFiled: '',
+      paperLob: '',
+      paperNaics: '',
+      paperRp: '',
+      paperDebtor: '',
+      paperCase: '',
+      paperCourt: '',
+      line19: '',
+      line20: '',
+      line21: '',
+      line22: '',
+      line23: '',
+      line24: '',
+      line25: '',
+      line26: '',
+      line27: '',
+      line28: '',
+      line29: '',
+      line30: '',
+      line31: '',
+      paperNotes: '',
+      questionnaire: {},
+      projections: defaultProjections(),
+      attachments: defaultAttachments()
     };
   }
 
-  function applyReportPayload(data) {
-    if (!data) return;
-    const p = data.paper || {};
-    const cash = data.cash || {};
-    const parts = data.parts34 || {};
-    const setv = (id, v) => {
-      const e = document.getElementById(id);
-      if (e && v != null) e.value = String(v);
-    };
-    setv('paperMonth', p.monthLabel);
-    setv('paperFiled', p.filedDate);
-    setv('paperLob', p.lineOfBusiness);
-    setv('paperNaics', p.naicsCode);
-    setv('paperRp', p.responsibleParty);
-    setv('paperDebtor', p.debtorName);
-    setv('paperCase', p.caseNumber);
-    setv('paperCourt', p.court);
-    setv('line19', cash.line19);
-    setv('line20', cash.line20);
-    setv('line21', cash.line21);
-    setv('line22', cash.line22);
-    setv('line23', cash.line23);
-    setv('line24', parts.line24);
-    setv('line25', parts.line25);
-    setv('line26', parts.line26);
-    setv('line27', parts.line27);
-    setv('line28', parts.line28);
-    setv('line29', parts.line29);
-    setv('line30', parts.line30);
-    setv('line31', parts.line31);
-    setv('paperNotes', data.notes);
-    setQuestionnaire(data.questionnaire);
-    setProjections(data.projections);
-    setAttachments(data.attachments);
-    lastQboReceiptsData = data.exhibitC?.qbo || null;
-    lastQBPasteResult = data.exhibitC?.paste || null;
-    const lines = data.exhibitC?.displayLines || lastQboReceiptsData?.exhibitCLines || lastQBPasteResult?.rows || [];
-    const src = data.exhibitC?.source || (lastQboReceiptsData ? 'qbo' : lastQBPasteResult ? 'paste' : null);
-    renderExhibitCFromLines(lines, src === 'paste' ? 'paste' : 'qbo');
-    renderExhibitD(data.exhibitD);
-    recalcCash();
-    const tt = document.getElementById('transferBody');
-    const transfers = lastQboReceiptsData?.transfersInPeriod;
-    if (tt) {
-      if (!(transfers || []).length) tt.innerHTML = '<tr><td colspan="4">—</td></tr>';
-      else {
-        tt.innerHTML = transfers
-          .map(
-            (t) =>
-              '<tr><td>' +
-              escapeHtml(t.txnDate) +
-              '</td><td>' +
-              escapeHtml(String(t.from || '')) +
-              '</td><td>' +
-              escapeHtml(String(t.to || '')) +
-              '</td><td class="f425-money">' +
-              escapeHtml(String(t.amount)) +
-              '</td></tr>'
-          )
-          .join('');
-      }
-    }
-  }
-
-  async function loadProfiles() {
-    const r = await fetch('/api/form-425c/profiles');
-    profilesState = await r.json();
-    renderProfileEditors();
-    syncReportSelectors();
-  }
-
-  async function fetchPriorOpening() {
-    const msg = document.getElementById('receiptMsg');
-    const companyId = document.getElementById('repCompany').value;
-    const month = document.getElementById('repMonth').value;
-    try {
-      const r = await fetch('/api/form-425c/prior-balance?' + new URLSearchParams({ companyId, month }));
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Request failed');
-      if (d.line23 != null && d.line23 !== '') {
-        document.getElementById('line19').value = String(d.line23);
-        recalcCash();
-        if (msg) msg.textContent = 'Line 19 set from prior month ' + (d.priorMonth || '') + ' ending cash (line 23).';
-      } else if (msg) {
-        msg.textContent = 'No saved report for prior month — enter line 19 manually.';
-      }
-    } catch (e) {
-      if (msg) msg.textContent = String(e.message || e);
-    }
-  }
-
-  async function saveReportToServer() {
-    const companyId = document.getElementById('repCompany').value;
-    const month = document.getElementById('repMonth').value;
-    const msg = document.getElementById('receiptMsg');
-    if (!companyId || !month) {
-      alert('Select company and month.');
-      return;
-    }
-    const body = { companyId, month, ...gatherReportPayload() };
-    try {
-      const r = await fetch('/api/form-425c/saved-report', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || await r.text());
-      if (msg) msg.textContent = 'Report saved for ' + month + '.';
-      refreshHistoryTable();
-    } catch (e) {
-      alert(String(e.message || e));
-    }
-  }
-
-  async function loadSavedReport(companyId, month) {
-    const r = await fetch('/api/form-425c/saved-report?' + new URLSearchParams({ companyId, month }));
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'Not found');
-    const rep = d.report;
-    document.getElementById('repCompany').value = rep.companyId || companyId;
-    document.getElementById('repMonth').value = rep.month || month;
-    applyProfileToPaper();
-    applyReportPayload(rep);
-  }
-
-  async function refreshHistoryTable() {
-    const host = document.getElementById('historyTableHost');
-    if (!host) return;
-    try {
-      const r = await fetch('/api/form-425c/saved-reports');
-      const d = await r.json();
-      const rows = d.reports || [];
-      if (!rows.length) {
-        host.innerHTML = '<p class="f425-note">No saved reports yet.</p>';
-        return;
-      }
-      host.innerHTML =
-        '<table class="f425-table"><thead><tr><th>Company</th><th>Month</th><th>Updated</th><th></th></tr></thead><tbody>' +
-        rows
-          .map((row) => {
-            return (
-              '<tr><td>' +
-              escapeHtml(row.companyId) +
-              '</td><td>' +
-              escapeHtml(row.month) +
-              '</td><td>' +
-              escapeHtml(row.updatedAt || '') +
-              '</td><td class="no-print"><button type="button" class="btn primary btn-hist-load" data-c="' +
-              escapeAttr(row.companyId) +
-              '" data-m="' +
-              escapeAttr(row.month) +
-              '">Load</button></td></tr>'
-            );
-          })
-          .join('') +
-        '</tbody></table>';
-      host.querySelectorAll('.btn-hist-load').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          try {
-            await loadSavedReport(btn.getAttribute('data-c'), btn.getAttribute('data-m'));
-            document.querySelector('.f425-tabs button[data-tab="report"]')?.click();
-            const msg = document.getElementById('receiptMsg');
-            if (msg) msg.textContent = 'Loaded saved report.';
-          } catch (e) {
-            alert(String(e.message || e));
-          }
-        });
-      });
-    } catch (e) {
-      host.innerHTML = '<p class="f425-note">' + escapeHtml(String(e.message || e)) + '</p>';
-    }
-  }
-
-  async function parseQBPaste() {
-    const msg = document.getElementById('qbPasteMsg');
-    const companyId = document.getElementById('qbCompany')?.value || document.getElementById('repCompany')?.value;
-    const text = document.getElementById('qbPasteText')?.value || '';
-    if (msg) msg.textContent = 'Parsing…';
-    try {
-      const r = await fetch('/api/form-425c/parse-qb-paste', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, companyId })
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Parse failed');
-      lastQBPasteResult = d;
-      const tb = document.getElementById('qbPasteTableBody');
-      if (tb) {
-        if (!(d.rows || []).length) {
-          tb.innerHTML = '<tr><td colspan="6" class="f425-note">' + escapeHtml(d.meta?.message || 'No rows') + '</td></tr>';
-        } else {
-          tb.innerHTML = d.rows
-            .map(
-              (row) =>
-                '<tr><td>' +
-                escapeHtml(row.date) +
-                '</td><td>' +
-                escapeHtml(row.type) +
-                '</td><td class="f425-money">' +
-                escapeHtml(String(row.amount)) +
-                '</td><td>' +
-                escapeHtml(row.split) +
-                '</td><td>' +
-                escapeHtml(row.name) +
-                '</td><td>' +
-                escapeHtml(row.memo) +
-                '</td></tr>'
-            )
-            .join('');
-        }
-      }
-      if (msg) msg.textContent = (d.meta && d.meta.message) || 'Parsed.';
-    } catch (e) {
-      if (msg) msg.textContent = String(e.message || e);
-    }
-  }
-
-  function applyPasteTotalToLine20() {
-    if (!lastQBPasteResult || lastQBPasteResult.total == null) {
-      alert('Parse a paste first.');
-      return;
-    }
-    document.getElementById('line20').value = String(lastQBPasteResult.total);
-    lastQboReceiptsData = null;
-    renderExhibitCFromLines(lastQBPasteResult.rows, 'paste');
-    const tt = document.getElementById('transferBody');
-    if (tt) tt.innerHTML = '<tr><td colspan="4">Transfers not extracted from paste — use QBO load on Form tab if needed.</td></tr>';
-    recalcCash();
-    document.querySelector('.f425-tabs button[data-tab="report"]')?.click();
-    const msg = document.getElementById('receiptMsg');
-    if (msg) msg.textContent = 'Line 20 and Exhibit C updated from paste (total $' + lastQBPasteResult.total + ').';
-  }
-
-  async function downloadPackageZip() {
-    const msg = document.getElementById('mergeMsg');
-    const filesEl = document.getElementById('mergeFiles');
-    if (!filesEl?.files?.length) {
-      if (msg) msg.textContent = 'Choose at least one PDF (or other file) to include.';
-      return;
-    }
-    const fd = new FormData();
-    for (const f of filesEl.files) {
-      fd.append('files', f, f.name);
-    }
-    const manifest = {
-      companyId: document.getElementById('repCompany')?.value,
-      month: document.getElementById('repMonth')?.value,
-      attachmentsChecklist: readAttachments(),
-      generatedWith: 'IH35 Form 425C workspace'
-    };
-    fd.append('manifestJson', JSON.stringify(manifest));
-    if (msg) msg.textContent = 'Building ZIP…';
-    try {
-      const r = await fetch('/api/form-425c/package', { method: 'POST', body: fd });
-      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
-      const blob = await r.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'IH35-Form425C-package.zip';
-      a.click();
-      URL.revokeObjectURL(a.href);
-      if (msg) msg.textContent = 'Download started.';
-    } catch (e) {
-      if (msg) msg.textContent = String(e.message || e);
-    }
-  }
-
-  function wire() {
-    document.getElementById('btnLoadBanks')?.addEventListener('click', async () => {
-      const msg = document.getElementById('bankLoadMsg');
-      if (msg) msg.textContent = 'Loading…';
-      try {
-        const r = await fetch('/api/form-425c/qbo-bank-accounts');
-        const d = await r.json();
-        if (!d.ok) throw new Error(d.error || 'QBO error');
-        bankAccountsCache = d.accounts || [];
-        if (msg) msg.textContent = 'Loaded ' + bankAccountsCache.length + ' bank account(s).';
-        renderProfileEditors();
-      } catch (e) {
-        if (msg) msg.textContent = String(e.message || e);
-      }
+  function projectionsFromSaved(rows) {
+    var by = {};
+    (rows || []).forEach(function (r) {
+      if (r && r.line) by[r.line] = { prior: r.prior || '', current: r.current || '', next: r.next || '' };
     });
+    var o = defaultProjections();
+    Object.keys(o).forEach(function (k) {
+      if (by[k]) o[k] = by[k];
+    });
+    return o;
+  }
 
-    document.getElementById('btnSaveProfiles')?.addEventListener('click', async () => {
-      const body = collectProfilesFromDom();
-      const r = await fetch('/api/form-425c/profiles', {
+  function Form425CApp() {
+    var h = React.createElement;
+    var React_useState = React.useState;
+    var React_useEffect = React.useEffect;
+    var React_useRef = React.useRef;
+
+    var tabState = React_useState('profile');
+    var tab = tabState[0];
+    var setTab = tabState[1];
+
+    var profilesState = React_useState({ version: 1, companies: [] });
+    var profiles = profilesState[0];
+    var setProfiles = profilesState[1];
+
+    var banksState = React_useState([]);
+    var banks = banksState[0];
+    var setBanks = banksState[1];
+
+    var repCoState = React_useState('');
+    var repCompany = repCoState[0];
+    var setRepCompany = repCoState[1];
+
+    var repMoState = React_useState('');
+    var repMonth = repMoState[0];
+    var setRepMonth = repMoState[1];
+
+    var qbCoState = React_useState('');
+    var qbCompany = qbCoState[0];
+    var setQbCompany = qbCoState[1];
+
+    var pasteState = React_useState('');
+    var pasteText = pasteState[0];
+    var setPasteText = pasteState[1];
+
+    var lastPasteState = React_useState(null);
+    var lastPaste = lastPasteState[0];
+    var setLastPaste = lastPasteState[1];
+
+    var lastQboState = React_useState(null);
+    var lastQbo = lastQboState[0];
+    var setLastQbo = lastQboState[1];
+
+    var reportState = React_useState(defaultReportState);
+    var report = reportState[0];
+    var setReport = reportState[1];
+
+    var exDState = React_useState([{ date: '', payee: '', amount: '', memo: '' }]);
+    var exhibitD = exDState[0];
+    var setExhibitD = exDState[1];
+
+    var histState = React_useState([]);
+    var historyList = histState[0];
+    var setHistoryList = histState[1];
+
+    var bankMsgState = React_useState('');
+    var bankLoadMsg = bankMsgState[0];
+    var setBankLoadMsg = bankMsgState[1];
+
+    var recMsgState = React_useState('');
+    var receiptMsg = recMsgState[0];
+    var setReceiptMsg = recMsgState[1];
+
+    var qbMsgState = React_useState('');
+    var qbPasteMsg = qbMsgState[0];
+    var setQbPasteMsg = qbMsgState[1];
+
+    var mergeMsgState = React_useState('');
+    var mergeMsg = mergeMsgState[0];
+    var setMergeMsg = mergeMsgState[1];
+
+    var monthPhState = React_useState('');
+    var monthPlaceholder = monthPhState[0];
+    var setMonthPlaceholder = monthPhState[1];
+
+    var mergeRef = React_useRef(null);
+
+    React_useEffect(function () {
+      var d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      setRepMonth(y + '-' + m);
+      setMonthPlaceholder(d.toLocaleString(undefined, { month: 'long', year: 'numeric' }));
+    }, []);
+
+    React_useEffect(function () {
+      var cancelled = false;
+      (async function () {
+        try {
+          var r = await fetch('/api/form-425c/profiles');
+          var data = await r.json();
+          if (cancelled) return;
+          setProfiles(data);
+          var first = (data.companies || [])[0];
+          if (first) {
+            setRepCompany(function (c) {
+              return c || first.id;
+            });
+            setQbCompany(function (c) {
+              return c || first.id;
+            });
+            applyProfileFromCompany(first);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      })();
+      return function () {
+        cancelled = true;
+      };
+    }, []);
+
+    React_useEffect(function () {
+      refreshHistory();
+    }, []);
+
+    function applyProfileFromCompany(c) {
+      if (!c) return;
+      setReport(function (r) {
+        return {
+          ...r,
+          paperDebtor: c.debtorName || '',
+          paperCase: c.caseNumber || '',
+          paperCourt: [c.courtDistrict, c.courtDivision].filter(Boolean).join(' \u00b7 '),
+          paperNaics: c.naicsCode || '',
+          paperLob: c.lineOfBusiness || '',
+          paperRp: c.responsiblePartyName || ''
+        };
+      });
+    }
+
+    function applySelectedProfileToPaper(companyId) {
+      var c = (profiles.companies || []).find(function (x) {
+        return x.id === companyId;
+      });
+      applyProfileFromCompany(c);
+    }
+
+    React_useEffect(function () {
+      var n = function (v) {
+        return parseFloat(String(v == null ? '' : v).replace(/,/g, '')) || 0;
+      };
+      var o19 = n(report.line19);
+      var o20 = n(report.line20);
+      var o21 = n(report.line21);
+      var flow = Math.round((o20 - o21) * 100) / 100;
+      var end = Math.round((o19 + flow) * 100) / 100;
+      var l22 = flow ? String(flow) : '';
+      var l23 = end ? String(end) : '';
+      setReport(function (r) {
+        if (r.line22 === l22 && r.line23 === l23) return r;
+        return { ...r, line22: l22, line23: l23 };
+      });
+    }, [report.line19, report.line20, report.line21]);
+
+    async function refreshHistory() {
+      try {
+        var r = await fetch('/api/form-425c/saved-reports');
+        var d = await r.json();
+        setHistoryList(d.reports || []);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function patchCompany(cid, patch) {
+      setProfiles(function (p) {
+        return {
+          ...p,
+          companies: p.companies.map(function (c) {
+            return c.id === cid ? { ...c, ...patch } : c;
+          })
+        };
+      });
+    }
+
+    function patchCompanyDefQ(cid, n, val) {
+      setProfiles(function (p) {
+        return {
+          ...p,
+          companies: p.companies.map(function (c) {
+            if (c.id !== cid) return c;
+            var dq = { ...(c.defaultQuestionnaire || {}) };
+            dq[String(n)] = val;
+            return { ...c, defaultQuestionnaire: dq };
+          })
+        };
+      });
+    }
+
+    function toggleBank(cid, qboId, on) {
+      setProfiles(function (p) {
+        return {
+          ...p,
+          companies: p.companies.map(function (c) {
+            if (c.id !== cid) return c;
+            var ids = new Set((c.bankAccountQboIds || []).map(String));
+            if (on) ids.add(String(qboId));
+            else ids.delete(String(qboId));
+            var idArr = [...ids];
+            var labels = banks
+              .filter(function (a) {
+                return ids.has(String(a.id));
+              })
+              .map(function (a) {
+                return a.name;
+              });
+            return { ...c, bankAccountQboIds: idArr, bankAccountLabels: labels };
+          })
+        };
+      });
+    }
+
+    async function loadBanks() {
+      setBankLoadMsg('Loading\u2026');
+      try {
+        var r = await fetch('/api/form-425c/qbo-bank-accounts');
+        var d = await r.json();
+        if (!d.ok) throw new Error(d.error || 'QBO error');
+        setBanks(d.accounts || []);
+        setBankLoadMsg('Loaded ' + (d.accounts || []).length + ' bank account(s).');
+      } catch (e) {
+        setBankLoadMsg(String(e.message || e));
+      }
+    }
+
+    async function saveProfiles() {
+      var r = await fetch('/api/form-425c/profiles', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(profiles)
       });
       if (!r.ok) {
         alert(await r.text());
         return;
       }
-      profilesState = await r.json();
+      setProfiles(await r.json());
       alert('Profiles saved.');
-    });
+    }
 
-    document.getElementById('btnLoadReceipts')?.addEventListener('click', async () => {
-      const msg = document.getElementById('receiptMsg');
-      const companyId = document.getElementById('repCompany').value;
-      const month = document.getElementById('repMonth').value;
-      if (msg) msg.textContent = 'Loading…';
+    function applyQDefaults() {
+      var c = (profiles.companies || []).find(function (x) {
+        return x.id === repCompany;
+      });
+      if (!c || !c.defaultQuestionnaire) return;
+      setReport(function (r) {
+        return { ...r, questionnaire: { ...c.defaultQuestionnaire } };
+      });
+      setReceiptMsg('Questionnaire set from profile defaults.');
+    }
+
+    function setQ(n, val) {
+      setReport(function (r) {
+        var q = { ...r.questionnaire };
+        q[String(n)] = val;
+        return { ...r, questionnaire: q };
+      });
+    }
+
+    function gatherReportPayload() {
+      var displayLines = lastQbo
+        ? lastQbo.exhibitCLines || []
+        : lastPaste
+          ? lastPaste.rows || []
+          : [];
+      return {
+        questionnaire: report.questionnaire,
+        paper: {
+          monthLabel: report.paperMonth,
+          filedDate: report.paperFiled,
+          lineOfBusiness: report.paperLob,
+          naicsCode: report.paperNaics,
+          responsibleParty: report.paperRp,
+          debtorName: report.paperDebtor,
+          caseNumber: report.paperCase,
+          court: report.paperCourt
+        },
+        cash: {
+          line19: report.line19,
+          line20: report.line20,
+          line21: report.line21,
+          line22: report.line22,
+          line23: report.line23
+        },
+        parts34: {
+          line24: report.line24,
+          line25: report.line25,
+          line26: report.line26,
+          line27: report.line27,
+          line28: report.line28,
+          line29: report.line29,
+          line30: report.line30,
+          line31: report.line31
+        },
+        projections: PROJ_ROWS.map(function (row) {
+          var code = row[0];
+          var pr = report.projections[code] || { prior: '', current: '', next: '' };
+          return { line: code, prior: pr.prior, current: pr.current, next: pr.next };
+        }),
+        attachments: report.attachments,
+        exhibitC: {
+          source: lastQbo ? 'qbo' : lastPaste ? 'paste' : null,
+          qbo: lastQbo,
+          paste: lastPaste,
+          displayLines: displayLines
+        },
+        exhibitD: exhibitD,
+        notes: report.paperNotes
+      };
+    }
+
+    function applyReportPayload(data) {
+      if (!data) return;
+      var p = data.paper || {};
+      var cash = data.cash || {};
+      var parts = data.parts34 || {};
+      setReport(function (r) {
+        return {
+          ...r,
+          paperMonth: p.monthLabel != null ? String(p.monthLabel) : r.paperMonth,
+          paperFiled: p.filedDate != null ? String(p.filedDate) : r.paperFiled,
+          paperLob: p.lineOfBusiness != null ? String(p.lineOfBusiness) : r.paperLob,
+          paperNaics: p.naicsCode != null ? String(p.naicsCode) : r.paperNaics,
+          paperRp: p.responsibleParty != null ? String(p.responsibleParty) : r.paperRp,
+          paperDebtor: p.debtorName != null ? String(p.debtorName) : r.paperDebtor,
+          paperCase: p.caseNumber != null ? String(p.caseNumber) : r.paperCase,
+          paperCourt: p.court != null ? String(p.court) : r.paperCourt,
+          line19: cash.line19 != null ? String(cash.line19) : r.line19,
+          line20: cash.line20 != null ? String(cash.line20) : r.line20,
+          line21: cash.line21 != null ? String(cash.line21) : r.line21,
+          line22: cash.line22 != null ? String(cash.line22) : r.line22,
+          line23: cash.line23 != null ? String(cash.line23) : r.line23,
+          line24: parts.line24 != null ? String(parts.line24) : r.line24,
+          line25: parts.line25 != null ? String(parts.line25) : r.line25,
+          line26: parts.line26 != null ? String(parts.line26) : r.line26,
+          line27: parts.line27 != null ? String(parts.line27) : r.line27,
+          line28: parts.line28 != null ? String(parts.line28) : r.line28,
+          line29: parts.line29 != null ? String(parts.line29) : r.line29,
+          line30: parts.line30 != null ? String(parts.line30) : r.line30,
+          line31: parts.line31 != null ? String(parts.line31) : r.line31,
+          paperNotes: data.notes != null ? String(data.notes) : r.paperNotes,
+          questionnaire: data.questionnaire ? { ...data.questionnaire } : r.questionnaire,
+          projections: data.projections ? projectionsFromSaved(data.projections) : r.projections,
+          attachments: data.attachments ? { ...defaultAttachments(), ...data.attachments } : r.attachments
+        };
+      });
+      var ex = data.exhibitC || {};
+      setLastQbo(ex.qbo || null);
+      setLastPaste(ex.paste || null);
+      setExhibitD(
+        data.exhibitD && data.exhibitD.length
+          ? data.exhibitD.map(function (x) {
+              return { ...x };
+            })
+          : [{ date: '', payee: '', amount: '', memo: '' }]
+      );
+    }
+
+    async function fetchPriorOpening() {
       try {
-        const r = await fetch('/api/form-425c/receipts?' + new URLSearchParams({ companyId, month }));
-        const d = await r.json();
-        if (d.error) throw new Error(d.error);
-        lastQboReceiptsData = d;
-        lastQBPasteResult = null;
-        document.getElementById('line20').value = d.line20Total != null ? String(d.line20Total) : '';
-        recalcCash();
-        renderExhibitCFromLines(d.exhibitCLines || [], 'qbo');
-        const tt = document.getElementById('transferBody');
-        if (!(d.transfersInPeriod || []).length) {
-          if (tt) tt.innerHTML = '<tr><td colspan="4">No Transfer transactions in QBO for this month.</td></tr>';
-        } else if (tt) {
-          tt.innerHTML = d.transfersInPeriod
-            .map(
-              (t) =>
-                '<tr><td>' +
-                escapeHtml(t.txnDate) +
-                '</td><td>' +
-                escapeHtml(String(t.from || '')) +
-                '</td><td>' +
-                escapeHtml(String(t.to || '')) +
-                '</td><td class="f425-money">' +
-                escapeHtml(String(t.amount)) +
-                '</td></tr>'
-            )
-            .join('');
-        }
-        if (msg) {
-          msg.textContent =
-            'Exhibit C: ' +
-            (d.exhibitCLines || []).length +
-            ' line(s) · Total $' +
-            d.line20Total +
-            ' · Deposits scanned: ' +
-            d.depositsConsidered;
-        }
+        var r = await fetch(
+          '/api/form-425c/prior-balance?' +
+            new URLSearchParams({ companyId: repCompany, month: repMonth })
+        );
+        var d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Request failed');
+        if (d.line23 != null && d.line23 !== '') {
+          setReport(function (r0) {
+            return { ...r0, line19: String(d.line23) };
+          });
+          setReceiptMsg('Line 19 set from prior month ' + (d.priorMonth || '') + ' ending cash (line 23).');
+        } else setReceiptMsg('No saved report for prior month \u2014 enter line 19 manually.');
       } catch (e) {
-        if (msg) msg.textContent = String(e.message || e);
+        setReceiptMsg(String(e.message || e));
       }
-    });
+    }
 
-    document.getElementById('btnPriorBalance')?.addEventListener('click', () => void fetchPriorOpening());
-    document.getElementById('btnSaveReport')?.addEventListener('click', () => void saveReportToServer());
-    document.getElementById('btnApplyQDefaults')?.addEventListener('click', () => {
-      applyDefaultQuestionnaireFromProfile();
-      const msg = document.getElementById('receiptMsg');
-      if (msg) msg.textContent = 'Questionnaire set from profile defaults.';
-    });
+    async function saveReportToServer() {
+      if (!repCompany || !repMonth) {
+        alert('Select company and month.');
+        return;
+      }
+      var body = { companyId: repCompany, month: repMonth, ...gatherReportPayload() };
+      try {
+        var r = await fetch('/api/form-425c/saved-report', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        var d = await r.json();
+        if (!r.ok) throw new Error(d.error || (await r.text()));
+        setReceiptMsg('Report saved for ' + repMonth + '.');
+        refreshHistory();
+      } catch (e) {
+        alert(String(e.message || e));
+      }
+    }
 
-    document.getElementById('btnParseQbPaste')?.addEventListener('click', () => void parseQBPaste());
-    document.getElementById('btnApplyPasteTo20')?.addEventListener('click', applyPasteTotalToLine20);
+    async function loadSavedReport(companyId, month) {
+      var r = await fetch(
+        '/api/form-425c/saved-report?' + new URLSearchParams({ companyId: companyId, month: month })
+      );
+      var d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Not found');
+      var rep = d.report;
+      setRepCompany(rep.companyId || companyId);
+      setRepMonth(rep.month || month);
+      applyReportPayload(rep);
+    }
 
-    document.getElementById('btnMergeZip')?.addEventListener('click', () => void downloadPackageZip());
-    document.getElementById('btnRefreshHistory')?.addEventListener('click', () => void refreshHistoryTable());
+    async function parseQBPaste() {
+      setQbPasteMsg('Parsing\u2026');
+      try {
+        var r = await fetch('/api/form-425c/parse-qb-paste', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: pasteText, companyId: qbCompany || repCompany })
+        });
+        var d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Parse failed');
+        setLastPaste(d);
+        setQbPasteMsg((d.meta && d.meta.message) || 'Parsed.');
+      } catch (e) {
+        setQbPasteMsg(String(e.message || e));
+      }
+    }
 
-    document.getElementById('btnAddExhibitDRow')?.addEventListener('click', () => {
-      const tb = document.getElementById('exhibitDBody');
-      if (!tb) return;
-      renderExhibitD([...exhibitDRowsFromDom(), { date: '', payee: '', amount: '', memo: '' }]);
-    });
-    document.getElementById('btnRecalcLine21')?.addEventListener('click', syncLine21FromExhibitD);
+    function applyPasteToLine20() {
+      if (!lastPaste || lastPaste.total == null) {
+        alert('Parse a paste first.');
+        return;
+      }
+      setReport(function (r) {
+        return { ...r, line20: String(lastPaste.total) };
+      });
+      setLastQbo(null);
+      setReceiptMsg('Line 20 and Exhibit C updated from paste (total $' + lastPaste.total + ').');
+      setTab('report');
+    }
 
-    document.getElementById('repCompany')?.addEventListener('change', applyProfileToPaper);
-    ['line19', 'line20', 'line21'].forEach((id) =>
-      document.getElementById(id)?.addEventListener('input', recalcCash)
+    async function loadReceipts() {
+      setReceiptMsg('Loading\u2026');
+      try {
+        var r = await fetch(
+          '/api/form-425c/receipts?' + new URLSearchParams({ companyId: repCompany, month: repMonth })
+        );
+        var d = await r.json();
+        if (d.error) throw new Error(d.error);
+        setLastQbo(d);
+        setLastPaste(null);
+        setReport(function (r0) {
+          return { ...r0, line20: d.line20Total != null ? String(d.line20Total) : r0.line20 };
+        });
+        setReceiptMsg(
+          'Exhibit C: ' +
+            (d.exhibitCLines || []).length +
+            ' line(s) \u00b7 Total $' +
+            d.line20Total +
+            ' \u00b7 Deposits scanned: ' +
+            d.depositsConsidered
+        );
+      } catch (e) {
+        setReceiptMsg(String(e.message || e));
+      }
+    }
+
+    function syncLine21FromExhibitD() {
+      var sum = 0;
+      exhibitD.forEach(function (row) {
+        sum += parseFloat(String(row.amount || '').replace(/,/g, '')) || 0;
+      });
+      sum = Math.round(sum * 100) / 100;
+      setReport(function (r) {
+        return { ...r, line21: sum ? String(sum) : '' };
+      });
+    }
+
+    async function downloadPackageZip() {
+      var inp = mergeRef.current;
+      if (!inp || !inp.files || !inp.files.length) {
+        setMergeMsg('Choose at least one PDF (or other file) to include.');
+        return;
+      }
+      var fd = new FormData();
+      for (var i = 0; i < inp.files.length; i++) {
+        fd.append('files', inp.files[i], inp.files[i].name);
+      }
+      fd.append(
+        'manifestJson',
+        JSON.stringify({
+          companyId: repCompany,
+          month: repMonth,
+          attachmentsChecklist: report.attachments,
+          generatedWith: 'IH35 Form 425C workspace'
+        })
+      );
+      setMergeMsg('Building ZIP\u2026');
+      try {
+        var r = await fetch('/api/form-425c/package', { method: 'POST', body: fd });
+        if (!r.ok) {
+          var errJ = await r.json().catch(function () {
+            return {};
+          });
+          throw new Error(errJ.error || r.statusText);
+        }
+        var blob = await r.blob();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'IH35-Form425C-package.zip';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        setMergeMsg('Download started.');
+      } catch (e) {
+        setMergeMsg(String(e.message || e));
+      }
+    }
+
+    function tabBtn(id, label) {
+      return h(
+        'button',
+        {
+          type: 'button',
+          className: 'f425-tabs-btn' + (tab === id ? ' active' : ''),
+          role: 'tab',
+          'aria-selected': tab === id ? 'true' : 'false',
+          onClick: function () {
+            setTab(id);
+          }
+        },
+        label
+      );
+    }
+
+    function companyOptions() {
+      return (profiles.companies || []).map(function (c) {
+        return h('option', { key: c.id, value: c.id }, c.displayName || c.id);
+      });
+    }
+
+    function renderProfilePanel() {
+      return h(
+        'section',
+        { id: 'panel-profile', className: 'f425-panel' + (tab === 'profile' ? ' active' : '') },
+        h('h2', { className: 'f425-h2' }, 'Debtor profiles, bank mapping & default questionnaire'),
+        h(
+          'div',
+          { className: 'f425-actions no-print' },
+          h(
+            'button',
+            { type: 'button', className: 'btn primary', onClick: loadBanks },
+            'Refresh QuickBooks bank list'
+          ),
+          h(
+            'button',
+            { type: 'button', className: 'btn primary', onClick: saveProfiles },
+            'Save profiles'
+          )
+        ),
+        h('p', { className: 'f425-note' }, bankLoadMsg),
+        (profiles.companies || []).map(function (c) {
+          var hints = (c.bankPasteHints || []).join(', ');
+          return h(
+            'div',
+            { key: c.id, className: 'f425-company-card' },
+            h(
+              'h3',
+              null,
+              escapeHtml(c.displayName || c.id),
+              ' ',
+              h('code', { style: { fontWeight: 400 } }, c.id)
+            ),
+            h(
+              'div',
+              { className: 'f425-grid' },
+              h(
+                'label',
+                null,
+                'Display name',
+                h('input', {
+                  value: c.displayName || '',
+                  onChange: function (e) {
+                    patchCompany(c.id, { displayName: e.target.value });
+                  }
+                })
+              ),
+              h(
+                'label',
+                null,
+                'Debtor name (425C header)',
+                h('input', {
+                  value: c.debtorName || '',
+                  onChange: function (e) {
+                    patchCompany(c.id, { debtorName: e.target.value });
+                  }
+                })
+              ),
+              h(
+                'label',
+                null,
+                'Case number',
+                h('input', {
+                  value: c.caseNumber || '',
+                  onChange: function (e) {
+                    patchCompany(c.id, { caseNumber: e.target.value });
+                  }
+                })
+              ),
+              h(
+                'label',
+                null,
+                'Court district',
+                h('input', {
+                  value: c.courtDistrict || '',
+                  onChange: function (e) {
+                    patchCompany(c.id, { courtDistrict: e.target.value });
+                  }
+                })
+              ),
+              h(
+                'label',
+                null,
+                'Court division',
+                h('input', {
+                  value: c.courtDivision || '',
+                  onChange: function (e) {
+                    patchCompany(c.id, { courtDivision: e.target.value });
+                  }
+                })
+              ),
+              h(
+                'label',
+                null,
+                'NAICS',
+                h('input', {
+                  value: c.naicsCode || '',
+                  onChange: function (e) {
+                    patchCompany(c.id, { naicsCode: e.target.value });
+                  }
+                })
+              ),
+              h(
+                'label',
+                null,
+                'Line of business',
+                h('input', {
+                  value: c.lineOfBusiness || '',
+                  onChange: function (e) {
+                    patchCompany(c.id, { lineOfBusiness: e.target.value });
+                  }
+                })
+              ),
+              h(
+                'label',
+                null,
+                'Responsible party',
+                h('input', {
+                  value: c.responsiblePartyName || '',
+                  onChange: function (e) {
+                    patchCompany(c.id, { responsiblePartyName: e.target.value });
+                  }
+                })
+              )
+            ),
+            h(
+              'label',
+              { style: { display: 'block', marginTop: 10, fontSize: 12, color: 'var(--color-text-label)' } },
+              'QB paste filter hints (comma-separated)',
+              h('textarea', {
+                rows: 2,
+                style: { width: '100%', marginTop: 4, padding: 8, borderRadius: 6, font: 'inherit' },
+                value: hints,
+                onChange: function (e) {
+                  var parts = e.target.value
+                    .split(/[,;\n]+/)
+                    .map(function (s) {
+                      return s.trim();
+                    })
+                    .filter(Boolean);
+                  patchCompany(c.id, { bankPasteHints: parts });
+                }
+              })
+            ),
+            h(
+              'p',
+              { className: 'f425-note' },
+              'Select QuickBooks ',
+              h('strong', null, 'Bank'),
+              ' accounts for this debtor.'
+            ),
+            h(
+              'div',
+              { className: 'f425-bank-pick' },
+              !banks.length
+                ? h(
+                    'span',
+                    { className: 'f425-note' },
+                    'Click ',
+                    h('strong', null, 'Refresh QuickBooks bank list'),
+                    ' to map accounts.'
+                  )
+                : banks.map(function (a) {
+                    var checked = new Set((c.bankAccountQboIds || []).map(String)).has(String(a.id));
+                    return h(
+                      'label',
+                      { key: a.id },
+                      h('input', {
+                        type: 'checkbox',
+                        checked: checked,
+                        onChange: function (e) {
+                          toggleBank(c.id, a.id, e.target.checked);
+                        }
+                      }),
+                      h(
+                        'span',
+                        null,
+                        a.name,
+                        ' ',
+                        h('code', null, a.id),
+                        a.currentBalance != null ? ' \u00b7 Bal ' + a.currentBalance : ''
+                      )
+                    );
+                  })
+            ),
+            h(
+              'label',
+              { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontSize: 13 } },
+              h('input', {
+                type: 'checkbox',
+                checked: !!c.includeUnclassifiedDepositLines,
+                onChange: function (e) {
+                  patchCompany(c.id, { includeUnclassifiedDepositLines: e.target.checked });
+                }
+              }),
+              'Include deposit lines with no linked txn (review manually)'
+            ),
+            h(
+              'label',
+              { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 } },
+              h('input', {
+                type: 'checkbox',
+                checked: !!c.includeJournalEntryDepositLines,
+                onChange: function (e) {
+                  patchCompany(c.id, { includeJournalEntryDepositLines: e.target.checked });
+                }
+              }),
+              'Include lines linked to JournalEntry'
+            ),
+            h(
+              'details',
+              { style: { marginTop: 12 } },
+              h(
+                'summary',
+                { className: 'f425-note', style: { cursor: 'pointer', fontWeight: 600 } },
+                'Default questionnaire (lines 1\u201318)'
+              ),
+              h(
+                'div',
+                {
+                  style: {
+                    marginTop: 10,
+                    padding: 10,
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 8,
+                    background: 'var(--color-bg-card)'
+                  }
+                },
+                Q_LINES.map(function (ql) {
+                  var n = ql[0];
+                  var txt = ql[1];
+                  var v = (c.defaultQuestionnaire || {})[String(n)] || 'Yes';
+                  return h(
+                    'div',
+                    { key: n, className: 'f425-yn-row', style: { fontSize: 12 } },
+                    h('span', { style: { minWidth: 140 } }, 'Line ' + n),
+                    h(
+                      'label',
+                      null,
+                      h('input', {
+                        type: 'radio',
+                        name: 'defq-' + c.id + '-' + n,
+                        checked: v === 'Yes',
+                        onChange: function () {
+                          patchCompanyDefQ(c.id, n, 'Yes');
+                        }
+                      }),
+                      ' Yes'
+                    ),
+                    h(
+                      'label',
+                      null,
+                      h('input', {
+                        type: 'radio',
+                        name: 'defq-' + c.id + '-' + n,
+                        checked: v === 'No',
+                        onChange: function () {
+                          patchCompanyDefQ(c.id, n, 'No');
+                        }
+                      }),
+                      ' No'
+                    ),
+                    h(
+                      'label',
+                      null,
+                      h('input', {
+                        type: 'radio',
+                        name: 'defq-' + c.id + '-' + n,
+                        checked: v === 'N/A',
+                        onChange: function () {
+                          patchCompanyDefQ(c.id, n, 'N/A');
+                        }
+                      }),
+                      ' N/A'
+                    ),
+                    h('span', { style: { flex: '1 1 100%', fontSize: 11, color: 'var(--color-text-label)' } }, txt)
+                  );
+                })
+              )
+            )
+          );
+        })
+      );
+    }
+
+    function renderQbImportPanel() {
+      var pasteRows = (lastPaste && lastPaste.rows) || [];
+      return h(
+        'section',
+        { id: 'panel-qbimport', className: 'f425-panel' + (tab === 'qbimport' ? ' active' : '') },
+        h('h2', { className: 'f425-h2' }, 'Paste QuickBooks deposit / register export'),
+        h(
+          'p',
+          { className: 'f425-note' },
+          'Transfers excluded; income-like deposits kept. Profile paste hints filter the bank/split column.'
+        ),
+        h(
+          'div',
+          { className: 'f425-grid', style: { marginBottom: 12 } },
+          h(
+            'label',
+            null,
+            'Debtor profile',
+            h(
+              'select',
+              {
+                value: qbCompany,
+                onChange: function (e) {
+                  setQbCompany(e.target.value);
+                }
+              },
+              companyOptions()
+            )
+          )
+        ),
+        h(
+          'label',
+          { style: { display: 'block', fontSize: 12, color: 'var(--color-text-label)' } },
+          'Paste export',
+          h('textarea', {
+            rows: 12,
+            style: { width: '100%', marginTop: 4, fontFamily: 'ui-monospace,monospace', fontSize: 11 },
+            value: pasteText,
+            onChange: function (e) {
+              setPasteText(e.target.value);
+            }
+          })
+        ),
+        h(
+          'div',
+          { className: 'f425-actions no-print' },
+          h(
+            'button',
+            { type: 'button', className: 'btn primary', onClick: parseQBPaste },
+            'Parse paste'
+          ),
+          h(
+            'button',
+            { type: 'button', className: 'btn secondary', onClick: applyPasteToLine20 },
+            'Apply total to line 20 & Exhibit C'
+          )
+        ),
+        h('p', { className: 'f425-note' }, qbPasteMsg),
+        h(
+          'table',
+          { className: 'f425-table' },
+          h(
+            'thead',
+            null,
+            h(
+              'tr',
+              null,
+              h('th', null, 'Date'),
+              h('th', null, 'Type'),
+              h('th', null, 'Amount'),
+              h('th', null, 'Split'),
+              h('th', null, 'Name'),
+              h('th', null, 'Memo')
+            )
+          ),
+          h(
+            'tbody',
+            null,
+            !pasteRows.length
+              ? h(
+                  'tr',
+                  null,
+                  h('td', { colSpan: 6, className: 'f425-note' }, 'Parse a paste to preview rows.')
+                )
+              : pasteRows.map(function (row, ix) {
+                  return h(
+                    'tr',
+                    { key: ix },
+                    h('td', null, row.date),
+                    h('td', null, row.type),
+                    h('td', { className: 'f425-money' }, String(row.amount)),
+                    h('td', null, row.split),
+                    h('td', null, row.name),
+                    h('td', null, row.memo)
+                  );
+                })
+          )
+        )
+      );
+    }
+
+    var exhibitCLines = lastQbo
+      ? lastQbo.exhibitCLines || []
+      : lastPaste
+        ? lastPaste.rows || []
+        : [];
+    var isPasteC = !lastQbo && !!lastPaste;
+
+    function renderReportPanel() {
+      return h(
+        'section',
+        { id: 'panel-report', className: 'f425-panel' + (tab === 'report' ? ' active' : '') },
+        h('h2', { className: 'f425-h2' }, 'Form 425C \u2014 working copy'),
+        h(
+          'div',
+          { className: 'f425-grid', style: { marginBottom: 12 } },
+          h(
+            'label',
+            null,
+            'Debtor profile',
+            h(
+              'select',
+              {
+                value: repCompany,
+                onChange: function (e) {
+                  var id = e.target.value;
+                  setRepCompany(id);
+                  applySelectedProfileToPaper(id);
+                }
+              },
+              companyOptions()
+            )
+          ),
+          h(
+            'label',
+            null,
+            'Report month',
+            h('input', {
+              type: 'month',
+              value: repMonth,
+              onChange: function (e) {
+                setRepMonth(e.target.value);
+              }
+            })
+          )
+        ),
+        h(
+          'div',
+          { className: 'f425-actions no-print' },
+          h(
+            'button',
+            { type: 'button', className: 'btn primary', onClick: loadReceipts },
+            'Load Exhibit C from QuickBooks'
+          ),
+          h(
+            'button',
+            { type: 'button', className: 'btn secondary', onClick: fetchPriorOpening },
+            'Carry line 19 from prior saved month'
+          ),
+          h(
+            'button',
+            { type: 'button', className: 'btn secondary', onClick: applyQDefaults },
+            'Apply profile questionnaire defaults'
+          ),
+          h(
+            'button',
+            { type: 'button', className: 'btn primary', onClick: saveReportToServer },
+            'Save report'
+          ),
+          h('button', { type: 'button', className: 'btn secondary', onClick: function () { window.print(); } }, 'Print / Save as PDF')
+        ),
+        h('p', { className: 'f425-note' }, receiptMsg),
+        h(
+          'div',
+          { className: 'f425-paper' },
+          h(
+            'p',
+            { style: { fontSize: 11, color: 'var(--color-text-label)', margin: '0 0 8px' } },
+            h('strong', null, 'Official Form 425C'),
+            ' \u00b7 Monthly Operating Report for Small Business Under Chapter 11'
+          ),
+          h(
+            'div',
+            { className: 'f425-grid' },
+            h(
+              'label',
+              null,
+              'Month',
+              h('input', {
+                type: 'text',
+                placeholder: monthPlaceholder || 'e.g. March 2026',
+                value: report.paperMonth,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperMonth: e.target.value };
+                  });
+                }
+              })
+            ),
+            h(
+              'label',
+              null,
+              'Date report filed',
+              h('input', {
+                type: 'date',
+                value: report.paperFiled,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperFiled: e.target.value };
+                  });
+                }
+              })
+            ),
+            h(
+              'label',
+              null,
+              'Line of business',
+              h('input', {
+                value: report.paperLob,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperLob: e.target.value };
+                  });
+                }
+              })
+            ),
+            h(
+              'label',
+              null,
+              'NAICS code',
+              h('input', {
+                value: report.paperNaics,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperNaics: e.target.value };
+                  });
+                }
+              })
+            )
+          ),
+          h(
+            'label',
+            { style: { display: 'block', marginTop: 10, fontSize: 12, color: 'var(--color-text-label)' } },
+            'Responsible party (printed name)',
+            h('input', {
+              style: { width: '100%', maxWidth: 640 },
+              value: report.paperRp,
+              onChange: function (e) {
+                setReport(function (r) {
+                  return { ...r, paperRp: e.target.value };
+                });
+              }
+            })
+          ),
+          h('h3', { className: 'f425-h3' }, 'Part 1 \u2014 Questionnaire (lines 1\u201318)'),
+          h(
+            'p',
+            { className: 'f425-note' },
+            'Yes / No / N/A per line. Attach Exhibit A/B as required.'
+          ),
+          Q_LINES.map(function (ql) {
+            var n = ql[0];
+            var txt = ql[1];
+            var cur = report.questionnaire[String(n)] || '';
+            return h(
+              'div',
+              { key: n, className: 'f425-yn-row' },
+              h('span', { style: { minWidth: 220 } }, n + '. ' + txt),
+              h(
+                'label',
+                null,
+                h('input', {
+                  type: 'radio',
+                  name: 'q' + n,
+                  checked: cur === 'Yes',
+                  onChange: function () {
+                    setQ(n, 'Yes');
+                  }
+                }),
+                ' Yes'
+              ),
+              h(
+                'label',
+                null,
+                h('input', {
+                  type: 'radio',
+                  name: 'q' + n,
+                  checked: cur === 'No',
+                  onChange: function () {
+                    setQ(n, 'No');
+                  }
+                }),
+                ' No'
+              ),
+              h(
+                'label',
+                null,
+                h('input', {
+                  type: 'radio',
+                  name: 'q' + n,
+                  checked: cur === 'N/A',
+                  onChange: function () {
+                    setQ(n, 'N/A');
+                  }
+                }),
+                ' N/A'
+              )
+            );
+          }),
+          h('h3', { className: 'f425-h3' }, 'Debtor / case'),
+          h(
+            'div',
+            { className: 'f425-grid' },
+            h(
+              'label',
+              null,
+              'Debtor name',
+              h('input', {
+                value: report.paperDebtor,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperDebtor: e.target.value };
+                  });
+                }
+              })
+            ),
+            h(
+              'label',
+              null,
+              'Case number',
+              h('input', {
+                value: report.paperCase,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperCase: e.target.value };
+                  });
+                }
+              })
+            ),
+            h(
+              'label',
+              null,
+              'Bankruptcy court',
+              h('input', {
+                placeholder: 'e.g. Southern \u00b7 Texas',
+                value: report.paperCourt,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperCourt: e.target.value };
+                  });
+                }
+              })
+            )
+          ),
+          h('h3', { className: 'f425-h3' }, 'Part 2 \u2014 Cash summary (lines 19\u201323)'),
+          h(
+            'div',
+            { className: 'f425-grid' },
+            ['line19', 'line20', 'line21'].map(function (key, i) {
+              var labels = [
+                '19. Total opening balance (all accounts)',
+                '20. Total cash receipts (Exhibit C)',
+                '21. Total cash disbursements (Exhibit D)'
+              ];
+              return h(
+                'label',
+                { key: key },
+                labels[i],
+                h('input', {
+                  className: 'f425-money',
+                  inputMode: 'decimal',
+                  value: report[key],
+                  onChange: function (e) {
+                    var k = key;
+                    var v = e.target.value;
+                    setReport(function (r) {
+                      return { ...r, [k]: v };
+                    });
+                  }
+                })
+              );
+            }),
+            h(
+              'label',
+              null,
+              '22. Net cash flow',
+              h('input', {
+                className: 'f425-money',
+                readOnly: true,
+                value: report.line22
+              })
+            ),
+            h(
+              'label',
+              null,
+              '23. Ending cash',
+              h('input', {
+                className: 'f425-money',
+                readOnly: true,
+                value: report.line23
+              })
+            )
+          ),
+          h('h3', { className: 'f425-h3' }, 'Exhibit C \u2014 Cash receipts'),
+          h(
+            'table',
+            { className: 'f425-table' },
+            h(
+              'thead',
+              null,
+              h(
+                'tr',
+                null,
+                h('th', null, 'Deposit date'),
+                h('th', null, 'Bank / split'),
+                h('th', null, 'Amount'),
+                h('th', null, 'Type / linked'),
+                h('th', null, 'Reference')
+              )
+            ),
+            h(
+              'tbody',
+              null,
+              !exhibitCLines.length
+                ? h(
+                    'tr',
+                    null,
+                    h(
+                      'td',
+                      { colSpan: 5, className: 'f425-note' },
+                      'Load from QuickBooks or use QB import tab.'
+                    )
+                  )
+                : exhibitCLines.map(function (row, ix) {
+                    if (isPasteC) {
+                      return h(
+                        'tr',
+                        { key: ix },
+                        h('td', null, row.date),
+                        h('td', null, row.split || ''),
+                        h('td', { className: 'f425-money' }, String(row.amount)),
+                        h('td', null, row.type || ''),
+                        h('td', null, [row.name, row.memo].filter(Boolean).join(' \u00b7 '))
+                      );
+                    }
+                    return h(
+                      'tr',
+                      { key: ix },
+                      h('td', null, row.depositTxnDate),
+                      h('td', null, row.bankAccountName || row.bankAccountId),
+                      h('td', { className: 'f425-money' }, String(row.lineAmount)),
+                      h('td', null, (row.linkedTxnTypes || []).join(', ')),
+                      h('td', null, String(row.depositId))
+                    );
+                  })
+            )
+          ),
+          h('h3', { className: 'f425-h3' }, 'Exhibit D \u2014 Disbursements'),
+          h(
+            'p',
+            { className: 'f425-note no-print' },
+            'Add rows; ',
+            h('strong', null, 'Recalc line 21'),
+            ' sums amounts.'
+          ),
+          h(
+            'div',
+            { className: 'f425-actions no-print' },
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'btn secondary',
+                onClick: function () {
+                  setExhibitD(
+                    exhibitD.concat([{ date: '', payee: '', amount: '', memo: '' }])
+                  );
+                }
+              },
+              'Add row'
+            ),
+            h(
+              'button',
+              { type: 'button', className: 'btn secondary', onClick: syncLine21FromExhibitD },
+              'Recalc line 21 from Exhibit D'
+            )
+          ),
+          h(
+            'table',
+            { className: 'f425-table' },
+            h(
+              'thead',
+              null,
+              h(
+                'tr',
+                null,
+                h('th', null, 'Date'),
+                h('th', null, 'Payee'),
+                h('th', null, 'Amount'),
+                h('th', null, 'Memo'),
+                h('th', { className: 'no-print' }, '')
+              )
+            ),
+            h(
+              'tbody',
+              null,
+              exhibitD.map(function (row, ix) {
+                return h(
+                  'tr',
+                  { key: ix },
+                  h(
+                    'td',
+                    null,
+                    h('input', {
+                      style: { width: '100%', boxSizing: 'border-box' },
+                      value: row.date,
+                      onChange: function (e) {
+                        var v = e.target.value;
+                        setExhibitD(
+                          exhibitD.map(function (r, j) {
+                            return j === ix ? { ...r, date: v } : r;
+                          })
+                        );
+                      }
+                    })
+                  ),
+                  h(
+                    'td',
+                    null,
+                    h('input', {
+                      style: { width: '100%', boxSizing: 'border-box' },
+                      value: row.payee,
+                      onChange: function (e) {
+                        var v = e.target.value;
+                        setExhibitD(
+                          exhibitD.map(function (r, j) {
+                            return j === ix ? { ...r, payee: v } : r;
+                          })
+                        );
+                      }
+                    })
+                  ),
+                  h(
+                    'td',
+                    null,
+                    h('input', {
+                      className: 'f425-money',
+                      inputMode: 'decimal',
+                      style: { width: '100%', boxSizing: 'border-box' },
+                      value: row.amount,
+                      onChange: function (e) {
+                        var v = e.target.value;
+                        setExhibitD(
+                          exhibitD.map(function (r, j) {
+                            return j === ix ? { ...r, amount: v } : r;
+                          })
+                        );
+                      }
+                    })
+                  ),
+                  h(
+                    'td',
+                    null,
+                    h('input', {
+                      style: { width: '100%', boxSizing: 'border-box' },
+                      value: row.memo,
+                      onChange: function (e) {
+                        var v = e.target.value;
+                        setExhibitD(
+                          exhibitD.map(function (r, j) {
+                            return j === ix ? { ...r, memo: v } : r;
+                          })
+                        );
+                      }
+                    })
+                  ),
+                  h(
+                    'td',
+                    { className: 'no-print' },
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'btn secondary',
+                        onClick: function () {
+                          if (exhibitD.length <= 1) return;
+                          setExhibitD(
+                            exhibitD.filter(function (_, j) {
+                              return j !== ix;
+                            })
+                          );
+                        }
+                      },
+                      'Remove'
+                    )
+                  )
+                );
+              })
+            )
+          ),
+          h('h3', { className: 'f425-h3' }, 'Parts 3\u20136'),
+          h(
+            'div',
+            { className: 'f425-grid' },
+            [
+              ['line24', '24. Total payables'],
+              ['line25', '25. Total receivables'],
+              ['line26', '26. Employees when case filed'],
+              ['line27', '27. Employees as of report date'],
+              ['line28', '28. Professional fees (bankruptcy) this month'],
+              ['line29', '29. Professional fees (bankruptcy) since filing'],
+              ['line30', '30. Other professional fees this month'],
+              ['line31', '31. Other professional fees since filing']
+            ].map(function (pair) {
+              var k = pair[0];
+              var lab = pair[1];
+              var money =
+                k !== 'line26' && k !== 'line27';
+              return h(
+                'label',
+                { key: k },
+                lab,
+                h('input', {
+                  className: money ? 'f425-money' : '',
+                  value: report[k],
+                  onChange: function (e) {
+                    var key = k;
+                    var v = e.target.value;
+                    setReport(function (r) {
+                      return { ...r, [key]: v };
+                    });
+                  }
+                })
+              );
+            })
+          ),
+          h('h3', { className: 'f425-h3' }, 'Part 7 \u2014 Projections'),
+          h(
+            'table',
+            { className: 'f425-table f425-proj-table', style: { tableLayout: 'fixed', width: '100%' } },
+            h(
+              'colgroup',
+              null,
+              h('col', { style: { width: '28%' } }),
+              h('col', { style: { width: '24%' } }),
+              h('col', { style: { width: '24%' } }),
+              h('col', { style: { width: '24%' } })
+            ),
+            h(
+              'thead',
+              null,
+              h(
+                'tr',
+                null,
+                h('th', null, 'Line / description'),
+                h('th', { style: { textAlign: 'center' } }, 'Prior month'),
+                h('th', { style: { textAlign: 'center' } }, 'This month'),
+                h('th', { style: { textAlign: 'center' } }, 'Next month (proj.)')
+              )
+            ),
+            h(
+              'tbody',
+              null,
+              PROJ_ROWS.map(function (pr) {
+                var code = pr[0];
+                var label = pr[1];
+                var pj = report.projections[code] || { prior: '', current: '', next: '' };
+                return h(
+                  'tr',
+                  { key: code },
+                  h(
+                    'td',
+                    null,
+                    h('strong', null, code),
+                    ' \u00b7 ',
+                    label
+                  ),
+                  h(
+                    'td',
+                    null,
+                    h('input', {
+                      value: pj.prior,
+                      onChange: function (e) {
+                        var v = e.target.value;
+                        setReport(function (r) {
+                          var proj = { ...r.projections };
+                          proj[code] = { ...proj[code], prior: v };
+                          return { ...r, projections: proj };
+                        });
+                      }
+                    })
+                  ),
+                  h(
+                    'td',
+                    null,
+                    h('input', {
+                      value: pj.current,
+                      onChange: function (e) {
+                        var v = e.target.value;
+                        setReport(function (r) {
+                          var proj = { ...r.projections };
+                          proj[code] = { ...proj[code], current: v };
+                          return { ...r, projections: proj };
+                        });
+                      }
+                    })
+                  ),
+                  h(
+                    'td',
+                    null,
+                    h('input', {
+                      value: pj.next,
+                      onChange: function (e) {
+                        var v = e.target.value;
+                        setReport(function (r) {
+                          var proj = { ...r.projections };
+                          proj[code] = { ...proj[code], next: v };
+                          return { ...r, projections: proj };
+                        });
+                      }
+                    })
+                  )
+                );
+              })
+            )
+          ),
+          h('h3', { className: 'f425-h3' }, 'Part 8 \u2014 Attachment checklist'),
+          ATTACH_KEYS.map(function (ak) {
+            var key = ak[0];
+            var lab = ak[1];
+            return h(
+              'label',
+              {
+                key: key,
+                style: { display: 'flex', alignItems: 'center', gap: 8, margin: '6px 0', fontSize: 13 }
+              },
+              h('input', {
+                type: 'checkbox',
+                checked: !!report.attachments[key],
+                onChange: function (e) {
+                  var on = e.target.checked;
+                  setReport(function (r) {
+                    var att = { ...r.attachments };
+                    att[key] = on;
+                    return { ...r, attachments: att };
+                  });
+                }
+              }),
+              ' ',
+              lab
+            );
+          }),
+          h(
+            'label',
+            { style: { display: 'block', marginTop: 14, fontSize: 12, color: 'var(--color-text-label)' } },
+            'Notes / other attachments',
+            h('textarea', {
+              rows: 3,
+              style: { width: '100%', marginTop: 4 },
+              value: report.paperNotes,
+              onChange: function (e) {
+                setReport(function (r) {
+                  return { ...r, paperNotes: e.target.value };
+                });
+              }
+            })
+          )
+        ),
+        h(
+          'h3',
+          { className: 'f425-h2 no-print', style: { marginTop: 20 } },
+          'Transfers in period (informational)'
+        ),
+        h(
+          'table',
+          { className: 'f425-table no-print' },
+          h(
+            'thead',
+            null,
+            h('tr', null, h('th', null, 'Date'), h('th', null, 'From'), h('th', null, 'To'), h('th', null, 'Amount'))
+          ),
+          h(
+            'tbody',
+            null,
+            !(lastQbo && (lastQbo.transfersInPeriod || []).length)
+              ? h('tr', null, h('td', { colSpan: 4 }, '\u2014'))
+              : (lastQbo.transfersInPeriod || []).map(function (t, ix) {
+                  return h(
+                    'tr',
+                    { key: ix },
+                    h('td', null, t.txnDate),
+                    h('td', null, String(t.from || '')),
+                    h('td', null, String(t.to || '')),
+                    h('td', { className: 'f425-money' }, String(t.amount))
+                  );
+                })
+          )
+        )
+      );
+    }
+
+    function renderMergePanel() {
+      return h(
+        'section',
+        { id: 'panel-merge', className: 'f425-panel' + (tab === 'merge' ? ' active' : '') },
+        h('h2', { className: 'f425-h2' }, 'Merge & export \u2014 filing package (.zip)'),
+        h(
+          'p',
+          { className: 'f425-note' },
+          'Upload PDFs; package-manifest.json includes company, month, and checklist.'
+        ),
+        h(
+          'label',
+          { style: { display: 'block', fontSize: 13 } },
+          'Files to include',
+          h('input', {
+            ref: mergeRef,
+            type: 'file',
+            multiple: true,
+            accept: 'application/pdf,.pdf',
+            className: 'no-print',
+            style: { marginTop: 6 }
+          })
+        ),
+        h(
+          'div',
+          { className: 'f425-actions' },
+          h(
+            'button',
+            { type: 'button', className: 'btn primary', onClick: downloadPackageZip },
+            'Download ZIP package'
+          )
+        ),
+        h('p', { className: 'f425-note' }, mergeMsg)
+      );
+    }
+
+    function renderHistoryPanel() {
+      return h(
+        'section',
+        { id: 'panel-history', className: 'f425-panel' + (tab === 'history' ? ' active' : '') },
+        h('h2', { className: 'f425-h2' }, 'Saved reports'),
+        h(
+          'div',
+          { className: 'f425-actions no-print' },
+          h(
+            'button',
+            { type: 'button', className: 'btn secondary', onClick: refreshHistory },
+            'Refresh list'
+          )
+        ),
+        !historyList.length
+          ? h('p', { className: 'f425-note' }, 'No saved reports yet.')
+          : h(
+              'table',
+              { className: 'f425-table' },
+              h(
+                'thead',
+                null,
+                h(
+                  'tr',
+                  null,
+                  h('th', null, 'Company'),
+                  h('th', null, 'Month'),
+                  h('th', null, 'Updated'),
+                  h('th', { className: 'no-print' }, '')
+                )
+              ),
+              h(
+                'tbody',
+                null,
+                historyList.map(function (row) {
+                  return h(
+                    'tr',
+                    { key: row.companyId + '-' + row.month },
+                    h('td', null, row.companyId),
+                    h('td', null, row.month),
+                    h('td', null, row.updatedAt || ''),
+                    h(
+                      'td',
+                      { className: 'no-print' },
+                      h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'btn primary',
+                          onClick: async function () {
+                            try {
+                              await loadSavedReport(row.companyId, row.month);
+                              setTab('report');
+                              setReceiptMsg('Loaded saved report.');
+                            } catch (e) {
+                              alert(String(e.message || e));
+                            }
+                          }
+                        },
+                        'Load'
+                      )
+                    )
+                  );
+                })
+              )
+            )
+      );
+    }
+
+    return h(
+      'div',
+      { className: 'form-425c-root' },
+      h(
+        'div',
+        { className: 'form-425c-wrap' },
+        h(
+          'p',
+          { className: 'no-print', style: { fontSize: 12 } },
+          h('a', { href: '/' }, '\u2190 Company home'),
+          ' \u00b7 ',
+          h('a', { href: '/maintenance.html' }, 'ERP'),
+          ' \u00b7 ',
+          h('a', { href: '/form-425c-demo.html' }, 'Filled sample (demo)')
+        ),
+        h(
+          'h1',
+          { style: { margin: '8px 0 4px', fontSize: '1.35rem', color: 'var(--color-text-primary)' } },
+          'Official Form 425C \u2014 Monthly operating report'
+        ),
+        h(
+          'p',
+          { className: 'f425-note no-print' },
+          'IH 35 Transportation LLC and IH 35 Trucking LLC \u2014 Chapter 11 workspace. QB import excludes transfers; History saves JSON per month.'
+        ),
+        h(
+          'div',
+          { className: 'f425-tabs no-print', role: 'tablist' },
+          tabBtn('profile', 'Profiles & defaults'),
+          tabBtn('qbimport', 'QB import'),
+          tabBtn('report', 'Form 425C'),
+          tabBtn('merge', 'Merge & export'),
+          tabBtn('history', 'History')
+        ),
+        renderProfilePanel(),
+        renderQbImportPanel(),
+        renderReportPanel(),
+        renderMergePanel(),
+        renderHistoryPanel()
+      )
     );
   }
 
-  function renderProjectionTable() {
-    const host = document.getElementById('projectionTableHost');
-    if (!host) return;
-    host.innerHTML =
-      '<table class="f425-table f425-proj-table" style="table-layout:fixed;width:100%">' +
-      '<colgroup><col style="width:28%" /><col style="width:24%" /><col style="width:24%" /><col style="width:24%" /></colgroup>' +
-      '<thead><tr><th>Line / description</th><th style="text-align:center">Prior month</th><th style="text-align:center">This month</th><th style="text-align:center">Next month (proj.)</th></tr></thead><tbody>' +
-      PROJ_ROWS.map(([code, label]) => {
-        return (
-          '<tr><td><strong>' +
-          escapeHtml(code) +
-          '</strong> · ' +
-          escapeHtml(label) +
-          '</td><td><input id="proj-' +
-          code +
-          '-prior" type="text" style="width:100%;box-sizing:border-box" /></td><td><input id="proj-' +
-          code +
-          '-cur" type="text" style="width:100%;box-sizing:border-box" /></td><td><input id="proj-' +
-          code +
-          '-next" type="text" style="width:100%;box-sizing:border-box" /></td></tr>'
-        );
-      }).join('') +
-      '</tbody></table>';
+  var rootEl = document.getElementById('form-425c-root');
+  if (rootEl && typeof React !== 'undefined' && typeof ReactDOM !== 'undefined' && ReactDOM.createRoot) {
+    ReactDOM.createRoot(rootEl).render(React.createElement(Form425CApp, null));
   }
-
-  function renderAttachmentChecklist() {
-    const host = document.getElementById('attachmentChecklistHost');
-    if (!host) return;
-    host.innerHTML = ATTACH_KEYS.map(
-      ([k, lab]) =>
-        '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px">' +
-        '<input type="checkbox" id="att-' +
-        k +
-        '" /> ' +
-        escapeHtml(lab) +
-        '</label>'
-    ).join('');
-  }
-
-  function defaultMonth() {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const rm = document.getElementById('repMonth');
-    if (rm) rm.value = y + '-' + m;
-    const pm = document.getElementById('paperMonth');
-    if (pm) pm.placeholder = d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
-  }
-
-  window.initForm425cApp = function initForm425cApp() {
-    tabInit();
-    renderQuestions();
-    renderProjectionTable();
-    renderAttachmentChecklist();
-    renderExhibitD([{ date: '', payee: '', amount: '', memo: '' }]);
-    wire();
-    defaultMonth();
-    loadProfiles().catch((e) => console.error(e));
-    refreshHistoryTable().catch((e) => console.error(e));
-  };
 })();
