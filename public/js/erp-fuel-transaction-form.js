@@ -44,7 +44,7 @@
     var t = TITLES[type] ? type : 'fuel-expense';
     global.__erpFuelTransactionType = t;
     var sel = document.getElementById('erpDedFuelTxnType');
-    if (sel && !opts.skipSelect) sel.value = t;
+    if (sel) sel.value = t;
 
     var titleEl = document.getElementById('erpDedModalTitle');
     if (titleEl) titleEl.textContent = TITLES[t] || 'Fuel';
@@ -66,7 +66,7 @@
     if (!w) return;
     if (show) {
       w.classList.remove('hidden');
-      w.style.display = '';
+      w.style.display = 'flex';
     } else {
       w.classList.add('hidden');
       w.style.display = 'none';
@@ -78,7 +78,7 @@
     if (!sel || sel.dataset.erpFuelTypeWired) return;
     sel.dataset.erpFuelTypeWired = '1';
     sel.addEventListener('change', function () {
-      erpApplyFuelTransactionType(sel.value, { skipSelect: true });
+      erpApplyFuelTransactionType(sel.value);
       void erpHydrateFuelVendorAddressFromApi();
     });
   }

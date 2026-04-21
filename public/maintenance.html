@@ -601,18 +601,19 @@
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Expenses</div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('expense')">Expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-expense')">Fuel expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-def-combined')">Fuel/DEF combined</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('maintenance-expense')">Maintenance expense</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('repair-expense')">Repair expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-expense')">Fuel expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-fast-entry')">Fuel/DEF fast entry</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Bills</div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('bill')">Bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('def-bill')">DEF bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill')">Driver bill</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-bill')">Fuel bill</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('maintenance-bill')">Maintenance bill</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('repair-bill')">Repair bill</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-bill')">Fuel bill</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill')">Driver bill</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-bill')">Vendor bill</button>
                     <button type="button" class="erp-new-menu__item erp-new-menu__item--with-icon" role="menuitem" onclick="erpOpenFromNewMenu('multi-bills')">
                       <span class="erp-new-menu__cal-ico" aria-hidden="true">
@@ -9172,8 +9173,10 @@
       if (k === 'bill') return erpNewBill();
       if (k === 'maintenance-expense') return erpOpenDedicatedAccountingForm('maintenance-expense');
       if (k === 'repair-expense') return erpOpenDedicatedAccountingForm('repair-expense');
-      if (k === 'fuel-expense') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense' });
-      if (k === 'fuel-fast-entry') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry' });
+      if (k === 'fuel-expense') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' });
+      if (k === 'fuel-fast-entry' || k === 'fuel-def-combined')
+        return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry', fuelTxnType: 'fuel-def-combined' });
+      if (k === 'def-bill') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry', fuelTxnType: 'def-bill' });
       if (k === 'maintenance-bill') return erpOpenDedicatedAccountingForm('maintenance-bill');
       if (k === 'repair-bill') return erpOpenDedicatedAccountingForm('repair-bill');
       if (k === 'fuel-bill') return erpOpenDedicatedAccountingForm('fuel-bill');
@@ -9602,7 +9605,7 @@
 
     function erpNewFuelRecord() {
       erpCloseNewMenu();
-      erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry' });
+      erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry', fuelTxnType: 'fuel-def-combined' });
     }
 
     const ERP_WRENCH_ICON =
@@ -9843,12 +9846,18 @@
       const amt = document.getElementById('erpDedModalTotalAmt');
       if (window.__erpDedicatedModalKind === 'fuel') {
         const ft = document.getElementById('fuelManualHeaderTotal');
-        const fv = window.__erpFuelUiVariant || 'fast-entry';
-        if (title) title.textContent = fv === 'fuel-expense' ? 'Fuel expense' : 'Fuel / DEF fast entry';
+        if (typeof erpShowFuelDedModalTypeRow === 'function') erpShowFuelDedModalTypeRow(true);
+        if (typeof erpWireFuelDedModalTypeSelectOnce === 'function') erpWireFuelDedModalTypeSelectOnce();
+        const t =
+          (window.__erpFuelTransactionType && String(window.__erpFuelTransactionType)) ||
+          (document.getElementById('erpDedFuelTxnType') && document.getElementById('erpDedFuelTxnType').value) ||
+          'fuel-expense';
+        if (typeof erpApplyFuelTransactionType === 'function') erpApplyFuelTransactionType(t);
         if (amt && ft) amt.textContent = ft.textContent || '$0.00';
-        if (lab) lab.textContent = 'Amount';
+        if (lab) lab.textContent = 'Balance due';
         return;
       }
+      if (typeof erpShowFuelDedModalTypeRow === 'function') erpShowFuelDedModalTypeRow(false);
       if (window.__erpDedicatedModalKind === 'ledger-stub') {
         const w = window.__erpLedgerStubWhich || '';
         const stubTitles = {
@@ -10040,6 +10049,8 @@
         const h2 = document.getElementById('fuelManualDocTitleH2');
         if (h2) h2.textContent = 'Manual fuel / DEF expense';
         window.__erpFuelUiVariant = '';
+        window.__erpFuelTransactionType = '';
+        if (typeof erpShowFuelDedModalTypeRow === 'function') erpShowFuelDedModalTypeRow(false);
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
         const shell = document.getElementById('erpBillPayShellPanel');
@@ -10128,8 +10139,14 @@
       const dedOpen = dedModal && !dedModal.classList.contains('hidden');
       if (dedOpen) {
         if (mode === 'fuel-expense') {
-          const want = opts.fuelVariant === 'fuel-expense' ? 'fuel-expense' : 'fast-entry';
-          if (window.__erpDedicatedModalKind === 'fuel' && (window.__erpFuelUiVariant || '') === want) {
+          const wantVar = opts.fuelVariant === 'fast-entry' ? 'fast-entry' : 'fuel-expense';
+          let wantType = String(opts.fuelTxnType || '').trim();
+          if (!wantType) wantType = wantVar === 'fuel-expense' ? 'fuel-expense' : 'fuel-def-combined';
+          if (
+            window.__erpDedicatedModalKind === 'fuel' &&
+            (window.__erpFuelUiVariant || '') === wantVar &&
+            (window.__erpFuelTransactionType || '') === wantType
+          ) {
             syncErpDedicatedModalChrome();
             if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('fuel');
             return;
@@ -10170,7 +10187,12 @@
       if (mode === 'fuel-expense') {
         window.__erpDedicatedApPreset = '';
         window.__erpDedicatedModalKind = 'fuel';
-        window.__erpFuelUiVariant = opts.fuelVariant === 'fuel-expense' ? 'fuel-expense' : 'fast-entry';
+        window.__erpFuelUiVariant = opts.fuelVariant === 'fast-entry' ? 'fast-entry' : 'fuel-expense';
+        let ftt = String(opts.fuelTxnType || '').trim();
+        if (!ftt) {
+          ftt = window.__erpFuelUiVariant === 'fuel-expense' ? 'fuel-expense' : 'fuel-def-combined';
+        }
+        window.__erpFuelTransactionType = ftt;
         openSection('accounting', acctBtn);
         const trig = document.getElementById('acctFuelDdTrigger');
         openAccountingTab('acct-fuel-expense', trig);
@@ -10183,8 +10205,8 @@
           acc.classList.remove('hidden');
         }
         const h2 = document.getElementById('fuelManualDocTitleH2');
-        const fuelTitle = window.__erpFuelUiVariant === 'fuel-expense' ? 'Fuel expense' : 'Fuel / DEF fast entry';
-        if (h2) h2.textContent = fuelTitle;
+        if (typeof erpApplyFuelTransactionType === 'function') erpApplyFuelTransactionType(ftt);
+        else if (h2) h2.textContent = window.__erpFuelUiVariant === 'fuel-expense' ? 'Fuel expense' : 'Fuel/DEF combined';
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
         modal.setAttribute('data-erp-acct-layout', 'fuel');
@@ -10192,6 +10214,7 @@
         erpDedicatedModalBindEscape(true);
         if (!fromHash) window.location.hash = 'accounting-fuel-expense-new';
         syncErpDedicatedModalChrome();
+        if (typeof erpHydrateFuelVendorAddressFromApi === 'function') void erpHydrateFuelVendorAddressFromApi();
         if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('fuel');
         return;
       }
