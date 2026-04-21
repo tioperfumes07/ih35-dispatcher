@@ -2,7 +2,7 @@
  * Official Form 425C — profiles, QBO receipts, QB paste, saved reports, ZIP package.
  */
 
-import express, { Router } from 'express';
+import { Router } from 'express';
 import multer from 'multer';
 import JSZip from 'jszip';
 import { createQboApiClient } from '../lib/qbo-api-client.mjs';
@@ -87,7 +87,7 @@ export function createForm425cRouter({ logError = console.error } = {}) {
   });
 
   /** Paste QuickBooks “Deposit Detail” / register export — classifies transfers out. */
-  router.post('/parse-qb-paste', express.json({ limit: '4mb' }), (req, res) => {
+  router.post('/parse-qb-paste', (req, res) => {
     try {
       const text = String(req.body?.text || '');
       const companyId = String(req.body?.companyId || '').trim();
@@ -132,7 +132,7 @@ export function createForm425cRouter({ logError = console.error } = {}) {
     }
   });
 
-  router.put('/saved-report', express.json({ limit: '4mb' }), (req, res) => {
+  router.put('/saved-report', (req, res) => {
     try {
       const companyId = String(req.body?.companyId || '').trim();
       const month = String(req.body?.month || '').trim();
