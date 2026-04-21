@@ -21,7 +21,7 @@ import {
   clampFleetAvgMilesPerMonth
 } from '../lib/fleet-mileage-settings.mjs';
 import { MAINTENANCE_SERVICE_CATALOG_SEEDS } from '../lib/maintenance-service-catalog.mjs';
-import { readQboStore } from '../lib/qbo-attachments.mjs';
+import { readQboStore, clearQboConnectionFailure } from '../lib/qbo-attachments.mjs';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
 
@@ -132,6 +132,16 @@ export function mountErpCoreApi(app, opts = {}) {
       catalogUiPollMinutes: 0,
       catalogLastSyncedAt: null
     });
+  });
+
+  /** Clears persisted QBO `connectionHealth` after a successful test/refresh (client calls). */
+  app.post('/api/qbo/clear-connection-health', (_req, res) => {
+    try {
+      clearQboConnectionFailure();
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
   });
 
   app.get('/api/qbo/sync-alerts', (_req, res) => {
