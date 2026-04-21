@@ -2939,9 +2939,15 @@
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Expenses</h3>
             <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Fuel expense</button>
               <button type="button" class="acct-board-action-btn" onclick="erpNewExpense()">Expense</button>
+              <button
+                type="button"
+                class="acct-board-action-btn"
+                onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })"
+              >
+                Fuel expense
+              </button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('repair-expense')">Repair expense</button>
             </div>
             <div id="acctBoardExpDateFilterHost" class="erp-date-filter-bar-host"></div>
@@ -3026,7 +3032,13 @@
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Fuel &amp; DEF</h3>
             <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">Open fuel fast entry ↗</button>
+              <button
+                type="button"
+                class="acct-board-action-btn"
+                onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry', fuelTxnType: 'fuel-def-combined' })"
+              >
+                Open Fuel/DEF combined ↗
+              </button>
               <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF ledger</button>
             </div>
           </div>
@@ -3770,8 +3782,12 @@
                 </span>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">
-                  Open fuel fast entry ↗
+                <button
+                  type="button"
+                  class="acct-board-action-btn"
+                  onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry', fuelTxnType: 'fuel-def-combined' })"
+                >
+                  Open Fuel/DEF combined ↗
                 </button>
                 <button type="button" class="qb-btn-add" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
                 <button type="button" class="qb-btn-primary" onclick="postFilteredFuelExpensesToQuickBooks()">
@@ -8938,7 +8954,7 @@
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Payment history</button>';
         const specializedBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel &amp; DEF fast entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel/DEF combined</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewDriverSettlement()">Driver settlement</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;journal-entry&quot;)">Journal entry</button>' +
@@ -14439,6 +14455,16 @@
       if (host && !host.querySelector('tr.fuel-m-cost-line')) addFuelManualLine();
       else fuelManualUpdateHeaderTotal();
       syncFuelManualClassFromUnit();
+      const fTbl = document.querySelector('.acct-fuel-manual-table');
+      if (
+        fTbl &&
+        window.ErpColumnResize &&
+        typeof window.ErpColumnResize.bindToTable === 'function' &&
+        !fTbl.dataset.erpFuelColResize
+      ) {
+        fTbl.dataset.erpFuelColResize = '1';
+        fTbl.__erpColResizeDispose = window.ErpColumnResize.bindToTable(fTbl, { showHint: false });
+      }
     }
 
     async function saveManualFuelPurchase(opts) {

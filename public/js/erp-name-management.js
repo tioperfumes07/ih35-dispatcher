@@ -231,6 +231,66 @@
       </div>`;
   }
 
+  async function nmHydrateAddressPanel() {
+    const row = state.selected;
+    if (!row || !row.qboId || (state.kind !== 'vendor' && state.kind !== 'customer')) return;
+    const path =
+      state.kind === 'vendor'
+        ? '/api/name-management/vendor-address/' + encodeURIComponent(row.qboId)
+        : '/api/name-management/customer-address/' + encodeURIComponent(row.qboId);
+    try {
+      const data = await nmFetch(path);
+      const r = data.record || {};
+      const set = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.value = v != null && v !== undefined ? String(v) : '';
+      };
+      set('nmAddrStreet', r.street_address);
+      set('nmAddrCity', r.city);
+      set('nmAddrState', r.state);
+      set('nmAddrZip', r.zip);
+      set('nmAddrCountry', r.country || 'USA');
+      set('nmAddrPhone', r.phone);
+      set('nmAddrEmail', r.email);
+    } catch (e) {
+      if (typeof erpNotify === 'function') erpNotify('Could not load address: ' + (e.message || e), 'warning');
+    }
+    const btn = document.getElementById('nmAddrSaveBtn');
+    if (btn)
+      btn.onclick = () => {
+        void nmSaveAddressPanel();
+      };
+  }
+
+  async function nmSaveAddressPanel() {
+    const row = state.selected;
+    if (!row || !row.qboId) return;
+    const body = {
+      display_name: String(row.primaryName || row.qboName || '').trim(),
+      street_address: document.getElementById('nmAddrStreet')?.value || '',
+      city: document.getElementById('nmAddrCity')?.value || '',
+      state: document.getElementById('nmAddrState')?.value || '',
+      zip: document.getElementById('nmAddrZip')?.value || '',
+      country: document.getElementById('nmAddrCountry')?.value || '',
+      phone: document.getElementById('nmAddrPhone')?.value || '',
+      email: document.getElementById('nmAddrEmail')?.value || ''
+    };
+    const path =
+      state.kind === 'vendor'
+        ? '/api/name-management/vendor-address/' + encodeURIComponent(row.qboId)
+        : '/api/name-management/customer-address/' + encodeURIComponent(row.qboId);
+    try {
+      await nmFetch(path, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (typeof erpNotify === 'function') erpNotify('Address saved.', 'success');
+    } catch (e) {
+      alert('Save failed: ' + (e.message || e));
+    }
+  }
+
   function paintDetail(host) {
     if (!state.selected) {
       host.innerHTML = '<p class="muted" style="text-align:center;padding:40px 12px;font-size:13px">Select a record from the list.</p>';
@@ -263,6 +323,44 @@
             <button type="button" class="btn" style="margin-top:8px" id="nmLinkBtn">Save link</button>
           </div>`
         : '';
+    const addrPanel =
+      state.kind === 'vendor' || state.kind === 'customer'
+        ? `<div style="background:#fff;border:1px solid #e0e3e8;border-radius:8px;padding:16px;margin-bottom:14px" id="nmAddrPanel">
+        <div style="font-weight:600;margin-bottom:8px">Address (ERP directory)</div>
+        <p class="mini-note" style="margin:0 0 10px;line-height:1.45">Shown on fuel and AP forms when this record is selected. Uses QuickBooks id as key.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:720px">
+          <div style="grid-column:1/-1">
+            <label class="qb-l">Street address</label>
+            <input class="qb-in" id="nmAddrStreet" autocomplete="off" style="width:100%" />
+          </div>
+          <div>
+            <label class="qb-l">City</label>
+            <input class="qb-in" id="nmAddrCity" autocomplete="off" style="width:100%" />
+          </div>
+          <div>
+            <label class="qb-l">State</label>
+            <input class="qb-in" id="nmAddrState" autocomplete="off" style="width:100%" />
+          </div>
+          <div>
+            <label class="qb-l">ZIP</label>
+            <input class="qb-in" id="nmAddrZip" autocomplete="off" style="width:100%" />
+          </div>
+          <div>
+            <label class="qb-l">Country</label>
+            <input class="qb-in" id="nmAddrCountry" placeholder="USA" autocomplete="off" style="width:100%" />
+          </div>
+          <div>
+            <label class="qb-l">Phone</label>
+            <input class="qb-in" id="nmAddrPhone" autocomplete="off" style="width:100%" />
+          </div>
+          <div style="grid-column:1/-1">
+            <label class="qb-l">Email</label>
+            <input class="qb-in" id="nmAddrEmail" autocomplete="off" style="width:100%" />
+          </div>
+        </div>
+        <button type="button" class="btn btn--small" style="margin-top:12px" id="nmAddrSaveBtn">Save address</button>
+      </div>`
+        : '';
     host.innerHTML = `
       <div style="background:#fff;border:1px solid #e0e3e8;border-radius:8px;padding:16px;margin-bottom:14px">
         <div style="font-weight:600;margin-bottom:10px">Current names</div>
@@ -284,6 +382,7 @@
         </table>
         ${mismatchNote}
       </div>
+      ${addrPanel}
       <div style="background:#fff;border:1px solid #e0e3e8;border-radius:8px;padding:16px;margin-bottom:14px">
         <div style="font-weight:600;margin-bottom:8px">Set the official name</div>
         <label class="qb-l">Official / canonical name</label>
@@ -324,6 +423,7 @@
       });
     });
     document.getElementById('nmApplyBtn')?.addEventListener('click', openConfirmModal);
+    if (state.kind === 'vendor' || state.kind === 'customer') void nmHydrateAddressPanel();
     if (state.kind === 'driver' && !row.samsaraId) {
       const sel = document.getElementById('nmLinkSam');
       if (sel) {

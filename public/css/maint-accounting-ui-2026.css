@@ -3562,3 +3562,34 @@ body.erp-maintenance .erp-col-resize-hint {
   color: var(--color-text-muted, var(--color-text-label));
 }
 
+/* Fuel transaction form — modal bar + table cell metrics (theme colors only) */
+body.erp-maintenance .erp-ded-fuel-type-sel {
+  min-width: 160px;
+  max-width: min(240px, 100%);
+}
+
+body.erp-maintenance .erp-dedicated-form-modal__bar-actions .btn.btn--small {
+  min-height: 28px;
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 4px 10px;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .acct-fuel-manual-table .qb-in.maint-field {
+  min-height: 24px;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .acct-fuel-manual-table thead th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] #erpDedModalFsBtn {
+  border-color: var(--color-border-focus);
+  color: var(--color-border-focus);
+}
