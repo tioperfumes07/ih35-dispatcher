@@ -271,15 +271,18 @@ body.erp-maintenance .maint-wo-columns {
 }
 
 body.erp-maintenance .maint-wo-col-units {
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px;
-  flex-shrink: 0 !important;
+  flex: 0 1 min(240px, 36vw);
+  width: auto;
+  min-width: min(200px, 42vw);
+  max-width: 260px;
+  flex-shrink: 1;
   border-right: 1px solid #e0e3e8;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: #fff;
 }
 
@@ -289,7 +292,9 @@ body.erp-maintenance .maint-wo-col-form {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.erp-maintenance .maint-wo-form-stack-inner {
@@ -297,7 +302,9 @@ body.erp-maintenance .maint-wo-form-stack-inner {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.erp-maintenance .maint-wo-main-aside {
@@ -305,7 +312,9 @@ body.erp-maintenance .maint-wo-main-aside {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.erp-maintenance .maint-wo-workspace {
@@ -313,7 +322,9 @@ body.erp-maintenance .maint-wo-workspace {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Snapshot dock: sticky top of right column */
