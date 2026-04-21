@@ -542,6 +542,7 @@ export function mountDedupeRoutes(app, deps) {
         }
         return res.json({ ok: true, total: 0, page: 1, pageSize: 25, rows: [], dbDisabled: true });
       }
+      await ensureDedupeWritePathObjects();
       if (String(req.query.format || '').toLowerCase() === 'xlsx') {
         const r = await dbQuery(
           `SELECT id, merge_type, kept_qbo_id, kept_name, merged_qbo_id, merged_name, merged_by, merged_at,
@@ -642,6 +643,7 @@ export function mountDedupeRoutes(app, deps) {
       if (!getPool()) {
         return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
       }
+      await ensureDedupeWritePathObjects();
       const id = String(req.params.id || '').trim();
       const r = await dbQuery(`SELECT * FROM merge_log WHERE id = $1::bigint`, [id]);
       const row = r.rows?.[0];
