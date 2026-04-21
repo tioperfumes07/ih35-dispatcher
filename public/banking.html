@@ -58,6 +58,7 @@
           <div class="mr-filter-bar__actions">
             <label class="mini" style="margin:0;visibility:hidden" aria-hidden="true">&nbsp;</label>
             <button type="button" class="primary" id="btnSnap">Load snapshot</button>
+            <button type="button" class="primary" onclick="window.openForm425C()">Form 425C — Monthly Report</button>
           </div>
         </div>
         <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
@@ -383,5 +384,6 @@
       if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
     });
   </script>
+  <script src="/js/form-425c-modal.js"></script>
 </body>
 </html>
