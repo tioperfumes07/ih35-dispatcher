@@ -22234,9 +22234,36 @@
       const tabBtn = document.getElementById('acctStubTrans');
       if (tabBtn) openAccountingTab('acct-transactions', tabBtn);
 
-      // Header fields
-      document.getElementById('apTxnType').value = txnType === 'bill' ? 'bill' : 'expense';
+      // Header fields — align titles, readonly type chip, and validation with dedicated flows (repair vs maintenance).
+      const recType = (document.getElementById('recordTypeSelect')?.value || '').trim();
+      let apPreset = '';
+      if (txnType === 'bill') {
+        if (recType === 'repair') apPreset = 'repair-bill';
+        else if (recType === 'maintenance') apPreset = 'maintenance-bill';
+        else apPreset = 'standard-bill';
+      } else if (recType === 'repair') apPreset = 'repair-expense';
+      else if (recType === 'maintenance') apPreset = 'maintenance-expense';
+      else apPreset = 'standard-expense';
+      window.__erpDedicatedApPreset = apPreset;
+      window.__erpApNewMenuUi =
+        typeof erpBuildApNewMenuUi === 'function' ? erpBuildApNewMenuUi(apPreset) : null;
+      const tsel = document.getElementById('apTxnType');
+      if (tsel) {
+        tsel.value = txnType === 'bill' ? 'bill' : 'expense';
+        const lockDedicated = [
+          'maintenance-expense',
+          'repair-expense',
+          'maintenance-bill',
+          'repair-bill',
+          'standard-expense',
+          'standard-bill'
+        ].includes(apPreset);
+        tsel.disabled = lockDedicated;
+      }
       syncApDocTitle();
+      if (typeof erpApplyApDedicatedUiAfterOpen === 'function') {
+        erpApplyApDedicatedUiAfterOpen(apPreset);
+      }
 
       const vName = vendorText || qboNameById(cacheVendors(), vendorQboId);
       document.getElementById('apVendorSearch').value = vName || '';
@@ -22256,7 +22283,6 @@
         if (apSvcH) apSvcH.value = (document.getElementById('serviceTypeInput')?.value || apSvc.value).trim();
       }
 
-      const recType = (document.getElementById('recordTypeSelect')?.value || '').trim();
       const apMrt = document.getElementById('apMaintRecordType');
       if (apMrt) apMrt.value = recType;
       const apDot = document.getElementById('apAccidentDotReportable');
@@ -24948,6 +24974,7 @@
         body: JSON.stringify({
           unit,
           assetCategory: activeAssetCategory,
+          dedicatedApPreset: String(window.__erpDedicatedApPreset || '').trim() || undefined,
           repairLocationType: document.getElementById('woRepairLocationType').value || '',
           ...(String(document.getElementById('apRepairLocationSearch')?.value || '').trim()
             ? { repairLocationLabel: String(document.getElementById('apRepairLocationSearch').value).trim() }

@@ -949,12 +949,23 @@ tr:nth-child(even){background:#f9f9f9}
             ],
             data.meta.external.rows || []
           );
+          const extRows = data.meta.external?.rows || [];
+          const topSpend = extRows.slice().sort((a, b) => (Number(b.totalCost) || 0) - (Number(a.totalCost) || 0))[0];
+          const inHouseHint = topSpend
+            ? `<div class="mini-note" style="margin:10px 0 0;padding:10px 12px;border-radius:8px;background:#f8f9fb;border:1px solid #e0e3eb;line-height:1.45">
+              <strong>What could be brought in-house?</strong> Highest external vendor spend in this period:
+              <strong>${escapeHtml(String(topSpend.vendor || '—'))}</strong> (~$${Number(topSpend.totalCost || 0).toFixed(0)} across ${Number(
+                topSpend.count || 0
+              )} records). Review recurring external work that matches in-yard capabilities (PM, tires, light mechanical) before moving spend internal.
+            </div>`
+            : '';
           host.innerHTML =
             renderSummaryCards(data.meta.summaryCards || [], false) +
             `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
               <div><h4 style="margin:0 0 6px;font-size:13px">Internal shop</h4>${left}</div>
               <div><h4 style="margin:0 0 6px;font-size:13px">External vendors</h4>${right}</div>
-            </div>`;
+            </div>` +
+            inHouseHint;
           bindSortable(host);
         } else if (data.rows && data.rows.length) {
           if (datasetId === 'a4-pm-schedule') {
@@ -1322,6 +1333,7 @@ tr:nth-child(even){background:#f9f9f9}
     if (document.getElementById('repDotCfgDotAcc')?.checked) qs.append('dotReportable', 'y');
     const ie = document.getElementById('repDotCfgIncludeEmpty');
     if (ie && !ie.checked) qs.set('includeEmpty', 'false');
+    if (document.getElementById('repDotCfgKeepEmpty4')?.checked) qs.set('keepEmptySection4Buckets', 'true');
     return qs;
   }
 
@@ -1389,6 +1401,7 @@ tr:nth-child(even){background:#f9f9f9}
         <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgPosted" /> Posted to QuickBooks</label>
         <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgDotAcc" /> DOT-reportable accidents only</label>
         <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgIncludeEmpty" checked /> Include empty section shells</label>
+        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgKeepEmpty4" /> Always keep Section 4A–4H bucket keys (when trimming other empty arrays)</label>
         <div class="qb-l" style="margin-top:10px">Format</div>
         <label style="font-size:12px"><input type="radio" name="repDotCfgFormat" value="full" checked /> Full detail</label>
         <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgFormat" value="summary" /> Summary</label>

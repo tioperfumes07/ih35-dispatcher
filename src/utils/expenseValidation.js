@@ -64,6 +64,9 @@
       if (!String(s.repairLocationType || '').trim()) {
         pushErr('apRepairLocationSelect', 'ap_maint_loc_type', 'Maintenance bill — choose a service location type.');
       }
+      if (!String(s.repairLocationLabel || '').trim()) {
+        pushErr('apRepairLocationSearch', 'ap_maint_loc_name', 'Maintenance bill — enter the service location (shop or site name).');
+      }
     }
 
     const lines = Array.isArray(s.lines) ? s.lines : [];
