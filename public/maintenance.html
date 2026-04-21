@@ -7667,7 +7667,8 @@
     }
 
     function maintRmSwitchSubtab(which, _btn) {
-      document.querySelectorAll('.maint-rm-subtab').forEach(b => {
+      const rmRoot = document.getElementById('section-maintenance');
+      (rmRoot || document).querySelectorAll('.maint-rm-subtab').forEach(b => {
         b.classList.toggle('active', b.getAttribute('data-maint-rm-sub') === which);
       });
       const al = document.getElementById('maintRmSubpaneAlerts');

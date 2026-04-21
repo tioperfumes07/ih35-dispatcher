@@ -5,6 +5,7 @@
       label: 'Fuel & route planning',
       href: '/maintenance.html#fuel',
       links: [
+        { label: 'Accounting — Fuel & DEF ledger', href: '/maintenance.html#accounting-fuel-ledger' },
         { label: 'ERP — Fuel tab', href: '/maintenance.html#fuel' },
         { label: 'Full-screen fuel planner', href: '/fuel.html' },
         { label: 'IH 35 Transportation LLC', href: '/' }
@@ -83,6 +84,7 @@
       href: '/maintenance.html#catalog',
       links: [
         { label: 'Fleet & Samsara writes', href: '/maintenance.html#catalog-fleet' },
+        { label: 'Name management', href: '/maintenance.html#catalog-name-mgmt' },
         { label: 'Operational status', href: '/maintenance.html#catalog-operational' },
         { label: 'QuickBooks items & accounts', href: '/maintenance.html#catalog-qbo' },
         { label: 'Service types (database)', href: '/maintenance.html#catalog-service' },
