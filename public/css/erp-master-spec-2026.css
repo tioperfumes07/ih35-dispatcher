@@ -45,6 +45,571 @@ body.erp-maintenance .erp-main-body .erp-reports-main {
   min-height: 0;
 }
 
+/* --- Reports hub v2: Fleet reports pagehead + filter sidebar + catalog stage + parts table --- */
+body.erp-maintenance .erp-reports-shell--v2 {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+body.erp-maintenance .erp-reports-pagehead {
+  margin: 0 0 8px;
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .erp-reports-pagehead__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-body);
+  letter-spacing: -0.02em;
+}
+
+body.erp-maintenance .erp-reports-pagehead__sub {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--color-text-label);
+}
+
+body.erp-maintenance .erp-reports-catalog-shell {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--color-border);
+}
+
+body.erp-maintenance .rep-filter-sidebar {
+  width: 200px;
+  flex: 0 0 200px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--color-border);
+  padding: 8px 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  background: var(--color-bg-card, var(--color-bg-page));
+}
+
+body.erp-maintenance .rep-filter-sidebar__head {
+  margin-bottom: 2px;
+}
+
+body.erp-maintenance .rep-filter-sidebar__title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-body);
+}
+
+body.erp-maintenance .rep-filter-sidebar__sub {
+  font-size: 9px;
+  color: var(--color-text-label);
+  line-height: 1.35;
+}
+
+body.erp-maintenance .rep-filter-field__lbl {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-label);
+  margin-bottom: 2px;
+}
+
+body.erp-maintenance .rep-filter-field__row {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+body.erp-maintenance .rep-filter-inp {
+  width: 100%;
+  height: 14px;
+  font-size: 10px;
+  line-height: 1;
+  padding: 0 5px;
+  border-radius: 3px;
+  border: 1px solid var(--color-border-input, var(--color-border));
+  background: var(--color-bg-input, var(--color-bg-card));
+  color: var(--color-text-primary);
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .rep-filter-inp::placeholder {
+  color: var(--color-text-label);
+  opacity: 1;
+}
+
+body.erp-maintenance .rep-filter-apply {
+  margin-top: 4px;
+  font-size: 10px;
+  padding: 4px 8px;
+  height: auto;
+  min-height: 22px;
+}
+
+body.erp-maintenance .rep-catalog-stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--color-bg-page, var(--color-bg-card));
+}
+
+body.erp-maintenance .rep-cat-tabs--bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 0 0 0;
+  padding: 0;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .rep-cat-tabs--bar .rep-cat-tab {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-body);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+body.erp-maintenance .rep-cat-tabs--bar .rep-cat-tab:hover {
+  background: var(--color-bg-hover);
+}
+
+body.erp-maintenance .rep-cat-tabs--bar .rep-cat-tab.active {
+  color: var(--color-border-focus, #1557a0);
+  border-bottom-color: var(--color-border-focus, #1557a0);
+  background: transparent;
+}
+
+body.erp-maintenance .rep-filter-ms {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--color-border-input, var(--color-border));
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--color-bg-input, var(--color-bg-card));
+}
+
+body.erp-maintenance .rep-filter-ms__search {
+  width: 100%;
+  height: 14px;
+  font-size: 10px;
+  padding: 0 5px;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-primary);
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .rep-filter-ms__search::placeholder {
+  color: var(--color-text-label);
+}
+
+body.erp-maintenance .rep-filter-ms__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px 4px;
+}
+
+body.erp-maintenance .rep-filter-ms__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 6px;
+  background: var(--pill-blue-bg, #e8f0fe);
+  color: var(--color-border-focus, #1557a0);
+}
+
+body.erp-maintenance .rep-filter-ms__chip button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  color: inherit;
+}
+
+body.erp-maintenance .rep-filter-ms__opts {
+  max-height: 60px;
+  overflow-y: auto;
+}
+
+body.erp-maintenance .rep-filter-ms__opt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+body.erp-maintenance .rep-filter-ms__opt:hover {
+  background: var(--color-bg-hover);
+}
+
+body.erp-maintenance .rep-filter-ms__opt input {
+  width: 10px;
+  height: 10px;
+  margin: 0;
+  accent-color: var(--color-nav-bg, #1557a0);
+}
+
+body.erp-maintenance .rep-filter-ms__add {
+  font-size: 9px;
+  color: var(--color-border-focus, #1557a0);
+  border-top: 1px solid var(--color-border);
+  padding: 1px 5px;
+  cursor: pointer;
+}
+
+body.erp-maintenance .rep-filter-ms__add.hidden {
+  display: none;
+}
+
+body.erp-maintenance .rep-catalog-card-wrap {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: var(--color-bg-card);
+  min-height: 0;
+}
+
+body.erp-maintenance .rep-catalog-card-wrap .rep-catalog-card {
+  flex: 1 1 auto;
+  border: none;
+  border-radius: 5px 5px 0 0;
+}
+
+body.erp-maintenance .rep-catalog-card-wrap .rep-catalog-card:hover {
+  border: none;
+}
+
+body.erp-maintenance .rep-catalog-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 8px 6px;
+  border-top: 1px solid var(--color-border);
+}
+
+body.erp-maintenance .rep-catalog-card__open {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-border-focus, #1557a0);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+body.erp-maintenance .rep-catalog-card__fs {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-bg-card);
+  color: var(--color-text-body);
+  cursor: pointer;
+}
+
+body.erp-maintenance .rep-catalog-card-wrap.rep-filter-hidden,
+body.erp-maintenance .rep-catalog-card-wrap.rep-sidebar-filtered-out {
+  display: none !important;
+}
+
+body.erp-maintenance .rep-catalog-sub__label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-label);
+  margin: 0 0 7px;
+}
+
+body.erp-maintenance .rep-catalog-subgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+body.erp-maintenance .rep-parts-catalog {
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: var(--color-bg-card);
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .rep-parts-catalog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+body.erp-maintenance .rep-parts-catalog__head-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-body);
+}
+
+body.erp-maintenance .rep-parts-catalog__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+body.erp-maintenance .rep-parts-toolbar-btn {
+  height: 22px;
+  font-size: 9px;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+body.erp-maintenance .rep-parts-toolbar-btn--primary {
+  background: var(--color-semantic-success-bg, #e8f5e9);
+  color: var(--color-semantic-success, #1b5e20);
+  border-color: var(--color-semantic-success, #1b5e20);
+}
+
+body.erp-maintenance .rep-parts-fs {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-bg-card);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-body);
+}
+
+body.erp-maintenance .rep-parts-catalog__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+}
+
+body.erp-maintenance .rep-parts-search {
+  flex: 1 1 160px;
+  min-width: 120px;
+}
+
+body.erp-maintenance .rep-parts-cat,
+body.erp-maintenance .rep-parts-status {
+  flex: 0 0 auto;
+  min-width: 100px;
+  width: auto;
+}
+
+body.erp-maintenance .rep-parts-table-scroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+body.erp-maintenance .rep-parts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  table-layout: fixed;
+}
+
+body.erp-maintenance .rep-parts-table thead th {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 400;
+  color: var(--color-text-label);
+  text-align: left;
+  padding: 3px 5px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-header, var(--color-bg-card));
+}
+
+body.erp-maintenance .rep-parts-table tbody td {
+  padding: 4px 5px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+body.erp-maintenance .rep-parts-table tbody tr:hover {
+  background: var(--color-bg-hover);
+}
+
+body.erp-maintenance .rep-parts-cell-inp {
+  width: 100%;
+  height: 18px;
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: 3px;
+  border: 1px solid var(--color-border-input, var(--color-border));
+  background: var(--color-bg-input, var(--color-bg-card));
+  color: var(--color-text-primary);
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .rep-parts-cell-inp::placeholder {
+  color: var(--color-text-label);
+  opacity: 1;
+}
+
+body.erp-maintenance .rep-parts-catalog__newrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  padding: 5px 8px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-header, var(--color-bg-page));
+}
+
+body.erp-maintenance .rep-parts-newrow__lbl {
+  font-size: 9px;
+  color: var(--color-text-label);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+body.erp-maintenance .rep-parts-new-name {
+  flex: 2 1 120px;
+  min-width: 80px;
+}
+
+body.erp-maintenance .rep-parts-new-num {
+  flex: 1 1 72px;
+  min-width: 56px;
+}
+
+body.erp-maintenance .rep-parts-new-cat {
+  flex: 1 1 100px;
+  min-width: 80px;
+}
+
+body.erp-maintenance .rep-parts-new-qty {
+  max-width: 40px;
+  flex: 0 0 40px;
+}
+
+body.erp-maintenance .rep-parts-new-cost {
+  max-width: 50px;
+  flex: 0 0 50px;
+}
+
+body.erp-maintenance .rep-parts-add-row-btn {
+  height: 18px;
+  font-size: 9px;
+  padding: 0 8px;
+  line-height: 1;
+  background: var(--color-semantic-success-bg, #e8f5e9);
+  color: var(--color-semantic-success, #1b5e20);
+  border-color: var(--color-semantic-success, #1b5e20);
+  white-space: nowrap;
+}
+
+body.erp-maintenance .rep-parts-catalog__hint {
+  font-size: 9px;
+  color: var(--color-text-label);
+  text-align: right;
+  padding: 3px 8px 6px;
+}
+
+body.erp-maintenance .rep-badge--ok {
+  font-size: 8px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--color-semantic-success-bg, #e8f5e9);
+  color: var(--color-semantic-success, #1b5e20);
+}
+
+body.erp-maintenance .rep-badge--warn {
+  font-size: 8px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--color-semantic-warning-bg, #fff8e1);
+  color: var(--color-semantic-warning, #e65100);
+}
+
+body.erp-maintenance .rep-badge--bad {
+  font-size: 8px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--color-semantic-error-bg, #fce8e6);
+  color: var(--color-semantic-error, #c5221f);
+}
+
+body.erp-maintenance .rep-parts-table thead th.erp-col-resize-th {
+  position: relative;
+  overflow: hidden;
+}
+
+body.erp-maintenance .rep-parts-table .erp-col-resize-hit {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 2;
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  body.erp-maintenance .erp-reports-catalog-shell {
+    flex-direction: column;
+  }
+  body.erp-maintenance .rep-filter-sidebar {
+    width: 100%;
+    flex: 0 0 auto;
+    max-height: 44vh;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
 /* Rule 14 target width (~180px), still collapses on narrow viewports (see redesign 900px breakpoint). */
 body.erp-maintenance .erp-reports-sidebar {
   flex: 0 0 min(11.25rem, 100%);
@@ -2798,42 +3363,47 @@ body.erp-maintenance .rep-cat-tab.active {
 }
 body.erp-maintenance .rep-catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
-  margin: 0 0 16px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  margin: 0;
+  width: 100%;
 }
 body.erp-maintenance .rep-catalog-card {
   text-align: left;
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: var(--color-bg-card);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-height: 72px;
+  min-height: 56px;
 }
 body.erp-maintenance .rep-catalog-card:hover {
   border-color: #1557a0;
   background: #f0f7ff;
 }
 body.erp-maintenance .rep-catalog-card__src {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-text-label);
+  color: var(--color-border-focus, #1557a0);
+  background: var(--pill-blue-bg, #e8f0fe);
+  padding: 1px 5px;
+  border-radius: 6px;
+  align-self: flex-start;
 }
 body.erp-maintenance .rep-catalog-card__title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--color-text-body);
 }
 body.erp-maintenance .rep-catalog-card__desc {
-  font-size: 11px;
+  font-size: 9px;
   color: var(--color-text-label);
-  line-height: 1.35;
+  line-height: 1.4;
 }
 body.erp-maintenance .rep-src-badge {
   font-size: 10px;
