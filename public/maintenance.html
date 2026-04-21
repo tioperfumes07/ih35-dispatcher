@@ -6974,6 +6974,7 @@
     function closeMaintWorkOrderModal() {
       const modal = document.getElementById('maintWorkOrderModal');
       const shell = modal?.querySelector('.maint-workorder-fullmodal__shell');
+      if (shell && typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       if (shell && typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
         void erpExitDocumentFullscreen().catch(() => {});
       }
@@ -7004,6 +7005,7 @@
       const btn = document.getElementById('maintWoMaxBtn');
       if (!shell) return;
       const on = !shell.classList.contains('maint-wo-shell--max');
+      if (on && typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       if (on && typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
         void erpExitDocumentFullscreen().catch(() => {});
       }
@@ -7025,6 +7027,7 @@
       const fsBtn = document.getElementById('maintWoFsBtn');
       if (!modal || !shell || !modal.classList.contains('on')) return;
       if (typeof erpGetFullscreenElement !== 'function' || typeof erpRequestElementFullscreen !== 'function') return;
+      if (typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       if (erpGetFullscreenElement() === shell) {
         void erpExitDocumentFullscreen().catch(() => {});
         if (fsBtn) {
@@ -7055,6 +7058,7 @@
       const shell = erpMaintDialogShell(bgId);
       if (!shell) return;
       const on = !shell.classList.contains('erp-qb-dialog--viewport-max');
+      if (on && typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       if (on && typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
         void erpExitDocumentFullscreen().catch(() => {});
       }
@@ -7069,6 +7073,7 @@
         void erpExitDocumentFullscreen().catch(() => {});
         return;
       }
+      if (typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       shell.classList.remove('erp-qb-dialog--viewport-max');
       void erpRequestElementFullscreen(shell).catch(() => {});
     }
@@ -7076,6 +7081,7 @@
     function erpResetQbDialogViewport(bgId) {
       const shell = erpMaintDialogShell(bgId);
       if (!shell) return;
+      if (typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       if (typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
         void erpExitDocumentFullscreen().catch(() => {});
       }
@@ -9677,6 +9683,10 @@
     function erpResetDedicatedModalLayout() {
       const modal = document.getElementById('erpDedicatedFormModal');
       const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
+      if (typeof erpModalChromeResetLayoutFullscreen === 'function') {
+        if (shell) erpModalChromeResetLayoutFullscreen(shell);
+        else if (modal) erpModalChromeResetLayoutFullscreen(modal);
+      }
       if (modal) modal.removeAttribute('data-erp-acct-layout');
       if (modal) modal.classList.remove('erp-dedicated-form-modal--maximized');
       if (shell) shell.classList.remove('erp-dedicated-form-modal__shell--maximized');
@@ -11644,6 +11654,7 @@
     function closeErpDrawer() {
       const d = document.getElementById('erpDrawer');
       const b = document.getElementById('erpDrawerBackdrop');
+      if (d && typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(d);
       if (d) d.classList.remove('is-open');
       if (b) b.classList.remove('is-open');
       if (d) d.setAttribute('aria-hidden', 'true');
@@ -19184,7 +19195,9 @@
     function erpMbToggleMaximize() {
       const d = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
       if (!d) return;
-      __mbMaxOn = !__mbMaxOn;
+      const willMax = !__mbMaxOn;
+      if (willMax && typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(d);
+      __mbMaxOn = willMax;
       if (__mbMaxOn) {
         d.classList.add('erp-mb-modal__dialog--max');
         d.classList.remove('erp-mb-modal__dialog--fs');
