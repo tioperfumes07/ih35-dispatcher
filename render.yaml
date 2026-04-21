@@ -1,0 +1,10 @@
+# Render Blueprint — IH35 ERP must run as a Web Service so Express serves /api/*.
+# A Static Site will serve HTML only and API calls return "Cannot GET /api/..." HTML errors.
+# See docs/HOW_CODE_GETS_ONLINE.md
+services:
+  - type: web
+    name: ih35-erp
+    runtime: node
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health

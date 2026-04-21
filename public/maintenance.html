@@ -8316,7 +8316,21 @@
       try {
         data = JSON.parse(text);
       } catch {
-        throw new Error(text.slice(0, 300));
+        const head = text.slice(0, 120).trim();
+        const looksHtml =
+          /^<!DOCTYPE/i.test(head) ||
+          /^<html/i.test(head) ||
+          /<title>\s*Error\s*<\/title>/i.test(text.slice(0, 800));
+        if (looksHtml) {
+          const preM = text.match(/<pre[^>]*>([^<]*)<\/pre>/i);
+          const pre = preM ? String(preM[1] || '').trim() : '';
+          throw new Error(
+            pre
+              ? `${pre} (${url}) — Server returned an HTML error page instead of JSON. On Render, use a Web Service with Start Command "npm start" (node server.js), not a Static Site.`
+              : `Non-JSON response from ${url} — Deploy the Node server so /api routes are registered (see docs/HOW_CODE_GETS_ONLINE.md).`
+          );
+        }
+        throw new Error(`Invalid JSON from ${url}: ${text.slice(0, 200)}`);
       }
       if (!r.ok) {
         if (r.status === 401 && data && data.authRequired) {
@@ -12431,10 +12445,29 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
+        let maintLoadErrorMsg = '';
+        const tagMaintLoadErr = e => {
+          if (!maintLoadErrorMsg) maintLoadErrorMsg = (e && e.message) || String(e || '');
+        };
+        const dashFallback = {
+          ok: false,
+          vehicles: [],
+          dashboard: [],
+          tireAlerts: [],
+          refreshedAt: null
+        };
         const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes] =
           await Promise.all([
-            j('/api/maintenance/dashboard'),
-            j('/api/maintenance/records'),
+            j('/api/maintenance/dashboard').catch(e => {
+              console.error(e);
+              tagMaintLoadErr(e);
+              return dashFallback;
+            }),
+            j('/api/maintenance/records').catch(e => {
+              console.error(e);
+              tagMaintLoadErr(e);
+              return {};
+            }),
             j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
             j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
             detectTmsEnabled(),
@@ -12456,6 +12489,10 @@
         if (bar) {
           bar.classList.add('hidden');
           bar.textContent = '';
+        }
+        if (maintLoadErrorMsg && bar) {
+          bar.classList.remove('hidden');
+          bar.innerHTML = `${escapeHtml(maintLoadErrorMsg)} · <a href="/settings.html" style="color:var(--color-border-focus);font-weight:500">Sign in</a>`;
         }
         setTmsUiEnabled(!!dbRes);
 

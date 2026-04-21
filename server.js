@@ -72,6 +72,10 @@ async function start() {
 
   mountErpCoreApi(app, { logError: console.error });
 
+  app.get('/api/live', (_req, res) => {
+    res.type('text/plain; charset=utf-8').send('ok');
+  });
+
   app.use(pdfRouter);
 
   app.get('/', (_req, res) => {
