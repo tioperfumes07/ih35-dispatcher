@@ -245,6 +245,21 @@
     }
   }
 
+  function repPrintCompanyBlock() {
+    const g =
+      typeof window.__erpPrintCompanyInfo === 'object' && window.__erpPrintCompanyInfo != null ? window.__erpPrintCompanyInfo : {};
+    const name = String(g.companyName || '').trim() || 'IH 35 Transportation LLC';
+    const bits = [];
+    if (String(g.address || '').trim()) bits.push(`<div class="co-sub">${escapeHtml(String(g.address).trim())}</div>`);
+    if (String(g.city || '').trim()) bits.push(`<div class="co-sub">${escapeHtml(String(g.city).trim())}</div>`);
+    if (String(g.phone || '').trim()) bits.push(`<div class="co-sub">${escapeHtml(String(g.phone).trim())}</div>`);
+    const reg = [];
+    if (String(g.usdot || '').trim()) reg.push('USDOT ' + escapeHtml(String(g.usdot).trim()));
+    if (String(g.mcNumber || '').trim()) reg.push('MC ' + escapeHtml(String(g.mcNumber).trim()));
+    if (reg.length) bits.push(`<div class="co-sub">${reg.join(' · ')}</div>`);
+    return `<div class="company-name">${escapeHtml(name)}</div>${bits.join('')}`;
+  }
+
   function repDynamicPrint() {
     const st = window.__repDynState;
     if (!st || !st.columns) return;
@@ -259,32 +274,48 @@
             .map((k, i) => `<td>${i === 0 ? 'Total' : escapeHtml(String(st.totals[k] ?? ''))}</td>`)
             .join('')}</tr>`
         : '';
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${escapeHtml(st.title || 'Report')}</title><style>
-@page { size: letter; margin: 0.75in; }
-body{font-family:Arial,sans-serif;font-size:9pt;color:#000}
-table{width:100%;border-collapse:collapse}
-th{background:#1a1f36;color:#fff;padding:5pt 6pt;font-size:8pt;font-weight:bold;text-align:left}
-td{padding:4pt 6pt;border-bottom:0.5pt solid #ddd;font-size:8pt}
-tr:nth-child(even){background:#f9f9f9}
-.totals-row{font-weight:bold;background:#e8e8e8;border-top:1pt solid #000}
-.report-header{border-bottom:1.5pt solid #000;padding-bottom:6pt;margin-bottom:8pt;display:flex;justify-content:space-between}
-.company-name{font-size:12pt;font-weight:bold}
-.report-title{font-size:14pt;font-weight:bold;text-align:right}
-.sub{font-size:8pt;color:#555}
+    const footerCenter = [escapeHtml(st.title || 'Report'), escapeHtml(st.unitTag || ''), escapeHtml(st.startDate || ''), escapeHtml(st.endDate || '')]
+      .filter(Boolean)
+      .join(' · ');
+    const extraCss =
+      typeof window.PRINT_CSS === 'string'
+        ? ''
+        : `
+    .page-footer{position:fixed;bottom:0;left:0;right:0;z-index:100;border-top:0.5pt solid #ccc;padding:4pt 0.65in;font-size:6.5pt;color:#888;display:flex;justify-content:space-between;align-items:center;gap:8pt;background:#fff}
+    .page-footer__center{text-align:center;flex:1;min-width:0}
+    .page-footer__pg{flex-shrink:0;white-space:nowrap}
+    @media print{.page-footer__pg::after{content:"Page " counter(page) " of " counter(pages)}}
+    @media screen{.page-footer__pg::after{content:"Page 1"}}`;
+    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>${escapeHtml(st.title || 'Report')}</title><style>
+${typeof window.PRINT_CSS === 'string' ? window.PRINT_CSS : ''}
+@page { size: letter portrait; margin: 0.65in; }
+body{font-family:Arial,Helvetica,sans-serif;font-size:7pt;color:#111;background:#fff;line-height:1.4}
+.pwrap{max-width:100%;margin:0 auto;padding-bottom:0.35in}
+table{width:100%;border-collapse:collapse;margin-bottom:6pt}
+thead{display:table-header-group}
+th{background:#1a1f36;color:#fff;padding:3pt 5pt;font-size:6.5pt;font-weight:bold;text-align:left;border:0.5pt solid #1a1f36}
+th.right{text-align:right}
+td{padding:3pt 5pt;border:0.5pt solid #ddd;font-size:7pt;vertical-align:top}
+tr:nth-child(even) td{background:#f9f9f9}
+.totals-row td{font-weight:bold;background:#f0f0f0;border-top:0.5pt solid #ccc;font-size:8pt}
+.report-header{border-bottom:1.5pt solid #1a1f36;padding-bottom:8pt;margin-bottom:10pt;display:flex;justify-content:space-between;align-items:flex-start}
+.company-name{font-size:11pt;font-weight:bold;color:#1a1f36}
+.co-sub{font-size:6.5pt;color:#555;margin-top:2pt;line-height:1.5}
+.report-title{font-size:13pt;font-weight:bold;color:#1a1f36;border:1.5pt solid #1a1f36;padding:3pt 10pt;text-align:right;display:inline-block}
+.genline{font-size:7pt;color:#555;margin:0 0 8px}
 @media print{thead{display:table-header-group}tr{page-break-inside:avoid}}
-</style></head><body>
-<div class="report-header"><div><div class="company-name">IH 35 Transportation LLC</div><div class="sub">${escapeHtml(st.subtitle || '')}</div></div>
+${extraCss}
+</style></head><body><div class="pwrap">
+<div class="report-header"><div>${repPrintCompanyBlock()}<div class="genline">${escapeHtml(st.subtitle || '')}</div></div>
 <div class="report-title">${escapeHtml(st.title || 'Report')}</div></div>
-<div class="sub" style="margin-bottom:8px">Generated ${escapeHtml(new Date().toISOString())}</div>
+<div class="genline">Generated ${escapeHtml(new Date().toISOString())}</div>
 <table><thead><tr>${th}</tr></thead><tbody>${tr}${tot}</tbody></table>
+</div><div class="page-footer"><span></span><span class="page-footer__center">${footerCenter}</span><span class="page-footer__pg"></span></div>
 </body></html>`;
-    const w = window.open('', '_blank', 'width=1000,height=700');
-    if (!w) return;
-    w.document.write(html);
-    w.document.close();
-    if (typeof window.generateFilename === 'function' && st) {
+    let suggested = '';
+    if (typeof window.generateFilename === 'function') {
       try {
-        const fn = window.generateFilename(
+        suggested = window.generateFilename(
           'report',
           {
             reportName: st.title,
@@ -294,11 +325,40 @@ tr:nth-child(even){background:#f9f9f9}
           },
           'pdf'
         );
-        w.document.title = fn.replace(/\.pdf$/i, '');
+      } catch (_) {}
+    }
+    const co =
+      typeof window.__erpPrintCompanyInfo === 'object' && window.__erpPrintCompanyInfo != null
+        ? String(window.__erpPrintCompanyInfo.companyName || '').trim()
+        : '';
+    const footerLeft = co || 'IH 35 Transportation LLC';
+    const htmlWithFooter = html.replace(
+      '<div class="page-footer"><span></span>',
+      `<div class="page-footer"><span>${escapeHtml(footerLeft)}</span>`
+    );
+    if (typeof window.erpPrintOpenAndPrint === 'function') {
+      window.erpPrintOpenAndPrint(htmlWithFooter, { suggestedFilename: suggested || undefined });
+      return;
+    }
+    const w = window.open('', '_blank', 'width=900,height=750,scrollbars=yes,resizable=yes');
+    if (!w || w.closed) {
+      if (typeof window.erpNotify === 'function') window.erpNotify('Popup blocked. Allow popups for this site to print reports.', 'warning');
+      return;
+    }
+    w.document.open();
+    w.document.write(htmlWithFooter);
+    w.document.close();
+    if (suggested) {
+      try {
+        w.document.title = suggested.replace(/\.pdf$/i, '');
       } catch (_) {}
     }
     w.focus();
-    setTimeout(() => w.print(), 500);
+    setTimeout(() => {
+      try {
+        w.print();
+      } catch (_) {}
+    }, 400);
   }
 
   async function repDynamicExport(format) {

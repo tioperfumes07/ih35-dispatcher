@@ -688,9 +688,20 @@
     } else {
       segments = [sanitizeFilename(dt), formatDateForFilename(new Date().toISOString())];
     }
+<<<<<<< Updated upstream
     let base = segments.filter(Boolean).join('-');
     if (base.length > 120) base = base.slice(0, 120);
     return base + '.' + ext;
+=======
+    if (dt === 'report') {
+      const sd = formatDateForFilename(d.startDate);
+      const ed = formatDateForFilename(d.endDate);
+      const range = sd && ed && sd !== ed ? `${sd}-to-${ed}` : sd || ed || formatDateForFilename(new Date().toISOString());
+      const unitSeg = cleanStr(d.unitFilter) || '';
+      return joinFilenameSegments(['Report', d.reportName || 'Dataset', unitSeg, range], ext);
+    }
+    return joinFilenameSegments([dt, formatDateForFilename(new Date().toISOString())], ext);
+>>>>>>> Stashed changes
   }
 
   function wrapHtml(title, inner, footerParts) {
