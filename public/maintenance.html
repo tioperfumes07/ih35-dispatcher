@@ -7348,15 +7348,18 @@
       return document.getElementById('maintWorkOrderFormMount');
     }
 
-    /** One-time: when Fleet hub (record iframe) saves, refresh ERP in-memory data + unit panel. */
-    function ensureMaintRecordHubPostMessageBridge() {
-      if (window.__ih35MaintRecordHubBridge) return;
-      window.__ih35MaintRecordHubBridge = true;
+    /** One-time: when Fleet hub (record tab or full-window WO iframe) saves, refresh ERP data + unit panel. */
+    function ensureMaintFleetHubPostMessageBridge() {
+      if (window.__ih35MaintFleetHubBridge) return;
+      window.__ih35MaintFleetHubBridge = true;
       window.addEventListener('message', function (ev) {
         const d = ev.data;
         if (!d || d.source !== 'ih35-fleet-hub' || d.type !== 'maint-repair-wo-saved') return;
-        const iframe = document.getElementById('maintRecordHubWoIframe');
-        if (!iframe || iframe.contentWindow !== ev.source) return;
+        const rec = document.getElementById('maintRecordHubWoIframe');
+        const mod = document.getElementById('maintHubWoIframe');
+        const fromRec = rec && rec.contentWindow === ev.source;
+        const fromMod = mod && mod.contentWindow === ev.source;
+        if (!fromRec && !fromMod) return;
         if (typeof loadAll === 'function') void loadAll();
         try {
           if (typeof renderSelectedUnit === 'function') renderSelectedUnit();
@@ -7379,7 +7382,7 @@
         fa.classList.remove('maint-wo-record-hub-active');
         return;
       }
-      ensureMaintRecordHubPostMessageBridge();
+      ensureMaintFleetHubPostMessageBridge();
       const hubBase =
         (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
       const enc = encodeURIComponent(u);
@@ -7433,6 +7436,7 @@
       const hubBase =
         (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
       iframe.src = `${hubBase}/fleet-reports/index.html?erpWoModal=1`;
+      ensureMaintFleetHubPostMessageBridge();
       modal.classList.add('on');
       modal.setAttribute('aria-hidden', 'false');
       window.__maintWoModalOpen = true;

@@ -55,10 +55,17 @@ function readErpRecordEmbedFlag(): boolean {
   return new URLSearchParams(window.location.search).get('erpWoEmbed') === '1'
 }
 
+function readErpWoModalHostFlag(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('erpWoModal') === '1'
+}
+
 export default function App() {
   const [tab, setTab] = useState<ReportCategory>(readInitialReportTab)
   /** True for the session when opened from ERP record-tab iframe (?erpWoEmbed=1), after URL cleanup. */
   const [erpRecordEmbed] = useState(readErpRecordEmbedFlag)
+  /** True for the session when opened from ERP full-window WO modal (?erpWoModal=1), after URL cleanup. */
+  const [erpWoModalHost] = useState(readErpWoModalHostFlag)
   const [search, setSearch] = useState('')
   const [draftFilters, setDraftFilters] = useState<ReportFilters>(defaultFilters)
   const [appliedFilters, setAppliedFilters] = useState<ReportFilters>(
@@ -105,6 +112,25 @@ export default function App() {
   )
 
   const clearMaintExtNav = useCallback(() => setMaintExtNav(null), [])
+
+  const notifyErpWoModalParentAfterSave = useCallback(
+    ({ unitId }: { unitId: string }) => {
+      if (!erpWoModalHost) return
+      try {
+        window.parent?.postMessage(
+          {
+            source: 'ih35-fleet-hub',
+            type: 'maint-repair-wo-saved',
+            unitId,
+          },
+          '*',
+        )
+      } catch {
+        /* ignore */
+      }
+    },
+    [erpWoModalHost],
+  )
 
   useEffect(() => {
     if (tab !== 'maintenance') setMaintExtNav(null)
@@ -467,6 +493,9 @@ export default function App() {
               onIntegrityBatch={() => {
                 /* mergeAlertsIntoStore runs inside save */
               }}
+              onAfterSaveSuccess={
+                erpWoModalHost ? notifyErpWoModalParentAfterSave : undefined
+              }
             />
           </div>
         </div>

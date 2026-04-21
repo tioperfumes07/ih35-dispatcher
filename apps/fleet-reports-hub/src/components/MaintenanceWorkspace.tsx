@@ -198,14 +198,14 @@ export function MaintenanceWorkspace({
     ...LISTS_NAV_SRC,
   ].sort((a, b) => a.label.localeCompare(b.label))
 
-  const notifyErpParentAfterSave = () => {
+  const notifyErpParentAfterSave = (detail: { unitId: string }) => {
     if (!erpRecordEmbed) return
     try {
       window.parent?.postMessage(
         {
           source: 'ih35-fleet-hub',
           type: 'maint-repair-wo-saved',
-          unitId: repairTabUnitId,
+          unitId: detail.unitId,
         },
         '*',
       )
