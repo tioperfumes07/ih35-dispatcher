@@ -19140,6 +19140,7 @@
     function erpMbResetChrome() {
       const d = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
       if (!d) return;
+      if (typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(d);
       d.classList.remove('erp-mb-modal__dialog--fs', 'erp-mb-modal__dialog--max');
       __mbFsOn = false;
       __mbMaxOn = false;
@@ -19158,7 +19159,9 @@
     function erpMbToggleFullscreen() {
       const d = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
       if (!d) return;
-      __mbFsOn = !__mbFsOn;
+      const willFs = !__mbFsOn;
+      if (willFs && typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(d);
+      __mbFsOn = willFs;
       if (__mbFsOn) {
         d.classList.add('erp-mb-modal__dialog--fs');
         d.classList.remove('erp-mb-modal__dialog--max');
