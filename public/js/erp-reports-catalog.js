@@ -884,6 +884,9 @@ ${extraCss}
     for (const r of meta.external?.rows || []) {
       rows.push({ __side: 'external', label: r.vendor, count: r.count, totalCost: r.totalCost });
     }
+    for (const r of meta.roadside?.rows || []) {
+      rows.push({ __side: 'roadside', label: r.serviceType, count: r.count, totalCost: r.totalCost });
+    }
     return { columns, rows };
   }
 
