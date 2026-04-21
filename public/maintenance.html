@@ -23694,6 +23694,109 @@
       };
     }
 
+    /** Same query shape as `loadIntegrityDashboard` (Reports → Integrity) for the Maintenance KPI widget. */
+    function buildIntegrityDashboardQueryForMaintWidget() {
+      const fromEl = document.getElementById('integrityDashDateFrom');
+      const toEl = document.getElementById('integrityDashDateTo');
+      let start = String(fromEl?.value || '').trim();
+      let end = String(toEl?.value || '').trim();
+      if (!start || !end) {
+        const endD = new Date();
+        const stD = new Date(endD);
+        stD.setDate(stD.getDate() - 89);
+        start = localIsoDate(stD);
+        end = localIsoDate(endD);
+      }
+      const catSel = document.getElementById('integrityDashCategory');
+      const statSel = document.getElementById('integrityDashStatus');
+      const cat = String(catSel?.value || 'all').trim().toLowerCase() || 'all';
+      const st = String(statSel?.value || 'active').trim().toLowerCase() || 'active';
+      const sev = String(document.getElementById('integrityDashSeverity')?.value || '').trim();
+      const qs = new URLSearchParams();
+      qs.set('startDate', start);
+      qs.set('endDate', end);
+      if (cat && cat !== 'all') qs.set('category', cat);
+      if (sev) qs.set('severity', sev);
+      if (st && st !== 'all') qs.set('status', st);
+      return qs;
+    }
+
+    function maintIntegrityAlertRecencyTs(a) {
+      const raw = a.triggered_date ?? a.triggeredDate ?? a.created_at ?? a.createdAt;
+      if (raw == null || raw === '') return 0;
+      const n = Date.parse(String(raw));
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function openMaintIntegrityReportsFullView() {
+      const repBtn = document.querySelector('.nav-btn[data-section="reports"]');
+      if (typeof openSection === 'function' && repBtn) openSection('reports', repBtn);
+      else if (typeof openSectionByName === 'function') openSectionByName('reports');
+      if (typeof openReportsTabFromSidebar === 'function') openReportsTabFromSidebar('rep-integrity');
+    }
+
+    async function refreshMaintWorkspaceIntegrityWidget() {
+      const headEl = document.getElementById('maintDashIntegrityHeadline');
+      const listEl = document.getElementById('maintDashIntegrityMiniList');
+      if (!headEl || !listEl) return;
+      const qs = buildIntegrityDashboardQueryForMaintWidget();
+      try {
+        const d = await j('/api/integrity/dashboard?' + qs.toString());
+        const kpi = d.kpi || {};
+        const red = Number(kpi.red) || 0;
+        const amb = Number(kpi.amber) || 0;
+        const active = Number(kpi.active) || 0;
+        let headline;
+        if (red > 0) headline = `${red} error${red === 1 ? '' : 's'}`;
+        else if (amb > 0) headline = `${amb} review${amb === 1 ? '' : 's'}`;
+        else if (active > 0) headline = `${active} active`;
+        else headline = '0 alerts';
+        headEl.textContent = headline;
+        headEl.classList.toggle('maint-kpi-card__val--danger', red > 0);
+        headEl.classList.toggle('maint-kpi-card__val--amber', red === 0 && amb > 0);
+
+        window.__integrityDashSessionDismiss = window.__integrityDashSessionDismiss || new Set();
+        const sess = window.__integrityDashSessionDismiss;
+        const rowsAll = Array.isArray(d.alerts) ? d.alerts : [];
+        const rows = rowsAll.filter(a => !sess.has(String(a.id || '')));
+        const top5 = rows
+          .slice()
+          .sort((a, b) => maintIntegrityAlertRecencyTs(b) - maintIntegrityAlertRecencyTs(a))
+          .slice(0, 5);
+        if (!top5.length) {
+          listEl.innerHTML =
+            '<div class="maint-dash-int-row maint-dash-int-row--empty mini-note" style="margin:0">No open alerts for current filters.</div>';
+        } else {
+          listEl.innerHTML = top5
+            .map(a => {
+              const catLab = escapeHtml(String(a.category || '—').trim() || '—');
+              const sevU = String(a.severity || '').toUpperCase();
+              const sevClass = sevU === 'RED' ? 'erp-int-pill--high' : 'erp-int-pill--review';
+              const sevHtml = `<span class="erp-int-pill ${sevClass}">${escapeHtml(sevU || '—')}</span>`;
+              const title = escapeHtml(String(a.shortTitle || a.alertType || 'Alert').trim());
+              const msg = String(a.message || '').trim();
+              const shortDesc = escapeHtml(msg.length > 100 ? msg.slice(0, 97) + '…' : msg);
+              return `<div class="maint-dash-int-row">
+                <div class="maint-dash-int-row__meta">
+                  <span class="erp-int-pill erp-int-pill--cat">${catLab}</span>
+                  ${sevHtml}
+                </div>
+                <div class="maint-dash-int-row__title">${title}</div>
+                <div class="maint-dash-int-row__desc mini-note">${shortDesc}</div>
+              </div>`;
+            })
+            .join('');
+        }
+        void refreshIntegrityNavBadges();
+      } catch (e) {
+        headEl.textContent = '—';
+        headEl.classList.remove('maint-kpi-card__val--danger', 'maint-kpi-card__val--amber');
+        listEl.innerHTML = `<div class="maint-dash-int-row maint-dash-int-row--empty mini-note" style="margin:0">${escapeHtml(
+          e.message || 'Unable to load alerts.'
+        )}</div>`;
+      }
+    }
+
     async function integrityExportReport(fmt) {
       const f = String(fmt || 'xlsx').toLowerCase();
       const qs = new URLSearchParams();
