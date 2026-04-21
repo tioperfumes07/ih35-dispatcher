@@ -3593,3 +3593,35 @@ body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] #erpDed
   border-color: var(--color-border-focus);
   color: var(--color-border-focus);
 }
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .acct-fuel-manual-table .fuel-m-th-drag {
+  width: 28px;
+  max-width: 36px;
+  padding: 4px 2px;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .acct-fuel-manual-table .fuel-m-drag-cell {
+  width: 28px;
+  max-width: 36px;
+  text-align: center;
+  vertical-align: middle;
+  padding: 2px 4px;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .fuel-m-drag-handle {
+  cursor: grab;
+  user-select: none;
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--color-text-label);
+  letter-spacing: -0.08em;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .fuel-m-drag-handle:active {
+  cursor: grabbing;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-acct-layout='fuel'] .fuel-m-row--dragging {
+  opacity: 0.65;
+}
