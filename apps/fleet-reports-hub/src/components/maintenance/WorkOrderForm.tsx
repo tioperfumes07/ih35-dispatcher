@@ -88,7 +88,11 @@ const LOCATION_OPTS: ComboOption[] = [
   { value: 'mobile-road', label: 'Roadside' },
 ]
 
-export function RepairWorkOrderForm({
+/**
+ * Unified work order / service record form (all integrity save types + fleet UX).
+ * Renders {@link WorkOrderShell}; use this instead of ad-hoc WO layouts elsewhere.
+ */
+export function WorkOrderForm({
   onIntegrityBatch,
   onViewAllIntegrity,
   variant = 'workspace',

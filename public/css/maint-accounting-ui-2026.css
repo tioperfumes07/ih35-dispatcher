@@ -565,6 +565,18 @@ body.maint-wo-modal-open #maintWorkOrderFormMount {
   flex-direction: column;
   overflow: hidden;
 }
+
+/* Full-window WO modal: Fleet hub iframe (same React shell as hub app) */
+body.maint-wo-modal-open #maintWorkOrderModalBody > #maintHubWoIframe.maint-hub-wo-iframe {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: var(--color-bg-page);
+}
 body.maint-wo-modal-open #maintWorkOrderFormMount > .maint-wo-columns {
   flex: 1 1 auto;
   min-height: 0;

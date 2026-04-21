@@ -4,7 +4,7 @@ import { seedIntegrityDemoIfEmpty } from '../data/integritySeed'
 import { INTEGRITY_LIVE_FEED_INTERVAL_MS } from '../hooks/useIntegrityAlertsFeed'
 import { openAlertCount } from '../api/postIntegrityCheck'
 import type { IntegrityAlert } from '../types/integrity'
-import { RepairWorkOrderForm } from './maintenance/RepairWorkOrderForm'
+import { WorkOrderForm } from './maintenance/WorkOrderForm'
 import { AccidentWorkOrderForm } from './maintenance/AccidentWorkOrderForm'
 import { IntegrityDashboard } from './maintenance/IntegrityDashboard'
 import { IntegrityThresholdSettings } from './maintenance/IntegrityThresholdSettings'
@@ -258,7 +258,7 @@ export function MaintenanceWorkspace({
           </section>
         )}
         {view === 'repair-wo' && (
-          <RepairWorkOrderForm
+          <WorkOrderForm
             unitId={repairTabUnitId}
             onUnitIdChange={setRepairTabUnitId}
             onRequestCreateWorkOrder={() => {
@@ -278,14 +278,14 @@ export function MaintenanceWorkspace({
           <AccidentWorkOrderForm onIntegrityBatch={onBatch} />
         )}
         {view === 'expense' && (
-          <RepairWorkOrderForm
+          <WorkOrderForm
             integritySaveType="maintenance_expense"
             onIntegrityBatch={onBatch}
             onViewAllIntegrity={goToIntegrityView}
           />
         )}
         {view === 'bill' && (
-          <RepairWorkOrderForm
+          <WorkOrderForm
             integritySaveType="maintenance_bill"
             onIntegrityBatch={onBatch}
             onViewAllIntegrity={goToIntegrityView}
@@ -330,7 +330,7 @@ export function MaintenanceWorkspace({
               aria-label="Create work order"
               onMouseDown={(e) => e.stopPropagation()}
             >
-              <RepairWorkOrderForm
+              <WorkOrderForm
                 key={woModalKey}
                 variant="modal"
                 initialUnitId={repairTabUnitId}

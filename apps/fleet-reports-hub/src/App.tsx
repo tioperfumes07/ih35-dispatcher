@@ -23,7 +23,7 @@ import {
   fuelTransactionTypesAlphabetical,
   type FuelTransactionType,
 } from './types/fuelTransaction'
-import { RepairWorkOrderForm } from './components/maintenance/RepairWorkOrderForm'
+import { WorkOrderForm } from './components/maintenance/WorkOrderForm'
 import type { WorkOrderShellKind } from './components/workorder/WorkOrderShell'
 import { useRecentReports } from './hooks/usePersisted'
 import { IntegrationConnectionsProvider } from './context/IntegrationConnectionsContext'
@@ -95,6 +95,23 @@ export default function App() {
   useEffect(() => {
     if (tab !== 'maintenance') setMaintExtNav(null)
   }, [tab])
+
+  /** ERP maintenance full-window modal loads hub via iframe with ?erpWoModal=1 */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('erpWoModal') !== '1') return
+    setTab('maintenance')
+    setAppWoPickOpen(true)
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('erpWoModal')
+      const qs = url.searchParams.toString()
+      window.history.replaceState({}, '', url.pathname + (qs ? `?${qs}` : '') + url.hash)
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   const recent = useRecentReports('fleet-reports:recent')
   const { rows: serviceCatalogRows } = useServiceCatalogRows('all')
@@ -405,7 +422,7 @@ export default function App() {
             aria-label="Create work order"
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <RepairWorkOrderForm
+            <WorkOrderForm
               key={appWoModalKey}
               variant="modal"
               initialUnitId="101"

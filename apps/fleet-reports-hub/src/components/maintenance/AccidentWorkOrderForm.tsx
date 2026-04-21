@@ -1,5 +1,5 @@
 import type { IntegrityAlert } from '../../types/integrity'
-import { RepairWorkOrderForm } from './RepairWorkOrderForm'
+import { WorkOrderForm } from './WorkOrderForm'
 
 type Props = {
   onIntegrityBatch: (alerts: IntegrityAlert[]) => void
@@ -8,7 +8,7 @@ type Props = {
 /** Accident records use the shared work order shell and accident integrity save type. */
 export function AccidentWorkOrderForm({ onIntegrityBatch }: Props) {
   return (
-    <RepairWorkOrderForm
+    <WorkOrderForm
       onIntegrityBatch={onIntegrityBatch}
       initialUnitId="204"
       initialDescription="Rear corner impact — guard damage"

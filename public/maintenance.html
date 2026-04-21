@@ -374,7 +374,7 @@
           <span class="erp-help-tip maint-workorder-fullmodal__title-tip" aria-label="Help for full-window work order">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Full-window work order">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
-              Full-window form (QuickBooks-style). Close when you need the fleet tabs underneath.
+              Opens the <strong>Fleet hub</strong> work order (same <code>WorkOrderShell</code> as <code>/fleet-reports/</code>). Close when you need the fleet tabs underneath.
             </span>
           </span>
         </div>
@@ -7371,9 +7371,20 @@
       }
       const modal = document.getElementById('maintWorkOrderModal');
       const body = document.getElementById('maintWorkOrderModalBody');
-      const mount = getMaintWorkOrderFormMount();
-      if (!modal || !body || !mount) return;
-      body.appendChild(mount);
+      if (!modal || !body) return;
+      /** Fleet hub — same WorkOrderShell as apps/fleet-reports-hub (no duplicate full-modal WO). */
+      let iframe = document.getElementById('maintHubWoIframe');
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'maintHubWoIframe';
+        iframe.className = 'maint-hub-wo-iframe';
+        iframe.title = 'Fleet hub — work order';
+        iframe.setAttribute('loading', 'eager');
+        body.appendChild(iframe);
+      }
+      const hubBase =
+        (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
+      iframe.src = `${hubBase}/fleet-reports/index.html?erpWoModal=1`;
       modal.classList.add('on');
       modal.setAttribute('aria-hidden', 'false');
       window.__maintWoModalOpen = true;
@@ -7388,6 +7399,12 @@
     }
 
     function closeMaintWorkOrderModal() {
+      const hubIframe = document.getElementById('maintHubWoIframe');
+      if (hubIframe && hubIframe instanceof HTMLIFrameElement) {
+        try {
+          hubIframe.src = 'about:blank';
+        } catch (_) {}
+      }
       const modal = document.getElementById('maintWorkOrderModal');
       const shell = modal?.querySelector('.maint-workorder-fullmodal__shell');
       if (typeof erpRehomeGlobalDatalistsForShell === 'function') erpRehomeGlobalDatalistsForShell(null, false);
