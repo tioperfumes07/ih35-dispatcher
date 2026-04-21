@@ -16,11 +16,8 @@
     "smoke": "node scripts/system-smoke.mjs",
     "smoke:gate-sync": "node scripts/smoke-gate-paths-sync.mjs",
     "test:layout": "node --test tests/layout-responsive-erp.test.mjs",
-<<<<<<< HEAD
-=======
     "test:playwright": "playwright test",
     "test:playwright:install": "playwright install chromium",
->>>>>>> main
     "test:name-mgmt": "node --test tests/name-management-erp.test.mjs",
     "test:fleet-mileage": "node --test tests/fleet-mileage-settings.test.mjs",
     "test:integrity-meta": "node --test tests/integrity-engine-export-meta.test.mjs",
@@ -40,12 +37,8 @@
     "node-cron": "^3.0.3",
     "pdf-parse": "^1.1.4",
     "pdfkit": "^0.18.0",
-<<<<<<< HEAD
     "pg": "^8.13.1",
     "xlsx": "npm:@e965/xlsx@^0.20.3"
-=======
-    "pg": "^8.13.1"
->>>>>>> main
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1"
