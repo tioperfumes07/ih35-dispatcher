@@ -136,14 +136,7 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
                       exportDomTableToXlsx(dataCol.tableRef.current, `Report-${report.id}`)
                     }
                   >
-                    Export table
-                  </button>
-                  <button
-                    type="button"
-                    className="btn sm ghost"
-                    onClick={() => void exportExcel(report, filters, sorted)}
-                  >
-                    Excel
+                    Export to Excel
                   </button>
                   <button
                     type="button"
@@ -158,6 +151,13 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
                     onClick={() => exportPdfPrint(report, filters, sorted)}
                   >
                     PDF
+                  </button>
+                  <button
+                    type="button"
+                    className="btn sm ghost"
+                    onClick={() => void exportExcel(report, filters, sorted)}
+                  >
+                    Excel (structured)
                   </button>
                 </div>
               </section>
