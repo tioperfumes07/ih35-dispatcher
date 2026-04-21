@@ -7903,10 +7903,32 @@
       } catch (_) {}
     }
 
+    function initMaintSearchableCombos() {
+      if (!window.erpSearchableCombo || window.__maintScomboInit) return;
+      window.__maintScomboInit = true;
+      try {
+        const bind = inp => {
+          if (!inp || inp.dataset.erpScomboBound === '1') return;
+          window.erpSearchableCombo.attachFloatingList(inp, () => window.erpSearchableCombo.optionsFromInputList(inp));
+        };
+        ['serviceSearchInput', 'repairLocationSearch', 'vendorInput', 'maintRecordDriverSearch'].forEach(id =>
+          bind(document.getElementById(id))
+        );
+        document.getElementById('maintPlannedServicesHost')?.addEventListener('focusin', ev => {
+          const t = ev.target;
+          if (t && t.classList && t.classList.contains('maint-planned-desc')) bind(t);
+        });
+      } catch (e) {
+        console.warn('initMaintSearchableCombos', e);
+      }
+    }
+
     function toggleMaintenanceUnitList() {
       const sp = document.getElementById('maintenanceSplit');
       const btn = document.getElementById('unitListToggleBtn');
       if (!sp) return;
+      sp.classList.add('unit-list-animating');
+      setTimeout(() => sp.classList.remove('unit-list-animating'), 220);
       sp.classList.toggle('unit-list-collapsed');
       const c = sp.classList.contains('unit-list-collapsed');
       if (btn) {
@@ -20081,24 +20103,25 @@
       const odoStr = displayMi != null && Number.isFinite(displayMi) ? Math.round(displayMi).toLocaleString() : '—';
       const cardEl = document.getElementById('maintAssetHeaderCard');
       if (cardEl) {
+        const opLab =
+          typeof operationalStatusLabelForValue === 'function' ? operationalStatusLabelForValue(opStatus) : String(opStatus || '');
+        const pillCls = maintOperationalStatusPillClass(opStatus);
         cardEl.innerHTML = `
-          <div class="maint-asset-header-card__ro">
-            <div class="maint-asset-header-card__ro-primary">
-              <div class="maint-asset-header-card__ymm-line">${escapeHtml(ymm)}</div>
-              <div class="maint-asset-header-card__ids maint-asset-header-card__ids--stack">
-                <span><span class="maint-asset-header-card__id-k">VIN</span> ${escapeHtml(vin)}</span>
-                <span><span class="maint-asset-header-card__id-k">Plate</span> ${escapeHtml(plate)}</span>
-              </div>
+          <div class="maint-asset-card2026">
+            <div class="maint-asset-card2026__row1">
+              <span class="${pillCls} maint-asset-card2026__pill">${escapeHtml(opLab || '—')}</span>
+              <span class="maint-asset-card2026__ymm">${escapeHtml(ymm)}</span>
+              <span class="maint-asset-card2026__ids">VIN <span class="maint-asset-card2026__id-muted">${escapeHtml(vin)}</span> · Plate <span class="maint-asset-card2026__id-muted">${escapeHtml(plate)}</span></span>
             </div>
-            <div class="maint-asset-header-card__ro-stats maint-asset-header-card__ro-kpis" aria-label="Vehicle summary">
-              <div class="unit-box"><div class="k">Mileage</div><div class="v" id="unitMileageBox">N/A</div></div>
-              <div class="unit-box"><div class="k">Fuel</div><div class="v" id="unitFuelBox">N/A</div></div>
-              <div class="unit-box"><div class="k">Past due</div><div class="v" id="unitPastDueBox">0</div></div>
-              <div class="unit-box"><div class="k">Due soon</div><div class="v" id="unitDueSoonBox">0</div></div>
+            <div class="maint-asset-card2026__row2" aria-label="Vehicle summary">
+              <span class="maint-asset-card2026__stat"><span class="maint-asset-card2026__sk">Odometer</span> <span class="maint-asset-card2026__sv" id="unitMileageBox">N/A</span></span>
+              <span class="maint-asset-card2026__stat"><span class="maint-asset-card2026__sk">Fuel</span> <span class="maint-asset-card2026__sv" id="unitFuelBox">N/A</span></span>
+              <span class="maint-asset-card2026__stat"><span class="maint-asset-card2026__sk">Past due</span> <span class="maint-asset-card2026__sv" id="unitPastDueBox">0</span></span>
+              <span class="maint-asset-card2026__stat"><span class="maint-asset-card2026__sk">Due soon</span> <span class="maint-asset-card2026__sv" id="unitDueSoonBox">0</span></span>
             </div>
-          </div>
-          <div class="maint-asset-header-card__ro-actions">
-            <button type="button" class="btn btn--small btn--ghost" onclick="openMaintAssetStatusPanel()">Operational status…</button>
+            <div class="maint-asset-header-card__ro-actions">
+              <button type="button" class="btn btn--small btn--ghost" onclick="openMaintAssetStatusPanel()">Operational status…</button>
+            </div>
           </div>`;
       }
 
