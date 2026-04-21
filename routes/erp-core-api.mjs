@@ -254,13 +254,14 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   /** Runs after client save — never blocks the save path; merges alerts into maintenance.json. */
-  app.post('/api/integrity/check', (req, res) => {
+  app.post('/api/integrity/check', async (req, res) => {
     try {
       const ctx = req.body && typeof req.body === 'object' ? req.body : {};
       const erp = readFullErpJson();
       const { alerts: fresh } = evaluateIntegrityCheck(ctx, erp);
       const normalized = (fresh || []).map(a => ({
         type: a.type,
+        category: a.category,
         severity: a.severity,
         message: a.message,
         details: a.details || {},
@@ -274,6 +275,12 @@ export function mountErpCoreApi(app, opts = {}) {
           dkSet.has(String(a.dedupeKey || '')) ||
           dkSet.has(String(a.details?.dedupeKey || ''))
       );
+      try {
+        const { syncIntegrityAlertsToDatabase } = await import('../lib/integrity-db-sync.mjs');
+        await syncIntegrityAlertsToDatabase(mergedRows);
+      } catch (_) {
+        /* optional */
+      }
       res.json({ ok: true, alerts: mergedRows.map(enrichIntegrityAlertRow) });
     } catch (e) {
       logError('POST /api/integrity/check', e);
@@ -286,8 +293,8 @@ export function mountErpCoreApi(app, opts = {}) {
       const erp = readFullErpJson();
       const alert = findAlertById(erp, req.params.id);
       if (!alert) return res.status(404).json({ ok: false, error: 'Alert not found' });
-      const records = buildInvestigatePayload(alert, erp);
-      res.json({ ok: true, records });
+      const payload = buildInvestigatePayload(alert, erp);
+      res.json({ ok: true, records: payload.relatedRecords || [], alert: payload.alert });
     } catch (e) {
       logError('GET /api/integrity/alert/:id/records', e);
       res.status(500).json({ ok: false, error: e?.message || String(e) });
