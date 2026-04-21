@@ -14686,9 +14686,12 @@
           fTbl.__erpColResizeDispose = window.ErpColumnResize.bindToTable(fTbl, { showHint: false });
         }
       });
+      bindFuelManualRowDragHost(document.getElementById('fuelManualCatLines'));
+      bindFuelManualRowDragHost(document.getElementById('fuelManualItemLines'));
     }
 
     async function saveManualFuelPurchase(opts) {
+      const afterSave = String((opts && opts.afterSave) || 'default');
       const postToQbo = !!(opts && opts.postToQbo);
       if (postToQbo) {
         if (
@@ -14921,8 +14924,17 @@
               ? 'Saved — 1 row added. Use Confirm & record next time, or Record to QuickBooks on the row.'
               : `Saved — ${saved} rows added. Use Confirm & record next time, or Record to QuickBooks on each row.`;
         }
-        resetManualFuelForm(true);
-        await loadFuelExpenseTab();
+        if (afterSave === 'close') {
+          resetManualFuelForm(true);
+          await loadFuelExpenseTab();
+          if (typeof erpCloseDedicatedFormModal === 'function') erpCloseDedicatedFormModal({ force: true });
+        } else if (afterSave === 'clear') {
+          resetManualFuelForm(false);
+          await loadFuelExpenseTab();
+        } else {
+          resetManualFuelForm(true);
+          await loadFuelExpenseTab();
+        }
       } catch (e) {
         if (hint) hint.textContent = '';
         erpNotify(e.message || String(e), 'error');
