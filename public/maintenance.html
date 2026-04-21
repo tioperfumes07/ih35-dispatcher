@@ -7401,6 +7401,7 @@
     function closeMaintWorkOrderModal() {
       const modal = document.getElementById('maintWorkOrderModal');
       const shell = modal?.querySelector('.maint-workorder-fullmodal__shell');
+      if (typeof erpRehomeGlobalDatalistsForShell === 'function') erpRehomeGlobalDatalistsForShell(null, false);
       if (shell && typeof erpModalChromeResetLayoutFullscreen === 'function') erpModalChromeResetLayoutFullscreen(shell);
       if (shell && typeof erpGetFullscreenElement === 'function' && erpGetFullscreenElement() === shell) {
         void erpExitDocumentFullscreen().catch(() => {});
