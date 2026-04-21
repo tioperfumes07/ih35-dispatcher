@@ -301,7 +301,7 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
-  app.post('/api/integrity/alert/:id/notes', (req, res) => {
+  app.post('/api/integrity/alert/:id/notes', async (req, res) => {
     try {
       const erp = readFullErpJson();
       const list = Array.isArray(erp.integrityAlerts) ? erp.integrityAlerts : [];
@@ -311,6 +311,10 @@ export function mountErpCoreApi(app, opts = {}) {
       list[idx] = { ...list[idx], notes };
       erp.integrityAlerts = list;
       writeFullErpJson(erp);
+      try {
+        const { syncIntegrityAlertsToDatabase } = await import('../lib/integrity-db-sync.mjs');
+        await syncIntegrityAlertsToDatabase([list[idx]]);
+      } catch (_) {}
       res.json({ ok: true, alert: enrichIntegrityAlertRow(list[idx]) });
     } catch (e) {
       logError('POST /api/integrity/alert/:id/notes', e);
@@ -318,7 +322,7 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
-  app.post('/api/integrity/alert/:id/review', (req, res) => {
+  app.post('/api/integrity/alert/:id/review', async (req, res) => {
     try {
       const erp = readFullErpJson();
       const list = Array.isArray(erp.integrityAlerts) ? erp.integrityAlerts : [];
@@ -336,6 +340,10 @@ export function mountErpCoreApi(app, opts = {}) {
       };
       erp.integrityAlerts = list;
       writeFullErpJson(erp);
+      try {
+        const { syncIntegrityAlertsToDatabase } = await import('../lib/integrity-db-sync.mjs');
+        await syncIntegrityAlertsToDatabase([list[idx]]);
+      } catch (_) {}
       res.json({ ok: true, alert: enrichIntegrityAlertRow(list[idx]) });
     } catch (e) {
       logError('POST /api/integrity/alert/:id/review', e);
