@@ -1053,4 +1053,152 @@ export function mountNameManagementRoutes(app, deps) {
       res.status(500).json({ ok: false, error: e.message });
     }
   });
+
+  app.get('/api/name-management/vendor-address/:qboId', async (req, res) => {
+    if (!requireDb(res)) return;
+    const id = String(req.params.qboId || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'qboId required' });
+    try {
+      const { rows } = await dbQuery(
+        `SELECT qbo_vendor_id, display_name, street_address, city, state, zip, country, phone, email, updated_at
+         FROM vendors WHERE qbo_vendor_id = $1`,
+        [id]
+      );
+      const record =
+        rows[0] ||
+        ({
+          qbo_vendor_id: id,
+          display_name: null,
+          street_address: null,
+          city: null,
+          state: null,
+          zip: null,
+          country: 'USA',
+          phone: null,
+          email: null
+        });
+      res.json({ ok: true, record });
+    } catch (e) {
+      logError('GET /api/name-management/vendor-address', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  app.put('/api/name-management/vendor-address/:qboId', async (req, res) => {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    if (!requireDb(res)) return;
+    const id = String(req.params.qboId || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'qboId required' });
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    try {
+      await dbQuery(
+        `INSERT INTO vendors (qbo_vendor_id, display_name, street_address, city, state, zip, country, phone, email, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, COALESCE(NULLIF(TRIM($7), ''), 'USA'), NULLIF(TRIM($8), ''), NULLIF(TRIM($9), ''), now())
+         ON CONFLICT (qbo_vendor_id) DO UPDATE SET
+           display_name = COALESCE(NULLIF(TRIM(EXCLUDED.display_name), ''), vendors.display_name),
+           street_address = NULLIF(TRIM(EXCLUDED.street_address), ''),
+           city = NULLIF(TRIM(EXCLUDED.city), ''),
+           state = NULLIF(TRIM(EXCLUDED.state), ''),
+           zip = NULLIF(TRIM(EXCLUDED.zip), ''),
+           country = COALESCE(NULLIF(TRIM(EXCLUDED.country), ''), vendors.country),
+           phone = NULLIF(TRIM(EXCLUDED.phone), ''),
+           email = NULLIF(TRIM(EXCLUDED.email), ''),
+           updated_at = now()`,
+        [
+          id,
+          b.display_name != null ? String(b.display_name) : '',
+          b.street_address != null ? String(b.street_address) : '',
+          b.city != null ? String(b.city) : '',
+          b.state != null ? String(b.state) : '',
+          b.zip != null ? String(b.zip) : '',
+          b.country != null ? String(b.country) : '',
+          b.phone != null ? String(b.phone) : '',
+          b.email != null ? String(b.email) : ''
+        ]
+      );
+      const { rows } = await dbQuery(
+        `SELECT qbo_vendor_id, display_name, street_address, city, state, zip, country, phone, email, updated_at
+         FROM vendors WHERE qbo_vendor_id = $1`,
+        [id]
+      );
+      res.json({ ok: true, record: rows[0] });
+    } catch (e) {
+      logError('PUT /api/name-management/vendor-address', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  app.get('/api/name-management/customer-address/:qboId', async (req, res) => {
+    if (!requireDb(res)) return;
+    const id = String(req.params.qboId || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'qboId required' });
+    try {
+      const { rows } = await dbQuery(
+        `SELECT qbo_customer_id, display_name, street_address, city, state, zip, country, phone, email, updated_at
+         FROM qbo_customer_addresses WHERE qbo_customer_id = $1`,
+        [id]
+      );
+      const record =
+        rows[0] ||
+        ({
+          qbo_customer_id: id,
+          display_name: null,
+          street_address: null,
+          city: null,
+          state: null,
+          zip: null,
+          country: 'USA',
+          phone: null,
+          email: null
+        });
+      res.json({ ok: true, record });
+    } catch (e) {
+      logError('GET /api/name-management/customer-address', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  app.put('/api/name-management/customer-address/:qboId', async (req, res) => {
+    if (!requireErpWriteOrAdmin(req, res)) return;
+    if (!requireDb(res)) return;
+    const id = String(req.params.qboId || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'qboId required' });
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    try {
+      await dbQuery(
+        `INSERT INTO qbo_customer_addresses (qbo_customer_id, display_name, street_address, city, state, zip, country, phone, email, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, COALESCE(NULLIF(TRIM($7), ''), 'USA'), NULLIF(TRIM($8), ''), NULLIF(TRIM($9), ''), now())
+         ON CONFLICT (qbo_customer_id) DO UPDATE SET
+           display_name = COALESCE(NULLIF(TRIM(EXCLUDED.display_name), ''), qbo_customer_addresses.display_name),
+           street_address = NULLIF(TRIM(EXCLUDED.street_address), ''),
+           city = NULLIF(TRIM(EXCLUDED.city), ''),
+           state = NULLIF(TRIM(EXCLUDED.state), ''),
+           zip = NULLIF(TRIM(EXCLUDED.zip), ''),
+           country = COALESCE(NULLIF(TRIM(EXCLUDED.country), ''), qbo_customer_addresses.country),
+           phone = NULLIF(TRIM(EXCLUDED.phone), ''),
+           email = NULLIF(TRIM(EXCLUDED.email), ''),
+           updated_at = now()`,
+        [
+          id,
+          b.display_name != null ? String(b.display_name) : '',
+          b.street_address != null ? String(b.street_address) : '',
+          b.city != null ? String(b.city) : '',
+          b.state != null ? String(b.state) : '',
+          b.zip != null ? String(b.zip) : '',
+          b.country != null ? String(b.country) : '',
+          b.phone != null ? String(b.phone) : '',
+          b.email != null ? String(b.email) : ''
+        ]
+      );
+      const { rows } = await dbQuery(
+        `SELECT qbo_customer_id, display_name, street_address, city, state, zip, country, phone, email, updated_at
+         FROM qbo_customer_addresses WHERE qbo_customer_id = $1`,
+        [id]
+      );
+      res.json({ ok: true, record: rows[0] });
+    } catch (e) {
+      logError('PUT /api/name-management/customer-address', e);
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
 }
