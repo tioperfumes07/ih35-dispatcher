@@ -39,11 +39,14 @@
     { id: 'maintenance', label: 'Maintenance' },
     { id: 'accounting', label: 'Accounting' },
     { id: 'safety', label: 'Safety & HOS' },
-    { id: 'fuel', label: 'Fuel & energy' },
+    { id: 'fuel', label: 'Fuel & Energy' },
     { id: 'operations', label: 'Operations' },
-    { id: 'dot', label: 'DOT compliance' },
+    { id: 'dot', label: 'DOT Compliance' },
     { id: 'custom', label: 'Custom' }
   ];
+
+  const REP_SERVICE_TYPE_DEFAULTS = ['PM-A', 'PM-B', 'Corrective', 'Tire', 'DOT', 'Electrical', 'Body repair', 'Oil change'];
+  const REP_RECORD_TYPE_DEFAULTS = ['Work order', 'Repair order', 'PM service', 'Inspection', 'Bill'];
 
   /** @type {{cat:string,title:string,desc:string,source:string,keywords:string,dataset?:string,qbo?:string,legacy?:string,dotPdf?:boolean,custom?:string}[]} */
   const REP_ITEMS = [];
@@ -162,6 +165,14 @@
   add('custom', 'Scheduled reports', 'Roadmap — scheduler', ERP, 'scheduled reports', { custom: 'scheduled' });
 
   let __repCat = 'overview';
+  /** @type {{ getSelected:()=>string[] }|null} */
+  let __repMsUnits = null;
+  /** @type {{ getSelected:()=>string[] }|null} */
+  let __repMsSvc = null;
+  /** @type {{ getSelected:()=>string[] }|null} */
+  let __repMsRec = null;
+  /** @type {object[]} */
+  let __repPartsManual = [];
 
   function pad2(n) {
     return String(n).padStart(2, '0');

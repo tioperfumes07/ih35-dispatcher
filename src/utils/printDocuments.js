@@ -374,7 +374,7 @@
         )}</td><td>${esc(cls)}</td></tr>`;
       })
       .join('');
-    return `<table><thead><tr><th>#</th><th>Category / account</th><th>Description</th><th class="right">Amount</th><th>Class</th></tr></thead><tbody>${body}</tbody></table>`;
+    return `<table><thead><tr><th>#</th><th>CATEGORY / ACCOUNT</th><th>DESC</th><th class="right">AMOUNT</th><th>CLASS</th></tr></thead><tbody>${body}</tbody></table>`;
   }
 
   function buildItemTable(lines) {
@@ -395,7 +395,7 @@
         )}</td><td class="right">${esc(money(amtLine(ln)))}</td><td>${esc(cls)}</td></tr>`;
       })
       .join('');
-    return `<table><thead><tr><th>#</th><th>Product / service</th><th>SKU</th><th>Description</th><th class="right">Qty</th><th class="right">Rate</th><th class="right">Amount</th><th>Class</th></tr></thead><tbody>${body}</tbody></table>`;
+    return `<table><thead><tr><th>#</th><th>PRODUCT / SERVICE</th><th>SKU</th><th>DESC</th><th class="right">QTY</th><th class="right">RATE</th><th class="right">AMOUNT</th><th>CLASS</th></tr></thead><tbody>${body}</tbody></table>`;
   }
 
   function buildCostSection(categoryLines, itemLines, invoiceTotal) {
@@ -1068,9 +1068,9 @@
     let sec2Inner =
       rows.length === 0
         ? '<p class="co-sub">No fuel lines.</p>'
-        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
+        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">Amount</th></tr></thead><tbody>${body}<tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
             Number.isFinite(gal) ? gal.toFixed(3) : '—'
-          )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></table>`;
+          )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></tbody></table>`;
     if (rows.length === 0) {
       const { categoryLines, itemLines } = normCostFromMixed(d.costLines || []);
       if (categoryLines.length || itemLines.length) {
@@ -1150,9 +1150,9 @@
     const tbl =
       rows.length === 0
         ? '<p class="co-sub">No fuel lines.</p>'
-        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">Amount</th></tr></thead><tbody>${body}</tbody><tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
+        : `<table><thead><tr><th>#</th><th>Description</th><th>Account</th><th class="right">QTY (GAL)</th><th class="right">$/GAL</th><th class="right">Amount</th></tr></thead><tbody>${body}<tr class="totals-row"><td colspan="3">Total</td><td class="right">${esc(
             Number.isFinite(gal) ? gal.toFixed(3) : '—'
-          )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></table>`;
+          )}</td><td>—</td><td class="right">${esc(money(Number.isFinite(amt) ? amt : Number(d.totalAmount) || 0))}</td></tr></tbody></table>`;
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const sig = buildSignatureBlocks([
       { lines: ['Prepared by: _______________________', 'Date: _____________________________'] },
@@ -1217,9 +1217,9 @@
           })
           .join('')
       : '<tr><td colspan="6" class="co-sub">No bills selected.</td></tr>';
-    const tbl = `<table><thead><tr><th>Bill #</th><th>Bill date</th><th>Description</th><th class="right">Bill amount</th><th class="right">Payment applied</th><th class="right">Remaining</th></tr></thead><tbody>${tb}</tbody><tr class="totals-row"><td colspan="3">Total payment applied</td><td class="right">${esc(
+    const tbl = `<table><thead><tr><th>Bill #</th><th>Bill date</th><th>Description</th><th class="right">Bill amount</th><th class="right">Payment applied</th><th class="right">Remaining</th></tr></thead><tbody>${tb}<tr class="totals-row"><td colspan="3">Totals</td><td class="right">${esc(
       money(sumBill)
-    )}</td><td class="right">${esc(money(sumPay))}</td><td class="right">${esc(money(sumRem))}</td></tr></table>`;
+    )}</td><td class="right">${esc(money(sumPay))}</td><td class="right">${esc(money(sumRem))}</td></tr></tbody></table>`;
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const sig = buildSignatureBlocks([
       { lines: ['Prepared by: _______________________', 'Date: _____________________________'] },
@@ -1363,6 +1363,7 @@
   }
 
   global.PRINT_CSS = PRINT_CSS;
+  global.sanitizeFilenameSegment = sanitizeFilenameSegment;
   global.sanitizeFilename = sanitizeFilename;
   global.formatDateForFilename = formatDateForFilename;
   global.formatIsoDateShortPlain = formatIsoDateShortPlain;
