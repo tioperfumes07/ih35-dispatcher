@@ -5,6 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getPool, dbQuery } from '../lib/db.mjs';
+import { DEDUPE_SUPPORT_TABLE_NAMES } from '../lib/ensure-app-database-objects.mjs';
 import { readFullErpJson } from '../lib/read-erp.mjs';
 import { mergeIntegrityThresholds } from '../lib/integrity-engine.mjs';
 import {
@@ -61,7 +62,19 @@ export function mountErpCoreApi(app, opts = {}) {
     }
     try {
       await dbQuery('SELECT 1 AS one');
-      return res.json({ ok: true, configured: true });
+      let supportTables = null;
+      try {
+        const { rows } = await dbQuery(
+          `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+          [DEDUPE_SUPPORT_TABLE_NAMES]
+        );
+        const have = new Set((rows || []).map(r => r.table_name));
+        const missing = DEDUPE_SUPPORT_TABLE_NAMES.filter(n => !have.has(n));
+        supportTables = { ok: missing.length === 0, missing };
+      } catch (e2) {
+        supportTables = { ok: false, error: e2?.message || String(e2) };
+      }
+      return res.json({ ok: true, configured: true, supportTables });
     } catch (e) {
       return res.status(503).json({ ok: false, configured: true, error: e?.message || String(e) });
     }

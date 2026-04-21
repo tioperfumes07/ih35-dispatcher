@@ -12,6 +12,9 @@ import tmsRoutes from "./routes/tms.mjs";
 import integrationsRoutes from "./routes/integrations.mjs";
 import { mountReportsRestApi } from "./routes/reports-rest-api.mjs";
 import { mountScheduledReports, startReportScheduleRunner } from "./routes/scheduled-reports.mjs";
+import { mountDedupeRoutes } from "./routes/dedupe.mjs";
+import { mountNameManagementRoutes } from "./routes/name-management.mjs";
+import { createMaintIntegrationDeps } from "./lib/maint-server-deps.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -92,6 +95,10 @@ async function start() {
 
   app.use("/api/tms", tmsRoutes);
   app.use("/api/integrations", integrationsRoutes);
+
+  const maintDeps = createMaintIntegrationDeps();
+  mountDedupeRoutes(app, maintDeps);
+  mountNameManagementRoutes(app, maintDeps);
 
   mountReportsRestApi(app, {
     readErp: readFullErpJson,
