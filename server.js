@@ -133,7 +133,7 @@ async function start() {
   app.use(express.static(path.join(__dirname, "public")));
   app.use("/src", express.static(path.join(__dirname, "src")));
 
-  const PORT = process.env.PORT || 3100;
+  const PORT = process.env.PORT || 3300;
   app.listen(PORT, () => {
     console.log(`IH35 TMS running on port ${PORT}`);
   });
