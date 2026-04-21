@@ -7,7 +7,8 @@ import { useCallback, useState, type CSSProperties } from 'react'
 export function useFullScreen() {
   const [isFullScreen, setIsFullScreen] = useState(false)
   const toggle = useCallback(() => setIsFullScreen((p) => !p), [])
-  return { isFullScreen, toggle }
+  const reset = useCallback(() => setIsFullScreen(false), [])
+  return { isFullScreen, toggle, reset }
 }
 
 /** Full-viewport panel styles for modal shells (pair with `ModalFullscreenToggle`). */

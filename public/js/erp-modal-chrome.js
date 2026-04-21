@@ -152,6 +152,105 @@
     document.addEventListener(evName, syncAllChromeBtns);
   });
 
+  function erpModalChromeFindModalHeader(shell) {
+    if (!shell || !shell.querySelector) return null;
+    return shell.querySelector(
+      '.modal-header,.maint-modal__header,.maint-modal__topbar,.erp-qb-dialog__head,' +
+        '.maint-workorder-fullmodal__head,.erp-dedicated-form-modal__bar,.erp-mb-modal__head,' +
+        '.nm-modal__head,.vbp-modal__head,.erp-drawer__head'
+    );
+  }
+
+  function erpModalChromeFindCloseControl(header) {
+    if (!header || !header.querySelector) return null;
+    let btn = header.querySelector(
+      '.close,[aria-label="Close"],.erp-mb-modal__x,.erp-dedicated-form-modal__x'
+    );
+    if (btn) return btn;
+    const xs = header.querySelectorAll('button[type="button"]');
+    for (let i = xs.length - 1; i >= 0; i--) {
+      const b = xs[i];
+      const lab = String(b.getAttribute('aria-label') || '').toLowerCase();
+      const t = String(b.textContent || '').trim();
+      if (lab === 'close' || t === '\u00d7' || t === '\u2715' || t === '×') return b;
+    }
+    return null;
+  }
+
+  /**
+   * Injects a compact ⛶/⊡ control (same behavior as `[data-erp-modal-expand-btn]`) when the shell
+   * has no expand button yet — preserves DOM and form state (class-based layout fullscreen).
+   * @param {Element} modalEl Shell element or any descendant inside a supported chrome shell.
+   */
+  function addFullscreenToggle(modalEl) {
+    if (!modalEl || !(modalEl instanceof Element)) return;
+    const shell = resolveExpandShell(modalEl) || resolveShell(modalEl);
+    if (!shell) return;
+    if (shell.querySelector('[data-erp-modal-expand-btn]')) return;
+    if (shell.querySelector('[data-erp-modal-fs-injected="1"]')) return;
+
+    const header = erpModalChromeFindModalHeader(shell);
+    if (!header) return;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('data-erp-modal-expand-btn', '');
+    btn.setAttribute('data-erp-modal-fs-injected', '1');
+    btn.setAttribute('aria-label', 'Toggle full screen');
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('title', 'Expand to full viewport (layout)');
+    btn.className = 'erp-modal-fs-injected';
+    btn.style.cssText =
+      'width:18px;height:18px;' +
+      'border:0.5px solid var(--border-color,#d0d7de);' +
+      'border-radius:3px;' +
+      'background:transparent;' +
+      'cursor:pointer;margin-right:4px;' +
+      'display:inline-flex;' +
+      'align-items:center;' +
+      'justify-content:center;font-size:10px;padding:0;flex-shrink:0';
+    btn.textContent = '\u26f6';
+
+    const closeBtn = erpModalChromeFindCloseControl(header);
+    if (closeBtn && closeBtn.parentNode) {
+      closeBtn.parentNode.insertBefore(btn, closeBtn);
+    } else {
+      header.appendChild(btn);
+    }
+    syncExpandBtn(btn, shell.classList.contains(LAYOUT_FULLSCREEN_CLASS));
+  }
+
+  function erpModalChromeAttachMissingFullscreenToggles(root) {
+    const r = root && root.querySelectorAll ? root : document;
+    if (!r.querySelectorAll) return;
+    EXPAND_SHELL_SELECTORS.forEach(sel => {
+      r.querySelectorAll(sel).forEach(el => {
+        try {
+          addFullscreenToggle(el);
+        } catch (_) {}
+      });
+    });
+  }
+
+  let __erpFsAttachTimer = null;
+  function erpModalChromeScheduleAttachMissingToggles() {
+    if (__erpFsAttachTimer) window.clearTimeout(__erpFsAttachTimer);
+    __erpFsAttachTimer = window.setTimeout(() => {
+      __erpFsAttachTimer = null;
+      erpModalChromeAttachMissingFullscreenToggles(document);
+    }, 80);
+  }
+
+  if (typeof MutationObserver !== 'undefined' && document.documentElement) {
+    const mo = new MutationObserver(() => erpModalChromeScheduleAttachMissingToggles());
+    mo.observe(document.documentElement, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'hidden']
+    });
+  }
+  erpModalChromeScheduleAttachMissingToggles();
+
   function expandButtonHtml() {
     return (
       '<button type="button" class="btn secondary erp-modal-chrome__btn erp-modal-expand-btn" data-erp-modal-expand-btn ' +
@@ -195,4 +294,6 @@
   window.erpModalChromeExpandButtonHtml = expandButtonHtml;
   window.erpModalChromeResetModalShell = resetModalShell;
   window.erpModalChromeResetLayoutFullscreen = resetLayoutFullscreen;
+  window.erpModalChromeAddFullscreenToggle = addFullscreenToggle;
+  window.erpModalChromeAttachMissingFullscreenToggles = erpModalChromeAttachMissingFullscreenToggles;
 })();

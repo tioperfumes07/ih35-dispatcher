@@ -748,6 +748,9 @@
         minH: 400
       });
     });
+    if (typeof global.erpModalChromeAttachMissingFullscreenToggles === 'function') {
+      global.erpModalChromeAttachMissingFullscreenToggles(document);
+    }
   }
 
   /** Call when opening a dedicated accounting form so size keys stay separate per surface. */

@@ -1877,6 +1877,13 @@ nav.tabs {
   background: var(--panel-2);
 }
 
+.acct-hub-overlay__bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .acct-hub-overlay__title {
   margin: 0;
   font-size: 14px;
@@ -1885,6 +1892,19 @@ nav.tabs {
 .acct-hub-overlay__body {
   padding: 12px;
   max-height: 70vh;
+  overflow: auto;
+}
+
+.acct-hub-overlay--fullscreen {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+}
+
+.acct-hub-overlay--fullscreen .acct-hub-overlay__body {
+  max-height: none;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -2287,11 +2307,11 @@ nav.tabs {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 18px;
+  height: 18px;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 0.5px solid var(--border);
+  border-radius: 3px;
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -2308,7 +2328,7 @@ nav.tabs {
 }
 
 .modal-fs-toggle__icon {
-  font-size: 17px;
+  font-size: 10px;
   line-height: 1;
 }
 
@@ -6486,8 +6506,9 @@ nav.tabs {
 }
 
 .maint-modal__tb-btn.modal-fs-toggle {
-  width: 34px;
-  min-width: 34px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
   padding: 0;
   background: var(--panel-2);
 }
@@ -7291,15 +7312,15 @@ nav.tabs {
 }
 
 .fr-report-card__fs.modal-fs-toggle {
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
   padding: 0;
 }
 
 .fr-report-card__fs.modal-fs-toggle .modal-fs-toggle__icon {
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1;
 }
 
@@ -7342,9 +7363,9 @@ nav.tabs {
 }
 
 .fr-parts__fs {
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--border);
+  width: 18px;
+  height: 18px;
+  border: 0.5px solid var(--border);
   border-radius: 3px;
   background: var(--panel);
   color: var(--text);
@@ -7356,15 +7377,15 @@ nav.tabs {
 }
 
 .fr-parts__fs.modal-fs-toggle {
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
   padding: 0;
 }
 
 .fr-parts__fs.modal-fs-toggle .modal-fs-toggle__icon {
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1;
 }
 
@@ -7666,13 +7687,16 @@ nav.tabs {
 }
 
 .fuel-txn-bar-btn.modal-fs-toggle {
-  width: 28px !important;
-  min-width: 28px !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
   padding: 0 !important;
+  border-radius: 3px !important;
 }
 
 .fuel-txn-bar-btn.modal-fs-toggle .modal-fs-toggle__icon {
-  font-size: 12px;
+  font-size: 10px;
   line-height: 1;
 }
 

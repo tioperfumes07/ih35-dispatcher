@@ -18,6 +18,8 @@ import {
 } from '../../types/fuelTransaction'
 import { AccountingHomeHub, type AccountingHomeOverlay } from './AccountingHomeHub'
 import type { AccountingMaintNavTarget } from './accountingNav'
+import { ModalFullscreenToggle } from '../ModalFullscreenToggle'
+import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../../hooks/useFullScreen'
 
 export type { AccountingMaintNavTarget } from './accountingNav'
 
@@ -53,6 +55,15 @@ export function AccountingDashboard({
   const [acctNewOpen, setAcctNewOpen] = useState(false)
   const acctNewRef = useRef<HTMLDivElement>(null)
   const [homeOverlay, setHomeOverlay] = useState<AccountingHomeOverlay>(null)
+  const {
+    isFullScreen: homeOverlayFullScreen,
+    toggle: toggleHomeOverlayFullScreen,
+    reset: resetHomeOverlayFullScreen,
+  } = useFullScreen()
+
+  useEffect(() => {
+    resetHomeOverlayFullScreen()
+  }, [homeOverlay, resetHomeOverlayFullScreen])
 
   useEffect(() => {
     if (!acctNewOpen) return
@@ -255,12 +266,25 @@ export function AccountingDashboard({
       />
 
       {homeOverlay ? (
-        <div className="acct-hub-overlay" role="dialog" aria-modal="true" aria-label={overlayTitle ?? ''}>
+        <div
+          className={'acct-hub-overlay' + (homeOverlayFullScreen ? ' acct-hub-overlay--fullscreen' : '')}
+          role="dialog"
+          aria-modal="true"
+          aria-label={overlayTitle ?? ''}
+          style={homeOverlayFullScreen ? { ...MODAL_FULLSCREEN_STYLE, margin: 0 } : undefined}
+        >
           <div className="acct-hub-overlay__bar">
             <h2 className="acct-hub-overlay__title">{overlayTitle}</h2>
-            <button type="button" className="btn sm ghost" onClick={() => setHomeOverlay(null)}>
-              ← Back to home
-            </button>
+            <div className="acct-hub-overlay__bar-actions">
+              <ModalFullscreenToggle
+                isFullScreen={homeOverlayFullScreen}
+                onToggle={toggleHomeOverlayFullScreen}
+                className="btn sm ghost"
+              />
+              <button type="button" className="btn sm ghost" onClick={() => setHomeOverlay(null)}>
+                ← Back to home
+              </button>
+            </div>
           </div>
           <div className="acct-hub-overlay__body">
             {homeOverlay === 'payment-history' ? (
