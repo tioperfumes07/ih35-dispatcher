@@ -55,6 +55,9 @@
     var docLab = document.getElementById('fuelManualDocNumberLabel');
     if (docLab) docLab.textContent = docNumberLabelFor(t);
 
+    var selInline = document.getElementById('fuelManualTxnTypeSel');
+    if (selInline && TITLES[t]) selInline.value = t;
+
     var lab = document.getElementById('erpDedModalTotalLabel');
     if (lab && global.__erpDedicatedModalKind === 'fuel') lab.textContent = 'Balance due';
 
@@ -77,6 +80,17 @@
     var sel = document.getElementById('erpDedFuelTxnType');
     if (!sel || sel.dataset.erpFuelTypeWired) return;
     sel.dataset.erpFuelTypeWired = '1';
+    sel.addEventListener('change', function () {
+      erpApplyFuelTransactionType(sel.value);
+      void erpHydrateFuelVendorAddressFromApi();
+    });
+  }
+
+  /** Inline fuel composer on Accounting → Fuel & DEF (same types as dedicated modal). */
+  function erpWireFuelManualTypeSelectOnce() {
+    var sel = document.getElementById('fuelManualTxnTypeSel');
+    if (!sel || sel.dataset.erpFuelManualTypeWired) return;
+    sel.dataset.erpFuelManualTypeWired = '1';
     sel.addEventListener('change', function () {
       erpApplyFuelTransactionType(sel.value);
       void erpHydrateFuelVendorAddressFromApi();
@@ -145,4 +159,5 @@
   global.erpHydrateFuelVendorAddressFromApi = erpHydrateFuelVendorAddressFromApi;
   global.erpFuelVendorAddressEditClick = erpFuelVendorAddressEditClick;
   global.erpFuelTxnTitles = TITLES;
+  global.erpWireFuelManualTypeSelectOnce = erpWireFuelManualTypeSelectOnce;
 })(typeof window !== 'undefined' ? window : globalThis);

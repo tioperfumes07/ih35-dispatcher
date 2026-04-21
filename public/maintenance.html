@@ -601,8 +601,8 @@
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Expenses</div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('expense')">Expense</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-expense')">Fuel expense</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-def-combined')">Fuel/DEF combined</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-expense')">Fuel expense</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('maintenance-expense')">Maintenance expense</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('repair-expense')">Repair expense</button>
                   </div>
@@ -629,25 +629,25 @@
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Bill payment</div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('bill-payment')">Bill payment</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill-payment')">Driver bill payment</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('check')">Check</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-credit')">Vendor credit</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill-payment')">Driver bill payment</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('item-receipt')">Item receipt</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('purchase-order')">Purchase order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-credit')">Vendor credit</button>
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Maintenance &amp; shop</div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('work-order-blank')">Work order</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-repair')">Repair order</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-maintenance')">Maintenance order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-accident')">Accident repair</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-pm')">PM service</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-inspection')">Inspection</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-tire')">Tire record</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-air-bag')">Air bag record</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-battery')">Battery record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-inspection')">Inspection</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-maintenance')">Maintenance order</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-pm')">PM service</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-repair')">Repair order</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('wo-tire')">Tire record</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('work-order-blank')">Work order</button>
                   </div>
                 </div>
                 <div class="erp-new-menu__footer" aria-hidden="false">
@@ -3838,6 +3838,19 @@
                       <div class="fuel-manual-doc-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                         <span id="erpFuelDocTitleAccent" class="erp-ap-doc-accent hidden" aria-hidden="true"></span>
                         <h2 class="qb-doc-h2" id="fuelManualDocTitleH2">Fuel bill / expense (manual)</h2>
+                        <label class="qb-l" for="fuelManualTxnTypeSel" style="margin:0;font-size:11px;display:inline-flex;align-items:center;gap:6px">
+                          Type
+                          <select
+                            id="fuelManualTxnTypeSel"
+                            class="qb-in erp-ded-fuel-type-sel"
+                            aria-label="Fuel transaction type"
+                          >
+                            <option value="def-bill">DEF bill</option>
+                            <option value="fuel-bill">Fuel bill</option>
+                            <option value="fuel-expense">Fuel expense</option>
+                            <option value="fuel-def-combined">Fuel/DEF combined</option>
+                          </select>
+                        </label>
                         <span class="erp-help-tip">
                           <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Manual fuel form">?</button>
                           <span class="erp-help-tip__panel" role="tooltip">
@@ -3847,7 +3860,7 @@
                       </div>
                     </div>
                     <div class="qb-doc-total-block">
-                      <span class="qb-l">Lines total</span>
+                      <span class="qb-l">Balance due</span>
                       <div class="qb-doc-total-amt" id="fuelManualHeaderTotal">$0.00</div>
                     </div>
                   </div>
@@ -14839,6 +14852,14 @@
       });
       bindFuelManualRowDragHost(document.getElementById('fuelManualCatLines'));
       bindFuelManualRowDragHost(document.getElementById('fuelManualItemLines'));
+      if (typeof erpWireFuelManualTypeSelectOnce === 'function') erpWireFuelManualTypeSelectOnce();
+      if (typeof erpApplyFuelTransactionType === 'function') {
+        const cur =
+          (window.__erpFuelTransactionType && String(window.__erpFuelTransactionType)) ||
+          (document.getElementById('fuelManualTxnTypeSel') && document.getElementById('fuelManualTxnTypeSel').value) ||
+          'fuel-expense';
+        erpApplyFuelTransactionType(cur);
+      }
     }
 
     async function saveManualFuelPurchase(opts) {
