@@ -102,7 +102,7 @@ export function FilterSidebar({
       </div>
 
       <MultiSelectField
-        label="Units (multi)"
+        label="Units"
         options={UNIT_OPTIONS}
         value={draft.units}
         onChange={(units) => set({ units })}
@@ -112,7 +112,7 @@ export function FilterSidebar({
       />
 
       <MultiSelectField
-        label="Service type (multi)"
+        label="Service type"
         options={serviceOptions}
         value={draft.serviceTypes}
         onChange={(serviceTypes) => set({ serviceTypes })}
@@ -122,7 +122,7 @@ export function FilterSidebar({
       />
 
       <MultiSelectField
-        label="Record type (multi)"
+        label="Record type"
         options={MOCK_RECORD_TYPES}
         value={draft.recordTypes}
         onChange={(recordTypes) => set({ recordTypes })}
