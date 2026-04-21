@@ -3536,10 +3536,10 @@ body.erp-maintenance #erpApp.erp-master .erp-wo-record-type-slot {
 }
 body.erp-maintenance #erpApp.erp-master .erp-new-menu__cols--4 {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 215px));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
-  width: 860px;
-  max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  width: 100%;
+  max-width: min(860px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
 }
 body.erp-maintenance #erpApp.erp-master .erp-new-menu__cols--4 > .erp-new-menu__col {
   padding: 0 8px;
