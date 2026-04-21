@@ -151,9 +151,9 @@ export function FilterSidebar({
           }
         >
           <option value="">Any</option>
-          <option value="internal">Terminal</option>
-          <option value="dealer">Shop</option>
           <option value="roadside">Roadside</option>
+          <option value="dealer">Shop</option>
+          <option value="internal">Terminal</option>
         </select>
       </label>
 
