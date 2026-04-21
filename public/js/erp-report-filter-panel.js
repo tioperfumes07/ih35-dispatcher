@@ -535,6 +535,14 @@
       if (show.has('defectsOnly') && root.querySelector('.erp-rfp-defonly')?.checked) {
         sp.set('defectsOnly', 'true');
       }
+      if (show.has('partPositionsPick')) {
+        const raw = root.querySelector('.erp-rfp-pos-lines')?.value || '';
+        const lines = raw
+          .split(/[\r\n,]+/)
+          .map(s => s.trim())
+          .filter(Boolean);
+        for (const ln of lines) sp.append('positions', ln);
+      }
       return sp;
     }
 
@@ -568,6 +576,7 @@
         costMax: 'Max $',
         showOverdue: 'PM overdue only',
         dueWithinMiles: 'Due within mi',
+        positions: 'Position',
         accidentFault: 'Fault',
         dotReportable: 'DOT reportable',
         insuranceClaim: 'Insurance',
@@ -922,6 +931,7 @@
       el.addEventListener('input', paintChips);
       el.addEventListener('change', paintChips);
     });
+    root.querySelector('.erp-rfp-pos-lines')?.addEventListener('input', paintChips);
     root.querySelectorAll('.erp-rfp-sortby, .erp-rfp-sortdir, .erp-rfp-groupby').forEach(el => el.addEventListener('change', paintChips));
     root.querySelectorAll('.erp-rfp-af-cb, .erp-rfp-dot-cb, .erp-rfp-ins-cb, .erp-rfp-defonly').forEach(el =>
       el.addEventListener('change', paintChips)
@@ -1032,6 +1042,15 @@
       } else if (k === 'defectsOnly') {
         const d = root.querySelector('.erp-rfp-defonly');
         if (d) d.checked = false;
+      } else if (k === 'positions') {
+        const ta = root.querySelector('.erp-rfp-pos-lines');
+        if (ta) {
+          const next = ta.value
+            .split(/[\r\n,]+/)
+            .map(s => s.trim())
+            .filter(s => s && s !== v);
+          ta.value = next.join('\n');
+        }
       }
       paintChips();
     });
