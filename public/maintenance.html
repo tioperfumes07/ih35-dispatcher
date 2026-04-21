@@ -10151,10 +10151,9 @@
       'tireConditionOptions'
     ];
 
-    function erpRehomeDatalistsForDedicatedShell(shell, entering) {
-      if (!shell) return;
+    function erpRehomeGlobalDatalistsForShell(shell, entering) {
       if (entering) {
-        if (shell.dataset.erpDatalistsRehomed === '1') return;
+        if (!shell || shell.dataset.erpDatalistsRehomed === '1') return;
         ERP_DEDICATED_DATALIST_IDS.forEach(id => {
           const el = document.getElementById(id);
           if (!el || String(el.tagName).toUpperCase() !== 'DATALIST' || shell.contains(el)) return;
@@ -10166,7 +10165,11 @@
         if (window.__erpDedicatedDatalistRehome.length) shell.dataset.erpDatalistsRehomed = '1';
         return;
       }
-      delete shell.dataset.erpDatalistsRehomed;
+      document
+        .querySelectorAll('.erp-dedicated-form-modal__shell, .maint-workorder-fullmodal__shell')
+        .forEach(s => {
+          delete s.dataset.erpDatalistsRehomed;
+        });
       const stack = window.__erpDedicatedDatalistRehome;
       if (!stack || !stack.length) return;
       while (stack.length) {
@@ -10186,15 +10189,28 @@
       }
     }
 
+    /** Keep global QBO datalists under the same fullscreen subtree as the focused form (dedicated AP/fuel or WO). */
+    function erpSyncFullscreenDatalistRehome() {
+      const fsEl = erpGetFullscreenElement();
+      const dedShell = document.querySelector('#erpDedicatedFormModal .erp-dedicated-form-modal__shell');
+      const dedModal = document.getElementById('erpDedicatedFormModal');
+      const woShell = document.querySelector('#maintWorkOrderModal .maint-workorder-fullmodal__shell');
+      const woModal = document.getElementById('maintWorkOrderModal');
+      const dedOk = dedShell && dedModal && !dedModal.classList.contains('hidden') && fsEl === dedShell;
+      const woOk = woShell && woModal && !woModal.classList.contains('hidden') && fsEl === woShell;
+      if (dedOk) erpRehomeGlobalDatalistsForShell(dedShell, true);
+      else if (woOk) erpRehomeGlobalDatalistsForShell(woShell, true);
+      else erpRehomeGlobalDatalistsForShell(null, false);
+    }
+
     function erpSyncDedicatedModalFullscreenUi() {
+      erpSyncFullscreenDatalistRehome();
       const modal = document.getElementById('erpDedicatedFormModal');
       const shell = modal?.querySelector('.erp-dedicated-form-modal__shell');
       const fsBtn = document.getElementById('erpDedModalFsBtn');
-      if (!shell) return;
-      const inFs = erpGetFullscreenElement() === shell;
-      erpRehomeDatalistsForDedicatedShell(shell, !!(inFs && modal && !modal.classList.contains('hidden')));
-      if (!fsBtn) return;
+      if (!fsBtn || !shell) return;
       if (!modal || modal.classList.contains('hidden')) return;
+      const inFs = erpGetFullscreenElement() === shell;
       fsBtn.textContent = inFs ? 'Exit full screen' : 'Full screen';
       fsBtn.setAttribute('aria-pressed', inFs ? 'true' : 'false');
     }
@@ -10265,6 +10281,7 @@
       if (!force && erpDedicatedFormDirty()) {
         if (!confirm('Discard unsaved changes and close this form?')) return;
       }
+      erpRehomeGlobalDatalistsForShell(null, false);
       erpResetDedicatedModalLayout();
       if (window.__erpDedicatedModalKind === 'ap') {
         const shell = document.getElementById('erpApDocShellPanel');
