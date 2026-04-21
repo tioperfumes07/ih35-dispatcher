@@ -650,16 +650,22 @@ ${extraCss}
       return { datasetId, defaultMonths: 12, features: [...fullMaint, 'groupBy'], groupByOptions: gbLoc };
     if (datasetId === 'm5-internal-external') return { datasetId, defaultMonths: 12, features: [...fullMaint] };
     if (datasetId === 'm6-location-summary')
-      return {
-        datasetId,
-        defaultMonths: 12,
-        features: ['dateRange', 'recordTypes', 'locationCategories', 'locationNames', 'makes', 'sortBy']
-      };
+      return { datasetId, defaultMonths: 12, features: [...fullMaint] };
     if (datasetId === 'a4-pm-schedule')
       return {
         datasetId,
         defaultMonths: 3,
-        features: ['units', 'fleetTypes', 'makes', 'recordTypes', 'pmStatusPick', 'showOverduePm']
+        features: [
+          'dateRange',
+          'units',
+          'fleetTypes',
+          'makes',
+          'recordTypes',
+          'locationCategories',
+          'locationNames',
+          'pmStatusPick',
+          'showOverduePm'
+        ]
       };
     if (datasetId === 'a1-work-order-history')
       return { datasetId, defaultMonths: 3, features: [...fullMaint, 'defectsOnly', 'groupBy'], groupByOptions: gbA1 };
@@ -697,6 +703,33 @@ ${extraCss}
     return map[k] || '#1557a0';
   }
 
+  function borderFromLocationPillTone(tone) {
+    const t = String(tone || '').toLowerCase();
+    const map = {
+      green: '#1a7a3c',
+      blue: '#1557a0',
+      amber: '#d97706',
+      purple: '#6200ea',
+      gray: '#5f6368'
+    };
+    return map[t] || '#1557a0';
+  }
+
+  function renderServiceTypeMixBar(mix, totalCost) {
+    const arr = Array.isArray(mix) ? mix.filter(x => x && Number(x.total) > 0) : [];
+    const tot = Number(totalCost) > 0 ? Number(totalCost) : arr.reduce((s, x) => s + (Number(x.total) || 0), 0);
+    if (!arr.length || !(tot > 0)) return '';
+    const colors = ['#1557a0', '#1a7a3c', '#c5221f', '#6200ea', '#d97706', '#00897b'];
+    const segs = arr
+      .map((x, i) => {
+        const pct = Math.max(0.5, (Number(x.total) / tot) * 100);
+        const bg = colors[i % colors.length];
+        return `<span title="${escapeAttr(String(x.name))}: $${Number(x.total).toFixed(2)}" style="flex:${pct};min-width:4px;height:10px;background:${bg};border-radius:2px"></span>`;
+      })
+      .join('');
+    return `<div class="mini-note" style="margin:4px 0 8px">Service type spend</div><div style="display:flex;width:100%;max-width:560px;gap:1px;align-items:center">${segs}</div>`;
+  }
+
   function renderGroupedSections(sections) {
     const bar = (border, title, count, total, avg, bodyHtml, extraHead, secId) =>
       `<details open class="rep-grp-sec" id="${escapeHtml(secId)}" style="margin-bottom:10px;border:1px solid #e0e3eb;border-radius:8px;overflow:hidden;scroll-margin-top:72px">
@@ -721,19 +754,37 @@ ${extraCss}
     let i = 0;
     return (sections || [])
       .map(sec => {
-        const border = sec.recordCategory ? sectionBorderFromRecordCategory(sec.recordCategory) : colors[i++ % colors.length];
+        const border =
+          sec.pillTone && (sec.locationPill || sec.categoryPill)
+            ? borderFromLocationPillTone(sec.pillTone)
+            : sec.recordCategory
+              ? sectionBorderFromRecordCategory(sec.recordCategory)
+              : colors[i++ % colors.length];
         const cols = sec.columns || [];
         const rows = sec.rows || [];
+        const mixBar =
+          sec.locationPill && Array.isArray(sec.serviceTypeMix) && sec.serviceTypeMix.length
+            ? renderServiceTypeMixBar(sec.serviceTypeMix, sec.totalCost)
+            : '';
         const body = rows.length ? renderSortableTable(cols, rows, maintRowClassFromRow) : '<p class="mini-note">No rows in this group.</p>';
         const mixRow =
-          Array.isArray(sec.serviceTypeMix) && sec.serviceTypeMix.length
+          !mixBar && Array.isArray(sec.serviceTypeMix) && sec.serviceTypeMix.length
             ? `<div class="mini-note" style="margin:6px 0 8px">Service spend mix: ${sec.serviceTypeMix
                 .map(x => `${escapeHtml(String(x.name))} $${Number(x.total || 0).toFixed(2)}`)
                 .join(' · ')}</div>`
             : '';
+        const pt = String(sec.pillTone || '').toLowerCase();
+        const pillPalettes = {
+          green: 'background:#e6f4ea;color:#1a7a3c;border:1px solid #b7e1c1',
+          blue: 'background:#e8f0fe;color:#1557a0;border:1px solid #c5d9f7',
+          amber: 'background:#fef3c7;color:#b45309;border:1px solid #fcd34d',
+          purple: 'background:#ede7f6;color:#6200ea;border:1px solid #d1c4e9',
+          gray: 'background:#f1f3f4;color:#5f6368;border:1px solid #dadce0'
+        };
+        const pillStyle = pillPalettes[pt] || pillPalettes.blue;
         const pill =
           sec.categoryPill || sec.locationPill
-            ? `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:#ede7f6;color:#4527a0">${escapeHtml(
+            ? `<span style="font-size:10px;padding:2px 8px;border-radius:10px;${pillStyle}">${escapeHtml(
                 String(sec.categoryPill || sec.locationPill || '')
               )}</span>`
             : '';
@@ -749,7 +800,16 @@ ${extraCss}
         const slug = 'rep-grp-' + String(sec.title || sec.key || 'sec')
           .replace(/[^\w.-]+/g, '-')
           .slice(0, 96);
-        return bar(border, sec.title || sec.key, sec.recordCount ?? rows.length, sec.totalCost ?? 0, sec.avgCost ?? 0, mixRow + body + subTot, pill, slug);
+        return bar(
+          border,
+          sec.title || sec.key,
+          sec.recordCount ?? rows.length,
+          sec.totalCost ?? 0,
+          sec.avgCost ?? 0,
+          mixBar + mixRow + body + subTot,
+          pill,
+          slug
+        );
       })
       .join('');
   }
