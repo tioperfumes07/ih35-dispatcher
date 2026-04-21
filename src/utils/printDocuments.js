@@ -1001,7 +1001,9 @@
       ],
       4
     );
-    const extra = `<div style="margin-top:5pt;text-align:right;font-size:11pt;font-weight:bold">Balance due: ${esc(balDisp)}</div>`;
+    const extra = `<div style="margin-top:6pt;text-align:right"><span class="field-value large" style="display:inline;border:none;padding:0;min-height:0">Balance due: ${esc(
+      balDisp
+    )}</span></div>`;
     const { categoryLines, itemLines } = normCostFromMixed(d.costLines || []);
     const cost = buildCostSection(categoryLines, itemLines, Number.isFinite(bal) ? bal : d.invoiceTotal);
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
@@ -1046,7 +1048,9 @@
       ],
       4
     );
-    const balRow = `<div style="margin-top:6pt;text-align:right;font-size:11pt;font-weight:bold">Balance due: ${esc(balDisp)}</div>`;
+    const balRow = `<div style="margin-top:6pt;text-align:right"><span class="field-value large" style="display:inline;border:none;padding:0;min-height:0">Balance due: ${esc(
+      balDisp
+    )}</span></div>`;
     const sec1 = rowA + rowB + rowC + balRow;
     const rows = Array.isArray(d.fuelLines) ? d.fuelLines : [];
     let gal = 0;
