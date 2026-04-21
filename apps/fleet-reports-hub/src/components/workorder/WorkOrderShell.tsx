@@ -151,6 +151,15 @@ const TXN_OPTS: ComboOption[] = [
   { value: 'check', label: 'Check' },
 ]
 
+const PAYMENT_OPTS: ComboOption[] = [
+  { value: 'ACH', label: 'ACH' },
+  { value: 'Check', label: 'Check' },
+  { value: 'Credit card', label: 'Credit card' },
+  { value: 'Cash', label: 'Cash' },
+  { value: 'Wire', label: 'Wire' },
+  { value: 'Instant pay', label: 'Instant pay' },
+]
+
 /** Left-to-right tab order within category / item grids (section D / E). */
 const TAB_CAT = 400
 const TAB_ITEM = 900
@@ -261,9 +270,6 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
             Create work order
           </span>
           <span className="wo-wo-badge">{props.workOrderNumber}</span>
-          <span className="wo-pill wo-pill--kind" title="WO prefix">
-            {props.recordKind}
-          </span>
           <span className="wo-pill">{props.unitNo}</span>
           <span className="wo-pill">{props.pills.recordType}</span>
           <span className="wo-pill">{props.pills.location}</span>
@@ -1025,14 +1031,15 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
                 onChange={(e) => props.onExpenseBillNo(e.target.value)}
               />
             </label>
-            <label className="field">
-              <span className="wo-field-lbl">Payment method</span>
-              <input
-                className="wo-input"
+            <div>
+              <SearchableCombo
+                label="Payment method"
                 value={props.paymentMethod}
-                onChange={(e) => props.onPaymentMethod(e.target.value)}
+                onChange={props.onPaymentMethod}
+                options={PAYMENT_OPTS}
+                placeholder="Select or type…"
               />
-            </label>
+            </div>
             <label className="field">
               <span className="wo-field-lbl">Date</span>
               <input

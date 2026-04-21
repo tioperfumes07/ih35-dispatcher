@@ -262,7 +262,7 @@ export function RepairWorkOrderForm({
 
   const productOptions: ComboOption[] = useMemo(
     () => [
-      { value: '__add', label: '＋ Add new' },
+      { value: '__add', label: 'Add new' },
       ...qboItems.map((i) => ({
         value: i.id,
         label: i.name,

@@ -110,7 +110,11 @@ export function SearchableCombo({
           ) : (
             filtered.map((o) => (
               <li key={o.value + o.label} role="option">
-                <button type="button" className="maint-combo__opt" onMouseDown={() => pick(o.value)}>
+                <button
+                  type="button"
+                  className={'maint-combo__opt' + (o.value === '__add' ? ' maint-combo__opt--addnew' : '')}
+                  onMouseDown={() => pick(o.value)}
+                >
                   <span className="maint-combo__opt-label">{o.label}</span>
                   {o.subtitle ? (
                     <span className="muted tiny" style={{ fontStyle: 'italic' }}>
