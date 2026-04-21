@@ -3234,11 +3234,12 @@
                         id="apHeaderDriverSearch"
                         class="qb-in"
                         list="qboCustomerOptions"
-                        placeholder="Driver / customer"
-                        oninput="erpSyncApHeaderDriverToFirstLine()"
-                        onblur="erpSyncApHeaderDriverToFirstLine()"
+                        placeholder="Driver / customer (assign for integrity)"
+                        oninput="erpSyncApHeaderDriverToFirstLine(); erpRefreshApHeaderDriverIntegrityStrip();"
+                        onblur="erpSyncApHeaderDriverToFirstLine(); erpRefreshApHeaderDriverIntegrityStrip();"
                       />
                       <input type="hidden" id="apHeaderDriverQboId" value="" />
+                      <div id="apHeaderDriverIntegrityStrip" class="maint-driver-integrity-strip hidden" aria-live="polite"></div>
                     </div>
                     <div class="ap-exp-field">
                       <span class="qb-l">Service type / description</span>
@@ -9532,6 +9533,11 @@
       if (cs) cs.value = inEl.value.trim();
       if (cid && hid) cid.value = hid.value.trim();
       if (cs) resolveWoLineCustomer(cs);
+      try {
+        erpRefreshApHeaderDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     function erpSyncMaintWoDriverToFirstCostLine() {
@@ -9663,6 +9669,7 @@
       }
       try {
         erpRefreshApDriverIntegrityStrip();
+        erpRefreshApHeaderDriverIntegrityStrip();
       } catch (_) {
         /* ignore */
       }
@@ -9701,6 +9708,11 @@
         apLocSel.addEventListener('change', erpSyncApRepairLocationHidden);
       }
       syncApMaintRecordTypeDependentUi();
+      try {
+        erpRefreshApHeaderDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
+      }
       if (typeof syncErpDedicatedModalChrome === 'function') syncErpDedicatedModalChrome();
     }
 
@@ -10405,6 +10417,14 @@
           acc.classList.add('hidden');
         }
         syncApDocTitle();
+        requestAnimationFrame(() => {
+          try {
+            erpRefreshApDriverIntegrityStrip();
+            erpRefreshApHeaderDriverIntegrityStrip();
+          } catch (_) {
+            /* ignore */
+          }
+        });
       }
       if (window.__erpDedicatedModalKind === 'ledger-stub') {
         const mount = document.getElementById('erpDedicatedFormModalBody');
@@ -11134,6 +11154,7 @@
       requestAnimationFrame(() => {
         try {
           erpRefreshApDriverIntegrityStrip();
+          erpRefreshApHeaderDriverIntegrityStrip();
           erpRefreshFuelDriverIntegrityStrip();
         } catch (_) {
           /* ignore */
@@ -12936,6 +12957,7 @@
       hid.value = resolveDriverNameToId(inp.value);
       try {
         erpRefreshApDriverIntegrityStrip();
+        erpRefreshApHeaderDriverIntegrityStrip();
       } catch (_) {
         /* ignore */
       }
@@ -13084,6 +13106,33 @@
       }
       const nm = String(inp.value || '').trim();
       host.innerHTML = nm ? erpDriverIntegrityBannerOkHtml() : erpDriverIntegrityBannerWarnHtml();
+      host.classList.remove('hidden');
+    }
+
+    /** QBO customer driver row (+New presets that sync customer to first WO line). */
+    function erpRefreshApHeaderDriverIntegrityStrip() {
+      const host = document.getElementById('apHeaderDriverIntegrityStrip');
+      if (!host) return;
+      const wrap = document.getElementById('apDriverFieldWrap');
+      const inp = document.getElementById('apHeaderDriverSearch');
+      const tab = document.getElementById('acct-transactions');
+      const acctSec = document.getElementById('section-accounting');
+      if (
+        !inp ||
+        !wrap ||
+        wrap.classList.contains('hidden') ||
+        !tab ||
+        tab.classList.contains('hidden') ||
+        (acctSec && acctSec.classList.contains('hidden'))
+      ) {
+        host.innerHTML = '';
+        host.classList.add('hidden');
+        return;
+      }
+      const nm = String(inp.value || '').trim();
+      const qid = String(document.getElementById('apHeaderDriverQboId')?.value || '').trim();
+      const ok = !!(nm || qid);
+      host.innerHTML = ok ? erpDriverIntegrityBannerOkHtml() : erpDriverIntegrityBannerWarnHtml();
       host.classList.remove('hidden');
     }
 
@@ -21025,6 +21074,11 @@
         __apb.classList.remove('erp-validation-banner--shake');
       }
       syncApMaintRecordTypeDependentUi();
+      try {
+        erpRefreshApHeaderDriverIntegrityStrip();
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     function resolveWoLineAccount(input) {
