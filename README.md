@@ -51,6 +51,8 @@ If the server is not on **3400** or smoke must use another host, set **`SMOKE_BA
 
 ## Useful endpoints
 
+- `GET /` — Serves **`public/index.html`** (IH35 ERP company home and workspace links). For a **plain-text** process liveness line (e.g. load balancers), use **`GET /api/live`** instead.
+- `GET /api/live` — Short UTF-8 plain-text response confirming the Node process is up.
 - `GET /api/health` — Samsara probe + flags (`hasDatabaseUrl`, `hasPcmilerKey`, QBO config, …)
 - `GET /api/health/db` — Postgres check
 - `GET /api/tms/*` — TMS REST (loads, fleet, leg miles)
