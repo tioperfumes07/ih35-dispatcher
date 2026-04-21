@@ -10426,6 +10426,13 @@
         window.__erpFuelUiVariant = '';
         window.__erpFuelTransactionType = '';
         if (typeof erpShowFuelDedModalTypeRow === 'function') erpShowFuelDedModalTypeRow(false);
+        requestAnimationFrame(() => {
+          try {
+            erpRefreshFuelDriverIntegrityStrip();
+          } catch (_) {
+            /* ignore */
+          }
+        });
       }
       if (window.__erpDedicatedModalKind === 'billpay') {
         const shell = document.getElementById('erpBillPayShellPanel');

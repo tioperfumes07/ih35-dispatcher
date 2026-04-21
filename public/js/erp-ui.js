@@ -4,6 +4,7 @@
  * Rule 22 — inline “?” help panels (`erpHelpTipToggle`); style in `erp-master-spec-2026.css`.
  * Rule 19 — toasts (`showToast`); host `#erpToastHost` + styles in `erp-master-spec-2026.css`.
  * `erpNotify` — toast-first replacement for `alert()` (inference for type when omitted); falls back to `alert` if toasts unavailable.
+ * Maintenance / Accounting driver integrity strips (`erpRefreshApDriverIntegrityStrip`, `erpRefreshFuelDriverIntegrityStrip`) live in `maintenance.html`; they share `erpFleetMergeIntegrityApiAlerts` → `localStorage['fleet:integrity-alerts']`.
  * Rule 24 — `erpMountConnectionStrip(id)` reads `GET /api/qbo/status` and `GET /api/health` (read-only). When both integrations look healthy, one compact line is shown. Refreshes every 12 minutes while the page stays open. Non-2xx QBO status uses muted “could not load status.”
  */
 (function (global) {
