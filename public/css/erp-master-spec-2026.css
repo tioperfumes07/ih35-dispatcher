@@ -3585,7 +3585,7 @@ body.erp-maintenance #erpApp.erp-master .erp-new-menu__cal-ico {
   flex-shrink: 0;
 }
 body.erp-maintenance #erpApp.erp-master .erp-new-menu.erp-new-menu--floated {
-  width: 860px !important;
+  width: min(860px, 100%) !important;
   max-width: calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
   padding: 16px !important;
   border: 1px solid #d0d4da !important;

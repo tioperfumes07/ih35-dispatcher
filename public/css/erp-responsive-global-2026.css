@@ -129,62 +129,11 @@ body.dispatch-page #dispatchApp .erp-module-sidebar {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Mega menu + floated menu — fr columns, no fixed 860px row width            */
+/* Table scroll helpers + catalog cards (mega menu + WO shell: base CSS)     */
 /* -------------------------------------------------------------------------- */
-body.erp-maintenance #erpApp.erp-master .erp-new-menu__cols--4 {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
-  width: 100%;
-  max-width: min(860px, 100%);
-}
-
-body.erp-maintenance #erpApp.erp-master .erp-new-menu.erp-new-menu--floated {
-  width: min(860px, 100%) !important;
-  max-width: calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Table / settlement frames — prefer auto so content stays reachable         */
-/* -------------------------------------------------------------------------- */
-body.erp-maintenance .st-settlement-wrap {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
 body.erp-maintenance .erp-table-scroll {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-}
-
-/* Catalog add card: do not clip tall forms */
-body.erp-maintenance .catalog-add-card {
-  overflow-x: auto;
-  overflow-y: visible;
-}
-
-/* Wide data tables: grow with content, never narrower than the scroll frame */
-body.erp-maintenance .table-wrap > table {
-  width: 100%;
-  min-width: min(100%, max-content);
-}
-
-/* Work order workspace columns: scroll instead of clipping */
-body.erp-maintenance .maint-wo-col-units,
-body.erp-maintenance .maint-wo-col-form,
-body.erp-maintenance .maint-wo-form-stack-inner,
-body.erp-maintenance .maint-wo-main-aside,
-body.erp-maintenance .maint-wo-workspace {
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-body.erp-maintenance .maint-wo-col-units {
-  flex: 0 1 min(240px, 34vw);
-  width: auto;
-  min-width: min(200px, 40vw);
-  max-width: 260px;
 }
 
 /* Generic panel bodies inside maintenance main column */

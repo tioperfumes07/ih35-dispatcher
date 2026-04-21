@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="/css/accounting-layout-overhaul-2026.css" />
   <link rel="stylesheet" href="/css/erp-multi-bills.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
+  <link rel="stylesheet" href="/css/erp-responsive-global-2026.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body class="erp-app erp-maintenance">
@@ -1875,6 +1876,9 @@
                     </div>
                   </div>
 
+                </div>
+                </div>
+
                   <div class="maint-form-actions maint-section-card maint-form-actions--sticky">
                     <select id="maintSaveAction" class="maint-save-action-hidden" aria-hidden="true" tabindex="-1">
                       <option value="save">Save</option>
@@ -1963,8 +1967,6 @@
                       <div id="maintIntegrityInlineAlerts" class="maint-integrity-inline-host hidden" style="flex:1 1 100%;margin-top:10px;width:100%;min-width:0"></div>
                     </div>
                   </div>
-                </div>
-                </div>
             </div>
             <div id="maintAsideQbIssues" class="erp-sr-tab-anchor" aria-hidden="true"></div>
             <div id="maintAsideWoSummary" class="erp-sr-tab-anchor" aria-hidden="true"></div>
@@ -5508,7 +5510,7 @@
                 </p>
                 <button type="button" class="btn" onclick="openDedupeTool()">Open Find &amp; merge duplicates</button>
               </div>
-              <div id="nmCatalogRenamePane" style="display:none">
+              <div id="nmCatalogRenamePane">
                 <div id="erpNameMgmtRootCatalog"></div>
               </div>
             </div>

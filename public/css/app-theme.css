@@ -259,7 +259,8 @@ body.erp-maintenance .erp-dedicated-form-modal__total-wrap {
   border-radius: var(--radius-sm);
   background: var(--color-bg-card);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 .catalog-add-card__head {
   display: flex;
@@ -3982,6 +3983,14 @@ body.erp-maintenance #nmCatalogRenamePane {
 }
 
 body.erp-maintenance #catalog-panel-name-mgmt.catalog-subpanel.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+body.erp-maintenance #section-name-mgmt.section.active {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
