@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>IH35 — Form 425C workspace</title>
+  <link rel="stylesheet" href="/css/design-tokens.css" />
+  <link rel="stylesheet" href="/css/app-theme.css" />
+  <link rel="stylesheet" href="/css/erp-master-redesign.css" />
+  <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
+  <link rel="stylesheet" href="/css/board-nav.css" />
+  <style>
+    body.form-425c-page { margin: 0; background: var(--color-bg-app, #f4f6f8); color: var(--color-text-body, #222); }
+    .f425-wrap { max-width: 1100px; margin: 0 auto; padding: 16px 20px 48px; }
+    .f425-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; border-bottom: 1px solid var(--color-border, #ccc); padding-bottom: 8px; }
+    .f425-tabs button {
+      padding: 8px 14px; border-radius: 8px 8px 0 0; border: 1px solid transparent;
+      background: transparent; cursor: pointer; font: inherit;
+    }
+    .f425-tabs button.active { background: var(--color-bg-card, #fff); border-color: var(--color-border, #ccc); border-bottom-color: transparent; font-weight: 600; }
+    .f425-panel { display: none; background: var(--color-bg-card, #fff); border: 1px solid var(--color-border, #ddd); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+    .f425-panel.active { display: block; }
+    .f425-h2 { font-size: 1.05rem; margin: 0 0 12px; }
+    .f425-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px 16px; align-items: end; }
+    .f425-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--color-text-label, #555); }
+    .f425-grid input, .f425-grid select, .f425-grid textarea { padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-border-input, #bbb); font: inherit; }
+    .f425-company-card { border: 1px dashed var(--color-border, #ccc); border-radius: 10px; padding: 14px; margin-bottom: 16px; background: var(--color-bg-header, #fafafa); }
+    .f425-company-card h3 { margin: 0 0 10px; font-size: 15px; }
+    .f425-bank-pick { max-height: 200px; overflow: auto; border: 1px solid var(--color-border, #ddd); border-radius: 8px; padding: 8px; background: #fff; font-size: 12px; }
+    .f425-bank-pick label { display: flex; gap: 8px; align-items: center; margin: 4px 0; cursor: pointer; }
+    table.f425-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    table.f425-table th, table.f425-table td { border: 1px solid var(--color-border, #ddd); padding: 6px 8px; text-align: left; }
+    table.f425-table th { background: var(--color-bg-header, #f0f4f8); }
+    .f425-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .f425-note { font-size: 12px; color: var(--color-text-label, #666); line-height: 1.45; margin: 8px 0; }
+    .f425-yn-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 6px 0; font-size: 13px; }
+    .f425-money { font-variant-numeric: tabular-nums; }
+    @media print {
+      .no-print { display: none !important; }
+      .f425-panel { display: block !important; border: none; padding: 0; }
+      body.form-425c-page { background: #fff; }
+    }
+  </style>
+</head>
+<body class="form-425c-page hub-page">
+  <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
+  <div id="boardNavMount"></div>
+  <script src="/js/board-nav.js" defer></script>
+  <div class="f425-wrap">
+    <div id="erpConnectionStrip" class="erp-connection-strip no-print" aria-live="polite"></div>
+    <p class="no-print"><a href="/">← Company home</a> · <a href="/maintenance.html">ERP</a></p>
+    <h1 style="margin:8px 0 4px;font-size:1.35rem">Official Form 425C — Monthly operating report</h1>
+    <p class="f425-note no-print">
+      On-screen working copy for <strong>IH 35 Transportation LLC</strong> (three Wells Fargo accounts) and <strong>IH 35 Trucking LLC</strong> (one Wells Fargo account, e.g. WF-3500), all in the same QuickBooks company file.
+      Map each debtor’s DIP/operating bank accounts under <strong>Profile</strong>, then pull <strong>Exhibit C</strong> lines from QuickBooks <strong>Deposits</strong> linked to customer <strong>Payments</strong> and <strong>Sales receipts</strong> — not <strong>Transfer</strong> transactions between accounts.
+      Place the court’s fillable PDF at <code>public/forms/425C-official.pdf</code> if you want a static download link alongside this workspace.
+    </p>
+
+    <div class="f425-tabs no-print" role="tablist">
+      <button type="button" class="active" data-tab="profile" role="tab" aria-selected="true">Profile</button>
+      <button type="button" data-tab="report" role="tab">425C report</button>
+    </div>
+
+    <section id="panel-profile" class="f425-panel active" aria-labelledby="tab-profile">
+      <h2 class="f425-h2" id="tab-profile">Debtor profiles &amp; QuickBooks bank accounts</h2>
+      <div class="f425-actions">
+        <button type="button" class="btn primary" id="btnLoadBanks">Refresh QuickBooks bank list</button>
+        <button type="button" class="btn primary" id="btnSaveProfiles">Save profiles</button>
+      </div>
+      <p id="bankLoadMsg" class="f425-note"></p>
+      <div id="profileEditors"></div>
+    </section>
+
+    <section id="panel-report" class="f425-panel" aria-labelledby="tab-report">
+      <h2 class="f425-h2" id="tab-report">Fill report (print / PDF from browser)</h2>
+      <div class="f425-grid" style="margin-bottom:12px">
+        <label>Debtor profile
+          <select id="repCompany"></select>
+        </label>
+        <label>Report month
+          <input id="repMonth" type="month" />
+        </label>
+      </div>
+      <div class="f425-actions no-print">
+        <button type="button" class="btn primary" id="btnLoadReceipts">Load Exhibit C from QuickBooks</button>
+        <button type="button" class="btn secondary" onclick="window.print()">Print / Save as PDF</button>
+      </div>
+      <p id="receiptMsg" class="f425-note"></p>
+
+      <div class="f425-paper">
+        <p style="font-size:11px;color:#666;margin:0 0 8px"><strong>Official Form 425C</strong> · Monthly Operating Report for Small Business Under Chapter 11</p>
+        <div class="f425-grid">
+          <label>Month
+            <input id="paperMonth" type="text" placeholder="e.g. March 2026" />
+          </label>
+          <label>Date report filed
+            <input id="paperFiled" type="date" />
+          </label>
+          <label>Line of business
+            <input id="paperLob" type="text" />
+          </label>
+          <label>NAICS code
+            <input id="paperNaics" type="text" />
+          </label>
+        </div>
+        <label style="display:block;margin-top:10px;font-size:12px;color:#555">Responsible party (printed name)
+          <input id="paperRp" type="text" style="width:100%;max-width:640px" />
+        </label>
+
+        <h3 class="f425-h2" style="margin-top:18px">1. Questionnaire (lines 1–18)</h3>
+        <p class="f425-note">Yes / No / N/A per line. Attach Exhibit A/B as required by the form instructions.</p>
+        <div id="qBlock"></div>
+
+        <h3 class="f425-h2" style="margin-top:18px">Debtor / case</h3>
+        <div class="f425-grid">
+          <label>Debtor name
+            <input id="paperDebtor" type="text" />
+          </label>
+          <label>Case number
+            <input id="paperCase" type="text" />
+          </label>
+          <label>United States Bankruptcy Court for the ___ District of ___
+            <input id="paperCourt" type="text" placeholder="e.g. Southern · Texas" />
+          </label>
+        </div>
+
+        <h3 class="f425-h2" style="margin-top:18px">2. Summary of cash activity (lines 19–23)</h3>
+        <div class="f425-grid">
+          <label>19. Total opening balance (all accounts)
+            <input id="line19" class="f425-money" type="text" inputmode="decimal" placeholder="0.00" />
+          </label>
+          <label>20. Total cash receipts (Exhibit C — from QBO or manual)
+            <input id="line20" class="f425-money" type="text" inputmode="decimal" placeholder="0.00" />
+          </label>
+          <label>21. Total cash disbursements (Exhibit D)
+            <input id="line21" class="f425-money" type="text" inputmode="decimal" placeholder="0.00" />
+          </label>
+          <label>22. Net cash flow (20 − 21)
+            <input id="line22" class="f425-money" type="text" inputmode="decimal" placeholder="0.00" />
+          </label>
+          <label>23. Cash on hand end of month (19 + 22)
+            <input id="line23" class="f425-money" type="text" inputmode="decimal" placeholder="0.00" />
+          </label>
+        </div>
+
+        <h3 class="f425-h2" style="margin-top:18px">Exhibit C — Cash receipts detail (from QuickBooks)</h3>
+        <table class="f425-table" aria-label="Exhibit C">
+          <thead>
+            <tr>
+              <th>Deposit date</th>
+              <th>Bank account (QBO)</th>
+              <th>Amount</th>
+              <th>Linked txn types</th>
+              <th>Deposit Id</th>
+            </tr>
+          </thead>
+          <tbody id="exhibitCBody">
+            <tr><td colspan="5" class="f425-note">Load receipts after saving bank account Ids on the Profile tab.</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="f425-h2" style="margin-top:18px">Other lines (24–37)</h3>
+        <div class="f425-grid">
+          <label>24. Total payables (Exhibit E)
+            <input id="line24" class="f425-money" type="text" />
+          </label>
+          <label>25. Total receivables (Exhibit F)
+            <input id="line25" class="f425-money" type="text" />
+          </label>
+          <label>26. Employees when case filed
+            <input id="line26" type="text" />
+          </label>
+          <label>27. Employees as of report date
+            <input id="line27" type="text" />
+          </label>
+          <label>28. Professional fees (bankruptcy) this month
+            <input id="line28" class="f425-money" type="text" />
+          </label>
+          <label>29. Professional fees (bankruptcy) since filing
+            <input id="line29" class="f425-money" type="text" />
+          </label>
+          <label>30. Other professional fees this month
+            <input id="line30" class="f425-money" type="text" />
+          </label>
+          <label>31. Other professional fees since filing
+            <input id="line31" class="f425-money" type="text" />
+          </label>
+        </div>
+        <p class="f425-note">Lines 32–37 (projections): copy from prior month and this month’s actuals as instructed on the PDF.</p>
+      </div>
+
+      <h3 class="f425-h2 no-print" style="margin-top:20px">Transfers in period (informational — not added to line 20)</h3>
+      <table class="f425-table no-print" aria-label="QBO transfers">
+        <thead>
+          <tr><th>Date</th><th>From</th><th>To</th><th>Amount</th></tr>
+        </thead>
+        <tbody id="transferBody"><tr><td colspan="4">—</td></tr></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="/js/erp-ui.js"></script>
+  <script>
+    if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
+
+    const Q_LINES = [
+      [1, 'Did the business operate during the entire reporting period?'],
+      [2, 'Do you plan to continue to operate the business next month?'],
+      [3, 'Have you paid all of your bills on time?'],
+      [4, 'Did you pay your employees on time?'],
+      [5, 'Have you deposited all receipts into DIP accounts?'],
+      [6, 'Have you timely filed tax returns and paid taxes?'],
+      [7, 'Have you timely filed all other required government filings?'],
+      [8, 'Current on quarterly U.S. Trustee / Bankruptcy Administrator fees?'],
+      [9, 'Timely paid all insurance premiums?'],
+      [10, 'Any bank accounts open other than DIP accounts?'],
+      [11, 'Sold any assets other than inventory?'],
+      [12, 'Sold/transferred assets or services to anyone related to the DIP?'],
+      [13, 'Any insurance company cancel your policy?'],
+      [14, 'Unusual or significant unanticipated expenses?'],
+      [15, 'Borrowed money or payments made on your behalf?'],
+      [16, 'Anyone made an investment in your business?'],
+      [17, 'Paid pre-petition bills?'],
+      [18, 'Allowed pre-petition checks to clear?']
+    ];
+
+    function tabInit() {
+      document.querySelectorAll('.f425-tabs button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.f425-tabs button').forEach((b) => {
+            b.classList.toggle('active', b === btn);
+            b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+          });
+          const id = btn.getAttribute('data-tab');
+          document.querySelectorAll('.f425-panel').forEach((p) => p.classList.remove('active'));
+          document.getElementById('panel-' + id).classList.add('active');
+        });
+      });
+    }
+
+    function renderQuestions() {
+      const host = document.getElementById('qBlock');
+      host.innerHTML = Q_LINES.map(([n, txt]) => `
+        <div class="f425-yn-row">
+          <span style="min-width:220px">${n}. ${txt}</span>
+          <label><input type="radio" name="q${n}" value="Yes" /> Yes</label>
+          <label><input type="radio" name="q${n}" value="No" /> No</label>
+          <label><input type="radio" name="q${n}" value="N/A" /> N/A</label>
+        </div>
+      `).join('');
+    }
+
+    let profilesState = { version: 1, companies: [] };
+    let bankAccountsCache = [];
+
+    async function loadProfiles() {
+      const r = await fetch('/api/form-425c/profiles');
+      profilesState = await r.json();
+      renderProfileEditors();
+      syncReportSelectors();
+    }
+
+    function renderProfileEditors() {
+      const host = document.getElementById('profileEditors');
+      host.innerHTML = (profilesState.companies || []).map((c) => `
+        <div class="f425-company-card" data-cid="${c.id}">
+          <h3>${escapeHtml(c.displayName || c.id)} <code style="font-weight:400">${escapeHtml(c.id)}</code></h3>
+          <div class="f425-grid">
+            <label>Display name <input data-f="displayName" value="${escapeAttr(c.displayName)}" /></label>
+            <label>Debtor name (425C header) <input data-f="debtorName" value="${escapeAttr(c.debtorName)}" /></label>
+            <label>Case number <input data-f="caseNumber" value="${escapeAttr(c.caseNumber)}" /></label>
+            <label>Court district <input data-f="courtDistrict" value="${escapeAttr(c.courtDistrict)}" /></label>
+            <label>Court division <input data-f="courtDivision" value="${escapeAttr(c.courtDivision)}" /></label>
+            <label>NAICS <input data-f="naicsCode" value="${escapeAttr(c.naicsCode)}" /></label>
+            <label>Line of business <input data-f="lineOfBusiness" value="${escapeAttr(c.lineOfBusiness)}" /></label>
+            <label>Responsible party <input data-f="responsiblePartyName" value="${escapeAttr(c.responsiblePartyName)}" /></label>
+          </div>
+          <p class="f425-note">Select QuickBooks <strong>Bank</strong> accounts for this debtor (Transportation: three WF · Trucking: one WF, e.g. 3500).</p>
+          <div class="f425-bank-pick" data-bank-pick="${c.id}">${renderBankChecks(c)}</div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px">
+            <input type="checkbox" data-f="includeUnclassified" ${c.includeUnclassifiedDepositLines ? 'checked' : ''} />
+            Include deposit lines with no linked txn (review manually)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px">
+            <input type="checkbox" data-f="includeJE" ${c.includeJournalEntryDepositLines ? 'checked' : ''} />
+            Include lines linked to JournalEntry
+          </label>
+        </div>
+      `).join('');
+    }
+
+    function renderBankChecks(c) {
+      if (!bankAccountsCache.length) {
+        return '<span class="f425-note">Click <strong>Refresh QuickBooks bank list</strong> to map accounts.</span>';
+      }
+      const set = new Set((c.bankAccountQboIds || []).map(String));
+      return bankAccountsCache.map((a) => `
+        <label>
+          <input type="checkbox" value="${escapeAttr(a.id)}" ${set.has(String(a.id)) ? 'checked' : ''} />
+          <span>${escapeHtml(a.name)} <code>${escapeHtml(a.id)}</code>${a.currentBalance != null ? ` · Bal ${a.currentBalance}` : ''}</span>
+        </label>
+      `).join('');
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function escapeAttr(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    function collectProfilesFromDom() {
+      const companies = [];
+      document.querySelectorAll('.f425-company-card').forEach((card) => {
+        const id = card.getAttribute('data-cid');
+        const get = (sel) => card.querySelector(sel);
+        const ids = [];
+        const labels = [];
+        card.querySelectorAll('.f425-bank-pick input[type=checkbox]:checked').forEach((cb) => {
+          ids.push(cb.value);
+          const lab = bankAccountsCache.find((x) => x.id === cb.value);
+          labels.push(lab ? lab.name : cb.value);
+        });
+        companies.push({
+          id,
+          displayName: get('[data-f=displayName]')?.value?.trim() || '',
+          debtorName: get('[data-f=debtorName]')?.value?.trim() || '',
+          caseNumber: get('[data-f=caseNumber]')?.value?.trim() || '',
+          courtDistrict: get('[data-f=courtDistrict]')?.value?.trim() || '',
+          courtDivision: get('[data-f=courtDivision]')?.value?.trim() || '',
+          naicsCode: get('[data-f=naicsCode]')?.value?.trim() || '',
+          lineOfBusiness: get('[data-f=lineOfBusiness]')?.value?.trim() || '',
+          responsiblePartyName: get('[data-f=responsiblePartyName]')?.value?.trim() || '',
+          bankAccountQboIds: ids,
+          bankAccountLabels: labels,
+          includeUnclassifiedDepositLines: !!get('[data-f=includeUnclassified]')?.checked,
+          includeJournalEntryDepositLines: !!get('[data-f=includeJE]')?.checked
+        });
+      });
+      return { version: 1, companies };
+    }
+
+    function syncReportSelectors() {
+      const sel = document.getElementById('repCompany');
+      const cur = sel.value;
+      sel.innerHTML = (profilesState.companies || []).map((c) => `<option value="${escapeAttr(c.id)}">${escapeHtml(c.displayName || c.id)}</option>`).join('');
+      if (cur && [...sel.options].some((o) => o.value === cur)) sel.value = cur;
+      applyProfileToPaper();
+    }
+
+    function applyProfileToPaper() {
+      const id = document.getElementById('repCompany').value;
+      const c = (profilesState.companies || []).find((x) => x.id === id);
+      if (!c) return;
+      document.getElementById('paperDebtor').value = c.debtorName || '';
+      document.getElementById('paperCase').value = c.caseNumber || '';
+      document.getElementById('paperCourt').value = [c.courtDistrict, c.courtDivision].filter(Boolean).join(' · ');
+      document.getElementById('paperNaics').value = c.naicsCode || '';
+      document.getElementById('paperLob').value = c.lineOfBusiness || '';
+      document.getElementById('paperRp').value = c.responsiblePartyName || '';
+    }
+
+    function recalcCash() {
+      const n = (id) => parseFloat(String(document.getElementById(id).value || '').replace(/,/g, '')) || 0;
+      const o19 = n('line19');
+      const o20 = n('line20');
+      const o21 = n('line21');
+      const flow = Math.round((o20 - o21) * 100) / 100;
+      const end = Math.round((o19 + flow) * 100) / 100;
+      document.getElementById('line22').value = flow ? String(flow) : '';
+      document.getElementById('line23').value = end ? String(end) : '';
+    }
+
+    document.getElementById('btnLoadBanks').addEventListener('click', async () => {
+      const msg = document.getElementById('bankLoadMsg');
+      msg.textContent = 'Loading…';
+      try {
+        const r = await fetch('/api/form-425c/qbo-bank-accounts');
+        const d = await r.json();
+        if (!d.ok) throw new Error(d.error || 'QBO error');
+        bankAccountsCache = d.accounts || [];
+        msg.textContent = `Loaded ${bankAccountsCache.length} bank account(s).`;
+        renderProfileEditors();
+      } catch (e) {
+        msg.textContent = String(e.message || e);
+      }
+    });
+
+    document.getElementById('btnSaveProfiles').addEventListener('click', async () => {
+      const body = collectProfilesFromDom();
+      const r = await fetch('/api/form-425c/profiles', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) {
+        alert(await r.text());
+        return;
+      }
+      profilesState = await r.json();
+      alert('Profiles saved.');
+    });
+
+    document.getElementById('btnLoadReceipts').addEventListener('click', async () => {
+      const msg = document.getElementById('receiptMsg');
+      const companyId = document.getElementById('repCompany').value;
+      const month = document.getElementById('repMonth').value;
+      msg.textContent = 'Loading…';
+      try {
+        const r = await fetch('/api/form-425c/receipts?' + new URLSearchParams({ companyId, month }));
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+        document.getElementById('line20').value = d.line20Total != null ? String(d.line20Total) : '';
+        recalcCash();
+        const tb = document.getElementById('exhibitCBody');
+        if (!(d.exhibitCLines || []).length) {
+          tb.innerHTML = '<tr><td colspan="5">No matching deposit lines. Check bank Ids and month, or enable unclassified lines on Profile.</td></tr>';
+        } else {
+          tb.innerHTML = d.exhibitCLines.map((row) => `
+            <tr>
+              <td>${escapeHtml(row.depositTxnDate)}</td>
+              <td>${escapeHtml(row.bankAccountName || row.bankAccountId)}</td>
+              <td class="f425-money">${escapeHtml(String(row.lineAmount))}</td>
+              <td>${escapeHtml((row.linkedTxnTypes || []).join(', '))}</td>
+              <td>${escapeHtml(String(row.depositId))}</td>
+            </tr>
+          `).join('');
+        }
+        const tt = document.getElementById('transferBody');
+        if (!(d.transfersInPeriod || []).length) tt.innerHTML = '<tr><td colspan="4">No Transfer transactions in QBO for this month.</td></tr>';
+        else {
+          tt.innerHTML = d.transfersInPeriod.map((t) => `
+            <tr>
+              <td>${escapeHtml(t.txnDate)}</td>
+              <td>${escapeHtml(String(t.from || ''))}</td>
+              <td>${escapeHtml(String(t.to || ''))}</td>
+              <td class="f425-money">${escapeHtml(String(t.amount))}</td>
+            </tr>
+          `).join('');
+        }
+        msg.textContent = `Exhibit C: ${(d.exhibitCLines || []).length} line(s) · Total $${d.line20Total} · Deposits scanned: ${d.depositsConsidered}`;
+      } catch (e) {
+        msg.textContent = String(e.message || e);
+      }
+    });
+
+    document.getElementById('repCompany').addEventListener('change', applyProfileToPaper);
+    ['line19', 'line20', 'line21'].forEach((id) => document.getElementById(id).addEventListener('input', recalcCash));
+
+    tabInit();
+    renderQuestions();
+    (function defaultMonth() {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      document.getElementById('repMonth').value = `${y}-${m}`;
+      document.getElementById('paperMonth').placeholder = d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+    })();
+    loadProfiles().catch((e) => console.error(e));
+  </script>
+</body>
+</html>
