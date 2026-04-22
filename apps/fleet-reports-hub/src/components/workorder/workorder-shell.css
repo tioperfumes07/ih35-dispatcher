@@ -792,7 +792,8 @@
 .wo-input,
 .wo-select,
 .wo-inline-row .wo-input,
-.wo-bar-btn {
+.wo-bar-btn,
+.wo-mini-btn {
   min-height: 34px;
   height: 34px;
   font-size: 14px;
@@ -862,4 +863,37 @@
   font-size: 13px;
   padding: 7px 10px;
   min-height: 34px;
+}
+
+.wo-data-table .wo-input {
+  min-height: 32px;
+  height: 32px;
+  max-height: 32px;
+  font-size: 13px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--panel);
+  border-color: var(--border);
+}
+
+.wo-data-table .maint-combo__input {
+  min-height: 32px;
+  height: 32px;
+  font-size: 13px;
+  padding: 0 8px;
+  border-radius: 6px;
+}
+
+.wo-table-hint,
+.wo-link,
+.wo-sec__badge-ok {
+  font-size: 12px;
+}
+
+.wo-sec__head {
+  padding: 8px 10px;
+}
+
+.wo-bottombar {
+  padding: 10px 12px;
 }
