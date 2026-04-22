@@ -61,6 +61,19 @@
       border: 1px solid var(--color-border-soft);
       background: #f8fbff;
     }
+    .erp-module-sidebar__footer.is-collapsed #sidebarConnectionsBody {
+      display: none;
+    }
+    .erp-module-sidebar__footer-toggle {
+      margin-left: auto;
+      border: 1px solid var(--color-border-soft);
+      background: var(--color-bg-card);
+      color: var(--color-text-body);
+      border-radius: 8px;
+      line-height: 1;
+      padding: 2px 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body class="erp-app erp-maintenance">
@@ -568,6 +581,15 @@
       <div class="erp-module-sidebar__footer">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 6px;min-width:0">
           <div class="erp-sb-heading" style="margin:0">Connections</div>
+          <button
+            type="button"
+            id="sidebarConnectionsToggleBtn"
+            class="erp-module-sidebar__footer-toggle"
+            aria-expanded="false"
+            aria-controls="sidebarConnectionsBody"
+            onclick="toggleSidebarConnectionsFooter()"
+            title="Show/hide connection details"
+          >Show</button>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Sidebar connection lines">?</button>
             <span class="erp-help-tip__panel" role="tooltip">
@@ -575,10 +597,12 @@
             </span>
           </span>
         </div>
-        <div id="sidebarQboStatus" class="mini-note">QuickBooks: checking connection…</div>
-        <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
-        <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: waiting for first refresh…</div>
-        <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Last refresh: waiting…</div>
+        <div id="sidebarConnectionsBody">
+          <div id="sidebarQboStatus" class="mini-note">QuickBooks: checking connection…</div>
+          <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
+          <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: waiting for first refresh…</div>
+          <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Last refresh: waiting…</div>
+        </div>
       </div>
     </aside>
 
@@ -1221,7 +1245,7 @@
           <div class="maint-action-strip" aria-label="Maintenance actions">
             <div class="maint-action-strip__top">
               <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
-                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
+                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
@@ -7929,7 +7953,8 @@
           rm: 'maintMainTabRm',
           'shop-loc': 'maintMainTabShopLoc'
         };
-        if (tab !== 'record' || o.skipModal) closeMaintWorkOrderModal();
+        const openModal = tab === 'record' && o.openModal === true;
+        if (!openModal) closeMaintWorkOrderModal();
         document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
         const id = map[tab] || map.record;
         const panel = document.getElementById(id);
@@ -7938,7 +7963,11 @@
         document.querySelectorAll('.maint-nav-tab[data-maint-main]').forEach(b => {
           b.classList.toggle('active', b.getAttribute('data-maint-main') === key);
         });
-        if (tab === 'record' && !o.skipModal) {
+        if (tab === 'record') {
+          fillDataLists();
+          bootQbPickers();
+        }
+        if (openModal) {
           const modal = document.getElementById('maintWorkOrderModal');
           const already = modal && modal.classList.contains('on');
           if (!already) requestAnimationFrame(() => openMaintWorkOrderModal());
@@ -8544,6 +8573,39 @@
           document.getElementById('erpApp')?.classList.add('sidebar-collapsed');
         }
       } catch (_) {}
+    }
+
+    const SIDEBAR_CONNECTIONS_COLLAPSED_KEY = 'erpSidebarConnectionsCollapsed';
+
+    function setSidebarConnectionsCollapsed(collapsed, opts = {}) {
+      const footer = document.querySelector('.erp-module-sidebar__footer');
+      const btn = document.getElementById('sidebarConnectionsToggleBtn');
+      const isCollapsed = !!collapsed;
+      if (footer) footer.classList.toggle('is-collapsed', isCollapsed);
+      if (btn) {
+        btn.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+        btn.textContent = isCollapsed ? 'Show' : 'Hide';
+      }
+      if (opts.persist !== false) {
+        try {
+          localStorage.setItem(SIDEBAR_CONNECTIONS_COLLAPSED_KEY, isCollapsed ? '1' : '0');
+        } catch (_) {}
+      }
+    }
+
+    function toggleSidebarConnectionsFooter() {
+      const footer = document.querySelector('.erp-module-sidebar__footer');
+      const isCollapsed = footer ? footer.classList.contains('is-collapsed') : false;
+      setSidebarConnectionsCollapsed(!isCollapsed);
+    }
+
+    function initSidebarConnectionsFooter() {
+      let collapsed = true;
+      try {
+        const raw = localStorage.getItem(SIDEBAR_CONNECTIONS_COLLAPSED_KEY);
+        if (raw === '0') collapsed = false;
+      } catch (_) {}
+      setSidebarConnectionsCollapsed(collapsed, { persist: false });
     }
 
     function toggleMaintenanceUnitList() {
@@ -26792,6 +26854,7 @@
     }
 
     loadErpSidebarPreference();
+    initSidebarConnectionsFooter();
     if (!window.__erpNewMenuDoc) {
       window.__erpNewMenuDoc = true;
       document.addEventListener('click', erpDocClickCloseNew);

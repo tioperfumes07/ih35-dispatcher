@@ -129,9 +129,11 @@ function criticalContractError(path, json) {
     case '/api/health':
       return json.ok === true ? null : 'expected { ok: true }';
     case '/api/qbo/status':
-      return typeof json.connected === 'boolean' && typeof json.configured === 'boolean'
+      return json.ok === true &&
+        typeof json.connected === 'boolean' &&
+        typeof json.configured === 'boolean'
         ? null
-        : 'expected { connected:boolean, configured:boolean }';
+        : 'expected { ok:true, connected:boolean, configured:boolean }';
     case '/api/accounting/qbo-items':
       return Array.isArray(json.items) ? null : 'expected { items: [] }';
     case '/api/catalog/parts':
@@ -141,23 +143,64 @@ function criticalContractError(path, json) {
     case '/api/form-425c/profiles':
       return Array.isArray(json.companies) ? null : 'expected { companies: [] }';
     case '/api/qbo/sync-alerts':
-      return json.counts && typeof json.counts === 'object' ? null : 'expected { counts: {...} }';
+      return json.ok === true &&
+        json.counts &&
+        typeof json.counts === 'object' &&
+        typeof json.counts.total === 'number' &&
+        typeof json.configured === 'boolean' &&
+        typeof json.connected === 'boolean'
+        ? null
+        : 'expected { ok:true, counts:{ total:number }, configured:boolean, connected:boolean }';
     case '/api/maintenance/dashboard':
-      return Array.isArray(json.dashboard) ? null : 'expected { dashboard: [] }';
+      return json.ok === true &&
+        Array.isArray(json.dashboard) &&
+        Array.isArray(json.vehicles) &&
+        Array.isArray(json.tireAlerts)
+        ? null
+        : 'expected { ok:true, dashboard:[], vehicles:[], tireAlerts:[] }';
     case '/api/maintenance/records':
-      return Array.isArray(json.records) ? null : 'expected { records: [] }';
+      return json && typeof json === 'object' ? null : 'expected object payload';
+    case '/api/maintenance/service-types':
+      return json.ok === true && Array.isArray(json.names)
+        ? null
+        : 'expected { ok:true, names: [] }';
+    case '/api/board':
+      return Array.isArray(json.vehicles) &&
+        Array.isArray(json.live) &&
+        Array.isArray(json.hos) &&
+        Array.isArray(json.assignments)
+        ? null
+        : 'expected { vehicles:[], live:[], hos:[], assignments:[] }';
     case '/api/integrity/dashboard':
-      return json.ok === true && Array.isArray(json.alerts)
+      return json.ok === true &&
+        Array.isArray(json.alerts) &&
+        json.kpi &&
+        typeof json.kpi === 'object' &&
+        typeof json.kpi.active === 'number' &&
+        typeof json.kpi.red === 'number' &&
+        typeof json.kpi.amber === 'number' &&
+        json.query &&
+        typeof json.query === 'object'
         ? null
-        : 'expected { ok:true, alerts: [] }';
+        : 'expected { ok:true, alerts:[], kpi:{ active:number, red:number, amber:number }, query:{...} }';
     case '/api/integrity/counts':
-      return json.ok === true && typeof json.active === 'number'
+      return json.ok === true &&
+        typeof json.active === 'number' &&
+        typeof json.red === 'number' &&
+        typeof json.amber === 'number' &&
+        typeof json.resolvedThisMonth === 'number'
         ? null
-        : 'expected { ok:true, active:number }';
+        : 'expected { ok:true, active:number, red:number, amber:number, resolvedThisMonth:number }';
     case '/api/integrity/thresholds':
-      return json.ok === true && json.thresholds && typeof json.thresholds === 'object'
-        ? null
-        : 'expected { ok:true, thresholds:{...} }';
+      if (!(json.ok === true && json.thresholds && typeof json.thresholds === 'object')) {
+        return 'expected { ok:true, thresholds:{...} }';
+      }
+      {
+        const vals = Object.values(json.thresholds);
+        if (vals.length === 0) return 'expected thresholds to have at least one key';
+        const bad = vals.some(v => typeof v !== 'number' || !Number.isFinite(v));
+        return bad ? 'expected all thresholds values to be finite numbers' : null;
+      }
     default:
       return null;
   }
@@ -320,6 +363,11 @@ function summarize(j, path) {
   if (path === '/api/catalog/parts' && Array.isArray(j.parts)) return `parts=${j.parts.length}`;
   if (path === '/api/catalog/service-types' && Array.isArray(j.services)) return `services=${j.services.length}`;
   if (path === '/api/form-425c/profiles' && Array.isArray(j.companies)) return `companies=${j.companies.length}`;
+  if (path === '/api/qbo/status' && typeof j.connected === 'boolean') return `connected=${j.connected} configured=${j.configured}`;
+  if (path === '/api/board' && Array.isArray(j.vehicles)) return `vehicles=${j.vehicles.length} live=${Array.isArray(j.live) ? j.live.length : 0}`;
+  if (path === '/api/maintenance/dashboard' && Array.isArray(j.dashboard))
+    return `dashboard=${j.dashboard.length} vehicles=${Array.isArray(j.vehicles) ? j.vehicles.length : 0}`;
+  if (path === '/api/maintenance/service-types' && Array.isArray(j.names)) return `serviceTypes=${j.names.length}`;
   if (j.ok === false && j.error) return `error=${String(j.error).slice(0, 120)}`;
   if (j.counts) return `counts=${JSON.stringify(j.counts)}`;
   if (Array.isArray(j.vehicles)) return `vehicles=${j.vehicles.length}`;
