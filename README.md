@@ -6,3 +6,10 @@ Folder layout (static ERP shell vs React fleet hub): **[docs/PROJECT_LAYOUT.md](
 - `GET /` — Serves **`public/index.html`** (IH35 ERP company home and workspace links). For a **plain-text** process liveness line (e.g. load balancers), use **`GET /api/live`** instead.
 - `GET /api/live` — Short UTF-8 plain-text response confirming the Node process is up.
 - `GET /fleet-reports/` — Fleet reports **React** app after **`npm run build:fleet`** (output under `public/fleet-reports/`, gitignored until built).
+
+## Verification
+
+- Run `npm run verify:safari` for the standard post-change verification flow.
+- Run `npm run verify:safari:full` for one-command build + isolated QA + checklist prompt.
+- Follow `docs/SAFARI_E2E_CHECKLIST.md` for the full manual Safari end-to-end checklist.
+- Use `docs/RELEASE_READY_NOTES.md` as a copy/paste deployment notes template.

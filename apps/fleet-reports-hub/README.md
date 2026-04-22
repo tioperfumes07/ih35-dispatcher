@@ -4,6 +4,14 @@ Served by the root Express app at **`/fleet-reports/`** after `npm run build:fle
 
 **Local dev (full stack):** from the **repository root** run **`npm run dev`**, then in Safari use **`http://127.0.0.1:3100/fleet-reports/`** (plain **http**, not **https**; do not type **`0.0.0.0`** in the address bar). If the UI looks stale: **Develop → Empty Caches** (or a Private window). For phone/LAN testing: **`HOST=0.0.0.0 npm run dev`** and open **`http://<your-LAN-IP>:3100/fleet-reports/`**.
 
+## Verification Checklist
+
+For end-to-end Safari validation after deploys or major UI changes, use:
+
+- `docs/SAFARI_E2E_CHECKLIST.md`
+- `npm run verify:safari` (prints the standard verification flow)
+- `npm run verify:safari:full` (runs build + isolated QA + checklist prompt)
+
 ---
 
 ## React + TypeScript + Vite
