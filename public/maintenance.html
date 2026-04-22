@@ -7527,6 +7527,16 @@
     }
 
     /** One-time: when Fleet hub (record tab or full-window WO iframe) saves, refresh ERP data + unit panel. */
+    function ih35FleetDeployQuery() {
+      let deployRef = '';
+      try {
+        deployRef = typeof window.__IH35_DEPLOY_REF === 'string' ? String(window.__IH35_DEPLOY_REF).trim() : '';
+      } catch (_) {
+        deployRef = '';
+      }
+      return deployRef ? '&v=' + encodeURIComponent(deployRef) : '';
+    }
+
     /** Fleet hub fuel form embedded on Accounting → Fuel (reload after close for a fresh shell). */
     function syncErpFuelHubInlineIframe() {
       const iframe = document.getElementById('erpFuelHubInlineIframe');
@@ -7538,6 +7548,7 @@
         hubBase +
         '/fleet-reports/index.html?erpFuelEmbed=1&fuelTxnType=' +
         encodeURIComponent(ft) +
+        ih35FleetDeployQuery() +
         '&_=' +
         String(Date.now());
       if (typeof ensureMaintFleetHubPostMessageBridge === 'function') ensureMaintFleetHubPostMessageBridge();
@@ -7592,7 +7603,7 @@
       const hubBase =
         (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
       const enc = encodeURIComponent(u);
-      iframe.src = `${hubBase}/fleet-reports/index.html?erpWoEmbed=1&erpUnitId=${enc}`;
+      iframe.src = `${hubBase}/fleet-reports/index.html?erpWoEmbed=1&erpUnitId=${enc}${ih35FleetDeployQuery()}`;
       host.hidden = false;
       fa.classList.add('maint-wo-record-hub-active');
     }
@@ -7641,7 +7652,7 @@
       }
       const hubBase =
         (typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE) || '';
-      iframe.src = `${hubBase}/fleet-reports/index.html?erpWoModal=1`;
+      iframe.src = `${hubBase}/fleet-reports/index.html?erpWoModal=1${ih35FleetDeployQuery()}`;
       ensureMaintFleetHubPostMessageBridge();
       modal.classList.add('on');
       modal.setAttribute('aria-hidden', 'false');
@@ -10823,7 +10834,8 @@
         iframe.src =
           hubBase +
           '/fleet-reports/index.html?erpFuelModal=1&fuelTxnType=' +
-          encodeURIComponent(ftt);
+          encodeURIComponent(ftt) +
+          ih35FleetDeployQuery();
         mount.appendChild(iframe);
         if (typeof ensureMaintFleetHubPostMessageBridge === 'function') ensureMaintFleetHubPostMessageBridge();
         requestAnimationFrame(() => {

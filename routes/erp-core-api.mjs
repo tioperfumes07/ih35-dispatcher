@@ -254,6 +254,47 @@ export function mountErpCoreApi(app, opts = {}) {
     });
   });
 
+  /**
+   * Legacy ERP shell compatibility endpoint.
+   * `public/maintenance.html` test action expects Intuit-style `CompanyInfo`.
+   */
+  app.get('/api/qbo/company', (_req, res) => {
+    const { connected, companyName } = qboConnectionFlags();
+    if (!connected) {
+      return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+    }
+    return res.json({
+      CompanyInfo: {
+        CompanyName: companyName || 'Connected'
+      }
+    });
+  });
+
+  /**
+   * Legacy ERP shell compatibility endpoint.
+   * Newer code reads `/api/qbo/status`, but the maintenance shell still calls `/api/qbo/master`.
+   */
+  app.get('/api/qbo/master', (_req, res) => {
+    const erp = readFullErpJson();
+    const cache = erp?.qboCache && typeof erp.qboCache === 'object' ? erp.qboCache : {};
+    const arr = (v) => (Array.isArray(v) ? v : []);
+    return res.json({
+      vendors: arr(cache.vendors),
+      items: arr(cache.items),
+      accounts: arr(cache.accounts),
+      accountsExpense: arr(cache.accountsExpense),
+      accountsIncome: arr(cache.accountsIncome),
+      customers: arr(cache.customers),
+      classes: arr(cache.classes),
+      accountsBank: arr(cache.accountsBank),
+      paymentMethods: arr(cache.paymentMethods),
+      employees: arr(cache.employees),
+      terms: arr(cache.terms),
+      transactionActivity: cache.transactionActivity || null,
+      refreshedAt: erp?.refreshedAt || null
+    });
+  });
+
   /** Clears persisted QBO `connectionHealth` after a successful test/refresh (client calls). */
   app.post('/api/qbo/clear-connection-health', (_req, res) => {
     try {

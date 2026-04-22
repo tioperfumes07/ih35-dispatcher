@@ -1093,10 +1093,18 @@
       typeof global.__IH35_FLEET_HUB_BASE === 'string' && global.__IH35_FLEET_HUB_BASE
         ? global.__IH35_FLEET_HUB_BASE
         : '';
+    var deployRef = '';
+    try {
+      deployRef = typeof global.__IH35_DEPLOY_REF === 'string' ? String(global.__IH35_DEPLOY_REF).trim() : '';
+    } catch (_) {
+      deployRef = '';
+    }
+    var deploySuffix = deployRef ? '&v=' + encodeURIComponent(deployRef) : '';
     var url =
       hubBase +
       '/fleet-reports/index.html?erpFuelModal=1&fuelTxnType=' +
-      encodeURIComponent(t);
+      encodeURIComponent(t) +
+      deploySuffix;
     try {
       global.open(url, '_blank', 'noopener,noreferrer');
     } catch (_) {}
