@@ -62,6 +62,9 @@ const REPORT_TAB_QUERY_VALUES: ReportCategory[] = [
   'dot',
   'custom',
 ]
+const REPORTS_PAGE_TAB_IDS: ReportCategory[] = REPORT_TAB_QUERY_VALUES.filter(
+  (id) => id !== 'safety' && id !== 'fuel' && id !== 'operations',
+)
 
 type AppSection =
   | 'home'
@@ -89,6 +92,23 @@ const ORDERED_APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'home', label: 'Home' },
   ...APP_SECTIONS.filter((s) => s.id !== 'home').sort((a, b) => a.label.localeCompare(b.label)),
 ]
+const LISTS_CATALOG_LIST_IDS: ListsCatalogListId[] = [
+  'fleet-writes',
+  'op-status',
+  'find-merge',
+  'name-registry',
+  'rename-vendors',
+  'qbo-items-list',
+  'service-types-db',
+  'bank-csv',
+  'vendors-payees',
+  'parts-ref',
+  'drivers-db',
+  'vendors-db',
+  'assets-db',
+]
+const LISTS_TAB_ID_SET = new Set<ListsCatalogsTab>(LISTS_CATALOG_TAB_IDS)
+const LISTS_LIST_ID_SET = new Set<ListsCatalogListId>(LISTS_CATALOG_LIST_IDS)
 
 const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   home: 'Operational dashboard with section shortcuts and KPI snapshot.',
@@ -136,6 +156,20 @@ function readInitialSection(): AppSection {
     return 'reports'
   }
   return 'home'
+}
+
+function readInitialListsTab(): ListsCatalogsTab {
+  if (typeof window === 'undefined') return 'fleet-samsara'
+  const p = new URLSearchParams(window.location.search)
+  const listsTab = String(p.get('listsTab') || '').trim() as ListsCatalogsTab
+  return LISTS_TAB_ID_SET.has(listsTab) ? listsTab : 'fleet-samsara'
+}
+
+function readInitialListsDeepLink(): ListsCatalogListId | null {
+  if (typeof window === 'undefined') return null
+  const p = new URLSearchParams(window.location.search)
+  const list = String(p.get('listsList') || '').trim() as ListsCatalogListId
+  return LISTS_LIST_ID_SET.has(list) ? list : null
 }
 
 function readErpRecordEmbedFlag(): boolean {
@@ -191,8 +225,10 @@ export default function App() {
   const [appWoModalKey, setAppWoModalKey] = useState(0)
   const { isFullScreen: woPickFullScreen, toggle: toggleWoPickFullScreen } = useFullScreen()
   const [fuelPlannerTxn, setFuelPlannerTxn] = useState<FuelTransactionType | null>(null)
-  const [listsTab, setListsTab] = useState<ListsCatalogsTab>('fleet-samsara')
-  const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(null)
+  const [listsTab, setListsTab] = useState<ListsCatalogsTab>(readInitialListsTab)
+  const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(
+    readInitialListsDeepLink,
+  )
 
   const openSection = useCallback((section: AppSection) => {
     setActiveSection(section)
@@ -214,16 +250,23 @@ export default function App() {
     if (!reportSections.includes(activeSection)) setActive(null)
   }, [activeSection])
 
+  useEffect(() => {
+    if (activeSection !== 'reports') return
+    if (!REPORTS_PAGE_TAB_IDS.includes(tab)) setTab('overview')
+  }, [activeSection, tab])
+
   /** ERP maintenance → hub lists deep link: `?acctLists=1&listsTab=drivers-database` (+ optional `listsList=`). */
   useEffect(() => {
     if (typeof window === 'undefined') return
     const p = new URLSearchParams(window.location.search)
     if (p.get('acctLists') !== '1') return
     const listsTabRaw = p.get('listsTab') || ''
-    if (!LISTS_CATALOG_TAB_IDS.includes(listsTabRaw as ListsCatalogsTab)) return
+    if (!LISTS_TAB_ID_SET.has(listsTabRaw as ListsCatalogsTab)) return
     const listsListRaw = p.get('listsList') || ''
     const list =
-      listsListRaw && listsListRaw.length
+      listsListRaw &&
+      listsListRaw.length &&
+      LISTS_LIST_ID_SET.has(listsListRaw as ListsCatalogListId)
         ? (listsListRaw as ListsCatalogListId)
         : null
     openSection('lists')
@@ -297,14 +340,18 @@ export default function App() {
       setTab((prev) => (prev === nextTab ? prev : nextTab))
       if (nextSection === 'lists') {
         const nextListsTab = p.get('listsTab') || ''
-        if (LISTS_CATALOG_TAB_IDS.includes(nextListsTab as ListsCatalogsTab)) {
-          setListsTab((prev) => (prev === nextListsTab ? prev : (nextListsTab as ListsCatalogsTab)))
-        }
+        const nextListsTabResolved = LISTS_TAB_ID_SET.has(nextListsTab as ListsCatalogsTab)
+          ? (nextListsTab as ListsCatalogsTab)
+          : 'fleet-samsara'
+        setListsTab((prev) => (prev === nextListsTabResolved ? prev : nextListsTabResolved))
         const nextListsList = p.get('listsList') || ''
         setListsDeepLink((prev) =>
-          prev === (nextListsList ? (nextListsList as ListsCatalogListId) : null)
+          prev ===
+          (LISTS_LIST_ID_SET.has(nextListsList as ListsCatalogListId)
+            ? (nextListsList as ListsCatalogListId)
+            : null)
             ? prev
-            : nextListsList
+            : LISTS_LIST_ID_SET.has(nextListsList as ListsCatalogListId)
               ? (nextListsList as ListsCatalogListId)
               : null,
         )
@@ -577,7 +624,7 @@ export default function App() {
                 role="tablist"
                 aria-label="Report categories"
               >
-                {TABS.map((t) => (
+                {TABS.filter((t) => REPORTS_PAGE_TAB_IDS.includes(t.id)).map((t) => (
                   <button
                     key={t.id}
                     type="button"
