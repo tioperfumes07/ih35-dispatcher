@@ -177,12 +177,9 @@ export default function App() {
       listsListRaw && listsListRaw.length
         ? (listsListRaw as ListsCatalogListId)
         : null
-    setTab('accounting')
-    setAcctListsBootstrap({
-      token: Date.now(),
-      tab: listsTabRaw as ListsCatalogsTab,
-      list,
-    })
+    setActiveSection('lists')
+    setListsTab(listsTabRaw as ListsCatalogsTab)
+    setListsDeepLink(list)
     p.delete('acctLists')
     p.delete('listsTab')
     p.delete('listsList')
@@ -194,6 +191,23 @@ export default function App() {
       /* ignore */
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (erpRecordEmbed || erpFuelEmbed || erpFuelModalHost || erpWoModalHost) return
+    try {
+      const url = new URL(window.location.href)
+      if (activeSection === 'home') url.searchParams.delete('section')
+      else url.searchParams.set('section', activeSection)
+      if (activeSection === 'reports') {
+        if (tab === 'overview') url.searchParams.delete('tab')
+        else url.searchParams.set('tab', tab)
+      }
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+    } catch {
+      /* ignore */
+    }
+  }, [activeSection, tab, erpRecordEmbed, erpFuelEmbed, erpFuelModalHost, erpWoModalHost])
 
   useEffect(() => {
     if (!appWoPickOpen && woPickFullScreen) toggleWoPickFullScreen()
@@ -213,7 +227,7 @@ export default function App() {
         bill: 'bill',
         'repair-wo': 'repair-wo',
       }
-      setTab('maintenance')
+      setActiveSection('maintenance')
       setMaintExtNav((prev) => ({
         view: viewMap[target],
         token: (prev?.token ?? 0) + 1,
@@ -225,7 +239,7 @@ export default function App() {
   const clearMaintExtNav = useCallback(() => setMaintExtNav(null), [])
 
   const openMaintenanceIntegrityView = useCallback(() => {
-    setTab('maintenance')
+    setActiveSection('maintenance')
     setMaintExtNav((prev) => ({
       view: 'integrity',
       token: (prev?.token ?? 0) + 1,
@@ -252,8 +266,8 @@ export default function App() {
   )
 
   useEffect(() => {
-    if (tab !== 'maintenance') setMaintExtNav(null)
-  }, [tab])
+    if (activeSection !== 'maintenance') setMaintExtNav(null)
+  }, [activeSection])
 
   /**
    * ERP maintenance full-window modal loads hub via iframe with ?erpWoModal=1.
@@ -263,7 +277,7 @@ export default function App() {
     if (typeof window === 'undefined') return
     const p = new URLSearchParams(window.location.search)
     if (p.get('erpWoModal') !== '1') return
-    setTab('maintenance')
+    setActiveSection('maintenance')
     setAppWoPickOpen(true)
     try {
       const url = new URL(window.location.href)
@@ -283,7 +297,7 @@ export default function App() {
     const modal = p.get('erpFuelModal') === '1'
     if (!embed && !modal) return
     const ft = parseFuelTransactionTypeParam(p.get('fuelTxnType'))
-    setTab('accounting')
+    setActiveSection('accounting')
     setFuelPlannerTxn(ft ?? 'fuel-bill')
     try {
       const url = new URL(window.location.href)
@@ -303,20 +317,39 @@ export default function App() {
     () => serviceCatalogRows.map((s) => s.service_name),
     [serviceCatalogRows],
   )
+  const reportsSectionVisible =
+    activeSection === 'reports' ||
+    activeSection === 'safety' ||
+    activeSection === 'fuel' ||
+    activeSection === 'loads'
+  const reportTabForSection = useMemo<ReportCategory>(() => {
+    if (activeSection === 'safety') return 'safety'
+    if (activeSection === 'fuel') return 'fuel'
+    if (activeSection === 'loads') return 'operations'
+    return tab
+  }, [activeSection, tab])
 
   /** Report cards on the right: Overview = all reports; other tabs = that category only. */
   const catalogReportsForGrid = useMemo(() => {
     const list =
-      tab === 'overview' ? REPORTS : REPORTS.filter((r) => r.category === tab)
+      reportTabForSection === 'overview'
+        ? REPORTS
+        : REPORTS.filter((r) => r.category === reportTabForSection)
     return list.filter((r) => matchesSearch(r, search))
-  }, [tab, search])
+  }, [reportTabForSection, search])
 
   /** Domain section headings + cards (Overview = one block per category). */
   const reportCardGroups = useMemo(() => {
     const list = catalogReportsForGrid
-    if (tab !== 'overview') {
-      const meta = TABS.find((t) => t.id === tab)
-      return [{ key: String(tab), section: meta?.label ?? tab, reports: list }]
+    if (reportTabForSection !== 'overview') {
+      const meta = TABS.find((t) => t.id === reportTabForSection)
+      return [
+        {
+          key: String(reportTabForSection),
+          section: meta?.label ?? reportTabForSection,
+          reports: list,
+        },
+      ]
     }
     const catOrder = TABS.filter((t) => t.id !== 'overview').map((t) => t.id)
     const byCat = new Map<ReportCategory, typeof list>()
@@ -332,7 +365,7 @@ export default function App() {
         section: TABS.find((t) => t.id === id)?.label ?? id,
         reports: byCat.get(id)!,
       }))
-  }, [tab, catalogReportsForGrid])
+  }, [reportTabForSection, catalogReportsForGrid])
 
   /** Maintenance workspace nav cards — always maintenance category. */
   const maintenanceListReports = useMemo(() => {
@@ -382,172 +415,250 @@ export default function App() {
       }
       style={appThemeStyle}
     >
-      <div className="layout fleet-reports-layout">
-      <div
-        className={
-          `reports-page reports-page--redesign reports-page--tab-${tab}` +
-          (erpRecordEmbed ? ' reports-page--erp-record-embed' : '')
-        }
-      >
-        {!erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
-          <header className="reports-page__header">
-            <h1 className="reports-page__title">Fleet reports</h1>
-            <p className="reports-page__subtitle">
-              Cards by domain, live search, shared filters, exports.
-            </p>
-            <nav
-              className="tabs reports-tabs"
-              role="tablist"
-              aria-label="Report categories"
+      {!erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
+        <nav
+          className="tabs reports-tabs"
+          role="tablist"
+          aria-label="Application sections"
+          style={{ margin: '8px 12px 0' }}
+        >
+          {APP_SECTIONS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              role="tab"
+              aria-selected={activeSection === s.id}
+              className={
+                activeSection === s.id ? 'reports-tab reports-tab--active' : 'reports-tab'
+              }
+              onClick={() => setActiveSection(s.id)}
             >
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={t.id === tab}
-                  className={t.id === tab ? 'reports-tab reports-tab--active' : 'reports-tab'}
-                  onClick={() => setTab(t.id)}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-          </header>
-        ) : null}
-
-        <IntegrationOfflineBanner />
-
+              {s.label}
+            </button>
+          ))}
+        </nav>
+      ) : null}
+      <div className="layout fleet-reports-layout">
         <div
           className={
-            'reports-page__body-split' +
-            (tab === 'accounting' ||
-            (tab === 'maintenance' && erpRecordEmbed) ||
-            erpFuelEmbed ||
-            erpFuelModalHost
-              ? ' reports-page__body-split--no-sidebar'
-              : '')
+            `reports-page reports-page--redesign reports-page--tab-${reportTabForSection}` +
+            (erpRecordEmbed ? ' reports-page--erp-record-embed' : '')
           }
         >
-          {tab !== 'accounting' &&
-          !(tab === 'maintenance' && erpRecordEmbed) &&
+          {!erpRecordEmbed &&
           !erpFuelEmbed &&
-          !erpFuelModalHost ? (
-            <FilterSidebar
-              draft={draftFilters}
-              applied={appliedFilters}
-              onChange={setDraftFilters}
-              onApply={() => setAppliedFilters({ ...draftFilters })}
-              onReset={() => {
-                const z = defaultFilters()
-                setDraftFilters(z)
-                setAppliedFilters(z)
-              }}
-              catalogServiceNames={catalogServiceNames}
-              onOpenForm425c={openForm425cEmbedded}
-            />
+          !erpFuelModalHost &&
+          activeSection === 'reports' ? (
+            <header className="reports-page__header">
+              <h1 className="reports-page__title">Fleet reports</h1>
+              <p className="reports-page__subtitle">
+                Cards by domain, live search, shared filters, exports.
+              </p>
+              <nav
+                className="tabs reports-tabs"
+                role="tablist"
+                aria-label="Report categories"
+              >
+                {TABS.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={t.id === tab}
+                    className={t.id === tab ? 'reports-tab reports-tab--active' : 'reports-tab'}
+                    onClick={() => setTab(t.id)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </nav>
+            </header>
           ) : null}
 
-          <main
-            key={`section-${tab}`}
+          <IntegrationOfflineBanner />
+
+          <div
             className={
-              'reports-page__main main tab-panel' +
-              (tab === 'accounting' ? ' reports-page__main--accounting' : '')
+              'reports-page__body-split' +
+              (!reportsSectionVisible || erpFuelEmbed || erpFuelModalHost
+                ? ' reports-page__body-split--no-sidebar'
+                : '')
             }
           >
-          {tab !== 'accounting' && tab !== 'maintenance' && (
-            <>
-              <div className="fr-reports-toolbar">
-                <label className="search fr-reports-search">
-                  <span className="sr-only">Search reports</span>
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search reports (title, tags, id)…"
-                  />
-                </label>
-              </div>
-            </>
-          )}
-
-          {tab === 'maintenance' ? (
-            <ErrorBoundary name="Maintenance">
-              {!erpRecordEmbed ? (
-                <div className="chips-inline maint-applied-filters" aria-label="Applied filters summary">
-                  {appliedChips(appliedFilters).map((c) => (
-                    <span key={c} className="chip sm">
-                      {c}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              <MaintenanceWorkspace
-                tabReports={maintenanceListReports}
-                onOpenReport={openReport}
-                externalNavRequest={maintExtNav}
-                onExternalNavConsumed={clearMaintExtNav}
-                onOpenAppWorkOrder={() => setAppWoPickOpen(true)}
-                erpRecordEmbed={erpRecordEmbed}
-              />
-            </ErrorBoundary>
-          ) : tab === 'accounting' ? (
-            <ErrorBoundary name="Accounting">
-              <AccountingDashboard
-                onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
-                onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
-                onNewWorkOrder={() => setAppWoPickOpen(true)}
-                listsBootstrap={acctListsBootstrap}
-                onListsBootstrapConsumed={() => setAcctListsBootstrap(null)}
-                erpFuelHost={erpFuelEmbed || erpFuelModalHost}
-                onFuelOpenFromAccounting={
-                  erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
-                }
+            {reportsSectionVisible && !erpFuelEmbed && !erpFuelModalHost ? (
+              <FilterSidebar
+                draft={draftFilters}
+                applied={appliedFilters}
+                onChange={setDraftFilters}
+                onApply={() => setAppliedFilters({ ...draftFilters })}
+                onReset={() => {
+                  const z = defaultFilters()
+                  setDraftFilters(z)
+                  setAppliedFilters(z)
+                }}
+                catalogServiceNames={catalogServiceNames}
                 onOpenForm425c={openForm425cEmbedded}
               />
-            </ErrorBoundary>
-          ) : (
-            <ErrorBoundary name="Reports">
-              {tab === 'fuel' ? (
-                <div className="fr-fuel-entry-strip" role="region" aria-label="Fuel bills and expenses">
-                  <p className="fr-fuel-entry-strip__lead muted">
-                    Opens the same fuel / DEF entry dialog as Accounting. Choose a transaction type below.
-                  </p>
-                  <div className="fr-fuel-entry-strip__btns">
-                    {fuelTransactionTypesAlphabetical().map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        className="btn sm primary"
-                        onClick={() => setFuelPlannerTxn(t)}
-                      >
-                        {FUEL_TRANSACTION_TYPE_LABELS[t]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {catalogReportsForGrid.length === 0 ? (
-                <p className="empty">No reports match this search.</p>
-              ) : (
-                reportCardGroups.map((g) => (
-                  <div key={g.key} className="fr-reports-domain">
-                    <div className="fr-reports-kicker" role="heading" aria-level={2}>
-                      {g.section}
+            ) : null}
+
+            <main
+              key={`section-${activeSection}-${reportTabForSection}`}
+              className={
+                'reports-page__main main tab-panel' +
+                (activeSection === 'accounting' ? ' reports-page__main--accounting' : '')
+              }
+            >
+              {activeSection === 'home' ? (
+                <ErrorBoundary name="Home">
+                  <div className="acct-hub">
+                    <div className="acct-hub__kpis" aria-label="Home KPI summary">
+                      <div className="acct-hub__kpi">
+                        <span className="acct-hub__kpi-lbl">Open bills</span>
+                        <span className="acct-hub__kpi-val">12</span>
+                        <span className="acct-hub__kpi-sub muted">$42,180 due</span>
+                      </div>
+                      <div className="acct-hub__kpi">
+                        <span className="acct-hub__kpi-lbl">Expenses this month</span>
+                        <span className="acct-hub__kpi-val">$18,420</span>
+                        <span className="acct-hub__kpi-sub muted">38 transactions</span>
+                      </div>
+                      <div className="acct-hub__kpi">
+                        <span className="acct-hub__kpi-lbl">QBO vendors</span>
+                        <span className="acct-hub__kpi-val">240</span>
+                        <span className="acct-hub__kpi-sub muted">Last synced today</span>
+                      </div>
+                      <div className="acct-hub__kpi acct-hub__kpi--warn">
+                        <span className="acct-hub__kpi-lbl">Pending QBO posts</span>
+                        <span className="acct-hub__kpi-val">2</span>
+                        <span className="acct-hub__kpi-sub muted">Review before sync</span>
+                      </div>
                     </div>
-                    <section className="report-cards-grid fr-report-cards-grid" aria-live="polite">
-                      {g.reports.map((r) => (
-                        <ReportCard key={r.id} report={r} onOpen={() => openReport(r)} />
-                      ))}
-                    </section>
+                    <div className="acct-hub__quick" aria-label="Home shortcuts">
+                      <button
+                        type="button"
+                        className="acct-hub__quick-btn"
+                        onClick={() => setActiveSection('maintenance')}
+                      >
+                        Maintenance center
+                      </button>
+                      <button
+                        type="button"
+                        className="acct-hub__quick-btn"
+                        onClick={() => setActiveSection('fuel')}
+                      >
+                        Fuel & route planning
+                      </button>
+                      <button
+                        type="button"
+                        className="acct-hub__quick-btn"
+                        onClick={() => setActiveSection('accounting')}
+                      >
+                        Accounting
+                      </button>
+                    </div>
                   </div>
-                ))
-              )}
-              <PartsCatalogPanel />
-            </ErrorBoundary>
-          )}
-          </main>
+                </ErrorBoundary>
+              ) : activeSection === 'maintenance' ? (
+                <ErrorBoundary name="Maintenance">
+                  {!erpRecordEmbed ? (
+                    <div className="chips-inline maint-applied-filters" aria-label="Applied filters summary">
+                      {appliedChips(appliedFilters).map((c) => (
+                        <span key={c} className="chip sm">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  <MaintenanceWorkspace
+                    tabReports={maintenanceListReports}
+                    onOpenReport={openReport}
+                    externalNavRequest={maintExtNav}
+                    onExternalNavConsumed={clearMaintExtNav}
+                    onOpenAppWorkOrder={() => setAppWoPickOpen(true)}
+                    erpRecordEmbed={erpRecordEmbed}
+                  />
+                </ErrorBoundary>
+              ) : activeSection === 'accounting' ? (
+                <ErrorBoundary name="Accounting">
+                  <AccountingDashboard
+                    onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
+                    onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
+                    onNewWorkOrder={() => setAppWoPickOpen(true)}
+                    listsBootstrap={acctListsBootstrap}
+                    onListsBootstrapConsumed={() => setAcctListsBootstrap(null)}
+                    erpFuelHost={erpFuelEmbed || erpFuelModalHost}
+                    onFuelOpenFromAccounting={
+                      erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
+                    }
+                    onOpenForm425c={openForm425cEmbedded}
+                  />
+                </ErrorBoundary>
+              ) : activeSection === 'lists' ? (
+                <ErrorBoundary name="Lists">
+                  <ListsCatalogsWorkspace
+                    activeTab={listsTab}
+                    onTabChange={setListsTab}
+                    deepLinkList={listsDeepLink}
+                    onDeepLinkConsumed={() => setListsDeepLink(null)}
+                  />
+                </ErrorBoundary>
+              ) : activeSection === 'tracking' ? (
+                <ErrorBoundary name="Tracking">
+                  <TelematicsFleetPage />
+                </ErrorBoundary>
+              ) : reportsSectionVisible ? (
+                <ErrorBoundary name={activeSection === 'reports' ? 'Reports' : activeSection}>
+                  <div className="fr-reports-toolbar">
+                    <label className="search fr-reports-search">
+                      <span className="sr-only">Search reports</span>
+                      <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search reports (title, tags, id)…"
+                      />
+                    </label>
+                  </div>
+                  {reportTabForSection === 'fuel' ? (
+                    <div className="fr-fuel-entry-strip" role="region" aria-label="Fuel bills and expenses">
+                      <p className="fr-fuel-entry-strip__lead muted">
+                        Opens the same fuel / DEF entry dialog as Accounting. Choose a transaction type below.
+                      </p>
+                      <div className="fr-fuel-entry-strip__btns">
+                        {fuelTransactionTypesAlphabetical().map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            className="btn sm primary"
+                            onClick={() => setFuelPlannerTxn(t)}
+                          >
+                            {FUEL_TRANSACTION_TYPE_LABELS[t]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {catalogReportsForGrid.length === 0 ? (
+                    <p className="empty">No reports match this search.</p>
+                  ) : (
+                    reportCardGroups.map((g) => (
+                      <div key={g.key} className="fr-reports-domain">
+                        <div className="fr-reports-kicker" role="heading" aria-level={2}>
+                          {g.section}
+                        </div>
+                        <section className="report-cards-grid fr-report-cards-grid" aria-live="polite">
+                          {g.reports.map((r) => (
+                            <ReportCard key={r.id} report={r} onOpen={() => openReport(r)} />
+                          ))}
+                        </section>
+                      </div>
+                    ))
+                  )}
+                  <PartsCatalogPanel />
+                </ErrorBoundary>
+              ) : null}
+            </main>
+          </div>
         </div>
-      </div>
       </div>
 
       <div className="toast-host" id="toast-host" aria-live="polite" />
@@ -657,12 +768,9 @@ export default function App() {
         }}
         onOpenVendorDirectory={() => {
           setFuelPlannerTxn(null)
-          setTab('accounting')
-          setAcctListsBootstrap({
-            token: Date.now(),
-            tab: 'name-management',
-            list: 'name-registry',
-          })
+          setActiveSection('lists')
+          setListsTab('name-management')
+          setListsDeepLink('name-registry')
         }}
         onViewAllIntegrity={() => {
           setFuelPlannerTxn(null)
