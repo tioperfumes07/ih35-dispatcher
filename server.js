@@ -155,6 +155,10 @@ async function start() {
     res.json({ ok: true, thresholds: {} });
   });
 
+  app.get("/src/utils/printDocuments.js", (_req, res) => {
+    res.sendFile(path.join(__dirname, "src", "utils", "printDocuments.js"));
+  });
+
   app.use(pdfRouter);
 
   app.use("/api/tms", tmsRoutes);

@@ -1,0 +1,75 @@
+-- Drivers, local vendors mirror, and Samsara/QBO-linked assets (Postgres / Neon).
+-- SQLite runtime DDL lives in server/lib/accounting-db.mjs (kept in sync conceptually).
+
+CREATE TABLE IF NOT EXISTS drivers (
+  id SERIAL PRIMARY KEY,
+  samsara_id TEXT UNIQUE,
+  full_name TEXT NOT NULL,
+  first_name TEXT,
+  last_name TEXT,
+  address TEXT,
+  city TEXT,
+  state TEXT,
+  zip TEXT,
+  country TEXT DEFAULT 'USA',
+  phone TEXT,
+  email TEXT,
+  cdl_number TEXT,
+  cdl_state TEXT,
+  cdl_expiry DATE,
+  assigned_unit TEXT,
+  qbo_vendor_id TEXT,
+  qbo_synced BOOLEAN DEFAULT false,
+  qbo_synced_at TIMESTAMPTZ,
+  status TEXT DEFAULT 'active',
+  samsara_synced_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS vendors_local (
+  id SERIAL PRIMARY KEY,
+  qbo_vendor_id TEXT UNIQUE,
+  display_name TEXT NOT NULL,
+  company_name TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  address TEXT,
+  city TEXT,
+  state TEXT,
+  zip TEXT,
+  country TEXT DEFAULT 'USA',
+  phone TEXT,
+  email TEXT,
+  vendor_type TEXT,
+  tax_id TEXT,
+  payment_terms TEXT,
+  qbo_synced BOOLEAN DEFAULT false,
+  qbo_synced_at TIMESTAMPTZ,
+  status TEXT DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS assets (
+  id SERIAL PRIMARY KEY,
+  samsara_id TEXT UNIQUE,
+  unit_number TEXT NOT NULL,
+  year INTEGER,
+  make TEXT,
+  model TEXT,
+  vin TEXT,
+  license_plate TEXT,
+  license_state TEXT,
+  odometer_miles INTEGER,
+  engine_hours NUMERIC,
+  fuel_type TEXT,
+  asset_type TEXT DEFAULT 'truck',
+  qbo_class_id TEXT,
+  qbo_class_name TEXT,
+  qbo_synced BOOLEAN DEFAULT false,
+  status TEXT DEFAULT 'active',
+  samsara_synced_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);

@@ -1,0 +1,154 @@
+{
+  "vendors": [
+    {
+      "id": "v-acme-1",
+      "name": "Acme Parts, Inc.",
+      "phone": "+1-214-555-0100",
+      "email": "ap@acmeparts.com",
+      "address": "1200 Industrial Blvd, Dallas, TX 75201",
+      "qboId": "QBO-V-10001",
+      "qboActive": true,
+      "active": true,
+      "billsCount": 4,
+      "expensesCount": 2,
+      "posCount": 1
+    },
+    {
+      "id": "v-acme-2",
+      "name": "ACME PARTS LLC",
+      "phone": "2145550100",
+      "email": "billing@acmeparts.com",
+      "address": "1200 Industrial Blvd Dallas TX 75201",
+      "qboId": "QBO-V-10002",
+      "qboActive": true,
+      "active": true,
+      "billsCount": 1,
+      "expensesCount": 0,
+      "posCount": 0
+    },
+    {
+      "id": "v-ta-1",
+      "name": "TA Petro Stopping Centers",
+      "phone": "+1-800-555-8844",
+      "email": "fleet@tapetro.com",
+      "address": "1 Petro Way, Westlake, OH 44145",
+      "qboId": "QBO-V-20001",
+      "qboActive": true,
+      "active": true,
+      "billsCount": 12,
+      "expensesCount": 3,
+      "posCount": 0
+    },
+    {
+      "id": "v-ta-2",
+      "name": "TA Petro — Stopping Centers Corp.",
+      "phone": "800-555-8844",
+      "email": "accounts@tapetro.com",
+      "address": "1 Petro Way Westlake OH 44145",
+      "qboId": "QBO-V-20002",
+      "qboActive": true,
+      "active": true,
+      "billsCount": 2,
+      "expensesCount": 1,
+      "posCount": 2
+    },
+    {
+      "id": "v-lone",
+      "name": "Lone Star Diesel Repair",
+      "phone": "+1-512-555-3300",
+      "email": "office@lonediesel.example",
+      "address": "88 Truck Ln, Austin, TX 78701",
+      "qboId": "QBO-V-30001",
+      "qboActive": true,
+      "active": true,
+      "billsCount": 0,
+      "expensesCount": 0,
+      "posCount": 0
+    }
+  ],
+  "customers": [
+    {
+      "id": "c-haul-1",
+      "name": "Summit Hauling LLC",
+      "phone": "+1-713-555-7788",
+      "email": "ar@summithauling.com",
+      "address": "500 Commerce St, Houston, TX 77002",
+      "qboId": "QBO-C-50001",
+      "qboActive": true,
+      "active": true,
+      "billsCount": 0,
+      "expensesCount": 0,
+      "posCount": 0
+    },
+    {
+      "id": "c-haul-2",
+      "name": "Summit Hauling, Inc",
+      "phone": "7135557788",
+      "email": "ap@summithauling.com",
+      "address": "500 Commerce Street Houston TX 77002",
+      "qboId": "QBO-C-50002",
+      "qboActive": true,
+      "active": true,
+      "billsCount": 0,
+      "expensesCount": 0,
+      "posCount": 0
+    },
+    {
+      "id": "c-metro",
+      "name": "Metro Cold Chain",
+      "phone": "+1-214-555-9900",
+      "email": "billing@metrocold.example",
+      "address": "9 Refrigerated Rd, Irving, TX 75038",
+      "qboId": "QBO-C-60001",
+      "qboActive": true,
+      "active": true,
+      "billsCount": 0,
+      "expensesCount": 0,
+      "posCount": 0
+    }
+  ],
+  "qboItems": [
+    {
+      "id": "qbo-it-linehaul",
+      "name": "Linehaul revenue",
+      "category": "Freight revenue",
+      "sku": ""
+    },
+    {
+      "id": "qbo-it-lumper",
+      "name": "Lumper / unload",
+      "category": "Accessorial",
+      "sku": "LUMP"
+    },
+    {
+      "id": "qbo-it-tires",
+      "name": "Tires & mounting",
+      "category": "R&M — tires",
+      "sku": "TIRE"
+    },
+    {
+      "id": "qbo-it-pm",
+      "name": "PM labor bundle",
+      "category": "R&M — preventive",
+      "sku": "PM-LAB"
+    },
+    {
+      "id": "qbo-it-def",
+      "name": "DEF fluid",
+      "category": "Fuel & DEF",
+      "sku": "DEF"
+    },
+    {
+      "id": "qbo-it-dot",
+      "name": "DOT annual inspection",
+      "category": "Compliance",
+      "sku": "DOT-INS"
+    },
+    {
+      "id": "qbo-it-reefer",
+      "name": "Reefer unit repair",
+      "category": "R&M — reefer",
+      "sku": "RF-RPR"
+    }
+  ]
+}

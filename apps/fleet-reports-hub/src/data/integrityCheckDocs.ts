@@ -1,0 +1,27 @@
+/** Human-readable catalog of integrity rules (for Settings / help). */
+
+export const INTEGRITY_RULE_DOCS: Record<string, string> = {
+  T1: '>8 tires / unit / 90 days',
+  T2: 'Same position replaced 3× / 180 days',
+  T3: 'Tire job cost >2.5× fleet avg',
+  T4: '>20 fleet tires / month',
+  D1: '>3 repairs / driver / 90 days',
+  D2: '>2 accidents / driver / year',
+  D3: '>$5,000 driver-attributed spend / 90 days',
+  D4: 'Same driver + unit combo 2× / 60 days',
+  A1: 'Multiple accidents same unit',
+  A2: 'High quarterly accident cost',
+  A3: 'DOT reportable — always review',
+  F1: '>30% above avg consumption',
+  F2: 'Driver fuel anomaly',
+  F3: 'Unusual gallons pattern',
+  F4: 'Price spike >20%',
+  F5: 'Same unit fuel 2× / day',
+  M1: 'Single repair >3× rolling avg',
+  M2: '>$4,000 / month / unit',
+  M3: '>6 maintenance records / unit / 60 days',
+  M4: 'Vendor invoice >40% above avg',
+  M5: 'PM overdue (schedule vs odometer)',
+  M6: 'PM due soon (within threshold mi)',
+  P1: 'Predictive model advisory',
+}
