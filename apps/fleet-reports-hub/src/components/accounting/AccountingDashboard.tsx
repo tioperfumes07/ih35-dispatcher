@@ -167,17 +167,22 @@ export function AccountingDashboard({
 
   return (
     <div className="acct-dash">
-      <div className="acct-dash__toolbar">
-        <div className="acct-new-wrap" ref={acctNewRef}>
-          <button
-            type="button"
-            className="btn primary"
-            aria-expanded={acctNewOpen}
-            aria-haspopup="menu"
-            onClick={() => setAcctNewOpen((o) => !o)}
-          >
-            + New
-          </button>
+      <header className="acct-dash__page-head">
+        <div className="acct-dash__page-head-text">
+          <h1 className="acct-dash__page-title">Accounting — IH 35 Transportation LLC</h1>
+          <p className="acct-dash__page-sub muted">QuickBooks connected · Samsara: 41 vehicles</p>
+        </div>
+        <div className="acct-dash__page-head-actions">
+          <div className="acct-new-wrap" ref={acctNewRef}>
+            <button
+              type="button"
+              className="btn primary acct-dash__head-btn"
+              aria-expanded={acctNewOpen}
+              aria-haspopup="menu"
+              onClick={() => setAcctNewOpen((o) => !o)}
+            >
+              + New
+            </button>
           {acctNewOpen && (
             <ul className="acct-new-dd" role="menu">
               {(
@@ -286,8 +291,15 @@ export function AccountingDashboard({
                 ))}
             </ul>
           )}
+          </div>
+          <button type="button" className="btn sm ghost acct-dash__head-btn">
+            Test QuickBooks
+          </button>
+          <button type="button" className="btn sm ghost acct-dash__head-btn">
+            Refresh QBO lists
+          </button>
         </div>
-      </div>
+      </header>
 
       <AccountingHomeHub
         onOpenFuel={openFuel}

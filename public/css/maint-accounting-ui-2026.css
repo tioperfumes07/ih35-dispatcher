@@ -3880,3 +3880,262 @@ body.erp-maintenance .erp-fuel-ded-hub-iframe {
 body.erp-maintenance #erpDedicatedFormModalBody .erp-fuel-ded-hub-iframe {
   min-height: min(88vh, 920px);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Visual consistency — spec utility aliases + compact controls (tokens only) */
+/* -------------------------------------------------------------------------- */
+body.erp-maintenance {
+  --color-background-primary: var(--color-bg-card);
+  --color-background-secondary: var(--color-bg-header);
+  --color-border-secondary: var(--color-border-input);
+  --color-border-tertiary: var(--color-border);
+  --color-text-secondary: var(--color-text-label);
+  --color-text-tertiary: var(--color-text-placeholder);
+  --color-background-success: var(--pill-green-bg);
+  --color-text-success: var(--pill-green-text);
+  --color-border-success: var(--color-success-border-soft);
+  --color-background-info: var(--pill-blue-bg);
+  --color-text-info: var(--pill-blue-text);
+  --color-border-info: var(--btn-info-border);
+  --color-background-warning: var(--pill-yellow-bg);
+  --color-text-warning: var(--pill-yellow-text);
+  --color-border-warning: var(--color-warning-border-soft);
+  --color-background-danger: var(--pill-red-bg);
+  --color-text-danger: var(--pill-red-text);
+  --color-border-danger: var(--btn-danger-border);
+}
+
+body.erp-maintenance input,
+body.erp-maintenance select,
+body.erp-maintenance textarea {
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .field-inp,
+body.erp-maintenance .form-input {
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  font-size: 10px !important;
+  padding: 0 6px !important;
+  border-radius: 3px !important;
+  border: 0.5px solid var(--color-border-secondary) !important;
+  background: var(--color-background-primary) !important;
+  color: var(--color-text-primary) !important;
+  outline: none !important;
+  width: 100%;
+  line-height: 22px !important;
+}
+
+body.erp-maintenance .field-inp:focus,
+body.erp-maintenance .form-input:focus {
+  border-color: #0969da !important;
+}
+
+body.erp-maintenance .field-inp::placeholder,
+body.erp-maintenance .form-input::placeholder,
+body.erp-maintenance input::placeholder,
+body.erp-maintenance textarea::placeholder {
+  color: var(--color-text-tertiary) !important;
+  opacity: 1 !important;
+}
+
+body.erp-maintenance .field-std {
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  font-size: 12px !important;
+  padding: 0 10px !important;
+  border-radius: 4px !important;
+  line-height: 32px !important;
+}
+
+body.erp-maintenance .td-inp {
+  height: 20px !important;
+  min-height: 20px !important;
+  max-height: 20px !important;
+  font-size: 10px !important;
+  padding: 0 4px !important;
+  border: 0.5px solid transparent !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  width: 100%;
+  line-height: 20px !important;
+}
+
+body.erp-maintenance .td-inp:focus {
+  border-color: #0969da !important;
+  background: var(--color-background-primary) !important;
+}
+
+body.erp-maintenance .filter-inp {
+  height: 14px !important;
+  min-height: 14px !important;
+  max-height: 14px !important;
+  font-size: 10px !important;
+  padding: 0 5px !important;
+  border-radius: 3px !important;
+  line-height: 14px !important;
+}
+
+body.erp-maintenance .btn-bar {
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  font-size: 11px !important;
+  padding: 0 14px !important;
+  border-radius: 4px !important;
+  line-height: 1 !important;
+}
+
+body.erp-maintenance .btn-std {
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  font-size: 10px !important;
+  padding: 0 10px !important;
+  border-radius: 4px !important;
+  line-height: 1 !important;
+}
+
+body.erp-maintenance .btn-sm {
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  font-size: 9px !important;
+  padding: 0 9px !important;
+  border-radius: 3px !important;
+  line-height: 1 !important;
+}
+
+body.erp-maintenance .btn-row {
+  height: 17px !important;
+  min-height: 17px !important;
+  max-height: 17px !important;
+  font-size: 9px !important;
+  padding: 0 5px !important;
+  border-radius: 2px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+}
+
+body.erp-maintenance .btn-icon {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 3px !important;
+  border: 0.5px solid var(--color-border-tertiary) !important;
+  background: transparent !important;
+  cursor: pointer;
+  color: var(--color-text-secondary) !important;
+}
+
+body.erp-maintenance .section-card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 6px 8px;
+}
+
+body.erp-maintenance .section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: var(--color-background-secondary);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+
+body.erp-maintenance .section-card-title {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+body.erp-maintenance .section-card-body {
+  padding: 8px;
+}
+
+body.erp-maintenance .field-label {
+  font-size: 9px;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+body.erp-maintenance .data-table th {
+  font-size: 9px;
+  color: var(--color-text-secondary);
+  text-align: left;
+  padding: 4px 7px;
+  border-bottom: 0.5px solid var(--color-border-secondary);
+  font-weight: 400;
+  white-space: nowrap;
+  background: var(--color-background-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  position: relative;
+  user-select: none;
+}
+
+body.erp-maintenance .data-table td {
+  font-size: 11px;
+  padding: 4px 7px;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  vertical-align: middle;
+  height: 26px;
+}
+
+body.erp-maintenance .data-table tr:hover td {
+  background: var(--color-bg-hover);
+}
+
+body.erp-maintenance .badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+body.erp-maintenance .badge-success {
+  background: var(--color-background-success);
+  color: var(--color-text-success);
+  border: 0.5px solid var(--color-border-success);
+}
+
+body.erp-maintenance .badge-info {
+  background: var(--color-background-info);
+  color: var(--color-text-info);
+  border: 0.5px solid var(--color-border-info);
+}
+
+body.erp-maintenance .badge-warning {
+  background: var(--color-background-warning);
+  color: var(--color-text-warning);
+  border: 0.5px solid var(--color-border-warning);
+}
+
+body.erp-maintenance .badge-danger {
+  background: var(--color-background-danger);
+  color: var(--color-text-danger);
+  border: 0.5px solid var(--color-border-danger);
+}
+
+body.erp-maintenance .badge-gray {
+  background: var(--pill-gray-bg);
+  color: var(--pill-gray-text);
+  border: 0.5px solid var(--color-border-tertiary);
+}
+

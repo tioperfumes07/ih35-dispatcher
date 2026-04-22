@@ -36,15 +36,18 @@ export function WorkspaceSnapshot({ onViewAllIntegrity }: Props) {
     }
   }, [])
 
-  const { openCount, recent5Lines } = useMemo(() => {
+  function truncate(s: string, max: number) {
+    if (s.length <= max) return s
+    return `${s.slice(0, max - 1)}…`
+  }
+
+  const { openCount, recent5 } = useMemo(() => {
     void storeTick
     const all = loadStoredAlerts()
     const open = all.filter((a) => !a.reviewedAt)
     const sorted = [...open].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    const recent5Lines = sorted.slice(0, 5).map(
-      (a) => `${catLabel(a.category)} · ${sevLabel(a.severity)}`,
-    )
-    return { openCount: open.length, recent5Lines }
+    const recent5 = sorted.slice(0, 5)
+    return { openCount: open.length, recent5 }
   }, [storeTick])
 
   return (
@@ -66,7 +69,12 @@ export function WorkspaceSnapshot({ onViewAllIntegrity }: Props) {
           <span className="acct-dash__kpi-label">QBO vendors</span>
           <span className="acct-dash__kpi-val">477</span>
         </div>
-        <div className="acct-dash__kpi maint-ws-snapshot-integrity-kpi">
+        <div
+          className={
+            'acct-dash__kpi maint-ws-snapshot-integrity-kpi' +
+            (openCount > 0 ? ' maint-ws-snapshot-integrity-kpi--alert' : '')
+          }
+        >
           <span className="acct-dash__kpi-label">Integrity Alerts</span>
           <span
             className={
@@ -81,12 +89,23 @@ export function WorkspaceSnapshot({ onViewAllIntegrity }: Props) {
             className="maint-ws-snapshot-integrity-kpi__list"
             aria-label="Five most recent open alerts"
           >
-            {recent5Lines.length === 0 ? (
+            {recent5.length === 0 ? (
               <li className="muted tiny maint-ws-snapshot-integrity-kpi__empty">No open alerts.</li>
             ) : (
-              recent5Lines.map((line, i) => (
-                <li key={`${line}-${i}`} className="tiny maint-ws-snapshot-integrity-kpi__line">
-                  {line}
+              recent5.map((a) => (
+                <li key={a.id} className="tiny maint-ws-snapshot-integrity-kpi__line">
+                  <span
+                    className={
+                      'maint-ws-snapshot-integrity-kpi__dot' +
+                      (a.severity === 'amber'
+                        ? ' maint-ws-snapshot-integrity-kpi__dot--amber'
+                        : ' maint-ws-snapshot-integrity-kpi__dot--red')
+                    }
+                    aria-hidden
+                  />
+                  <span className="maint-ws-snapshot-integrity-kpi__txt">
+                    {truncate((a.message || a.title || `${catLabel(a.category)} · ${sevLabel(a.severity)}`).trim(), 64)}
+                  </span>
                 </li>
               ))
             )}

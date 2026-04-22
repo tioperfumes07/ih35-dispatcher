@@ -479,12 +479,12 @@ export function FuelTransactionForm({
                 ))}
               </select>
             </label>
-            <div className="fuel-txn-balance">
+          </div>
+          <div className="fuel-txn-topbar__right">
+            <div className="fuel-txn-balance" aria-label="Balance due">
               <span className="muted fuel-txn-balance__lbl">Balance due</span>
               <span className="fuel-txn-balance__val">{money(balanceDue)}</span>
             </div>
-          </div>
-          <div className="fuel-txn-topbar__right">
             <button
               type="button"
               className="btn sm fuel-txn-bar-btn"
@@ -509,11 +509,13 @@ export function FuelTransactionForm({
 
         {driver.trim() ? (
           <div className="fuel-txn-integrity fuel-txn-integrity--ok" role="status">
-            Driver recorded on this entry.
+            <span className="fuel-txn-integrity__dot" aria-hidden />
+            <span className="fuel-txn-integrity__msg">Driver recorded on this entry.</span>
           </div>
         ) : (
           <div className="fuel-txn-integrity fuel-txn-integrity--warn" role="alert">
-            <span>
+            <span className="fuel-txn-integrity__dot" aria-hidden />
+            <span className="fuel-txn-integrity__msg">
               Integrity: no driver assigned — assign below to log accountability for this service record.
             </span>
             {onViewAllIntegrity ? (
@@ -585,13 +587,15 @@ export function FuelTransactionForm({
                   <span className="fuel-txn__lbl">Unit / asset</span>
                   {unitNo.trim() ? (
                     <>
-                      <div className="fuel-txn-unit-row">
-                        <span className="fuel-txn-unit-badge fuel-txn-unit-badge--info">{unitNo.trim()}</span>
-                        <button type="button" className="fuel-txn__link" onClick={() => setUnitNo('')}>
+                      <div className="fuel-txn-unit-strip fuel-txn-unit-badge--info">
+                        <span className="fuel-txn-unit-strip__main">
+                          {unitNo.trim()} — auto-set as QBO Class
+                        </span>
+                        <button type="button" className="fuel-txn__link fuel-txn-unit-strip__change" onClick={() => setUnitNo('')}>
                           Change
                         </button>
                       </div>
-                      <p className="muted tiny">Unit number = Class in QuickBooks</p>
+                      <p className="fuel-txn-unit-hint muted tiny">Unit number = Class in QuickBooks</p>
                     </>
                   ) : (
                     <>
@@ -601,7 +605,7 @@ export function FuelTransactionForm({
                         onChange={(e) => setUnitNo(e.target.value)}
                         placeholder="Search or enter unit"
                       />
-                      <p className="muted tiny">Unit number = Class in QuickBooks</p>
+                      <p className="fuel-txn-unit-hint muted tiny">Unit number = Class in QuickBooks</p>
                     </>
                   )}
                 </div>

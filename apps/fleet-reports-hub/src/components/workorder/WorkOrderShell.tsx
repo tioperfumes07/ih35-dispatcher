@@ -305,10 +305,10 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               {ledger ? ledger.topTitle : 'Create work order'}
             </span>
             <span className="wo-wo-badge">{props.workOrderNumber}</span>
-            <span className="wo-pill">{props.unitNo}</span>
-            <span className="wo-pill">{props.pills.recordType}</span>
-            <span className="wo-pill">{props.pills.location}</span>
-            <span className="wo-pill">{props.pills.total}</span>
+            <span className="wo-pill wo-pill--info">{props.unitNo}</span>
+            <span className="wo-pill wo-pill--warn">{props.pills.recordType}</span>
+            <span className="wo-pill wo-pill--ok">{props.pills.location}</span>
+            <span className="wo-pill wo-pill--total">{props.pills.total}</span>
           </div>
           {ledger ? <p className="wo-topbar__ledger-hint">{ledger.topHint}</p> : null}
         </div>
@@ -332,31 +332,59 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
 
       <div className="wo-unit-card">
         <div className="wo-unit-card__left">
-          <span className="wo-unit-badge">Unit</span>
-          <strong style={{ fontSize: 12 }}>
-            {props.unitNo} · {props.unitTitle}
-          </strong>
-          <span className="wo-pill">{props.vehicleTypeLabel}</span>
+          <span className="wo-unit-badge">{props.unitNo}</span>
+          <div className="wo-unit-card__meta">
+            <div className="wo-unit-card__name">
+              {props.unitNo} · {props.unitTitle}
+            </div>
+            <div className="wo-unit-card__sub muted">{props.vehicleTypeLabel}</div>
+          </div>
         </div>
         <div className="wo-unit-card__stats">
-          <span>Odometer {props.unitStats.odometer.toLocaleString()}</span>
-          <span style={{ color: props.unitStats.pastDue > 0 ? 'var(--danger)' : undefined }}>
-            Past due {props.unitStats.pastDue}
+          <span className="wo-unit-card__stat">
+            <span className="wo-unit-card__stat-lbl">Odo</span>{' '}
+            <strong className="wo-unit-card__stat-val">
+              {props.unitStats.odometer.toLocaleString()} mi
+            </strong>
           </span>
-          <span style={{ color: props.unitStats.dueSoon > 0 ? 'var(--warn)' : undefined }}>
-            Due soon {props.unitStats.dueSoon}
+          <span className="wo-unit-card__stat">
+            <span className="wo-unit-card__stat-lbl">Past due</span>{' '}
+            <strong
+              className={
+                'wo-unit-card__stat-val' +
+                (props.unitStats.pastDue > 0 ? ' wo-unit-card__stat-val--danger' : '')
+              }
+            >
+              {props.unitStats.pastDue}
+            </strong>
           </span>
-          <span>Saved odo {props.unitStats.savedOdoDisplay}</span>
+          <span className="wo-unit-card__stat">
+            <span className="wo-unit-card__stat-lbl">Due soon</span>{' '}
+            <strong
+              className={
+                'wo-unit-card__stat-val' +
+                (props.unitStats.dueSoon > 0 ? ' wo-unit-card__stat-val--warn' : '')
+              }
+            >
+              {props.unitStats.dueSoon}
+            </strong>
+          </span>
+          <span className="wo-unit-card__stat">
+            <span className="wo-unit-card__stat-lbl">Saved odo</span>{' '}
+            <strong className="wo-unit-card__stat-val">{props.unitStats.savedOdoDisplay}</strong>
+          </span>
         </div>
       </div>
 
       {props.driverName.trim() ? (
         <div className="wo-integrity wo-integrity--ok" role="status">
-          Driver recorded on this entry.
+          <span className="wo-integrity__dot" aria-hidden />
+          <span className="wo-integrity__msg">Driver recorded on this entry.</span>
         </div>
       ) : (
         <div className="wo-integrity wo-integrity--warn" role="alert">
-          <span>
+          <span className="wo-integrity__dot" aria-hidden />
+          <span className="wo-integrity__msg">
             Integrity: no driver assigned — assign below to log accountability for this service record.
           </span>
           {props.integrity.onViewAllIntegrity ? (
@@ -463,7 +491,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
 
         <SectionCard
           sid="B"
-          label="B — Driver assignment (integrity tracked)"
+          label="B — Driver assignment"
           extraHead={<span className="wo-sec__badge-ok">Integrity tracked</span>}
         >
           <div className="wo-grid4">
@@ -493,7 +521,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
                   value={props.odometerInput}
                   onChange={(e) => props.onOdometerInput(e.target.value)}
                 />
-                <div className="wo-table-hint">{props.samsaraOdoHint}</div>
+                <div className="wo-table-hint wo-table-hint--left">{props.samsaraOdoHint}</div>
               </div>
             </label>
             <label className="field">
@@ -501,6 +529,14 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               <input className="wo-input" readOnly value={props.suggestedLoad} />
             </label>
           </div>
+          {props.driverName.trim() ? (
+            <div className="wo-driver-confirm" role="status">
+              <span className="wo-driver-confirm__dot" aria-hidden />
+              <span>
+                Driver recorded on this entry — applies to repairs, PM, work orders, accidents, inspections.
+              </span>
+            </div>
+          ) : null}
         </SectionCard>
 
         <SectionCard sid="C" label="C — Planned work & parts">
