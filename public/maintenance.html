@@ -622,7 +622,6 @@
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill-payment')">Driver bill payment</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('item-receipt')">Item receipt</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('form-425c')">Form 425C (monthly operating report)</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('purchase-order')">Purchase order</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('vendor-credit')">Vendor credit</button>
@@ -2913,7 +2912,7 @@
             <span class="erp-help-tip">
               <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="KPIs vs tabs">?</button>
               <span class="erp-help-tip__panel" role="tooltip">
-                <strong>KPIs</strong> = expenses, bills, sync alerts, review queue. Cards open the matching tab; <strong>Connections</strong> = live Samsara / QBO / API.
+                <strong>KPIs</strong> = open bills, expenses this month, QBO vendor catalog count + last refresh, pending QBO posts. <strong>Connections</strong> = live Samsara / QBO / API.
               </span>
             </span>
           </div>
@@ -3090,6 +3089,7 @@
               <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
               <button type="button" onclick="openDedupeTool()">Find &amp; merge duplicates</button>
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
+              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('name-mgmt');">Name management</button>
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
               <button type="button" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>
@@ -3559,10 +3559,6 @@
                 <div class="mr-filter-bar__actions">
                   <span class="qb-l">&nbsp;</span>
                   <button type="button" class="qb-btn-add" onclick="bpLoadOpenBillByQuickId()">Load bill by Id</button>
-                </div>
-                <div class="mr-filter-bar__actions">
-                  <span class="qb-l">&nbsp;</span>
-                  <button type="button" class="qb-btn-add" onclick="window.openForm425C()">Form 425C — Monthly Report</button>
                 </div>
               </div>
             </div>
@@ -5736,12 +5732,12 @@
           </div>
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
-              <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; Samsara</button>
+              <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; Samsara writes</button>
               <button type="button" class="subtab" data-cat-sub="name-mgmt" onclick="openCatalogSubpanel('name-mgmt', this)">Name management</button>
-              <button type="button" class="subtab" data-cat-sub="operational" onclick="openCatalogSubpanel('operational', this)">Operational status</button>
+              <button type="button" class="subtab" data-cat-sub="operational" onclick="openCatalogSubpanel('operational', this)">Operational status labels</button>
               <button type="button" class="subtab" data-cat-sub="qbo" onclick="openCatalogSubpanel('qbo', this)">QuickBooks items &amp; accounts</button>
               <button type="button" class="subtab active" data-cat-sub="service" onclick="openCatalogSubpanel('service', this)">Service types (DB)</button>
-              <button type="button" class="subtab" data-cat-sub="vendors" onclick="openCatalogSubpanel('vendors', this)">Vendors &amp; drivers</button>
+              <button type="button" class="subtab" data-cat-sub="vendors" onclick="openCatalogSubpanel('vendors', this)">Vendors &amp; driver payees</button>
             </div>
             <div id="catalog-panel-service" class="catalog-subpanel active">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
@@ -9032,7 +9028,7 @@
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'vendors\');">Vendors &amp; driver payees</button>';
       if (includeBankCsv) {
         s =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV (matching)</button>' + s;
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV matching</button>' + s;
       }
       return s;
     }
@@ -9490,7 +9486,7 @@
       if (k === 'transfer') return erpOpenLedgerStubModal('transfer');
       if (k === 'journal-entry') return erpOpenLedgerStubModal('journal');
       if (k === 'form-425c') {
-        window.location.href = '/form-425c';
+        window.location.href = '/form-425c.html';
         return;
       }
       if (k === 'find-merge-dupes') {
@@ -21779,19 +21775,21 @@
       const elM = document.getElementById('acctBoardKpiExpMonth');
       const elMS = document.getElementById('acctBoardKpiExpMonthSub');
       if (elM) elM.textContent = monthN ? '$' + monthTotal.toFixed(2) : '$0.00';
-      if (elMS) elMS.textContent = monthN ? String(monthN) + ' records' : '0 records';
+      if (elMS) elMS.textContent = monthN ? String(monthN) + ' transactions' : '0 transactions';
 
-      const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-      const weekEnd = today0 + 7 * 86400000;
       let billsN = 0;
       let bills$ = 0;
       (erp.apTransactions || []).forEach(ap => {
         if (String(ap.txnType || '').toLowerCase() !== 'bill') return;
-        const due = ap.dueDate ? new Date(ap.dueDate).getTime() : 0;
-        if (!Number.isFinite(due) || !due) return;
-        if (due >= today0 && due <= weekEnd) {
+        if (String(ap.qboSyncStatus || '').toLowerCase() === 'void') return;
+        const pay = String(ap.paymentStatus || ap.status || '').toLowerCase();
+        if (pay === 'paid' || pay === 'closed' || pay === 'fullypaid') return;
+        const bal = Number(ap.balanceDue);
+        const amt = Number(ap.amount) || 0;
+        const openAmt = Number.isFinite(bal) && bal >= 0 ? bal : amt;
+        if (openAmt > 0.0001) {
           billsN++;
-          bills$ += Number(ap.amount) || 0;
+          bills$ += openAmt;
         }
       });
       const elB = document.getElementById('acctBoardKpiBillsWeek');
@@ -21801,41 +21799,22 @@
         elB.classList.remove('acct-dash-kpi__val--danger', 'acct-dash-kpi__val--ok');
         elB.classList.add(billsN > 0 ? 'acct-dash-kpi__val--danger' : 'acct-dash-kpi__val--ok');
       }
-      if (elBS) elBS.textContent = billsN ? '$' + bills$.toFixed(2) + ' total due' : '$0.00 total due';
+      if (elBS) elBS.textContent = billsN ? '$' + bills$.toFixed(2) + ' due' : '$0.00 due';
 
-      const sync = __maintQboSyncPayloadCache;
-      const c = (sync && sync.counts) || {};
-      const alertTotal =
-        c.total != null
-          ? Number(c.total)
-          : Array.isArray(sync?.alerts)
-            ? sync.alerts.length
-            : 0;
+      const vendors = typeof cacheVendors === 'function' ? cacheVendors() : [];
+      const vcount = Array.isArray(vendors) ? vendors.length : 0;
       const elQ = document.getElementById('acctBoardKpiSyncAlerts');
       const elQS = document.getElementById('acctBoardKpiSyncAlertsSub');
       if (elQ) {
-        elQ.textContent = String(Number.isFinite(alertTotal) ? alertTotal : 0);
+        elQ.textContent = String(vcount);
         elQ.classList.remove('acct-dash-kpi__val--danger', 'acct-dash-kpi__val--ok');
-        elQ.classList.add(alertTotal > 0 ? 'acct-dash-kpi__val--danger' : 'acct-dash-kpi__val--ok');
+        elQ.classList.add('acct-dash-kpi__val--ok');
       }
       if (elQS) {
-        const high = Number(c.high) || 0;
-        const med = Number(c.medium) || 0;
-        elQS.textContent = `${med} pending · ${high} errors · timer ~${Math.round(AUTO_REFRESH_MS / 60000)} min`;
-      }
-
-      let errReview = 0;
-      (erp.apTransactions || []).forEach(ap => {
-        if (String(ap.qboSyncStatus || '').toLowerCase() === 'error') errReview++;
-      });
-      (erp.workOrders || []).forEach(wo => {
-        if (!wo.voided && String(wo.qboSyncStatus || '').toLowerCase() === 'error') errReview++;
-      });
-      const elU = document.getElementById('acctBoardKpiUnreconciled');
-      if (elU) {
-        elU.textContent = String(errReview);
-        elU.classList.remove('acct-dash-kpi__val--danger', 'acct-dash-kpi__val--ok');
-        elU.classList.add(errReview > 0 ? 'acct-dash-kpi__val--danger' : 'acct-dash-kpi__val--ok');
+        const ra = erp && erp.qboCache && erp.qboCache.refreshedAt;
+        elQS.textContent = ra
+          ? 'Last sync ' + new Date(ra).toLocaleString()
+          : 'Refresh QuickBooks live master to load vendors';
       }
 
       let pendingN = 0;
@@ -21853,9 +21832,15 @@
           pending$ += Number(ap.amount) || 0;
         }
       });
-      const sumEl = document.getElementById('acctBoardPendingSummary');
-      if (sumEl) {
-        sumEl.textContent = String(pendingN) + ' pending · $' + pending$.toFixed(2) + ' total (not yet in QuickBooks)';
+      const elU = document.getElementById('acctBoardKpiUnreconciled');
+      const elUS = document.getElementById('acctBoardKpiUnreconciledSub');
+      if (elU) {
+        elU.textContent = String(pendingN);
+        elU.classList.remove('acct-dash-kpi__val--danger', 'acct-dash-kpi__val--ok');
+        elU.classList.add(pendingN > 0 ? 'acct-dash-kpi__val--danger' : 'acct-dash-kpi__val--ok');
+      }
+      if (elUS) {
+        elUS.textContent = pendingN ? '$' + pending$.toFixed(2) + ' not yet in QBO' : 'All rows posted or cleared';
       }
       renderAcctBoardMiniTables();
       if (typeof erpInitAcctBoardDateFilters === 'function') erpInitAcctBoardDateFilters();
@@ -26626,6 +26611,5 @@
   </script>
   <script src="/js/erp-qbo-dedupe.js"></script>
   <script src="/js/erp-name-management.js"></script>
-  <script src="/js/form-425c-modal.js"></script>
 </body>
 </html>

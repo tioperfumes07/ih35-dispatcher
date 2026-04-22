@@ -881,38 +881,27 @@ body.erp-maintenance #section-accounting .maint-qb-lines-scroll {
 }
 
 body.erp-maintenance .acct-dash-kpis {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
   min-width: 0;
   min-height: 0;
 }
 
-@media (max-width: 1099px) {
-  body.erp-maintenance .acct-dash-kpis {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 699px) {
-  body.erp-maintenance .acct-dash-kpis {
-    grid-template-columns: 1fr;
-  }
-}
-
 body.erp-maintenance .acct-dash-kpi {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 14px 16px;
+  flex: 1 1 140px;
+  min-width: min(160px, 100%);
+  background: var(--color-bg-hover);
+  border: 0.5px solid var(--color-border);
+  border-radius: 5px;
+  padding: 8px 10px;
   box-sizing: border-box;
-  min-width: 0;
   min-height: 0;
 }
 
 body.erp-maintenance .acct-dash-kpi__label {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 500;
   text-transform: uppercase;
   color: var(--color-text-label);
@@ -922,7 +911,7 @@ body.erp-maintenance .acct-dash-kpi__label {
 }
 
 body.erp-maintenance .acct-dash-kpi__val {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 500;
   color: #1a1f36;
   margin-top: 4px;
@@ -939,11 +928,32 @@ body.erp-maintenance .acct-dash-kpi__val--ok {
 }
 
 body.erp-maintenance .acct-dash-kpi__sub {
-  font-size: 11px;
+  font-size: 9px;
   color: #a0a8b8;
   margin-top: 4px;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/* Packet 8 — accounting board home: no inline record tables on the strip */
+body.erp-maintenance #acctBoardStrip .acct-board-table-wrap,
+body.erp-maintenance #acctBoardStrip .erp-date-filter-bar-host,
+body.erp-maintenance #acctBoardStrip .acct-board-section__foot,
+body.erp-maintenance #acctBoardStrip #acctBoardQboErrDateFilterHost,
+body.erp-maintenance #acctBoardStrip #acctDashQboErrList,
+body.erp-maintenance #acctBoardStrip #acctDashQboErrMore {
+  display: none !important;
+}
+
+/* Packet 8 — board quick actions: compact control height */
+body.erp-maintenance #acctBoardStrip .acct-board-action-btn {
+  height: 22px;
+  min-height: 22px;
+  padding: 0 10px;
+  font-size: 9px;
+  line-height: 1;
+  border-radius: 3px;
+  border-width: 0.5px;
 }
 
 /* Accounting board — 2×2 action cards (Fix 3) */
