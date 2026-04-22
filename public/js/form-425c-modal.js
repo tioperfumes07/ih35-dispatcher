@@ -5,8 +5,8 @@
 (function () {
   'use strict';
 
-  var REACT_SRC = 'https://unpkg.com/react@19/umd/react.development.js';
-  var REACT_DOM_SRC = 'https://unpkg.com/react-dom@19/umd/react-dom.development.js';
+  var REACT_SRC = 'https://unpkg.com/react@18/umd/react.development.js';
+  var REACT_DOM_SRC = 'https://unpkg.com/react-dom@18/umd/react-dom.development.js';
   var APP_SRC = '/js/form-425c-app.js';
   var CSS_HREF = '/css/form-425c.css';
 
@@ -213,8 +213,25 @@
 
         var mount = document.getElementById('form-425c-modal-root');
         if (!mount) throw new Error('Missing #form-425c-modal-root');
-        st.root = window.ReactDOM.createRoot(mount);
-        st.root.render(window.React.createElement(window.Form425CApp, null));
+        if (window.ReactDOM && typeof window.ReactDOM.createRoot === 'function') {
+          st.root = window.ReactDOM.createRoot(mount);
+          st.root.render(window.React.createElement(window.Form425CApp, null));
+          return;
+        }
+        if (window.ReactDOM && typeof window.ReactDOM.render === 'function') {
+          window.ReactDOM.render(window.React.createElement(window.Form425CApp, null), mount);
+          st.root = {
+            unmount: function () {
+              try {
+                window.ReactDOM.unmountComponentAtNode(mount);
+              } catch (_) {
+                /* ignore */
+              }
+            }
+          };
+          return;
+        }
+        throw new Error('Form 425C modal: ReactDOM mount API unavailable');
       })
       .catch(function (err) {
         console.error(err);

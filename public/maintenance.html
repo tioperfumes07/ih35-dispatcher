@@ -23,6 +23,14 @@
   <!-- Same-origin on Render by default; set IH35_FLEET_HUB_BASE_URL on the server if hub lives elsewhere. -->
   <script src="/ih35-runtime.js"></script>
   <style>
+    /* Keep section routing deterministic: only one top-level section is visible at a time. */
+    #erpApp .erp-main-body > .section {
+      display: none !important;
+    }
+    #erpApp .erp-main-body > .section.active {
+      display: block !important;
+    }
+
     /* Keep modal/iframe surfaces aligned with the ERP light palette and responsive viewport behavior. */
     .maint-modal-bg {
       padding: clamp(8px, 1.4vw, 18px);
@@ -646,7 +654,6 @@
                   </div>
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Bills</div>
-                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('bill')">Bill</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('def-bill')">DEF bill</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('driver-bill')">Driver bill</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-bill')">Fuel bill</button>

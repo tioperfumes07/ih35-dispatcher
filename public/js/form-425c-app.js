@@ -1879,5 +1879,16 @@
   }
 
   window.Form425CApp = Form425CApp;
-  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Form425CApp, null));
+  var rootEl = document.getElementById('root');
+  if (rootEl) {
+    if (window.ReactDOM && typeof window.ReactDOM.createRoot === 'function') {
+      window.ReactDOM.createRoot(rootEl).render(React.createElement(Form425CApp, null));
+    } else if (window.ReactDOM && typeof window.ReactDOM.render === 'function') {
+      window.ReactDOM.render(React.createElement(Form425CApp, null), rootEl);
+    } else {
+      console.error('Form 425C: ReactDOM mount API unavailable');
+    }
+  } else {
+    console.error('Form 425C: missing #root mount node');
+  }
 })();
