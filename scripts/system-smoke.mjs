@@ -22,6 +22,10 @@ const base = String(process.env.SMOKE_BASE || `http://localhost:${process.env.PO
 const CRITICAL = [
   ['GET', '/api/health'],
   ['GET', '/api/qbo/status'],
+  ['GET', '/api/accounting/qbo-items'],
+  ['GET', '/api/catalog/parts'],
+  ['GET', '/api/catalog/service-types'],
+  ['GET', '/api/form-425c/profiles'],
   ['GET', '/api/qbo/sync-alerts'],
   ['GET', '/api/maintenance/dashboard'],
   ['GET', '/api/maintenance/records'],
@@ -268,6 +272,10 @@ async function onePdf(path) {
 function summarize(j, path) {
   if (!j || typeof j !== 'object') return String(j).slice(0, 80);
   if (path === '/api/health') return `ok=${j.ok} samsara=${j.hasSamsaraToken} qboCfg=${j.hasQboConfig}`;
+  if (path === '/api/accounting/qbo-items' && Array.isArray(j.items)) return `items=${j.items.length}`;
+  if (path === '/api/catalog/parts' && Array.isArray(j.parts)) return `parts=${j.parts.length}`;
+  if (path === '/api/catalog/service-types' && Array.isArray(j.services)) return `services=${j.services.length}`;
+  if (path === '/api/form-425c/profiles' && Array.isArray(j.companies)) return `companies=${j.companies.length}`;
   if (j.ok === false && j.error) return `error=${String(j.error).slice(0, 120)}`;
   if (j.counts) return `counts=${JSON.stringify(j.counts)}`;
   if (Array.isArray(j.vehicles)) return `vehicles=${j.vehicles.length}`;

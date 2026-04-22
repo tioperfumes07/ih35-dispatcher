@@ -132,6 +132,10 @@ process.on('uncaughtException', (err) => {
  */
 const SMOKE_GATE_API_PATHS = new Set([
   '/api/qbo/status',
+  '/api/accounting/qbo-items',
+  '/api/catalog/parts',
+  '/api/catalog/service-types',
+  '/api/form-425c/profiles',
   '/api/qbo/sync-alerts',
   '/api/maintenance/dashboard',
   '/api/maintenance/records',
