@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { initializeDatabase } from "./lib/ensure-app-database-objects.mjs";
@@ -24,6 +25,10 @@ const __dirname = path.dirname(__filename);
 const SMOKE_GATE_API_PATHS = new Set([
   "/api/qbo/status",
   "/api/qbo/sync-alerts",
+  "/api/accounting/qbo-items",
+  "/api/catalog/parts",
+  "/api/catalog/service-types",
+  "/api/form-425c/profiles",
   "/api/maintenance/dashboard",
   "/api/maintenance/records",
   "/api/board",
@@ -32,6 +37,15 @@ const SMOKE_GATE_API_PATHS = new Set([
   "/api/integrity/counts",
   "/api/integrity/thresholds"
 ]);
+
+function readJsonFileSafe(filePath, fallback) {
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
 
 function readSessionTokenFromReq(req) {
   const auth = String(req.headers.authorization || "").trim();
@@ -116,15 +130,60 @@ async function start() {
   });
 
   app.get("/api/qbo/status", (_req, res) => {
-    res.json({ ok: true, connected: false, realmId: null });
+    const configured = Boolean(String(process.env.QBO_CLIENT_ID || "").trim());
+    res.json({ ok: true, connected: false, configured, realmId: null });
   });
 
   app.get("/api/qbo/sync-alerts", (_req, res) => {
-    res.json({ ok: true, counts: { total: 0, errors: 0, warnings: 0 } });
+    const configured = Boolean(String(process.env.QBO_CLIENT_ID || "").trim());
+    res.json({
+      ok: true,
+      configured,
+      connected: false,
+      counts: { total: 0, errors: 0, warnings: 0 }
+    });
+  });
+
+  app.get("/api/accounting/qbo-items", (req, res) => {
+    const q = String(req.query.q || "").trim().toLowerCase();
+    const catalogPath = path.join(__dirname, "apps", "fleet-reports-hub", "server", "data", "accounting-catalog.json");
+    const catalog = readJsonFileSafe(catalogPath, { qboItems: [] });
+    const rows = Array.isArray(catalog?.qboItems) ? catalog.qboItems : [];
+    const items = q
+      ? rows.filter((it) =>
+          [it?.name, it?.category, it?.sku].some((v) => String(v || "").toLowerCase().includes(q))
+        )
+      : rows;
+    res.json({ ok: true, items });
+  });
+
+  app.get("/api/catalog/parts", (_req, res) => {
+    const partsPath = path.join(__dirname, "apps", "fleet-reports-hub", "server", "data", "parts-reference.json");
+    const parts = readJsonFileSafe(partsPath, []);
+    res.json({ ok: true, parts: Array.isArray(parts) ? parts : [] });
+  });
+
+  app.get("/api/catalog/service-types", (_req, res) => {
+    const serviceTypesPath = path.join(
+      __dirname,
+      "apps",
+      "fleet-reports-hub",
+      "server",
+      "data",
+      "service-types.json"
+    );
+    const services = readJsonFileSafe(serviceTypesPath, []);
+    res.json({ ok: true, services: Array.isArray(services) ? services : [] });
+  });
+
+  app.get("/api/form-425c/profiles", (_req, res) => {
+    const profilesPath = path.join(__dirname, "data", "form-425c-profiles.example.json");
+    const doc = readJsonFileSafe(profilesPath, { companies: [] });
+    res.json({ ok: true, companies: Array.isArray(doc?.companies) ? doc.companies : [] });
   });
 
   app.get("/api/maintenance/dashboard", (_req, res) => {
-    res.json({ ok: true, dashboard: [] });
+    res.json({ ok: true, dashboard: [], vehicles: [], tireAlerts: [] });
   });
 
   app.get("/api/maintenance/records", (_req, res) => {
@@ -132,27 +191,55 @@ async function start() {
   });
 
   app.get("/api/board", (_req, res) => {
-    res.json({ ok: true, vehicles: [] });
+    res.json({ ok: true, vehicles: [], live: [], hos: [], assignments: [] });
   });
 
   app.get("/api/maintenance/service-types", (_req, res) => {
-    res.json({ ok: true, serviceTypes: [] });
+    const serviceTypesPath = path.join(
+      __dirname,
+      "apps",
+      "fleet-reports-hub",
+      "server",
+      "data",
+      "service-types.json"
+    );
+    const rows = readJsonFileSafe(serviceTypesPath, []);
+    const names = Array.isArray(rows)
+      ? rows
+          .map((r) => String(r?.service_name || "").trim())
+          .filter(Boolean)
+      : [];
+    res.json({ ok: true, names });
   });
 
   app.get("/api/integrity/dashboard", (_req, res) => {
     res.json({
       ok: true,
       alerts: [],
-      kpi: { active: 0, red: 0, amber: 0, resolvedThisMonth: 0 }
+      kpi: { active: 0, red: 0, amber: 0, resolvedThisMonth: 0 },
+      query: {}
     });
   });
 
   app.get("/api/integrity/counts", (_req, res) => {
-    res.json({ ok: true, active: 0, red: 0, amber: 0 });
+    res.json({ ok: true, active: 0, red: 0, amber: 0, resolvedThisMonth: 0 });
   });
 
   app.get("/api/integrity/thresholds", (_req, res) => {
-    res.json({ ok: true, thresholds: {} });
+    res.json({ ok: true, thresholds: { missingDriverPctWarn: 15 } });
+  });
+
+  app.get("/ih35-runtime.js", (_req, res) => {
+    res.type("application/javascript").send(
+      [
+        "window.__IH35_FLEET_HUB_BASE = '/fleet-reports/';",
+        "window.__IH35_DEPLOY_REF = 'dev-local';"
+      ].join("\n")
+    );
+  });
+
+  app.get("/src/utils/printDocuments.js", (_req, res) => {
+    res.sendFile(path.join(__dirname, "src", "utils", "printDocuments.js"));
   });
 
   app.use(pdfRouter);

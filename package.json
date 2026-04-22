@@ -11,6 +11,7 @@
     "render:install": "rm -rf node_modules && npm ci",
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "build:fleet": "VITE_BASE=/fleet-reports/ npm --prefix apps/fleet-reports-hub run build && rm -rf public/fleet-reports && mkdir -p public/fleet-reports && cp -R apps/fleet-reports-hub/dist/. public/fleet-reports/",
     "db:test": "node scripts/db-test.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "smoke": "node scripts/system-smoke.mjs",
