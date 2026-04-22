@@ -15,7 +15,6 @@ import {
 } from './components/MaintenanceWorkspace'
 import {
   AccountingDashboard,
-  type AccountingListsBootstrap,
 } from './components/accounting/AccountingDashboard'
 import {
   LISTS_CATALOG_TAB_IDS,
@@ -87,6 +86,18 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'loads', label: 'Loads' },
 ]
 
+const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
+  home: 'Operational dashboard with section shortcuts and KPI snapshot.',
+  maintenance: 'Work orders, integrity operations, and maintenance workflows.',
+  accounting: 'Accounting workspace with QBO-facing actions and controls.',
+  lists: 'Catalog and registry management with inline CRUD workflows.',
+  reports: 'Cards by domain, live search, shared filters, exports.',
+  safety: 'Safety-focused report cards and audit drill-down entry points.',
+  tracking: 'Telematics fleet inventory, integrity, and connection status.',
+  fuel: 'Fuel-focused report cards with direct transaction launch actions.',
+  loads: 'Operations and load-facing reporting surfaces.',
+}
+
 function readInitialReportTab(): ReportCategory {
   if (typeof window === 'undefined') return 'overview'
   const p = new URLSearchParams(window.location.search)
@@ -105,6 +116,13 @@ function readInitialSection(): AppSection {
   if (p.get('erpEmbed') === '1') return 'reports'
   const q = String(p.get('section') || '').trim().toLowerCase()
   if ((APP_SECTIONS as { id: string }[]).some((s) => s.id === q)) return q as AppSection
+  const tabQ = String(p.get('tab') || '').trim().toLowerCase()
+  if ((REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) {
+    if (tabQ === 'safety') return 'safety'
+    if (tabQ === 'fuel') return 'fuel'
+    if (tabQ === 'operations') return 'loads'
+    return 'reports'
+  }
   return 'home'
 }
 
@@ -161,9 +179,19 @@ export default function App() {
   const [appWoModalKey, setAppWoModalKey] = useState(0)
   const { isFullScreen: woPickFullScreen, toggle: toggleWoPickFullScreen } = useFullScreen()
   const [fuelPlannerTxn, setFuelPlannerTxn] = useState<FuelTransactionType | null>(null)
-  const [acctListsBootstrap, setAcctListsBootstrap] = useState<AccountingListsBootstrap | null>(null)
   const [listsTab, setListsTab] = useState<ListsCatalogsTab>('fleet-samsara')
   const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(null)
+
+  const openSection = useCallback((section: AppSection) => {
+    setActiveSection(section)
+    if (section === 'lists') {
+      setListsTab('fleet-samsara')
+      setListsDeepLink(null)
+      return
+    }
+    if (section === 'reports') setTab('overview')
+    setListsDeepLink(null)
+  }, [])
 
   /** ERP maintenance → hub lists deep link: `?acctLists=1&listsTab=drivers-database` (+ optional `listsList=`). */
   useEffect(() => {
@@ -202,6 +230,8 @@ export default function App() {
       if (activeSection === 'reports') {
         if (tab === 'overview') url.searchParams.delete('tab')
         else url.searchParams.set('tab', tab)
+      } else {
+        url.searchParams.delete('tab')
       }
       window.history.replaceState({}, '', url.pathname + url.search + url.hash)
     } catch {
@@ -444,7 +474,7 @@ export default function App() {
               className={
                 activeSection === s.id ? 'reports-tab reports-tab--active' : 'reports-tab'
               }
-              onClick={() => setActiveSection(s.id)}
+              onClick={() => openSection(s.id)}
             >
               {s.label}
             </button>
@@ -485,6 +515,15 @@ export default function App() {
                   </button>
                 ))}
               </nav>
+            </header>
+          ) : !erpEmbed && !erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
+            <header className="reports-page__header">
+              <h1 className="reports-page__title">
+                {APP_SECTIONS.find((s) => s.id === activeSection)?.label ?? 'Workspace'}
+              </h1>
+              <p className="reports-page__subtitle">
+                {SECTION_DESCRIPTIONS[activeSection]}
+              </p>
             </header>
           ) : null}
 
@@ -552,10 +591,41 @@ export default function App() {
                           key={`home-link-${s.id}`}
                           type="button"
                           className="acct-hub__quick-btn"
-                          onClick={() => setActiveSection(s.id)}
+                          onClick={() => openSection(s.id)}
                         >
                           {s.label}
                         </button>
+                      ))}
+                    </div>
+                    <div className="acct-hub__grid" aria-label="Section cards">
+                      {APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
+                        <div key={`home-card-${s.id}`} className="acct-hub-sec">
+                          <button
+                            type="button"
+                            className="acct-hub-sec__head"
+                            onClick={() => openSection(s.id)}
+                            aria-label={`Open ${s.label}`}
+                          >
+                            <span>{s.label}</span>
+                            <span className="acct-hub-sec__chev" aria-hidden>
+                              →
+                            </span>
+                          </button>
+                          <ul className="acct-hub-sec__body">
+                            <li>
+                              <button
+                                type="button"
+                                className="acct-hub-sec__row"
+                                onClick={() => openSection(s.id)}
+                              >
+                                <span>{SECTION_DESCRIPTIONS[s.id]}</span>
+                                <span className="acct-hub-sec__arrow" aria-hidden>
+                                  Open
+                                </span>
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -586,8 +656,6 @@ export default function App() {
                     onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
                     onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
                     onNewWorkOrder={() => setAppWoPickOpen(true)}
-                    listsBootstrap={acctListsBootstrap}
-                    onListsBootstrapConsumed={() => setAcctListsBootstrap(null)}
                     erpFuelHost={erpFuelEmbed || erpFuelModalHost}
                     onFuelOpenFromAccounting={
                       erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined

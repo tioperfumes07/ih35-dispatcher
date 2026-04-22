@@ -23,22 +23,12 @@ import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../../hooks/useFullScreen
 
 export type { AccountingMaintNavTarget } from './accountingNav'
 
-export type AccountingListsBootstrap = {
-  token: number
-  tab: ListsCatalogsTab
-  /** When omitted, open the lists tab root (e.g. Packet 9 database tabs). */
-  list?: ListsCatalogListId | null
-}
-
 type Props = {
   onRequestMaintenanceNav: (target: AccountingMaintNavTarget) => void
   /** Fuel / integrity “View all” → Maintenance → Integrity in the hub. */
   onOpenMaintenanceIntegrity?: () => void
   /** Top nav "+ New" → work order / service record (app-level modal). */
   onNewWorkOrder?: () => void
-  /** When set (e.g. from Fuel tab vendor link), open Lists & catalogs on the given list once. */
-  listsBootstrap?: AccountingListsBootstrap | null
-  onListsBootstrapConsumed?: () => void
   /** ERP iframe embed/modal — notify parent window when fuel form closes. */
   erpFuelHost?: boolean
   /** When ERP embed: open fuel dialog at app level (single FuelTransactionForm). */
@@ -51,8 +41,6 @@ export function AccountingDashboard({
   onRequestMaintenanceNav,
   onOpenMaintenanceIntegrity,
   onNewWorkOrder,
-  listsBootstrap,
-  onListsBootstrapConsumed,
   erpFuelHost = false,
   onFuelOpenFromAccounting,
   onOpenForm425c,
@@ -92,14 +80,6 @@ export function AccountingDashboard({
     setListsDeepLink(listId === undefined ? null : listId)
     setRoute('lists')
   }, [])
-
-  useEffect(() => {
-    if (!listsBootstrap) return
-    setListsTab(listsBootstrap.tab)
-    setListsDeepLink(listsBootstrap.list ?? null)
-    setRoute('lists')
-    onListsBootstrapConsumed?.()
-  }, [listsBootstrap, onListsBootstrapConsumed])
 
   const openFuel = useCallback(
     (ft: FuelTransactionType) => {
