@@ -150,15 +150,15 @@ function parseListsStateFromSearchParams(params: URLSearchParams): {
 }
 
 const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
-  home: 'Operational dashboard with section shortcuts and KPI snapshot.',
-  maintenance: 'Work orders, integrity operations, and maintenance workflows.',
-  accounting: 'Accounting workspace with QBO-facing actions and controls.',
-  lists: 'Catalog and registry management with inline CRUD workflows.',
-  reports: 'Cards by domain, live search, shared filters, exports.',
-  safety: 'Safety-focused report cards and audit drill-down entry points.',
-  tracking: 'Telematics fleet inventory, integrity, and connection status.',
-  fuel: 'Fuel-focused report cards with direct transaction launch actions.',
-  loads: 'Operations and load-facing reporting surfaces.',
+  home: 'Operational dashboard with section shortcuts and KPI status.',
+  maintenance: 'Manage work orders, integrity operations, and maintenance workflows.',
+  accounting: 'Run accounting actions, posting checks, and QuickBooks workflows.',
+  lists: 'Open inline catalogs and registries with search, filters, CRUD, and export.',
+  reports: 'Use filters and search to open report viewers and exports by domain.',
+  safety: 'Review safety report cards and open related audits and drill-downs.',
+  tracking: 'Monitor telematics fleet inventory, integrity, and connection status.',
+  fuel: 'Open fuel report cards and launch transaction workflows directly.',
+  loads: 'Review operations and load-facing reporting surfaces.',
 }
 
 function sectionForReportTab(tab: ReportCategory): AppSection {
@@ -853,7 +853,7 @@ export default function App() {
             <header className="reports-page__header">
               <h1 className="reports-page__title">Fleet reports</h1>
               <p className="reports-page__subtitle">
-                Cards by domain, live search, shared filters, exports.
+                {SECTION_DESCRIPTIONS.reports}
               </p>
               <nav
                 className="tabs reports-tabs"
@@ -880,7 +880,9 @@ export default function App() {
                 {APP_SECTIONS.find((s) => s.id === activeSection)?.label ?? 'Workspace'}
               </h1>
               <p className="reports-page__subtitle">
-                {SECTION_DESCRIPTIONS[activeSection]}
+                {activeSection === 'home'
+                  ? `${SECTION_DESCRIPTIONS.home} ${homeKpis.lastKpiRefreshSub}.`
+                  : SECTION_DESCRIPTIONS[activeSection]}
               </p>
             </header>
           ) : null}
@@ -947,6 +949,15 @@ export default function App() {
                         <span className="acct-hub__kpi-sub muted">{homeKpis.pendingQboPostsSub}</span>
                       </div>
                     </div>
+                    <p className="acct-hub__meta muted">
+                      {homeKpis.qboConnectionSub +
+                        ' · ' +
+                        homeKpis.samsaraVehiclesSub +
+                        ' · ' +
+                        homeKpis.environmentSub +
+                        ' · ' +
+                        homeKpis.lastKpiRefreshSub}
+                    </p>
                     <div className="acct-hub__quick" aria-label="Home shortcuts">
                       {ORDERED_APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
                         <button
