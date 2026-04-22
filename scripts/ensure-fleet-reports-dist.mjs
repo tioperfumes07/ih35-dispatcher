@@ -3,6 +3,9 @@
  * Ensures `public/fleet-reports/index.html` exists (Vite output; path is gitignored).
  * Invoked by `npm run prestart` before `npm start`, by `npm run dev`, and by `qa-with-server.mjs`
  * so a single `server.js` process can always serve `/fleet-reports/*` static assets.
+ *
+ * Rebuilds when hub sources are newer than the built `index.html` (avoids stale UI after CSS/TS edits).
+ * Force anytime: `IH35_FORCE_FLEET_HUB_BUILD=1` or `FORCE_FLEET_HUB_BUILD=1`.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -90,13 +93,13 @@ if (!fs.existsSync(path.join(hub, 'package.json'))) {
   process.exit(1);
 }
 
-const shell = process.platform === 'win32';
 const hubNodeModules = path.join(hub, 'node_modules');
 if (!fs.existsSync(hubNodeModules)) {
-  let r = spawnSync('npm', ['ci'], { cwd: hub, stdio: 'inherit', env: process.env, shell });
+  const sh = process.platform === 'win32';
+  let r = spawnSync('npm', ['ci'], { cwd: hub, stdio: 'inherit', env: process.env, shell: sh });
   if (r.status !== 0) {
     console.warn('[ensure-fleet-reports-dist] npm ci failed in apps/fleet-reports-hub — trying npm install …');
-    r = spawnSync('npm', ['install'], { cwd: hub, stdio: 'inherit', env: process.env, shell });
+    r = spawnSync('npm', ['install'], { cwd: hub, stdio: 'inherit', env: process.env, shell: sh });
     if (r.status !== 0) {
       console.error('[ensure-fleet-reports-dist] npm install in apps/fleet-reports-hub failed');
       process.exit(r.status ?? 1);
@@ -104,10 +107,15 @@ if (!fs.existsSync(hubNodeModules)) {
   }
 }
 
-r = spawnSync('npm', ['run', 'build:fleet'], { cwd: root, stdio: 'inherit', env: process.env, shell });
-if (r.status !== 0) {
+const build = spawnSync('npm', ['run', 'build:fleet'], {
+  cwd: root,
+  stdio: 'inherit',
+  env: process.env,
+  shell: process.platform === 'win32',
+});
+if (build.status !== 0) {
   console.error('[ensure-fleet-reports-dist] npm run build:fleet failed');
-  process.exit(r.status ?? 1);
+  process.exit(build.status ?? 1);
 }
 
 if (!fs.existsSync(indexPath)) {
