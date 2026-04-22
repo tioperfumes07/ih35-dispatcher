@@ -100,7 +100,8 @@ const STATIC_TEXT = [
   ['/js/board-nav.js', 'Fuel & route planning', '*/*'],
   ['/src/utils/printDocuments.js', 'IH35 ERP — approved print documents', '*/*'],
   ['/css/erp-multi-bills.css', 'Multiple bills modal'],
-  ['/js/erp-multi-bills.js', 'Multiple bills — pure helpers', '*/*']
+  ['/js/erp-multi-bills.js', 'Multiple bills — pure helpers', '*/*'],
+  ['/ih35-runtime.js', 'window.__IH35_FLEET_HUB_BASE', '*/*']
 ];
 
 /** `[path, Accept header]` — GET body checked against **`rule-zero-agent-b.mjs`** forbidden list. */

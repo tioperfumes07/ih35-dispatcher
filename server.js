@@ -76,7 +76,21 @@ async function start() {
 
   const pool = getPool();
   const app = express();
+  app.set('trust proxy', 1);
   app.locals.db = pool;
+
+  /** Optional split-origin hub; default '' = same origin as this Express app (typical single Render Web Service). */
+  function normalizedFleetHubBaseUrl() {
+    const raw = String(process.env.IH35_FLEET_HUB_BASE_URL || '').trim();
+    if (!raw) return '';
+    try {
+      const u = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+      const path = u.pathname.replace(/\/+$/, '');
+      return path ? `${u.origin}${path}` : u.origin;
+    } catch {
+      return '';
+    }
+  }
 
   const dbQueryBound = (text, params) => {
     if (!pool) return Promise.reject(new Error('DATABASE_URL is not set'));
@@ -149,6 +163,14 @@ async function start() {
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
     }
+  });
+
+  app.get('/ih35-runtime.js', (_req, res) => {
+    const base = normalizedFleetHubBaseUrl();
+    setFleetHubEntryNoCache(res);
+    res
+      .type('application/javascript; charset=utf-8')
+      .send(`window.__IH35_FLEET_HUB_BASE=${JSON.stringify(base)};`);
   });
 
   app.use('/api/tms', tmsRoutes);

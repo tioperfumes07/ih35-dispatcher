@@ -5,6 +5,7 @@ services:
   - type: web
     name: ih35-erp
     runtime: node
-    buildCommand: npm ci
+    # Fleet hub output is under public/fleet-reports/ (often gitignored); build it on the host, not only on your laptop.
+    buildCommand: npm ci && npm ci --prefix apps/fleet-reports-hub && npm run build:fleet
     startCommand: npm start
     healthCheckPath: /api/health

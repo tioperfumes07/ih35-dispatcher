@@ -36,9 +36,9 @@ Think: *the office printer reprints the latest filing-cabinet version when you a
 
 1. Service is linked to the **same repo** you push to (`ih35-dispatcher` or whatever you use).
 2. **Branch** matches the branch you push (e.g. `main`).
-3. **Build command** includes anything extra you need, for example:
-   - `npm ci && npm run build:fleet && npm start`  
-   (or your team’s agreed command).
+3. **Build command** must produce `public/fleet-reports/index.html` on the server (the React hub). The repo’s **`render.yaml`** uses:
+   - `npm ci && npm ci --prefix apps/fleet-reports-hub && npm run build:fleet`  
+   Render runs **`startCommand`** separately (`npm start` here), so do not fold `npm start` into the build step on the dashboard unless you intend a one-off.
 4. **Auto Deploy** is enabled for that branch (or you click **Manual Deploy** after each push).
 
 ## Will old “local only” changes take effect?
