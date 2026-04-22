@@ -68,7 +68,7 @@ const HTML_PAGES = [
       'id="qboSyncAlertBar"',
       'erp-reports-shell',
       'id="erpReportsCatalogShell" class="erp-reports-catalog-shell print-hide-actions"',
-      'Show Fleet Hub iframe fallback',
+      'Form 425C in Fleet hub (Compliance tab)',
       'acct-dash-kpis',
       'id="acctBoardStrip"',
       'erpConnectionStrip',

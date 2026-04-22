@@ -4924,30 +4924,6 @@
           #section-reports tr.rep-row-rt--other td:first-child {
             border-left: 3px solid #6b7385;
           }
-          #section-reports .erp-reports-hub-embed-wrap {
-            border: 1px solid var(--color-border-soft);
-            border-radius: 10px;
-            background: var(--color-bg-card);
-            padding: 8px;
-            margin-bottom: 10px;
-          }
-          #section-reports .erp-reports-hub-iframe {
-            width: 100%;
-            min-height: 72vh;
-            height: clamp(620px, 80vh, 1220px);
-            border: 1px solid var(--color-border-soft);
-            border-radius: 8px;
-            background: #f8fbff;
-            resize: vertical;
-            overflow: auto;
-          }
-          #section-reports .erp-reports-legacy-toggle {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-            margin: 0 0 8px;
-          }
         </style>
         <div class="erp-reports-shell erp-reports-shell--v2">
           <header class="erp-reports-toolbar" role="banner">
@@ -4994,30 +4970,10 @@
             >
               <a class="btn btn--small" href="/form-425c.html">Form 425C — full workspace</a>
               <button type="button" class="btn btn--small" onclick="erpFocusForm425cInFleetHub()">
-                Form 425C in Fleet Hub iframe fallback (Compliance tab)
+                Form 425C in Fleet hub (Compliance tab)
               </button>
             </div>
           </header>
-          <div class="erp-reports-hub-embed-wrap print-hide-actions hidden" role="region" aria-label="Fleet reports hub" hidden>
-            <iframe
-              id="erpFleetReportsHubIframe"
-              class="erp-reports-hub-iframe"
-              title="Fleet reports — same experience as /fleet-reports/"
-              src="about:blank"
-              loading="lazy"
-            ></iframe>
-          </div>
-          <div class="erp-reports-legacy-toggle print-hide-actions">
-            <button
-              type="button"
-              class="btn btn--small"
-              aria-expanded="false"
-              onclick="erpToggleFleetReportsHubEmbed(this)"
-            >
-              Show Fleet Hub iframe fallback
-            </button>
-            <span class="mini-note">Default uses the in-shell reports surface below; iframe is optional fallback.</span>
-          </div>
           <div id="repCatTabs" class="rep-cat-tabs rep-cat-tabs--bar erp-tab-bar print-hide-actions" role="tablist" aria-label="Report categories"></div>
           <div id="erpReportsCatalogShell" class="erp-reports-catalog-shell print-hide-actions">
             <aside id="repFilterSidebar" class="rep-filter-sidebar" aria-label="Report filters">
@@ -9678,7 +9634,7 @@
       erpOpenDedicatedAccountingForm('standard-bill');
     }
 
-    /** Open Fleet reports Compliance tab; ensures iframe fallback is visible when needed. */
+    /** Open Reports and focus the in-shell Compliance category (Form 425C card). */
     function erpFocusForm425cInFleetHub() {
       const sec = document.getElementById('section-reports');
       const onReports = sec && sec.classList.contains('active');
@@ -11069,7 +11025,6 @@
       if (name === 'reports') {
         loadReportsData();
         if (typeof repInitReportsHub === 'function') repInitReportsHub();
-        if (typeof erpEnsureFleetReportsHubIframe === 'function') erpEnsureFleetReportsHubIframe();
         const rs = document.getElementById('repToolbarSearch');
         if (rs) {
           rs.value = '';

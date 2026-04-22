@@ -935,103 +935,46 @@
   global.erpInitFleetTableChrome = erpInitFleetTableChrome;
 
   /**
-   * ERP maintenance — Reports tab embeds the same React hub as `/fleet-reports/index.html`.
+   * Reports now render in-shell only; legacy iframe loader kept as no-op.
    */
   function erpEnsureFleetReportsHubIframe() {
-    var wrap = document.querySelector('#section-reports .erp-reports-hub-embed-wrap');
-    if (wrap && (wrap.classList.contains('hidden') || wrap.hidden)) return;
-    var iframe = document.getElementById('erpFleetReportsHubIframe');
-    if (!iframe || !(iframe instanceof HTMLIFrameElement)) return;
-    var href = '';
-    try {
-      href = String(iframe.src || iframe.getAttribute('src') || '');
-    } catch (_) {
-      href = '';
-    }
-    var hubBase =
-      typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE
-        ? window.__IH35_FLEET_HUB_BASE
-        : '';
-    var deployRef = '';
-    try {
-      deployRef = typeof window.__IH35_DEPLOY_REF === 'string' ? String(window.__IH35_DEPLOY_REF).trim() : '';
-    } catch (_) {
-      deployRef = '';
-    }
-    var deploySuffix = deployRef ? '&v=' + encodeURIComponent(deployRef) : '';
-    var pending = '';
-    try {
-      pending =
-        typeof window.__IH35_FLEET_HUB_TAB === 'string' ? String(window.__IH35_FLEET_HUB_TAB).trim() : '';
-    } catch (_) {
-      pending = '';
-    }
-    if (!pending && href.indexOf('fleet-reports') >= 0) {
-      if (!deployRef || href.indexOf('v=' + encodeURIComponent(deployRef)) >= 0) return;
-      iframe.src = hubBase + '/fleet-reports/index.html?erpEmbed=1' + deploySuffix;
-      return;
-    }
-    if (pending) {
-      iframe.src =
-        hubBase +
-        '/fleet-reports/index.html?erpEmbed=1&tab=' +
-        encodeURIComponent(pending) +
-        deploySuffix;
-      try {
-        delete window.__IH35_FLEET_HUB_TAB;
-      } catch (_) {
-        window.__IH35_FLEET_HUB_TAB = '';
-      }
-      return;
-    }
-    iframe.src = hubBase + '/fleet-reports/index.html?erpEmbed=1' + deploySuffix;
+    return;
   }
 
   global.erpEnsureFleetReportsHubIframe = erpEnsureFleetReportsHubIframe;
 
   /**
-   * Reports section: explicit fallback toggle for Fleet Hub iframe embed.
-   * In-shell reports catalog remains the default surface.
+   * Reports section no longer exposes iframe fallback controls.
+   * Kept for backward compatibility with old onclick handlers.
    */
-  function erpToggleFleetReportsHubEmbed(btn, forceOpen) {
-    var wrap = document.querySelector('#section-reports .erp-reports-hub-embed-wrap');
-    if (!wrap) return false;
-    var hidden = wrap.classList.contains('hidden') || wrap.hidden;
-    var show = typeof forceOpen === 'boolean' ? !!forceOpen : hidden;
-    wrap.classList.toggle('hidden', !show);
-    wrap.hidden = !show;
-    if (btn && btn instanceof HTMLElement) {
-      btn.setAttribute('aria-expanded', show ? 'true' : 'false');
-      btn.textContent = show ? 'Hide Fleet Hub iframe fallback' : 'Show Fleet Hub iframe fallback';
-    }
-    if (show) erpEnsureFleetReportsHubIframe();
-    return show;
+  function erpToggleFleetReportsHubEmbed() {
+    return false;
   }
 
   global.erpToggleFleetReportsHubEmbed = erpToggleFleetReportsHubEmbed;
 
   /**
-   * Reload embedded fleet hub with a tab query (e.g. tab=compliance for Form 425C).
-   * Call after opening Maintenance → Reports so the iframe exists.
+   * Select an in-shell reports category tab (e.g. "compliance" for Form 425C card).
    */
   function erpNavigateFleetReportsHubTab(tabId) {
-    erpToggleFleetReportsHubEmbed(null, true);
-    var iframe = document.getElementById('erpFleetReportsHubIframe');
-    if (!iframe || !(iframe instanceof HTMLIFrameElement)) return;
-    var hubBase =
-      typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE
-        ? window.__IH35_FLEET_HUB_BASE
-        : '';
-    var deployRef = '';
-    try {
-      deployRef = typeof window.__IH35_DEPLOY_REF === 'string' ? String(window.__IH35_DEPLOY_REF).trim() : '';
-    } catch (_) {
-      deployRef = '';
-    }
-    var deploySuffix = deployRef ? '&v=' + encodeURIComponent(deployRef) : '';
     var t = String(tabId || 'overview').trim() || 'overview';
-    iframe.src =
-      hubBase + '/fleet-reports/index.html?erpEmbed=1&tab=' + encodeURIComponent(t) + deploySuffix;
+    if (typeof window.repInitReportsHub === 'function') {
+      try {
+        window.repInitReportsHub();
+      } catch (_) {}
+    }
+    var shell = document.getElementById('erpReportsCatalogShell');
+    if (shell) {
+      shell.classList.remove('hidden');
+      shell.hidden = false;
+    }
+    var tabs = document.getElementById('repCatTabs');
+    if (!tabs) return false;
+    var btn = tabs.querySelector('.rep-cat-tab[data-cat="' + t + '"]');
+    if (!btn && t !== 'overview') btn = tabs.querySelector('.rep-cat-tab[data-cat="overview"]');
+    if (!btn || !(btn instanceof HTMLElement)) return false;
+    btn.click();
+    return true;
   }
 
   global.erpNavigateFleetReportsHubTab = erpNavigateFleetReportsHubTab;
