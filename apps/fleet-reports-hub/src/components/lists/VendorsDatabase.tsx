@@ -78,6 +78,8 @@ function toPatch(d: Draft): VendorLocalPatch {
 export function VendorsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const [rows, setRows] = useState<VendorLocalRow[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [syncMsg, setSyncMsg] = useState<string | null>(null)
+  const [lastQboSyncAt, setLastQboSyncAt] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [draft, setDraft] = useState<Draft>(emptyDraft())
@@ -99,7 +101,18 @@ export function VendorsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const onSync = async () => {
     setErr(null)
     try {
-      await syncVendorsFromQbo()
+      const r = await syncVendorsFromQbo()
+      const synced = Number(r.synced ?? 0)
+      if (synced <= 0) {
+        setSyncMsg('QuickBooks sync returned 0 vendors. Check QBO connection and vendor permissions.')
+      } else {
+        setSyncMsg(
+          r.message
+            ? `${r.message} (${synced} vendor${synced === 1 ? '' : 's'} synced)`
+            : `QuickBooks sync complete: ${synced} vendor${synced === 1 ? '' : 's'} synced.`,
+        )
+      }
+      setLastQboSyncAt(r.refreshedAt ?? new Date().toISOString())
       await load()
     } catch (e) {
       setErr(String((e as Error).message || e))
@@ -196,6 +209,12 @@ export function VendorsDatabase({ onCloseList }: { onCloseList: () => void }) {
             + Add vendor
           </button>
         </div>
+      </div>
+      <div className="lists-db__banner lists-db__banner--ok muted tiny">
+        {syncMsg ??
+          (lastQboSyncAt
+            ? `QuickBooks · last sync ${new Date(lastQboSyncAt).toLocaleString()}`
+            : 'QuickBooks: use Sync all from QBO to refresh vendors when a QBO connection is configured.')}
       </div>
       {err ? (
         <p className="nm-banner nm-banner--err" role="alert">

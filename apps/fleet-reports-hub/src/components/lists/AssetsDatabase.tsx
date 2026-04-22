@@ -88,6 +88,7 @@ function toPatch(d: Draft): AssetPatch {
 export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const [rows, setRows] = useState<AssetRow[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [samMsg, setSamMsg] = useState<string | null>(null)
   const [lastSamSyncAt, setLastSamSyncAt] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -111,7 +112,18 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
     async (opts?: { quiet?: boolean }) => {
       if (!opts?.quiet) setErr(null)
       try {
-        await syncAssetsSamsara()
+        const r = await syncAssetsSamsara()
+        const total = Number(r.totalVehicles ?? 0)
+        const synced = Number(r.synced ?? 0)
+        const inserted = Number(r.inserted ?? 0)
+        const skippedNoUnit = Number(r.skippedNoUnit ?? 0)
+        if (total <= 0) {
+          setSamMsg('Samsara returned 0 vehicles. Check SAMSARA_API_TOKEN / fleet access scope.')
+        } else {
+          setSamMsg(
+            `Samsara sync complete: ${synced} touched, ${inserted} inserted, ${skippedNoUnit} skipped (no unit). Source vehicles: ${total}.`,
+          )
+        }
         setLastSamSyncAt(new Date().toISOString())
         await load()
       } catch (e) {
@@ -257,9 +269,8 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         </div>
       </div>
       <div className="lists-db__banner lists-db__banner--ok muted tiny">
-        Samsara mirror · {rows.length} trucks
-        {lastSamSyncAt ? ` · last sync ${new Date(lastSamSyncAt).toLocaleString()}` : ''} · auto every 60s ·
-        Mirror is read-only from Samsara · editable locally · changes here do NOT push to Samsara.
+        {samMsg ??
+          `Samsara mirror · ${rows.length} trucks${lastSamSyncAt ? ` · last sync ${new Date(lastSamSyncAt).toLocaleString()}` : ''} · auto every 60s · Mirror is read-only from Samsara · editable locally · changes here do NOT push to Samsara.`}
       </div>
       {err ? (
         <p className="nm-banner nm-banner--err" role="alert">

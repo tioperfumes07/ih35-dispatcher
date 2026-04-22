@@ -124,7 +124,15 @@ export function DriversDatabase({
       if (!opts?.quiet) setErr(null)
       try {
         const r = await syncDriversSamsara()
-        if (!opts?.quiet) setSamMsg(`Synced ${r.synced} drivers from Samsara.`)
+        const synced = Number(r.synced ?? 0)
+        const fail = Number(r.errors?.length ?? 0)
+        if (synced <= 0) {
+          setSamMsg('Samsara returned 0 drivers. Check SAMSARA_API_TOKEN / driver read scope.')
+        } else if (fail > 0) {
+          setSamMsg(`Samsara sync: ${synced} driver(s) synced, ${fail} failed.`)
+        } else {
+          setSamMsg(`Samsara sync complete: ${synced} driver(s) synced.`)
+        }
         setLastSamSyncAt(new Date().toISOString())
         await load()
       } catch (e) {

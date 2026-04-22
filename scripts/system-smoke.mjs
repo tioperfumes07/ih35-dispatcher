@@ -102,7 +102,7 @@ const STATIC_TEXT = [
     'IH35 ERP — Master redesign spec (Rules 0–22; maintenance is the reference surface).'
   ],
   ['/css/board-nav.css', 'Persistent operations bar'],
-  ['/js/erp-ui.js', 'IH35 ERP — shared UI helpers', '*/*'],
+  ['/js/erp-ui.js', ['IH35 ERP — shared UI helpers', '__IH35_DEPLOY_REF'], '*/*'],
   ['/js/board-nav.js', 'Fuel & route planning', '*/*'],
   ['/src/utils/printDocuments.js', 'IH35 ERP — approved print documents', '*/*'],
   ['/css/erp-multi-bills.css', 'Multiple bills modal'],
