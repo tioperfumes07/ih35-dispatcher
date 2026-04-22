@@ -22,7 +22,25 @@ import { createMaintIntegrationDeps } from './lib/maint-server-deps.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const PUBLIC_ROOT = path.join(__dirname, 'public');
+const SRC_ROOT = path.join(__dirname, 'src');
+const PUBLIC_CSS_PREFIX = path.join(PUBLIC_ROOT, 'css') + path.sep;
+const PUBLIC_JS_PREFIX = path.join(PUBLIC_ROOT, 'js') + path.sep;
+
 const FLEET_REPORTS_INDEX = path.join(__dirname, 'public', 'fleet-reports', 'index.html');
+
+/** Browsers often keep stale ERP shells and unhashed CSS/JS; force revalidation after deploys. */
+function applyPublicStaticCacheHeaders(res, absFilePath) {
+  if (typeof absFilePath !== 'string') return;
+  if (absFilePath.endsWith('.html')) {
+    res.setHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    return;
+  }
+  if (absFilePath.startsWith(PUBLIC_CSS_PREFIX) || absFilePath.startsWith(PUBLIC_JS_PREFIX)) {
+    res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+  }
+}
 
 /** Avoid stale Fleet hub UI: browsers often cache `index.html` and keep old hashed `assets/*` URLs. */
 function setFleetHubEntryNoCache(res) {
@@ -138,11 +156,15 @@ async function start() {
   app.use(pdfRouter);
 
   app.get('/', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const p = path.join(PUBLIC_ROOT, 'index.html');
+    applyPublicStaticCacheHeaders(res, p);
+    res.sendFile(p);
   });
 
   app.get('/form-425c', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'form-425c.html'));
+    const p = path.join(PUBLIC_ROOT, 'form-425c.html');
+    applyPublicStaticCacheHeaders(res, p);
+    res.sendFile(p);
   });
 
   app.get('/health', (_req, res) => {
@@ -165,12 +187,16 @@ async function start() {
     }
   });
 
+  const deployRef = String(
+    process.env.RENDER_GIT_COMMIT || process.env.VERCEL_GIT_COMMIT_SHA || process.env.IH35_BUILD_STAMP || '',
+  ).trim();
+
   app.get('/ih35-runtime.js', (_req, res) => {
     const base = normalizedFleetHubBaseUrl();
     setFleetHubEntryNoCache(res);
-    res
-      .type('application/javascript; charset=utf-8')
-      .send(`window.__IH35_FLEET_HUB_BASE=${JSON.stringify(base)};`);
+    res.type('application/javascript; charset=utf-8').send(
+      `window.__IH35_FLEET_HUB_BASE=${JSON.stringify(base)};window.__IH35_DEPLOY_REF=${JSON.stringify(deployRef)};`,
+    );
   });
 
   app.use('/api/tms', tmsRoutes);
@@ -229,8 +255,27 @@ async function start() {
     }),
   );
 
-  app.use(express.static(path.join(__dirname, 'public')));
-  app.use('/src', express.static(path.join(__dirname, 'src')));
+  app.use(
+    express.static(PUBLIC_ROOT, {
+      etag: true,
+      lastModified: true,
+      setHeaders(res, absPath) {
+        applyPublicStaticCacheHeaders(res, absPath);
+      },
+    }),
+  );
+  app.use(
+    '/src',
+    express.static(SRC_ROOT, {
+      etag: true,
+      lastModified: true,
+      setHeaders(res, absPath) {
+        if (typeof absPath === 'string' && absPath.startsWith(SRC_ROOT + path.sep)) {
+          res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+        }
+      },
+    }),
+  );
 
   const PORT = process.env.PORT || 3100;
   const HOST = process.env.HOST || '0.0.0.0';
