@@ -410,6 +410,30 @@
   }
 
   /**
+   * Optional topbar badge (`#erpBuildRefBadge`) to show active deploy/build ref.
+   * @param {string} runtimeRef
+   * @param {string} healthRef
+   * @param {'ok'|'warn'|'muted'} tone
+   */
+  function syncBuildRefBadge(runtimeRef, healthRef, tone) {
+    const el = document.getElementById('erpBuildRefBadge');
+    if (!el) return;
+    const run = String(runtimeRef || '').trim();
+    const health = String(healthRef || '').trim();
+    const shown = health || run;
+    el.classList.remove('topbar-buildref--ok', 'topbar-buildref--warn', 'topbar-buildref--muted');
+    if (!shown) {
+      el.textContent = 'Build ref: —';
+      el.classList.add('topbar-buildref--muted');
+      return;
+    }
+    el.textContent = 'Build ref: ' + shown;
+    el.classList.add(
+      tone === 'warn' ? 'topbar-buildref--warn' : tone === 'ok' ? 'topbar-buildref--ok' : 'topbar-buildref--muted',
+    );
+  }
+
+  /**
    * Rule 24 — hydrate a host with QuickBooks + Samsara read-only status (two rows).
    * @param {string | HTMLElement} hostIdOrEl
    */
@@ -539,6 +563,9 @@
               shownRef +
               (sameRef ? '' : ' (refresh if this does not match expected deploy)')
           );
+          syncBuildRefBadge(runtimeRef, healthRef, sameRef ? 'ok' : 'warn');
+        } else {
+          syncBuildRefBadge('', '', 'muted');
         }
         if (worst >= 2) el.classList.add('erp-connection-strip--muted');
         else if (worst === 1) el.classList.add('erp-connection-strip--warn');
@@ -548,6 +575,7 @@
         el.textContent = '';
         appendRow('bad', stripLoadFailed);
         appendRow('bad', 'Samsara: check failed.');
+        syncBuildRefBadge('', '', 'muted');
         el.classList.add('erp-connection-strip--muted');
         syncOptionalDisconnectBanners(false, false, null, null);
       }

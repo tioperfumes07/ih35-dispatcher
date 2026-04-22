@@ -237,6 +237,30 @@ body.erp-maintenance .erp-topbar .topbar-hint-wrap {
   min-width: 0;
 }
 
+body.erp-maintenance .erp-topbar .topbar-buildref {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 999px;
+  background: var(--color-bg-card);
+  color: var(--color-text-label);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+body.erp-maintenance .erp-topbar .topbar-buildref--ok {
+  border-color: color-mix(in srgb, #1a7a3c 45%, var(--color-border-soft));
+  color: #1a7a3c;
+}
+
+body.erp-maintenance .erp-topbar .topbar-buildref--warn {
+  border-color: color-mix(in srgb, #f9ab00 55%, var(--color-border-soft));
+  color: #8a5200;
+}
+
+body.erp-maintenance .erp-topbar .topbar-buildref--muted {
+  opacity: 0.9;
+}
+
 /* --- Rule 0: form rows (book-style grids) --- */
 body.erp-maintenance .grid2 > .row,
 body.erp-maintenance .search-row {
