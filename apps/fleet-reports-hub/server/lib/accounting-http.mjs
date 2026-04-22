@@ -66,9 +66,13 @@ export function registerAccountingRoutes(app) {
   app.get('/api/accounting/qbo-items', (req, res) => {
     try {
       const q = String(req.query.q || '');
-      res.json({ items: listQboItems(q) });
+      res.json({ ok: true, items: listQboItems(q) });
     } catch (e) {
-      res.status(500).json({ error: String(e?.message || e) });
+      res.status(200).json({
+        ok: false,
+        items: [],
+        warning: String(e?.message || e),
+      });
     }
   });
 

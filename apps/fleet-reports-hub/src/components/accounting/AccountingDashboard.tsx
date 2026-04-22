@@ -156,12 +156,19 @@ export function AccountingDashboard({
     setQboActionMsg(null)
     try {
       const res = await fetch('/api/accounting/qbo-items', { headers: { Accept: 'application/json' } })
-      const j = (await res.json().catch(() => null)) as { items?: unknown[] } | null
+      const j = (await res.json().catch(() => null)) as
+        | { items?: unknown[]; warning?: string; ok?: boolean }
+        | null
       if (!res.ok || !j || !Array.isArray(j.items)) {
         setQboActionErr(true)
         setQboActionMsg(`Unable to refresh QBO list (${res.status}).`)
       } else {
-        setQboActionMsg(`QBO items refreshed: ${j.items.length} rows.`)
+        if (typeof j.warning === 'string' && j.warning.trim()) {
+          setQboActionErr(true)
+          setQboActionMsg(`QBO list loaded with warning: ${j.warning}`)
+        } else {
+          setQboActionMsg(`QBO items refreshed: ${j.items.length} rows.`)
+        }
         openLists('qbo-items', 'qbo-items-list')
       }
     } catch (e) {

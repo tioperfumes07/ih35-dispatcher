@@ -7,9 +7,34 @@ import { getAccountingDb } from './accounting-db.mjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CATALOG_PATH = path.join(__dirname, '..', 'data', 'accounting-catalog.json');
 
+function emptyCatalog() {
+  return {
+    vendors: [],
+    customers: [],
+    qboItems: [],
+  };
+}
+
 function readCatalog() {
-  const raw = fs.readFileSync(CATALOG_PATH, 'utf8');
-  return JSON.parse(raw);
+  try {
+    const raw = fs.readFileSync(CATALOG_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return emptyCatalog();
+    return {
+      vendors: Array.isArray(parsed.vendors) ? parsed.vendors : [],
+      customers: Array.isArray(parsed.customers) ? parsed.customers : [],
+      qboItems: Array.isArray(parsed.qboItems) ? parsed.qboItems : [],
+    };
+  } catch {
+    const fresh = emptyCatalog();
+    try {
+      fs.mkdirSync(path.dirname(CATALOG_PATH), { recursive: true });
+      fs.writeFileSync(CATALOG_PATH, JSON.stringify(fresh, null, 2), 'utf8');
+    } catch {
+      /* ignore write failures; callers still get safe empty data */
+    }
+    return fresh;
+  }
 }
 
 function writeCatalog(obj) {
