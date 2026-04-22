@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { REPORTS, TABS } from './data/reports'
 import type { ReportCategory, ReportDef, ReportFilters } from './types'
 import { defaultFilters } from './types'
@@ -342,6 +342,10 @@ export default function App() {
   } | null>(null)
   const [appWoPickOpen, setAppWoPickOpen] = useState(false)
   const [appWoModalOpen, setAppWoModalOpen] = useState(false)
+  const appWoPickDialogRef = useRef<HTMLDivElement | null>(null)
+  const appWoModalDialogRef = useRef<HTMLDivElement | null>(null)
+  const appWoPickReturnFocusRef = useRef<HTMLElement | null>(null)
+  const appWoModalReturnFocusRef = useRef<HTMLElement | null>(null)
   const [appWoKind, setAppWoKind] = useState<WorkOrderShellKind>('IWO')
   const [appWoModalKey, setAppWoModalKey] = useState(0)
   const { isFullScreen: woPickFullScreen, toggle: toggleWoPickFullScreen } = useFullScreen()
@@ -490,6 +494,57 @@ export default function App() {
   useEffect(() => {
     if (!appWoPickOpen && woPickFullScreen) toggleWoPickFullScreen()
   }, [appWoPickOpen, woPickFullScreen, toggleWoPickFullScreen])
+  useEffect(() => {
+    if (!appWoPickOpen) {
+      const el = appWoPickReturnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    appWoPickReturnFocusRef.current = document.activeElement as HTMLElement | null
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAppWoPickOpen(false)
+    }
+    const id = window.setTimeout(() => {
+      const root = appWoPickDialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
+  }, [appWoPickOpen])
+  useEffect(() => {
+    if (!appWoModalOpen) {
+      const el = appWoModalReturnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    appWoModalReturnFocusRef.current = document.activeElement as HTMLElement | null
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setAppWoModalOpen(false)
+        setAppWoKind('IWO')
+      }
+    }
+    const id = window.setTimeout(() => {
+      const root = appWoModalDialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
+  }, [appWoModalOpen])
 
   useEffect(() => {
     let cancelled = false
@@ -1147,6 +1202,7 @@ export default function App() {
           }}
         >
           <div
+            ref={appWoPickDialogRef}
             className={
               'maint-modal' + (woPickFullScreen ? ' app-modal-panel--fullscreen' : '')
             }
@@ -1241,6 +1297,7 @@ export default function App() {
           }}
         >
           <div
+            ref={appWoModalDialogRef}
             className="maint-modal maint-modal--drawerish maint-modal--wo-shell"
             role="dialog"
             aria-modal="true"
