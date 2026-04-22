@@ -194,7 +194,7 @@ export default function App() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (erpRecordEmbed || erpFuelEmbed || erpFuelModalHost || erpWoModalHost) return
+    if (erpEmbed || erpRecordEmbed || erpFuelEmbed || erpFuelModalHost || erpWoModalHost) return
     try {
       const url = new URL(window.location.href)
       if (activeSection === 'home') url.searchParams.delete('section')
@@ -207,7 +207,20 @@ export default function App() {
     } catch {
       /* ignore */
     }
-  }, [activeSection, tab, erpRecordEmbed, erpFuelEmbed, erpFuelModalHost, erpWoModalHost])
+  }, [
+    activeSection,
+    tab,
+    erpEmbed,
+    erpRecordEmbed,
+    erpFuelEmbed,
+    erpFuelModalHost,
+    erpWoModalHost,
+  ])
+
+  useEffect(() => {
+    if (!erpEmbed) return
+    if (activeSection !== 'reports') setActiveSection('reports')
+  }, [erpEmbed, activeSection])
 
   useEffect(() => {
     if (!appWoPickOpen && woPickFullScreen) toggleWoPickFullScreen()
@@ -415,7 +428,7 @@ export default function App() {
       }
       style={appThemeStyle}
     >
-      {!erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
+      {!erpEmbed && !erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
         <nav
           className="tabs reports-tabs"
           role="tablist"
@@ -534,27 +547,16 @@ export default function App() {
                       </div>
                     </div>
                     <div className="acct-hub__quick" aria-label="Home shortcuts">
-                      <button
-                        type="button"
-                        className="acct-hub__quick-btn"
-                        onClick={() => setActiveSection('maintenance')}
-                      >
-                        Maintenance center
-                      </button>
-                      <button
-                        type="button"
-                        className="acct-hub__quick-btn"
-                        onClick={() => setActiveSection('fuel')}
-                      >
-                        Fuel & route planning
-                      </button>
-                      <button
-                        type="button"
-                        className="acct-hub__quick-btn"
-                        onClick={() => setActiveSection('accounting')}
-                      >
-                        Accounting
-                      </button>
+                      {APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
+                        <button
+                          key={`home-link-${s.id}`}
+                          type="button"
+                          className="acct-hub__quick-btn"
+                          onClick={() => setActiveSection(s.id)}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </ErrorBoundary>
