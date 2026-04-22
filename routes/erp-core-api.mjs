@@ -130,6 +130,36 @@ function qboConnectionFlags() {
   };
 }
 
+function fleetApiOrigin() {
+  return (
+    process.env.IH35_FLEET_API_ORIGIN ||
+    `http://127.0.0.1:${process.env.INTEGRITY_API_PORT || 8787}`
+  ).replace(/\/+$/, '');
+}
+
+function normalizeMaintenanceUnitRow(raw = {}) {
+  const unit =
+    String(
+      raw.unitNumber ||
+        raw.unitNo ||
+        raw.unit_number ||
+        raw.id ||
+        raw.truckNumber ||
+        raw.vehicleId ||
+        ''
+    ).trim() || 'Unknown';
+  return {
+    unit,
+    id: String(raw.id || raw.unitId || unit),
+    status: String(raw.status || raw.operationalStatus || 'active').trim() || 'active',
+    make: String(raw.make || '').trim(),
+    model: String(raw.model || '').trim(),
+    vin: String(raw.vin || '').trim(),
+    plate: String(raw.plate || raw.licensePlate || '').trim(),
+    odometerMiles: Number(raw.odometerMiles || raw.odometer || raw.miles || 0) || 0
+  };
+}
+
 /**
  * @param {import('express').Application} app
  * @param {{ logError?: (msg: string, err?: unknown) => void }} [opts]
@@ -264,6 +294,18 @@ export function mountErpCoreApi(app, opts = {}) {
     res.json(readFullErpJson());
   });
 
+  app.get('/api/maintenance/units', (_req, res) => {
+    try {
+      const erp = readFullErpJson();
+      const rows = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+      const units = rows.map(normalizeMaintenanceUnitRow).filter(r => r.unit !== 'Unknown');
+      return res.json({ ok: true, units, count: units.length, refreshedAt: erp.refreshedAt || null });
+    } catch (e) {
+      logError('GET /api/maintenance/units', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
   app.get('/api/board', (_req, res) => {
     res.json({
       vehicles: [],
@@ -308,6 +350,57 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/integrity/dashboard', e);
       res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  /**
+   * Main server shim for fleet-integrity table consumed by hub telematics pages.
+   * Source of truth is the fleet API service (default :8787); falls back to local ERP units.
+   */
+  app.get('/api/integrity/fleet-vehicles', async (_req, res) => {
+    const origin = fleetApiOrigin();
+    try {
+      const r = await fetch(`${origin}/api/integrity/fleet-vehicles`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (r.ok) {
+        const payload = await r.json().catch(() => null);
+        if (payload && typeof payload === 'object') return res.json(payload);
+      }
+    } catch (e) {
+      logError('[integrity/fleet-vehicles] upstream fetch failed', e);
+    }
+    try {
+      const erp = readFullErpJson();
+      const vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+      const table = vehicles
+        .map(v => {
+          const row = normalizeMaintenanceUnitRow(v);
+          return {
+            unit: row.unit,
+            score: 0,
+            band: 'ok',
+            alertCount: 0,
+            codes: [],
+            tripMiles90d: null,
+            idlePct: null,
+            faults: 0
+          };
+        })
+        .filter(Boolean);
+      return res.json({
+        refreshedAt: erp.refreshedAt || null,
+        fromCache: true,
+        table,
+        checks: {
+          vehicles: {},
+          fleetSafetyAvg: 0,
+          fleetTripAvg90: 0
+        }
+      });
+    } catch (e) {
+      logError('GET /api/integrity/fleet-vehicles fallback', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 
@@ -359,6 +452,21 @@ export function mountErpCoreApi(app, opts = {}) {
       logError('POST /api/integrity/thresholds', e);
       res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
+  });
+
+  /** Back-compat endpoint used by ERP shell actions; detailed sync state is served by /api/qbo/sync-alerts. */
+  app.post('/api/qbo/sync', (_req, res) => {
+    const { configured, connected, companyName } = qboConnectionFlags();
+    res.json({
+      ok: true,
+      configured,
+      connected,
+      companyName: companyName || undefined,
+      synced: 0,
+      message: connected
+        ? 'No immediate sync work queued. Use section-specific posting actions.'
+        : 'QuickBooks is not connected. Open Settings to authorize.'
+    });
   });
 
   /** Runs after client save — never blocks the save path; merges alerts into maintenance.json. */
