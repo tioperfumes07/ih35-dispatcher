@@ -261,6 +261,8 @@ function readErpEmbedFlag(): boolean {
 }
 
 type HomeKpis = {
+  accountingTitle: string
+  environmentSub: string
   openBillsCount: string
   openBillsSub: string
   expensesMonthAmount: string
@@ -270,9 +272,14 @@ type HomeKpis = {
   pendingQboPosts: string
   pendingQboPostsSub: string
   pendingQboPostsWarn: boolean
+  qboConnectionSub: string
+  samsaraVehiclesSub: string
+  lastKpiRefreshSub: string
 }
 
 const FALLBACK_HOME_KPIS: HomeKpis = {
+  accountingTitle: 'Accounting — IH 35 Transportation LLC',
+  environmentSub: 'Environment unknown',
   openBillsCount: '—',
   openBillsSub: 'No open bill data yet',
   expensesMonthAmount: '$0',
@@ -282,6 +289,9 @@ const FALLBACK_HOME_KPIS: HomeKpis = {
   pendingQboPosts: '0',
   pendingQboPostsSub: 'No pending sync alerts',
   pendingQboPostsWarn: false,
+  qboConnectionSub: 'QuickBooks status unknown',
+  samsaraVehiclesSub: 'Samsara vehicles: —',
+  lastKpiRefreshSub: 'Data refresh: —',
 }
 
 function asNumber(v: unknown): number | null {
@@ -486,11 +496,12 @@ export default function App() {
 
     const loadHomeKpis = async () => {
       const reqHeaders = { Accept: 'application/json' }
-      const [masterRes, recordsRes, syncAlertsRes, qboStatusRes] = await Promise.allSettled([
+      const [masterRes, recordsRes, syncAlertsRes, qboStatusRes, healthRes] = await Promise.allSettled([
         fetch('/api/qbo/master', { headers: reqHeaders }),
         fetch('/api/maintenance/records', { headers: reqHeaders }),
         fetch('/api/qbo/sync-alerts', { headers: reqHeaders }),
         fetch('/api/qbo/status', { headers: reqHeaders }),
+        fetch('/api/health', { headers: reqHeaders }),
       ])
 
       const readJson = async (res: PromiseSettledResult<Response>) => {
@@ -498,11 +509,12 @@ export default function App() {
         return res.value.json().catch(() => null)
       }
 
-      const [master, records, syncAlerts, qboStatus] = await Promise.all([
+      const [master, records, syncAlerts, qboStatus, health] = await Promise.all([
         readJson(masterRes),
         readJson(recordsRes),
         readJson(syncAlertsRes),
         readJson(qboStatusRes),
+        readJson(healthRes),
       ])
 
       if (cancelled) return
@@ -538,6 +550,7 @@ export default function App() {
         const rec = row as Record<string, unknown>
         return sum + (asNumber(rec.amount) ?? asNumber(rec.totalAmt) ?? asNumber(rec.total) ?? 0)
       }, 0)
+      const vehicleCount = Array.isArray(recordsObj?.vehicles) ? recordsObj.vehicles.length : 0
 
       const masterObj = master && typeof master === 'object' ? (master as Record<string, unknown>) : null
       const vendorCount = Array.isArray(masterObj?.vendors)
@@ -555,8 +568,19 @@ export default function App() {
       const qboObj = qboStatus && typeof qboStatus === 'object' ? (qboStatus as Record<string, unknown>) : null
       const qboConnected = qboObj?.connected === true
       const qboConfigured = qboObj?.configured === true
+      const companyName = String(qboObj?.companyName || '').trim()
+      const healthObj = health && typeof health === 'object' ? (health as Record<string, unknown>) : null
+      const healthSamsaraVehicles = asNumber(healthObj?.samsaraVehicles)
+      const vehiclesCount = healthSamsaraVehicles ?? vehicleCount
+      const hasDatabaseUrl = healthObj?.hasDatabaseUrl === true
+      const refreshedAtLabel = new Date().toLocaleTimeString(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
 
       setHomeKpis({
+        accountingTitle: `Accounting — ${companyName || 'IH 35 Transportation LLC'}`,
+        environmentSub: hasDatabaseUrl ? 'Environment: Cloud database' : 'Environment: Local fallback',
         openBillsCount: String(bills.length),
         openBillsSub:
           bills.length > 0 ? `${formatUsd(openBillsDue)} due` : 'No open bills in current activity window',
@@ -572,6 +596,13 @@ export default function App() {
         pendingQboPostsSub:
           pendingCount > 0 ? 'Review sync alerts before posting' : 'No pending sync alerts',
         pendingQboPostsWarn: pendingCount > 0,
+        qboConnectionSub: qboConnected
+          ? 'QuickBooks connected'
+          : qboConfigured
+            ? 'QuickBooks disconnected'
+            : 'QuickBooks not configured',
+        samsaraVehiclesSub: `Samsara vehicles: ${vehiclesCount}`,
+        lastKpiRefreshSub: `Data refresh: ${refreshedAtLabel}`,
       })
     }
 
@@ -988,6 +1019,9 @@ export default function App() {
                     onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
                     onNewWorkOrder={() => setAppWoPickOpen(true)}
                     homeKpis={homeKpis}
+                    onOpenTrackingSection={() => openSection('tracking')}
+                    onOpenUploadCenter={() => openListsSection('vendors-drivers', 'bank-csv')}
+                    onOpenSettingsUsers={() => openListsSection('name-management', 'name-registry')}
                     onOpenListsSection={(tabId, listId) =>
                       openListsSection(tabId, listId === undefined ? null : listId)
                     }

@@ -36,7 +36,12 @@ type Props = {
   onOpenForm425c?: () => void
   /** Open global Lists section in App shell (preferred). */
   onOpenListsSection: (tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => void
+  onOpenTrackingSection?: () => void
+  onOpenUploadCenter?: () => void
+  onOpenSettingsUsers?: () => void
   homeKpis?: {
+    accountingTitle: string
+    environmentSub: string
     openBillsCount: string
     openBillsSub: string
     expensesMonthAmount: string
@@ -46,6 +51,9 @@ type Props = {
     pendingQboPosts: string
     pendingQboPostsSub: string
     pendingQboPostsWarn: boolean
+    qboConnectionSub: string
+    samsaraVehiclesSub: string
+    lastKpiRefreshSub: string
   }
 }
 
@@ -57,6 +65,9 @@ export function AccountingDashboard({
   onFuelOpenFromAccounting,
   onOpenForm425c,
   onOpenListsSection,
+  onOpenTrackingSection,
+  onOpenUploadCenter,
+  onOpenSettingsUsers,
   homeKpis,
 }: Props) {
   const [recurringOpen, setRecurringOpen] = useState(false)
@@ -67,6 +78,9 @@ export function AccountingDashboard({
   const [acctNewOpen, setAcctNewOpen] = useState(false)
   const acctNewRef = useRef<HTMLDivElement>(null)
   const [homeOverlay, setHomeOverlay] = useState<AccountingHomeOverlay>(null)
+  const [qboActionMsg, setQboActionMsg] = useState<string | null>(null)
+  const [qboActionErr, setQboActionErr] = useState(false)
+  const [qboActionBusy, setQboActionBusy] = useState(false)
   const {
     isFullScreen: homeOverlayFullScreen,
     toggle: toggleHomeOverlayFullScreen,
@@ -98,6 +112,66 @@ export function AccountingDashboard({
     [erpFuelHost, onFuelOpenFromAccounting],
   )
 
+  const runQboStatusCheck = useCallback(async () => {
+    setQboActionBusy(true)
+    setQboActionErr(false)
+    setQboActionMsg(null)
+    try {
+      const res = await fetch('/api/qbo/status', { headers: { Accept: 'application/json' } })
+      const j = (await res.json().catch(() => null)) as
+        | { connected?: boolean; configured?: boolean; lastRefreshError?: string }
+        | null
+      if (!res.ok || !j) {
+        setQboActionErr(true)
+        setQboActionMsg(`QBO status check failed (${res.status}).`)
+        return
+      }
+      if (j.configured && j.connected) {
+        if (typeof j.lastRefreshError === 'string' && j.lastRefreshError.trim()) {
+          setQboActionErr(true)
+          setQboActionMsg(`QBO connected with warning: ${j.lastRefreshError}`)
+          return
+        }
+        setQboActionMsg('QuickBooks connected and healthy.')
+        return
+      }
+      if (j.configured && !j.connected) {
+        setQboActionErr(true)
+        setQboActionMsg('QuickBooks configured but disconnected.')
+        return
+      }
+      setQboActionErr(true)
+      setQboActionMsg('QuickBooks is not configured.')
+    } catch (e) {
+      setQboActionErr(true)
+      setQboActionMsg(`QBO status check failed: ${String((e as Error).message || e)}`)
+    } finally {
+      setQboActionBusy(false)
+    }
+  }, [])
+
+  const runQboItemsRefresh = useCallback(async () => {
+    setQboActionBusy(true)
+    setQboActionErr(false)
+    setQboActionMsg(null)
+    try {
+      const res = await fetch('/api/accounting/qbo-items', { headers: { Accept: 'application/json' } })
+      const j = (await res.json().catch(() => null)) as { items?: unknown[] } | null
+      if (!res.ok || !j || !Array.isArray(j.items)) {
+        setQboActionErr(true)
+        setQboActionMsg(`Unable to refresh QBO list (${res.status}).`)
+      } else {
+        setQboActionMsg(`QBO items refreshed: ${j.items.length} rows.`)
+        openLists('qbo-items', 'qbo-items-list')
+      }
+    } catch (e) {
+      setQboActionErr(true)
+      setQboActionMsg(`Unable to refresh QBO list: ${String((e as Error).message || e)}`)
+    } finally {
+      setQboActionBusy(false)
+    }
+  }, [openLists])
+
   const fuelForm = !erpFuelHost ? (
     <FuelTransactionForm
       open={fuelOpen !== null}
@@ -127,8 +201,19 @@ export function AccountingDashboard({
     <div className="acct-dash">
       <header className="acct-dash__page-head">
         <div className="acct-dash__page-head-text">
-          <h1 className="acct-dash__page-title">Accounting — IH 35 Transportation LLC</h1>
-          <p className="acct-dash__page-sub muted">QuickBooks connected · Samsara: 41 vehicles</p>
+          <h1 className="acct-dash__page-title">
+            {homeKpis?.accountingTitle ?? 'Accounting — IH 35 Transportation LLC'}
+          </h1>
+          <p className="acct-dash__page-sub muted">
+            {(homeKpis?.qboConnectionSub ?? 'QuickBooks status unknown') +
+              ' · ' +
+              (homeKpis?.samsaraVehiclesSub ?? 'Samsara vehicles: —')}
+          </p>
+          <p className="muted tiny">
+            {(homeKpis?.environmentSub ?? 'Environment unknown') +
+              ' · ' +
+              (homeKpis?.lastKpiRefreshSub ?? 'Data refresh: —')}
+          </p>
         </div>
         <div className="acct-dash__page-head-actions">
           <div className="acct-new-wrap" ref={acctNewRef}>
@@ -250,14 +335,32 @@ export function AccountingDashboard({
             </ul>
           )}
           </div>
-          <button type="button" className="btn sm ghost acct-dash__head-btn">
+          <button
+            type="button"
+            className="btn sm ghost acct-dash__head-btn"
+            onClick={() => void runQboStatusCheck()}
+            disabled={qboActionBusy}
+          >
             Test QuickBooks
           </button>
-          <button type="button" className="btn sm ghost acct-dash__head-btn">
-            Refresh QBO lists
+          <button
+            type="button"
+            className="btn sm ghost acct-dash__head-btn"
+            onClick={() => void runQboItemsRefresh()}
+            disabled={qboActionBusy}
+          >
+            {qboActionBusy ? 'Working…' : 'Refresh QBO lists'}
           </button>
         </div>
       </header>
+      {qboActionMsg ? (
+        <p
+          className={`nm-banner ${qboActionErr ? 'nm-banner--err' : 'nm-banner--ok'}`}
+          role="status"
+        >
+          {qboActionMsg}
+        </p>
+      ) : null}
 
       <AccountingHomeHub
         onOpenFuel={openFuel}
@@ -265,6 +368,13 @@ export function AccountingDashboard({
         onRequestMaintenanceNav={onRequestMaintenanceNav}
         onOpenRecurring={() => setRecurringOpen(true)}
         onOpenLists={openLists}
+        onOpenTracking={() => onOpenTrackingSection?.()}
+        onOpenUploadCenter={() =>
+          onOpenUploadCenter ? onOpenUploadCenter() : openLists('vendors-drivers', 'bank-csv')
+        }
+        onOpenSettingsUsers={() =>
+          onOpenSettingsUsers ? onOpenSettingsUsers() : openLists('name-management', 'name-registry')
+        }
         onSetHomeOverlay={setHomeOverlay}
         kpis={homeKpis}
       />

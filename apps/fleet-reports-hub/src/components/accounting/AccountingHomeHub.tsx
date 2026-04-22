@@ -17,6 +17,9 @@ type Props = {
   onRequestMaintenanceNav: (target: AccountingMaintNavTarget) => void
   onOpenRecurring: () => void
   onOpenLists: (tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => void
+  onOpenTracking: () => void
+  onOpenUploadCenter: () => void
+  onOpenSettingsUsers: () => void
   onSetHomeOverlay: (o: AccountingHomeOverlay) => void
   kpis?: {
     openBillsCount: string
@@ -95,6 +98,9 @@ export function AccountingHomeHub({
   onRequestMaintenanceNav,
   onOpenRecurring,
   onOpenLists,
+  onOpenTracking,
+  onOpenUploadCenter,
+  onOpenSettingsUsers,
   onSetHomeOverlay,
   kpis,
 }: Props) {
@@ -109,10 +115,6 @@ export function AccountingHomeHub({
 
   const toggle = useCallback((id: SectionId) => {
     setExpanded((e) => ({ ...e, [id]: !e[id] }))
-  }, [])
-
-  const qboStub = useCallback((label: string) => {
-    alert(`${label} — demo shell (no live QuickBooks).`)
   }, [])
 
   const sections = useMemo(() => {
@@ -182,7 +184,7 @@ export function AccountingHomeHub({
       {
         key: 'conn',
         label: 'Connect QuickBooks',
-        onActivate: () => qboStub('Connect QuickBooks'),
+        onActivate: () => onOpenLists('qbo-items', 'qbo-items-list'),
       },
       {
         key: 'items',
@@ -192,7 +194,7 @@ export function AccountingHomeHub({
       {
         key: 'sync',
         label: 'Sync status',
-        onActivate: () => qboStub('Sync status'),
+        onActivate: () => onOpenLists('qbo-items', 'qbo-items-list'),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
 
@@ -205,12 +207,12 @@ export function AccountingHomeHub({
       {
         key: 'sam-cloud',
         label: 'Samsara Cloud',
-        onActivate: () => alert('Samsara Cloud — connect flows are configured in Telematics.'),
+        onActivate: () => onOpenTracking(),
       },
       {
         key: 'upload',
         label: 'Upload center',
-        onActivate: () => alert('Upload center — demo shell.'),
+        onActivate: () => onOpenUploadCenter(),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
 
@@ -218,7 +220,7 @@ export function AccountingHomeHub({
       {
         key: 'settings',
         label: 'Settings & users',
-        onActivate: () => alert('Settings & users — demo shell.'),
+        onActivate: () => onOpenSettingsUsers(),
       },
       {
         key: 'tms',
@@ -247,8 +249,10 @@ export function AccountingHomeHub({
     onRequestMaintenanceNav,
     onOpenRecurring,
     onOpenLists,
+    onOpenTracking,
+    onOpenUploadCenter,
+    onOpenSettingsUsers,
     onSetHomeOverlay,
-    qboStub,
   ])
 
   /** Packet 8 quick actions — alphabetical (DEF / combined stay in + New and Bills via navigation). */
