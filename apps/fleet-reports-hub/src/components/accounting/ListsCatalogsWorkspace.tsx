@@ -130,14 +130,7 @@ function cardsForTab(tab: ListsCatalogsTab, serviceCount: number): CardDef[] {
       break
     case 'vendors-drivers':
       cards = [
-        {
-          id: 'assets-db',
-          name: 'Assets',
-          description: 'Samsara mirror (trucks)',
-        },
         { id: 'bank-csv', name: 'Bank CSV matching', description: 'Import & match' },
-        { id: 'drivers-db', name: 'Drivers database', description: 'Samsara + QBO' },
-        { id: 'vendors-db', name: 'Vendors database', description: 'QBO mirror' },
         {
           id: 'vendors-payees',
           name: 'Vendors & driver payees',

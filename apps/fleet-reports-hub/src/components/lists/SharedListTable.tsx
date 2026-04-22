@@ -155,7 +155,7 @@ export function SharedListTable<T extends Record<string, unknown>>({
             className="shared-list__head-btn fr-table-excel-export"
             onClick={onExportExcel ?? defaultExport}
           >
-            Export to Excel
+            Export Excel
           </button>
           {onAddNew ? (
             <button type="button" className="btn sm primary shared-list__head-btn" onClick={onAddNew}>
