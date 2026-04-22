@@ -24,9 +24,20 @@ const __dirname = path.dirname(__filename);
 
 const FLEET_REPORTS_INDEX = path.join(__dirname, 'public', 'fleet-reports', 'index.html');
 
+/** Avoid stale Fleet hub UI: browsers often cache `index.html` and keep old hashed `assets/*` URLs. */
+function setFleetHubEntryNoCache(res) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+}
+
 function sendFleetReportsSpa(res) {
   if (fs.existsSync(FLEET_REPORTS_INDEX)) {
-    res.sendFile(FLEET_REPORTS_INDEX);
+    setFleetHubEntryNoCache(res);
+    res.sendFile(FLEET_REPORTS_INDEX, {
+      etag: false,
+      lastModified: false,
+      cacheControl: false,
+    });
     return;
   }
   res
@@ -175,6 +186,7 @@ async function start() {
 
   /** Fleet hub SPA (same process as ERP); assets live under `/fleet-reports/assets/`. */
   app.get('/fleet-reports', (_req, res) => {
+    setFleetHubEntryNoCache(res);
     res.redirect(302, '/fleet-reports/');
   });
   app.get('/fleet-reports/', (_req, res) => {
@@ -183,6 +195,17 @@ async function start() {
   app.get('/fleet-reports/index.html', (_req, res) => {
     sendFleetReportsSpa(res);
   });
+
+  /** Hashed Vite chunks under `/fleet-reports/assets/` — short revalidate so new builds win over disk cache. */
+  app.use(
+    '/fleet-reports/assets',
+    express.static(path.join(__dirname, 'public', 'fleet-reports', 'assets'), {
+      maxAge: 0,
+      setHeaders(res) {
+        res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+      },
+    }),
+  );
 
   app.use(express.static(path.join(__dirname, 'public')));
   app.use('/src', express.static(path.join(__dirname, 'src')));
