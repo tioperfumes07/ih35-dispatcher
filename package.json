@@ -8,43 +8,31 @@
     "node": ">=18"
   },
   "scripts": {
-    "prestart": "node scripts/ensure-fleet-reports-dist.mjs",
+    "render:install": "rm -rf node_modules && npm ci",
     "start": "node server.js",
-    "dev": "node scripts/dev-stack.mjs",
-    "dev:reset": "node scripts/dev-reset.mjs",
-    "dev:server-only": "node scripts/ensure-fleet-reports-dist.mjs && node --watch server.js",
-    "dev:fleet": "npm --prefix apps/fleet-reports-hub run dev",
-    "dev:fleet:api": "npm --prefix apps/fleet-reports-hub run dev:api",
-    "build:fleet": "VITE_BASE=/fleet-reports/ npm --prefix apps/fleet-reports-hub run build && rm -rf public/fleet-reports && mkdir -p public/fleet-reports && cp -R apps/fleet-reports-hub/dist/. public/fleet-reports/",
-    "dev:fresh": "npm run build:fleet && node scripts/dev-stack.mjs",
+    "dev": "node --watch server.js",
     "db:test": "node scripts/db-test.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
-    "db:ensure-support": "node scripts/ensure-support-tables.mjs",
     "smoke": "node scripts/system-smoke.mjs",
     "smoke:gate-sync": "node scripts/smoke-gate-paths-sync.mjs",
+    "test:layout": "node --test tests/layout-responsive-erp.test.mjs",
+    "test:playwright": "playwright test",
+    "test:playwright:install": "playwright install chromium",
     "test:name-mgmt": "node --test tests/name-management-erp.test.mjs",
     "test:fleet-mileage": "node --test tests/fleet-mileage-settings.test.mjs",
     "test:integrity-meta": "node --test tests/integrity-engine-export-meta.test.mjs",
-    "test:playwright": "playwright test",
-    "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke && npm run test:name-mgmt && npm run test:fleet-mileage",
+    "test:qbo-dedupe-purchase": "node --test tests/qbo-dedupe-purchase-scan.test.mjs",
+    "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run test:layout && npm run smoke && npm run test:name-mgmt && npm run test:fleet-mileage && npm run test:integrity-meta && npm run test:qbo-dedupe-purchase",
     "qa:isolated": "node scripts/qa-with-server.mjs",
-    "verify:full": "npm run build:fleet && npm run qa:isolated",
-    "verify:safari": "echo \"Safari verification flow:\" && echo \"1) npm run build:fleet\" && echo \"2) npm run qa:isolated\" && echo \"3) Follow docs/SAFARI_E2E_CHECKLIST.md\"",
-    "verify:safari:full": "npm run build:fleet && npm run qa:isolated && npm run verify:safari",
-    "pm2:start": "pm2 start ecosystem.config.cjs --env production",
-    "pm2:stop": "pm2 stop ih35-erp",
-    "pm2:restart": "pm2 restart ih35-erp",
-    "pm2:logs": "pm2 logs ih35-erp",
-    "pm2:status": "pm2 status",
     "test": "npm run rule0:check",
     "rule0:check": "node scripts/rule-zero-agent-b-check.mjs",
-    "report:erp": "node scripts/generate-erp-progress-report.mjs"
+    "report:erp": "node scripts/generate-erp-progress-report.mjs",
+    "git:sync": "bash scripts/git-auto-sync.sh"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "jszip": "^3.10.1",
     "multer": "^2.1.1",
     "node-cron": "^3.0.3",
     "pdf-parse": "^1.1.4",
@@ -53,7 +41,6 @@
     "xlsx": "npm:@e965/xlsx@^0.20.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.1",
-    "pm2": "^5.4.3"
+    "@playwright/test": "^1.49.1"
   }
 }
