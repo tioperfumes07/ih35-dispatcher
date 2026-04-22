@@ -286,8 +286,8 @@ export default function App() {
 
   useEffect(() => {
     if (!erpEmbed) return
-    if (activeSection !== 'reports') setActiveSection('reports')
-  }, [erpEmbed, activeSection])
+    if (activeSection !== 'reports') openSection('reports')
+  }, [erpEmbed, activeSection, openSection])
 
   useEffect(() => {
     if (!appWoPickOpen && woPickFullScreen) toggleWoPickFullScreen()
