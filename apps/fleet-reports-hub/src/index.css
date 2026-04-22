@@ -8836,20 +8836,20 @@ nav.tabs {
 }
 
 .app--fleet-reports .field-label {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--color-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .app--fleet-reports .data-table th {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--color-text-secondary);
   text-align: left;
-  padding: 4px 7px;
+  padding: 7px 10px;
   border-bottom: 0.5px solid var(--color-border-secondary);
-  font-weight: 400;
+  font-weight: 500;
   white-space: nowrap;
   background: var(--color-background-secondary);
   text-transform: uppercase;
@@ -8859,11 +8859,11 @@ nav.tabs {
 }
 
 .app--fleet-reports .data-table td {
-  font-size: 11px;
-  padding: 4px 7px;
+  font-size: 13px;
+  padding: 7px 10px;
   border-bottom: 0.5px solid var(--color-border-tertiary);
   vertical-align: middle;
-  height: 26px;
+  height: 34px;
 }
 
 .app--fleet-reports .data-table tr:hover td {
@@ -8871,11 +8871,123 @@ nav.tabs {
 }
 
 .app--fleet-reports .badge {
-  font-size: 9px;
-  padding: 1px 5px;
-  border-radius: 6px;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 8px;
   white-space: nowrap;
   display: inline-block;
+}
+
+/* Packet parity sizing/layout (work orders, bills, reports) */
+.reports-page--redesign .reports-page__title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.reports-page--redesign .reports-page__subtitle {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.reports-page--redesign .reports-tab {
+  font-size: 14px;
+  padding: 10px 14px;
+}
+
+.filter-panel.filter-panel--reports {
+  flex-basis: min(260px, 100%);
+  width: min(260px, 100%);
+  padding: 14px;
+}
+
+.filter-panel--reports .filter-panel__title {
+  font-size: 20px;
+}
+
+.filter-panel--reports .field input:not([type='checkbox']):not([type='radio']),
+.filter-panel--reports .field select,
+.multi-select-field__search {
+  min-height: 34px;
+  font-size: 14px;
+}
+
+.bill-pay__section-title {
+  font-size: 16px;
+}
+
+.bill-pay__pay-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 14px;
+}
+
+.bill-pay__pay-header .field input,
+.bill-pay__pay-header .field select {
+  min-height: 36px;
+  font-size: 14px;
+}
+
+.bill-pay__scroll {
+  background: var(--panel);
+}
+
+.bill-pay__table {
+  font-size: 13px;
+}
+
+.bill-pay__table thead th {
+  background: var(--panel-2);
+  font-size: 11px;
+}
+
+.acct-hub-sec__head,
+.acct-hub-sec__row {
+  min-height: 36px;
+}
+
+.acct-hub-sec__row {
+  font-size: 14px;
+}
+
+.lists-catalogs__card {
+  min-height: 86px;
+}
+
+/* ERP-hosted surfaces should stay in the light shell (no dark blocks). */
+.app--erp-host .reports-page {
+  background: var(--panel);
+}
+
+.app--erp-host .reports-page__header,
+.app--erp-host .reports-page__main {
+  background: var(--panel);
+}
+
+.app--erp-host .filter-panel.filter-panel--reports {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+
+.app--erp-host .filter-panel--reports .filter-panel__title {
+  color: var(--text);
+}
+
+.app--erp-host .filter-panel--reports .field input:not([type='checkbox']):not([type='radio']),
+.app--erp-host .filter-panel--reports .field select,
+.app--erp-host .multi-select-field__search,
+.app--erp-host .multi-select-field__list,
+.app--erp-host .multi-select-field__add,
+.app--erp-host .multi-select-field__chip,
+.app--erp-host .bill-pay__vendor-input,
+.app--erp-host .bill-pay__scroll,
+.app--erp-host .bill-pay__table thead th {
+  background: var(--panel-2);
+}
+
+.app--erp-host .bill-pay__table th,
+.app--erp-host .bill-pay__table td {
+  border-bottom-color: var(--border);
 }
 
 .app--fleet-reports .badge-success {

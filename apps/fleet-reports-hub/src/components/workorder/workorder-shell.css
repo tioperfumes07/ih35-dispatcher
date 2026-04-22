@@ -781,3 +781,85 @@
   width: min(1180px, 100%);
   max-height: min(94vh, 1200px);
 }
+
+/* Packet parity sizing for WO shell (keep existing palette tokens). */
+.wo-shell-root .maint-combo__label > span:first-child,
+.wo-field-lbl {
+  font-size: 11px;
+}
+
+.wo-shell-root .maint-combo__input,
+.wo-input,
+.wo-select,
+.wo-inline-row .wo-input,
+.wo-bar-btn {
+  min-height: 34px;
+  height: 34px;
+  font-size: 14px;
+  padding: 0 10px;
+  border-radius: 8px;
+}
+
+.wo-textarea {
+  min-height: 92px;
+  font-size: 14px;
+  padding: 8px 10px;
+}
+
+.wo-topbar {
+  padding: 10px 12px;
+  gap: 10px;
+}
+
+.wo-topbar__title,
+.wo-topbar__ledger-hint,
+.wo-bar-status,
+.wo-totals-bar {
+  font-size: 13px;
+}
+
+.wo-wo-badge,
+.wo-pill,
+.wo-unit-badge {
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 999px;
+}
+
+.wo-ico-btn,
+.wo-ico-btn.modal-fs-toggle {
+  min-height: 34px;
+  height: 34px;
+  font-size: 13px;
+  padding: 0 10px;
+  border-radius: 8px;
+}
+
+.wo-unit-card {
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.wo-unit-card__name {
+  font-size: 17px;
+}
+
+.wo-unit-card__sub,
+.wo-unit-card__stats {
+  font-size: 13px;
+}
+
+.wo-sec__label {
+  font-size: 14px;
+}
+
+.wo-data-table th {
+  font-size: 11px;
+  padding: 7px 10px;
+}
+
+.wo-data-table td {
+  font-size: 13px;
+  padding: 7px 10px;
+  min-height: 34px;
+}
