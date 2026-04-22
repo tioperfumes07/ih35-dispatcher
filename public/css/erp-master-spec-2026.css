@@ -2224,7 +2224,8 @@ body.banking-page #authBanner.erp-auth-banner {
 .erp-dedicated-form-modal {
   position: fixed;
   inset: 0;
-  z-index: 1900;
+  /* Above .maint-modal-bg / connection strips (9000), below merge/dedupe (12000) and multi-bills (12050). */
+  z-index: 11900;
   display: grid;
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: start center;

@@ -10799,6 +10799,15 @@
       }
       syncApDocTitle();
       const shell = document.getElementById('erpApDocShellPanel');
+      if (!shell) {
+        if (typeof erpNotify === 'function') {
+          erpNotify('Accounting form shell (#erpApDocShellPanel) is missing. Reload the page or open Accounting once.', 'error');
+        }
+        return;
+      }
+      Array.from(mount.children).forEach(ch => {
+        if (ch !== shell) mount.removeChild(ch);
+      });
       mount.appendChild(shell);
       const acc = document.getElementById('erpApDocTitleAccent');
       if (acc) {

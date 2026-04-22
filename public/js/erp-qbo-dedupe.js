@@ -770,5 +770,13 @@
   window.openDedupeTool = function () {
     if (typeof openSection === 'function') openSection('dedupe', null);
     else window.location.hash = 'dedupe';
+    requestAnimationFrame(() => {
+      try {
+        document.getElementById('section-dedupe')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        document.getElementById('erpDedupeRoot')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } catch (_) {
+        /* ignore */
+      }
+    });
   };
 })();
