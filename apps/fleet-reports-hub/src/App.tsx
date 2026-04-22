@@ -85,6 +85,10 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'fuel', label: 'Fuel' },
   { id: 'loads', label: 'Loads' },
 ]
+const ORDERED_APP_SECTIONS: { id: AppSection; label: string }[] = [
+  { id: 'home', label: 'Home' },
+  ...APP_SECTIONS.filter((s) => s.id !== 'home').sort((a, b) => a.label.localeCompare(b.label)),
+]
 
 const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   home: 'Operational dashboard with section shortcuts and KPI snapshot.',
@@ -115,7 +119,15 @@ function readInitialSection(): AppSection {
   if (p.get('erpFuelEmbed') === '1' || p.get('erpFuelModal') === '1') return 'accounting'
   if (p.get('erpEmbed') === '1') return 'reports'
   const q = String(p.get('section') || '').trim().toLowerCase()
-  if ((APP_SECTIONS as { id: string }[]).some((s) => s.id === q)) return q as AppSection
+  if ((APP_SECTIONS as { id: string }[]).some((s) => s.id === q)) {
+    if (q === 'reports') {
+      const tabQ = String(p.get('tab') || '').trim().toLowerCase()
+      if (tabQ === 'safety') return 'safety'
+      if (tabQ === 'fuel') return 'fuel'
+      if (tabQ === 'operations') return 'loads'
+    }
+    return q as AppSection
+  }
   const tabQ = String(p.get('tab') || '').trim().toLowerCase()
   if ((REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) {
     if (tabQ === 'safety') return 'safety'
@@ -233,6 +245,7 @@ export default function App() {
     if (typeof window === 'undefined') return
     if (erpEmbed || erpRecordEmbed || erpFuelEmbed || erpFuelModalHost || erpWoModalHost) return
     try {
+      const before = `${window.location.pathname}${window.location.search}${window.location.hash}`
       const url = new URL(window.location.href)
       if (activeSection === 'home') url.searchParams.delete('section')
       else url.searchParams.set('section', activeSection)
@@ -245,10 +258,19 @@ export default function App() {
         url.searchParams.set('tab', 'fuel')
       } else if (activeSection === 'loads') {
         url.searchParams.set('tab', 'operations')
+      } else if (activeSection === 'lists') {
+        url.searchParams.set('listsTab', listsTab)
+        if (listsDeepLink) url.searchParams.set('listsList', listsDeepLink)
+        else url.searchParams.delete('listsList')
       } else {
         url.searchParams.delete('tab')
       }
-      window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+      if (activeSection !== 'lists') {
+        url.searchParams.delete('listsTab')
+        url.searchParams.delete('listsList')
+      }
+      const after = `${url.pathname}${url.search}${url.hash}`
+      if (after !== before) window.history.replaceState({}, '', after)
     } catch {
       /* ignore */
     }
@@ -260,17 +282,35 @@ export default function App() {
     erpFuelEmbed,
     erpFuelModalHost,
     erpWoModalHost,
+    listsTab,
+    listsDeepLink,
   ])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (erpEmbed || erpRecordEmbed || erpFuelEmbed || erpFuelModalHost || erpWoModalHost) return
     const syncFromLocation = () => {
+      const p = new URLSearchParams(window.location.search)
       const nextSection = readInitialSection()
       const nextTab = readInitialReportTab()
       if (nextSection !== activeSection) openSection(nextSection)
       setTab((prev) => (prev === nextTab ? prev : nextTab))
-      if (nextSection !== 'lists') setListsDeepLink(null)
+      if (nextSection === 'lists') {
+        const nextListsTab = p.get('listsTab') || ''
+        if (LISTS_CATALOG_TAB_IDS.includes(nextListsTab as ListsCatalogsTab)) {
+          setListsTab((prev) => (prev === nextListsTab ? prev : (nextListsTab as ListsCatalogsTab)))
+        }
+        const nextListsList = p.get('listsList') || ''
+        setListsDeepLink((prev) =>
+          prev === (nextListsList ? (nextListsList as ListsCatalogListId) : null)
+            ? prev
+            : nextListsList
+              ? (nextListsList as ListsCatalogListId)
+              : null,
+        )
+      } else {
+        setListsDeepLink(null)
+      }
     }
     window.addEventListener('popstate', syncFromLocation)
     return () => window.removeEventListener('popstate', syncFromLocation)
@@ -449,10 +489,8 @@ export default function App() {
 
   /** Maintenance workspace nav cards — always maintenance category. */
   const maintenanceListReports = useMemo(() => {
-    return REPORTS.filter((r) => r.category === 'maintenance').filter((r) =>
-      matchesSearch(r, search),
-    )
-  }, [search])
+    return REPORTS.filter((r) => r.category === 'maintenance')
+  }, [])
 
   const openReport = (r: ReportDef) => {
     recent.recordOpen(r.id)
@@ -502,7 +540,7 @@ export default function App() {
           aria-label="Application sections"
           style={{ margin: '8px 12px 0' }}
         >
-          {APP_SECTIONS.map((s) => (
+          {ORDERED_APP_SECTIONS.map((s) => (
             <button
               key={s.id}
               type="button"
@@ -623,7 +661,7 @@ export default function App() {
                       </div>
                     </div>
                     <div className="acct-hub__quick" aria-label="Home shortcuts">
-                      {APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
+                      {ORDERED_APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
                         <button
                           key={`home-link-${s.id}`}
                           type="button"
@@ -635,7 +673,7 @@ export default function App() {
                       ))}
                     </div>
                     <div className="acct-hub__grid" aria-label="Section cards">
-                      {APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
+                      {ORDERED_APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
                         <div key={`home-card-${s.id}`} className="acct-hub-sec">
                           <button
                             type="button"
