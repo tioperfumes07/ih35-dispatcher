@@ -92,6 +92,17 @@ const ORDERED_APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'home', label: 'Home' },
   ...APP_SECTIONS.filter((s) => s.id !== 'home').sort((a, b) => a.label.localeCompare(b.label)),
 ]
+const REPORT_SECTION_IDS = new Set<AppSection>(['reports', 'safety', 'fuel', 'loads'])
+const SECTION_REPORT_TAB_OVERRIDES: Partial<Record<AppSection, ReportCategory>> = {
+  safety: 'safety',
+  fuel: 'fuel',
+  loads: 'operations',
+}
+const TAB_SECTION_OVERRIDES: Partial<Record<ReportCategory, AppSection>> = {
+  safety: 'safety',
+  fuel: 'fuel',
+  operations: 'loads',
+}
 const LISTS_CATALOG_LIST_IDS: ListsCatalogListId[] = [
   'fleet-writes',
   'op-status',
@@ -110,6 +121,22 @@ const LISTS_CATALOG_LIST_IDS: ListsCatalogListId[] = [
 const LISTS_TAB_ID_SET = new Set<ListsCatalogsTab>(LISTS_CATALOG_TAB_IDS)
 const LISTS_LIST_ID_SET = new Set<ListsCatalogListId>(LISTS_CATALOG_LIST_IDS)
 
+function isValidListsTab(value: string): value is ListsCatalogsTab {
+  return LISTS_TAB_ID_SET.has(value as ListsCatalogsTab)
+}
+
+function normalizeListsTab(value: string): ListsCatalogsTab {
+  return isValidListsTab(value) ? value : 'fleet-samsara'
+}
+
+function isValidListsListId(value: string): value is ListsCatalogListId {
+  return LISTS_LIST_ID_SET.has(value as ListsCatalogListId)
+}
+
+function normalizeListsListId(value: string): ListsCatalogListId | null {
+  return isValidListsListId(value) ? value : null
+}
+
 const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   home: 'Operational dashboard with section shortcuts and KPI snapshot.',
   maintenance: 'Work orders, integrity operations, and maintenance workflows.',
@@ -120,6 +147,15 @@ const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   tracking: 'Telematics fleet inventory, integrity, and connection status.',
   fuel: 'Fuel-focused report cards with direct transaction launch actions.',
   loads: 'Operations and load-facing reporting surfaces.',
+}
+
+function sectionForReportTab(tab: ReportCategory): AppSection {
+  return TAB_SECTION_OVERRIDES[tab] ?? 'reports'
+}
+
+function normalizeReportTabForSection(section: AppSection, tab: ReportCategory): ReportCategory {
+  if (section === 'reports' && !REPORTS_PAGE_TAB_IDS.includes(tab)) return 'overview'
+  return tab
 }
 
 function readInitialReportTab(): ReportCategory {
@@ -141,19 +177,14 @@ function readInitialSection(): AppSection {
   const q = String(p.get('section') || '').trim().toLowerCase()
   if ((APP_SECTIONS as { id: string }[]).some((s) => s.id === q)) {
     if (q === 'reports') {
-      const tabQ = String(p.get('tab') || '').trim().toLowerCase()
-      if (tabQ === 'safety') return 'safety'
-      if (tabQ === 'fuel') return 'fuel'
-      if (tabQ === 'operations') return 'loads'
+      const tabQ = String(p.get('tab') || '').trim().toLowerCase() as ReportCategory
+      if ((REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) return sectionForReportTab(tabQ)
     }
     return q as AppSection
   }
-  const tabQ = String(p.get('tab') || '').trim().toLowerCase()
+  const tabQ = String(p.get('tab') || '').trim().toLowerCase() as ReportCategory
   if ((REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) {
-    if (tabQ === 'safety') return 'safety'
-    if (tabQ === 'fuel') return 'fuel'
-    if (tabQ === 'operations') return 'loads'
-    return 'reports'
+    return sectionForReportTab(tabQ)
   }
   return 'home'
 }
@@ -161,15 +192,13 @@ function readInitialSection(): AppSection {
 function readInitialListsTab(): ListsCatalogsTab {
   if (typeof window === 'undefined') return 'fleet-samsara'
   const p = new URLSearchParams(window.location.search)
-  const listsTab = String(p.get('listsTab') || '').trim() as ListsCatalogsTab
-  return LISTS_TAB_ID_SET.has(listsTab) ? listsTab : 'fleet-samsara'
+  return normalizeListsTab(String(p.get('listsTab') || '').trim())
 }
 
 function readInitialListsDeepLink(): ListsCatalogListId | null {
   if (typeof window === 'undefined') return null
   const p = new URLSearchParams(window.location.search)
-  const list = String(p.get('listsList') || '').trim() as ListsCatalogListId
-  return LISTS_LIST_ID_SET.has(list) ? list : null
+  return normalizeListsListId(String(p.get('listsList') || '').trim())
 }
 
 function readErpRecordEmbedFlag(): boolean {
@@ -199,7 +228,9 @@ function readErpEmbedFlag(): boolean {
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<AppSection>(readInitialSection)
-  const [tab, setTab] = useState<ReportCategory>(readInitialReportTab)
+  const [tab, setTab] = useState<ReportCategory>(() =>
+    normalizeReportTabForSection(readInitialSection(), readInitialReportTab()),
+  )
   /** True for the session when opened from ERP record-tab iframe (?erpWoEmbed=1), after URL cleanup. */
   const [erpRecordEmbed] = useState(readErpRecordEmbedFlag)
   /** True for the session when opened from ERP full-window WO modal (?erpWoModal=1), after URL cleanup. */
@@ -244,10 +275,17 @@ export default function App() {
     if (section === 'reports') setTab('overview')
     setListsDeepLink(null)
   }, [])
+  const openListsSection = useCallback(
+    (tabId: ListsCatalogsTab = 'fleet-samsara', listId: ListsCatalogListId | null = null) => {
+      openSection('lists')
+      setListsTab(tabId)
+      setListsDeepLink(listId)
+    },
+    [openSection],
+  )
 
   useEffect(() => {
-    const reportSections: AppSection[] = ['reports', 'safety', 'fuel', 'loads']
-    if (!reportSections.includes(activeSection)) setActive(null)
+    if (!REPORT_SECTION_IDS.has(activeSection)) setActive(null)
   }, [activeSection])
 
   useEffect(() => {
@@ -261,17 +299,10 @@ export default function App() {
     const p = new URLSearchParams(window.location.search)
     if (p.get('acctLists') !== '1') return
     const listsTabRaw = p.get('listsTab') || ''
-    if (!LISTS_TAB_ID_SET.has(listsTabRaw as ListsCatalogsTab)) return
+    if (!isValidListsTab(listsTabRaw)) return
     const listsListRaw = p.get('listsList') || ''
-    const list =
-      listsListRaw &&
-      listsListRaw.length &&
-      LISTS_LIST_ID_SET.has(listsListRaw as ListsCatalogListId)
-        ? (listsListRaw as ListsCatalogListId)
-        : null
-    openSection('lists')
-    setListsTab(listsTabRaw as ListsCatalogsTab)
-    setListsDeepLink(list)
+    const list = normalizeListsListId(listsListRaw)
+    openListsSection(listsTabRaw, list)
     p.delete('acctLists')
     p.delete('listsTab')
     p.delete('listsList')
@@ -282,7 +313,7 @@ export default function App() {
     } catch {
       /* ignore */
     }
-  }, [openSection])
+  }, [openListsSection])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -293,14 +324,12 @@ export default function App() {
       if (activeSection === 'home') url.searchParams.delete('section')
       else url.searchParams.set('section', activeSection)
       if (activeSection === 'reports') {
-        if (tab === 'overview') url.searchParams.delete('tab')
+        if (tab === 'overview' || !REPORTS_PAGE_TAB_IDS.includes(tab)) {
+          url.searchParams.delete('tab')
+        }
         else url.searchParams.set('tab', tab)
-      } else if (activeSection === 'safety') {
-        url.searchParams.set('tab', 'safety')
-      } else if (activeSection === 'fuel') {
-        url.searchParams.set('tab', 'fuel')
-      } else if (activeSection === 'loads') {
-        url.searchParams.set('tab', 'operations')
+      } else if (SECTION_REPORT_TAB_OVERRIDES[activeSection]) {
+        url.searchParams.set('tab', SECTION_REPORT_TAB_OVERRIDES[activeSection]!)
       } else if (activeSection === 'lists') {
         url.searchParams.set('listsTab', listsTab)
         if (listsDeepLink) url.searchParams.set('listsList', listsDeepLink)
@@ -335,25 +364,17 @@ export default function App() {
     const syncFromLocation = () => {
       const p = new URLSearchParams(window.location.search)
       const nextSection = readInitialSection()
-      const nextTab = readInitialReportTab()
+      const nextTab = normalizeReportTabForSection(nextSection, readInitialReportTab())
       if (nextSection !== activeSection) openSection(nextSection)
       setTab((prev) => (prev === nextTab ? prev : nextTab))
       if (nextSection === 'lists') {
         const nextListsTab = p.get('listsTab') || ''
-        const nextListsTabResolved = LISTS_TAB_ID_SET.has(nextListsTab as ListsCatalogsTab)
-          ? (nextListsTab as ListsCatalogsTab)
-          : 'fleet-samsara'
+        const nextListsTabResolved = normalizeListsTab(nextListsTab)
         setListsTab((prev) => (prev === nextListsTabResolved ? prev : nextListsTabResolved))
         const nextListsList = p.get('listsList') || ''
+        const nextListsListResolved = normalizeListsListId(nextListsList)
         setListsDeepLink((prev) =>
-          prev ===
-          (LISTS_LIST_ID_SET.has(nextListsList as ListsCatalogListId)
-            ? (nextListsList as ListsCatalogListId)
-            : null)
-            ? prev
-            : LISTS_LIST_ID_SET.has(nextListsList as ListsCatalogListId)
-              ? (nextListsList as ListsCatalogListId)
-              : null,
+          prev === nextListsListResolved ? prev : nextListsListResolved,
         )
       } else {
         setListsDeepLink(null)
@@ -484,16 +505,9 @@ export default function App() {
     () => serviceCatalogRows.map((s) => s.service_name),
     [serviceCatalogRows],
   )
-  const reportsSectionVisible =
-    activeSection === 'reports' ||
-    activeSection === 'safety' ||
-    activeSection === 'fuel' ||
-    activeSection === 'loads'
+  const reportsSectionVisible = REPORT_SECTION_IDS.has(activeSection)
   const reportTabForSection = useMemo<ReportCategory>(() => {
-    if (activeSection === 'safety') return 'safety'
-    if (activeSection === 'fuel') return 'fuel'
-    if (activeSection === 'loads') return 'operations'
-    return tab
+    return SECTION_REPORT_TAB_OVERRIDES[activeSection] ?? tab
   }, [activeSection, tab])
 
   /** Report cards on the right: Overview = all reports; other tabs = that category only. */
@@ -778,11 +792,9 @@ export default function App() {
                     onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
                     onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
                     onNewWorkOrder={() => setAppWoPickOpen(true)}
-                    onOpenListsSection={(tabId, listId) => {
-                      openSection('lists')
-                      setListsTab(tabId)
-                      setListsDeepLink(listId === undefined ? null : listId)
-                    }}
+                    onOpenListsSection={(tabId, listId) =>
+                      openListsSection(tabId, listId === undefined ? null : listId)
+                    }
                     erpFuelHost={erpFuelEmbed || erpFuelModalHost}
                     onFuelOpenFromAccounting={
                       erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
@@ -965,9 +977,7 @@ export default function App() {
         }}
         onOpenVendorDirectory={() => {
           setFuelPlannerTxn(null)
-          openSection('lists')
-          setListsTab('name-management')
-          setListsDeepLink('name-registry')
+          openListsSection('name-management', 'name-registry')
         }}
         onViewAllIntegrity={() => {
           setFuelPlannerTxn(null)
