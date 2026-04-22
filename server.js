@@ -18,6 +18,9 @@ import { mountFleetRegistryProxy } from './routes/fleet-registry-proxy.mjs';
 import { mountDedupeRoutes } from './routes/dedupe.mjs';
 import { mountNameManagementRoutes } from './routes/name-management.mjs';
 import { createMaintIntegrationDeps } from './lib/maint-server-deps.mjs';
+import { initializeDatabase as initializeFleetRegistryDb } from './apps/fleet-reports-hub/server/lib/accounting-db.mjs';
+import { registerCatalogRoutes as registerFleetCatalogRoutes } from './apps/fleet-reports-hub/server/lib/catalog-http.mjs';
+import { registerAccountingRoutes as registerFleetAccountingRoutes } from './apps/fleet-reports-hub/server/lib/accounting-http.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -138,6 +141,11 @@ void SMOKE_GATE_API_PATHS;
 
 async function start() {
   await initializeDatabase();
+  try {
+    initializeFleetRegistryDb();
+  } catch (e) {
+    console.error('[fleet-registry] SQLite init failed:', e?.message || e);
+  }
 
   const pool = getPool();
   const app = express();
@@ -208,6 +216,8 @@ async function start() {
   mountNameManagementRoutes(app, maintIntegrationDeps);
 
   mountFleetRegistryProxy(app, { logError: console.error });
+  registerFleetCatalogRoutes(app);
+  registerFleetAccountingRoutes(app);
 
   app.use('/api/form-425c', createForm425cRouter({ logError: console.error }));
 
