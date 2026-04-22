@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalFullscreenToggle } from './ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../hooks/useFullScreen'
 import { useColumnResize } from '../hooks/useColumnResize'
@@ -42,6 +42,8 @@ function splitTotal(total: number, parts: number): number[] {
 
 export function RecurringBillsModal({ open, onClose }: Props) {
   const { isFullScreen, toggle } = useFullScreen()
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
   const [phase, setPhase] = useState<Phase>('edit')
   const [progress, setProgress] = useState(0)
   const [seriesId, setSeriesId] = useState<string | null>(null)
@@ -86,7 +88,12 @@ export function RecurringBillsModal({ open, onClose }: Props) {
   }, [open, resetForm])
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      const el = returnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    returnFocusRef.current = document.activeElement as HTMLElement | null
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || phase === 'progress') return
       if (phase === 'confirm') {
@@ -95,8 +102,19 @@ export function RecurringBillsModal({ open, onClose }: Props) {
       }
       onClose()
     }
+    const id = window.setTimeout(() => {
+      const root = dialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
   }, [open, onClose, phase])
 
   const previewFormats = useMemo(() => previewBillFormats(billFormat), [billFormat])
@@ -188,6 +206,7 @@ export function RecurringBillsModal({ open, onClose }: Props) {
   return (
     <div className="recurring-modal" role="presentation">
       <div
+        ref={dialogRef}
         className="recurring-modal__dialog"
         style={isFullScreen ? MODAL_FULLSCREEN_STYLE : undefined}
         role="dialog"

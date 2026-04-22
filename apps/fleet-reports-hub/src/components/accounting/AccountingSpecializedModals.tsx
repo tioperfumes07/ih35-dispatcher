@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { ModalFullscreenToggle } from '../ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../../hooks/useFullScreen'
 import { DateFilterBar } from '../DateFilterBar'
@@ -121,20 +121,36 @@ function ModalShell({
   const titleId = useId()
   const { isFullScreen, toggle } = useFullScreen()
   const [wIdx, setWIdx] = useState(2)
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (!open) {
       setWIdx(2)
+      const el = returnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
     }
   }, [open])
 
   useEffect(() => {
     if (!open) return
+    returnFocusRef.current = document.activeElement as HTMLElement | null
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
+    const id = window.setTimeout(() => {
+      const root = dialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
   }, [open, onClose])
 
   if (!open) return null
@@ -147,6 +163,7 @@ function ModalShell({
       }}
     >
       <div
+        ref={dialogRef}
         className="acct-spec-modal__dialog"
         style={
           isFullScreen

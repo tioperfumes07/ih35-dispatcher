@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalFullscreenToggle } from '../ModalFullscreenToggle'
 import { DateFilterBar } from '../DateFilterBar'
 import { ResizeTableTh } from '../table/ResizeTableTh'
@@ -153,6 +153,8 @@ export function VendorCustomerDedupWorkspace() {
   const [keepSide, setKeepSide] = useState<'A' | 'B' | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmFullScreen, setConfirmFullScreen] = useState(false)
+  const confirmDialogRef = useRef<HTMLDivElement | null>(null)
+  const confirmReturnFocusRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (!confirmOpen) setConfirmFullScreen(false)
@@ -160,6 +162,30 @@ export function VendorCustomerDedupWorkspace() {
   const [confirmAck, setConfirmAck] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  useEffect(() => {
+    if (!confirmOpen) {
+      const el = confirmReturnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    confirmReturnFocusRef.current = document.activeElement as HTMLElement | null
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !busy) setConfirmOpen(false)
+    }
+    const id = window.setTimeout(() => {
+      const root = confirmDialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
+  }, [confirmOpen, busy])
 
   const refreshCandidates = useCallback(async () => {
     const { groups: g } = await fetchDedupCandidates(entityType)
@@ -597,6 +623,7 @@ export function VendorCustomerDedupWorkspace() {
           onClick={() => !busy && setConfirmOpen(false)}
         >
           <div
+            ref={confirmDialogRef}
             className={
               'modal dedup-confirm' +
               (confirmFullScreen ? ' app-modal-panel--fullscreen' : '')
