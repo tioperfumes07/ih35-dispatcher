@@ -33,8 +33,8 @@ type IntegrationConnectionsContextValue = {
 const IntegrationConnectionsContext =
   createContext<IntegrationConnectionsContextValue | null>(null)
 
-/** Background probe interval (matches ERP strip ~12 min). */
-const FIVE_MIN_MS = 12 * 60 * 1000
+/** Background probe interval shown in the connection strip. */
+const PROBE_INTERVAL_MS = 5 * 60 * 1000
 
 function delay(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms))
@@ -159,7 +159,7 @@ export function IntegrationConnectionsProvider({ children }: { children: ReactNo
   useEffect(() => {
     const id = window.setInterval(() => {
       void runProbe()
-    }, FIVE_MIN_MS)
+    }, PROBE_INTERVAL_MS)
     return () => window.clearInterval(id)
   }, [runProbe])
 

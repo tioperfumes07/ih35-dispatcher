@@ -1599,6 +1599,12 @@ nav.tabs {
   line-height: 1.35;
 }
 
+.acct-dash__page-meta {
+  margin: 2px 0 0;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
 .acct-dash__page-head-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2563,7 +2569,8 @@ nav.tabs {
 
 .recurring-modal__top-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -2898,7 +2905,8 @@ nav.tabs {
 
 .acct-spec-modal__title-bar-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -4526,7 +4534,7 @@ nav.tabs {
 .list-edit-modal__head-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   justify-content: flex-end;
 }

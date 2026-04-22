@@ -209,7 +209,7 @@ export function AccountingDashboard({
               ' · ' +
               (homeKpis?.samsaraVehiclesSub ?? 'Samsara vehicles: —')}
           </p>
-          <p className="muted tiny">
+          <p className="acct-dash__page-meta muted">
             {(homeKpis?.environmentSub ?? 'Environment unknown') +
               ' · ' +
               (homeKpis?.lastKpiRefreshSub ?? 'Data refresh: —')}
