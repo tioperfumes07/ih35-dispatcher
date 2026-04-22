@@ -185,7 +185,9 @@ export default function App() {
   const openSection = useCallback((section: AppSection) => {
     setActiveSection(section)
     setActive(null)
-    if (section !== 'fuel' && section !== 'accounting') setFuelPlannerTxn(null)
+    setFuelPlannerTxn(null)
+    setAppWoPickOpen(false)
+    setAppWoModalOpen(false)
     if (section === 'lists') {
       setListsTab('fleet-samsara')
       setListsDeepLink(null)
@@ -212,7 +214,7 @@ export default function App() {
       listsListRaw && listsListRaw.length
         ? (listsListRaw as ListsCatalogListId)
         : null
-    setActiveSection('lists')
+    openSection('lists')
     setListsTab(listsTabRaw as ListsCatalogsTab)
     setListsDeepLink(list)
     p.delete('acctLists')
@@ -225,7 +227,7 @@ export default function App() {
     } catch {
       /* ignore */
     }
-  }, [])
+  }, [openSection])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -237,6 +239,12 @@ export default function App() {
       if (activeSection === 'reports') {
         if (tab === 'overview') url.searchParams.delete('tab')
         else url.searchParams.set('tab', tab)
+      } else if (activeSection === 'safety') {
+        url.searchParams.set('tab', 'safety')
+      } else if (activeSection === 'fuel') {
+        url.searchParams.set('tab', 'fuel')
+      } else if (activeSection === 'loads') {
+        url.searchParams.set('tab', 'operations')
       } else {
         url.searchParams.delete('tab')
       }
@@ -253,6 +261,20 @@ export default function App() {
     erpFuelModalHost,
     erpWoModalHost,
   ])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (erpEmbed || erpRecordEmbed || erpFuelEmbed || erpFuelModalHost || erpWoModalHost) return
+    const syncFromLocation = () => {
+      const nextSection = readInitialSection()
+      const nextTab = readInitialReportTab()
+      setActiveSection((prev) => (prev === nextSection ? prev : nextSection))
+      setTab((prev) => (prev === nextTab ? prev : nextTab))
+      if (nextSection !== 'lists') setListsDeepLink(null)
+    }
+    window.addEventListener('popstate', syncFromLocation)
+    return () => window.removeEventListener('popstate', syncFromLocation)
+  }, [erpEmbed, erpRecordEmbed, erpFuelEmbed, erpFuelModalHost, erpWoModalHost])
 
   useEffect(() => {
     if (!erpEmbed) return
@@ -277,24 +299,24 @@ export default function App() {
         bill: 'bill',
         'repair-wo': 'repair-wo',
       }
-      setActiveSection('maintenance')
+      openSection('maintenance')
       setMaintExtNav((prev) => ({
         view: viewMap[target],
         token: (prev?.token ?? 0) + 1,
       }))
     },
-    [],
+    [openSection],
   )
 
   const clearMaintExtNav = useCallback(() => setMaintExtNav(null), [])
 
   const openMaintenanceIntegrityView = useCallback(() => {
-    setActiveSection('maintenance')
+    openSection('maintenance')
     setMaintExtNav((prev) => ({
       view: 'integrity',
       token: (prev?.token ?? 0) + 1,
     }))
-  }, [])
+  }, [openSection])
 
   const notifyErpWoModalParentAfterSave = useCallback(
     ({ unitId }: { unitId: string }) => {
@@ -327,7 +349,7 @@ export default function App() {
     if (typeof window === 'undefined') return
     const p = new URLSearchParams(window.location.search)
     if (p.get('erpWoModal') !== '1') return
-    setActiveSection('maintenance')
+    openSection('maintenance')
     setAppWoPickOpen(true)
     try {
       const url = new URL(window.location.href)
@@ -337,7 +359,7 @@ export default function App() {
     } catch {
       /* ignore */
     }
-  }, [])
+  }, [openSection])
 
   /** ERP Accounting fuel tab iframe (?erpFuelEmbed=1) or dedicated modal (?erpFuelModal=1) — open hub FuelTransactionForm only. */
   useEffect(() => {
@@ -347,7 +369,7 @@ export default function App() {
     const modal = p.get('erpFuelModal') === '1'
     if (!embed && !modal) return
     const ft = parseFuelTransactionTypeParam(p.get('fuelTxnType'))
-    setActiveSection('accounting')
+    openSection('accounting')
     setFuelPlannerTxn(ft ?? 'fuel-bill')
     try {
       const url = new URL(window.location.href)
@@ -359,7 +381,7 @@ export default function App() {
     } catch {
       /* ignore */
     }
-  }, [])
+  }, [openSection])
 
   const recent = useRecentReports('fleet-reports:recent')
   const { rows: serviceCatalogRows } = useServiceCatalogRows('all')
@@ -845,7 +867,7 @@ export default function App() {
         }}
         onOpenVendorDirectory={() => {
           setFuelPlannerTxn(null)
-          setActiveSection('lists')
+          openSection('lists')
           setListsTab('name-management')
           setListsDeepLink('name-registry')
         }}
