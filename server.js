@@ -101,6 +101,10 @@ async function start() {
 
   app.use(cors());
   app.use(express.json());
+  app.use((_, res, next) => {
+    res.setHeader("X-IH35-Deploy-Ref", deployRef);
+    next();
+  });
 
   const publicDir = path.join(__dirname, "public");
   const fleetReportsDir = path.join(publicDir, "fleet-reports");
@@ -160,8 +164,18 @@ async function start() {
   app.get("/api/health", (_req, res) => {
     res.json({
       ok: true,
+      version: deployRef,
+      serverTime: new Date().toISOString(),
       hasSamsaraToken: false,
       hasQboConfig: Boolean(String(process.env.QBO_CLIENT_ID || "").trim())
+    });
+  });
+
+  app.get("/health", (_req, res) => {
+    res.json({
+      ok: true,
+      version: deployRef,
+      serverTime: new Date().toISOString()
     });
   });
 

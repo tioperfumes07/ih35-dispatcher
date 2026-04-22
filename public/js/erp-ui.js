@@ -527,6 +527,19 @@
           if (sRow) appendRow(sRow.kind, sRow.text);
         }
 
+        const runtimeRef =
+          typeof global.__IH35_DEPLOY_REF === 'string' ? String(global.__IH35_DEPLOY_REF).trim() : '';
+        const healthRef = hj && typeof hj.version === 'string' ? String(hj.version).trim() : '';
+        if (runtimeRef || healthRef) {
+          const sameRef = runtimeRef && healthRef && runtimeRef === healthRef;
+          const shownRef = healthRef || runtimeRef;
+          appendRow(
+            sameRef ? 'ok' : 'warn',
+            'Build ref: ' +
+              shownRef +
+              (sameRef ? '' : ' (refresh if this does not match expected deploy)')
+          );
+        }
         if (worst >= 2) el.classList.add('erp-connection-strip--muted');
         else if (worst === 1) el.classList.add('erp-connection-strip--warn');
         else el.classList.add('erp-connection-strip--ok');
