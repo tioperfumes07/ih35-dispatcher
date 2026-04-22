@@ -77,7 +77,10 @@ export function AccountingDashboard({
   const [fuelOpen, setFuelOpen] = useState<FuelTransactionType | null>(null)
   const [acctNewOpen, setAcctNewOpen] = useState(false)
   const acctNewRef = useRef<HTMLDivElement>(null)
+  const acctNewMenuRef = useRef<HTMLUListElement | null>(null)
   const [homeOverlay, setHomeOverlay] = useState<AccountingHomeOverlay>(null)
+  const homeOverlayRef = useRef<HTMLDivElement | null>(null)
+  const homeOverlayReturnFocusRef = useRef<HTMLElement | null>(null)
   const [qboActionMsg, setQboActionMsg] = useState<string | null>(null)
   const [qboActionErr, setQboActionErr] = useState(false)
   const [qboActionBusy, setQboActionBusy] = useState(false)
@@ -96,9 +99,45 @@ export function AccountingDashboard({
     const close = (e: MouseEvent) => {
       if (!acctNewRef.current?.contains(e.target as Node)) setAcctNewOpen(false)
     }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAcctNewOpen(false)
+    }
     document.addEventListener('click', close)
-    return () => document.removeEventListener('click', close)
+    window.addEventListener('keydown', onKey)
+    const id = window.setTimeout(() => {
+      const first = acctNewMenuRef.current?.querySelector<HTMLElement>('button[role="menuitem"]')
+      first?.focus()
+    }, 0)
+    return () => {
+      document.removeEventListener('click', close)
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
   }, [acctNewOpen])
+
+  useEffect(() => {
+    if (!homeOverlay) {
+      const el = homeOverlayReturnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setHomeOverlay(null)
+    }
+    window.addEventListener('keydown', onKey)
+    const id = window.setTimeout(() => {
+      const root = homeOverlayRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
+  }, [homeOverlay])
 
   const openLists = useCallback((tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => {
     onOpenListsSection(tab, listId)
@@ -111,6 +150,11 @@ export function AccountingDashboard({
     },
     [erpFuelHost, onFuelOpenFromAccounting],
   )
+
+  const openHomeOverlay = useCallback((overlay: AccountingHomeOverlay) => {
+    homeOverlayReturnFocusRef.current = document.activeElement as HTMLElement | null
+    setHomeOverlay(overlay)
+  }, [])
 
   const runQboStatusCheck = useCallback(async () => {
     setQboActionBusy(true)
@@ -234,7 +278,7 @@ export function AccountingDashboard({
               + New
             </button>
           {acctNewOpen && (
-            <ul className="acct-new-dd" role="menu">
+            <ul ref={acctNewMenuRef} className="acct-new-dd" role="menu">
               {(
                 [
                   {
@@ -243,7 +287,7 @@ export function AccountingDashboard({
                   },
                   {
                     label: 'Bill payment',
-                    onClick: () => setHomeOverlay('bill-payment'),
+                    onClick: () => openHomeOverlay('bill-payment'),
                   },
                   {
                     label: 'Driver bill',
@@ -303,7 +347,7 @@ export function AccountingDashboard({
                   },
                   {
                     label: 'Vendor bill',
-                    onClick: () => setHomeOverlay('vendor-bill'),
+                    onClick: () => openHomeOverlay('vendor-bill'),
                   },
                   {
                     label: 'Vendors & driver payees',
@@ -382,12 +426,13 @@ export function AccountingDashboard({
         onOpenSettingsUsers={() =>
           onOpenSettingsUsers ? onOpenSettingsUsers() : openLists('name-management', 'name-registry')
         }
-        onSetHomeOverlay={setHomeOverlay}
+        onSetHomeOverlay={openHomeOverlay}
         kpis={homeKpis}
       />
 
       {homeOverlay ? (
         <div
+          ref={homeOverlayRef}
           className={'acct-hub-overlay' + (homeOverlayFullScreen ? ' acct-hub-overlay--fullscreen' : '')}
           role="dialog"
           aria-modal="true"

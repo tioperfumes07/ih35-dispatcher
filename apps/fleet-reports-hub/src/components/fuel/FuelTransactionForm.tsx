@@ -121,6 +121,8 @@ export function FuelTransactionForm({
   const [saveMenuOpen, setSaveMenuOpen] = useState(false)
   const [defaultSaveChoice, setDefaultSaveChoice] = useState<SaveMenuChoice>('save')
   const saveMenuRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
   const [productOptions, setProductOptions] = useState<ComboOption[]>(() => [
     { value: '__add', label: '＋ Add new' },
     ...QBO_PRODUCT_FALLBACK,
@@ -167,12 +169,30 @@ export function FuelTransactionForm({
 
   useEffect(() => {
     if (!open) return
+    returnFocusRef.current = document.activeElement as HTMLElement | null
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
+
+  useEffect(() => {
+    if (!open) {
+      const el = returnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    const id = window.setTimeout(() => {
+      const root = dialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
+    return () => window.clearTimeout(id)
+  }, [open])
 
   useEffect(() => {
     if (!saveMenuOpen) return
@@ -458,6 +478,7 @@ export function FuelTransactionForm({
       }}
     >
       <div
+        ref={dialogRef}
         className={'fuel-txn-dialog' + (isFullScreen ? ' fuel-txn-dialog--fs' : '')}
         style={
           isFullScreen

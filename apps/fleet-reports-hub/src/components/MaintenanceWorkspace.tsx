@@ -85,6 +85,7 @@ export function MaintenanceWorkspace({
   const [repairTabUnitId, setRepairTabUnitId] = useState(readErpEmbedRepairUnitId)
   const [woModalOpen, setWoModalOpen] = useState(false)
   const [woModalKey, setWoModalKey] = useState(0)
+  const woModalReturnFocusRef = useRef<HTMLElement | null>(null)
   const consumeExtNavRef = useRef(onExternalNavConsumed)
   consumeExtNavRef.current = onExternalNavConsumed
 
@@ -127,6 +128,14 @@ export function MaintenanceWorkspace({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [woModalOpen])
+
+  useEffect(() => {
+    if (woModalOpen) return
+    const el = woModalReturnFocusRef.current
+    if (el && typeof el.focus === 'function') {
+      window.setTimeout(() => el.focus(), 0)
+    }
   }, [woModalOpen])
 
   /** Run after DOM has the integrity block (flushSync + id). */
@@ -242,6 +251,13 @@ export function MaintenanceWorkspace({
     </li>
   )
 
+  const openWorkOrderModal = (unitToOpen?: string) => {
+    woModalReturnFocusRef.current = document.activeElement as HTMLElement | null
+    if (unitToOpen) setRepairTabUnitId(unitToOpen)
+    setWoModalKey((k) => k + 1)
+    setWoModalOpen(true)
+  }
+
   return (
     <div
       className={
@@ -337,15 +353,8 @@ export function MaintenanceWorkspace({
           <WorkOrderForm
             unitId={repairTabUnitId}
             onUnitIdChange={setRepairTabUnitId}
-            onRequestCreateWorkOrder={() => {
-              setWoModalKey((k) => k + 1)
-              setWoModalOpen(true)
-            }}
-            onUnitOpenRecordModal={(id) => {
-              setRepairTabUnitId(id)
-              setWoModalKey((k) => k + 1)
-              setWoModalOpen(true)
-            }}
+            onRequestCreateWorkOrder={() => openWorkOrderModal()}
+            onUnitOpenRecordModal={(id) => openWorkOrderModal(id)}
             onIntegrityBatch={onBatch}
             onAfterSaveSuccess={notifyErpParentAfterSave}
             onViewAllIntegrity={goToIntegrityView}
