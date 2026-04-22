@@ -45,44 +45,49 @@ type SectionId =
 type RowDef = {
   key: string
   label: string
+  desc: string
   onActivate: () => void
 }
 
 function SectionBlock({
   id,
   title,
+  newLabel,
+  onCreate,
   rows,
   expanded,
   onToggle,
 }: {
   id: SectionId
   title: string
+  newLabel: string
+  onCreate: () => void
   rows: RowDef[]
   expanded: boolean
   onToggle: (id: SectionId) => void
 }) {
   return (
     <div className="acct-hub-sec">
-      <button
-        type="button"
-        className="acct-hub-sec__head"
-        aria-expanded={expanded}
-        onClick={() => onToggle(id)}
-      >
-        <span>{title}</span>
-        <span className="acct-hub-sec__chev" aria-hidden>
+      <div className="section-breadcrumb">
+        <button type="button" className="bc-back" onClick={() => onToggle(id)}>
           {expanded ? '▾' : '▸'}
-        </span>
-      </button>
+        </button>
+        <span className="bc-slash">/</span>
+        <span className="bc-title">{title}</span>
+        <button type="button" className="bc-new-btn" onClick={onCreate}>
+          {newLabel}
+        </button>
+      </div>
       {expanded ? (
         <ul className="acct-hub-sec__body">
           {rows.map((r) => (
             <li key={r.key}>
               <button type="button" className="acct-hub-sec__row" onClick={r.onActivate}>
-                <span>{r.label}</span>
-                <span className="acct-hub-sec__arrow" aria-hidden>
-                  →
+                <span className="acct-hub-sec__row-copy">
+                  <span className="type-row-name">{r.label}</span>
+                  <span className="type-row-desc">{r.desc}</span>
                 </span>
+                <span className="type-row-btn">Open →</span>
               </button>
             </li>
           ))}
@@ -122,23 +127,37 @@ export function AccountingHomeHub({
       {
         key: 'driver-bill',
         label: 'Driver bill',
+        desc: 'Driver-related expense bill linked to driver vendor in QuickBooks.',
         onActivate: () => onOpenSpecialized('driver-settlement'),
       },
-      { key: 'fuel-bill', label: 'Fuel bill', onActivate: () => onOpenFuel('fuel-bill') },
+      {
+        key: 'fuel-bill',
+        label: 'Fuel bill',
+        desc: 'Fuel purchase bill with vendor address autofill and class by unit.',
+        onActivate: () => onOpenFuel('fuel-bill'),
+      },
       {
         key: 'maint-bill',
         label: 'Maintenance bill',
+        desc: 'Maintenance vendor bill that can be tied to a work order.',
         onActivate: () => onRequestMaintenanceNav('bill'),
       },
-      { key: 'multi', label: 'Multiple bills', onActivate: () => onOpenRecurring() },
+      {
+        key: 'multi',
+        label: 'Multiple bills',
+        desc: 'Enter multiple bills at once from vendor statement lines.',
+        onActivate: () => onOpenRecurring(),
+      },
       {
         key: 'repair-bill',
         label: 'Repair bill',
+        desc: 'Repair-order related bill synced to QuickBooks expense records.',
         onActivate: () => onRequestMaintenanceNav('bill'),
       },
       {
         key: 'vendor-bill',
         label: 'Vendor bill',
+        desc: 'General vendor bill for any QuickBooks vendor.',
         onActivate: () => onSetHomeOverlay('vendor-bill'),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
@@ -147,17 +166,25 @@ export function AccountingHomeHub({
       {
         key: 'exp',
         label: 'Expense',
+        desc: 'General expense record for any vendor and category.',
         onActivate: () => onRequestMaintenanceNav('expense'),
       },
-      { key: 'fuel-exp', label: 'Fuel expense', onActivate: () => onOpenFuel('fuel-expense') },
+      {
+        key: 'fuel-exp',
+        label: 'Fuel expense',
+        desc: 'Fuel expense record with QuickBooks vendor linkage.',
+        onActivate: () => onOpenFuel('fuel-expense'),
+      },
       {
         key: 'maint-exp',
         label: 'Maintenance expense',
+        desc: 'Maintenance-related expense that can link to work order context.',
         onActivate: () => onRequestMaintenanceNav('expense'),
       },
       {
         key: 'repair-exp',
         label: 'Repair expense',
+        desc: 'Repair-related expense record for accounting and integrity checks.',
         onActivate: () => onRequestMaintenanceNav('expense'),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
@@ -166,16 +193,19 @@ export function AccountingHomeHub({
       {
         key: 'bp',
         label: 'Bill payment',
+        desc: 'Pay a standard vendor bill and keep QuickBooks in sync.',
         onActivate: () => onSetHomeOverlay('bill-payment'),
       },
       {
         key: 'dbp',
         label: 'Driver bill payment',
+        desc: 'Pay driver bills with automatic driver-vendor mapping.',
         onActivate: () => onOpenSpecialized('driver-settlement'),
       },
       {
         key: 'ph',
         label: 'Payment history',
+        desc: 'Review posted bill payments with date/vendor filtering.',
         onActivate: () => onSetHomeOverlay('payment-history'),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
@@ -184,16 +214,19 @@ export function AccountingHomeHub({
       {
         key: 'conn',
         label: 'Connect QuickBooks',
+        desc: 'Open QuickBooks list sync workspace and connection status.',
         onActivate: () => onOpenLists('qbo-items', 'qbo-items-list'),
       },
       {
         key: 'items',
         label: 'Items & accounts',
+        desc: 'Manage item and account lists pulled from QuickBooks.',
         onActivate: () => onOpenLists('qbo-items', 'qbo-items-list'),
       },
       {
         key: 'sync',
         label: 'Sync status',
+        desc: 'Check sync health, warnings, and QuickBooks list freshness.',
         onActivate: () => onOpenLists('qbo-items', 'qbo-items-list'),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
@@ -202,16 +235,19 @@ export function AccountingHomeHub({
       {
         key: 'bank',
         label: 'Bank CSV matching',
+        desc: 'Open bank import matching and mapping tools.',
         onActivate: () => onOpenLists('vendors-drivers', 'bank-csv'),
       },
       {
         key: 'sam-cloud',
         label: 'Samsara Cloud',
+        desc: 'Open tracking data and Samsara-linked fleet views.',
         onActivate: () => onOpenTracking(),
       },
       {
         key: 'upload',
         label: 'Upload center',
+        desc: 'Open upload center for docs and import payloads.',
         onActivate: () => onOpenUploadCenter(),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
@@ -220,16 +256,19 @@ export function AccountingHomeHub({
       {
         key: 'settings',
         label: 'Settings & users',
+        desc: 'Open users/settings surface for accounting controls.',
         onActivate: () => onOpenSettingsUsers(),
       },
       {
         key: 'tms',
         label: 'TMS loads',
+        desc: 'Open load settlement and specialized accounting flow.',
         onActivate: () => onOpenSpecialized('load-tms'),
       },
       {
         key: 'tools',
         label: 'Tools & data',
+        desc: 'Open tools and list catalog management workspace.',
         onActivate: () => onOpenLists('fleet-samsara', null),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
@@ -341,6 +380,11 @@ export function AccountingHomeHub({
             key={s.id}
             id={s.id}
             title={s.title}
+            newLabel={`+ New ${s.title.toLowerCase()}`}
+            onCreate={() => {
+              const first = s.rows[0]
+              if (first) first.onActivate()
+            }}
             rows={s.rows}
             expanded={expanded[s.id]}
             onToggle={toggle}

@@ -121,6 +121,15 @@
     else if (!t.closest('.board-nav-wrap')) closeAll();
   }
 
+  function normalizeHrefForCompare(raw) {
+    try {
+      const u = new URL(String(raw || ''), window.location.origin);
+      return `${u.pathname}${u.hash || ''}`;
+    } catch (_) {
+      return String(raw || '');
+    }
+  }
+
   function mount() {
     const mountEl = document.getElementById('boardNavMount');
     if (!mountEl) return;
@@ -158,6 +167,34 @@
     wrap.className = 'board-nav-wrap';
     wrap.appendChild(inner);
     mountEl.replaceWith(wrap);
+
+    const applyActiveBoard = () => {
+      const here = `${window.location.pathname}${window.location.hash || ''}`;
+      const herePath = window.location.pathname;
+      wrap.querySelectorAll('.board-nav-item').forEach((el) => el.classList.remove('active'));
+      let best = null;
+      let bestLen = -1;
+      for (const b of BOARDS) {
+        const target = normalizeHrefForCompare(b.href);
+        const targetPath = target.split('#')[0] || '';
+        if (!target) continue;
+        const match =
+          here === target ||
+          (target.includes('#') && here.startsWith(target)) ||
+          (!target.includes('#') && herePath === targetPath);
+        if (!match) continue;
+        if (target.length > bestLen) {
+          best = b.id;
+          bestLen = target.length;
+        }
+      }
+      if (!best) return;
+      const node = wrap.querySelector(`.board-nav-item[data-board="${best}"]`);
+      if (node) node.classList.add('active');
+    };
+    applyActiveBoard();
+    window.addEventListener('hashchange', applyActiveBoard);
+    window.addEventListener('popstate', applyActiveBoard);
 
     stripToggle.addEventListener('click', ev => {
       ev.preventDefault();
