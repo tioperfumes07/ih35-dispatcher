@@ -6,7 +6,6 @@ import {
   type SpecializedModalId,
 } from './AccountingSpecializedModals'
 import {
-  ListsCatalogsWorkspace,
   type ListsCatalogsTab,
   type ListsCatalogListId,
 } from './ListsCatalogsWorkspace'
@@ -35,6 +34,8 @@ type Props = {
   onFuelOpenFromAccounting?: (t: FuelTransactionType) => void
   /** + New → Form 425C — Monthly report (hub report viewer iframe). */
   onOpenForm425c?: () => void
+  /** Open global Lists section in App shell (preferred). */
+  onOpenListsSection: (tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => void
 }
 
 export function AccountingDashboard({
@@ -44,10 +45,8 @@ export function AccountingDashboard({
   erpFuelHost = false,
   onFuelOpenFromAccounting,
   onOpenForm425c,
+  onOpenListsSection,
 }: Props) {
-  const [route, setRoute] = useState<'home' | 'lists'>('home')
-  const [listsTab, setListsTab] = useState<ListsCatalogsTab>('fleet-samsara')
-  const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(null)
   const [recurringOpen, setRecurringOpen] = useState(false)
   const [specializedOpen, setSpecializedOpen] = useState<SpecializedModalId | null>(
     null,
@@ -76,10 +75,8 @@ export function AccountingDashboard({
   }, [acctNewOpen])
 
   const openLists = useCallback((tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => {
-    setListsTab(tab)
-    setListsDeepLink(listId === undefined ? null : listId)
-    setRoute('lists')
-  }, [])
+    onOpenListsSection(tab, listId)
+  }, [onOpenListsSection])
 
   const openFuel = useCallback(
     (ft: FuelTransactionType) => {
@@ -104,37 +101,6 @@ export function AccountingDashboard({
       }}
     />
   ) : null
-
-  if (route === 'lists') {
-    return (
-      <div className="acct-dash acct-dash--lists">
-        <div className="acct-dash__lists-head">
-          <button
-            type="button"
-            className="btn sm ghost"
-            onClick={() => {
-              setListsDeepLink(null)
-              setRoute('home')
-            }}
-          >
-            ← Back to accounting
-          </button>
-        </div>
-        <ListsCatalogsWorkspace
-          activeTab={listsTab}
-          onTabChange={setListsTab}
-          deepLinkList={listsDeepLink}
-          onDeepLinkConsumed={() => setListsDeepLink(null)}
-        />
-        <RecurringBillsModal open={recurringOpen} onClose={() => setRecurringOpen(false)} />
-        <AccountingSpecializedModals
-          open={specializedOpen}
-          onClose={() => setSpecializedOpen(null)}
-        />
-        {fuelForm}
-      </div>
-    )
-  }
 
   const overlayTitle =
     homeOverlay === 'payment-history'

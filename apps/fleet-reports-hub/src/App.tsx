@@ -778,6 +778,11 @@ export default function App() {
                     onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
                     onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
                     onNewWorkOrder={() => setAppWoPickOpen(true)}
+                    onOpenListsSection={(tabId, listId) => {
+                      openSection('lists')
+                      setListsTab(tabId)
+                      setListsDeepLink(listId === undefined ? null : listId)
+                    }}
                     erpFuelHost={erpFuelEmbed || erpFuelModalHost}
                     onFuelOpenFromAccounting={
                       erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
