@@ -433,6 +433,31 @@
     );
   }
 
+  function formatSeenAt(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString();
+  }
+
+  function recordBuildRefSeen(ref, source) {
+    const buildRef = String(ref || '').trim();
+    if (!buildRef || typeof localStorage === 'undefined') return null;
+    const nowIso = new Date().toISOString();
+    const key = 'ih35:build-ref-history';
+    try {
+      const raw = localStorage.getItem(key);
+      const history = raw ? JSON.parse(raw) : [];
+      const arr = Array.isArray(history) ? history : [];
+      const next = arr.filter((x) => x && x.ref !== buildRef).slice(0, 24);
+      next.unshift({ ref: buildRef, source: String(source || 'unknown'), seenAt: nowIso });
+      localStorage.setItem(key, JSON.stringify(next.slice(0, 25)));
+      return nowIso;
+    } catch (_) {
+      return nowIso;
+    }
+  }
+
   /**
    * Rule 24 — hydrate a host with QuickBooks + Samsara read-only status (two rows).
    * @param {string | HTMLElement} hostIdOrEl
@@ -557,6 +582,8 @@
         if (runtimeRef || healthRef) {
           const sameRef = runtimeRef && healthRef && runtimeRef === healthRef;
           const shownRef = healthRef || runtimeRef;
+          const seenAtIso = recordBuildRefSeen(shownRef, healthRef ? 'health' : 'runtime');
+          const seenAtText = formatSeenAt(seenAtIso);
           const prevMismatch = Number(el._erpRefMismatchCount || 0);
           const nextMismatch = sameRef ? 0 : prevMismatch + 1;
           el._erpRefMismatchCount = nextMismatch;
@@ -564,6 +591,7 @@
             sameRef ? 'ok' : 'warn',
             'Build ref: ' +
               shownRef +
+              (seenAtText ? ' · seen ' + seenAtText : '') +
               (sameRef ? '' : ' (refresh if this does not match expected deploy)')
           );
           if (!sameRef && nextMismatch >= 2) {
