@@ -62,6 +62,7 @@ const REPORT_TAB_QUERY_VALUES: ReportCategory[] = [
   'dot',
   'custom',
 ]
+const REPORT_TAB_SET = new Set<ReportCategory>(REPORT_TAB_QUERY_VALUES)
 const REPORTS_PAGE_TAB_IDS: ReportCategory[] = REPORT_TAB_QUERY_VALUES.filter(
   (id) => id !== 'safety' && id !== 'fuel' && id !== 'operations',
 )
@@ -153,6 +154,14 @@ function sectionForReportTab(tab: ReportCategory): AppSection {
   return TAB_SECTION_OVERRIDES[tab] ?? 'reports'
 }
 
+function isValidReportTab(value: string): value is ReportCategory {
+  return REPORT_TAB_SET.has(value as ReportCategory)
+}
+
+function normalizeReportTab(value: string): ReportCategory {
+  return isValidReportTab(value) ? value : 'overview'
+}
+
 function normalizeReportTabForSection(section: AppSection, tab: ReportCategory): ReportCategory {
   if (section === 'reports' && !REPORTS_PAGE_TAB_IDS.includes(tab)) return 'overview'
   return tab
@@ -161,11 +170,7 @@ function normalizeReportTabForSection(section: AppSection, tab: ReportCategory):
 function readInitialReportTab(): ReportCategory {
   if (typeof window === 'undefined') return 'overview'
   const p = new URLSearchParams(window.location.search)
-  const tabQ = p.get('tab')
-  if (tabQ && (REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) {
-    return tabQ as ReportCategory
-  }
-  return 'overview'
+  return normalizeReportTab(String(p.get('tab') || '').trim().toLowerCase())
 }
 
 function readInitialSection(): AppSection {
@@ -178,12 +183,12 @@ function readInitialSection(): AppSection {
   if ((APP_SECTIONS as { id: string }[]).some((s) => s.id === q)) {
     if (q === 'reports') {
       const tabQ = String(p.get('tab') || '').trim().toLowerCase() as ReportCategory
-      if ((REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) return sectionForReportTab(tabQ)
+      if (isValidReportTab(tabQ)) return sectionForReportTab(tabQ)
     }
     return q as AppSection
   }
   const tabQ = String(p.get('tab') || '').trim().toLowerCase() as ReportCategory
-  if ((REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) {
+  if (isValidReportTab(tabQ)) {
     return sectionForReportTab(tabQ)
   }
   return 'home'
