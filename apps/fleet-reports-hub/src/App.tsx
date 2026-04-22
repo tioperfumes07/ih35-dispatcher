@@ -260,6 +260,53 @@ function readErpEmbedFlag(): boolean {
   return new URLSearchParams(window.location.search).get('erpEmbed') === '1'
 }
 
+type HomeKpis = {
+  openBillsCount: string
+  openBillsSub: string
+  expensesMonthAmount: string
+  expensesMonthSub: string
+  qboVendors: string
+  qboVendorsSub: string
+  pendingQboPosts: string
+  pendingQboPostsSub: string
+  pendingQboPostsWarn: boolean
+}
+
+const FALLBACK_HOME_KPIS: HomeKpis = {
+  openBillsCount: '—',
+  openBillsSub: 'No open bill data yet',
+  expensesMonthAmount: '$0',
+  expensesMonthSub: '0 transactions',
+  qboVendors: '—',
+  qboVendorsSub: 'QuickBooks cache not loaded',
+  pendingQboPosts: '0',
+  pendingQboPostsSub: 'No pending sync alerts',
+  pendingQboPostsWarn: false,
+}
+
+function asNumber(v: unknown): number | null {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
+
+function formatUsd(v: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(v)
+}
+
+function startOfMonth(d = new Date()): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1)
+}
+
+function parseDateValue(v: unknown): Date | null {
+  if (typeof v !== 'string' || !v.trim()) return null
+  const d = new Date(v)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 export default function App() {
   const [initialLocation] = useState(readInitialLocationState)
   const [activeSection, setActiveSection] = useState<AppSection>(initialLocation.section)
@@ -293,6 +340,7 @@ export default function App() {
   const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(
     initialLocation.listsList,
   )
+  const [homeKpis, setHomeKpis] = useState<HomeKpis>(FALLBACK_HOME_KPIS)
 
   const openSection = useCallback((section: AppSection) => {
     setActiveSection(section)
@@ -432,6 +480,117 @@ export default function App() {
   useEffect(() => {
     if (!appWoPickOpen && woPickFullScreen) toggleWoPickFullScreen()
   }, [appWoPickOpen, woPickFullScreen, toggleWoPickFullScreen])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadHomeKpis = async () => {
+      const reqHeaders = { Accept: 'application/json' }
+      const [masterRes, recordsRes, syncAlertsRes, qboStatusRes] = await Promise.allSettled([
+        fetch('/api/qbo/master', { headers: reqHeaders }),
+        fetch('/api/maintenance/records', { headers: reqHeaders }),
+        fetch('/api/qbo/sync-alerts', { headers: reqHeaders }),
+        fetch('/api/qbo/status', { headers: reqHeaders }),
+      ])
+
+      const readJson = async (res: PromiseSettledResult<Response>) => {
+        if (res.status !== 'fulfilled' || !res.value.ok) return null
+        return res.value.json().catch(() => null)
+      }
+
+      const [master, records, syncAlerts, qboStatus] = await Promise.all([
+        readJson(masterRes),
+        readJson(recordsRes),
+        readJson(syncAlertsRes),
+        readJson(qboStatusRes),
+      ])
+
+      if (cancelled) return
+
+      const transactionActivity =
+        master && typeof master === 'object' && master.transactionActivity && typeof master.transactionActivity === 'object'
+          ? (master.transactionActivity as Record<string, unknown>)
+          : null
+      const bills = Array.isArray(transactionActivity?.bills) ? transactionActivity.bills : []
+      const openBillsDue = bills.reduce((sum, row) => {
+        if (!row || typeof row !== 'object') return sum
+        const rec = row as Record<string, unknown>
+        const amt = asNumber(rec.balance) ?? asNumber(rec.totalAmt) ?? asNumber(rec.amount) ?? 0
+        return sum + amt
+      }, 0)
+
+      const recordsObj =
+        records && typeof records === 'object' ? (records as Record<string, unknown>) : null
+      const apTransactions = Array.isArray(recordsObj?.apTransactions) ? recordsObj.apTransactions : []
+      const monthStart = startOfMonth()
+      const expensesThisMonth = apTransactions.filter((row) => {
+        if (!row || typeof row !== 'object') return false
+        const rec = row as Record<string, unknown>
+        const d =
+          parseDateValue(rec.txnDate) ??
+          parseDateValue(rec.date) ??
+          parseDateValue(rec.transactionDate) ??
+          parseDateValue(rec.createdAt)
+        return d !== null && d >= monthStart
+      })
+      const expenseAmount = expensesThisMonth.reduce((sum, row) => {
+        if (!row || typeof row !== 'object') return sum
+        const rec = row as Record<string, unknown>
+        return sum + (asNumber(rec.amount) ?? asNumber(rec.totalAmt) ?? asNumber(rec.total) ?? 0)
+      }, 0)
+
+      const masterObj = master && typeof master === 'object' ? (master as Record<string, unknown>) : null
+      const vendorCount = Array.isArray(masterObj?.vendors)
+        ? masterObj.vendors.length
+        : Array.isArray((recordsObj?.qboCache as Record<string, unknown> | undefined)?.vendors)
+          ? ((recordsObj?.qboCache as Record<string, unknown>).vendors as unknown[]).length
+          : 0
+
+      const syncObj =
+        syncAlerts && typeof syncAlerts === 'object'
+          ? (syncAlerts as Record<string, unknown>)
+          : null
+      const pendingCount = asNumber((syncObj?.counts as Record<string, unknown> | undefined)?.total) ?? 0
+
+      const qboObj = qboStatus && typeof qboStatus === 'object' ? (qboStatus as Record<string, unknown>) : null
+      const qboConnected = qboObj?.connected === true
+      const qboConfigured = qboObj?.configured === true
+
+      setHomeKpis({
+        openBillsCount: String(bills.length),
+        openBillsSub:
+          bills.length > 0 ? `${formatUsd(openBillsDue)} due` : 'No open bills in current activity window',
+        expensesMonthAmount: formatUsd(expenseAmount),
+        expensesMonthSub: `${expensesThisMonth.length} transactions`,
+        qboVendors: String(vendorCount),
+        qboVendorsSub: qboConnected
+          ? 'QuickBooks connected'
+          : qboConfigured
+            ? 'QuickBooks disconnected'
+            : 'QuickBooks not configured',
+        pendingQboPosts: String(pendingCount),
+        pendingQboPostsSub:
+          pendingCount > 0 ? 'Review sync alerts before posting' : 'No pending sync alerts',
+        pendingQboPostsWarn: pendingCount > 0,
+      })
+    }
+
+    const safeLoadHomeKpis = () =>
+      loadHomeKpis().catch(() => {
+        if (cancelled) return
+        setHomeKpis(FALLBACK_HOME_KPIS)
+      })
+
+    void safeLoadHomeKpis()
+    const refreshId = window.setInterval(() => {
+      void safeLoadHomeKpis()
+    }, 120000)
+
+    return () => {
+      window.clearInterval(refreshId)
+      cancelled = true
+    }
+  }, [])
 
   const openAppWorkOrder = (kind: WorkOrderShellKind) => {
     setAppWoKind(kind)
@@ -734,23 +893,27 @@ export default function App() {
                     <div className="acct-hub__kpis" aria-label="Home KPI summary">
                       <div className="acct-hub__kpi">
                         <span className="acct-hub__kpi-lbl">Open bills</span>
-                        <span className="acct-hub__kpi-val">12</span>
-                        <span className="acct-hub__kpi-sub muted">$42,180 due</span>
+                        <span className="acct-hub__kpi-val">{homeKpis.openBillsCount}</span>
+                        <span className="acct-hub__kpi-sub muted">{homeKpis.openBillsSub}</span>
                       </div>
                       <div className="acct-hub__kpi">
                         <span className="acct-hub__kpi-lbl">Expenses this month</span>
-                        <span className="acct-hub__kpi-val">$18,420</span>
-                        <span className="acct-hub__kpi-sub muted">38 transactions</span>
+                        <span className="acct-hub__kpi-val">{homeKpis.expensesMonthAmount}</span>
+                        <span className="acct-hub__kpi-sub muted">{homeKpis.expensesMonthSub}</span>
                       </div>
                       <div className="acct-hub__kpi">
                         <span className="acct-hub__kpi-lbl">QBO vendors</span>
-                        <span className="acct-hub__kpi-val">240</span>
-                        <span className="acct-hub__kpi-sub muted">Last synced today</span>
+                        <span className="acct-hub__kpi-val">{homeKpis.qboVendors}</span>
+                        <span className="acct-hub__kpi-sub muted">{homeKpis.qboVendorsSub}</span>
                       </div>
-                      <div className="acct-hub__kpi acct-hub__kpi--warn">
+                      <div
+                        className={
+                          'acct-hub__kpi' + (homeKpis.pendingQboPostsWarn ? ' acct-hub__kpi--warn' : '')
+                        }
+                      >
                         <span className="acct-hub__kpi-lbl">Pending QBO posts</span>
-                        <span className="acct-hub__kpi-val">2</span>
-                        <span className="acct-hub__kpi-sub muted">Review before sync</span>
+                        <span className="acct-hub__kpi-val">{homeKpis.pendingQboPosts}</span>
+                        <span className="acct-hub__kpi-sub muted">{homeKpis.pendingQboPostsSub}</span>
                       </div>
                     </div>
                     <div className="acct-hub__quick" aria-label="Home shortcuts">
@@ -824,6 +987,7 @@ export default function App() {
                     onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
                     onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
                     onNewWorkOrder={() => setAppWoPickOpen(true)}
+                    homeKpis={homeKpis}
                     onOpenListsSection={(tabId, listId) =>
                       openListsSection(tabId, listId === undefined ? null : listId)
                     }

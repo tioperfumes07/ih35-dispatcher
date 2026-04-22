@@ -18,6 +18,17 @@ type Props = {
   onOpenRecurring: () => void
   onOpenLists: (tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => void
   onSetHomeOverlay: (o: AccountingHomeOverlay) => void
+  kpis?: {
+    openBillsCount: string
+    openBillsSub: string
+    expensesMonthAmount: string
+    expensesMonthSub: string
+    qboVendors: string
+    qboVendorsSub: string
+    pendingQboPosts: string
+    pendingQboPostsSub: string
+    pendingQboPostsWarn: boolean
+  }
 }
 
 type SectionId =
@@ -33,9 +44,6 @@ type RowDef = {
   label: string
   onActivate: () => void
 }
-
-/** Demo pending posts count until wired to API. */
-const KPI_PENDING_POSTS = 2
 
 function SectionBlock({
   id,
@@ -88,6 +96,7 @@ export function AccountingHomeHub({
   onOpenRecurring,
   onOpenLists,
   onSetHomeOverlay,
+  kpis,
 }: Props) {
   const [expanded, setExpanded] = useState<Record<SectionId, boolean>>(() => ({
     bills: true,
@@ -286,27 +295,31 @@ export function AccountingHomeHub({
       <div className="acct-hub__kpis" aria-label="Key metrics">
         <div className="acct-hub__kpi">
           <span className="acct-hub__kpi-lbl">Open bills</span>
-          <span className="acct-hub__kpi-val">12</span>
-          <span className="acct-hub__kpi-sub muted">$42,180 due</span>
+          <span className="acct-hub__kpi-val">{kpis?.openBillsCount ?? '—'}</span>
+          <span className="acct-hub__kpi-sub muted">{kpis?.openBillsSub ?? 'No open bill data yet'}</span>
         </div>
         <div className="acct-hub__kpi">
           <span className="acct-hub__kpi-lbl">Expenses this month</span>
-          <span className="acct-hub__kpi-val">$18,420</span>
-          <span className="acct-hub__kpi-sub muted">38 transactions</span>
+          <span className="acct-hub__kpi-val">{kpis?.expensesMonthAmount ?? '—'}</span>
+          <span className="acct-hub__kpi-sub muted">
+            {kpis?.expensesMonthSub ?? 'No expense transactions this month'}
+          </span>
         </div>
         <div className="acct-hub__kpi">
           <span className="acct-hub__kpi-lbl">QBO vendors</span>
-          <span className="acct-hub__kpi-val">240</span>
-          <span className="acct-hub__kpi-sub muted">Last synced today</span>
+          <span className="acct-hub__kpi-val">{kpis?.qboVendors ?? '—'}</span>
+          <span className="acct-hub__kpi-sub muted">{kpis?.qboVendorsSub ?? 'QuickBooks cache not loaded'}</span>
         </div>
         <div
           className={
-            'acct-hub__kpi' + (KPI_PENDING_POSTS > 0 ? ' acct-hub__kpi--warn' : '')
+            'acct-hub__kpi' + (kpis?.pendingQboPostsWarn ? ' acct-hub__kpi--warn' : '')
           }
         >
           <span className="acct-hub__kpi-lbl">Pending QBO posts</span>
-          <span className="acct-hub__kpi-val">{KPI_PENDING_POSTS}</span>
-          <span className="acct-hub__kpi-sub muted">Review before sync</span>
+          <span className="acct-hub__kpi-val">{kpis?.pendingQboPosts ?? '—'}</span>
+          <span className="acct-hub__kpi-sub muted">
+            {kpis?.pendingQboPostsSub ?? 'No pending sync alerts'}
+          </span>
         </div>
       </div>
 

@@ -4994,11 +4994,11 @@
             >
               <a class="btn btn--small" href="/form-425c.html">Form 425C — full workspace</a>
               <button type="button" class="btn btn--small" onclick="erpFocusForm425cInFleetHub()">
-                Form 425C in embedded hub (Compliance tab)
+                Form 425C in Fleet Hub iframe fallback (Compliance tab)
               </button>
             </div>
           </header>
-          <div class="erp-reports-hub-embed-wrap print-hide-actions" role="region" aria-label="Fleet reports hub">
+          <div class="erp-reports-hub-embed-wrap print-hide-actions hidden" role="region" aria-label="Fleet reports hub" hidden>
             <iframe
               id="erpFleetReportsHubIframe"
               class="erp-reports-hub-iframe"
@@ -5012,14 +5012,14 @@
               type="button"
               class="btn btn--small"
               aria-expanded="false"
-              onclick="erpToggleLegacyReportsCatalog(this)"
+              onclick="erpToggleFleetReportsHubEmbed(this)"
             >
-              Show legacy reports tools
+              Show Fleet Hub iframe fallback
             </button>
-            <span class="mini-note">Use this only when you need the old filter + table tools below.</span>
+            <span class="mini-note">Default uses the in-shell reports surface below; iframe is optional fallback.</span>
           </div>
           <div id="repCatTabs" class="rep-cat-tabs rep-cat-tabs--bar erp-tab-bar print-hide-actions" role="tablist" aria-label="Report categories"></div>
-          <div id="erpReportsCatalogShell" class="erp-reports-catalog-shell print-hide-actions hidden" hidden>
+          <div id="erpReportsCatalogShell" class="erp-reports-catalog-shell print-hide-actions">
             <aside id="repFilterSidebar" class="rep-filter-sidebar" aria-label="Report filters">
               <div class="rep-filter-sidebar__head">
                 <div class="rep-filter-sidebar__title">Filters</div>
@@ -9678,23 +9678,19 @@
       erpOpenDedicatedAccountingForm('standard-bill');
     }
 
-    /** Open Fleet reports embed on Compliance tab (Form 425C card + iframe tool). */
+    /** Open Fleet reports Compliance tab; ensures iframe fallback is visible when needed. */
     function erpFocusForm425cInFleetHub() {
       const sec = document.getElementById('section-reports');
       const onReports = sec && sec.classList.contains('active');
       if (!onReports) {
-        try {
-          window.__IH35_FLEET_HUB_TAB = 'compliance';
-        } catch (_) {
-          window.__IH35_FLEET_HUB_TAB = 'compliance';
-        }
         openSection(
           'reports',
           document.querySelector(
             '#erpIconNav .nav-btn[data-section="reports"], #erpSectionGhostNav .nav-btn[data-section="reports"]'
           )
         );
-      } else if (typeof erpNavigateFleetReportsHubTab === 'function') {
+      }
+      if (typeof erpNavigateFleetReportsHubTab === 'function') {
         erpNavigateFleetReportsHubTab('compliance');
       }
     }

@@ -67,6 +67,8 @@ const HTML_PAGES = [
       'id="erpToastHost"',
       'id="qboSyncAlertBar"',
       'erp-reports-shell',
+      'id="erpReportsCatalogShell" class="erp-reports-catalog-shell print-hide-actions"',
+      'Show Fleet Hub iframe fallback',
       'acct-dash-kpis',
       'id="acctBoardStrip"',
       'erpConnectionStrip',

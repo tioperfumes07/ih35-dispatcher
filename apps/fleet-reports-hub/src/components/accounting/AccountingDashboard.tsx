@@ -36,6 +36,17 @@ type Props = {
   onOpenForm425c?: () => void
   /** Open global Lists section in App shell (preferred). */
   onOpenListsSection: (tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => void
+  homeKpis?: {
+    openBillsCount: string
+    openBillsSub: string
+    expensesMonthAmount: string
+    expensesMonthSub: string
+    qboVendors: string
+    qboVendorsSub: string
+    pendingQboPosts: string
+    pendingQboPostsSub: string
+    pendingQboPostsWarn: boolean
+  }
 }
 
 export function AccountingDashboard({
@@ -46,6 +57,7 @@ export function AccountingDashboard({
   onFuelOpenFromAccounting,
   onOpenForm425c,
   onOpenListsSection,
+  homeKpis,
 }: Props) {
   const [recurringOpen, setRecurringOpen] = useState(false)
   const [specializedOpen, setSpecializedOpen] = useState<SpecializedModalId | null>(
@@ -254,6 +266,7 @@ export function AccountingDashboard({
         onOpenRecurring={() => setRecurringOpen(true)}
         onOpenLists={openLists}
         onSetHomeOverlay={setHomeOverlay}
+        kpis={homeKpis}
       />
 
       {homeOverlay ? (

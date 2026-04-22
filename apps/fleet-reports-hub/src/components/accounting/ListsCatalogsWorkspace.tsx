@@ -9,6 +9,7 @@ import { VendorsDatabase } from '../lists/VendorsDatabase'
 import { AssetsDatabase } from '../lists/AssetsDatabase'
 import { OperationalStatusListPanel } from '../lists/OperationalStatusListPanel'
 import { FleetSamsaraWritesListPanel } from '../lists/FleetSamsaraWritesListPanel'
+import { BankCsvMatchingListPanel } from '../lists/BankCsvMatchingListPanel'
 import { INITIAL_FLEET_WRITE_ROWS, INITIAL_OPERATIONAL_STATUS_ROWS } from '../../data/mockCatalogLists'
 import { fetchQboItems, type QboItemRow } from '../../lib/qboItemsApi'
 import { useServiceCatalogRows } from '../../hooks/useServiceCatalogRows'
@@ -135,6 +136,11 @@ function cardsForTab(tab: ListsCatalogsTab, serviceCount: number): CardDef[] {
     case 'service-types':
       cards = [
         {
+          id: 'parts-ref',
+          name: 'Parts reference',
+          description: 'Parts catalog list',
+        },
+        {
           id: 'service-types-db',
           name: 'Service types (DB)',
           description: `${serviceCount} types`,
@@ -160,13 +166,17 @@ function cardsForTab(tab: ListsCatalogsTab, serviceCount: number): CardDef[] {
 function QboItemsPanel({ onClose }: { onClose: () => void }) {
   const [rows, setRows] = useState<QboItemRow[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const load = useCallback(async () => {
     setErr(null)
+    setLoading(true)
     try {
       setRows(await fetchQboItems())
     } catch (e) {
       setErr(String((e as Error).message || e))
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -200,6 +210,16 @@ function QboItemsPanel({ onClose }: { onClose: () => void }) {
         searchPlaceholder="Search name, SKU…"
         exportFilename="QboItems"
         onCloseList={onClose}
+        toolbarExtra={
+          <button
+            type="button"
+            className="btn sm ghost"
+            onClick={() => void load()}
+            disabled={loading}
+          >
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        }
       />
     </div>
   )
@@ -213,6 +233,7 @@ export function ListsCatalogsWorkspace({
 }: Props) {
   const { rows: svcRows } = useServiceCatalogRows('all')
   const [openedListId, setOpenedListId] = useState<ListsCatalogListId | null>(null)
+  const [cardSearch, setCardSearch] = useState('')
 
   useEffect(() => {
     if (deepLinkList) {
@@ -225,13 +246,15 @@ export function ListsCatalogsWorkspace({
     () => cardsForTab(activeTab, svcRows.length),
     [activeTab, svcRows.length],
   )
+  const visibleCards = useMemo(() => {
+    const q = cardSearch.trim().toLowerCase()
+    if (!q) return cards
+    return cards.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q),
+    )
+  }, [cards, cardSearch])
 
   const closeList = () => setOpenedListId(null)
-
-  const bankCols: SharedListColumn<Record<string, unknown>>[] = [
-    { id: 'f', label: 'File', width: 160, render: (r) => String(r.file ?? '') },
-    { id: 'st', label: 'Status', width: 88, render: (r) => String(r.status ?? '') },
-  ]
 
   const isDbTab = DB_TABS.has(activeTab)
   const showCards = !isDbTab && !openedListId
@@ -312,17 +335,7 @@ export function ListsCatalogsWorkspace({
       case 'fleet-writes':
         return <FleetSamsaraWritesListPanel onCloseList={closeList} />
       case 'bank-csv':
-        return (
-          <SharedListTable
-            title="Bank CSV matching"
-            itemCount={1}
-            columns={bankCols}
-            data={[{ id: '1', file: 'Sample-bank.csv', status: 'Draft' }]}
-            rowKey={(r) => String(r.id)}
-            exportFilename="BankCsv"
-            onCloseList={closeList}
-          />
-        )
+        return <BankCsvMatchingListPanel onCloseList={closeList} />
       case 'drivers-db':
         return <DriversDatabase onCloseList={closeList} />
       case 'vendors-db':
@@ -358,6 +371,7 @@ export function ListsCatalogsWorkspace({
               className={activeTab === t.id ? 'integrity-tab active' : 'integrity-tab'}
               onClick={() => {
                 onTabChange(t.id)
+                setCardSearch('')
               }}
             >
               {t.label}
@@ -365,8 +379,18 @@ export function ListsCatalogsWorkspace({
           ))}
         </div>
         <div className="lists-catalogs__body tab-panel lists-catalogs__cards-wrap">
+          <div className="fr-reports-toolbar">
+            <label className="search fr-reports-search">
+              <span className="sr-only">Search lists</span>
+              <input
+                value={cardSearch}
+                onChange={(e) => setCardSearch(e.target.value)}
+                placeholder="Search lists and catalogs..."
+              />
+            </label>
+          </div>
           <div className="lists-catalogs__cards">
-            {cards.map((c) => (
+            {visibleCards.map((c) => (
               <button
                 key={`${activeTab}-${c.id}`}
                 type="button"
@@ -378,6 +402,11 @@ export function ListsCatalogsWorkspace({
                 <span className="lists-catalogs__card-btn">Open list</span>
               </button>
             ))}
+            {visibleCards.length === 0 ? (
+              <p className="empty" style={{ margin: 0 }}>
+                No lists match this search.
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -398,6 +427,7 @@ export function ListsCatalogsWorkspace({
             className={activeTab === t.id ? 'integrity-tab active' : 'integrity-tab'}
             onClick={() => {
               onTabChange(t.id)
+              setCardSearch('')
               setOpenedListId(null)
             }}
           >

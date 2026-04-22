@@ -279,6 +279,13 @@ export function SharedListTable<T extends Record<string, unknown>>({
                 </tr>
               )
             })}
+            {slice.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + 2} className="empty-cell">
+                  No rows match the current search/filter.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

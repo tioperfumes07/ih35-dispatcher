@@ -938,6 +938,8 @@
    * ERP maintenance — Reports tab embeds the same React hub as `/fleet-reports/index.html`.
    */
   function erpEnsureFleetReportsHubIframe() {
+    var wrap = document.querySelector('#section-reports .erp-reports-hub-embed-wrap');
+    if (wrap && (wrap.classList.contains('hidden') || wrap.hidden)) return;
     var iframe = document.getElementById('erpFleetReportsHubIframe');
     if (!iframe || !(iframe instanceof HTMLIFrameElement)) return;
     var href = '';
@@ -988,10 +990,32 @@
   global.erpEnsureFleetReportsHubIframe = erpEnsureFleetReportsHubIframe;
 
   /**
+   * Reports section: explicit fallback toggle for Fleet Hub iframe embed.
+   * In-shell reports catalog remains the default surface.
+   */
+  function erpToggleFleetReportsHubEmbed(btn, forceOpen) {
+    var wrap = document.querySelector('#section-reports .erp-reports-hub-embed-wrap');
+    if (!wrap) return false;
+    var hidden = wrap.classList.contains('hidden') || wrap.hidden;
+    var show = typeof forceOpen === 'boolean' ? !!forceOpen : hidden;
+    wrap.classList.toggle('hidden', !show);
+    wrap.hidden = !show;
+    if (btn && btn instanceof HTMLElement) {
+      btn.setAttribute('aria-expanded', show ? 'true' : 'false');
+      btn.textContent = show ? 'Hide Fleet Hub iframe fallback' : 'Show Fleet Hub iframe fallback';
+    }
+    if (show) erpEnsureFleetReportsHubIframe();
+    return show;
+  }
+
+  global.erpToggleFleetReportsHubEmbed = erpToggleFleetReportsHubEmbed;
+
+  /**
    * Reload embedded fleet hub with a tab query (e.g. tab=compliance for Form 425C).
    * Call after opening Maintenance → Reports so the iframe exists.
    */
   function erpNavigateFleetReportsHubTab(tabId) {
+    erpToggleFleetReportsHubEmbed(null, true);
     var iframe = document.getElementById('erpFleetReportsHubIframe');
     if (!iframe || !(iframe instanceof HTMLIFrameElement)) return;
     var hubBase =
