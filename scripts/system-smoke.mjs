@@ -74,7 +74,9 @@ const HTML_PAGES = [
       'printDocuments.js',
       'erp-multi-bills.js',
       'erpOpenMultiBillsModal',
-      'id="erpMultiBillsModal"'
+      'id="erpMultiBillsModal"',
+      'ih35-runtime.js',
+      'http-equiv="Cache-Control"'
     ]
   ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
@@ -101,7 +103,7 @@ const STATIC_TEXT = [
   ['/src/utils/printDocuments.js', 'IH35 ERP — approved print documents', '*/*'],
   ['/css/erp-multi-bills.css', 'Multiple bills modal'],
   ['/js/erp-multi-bills.js', 'Multiple bills — pure helpers', '*/*'],
-  ['/ih35-runtime.js', 'window.__IH35_FLEET_HUB_BASE', '*/*']
+  ['/ih35-runtime.js', ['window.__IH35_FLEET_HUB_BASE', 'window.__IH35_DEPLOY_REF'], '*/*']
 ];
 
 /** `[path, Accept header]` — GET body checked against **`rule-zero-agent-b.mjs`** forbidden list. */
@@ -156,16 +158,18 @@ async function oneHtml(path, needleOrList) {
   };
 }
 
-async function oneStatic(path, needle, accept = 'text/css,*/*') {
+async function oneStatic(path, needleOrList, accept = 'text/css,*/*') {
   const url = base + path;
   const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
   const r = await fetch(url, { method: 'GET', headers: { Accept: accept }, signal: ctrl });
   const text = await r.text();
-  const has = Boolean(needle && text.includes(needle));
+  const needles = Array.isArray(needleOrList) ? needleOrList : needleOrList ? [needleOrList] : [];
+  const missing = needles.filter((n) => n && !text.includes(n));
+  const has = needles.length > 0 && missing.length === 0;
   const hint = has
-    ? `contains "${needle}"`
+    ? `contains ${needles.map((n) => `"${n}"`).join(' + ')}`
     : r.ok
-      ? `missing "${needle}"`
+      ? `missing ${missing.map((n) => `"${n}"`).join(', ')}`
       : '';
   return {
     path,
