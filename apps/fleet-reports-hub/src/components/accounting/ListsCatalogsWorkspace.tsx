@@ -47,8 +47,10 @@ const TAB_DEFS_SOURCE: TabDef[] = [
   { id: 'vendors-drivers', label: 'Vendors & driver payees' },
 ]
 
-/** Fixed A–Z order per Lists & catalogs spec (do not resort at runtime). */
-const TAB_DEFS: TabDef[] = TAB_DEFS_SOURCE
+/** Lists & catalogs tab bar — alphabetical by label (Packet 8). */
+const TAB_DEFS: TabDef[] = [...TAB_DEFS_SOURCE].sort((a, b) =>
+  a.label.localeCompare(b.label),
+)
 
 type CardDef = {
   id: ListsCatalogListId
