@@ -505,7 +505,7 @@ export const REPORTS: ReportDef[] = [
   },
 ]
 
-/** Top tabs: Overview first (default), then alphabetical by label. */
+/** Top tabs: Overview first (default), then A→Z by label (Packet 8). */
 const TABS_SOURCE: { id: ReportCategory; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'accounting', label: 'Accounting' },
@@ -517,8 +517,10 @@ const TABS_SOURCE: { id: ReportCategory; label: string }[] = [
   { id: 'safety', label: 'Safety & HOS' },
 ]
 
-/** Top report category tabs — fixed order (Fleet reports hub layout). */
-export const TABS: { id: ReportCategory; label: string }[] = [...TABS_SOURCE]
+export const TABS: { id: ReportCategory; label: string }[] = [
+  TABS_SOURCE[0]!,
+  ...TABS_SOURCE.slice(1).sort((a, b) => a.label.localeCompare(b.label)),
+]
 
 /** Default unit numbers for Reports filters (`Unit {n}` labels built in FilterSidebar). */
 export const MOCK_UNITS = ['101', '102', '204', '305', '412', '530']
