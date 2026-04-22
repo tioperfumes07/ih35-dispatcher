@@ -268,13 +268,21 @@ export default function App() {
     const syncFromLocation = () => {
       const nextSection = readInitialSection()
       const nextTab = readInitialReportTab()
-      setActiveSection((prev) => (prev === nextSection ? prev : nextSection))
+      if (nextSection !== activeSection) openSection(nextSection)
       setTab((prev) => (prev === nextTab ? prev : nextTab))
       if (nextSection !== 'lists') setListsDeepLink(null)
     }
     window.addEventListener('popstate', syncFromLocation)
     return () => window.removeEventListener('popstate', syncFromLocation)
-  }, [erpEmbed, erpRecordEmbed, erpFuelEmbed, erpFuelModalHost, erpWoModalHost])
+  }, [
+    activeSection,
+    openSection,
+    erpEmbed,
+    erpRecordEmbed,
+    erpFuelEmbed,
+    erpFuelModalHost,
+    erpWoModalHost,
+  ])
 
   useEffect(() => {
     if (!erpEmbed) return
