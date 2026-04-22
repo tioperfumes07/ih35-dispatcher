@@ -126,6 +126,11 @@
     document.body.prepend(banner);
   }
 
+  function bindUpdateBanner() {
+    if (window.__IH35_UPDATE_AVAILABLE) showUpdateBanner();
+    window.addEventListener('ih35:update-available', showUpdateBanner);
+  }
+
   function closeAll() {
     document.querySelectorAll('.board-nav-item.open').forEach(el => el.classList.remove('open'));
   }
@@ -223,8 +228,6 @@
 
     document.addEventListener('click', onDocClick);
 
-    if (window.__IH35_UPDATE_AVAILABLE) showUpdateBanner();
-    window.addEventListener('ih35:update-available', showUpdateBanner);
   }
 
   function escapeNav(s) {
@@ -236,8 +239,10 @@
   }
 
   if (document.readyState === 'loading') {
+    bindUpdateBanner();
     document.addEventListener('DOMContentLoaded', mount);
   } else {
+    bindUpdateBanner();
     mount();
   }
 })();
