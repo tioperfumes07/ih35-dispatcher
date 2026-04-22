@@ -119,6 +119,50 @@ const RULE0_GUARD_FETCHES = [
 
 const FETCH_MS = Math.min(30000, Math.max(2000, Number(process.env.SMOKE_TIMEOUT_MS) || 10000));
 
+/**
+ * Returns null when payload shape is acceptable for the endpoint.
+ * Returns a short error string when payload shape is invalid.
+ */
+function criticalContractError(path, json) {
+  if (!json || typeof json !== 'object' || json._nonJson) return 'non-JSON response body';
+  switch (path) {
+    case '/api/health':
+      return json.ok === true ? null : 'expected { ok: true }';
+    case '/api/qbo/status':
+      return typeof json.connected === 'boolean' && typeof json.configured === 'boolean'
+        ? null
+        : 'expected { connected:boolean, configured:boolean }';
+    case '/api/accounting/qbo-items':
+      return Array.isArray(json.items) ? null : 'expected { items: [] }';
+    case '/api/catalog/parts':
+      return Array.isArray(json.parts) ? null : 'expected { parts: [] }';
+    case '/api/catalog/service-types':
+      return Array.isArray(json.services) ? null : 'expected { services: [] }';
+    case '/api/form-425c/profiles':
+      return Array.isArray(json.companies) ? null : 'expected { companies: [] }';
+    case '/api/qbo/sync-alerts':
+      return json.counts && typeof json.counts === 'object' ? null : 'expected { counts: {...} }';
+    case '/api/maintenance/dashboard':
+      return Array.isArray(json.dashboard) ? null : 'expected { dashboard: [] }';
+    case '/api/maintenance/records':
+      return Array.isArray(json.records) ? null : 'expected { records: [] }';
+    case '/api/integrity/dashboard':
+      return json.ok === true && Array.isArray(json.alerts)
+        ? null
+        : 'expected { ok:true, alerts: [] }';
+    case '/api/integrity/counts':
+      return json.ok === true && typeof json.active === 'number'
+        ? null
+        : 'expected { ok:true, active:number }';
+    case '/api/integrity/thresholds':
+      return json.ok === true && json.thresholds && typeof json.thresholds === 'object'
+        ? null
+        : 'expected { ok:true, thresholds:{...} }';
+    default:
+      return null;
+  }
+}
+
 async function one(method, path) {
   const url = base + path;
   const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
@@ -136,7 +180,7 @@ async function one(method, path) {
       : path === '/api/qbo/sync-alerts' && json?.counts
         ? `(alerts total ${json.counts.total ?? '—'})`
         : '';
-  return { path, status: r.status, ok: r.ok, hint, jsonSnippet: summarize(json, path) };
+  return { path, status: r.status, ok: r.ok, hint, json, jsonSnippet: summarize(json, path) };
 }
 
 async function oneHtml(path, needleOrList) {
@@ -313,10 +357,14 @@ const ruleZeroBodyCache = new Map();
 for (const [method, path] of CRITICAL) {
   try {
     const row = await one(method, path);
-    const pass = row.ok;
+    const contractErr = criticalContractError(path, row.json);
+    const pass = row.ok && !contractErr;
     if (!pass) criticalFailures++;
     console.log(`${pass ? '✓' : '✗'} ${row.status} ${method} ${path} ${row.hint}`.trim());
-    if (!pass) console.log('   ', row.jsonSnippet);
+    if (!pass) {
+      console.log('   ', row.jsonSnippet);
+      if (contractErr) console.log('    Contract:', contractErr);
+    }
     if (!pass && path === '/api/qbo/sync-alerts' && row.status === 404) {
       console.log(
         '    Hint: 404 on this path usually means the listener on this port is not this tree’s server (restart `npm start`, or set SMOKE_BASE to the server you intend).'
