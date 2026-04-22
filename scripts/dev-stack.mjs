@@ -34,7 +34,6 @@ const ensure = spawnSync(process.execPath, [path.join(__dirname, 'ensure-fleet-r
 if (ensure.status !== 0) process.exit(ensure.status ?? 1);
 
 let apiChild = null;
-/** @type {import('node:child_process').ChildProcess | null} */
 let web = null;
 const skipApi = process.env.IH35_SKIP_FLEET_API === '1';
 
