@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { REPORTS, TABS } from './data/reports'
 import type { ReportCategory, ReportDef, ReportFilters } from './types'
 import { defaultFilters } from './types'
@@ -94,6 +94,11 @@ function readErpFuelModalHostFlag(): boolean {
   return new URLSearchParams(window.location.search).get('erpFuelModal') === '1'
 }
 
+function readErpEmbedFlag(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('erpEmbed') === '1'
+}
+
 export default function App() {
   const [tab, setTab] = useState<ReportCategory>(readInitialReportTab)
   /** True for the session when opened from ERP record-tab iframe (?erpWoEmbed=1), after URL cleanup. */
@@ -102,6 +107,7 @@ export default function App() {
   const [erpWoModalHost] = useState(readErpWoModalHostFlag)
   const [erpFuelEmbed] = useState(readErpFuelEmbedFlag)
   const [erpFuelModalHost] = useState(readErpFuelModalHostFlag)
+  const [erpEmbed] = useState(readErpEmbedFlag)
   const [search, setSearch] = useState('')
   const [draftFilters, setDraftFilters] = useState<ReportFilters>(defaultFilters)
   const [appliedFilters, setAppliedFilters] = useState<ReportFilters>(
@@ -306,14 +312,35 @@ export default function App() {
     if (r) openReport(r)
   }
 
+  const appThemeStyle = useMemo<CSSProperties | undefined>(() => {
+    if (!erpEmbed) return undefined
+    return {
+      ['--bg' as '--bg']: '#f4f7fb',
+      ['--panel' as '--panel']: '#ffffff',
+      ['--panel-2' as '--panel-2']: '#f8fafc',
+      ['--border' as '--border']: '#d8e1ec',
+      ['--text' as '--text']: '#0f172a',
+      ['--muted' as '--muted']: '#5b6476',
+      ['--accent' as '--accent']: '#0b66d6',
+      ['--accent-2' as '--accent-2']: '#1f8b4c',
+      ['--ok' as '--ok']: '#1f8b4c',
+      ['--warn' as '--warn']: '#b7791f',
+      ['--danger' as '--danger']: '#b42318',
+      ['--shadow' as '--shadow']: '0 12px 32px rgba(15, 23, 42, 0.12)',
+      colorScheme: 'light',
+    };
+  }, [erpEmbed])
+
   return (
     <IntegrationConnectionsProvider>
     <div
       className={
         'app app--fleet-reports' +
+        (erpEmbed ? ' app--erp-embed' : '') +
         (erpRecordEmbed ? ' app--erp-record-embed' : '') +
         (erpFuelEmbed || erpFuelModalHost ? ' app--erp-fuel-host' : '')
       }
+      style={appThemeStyle}
     >
       <div className="layout fleet-reports-layout">
       <div
@@ -617,6 +644,14 @@ export default function App() {
             aria-modal="true"
             aria-label="Create work order"
             onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              resize: 'both',
+              overflow: 'auto',
+              minHeight: '58vh',
+              minWidth: 'min(940px, 96vw)',
+              maxWidth: '98vw',
+              maxHeight: '94vh',
+            }}
           >
             <WorkOrderForm
               key={appWoModalKey}

@@ -953,7 +953,7 @@
       pending = '';
     }
     if (pending) {
-      iframe.src = hubBase + '/fleet-reports/index.html?tab=' + encodeURIComponent(pending);
+      iframe.src = hubBase + '/fleet-reports/index.html?erpEmbed=1&tab=' + encodeURIComponent(pending);
       try {
         delete window.__IH35_FLEET_HUB_TAB;
       } catch (_) {
@@ -961,7 +961,7 @@
       }
       return;
     }
-    iframe.src = hubBase + '/fleet-reports/index.html';
+    iframe.src = hubBase + '/fleet-reports/index.html?erpEmbed=1';
   }
 
   global.erpEnsureFleetReportsHubIframe = erpEnsureFleetReportsHubIframe;
@@ -978,7 +978,7 @@
         ? window.__IH35_FLEET_HUB_BASE
         : '';
     var t = String(tabId || 'overview').trim() || 'overview';
-    iframe.src = hubBase + '/fleet-reports/index.html?tab=' + encodeURIComponent(t);
+    iframe.src = hubBase + '/fleet-reports/index.html?erpEmbed=1&tab=' + encodeURIComponent(t);
   }
 
   global.erpNavigateFleetReportsHubTab = erpNavigateFleetReportsHubTab;
@@ -1073,4 +1073,27 @@
     } catch (_) {}
   }
   global.erpOpenFuelTransactionHub = erpOpenFuelTransactionHub;
+
+  /**
+   * Reports section: hide noisy legacy catalog tools by default; allow expand-on-demand.
+   */
+  function erpToggleLegacyReportsCatalog(btn) {
+    var shell = document.getElementById('erpReportsCatalogShell');
+    if (!shell) return false;
+    var hidden = shell.classList.contains('hidden') || shell.hidden;
+    if (hidden) {
+      shell.classList.remove('hidden');
+      shell.hidden = false;
+    } else {
+      shell.classList.add('hidden');
+      shell.hidden = true;
+    }
+    if (btn && btn instanceof HTMLElement) {
+      btn.setAttribute('aria-expanded', hidden ? 'true' : 'false');
+      btn.textContent = hidden ? 'Hide legacy reports tools' : 'Show legacy reports tools';
+    }
+    return hidden;
+  }
+
+  global.erpToggleLegacyReportsCatalog = erpToggleLegacyReportsCatalog;
 })(typeof window !== 'undefined' ? window : globalThis);
