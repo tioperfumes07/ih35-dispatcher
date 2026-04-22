@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -20,6 +21,26 @@ import { createMaintIntegrationDeps } from './lib/maint-server-deps.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const FLEET_REPORTS_INDEX = path.join(__dirname, 'public', 'fleet-reports', 'index.html');
+
+function sendFleetReportsSpa(res) {
+  if (fs.existsSync(FLEET_REPORTS_INDEX)) {
+    res.sendFile(FLEET_REPORTS_INDEX);
+    return;
+  }
+  res
+    .status(503)
+    .type('html')
+    .send(
+      '<!doctype html><html lang="en"><head><meta charset="utf-8"/><title>Fleet hub unavailable</title></head><body style="font-family:system-ui;padding:24px">' +
+        '<h1>Fleet Reports Hub is not built</h1>' +
+        '<p>This deploy is missing <code>public/fleet-reports/index.html</code>. On the host, run:</p>' +
+        '<pre style="background:#f4f4f5;padding:12px;border-radius:8px">npm run build:fleet</pre>' +
+        '<p>Using <code>npm start</code> runs that step automatically via <code>prestart</code>.</p>' +
+        '</body></html>',
+    );
+}
 
 /**
  * Must mirror GET paths in scripts/system-smoke.mjs `CRITICAL` except `/api/health`.
@@ -150,6 +171,17 @@ async function start() {
       return res.status(404).json({ error: 'Not found', path: req.path });
     }
     next();
+  });
+
+  /** Fleet hub SPA (same process as ERP); assets live under `/fleet-reports/assets/`. */
+  app.get('/fleet-reports', (_req, res) => {
+    res.redirect(302, '/fleet-reports/');
+  });
+  app.get('/fleet-reports/', (_req, res) => {
+    sendFleetReportsSpa(res);
+  });
+  app.get('/fleet-reports/index.html', (_req, res) => {
+    sendFleetReportsSpa(res);
   });
 
   app.use(express.static(path.join(__dirname, 'public')));

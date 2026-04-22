@@ -18,6 +18,16 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body class="erp-app erp-maintenance">
+  <script>
+    (function () {
+      window.addEventListener('unhandledrejection', function (ev) {
+        console.error('Unhandled promise:', ev.reason);
+        try {
+          ev.preventDefault();
+        } catch (_) {}
+      });
+    })();
+  </script>
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="erpDedicatedFormModal" class="erp-dedicated-form-modal hidden" aria-hidden="true">
     <div class="erp-dedicated-form-modal__backdrop" data-erp-ded-close="1"></div>
@@ -7820,34 +7830,39 @@
     }
 
     function openMaintMainTab(tab, btn, opts) {
-      const o = opts || {};
-      const map = {
-        record: 'maintMainTabRecord',
-        fleet: 'maintMainTabFleet',
-        rm: 'maintMainTabRm',
-        'shop-loc': 'maintMainTabShopLoc'
-      };
-      if (tab !== 'record' || o.skipModal) closeMaintWorkOrderModal();
-      document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
-      const id = map[tab] || map.record;
-      const panel = document.getElementById(id);
-      if (panel) panel.classList.add('active');
-      const key = tab in map ? tab : 'record';
-      document.querySelectorAll('.maint-nav-tab[data-maint-main]').forEach(b => {
-        b.classList.toggle('active', b.getAttribute('data-maint-main') === key);
-      });
-      if (tab === 'record' && !o.skipModal) {
-        const modal = document.getElementById('maintWorkOrderModal');
-        const already = modal && modal.classList.contains('on');
-        if (!already) requestAnimationFrame(() => openMaintWorkOrderModal());
-      }
-      if (tab === 'rm') {
-        loadSecurityCatalogUi().catch(() => {});
-        const duePane = document.getElementById('maintRmSubpaneDue');
-        if (duePane && !duePane.classList.contains('hidden')) loadMaintRmDueSchedule().catch(() => {});
-      }
-      if (tab === 'shop-loc') {
-        renderMaintLocationBoard();
+      try {
+        const o = opts || {};
+        const map = {
+          record: 'maintMainTabRecord',
+          fleet: 'maintMainTabFleet',
+          rm: 'maintMainTabRm',
+          'shop-loc': 'maintMainTabShopLoc'
+        };
+        if (tab !== 'record' || o.skipModal) closeMaintWorkOrderModal();
+        document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
+        const id = map[tab] || map.record;
+        const panel = document.getElementById(id);
+        if (panel) panel.classList.add('active');
+        const key = tab in map ? tab : 'record';
+        document.querySelectorAll('.maint-nav-tab[data-maint-main]').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-maint-main') === key);
+        });
+        if (tab === 'record' && !o.skipModal) {
+          const modal = document.getElementById('maintWorkOrderModal');
+          const already = modal && modal.classList.contains('on');
+          if (!already) requestAnimationFrame(() => openMaintWorkOrderModal());
+        }
+        if (tab === 'rm') {
+          loadSecurityCatalogUi().catch(() => {});
+          const duePane = document.getElementById('maintRmSubpaneDue');
+          if (duePane && !duePane.classList.contains('hidden')) loadMaintRmDueSchedule().catch(() => {});
+        }
+        if (tab === 'shop-loc') {
+          renderMaintLocationBoard();
+        }
+      } catch (err) {
+        console.error('openMaintMainTab', err);
+        if (typeof erpNotify === 'function') erpNotify(String(err?.message || err), 'error');
       }
     }
 

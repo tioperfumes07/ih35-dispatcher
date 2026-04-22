@@ -88,6 +88,13 @@ async function main() {
   if (sync.error) throw sync.error;
   if (sync.status !== 0) process.exit(sync.status ?? 1);
 
+  const ensure = spawnSync(process.execPath, [path.join(root, 'scripts/ensure-fleet-reports-dist.mjs')], {
+    cwd: root,
+    stdio: 'inherit',
+  });
+  if (ensure.error) throw ensure.error;
+  if (ensure.status !== 0) process.exit(ensure.status ?? 1);
+
   const port = await getFreePort();
   const base = `http://127.0.0.1:${port}`;
   const envPort = { PORT: String(port), IH35_SMOKE_GATE: '1' };

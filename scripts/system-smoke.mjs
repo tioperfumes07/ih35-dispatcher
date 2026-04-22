@@ -81,7 +81,8 @@ const HTML_PAGES = [
   ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],
   ['/banking.html', ['banking-page', 'erpConnectionStrip']],
   ['/settings.html', ['settings-page', 'erpConnectionStrip']],
-  ['/tracking.html', ['maintenance.html#tracking', 'viewport-fit=cover']]
+  ['/tracking.html', ['maintenance.html#tracking', 'viewport-fit=cover']],
+  ['/fleet-reports/index.html', ['id="root"', 'Fleet Reports Hub']]
 ];
 
 /** Static assets (200 + stable header): `[path, needle]` or `[path, needle, accept]`. */
