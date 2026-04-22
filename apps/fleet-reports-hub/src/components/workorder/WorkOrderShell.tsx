@@ -410,7 +410,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               {props.catalogError}
             </p>
           ) : null}
-          <div className="wo-grid5">
+          <div className={'wo-grid5' + (ledger ? ' wo-grid5--ledger' : '')}>
             <div>
               <SearchableCombo
                 label="Record type"
@@ -454,7 +454,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               />
             </label>
           </div>
-          <div className="wo-grid3">
+          <div className={'wo-grid3' + (ledger ? ' wo-grid3--ledger' : '')}>
             <div>
               <SearchableCombo
                 label="Vendor (QuickBooks)"
@@ -1094,7 +1094,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
               : 'F — QuickBooks posting header'
           }
         >
-          <div className="wo-grid-f">
+          <div className={'wo-grid-f' + (ledger ? ' wo-grid-f--ledger' : '')}>
             <div>
               {ledger ? (
                 <label className="field">

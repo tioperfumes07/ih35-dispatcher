@@ -446,11 +446,19 @@
   gap: 6px;
 }
 
+.wo-grid5--ledger {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .wo-grid3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin-top: 6px;
+}
+
+.wo-grid3--ledger {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .wo-grid4 {
@@ -660,6 +668,10 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
+}
+
+.wo-grid-f--ledger {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .wo-memo-grid {

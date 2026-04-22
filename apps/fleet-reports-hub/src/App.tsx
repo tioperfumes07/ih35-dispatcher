@@ -182,15 +182,7 @@ function isValidSectionId(value: string): value is AppSection {
   return APP_SECTION_ID_SET.has(value as AppSection)
 }
 
-function readInitialReportTab(): ReportCategory {
-  if (typeof window === 'undefined') return 'overview'
-  const p = new URLSearchParams(window.location.search)
-  return normalizeReportTab(String(p.get('tab') || '').trim().toLowerCase())
-}
-
-function readInitialSection(): AppSection {
-  if (typeof window === 'undefined') return 'home'
-  const p = new URLSearchParams(window.location.search)
+function resolveSectionFromSearchParams(p: URLSearchParams): AppSection {
   if (p.get('erpWoModal') === '1' || p.get('erpWoEmbed') === '1') return 'maintenance'
   if (p.get('erpFuelEmbed') === '1' || p.get('erpFuelModal') === '1') return 'accounting'
   if (p.get('erpEmbed') === '1') return 'reports'
@@ -209,16 +201,25 @@ function readInitialSection(): AppSection {
   return 'home'
 }
 
-function readInitialListsTab(): ListsCatalogsTab {
-  if (typeof window === 'undefined') return 'fleet-samsara'
-  const p = new URLSearchParams(window.location.search)
-  return parseListsStateFromSearchParams(p).tab
+function resolveReportTabFromSearchParams(p: URLSearchParams): ReportCategory {
+  return normalizeReportTab(String(p.get('tab') || '').trim().toLowerCase())
 }
 
-function readInitialListsDeepLink(): ListsCatalogListId | null {
-  if (typeof window === 'undefined') return null
-  const p = new URLSearchParams(window.location.search)
-  return parseListsStateFromSearchParams(p).list
+function readLocationStateFromSearchParams(p: URLSearchParams): {
+  section: AppSection
+  tab: ReportCategory
+  listsTab: ListsCatalogsTab
+  listsList: ListsCatalogListId | null
+} {
+  const section = resolveSectionFromSearchParams(p)
+  const tab = normalizeReportTabForSection(section, resolveReportTabFromSearchParams(p))
+  const listsState = parseListsStateFromSearchParams(p)
+  return {
+    section,
+    tab,
+    listsTab: listsState.tab,
+    listsList: listsState.list,
+  }
 }
 
 function readInitialLocationState(): {
@@ -227,14 +228,11 @@ function readInitialLocationState(): {
   listsTab: ListsCatalogsTab
   listsList: ListsCatalogListId | null
 } {
-  const section = readInitialSection()
-  const tab = normalizeReportTabForSection(section, readInitialReportTab())
-  return {
-    section,
-    tab,
-    listsTab: readInitialListsTab(),
-    listsList: readInitialListsDeepLink(),
+  if (typeof window === 'undefined') {
+    return { section: 'home', tab: 'overview', listsTab: 'fleet-samsara', listsList: null }
   }
+  const p = new URLSearchParams(window.location.search)
+  return readLocationStateFromSearchParams(p)
 }
 
 function readErpRecordEmbedFlag(): boolean {
@@ -398,15 +396,15 @@ export default function App() {
     if (erpEmbed || erpRecordEmbed || erpFuelEmbed || erpFuelModalHost || erpWoModalHost) return
     const syncFromLocation = () => {
       const p = new URLSearchParams(window.location.search)
-      const nextSection = readInitialSection()
-      const nextTab = normalizeReportTabForSection(nextSection, readInitialReportTab())
+      const locationState = readLocationStateFromSearchParams(p)
+      const nextSection = locationState.section
+      const nextTab = locationState.tab
       if (nextSection !== activeSection) openSection(nextSection)
       setTab((prev) => (prev === nextTab ? prev : nextTab))
       if (nextSection === 'lists') {
-        const nextListsState = parseListsStateFromSearchParams(p)
-        const nextListsTabResolved = nextListsState.tab
+        const nextListsTabResolved = locationState.listsTab
         setListsTab((prev) => (prev === nextListsTabResolved ? prev : nextListsTabResolved))
-        const nextListsListResolved = nextListsState.list
+        const nextListsListResolved = locationState.listsList
         setListsDeepLink((prev) =>
           prev === nextListsListResolved ? prev : nextListsListResolved,
         )
