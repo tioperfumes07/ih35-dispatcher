@@ -34,6 +34,7 @@ type RowDef = {
   onActivate: () => void
 }
 
+/** Demo pending posts count until wired to API. */
 const KPI_PENDING_POSTS = 2
 
 function SectionBlock({
@@ -88,14 +89,14 @@ export function AccountingHomeHub({
   onOpenLists,
   onSetHomeOverlay,
 }: Props) {
-  const [expanded, setExpanded] = useState<Record<SectionId, boolean>>({
-    bills: false,
-    expenses: false,
-    'bill-payment': false,
-    quickbooks: false,
-    uploads: false,
-    specialized: false,
-  })
+  const [expanded, setExpanded] = useState<Record<SectionId, boolean>>(() => ({
+    bills: true,
+    expenses: true,
+    'bill-payment': true,
+    quickbooks: true,
+    uploads: true,
+    specialized: true,
+  }))
 
   const toggle = useCallback((id: SectionId) => {
     setExpanded((e) => ({ ...e, [id]: !e[id] }))
@@ -108,21 +109,11 @@ export function AccountingHomeHub({
   const sections = useMemo(() => {
     const billRows: RowDef[] = [
       {
-        key: 'def-bill',
-        label: 'DEF bill',
-        onActivate: () => onOpenFuel('def-bill'),
-      },
-      {
         key: 'driver-bill',
         label: 'Driver bill',
         onActivate: () => onOpenSpecialized('driver-settlement'),
       },
       { key: 'fuel-bill', label: 'Fuel bill', onActivate: () => onOpenFuel('fuel-bill') },
-      {
-        key: 'fuel-def',
-        label: 'Fuel/DEF combined',
-        onActivate: () => onOpenFuel('fuel-def-combined'),
-      },
       {
         key: 'maint-bill',
         label: 'Maintenance bill',
@@ -232,8 +223,7 @@ export function AccountingHomeHub({
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
 
-    /** Section cards A–Z by title (2×3 grid). */
-    return [
+    const blocks = [
       { id: 'bill-payment' as const, title: 'Bill payment', rows: payRows },
       { id: 'bills' as const, title: 'Bills', rows: billRows },
       { id: 'expenses' as const, title: 'Expenses', rows: expRows },
@@ -241,6 +231,7 @@ export function AccountingHomeHub({
       { id: 'specialized' as const, title: 'Specialized', rows: specRows },
       { id: 'uploads' as const, title: 'Uploads', rows: upRows },
     ]
+    return blocks.sort((a, b) => a.title.localeCompare(b.title))
   }, [
     onOpenFuel,
     onOpenSpecialized,
@@ -251,11 +242,11 @@ export function AccountingHomeHub({
     qboStub,
   ])
 
+  /** Packet 8 quick actions — alphabetical (DEF / combined stay in + New and Bills via navigation). */
   const quickActions = useMemo(
     () =>
       [
         { key: 'qa-bp', label: '+ Bill payment', onClick: () => onSetHomeOverlay('bill-payment') },
-        { key: 'qa-def', label: '+ DEF bill', onClick: () => onOpenFuel('def-bill') },
         {
           key: 'qa-db',
           label: '+ Driver bill',
@@ -264,11 +255,6 @@ export function AccountingHomeHub({
         { key: 'qa-ex', label: '+ Expense', onClick: () => onRequestMaintenanceNav('expense') },
         { key: 'qa-fb', label: '+ Fuel bill', onClick: () => onOpenFuel('fuel-bill') },
         { key: 'qa-fe', label: '+ Fuel expense', onClick: () => onOpenFuel('fuel-expense') },
-        {
-          key: 'qa-fdef',
-          label: '+ Fuel/DEF combined',
-          onClick: () => onOpenFuel('fuel-def-combined'),
-        },
         {
           key: 'qa-mb',
           label: '+ Maintenance bill',
@@ -320,6 +306,7 @@ export function AccountingHomeHub({
         >
           <span className="acct-hub__kpi-lbl">Pending QBO posts</span>
           <span className="acct-hub__kpi-val">{KPI_PENDING_POSTS}</span>
+          <span className="acct-hub__kpi-sub muted">Review before sync</span>
         </div>
       </div>
 
@@ -345,9 +332,8 @@ export function AccountingHomeHub({
       </div>
 
       <p className="acct-hub__foot muted">
-        Records are not shown on this home page —
-        <br />
-        click any item above to open that section and view records.
+        Records are not shown on this home page — click any item above to open that section and view
+        records.
       </p>
     </div>
   )
