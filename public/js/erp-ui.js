@@ -10,6 +10,65 @@
 (function (global) {
   'use strict';
 
+  var ERP_UPDATE_EVENT = 'ih35:update-available';
+
+  function erpCurrentBuildVersion() {
+    try {
+      var v = document.documentElement.getAttribute('data-build-version');
+      return v ? String(v).trim() : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function erpMarkUpdateAvailable(nextVersion) {
+    try {
+      global.__IH35_UPDATE_AVAILABLE = true;
+      global.__IH35_UPDATE_VERSION = String(nextVersion || '').trim();
+      global.dispatchEvent(
+        new CustomEvent(ERP_UPDATE_EVENT, {
+          detail: { version: global.__IH35_UPDATE_VERSION },
+        }),
+      );
+    } catch (_) {}
+  }
+
+  function erpStartBuildVersionWatcher() {
+    var current = erpCurrentBuildVersion();
+    if (!current || typeof fetch !== 'function') return;
+    var intervalMs = 5 * 60 * 1000;
+    var ticking = false;
+
+    async function tick() {
+      if (ticking) return;
+      ticking = true;
+      try {
+        var r = await fetch('/health?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        });
+        if (!r.ok) return;
+        var j = await r.json();
+        var next = j && j.version ? String(j.version).trim() : '';
+        if (!next || next === current) return;
+        erpMarkUpdateAvailable(next);
+      } catch (_) {
+        // Ignore transient network errors; keep polling.
+      } finally {
+        ticking = false;
+      }
+    }
+
+    void tick();
+    global.setInterval(function () {
+      void tick();
+    }, intervalMs);
+  }
+
+  global.erpCurrentBuildVersion = erpCurrentBuildVersion;
+  global.erpStartBuildVersionWatcher = erpStartBuildVersionWatcher;
+  erpStartBuildVersionWatcher();
+
   /**
    * @param {HTMLElement | null} el
    * @param {boolean} busy

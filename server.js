@@ -28,13 +28,48 @@ const PUBLIC_CSS_PREFIX = path.join(PUBLIC_ROOT, 'css') + path.sep;
 const PUBLIC_JS_PREFIX = path.join(PUBLIC_ROOT, 'js') + path.sep;
 
 const FLEET_REPORTS_INDEX = path.join(__dirname, 'public', 'fleet-reports', 'index.html');
+const BUILD_VERSION = String(
+  process.env.RENDER_GIT_COMMIT ||
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.IH35_BUILD_STAMP ||
+    Date.now(),
+).trim();
+
+/** Legacy shells are static HTML files; serve with versioned local JS/CSS URLs so stale assets are busted on deploy. */
+function injectBuildVersionIntoHtml(rawHtml) {
+  const htmlWithVersionAttr = /<html\b[^>]*data-build-version=/i.test(rawHtml)
+    ? rawHtml
+    : rawHtml.replace(/<html(\b[^>]*)>/i, `<html$1 data-build-version="${BUILD_VERSION}">`);
+  return htmlWithVersionAttr.replace(
+    /((?:src|href)=["'])(\/[^"']+\.(?:js|css))(?:\?[^"']*)?(["'])/gi,
+    `$1$2?v=${encodeURIComponent(BUILD_VERSION)}$3`,
+  );
+}
+
+function setNoCacheHeaders(res) {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+}
+
+function sendVersionedPublicHtml(res, absPath) {
+  try {
+    const raw = fs.readFileSync(absPath, 'utf8');
+    setNoCacheHeaders(res);
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.type('html').send(injectBuildVersionIntoHtml(raw));
+  } catch {
+    setNoCacheHeaders(res);
+    res.sendFile(absPath);
+  }
+}
 
 /** Browsers often keep stale ERP shells and unhashed CSS/JS; force revalidation after deploys. */
 function applyPublicStaticCacheHeaders(res, absFilePath) {
   if (typeof absFilePath !== 'string') return;
   if (absFilePath.endsWith('.html')) {
-    res.setHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
+    setNoCacheHeaders(res);
+    res.setHeader('Surrogate-Control', 'no-store');
     return;
   }
   if (absFilePath.startsWith(PUBLIC_CSS_PREFIX) || absFilePath.startsWith(PUBLIC_JS_PREFIX)) {
@@ -71,6 +106,18 @@ function sendFleetReportsSpa(res) {
     );
 }
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  if (err?.code === 'EADDRINUSE') {
+    console.error('Port already in use. Exiting.');
+    process.exit(1);
+  }
+});
+
 /**
  * Must mirror GET paths in scripts/system-smoke.mjs `CRITICAL` except `/api/health`.
  * scripts/smoke-gate-paths-sync.mjs parses this Set — keep entries in sync.
@@ -96,6 +143,7 @@ async function start() {
   const app = express();
   app.set('trust proxy', 1);
   app.locals.db = pool;
+  app.locals.buildVersion = BUILD_VERSION;
 
   /** Optional split-origin hub; default '' = same origin as this Express app (typical single Render Web Service). */
   function normalizedFleetHubBaseUrl() {
@@ -117,6 +165,20 @@ async function start() {
 
   app.use(cors());
   app.use(express.json({ limit: '4mb' }));
+  app.use((req, res, next) => {
+    const pathOnly = req.path.split('?')[0];
+    if (pathOnly.startsWith('/api/')) {
+      setNoCacheHeaders(res);
+      return next();
+    }
+    if (pathOnly === '/' || pathOnly.endsWith('.html') || !pathOnly.includes('.')) {
+      setNoCacheHeaders(res);
+      res.setHeader('Surrogate-Control', 'no-store');
+    } else if (pathOnly.endsWith('.js') || pathOnly.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    }
+    next();
+  });
 
   /*
    * Smoke / auth contract (scripts/smoke-gate-paths-sync.mjs):
@@ -157,21 +219,40 @@ async function start() {
 
   app.get('/', (_req, res) => {
     const p = path.join(PUBLIC_ROOT, 'index.html');
-    applyPublicStaticCacheHeaders(res, p);
-    res.sendFile(p);
+    sendVersionedPublicHtml(res, p);
   });
 
   app.get('/form-425c', (_req, res) => {
     const p = path.join(PUBLIC_ROOT, 'form-425c.html');
-    applyPublicStaticCacheHeaders(res, p);
-    res.sendFile(p);
+    sendVersionedPublicHtml(res, p);
   });
 
+  const ERP_HTML_PAGES = [
+    'maintenance.html',
+    'form-425c.html',
+    'form-425c-demo.html',
+    'banking.html',
+    'dispatch.html',
+    'fuel.html',
+    'safety.html',
+    'settings.html',
+    'tracking.html',
+  ];
+  for (const htmlFile of ERP_HTML_PAGES) {
+    app.get(`/${htmlFile}`, (_req, res) => {
+      const p = path.join(PUBLIC_ROOT, htmlFile);
+      sendVersionedPublicHtml(res, p);
+    });
+  }
+
   app.get('/health', (_req, res) => {
+    setNoCacheHeaders(res);
     res.json({
+      status: 'ok',
       ok: true,
-      message: 'IH35 system running',
-      time: new Date().toISOString(),
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      version: BUILD_VERSION,
     });
   });
 
@@ -187,9 +268,7 @@ async function start() {
     }
   });
 
-  const deployRef = String(
-    process.env.RENDER_GIT_COMMIT || process.env.VERCEL_GIT_COMMIT_SHA || process.env.IH35_BUILD_STAMP || '',
-  ).trim();
+  const deployRef = BUILD_VERSION;
 
   app.get('/ih35-runtime.js', (_req, res) => {
     const base = normalizedFleetHubBaseUrl();
@@ -276,6 +355,16 @@ async function start() {
       },
     }),
   );
+
+  app.use((err, req, res, next) => {
+    console.error('Express error:', err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: String(err?.message || err),
+      path: req.path,
+    });
+  });
 
   const PORT = Number(process.env.PORT) || 3100;
   /** Browsers cannot open http://0.0.0.0; Safari often fails with https:// on a plain HTTP dev server. */

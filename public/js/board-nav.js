@@ -104,6 +104,27 @@
       ]
     }
   ];
+  const UPDATE_BANNER_ID = 'ih35UpdateBanner';
+
+  function showUpdateBanner() {
+    if (!document.body || document.getElementById(UPDATE_BANNER_ID)) return;
+    const banner = document.createElement('div');
+    banner.id = UPDATE_BANNER_ID;
+    banner.style.cssText =
+      'position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;gap:12px;align-items:center;justify-content:center;' +
+      'padding:8px 12px;background:#1a7f37;color:#fff;font-size:12px;line-height:1.3;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;';
+    banner.innerHTML =
+      '<span>A new version is available.</span>' +
+      '<button type="button" data-ih35-update-reload="1" style="height:24px;padding:0 12px;background:#fff;color:#1a7f37;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">Reload now</button>' +
+      '<button type="button" data-ih35-update-dismiss="1" aria-label="Dismiss update banner" style="background:none;border:none;color:#fff;cursor:pointer;font-size:15px;line-height:1">×</button>';
+    banner.querySelector('[data-ih35-update-reload="1"]')?.addEventListener('click', function () {
+      window.location.reload();
+    });
+    banner.querySelector('[data-ih35-update-dismiss="1"]')?.addEventListener('click', function () {
+      banner.remove();
+    });
+    document.body.prepend(banner);
+  }
 
   function closeAll() {
     document.querySelectorAll('.board-nav-item.open').forEach(el => el.classList.remove('open'));
@@ -201,6 +222,9 @@
     });
 
     document.addEventListener('click', onDocClick);
+
+    if (window.__IH35_UPDATE_AVAILABLE) showUpdateBanner();
+    window.addEventListener('ih35:update-available', showUpdateBanner);
   }
 
   function escapeNav(s) {

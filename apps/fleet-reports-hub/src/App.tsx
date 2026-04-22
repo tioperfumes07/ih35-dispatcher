@@ -8,6 +8,7 @@ import { PartsCatalogPanel } from './components/reports/PartsCatalogPanel'
 import { useServiceCatalogRows } from './hooks/useServiceCatalogRows'
 import { ReportCard } from './components/ReportCard'
 import { ReportViewer } from './components/ReportViewer'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import {
   MaintenanceWorkspace,
   type MaintView,
@@ -381,6 +382,7 @@ export default function App() {
           ) : null}
 
           <main
+            key={`section-${tab}`}
             className={
               'reports-page__main main tab-panel' +
               (tab === 'accounting' ? ' reports-page__main--accounting' : '')
@@ -402,7 +404,7 @@ export default function App() {
           )}
 
           {tab === 'maintenance' ? (
-            <>
+            <ErrorBoundary name="Maintenance">
               {!erpRecordEmbed ? (
                 <div className="chips-inline maint-applied-filters" aria-label="Applied filters summary">
                   {appliedChips(appliedFilters).map((c) => (
@@ -420,22 +422,24 @@ export default function App() {
                 onOpenAppWorkOrder={() => setAppWoPickOpen(true)}
                 erpRecordEmbed={erpRecordEmbed}
               />
-            </>
+            </ErrorBoundary>
           ) : tab === 'accounting' ? (
-            <AccountingDashboard
-              onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
-              onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
-              onNewWorkOrder={() => setAppWoPickOpen(true)}
-              listsBootstrap={acctListsBootstrap}
-              onListsBootstrapConsumed={() => setAcctListsBootstrap(null)}
-              erpFuelHost={erpFuelEmbed || erpFuelModalHost}
-              onFuelOpenFromAccounting={
-                erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
-              }
-              onOpenForm425c={openForm425cEmbedded}
-            />
+            <ErrorBoundary name="Accounting">
+              <AccountingDashboard
+                onRequestMaintenanceNav={navigateMaintenanceFromAccounting}
+                onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
+                onNewWorkOrder={() => setAppWoPickOpen(true)}
+                listsBootstrap={acctListsBootstrap}
+                onListsBootstrapConsumed={() => setAcctListsBootstrap(null)}
+                erpFuelHost={erpFuelEmbed || erpFuelModalHost}
+                onFuelOpenFromAccounting={
+                  erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
+                }
+                onOpenForm425c={openForm425cEmbedded}
+              />
+            </ErrorBoundary>
           ) : (
-            <>
+            <ErrorBoundary name="Reports">
               {tab === 'fuel' ? (
                 <div className="fr-fuel-entry-strip" role="region" aria-label="Fuel bills and expenses">
                   <p className="fr-fuel-entry-strip__lead muted">
@@ -472,7 +476,7 @@ export default function App() {
                 ))
               )}
               <PartsCatalogPanel />
-            </>
+            </ErrorBoundary>
           )}
           </main>
         </div>
