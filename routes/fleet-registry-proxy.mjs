@@ -37,11 +37,25 @@ export function mountFleetRegistryProxy(app, { logError = console.error } = {}) 
       const text = await r.text();
       res.status(r.status).send(text);
     } catch (e) {
-      logError('fleet-registry-proxy', e?.message || e);
+      const msg = String(e?.message || e);
+      const refused =
+        msg.includes('ECONNREFUSED') ||
+        String(e?.cause?.code || e?.code || '') === 'ECONNREFUSED';
+      const isProd = process.env.NODE_ENV === 'production';
+      if (refused && !isProd) {
+        if (!globalThis.__ih35FleetProxyConnWarned) {
+          globalThis.__ih35FleetProxyConnWarned = true;
+          console.warn(
+            `[fleet-registry-proxy] No listener at ${origin} — Drivers/Assets API routes return 502 until the fleet API runs (use npm run dev, or npm run dev:fleet:api).`,
+          );
+        }
+      } else {
+        logError('fleet-registry-proxy', msg);
+      }
       res.status(502).json({
         error: 'Fleet registry API unreachable',
         upstream: origin,
-        detail: String(e?.message || e),
+        detail: msg,
       });
     }
   });
