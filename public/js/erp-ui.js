@@ -491,6 +491,12 @@
           qRow = { kind: 'warn', text: 'QuickBooks: not connected — open Settings to authorize.', sev: 1 };
         }
 
+        const parseVehicleCount = value => {
+          if (value === null || value === undefined || value === '') return null;
+          const n = Number(value);
+          return Number.isFinite(n) && n >= 0 ? n : null;
+        };
+
         /** @type {{ kind: 'ok'|'warn'|'bad', text: string, sev: number } | null} */
         let sRow = null;
         if (!rh.ok) {
@@ -500,9 +506,9 @@
         } else if (!hj.hasSamsaraToken) {
           sRow = { kind: 'warn', text: 'Samsara: API token not configured on server.', sev: 1 };
         } else {
-          const nVeh = Number(hj.samsaraVehicles);
+          const nVeh = parseVehicleCount(hj.samsaraVehicles);
           const tail =
-            Number.isFinite(nVeh) && nVeh >= 0 ? ' · last snapshot: ' + nVeh + ' vehicles' : '';
+            nVeh !== null ? ' · last snapshot: ' + nVeh + ' vehicles' : '';
           sRow = { kind: 'ok', text: 'Samsara token on server' + tail + '.', sev: 0 };
         }
 
@@ -512,9 +518,9 @@
         if (compactOk) {
           el.classList.add('erp-connection-strip--compact');
           const nm = qj.companyName ? String(qj.companyName) : '';
-          const nVeh = Number(hj.samsaraVehicles);
+          const nVeh = parseVehicleCount(hj.samsaraVehicles);
           const veh =
-            Number.isFinite(nVeh) && nVeh >= 0 ? ' · Samsara snapshot: ' + nVeh + ' vehicles' : ' · Samsara: token OK';
+            nVeh !== null ? ' · Samsara snapshot: ' + nVeh + ' vehicles' : ' · Samsara: token OK';
           appendRow('ok', 'Integrations · QuickBooks connected' + (nm ? ' — ' + nm : '') + veh + '.');
         } else {
           if (qRow) appendRow(qRow.kind, qRow.text);

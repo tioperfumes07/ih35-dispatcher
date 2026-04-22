@@ -22,8 +22,87 @@ import {
 } from '../lib/fleet-mileage-settings.mjs';
 import { MAINTENANCE_SERVICE_CATALOG_SEEDS } from '../lib/maintenance-service-catalog.mjs';
 import { readQboStore, clearQboConnectionFailure } from '../lib/qbo-attachments.mjs';
+import { getVehicles } from '../services/samsara.js';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
+const SAMSARA_HEALTH_CACHE_MS = 10 * 60 * 1000;
+const SAMSARA_HEALTH_TIMEOUT_MS = 5000;
+const samsaraHealthCache = {
+  fetchedAt: 0,
+  vehicles: null,
+  lastError: '',
+  refreshing: null
+};
+
+function summarizeSamsaraVehiclesPayload(payload) {
+  const arr = Array.isArray(payload?.data)
+    ? payload.data
+    : Array.isArray(payload?.vehicles)
+      ? payload.vehicles
+      : Array.isArray(payload)
+        ? payload
+        : [];
+  return { rows: arr, count: arr.length };
+}
+
+async function fetchSamsaraVehicleCountCached(token, logError) {
+  const now = Date.now();
+  const hasFresh =
+    Number.isFinite(samsaraHealthCache.fetchedAt) &&
+    samsaraHealthCache.fetchedAt > 0 &&
+    now - samsaraHealthCache.fetchedAt < SAMSARA_HEALTH_CACHE_MS;
+  if (hasFresh && Number.isFinite(samsaraHealthCache.vehicles) && samsaraHealthCache.vehicles >= 0) {
+    return {
+      vehicles: samsaraHealthCache.vehicles,
+      cacheAgeMs: now - samsaraHealthCache.fetchedAt,
+      error: samsaraHealthCache.lastError || undefined
+    };
+  }
+  if (samsaraHealthCache.refreshing) {
+    try {
+      return await samsaraHealthCache.refreshing;
+    } catch {
+      return {
+        vehicles: Number.isFinite(samsaraHealthCache.vehicles) ? samsaraHealthCache.vehicles : null,
+        cacheAgeMs: now - (samsaraHealthCache.fetchedAt || now),
+        error: samsaraHealthCache.lastError || 'Samsara refresh failed'
+      };
+    }
+  }
+  samsaraHealthCache.refreshing = (async () => {
+    const t = setTimeout(() => {
+      samsaraHealthCache.lastError = `Samsara health snapshot exceeded ${SAMSARA_HEALTH_TIMEOUT_MS}ms`;
+    }, SAMSARA_HEALTH_TIMEOUT_MS);
+    try {
+      const response = await getVehicles(token);
+      const { rows, count } = summarizeSamsaraVehiclesPayload(response);
+      samsaraHealthCache.vehicles = count;
+      samsaraHealthCache.fetchedAt = Date.now();
+      samsaraHealthCache.lastError = '';
+      try {
+        console.log(
+          '[samsara] vehicles health snapshot:',
+          JSON.stringify({ count, sample: rows[0] || null }).slice(0, 500)
+        );
+      } catch {
+        /* ignore non-serializable payload */
+      }
+      return { vehicles: count, cacheAgeMs: 0, error: undefined };
+    } catch (err) {
+      samsaraHealthCache.lastError = err?.message || String(err);
+      logError('[api/health] samsara vehicles snapshot failed', err);
+      return {
+        vehicles: Number.isFinite(samsaraHealthCache.vehicles) ? samsaraHealthCache.vehicles : null,
+        cacheAgeMs: samsaraHealthCache.fetchedAt ? Date.now() - samsaraHealthCache.fetchedAt : null,
+        error: samsaraHealthCache.lastError
+      };
+    } finally {
+      clearTimeout(t);
+      samsaraHealthCache.refreshing = null;
+    }
+  })();
+  return await samsaraHealthCache.refreshing;
+}
 
 function qboConnectionFlags() {
   const s = readQboStore();
@@ -62,16 +141,27 @@ export function mountErpCoreApi(app, opts = {}) {
     return String(req.headers['x-ih35-user'] || req.headers['x-user-email'] || 'operator').trim() || 'operator';
   }
 
-  app.get('/api/health', (_req, res) => {
+  app.get('/api/health', async (_req, res) => {
     const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+    const qbo = qboConnectionFlags();
+    let samsaraVehicles = null;
+    let samsaraStatsRows = null;
+    let samsaraError = undefined;
+    if (token) {
+      const s = await fetchSamsaraVehicleCountCached(token, logError);
+      samsaraVehicles = Number.isFinite(s.vehicles) ? s.vehicles : null;
+      samsaraStatsRows = Number.isFinite(s.vehicles) ? s.vehicles : null;
+      samsaraError = s.error;
+    }
     res.json({
       ok: true,
       serverTime: new Date().toISOString(),
       hasSamsaraToken: Boolean(token),
-      hasQboConfig: qboConnectionFlags().configured,
+      hasQboConfig: qbo.configured,
       hasDatabaseUrl: Boolean(process.env.DATABASE_URL?.trim()),
-      samsaraVehicles: null,
-      samsaraStatsRows: null
+      samsaraVehicles,
+      samsaraStatsRows,
+      samsaraError
     });
   });
 
