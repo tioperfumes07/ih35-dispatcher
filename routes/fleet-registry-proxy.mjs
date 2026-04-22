@@ -5,6 +5,8 @@
  *
  * Set `IH35_FLEET_API_ORIGIN` to override the upstream base (no trailing slash).
  */
+let fleetProxyConnWarned = false;
+
 export function mountFleetRegistryProxy(app, { logError = console.error } = {}) {
   const origin = (
     process.env.IH35_FLEET_API_ORIGIN ||
@@ -43,8 +45,8 @@ export function mountFleetRegistryProxy(app, { logError = console.error } = {}) 
         String(e?.cause?.code || e?.code || '') === 'ECONNREFUSED';
       const isProd = process.env.NODE_ENV === 'production';
       if (refused && !isProd) {
-        if (!globalThis.__ih35FleetProxyConnWarned) {
-          globalThis.__ih35FleetProxyConnWarned = true;
+        if (!fleetProxyConnWarned) {
+          fleetProxyConnWarned = true;
           console.warn(
             `[fleet-registry-proxy] No listener at ${origin} — Drivers/Assets API routes return 502 until the fleet API runs (use npm run dev, or npm run dev:fleet:api).`,
           );
