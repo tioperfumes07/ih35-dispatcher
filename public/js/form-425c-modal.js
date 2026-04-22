@@ -48,12 +48,12 @@
     });
   }
 
-  /** Hidden mount target so /js/form-425c-app.js can run its standalone createRoot line on pages without #form-425c-root. */
+  /** Hidden mount target so /js/form-425c-app.js can run its standalone createRoot line on pages without #root. */
   function ensurePhantomPageRoot() {
-    var el = document.getElementById('form-425c-root');
+    var el = document.getElementById('root');
     if (el) return el;
     el = document.createElement('div');
-    el.id = 'form-425c-root';
+    el.id = 'root';
     el.setAttribute('hidden', '');
     el.setAttribute('aria-hidden', 'true');
     el.style.cssText =

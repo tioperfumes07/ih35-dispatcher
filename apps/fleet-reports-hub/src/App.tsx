@@ -249,6 +249,11 @@ export default function App() {
     setActive(r)
   }
 
+  const openForm425cEmbedded = () => {
+    const r = REPORTS.find((x) => x.id === 'form-425c')
+    if (r) openReport(r)
+  }
+
   return (
     <IntegrationConnectionsProvider>
     <div
@@ -320,6 +325,7 @@ export default function App() {
                 setAppliedFilters(z)
               }}
               catalogServiceNames={catalogServiceNames}
+              onOpenForm425c={openForm425cEmbedded}
             />
           ) : null}
 
@@ -375,6 +381,7 @@ export default function App() {
               onFuelOpenFromAccounting={
                 erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
               }
+              onOpenForm425c={openForm425cEmbedded}
             />
           ) : (
             <>

@@ -33,10 +33,12 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
   const [schedFreq, setSchedFreq] = useState<'daily' | 'weekly'>('weekly')
 
   const custom = report.viewer
+  const isEmbed = Boolean(report.embedToolUrl)
 
   const { rows, total } = useMemo(
-    () => (custom ? { rows: [], total: 0 } : buildMockRows(report, filters, page, PAGE_SIZE)),
-    [report, filters, page, custom],
+    () =>
+      custom || isEmbed ? { rows: [], total: 0 } : buildMockRows(report, filters, page, PAGE_SIZE),
+    [report, filters, page, custom, isEmbed],
   )
 
   const sorted = useMemo(() => {
@@ -57,7 +59,7 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
     [report.hasChart, sorted],
   )
 
-  const empty = !custom && total === 0
+  const empty = !custom && !isEmbed && total === 0
 
   useTableTabOrder(dataCol.tableRef, [sorted, empty])
 
@@ -105,6 +107,31 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
           </div>
         </header>
 
+        {isEmbed && report.embedToolUrl ? (
+          <div
+            className="viewer__scroll viewer__scroll--embed-tool"
+            style={{
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              minHeight: 0,
+            }}
+          >
+            <iframe
+              title={report.title}
+              src={report.embedToolUrl}
+              style={{
+                flex: 1,
+                border: 0,
+                width: '100%',
+                minHeight: 520,
+                background: 'var(--color-bg-card, #fff)',
+              }}
+              referrerPolicy="same-origin"
+            />
+          </div>
+        ) : (
         <div className="viewer__scroll">
           {custom ? (
             <div className="viewer__custom">{locationBody}</div>
@@ -300,6 +327,7 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
             </>
           )}
         </div>
+        )}
       </div>
     </div>
   )

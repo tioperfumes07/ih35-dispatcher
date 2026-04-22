@@ -14,9 +14,8 @@
 <body class="form-425c-page">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="boardNavMount"></div>
-  <script src="/js/board-nav.js" defer></script>
   <div id="erpConnectionStrip" class="erp-connection-strip no-print" aria-live="polite"></div>
-  <div id="form-425c-root"></div>
+  <div id="root"></div>
   <script src="https://unpkg.com/react@19/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@19/umd/react-dom.development.js" crossorigin></script>
   <script src="/js/form-425c-app.js"></script>
@@ -24,5 +23,6 @@
   <script>
     if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
   </script>
+  <script src="/js/board-nav.js" defer></script>
 </body>
 </html>

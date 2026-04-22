@@ -22,29 +22,29 @@ body.form-425c-page a:hover {
   color: var(--btn-post-qbo-hover);
 }
 
-#form-425c-root {
+#root {
   display: block;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
 }
 
-#form-425c-root,
-#form-425c-root .form-425c-root {
+#root,
+#root .form-425c-root {
   --f425-part-color: var(--color-app-frame-border, #1e3a5a);
 }
 
-#form-425c-root .form-425c-root {
+#root .form-425c-root {
   color: var(--color-text-body);
 }
 
-#form-425c-root .form-425c-wrap {
+#root .form-425c-wrap {
   max-width: 1100px;
   margin: 0 auto;
   padding: var(--space-md, 12px) var(--space-lg, 16px) var(--space-3xl, 48px);
 }
 
-#form-425c-root .f425-tabs {
+#root .f425-tabs {
   display: flex;
   gap: var(--space-sm, 8px);
   flex-wrap: wrap;
@@ -53,7 +53,7 @@ body.form-425c-page a:hover {
   padding-bottom: var(--space-sm, 8px);
 }
 
-#form-425c-root .f425-tabs button {
+#root .f425-tabs button {
   padding: var(--space-sm, 8px) 14px;
   border-radius: var(--radius-md, 8px) var(--radius-md, 8px) 0 0;
   border: 1px solid transparent;
@@ -64,14 +64,14 @@ body.form-425c-page a:hover {
   color: var(--color-text-body, #3c4257);
 }
 
-#form-425c-root .f425-tabs button.active {
+#root .f425-tabs button.active {
   background: var(--color-bg-card, #fff);
   border-color: var(--color-border, #e0e3e8);
   border-bottom-color: transparent;
   font-weight: 600;
 }
 
-#form-425c-root .f425-panel {
+#root .f425-panel {
   display: none;
   background: var(--color-bg-card, #fff);
   border: 1px solid var(--color-border, #e0e3e8);
@@ -80,31 +80,31 @@ body.form-425c-page a:hover {
   margin-bottom: var(--space-md, 16px);
 }
 
-#form-425c-root .f425-panel.active {
+#root .f425-panel.active {
   display: block;
 }
 
-#form-425c-root .f425-h2 {
+#root .f425-h2 {
   font-size: var(--font-xl, 15px);
   margin: 0 0 var(--space-md, 12px);
   color: var(--color-text-primary, #1a1f36);
 }
 
-#form-425c-root .f425-h3 {
+#root .f425-h3 {
   font-size: var(--font-lg, 14px);
   margin: 18px 0 var(--space-sm, 8px);
   color: var(--f425-part-color);
   font-weight: 700;
 }
 
-#form-425c-root .f425-grid {
+#root .f425-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 10px var(--space-lg, 16px);
   align-items: end;
 }
 
-#form-425c-root .f425-grid label {
+#root .f425-grid label {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs, 4px);
@@ -112,9 +112,9 @@ body.form-425c-page a:hover {
   color: var(--color-text-label, #6b7385);
 }
 
-#form-425c-root .f425-grid input,
-#form-425c-root .f425-grid select,
-#form-425c-root .f425-grid textarea {
+#root .f425-grid input,
+#root .f425-grid select,
+#root .f425-grid textarea {
   padding: var(--space-sm, 8px) 10px;
   border-radius: var(--radius-sm, 6px);
   border: 1px solid var(--color-border-input, #d0d4da);
@@ -123,7 +123,7 @@ body.form-425c-page a:hover {
   color: var(--color-text-primary, #1a1f36);
 }
 
-#form-425c-root .f425-company-card {
+#root .f425-company-card {
   border: 1px dashed var(--color-border, #e0e3e8);
   border-radius: var(--radius-md, 10px);
   padding: 14px;
@@ -131,13 +131,13 @@ body.form-425c-page a:hover {
   background: var(--color-bg-header, #f1f3f4);
 }
 
-#form-425c-root .f425-company-card h3 {
+#root .f425-company-card h3 {
   margin: 0 0 10px;
   font-size: var(--font-xl, 15px);
   color: var(--color-text-primary, #1a1f36);
 }
 
-#form-425c-root .f425-bank-pick {
+#root .f425-bank-pick {
   max-height: 200px;
   overflow: auto;
   border: 1px solid var(--color-border, #e0e3e8);
@@ -147,7 +147,7 @@ body.form-425c-page a:hover {
   font-size: var(--font-base, 12px);
 }
 
-#form-425c-root .f425-bank-pick label {
+#root .f425-bank-pick label {
   display: flex;
   gap: var(--space-sm, 8px);
   align-items: center;
@@ -156,15 +156,15 @@ body.form-425c-page a:hover {
   color: var(--color-text-body, #3c4257);
 }
 
-#form-425c-root table.f425-table {
+#root table.f425-table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--font-base, 12px);
   margin-top: 10px;
 }
 
-#form-425c-root table.f425-table th,
-#form-425c-root table.f425-table td {
+#root table.f425-table th,
+#root table.f425-table td {
   border: 1px solid var(--color-border, #e0e3e8);
   padding: var(--space-sm, 6px) var(--space-sm, 8px);
   text-align: left;
@@ -172,12 +172,12 @@ body.form-425c-page a:hover {
   color: var(--color-text-body);
 }
 
-#form-425c-root table.f425-table th {
+#root table.f425-table th {
   background: var(--color-bg-header, #f1f3f4);
   color: var(--color-text-primary, #1a1f36);
 }
 
-#form-425c-root .f425-proj-table input {
+#root .f425-proj-table input {
   border: 1px solid var(--color-border-input, #d0d4da);
   border-radius: var(--radius-sm, 4px);
   padding: var(--space-xs, 4px) var(--space-sm, 6px);
@@ -186,21 +186,21 @@ body.form-425c-page a:hover {
   box-sizing: border-box;
 }
 
-#form-425c-root .f425-actions {
+#root .f425-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm, 8px);
   margin: var(--space-md, 12px) 0;
 }
 
-#form-425c-root .f425-note {
+#root .f425-note {
   font-size: var(--font-base, 12px);
   color: var(--color-text-label, #6b7385);
   line-height: 1.45;
   margin: var(--space-sm, 8px) 0;
 }
 
-#form-425c-root .f425-yn-row {
+#root .f425-yn-row {
   display: flex;
   gap: var(--space-md, 16px);
   flex-wrap: wrap;
@@ -210,37 +210,37 @@ body.form-425c-page a:hover {
   color: var(--color-text-body, #3c4257);
 }
 
-#form-425c-root .f425-money {
+#root .f425-money {
   font-variant-numeric: tabular-nums;
 }
 
 /* Narrow viewports: stack tabs and keep panels within width */
 @media (max-width: 720px) {
-  #form-425c-root .form-425c-wrap {
+  #root .form-425c-wrap {
     padding-left: max(var(--space-md, 12px), env(safe-area-inset-left, 0px));
     padding-right: max(var(--space-md, 12px), env(safe-area-inset-right, 0px));
   }
 
-  #form-425c-root .f425-grid {
+  #root .f425-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  #form-425c-root table.f425-table {
+  #root table.f425-table {
     font-size: var(--font-sm, 11px);
   }
 
-  #form-425c-root table.f425-table th,
-  #form-425c-root table.f425-table td {
+  #root table.f425-table th,
+  #root table.f425-table td {
     overflow-wrap: anywhere;
     word-break: break-word;
   }
 }
 
 @media print {
-  #form-425c-root .no-print {
+  #root .no-print {
     display: none !important;
   }
-  #form-425c-root .f425-panel {
+  #root .f425-panel {
     display: block !important;
     border: none;
     padding: 0;

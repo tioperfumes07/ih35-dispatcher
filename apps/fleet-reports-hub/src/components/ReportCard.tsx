@@ -12,6 +12,7 @@ const CATEGORY_LABEL: Record<ReportCategory, string> = {
   overview: 'Overview',
   maintenance: 'Maintenance',
   accounting: 'Accounting',
+  compliance: 'Compliance',
   safety: 'Safety & HOS',
   fuel: 'Fuel & Energy',
   operations: 'Operations',

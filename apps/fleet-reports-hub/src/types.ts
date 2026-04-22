@@ -2,6 +2,7 @@ export type ReportCategory =
   | 'overview'
   | 'maintenance'
   | 'accounting'
+  | 'compliance'
   | 'safety'
   | 'fuel'
   | 'operations'
@@ -34,6 +35,8 @@ export interface ReportDef {
   hasChart?: boolean
   /** Rich layout in ReportViewer instead of generic mock table */
   viewer?: ReportViewerKind
+  /** Load standalone Express HTML tool inside ReportViewer (same-origin iframe). */
+  embedToolUrl?: string
 }
 
 export interface ReportFilters {

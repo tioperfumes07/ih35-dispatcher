@@ -42,6 +42,8 @@ type Props = {
   erpFuelHost?: boolean
   /** When ERP embed: open fuel dialog at app level (single FuelTransactionForm). */
   onFuelOpenFromAccounting?: (t: FuelTransactionType) => void
+  /** + New → Form 425C — Monthly report (hub report viewer iframe). */
+  onOpenForm425c?: () => void
 }
 
 export function AccountingDashboard({
@@ -52,6 +54,7 @@ export function AccountingDashboard({
   onListsBootstrapConsumed,
   erpFuelHost = false,
   onFuelOpenFromAccounting,
+  onOpenForm425c,
 }: Props) {
   const [route, setRoute] = useState<'home' | 'lists'>('home')
   const [listsTab, setListsTab] = useState<ListsCatalogsTab>('fleet-samsara')
@@ -198,6 +201,14 @@ export function AccountingDashboard({
                     label: 'Expense',
                     onClick: () => onRequestMaintenanceNav('expense'),
                   },
+                  ...(onOpenForm425c
+                    ? [
+                        {
+                          label: 'Form 425C — Monthly report',
+                          onClick: () => onOpenForm425c(),
+                        },
+                      ]
+                    : []),
                   ...fuelTransactionTypesAlphabetical().map((ft) => ({
                     label: FUEL_TRANSACTION_TYPE_LABELS[ft],
                     onClick: () => openFuel(ft),

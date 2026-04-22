@@ -215,6 +215,15 @@ export const REPORTS: ReportDef[] = [
     apiHint: 'GET /api/reports/erp/bills',
   },
   {
+    id: 'form-425c',
+    title: 'Form 425C',
+    description:
+      'Monthly operating report for US Bankruptcy Court. Import QuickBooks data, complete all parts, export package.',
+    category: 'compliance',
+    tags: ['compliance', 'bankruptcy', '425C'],
+    embedToolUrl: '/form-425c.html',
+  },
+  {
     id: 'B11',
     title: 'Fuel history (accounting)',
     description: 'Fuel card and bulk fuel costs for GL tie-out.',
@@ -509,6 +518,7 @@ export const REPORTS: ReportDef[] = [
 const TABS_SOURCE: { id: ReportCategory; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'accounting', label: 'Accounting' },
+  { id: 'compliance', label: 'Compliance' },
   { id: 'custom', label: 'Custom' },
   { id: 'dot', label: 'DOT Compliance' },
   { id: 'fuel', label: 'Fuel & Energy' },

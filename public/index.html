@@ -93,21 +93,12 @@
       <p>Import bank CSV, load QuickBooks purchases/bills/payments, and link rows for reconciliation triage (audit trail in-app).</p>
       <div class="arrow">Open bank matching →</div>
     </a>
-    <div class="hub-card-stack" style="min-width:0">
-      <a class="card" href="/form-425c.html">
-        <span class="card-tag tag-reports">Bankruptcy</span>
-        <h2>Form 425C (monthly operating report)</h2>
-        <p>Profiles for IH 35 Transportation LLC and IH 35 Trucking LLC, QuickBooks bank mapping, QB paste import, saved monthly JSON, ZIP export, and Exhibit C cash receipts from sales deposits (excludes inter-account transfers). <a href="/form-425c-demo.html">Sample filled report (demo)</a>.</p>
-        <div class="arrow">Open 425C workspace →</div>
-      </a>
-      <button
-        type="button"
-        onclick="window.openForm425C()"
-        style="margin-top:12px;padding:10px 16px;border-radius:12px;border:1px solid var(--color-hub-accent);background:transparent;color:var(--color-hub-accent);font-weight:600;cursor:pointer;font-size:14px;font-family:inherit;width:100%;box-sizing:border-box"
-      >
-        Form 425C — Monthly Report
-      </button>
-    </div>
+    <a class="card" href="/form-425c.html">
+      <span class="card-tag tag-reports">Bankruptcy</span>
+      <h2>Form 425C (monthly operating report)</h2>
+      <p>Profiles for IH 35 Transportation LLC and IH 35 Trucking LLC, QuickBooks bank mapping, QB paste import, saved monthly JSON, ZIP export, and Exhibit C cash receipts from sales deposits (excludes inter-account transfers). <a href="/form-425c-demo.html">Sample filled report (demo)</a>.</p>
+      <div class="arrow">Open 425C workspace →</div>
+    </a>
   </div>
   <footer>
     <div class="hub-footer-row">
@@ -126,6 +117,5 @@
   <script>
     if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
   </script>
-  <script src="/js/form-425c-modal.js"></script>
 </body>
 </html>

@@ -31,6 +31,8 @@ type Props = {
   onReset: () => void
   /** Extra service names from live catalog (merged with defaults). */
   catalogServiceNames: string[]
+  /** Opens Form 425C in the hub report viewer (embedded tool). */
+  onOpenForm425c?: () => void
 }
 
 export function FilterSidebar({
@@ -40,6 +42,7 @@ export function FilterSidebar({
   onApply,
   onReset,
   catalogServiceNames,
+  onOpenForm425c,
 }: Props) {
   const set = (patch: Partial<ReportFilters>) => onChange({ ...draft, ...patch })
 
@@ -200,6 +203,27 @@ export function FilterSidebar({
           </ul>
         )}
       </div>
+
+      {onOpenForm425c ? (
+        <div
+          className="fr-filter-sidebar__tools"
+          style={{
+            marginTop: 12,
+            paddingTop: 12,
+            borderTop: '1px solid var(--color-border, #e0e3e8)',
+          }}
+        >
+          <div className="fr-filter-sidebar__applied-h">Compliance</div>
+          <button
+            type="button"
+            className="btn sm ghost fr-filter-btn"
+            style={{ width: '100%', marginTop: 8 }}
+            onClick={onOpenForm425c}
+          >
+            Form 425C
+          </button>
+        </div>
+      ) : null}
 
       <IntegrationSidebarFooter />
     </aside>
