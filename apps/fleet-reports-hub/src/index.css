@@ -1290,7 +1290,7 @@ nav.tabs {
 .viewer {
   width: min(1080px, 100%);
   max-height: min(calc(100dvh - 48px), 100%);
-  background: #12151c;
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: var(--shadow);
@@ -5439,7 +5439,7 @@ nav.tabs {
   max-height: 90vh;
   overflow: auto;
   padding: 16px 18px;
-  background: #10131a;
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 14px;
 }
@@ -6599,7 +6599,7 @@ nav.tabs {
   width: min(720px, 100%);
   max-height: min(88vh, 100dvh);
   min-height: 0;
-  background: #10131a;
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: var(--shadow);
@@ -6625,7 +6625,7 @@ nav.tabs {
   padding: 0 10px 0 12px;
   min-height: 46px;
   border-bottom: 1px solid var(--border);
-  background: #121722;
+  background: var(--panel-2);
 }
 
 .maint-modal__titlebar-left {
@@ -6711,7 +6711,7 @@ nav.tabs {
   gap: 10px;
   padding: 10px 12px;
   border-top: 1px solid var(--border);
-  background: #0e1118;
+  background: var(--panel-2);
 }
 
 .maint-modal-savebtn {
@@ -7855,6 +7855,31 @@ nav.tabs {
 .app--erp-host .maint-modal__titlebar,
 .app--erp-host .maint-modal__savebar {
   background: var(--panel);
+}
+
+/* ERP-hosted mode: keep all modal shells in the same light surface family. */
+.app--erp-host .modal-backdrop,
+.app--erp-host .viewer-overlay,
+.app--erp-host .list-edit-modal-backdrop,
+.app--erp-host .fuel-txn-backdrop {
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+.app--erp-host .viewer,
+.app--erp-host .svc-modal,
+.app--erp-host .nm-bulk-modal,
+.app--erp-host .telematics-drawer,
+.app--erp-host .list-edit-modal {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.app--erp-host .list-edit-modal__head,
+.app--erp-host .fuel-txn-head,
+.app--erp-host .fuel-txn-bar {
+  background: var(--panel-2);
+  border-color: var(--border);
 }
 
 /* Fuel transaction form (QBO-style) — tokens only */
