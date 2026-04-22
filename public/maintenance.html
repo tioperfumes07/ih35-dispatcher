@@ -13020,6 +13020,7 @@
           loadTeamSecurityPanel();
         }
         await refreshFleetMileageBanner();
+        scheduleFleetAssetClassMapRefresh();
       } catch (e) {
         console.error(e);
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
@@ -14678,10 +14679,71 @@
       elId.value = match ? match.qboId : '';
     }
 
+    const FLEET_ASSET_QBO_CLASS_CACHE_MS = 45000;
+    let __fleetAssetClassFetch = null;
+    let __fleetAssetClassFetchedAt = 0;
+
+    function getFleetRegistryFetchRoot() {
+      const b =
+        typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE.trim()
+          ? window.__IH35_FLEET_HUB_BASE.trim()
+          : '';
+      return b.replace(/\/+$/, '');
+    }
+
+    /** Loads hub `assets` rows (unit_number → qbo_class_id) for AP/fuel class defaults; same-origin via server proxy when configured. */
+    function scheduleFleetAssetClassMapRefresh(opts) {
+      const force = opts && opts.force;
+      const now = Date.now();
+      if (
+        !force &&
+        __fleetAssetClassFetchedAt > 0 &&
+        now - __fleetAssetClassFetchedAt < FLEET_ASSET_QBO_CLASS_CACHE_MS
+      ) {
+        return;
+      }
+      if (__fleetAssetClassFetch) return;
+      __fleetAssetClassFetch = (async () => {
+        try {
+          const root = getFleetRegistryFetchRoot();
+          const url = root ? `${root}/api/assets` : '/api/assets';
+          const r = await fetch(url, { credentials: 'same-origin' });
+          if (!r.ok) return;
+          const j = await r.json();
+          const list = Array.isArray(j.assets) ? j.assets : [];
+          const m = Object.create(null);
+          for (const a of list) {
+            const un = String(a.unit_number || '').trim().toLowerCase();
+            const qid = String(a.qbo_class_id || '').trim();
+            if (un && qid) m[un] = { qbo_class_id: qid, qbo_class_name: String(a.qbo_class_name || '').trim() };
+          }
+          window.__ih35FleetAssetClassByUnit = m;
+          try {
+            if (typeof syncFuelManualClassFromUnit === 'function') syncFuelManualClassFromUnit();
+          } catch (_) {}
+          try {
+            if (typeof woApAllRows === 'function' && typeof syncWoApLineDefaultsFromUnit === 'function') {
+              woApAllRows().forEach(row => syncWoApLineDefaultsFromUnit(row));
+            }
+          } catch (_) {}
+        } catch (_) {
+          /* Hub may be down; QBO name match still applies. */
+        } finally {
+          __fleetAssetClassFetchedAt = Date.now();
+          __fleetAssetClassFetch = null;
+        }
+      })();
+    }
+
     function qboClassIdForFuelUnitName(unit) {
-      const u = String(unit || '').trim().toLowerCase();
+      const u = String(unit || '').trim();
       if (!u) return '';
-      const hit = cacheQboClasses().find(c => String(c.name || '').trim().toLowerCase() === u);
+      scheduleFleetAssetClassMapRefresh();
+      const key = u.toLowerCase();
+      const map = window.__ih35FleetAssetClassByUnit;
+      const rec = map && map[key];
+      if (rec && String(rec.qbo_class_id || '').trim()) return String(rec.qbo_class_id).trim();
+      const hit = cacheQboClasses().find(c => String(c.name || '').trim().toLowerCase() === key);
       return hit ? String(hit.qboId) : '';
     }
 
