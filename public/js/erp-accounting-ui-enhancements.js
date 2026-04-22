@@ -554,12 +554,24 @@
         });
         return;
       }
+      if (typeof global.erpNotify === 'function') {
+        global.erpNotify(
+          'Fuel fast entry: full form is not loaded on this page — opening layout preview instead.',
+          'info'
+        );
+      } else if (typeof console !== 'undefined' && console.warn) {
+        console.warn(
+          '[erpOpenAcctWorkflowModal] erpOpenDedicatedAccountingForm missing; using fuel fast-entry layout preview.'
+        );
+      }
+      /* Fall through: map.fuel-fast-entry opens the stub modal (fuelFastEntryHtml + wireFuelFast). */
     }
     const map = {
       'journal-entry': { layout: 'journal', html: journalHtml },
       transfer: { layout: 'transfer', html: transferHtml },
       'driver-settlement': { layout: 'driver-settlement', html: driverSettlementHtml },
-      'load-tms': { layout: 'load-tms', html: loadTmsHtml }
+      'load-tms': { layout: 'load-tms', html: loadTmsHtml },
+      'fuel-fast-entry': { layout: 'fuel', html: fuelFastEntryHtml }
     };
     const spec = map[norm];
     if (!spec) return;
