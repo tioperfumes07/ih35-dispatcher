@@ -4,6 +4,13 @@ import {
   fetchSamsaraVehiclesNormalized,
 } from './samsara-client.mjs';
 import { listParties } from './accounting-catalog.mjs';
+import {
+  pullVendorsFromQboIntoDb,
+  syncAllActiveDriversToQbo,
+  syncAllActiveTruckClasses,
+  tryCreateQboClient,
+  upsertDriverAsQboVendor,
+} from './fleet-qbo-registry-sync.mjs';
 
 function nowIso() {
   return new Date().toISOString();
@@ -65,8 +72,15 @@ function rowVendor(r) {
   };
 }
 
-/** @param {import('better-sqlite3').Database} db */
-function syncVendorsFromQboIntoDb(db) {
+/**
+ * @param {import('better-sqlite3').Database} db
+ * @returns {Promise<{ synced: number; refreshedAt: string }>}
+ */
+async function syncVendorsFromQboIntoDb(db) {
+  const client = tryCreateQboClient();
+  if (client) {
+    return pullVendorsFromQboIntoDb(db, client);
+  }
   const vendors = listParties('vendor');
   const t = nowIso();
   const ins = db.prepare(`
@@ -178,13 +192,13 @@ export function registerFleetRegistryRoutes(app) {
         });
         n++;
       }
-      res.json({ synced: n, refreshedAt: t });
+      res.json({ synced: n, errors: [], refreshedAt: t });
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }
   });
 
-  app.post('/api/drivers', (req, res) => {
+  app.post('/api/drivers', async (req, res) => {
     try {
       const full_name = String(req.body?.full_name || '').trim();
       if (!full_name) return res.status(400).json({ error: 'full_name required' });
@@ -196,13 +210,23 @@ export function registerFleetRegistryRoutes(app) {
         )
         .run(full_name, t, t);
       const row = db.prepare(`SELECT * FROM drivers WHERE id = ?`).get(info.lastInsertRowid);
-      res.json({ driver: rowDriver(row) });
+      let qboNote = null;
+      const qbo = tryCreateQboClient();
+      if (qbo) {
+        try {
+          await upsertDriverAsQboVendor(db, row.id, qbo);
+        } catch (e) {
+          qboNote = String(e?.message || e);
+        }
+      }
+      const fresh = db.prepare(`SELECT * FROM drivers WHERE id = ?`).get(row.id);
+      res.json({ driver: rowDriver(fresh), qboNote });
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }
   });
 
-  app.patch('/api/drivers/:id', (req, res) => {
+  app.patch('/api/drivers/:id', async (req, res) => {
     try {
       const id = Number(req.params.id);
       if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
@@ -236,9 +260,19 @@ export function registerFleetRegistryRoutes(app) {
         params[k] = v === undefined || v === '' ? null : v;
       }
       db.prepare(`UPDATE drivers SET ${sets}, updated_at = @updated_at WHERE id = @id`).run(params);
-      const row = db.prepare(`SELECT * FROM drivers WHERE id = ?`).get(id);
+      let row = db.prepare(`SELECT * FROM drivers WHERE id = ?`).get(id);
       if (!row) return res.status(404).json({ error: 'not found' });
-      res.json({ driver: rowDriver(row) });
+      let qboNote = null;
+      const qbo = tryCreateQboClient();
+      if (qbo) {
+        try {
+          await upsertDriverAsQboVendor(db, id, qbo);
+          row = db.prepare(`SELECT * FROM drivers WHERE id = ?`).get(id);
+        } catch (e) {
+          qboNote = String(e?.message || e);
+        }
+      }
+      res.json({ driver: rowDriver(row), qboNote });
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }
@@ -256,20 +290,27 @@ export function registerFleetRegistryRoutes(app) {
     }
   });
 
-  app.post('/api/drivers/sync-qbo', (_req, res) => {
+  app.post('/api/drivers/sync-qbo', async (_req, res) => {
     try {
       const db = getAccountingDb();
-      const rows = db.prepare(`SELECT id FROM drivers WHERE status = 'active'`).all();
-      const t = nowIso();
-      for (const r of rows) {
-        db.prepare(
-          `UPDATE drivers SET qbo_synced = 1, qbo_synced_at = ?, updated_at = ? WHERE id = ?`,
-        ).run(t, t, r.id);
+      const client = tryCreateQboClient();
+      if (!client) {
+        const rows = db.prepare(`SELECT id FROM drivers WHERE status = 'active'`).all();
+        const t = nowIso();
+        for (const r of rows) {
+          db.prepare(
+            `UPDATE drivers SET qbo_synced = 1, qbo_synced_at = ?, updated_at = ? WHERE id = ?`,
+          ).run(t, t, r.id);
+        }
+        return res.json({
+          synced: rows.length,
+          errors: [],
+          message:
+            'QuickBooks not connected locally — flagged qbo_synced only. Connect QBO (qbo_tokens.json) for live vendor writes.',
+        });
       }
-      res.json({
-        updated: rows.length,
-        message: 'Demo mode: flagged qbo_synced without live QuickBooks vendor writes.',
-      });
+      const { synced, errors } = await syncAllActiveDriversToQbo(db, client);
+      res.json({ synced, errors });
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }
@@ -360,20 +401,22 @@ export function registerFleetRegistryRoutes(app) {
     }
   });
 
-  app.get('/api/vendors-local/sync-qbo', (_req, res) => {
+  app.get('/api/vendors-local/sync-qbo', async (_req, res) => {
     try {
       const db = getAccountingDb();
-      res.json(syncVendorsFromQboIntoDb(db));
+      const out = await syncVendorsFromQboIntoDb(db);
+      res.json(out);
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }
   });
 
   /** Spec alias — same behavior as `/api/vendors-local/sync-qbo`. */
-  app.get('/api/vendors/sync-qbo', (_req, res) => {
+  app.get('/api/vendors/sync-qbo', async (_req, res) => {
     try {
       const db = getAccountingDb();
-      res.json(syncVendorsFromQboIntoDb(db));
+      const out = await syncVendorsFromQboIntoDb(db);
+      res.json(out);
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }
@@ -428,6 +471,8 @@ export function registerFleetRegistryRoutes(app) {
         'asset_type',
         'status',
         'qbo_class_name',
+        'qbo_class_id',
+        'samsara_id',
       ]);
       const body = req.body && typeof req.body === 'object' ? req.body : {};
       const keys = Object.keys(body).filter((k) => allowed.has(k));
@@ -550,26 +595,33 @@ export function registerFleetRegistryRoutes(app) {
         });
         n++;
       }
-      res.json({ synced: n, refreshedAt: t });
+      res.json({ synced: n, errors: [], refreshedAt: t });
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }
   });
 
-  app.post('/api/assets/sync-qbo-classes', (_req, res) => {
+  app.post('/api/assets/sync-qbo-classes', async (_req, res) => {
     try {
       const db = getAccountingDb();
-      const rows = db.prepare(`SELECT id, unit_number FROM assets WHERE status = 'active'`).all();
-      const t = nowIso();
-      for (const r of rows) {
-        db.prepare(
-          `UPDATE assets SET qbo_class_name = ?, qbo_synced = 1, updated_at = ? WHERE id = ?`,
-        ).run(r.unit_number, t, r.id);
+      const client = tryCreateQboClient();
+      if (!client) {
+        const rows = db.prepare(`SELECT id, unit_number FROM assets WHERE status = 'active'`).all();
+        const t = nowIso();
+        for (const r of rows) {
+          db.prepare(
+            `UPDATE assets SET qbo_class_name = ?, qbo_synced = 1, updated_at = ? WHERE id = ?`,
+          ).run(r.unit_number, t, r.id);
+        }
+        return res.json({
+          synced: rows.length,
+          errors: [],
+          message:
+            'QuickBooks not connected — mirrored unit # as class name only. Connect QBO for live Class entities.',
+        });
       }
-      res.json({
-        updated: rows.length,
-        message: 'Demo mode: class name mirrored from unit #; live QBO class ids not written.',
-      });
+      const { synced, errors } = await syncAllActiveTruckClasses(db, client);
+      res.json({ synced, errors });
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }

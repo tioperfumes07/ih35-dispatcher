@@ -186,7 +186,10 @@ export function VendorsDatabase({ onCloseList }: { onCloseList: () => void }) {
       <div className="lists-db__head">
         <div>
           <h3 className="lists-db__title">Vendors database</h3>
-          <p className="muted tiny lists-db__sub">Local mirror of QuickBooks vendors (demo catalog seed).</p>
+          <p className="muted tiny lists-db__sub">
+            Local mirror of QuickBooks vendors — use <strong>Sync all from QBO</strong> when connected; full
+            address and contact fields.
+          </p>
         </div>
         <div className="lists-db__actions">
           <button type="button" className="btn sm primary shared-list__head-btn" onClick={openAdd}>

@@ -132,7 +132,9 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const onQbo = async () => {
     setErr(null)
     try {
-      await syncAssetsQboClasses()
+      const r = await syncAssetsQboClasses()
+      const fail = r.errors?.length
+      if (fail) setErr(r.errors!.map((e) => `#${e.id} ${e.unit ?? ''}: ${e.error}`).join('\n'))
       await load()
     } catch (e) {
       setErr(String((e as Error).message || e))
@@ -192,21 +194,47 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
 
   const cols: SharedListColumn<Row>[] = useMemo(
     () => [
-      { id: 'unit', label: 'Unit #', width: 72, render: (r) => r.unit_number },
+      {
+        id: 'unit',
+        label: 'Unit #',
+        width: 72,
+        render: (r) => <span className="lists-db__pill lists-db__pill--info">{r.unit_number}</span>,
+      },
       { id: 'year', label: 'Year', width: 52, render: (r) => r.year ?? '—' },
       { id: 'make', label: 'Make', width: 88, render: (r) => r.make ?? '—' },
       { id: 'model', label: 'Model', width: 88, render: (r) => r.model ?? '—' },
       { id: 'vin', label: 'VIN', width: 120, render: (r) => r.vin ?? '—' },
       { id: 'odo', label: 'Odometer', width: 88, render: (r) => r.odometer_miles ?? '—' },
       { id: 'plate', label: 'License plate', width: 88, render: (r) => r.license_plate ?? '—' },
-      { id: 'sid', label: 'Samsara ID', width: 100, render: (r) => r.samsara_id ?? '—' },
+      {
+        id: 'sid',
+        label: 'Samsara ID',
+        width: 100,
+        render: (r) =>
+          r.samsara_id ? <span className="lists-db__mono">{r.samsara_id}</span> : '—',
+      },
       {
         id: 'cls',
         label: 'QBO Class',
-        width: 88,
-        render: (r) => r.qbo_class_name ?? '—',
+        width: 96,
+        render: (r) =>
+          r.qbo_class_name || r.qbo_class_id ? (
+            <span className="lists-db__pill lists-db__pill--info">{r.qbo_class_name ?? r.qbo_class_id}</span>
+          ) : (
+            '—'
+          ),
       },
-      { id: 'status', label: 'Status', width: 80, render: (r) => r.status },
+      {
+        id: 'status',
+        label: 'Status',
+        width: 96,
+        render: (r) => {
+          const s = String(r.status || 'active').toLowerCase()
+          if (s === 'inactive') return <span className="muted">Inactive</span>
+          if (s === 'maintenance') return <span className="lists-db__pill lists-db__pill--warn">Maintenance</span>
+          return <span className="lists-db__pill lists-db__pill--ok">Active</span>
+        },
+      },
     ],
     [],
   )

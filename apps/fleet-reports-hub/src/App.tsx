@@ -16,6 +16,11 @@ import {
   AccountingDashboard,
   type AccountingListsBootstrap,
 } from './components/accounting/AccountingDashboard'
+import {
+  LISTS_CATALOG_TAB_IDS,
+  type ListsCatalogListId,
+  type ListsCatalogsTab,
+} from './components/accounting/ListsCatalogsWorkspace'
 import type { AccountingMaintNavTarget } from './components/accounting/accountingNav'
 import { FuelTransactionForm } from './components/fuel/FuelTransactionForm'
 import {
@@ -113,6 +118,36 @@ export default function App() {
   const { isFullScreen: woPickFullScreen, toggle: toggleWoPickFullScreen } = useFullScreen()
   const [fuelPlannerTxn, setFuelPlannerTxn] = useState<FuelTransactionType | null>(null)
   const [acctListsBootstrap, setAcctListsBootstrap] = useState<AccountingListsBootstrap | null>(null)
+
+  /** ERP maintenance → hub lists deep link: `?acctLists=1&listsTab=drivers-database` (+ optional `listsList=`). */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('acctLists') !== '1') return
+    const listsTabRaw = p.get('listsTab') || ''
+    if (!LISTS_CATALOG_TAB_IDS.includes(listsTabRaw as ListsCatalogsTab)) return
+    const listsListRaw = p.get('listsList') || ''
+    const list =
+      listsListRaw && listsListRaw.length
+        ? (listsListRaw as ListsCatalogListId)
+        : null
+    setTab('accounting')
+    setAcctListsBootstrap({
+      token: Date.now(),
+      tab: listsTabRaw as ListsCatalogsTab,
+      list,
+    })
+    p.delete('acctLists')
+    p.delete('listsTab')
+    p.delete('listsList')
+    try {
+      const u = new URL(window.location.href)
+      u.search = p.toString() ? `?${p.toString()}` : ''
+      window.history.replaceState({}, '', u.pathname + u.search + u.hash)
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   useEffect(() => {
     if (!appWoPickOpen && woPickFullScreen) toggleWoPickFullScreen()

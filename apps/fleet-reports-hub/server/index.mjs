@@ -175,6 +175,13 @@ if (fs.existsSync(distIndex)) {
 
 app.listen(PORT, BIND_HOST, () => {
   console.log(`Integrity + Samsara API http://${BIND_HOST}:${PORT}`);
+  /** Packet 9 — keep drivers + truck assets aligned with Samsara on the same cadence as hub UI (60s). */
+  const tick = () => {
+    const base = `http://127.0.0.1:${PORT}`;
+    void fetch(`${base}/api/drivers/sync-samsara`).catch(() => {});
+    void fetch(`${base}/api/assets/sync-samsara`).catch(() => {});
+  };
+  setInterval(tick, 60_000);
 });
 
 cron.schedule(

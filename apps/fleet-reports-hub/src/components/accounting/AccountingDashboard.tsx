@@ -26,7 +26,8 @@ export type { AccountingMaintNavTarget } from './accountingNav'
 export type AccountingListsBootstrap = {
   token: number
   tab: ListsCatalogsTab
-  list: ListsCatalogListId
+  /** When omitted, open the lists tab root (e.g. Packet 9 database tabs). */
+  list?: ListsCatalogListId | null
 }
 
 type Props = {
@@ -95,7 +96,7 @@ export function AccountingDashboard({
   useEffect(() => {
     if (!listsBootstrap) return
     setListsTab(listsBootstrap.tab)
-    setListsDeepLink(listsBootstrap.list)
+    setListsDeepLink(listsBootstrap.list ?? null)
     setRoute('lists')
     onListsBootstrapConsumed?.()
   }, [listsBootstrap, onListsBootstrapConsumed])
@@ -183,7 +184,7 @@ export function AccountingDashboard({
                 [
                   {
                     label: 'Assets (Samsara mirror)',
-                    onClick: () => openLists('vendors-drivers', 'assets-db'),
+                    onClick: () => openLists('assets-database'),
                   },
                   {
                     label: 'Bill payment',
@@ -195,7 +196,7 @@ export function AccountingDashboard({
                   },
                   {
                     label: 'Drivers database',
-                    onClick: () => openLists('vendors-drivers', 'drivers-db'),
+                    onClick: () => openLists('drivers-database'),
                   },
                   {
                     label: 'Expense',
@@ -255,7 +256,7 @@ export function AccountingDashboard({
                   },
                   {
                     label: 'Vendors database',
-                    onClick: () => openLists('vendors-drivers', 'vendors-db'),
+                    onClick: () => openLists('vendors-database'),
                   },
                   ...(onNewWorkOrder
                     ? [

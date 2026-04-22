@@ -179,10 +179,10 @@ export function MaintenanceWorkspace({
     a.label.localeCompare(b.label),
   )
 
-  const LISTS_NAV_SRC: { tab: ListsCatalogsTab; list: ListsCatalogListId; label: string }[] = [
-    { tab: 'vendors-drivers', list: 'assets-db', label: 'Assets' },
+  const LISTS_NAV_SRC: { tab: ListsCatalogsTab; list: ListsCatalogListId | null; label: string }[] = [
+    { tab: 'assets-database', list: null, label: 'Assets (Samsara mirror)' },
     { tab: 'vendors-drivers', list: 'bank-csv', label: 'Bank CSV matching' },
-    { tab: 'vendors-drivers', list: 'drivers-db', label: 'Drivers database' },
+    { tab: 'drivers-database', list: null, label: 'Drivers database' },
     { tab: 'name-management', list: 'find-merge', label: 'Find & merge duplicates' },
     { tab: 'fleet-samsara', list: 'fleet-writes', label: 'Fleet & Samsara writes' },
     { tab: 'name-management', list: 'name-registry', label: 'Name management' },
@@ -192,9 +192,9 @@ export function MaintenanceWorkspace({
     { tab: 'name-management', list: 'rename-vendors', label: 'Rename vendors & drivers' },
     { tab: 'service-types', list: 'service-types-db', label: 'Service types (DB)' },
     { tab: 'vendors-drivers', list: 'vendors-payees', label: 'Vendors & driver payees' },
-    { tab: 'vendors-drivers', list: 'vendors-db', label: 'Vendors database' },
+    { tab: 'vendors-database', list: null, label: 'Vendors database' },
   ]
-  const LISTS_NAV: { tab: ListsCatalogsTab; list: ListsCatalogListId; label: string }[] = [
+  const LISTS_NAV: { tab: ListsCatalogsTab; list: ListsCatalogListId | null; label: string }[] = [
     ...LISTS_NAV_SRC,
   ].sort((a, b) => a.label.localeCompare(b.label))
 
@@ -276,14 +276,15 @@ export function MaintenanceWorkspace({
                 <button
                   type="button"
                   className={
-                    view === 'lists-catalogs' && listsSidebarKey === `${n.tab}:${n.list}`
+                    view === 'lists-catalogs' &&
+                    listsSidebarKey === `${n.tab}:${n.list ?? 'root'}`
                       ? 'acct-bills-link is-active'
                       : 'acct-bills-link'
                   }
                   onClick={() => {
                     setListsCatalogsTab(n.tab)
                     setListsDeepLink(n.list)
-                    setListsSidebarKey(`${n.tab}:${n.list}`)
+                    setListsSidebarKey(`${n.tab}:${n.list ?? 'root'}`)
                     setView('lists-catalogs')
                   }}
                 >

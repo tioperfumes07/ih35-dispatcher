@@ -145,7 +145,15 @@ export function DriversDatabase({
   const onPushQbo = async () => {
     setErr(null)
     try {
-      await syncDriversQbo()
+      const r = await syncDriversQbo()
+      const n = r.synced ?? r.updated ?? 0
+      const fail = r.errors?.length
+      setSamMsg(
+        fail
+          ? `QBO sync: ${n} ok, ${fail} failed — see error banner.`
+          : `QBO vendor sync finished for ${n} driver(s).`,
+      )
+      if (fail) setErr(r.errors!.map((e) => `#${e.id}: ${e.error}`).join('\n'))
       await load()
     } catch (e) {
       setErr(String((e as Error).message || e))
@@ -213,12 +221,29 @@ export function DriversDatabase({
       { id: 'phone', label: 'Phone', width: 100, render: (r) => r.phone ?? '—' },
       { id: 'email', label: 'Email', width: 140, render: (r) => r.email ?? '—' },
       { id: 'cdl', label: 'CDL #', width: 88, render: (r) => r.cdl_number ?? '—' },
-      { id: 'unit', label: 'Assigned unit', width: 88, render: (r) => r.assigned_unit ?? '—' },
+      {
+        id: 'unit',
+        label: 'Assigned unit',
+        width: 88,
+        render: (r) =>
+          r.assigned_unit ? (
+            <span className="lists-db__pill lists-db__pill--info">{r.assigned_unit}</span>
+          ) : (
+            '—'
+          ),
+      },
       {
         id: 'qbo',
         label: 'QBO vendor',
-        width: 88,
-        render: (r) => (r.qbo_synced ? 'Synced' : '—'),
+        width: 96,
+        render: (r) =>
+          r.qbo_synced ? (
+            <span className="lists-db__pill lists-db__pill--ok">Synced</span>
+          ) : r.qbo_vendor_id ? (
+            <span className="lists-db__pill lists-db__pill--warn">Pending</span>
+          ) : (
+            '—'
+          ),
       },
       { id: 'status', label: 'Status', width: 72, render: (r) => r.status },
     ],
@@ -247,8 +272,8 @@ export function DriversDatabase({
         <div>
           <h3 className="lists-db__title">Drivers database</h3>
           <p className="muted tiny lists-db__sub">
-            Local registry mirrored from Samsara; QuickBooks vendor sync is demo-flagged until live QBO
-            wiring.
+            QuickBooks vendor format — address, city, state, ZIP — sync from Samsara; push to QBO when
+            connected (local <code>qbo_tokens.json</code> on the fleet API host).
           </p>
         </div>
         <div className="lists-db__actions">
@@ -276,7 +301,7 @@ export function DriversDatabase({
       <ListItemEditModal
         open={modalOpen}
         title={editingId == null ? 'Add driver' : 'Edit driver'}
-        subtitle="Fields sized for QuickBooks vendor mapping (demo save to local SQLite)."
+        subtitle="Fields map to QuickBooks Vendor (DisplayName, BillAddr, phone, email)."
         onClose={closeModal}
         onSave={saveDraft}
         extraSaveButton={

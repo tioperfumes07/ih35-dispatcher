@@ -82,11 +82,18 @@ export async function fetchDrivers() {
 }
 
 export async function syncDriversSamsara() {
-  return j<{ synced: number; message?: string }>('/api/drivers/sync-samsara')
+  return j<{ synced: number; errors?: { id: number; error: string }[]; message?: string }>(
+    '/api/drivers/sync-samsara',
+  )
 }
 
 export async function syncDriversQbo() {
-  return j<{ updated: number; message?: string }>('/api/drivers/sync-qbo', { method: 'POST' })
+  return j<{
+    synced: number
+    errors?: { id: number; error: string }[]
+    message?: string
+    updated?: number
+  }>('/api/drivers/sync-qbo', { method: 'POST' })
 }
 
 export async function fetchVendorsLocal() {
@@ -94,7 +101,7 @@ export async function fetchVendorsLocal() {
 }
 
 export async function syncVendorsFromQbo() {
-  return j<{ synced: number; message?: string }>('/api/vendors-local/sync-qbo')
+  return j<{ synced: number; refreshedAt?: string; message?: string }>('/api/vendors-local/sync-qbo')
 }
 
 export async function fetchAssets() {
@@ -102,11 +109,16 @@ export async function fetchAssets() {
 }
 
 export async function syncAssetsSamsara() {
-  return j<{ synced: number; message?: string }>('/api/assets/sync-samsara')
+  return j<{ synced: number; errors?: unknown[]; message?: string }>('/api/assets/sync-samsara')
 }
 
 export async function syncAssetsQboClasses() {
-  return j<{ updated: number; message?: string }>('/api/assets/sync-qbo-classes', {
+  return j<{
+    synced: number
+    errors?: { id: number; unit?: string; error: string }[]
+    message?: string
+    updated?: number
+  }>('/api/assets/sync-qbo-classes', {
     method: 'POST',
   })
 }
@@ -208,6 +220,8 @@ export type AssetPatch = Partial<
     | 'asset_type'
     | 'status'
     | 'qbo_class_name'
+    | 'qbo_class_id'
+    | 'samsara_id'
   >
 >
 

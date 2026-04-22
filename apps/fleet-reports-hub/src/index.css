@@ -4796,6 +4796,39 @@ nav.tabs {
   background: color-mix(in srgb, var(--ok) 10%, var(--panel-2));
 }
 
+.lists-db__pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  height: 17px;
+  font-size: 9px;
+  font-weight: 600;
+  border-radius: 2px;
+  border: 0.5px solid var(--border);
+}
+
+.lists-db__pill--info {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.lists-db__pill--ok {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+}
+
+.lists-db__pill--warn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+}
+
+.lists-db__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+
 /* Vendor & driver name management — NameManagementPage root */
 .name-mgmt-page-root {
   display: flex;
