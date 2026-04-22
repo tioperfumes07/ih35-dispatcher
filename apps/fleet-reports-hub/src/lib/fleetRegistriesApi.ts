@@ -109,7 +109,14 @@ export async function fetchAssets() {
 }
 
 export async function syncAssetsSamsara() {
-  return j<{ synced: number; errors?: unknown[]; message?: string }>('/api/assets/sync-samsara')
+  return j<{
+    synced: number
+    inserted?: number
+    skippedNoUnit?: number
+    totalVehicles?: number
+    errors?: unknown[]
+    message?: string
+  }>('/api/assets/sync-samsara')
 }
 
 export async function syncAssetsQboClasses() {

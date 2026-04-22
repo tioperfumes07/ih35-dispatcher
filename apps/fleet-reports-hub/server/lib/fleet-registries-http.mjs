@@ -549,6 +549,16 @@ export function registerFleetRegistryRoutes(app) {
         return null;
       };
 
+      const ins = db.prepare(`
+        INSERT INTO assets (
+          samsara_id, unit_number, year, make, model, vin, license_plate,
+          odometer_miles, asset_type, status, qbo_synced, samsara_synced_at, created_at, updated_at
+        ) VALUES (
+          @sid, @unit_number, @year, @make, @model, @vin, @plate,
+          @odo, 'truck', 'active', 0, @t, @t, @t
+        )
+      `);
+
       const upd = db.prepare(`
         UPDATE assets SET
           samsara_id = COALESCE(NULLIF(TRIM(samsara_id), ''), @sid),
@@ -564,10 +574,16 @@ export function registerFleetRegistryRoutes(app) {
       `);
 
       let n = 0;
+      let inserted = 0;
+      let skippedNoUnit = 0;
       for (const v of vehicles) {
         if (!isTruckLike(v)) continue;
         const rowId = resolveRowId(v);
-        if (!rowId) continue;
+        const unitNumber = String(v.name || '').trim();
+        if (!rowId && !unitNumber) {
+          skippedNoUnit++;
+          continue;
+        }
         const vin = String(v.vin || '').trim();
         const plate = String(v.licensePlate || '').trim();
         const make = String(v.make || '').trim();
@@ -582,20 +598,47 @@ export function registerFleetRegistryRoutes(app) {
           typeof v.odometerMiles === 'number' && Number.isFinite(v.odometerMiles)
             ? Math.trunc(v.odometerMiles)
             : null;
-        upd.run({
-          sid: String(v.id),
-          vin: vin || null,
-          plate: plate || null,
-          make: make || null,
-          model: model || null,
-          year,
-          odo,
-          t,
-          rowId,
-        });
+        if (rowId) {
+          upd.run({
+            sid: String(v.id),
+            vin: vin || null,
+            plate: plate || null,
+            make: make || null,
+            model: model || null,
+            year,
+            odo,
+            t,
+            rowId,
+          });
+        } else {
+          const info = ins.run({
+            sid: String(v.id || '').trim() || null,
+            unit_number: unitNumber,
+            vin: vin || null,
+            plate: plate || null,
+            make: make || null,
+            model: model || null,
+            year,
+            odo,
+            t,
+          });
+          const newId = Number(info.lastInsertRowid);
+          if (Number.isFinite(newId)) {
+            if (v.id) bySamsara.set(String(v.id), newId);
+            byUnit.set(unitNumber.toLowerCase(), newId);
+          }
+          inserted++;
+        }
         n++;
       }
-      res.json({ synced: n, errors: [], refreshedAt: t });
+      res.json({
+        synced: n,
+        inserted,
+        skippedNoUnit,
+        totalVehicles: vehicles.length,
+        errors: [],
+        refreshedAt: t,
+      });
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
     }
