@@ -184,6 +184,8 @@ export default function App() {
 
   const openSection = useCallback((section: AppSection) => {
     setActiveSection(section)
+    setActive(null)
+    if (section !== 'fuel' && section !== 'accounting') setFuelPlannerTxn(null)
     if (section === 'lists') {
       setListsTab('fleet-samsara')
       setListsDeepLink(null)
@@ -192,6 +194,11 @@ export default function App() {
     if (section === 'reports') setTab('overview')
     setListsDeepLink(null)
   }, [])
+
+  useEffect(() => {
+    const reportSections: AppSection[] = ['reports', 'safety', 'fuel', 'loads']
+    if (!reportSections.includes(activeSection)) setActive(null)
+  }, [activeSection])
 
   /** ERP maintenance → hub lists deep link: `?acctLists=1&listsTab=drivers-database` (+ optional `listsList=`). */
   useEffect(() => {
