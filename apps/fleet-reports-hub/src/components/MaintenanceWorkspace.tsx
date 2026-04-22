@@ -120,6 +120,15 @@ export function MaintenanceWorkspace({
     return () => window.clearInterval(id)
   }, [])
 
+  useEffect(() => {
+    if (!woModalOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setWoModalOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [woModalOpen])
+
   /** Run after DOM has the integrity block (flushSync + id). */
   function scrollIntegrityIntoView() {
     const run = () => {

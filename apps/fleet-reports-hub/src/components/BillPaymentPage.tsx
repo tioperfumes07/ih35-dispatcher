@@ -79,6 +79,15 @@ export function BillPaymentPage({
   useEffect(() => {
     if (!detailBatchId) setPayDrawerFs(false)
   }, [detailBatchId])
+
+  useEffect(() => {
+    if (!detailBatchId) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDetailBatchId(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [detailBatchId])
   const [openBillsDateRange, setOpenBillsDateRange] = useState<DateFilterRange>(
     () => wideOpenBillsDateRange(),
   )
