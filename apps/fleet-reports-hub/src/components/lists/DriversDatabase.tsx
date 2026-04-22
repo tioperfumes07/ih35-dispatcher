@@ -169,12 +169,14 @@ export function DriversDatabase({
   }
 
   const openAdd = () => {
+    setErr(null)
     setEditingId(null)
     setDraft(emptyDraft())
     setModalOpen(true)
   }
 
   const openEdit = (r: DriverRow) => {
+    setErr(null)
     setEditingId(r.id)
     setDraft(rowToDraft(r))
     setModalOpen(true)
@@ -187,7 +189,7 @@ export function DriversDatabase({
 
   const persistDriver = async () => {
     if (!draft.full_name.trim()) {
-      alert('Full name is required.')
+      setErr('Full name is required.')
       throw new Error('validation')
     }
     if (editingId == null) {

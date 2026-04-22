@@ -68,6 +68,7 @@ export function BillPaymentPage({
   const [payMethod, setPayMethod] = useState('Check')
   const [checkNo, setCheckNo] = useState('')
   const [memo, setMemo] = useState('')
+  const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [billState, setBillState] = useState<BillPayState>({})
   const [detailBatchId, setDetailBatchId] = useState<string | null>(null)
   const [payDrawerFs, setPayDrawerFs] = useState(false)
@@ -128,6 +129,7 @@ export function BillPaymentPage({
 
   const pickVendor = useCallback((v: VendorRecord) => {
     setSelected(v)
+    setSaveMsg(null)
     setVendorQuery(v.name)
     setBillState({})
     setDetailBatchId(null)
@@ -137,6 +139,7 @@ export function BillPaymentPage({
 
   const clearVendor = useCallback(() => {
     setSelected(null)
+    setSaveMsg(null)
     setVendorQuery('')
     setBillState({})
     setDetailBatchId(null)
@@ -187,8 +190,8 @@ export function BillPaymentPage({
     if (saveDisabled || !selected) return
     const batchId = crypto.randomUUID()
     void batchId
-    alert(
-      `Saved payment batch.\nTotal: $${money(totals.payTotal)}\nBills linked by batch_id (demo — wire to API).`,
+    setSaveMsg(
+      `Saved payment batch. Total: $${money(totals.payTotal)}. Bills linked by batch_id (demo — wire to API).`,
     )
     setBillState({})
     setCheckNo('')
@@ -327,6 +330,11 @@ export function BillPaymentPage({
 
           <section className="bill-pay__pay-header" aria-label="Payment details">
             <h3 className="bill-pay__section-title">Payment</h3>
+            {saveMsg ? (
+              <p className="nm-banner nm-banner--ok" role="status">
+                {saveMsg}
+              </p>
+            ) : null}
             <div className="bill-pay__pay-grid">
               <label className="field">
                 <span>Pay from account</span>

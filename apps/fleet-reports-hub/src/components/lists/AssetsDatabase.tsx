@@ -154,12 +154,14 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   }
 
   const openAdd = () => {
+    setErr(null)
     setEditingId(null)
     setDraft(emptyDraft())
     setModalOpen(true)
   }
 
   const openEdit = (r: AssetRow) => {
+    setErr(null)
     setEditingId(r.id)
     setDraft(rowToDraft(r))
     setModalOpen(true)
@@ -172,7 +174,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
 
   const persist = async () => {
     if (!draft.unit_number.trim()) {
-      alert('Unit # is required.')
+      setErr('Unit # is required.')
       throw new Error('validation')
     }
     if (editingId == null) {

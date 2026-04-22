@@ -17,6 +17,7 @@ export function OperationalStatusListPanel({ onCloseList }: { onCloseList: () =>
   )
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [formErr, setFormErr] = useState<string | null>(null)
   const [draft, setDraft] = useState({
     label: '',
     color: '',
@@ -26,6 +27,7 @@ export function OperationalStatusListPanel({ onCloseList }: { onCloseList: () =>
   })
 
   const openAdd = () => {
+    setFormErr(null)
     setEditingId(null)
     setDraft({
       label: '',
@@ -38,6 +40,7 @@ export function OperationalStatusListPanel({ onCloseList }: { onCloseList: () =>
   }
 
   const openEdit = (r: OperationalStatusRow) => {
+    setFormErr(null)
     setEditingId(r.id)
     setDraft({
       label: r.label,
@@ -50,15 +53,17 @@ export function OperationalStatusListPanel({ onCloseList }: { onCloseList: () =>
   }
 
   const closeModal = () => {
+    setFormErr(null)
     setModalOpen(false)
     setEditingId(null)
   }
 
   const persist = (): boolean => {
     if (!draft.label.trim()) {
-      alert('Label is required.')
+      setFormErr('Label is required.')
       return false
     }
+    setFormErr(null)
     const next: OperationalStatusRow = {
       id: editingId ?? newId(),
       label: draft.label.trim(),
@@ -110,6 +115,11 @@ export function OperationalStatusListPanel({ onCloseList }: { onCloseList: () =>
         onSave={save}
       >
         <div className="list-edit-form">
+          {formErr ? (
+            <p className="nm-banner nm-banner--err" role="alert">
+              {formErr}
+            </p>
+          ) : null}
           <label className="list-edit-field list-edit-field--full">
             <span className="list-edit-field__lbl">Label</span>
             <input

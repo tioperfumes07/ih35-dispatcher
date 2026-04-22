@@ -57,6 +57,7 @@ export function BankCsvMatchingListPanel({ onCloseList }: { onCloseList: () => v
   const [rows, setRows] = useState<BankCsvRow[]>(() => sortRows(INITIAL_ROWS))
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [formErr, setFormErr] = useState<string | null>(null)
   const [draft, setDraft] = useState({
     importedAt: new Date().toISOString().slice(0, 10),
     file: '',
@@ -67,6 +68,7 @@ export function BankCsvMatchingListPanel({ onCloseList }: { onCloseList: () => v
   })
 
   const openAdd = () => {
+    setFormErr(null)
     setEditingId(null)
     setDraft({
       importedAt: new Date().toISOString().slice(0, 10),
@@ -80,6 +82,7 @@ export function BankCsvMatchingListPanel({ onCloseList }: { onCloseList: () => v
   }
 
   const openEdit = (r: BankCsvRow) => {
+    setFormErr(null)
     setEditingId(r.id)
     setDraft({
       importedAt: r.importedAt,
@@ -93,20 +96,22 @@ export function BankCsvMatchingListPanel({ onCloseList }: { onCloseList: () => v
   }
 
   const closeModal = () => {
+    setFormErr(null)
     setModalOpen(false)
     setEditingId(null)
   }
 
   const persist = (): boolean => {
     if (!draft.file.trim()) {
-      alert('File name is required.')
+      setFormErr('File name is required.')
       return false
     }
     const n = Number(draft.amount)
     if (!Number.isFinite(n) || n < 0) {
-      alert('Amount must be a valid non-negative number.')
+      setFormErr('Amount must be a valid non-negative number.')
       return false
     }
+    setFormErr(null)
     const next: BankCsvRow = {
       id: editingId ?? newId(),
       importedAt: draft.importedAt || new Date().toISOString().slice(0, 10),
@@ -164,6 +169,11 @@ export function BankCsvMatchingListPanel({ onCloseList }: { onCloseList: () => v
         onSave={save}
       >
         <div className="list-edit-form">
+          {formErr ? (
+            <p className="nm-banner nm-banner--err" role="alert">
+              {formErr}
+            </p>
+          ) : null}
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">Imported date</span>
             <input

@@ -120,12 +120,14 @@ export function VendorsDatabase({ onCloseList }: { onCloseList: () => void }) {
   }
 
   const openAdd = () => {
+    setErr(null)
     setEditingId(null)
     setDraft(emptyDraft())
     setModalOpen(true)
   }
 
   const openEdit = (r: VendorLocalRow) => {
+    setErr(null)
     setEditingId(r.id)
     setDraft(rowToDraft(r))
     setModalOpen(true)
@@ -138,7 +140,7 @@ export function VendorsDatabase({ onCloseList }: { onCloseList: () => void }) {
 
   const persist = async () => {
     if (!draft.display_name.trim()) {
-      alert('Display name is required.')
+      setErr('Display name is required.')
       throw new Error('validation')
     }
     if (editingId == null) {

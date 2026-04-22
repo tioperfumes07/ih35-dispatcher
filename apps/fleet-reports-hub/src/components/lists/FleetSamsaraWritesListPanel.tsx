@@ -19,6 +19,7 @@ export function FleetSamsaraWritesListPanel({ onCloseList }: { onCloseList: () =
   const [rows, setRows] = useState<FleetWriteRow[]>(() => sortByUnit(INITIAL_FLEET_WRITE_ROWS))
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [formErr, setFormErr] = useState<string | null>(null)
   const [draft, setDraft] = useState({
     unit: '',
     writeType: '',
@@ -28,6 +29,7 @@ export function FleetSamsaraWritesListPanel({ onCloseList }: { onCloseList: () =
   })
 
   const openAdd = () => {
+    setFormErr(null)
     setEditingId(null)
     setDraft({
       unit: '',
@@ -40,6 +42,7 @@ export function FleetSamsaraWritesListPanel({ onCloseList }: { onCloseList: () =
   }
 
   const openEdit = (r: FleetWriteRow) => {
+    setFormErr(null)
     setEditingId(r.id)
     setDraft({
       unit: r.unit,
@@ -52,15 +55,17 @@ export function FleetSamsaraWritesListPanel({ onCloseList }: { onCloseList: () =
   }
 
   const closeModal = () => {
+    setFormErr(null)
     setModalOpen(false)
     setEditingId(null)
   }
 
   const persist = (): boolean => {
     if (!draft.unit.trim()) {
-      alert('Unit # is required.')
+      setFormErr('Unit # is required.')
       return false
     }
+    setFormErr(null)
     const next: FleetWriteRow = {
       id: editingId ?? newId(),
       unit: draft.unit.trim(),
@@ -110,6 +115,11 @@ export function FleetSamsaraWritesListPanel({ onCloseList }: { onCloseList: () =
         onSave={save}
       >
         <div className="list-edit-form">
+          {formErr ? (
+            <p className="nm-banner nm-banner--err" role="alert">
+              {formErr}
+            </p>
+          ) : null}
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">Unit #</span>
             <input

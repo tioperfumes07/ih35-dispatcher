@@ -28,6 +28,7 @@ export function MaintenanceIntelligencePage() {
   const [tab, setTab] = useState<Tab>('due')
   const [partQ, setPartQ] = useState('')
   const [predUnit, setPredUnit] = useState('101')
+  const [publishMsg, setPublishMsg] = useState<string | null>(null)
   const fleetAvg = loadThresholds().fleet_avg_miles_per_month ?? FLEET_AVG_MILES_PER_MONTH
 
   const dueRows = useMemo(() => fleetWideDueRows(), [])
@@ -51,7 +52,9 @@ export function MaintenanceIntelligencePage() {
 
   const publishScheduleAlerts = () => {
     mergeAlertsIntoStore(flatAlerts)
-    alert(`Published ${flatAlerts.length} schedule alerts (M5 overdue / M6 due soon) to integrity store.`)
+    setPublishMsg(
+      `Published ${flatAlerts.length} schedule alerts (M5 overdue / M6 due soon) to integrity store.`,
+    )
   }
 
   const forecast = useMemo(() => {
@@ -114,6 +117,11 @@ export function MaintenanceIntelligencePage() {
               Publish M5/M6 to integrity
             </button>
           </div>
+          {publishMsg ? (
+            <p className="nm-banner nm-banner--ok" role="status">
+              {publishMsg}
+            </p>
+          ) : null}
           <div className="maint-intel__due-grid">
             {dueRows.map((snap) => (
               <article key={snap.unitId} className="maint-intel__unit-card">
