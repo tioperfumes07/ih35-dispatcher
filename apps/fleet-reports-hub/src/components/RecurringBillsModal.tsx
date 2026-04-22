@@ -209,16 +209,17 @@ export function RecurringBillsModal({ open, onClose }: Props) {
               isFullScreen={isFullScreen}
               onToggle={toggle}
               disabled={phase === 'progress'}
-              className="btn sm ghost"
             />
             <button
               type="button"
-              className="btn sm ghost"
+              className="modal-fs-toggle"
               onClick={onClose}
               disabled={phase === 'progress'}
               aria-label="Close"
             >
-              ×
+              <span className="modal-fs-toggle__icon" aria-hidden>
+                ×
+              </span>
             </button>
           </div>
         </header>

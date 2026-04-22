@@ -167,10 +167,11 @@ function ModalShell({
             <ModalFullscreenToggle
               isFullScreen={isFullScreen}
               onToggle={toggle}
-              className="btn sm ghost"
             />
-            <button type="button" className="btn sm ghost" onClick={onClose} aria-label="Close">
-              ×
+            <button type="button" className="modal-fs-toggle" onClick={onClose} aria-label="Close">
+              <span className="modal-fs-toggle__icon" aria-hidden>
+                ×
+              </span>
             </button>
           </div>
         </header>

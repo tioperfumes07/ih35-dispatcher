@@ -2414,11 +2414,11 @@ nav.tabs {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: 0.5px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -2435,7 +2435,7 @@ nav.tabs {
 }
 
 .modal-fs-toggle__icon {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1;
 }
 
@@ -2447,7 +2447,7 @@ nav.tabs {
 .modal-generic-head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   margin: 0 0 12px;
 }
@@ -2549,7 +2549,7 @@ nav.tabs {
 .recurring-modal__top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
@@ -2898,7 +2898,7 @@ nav.tabs {
 
 .acct-spec-modal__title-bar-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -2906,7 +2906,7 @@ nav.tabs {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 12px 16px 70px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -2922,8 +2922,9 @@ nav.tabs {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-top: 1px solid var(--border);
   background: var(--panel-2);
 }
@@ -4504,10 +4505,10 @@ nav.tabs {
 
 .list-edit-modal__head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-bottom: 0.5px solid var(--border);
   background: var(--panel-2);
 }
@@ -4525,7 +4526,7 @@ nav.tabs {
 .list-edit-modal__head-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   justify-content: flex-end;
 }
@@ -4537,7 +4538,7 @@ nav.tabs {
 }
 
 .list-edit-modal__body {
-  padding: 12px 14px 16px;
+  padding: 14px 16px 18px;
   overflow: auto;
 }
 
