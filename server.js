@@ -14,6 +14,9 @@ import { mountReportsRestApi } from './routes/reports-rest-api.mjs';
 import { mountScheduledReports, startReportScheduleRunner } from './routes/scheduled-reports.mjs';
 import { createForm425cRouter } from './routes/form-425c-api.mjs';
 import { mountFleetRegistryProxy } from './routes/fleet-registry-proxy.mjs';
+import { mountDedupeRoutes } from './routes/dedupe.mjs';
+import { mountNameManagementRoutes } from './routes/name-management.mjs';
+import { createMaintIntegrationDeps } from './lib/maint-server-deps.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,6 +76,10 @@ async function start() {
   });
 
   mountErpCoreApi(app, { logError: console.error });
+
+  const maintIntegrationDeps = createMaintIntegrationDeps();
+  mountDedupeRoutes(app, maintIntegrationDeps);
+  mountNameManagementRoutes(app, maintIntegrationDeps);
 
   mountFleetRegistryProxy(app, { logError: console.error });
 
