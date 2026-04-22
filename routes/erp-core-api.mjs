@@ -366,14 +366,63 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
-  app.get('/api/board', (_req, res) => {
-    res.json({
-      vehicles: [],
-      live: [],
-      hos: [],
-      assignments: [],
-      refreshedAt: new Date().toISOString()
-    });
+  app.get('/api/board', async (_req, res) => {
+    try {
+      const erp = readFullErpJson();
+      const vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+      const live = Array.isArray(erp.live) ? erp.live : [];
+      const hos = Array.isArray(erp.hos) ? erp.hos : [];
+      const assignments = Array.isArray(erp.assignments) ? erp.assignments : [];
+      if (vehicles.length > 0) {
+        return res.json({
+          vehicles,
+          live,
+          hos,
+          assignments,
+          refreshedAt: erp.refreshedAt || new Date().toISOString(),
+          source: 'erp-json',
+        });
+      }
+
+      const origin = fleetApiOrigin();
+      const payload = await fetch(`${origin}/api/assets`, {
+        headers: { Accept: 'application/json' },
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      const assets = Array.isArray(payload?.assets) ? payload.assets : [];
+      const mappedVehicles = assets
+        .map((a) => ({
+          id: a?.samsara_id || null,
+          name: String(a?.unit_number || '').trim(),
+          make: a?.make || null,
+          model: a?.model || null,
+          vin: a?.vin || null,
+          odometerMiles: Number.isFinite(Number(a?.odometer_miles)) ? Number(a.odometer_miles) : null,
+          licensePlate: a?.license_plate || null,
+          status: a?.status || 'active',
+        }))
+        .filter((v) => v.name);
+
+      return res.json({
+        vehicles: mappedVehicles,
+        live: [],
+        hos: [],
+        assignments: [],
+        refreshedAt: new Date().toISOString(),
+        source: mappedVehicles.length > 0 ? 'fleet-assets' : 'empty',
+      });
+    } catch (e) {
+      logError('GET /api/board', e);
+      return res.json({
+        vehicles: [],
+        live: [],
+        hos: [],
+        assignments: [],
+        refreshedAt: new Date().toISOString(),
+        source: 'error',
+      });
+    }
   });
 
   app.get('/api/maintenance/service-types', async (_req, res) => {
