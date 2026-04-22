@@ -1105,7 +1105,13 @@ export default function App() {
                   )}
                   <PartsCatalogPanel />
                 </ErrorBoundary>
-              ) : null}
+              ) : (
+                <ErrorBoundary name="Home">
+                  <div className="acct-hub">
+                    <p className="muted">Fallback: returning to Home overview.</p>
+                  </div>
+                </ErrorBoundary>
+              )}
             </main>
           </div>
         </div>

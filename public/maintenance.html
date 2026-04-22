@@ -13120,10 +13120,17 @@
           : new Date().toLocaleString();
         document.getElementById('sidebarLastUpdated').textContent =
           'Samsara live data: ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
-        const nVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
-        const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
+        const boardVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
+        const mirrorVeh = Array.isArray(vehicles) ? vehicles.length : 0;
+        const nVeh = boardVeh > 0 ? boardVeh : mirrorVeh;
+        const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : fleetAt;
         const sf = document.getElementById('sidebarFleetStatus');
-        if (sf) sf.textContent = `Samsara: ${nVeh} vehicles · last refresh ${brAt}`;
+        if (sf) {
+          sf.textContent =
+            boardVeh > 0
+              ? `Samsara: ${nVeh} vehicles · last refresh ${brAt}`
+              : `Samsara mirror: ${nVeh} vehicles · last refresh ${brAt}`;
+        }
         requestAnimationFrame(() => {
           uploadCenterBindUploadUiOnce();
           uploadCenterPaintConnectionCards();
