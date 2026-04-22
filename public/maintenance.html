@@ -22,6 +22,38 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <!-- Same-origin on Render by default; set IH35_FLEET_HUB_BASE_URL on the server if hub lives elsewhere. -->
   <script src="/ih35-runtime.js"></script>
+  <style>
+    /* Keep modal/iframe surfaces aligned with the ERP light palette and responsive viewport behavior. */
+    .maint-modal-bg {
+      padding: clamp(8px, 1.4vw, 18px);
+      align-items: flex-start;
+    }
+    .maint-modal,
+    .maint-workorder-fullmodal__shell,
+    .erp-qb-dialog,
+    .erp-qb-fullsheet {
+      background: var(--color-bg-card);
+      color: var(--color-text-body);
+      border-color: var(--color-border);
+      max-height: 94vh;
+      overflow: auto;
+    }
+    .maint-workorder-fullmodal__body {
+      min-height: 72vh;
+      max-height: 86vh;
+      overflow: auto;
+    }
+    .maint-record-hub-wo-iframe,
+    .erp-fuel-hub-inline-iframe {
+      width: 100%;
+      min-height: 68vh;
+      resize: vertical;
+      overflow: auto;
+      border-radius: 8px;
+      border: 1px solid var(--color-border-soft);
+      background: #f8fbff;
+    }
+  </style>
 </head>
 <body class="erp-app erp-maintenance">
   <script>

@@ -108,6 +108,8 @@ export default function App() {
   const [erpFuelEmbed] = useState(readErpFuelEmbedFlag)
   const [erpFuelModalHost] = useState(readErpFuelModalHostFlag)
   const [erpEmbed] = useState(readErpEmbedFlag)
+  const erpHostedSurface =
+    erpEmbed || erpRecordEmbed || erpWoModalHost || erpFuelEmbed || erpFuelModalHost
   const [search, setSearch] = useState('')
   const [draftFilters, setDraftFilters] = useState<ReportFilters>(defaultFilters)
   const [appliedFilters, setAppliedFilters] = useState<ReportFilters>(
@@ -313,7 +315,7 @@ export default function App() {
   }
 
   const appThemeStyle = useMemo<CSSProperties | undefined>(() => {
-    if (!erpEmbed) return undefined
+    if (!erpHostedSurface) return undefined
     return {
       ['--bg' as '--bg']: '#f4f7fb',
       ['--panel' as '--panel']: '#ffffff',
@@ -328,14 +330,15 @@ export default function App() {
       ['--danger' as '--danger']: '#b42318',
       ['--shadow' as '--shadow']: '0 12px 32px rgba(15, 23, 42, 0.12)',
       colorScheme: 'light',
-    };
-  }, [erpEmbed])
+    }
+  }, [erpHostedSurface])
 
   return (
     <IntegrationConnectionsProvider>
     <div
       className={
         'app app--fleet-reports' +
+        (erpHostedSurface ? ' app--erp-host' : '') +
         (erpEmbed ? ' app--erp-embed' : '') +
         (erpRecordEmbed ? ' app--erp-record-embed' : '') +
         (erpFuelEmbed || erpFuelModalHost ? ' app--erp-fuel-host' : '')

@@ -7793,6 +7793,48 @@ nav.tabs {
   min-height: min(100vh, 900px);
 }
 
+/* ERP-hosted hub surfaces (reports iframe + WO/fuel modals) should match light maintenance palette. */
+.app--erp-host {
+  color-scheme: light;
+}
+
+.app--erp-host .reports-page {
+  border-color: var(--border);
+  background: var(--panel);
+}
+
+.app--erp-host .maint-modal-backdrop {
+  background: rgba(15, 23, 42, 0.18);
+  padding: clamp(8px, 1.6vw, 18px);
+}
+
+.app--erp-host .maint-modal,
+.app--erp-host .maint-modal--drawerish {
+  width: min(1220px, 98vw);
+  max-height: 94vh;
+  min-height: min(580px, 76vh);
+  overflow: auto;
+}
+
+.app--erp-host .wo-shell-root,
+.app--erp-host .wo-shell-root .qb-in,
+.app--erp-host .wo-shell-root button,
+.app--erp-host .wo-shell-root select,
+.app--erp-host .wo-shell-root textarea {
+  color: var(--text);
+  background: var(--panel);
+}
+
+.app--erp-host .wo-shell-root .wo-topbar__title,
+.app--erp-host .wo-shell-root .wo-unit-card__sub,
+.app--erp-host .wo-shell-root .wo-fs-lbl {
+  font-size: 11px;
+}
+
+.app--erp-host .wo-shell-root .wo-unit-card__name {
+  font-size: 12px;
+}
+
 /* Fuel transaction form (QBO-style) — tokens only */
 .fuel-txn-backdrop {
   position: fixed;
