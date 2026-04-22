@@ -88,7 +88,7 @@ const HTML_PAGES = [
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
   ['/fuel.html', ['fuel-board', 'erpConnectionStrip']],
   ['/banking.html', ['banking-page', 'erpConnectionStrip']],
-  ['/form-425c.html', ['Form 425C', 'Profiles & Defaults', 'Merge & Export', 'History']],
+  ['/form-425c.html', ['Form 425C — IH35', 'id="root"', '/js/form-425c-app.js']],
   ['/settings.html', ['settings-page', 'erpConnectionStrip']],
   ['/tracking.html', ['maintenance.html#tracking', 'viewport-fit=cover']],
   ['/fleet-reports/index.html', ['id="root"', 'Fleet Reports Hub']]
