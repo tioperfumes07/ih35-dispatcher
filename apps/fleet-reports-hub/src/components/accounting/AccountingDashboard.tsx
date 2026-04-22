@@ -195,7 +195,7 @@ export function AccountingDashboard({
                   },
                   {
                     label: 'Repair expense',
-                    onClick: () => onRequestMaintenanceNav('repair-wo'),
+                    onClick: () => onRequestMaintenanceNav('expense'),
                   },
                   {
                     label: 'Vendor bill',

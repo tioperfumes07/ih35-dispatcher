@@ -166,6 +166,15 @@ export function FuelTransactionForm({
   }, [open, initialType])
 
   useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  useEffect(() => {
     if (!saveMenuOpen) return
     const fn = (e: MouseEvent) => {
       if (!saveMenuRef.current?.contains(e.target as Node)) setSaveMenuOpen(false)
@@ -500,6 +509,14 @@ export function FuelTransactionForm({
             />
             <button type="button" className="btn sm fuel-txn-bar-btn" onClick={printForm}>
               Print
+            </button>
+            <button
+              type="button"
+              className="btn sm ghost fuel-txn-bar-btn fuel-txn-bar-btn--close"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ×
             </button>
             <button type="button" className="btn sm fuel-txn-bar-btn danger" onClick={onClose}>
               Cancel

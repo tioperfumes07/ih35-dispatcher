@@ -2083,15 +2083,41 @@ nav.tabs {
   top: calc(100% + 6px);
   left: 0;
   z-index: 400;
-  min-width: min(100%, 14rem);
-  max-width: min(100vw - 24px, 22rem);
+  width: min(100vw - 24px, 64rem);
+  max-height: min(70vh, 34rem);
+  overflow: auto;
   margin: 0;
-  padding: 6px;
+  padding: 8px;
   list-style: none;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (max-width: 1080px) {
+  .acct-new-dd {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 780px) {
+  .acct-new-dd {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .acct-new-dd {
+    grid-template-columns: 1fr;
+  }
+}
+
+.acct-new-dd li {
+  min-width: 0;
 }
 
 .acct-new-dd__item {
@@ -2100,12 +2126,13 @@ nav.tabs {
   border: none;
   background: transparent;
   color: var(--text);
-  font-size: 10px;
-  line-height: 1.2;
-  min-height: 22px;
-  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1.25;
+  min-height: 28px;
+  padding: 6px 9px;
   border-radius: 6px;
   cursor: pointer;
+  white-space: normal;
 }
 
 .acct-new-dd__item:hover {
@@ -3513,14 +3540,14 @@ nav.tabs {
   position: fixed;
   inset: 0;
   z-index: 55;
-  background: rgba(0, 0, 0, 0.55);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
   display: flex;
   justify-content: flex-end;
 }
 
 .bill-pay__drawer {
   width: min(440px, 100%);
-  background: #10131a;
+  background: var(--panel);
   border-left: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: 16px;
@@ -3535,6 +3562,8 @@ nav.tabs {
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .bill-pay__drawer-foot {
@@ -5908,7 +5937,7 @@ nav.tabs {
   width: 100%;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
-  background: #121722;
+  background: var(--panel-2);
   flex-shrink: 0;
 }
 
@@ -6002,7 +6031,7 @@ nav.tabs {
   gap: 8px;
   padding: 8px 14px 10px;
   border-bottom: 1px solid var(--border);
-  background: #10141c;
+  background: var(--panel-2);
   flex-shrink: 0;
 }
 
@@ -6050,7 +6079,7 @@ nav.tabs {
   min-width: 10rem;
   min-height: 0;
   border-right: 1px solid var(--border);
-  background: #0e1118;
+  background: var(--panel-2);
   position: relative;
 }
 
@@ -6061,7 +6090,7 @@ nav.tabs {
   min-height: 0;
   border: none;
   border-right: 1px solid var(--border);
-  background: #0c0f14;
+  background: var(--panel);
   color: var(--muted);
   font-size: 14px;
   cursor: pointer;
@@ -6070,7 +6099,7 @@ nav.tabs {
 
 .maint-unit-col__collapse:hover {
   color: var(--text);
-  background: #121722;
+  background: var(--panel-2);
 }
 
 .maint-unit-col__inner {
@@ -6165,13 +6194,13 @@ nav.tabs {
 }
 
 .maint-unit-card:hover {
-  background: #151a24;
+  background: var(--panel-2);
 }
 
 .maint-unit-card--selected {
   border-left: 3px solid var(--accent);
   padding-left: 5px;
-  background: color-mix(in srgb, var(--accent) 12%, #121722);
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel-2));
 }
 
 .maint-unit-card__avatar {
@@ -6222,7 +6251,7 @@ nav.tabs {
   width: 40px;
   height: 4px;
   border-radius: 999px;
-  background: #1f2533;
+  background: var(--panel-2);
   margin-top: 2px;
   overflow: hidden;
 }
@@ -6949,18 +6978,18 @@ nav.tabs {
 
 .fr-filter-sidebar .fr-filter-input,
 .fr-filter-sidebar select.fr-filter-input {
-  height: 14px;
-  min-height: 14px;
-  max-height: 14px;
-  font-size: 10px;
-  padding: 0 5px;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  font-size: 11px;
+  padding: 0 8px;
   border-radius: 3px;
   border: 0.5px solid var(--border);
   background: var(--panel-2);
   color: var(--text);
   width: 100%;
   box-sizing: border-box;
-  line-height: 14px;
+  line-height: 24px;
 }
 
 .fr-filter-sidebar select.fr-filter-input {
@@ -7162,12 +7191,12 @@ nav.tabs {
 }
 
 .fr-filter-sidebar .fr-ms__search {
-  min-height: 14px;
-  height: 14px;
-  max-height: 14px;
-  font-size: 10px;
-  padding: 0 5px;
-  line-height: 14px;
+  min-height: 24px;
+  height: 24px;
+  max-height: 24px;
+  font-size: 11px;
+  padding: 0 8px;
+  line-height: 24px;
 }
 
 .fr-filter-sidebar .fr-ms__chips {
@@ -7243,15 +7272,15 @@ nav.tabs {
 }
 
 .fr-reports-search input {
-  height: 14px;
-  min-height: 14px;
-  font-size: 10px;
-  padding: 0 5px;
+  height: 24px;
+  min-height: 24px;
+  font-size: 11px;
+  padding: 0 8px;
   border-radius: 3px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  line-height: 14px;
+  line-height: 24px;
   background: var(--panel-2);
   border: 1px solid var(--border);
   color: var(--text);
@@ -7584,9 +7613,9 @@ nav.tabs {
 .fr-parts__search {
   flex: 1;
   min-width: 120px;
-  height: 14px;
-  font-size: 10px;
-  padding: 0 5px;
+  height: 24px;
+  font-size: 11px;
+  padding: 0 8px;
   border-radius: 3px;
   border: 0.5px solid var(--border);
   background: var(--panel-2);
@@ -7600,9 +7629,9 @@ nav.tabs {
 }
 
 .fr-parts__sel {
-  height: 14px;
-  font-size: 10px;
-  padding: 0 4px;
+  height: 24px;
+  font-size: 11px;
+  padding: 0 8px;
   border-radius: 3px;
   border: 0.5px solid var(--border);
   background: var(--panel-2);
@@ -7697,17 +7726,17 @@ nav.tabs {
 }
 
 .fr-parts__cell-inp {
-  height: 14px;
-  min-height: 14px;
-  max-height: 14px;
+  height: 22px;
+  min-height: 22px;
+  max-height: 22px;
   font-size: 10px;
-  padding: 0 5px;
+  padding: 0 6px;
   border-radius: 3px;
   border: 0.5px solid var(--border);
   background: var(--panel-2);
   color: var(--text);
   box-sizing: border-box;
-  line-height: 14px;
+  line-height: 22px;
 }
 
 .fr-parts__cell-inp::placeholder {
@@ -7733,11 +7762,11 @@ nav.tabs {
 }
 
 .fr-parts__add-row {
-  height: 14px !important;
-  min-height: 14px !important;
-  max-height: 14px !important;
-  font-size: 9px !important;
-  line-height: 14px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  font-size: 10px !important;
+  line-height: 22px !important;
   color: var(--ok) !important;
   border-color: color-mix(in srgb, var(--ok) 45%, var(--border)) !important;
   background: color-mix(in srgb, var(--ok) 12%, var(--panel-2)) !important;
@@ -8049,6 +8078,14 @@ nav.tabs {
   font-size: 11px !important;
   padding: 0 10px !important;
   border-radius: 4px !important;
+  line-height: 1 !important;
+}
+
+.fuel-txn-bar-btn--close {
+  width: 28px !important;
+  min-width: 28px !important;
+  padding: 0 !important;
+  font-size: 14px !important;
   line-height: 1 !important;
 }
 
@@ -8699,9 +8736,9 @@ nav.tabs {
 }
 
 .app--fleet-reports .filter-inp {
-  height: 14px;
+  height: 24px;
   font-size: 10px;
-  padding: 0 5px;
+  padding: 0 8px;
   border-radius: 3px;
 }
 

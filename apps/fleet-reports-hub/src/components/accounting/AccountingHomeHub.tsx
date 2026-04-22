@@ -147,7 +147,7 @@ export function AccountingHomeHub({
       {
         key: 'repair-exp',
         label: 'Repair expense',
-        onActivate: () => onRequestMaintenanceNav('repair-wo'),
+        onActivate: () => onRequestMaintenanceNav('expense'),
       },
     ].sort((a, b) => a.label.localeCompare(b.label))
 
