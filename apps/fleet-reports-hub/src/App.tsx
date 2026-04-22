@@ -221,6 +221,22 @@ function readInitialListsDeepLink(): ListsCatalogListId | null {
   return parseListsStateFromSearchParams(p).list
 }
 
+function readInitialLocationState(): {
+  section: AppSection
+  tab: ReportCategory
+  listsTab: ListsCatalogsTab
+  listsList: ListsCatalogListId | null
+} {
+  const section = readInitialSection()
+  const tab = normalizeReportTabForSection(section, readInitialReportTab())
+  return {
+    section,
+    tab,
+    listsTab: readInitialListsTab(),
+    listsList: readInitialListsDeepLink(),
+  }
+}
+
 function readErpRecordEmbedFlag(): boolean {
   if (typeof window === 'undefined') return false
   return new URLSearchParams(window.location.search).get('erpWoEmbed') === '1'
@@ -247,10 +263,9 @@ function readErpEmbedFlag(): boolean {
 }
 
 export default function App() {
-  const [activeSection, setActiveSection] = useState<AppSection>(readInitialSection)
-  const [tab, setTab] = useState<ReportCategory>(() =>
-    normalizeReportTabForSection(readInitialSection(), readInitialReportTab()),
-  )
+  const [initialLocation] = useState(readInitialLocationState)
+  const [activeSection, setActiveSection] = useState<AppSection>(initialLocation.section)
+  const [tab, setTab] = useState<ReportCategory>(initialLocation.tab)
   /** True for the session when opened from ERP record-tab iframe (?erpWoEmbed=1), after URL cleanup. */
   const [erpRecordEmbed] = useState(readErpRecordEmbedFlag)
   /** True for the session when opened from ERP full-window WO modal (?erpWoModal=1), after URL cleanup. */
@@ -276,9 +291,9 @@ export default function App() {
   const [appWoModalKey, setAppWoModalKey] = useState(0)
   const { isFullScreen: woPickFullScreen, toggle: toggleWoPickFullScreen } = useFullScreen()
   const [fuelPlannerTxn, setFuelPlannerTxn] = useState<FuelTransactionType | null>(null)
-  const [listsTab, setListsTab] = useState<ListsCatalogsTab>(readInitialListsTab)
+  const [listsTab, setListsTab] = useState<ListsCatalogsTab>(initialLocation.listsTab)
   const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(
-    readInitialListsDeepLink,
+    initialLocation.listsList,
   )
 
   const openSection = useCallback((section: AppSection) => {
