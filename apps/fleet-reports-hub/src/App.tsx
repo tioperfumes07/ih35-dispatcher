@@ -89,6 +89,7 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'fuel', label: 'Fuel' },
   { id: 'loads', label: 'Loads' },
 ]
+const APP_SECTION_ID_SET = new Set<AppSection>(APP_SECTIONS.map((s) => s.id))
 const ORDERED_APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'home', label: 'Home' },
   ...APP_SECTIONS.filter((s) => s.id !== 'home').sort((a, b) => a.label.localeCompare(b.label)),
@@ -138,6 +139,16 @@ function normalizeListsListId(value: string): ListsCatalogListId | null {
   return isValidListsListId(value) ? value : null
 }
 
+function parseListsStateFromSearchParams(params: URLSearchParams): {
+  tab: ListsCatalogsTab
+  list: ListsCatalogListId | null
+} {
+  return {
+    tab: normalizeListsTab(String(params.get('listsTab') || '').trim()),
+    list: normalizeListsListId(String(params.get('listsList') || '').trim()),
+  }
+}
+
 const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   home: 'Operational dashboard with section shortcuts and KPI snapshot.',
   maintenance: 'Work orders, integrity operations, and maintenance workflows.',
@@ -167,6 +178,10 @@ function normalizeReportTabForSection(section: AppSection, tab: ReportCategory):
   return tab
 }
 
+function isValidSectionId(value: string): value is AppSection {
+  return APP_SECTION_ID_SET.has(value as AppSection)
+}
+
 function readInitialReportTab(): ReportCategory {
   if (typeof window === 'undefined') return 'overview'
   const p = new URLSearchParams(window.location.search)
@@ -179,13 +194,13 @@ function readInitialSection(): AppSection {
   if (p.get('erpWoModal') === '1' || p.get('erpWoEmbed') === '1') return 'maintenance'
   if (p.get('erpFuelEmbed') === '1' || p.get('erpFuelModal') === '1') return 'accounting'
   if (p.get('erpEmbed') === '1') return 'reports'
-  const q = String(p.get('section') || '').trim().toLowerCase()
-  if ((APP_SECTIONS as { id: string }[]).some((s) => s.id === q)) {
+  const q = String(p.get('section') || '').trim().toLowerCase() as AppSection
+  if (isValidSectionId(q)) {
     if (q === 'reports') {
       const tabQ = String(p.get('tab') || '').trim().toLowerCase() as ReportCategory
       if (isValidReportTab(tabQ)) return sectionForReportTab(tabQ)
     }
-    return q as AppSection
+    return q
   }
   const tabQ = String(p.get('tab') || '').trim().toLowerCase() as ReportCategory
   if (isValidReportTab(tabQ)) {
@@ -197,13 +212,13 @@ function readInitialSection(): AppSection {
 function readInitialListsTab(): ListsCatalogsTab {
   if (typeof window === 'undefined') return 'fleet-samsara'
   const p = new URLSearchParams(window.location.search)
-  return normalizeListsTab(String(p.get('listsTab') || '').trim())
+  return parseListsStateFromSearchParams(p).tab
 }
 
 function readInitialListsDeepLink(): ListsCatalogListId | null {
   if (typeof window === 'undefined') return null
   const p = new URLSearchParams(window.location.search)
-  return normalizeListsListId(String(p.get('listsList') || '').trim())
+  return parseListsStateFromSearchParams(p).list
 }
 
 function readErpRecordEmbedFlag(): boolean {
@@ -373,11 +388,10 @@ export default function App() {
       if (nextSection !== activeSection) openSection(nextSection)
       setTab((prev) => (prev === nextTab ? prev : nextTab))
       if (nextSection === 'lists') {
-        const nextListsTab = p.get('listsTab') || ''
-        const nextListsTabResolved = normalizeListsTab(nextListsTab)
+        const nextListsState = parseListsStateFromSearchParams(p)
+        const nextListsTabResolved = nextListsState.tab
         setListsTab((prev) => (prev === nextListsTabResolved ? prev : nextListsTabResolved))
-        const nextListsList = p.get('listsList') || ''
-        const nextListsListResolved = normalizeListsListId(nextListsList)
+        const nextListsListResolved = nextListsState.list
         setListsDeepLink((prev) =>
           prev === nextListsListResolved ? prev : nextListsListResolved,
         )
