@@ -1,4 +1,12 @@
-# React + TypeScript + Vite
+# Fleet Reports Hub (IH35)
+
+Served by the root Express app at **`/fleet-reports/`** after `npm run build:fleet` from the repo root.
+
+**Local dev (full stack):** from the **repository root** run **`npm run dev`**, then in Safari use **`http://127.0.0.1:3100/fleet-reports/`** (plain **http**, not **https**; do not type **`0.0.0.0`** in the address bar). If the UI looks stale: **Develop → Empty Caches** (or a Private window). For phone/LAN testing: **`HOST=0.0.0.0 npm run dev`** and open **`http://<your-LAN-IP>:3100/fleet-reports/`**.
+
+---
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

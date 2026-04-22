@@ -277,10 +277,15 @@ async function start() {
     }),
   );
 
-  const PORT = process.env.PORT || 3100;
-  const HOST = process.env.HOST || '0.0.0.0';
+  const PORT = Number(process.env.PORT) || 3100;
+  /** Browsers cannot open http://0.0.0.0; Safari often fails with https:// on a plain HTTP dev server. */
+  const isProduction = process.env.NODE_ENV === 'production';
+  const HOST = process.env.HOST || (isProduction ? '0.0.0.0' : '127.0.0.1');
+  const browserBase = `http://127.0.0.1:${PORT}`;
   app.listen(PORT, HOST, () => {
-    console.log(`IH35 TMS running on http://${HOST}:${PORT}`);
+    console.log(`IH35 TMS listening host=${HOST} port=${PORT}`);
+    console.log(`Open in Safari: ${browserBase}/fleet-reports/  |  ${browserBase}/maintenance.html`);
+    console.log('Use http (not https). Do not use 0.0.0.0 in the address bar. From another device: HOST=0.0.0.0 npm run dev');
   });
 }
 
