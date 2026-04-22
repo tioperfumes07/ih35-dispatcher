@@ -312,11 +312,7 @@ async function start() {
   });
 
   /** Fleet hub SPA (same process as ERP); assets live under `/fleet-reports/assets/`. */
-  app.get('/fleet-reports', (_req, res) => {
-    setFleetHubEntryNoCache(res);
-    res.redirect(302, '/fleet-reports/');
-  });
-  app.get('/fleet-reports/', (_req, res) => {
+  app.get(['/fleet-reports', '/fleet-reports/'], (_req, res) => {
     sendFleetReportsSpa(res);
   });
   app.get('/fleet-reports/index.html', (_req, res) => {
