@@ -86,6 +86,11 @@ function setFleetHubEntryNoCache(res) {
   res.setHeader('Pragma', 'no-cache');
 }
 
+function isLikelyHashedAssetPath(assetPath = '') {
+  const base = String(assetPath).split('/').pop() || '';
+  return /-[A-Za-z0-9_-]{6,}\.[A-Za-z0-9]+$/.test(base);
+}
+
 function sendFleetReportsSpa(res) {
   if (fs.existsSync(FLEET_REPORTS_INDEX)) {
     setFleetHubEntryNoCache(res);
@@ -334,7 +339,12 @@ async function start() {
     '/fleet-reports/assets',
     express.static(path.join(__dirname, 'public', 'fleet-reports', 'assets'), {
       maxAge: 0,
-      setHeaders(res) {
+      setHeaders(res, absPath) {
+        if (typeof absPath === 'string' && isLikelyHashedAssetPath(absPath)) {
+          // Vite chunk filenames are content-hashed; safe to keep immutable.
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          return;
+        }
         res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
       },
     }),
@@ -377,11 +387,35 @@ async function start() {
   const isProduction = process.env.NODE_ENV === 'production';
   const HOST = process.env.HOST || (isProduction ? '0.0.0.0' : '127.0.0.1');
   const browserBase = `http://127.0.0.1:${PORT}`;
-  app.listen(PORT, HOST, () => {
+  const server = app.listen(PORT, HOST, () => {
     console.log(`IH35 TMS listening host=${HOST} port=${PORT}`);
     console.log(`Open in Safari: ${browserBase}/fleet-reports/  |  ${browserBase}/maintenance.html`);
     console.log('Use http (not https). Do not use 0.0.0.0 in the address bar. From another device: HOST=0.0.0.0 npm run dev');
   });
+
+  let shuttingDown = false;
+  const shutdown = (signal) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[shutdown] ${signal} received, closing server...`);
+    const forceExitTimer = setTimeout(() => {
+      console.error('[shutdown] Timed out waiting for graceful close, exiting.');
+      process.exit(1);
+    }, 15000);
+    server.close(async () => {
+      try {
+        if (pool && typeof pool.end === 'function') await pool.end();
+      } catch (e) {
+        console.error('[shutdown] Error closing DB pool:', e?.message || e);
+      } finally {
+        clearTimeout(forceExitTimer);
+        console.log('[shutdown] Complete.');
+        process.exit(0);
+      }
+    });
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 start().catch((err) => {

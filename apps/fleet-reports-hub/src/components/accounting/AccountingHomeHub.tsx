@@ -274,7 +274,7 @@ export function AccountingHomeHub({
         {
           key: 'qa-re',
           label: '+ Repair expense',
-          onClick: () => onRequestMaintenanceNav('repair-wo'),
+          onClick: () => onRequestMaintenanceNav('expense'),
         },
         { key: 'qa-vb', label: '+ Vendor bill', onClick: () => onSetHomeOverlay('vendor-bill') },
       ].sort((a, b) => a.label.localeCompare(b.label)),
