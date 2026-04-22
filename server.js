@@ -4,6 +4,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { spawnSync } from "child_process";
 import { initializeDatabase } from "./lib/ensure-app-database-objects.mjs";
 import { getPool } from "./lib/db.mjs";
 import { authRequired, verifySessionToken } from "./lib/auth-users.mjs";
@@ -80,6 +81,17 @@ function smokeApiSessionGate(req, res, next) {
 }
 
 async function start() {
+  const deployRef =
+    String(process.env.IH35_DEPLOY_REF || process.env.RENDER_GIT_COMMIT || Date.now()).trim() || String(Date.now());
+  const ensureFleetDist = spawnSync(process.execPath, [path.join(__dirname, "scripts", "ensure-fleet-reports-dist.mjs")], {
+    cwd: __dirname,
+    stdio: "inherit",
+    env: process.env
+  });
+  if (ensureFleetDist.status !== 0) {
+    throw new Error(`ensure-fleet-reports-dist failed with status ${ensureFleetDist.status ?? 1}`);
+  }
+
   await initializeDatabase();
 
   const pool = getPool();
@@ -89,12 +101,48 @@ async function start() {
 
   app.use(cors());
   app.use(express.json());
-  app.use(express.static(path.join(__dirname, "public")));
+
+  const publicDir = path.join(__dirname, "public");
+  const fleetReportsDir = path.join(publicDir, "fleet-reports");
+
+  app.use(
+    "/fleet-reports/assets",
+    express.static(path.join(fleetReportsDir, "assets"), {
+      setHeaders: (res) => {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    })
+  );
+
+  app.use(
+    "/fleet-reports",
+    express.static(fleetReportsDir, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".html")) {
+          res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
+        }
+      }
+    })
+  );
+
+  app.use(
+    express.static(publicDir, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".html")) {
+          res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
+        }
+      }
+    })
+  );
 
   app.use(smokeApiSessionGate);
 
-  app.get("/", (_req, res) => {
-    res.send("IH35 TMS FULL SYSTEM LIVE 🚛");
+  app.get("/api/live", (_req, res) => {
+    res.type("text/plain; charset=utf-8").send("IH35 TMS FULL SYSTEM LIVE 🚛");
   });
 
   app.get("/db-test", async (_req, res) => {
@@ -233,7 +281,7 @@ async function start() {
     res.type("application/javascript").send(
       [
         "window.__IH35_FLEET_HUB_BASE = '/fleet-reports/';",
-        "window.__IH35_DEPLOY_REF = 'dev-local';"
+        `window.__IH35_DEPLOY_REF = ${JSON.stringify(deployRef)};`
       ].join("\n")
     );
   });
