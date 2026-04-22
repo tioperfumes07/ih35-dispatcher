@@ -3040,6 +3040,17 @@
           </div>
 
           <div class="acct-board-section">
+            <h3 class="acct-board-section__h">Court &amp; bankruptcy (Form 425C)</h3>
+            <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="window.location.href='/form-425c.html'">Form 425C — full workspace</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpFocusForm425cInFleetHub()">Form 425C in Fleet hub</button>
+            </div>
+            <p class="mini-note" style="margin:8px 0 0;font-size:10px;line-height:1.45;color:var(--color-text-label)">
+              Monthly operating report for IH 35 Transportation LLC / IH 35 Trucking LLC. The Fleet hub opens on the <strong>Compliance</strong> tab where the same tool is available as a card.
+            </p>
+          </div>
+
+          <div class="acct-board-section">
             <h3 class="acct-board-section__h">Fuel &amp; DEF</h3>
             <div class="acct-board-actions">
               <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF ledger</button>
@@ -4882,6 +4893,15 @@
           <header class="erp-reports-pagehead print-hide-actions" aria-labelledby="erpReportsFleetTitle">
             <h2 id="erpReportsFleetTitle" class="erp-reports-pagehead__title">Fleet reports</h2>
             <p class="erp-reports-pagehead__sub">Cards by domain, live search, shared filters, exports.</p>
+            <div
+              class="erp-reports-pagehead__jump print-hide-actions"
+              style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;align-items:center"
+            >
+              <a class="btn btn--small" href="/form-425c.html">Form 425C — full workspace</a>
+              <button type="button" class="btn btn--small" onclick="erpFocusForm425cInFleetHub()">
+                Form 425C in embedded hub (Compliance tab)
+              </button>
+            </div>
           </header>
           <div class="erp-reports-hub-embed-wrap print-hide-actions" role="region" aria-label="Fleet reports hub">
             <iframe
@@ -5037,6 +5057,8 @@
                 <div class="mr-rep-nav-group__body">
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="erp sync qbo quickbooks reconcile" onclick="openReportsTabFromSidebar('rep-sync')">ERP ↔ QBO sync</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="expense history ap" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-expense-history', document.getElementById('acctLogsDdTrigger'));">Expense history</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="form 425c monthly operating report bankruptcy" onclick="window.location.href='/form-425c.html'">Form 425C — monthly report</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="form 425c fleet hub compliance tab" onclick="erpFocusForm425cInFleetHub()">Form 425C in Fleet hub (Compliance)</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="fuel expense def ledger" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'));">Fuel expense history</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTabFromSidebar('rep-qbo')">QuickBooks activity</button>
                 </div>
@@ -5059,6 +5081,7 @@
                 <summary class="mr-rep-nav-group__head sidebar-group-header">DOT compliance <span class="mr-rep-nav-group__chev" aria-hidden="true">▶</span></summary>
                 <div class="mr-rep-nav-group__body">
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="dot audit overview fleet" onclick="openReportsTabFromSidebar('rep-overview')">DOT audit file</button>
+                  <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="form 425c bankruptcy monthly operating report" onclick="window.location.href='/form-425c.html'">Form 425C (monthly operating report)</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="driver qualification team" onclick="openReportsTabFromSidebar('rep-team')">Driver qualification</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="fleet overview board" onclick="openReportsTabFromSidebar('rep-overview')">Fleet overview</button>
                   <button type="button" class="erp-reports-sblink sidebar-child-item" data-rep-k="integrity anomaly monitoring" onclick="openReportsTabFromSidebar('rep-integrity')">Integrity dashboard</button>
@@ -5103,6 +5126,29 @@
               </button>
               <button type="button" class="erp-reports-hub__tile" data-rep-tab="rep-qbo" data-rep-k="quickbooks qbo bills purchases invoices activity" onclick="openReportsTabFromSidebar('rep-qbo')">
                 <span class="erp-reports-hub__tile-title">QuickBooks activity</span>
+              </button>
+            </div>
+          </div>
+          <div class="erp-reports-hub__card">
+            <div class="erp-reports-hub__label">Compliance</div>
+            <div class="erp-reports-hub__tiles">
+              <button
+                type="button"
+                class="erp-reports-hub__tile"
+                data-rep-k="form 425c monthly operating report bankruptcy court"
+                onclick="window.location.href='/form-425c.html'"
+              >
+                <span class="erp-reports-hub__tile-title">Form 425C</span>
+                <span class="erp-reports-hub__tile-meta">Full workspace</span>
+              </button>
+              <button
+                type="button"
+                class="erp-reports-hub__tile"
+                data-rep-k="form 425c embedded fleet hub compliance tab"
+                onclick="erpFocusForm425cInFleetHub()"
+              >
+                <span class="erp-reports-hub__tile-title">Form 425C in hub</span>
+                <span class="erp-reports-hub__tile-meta">Compliance tab</span>
               </button>
             </div>
           </div>
@@ -9456,6 +9502,27 @@
 
     function erpNewBill() {
       erpOpenDedicatedAccountingForm('standard-bill');
+    }
+
+    /** Open Fleet reports embed on Compliance tab (Form 425C card + iframe tool). */
+    function erpFocusForm425cInFleetHub() {
+      const sec = document.getElementById('section-reports');
+      const onReports = sec && sec.classList.contains('active');
+      if (!onReports) {
+        try {
+          window.__IH35_FLEET_HUB_TAB = 'compliance';
+        } catch (_) {
+          window.__IH35_FLEET_HUB_TAB = 'compliance';
+        }
+        openSection(
+          'reports',
+          document.querySelector(
+            '#erpIconNav .nav-btn[data-section="reports"], #erpSectionGhostNav .nav-btn[data-section="reports"]'
+          )
+        );
+      } else if (typeof erpNavigateFleetReportsHubTab === 'function') {
+        erpNavigateFleetReportsHubTab('compliance');
+      }
     }
 
     /** + New menu: single entry point (keeps modal wiring in one place). */

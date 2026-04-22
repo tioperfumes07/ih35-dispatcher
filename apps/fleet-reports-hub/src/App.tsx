@@ -44,11 +44,27 @@ function matchesSearch(r: ReportDef, q: string) {
   )
 }
 
+const REPORT_TAB_QUERY_VALUES: ReportCategory[] = [
+  'overview',
+  'maintenance',
+  'accounting',
+  'compliance',
+  'safety',
+  'fuel',
+  'operations',
+  'dot',
+  'custom',
+]
+
 function readInitialReportTab(): ReportCategory {
   if (typeof window === 'undefined') return 'overview'
   const p = new URLSearchParams(window.location.search)
   if (p.get('erpWoModal') === '1' || p.get('erpWoEmbed') === '1') return 'maintenance'
   if (p.get('erpFuelEmbed') === '1' || p.get('erpFuelModal') === '1') return 'accounting'
+  const tabQ = p.get('tab')
+  if (tabQ && (REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) {
+    return tabQ as ReportCategory
+  }
   return 'overview'
 }
 

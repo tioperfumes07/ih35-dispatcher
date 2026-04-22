@@ -886,10 +886,43 @@
       typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE
         ? window.__IH35_FLEET_HUB_BASE
         : '';
+    var pending = '';
+    try {
+      pending =
+        typeof window.__IH35_FLEET_HUB_TAB === 'string' ? String(window.__IH35_FLEET_HUB_TAB).trim() : '';
+    } catch (_) {
+      pending = '';
+    }
+    if (pending) {
+      iframe.src = hubBase + '/fleet-reports/index.html?tab=' + encodeURIComponent(pending);
+      try {
+        delete window.__IH35_FLEET_HUB_TAB;
+      } catch (_) {
+        window.__IH35_FLEET_HUB_TAB = '';
+      }
+      return;
+    }
     iframe.src = hubBase + '/fleet-reports/index.html';
   }
 
   global.erpEnsureFleetReportsHubIframe = erpEnsureFleetReportsHubIframe;
+
+  /**
+   * Reload embedded fleet hub with a tab query (e.g. tab=compliance for Form 425C).
+   * Call after opening Maintenance → Reports so the iframe exists.
+   */
+  function erpNavigateFleetReportsHubTab(tabId) {
+    var iframe = document.getElementById('erpFleetReportsHubIframe');
+    if (!iframe || !(iframe instanceof HTMLIFrameElement)) return;
+    var hubBase =
+      typeof window.__IH35_FLEET_HUB_BASE === 'string' && window.__IH35_FLEET_HUB_BASE
+        ? window.__IH35_FLEET_HUB_BASE
+        : '';
+    var t = String(tabId || 'overview').trim() || 'overview';
+    iframe.src = hubBase + '/fleet-reports/index.html?tab=' + encodeURIComponent(t);
+  }
+
+  global.erpNavigateFleetReportsHubTab = erpNavigateFleetReportsHubTab;
 
   /** Same localStorage key as apps/fleet-reports-hub (`postIntegrityCheck.ts`). */
   var ERP_FLEET_INTEGRITY_LS_KEY = 'fleet:integrity-alerts';
