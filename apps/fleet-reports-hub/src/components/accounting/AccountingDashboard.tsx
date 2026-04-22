@@ -199,6 +199,22 @@ export function AccountingDashboard({
     setQboActionErr(false)
     setQboActionMsg(null)
     try {
+      const statusRes = await fetch('/api/qbo/status', { headers: { Accept: 'application/json' } })
+      const statusJson = (await statusRes.json().catch(() => null)) as
+        | { connected?: boolean; configured?: boolean }
+        | null
+      if (statusRes.ok && statusJson) {
+        if (!statusJson.configured) {
+          setQboActionErr(false)
+          setQboActionMsg('QuickBooks is not configured yet. Open Settings to connect first.')
+          return
+        }
+        if (!statusJson.connected) {
+          setQboActionErr(false)
+          setQboActionMsg('QuickBooks is configured but disconnected. Re-authorize, then refresh lists.')
+          return
+        }
+      }
       const res = await fetch('/api/accounting/qbo-items', { headers: { Accept: 'application/json' } })
       const j = (await res.json().catch(() => null)) as
         | { items?: unknown[]; warning?: string; ok?: boolean }
@@ -208,7 +224,7 @@ export function AccountingDashboard({
         setQboActionMsg(`Unable to refresh QBO list (${res.status}).`)
       } else {
         if (typeof j.warning === 'string' && j.warning.trim()) {
-          setQboActionErr(true)
+          setQboActionErr(false)
           setQboActionMsg(`QBO list loaded with warning: ${j.warning}`)
         } else {
           setQboActionMsg(`QBO items refreshed: ${j.items.length} rows.`)

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { exportDomTableToXlsx } from '../lib/tableExportXlsx'
 import { useColumnResize } from '../hooks/useColumnResize'
 import { useTableTabOrder } from '../hooks/useTableTabOrder'
@@ -26,6 +26,8 @@ const PAGE_SIZE = 8
 
 export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props) {
   const { isFullScreen, toggle } = useFullScreen()
+  const viewerRef = useRef<HTMLDivElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
   const dataCol = useColumnResize([96, 72, 120, 140, 88, 120, 120, 88, 100])
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState<'date' | 'amount'>('date')
@@ -63,6 +65,28 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
 
   useTableTabOrder(dataCol.tableRef, [sorted, empty])
 
+  useEffect(() => {
+    returnFocusRef.current = document.activeElement as HTMLElement | null
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    const id = window.setTimeout(() => {
+      const root = viewerRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+      const el = returnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+    }
+  }, [onClose])
+
   const locationBody =
     custom === 'location_work_by_service' ? (
       <WorkByServiceLocationReport filters={filters} />
@@ -83,6 +107,7 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
       aria-modal="true"
     >
       <div
+        ref={viewerRef}
         className={
           'viewer' +
           (report.category === 'safety' ? ' viewer--report-safety' : '')

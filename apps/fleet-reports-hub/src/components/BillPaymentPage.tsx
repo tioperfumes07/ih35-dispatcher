@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useColumnResize } from '../hooks/useColumnResize'
 import { exportDomTableToXlsx } from '../lib/tableExportXlsx'
 import {
@@ -72,6 +72,8 @@ export function BillPaymentPage({
   const [billState, setBillState] = useState<BillPayState>({})
   const [detailBatchId, setDetailBatchId] = useState<string | null>(null)
   const [payDrawerFs, setPayDrawerFs] = useState(false)
+  const payDrawerRef = useRef<HTMLElement | null>(null)
+  const payDrawerReturnFocusRef = useRef<HTMLElement | null>(null)
   const openBillsCol = useColumnResize([44, 112, 92, 92, 200, 88, 88, 88, 88, 104, 140])
   const historyCol = useColumnResize([120, 92, 104, 92, 92, 92, 92, 100, 140, 72, 200, 96])
   const detailPayCol = useColumnResize([120, 104, 92, 100, 88])
@@ -81,12 +83,28 @@ export function BillPaymentPage({
   }, [detailBatchId])
 
   useEffect(() => {
-    if (!detailBatchId) return
+    if (!detailBatchId) {
+      const el = payDrawerReturnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    payDrawerReturnFocusRef.current = document.activeElement as HTMLElement | null
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setDetailBatchId(null)
     }
+    const id = window.setTimeout(() => {
+      const root = payDrawerRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
   }, [detailBatchId])
   const [openBillsDateRange, setOpenBillsDateRange] = useState<DateFilterRange>(
     () => wideOpenBillsDateRange(),
@@ -688,6 +706,7 @@ export function BillPaymentPage({
           onClick={() => setDetailBatchId(null)}
         >
           <aside
+            ref={payDrawerRef}
             className={
               'bill-pay__drawer' +
               (payDrawerFs ? ' app-modal-panel--fullscreen' : '')
