@@ -94,12 +94,21 @@ if (!fs.existsSync(path.join(hub, 'package.json'))) {
 }
 
 const hubNodeModules = path.join(hub, 'node_modules');
-if (!fs.existsSync(hubNodeModules)) {
+/** Production hosts (e.g. Render) set NODE_ENV=production; npm then omits devDependencies — hub build needs tsc/vite/types. */
+const hubInstallEnv = { ...process.env, NPM_CONFIG_PRODUCTION: 'false' };
+function hubHasFleetBuildDeps() {
+  const viteClient = path.join(hub, 'node_modules', 'vite', 'client.d.ts');
+  const typesNode = path.join(hub, 'node_modules', '@types', 'node', 'package.json');
+  const tscBin = path.join(hub, 'node_modules', 'typescript', 'package.json');
+  return fs.existsSync(viteClient) && fs.existsSync(typesNode) && fs.existsSync(tscBin);
+}
+const hubNeedInstall = !fs.existsSync(hubNodeModules) || !hubHasFleetBuildDeps();
+if (hubNeedInstall) {
   const sh = process.platform === 'win32';
-  let r = spawnSync('npm', ['ci'], { cwd: hub, stdio: 'inherit', env: process.env, shell: sh });
+  let r = spawnSync('npm', ['ci'], { cwd: hub, stdio: 'inherit', env: hubInstallEnv, shell: sh });
   if (r.status !== 0) {
     console.warn('[ensure-fleet-reports-dist] npm ci failed in apps/fleet-reports-hub — trying npm install …');
-    r = spawnSync('npm', ['install'], { cwd: hub, stdio: 'inherit', env: process.env, shell: sh });
+    r = spawnSync('npm', ['install'], { cwd: hub, stdio: 'inherit', env: hubInstallEnv, shell: sh });
     if (r.status !== 0) {
       console.error('[ensure-fleet-reports-dist] npm install in apps/fleet-reports-hub failed');
       process.exit(r.status ?? 1);
