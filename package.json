@@ -11,6 +11,7 @@
     "prestart": "node scripts/ensure-fleet-reports-dist.mjs",
     "start": "node server.js",
     "dev": "node scripts/dev-stack.mjs",
+    "dev:reset": "node scripts/dev-reset.mjs",
     "dev:server-only": "node scripts/ensure-fleet-reports-dist.mjs && node --watch server.js",
     "dev:fleet": "npm --prefix apps/fleet-reports-hub run dev",
     "dev:fleet:api": "npm --prefix apps/fleet-reports-hub run dev:api",
@@ -27,6 +28,12 @@
     "test:playwright": "playwright test",
     "qa:automated": "npm run smoke:gate-sync && node scripts/rule-zero-agent-b-check.mjs --skip-release-tip && npm run smoke && npm run test:name-mgmt && npm run test:fleet-mileage",
     "qa:isolated": "node scripts/qa-with-server.mjs",
+    "verify:full": "npm run build:fleet && npm run qa:isolated",
+    "pm2:start": "pm2 start ecosystem.config.cjs --env production",
+    "pm2:stop": "pm2 stop ih35-erp",
+    "pm2:restart": "pm2 restart ih35-erp",
+    "pm2:logs": "pm2 logs ih35-erp",
+    "pm2:status": "pm2 status",
     "test": "npm run rule0:check",
     "rule0:check": "node scripts/rule-zero-agent-b-check.mjs",
     "report:erp": "node scripts/generate-erp-progress-report.mjs"
@@ -44,6 +51,7 @@
     "xlsx": "npm:@e965/xlsx@^0.20.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.1"
+    "@playwright/test": "^1.49.1",
+    "pm2": "^5.4.3"
   }
 }
