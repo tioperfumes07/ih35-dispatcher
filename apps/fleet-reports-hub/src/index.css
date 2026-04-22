@@ -7835,6 +7835,28 @@ nav.tabs {
   font-size: 12px;
 }
 
+/* Work-order service details panel: hardcoded dark card -> light ERP card for hosted mode. */
+.app--erp-host .svc-wo-info {
+  background: var(--panel-2);
+  border-color: var(--border);
+}
+
+.app--erp-host .svc-wo-info__h,
+.app--erp-host .svc-wo-info__dl dd {
+  color: var(--text);
+}
+
+.app--erp-host .svc-wo-info__dl dt {
+  color: var(--muted);
+}
+
+.app--erp-host .maint-rwo__L1,
+.app--erp-host .maint-modal,
+.app--erp-host .maint-modal__titlebar,
+.app--erp-host .maint-modal__savebar {
+  background: var(--panel);
+}
+
 /* Fuel transaction form (QBO-style) — tokens only */
 .fuel-txn-backdrop {
   position: fixed;
