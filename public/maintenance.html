@@ -2919,27 +2919,33 @@
           </div>
           <div class="acct-dash-kpis">
             <div class="acct-dash-kpi">
+              <div class="acct-dash-kpi__label">Open bills</div>
+              <div class="acct-dash-kpi__val" id="acctBoardKpiBillsWeek">—</div>
+              <div class="acct-dash-kpi__sub" id="acctBoardKpiBillsWeekSub">—</div>
+            </div>
+            <div class="acct-dash-kpi">
               <div class="acct-dash-kpi__label">Expenses this month</div>
               <div class="acct-dash-kpi__val" id="acctBoardKpiExpMonth">—</div>
               <div class="acct-dash-kpi__sub" id="acctBoardKpiExpMonthSub">—</div>
             </div>
             <div class="acct-dash-kpi">
-              <div class="acct-dash-kpi__label">Bills due this week</div>
-              <div class="acct-dash-kpi__val" id="acctBoardKpiBillsWeek">—</div>
-              <div class="acct-dash-kpi__sub" id="acctBoardKpiBillsWeekSub">—</div>
-            </div>
-            <div class="acct-dash-kpi">
-              <div class="acct-dash-kpi__label">QBO sync errors</div>
+              <div class="acct-dash-kpi__label">QBO vendors</div>
               <div class="acct-dash-kpi__val" id="acctBoardKpiSyncAlerts">—</div>
               <div class="acct-dash-kpi__sub" id="acctBoardKpiSyncAlertsSub">—</div>
             </div>
             <div class="acct-dash-kpi">
-              <div class="acct-dash-kpi__label">Unreconciled / errors</div>
+              <div class="acct-dash-kpi__label">Pending QBO posts</div>
               <div class="acct-dash-kpi__val" id="acctBoardKpiUnreconciled">—</div>
-              <div class="acct-dash-kpi__sub" id="acctBoardKpiUnreconciledSub">Needs review</div>
+              <div class="acct-dash-kpi__sub" id="acctBoardKpiUnreconciledSub">—</div>
             </div>
           </div>
-          <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
+          <p
+            class="mini-note acct-board-home-foot"
+            id="acctBoardPendingSummary"
+            style="margin:8px 0 12px;text-align:center;color:var(--color-text-label);font-size:10px;line-height:1.45"
+          >
+            Records are not shown on this home page — click any item above to open that section and view records.
+          </p>
 
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Expenses</h3>
@@ -2978,11 +2984,11 @@
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Bills</h3>
             <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('driver-bill')">Driver bill</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenRepairBill()">Repair bill</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('driver-bill')">Driver bill</button>
+              <button type="button" class="acct-board-action-btn" onclick="erpOpenRepairBill()">Repair bill</button>
               <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-bill')">Vendor bill</button>
             </div>
             <div id="acctBoardBillsDateFilterHost" class="erp-date-filter-bar-host"></div>
@@ -3037,6 +3043,7 @@
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Fuel &amp; DEF</h3>
             <div class="acct-board-actions">
+              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF ledger</button>
               <button
                 type="button"
                 class="acct-board-action-btn"
@@ -3044,7 +3051,6 @@
               >
                 Open Fuel/DEF combined ↗
               </button>
-              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF ledger</button>
             </div>
           </div>
 
@@ -3052,10 +3058,10 @@
             <h3 class="acct-board-section__h">QuickBooks</h3>
             <div class="acct-board-actions">
               <button type="button" class="acct-board-action-btn" onclick="openDedupeTool()">Deduplicate</button>
-              <button type="button" class="acct-board-action-btn" onclick="refreshQboMaster()">Refresh QBO lists</button>
-              <button type="button" class="acct-board-action-btn" onclick="testQuickBooks()">Test connection</button>
               <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">QBO rollback &amp; imports</button>
               <button type="button" class="acct-board-action-btn" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
+              <button type="button" class="acct-board-action-btn" onclick="refreshQboMaster()">Refresh QBO lists</button>
+              <button type="button" class="acct-board-action-btn" onclick="testQuickBooks()">Test connection</button>
             </div>
             <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
               <span style="min-width:0;flex:1 1 180px">Up to three sync error titles when the payload has alerts.</span>
