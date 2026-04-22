@@ -313,10 +313,6 @@ export function AccountingDashboard({
                     label: 'Drivers database',
                     onClick: () => openLists('drivers-database'),
                   },
-                  {
-                    label: 'Expense',
-                    onClick: () => onRequestMaintenanceNav('expense'),
-                  },
                   ...(onOpenForm425c
                     ? [
                         {
@@ -352,14 +348,6 @@ export function AccountingDashboard({
                   {
                     label: 'Parts reference',
                     onClick: () => openLists('service-types', 'parts-ref'),
-                  },
-                  {
-                    label: 'Repair bill',
-                    onClick: () => onRequestMaintenanceNav('bill'),
-                  },
-                  {
-                    label: 'Repair expense',
-                    onClick: () => onRequestMaintenanceNav('expense'),
                   },
                   {
                     label: 'Vendor bill',

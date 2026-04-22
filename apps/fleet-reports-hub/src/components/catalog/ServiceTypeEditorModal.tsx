@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ModalFullscreenToggle } from '../ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../../hooks/useFullScreen'
 import { useColumnResize } from '../../hooks/useColumnResize'
@@ -42,11 +42,34 @@ export function ServiceTypeEditorModal({
   const { isFullScreen, toggle } = useFullScreen()
   const makesCol = useColumnResize([120, 240, 100])
   const [f, setF] = useState<ServiceTypeRow>(empty(recordTypeDefault))
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      const el = returnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    returnFocusRef.current = document.activeElement as HTMLElement | null
     setF(initial ? { ...initial } : empty(recordTypeDefault))
-  }, [open, initial, recordTypeDefault])
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    const id = window.setTimeout(() => {
+      const root = dialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
+  }, [open, initial, recordTypeDefault, onClose])
 
   if (!open) return null
 
@@ -66,6 +89,7 @@ export function ServiceTypeEditorModal({
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
       <div
+        ref={dialogRef}
         className="modal svc-modal"
         style={isFullScreen ? MODAL_FULLSCREEN_STYLE : undefined}
         role="dialog"

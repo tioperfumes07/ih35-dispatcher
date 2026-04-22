@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ModalFullscreenToggle } from '../ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../../hooks/useFullScreen'
 import { useColumnResize } from '../../hooks/useColumnResize'
@@ -18,6 +18,8 @@ type Props = {
 export function BulkStandardizeModal({ open, onClose, onApplied }: Props) {
   const bulkCol = useColumnResize([48, 88, 160, 220])
   const { isFullScreen, toggle } = useFullScreen()
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -30,6 +32,7 @@ export function BulkStandardizeModal({ open, onClose, onApplied }: Props) {
 
   useEffect(() => {
     if (!open) return
+    returnFocusRef.current = document.activeElement as HTMLElement | null
     let cancelled = false
     ;(async () => {
       setLoading(true)
@@ -55,6 +58,30 @@ export function BulkStandardizeModal({ open, onClose, onApplied }: Props) {
       cancelled = true
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open) {
+      const el = returnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !busy) onClose()
+    }
+    const id = window.setTimeout(() => {
+      const root = dialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
+  }, [open, busy, onClose])
 
   const selected = useMemo(() => rows.filter((r) => r.selected), [rows])
 
@@ -85,6 +112,7 @@ export function BulkStandardizeModal({ open, onClose, onApplied }: Props) {
   return (
     <div className="modal-backdrop" role="presentation" onClick={() => !busy && onClose()}>
       <div
+        ref={dialogRef}
         className="modal nm-bulk-modal"
         style={isFullScreen ? MODAL_FULLSCREEN_STYLE : undefined}
         role="dialog"

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { ModalFullscreenToggle } from '../ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../../hooks/useFullScreen'
 
@@ -26,14 +26,32 @@ export function ListItemEditModal({
   const titleId = useId()
   const { isFullScreen, toggle } = useFullScreen()
   const [busy, setBusy] = useState(false)
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      const el = returnFocusRef.current
+      if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
+      return
+    }
+    returnFocusRef.current = document.activeElement as HTMLElement | null
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
+    const id = window.setTimeout(() => {
+      const root = dialogRef.current
+      if (!root) return
+      const first = root.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      first?.focus()
+    }, 0)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.clearTimeout(id)
+    }
   }, [open, onClose])
 
   if (!open) return null
@@ -56,6 +74,7 @@ export function ListItemEditModal({
       }}
     >
       <div
+        ref={dialogRef}
         className="list-edit-modal"
         role="dialog"
         aria-modal="true"
