@@ -557,14 +557,34 @@
         if (runtimeRef || healthRef) {
           const sameRef = runtimeRef && healthRef && runtimeRef === healthRef;
           const shownRef = healthRef || runtimeRef;
+          const prevMismatch = Number(el._erpRefMismatchCount || 0);
+          const nextMismatch = sameRef ? 0 : prevMismatch + 1;
+          el._erpRefMismatchCount = nextMismatch;
           appendRow(
             sameRef ? 'ok' : 'warn',
             'Build ref: ' +
               shownRef +
               (sameRef ? '' : ' (refresh if this does not match expected deploy)')
           );
+          if (!sameRef && nextMismatch >= 2) {
+            appendRow('warn', 'Update detected: reload this page to apply the newest UI.');
+            if (!global.__erpRefMismatchNotified) {
+              global.__erpRefMismatchNotified = true;
+              if (typeof showToast === 'function') {
+                showToast('New version detected. Reload this page to apply updates.', 'warning');
+              }
+            }
+            if (healthRef) {
+              try {
+                erpMarkUpdateAvailable(healthRef);
+              } catch (_) {
+                /* ignore */
+              }
+            }
+          }
           syncBuildRefBadge(runtimeRef, healthRef, sameRef ? 'ok' : 'warn');
         } else {
+          el._erpRefMismatchCount = 0;
           syncBuildRefBadge('', '', 'muted');
         }
         if (worst >= 2) el.classList.add('erp-connection-strip--muted');
