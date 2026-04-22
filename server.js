@@ -8,6 +8,10 @@ import { spawnSync } from "child_process";
 import { initializeDatabase } from "./lib/ensure-app-database-objects.mjs";
 import { getPool } from "./lib/db.mjs";
 import { authRequired, verifySessionToken } from "./lib/auth-users.mjs";
+import { mountErpCoreApi } from "./routes/erp-core-api.mjs";
+import { initializeDatabase as initializeFleetAccountingDb } from "./apps/fleet-reports-hub/server/lib/accounting-db.mjs";
+import { registerAccountingRoutes } from "./apps/fleet-reports-hub/server/lib/accounting-http.mjs";
+import { registerCatalogRoutes } from "./apps/fleet-reports-hub/server/lib/catalog-http.mjs";
 
 import tmsRoutes from "./routes/tms.mjs";
 import integrationsRoutes from "./routes/integrations.mjs";
@@ -93,6 +97,7 @@ async function start() {
   }
 
   await initializeDatabase();
+  initializeFleetAccountingDb();
 
   const pool = getPool();
   const app = express();
@@ -144,6 +149,11 @@ async function start() {
   );
 
   app.use(smokeApiSessionGate);
+
+  // Mount real ERP/Fleet API surfaces first (prevents stale/stub response regressions).
+  mountErpCoreApi(app, { logError: console.error });
+  registerAccountingRoutes(app);
+  registerCatalogRoutes(app);
 
   app.get("/api/live", (_req, res) => {
     res.type("text/plain; charset=utf-8").send("IH35 TMS FULL SYSTEM LIVE 🚛");

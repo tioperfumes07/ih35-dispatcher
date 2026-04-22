@@ -491,6 +491,36 @@
       el.appendChild(row);
     }
 
+    function runForcedRefresh(expectedRef) {
+      try {
+        const u = new URL(global.location.href);
+        u.searchParams.set('ih35_refresh', String(Date.now()));
+        if (expectedRef) u.searchParams.set('ih35_ref', String(expectedRef));
+        global.location.replace(u.toString());
+      } catch (_) {
+        global.location.reload();
+      }
+    }
+
+    function appendRefreshActionRow(expectedRef) {
+      const row = document.createElement('div');
+      row.className = 'erp-connection-strip__row';
+      const dot = document.createElement('span');
+      dot.className = 'erp-connection-strip__dot erp-connection-strip__dot--warn';
+      dot.setAttribute('aria-hidden', 'true');
+      const msg = document.createElement('span');
+      msg.textContent = 'Update detected:';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'erp-connection-strip__refresh-btn';
+      btn.textContent = 'Force refresh now';
+      btn.addEventListener('click', () => runForcedRefresh(expectedRef));
+      row.appendChild(dot);
+      row.appendChild(msg);
+      row.appendChild(btn);
+      el.appendChild(row);
+    }
+
     async function paintStrip() {
       el.textContent = '';
       el.classList.remove(
@@ -595,7 +625,7 @@
               (sameRef ? '' : ' (refresh if this does not match expected deploy)')
           );
           if (!sameRef && nextMismatch >= 2) {
-            appendRow('warn', 'Update detected: reload this page to apply the newest UI.');
+            appendRefreshActionRow(healthRef || shownRef);
             if (!global.__erpRefMismatchNotified) {
               global.__erpRefMismatchNotified = true;
               if (typeof showToast === 'function') {

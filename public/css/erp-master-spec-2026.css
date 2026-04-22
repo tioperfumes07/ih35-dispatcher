@@ -2137,6 +2137,23 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   background: #c5221f;
 }
 
+.erp-connection-strip__refresh-btn {
+  margin-left: 2px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-bg-card);
+  color: var(--color-link);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 10px;
+  cursor: pointer;
+}
+.erp-connection-strip__refresh-btn:hover {
+  background: color-mix(in srgb, var(--color-link) 7%, var(--color-bg-card));
+}
+
 /* Rule 24 — optional integration disconnect banners (synced from `erpMountConnectionStrip` when hosts exist) */
 .erp-disconnect-banners {
   display: flex;
