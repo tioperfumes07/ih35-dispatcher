@@ -21,6 +21,7 @@ import {
   LISTS_CATALOG_TAB_IDS,
   type ListsCatalogListId,
   type ListsCatalogsTab,
+  ListsCatalogsWorkspace,
 } from './components/accounting/ListsCatalogsWorkspace'
 import type { AccountingMaintNavTarget } from './components/accounting/accountingNav'
 import { FuelTransactionForm } from './components/fuel/FuelTransactionForm'
@@ -38,6 +39,7 @@ import { IntegrationOfflineBanner } from './components/IntegrationOfflineBanner'
 import { IntegrationConnectionStrip } from './components/IntegrationConnectionStrip'
 import { ModalFullscreenToggle } from './components/ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from './hooks/useFullScreen'
+import { TelematicsFleetPage } from './components/telematics/TelematicsFleetPage'
 
 function matchesSearch(r: ReportDef, q: string) {
   if (!q.trim()) return true
@@ -62,16 +64,48 @@ const REPORT_TAB_QUERY_VALUES: ReportCategory[] = [
   'custom',
 ]
 
+type AppSection =
+  | 'home'
+  | 'maintenance'
+  | 'accounting'
+  | 'lists'
+  | 'reports'
+  | 'safety'
+  | 'tracking'
+  | 'fuel'
+  | 'loads'
+
+const APP_SECTIONS: { id: AppSection; label: string }[] = [
+  { id: 'home', label: 'Home' },
+  { id: 'maintenance', label: 'Maintenance' },
+  { id: 'accounting', label: 'Accounting' },
+  { id: 'lists', label: 'Lists' },
+  { id: 'reports', label: 'Reports' },
+  { id: 'safety', label: 'Safety' },
+  { id: 'tracking', label: 'Tracking' },
+  { id: 'fuel', label: 'Fuel' },
+  { id: 'loads', label: 'Loads' },
+]
+
 function readInitialReportTab(): ReportCategory {
   if (typeof window === 'undefined') return 'overview'
   const p = new URLSearchParams(window.location.search)
-  if (p.get('erpWoModal') === '1' || p.get('erpWoEmbed') === '1') return 'maintenance'
-  if (p.get('erpFuelEmbed') === '1' || p.get('erpFuelModal') === '1') return 'accounting'
   const tabQ = p.get('tab')
   if (tabQ && (REPORT_TAB_QUERY_VALUES as string[]).includes(tabQ)) {
     return tabQ as ReportCategory
   }
   return 'overview'
+}
+
+function readInitialSection(): AppSection {
+  if (typeof window === 'undefined') return 'home'
+  const p = new URLSearchParams(window.location.search)
+  if (p.get('erpWoModal') === '1' || p.get('erpWoEmbed') === '1') return 'maintenance'
+  if (p.get('erpFuelEmbed') === '1' || p.get('erpFuelModal') === '1') return 'accounting'
+  if (p.get('erpEmbed') === '1') return 'reports'
+  const q = String(p.get('section') || '').trim().toLowerCase()
+  if ((APP_SECTIONS as { id: string }[]).some((s) => s.id === q)) return q as AppSection
+  return 'home'
 }
 
 function readErpRecordEmbedFlag(): boolean {
@@ -100,6 +134,7 @@ function readErpEmbedFlag(): boolean {
 }
 
 export default function App() {
+  const [activeSection, setActiveSection] = useState<AppSection>(readInitialSection)
   const [tab, setTab] = useState<ReportCategory>(readInitialReportTab)
   /** True for the session when opened from ERP record-tab iframe (?erpWoEmbed=1), after URL cleanup. */
   const [erpRecordEmbed] = useState(readErpRecordEmbedFlag)
@@ -127,6 +162,8 @@ export default function App() {
   const { isFullScreen: woPickFullScreen, toggle: toggleWoPickFullScreen } = useFullScreen()
   const [fuelPlannerTxn, setFuelPlannerTxn] = useState<FuelTransactionType | null>(null)
   const [acctListsBootstrap, setAcctListsBootstrap] = useState<AccountingListsBootstrap | null>(null)
+  const [listsTab, setListsTab] = useState<ListsCatalogsTab>('fleet-samsara')
+  const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(null)
 
   /** ERP maintenance → hub lists deep link: `?acctLists=1&listsTab=drivers-database` (+ optional `listsList=`). */
   useEffect(() => {
