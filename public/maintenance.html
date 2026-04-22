@@ -590,6 +590,7 @@
                   <div class="erp-new-menu__col">
                     <div class="erp-new-menu__col-title">Expenses</div>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('expense')">Expense</button>
+                    <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('form-425c')">Form 425C — monthly report</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-expense')">Fuel expense</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('fuel-def-combined')">Fuel/DEF combined</button>
                     <button type="button" class="erp-new-menu__item" role="menuitem" onclick="erpOpenFromNewMenu('maintenance-expense')">Maintenance expense</button>
@@ -3040,17 +3041,6 @@
           </div>
 
           <div class="acct-board-section">
-            <h3 class="acct-board-section__h">Court &amp; bankruptcy (Form 425C)</h3>
-            <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="window.location.href='/form-425c.html'">Form 425C — full workspace</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpFocusForm425cInFleetHub()">Form 425C in Fleet hub</button>
-            </div>
-            <p class="mini-note" style="margin:8px 0 0;font-size:10px;line-height:1.45;color:var(--color-text-label)">
-              Monthly operating report for IH 35 Transportation LLC / IH 35 Trucking LLC. The Fleet hub opens on the <strong>Compliance</strong> tab where the same tool is available as a card.
-            </p>
-          </div>
-
-          <div class="acct-board-section">
             <h3 class="acct-board-section__h">Fuel &amp; DEF</h3>
             <div class="acct-board-actions">
               <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF ledger</button>
@@ -3097,6 +3087,8 @@
             <h3 class="acct-board-section__h">Tools &amp; data</h3>
             <div class="acct-dash-tools-grid">
               <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
+              <button type="button" onclick="location.href='/form-425c.html'">Form 425C — full workspace</button>
+              <button type="button" onclick="erpFocusForm425cInFleetHub()">Form 425C in Fleet hub</button>
               <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
               <button type="button" onclick="openDedupeTool()">Find &amp; merge duplicates</button>
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
@@ -9093,6 +9085,8 @@
     function erpSbAccountingToolsDataBody() {
       return (
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV matching</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/form-425c.html\'">Form 425C — full workspace</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpFocusForm425cInFleetHub()">Form 425C in Fleet hub</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
@@ -9273,6 +9267,7 @@
       if (name === 'accounting') {
         const expensesBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewExpense()">Expense</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;form-425c&quot;)">Form 425C — monthly report</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;, { fuelVariant: &quot;fuel-expense&quot;, fuelTxnType: &quot;fuel-expense&quot; })">Fuel expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;repair-expense&quot;)">Repair expense</button>';
