@@ -1186,11 +1186,10 @@
       deployRef = '';
     }
     var deploySuffix = deployRef ? '&v=' + encodeURIComponent(deployRef) : '';
-    var url =
-      hubBase +
-      '/fleet-reports/index.html?erpFuelModal=1&fuelTxnType=' +
-      encodeURIComponent(t) +
-      deploySuffix;
+    var base = String(hubBase || '').replace(/\/+$/, '');
+    var path = '/fleet-reports/index.html';
+    if (base === '/fleet-reports' || /\/fleet-reports$/.test(base)) path = '/index.html';
+    var url = base + path + '?erpFuelModal=1&fuelTxnType=' + encodeURIComponent(t) + deploySuffix;
     try {
       global.open(url, '_blank', 'noopener,noreferrer');
     } catch (_) {}
