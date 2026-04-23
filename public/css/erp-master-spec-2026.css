@@ -2858,6 +2858,33 @@ body.erp-maintenance .rep-catalog-grid {
   gap: 8px;
   margin: 0 0 16px;
 }
+
+body.erp-maintenance #section-reports .erp-reports-catalog-shell {
+  display: flex !important;
+  flex-direction: row;
+  min-height: 0;
+  flex: 1 1 auto;
+  gap: 10px;
+}
+
+body.erp-maintenance #section-reports .rep-cat-tabs {
+  display: flex !important;
+  flex-wrap: wrap;
+}
+
+body.erp-maintenance #section-reports .erp-reports-columns {
+  display: none !important;
+}
+
+body.erp-maintenance #section-reports .rep-filter-sidebar {
+  width: 168px;
+  flex-shrink: 0;
+}
+
+body.erp-maintenance #section-reports .erp-reports-catalog-main {
+  flex: 1;
+  min-width: 0;
+}
 body.erp-maintenance .rep-catalog-card {
   text-align: left;
   border: 1px solid var(--color-border);
