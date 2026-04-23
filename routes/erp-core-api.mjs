@@ -231,13 +231,7 @@ async function fetchSamsaraVehiclesFallback(token, logError) {
       'vehicles from live api, first:',
       rows[0]?.name || rows[0]?.id
     );
-    // cache-first: use already-fetched rows
-  if (samsaraHealthCache.rows && samsaraHealthCache.rows.length > 0) {
-    const rows = samsaraHealthCache.rows;
-    console.log('[fallback] cache-first:', rows.length, 'vehicles, first:', rows[0]?.name || rows[0]?.id);
     return rows.map(mapSamsaraVehicleRow).filter(Boolean);
-  }
-  return rows.map(mapSamsaraVehicleRow).filter(Boolean);
   } catch (e) {
     logError('[samsara] fallback vehicle fetch failed', e);
     return [];
@@ -406,10 +400,16 @@ export function mountErpCoreApi(app, opts = {}) {
     let vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
     const dashboard = Array.isArray(erp.maintenanceDashboard) ? erp.maintenanceDashboard : [];
     const tireAlerts = Array.isArray(erp.tireAlerts) ? erp.tireAlerts : [];
-    if (!vehicles.length) {
-      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
-      const samsaraVehicles = await fetchSamsaraVehiclesFallback(token, logError);
-      if (samsaraVehicles.length) vehicles = samsaraVehicles;
+    const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+    if (token) {
+      try {
+        const payload = await getVehicles(token);
+        const { rows } = summarizeSamsaraVehiclesPayload(payload);
+        const mapped = rows.map(mapSamsaraVehicleRow).filter(Boolean);
+        if (mapped.length) vehicles = mapped;
+      } catch (e) {
+        logError('[maintenance/dashboard] samsara live vehicle fetch failed', e);
+      }
     }
     res.json({
       ok: true,
@@ -458,52 +458,31 @@ export function mountErpCoreApi(app, opts = {}) {
   app.get('/api/board', async (_req, res) => {
     try {
       const erp = readFullErpJson();
-      const vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+      const erpVehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
       const live = Array.isArray(erp.live) ? erp.live : [];
       const hos = Array.isArray(erp.hos) ? erp.hos : [];
       const assignments = Array.isArray(erp.assignments) ? erp.assignments : [];
-      if (vehicles.length > 0) {
-        return res.json({
-          vehicles,
-          live,
-          hos,
-          assignments,
-          refreshedAt: erp.refreshedAt || new Date().toISOString(),
-          source: 'erp-json',
-        });
-      }
 
-      const origin = fleetApiOrigin();
-      const payload = await fetch(`${origin}/api/assets`, {
-        headers: { Accept: 'application/json' },
-      })
-        .then((r) => (r.ok ? r.json() : null))
-        .catch(() => null);
-      const assets = Array.isArray(payload?.assets) ? payload.assets : [];
-      let mappedVehicles = assets
-        .map((a) => ({
-          id: a?.samsara_id || null,
-          name: String(a?.unit_number || '').trim(),
-          make: a?.make || null,
-          model: a?.model || null,
-          vin: a?.vin || null,
-          odometerMiles: Number.isFinite(Number(a?.odometer_miles)) ? Number(a.odometer_miles) : null,
-          licensePlate: a?.license_plate || null,
-          status: a?.status || 'active',
-        }))
-        .filter((v) => v.name);
-      if (!mappedVehicles.length) {
-        const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
-        mappedVehicles = await fetchSamsaraVehiclesFallback(token, logError);
+      let mappedVehicles = [];
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      if (token) {
+        try {
+          const payload = await getVehicles(token);
+          const { rows } = summarizeSamsaraVehiclesPayload(payload);
+          mappedVehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
+        } catch (e) {
+          logError('[board] samsara live vehicle fetch failed', e);
+        }
       }
+      if (!mappedVehicles.length && erpVehicles.length) mappedVehicles = erpVehicles;
 
       return res.json({
         vehicles: mappedVehicles,
-        live: [],
-        hos: [],
-        assignments: [],
+        live,
+        hos,
+        assignments,
         refreshedAt: new Date().toISOString(),
-        source: mappedVehicles.length > 0 ? 'fleet-assets' : 'empty',
+        source: mappedVehicles.length > 0 ? (token ? 'samsara-live' : 'erp-json') : 'empty',
       });
     } catch (e) {
       logError('GET /api/board', e);
