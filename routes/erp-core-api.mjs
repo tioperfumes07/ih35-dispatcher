@@ -231,7 +231,13 @@ async function fetchSamsaraVehiclesFallback(token, logError) {
       'vehicles from live api, first:',
       rows[0]?.name || rows[0]?.id
     );
+    // cache-first: use already-fetched rows
+  if (samsaraHealthCache.rows && samsaraHealthCache.rows.length > 0) {
+    const rows = samsaraHealthCache.rows;
+    console.log('[fallback] cache-first:', rows.length, 'vehicles, first:', rows[0]?.name || rows[0]?.id);
     return rows.map(mapSamsaraVehicleRow).filter(Boolean);
+  }
+  return rows.map(mapSamsaraVehicleRow).filter(Boolean);
   } catch (e) {
     logError('[samsara] fallback vehicle fetch failed', e);
     return [];
