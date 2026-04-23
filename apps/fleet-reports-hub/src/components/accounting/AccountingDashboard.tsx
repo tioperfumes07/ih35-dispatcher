@@ -1,2 +1,2 @@
-export { AccountingDashboard } from './AccountingDashboard 2'
-export type { AccountingMaintNavTarget } from './AccountingDashboard 2'
+export { AccountingDashboard } from "./AccountingDashboardImpl"
+export type { AccountingMaintNavTarget } from "./AccountingDashboardImpl"

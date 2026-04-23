@@ -1093,7 +1093,7 @@ export default function App() {
                     }
                     erpFuelHost={erpFuelEmbed || erpFuelModalHost}
                     onFuelOpenFromAccounting={
-                      erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t) : undefined
+                      erpFuelEmbed || erpFuelModalHost ? (t) => setFuelPlannerTxn(t as FuelTransactionType) : undefined
                     }
                     onOpenForm425c={openForm425cEmbedded}
                   />
