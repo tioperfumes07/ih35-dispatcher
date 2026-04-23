@@ -30,6 +30,7 @@ const SAMSARA_HEALTH_TIMEOUT_MS = 5000;
 const samsaraHealthCache = {
   fetchedAt: 0,
   vehicles: null,
+  rows: [],
   lastError: '',
   refreshing: null
 };
@@ -54,6 +55,7 @@ async function fetchSamsaraVehicleCountCached(token, logError) {
   if (hasFresh && Number.isFinite(samsaraHealthCache.vehicles) && samsaraHealthCache.vehicles >= 0) {
     return {
       vehicles: samsaraHealthCache.vehicles,
+      rows: Array.isArray(samsaraHealthCache.rows) ? samsaraHealthCache.rows : [],
       cacheAgeMs: now - samsaraHealthCache.fetchedAt,
       error: samsaraHealthCache.lastError || undefined
     };
@@ -64,6 +66,7 @@ async function fetchSamsaraVehicleCountCached(token, logError) {
     } catch {
       return {
         vehicles: Number.isFinite(samsaraHealthCache.vehicles) ? samsaraHealthCache.vehicles : null,
+        rows: Array.isArray(samsaraHealthCache.rows) ? samsaraHealthCache.rows : [],
         cacheAgeMs: now - (samsaraHealthCache.fetchedAt || now),
         error: samsaraHealthCache.lastError || 'Samsara refresh failed'
       };
@@ -77,6 +80,7 @@ async function fetchSamsaraVehicleCountCached(token, logError) {
       const response = await getVehicles(token);
       const { rows, count } = summarizeSamsaraVehiclesPayload(response);
       samsaraHealthCache.vehicles = count;
+      samsaraHealthCache.rows = Array.isArray(rows) ? rows : [];
       samsaraHealthCache.fetchedAt = Date.now();
       samsaraHealthCache.lastError = '';
       try {
@@ -87,12 +91,18 @@ async function fetchSamsaraVehicleCountCached(token, logError) {
       } catch {
         /* ignore non-serializable payload */
       }
-      return { vehicles: count, cacheAgeMs: 0, error: undefined };
+      return {
+        vehicles: count,
+        rows: Array.isArray(rows) ? rows : [],
+        cacheAgeMs: 0,
+        error: undefined
+      };
     } catch (err) {
       samsaraHealthCache.lastError = err?.message || String(err);
       logError('[api/health] samsara vehicles snapshot failed', err);
       return {
         vehicles: Number.isFinite(samsaraHealthCache.vehicles) ? samsaraHealthCache.vehicles : null,
+        rows: Array.isArray(samsaraHealthCache.rows) ? samsaraHealthCache.rows : [],
         cacheAgeMs: samsaraHealthCache.fetchedAt ? Date.now() - samsaraHealthCache.fetchedAt : null,
         error: samsaraHealthCache.lastError
       };
@@ -202,8 +212,9 @@ function mapSamsaraVehicleRow(raw = {}) {
 async function fetchSamsaraVehiclesFallback(token, logError) {
   if (!token) return [];
   try {
-    const payload = await getVehicles(token);
-    const { rows } = summarizeSamsaraVehiclesPayload(payload);
+    const snapshot = await fetchSamsaraVehicleCountCached(token, logError);
+    const rows = Array.isArray(snapshot?.rows) ? snapshot.rows : [];
+    if (!rows.length) return [];
     return rows.map(mapSamsaraVehicleRow).filter(Boolean);
   } catch (e) {
     logError('[samsara] fallback vehicle fetch failed', e);
