@@ -1187,6 +1187,7 @@
     }
     var deploySuffix = deployRef ? '&v=' + encodeURIComponent(deployRef) : '';
     var base = String(hubBase || '').replace(/\/+$/, '');
+    base = base.replace(/\/fleet-reports(?:\/fleet-reports)+$/, '/fleet-reports');
     var path = '/fleet-reports/index.html';
     if (base === '/fleet-reports' || /\/fleet-reports$/.test(base)) path = '/index.html';
     var url = base + path + '?erpFuelModal=1&fuelTxnType=' + encodeURIComponent(t) + deploySuffix;

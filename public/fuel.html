@@ -1201,6 +1201,8 @@
         return;
       }
       var b = typeof window.__IH35_FLEET_HUB_BASE === 'string' ? window.__IH35_FLEET_HUB_BASE : '';
+      b = String(b || '').replace(/\/+$/, '');
+      b = b.replace(/\/fleet-reports(?:\/fleet-reports)+$/, '/fleet-reports');
       var deployRef = '';
       try {
         deployRef = typeof window.__IH35_DEPLOY_REF === 'string' ? String(window.__IH35_DEPLOY_REF).trim() : '';
@@ -1208,11 +1210,9 @@
         deployRef = '';
       }
       var deploySuffix = deployRef ? '&v=' + encodeURIComponent(deployRef) : '';
-      window.open(
-        b + '/fleet-reports/index.html?erpFuelModal=1&fuelTxnType=' + encodeURIComponent(type) + deploySuffix,
-        '_blank',
-        'noopener,noreferrer',
-      );
+      var path = '/fleet-reports/index.html';
+      if (b === '/fleet-reports' || /\/fleet-reports$/.test(b)) path = '/index.html';
+      window.open(b + path + '?erpFuelModal=1&fuelTxnType=' + encodeURIComponent(type) + deploySuffix, '_blank', 'noopener,noreferrer');
     }
 
     window.addEventListener('load', () => {
