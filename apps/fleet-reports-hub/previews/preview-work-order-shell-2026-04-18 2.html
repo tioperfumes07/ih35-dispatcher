@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview — Work order shell</title>
+  <link rel="stylesheet" href="../src/index.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      max-width: 1200px;
+      margin-inline: auto;
+    }
+    .pv-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .wo-shell {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 480px;
+    }
+    .wo-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel-2);
+      flex-wrap: wrap;
+    }
+    .wo-top__left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .wo-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .wo-badge {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(91, 140, 255, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .wo-pill {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .wo-top__actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .wo-btn {
+      height: 22px;
+      font-size: 9px;
+      padding: 0 8px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .wo-btn--danger {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .wo-unit-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-wrap: wrap;
+    }
+    .wo-unit-card__left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .wo-unit-badge {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(91, 140, 255, 0.12);
+      color: var(--accent);
+    }
+    .wo-integrity {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(251, 191, 36, 0.12);
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--warn);
+    }
+    .wo-integrity a {
+      color: var(--accent);
+      font-size: 10px;
+      text-decoration: none;
+    }
+    .wo-sec {
+      margin: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-2);
+      overflow: hidden;
+    }
+    .wo-sec__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 8px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .wo-sec__label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .wo-sec__body {
+      padding: 8px;
+    }
+    .wo-grid5 {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+    @media (max-width: 900px) {
+      .wo-grid5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .wo-lbl {
+      display: block;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .wo-inp {
+      width: 100%;
+      height: 22px;
+      font-size: 10px;
+      padding: 0 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--text);
+      box-sizing: border-box;
+    }
+    .wo-table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .wo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+    .wo-table th,
+    .wo-table td {
+      border-bottom: 1px solid var(--border);
+      padding: 4px 6px;
+      text-align: left;
+    }
+    .wo-table th {
+      background: var(--panel);
+      position: relative;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    .wo-resize {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      cursor: col-resize;
+    }
+    .wo-foot {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-top: 1px solid var(--border);
+      background: var(--panel-2);
+    }
+    .wo-class-badge {
+      display: inline-block;
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: rgba(91, 140, 255, 0.15);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <p class="pv-note">Static preview — links app theme via <code>../src/index.css</code>. Open this file from the repo root path so the stylesheet resolves.</p>
+
+  <div class="wo-shell" aria-label="Work order shell preview">
+    <div class="wo-top">
+      <div class="wo-top__left">
+        <span class="wo-title">Create work order</span>
+        <span class="wo-badge">IWO-T120-20260418</span>
+        <span class="wo-pill">T120</span>
+        <span class="wo-pill">Repair</span>
+        <span class="wo-pill">In-house</span>
+        <span class="wo-pill">$8,500</span>
+      </div>
+      <div class="wo-top__actions">
+        <button type="button" class="wo-btn">Full screen</button>
+        <button type="button" class="wo-btn wo-btn--danger">Close</button>
+      </div>
+    </div>
+
+    <div class="wo-unit-card">
+      <div class="wo-unit-card__left">
+        <span class="wo-unit-badge">Unit</span>
+        <strong style="font-size:12px">T120 · Freightliner Cascadia</strong>
+      </div>
+      <div style="font-size:10px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap">
+        <span>Odo 418,200</span>
+        <span style="color:var(--danger)">Past due 1</span>
+        <span style="color:var(--warn)">Due soon 2</span>
+        <span>Saved odo —</span>
+      </div>
+    </div>
+
+    <div class="wo-integrity">
+      <span>Integrity: no driver assigned — assign below to log accountability for this service record.</span>
+      <a href="#">View all →</a>
+    </div>
+
+    <div class="wo-sec">
+      <div class="wo-sec__head">
+        <span class="wo-sec__label">A — Service information · <span class="wo-badge" style="font-size:9px">IWO-T120-20260418</span></span>
+        <button type="button" class="wo-btn" title="Section full screen">⛶</button>
+      </div>
+      <div class="wo-sec__body">
+        <div class="wo-grid5">
+          <div><span class="wo-lbl">Record type</span><input class="wo-inp" value="Repair" /></div>
+          <div><span class="wo-lbl">Service type</span><input class="wo-inp" value="Brake campaign" /></div>
+          <div><span class="wo-lbl">Service location</span><input class="wo-inp" value="In-house" /></div>
+          <div><span class="wo-lbl">Repair status</span><input class="wo-inp" value="In progress" /></div>
+          <div><span class="wo-lbl">Service date</span><input class="wo-inp" type="date" /></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px">
+          <div><span class="wo-lbl">Vendor (QuickBooks)</span><input class="wo-inp" placeholder="Vendor" /></div>
+          <div><span class="wo-lbl">Fleet mileage (ERP)</span><input class="wo-inp" value="418200" style="width:calc(100% - 52px)" /><button type="button" class="wo-btn" style="width:48px">Save</button></div>
+          <div><span class="wo-lbl">Location detail</span><input class="wo-inp" placeholder="Where work happened" /></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wo-sec">
+      <div class="wo-sec__head">
+        <span class="wo-sec__label">D — Category details (QuickBooks)</span>
+        <button type="button" class="wo-btn">⛶</button>
+      </div>
+      <div class="wo-sec__body">
+        <div class="wo-table-wrap">
+          <table class="wo-table">
+            <colgroup>
+              <col style="width:32px" />
+              <col style="width:120px" />
+              <col />
+              <col style="width:72px" />
+              <col style="width:56px" />
+              <col style="width:100px" />
+              <col style="width:72px" />
+              <col style="width:56px" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>#<span class="wo-resize" aria-hidden="true"></span></th>
+                <th>Category<span class="wo-resize"></span></th>
+                <th>Description<span class="wo-resize"></span></th>
+                <th>Amount<span class="wo-resize"></span></th>
+                <th>Billable<span class="wo-resize"></span></th>
+                <th>Customer<span class="wo-resize"></span></th>
+                <th>Class<span class="wo-resize"></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><input class="wo-inp" value="R&amp;M" /></td>
+                <td><input class="wo-inp" value="Brake service" /></td>
+                <td><input class="wo-inp" value="1200" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input class="wo-inp" /></td>
+                <td><span class="wo-class-badge">T120</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:9px;color:var(--muted);margin:6px 0 0">Drag column edges to resize · Tab to navigate</p>
+      </div>
+    </div>
+
+    <div class="wo-foot">
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button type="button" class="wo-btn" style="background:rgba(74,222,128,0.15);color:var(--ok);border-color:var(--ok)">Save ▾</button>
+        <button type="button" class="wo-btn" style="color:var(--accent)">Post to QuickBooks</button>
+        <button type="button" class="wo-btn">Attach file</button>
+        <button type="button" class="wo-btn">Parse PDF</button>
+        <button type="button" class="wo-btn">Print</button>
+        <button type="button" class="wo-btn" style="color:#217346;border-color:#217346">Export to Excel</button>
+      </div>
+      <span style="font-size:9px;color:var(--muted)">Save/post: draft · edit-mode uses plain textContent only</span>
+    </div>
+  </div>
+</body>
+</html>
