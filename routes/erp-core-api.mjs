@@ -210,11 +210,27 @@ function mapSamsaraVehicleRow(raw = {}) {
 }
 
 async function fetchSamsaraVehiclesFallback(token, logError) {
+  const cachedRows = Array.isArray(samsaraHealthCache.rows) ? samsaraHealthCache.rows : [];
+  if (cachedRows.length > 0) {
+    console.log(
+      '[fallback] using',
+      cachedRows.length,
+      'vehicles from cache, first:',
+      cachedRows[0]?.name || cachedRows[0]?.id
+    );
+    return cachedRows.map(mapSamsaraVehicleRow).filter(Boolean);
+  }
   if (!token) return [];
   try {
-    const snapshot = await fetchSamsaraVehicleCountCached(token, logError);
-    const rows = Array.isArray(snapshot?.rows) ? snapshot.rows : [];
+    const payload = await getVehicles(token);
+    const { rows } = summarizeSamsaraVehiclesPayload(payload);
     if (!rows.length) return [];
+    console.log(
+      '[fallback] using',
+      rows.length,
+      'vehicles from cache, first:',
+      rows[0]?.name || rows[0]?.id
+    );
     return rows.map(mapSamsaraVehicleRow).filter(Boolean);
   } catch (e) {
     logError('[samsara] fallback vehicle fetch failed', e);
