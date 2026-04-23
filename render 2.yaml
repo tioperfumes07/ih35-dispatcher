@@ -1,0 +1,11 @@
+# Render Blueprint — IH35 ERP must run as a Web Service so Express serves /api/*.
+# A Static Site will serve HTML only and API calls return "Cannot GET /api/..." HTML errors.
+# See docs/HOW_CODE_GETS_ONLINE.md
+services:
+  - type: web
+    name: ih35-erp
+    runtime: node
+    # Fleet hub output is under public/fleet-reports/ (often gitignored); build it on the host, not only on your laptop.
+    buildCommand: npm ci && npm ci --prefix apps/fleet-reports-hub && npm run build:fleet
+    startCommand: npm start
+    healthCheckPath: /api/health
