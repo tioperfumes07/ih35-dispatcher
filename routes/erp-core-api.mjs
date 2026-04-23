@@ -466,6 +466,15 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/board', async (_req, res) => {
+    // DIRECT CACHE READ - samsaraHealthCache always has vehicles
+    const cachedRows = Array.isArray(samsaraHealthCache && samsaraHealthCache.rows ? samsaraHealthCache.rows : []) ? (samsaraHealthCache.rows || []) : [];
+    if (cachedRows.length > 0) {
+      const vehicles = cachedRows.map(mapSamsaraVehicleRow).filter(Boolean);
+      if (vehicles.length > 0) {
+        console.log('[board] served', vehicles.length, 'vehicles from samsaraHealthCache');
+        return res.json({ vehicles, live: [], hos: [], assignments: [], refreshedAt: new Date().toISOString(), source: 'samsara-cache' });
+      }
+    }
     try {
       const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
       if (token) {
