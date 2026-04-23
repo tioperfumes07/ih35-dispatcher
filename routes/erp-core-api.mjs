@@ -160,6 +160,56 @@ function normalizeMaintenanceUnitRow(raw = {}) {
   };
 }
 
+function mapSamsaraVehicleRow(raw = {}) {
+  const unit = String(
+    raw.name ||
+      raw.unitNumber ||
+      raw.unit_number ||
+      raw.attributes?.name ||
+      raw.attributes?.unitNumber ||
+      ''
+  ).trim();
+  if (!unit) return null;
+  const odometerMeters = Number(
+    raw.odometerMeters ??
+      raw.odometer_meters ??
+      raw.odometer?.meters ??
+      raw.attributes?.odometerMeters ??
+      NaN
+  );
+  const odometerMiles = Number.isFinite(odometerMeters) && odometerMeters > 0
+    ? Math.round(odometerMeters * 0.000621371)
+    : null;
+  return {
+    id: String(raw.id || raw.vehicleId || raw.uuid || unit),
+    name: unit,
+    make: String(raw.make || raw.attributes?.make || '').trim() || null,
+    model: String(raw.model || raw.attributes?.model || '').trim() || null,
+    vin: String(raw.vin || raw.attributes?.vin || '').trim() || null,
+    licensePlate: String(
+      raw.licensePlate ||
+        raw.license_plate ||
+        raw.plate ||
+        raw.attributes?.licensePlate ||
+        ''
+    ).trim() || null,
+    status: String(raw.status || raw.attributes?.status || 'active').trim() || 'active',
+    odometerMiles,
+  };
+}
+
+async function fetchSamsaraVehiclesFallback(token, logError) {
+  if (!token) return [];
+  try {
+    const payload = await getVehicles(token);
+    const { rows } = summarizeSamsaraVehiclesPayload(payload);
+    return rows.map(mapSamsaraVehicleRow).filter(Boolean);
+  } catch (e) {
+    logError('[samsara] fallback vehicle fetch failed', e);
+    return [];
+  }
+}
+
 /**
  * @param {import('express').Application} app
  * @param {{ logError?: (msg: string, err?: unknown) => void }} [opts]
@@ -317,11 +367,16 @@ export function mountErpCoreApi(app, opts = {}) {
     });
   });
 
-  app.get('/api/maintenance/dashboard', (_req, res) => {
+  app.get('/api/maintenance/dashboard', async (_req, res) => {
     const erp = readFullErpJson();
-    const vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+    let vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
     const dashboard = Array.isArray(erp.maintenanceDashboard) ? erp.maintenanceDashboard : [];
     const tireAlerts = Array.isArray(erp.tireAlerts) ? erp.tireAlerts : [];
+    if (!vehicles.length) {
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      const samsaraVehicles = await fetchSamsaraVehiclesFallback(token, logError);
+      if (samsaraVehicles.length) vehicles = samsaraVehicles;
+    }
     res.json({
       ok: true,
       vehicles,
@@ -391,7 +446,7 @@ export function mountErpCoreApi(app, opts = {}) {
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null);
       const assets = Array.isArray(payload?.assets) ? payload.assets : [];
-      const mappedVehicles = assets
+      let mappedVehicles = assets
         .map((a) => ({
           id: a?.samsara_id || null,
           name: String(a?.unit_number || '').trim(),
@@ -403,6 +458,10 @@ export function mountErpCoreApi(app, opts = {}) {
           status: a?.status || 'active',
         }))
         .filter((v) => v.name);
+      if (!mappedVehicles.length) {
+        const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+        mappedVehicles = await fetchSamsaraVehiclesFallback(token, logError);
+      }
 
       return res.json({
         vehicles: mappedVehicles,
