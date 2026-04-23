@@ -396,21 +396,31 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/maintenance/dashboard', async (_req, res) => {
-    const erp = readFullErpJson();
-    let vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
-    const dashboard = Array.isArray(erp.maintenanceDashboard) ? erp.maintenanceDashboard : [];
-    const tireAlerts = Array.isArray(erp.tireAlerts) ? erp.tireAlerts : [];
-    const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+    const token = process.env.SAMSARA_API_TOKEN;
     if (token) {
       try {
         const payload = await getVehicles(token);
         const { rows } = summarizeSamsaraVehiclesPayload(payload);
-        const mapped = rows.map(mapSamsaraVehicleRow).filter(Boolean);
-        if (mapped.length) vehicles = mapped;
-      } catch (e) {
-        logError('[maintenance/dashboard] samsara live vehicle fetch failed', e);
+        const vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
+        if (vehicles.length > 0) {
+          return res.json({
+            ok: true,
+            vehicles,
+            dashboard: [],
+            tireAlerts: [],
+            refreshedAt: new Date().toISOString(),
+            source: 'samsara-live'
+          });
+        }
+      } catch(e) {
+        console.error('[maintenance/dashboard] samsara direct call failed:', e.message);
       }
     }
+
+    const erp = readFullErpJson();
+    let vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+    const dashboard = Array.isArray(erp.maintenanceDashboard) ? erp.maintenanceDashboard : [];
+    const tireAlerts = Array.isArray(erp.tireAlerts) ? erp.tireAlerts : [];
     res.json({
       ok: true,
       vehicles,
@@ -457,32 +467,40 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/board', async (_req, res) => {
     try {
-      const erp = readFullErpJson();
-      const erpVehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
-      const live = Array.isArray(erp.live) ? erp.live : [];
-      const hos = Array.isArray(erp.hos) ? erp.hos : [];
-      const assignments = Array.isArray(erp.assignments) ? erp.assignments : [];
-
-      let mappedVehicles = [];
-      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      const token = process.env.SAMSARA_API_TOKEN;
       if (token) {
         try {
           const payload = await getVehicles(token);
           const { rows } = summarizeSamsaraVehiclesPayload(payload);
-          mappedVehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
-        } catch (e) {
-          logError('[board] samsara live vehicle fetch failed', e);
+          const vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
+          if (vehicles.length > 0) {
+            return res.json({
+              vehicles,
+              live: [],
+              hos: [],
+              assignments: [],
+              refreshedAt: new Date().toISOString(),
+              source: 'samsara-live'
+            });
+          }
+        } catch(e) {
+          console.error('[board] samsara direct call failed:', e.message);
         }
       }
-      if (!mappedVehicles.length && erpVehicles.length) mappedVehicles = erpVehicles;
+
+      const erp = readFullErpJson();
+      const vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+      const live = Array.isArray(erp.live) ? erp.live : [];
+      const hos = Array.isArray(erp.hos) ? erp.hos : [];
+      const assignments = Array.isArray(erp.assignments) ? erp.assignments : [];
 
       return res.json({
-        vehicles: mappedVehicles,
+        vehicles,
         live,
         hos,
         assignments,
         refreshedAt: new Date().toISOString(),
-        source: mappedVehicles.length > 0 ? (token ? 'samsara-live' : 'erp-json') : 'empty',
+        source: vehicles.length > 0 ? 'erp-json' : 'empty',
       });
     } catch (e) {
       logError('GET /api/board', e);
