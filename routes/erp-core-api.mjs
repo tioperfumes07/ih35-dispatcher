@@ -396,7 +396,7 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/maintenance/dashboard', async (_req, res) => {
-    const token = process.env.SAMSARA_API_TOKEN;
+    const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
     if (token) {
       try {
         const payload = await getVehicles(token);
@@ -467,7 +467,7 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/board', async (_req, res) => {
     try {
-      const token = process.env.SAMSARA_API_TOKEN;
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
       if (token) {
         try {
           const payload = await getVehicles(token);
