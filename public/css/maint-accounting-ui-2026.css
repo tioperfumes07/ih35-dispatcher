@@ -260,6 +260,65 @@ body.erp-maintenance .erp-sr-tab-anchor {
   border: 0;
 }
 
+/* Section pages: row-based type chooser (replaces compact pill action clusters). */
+body.erp-maintenance .type-row-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 10px;
+}
+
+body.erp-maintenance .type-row {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+  margin-bottom: 6px;
+}
+
+body.erp-maintenance .type-row:hover {
+  border-color: var(--color-border-info);
+  background: var(--color-background-info);
+  transform: translateX(2px);
+}
+
+body.erp-maintenance .type-row-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 2px;
+}
+
+body.erp-maintenance .type-row-desc {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+body.erp-maintenance .type-row-btn {
+  height: 26px;
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 0 14px;
+  border: 0.5px solid var(--color-border-tertiary);
+  background: var(--color-background-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+body.erp-maintenance .type-row:hover .type-row-btn {
+  border-color: var(--color-border-info);
+  color: var(--color-text-info);
+}
+
 /* Search row */
 body.erp-maintenance .maint-search-row {
   display: flex;
@@ -757,13 +816,17 @@ body.erp-maintenance .qb-btn-add.maint-line-clear {
   font-weight: 500;
 }
 
-/* Rule 1: reports tile hub (spec flex/grid) — shrink inside .erp-reports-main. */
+/* Rule 1: reports tile hub — shrink inside .erp-reports-main; cards keep a wrap width so labels do not pile on one row. */
 body.erp-maintenance #section-reports .erp-reports-hub,
 body.erp-maintenance #section-reports .erp-reports-hub__tiles,
 body.erp-maintenance #section-reports .erp-reports-hub__tiles--dense,
-body.erp-maintenance #section-reports .erp-reports-hub__card,
 body.erp-maintenance #section-reports .erp-reports-hub__tile {
   min-width: 0;
+  min-height: 0;
+}
+
+body.erp-maintenance #section-reports .erp-reports-hub__card {
+  min-width: min(100%, 200px);
   min-height: 0;
 }
 

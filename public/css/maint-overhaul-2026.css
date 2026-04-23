@@ -320,15 +320,18 @@ body.erp-maintenance .maint-wo-columns {
 }
 
 body.erp-maintenance .maint-wo-col-units {
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px;
-  flex-shrink: 0 !important;
+  flex: 0 1 min(240px, 36vw);
+  width: auto;
+  min-width: min(200px, 42vw);
+  max-width: 260px;
+  flex-shrink: 1;
   border-right: 1px solid #e0e3e8;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: #fff;
 }
 
@@ -338,7 +341,9 @@ body.erp-maintenance .maint-wo-col-form {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.erp-maintenance .maint-wo-form-stack-inner {
@@ -346,7 +351,9 @@ body.erp-maintenance .maint-wo-form-stack-inner {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.erp-maintenance .maint-wo-main-aside {
@@ -354,7 +361,9 @@ body.erp-maintenance .maint-wo-main-aside {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.erp-maintenance .maint-wo-workspace {
@@ -362,7 +371,9 @@ body.erp-maintenance .maint-wo-workspace {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Snapshot dock: sticky top of right column */
@@ -426,7 +437,7 @@ body.erp-maintenance .maint-wo-form-shell {
 }
 
 body.erp-maintenance .maint-form-stack {
-  padding-bottom: 88px;
+  padding-bottom: 24px;
 }
 
 body.erp-maintenance .maint-form-actions.maint-form-actions--sticky {
@@ -700,4 +711,190 @@ body.erp-maintenance .maint-workorder-fullmodal__body {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+body.erp-maintenance #maintenanceSplit.unit-list-animating {
+  transition: opacity 0.15s ease;
+}
+
+/* Card 1 unified header */
+body.erp-maintenance .maint-card1-top {
+  border-bottom: 1px solid #eef1f4;
+  background: #fafbfc;
+}
+body.erp-maintenance .maint-card1-top__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px 8px;
+}
+body.erp-maintenance .maint-card1-top__left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+body.erp-maintenance .maint-card1-top__wo-title {
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: #1a1f36;
+}
+body.erp-maintenance .maint-card1-top__unit {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1557a0;
+}
+body.erp-maintenance .maint-card1-top__right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+  flex: 1 1 220px;
+}
+body.erp-maintenance .maint-card1-top__ctl {
+  min-width: 140px;
+  max-width: 280px;
+}
+body.erp-maintenance .maint-card1-top__loc-detail {
+  padding: 0 14px 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Vehicle summary (card 1 body) */
+body.erp-maintenance .maint-asset-card2026 {
+  padding: 10px 14px 12px;
+}
+body.erp-maintenance .maint-asset-card2026__row1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 8px;
+}
+body.erp-maintenance .maint-asset-card2026__pill {
+  flex-shrink: 0;
+}
+body.erp-maintenance .maint-asset-card2026__ymm {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1f36;
+}
+body.erp-maintenance .maint-asset-card2026__ids {
+  font-size: 12px;
+  color: #6b7385;
+}
+body.erp-maintenance .maint-asset-card2026__id-muted {
+  color: #9aa3b5;
+}
+body.erp-maintenance .maint-asset-card2026__row2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  font-size: 12px;
+  color: #3c4257;
+  margin-bottom: 8px;
+}
+body.erp-maintenance .maint-asset-card2026__sk {
+  color: #6b7385;
+  font-weight: 500;
+  margin-right: 4px;
+}
+body.erp-maintenance .maint-asset-card2026__sv {
+  font-weight: 600;
+}
+
+body.erp-maintenance .maint-wo-workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+body.erp-maintenance .maint-wo-form-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+body.erp-maintenance .maint-form-actions.maint-form-actions--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  flex-shrink: 0;
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  min-height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #fff;
+  border-top: 1px solid #e0e3e8;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+}
+body.erp-maintenance .maint-form-actions__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+body.erp-maintenance .maint-form-actions .maint-qbo-post-btn {
+  background: #1557a0 !important;
+  color: #fff !important;
+  border-color: #1557a0 !important;
+}
+body.erp-maintenance .maint-form-actions .maint-qbo-post-btn:hover {
+  background: #124a8a !important;
+}
+
+body.erp-maintenance .maint-wo-summary-pill--unitonly .maint-wo-summary-pill__val--unit {
+  font-size: 14px;
+}
+body.erp-maintenance .maint-wo-summary-pill__k {
+  font-weight: 600;
+  color: #3c4257;
+  margin-right: 4px;
+}
+
+/* Searchable combo dropdown */
+body.erp-maintenance .erp-scombo-wrap {
+  position: relative;
+  width: 100%;
+}
+body.erp-maintenance .erp-scombo-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 50;
+  margin-top: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e0e3e8;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+body.erp-maintenance .erp-scombo-list.hidden {
+  display: none !important;
+}
+body.erp-maintenance .erp-scombo-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid #f1f3f4;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+body.erp-maintenance .erp-scombo-item:hover {
+  background: #e8f0fe;
 }

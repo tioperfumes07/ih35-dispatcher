@@ -3,7 +3,7 @@
  * Offline Rule 0 check (no server): reads Agent B files from disk and exits 1 if forbidden substrings appear.
  * Run: `npm run rule0:check`. Full gate with HTTP smoke (server must listen): `npm run qa:automated`, or ephemeral server: `npm run qa:isolated` (**`scripts/smoke-gate-paths-sync.mjs`** first, then **`rule0:check`** + **`system-smoke.mjs`** on a child **`server.js`** with **`IH35_SMOKE_GATE=1`**).
  * In CI (`CI=true`) or when `RULE0_QUIET=1`, success logs one summary line instead of per-file OK lines; failures always print details. Locally, `RULE0_QUIET=1` also hides the release tip (unless `--skip-release-tip` already did).
- * `npm run qa:automated` (see **`package.json`**) runs **`smoke:gate-sync`** first, then invokes this script with **`--skip-release-tip`**, then **`npm run smoke`**.
+ * `npm run qa:automated` (see **`package.json`**) runs **`smoke:gate-sync`** first, then invokes this script with **`--skip-release-tip`**, then **`npm run test:layout`**, then **`npm run smoke`**.
  */
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';

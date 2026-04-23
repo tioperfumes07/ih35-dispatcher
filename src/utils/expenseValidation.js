@@ -79,6 +79,9 @@
           pushErr('apVendorInvoiceNumber', 'ap_ext_inv', 'Vendor invoice # or internal WO # is required for this location type.');
         }
       }
+      if (!String(s.repairLocationLabel || '').trim()) {
+        pushErr('apRepairLocationSearch', 'ap_maint_loc_name', 'Maintenance bill — enter the service location (shop or site name).');
+      }
     }
 
     if (!s.hasLineMoney && (!Number.isFinite(s.docTotal) || s.docTotal <= 0)) {

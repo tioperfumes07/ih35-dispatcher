@@ -8,7 +8,7 @@
  *
  * Runs **`scripts/smoke-gate-paths-sync.mjs`** first so **`CRITICAL`** and **`SMOKE_GATE_API_PATHS`** cannot drift.
  *
- * After HTTP smoke, runs **`npm run test:name-mgmt`**, **`npm run test:fleet-mileage`**, and **`npm run test:integrity-meta`** (same suites as **`npm run qa:automated`**) so one command matches the full automated gate when port **3400** is busy.
+ * After **`rule0:check`**, runs **`npm run test:layout`** (disk-only responsive CSS links), then HTTP smoke, then **`npm run test:name-mgmt`**, **`npm run test:fleet-mileage`**, and **`npm run test:integrity-meta`** (aligned with **`npm run qa:automated`** aside from **`test:qbo-dedupe-purchase`**).
  *
  * **`npm run qa:automated`** ( **`package.json`** ) runs the same **`smoke-gate-paths-sync`** step before **`rule0:check`** + **`smoke`** when a server is already listening — no child process here.
  *
@@ -173,6 +173,7 @@ async function main() {
   try {
     await waitUntilHealthy(server, base);
     await runNodeScript('scripts/rule-zero-agent-b-check.mjs', envPort, ['--skip-release-tip']);
+    await runNpmScript('test:layout');
     const smokeEnv = {
       ...envPort,
       SMOKE_BASE: base,
@@ -185,7 +186,7 @@ async function main() {
     await runNpmScript('test:name-mgmt');
     await runNpmScript('test:fleet-mileage');
     await runNpmScript('test:integrity-meta');
-    console.log(`qa:isolated OK — ${base} (smoke + rule0 + unit tests)`);
+    console.log(`qa:isolated OK — ${base} (rule0 + layout + smoke + unit tests)`);
   } finally {
     process.removeListener('SIGINT', onSigInt);
     process.removeListener('SIGTERM', onSigTerm);

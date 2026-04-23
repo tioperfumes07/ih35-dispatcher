@@ -56,7 +56,7 @@
   /* Top operations bar */
   --nav-bg: #0f172a;
   --nav-line: #1e293b;
-  --nav-text: #e2e8f0;
+  --nav-text: #cdd9e5;
   --nav-hover: #1e293b;
   --nav-dd-bg: #ffffff;
   --nav-dd-text: #0f172a;
@@ -261,7 +261,8 @@ body.erp-maintenance .erp-dedicated-form-modal__total-wrap {
   border-radius: var(--radius-sm);
   background: var(--color-bg-card);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 .catalog-add-card__head {
   display: flex;
@@ -1394,7 +1395,8 @@ body.erp-maintenance .table-wrap {
 }
 
 body.erp-maintenance .table-wrap > table {
-  min-width: min(1240px, max(100%, 720px));
+  width: 100%;
+  min-width: min(100%, max-content);
 }
 
 body.erp-maintenance .table-wrap th,
@@ -1445,7 +1447,8 @@ body.erp-maintenance .st-settlement-wrap {
   min-height: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--color-bg-card);
   box-shadow: var(--shadow-sm);
 }
@@ -2756,6 +2759,70 @@ body.erp-maintenance .maint-kpi-card__val {
   color: var(--color-text-primary);
 }
 
+body.erp-maintenance .maint-kpi-card--integrity {
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.erp-maintenance .maint-kpi-card__val--integrity.maint-kpi-card__val--danger {
+  color: var(--color-semantic-error);
+}
+
+body.erp-maintenance .maint-kpi-card__val--integrity.maint-kpi-card__val--amber {
+  color: #b86b00;
+}
+
+body.erp-maintenance .maint-dash-int-mini {
+  margin-top: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 11px;
+  line-height: 1.35;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0;
+  min-height: 0;
+  background: color-mix(in srgb, var(--color-bg-page) 55%, var(--color-bg-card));
+}
+
+body.erp-maintenance .maint-dash-int-row {
+  padding: 8px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
+  min-width: 0;
+}
+
+body.erp-maintenance .maint-dash-int-row:last-child {
+  border-bottom: none;
+}
+
+body.erp-maintenance .maint-dash-int-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+body.erp-maintenance .maint-dash-int-row__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+body.erp-maintenance .maint-dash-int-row__desc {
+  margin: 3px 0 0;
+  line-height: 1.35;
+  color: var(--color-text-body);
+}
+
+body.erp-maintenance .maint-dash-int-foot {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 body.erp-maintenance .maint-wo-workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(min(220px, 100%), min(300px, 100%));
@@ -3941,8 +4008,9 @@ body.erp-maintenance #section-reports #repMainSubtabs {
 
 body.erp-maintenance #section-reports #repMainSubtabs > .subtab,
 body.erp-maintenance #section-reports #repMainSubtabs > .nav-dropdown {
-  flex: 1 1 auto;
-  min-width: min(100%, 168px);
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
   min-height: 0;
 }
 
@@ -3980,6 +4048,42 @@ body.erp-maintenance #section-uploads > .panel,
 body.erp-maintenance #section-uploads > .panel > .panel-body {
   min-width: 0;
   min-height: 0;
+}
+
+/* Vendor & driver name management — full-width hosts + catalog rename pane flex chain */
+body.erp-maintenance #erpNameMgmtRoot,
+body.erp-maintenance #erpNameMgmtRootCatalog {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+body.erp-maintenance #nmCatalogRenamePane {
+  display: none;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+body.erp-maintenance #catalog-panel-name-mgmt.catalog-subpanel.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+body.erp-maintenance #section-name-mgmt.section.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
 }
 
 body.erp-maintenance #section-dashboard .panel-head > div,
