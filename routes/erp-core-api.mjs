@@ -470,6 +470,7 @@ export function mountErpCoreApi(app, opts = {}) {
       const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
       if (token) {
         try {
+          console.log('[board] calling getVehicles, token length:', token.length);
           const payload = await getVehicles(token);
           const { rows } = summarizeSamsaraVehiclesPayload(payload);
           const vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
@@ -483,8 +484,9 @@ export function mountErpCoreApi(app, opts = {}) {
               source: 'samsara-live'
             });
           }
-        } catch(e) {
-          console.error('[board] samsara direct call failed:', e.message);
+        } catch (e) {
+          logError('[board] samsara live vehicle fetch failed', e);
+          console.error('[board] VEHICLE FETCH ERROR DETAIL:', e.message, e.stack);
         }
       }
 
