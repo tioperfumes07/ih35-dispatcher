@@ -4156,3 +4156,54 @@ body.erp-maintenance .badge-gray {
   border: 0.5px solid var(--color-border-tertiary);
 }
 
+.acct-type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.acct-type-row {
+  background: var(--color-bg-primary, #fff);
+  border: 0.5px solid var(--color-border, #d0d7de);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.acct-type-row:hover {
+  border-color: var(--color-info, #0969da);
+  background: var(--color-info-bg, #ddf4ff);
+  transform: translateX(2px);
+}
+.acct-type-row__name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary, #24292f);
+  margin-bottom: 2px;
+}
+.acct-type-row__desc {
+  font-size: 10px;
+  color: var(--color-text-secondary, #57606a);
+  line-height: 1.4;
+}
+.acct-type-row__btn {
+  height: 26px;
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 0 14px;
+  border: 0.5px solid var(--color-border, #d0d7de);
+  background: var(--color-bg-primary, #fff);
+  color: var(--color-text-secondary, #57606a);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.acct-type-row:hover .acct-type-row__btn {
+  border-color: var(--color-info, #0969da);
+  color: var(--color-info, #0969da);
+}
+

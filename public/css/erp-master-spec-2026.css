@@ -3943,12 +3943,23 @@ body.erp-maintenance #section-reports .erp-reports-hub-iframe {
   border: 0;
   background: var(--panel, #f6f8fa);
 }
-body.erp-maintenance #section-reports .rep-cat-tabs,
-body.erp-maintenance #section-reports .erp-reports-catalog-shell,
 body.erp-maintenance #section-reports .erp-reports-sidebar,
 body.erp-maintenance #section-reports nav.erp-reports-hub,
 body.erp-maintenance #section-reports #repMainSubtabs,
 body.erp-maintenance #section-reports .erp-reports-main > .reports-tab {
+  display: none !important;
+}
+body.erp-maintenance #section-reports .erp-reports-catalog-shell {
+  display: flex !important;
+  flex-direction: row;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+body.erp-maintenance #section-reports .rep-cat-tabs {
+  display: flex !important;
+  flex-wrap: wrap;
+}
+body.erp-maintenance #section-reports .erp-reports-columns {
   display: none !important;
 }
 body.erp-maintenance #section-reports .erp-reports-columns {

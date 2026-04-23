@@ -3029,17 +3029,51 @@
 
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Expenses</h3>
-            <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="erpNewExpense()">Expense</button>
-              <button
-                type="button"
-                class="acct-board-action-btn"
+            <div class="acct-type-list">
+              <div class="acct-type-row" onclick="erpNewExpense()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Expense</div>
+                  <div class="acct-type-row__desc">General expense — any vendor, any category</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpNewExpense()">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="window.open('/form-425c.html', '_blank')">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Form 425C — monthly report</div>
+                  <div class="acct-type-row__desc">US Bankruptcy Court monthly report — import QB data, fill 8 parts, export PDF</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); window.open('/form-425c.html', '_blank')">Open →</button>
+              </div>
+              <div
+                class="acct-type-row"
                 onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })"
               >
-                Fuel expense
-              </button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">Maintenance expense</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('repair-expense')">Repair expense</button>
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Fuel expense</div>
+                  <div class="acct-type-row__desc">Fuel purchase expense — QBO vendor auto-link</div>
+                </div>
+                <button
+                  type="button"
+                  class="acct-type-row__btn"
+                  onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })"
+                >
+                  Open →
+                </button>
+              </div>
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Maintenance expense</div>
+                  <div class="acct-type-row__desc">Maintenance-related expense — can link to a work order</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('maintenance-expense')">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('repair-expense')">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Repair expense</div>
+                  <div class="acct-type-row__desc">Repair-related expense record</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('repair-expense')">Open →</button>
+              </div>
             </div>
             <div id="acctBoardExpDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div class="acct-board-table-wrap">
@@ -3063,13 +3097,49 @@
 
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Bills</h3>
-            <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('driver-bill')">Driver bill</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">Fuel bill</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">Maintenance bill</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenRepairBill()">Repair bill</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDedicatedAccountingForm('vendor-bill')">Vendor bill</button>
+            <div class="acct-type-list">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('driver-bill')">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Driver bill</div>
+                  <div class="acct-type-row__desc">Driver-related expense bill — links to driver vendor in QuickBooks</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('driver-bill')">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Fuel bill</div>
+                  <div class="acct-type-row__desc">Fuel purchase — vendor address auto-fills, unit = QBO Class automatically</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-bill')">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Maintenance bill</div>
+                  <div class="acct-type-row__desc">Shop or repair vendor bill — can link to an existing work order</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('maintenance-bill')">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="erpOpenMultiBillsModal()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Multiple bills</div>
+                  <div class="acct-type-row__desc">Enter multiple bills at once from a vendor statement</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenMultiBillsModal()">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="erpOpenRepairBill()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Repair bill</div>
+                  <div class="acct-type-row__desc">Repair order related bill — syncs to QBO expense record</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenRepairBill()">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('vendor-bill')">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Vendor bill</div>
+                  <div class="acct-type-row__desc">General vendor bill — any QuickBooks vendor</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('vendor-bill')">Open →</button>
+              </div>
             </div>
             <div id="acctBoardBillsDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div class="acct-board-table-wrap">
@@ -3094,10 +3164,28 @@
 
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Bill payment</h3>
-            <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="erpNewPayBills()">Bill payment</button>
-              <button type="button" class="acct-board-action-btn" onclick="erpOpenDriverBillPay()">Driver bill payment</button>
-              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Payment history</button>
+            <div class="acct-type-list">
+              <div class="acct-type-row" onclick="erpNewPayBills()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Bill payment</div>
+                  <div class="acct-type-row__desc">Pay a standard vendor bill — links to QuickBooks and auto-posts</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpNewPayBills()">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="erpOpenDriverBillPay()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Driver bill payment</div>
+                  <div class="acct-type-row__desc">Pay a driver bill — auto-links to driver vendor in QuickBooks</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDriverBillPay()">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Payment history</div>
+                  <div class="acct-type-row__desc">View all past bill payments — filter by vendor, date, unit</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">Open →</button>
+              </div>
             </div>
             <div id="acctBoardPayDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div class="acct-board-table-wrap">
@@ -3122,26 +3210,71 @@
 
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Fuel &amp; DEF</h3>
-            <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Fuel &amp; DEF ledger</button>
-              <button
-                type="button"
-                class="acct-board-action-btn"
+            <div class="acct-type-list">
+              <div class="acct-type-row" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Fuel &amp; DEF ledger</div>
+                  <div class="acct-type-row__desc">Complete ledger of all fuel and DEF transactions</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Open →</button>
+              </div>
+              <div
+                class="acct-type-row"
                 onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry', fuelTxnType: 'fuel-def-combined' })"
               >
-                Open Fuel/DEF combined ↗
-              </button>
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Open Fuel/DEF combined ↗</div>
+                  <div class="acct-type-row__desc">Open the combined fuel/DEF workspace in full view</div>
+                </div>
+                <button
+                  type="button"
+                  class="acct-type-row__btn"
+                  onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry', fuelTxnType: 'fuel-def-combined' })"
+                >
+                  Open →
+                </button>
+              </div>
             </div>
           </div>
 
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">QuickBooks</h3>
-            <div class="acct-board-actions">
-              <button type="button" class="acct-board-action-btn" onclick="openDedupeTool()">Deduplicate</button>
-              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">QBO rollback &amp; imports</button>
-              <button type="button" class="acct-board-action-btn" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
-              <button type="button" class="acct-board-action-btn" onclick="refreshQboMaster()">Refresh QBO lists</button>
-              <button type="button" class="acct-board-action-btn" onclick="testQuickBooks()">Test connection</button>
+            <div class="acct-type-list">
+              <div class="acct-type-row" onclick="openDedupeTool()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Deduplicate</div>
+                  <div class="acct-type-row__desc">Find and merge duplicate vendor and driver names</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); openDedupeTool()">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">QBO rollback &amp; imports</div>
+                  <div class="acct-type-row__desc">Roll back QBO imports and manage batch uploads</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); openAccountingTab('acct-qbo-rollback', document.getElementById('acctQboRollbackStub'))">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="loadFuelExpenseTab()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Refresh fuel purchases</div>
+                  <div class="acct-type-row__desc">Sync latest fuel purchases from QuickBooks</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); loadFuelExpenseTab()">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="refreshQboMaster()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Refresh QBO lists</div>
+                  <div class="acct-type-row__desc">Refresh vendors, items, and accounts from QuickBooks</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); refreshQboMaster()">Open →</button>
+              </div>
+              <div class="acct-type-row" onclick="testQuickBooks()">
+                <div class="acct-type-row__info">
+                  <div class="acct-type-row__name">Test connection</div>
+                  <div class="acct-type-row__desc">Verify QuickBooks connection is active and working</div>
+                </div>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); testQuickBooks()">Open →</button>
+              </div>
             </div>
             <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
               <span style="min-width:0;flex:1 1 180px">Up to three sync error titles when the payload has alerts.</span>
@@ -3183,8 +3316,22 @@
               <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
             </div>
             <div style="margin-top:12px">
-              <button type="button" class="acct-board-action-btn acct-board-action-btn--accent" onclick="acctScrollToPendingPost()">Post pending to QuickBooks</button>
-              <button type="button" class="acct-board-action-btn" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Saved maintenance expenses</button>
+              <div class="acct-type-list">
+                <div class="acct-type-row" onclick="acctScrollToPendingPost()">
+                  <div class="acct-type-row__info">
+                    <div class="acct-type-row__name">Post pending to QuickBooks</div>
+                    <div class="acct-type-row__desc">Post all pending ERP records to QuickBooks</div>
+                  </div>
+                  <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); acctScrollToPendingPost()">Open →</button>
+                </div>
+                <div class="acct-type-row" onclick="openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">
+                  <div class="acct-type-row__info">
+                    <div class="acct-type-row__name">Saved maintenance expenses</div>
+                    <div class="acct-type-row__desc">View all saved maintenance expense transactions</div>
+                  </div>
+                  <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'))">Open →</button>
+                </div>
+              </div>
             </div>
           </div>
           <div
@@ -3891,7 +4038,7 @@
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <button
                   type="button"
-                  class="acct-board-action-btn"
+                  class="qb-btn-add"
                   onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry', fuelTxnType: 'fuel-def-combined' })"
                 >
                   Open Fuel/DEF combined ↗
