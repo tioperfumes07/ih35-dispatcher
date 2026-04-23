@@ -228,7 +228,7 @@ async function fetchSamsaraVehiclesFallback(token, logError) {
     console.log(
       '[fallback] using',
       rows.length,
-      'vehicles from cache, first:',
+      'vehicles from live api, first:',
       rows[0]?.name || rows[0]?.id
     );
     return rows.map(mapSamsaraVehicleRow).filter(Boolean);
