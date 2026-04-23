@@ -161,13 +161,14 @@ function normalizeMaintenanceUnitRow(raw = {}) {
 }
 
 function mapSamsaraVehicleRow(raw = {}) {
+  const rawId = String(raw.id || raw.vehicleId || raw.uuid || '').trim();
   const unit = String(
     raw.name ||
       raw.unitNumber ||
       raw.unit_number ||
       raw.attributes?.name ||
       raw.attributes?.unitNumber ||
-      ''
+      rawId
   ).trim();
   if (!unit) return null;
   const odometerMeters = Number(
@@ -181,7 +182,7 @@ function mapSamsaraVehicleRow(raw = {}) {
     ? Math.round(odometerMeters * 0.000621371)
     : null;
   return {
-    id: String(raw.id || raw.vehicleId || raw.uuid || unit),
+    id: rawId || unit,
     name: unit,
     make: String(raw.make || raw.attributes?.make || '').trim() || null,
     model: String(raw.model || raw.attributes?.model || '').trim() || null,
