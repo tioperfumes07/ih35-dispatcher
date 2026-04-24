@@ -586,12 +586,13 @@ export default function App() {
 
     const loadHomeKpis = async () => {
       const reqHeaders = { Accept: 'application/json' }
-      const [masterRes, recordsRes, syncAlertsRes, qboStatusRes, healthRes] = await Promise.allSettled([
+      const [masterRes, recordsRes, syncAlertsRes, qboStatusRes, healthRes, vendorsLocalRes] = await Promise.allSettled([
         fetch('/api/qbo/master', { headers: reqHeaders }),
         fetch('/api/maintenance/records', { headers: reqHeaders }),
         fetch('/api/qbo/sync-alerts', { headers: reqHeaders }),
         fetch('/api/qbo/status', { headers: reqHeaders }),
         fetch('/api/health', { headers: reqHeaders }),
+        fetch('/api/vendors-local', { headers: reqHeaders }),
       ])
 
       const readJson = async (res: PromiseSettledResult<Response>) => {
@@ -599,12 +600,13 @@ export default function App() {
         return res.value.json().catch(() => null)
       }
 
-      const [master, records, syncAlerts, qboStatus, health] = await Promise.all([
+      const [master, records, syncAlerts, qboStatus, health, vendorsLocal] = await Promise.all([
         readJson(masterRes),
         readJson(recordsRes),
         readJson(syncAlertsRes),
         readJson(qboStatusRes),
         readJson(healthRes),
+        readJson(vendorsLocalRes),
       ])
 
       if (cancelled) return
@@ -643,11 +645,20 @@ export default function App() {
       const vehicleCount = Array.isArray(recordsObj?.vehicles) ? recordsObj.vehicles.length : 0
 
       const masterObj = master && typeof master === 'object' ? (master as Record<string, unknown>) : null
-      const vendorCount = Array.isArray(masterObj?.vendors)
-        ? masterObj.vendors.length
-        : Array.isArray((recordsObj?.qboCache as Record<string, unknown> | undefined)?.vendors)
-          ? ((recordsObj?.qboCache as Record<string, unknown>).vendors as unknown[]).length
+      const recordsQboVendors = Array.isArray((recordsObj?.qboCache as Record<string, unknown> | undefined)?.vendors)
+        ? ((recordsObj?.qboCache as Record<string, unknown>).vendors as unknown[])
+        : []
+      const vendorsLocalCount =
+        vendorsLocal &&
+        typeof vendorsLocal === 'object' &&
+        Array.isArray((vendorsLocal as Record<string, unknown>).vendors)
+          ? ((vendorsLocal as Record<string, unknown>).vendors as unknown[]).length
           : 0
+      const vendorCount = Array.isArray(masterObj?.vendors) && masterObj.vendors.length > 0
+        ? masterObj.vendors.length
+        : recordsQboVendors.length > 0
+          ? recordsQboVendors.length
+          : vendorsLocalCount
 
       const syncObj =
         syncAlerts && typeof syncAlerts === 'object'

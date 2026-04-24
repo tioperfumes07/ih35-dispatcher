@@ -434,6 +434,36 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+  app.get('/api/board', async (_req, res) => {
+    try {
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      let vehicles = [];
+      if (token) {
+        try {
+          const payload = await getVehicles(token);
+          const { rows } = summarizeSamsaraVehiclesPayload(payload);
+          vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
+          console.log('[board] samsara direct:', vehicles.length, 'vehicles');
+        } catch (e) {
+          logError('[board] samsara call failed', e);
+        }
+      }
+      if (!vehicles.length) {
+        const erp = readFullErpJson();
+        vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+      }
+      return res.json({
+        vehicles, live: [], hos: [], assignments: [],
+        refreshedAt: new Date().toISOString(),
+        source: vehicles.length > 0 ? 'samsara-live' : 'empty'
+      });
+    } catch (e) {
+      logError('GET /api/board', e);
+      return res.json({ vehicles: [], live: [], hos: [],
+        assignments: [], refreshedAt: new Date().toISOString(), source: 'error' });
+    }
+  });
+
   app.get('/api/maintenance/service-types', async (_req, res) => {
     try {
       if (!getPool()) {
