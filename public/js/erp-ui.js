@@ -1173,6 +1173,17 @@
    * Open the canonical hub FuelTransactionForm (new tab). Used from fuel.html and ERP helpers.
    * @param {'fuel-bill'|'fuel-expense'|'def-bill'|'fuel-def-combined'} type
    */
+  function erpNormalizeFleetHubPath(raw) {
+    var v = String(raw || '').trim();
+    if (!v) return '';
+    v = v.replace(/\\/g, '/');
+    v = v.replace(/\/fleet-reports(?:\/fleet-reports)+/g, '/fleet-reports');
+    v = v.replace(/\/\/{2,}/g, '/');
+    if (!v.startsWith('/')) v = '/' + v;
+    v = v.replace(/\/$/, '');
+    return v;
+  }
+
   function erpOpenFuelTransactionHub(type) {
     var t = String(type || 'fuel-bill').trim() || 'fuel-bill';
     var hubBase =
@@ -1186,11 +1197,11 @@
       deployRef = '';
     }
     var deploySuffix = deployRef ? '&v=' + encodeURIComponent(deployRef) : '';
-    var base = String(hubBase || '').replace(/\/+$/, '');
-    base = base.replace(/\/fleet-reports(?:\/fleet-reports)+$/, '/fleet-reports');
+    var base = erpNormalizeFleetHubPath(hubBase || '');
     var path = '/fleet-reports/index.html';
     if (base === '/fleet-reports' || /\/fleet-reports$/.test(base)) path = '/index.html';
-    var url = base + path + '?erpFuelModal=1&fuelTxnType=' + encodeURIComponent(t) + deploySuffix;
+    var url = (base + path).replace(/\/fleet-reports(?:\/fleet-reports)+/g, '/fleet-reports').replace(/\/\/{2,}/g, '/');
+    url += '?erpFuelModal=1&fuelTxnType=' + encodeURIComponent(t) + deploySuffix;
     try {
       global.open(url, '_blank', 'noopener,noreferrer');
     } catch (_) {}

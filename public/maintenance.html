@@ -7711,12 +7711,17 @@
     function erpSbGroup(module, gid, title, defaultOpen, bodyHtml) {
       const key = 'ih35_sb_v2_' + module + '_' + gid;
       let open = defaultOpen;
-      try {
-        const v = localStorage.getItem(key);
-        if (v === '0') open = false;
-        else if (v === '1') open = true;
-      } catch (_) {
-        /* ignore */
+      const forceClosedAccounting = module === 'accounting' && (gid === 'expenses' || gid === 'bills' || gid === 'billpay');
+      if (forceClosedAccounting) {
+        open = false;
+      } else {
+        try {
+          const v = localStorage.getItem(key);
+          if (v === '0') open = false;
+          else if (v === '1') open = true;
+        } catch (_) {
+          /* ignore */
+        }
       }
       const cls = open ? 'erp-sb-group sidebar-group is-open' : 'erp-sb-group sidebar-group';
       const exp = open ? 'true' : 'false';
@@ -7942,6 +7947,16 @@
         return;
       }
       if (name === 'accounting') {
+        try {
+          ['expenses', 'bills', 'billpay'].forEach(g => {
+            localStorage.removeItem('ih35_sb_accounting_' + g);
+            localStorage.removeItem('ih35_sb_v2_accounting_' + g);
+            localStorage.setItem('ih35_sb_v2_accounting_' + g, '0');
+          });
+        } catch (_) {
+          /* ignore */
+        }
+
         const expensesBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;, { fuelVariant: &quot;fuel-expense&quot; })">Fuel expense</button>' +
@@ -11309,12 +11324,33 @@
       }
     }
 
+    function erpShowStartupConnectionIssue(details) {
+      const msg = 'Connection issue - please refresh';
+      const detail = Array.isArray(details) && details.length ? ' (' + details.join(', ') + ')' : '';
+      const full = msg + detail;
+      const bar = document.getElementById('authBanner');
+      if (bar) {
+        bar.classList.remove('hidden');
+        bar.textContent = full;
+      }
+      const qbo = document.getElementById('erpQboDisconnectBanner');
+      if (qbo) {
+        qbo.classList.remove('hidden');
+        qbo.textContent = full;
+      }
+      const sam = document.getElementById('erpSamsaraDisconnectBanner');
+      if (sam) {
+        sam.classList.remove('hidden');
+        sam.textContent = full;
+      }
+    }
+
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
         const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes] =
           await Promise.all([
-            j('/api/maintenance/dashboard'),
+            j('/api/maintenance/dashboard').catch(err => ({ ok: false, error: err?.message || String(err), vehicles: [], dashboard: [], tireAlerts: [] })),
             j('/api/maintenance/records'),
             j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
             j('/api/maintenance/service-types').catch(() => ({ ok: false, names: [] })),
@@ -11338,6 +11374,17 @@
           bar.classList.add('hidden');
           bar.textContent = '';
         }
+
+        const startupFailures = [];
+        if (!dashRes || dashRes.ok !== true) startupFailures.push('/api/maintenance/dashboard');
+        if (!healthRes || healthRes.ok !== true) startupFailures.push('/api/health');
+        if (!qboStatusRes || qboStatusRes.ok !== true) startupFailures.push('/api/qbo/status');
+        if (startupFailures.length) {
+          erpShowStartupConnectionIssue(startupFailures);
+          renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
+          return;
+        }
+
         setTmsUiEnabled(!!dbRes);
 
         {
