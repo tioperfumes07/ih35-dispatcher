@@ -3866,3 +3866,105 @@ body.erp-maintenance .erp-icon-nav__btn.nav-btn::after {
   margin-top: 1px;
   opacity: 0.8;
 }
+
+
+/* ============================================================================
+   Change 4 — Input sizing + heading typography unification
+   ============================================================================ */
+:root {
+  --erp-heading-font-size: 13px;
+  --erp-heading-font-weight: 500;
+  --erp-control-height: 30px;
+  --erp-control-padding-x: 8px;
+}
+
+/* Reports tab bar style reference: 13px / 500 */
+body.erp-maintenance .erp-main-body h1,
+body.erp-maintenance .erp-main-body h2,
+body.erp-maintenance .erp-main-body h3,
+body.erp-maintenance .erp-main-body h4,
+body.erp-maintenance .erp-main-body h5,
+body.erp-maintenance .erp-main-body h6,
+body.dispatch-page h1,
+body.dispatch-page h2,
+body.dispatch-page h3,
+body.dispatch-page h4,
+body.dispatch-page h5,
+body.dispatch-page h6,
+body.fuel-board h1,
+body.fuel-board h2,
+body.fuel-board h3,
+body.fuel-board h4,
+body.fuel-board h5,
+body.fuel-board h6,
+body.banking-page h1,
+body.banking-page h2,
+body.banking-page h3,
+body.banking-page h4,
+body.banking-page h5,
+body.banking-page h6,
+body.settings-page h1,
+body.settings-page h2,
+body.settings-page h3,
+body.settings-page h4,
+body.settings-page h5,
+body.settings-page h6,
+body.erp-maintenance .panel-title,
+body.dispatch-page .panel-title,
+body.banking-page .ph,
+body.settings-page .panel h1 {
+  font-size: var(--erp-heading-font-size) !important;
+  font-weight: var(--erp-heading-font-weight) !important;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+/* Uniform compact controls across app pages */
+body.erp-maintenance input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+body.erp-maintenance select,
+body.erp-maintenance input[type='date'],
+body.erp-maintenance input[type='datetime-local'],
+body.erp-maintenance input[type='time'],
+body.dispatch-page input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+body.dispatch-page select,
+body.dispatch-page input[type='date'],
+body.dispatch-page input[type='datetime-local'],
+body.dispatch-page input[type='time'],
+body.fuel-board input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+body.fuel-board select,
+body.fuel-board input[type='date'],
+body.fuel-board input[type='datetime-local'],
+body.fuel-board input[type='time'],
+body.banking-page input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+body.banking-page select,
+body.banking-page input[type='date'],
+body.banking-page input[type='datetime-local'],
+body.banking-page input[type='time'],
+body.settings-page input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+body.settings-page select,
+body.settings-page input[type='date'],
+body.settings-page input[type='datetime-local'],
+body.settings-page input[type='time'] {
+  height: var(--erp-control-height) !important;
+  min-height: var(--erp-control-height) !important;
+  max-height: var(--erp-control-height) !important;
+  padding: 0 var(--erp-control-padding-x) !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+  box-sizing: border-box;
+}
+
+/* Keep multiline text areas compact but readable */
+body.erp-maintenance textarea,
+body.dispatch-page textarea,
+body.fuel-board textarea,
+body.banking-page textarea,
+body.settings-page textarea {
+  font-size: 13px !important;
+  padding: 6px 8px !important;
+  line-height: 1.3 !important;
+}
+
+/* ============================================================================
+   End Change 4 overrides
+   ============================================================================ */
