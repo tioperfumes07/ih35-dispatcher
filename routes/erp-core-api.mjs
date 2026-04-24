@@ -396,64 +396,6 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/maintenance/dashboard', async (_req, res) => {
-    const erp = readFullErpJson();
-    const erpVehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
-    const dashboard = Array.isArray(erp.maintenanceDashboard) ? erp.maintenanceDashboard : [];
-    const tireAlerts = Array.isArray(erp.tireAlerts) ? erp.tireAlerts : [];
-    const cachedRows = Array.isArray(samsaraHealthCache?.rows)
-      ? samsaraHealthCache.rows
-      : [];
-    let mappedVehicles = cachedRows.map(mapSamsaraVehicleRow).filter(Boolean);
-    console.log('[maintenance/dashboard] from samsaraHealthCache:', mappedVehicles.length, 'vehicles');
-    if (!mappedVehicles.length && erpVehicles.length) {
-      mappedVehicles = erpVehicles;
-    }
-    res.json({
-      ok: true,
-      vehicles: mappedVehicles,
-      dashboard,
-      tireAlerts,
-      refreshedAt: erp.refreshedAt || null,
-      source: mappedVehicles.length > 0 ? 'samsara-cache' : 'empty'
-    });
-  });
-
-  app.get('/api/maintenance/records', (_req, res) => {
-    res.json(readFullErpJson());
-  });
-
-  app.get('/api/maintenance/units', (_req, res) => {
-    try {
-      const erp = readFullErpJson();
-      const rows = Array.isArray(erp.vehicles) ? erp.vehicles : [];
-      const units = rows.map(normalizeMaintenanceUnitRow).filter(r => r.unit !== 'Unknown');
-      if (units.length > 0) {
-        return res.json({ ok: true, units, count: units.length, refreshedAt: erp.refreshedAt || null });
-      }
-      const origin = fleetApiOrigin();
-      return fetch(`${origin}/api/assets`, { headers: { Accept: 'application/json' } })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((payload) => {
-          const apiRows = Array.isArray(payload?.assets) ? payload.assets : [];
-          const merged = apiRows.map(normalizeMaintenanceUnitRow).filter((r) => r.unit !== 'Unknown');
-          return res.json({
-            ok: true,
-            units: merged,
-            count: merged.length,
-            refreshedAt: erp.refreshedAt || null,
-            source: merged.length ? 'fleet-api' : 'erp-json',
-          });
-        })
-        .catch(() =>
-          res.json({ ok: true, units, count: units.length, refreshedAt: erp.refreshedAt || null }),
-        );
-    } catch (e) {
-      logError('GET /api/maintenance/units', e);
-      return res.status(500).json({ ok: false, error: e?.message || String(e) });
-    }
-  });
-
-  app.get('/api/board', async (_req, res) => {
     try {
       const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
       let vehicles = [];
@@ -462,28 +404,26 @@ export function mountErpCoreApi(app, opts = {}) {
           const payload = await getVehicles(token);
           const { rows } = summarizeSamsaraVehiclesPayload(payload);
           vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
-          console.log('[board] samsara direct:', vehicles.length, 'vehicles');
+          console.log('[dashboard] samsara direct:', vehicles.length, 'vehicles');
         } catch (e) {
-          logError('[board] samsara call failed', e);
+          logError('[dashboard] samsara call failed', e);
         }
       }
-      if (!vehicles.length) {
-        const erp = readFullErpJson();
-        vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
-      }
+      const erp = readFullErpJson();
+      if (!vehicles.length) vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+      const dashboard = Array.isArray(erp.maintenanceDashboard) ? erp.maintenanceDashboard : [];
+      const tireAlerts = Array.isArray(erp.tireAlerts) ? erp.tireAlerts : [];
       return res.json({
+        ok: true,
         vehicles,
-        live: [],
-        hos: [],
-        assignments: [],
+        dashboard,
+        tireAlerts,
         refreshedAt: new Date().toISOString(),
         source: vehicles.length > 0 ? 'samsara-live' : 'empty'
       });
     } catch (e) {
-      logError('GET /api/board', e);
-      return res.json({ vehicles: [], live: [], hos: [],
-        assignments: [], refreshedAt: new Date().toISOString(),
-        source: 'error' });
+      logError('GET /api/maintenance/dashboard', e);
+      return res.json({ ok: false, vehicles: [], dashboard: [], tireAlerts: [], source: 'error' });
     }
   });
 
