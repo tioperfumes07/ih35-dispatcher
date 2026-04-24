@@ -465,9 +465,9 @@
       <button
         type="button"
         class="erp-icon-nav__btn nav-btn"
-        data-section="catalog"
+        data-section="lists"
         title="Lists &amp; catalogs — service types, QuickBooks items, vendors, operational labels, fleet / Samsara"
-        onclick="openSection('catalog', this); openCatalogSubpanel('service');"
+        onclick="openSection('lists', this)"
       >
         <span class="erp-icon-nav__glyph" aria-hidden="true">▤</span><span class="erp-icon-nav__lbl">Lists</span>
       </button>
@@ -2827,14 +2827,14 @@
               <button type="button" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>
               <button type="button" onclick="location.href='/banking.html'">Bank CSV matching</button>
               <button type="button" onclick="connectQuickBooks()">Connect QuickBooks</button>
-              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('fleet');">Fleet &amp; Samsara writes</button>
-              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('operational');">Operational status labels</button>
-              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('qbo');">QuickBooks items &amp; accounts</button>
+              <button type="button" onclick="openSection('lists', document.querySelector('.nav-btn[data-section=lists]'));">Fleet &amp; Samsara writes</button>
+              <button type="button" onclick="openSection('lists', document.querySelector('.nav-btn[data-section=lists]'));">Operational status labels</button>
+              <button type="button" onclick="openSection('lists', document.querySelector('.nav-btn[data-section=lists]'));">QuickBooks items &amp; accounts</button>
               <button type="button" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
-              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('service');">Service types database</button>
+              <button type="button" onclick="openSection('lists', document.querySelector('.nav-btn[data-section=lists]'));">Service types database</button>
               <button type="button" onclick="location.href='/settings.html'">Settings &amp; users</button>
               <button type="button" onclick="openSection('uploads', document.querySelector('.nav-btn[data-section=uploads]')); openUploadSubpanel('fuel');">Upload center</button>
-              <button type="button" onclick="openSection('catalog', document.querySelector('.nav-btn[data-section=catalog]')); openCatalogSubpanel('vendors');">Vendors &amp; driver payees</button>
+              <button type="button" onclick="openSection('lists', document.querySelector('.nav-btn[data-section=lists]'));">Vendors &amp; driver payees</button>
             </div>
             <div style="margin-top:12px">
               <div class="acct-type-list">
@@ -9418,6 +9418,11 @@
     }
 
     function openSection(name, btn) {
+      const REACT_SECTIONS = { 'lists': 'lists', 'reports': 'reports', 'scheduler': 'scheduler', 'drivers': 'drivers' };
+      if (REACT_SECTIONS[name]) {
+        window.location.href = '/fleet-reports?section=' + REACT_SECTIONS[name];
+        return;
+      }
       const secEl = document.getElementById(`section-${name}`);
       if (!secEl) {
         console.warn('openSection: missing #section-' + name);
