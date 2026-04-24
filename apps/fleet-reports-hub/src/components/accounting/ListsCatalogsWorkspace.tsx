@@ -6,6 +6,7 @@ import { PartsReferenceCatalogTab } from '../catalog/PartsReferenceCatalogTab'
 import { DriversDatabase } from '../lists/DriversDatabase'
 import { VendorsDatabase } from '../lists/VendorsDatabase'
 import { FleetAssetsDatabase } from '../lists/FleetAssetsDatabase'
+import { ImportTrailersPanel } from '../lists/ImportTrailersPanel'
 import { OperationalStatusListPanel } from '../lists/OperationalStatusListPanel'
 import { FleetSamsaraWritesListPanel } from '../lists/FleetSamsaraWritesListPanel'
 import { BankCsvMatchingListPanel } from '../lists/BankCsvMatchingListPanel'
@@ -24,6 +25,7 @@ export type ListsCatalogsTab =
   | 'service-types'
   | 'vendors-database'
   | 'vendors-drivers'
+  | 'trailer-import'
 
 export type ListsCatalogListId =
   | 'fleet-writes'
@@ -39,6 +41,7 @@ export type ListsCatalogListId =
   | 'drivers-db'
   | 'vendors-db'
   | 'assets-db'
+  | 'import-trailers'
 
 /** Keep legacy tab ids for URL/deep-link compatibility from ERP shell. */
 export const LISTS_CATALOG_TAB_IDS: ListsCatalogsTab[] = [
@@ -51,6 +54,7 @@ export const LISTS_CATALOG_TAB_IDS: ListsCatalogsTab[] = [
   'service-types',
   'vendors-database',
   'vendors-drivers',
+  'trailer-import',
 ]
 
 type Props = {
@@ -81,6 +85,7 @@ function mapTabToCategory(tab: ListsCatalogsTab): CategoryId {
   if (tab === 'drivers-database' || tab === 'name-management') return 'drivers'
   if (tab === 'vendors-database') return 'vendors'
   if (tab === 'service-types') return 'parts-repairs'
+  if (tab === 'trailer-import') return 'fleet-samsara'
   return 'fleet-samsara'
 }
 
@@ -90,6 +95,7 @@ function mapListToCategory(listId: ListsCatalogListId): CategoryId {
   if (listId === 'drivers-db' || listId === 'name-registry' || listId === 'rename-vendors' || listId === 'find-merge') return 'drivers'
   if (listId === 'vendors-db') return 'vendors'
   if (listId === 'parts-ref' || listId === 'service-types-db') return 'parts-repairs'
+  if (listId === 'import-trailers') return 'fleet-samsara'
   return 'fleet-samsara'
 }
 
@@ -176,6 +182,11 @@ export function ListsCatalogsWorkspace({
             id: 'fleet-writes',
             label: 'Fleet & Samsara writes',
             description: `Telemetry write log (${INITIAL_FLEET_WRITE_ROWS.length} demo rows)`,
+          },
+          {
+            id: 'import-trailers',
+            label: 'Import trailers',
+            description: 'Upload .xlsx/.csv and bulk-upsert trailer records',
           },
         ],
       },
@@ -272,6 +283,8 @@ export function ListsCatalogsWorkspace({
         return <VendorsDatabase onCloseList={closeList} />
       case 'assets-db':
         return <FleetAssetsDatabase onCloseList={closeList} />
+      case 'import-trailers':
+        return <ImportTrailersPanel onCloseList={closeList} />
       default:
         return null
     }

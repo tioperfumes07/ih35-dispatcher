@@ -389,6 +389,28 @@
       </footer>
     </div>
   </div>
+  <div id="maintFleetTableModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintFleetTableModal()" aria-hidden="true">
+    <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="maintFleetTableModalTitle" onclick="event.stopPropagation()" style="max-width:min(1120px,95vw)">
+      <header class="erp-qb-dialog__head maint-modal-head-draggable" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <h3 id="maintFleetTableModalTitle" class="erp-qb-dialog__title" style="margin:0">Fleet table · Active trucks</h3>
+        <button type="button" class="erp-qb-sheet-close" aria-label="Close" onclick="closeMaintFleetTableModal()">×</button>
+      </header>
+      <div class="erp-qb-dialog__body">
+        <div class="mini-note" id="maintFleetTableMeta" style="margin:0 0 10px">Loading active trucks…</div>
+        <div class="table-wrap erp-table-scroll" style="max-height:min(66vh,640px)">
+          <table>
+            <thead>
+              <tr>
+                <th>Unit#</th><th>Make</th><th>Model</th><th>Year</th><th>VIN</th><th>License Plate</th>
+                <th>Type</th><th>Status</th><th>Last Service</th><th>Due Date</th>
+              </tr>
+            </thead>
+            <tbody id="maintFleetTableModalBody"><tr><td colspan="10" class="mini-note">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
   <datalist id="unitOptions"></datalist>
   <datalist id="serviceOptions"></datalist>
   <datalist id="partsOptions"></datalist>
@@ -766,6 +788,15 @@
       </section>
 
       <section id="section-safety" class="section erp-ops-section">
+        <div class="panel maint-section-card" style="margin-bottom:12px">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="panel-title" style="margin:0">Samsara live map</div>
+            <div id="safetyMapMeta" class="mini-note">Loading map…</div>
+          </div>
+          <div class="panel-body" style="padding:10px">
+            <div id="safetyLiveMap" style="height:min(58vh,520px);width:100%;border:1px solid var(--color-border);border-radius:8px"></div>
+          </div>
+        </div>
         <div class="subtabs erp-ops-subtabs-bar" style="margin-bottom:12px">
           <button type="button" class="subtab" onclick="openSafetyTab('safe-active', this)">Active / in service</button>
           <button type="button" class="subtab" onclick="openSafetyTab('safe-assign', this)">Assignments</button>
@@ -1044,7 +1075,7 @@
             <div class="maint-action-strip__top">
               <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
                 <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
-                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintFleetTableModal()">Fleet table</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
               </div>
@@ -1060,7 +1091,7 @@
           </div>
           <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
             <button type="button" class="maint-nav-tab" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
-            <button type="button" class="maint-nav-tab" data-maint-main="fleet" tabindex="-1" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
+            <button type="button" class="maint-nav-tab" data-maint-main="fleet" tabindex="-1" onclick="openMaintFleetTableModal()">Fleet table</button>
             <button type="button" class="maint-nav-tab" data-maint-main="rm" tabindex="-1" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
             <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
           </div>
@@ -1240,7 +1271,7 @@
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Parts lookup
                           
                         </span>
-                        <input id="partsLookupInput" class="qb-in maint-field" list="partsOptions" placeholder="Search parts catalog" autocomplete="off" oninput="resolvePartsLookupSearch()" onblur="resolvePartsLookupSearch()" />
+                        <input id="partsLookupInput" class="qb-in maint-field" list="partsOptions" placeholder="Search parts catalog" autocomplete="off" oninput="resolvePartsLookupSearch(); schedulePartsLookupFetch()" onblur="resolvePartsLookupSearch()" />
                         <input id="partsLookupValue" type="hidden" />
                         <div class="mini-note maint-field-hint">Suggestions come from <code>vehicle_parts_reference</code> catalog.</div>
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px">Planned service / repair
@@ -2848,7 +2879,7 @@
           </div>
         </div>
 
-        <div id="acct-transactions" class="accounting-tab">
+        <div id="acct-transactions" class="accounting-tab hidden">
           <div id="erpApDocShellPlaceholder" class="erp-dom-placeholder" aria-hidden="true"></div>
           <div id="erpApDocShellPanel" class="panel qb-panel qb-doc-shell qb-doc-shell--ap-spec acct-expense-form-wrap">
             <div class="qb-doc-topbar">
@@ -5755,6 +5786,9 @@
     let __maintLinkSyncing = false;
     let __hydratingMaintenanceRecord = false;
     let __syncMaintLinkAcctRaf = null;
+    let __partsLookupFetchTimer = null;
+    let safetyLiveMap = null;
+    let safetyLiveMapLayer = null;
     /** Service catalog option names (width hints + legacy helpers). */
     let __servicePresetList = [];
     /** From GET /api/maintenance/service-types (Postgres catalog or server defaults). */
@@ -8671,7 +8705,7 @@
           pm: 'Select a unit first to create a PM service order.',
           tire: 'Select a unit first to create a tire service order.'
         };
-        const msg = placeholders[String(preset || '').trim()] || 'Select a unit first to create a service order.';
+        const msg = 'Select a unit from the fleet list first';
         const ph = document.getElementById('maintWoNoUnitPlaceholder');
         if (ph) ph.textContent = msg;
         if (typeof erpNotify === 'function') erpNotify(msg, 'warning');
@@ -9418,6 +9452,9 @@
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
       }
+      if (name === 'safety') {
+        requestAnimationFrame(() => renderSafetyLiveMap());
+      }
       if (name === 'reports') {
         loadReportsData();
         if (typeof repInitReportsHub === 'function') repInitReportsHub();
@@ -9481,14 +9518,8 @@
       if (name === 'accounting') {
         requestAnimationFrame(() => {
           syncAcctDashFromQboPayload();
+          showAccountingHomeOnly();
           syncAccountingSidebarActive();
-          const cur = String(location.hash || '')
-            .replace(/^#/, '')
-            .split('?')[0]
-            .split('&')[0];
-          if (cur === 'accounting' && typeof erpSyncAccountingTabHash === 'function') {
-            erpSyncAccountingTabHash('acct-transactions');
-          }
         });
       }
     }
@@ -9498,6 +9529,156 @@
         `#erpIconNav .nav-btn[data-section="${name}"], #erpSectionGhostNav .nav-btn[data-section="${name}"]`
       );
       openSection(name, btn);
+    }
+
+
+    function showAccountingHomeOnly() {
+      document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('#section-accounting .subtab').forEach(el => el.classList.remove('active'));
+      paintAccountingSidebarActive('');
+    }
+
+    async function openMaintFleetTableModal() {
+      const modal = document.getElementById('maintFleetTableModal');
+      const body = document.getElementById('maintFleetTableModalBody');
+      const meta = document.getElementById('maintFleetTableMeta');
+      if (!modal || !body) return;
+      modal.classList.add('on');
+      modal.setAttribute('aria-hidden', 'false');
+      body.innerHTML = '<tr><td colspan="10" class="mini-note">Loading…</td></tr>';
+      if (meta) meta.textContent = 'Loading active trucks…';
+      try {
+        const data = await j('/api/fleet/assets');
+        const rows = Array.isArray(data.assets) ? data.assets : [];
+        const trucks = rows.filter(r => /^T(\d{3})$/i.test(String(r.unit_number || '')) && String(r.status || '') === 'Active');
+        const recs = Array.isArray(erp.records) ? erp.records : [];
+        const byUnit = new Map();
+        recs.forEach(r => {
+          const u = String(r.unit || '').trim();
+          if (!u) return;
+          const cur = byUnit.get(u);
+          const d = String(r.serviceDate || r.createdAt || '');
+          if (!cur || d > cur.d) byUnit.set(u, { d, due: r.nextDueDate || r.dueDate || '' });
+        });
+        if (!trucks.length) {
+          body.innerHTML = '<tr><td colspan="10" class="mini-note">No active trucks found.</td></tr>';
+          if (meta) meta.textContent = '0 active trucks';
+          return;
+        }
+        body.innerHTML = trucks.map(r => {
+          const unit = String(r.unit_number || '');
+          const svc = byUnit.get(unit) || { d: '', due: '' };
+          return `<tr>
+            <td><strong>${escapeHtml(unit)}</strong></td>
+            <td>${escapeHtml(r.make || '—')}</td>
+            <td>${escapeHtml(r.model || '—')}</td>
+            <td>${escapeHtml(r.year != null ? String(r.year) : '—')}</td>
+            <td>${escapeHtml(r.vin || '—')}</td>
+            <td>${escapeHtml(r.licensePlate || '—')}</td>
+            <td>${escapeHtml(r.asset_type || 'Truck')}</td>
+            <td>${escapeHtml(r.status || 'Active')}</td>
+            <td>${escapeHtml(svc.d ? (typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(svc.d) : String(svc.d).slice(0,10)) : '—')}</td>
+            <td>${escapeHtml(svc.due ? (typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(svc.due) : String(svc.due).slice(0,10)) : '—')}</td>
+          </tr>`;
+        }).join('');
+        if (meta) meta.textContent = `${trucks.length} active trucks`;
+      } catch (e) {
+        body.innerHTML = `<tr><td colspan="10" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</td></tr>`;
+        if (meta) meta.textContent = 'Load failed';
+      }
+    }
+
+    function closeMaintFleetTableModal() {
+      const modal = document.getElementById('maintFleetTableModal');
+      if (!modal) return;
+      modal.classList.remove('on');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function schedulePartsLookupFetch() {
+      if (__partsLookupFetchTimer) clearTimeout(__partsLookupFetchTimer);
+      __partsLookupFetchTimer = setTimeout(() => {
+        void fetchPartsLookupOptions();
+      }, 220);
+    }
+
+    async function fetchPartsLookupOptions() {
+      const inp = document.getElementById('partsLookupInput');
+      const dl = document.getElementById('partsOptions');
+      if (!inp || !dl) return;
+      const q = String(inp.value || '').trim();
+      if (!q) return;
+      try {
+        const data = await j('/api/parts?q=' + encodeURIComponent(q));
+        const names = Array.isArray(data.parts)
+          ? data.parts.map(p => p.label || p.part_name || p.name).filter(Boolean)
+          : Array.isArray(data.names)
+            ? data.names
+            : [];
+        const merged = Array.from(new Set([...(catalogPartNames || []), ...names.map(n => String(n || '').trim()).filter(Boolean)])).sort((a,b)=>a.localeCompare(b));
+        catalogPartNames = merged;
+        dl.innerHTML = merged.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+      } catch (_) {
+        /* keep local fallback list */
+      }
+    }
+
+    async function hydrateQboVendorsWithFallback(masterPayload) {
+      const m = masterPayload && typeof masterPayload === 'object' ? masterPayload : null;
+      let vendors = normalizeQboVendorRows(m?.vendors || []);
+      if (vendors.length) return vendors;
+      try {
+        const byVendors = await j('/api/qbo/vendors');
+        vendors = normalizeQboVendorRows(byVendors?.vendors || []);
+        if (vendors.length) return vendors;
+      } catch (_) {}
+      try {
+        const bySearch = await j('/api/qbo/vendors/search?q=' + encodeURIComponent(''));
+        vendors = normalizeQboVendorRows(bySearch?.vendors || []);
+      } catch (_) {}
+      return vendors;
+    }
+
+    function initSafetyLiveMap() {
+      const host = document.getElementById('safetyLiveMap');
+      if (!host || typeof L === 'undefined') return false;
+      if (!safetyLiveMap) {
+        safetyLiveMap = L.map(host, { zoomControl: true }).setView([31.7619, -106.485], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(safetyLiveMap);
+        safetyLiveMapLayer = L.layerGroup().addTo(safetyLiveMap);
+      }
+      return true;
+    }
+
+    function renderSafetyLiveMap() {
+      const meta = document.getElementById('safetyMapMeta');
+      if (!initSafetyLiveMap()) {
+        if (meta) meta.textContent = 'Map unavailable';
+        return;
+      }
+      const veh = Array.isArray(board?.vehicles) ? board.vehicles : [];
+      const withGps = veh.filter(v => Number.isFinite(Number(v.lastGpsLat)) && Number.isFinite(Number(v.lastGpsLng)));
+      safetyLiveMapLayer.clearLayers();
+      if (!withGps.length) {
+        if (meta) meta.textContent = 'No GPS points available';
+        return;
+      }
+      const bounds = [];
+      withGps.forEach(v => {
+        const lat = Number(v.lastGpsLat);
+        const lng = Number(v.lastGpsLng);
+        bounds.push([lat, lng]);
+        const popup = `<strong>${escapeHtml(v.name || v.unit_number || 'Unit')}</strong><br/>${escapeHtml(v.driverName || 'No driver assigned')}`;
+        L.marker([lat, lng]).bindPopup(popup).addTo(safetyLiveMapLayer);
+      });
+      if (bounds.length) {
+        try { safetyLiveMap.fitBounds(bounds, { padding: [18, 18], maxZoom: 11 }); } catch (_) {}
+      }
+      if (meta) meta.textContent = `${withGps.length} / ${veh.length} vehicles with GPS · refresh 60s`;
+      setTimeout(() => { try { safetyLiveMap.invalidateSize(); } catch (_) {} }, 80);
     }
 
     function applyNavHash(opts) {
@@ -10913,8 +11094,9 @@
     async function refreshQboMaster() {
       try {
         const data = await j('/api/qbo/master');
+        const vendors = await hydrateQboVendorsWithFallback(data);
         erp.qboCache = {
-          vendors: normalizeQboVendorRows(data.vendors || []),
+          vendors: vendors.length ? vendors : normalizeQboVendorRows(data.vendors || []),
           items: data.items || [],
           accounts: data.accounts || [],
           accountsExpense: data.accountsExpense || [],
@@ -11502,11 +11684,12 @@
         tireAlerts = dashRes.tireAlerts || [];
         erp = erpRes || {};
         const master = qboMasterRes && typeof qboMasterRes === 'object' ? qboMasterRes : null;
+        const fallbackVendors = await hydrateQboVendorsWithFallback(master);
         const prevCache = erp.qboCache && typeof erp.qboCache === 'object' ? erp.qboCache : {};
         erp.qboCache = {
           ...prevCache,
           ...(master ? {
-            vendors: normalizeQboVendorRows(master.vendors || []),
+            vendors: fallbackVendors.length ? fallbackVendors : normalizeQboVendorRows(master.vendors || []),
             items: Array.isArray(master.items) ? master.items : (prevCache.items || []),
             accounts: Array.isArray(master.accounts) ? master.accounts : (prevCache.accounts || []),
             accountsExpense: Array.isArray(master.accountsExpense) ? master.accountsExpense : (prevCache.accountsExpense || []),
@@ -11566,6 +11749,7 @@
         renderMaintenanceTable();
         renderTrackingBoard();
         renderSafetyAll();
+        renderSafetyLiveMap();
         renderTrackingAssetsTable();
         renderTrackingDrivers();
         renderApTransactions();

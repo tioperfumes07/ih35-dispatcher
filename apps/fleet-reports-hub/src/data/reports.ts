@@ -514,22 +514,16 @@ export const REPORTS: ReportDef[] = [
   },
 ]
 
-/** Top tabs: Overview first (default), then A→Z by label (Packet 8). */
-const TABS_SOURCE: { id: ReportCategory; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'accounting', label: 'Accounting' },
-  { id: 'compliance', label: 'Compliance' },
-  { id: 'custom', label: 'Custom' },
-  { id: 'dot', label: 'DOT Compliance' },
-  { id: 'fuel', label: 'Fuel & Energy' },
-  { id: 'maintenance', label: 'Maintenance' },
-  { id: 'operations', label: 'Operations' },
-  { id: 'safety', label: 'Safety & HOS' },
-]
-
+/** Top tabs (fixed order requested by ERP shell): Overview | Maintenance | Accounting | Safety & HOS | Fuel & Energy | Operations | DOT | Custom */
 export const TABS: { id: ReportCategory; label: string }[] = [
-  TABS_SOURCE[0]!,
-  ...TABS_SOURCE.slice(1).sort((a, b) => a.label.localeCompare(b.label)),
+  { id: 'overview', label: 'Overview' },
+  { id: 'maintenance', label: 'Maintenance' },
+  { id: 'accounting', label: 'Accounting' },
+  { id: 'safety', label: 'Safety & HOS' },
+  { id: 'fuel', label: 'Fuel & Energy' },
+  { id: 'operations', label: 'Operations' },
+  { id: 'dot', label: 'DOT' },
+  { id: 'custom', label: 'Custom' },
 ]
 
 /** Default unit numbers for Reports filters (`Unit {n}` labels built in FilterSidebar). */

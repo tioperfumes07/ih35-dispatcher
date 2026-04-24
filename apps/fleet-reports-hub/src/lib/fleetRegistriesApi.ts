@@ -314,3 +314,81 @@ export async function fetchFleetAssetUnits() {
     count: number
   }>('/api/fleet/assets/units')
 }
+
+
+export type DriverProfile = {
+  id: number
+  full_name: string | null
+  unit_number: string
+  team: string | null
+  manager: string | null
+  cdl_number: string | null
+  cdl_expiry: string | null
+  medical_expiry: string | null
+  phone: string | null
+  email: string | null
+  status: 'Active' | 'On Vacation' | 'Sick' | 'Terminated'
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type DriverScheduleRow = {
+  id: number
+  unit_number: string
+  driver_id: number | null
+  date: string
+  leave_type: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export async function fetchDriverProfiles() {
+  return j<{ ok: boolean; drivers: DriverProfile[] }>('/api/drivers/profiles')
+}
+
+export async function upsertDriverProfile(body: Partial<DriverProfile> & { unit_number: string }) {
+  return j<{ ok: boolean; driver: DriverProfile | null }>('/api/drivers/profiles', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function fetchDriverSchedule(month: string) {
+  return j<{ ok: boolean; rows: DriverScheduleRow[] }>(`/api/drivers/schedule?month=${encodeURIComponent(month)}`)
+}
+
+export async function saveDriverScheduleEntry(body: {
+  unit_number: string
+  driver_id?: number | null
+  date: string
+  leave_type?: string | null
+  notes?: string | null
+}) {
+  return j<{ ok: boolean; row: DriverScheduleRow | null }>('/api/drivers/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function deleteDriverScheduleEntry(id: number) {
+  return j<{ ok: boolean; deleted: number }>(`/api/drivers/schedule/${id}`, { method: 'DELETE' })
+}
+
+export async function fetchDriverHosStatus() {
+  return j<{ ok: boolean; rows: Array<Record<string, unknown>> }>('/api/drivers/hos-status')
+}
+
+export async function importFleetAssetsBulk(records: Array<Record<string, unknown>>) {
+  return j<{ ok: boolean; inserted: number; updated: number; errors: number; total: number }>(
+    '/api/fleet/assets/bulk',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records }),
+    },
+  )
+}

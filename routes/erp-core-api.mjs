@@ -261,6 +261,37 @@ function qboConnectionFlags() {
   };
 }
 
+async function ensureDriverSchedulerTables() {
+  if (!getPool()) return false;
+  await dbQuery(`CREATE TABLE IF NOT EXISTS driver_profiles (
+    id BIGSERIAL PRIMARY KEY,
+    full_name TEXT,
+    unit_number TEXT UNIQUE,
+    team TEXT,
+    manager TEXT,
+    cdl_number TEXT,
+    cdl_expiry DATE,
+    medical_expiry DATE,
+    phone TEXT,
+    email TEXT,
+    status TEXT DEFAULT 'Active',
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`);
+  await dbQuery(`CREATE TABLE IF NOT EXISTS driver_schedules (
+    id BIGSERIAL PRIMARY KEY,
+    unit_number TEXT,
+    driver_id BIGINT,
+    date DATE NOT NULL,
+    leave_type TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`);
+  return true;
+}
+
 function dedupeCatalogNames(names = []) {
   const seen = new Set();
   const out = [];
@@ -951,6 +982,235 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/maintenance/parts-reference', e);
       return res.json({ ok: true, names: fallbackNames, parts: fallbackParts });
+    }
+  });
+
+  app.get('/api/parts', async (req, res) => {
+    const q = String(req.query?.q || '').trim().toLowerCase();
+    try {
+      const fromMaint = await (async () => {
+        if (!getPool()) return [];
+        await ensureFleetCatalogSeedRows(logError);
+        const { rows } = await dbQuery(
+          `SELECT part_key, label, avg_replacement_miles, avg_replacement_months, avg_cost_mid
+             FROM vehicle_parts_reference
+            ORDER BY label`
+        );
+        return (rows || []).map((r) => ({
+          part_key: String(r.part_key || '').trim(),
+          label: String(r.label || '').trim(),
+          avg_replacement_miles: r.avg_replacement_miles == null ? null : Number(r.avg_replacement_miles),
+          avg_replacement_months: r.avg_replacement_months == null ? null : Number(r.avg_replacement_months),
+          avg_cost_mid: r.avg_cost_mid == null ? null : Number(r.avg_cost_mid),
+        })).filter((r) => r.part_key && r.label);
+      })();
+      const fallback = COMMON_PARTS_REFERENCE_SEEDS.map((r) => ({ ...r }));
+      let parts = fromMaint.length ? fromMaint : fallback;
+      if (q) {
+        parts = parts.filter((p) => {
+          const hay = `${p.part_key || ''} ${p.label || ''}`.toLowerCase();
+          return hay.includes(q);
+        });
+      }
+      return res.json({ ok: true, parts, names: dedupeCatalogNames(parts.map((p) => p.label)) });
+    } catch (e) {
+      logError('GET /api/parts', e);
+      const fallback = COMMON_PARTS_REFERENCE_SEEDS
+        .filter((p) => !q || `${p.part_key} ${p.label}`.toLowerCase().includes(q))
+        .map((p) => ({ ...p }));
+      return res.json({ ok: true, parts: fallback, names: dedupeCatalogNames(fallback.map((p) => p.label)) });
+    }
+  });
+
+  app.post('/api/fleet/assets/bulk', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const rows = Array.isArray(req.body?.records) ? req.body.records : Array.isArray(req.body) ? req.body : [];
+      let inserted = 0;
+      let updated = 0;
+      let errors = 0;
+      for (const r of rows) {
+        try {
+          const unit = String(r?.unit_number || '').trim();
+          if (!unit) continue;
+          const sid = String(r?.samsara_id || `local-${unit.toUpperCase()}`).trim();
+          const existing = await dbQuery('SELECT samsara_id FROM fleet_assets WHERE lower(unit_number)=lower($1) LIMIT 1', [unit]);
+          const useId = String(existing.rows?.[0]?.samsara_id || sid).trim();
+          await dbQuery(
+            `INSERT INTO fleet_assets (
+              samsara_id, unit_number, asset_type, status,
+              vin_override, license_plate_override, year_override,
+              make_override, model_override, notes, updated_at
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
+            ON CONFLICT (samsara_id)
+            DO UPDATE SET
+              unit_number = EXCLUDED.unit_number,
+              asset_type = EXCLUDED.asset_type,
+              status = EXCLUDED.status,
+              vin_override = EXCLUDED.vin_override,
+              license_plate_override = EXCLUDED.license_plate_override,
+              year_override = EXCLUDED.year_override,
+              make_override = EXCLUDED.make_override,
+              model_override = EXCLUDED.model_override,
+              notes = EXCLUDED.notes,
+              updated_at = now()`,
+            [
+              useId,
+              unit,
+              String(r?.asset_type || normalizeFleetAssetType(unit, '')).trim() || 'Trailer',
+              String(r?.status || 'Active').trim() || 'Active',
+              String(r?.vin || '').trim() || null,
+              String(r?.license_plate || '').trim() || null,
+              Number.isFinite(Number(r?.year)) ? Number(r?.year) : null,
+              String(r?.make || '').trim() || null,
+              String(r?.model || '').trim() || null,
+              String(r?.notes || '').trim() || null,
+            ]
+          );
+          if (existing.rows?.length) updated++;
+          else inserted++;
+        } catch {
+          errors++;
+        }
+      }
+      return res.json({ ok: true, inserted, updated, errors, total: rows.length });
+    } catch (e) {
+      logError('POST /api/fleet/assets/bulk', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/drivers/profiles', async (_req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, drivers: [] });
+      await ensureDriverSchedulerTables();
+      const { rows } = await dbQuery('SELECT * FROM driver_profiles ORDER BY unit_number NULLS LAST, full_name NULLS LAST');
+      return res.json({ ok: true, drivers: rows || [] });
+    } catch (e) {
+      logError('GET /api/drivers/profiles', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), drivers: [] });
+    }
+  });
+
+  app.post('/api/drivers/profiles', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureDriverSchedulerTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const unit = String(b.unit_number || '').trim();
+      if (!unit) return res.status(400).json({ ok: false, error: 'unit_number is required' });
+      const fullName = String(b.full_name || '').trim();
+      await dbQuery(
+        `INSERT INTO driver_profiles (
+          full_name, unit_number, team, manager, cdl_number, cdl_expiry,
+          medical_expiry, phone, email, status, notes, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())
+        ON CONFLICT (unit_number)
+        DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          team = EXCLUDED.team,
+          manager = EXCLUDED.manager,
+          cdl_number = EXCLUDED.cdl_number,
+          cdl_expiry = EXCLUDED.cdl_expiry,
+          medical_expiry = EXCLUDED.medical_expiry,
+          phone = EXCLUDED.phone,
+          email = EXCLUDED.email,
+          status = EXCLUDED.status,
+          notes = EXCLUDED.notes,
+          updated_at = now()`,
+        [
+          fullName || null,
+          unit,
+          String(b.team || '').trim() || null,
+          String(b.manager || '').trim() || null,
+          String(b.cdl_number || '').trim() || null,
+          String(b.cdl_expiry || '').trim() || null,
+          String(b.medical_expiry || '').trim() || null,
+          String(b.phone || '').trim() || null,
+          String(b.email || '').trim() || null,
+          String(b.status || 'Active').trim() || 'Active',
+          String(b.notes || '').trim() || null,
+        ]
+      );
+      const { rows } = await dbQuery('SELECT * FROM driver_profiles WHERE unit_number = $1 LIMIT 1', [unit]);
+      return res.json({ ok: true, driver: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/drivers/profiles', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/drivers/schedule', async (req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, rows: [] });
+      await ensureDriverSchedulerTables();
+      const month = String(req.query?.month || '').trim();
+      const monthNorm = /^\d{4}-\d{2}$/.test(month) ? month : new Date().toISOString().slice(0, 7);
+      const start = `${monthNorm}-01`;
+      const d = new Date(`${start}T00:00:00Z`);
+      d.setUTCMonth(d.getUTCMonth() + 1);
+      const end = d.toISOString().slice(0, 10);
+      const { rows } = await dbQuery(
+        'SELECT * FROM driver_schedules WHERE date >= $1 AND date < $2 ORDER BY date, unit_number',
+        [start, end]
+      );
+      return res.json({ ok: true, rows: rows || [] });
+    } catch (e) {
+      logError('GET /api/drivers/schedule', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), rows: [] });
+    }
+  });
+
+  app.post('/api/drivers/schedule', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureDriverSchedulerTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const unit = String(b.unit_number || '').trim();
+      const date = String(b.date || '').trim();
+      if (!unit || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ ok: false, error: 'unit_number and date (YYYY-MM-DD) are required' });
+      }
+      const leaveType = String(b.leave_type || '').trim() || null;
+      const notes = String(b.notes || '').trim() || null;
+      const driverId = Number.isFinite(Number(b.driver_id)) ? Number(b.driver_id) : null;
+      const { rows } = await dbQuery(
+        `INSERT INTO driver_schedules (unit_number, driver_id, date, leave_type, notes, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,now(),now())
+         RETURNING *`,
+        [unit, driverId, date, leaveType, notes]
+      );
+      return res.json({ ok: true, row: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/drivers/schedule', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/drivers/schedule/:id', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureDriverSchedulerTables();
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ ok: false, error: 'invalid id' });
+      await dbQuery('DELETE FROM driver_schedules WHERE id = $1', [id]);
+      return res.json({ ok: true, deleted: id });
+    } catch (e) {
+      logError('DELETE /api/drivers/schedule/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/drivers/hos-status', async (_req, res) => {
+    const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+    if (!token) return res.json({ ok: true, rows: [] });
+    try {
+      const payload = await samsaraGet('/fleet/drivers/hos/clocks', token, {});
+      const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.clocks) ? payload.clocks : [];
+      return res.json({ ok: true, rows });
+    } catch (e) {
+      logError('GET /api/drivers/hos-status', e);
+      return res.json({ ok: true, rows: [] });
     }
   });
 

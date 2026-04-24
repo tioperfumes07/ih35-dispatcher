@@ -38,6 +38,8 @@ import { IntegrationConnectionStrip } from './components/IntegrationConnectionSt
 import { ModalFullscreenToggle } from './components/ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from './hooks/useFullScreen'
 import { TelematicsFleetPage } from './components/telematics/TelematicsFleetPage'
+import { DriverSchedulerPage } from './components/drivers/DriverSchedulerPage'
+import { DriverProfilesPage } from './components/drivers/DriverProfilesPage'
 
 function matchesSearch(r: ReportDef, q: string, titleOverride?: string) {
   if (!q.trim()) return true
@@ -83,6 +85,8 @@ type AppSection =
   | 'safety'
   | 'fuel'
   | 'loads'
+  | 'scheduler'
+  | 'drivers'
 
 const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -93,6 +97,8 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'safety', label: 'Safety' },
   { id: 'fuel', label: 'Fuel' },
   { id: 'loads', label: 'Loads' },
+  { id: 'scheduler', label: 'Scheduler' },
+  { id: 'drivers', label: 'Drivers' },
 ]
 const APP_SECTION_ID_SET = new Set<AppSection>(APP_SECTIONS.map((s) => s.id))
 const ORDERED_APP_SECTIONS: { id: AppSection; label: string }[] = [
@@ -163,6 +169,8 @@ const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   safety: 'Review safety report cards and open related audits and drill-downs.',
   fuel: 'Open fuel report cards and launch transaction workflows directly.',
   loads: 'Review operations and load-facing reporting surfaces.',
+  scheduler: 'Plan monthly vacation / leave schedule with HOS status and exports.',
+  drivers: 'Manage driver profiles, expirations, and schedule links.',
 }
 
 function sectionForReportTab(tab: ReportCategory): AppSection {
@@ -360,9 +368,11 @@ export default function App() {
   )
   const [homeKpis, setHomeKpis] = useState<HomeKpis>(FALLBACK_HOME_KPIS)
   const [selectedReportForTab, setSelectedReportForTab] = useState<Record<string, string>>({})
+  const [schedulerFocusUnit, setSchedulerFocusUnit] = useState<string | null>(null)
 
   const openSection = useCallback((section: AppSection) => {
     setActiveSection(section)
+    if (section !== 'scheduler') setSchedulerFocusUnit(null)
     setActive(null)
     setFuelPlannerTxn(null)
     setAppWoPickOpen(false)
@@ -1119,6 +1129,25 @@ export default function App() {
                     onTabChange={setListsTab}
                     deepLinkList={listsDeepLink}
                     onDeepLinkConsumed={() => setListsDeepLink(null)}
+                  />
+                </ErrorBoundary>
+              ) : activeSection === 'drivers' ? (
+                <ErrorBoundary name="Drivers">
+                  <DriverProfilesPage
+                    onViewSchedule={(unit) => {
+                      setSchedulerFocusUnit(unit)
+                      openSection('scheduler')
+                    }}
+                  />
+                </ErrorBoundary>
+              ) : activeSection === 'scheduler' ? (
+                <ErrorBoundary name="Scheduler">
+                  <DriverSchedulerPage
+                    focusUnit={schedulerFocusUnit}
+                    onOpenDriverProfile={(unit) => {
+                      setSchedulerFocusUnit(unit)
+                      openSection('drivers')
+                    }}
                   />
                 </ErrorBoundary>
               ) : activeSection === 'safety' ? (
