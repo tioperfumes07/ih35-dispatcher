@@ -291,12 +291,7 @@
           <button type="button" class="erp-modal-expand-btn" data-erp-modal-expand-btn title="Fill window (layout)" aria-label="Expand to full window" aria-pressed="false">⛶</button>
         </div>
         <h3 id="maintCatModalTitle" class="erp-qb-dialog__title">Vehicle type</h3>
-        <span class="erp-help-tip" aria-label="Help for vehicle categories">
-          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About categories">?</button>
-          <span class="erp-help-tip__panel" role="tooltip">
-            Pick the category, then complete the service or purchase form. Matches Samsara / Maintenance asset groups.
-          </span>
-        </span>
+        
       </header>
       <div class="erp-qb-dialog__body">
         <div class="asset-cat-grid">
@@ -321,12 +316,7 @@
           <button type="button" class="erp-modal-expand-btn" data-erp-modal-expand-btn title="Fill window (layout)" aria-label="Expand to full window" aria-pressed="false">⛶</button>
         </div>
         <h3 id="shopQueueAddModalTitle" class="erp-qb-dialog__title">Add to shop queue</h3>
-        <span class="erp-help-tip" aria-label="Help for shop queues">
-          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About shop queues">?</button>
-          <span class="erp-help-tip__panel" role="tooltip">
-            Track units through internal, external, roadside, or parts-purchase queues. Status and bottlenecks are saved in the ERP.
-          </span>
-        </span>
+        
       </header>
       <div class="erp-qb-dialog__body">
         <input type="hidden" id="sqShopType" value="internal" />
@@ -358,12 +348,7 @@
       <div class="maint-workorder-fullmodal__head">
         <div class="maint-workorder-fullmodal__head-main">
           <div id="maintWoFullModalTitle" class="maint-workorder-fullmodal__title">Create work order</div>
-          <span class="erp-help-tip maint-workorder-fullmodal__title-tip" aria-label="Help for full-window work order">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Full-window work order">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              Full-window form (QuickBooks-style). Close when you need the fleet tabs underneath.
-            </span>
-          </span>
+          
         </div>
         <div class="maint-workorder-fullmodal__head-viewport" data-erp-no-drag="1">
           <button type="button" class="btn btn--small secondary" id="maintWoMaxBtn" onclick="maintWoToggleMaximize()" title="90% of viewport" aria-pressed="false">Maximize</button>
@@ -384,12 +369,7 @@
           <button type="button" class="erp-modal-expand-btn" data-erp-modal-expand-btn title="Fill window (layout)" aria-label="Expand to full window" aria-pressed="false">⛶</button>
         </div>
         <h3 id="shopDelayModalTitle" class="erp-qb-dialog__title">Past estimated time — bottleneck</h3>
-        <span class="erp-help-tip" aria-label="Help for delay reasons">
-          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Why log a reason">?</button>
-          <span class="erp-help-tip__panel" role="tooltip">
-            Pick a reason so we can see delays (parts, queue, payment, etc.).
-          </span>
-        </span>
+        
       </header>
       <div class="erp-qb-dialog__body">
         <label class="qb-l">Reason</label>
@@ -488,23 +468,13 @@
         <div id="erpModuleSidebarInner" class="erp-module-sidebar__inner"></div>
         <div class="erp-module-sidebar__after-groups mini-note" style="margin:10px 0 0;padding:8px 2px 0;border-top:1px solid var(--color-border);display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;line-height:1.45;font-size:11px;color:var(--color-text-body)">
           <span style="min-width:0;flex:1 1 140px">Groups above refresh when you switch modules.</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Left rail list host">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              <code>renderErpModuleSidebar(name)</code> fills <code>#erpModuleSidebarInner</code> with stacked <code>erpSbGroup()</code> accordions (maintenance, dashboard, fuel, …). <strong>Lists &amp; catalogs</strong> reuses <code>erpSbAdmin()</code> + upload/settings shortcuts.
-            </span>
-          </span>
+          
         </div>
       </div>
       <div class="erp-module-sidebar__footer">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 6px;min-width:0">
           <div class="erp-sb-heading" style="margin:0">Connections</div>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Sidebar connection lines">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              <strong>QuickBooks</strong>, <strong>Samsara</strong>, and <strong>Last refresh</strong> below update from <code>loadAll()</code> and sync polls. <code>#sidebarQboStatus</code>, <code>#sidebarQboAlertBrief</code>, and <code>#sidebarFleetStatus</code> use <code>textContent</code>; the brief QBO strip can be empty when there is nothing to surface.
-            </span>
-          </span>
+          
         </div>
         <div id="sidebarQboStatus" class="mini-note">QuickBooks: checking connection…</div>
         <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
@@ -526,12 +496,7 @@
         <div class="erp-drawer__body" style="display:flex;flex-direction:column;min-height:0">
           <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;flex-shrink:0;line-height:1.45;color:var(--color-text-body)">
             <span style="min-width:0;flex:1 1 200px"><strong>+ New</strong> forms load in the scrollable area below; this line stays pinned.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create drawer body">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>openErpDrawer()</code> sets titles and replaces <code>#erpDrawerBody</code> <code>innerHTML</code>. <code>openAddNewDrawer()</code> builds vendor/item/account markup (items also fill income/expense <code>&lt;select&gt;</code>s). <code>closeErpDrawer()</code> toggles chrome only; body clears on the next open.
-              </span>
-            </span>
+            
           </div>
           <div id="erpDrawerBody" style="flex:1 1 auto;min-height:0;overflow:auto"></div>
         </div>
@@ -554,12 +519,7 @@
         <div class="erp-main-banner-hints print-hide-actions" style="margin:8px 0 4px;display:flex;flex-direction:column;gap:6px">
         <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
           <span style="min-width:0;flex:1 1 220px"><strong>401</strong> + <code>authRequired</code> → red strip above when needed; <code>loadAll()</code> hides it after a good refresh.</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Auth banner">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              <code>j()</code> paints <code>#authBanner</code> on 401 so users can open <strong>Settings</strong>. <code>loadAll()</code> clears it (<code>textContent</code> + <code>hidden</code>) after a successful refresh.
-            </span>
-          </span>
+          
         </div>
         </div>
         <header class="topbar erp-topbar">
@@ -669,12 +629,7 @@
               />
               <div class="mini-note" style="margin:4px 0 0;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label)">
                 <span style="min-width:0;flex:1 1 100px">Picker list below the field.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Global search menu">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>globalSearchRender()</code> + <code>globalSearchCollect()</code> scan vendors, units, loads, bills, WOs — rebuild <code>#globalSearchMenu</code> with <code>.qb-picker-item</code> rows (escaped labels), hide when empty, stub when no hits. Arrows move <code>qb-picker-item-active</code>; <strong>Enter</strong> runs the row callback.
-                  </span>
-                </span>
+                
               </div>
               <div
                 id="globalSearchMenu"
@@ -688,12 +643,7 @@
           </div>
           <div class="topbar-hint-wrap" aria-label="Workspace tips">
             <span class="mini-note topbar-hint topbar-hint--lead">Tip: left rail, search, and the green <strong>+ New</strong> (left of the title).</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How navigation works">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <strong>Left icon rail</strong> switches modules. Search covers vendors, units, loads, bills, WOs. The green <strong>+ New</strong> button (left of the page title) opens a fixed four-column menu: Expenses, Bills, Bill payment, Maintenance &amp; shop. Click outside or press Escape to close.
-              </span>
-            </span>
+            
           </div>
           <div class="erp-topbar__actions print-hide-actions">
             <button type="button" title="Reload lists and boards (auto-refresh also runs in the background)" onclick="loadAll()">Refresh</button>
@@ -744,23 +694,13 @@
             <div class="panel-head">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <div class="panel-title" style="margin:0">System Summary</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What fills these cards">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Live <strong>ERP + Samsara</strong> after <strong>Refresh</strong> (loads, maint, fuel). Open each workspace for detail.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
                 <span style="min-width:0;flex:1 1 160px">Fleet counts below refresh with <strong>Refresh</strong> on Home — title <strong>?</strong> for ERP + Samsara context.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="System summary cards host">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderDashboardHome()</code> builds five <code>.record-card</code> rows from <code>vehiclesByCategory()</code> (Trucks, Refrigerated Vans, Flatbeds, Dry Vans, Company Vehicles) and replaces <code>#dashboardSummaryCards</code> <code>innerHTML</code> with those counts only.
-                  </span>
-                </span>
+                
               </div>
               <div id="dashboardSummaryCards" class="card-list"></div>
             </div>
@@ -769,23 +709,13 @@
             <div class="panel-head">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <div class="panel-title" style="margin:0">Sync Summary</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QuickBooks sync snapshot">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Same QBO catalog view as <strong>Accounting</strong>; counts follow list sync. Posting health: <strong>Reports → ERP ↔ QBO sync</strong>.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
                 <span style="min-width:0;flex:1 1 160px">Catalog counts mirror <strong>Accounting</strong> list sync — title <strong>?</strong> for where to drill in.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Sync summary host">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderDashboardHome()</code> replaces <code>#dashboardQboSummary</code> <code>innerHTML</code> with line-broken counts: <code>cacheVendors()</code>, <code>erp.qboCache</code> customers/classes/employees, <code>cacheItems()</code>, <code>cacheAccounts()</code>, <code>erp.apTransactions</code> length, <code>erp.qboBillPaymentLog</code> length, and <code>tireAlerts</code> length.
-                  </span>
-                </span>
+                
               </div>
               <div id="dashboardQboSummary" class="mini-note">No data yet.</div>
             </div>
@@ -798,13 +728,7 @@
           <div class="panel-head">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="panel-title" style="margin:0">Fuel &amp; route planning</div>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About embedded planner">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  Embedded <code>/fuel.html?embed=1</code> — same planner as full page, no duplicate top nav.
-                  <a href="/fuel.html" target="_blank" rel="noopener" style="color:var(--color-border-focus);font-weight:500">Open full screen</a>
-                </span>
-              </span>
+              
             </div>
           </div>
           <div class="panel-body" style="padding:0">
@@ -827,21 +751,11 @@
               <span class="mr-violation-legend__item"><span class="mr-violation-legend__dot mr-violation-legend__dot--pink"></span> In violation</span>
               <span class="mr-violation-legend__item"><span class="mr-violation-legend__dot mr-violation-legend__dot--yellow"></span> Nearing violation</span>
             </div>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this table">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                Live Samsara duties: hide off-duty <strong>without</strong> truck; keep off-duty <strong>with</strong> truck. Token: <strong>Read ELD Compliance Settings (US)</strong>.
-              </span>
-            </span>
+            
           </div>
           <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;color:var(--color-text-label);font-size:12px;max-width:76ch;line-height:1.45">
             <span style="min-width:0;flex:1 1 200px">Tag / duty / violation chips, search, and <strong>Show</strong> below scope the HOS grid.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS filter bar">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                Chip rows open menus (tags, attributes, duty status, violations). Search matches driver text in the table. <strong>Show</strong> narrows which duty rows appear. Violation dot colors and off-duty-with/without-truck rules: use the <strong>?</strong> next to the legend above (Samsara token scopes there).
-              </span>
-            </span>
+            
           </div>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
             <div class="mr-filter-bar__chips">
@@ -886,12 +800,7 @@
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
             <span style="min-width:0;flex:1 1 220px"><strong>board.hos</strong> grid — search + <strong>Show</strong>; read-only mirror.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="HOS clocks table behavior">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyHos()</code>: <code>normalizeHosClock</code> → <code>applySafetyHosDutyMode</code> (<strong>Show</strong>) → paged <code>#safetyHosBody</code>; <code>safetyHosPager</code> + <code>#safetyHosMeta</code>. Read-only — refresh board if stale.
-              </span>
-            </span>
+            
           </div>
           <div class="safety-table-wrap erp-ops-data-frame">
             <table>
@@ -915,12 +824,7 @@
         <div id="safe-active" class="tracking-sub hidden">
           <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
             <span class="mini-note" style="margin:0">Active / in service lists</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Definitions">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <strong>Active</strong> = on duty (not off duty or sleeper). <strong>In service now</strong> = driving, on duty, or yard move (Samsara HOS).
-              </span>
-            </span>
+            
           </div>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Active list filters">
             <div class="mr-filter-bar__chips">
@@ -945,24 +849,14 @@
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
             <span style="min-width:0;flex:1 1 220px"><strong>List filter</strong> + same normalized <strong>board.hos</strong> window as <strong>HOS clocks</strong>.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Active / in service grids">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyActivePanels()</code>: <code>applySafetyHosDutyMode</code> + <code>#safetyActiveDutyFilter</code> → active vs in-service → paged <code>#safetyActiveBody</code> / <code>#safetyInServiceBody</code> + pagers + meta rows. Read-only.
-              </span>
-            </span>
+            
           </div>
           <div class="safety-active-grid">
             <div>
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0">
                   <span class="panel-title" style="font-size:14px;margin:0">Active drivers</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Active column">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>On duty</strong> (not off duty or sleeper). Same Samsara window as <strong>HOS clocks</strong> + <strong>List filter</strong> above.
-                    </span>
-                  </span>
+                  
                 </div>
                 <span class="mini-note" id="safetyActiveMeta"></span>
               </div>
@@ -978,12 +872,7 @@
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0">
                   <span class="panel-title" style="font-size:14px;margin:0">In service now</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="In service column">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>Driving</strong>, <strong>yard move</strong>, or <strong>on duty</strong> with vehicle — subset of Active. Tab <strong>?</strong> has full duty defs.
-                    </span>
-                  </span>
+                  
                 </div>
                 <span class="mini-note" id="safetyInServiceMeta"></span>
               </div>
@@ -1000,10 +889,7 @@
         <div id="safe-assign" class="tracking-sub hidden">
           <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
             <span class="mini-note" style="margin:0">Assignments</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About assignments">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">Samsara driver ↔ vehicle assignments for the loaded board window.</span>
-            </span>
+            
           </div>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Assignment filters">
             <div class="mr-filter-bar__chips">
@@ -1031,12 +917,7 @@
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
             <span style="min-width:0;flex:1 1 220px"><strong>board.assignments</strong> — search + <strong>Show</strong> filter here; pager slices the result.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Assignments table behavior">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyAssignments()</code> → <code>#safetyAssignBody</code> from <code>board.assignments</code>. <strong>Active</strong> = overlaps now (<code>assignmentIsActiveNow</code>); <strong>Inactive</strong> = rest. Pager after filters; <code>#safetyAssignMeta</code> = counts. Read-only.
-              </span>
-            </span>
+            
           </div>
           <div class="safety-table-wrap erp-ops-data-frame">
             <table>
@@ -1049,31 +930,18 @@
         <div id="safe-fleet" class="tracking-sub hidden">
           <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
             <span class="mini-note" style="margin:0">Fleet snapshot</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About fleet snapshot">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">Headline counts use the same asset filters as Maintenance and Fuel.</span>
-            </span>
+            
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
             <span style="min-width:0;flex:1 1 220px">Three headline counts below — refreshes with the board / opening this tab (no table pager).</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet snapshot counts">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderSafetyFleet()</code> → <code>#safetyFleetSummary</code>: tracked <code>vehicles.length</code>, Samsara <code>board.vehicles</code>, <code>board.hos</code> lengths. After <code>loadAll()</code> or opening tab. Read-only.
-              </span>
-            </span>
+            
           </div>
           <div id="safetyFleetSummary" class="mini-note">—</div>
         </div>
         <div id="safe-files" class="tracking-sub hidden">
           <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap">
             <span class="mini-note" style="margin:0">Driver files</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About driver files">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                Local compliance fields: CDL, med card, drug test, hire date, notes — not QuickBooks vendor PII.
-              </span>
-            </span>
+            
           </div>
           <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Driver files filters">
             <div class="mr-filter-bar__chips">
@@ -1101,12 +969,7 @@
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
             <span style="min-width:0;flex:1 1 220px">Rebuilds on search, <strong>Show</strong>, or page change; unsaved edits stay in memory per driver until <strong>Save</strong> (or clear fields).</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Driver files table API">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderDriverFiles()</code> → paged <code>#driverFilesBody</code>. Draft per driver until <strong>Save</strong> → <code>POST /api/safety/driver-profiles</code>; response refreshes + clears draft. <code>#driverFilesMeta</code> = counts.
-              </span>
-            </span>
+            
           </div>
           <div class="safety-table-wrap erp-ops-data-frame">
             <table>
@@ -1134,12 +997,7 @@
           <div class="panel-body maint-kpi-strip__body">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
               <span class="mini-note" style="margin:0;font-weight:500">Workspace snapshot</span>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Strip counts">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  Counts for this Maintenance workspace (assets, assignments, PM, QBO vendors). <strong>Full overview</strong> → <strong>Home</strong> for dashboard + sync.
-                </span>
-              </span>
+              
             </div>
             <div class="maint-kpi-cards">
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Tracked assets</div><div class="maint-kpi-card__val" id="maintDashTrackedAssets">0</div></div>
@@ -1163,12 +1021,7 @@
               </div>
               <div class="maint-action-strip__right" aria-live="polite">
                 <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"></span>
-                <span class="erp-help-tip" aria-label="Help for QBO issues indicator">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO posting alerts">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Green = no high-severity posting alerts. Counts reflect the same payload as the top sync bar. Use <strong>View</strong> (when shown) to open the full alert list.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="maint-action-strip__fleet">
@@ -1216,24 +1069,14 @@
             <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
                 <div class="panel-title" style="margin:0">Units</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Unit list for work orders">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Pick a unit to load the WO form. <strong>Find unit</strong>, service filter, and <strong>Maintenance Table</strong> narrow rows. <strong>▼</strong> collapses the column.
-                  </span>
-                </span>
+                
               </div>
               <button type="button" class="maint-unit-collapse-btn" id="unitListToggleBtn" onclick="toggleMaintenanceUnitList()" title="Collapse unit list">◂</button>
             </div>
             <div class="panel-body">
               <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 200px">Rows follow <strong>Find unit</strong> + active <strong>Fleet by type</strong>; past-due / due-soon badges use matching <strong>dashboard</strong> rows per unit.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Units list behavior">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintenanceUnitList()</code>: <code>#maintenanceUnitSearch</code> + <code>vehiclesByCategory()[activeAssetCategory]</code> → <code>#maintenanceUnitList</code> <code>.list-row</code> cards. <code>selectUnit()</code> highlights row + refreshes WO form, <strong>Maintenance Table</strong>, AP unit field. No network by itself.
-                  </span>
-                </span>
+                
               </div>
               <div class="list unit-list-scroll" id="maintenanceUnitList"></div>
               <div id="retiredAssetsWrap" class="mini-note" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--color-border)"></div>
@@ -1259,10 +1102,7 @@
               <div id="maintCard1HeaderSlot" class="maint-card1-header-slot hidden" aria-label="Service location and repair status">
                 <div class="maint-field-cell" style="flex:1 1 180px;min-width:160px;max-width:280px">
                   <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service location type
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service location type">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">High-level context (internal shop, external vendor, roadside, etc.). The free-text <strong>Service location</strong> field in the form names the specific place.</span>
-                    </span>
+                    
                   </span>
                   <select id="repairLocationSelect" class="qb-in maint-field" style="height:30px;min-width:160px" onchange="onRepairLocationSelectChange()" title="Service location type">
                     <option value="">— Choose —</option>
@@ -1296,12 +1136,7 @@
                 <div class="maint-asset-status-panel__head">
                   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0">
                     <span class="panel-title" style="font-size:13px;margin:0">Operational status</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        <strong>Save status</strong> / <strong>Save roster</strong> write to the server. <strong>Done</strong> only closes this sheet. Codes come from <strong>Lists → Operational</strong> plus saved work orders. APIs: <code>saveAssetStatus()</code> → <code>POST /api/maintenance/asset-status</code>; <code>saveAssetFleetActive()</code> → <code>POST /api/maintenance/asset-active</code>. Success runs <code>loadAll()</code>; saving status closes the panel.
-                      </span>
-                    </span>
+                    
                   </div>
                   <button type="button" class="btn btn--small" onclick="closeMaintAssetStatusPanel()">Done</button>
                 </div>
@@ -1315,18 +1150,13 @@
                     <div class="maint-form-grid__row maint-form-grid__row--4 maint-wo-box2__row1">
                       <div class="maint-field-cell maint-wo-box2__row1-loc">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service location <span class="maint-label-req" aria-hidden="true">*</span>
-                          <span class="erp-help-tip" aria-label="Help for service location">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service location">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Where this visit happened (yard, vendor site, bay, shop name, or short notes). Choose the <strong>service location type</strong> in the header above; this field is required. Prior labels appear in the datalist.</span>
-                          </span>
+                          
                         </span>
                         <input id="repairLocationSearch" class="qb-in maint-field" list="repairLocationOptions" placeholder="e.g. Dallas shop, Love’s #412, Bay 2…" autocomplete="off" oninput="resolveRepairLocationSearch(); renderMaintAsideWoSummary();" onblur="resolveRepairLocationSearch()" title="Service location (required)" aria-required="true" />
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Record type
-                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Record type">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Chooses which detail cards appear (tire map, accident, inspection, PM, driver row for repair/accident, etc.).</span>
-                          </span>
+                          
                         </span>
                         <div class="erp-wo-record-type-slot">
                           <select id="recordTypeSelect" class="qb-in maint-field" onchange="toggleRecordFields()" title="Record type">
@@ -1346,9 +1176,7 @@
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service type
-                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service type">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Uses the <strong>service catalog</strong> datalist plus free text. Syncs to the first cost line description when that line is empty.</span>
-                          </span>
+                          
                         </span>
                         <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service description" autocomplete="off" oninput="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" onblur="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" title="Catalog + free text" />
                         <input id="serviceTypeInput" type="hidden">
@@ -1356,9 +1184,7 @@
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service date
-                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service date">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Date of this service visit for the record and reporting.</span>
-                          </span>
+                          
                         </span>
                         <input id="serviceDateInput" class="qb-in maint-field maint-field--date" type="date" />
                       </div>
@@ -1366,19 +1192,14 @@
                     <div class="maint-form-grid__row maint-form-grid__row--3 maint-form-grid__row--vendor-driver-odo maint-wo-box2__row2">
                       <div class="maint-field-cell" style="flex:1;min-width:0">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Vendor
-                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">QuickBooks vendor for this expense / bill.</span>
-                          </span>
+                          
                         </span>
                         <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
                         <button type="button" class="maint-linkish" onclick="goToCreateQboVendor()">New in QBO</button>
                       </div>
                       <div class="maint-field-cell maint-field-cell--odo-150">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Odometer
-                          <span class="erp-help-tip" aria-label="Help for service odometer">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service odometer">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Suggested miles may come from Samsara, saved ERP mileage, or the last service on this unit. Use <strong>Samsara</strong> to pull the latest reading.</span>
-                          </span>
+                          
                         </span>
                         <div class="maint-field-cell__row">
                           <input id="serviceMileageInput" class="qb-in maint-field maint-field--odometer" type="number" step="1" placeholder="Service mileage" oninput="markServiceMileageTouched()" title="Odometer for this visit" style="max-width:150px" />
@@ -1388,9 +1209,7 @@
                       </div>
                       <div class="maint-field-cell maint-field-cell--grow">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Planned service / repair
-                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Planned work">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Optional lines from the <strong>service catalog</strong> (datalist) describing planned work.</span>
-                          </span>
+                          
                         </span>
                         <div id="maintPlannedServicesHost"></div>
                         <button type="button" class="maint-linkish" onclick="addMaintPlannedServiceRow()">+ Planned line</button>
@@ -1399,10 +1218,7 @@
                     <div class="maint-form-grid__row maint-form-grid__row--4 maint-wo-box2__row3">
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Load #
-                          <span class="erp-help-tip" aria-label="Help for load number">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Load #">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">When empty, the ERP may suggest an open TMS load for this unit. A <strong>Suggested:</strong> line can appear under the field.</span>
-                          </span>
+                          
                         </span>
                         <input id="recordLoadNumberInput" class="qb-in maint-field" list="loadNumberOptions" placeholder="Load / settlement #" autocomplete="off" />
                         <div id="recordLoadNumberHint" class="maint-inline-hint"></div>
@@ -1417,9 +1233,7 @@
                       </div>
                       <div class="maint-field-cell">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Invoice total
-                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Invoice total">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Should match category + item line totals within <strong>$0.02</strong> before save, or enable <strong>Lock total</strong>. Match status appears on the cost breakdown totals bar.</span>
-                          </span>
+                          
                         </span>
                         <input id="costInput" class="qb-in maint-field" type="number" step="0.01" placeholder="0.00" title="Invoice total" oninput="renderMaintAsideWoSummary()" />
                         <label class="maint-lock-inline"><input type="checkbox" id="costTotalLock" /> Lock total</label>
@@ -1430,9 +1244,7 @@
                       <summary class="maint-wo-box2__mileage-sum">Fleet mileage override (ERP)</summary>
                       <div class="maint-field-cell maint-wo-box2__mileage-body">
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Fleet mileage (ERP)
-                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet mileage override">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Manual override of fleet mileage stored in ERP for this unit (separate from this visit’s odometer).</span>
-                          </span>
+                          
                         </span>
                         <div class="maint-field-cell__row">
                           <input id="mileageInput" class="qb-in maint-field maint-field--odometer" type="number" placeholder="Override" title="Manual fleet mileage override" />
@@ -1450,9 +1262,7 @@
                     <div class="maint-form-grid__row maint-wo-box2__row5">
                       <div class="maint-field-cell maint-field-cell--grow">
                         <span class="qb-l maint-label-optional" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Catalog admin
-                          <span class="erp-help-tip"><button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Catalog admin">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">Add a new name to the service type catalog (<code>POST /api/maintenance/service-types</code>). Feedback appears below.</span>
-                          </span>
+                          
                         </span>
                         <div class="maint-field-cell__row">
                           <input id="maintNewCatalogServiceName" class="qb-in maint-field maint-field--catalog" placeholder="New catalog name" maxlength="120" autocomplete="off" />
@@ -1468,12 +1278,7 @@
                     <div class="maint-subcard__head maint-subcard__head--split erp-qb-cost-global-head">
                       <span class="erp-qb-cost-global-head__title" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"
                         >Cost breakdown
-                        <span class="erp-help-tip" aria-label="Help for cost breakdown">
-                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost breakdown">?</button>
-                          <span class="erp-help-tip__panel" role="tooltip">
-                            Category and item lines use the tables below. The totals bar shows category sum, item sum, and grand total. Invoice total should match line sum within $0.02 before save, or use <strong>Lock total</strong>. Status for invoice vs lines appears on the totals bar.
-                          </span>
-                        </span>
+                        
                       </span>
                       <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new cost lines">
                         <span class="erp-qb-cost-global__label">New lines</span>
@@ -1482,12 +1287,7 @@
                           <button type="button" class="erp-qb-seg__btn" data-mcg-mode="item" aria-pressed="false">Item</button>
                         </div>
                         <input type="hidden" id="maintCostGlobalMode" name="maintCostGlobalMode" value="category" />
-                        <span class="erp-help-tip erp-qb-cost-global__tip">
-                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Line type default">?</button>
-                          <span class="erp-help-tip__panel" role="tooltip">
-                            <strong>Category</strong> vs <strong>Item</strong> grids (QuickBooks-style). Use <strong>+ Add … line</strong> per grid. This toggle is the default for single “add line” shortcuts elsewhere.
-                          </span>
-                        </span>
+                        
                       </div>
                     </div>
                     <div class="maint-subcard__body maint-qb-cost-panels">
@@ -1598,12 +1398,7 @@
                       <div class="maint-print-hide-qbo-link maint-qbo-header-grid" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--color-border)" title="Expense vs bill, bank, dates — vendor and line accounts are on the form above">
                         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
                           <div class="panel-title" style="font-size:13px;margin:0">QuickBooks — posting header</div>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Expense vs bill">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <strong>Txn type</strong>: QuickBooks <strong>Expense</strong> vs <strong>Bill</strong>; doc # follows posting. Vendor + line accounts stay on the form above.
-                            </span>
-                          </span>
+                          
                         </div>
                         <div class="search-row">
                           <div>
@@ -1659,12 +1454,7 @@
                   <input id="maintInvoicePdfInput" type="file" accept="application/pdf" class="maint-hidden-file" tabindex="-1" aria-hidden="true" />
                   <div class="mini-note erp-dev-note" data-dev-note="true" style="margin:4px 0 2px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:56ch">
                     <span style="min-width:0;flex:1 1 220px">Parse status for maintenance PDF import — uses <strong>Parse PDF to lines</strong> / <code>parseMaintRecordInvoicePdf()</code>.</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance PDF parse status">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        <code>parseMaintRecordInvoicePdf()</code> sets <code>#maintInvoicePdfStatus</code> <code>textContent</code> (“Choose a PDF first.”, “Reading PDF…”, success line with hints, or cleared on error toast). <code>applyParsedExpenseInvoicePdf(..., 'maint')</code> mutates the form. <code>resetMaintenanceWorkOrderFormFields()</code> clears the status.
-                      </span>
-                    </span>
+                    
                   </div>
                   <div id="maintInvoicePdfStatus" class="mini-note maint-field-hint"></div>
                   <div id="maintNotesSlotsWrap" class="maint-notes-slots-wrap">
@@ -1754,21 +1544,11 @@
                         </div>
                         <p class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
                           <span><strong>First tire</strong> uses the fields above; add more wheel positions for the <strong>same vendor invoice / total</strong> below.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Same invoice, multiple tires">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              Extra rows share one vendor invoice + one QBO expense/bill header. <strong>+ Add another tire</strong> adds wheel positions on that invoice.
-                            </span>
-                          </span>
+                          
                         </p>
                         <div class="mini-note" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                           <span style="min-width:0;flex:1 1 200px">Extra wheel positions render in the box below — each row is a template clone, not typed into the first-tire fields.</span>
-                          <span class="erp-help-tip">
-                            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tire extra lines host">?</button>
-                            <span class="erp-help-tip__panel" role="tooltip">
-                              <code>addTireExtraLine()</code> clones <code>#tireExtraLineTpl</code> → <code>#tireExtraLinesHost</code> (<code>.tire-extra-pos</code> from <code>TIRE_POSITION_CHOICES</code>). <code>clearTireExtraLines()</code> on reset. <code>collectTireLineItems()</code> merges <code>#tireExtraLinesHost .tire-extra-row</code> with primary tire for save/PDF.
-                            </span>
-                          </span>
+                          
                         </div>
                         <div id="tireExtraLinesHost"></div>
                         <button type="button" class="qb-btn-add" onclick="addTireExtraLine()">+ Add another tire (same total cost)</button>
@@ -1812,12 +1592,7 @@
                           <span>Toggle to confirm you reviewed DOT-reportable status</span>
                         </label>
                       </div>
-                      <span class="erp-help-tip" style="margin-top:6px;display:inline-flex">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accident record">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          Add part/labor under <strong>Cost breakdown</strong>. Assign the <strong>driver</strong> in the Driver field above (required for accidents). Service line defaults to <em>Accident Report</em> unless you change it.
-                        </span>
-                      </span>
+                      
                     </div>
                   </div>
 
@@ -1969,12 +1744,7 @@
                     <div class="maint-form-actions__meta">
                       <div class="mini-note erp-dev-note" data-dev-note="true" style="flex:1 1 100%;margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
                         <span style="min-width:0;flex:1 1 240px">Save/post status (left) and edit-mode line (right) — both use plain <code>textContent</code> only.</span>
-                        <span class="erp-help-tip">
-                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Save / edit hints">?</button>
-                          <span class="erp-help-tip__panel" role="tooltip">
-                            <code>#maintSaveHint</code>: <code>maintToneSaveHint()</code> sets <code>textContent</code> + optional <code>maint-save-hint--caution|error</code> classes — driven from <code>saveRecordWithAction()</code> / <code>maintSaveFromSplitMenu()</code> (busy strings, success, validation), <code>maintPreparePrintWorkOrderOnly()</code> draft PDF messages, and cleared on new form. <code>#maintEditRecordHint</code>: <code>updateMaintEditRecordHint()</code> when <code>__editingMaintRecordId</code> is set from <code>hydrateMaintenanceRecordForm()</code>; cleared in <code>clearMaintenanceEditMode()</code>.
-                          </span>
-                        </span>
+                        
                       </div>
                       <span class="mini-note" id="maintSaveHint" role="status" aria-live="polite" aria-atomic="true"></span>
                       <span class="mini-note" id="maintEditRecordHint" style="color:var(--color-text-label)"></span>
@@ -1999,12 +1769,7 @@
             <div class="panel-head maint-panel-head-center">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
                 <div class="panel-title" style="margin:0">R&amp;M Status — integrity · fuel · parts</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About R&amp;M status">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Same signal family as <strong>Tracking → Shop</strong>. Flags odd repair cadence, large invoices, short tire life, diesel vs miles. Filter severity + search.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
@@ -2039,21 +1804,11 @@
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 200px"><strong>Refresh alerts</strong> after window changes or stale results.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Refreshing integrity data">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Uses in-memory maint records. Open tab after full <strong>load</strong> or press <strong>Refresh alerts</strong>; set <strong>Window (days)</strong> first when you change lookback.
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 200px">Stack updates on <strong>Refresh alerts</strong>, window, search, or severity — same API family as Tracking shop integrity.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="R&amp;M integrity alert host">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadSecurityCatalogUi()</code> → <code>GET /api/maintenance/security-alerts</code> (<code>#maintIntegrityDays</code>). <code>renderSecurityAlerts(..., maintSecurityAlertRenderOpts)</code> → <code>#maintSecurityAlertsBody</code> (header + cards + optional driver-risk). Errors align with Tracking integrity messaging.
-                  </span>
-                </span>
+                
               </div>
               <div id="maintSecurityAlertsBody" class="mini-note">Loading…</div>
               </div>
@@ -2085,12 +1840,7 @@
             <div class="panel-head maint-panel-head-center">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
                 <span>Vehicles by service / location context</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    ERP shop queues by type + recent WOs by <strong>repair location type</strong>. Status from queue rows or QBO sync on the WO.
-                  </span>
-                </span>
+                
               </div>
               <p class="mini-note" style="margin:6px auto 0;max-width:48ch;text-align:center">
                 Queue + repair-location snapshot for shop and roadside units.
@@ -2099,12 +1849,7 @@
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Built from <code>shopQueueCache</code> + recent <code>erp.records</code> — open tab after a full maint <strong>Refresh</strong> if stale.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service / location board">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintLocationBoard()</code>: <code>internal</code>/<code>external</code>/<code>roadside</code>/<code>parts</code> from <code>shopQueueCache</code>, then visits by <code>repairLocationType</code> from <code>erp.records</code> → <code>#maintLocationBoardHost</code>. Runs when <strong>Service / location</strong> is active after <code>loadAll()</code> / queue saves / tab switch.
-                  </span>
-                </span>
+                
               </div>
               <div id="maintLocationBoardHost" class="mini-note">Loading…</div>
             </div>
@@ -2116,12 +1861,7 @@
               <div class="panel-head">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <div class="panel-title" style="margin:0">Maintenance Table</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this grid">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Fleet WO grid (service, status, mileage, vendor, QBO). Pick unit in <strong>Units</strong>; <strong>Find unit</strong> + chips narrow rows. Pager at bottom.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="panel-body">
@@ -2151,12 +1891,7 @@
                 </div>
                 <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span style="min-width:0;flex:1 1 220px">Paged <strong>dashboard</strong> WOs for active <strong>Fleet by type</strong> + <strong>Filter by service</strong>.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance fleet table">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderMaintenanceTable()</code>: <code>dashboard</code> filtered by <code>vehiclesByCategory()[activeAssetCategory]</code> + <code>#maintenanceServiceFilter</code> → paged <code>#maintenanceTableBody</code>. <code>maintDashboardTablePager</code> + <code>erpPagerRender</code> on <code>#maintTablePagerHost</code>; category/service change → page 1. <strong>Repair</strong> updates the latest saved ERP row for that unit + service (same API as Service / location).
-                    </span>
-                  </span>
+                  
                 </div>
                 <div class="table-wrap erp-table-scroll">
                   <table>
@@ -2190,24 +1925,14 @@
               <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
                   <div class="panel-title" style="margin:0">Unit History</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="History vs new WO">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      History for <strong>selected unit</strong>. Click row to edit; <strong>New work order</strong> blanks the form on same unit.
-                    </span>
-                  </span>
+                  
                 </div>
                 <button type="button" class="qb-btn-add" onclick="clearMaintenanceFormNewEntry()">New work order</button>
               </div>
               <div class="panel-body">
                 <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span style="min-width:0;flex:1 1 220px">Cards rebuild when unit or <code>erp.records</code> changes.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Unit history list">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderUnitHistory()</code>: <code>erp.records</code> for <code>selectedUnit</code>, <code>serviceDate</code> desc → <code>#unitHistory</code> cards (service, QB, costs/tires, actions). Empty → <strong>No records yet.</strong> From <code>renderSelectedUnit()</code> / <code>loadAll()</code>.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div id="unitHistory" class="card-list">No records yet.</div>
               </div>
@@ -2219,12 +1944,7 @@
       <section id="section-tracking" class="section erp-ops-section">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
           <span class="mini-note" style="margin:0;font-weight:500">Fleet mix snapshot</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About these counts">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              Tracked Samsara assets by type. <strong>Assets</strong> = grid; <strong>Map</strong> = GPS; <strong>Shop &amp; maintenance</strong> = queues — not this KPI strip.
-            </span>
-          </span>
+          
         </div>
         <div class="grid grid-4 erp-kpi-grid erp-ops-kpi-strip">
           <div class="metric"><div class="metric-label">Trucks</div><div class="metric-value" id="trackTruckCount">0</div></div>
@@ -2244,24 +1964,14 @@
         <div id="tr-maint-shop" class="tracking-sub hidden">
           <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap">
             <span class="mini-note" style="margin:0">Shop queue &amp; rollups</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Navigation &amp; deep links">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                Queues, rollups, exports, R&amp;M flags — WOs <strong>Maintenance → Create work order</strong>; fleet <strong>→ Fleet table</strong>; yard <strong>→ Service / location</strong>. Deep links: <code>#tracking-shop</code>, <code>#maintenance-shop</code>, <code>#maintenance-parts</code>, <code>#maintenance-workorder</code>, <code>#maintenance-fleet</code>, <code>#maintenance-rm-status</code> / <code>#maintenance-alerts</code>, <code>#maintenance-shop-location</code>.
-              </span>
-            </span>
+            
           </div>
           <div class="panel shop-print-area maint-section-card">
             <div class="panel-head erp-ops-hero-head">
               <div style="flex:1;min-width:200px">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <div class="panel-title" style="margin:0">Maintenance &amp; shop</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Live internal / external / roadside queues — status vs est., delay reasons; expense rollups by fleet below.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="print-hide-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
@@ -2274,14 +1984,7 @@
               <div id="maintExpenseStrip" class="maint-expense-strip" style="margin-bottom:14px"></div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px">
                 <span class="mini-note" style="margin:0">Shop tabs &amp; queues</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tab meanings">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Tabs = queue type — <strong>Parts</strong> = vendor POs; <strong>Roadside</strong> ≠ external repair; <strong>OOS</strong> from maint records. Est. hours → overdue tint; past est needs delay reason.
-                    <a href="#" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-map', document.querySelector('#section-tracking .subtab[onclick*=\'tr-map\']')); return false;" style="color:var(--color-border-focus);font-weight:500">Vehicle map</a>
-                    · <a href="#" onclick="openSectionByName('safety');return false;" style="color:var(--color-border-focus);font-weight:500">Safety / HOS</a>
-                  </span>
-                </span>
+                
               </div>
               <div class="subtabs shop-subtabs erp-ops-shop-subtabs" id="shopBoardSubtabs">
                 <button type="button" class="subtab" data-shop-tab="external" onclick="openShopBoardTab('external', this)">External shop</button>
@@ -2317,12 +2020,7 @@
                 </div>
                 <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span style="min-width:0;flex:1 1 200px"><strong>Internal shop</strong> table re-renders on filter / date / status changes and after queue saves — from <code>shopQueueCache</code> (see <strong>?</strong>).</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> → filter <code>shopQueueCache</code> (<code>internal</code>) + toolbar → paged <code>#shopInternalTableBody</code> + pager. Cache: <code>GET /api/maintenance/shop-queue</code> on <code>loadAll()</code> + after saves.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
@@ -2375,12 +2073,7 @@
                 </div>
                 <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span style="min-width:0;flex:1 1 200px"><strong>External shop</strong> — same filter/pager as internal; <code>external</code> slice of <code>shopQueueCache</code>.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> → <code>external</code> + toolbar → paged <code>#shopExternalTableBody</code> + pager. Same cache load as internal.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
@@ -2433,12 +2126,7 @@
                 </div>
                 <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span style="min-width:0;flex:1 1 200px"><strong>Roadside</strong> — <code>roadside</code> rows; same cache + filters as other shop tabs.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> → <code>roadside</code> + toolbar → paged <code>#shopRoadsideTableBody</code> + pager. Same cache as other shop tabs.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
@@ -2467,12 +2155,7 @@
               <div id="shopTabParts" class="shop-tab-panel">
                 <p class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;max-width:70ch">
                   <span>Parts queue uses the same <strong>Queued / In progress / Completed</strong> stages as other shop tabs.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Parts queue stages">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Vendor parts: <strong>Queued</strong> = waiting on supplier · <strong>In progress</strong> = partial / in transit · <strong>Completed</strong> = received / closed.
-                    </span>
-                  </span>
+                  
                 </p>
                 <div class="toolbar erp-ops-toolbar erp-ops-toolbar--dense">
                   <div style="min-width:220px;flex:1">
@@ -2500,12 +2183,7 @@
                 </div>
                 <div class="mini-note" style="margin:8px 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span style="min-width:0;flex:1 1 200px"><strong>Parts purchase</strong> — same renderer; columns use PO / supplier wording.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop queue table">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderShopQueues()</code> → <code>shopType === &quot;parts&quot;</code> + toolbar → paged <code>#shopPartsTableBody</code> + <code>#shopPartsPagerHost</code>. Same <code>shop-queue</code> cache refresh as other tabs.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div class="erp-table-scroll erp-ops-table-frame">
                   <table class="catalog-admin-table" style="min-width:980px">
@@ -2540,12 +2218,7 @@
                     </div>
                     <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                       <span style="min-width:0;flex:1 1 200px">The list below is built from <strong>saved</strong> work orders whose service type reads as out of service — not live telematics flags.</span>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How out-of-service rows appear">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          <code>renderShopQueues()</code>: from <code>erp.records</code>, service types matching out-of-service / <code>oos</code> → one card per unit (latest). Header <strong>+</strong> = new OOS WO. Fleet roster: <strong>Lists &amp; catalogs</strong> or unit <strong>Active / Retired</strong>.
-                        </span>
-                      </span>
+                      
                     </div>
                     <div class="shop-col-body" id="shopOosBody"></div>
                   </div>
@@ -2558,12 +2231,7 @@
             <div class="panel-head maint-panel-head-center">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;justify-content:center;width:100%">
                 <div class="panel-title" style="margin:0">Maintenance reports</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop exports">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Shop <strong>CSV</strong> exports here — full rollups / QBO cross-checks in sidebar <strong>Reports</strong> (maint spend, detail, sync).
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin-top:6px;max-width:52ch">
                 Exports and rollups. Choose truck / van / flatbed category under <strong>Create work order</strong> when logging service.
@@ -2582,12 +2250,7 @@
             <div class="panel-head maint-panel-head-center">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;justify-content:center;width:100%">
                 <div class="panel-title" style="margin:0">Integrity · fuel · parts alerts</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Alert signals">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Same heuristics as <strong>R&amp;M Status</strong> — repair frequency, large invoices, tire interval, fuel vs miles. Use with PM + shop context — not alone.
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin:6px 0 0;max-width:56ch">
                 Frequency, invoice spikes, tire cycles, fuel vs miles — cross-check <strong>Operational status</strong> + dates; not sole truth.
@@ -2616,12 +2279,7 @@
               </div>
               <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 200px"><strong>Refresh alerts</strong> after window change or if stale — same feed as <strong>Maintenance → R&amp;M Status</strong>.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Shop integrity alerts">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/maintenance/security-alerts</code> (toolbar days) → <code>renderSecurityAlerts</code> on <code>#securityAlertsBody</code> + <code>#maintSecurityAlertsBody</code> (same as <strong>R&amp;M Status</strong>). Filters: <code>integritySearch</code> / <code>integritySeverity</code>. Errors show in the box below.
-                  </span>
-                </span>
+                
               </div>
               <div id="securityAlertsBody" class="mini-note">Loading alerts…</div>
             </div>
@@ -2634,24 +2292,14 @@
               <div class="panel-head">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <div class="panel-title" style="margin:0">Units</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit list">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Map list only — filter, pick a row to center map + detail. Not <strong>Maintenance → Units</strong> (WO picker).
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="panel-body">
                 <input id="trackingSearch" list="unitOptions" placeholder="Filter unit…" oninput="renderTrackingBoard()">
                 <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span style="min-width:0;flex:1 1 200px">Cards refresh on filter / pager — pick one to drive the map + detail under it.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map unit cards">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>renderTrackingBoard()</code>: sort/filter <code>vehicles</code> (<code>#trackingSearch</code>) → paged <code>#trackingList</code>. Click → <code>selectTrackingVehicle</code> → map, <code>#trackingDetailBox</code>, <code>#trackingSummaryText</code>.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div class="track-list" id="trackingList" style="margin-top:10px;"></div>
                 <div id="trackingListPagerHost" hidden></div>
@@ -2661,24 +2309,14 @@
               <div class="panel-head">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <div class="panel-title" style="margin:0">Live map (Samsara GPS)</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="GPS data">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>Samsara</strong> positions — pan/zoom freely; pick a unit on the left to highlight and show driver / last ping below.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="panel-body">
                 <div id="erpTrackingMap"></div>
                 <div class="mini-note" style="margin:10px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span style="min-width:0;flex:1 1 200px">Selected unit under the map — updates with <code>renderTrackingBoard()</code> (filter, pager, click).</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Map detail box">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <code>#trackingDetailBox</code> from <code>selectedTrackingVehicle</code> in <code>vehicles</code> (MMY, VIN, category, mileage, fuel, engine, coords) or <strong>Select a vehicle.</strong>
-                    </span>
-                  </span>
+                  
                 </div>
                 <div id="trackingDetailBox" class="mini-note" style="margin-top:8px">Select a vehicle.</div>
               </div>
@@ -2691,14 +2329,7 @@
             <div class="panel-head">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <div class="panel-title" style="margin:0">All tracked assets</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Data sources">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Names / VIN / GPS from <strong>Samsara</strong> (read-only) — edit in
-                    <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a>.
-                    TMS + Postgres when <code>DATABASE_URL</code> is set; align unit codes (e.g. T160).
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
@@ -2719,12 +2350,7 @@
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Paged <strong>vehicles</strong> + search — columns mix Samsara telemetry with ERP where linked.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="All tracked assets grid">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderTrackingAssetsTable()</code>: sorted <code>vehicles</code> + <code>#trackingAssetFilter</code> → paged <code>#trackingAssetsTableBody</code>; new filter → page **1**. Read-only — edit fleet in Samsara Cloud.
-                  </span>
-                </span>
+                
               </div>
               <div class="table-wrap erp-table-scroll">
                 <table>
@@ -2742,13 +2368,7 @@
         <div id="tr-drivers" class="tracking-sub hidden">
           <div style="display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap">
             <span class="mini-note" style="margin:0">Drivers (Samsara HOS)</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About drivers list">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                Same HOS feed as <strong>Safety → HOS</strong>. Edit drivers in
-                <a href="https://cloud.samsara.com" target="_blank" rel="noopener">Samsara Cloud</a>; read-only here. Settlement can still use TMS/Postgres when wired.
-              </span>
-            </span>
+            
           </div>
           <div class="mr-filter-bar erp-ops-filter-bar">
             <div class="mr-filter-bar__chips">
@@ -2773,12 +2393,7 @@
           </div>
           <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
             <span style="min-width:0;flex:1 1 220px"><strong>board.hos</strong> + <strong>Duty filter</strong> — same window as <strong>Safety → HOS</strong>.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking drivers table">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>renderTrackingDrivers()</code>: <code>board.hos</code> → <code>applySafetyHosDutyMode</code> (<code>#trackingDriversDutyFilter</code>) → paged <code>#trackingDriversBody</code> + <code>trackingDriversPager</code> / <code>erpPagerRender</code>. Read-only.
-              </span>
-            </span>
+            
           </div>
           <div class="safety-table-wrap erp-ops-data-frame erp-table-scroll">
             <table>
@@ -2794,34 +2409,19 @@
             <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
                 <div class="panel-title" style="margin:0">Yard &amp; idle (T120–T178)</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Yard band &amp; columns">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Default idle band <strong>T120–T178</strong>. <strong>Refresh</strong>: Samsara GPS/HOS + optional TMS idle fields. Geofence / env vars → lower <strong>?</strong>.
-                  </span>
-                </span>
+                
               </div>
               <button type="button" onclick="loadIdleSnapshot()">Refresh</button>
             </div>
             <div class="panel-body">
               <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap">
                 <span class="mini-note" style="margin:0">Yard &amp; idle snapshot</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Geofence &amp; columns">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Default yard fence (Mines Rd, Laredo). Override <code>YARD_LAT</code> / <code>YARD_LON</code> / <code>YARD_RADIUS_M</code>. Columns: GPS, yard in/out, HOS, optional TMS “since last load”, <code>IDLE_EST_DAILY_REVENUE</code> hint.
-                  </span>
-                </span>
+                
               </div>
               <div id="idleSnapshotMeta" class="mini-note" style="margin-bottom:10px"></div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px"><strong>Refresh</strong> or open tab loads the idle-band slice (Samsara + optional TMS).</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Yard &amp; idle grid">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/tracking/idle-snapshot</code> → <code>idleSnapshotPager</code> (<code>_rows</code>), <code>#idleSnapshotMeta</code>, paged <code>#idleSnapshotBody</code> via <code>renderIdleSnapshotTableBody()</code> + <code>#idleSnapshotPagerHost</code>. Errors → one tbody row.
-                  </span>
-                </span>
+                
               </div>
               <div class="table-wrap erp-table-scroll">
                 <table>
@@ -2853,23 +2453,13 @@
           <div class="panel-head">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="panel-title" style="margin:0">Summary</div>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking summary">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  Tracking-only counts (assets, drivers, map). Refreshes with tracking tabs — not <strong>Home → System Summary</strong>.
-                </span>
-              </span>
+              
             </div>
           </div>
           <div class="panel-body">
             <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
               <span style="min-width:0;flex:1 1 220px">In-memory <code>vehicles</code> + <code>board</code> — same refresh cadence as Map.</span>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Tracking summary block">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  <code>renderTrackingBoard()</code> → <code>#trackingSummaryText</code>: five counts — <code>vehicles</code>, <code>board.vehicles</code>, <code>board.live</code>, <code>board.assignments</code>, <code>board.hos</code> lengths (line breaks in markup).
-                </span>
-              </span>
+              
             </div>
             <div id="trackingSummaryText">No tracking data loaded yet.</div>
           </div>
@@ -2890,12 +2480,7 @@
         <div id="acctBoardStrip" class="mr-acct-board maint-section-card" aria-label="Accounting overview">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--color-border);min-width:0">
             <span class="panel-title" style="margin:0;font-size:17px">Accounting board</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="KPIs vs tabs">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <strong>KPIs</strong> = expenses, bills, sync alerts, review queue. Cards open the matching tab; <strong>Connections</strong> = live Samsara / QBO / API.
-              </span>
-            </span>
+            
           </div>
           <div class="acct-dash-kpis">
             <div class="acct-dash-kpi">
@@ -3154,10 +2739,7 @@
             </div>
             <div class="mini-note" style="margin:10px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">
               <span style="min-width:0;flex:1 1 180px">Up to three sync error titles when the payload has alerts.</span>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO errors on dash">?</button>
-                <span class="erp-help-tip__panel" role="tooltip"><code>paintAcctDashQboErrors()</code> → <code>#acctDashQboErrList</code>. <strong>View all errors</strong> scrolls the list on this board.</span>
-              </span>
+              
             </div>
             <div id="acctBoardQboErrDateFilterHost" class="erp-date-filter-bar-host"></div>
             <div id="acctDashQboErrList" class="acct-qbo-err-list" aria-live="polite"></div>
@@ -3225,12 +2807,7 @@
             </div>
             <div class="mini-note" style="margin:8px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
               <span style="min-width:0;flex:1 1 240px">Cross-WO/AP posting checks before QBO — warning line is plain <code>textContent</code> (first 8 issues).</span>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posting preflight host">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  <code>runPostingPreflight()</code> scans <code>erp.workOrders</code> and <code>erp.apTransactions</code> for money rows missing vendor / QBO item or account; sets <code>#maintPostingPreflight</code> <code>textContent</code> with a truncated list, <code>display:block</code>, or hides and clears when clean. Called from <code>loadAll()</code> after QBO status + sync alerts (same refresh tick as connection strip paint).
-                </span>
-              </span>
+              
             </div>
             <div id="maintPostingPreflight" class="mini-note" style="margin-top:6px;display:none;color:var(--color-semantic-warning)"></div>
           </div>
@@ -3265,12 +2842,7 @@
                       <span id="erpApDocTitleAccent" class="erp-ap-doc-accent hidden" aria-hidden="true"></span>
                       <span id="apDocTitle">Expense</span>
                     </h2>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this form">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        Save the expense in ERP first, then use <strong>Record to QuickBooks</strong> and <strong>Verify in QuickBooks</strong> from the saved list. One vendor, many lines — reuse load / invoice # for trip P&amp;L.
-                      </span>
-                    </span>
+                    
                   </div>
                 </div>
                 <div class="qb-doc-total-block">
@@ -3423,33 +2995,18 @@
                   </div>
                   <div class="mini-note" style="margin:6px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:58ch">
                     <span style="min-width:0;flex:1 1 220px">Parse status for Accounting AP PDF extract — same parser as maintenance, different <code>applyParsedExpenseInvoicePdf</code> target.</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="AP PDF parse status host">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        <code>parseApInvoicePdf()</code> sets <code>#apInvoicePdfStatus</code> <code>textContent</code> (“Choose a PDF first.”, “Reading PDF…”, success line with hints, or cleared on error toast). <code>applyParsedExpenseInvoicePdf(p, 'ap')</code> mutates the AP composer. User note: needs selectable text in the PDF; image-only scans usually fail.
-                      </span>
-                    </span>
+                    
                   </div>
                   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin-top:2px">
                     <span id="apInvoicePdfStatus" class="mini-note"></span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="PDF extract">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        Fills invoice #, date, unit, first-line total when possible. Needs selectable text; scans without OCR usually fail.
-                      </span>
-                    </span>
+                    
                   </div>
                 </div>
               </div>
 
               <div class="ap-lines-section-label">
                 <span>Category &amp; item lines</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Category lines">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Category</strong> vs <strong>Item</strong> grids (QBO-style). <strong>+ Add …</strong> per section. Amounts sum to the doc total.
-                  </span>
-                </span>
+                
               </div>
               <div class="qb-lines-wrap">
                 <div id="woLines" class="ap-wo-lines-root">
@@ -3532,12 +3089,7 @@
                 <div class="qb-attach-box">
                   <div class="ap-attach-head">
                     <span class="qb-l">Attachments</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Attachments">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        Files are stored on the server with this work order. When you <strong>Post to QuickBooks</strong>, they are uploaded and linked to the Purchase or Bill in QBO.
-                      </span>
-                    </span>
+                    
                   </div>
                   <div class="erp-qbo-attach-zone">
                     <input id="apWoAttachmentsInput" type="file" class="erp-qbo-attach-zone__input" multiple accept=".pdf,image/*,.csv,.xlsx,.xls,.doc,.docx,.txt" aria-label="Attachment files for this work order" />
@@ -3582,12 +3134,7 @@
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
                   <div class="panel-title" style="margin:0">Saved Maintenance Expense Transactions</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="AP card list">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Saved <strong>maintenance AP</strong> cards → full form. Exports: WO + AP CSVs.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                   <button type="button" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
@@ -3624,14 +3171,7 @@
                   <div class="panel-title" id="bpPanelTitle">Bill payment (QuickBooks)</div>
                   <span id="bpDriverPayChip" class="bp-driver-pay-chip hidden" aria-live="polite">Driver payees only</span>
                 </div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bill pay">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Pays open QBO <strong>Bills</strong> via <strong>Bill Payment</strong> from the bank/card you pick (reconciliation feed).
-                    <strong>Load from QuickBooks</strong> is live — filter with search or <strong>Bill Id</strong> + <strong>Load bill by Id</strong>.
-                    Shop work: post a <strong>Bill</strong> from <strong>Maintenance expenses</strong> first; ad-hoc <strong>Purchase</strong> cards differ in QBO.
-                  </span>
-                </span>
+                
               </div>
               <div class="mr-filter-bar mr-filter-bar--bp-load" role="group" aria-label="Load open bills from QuickBooks">
                 <div class="mr-filter-bar__grow">
@@ -3698,13 +3238,7 @@
               </div>
               <div class="mr-bp-hintrow">
                 <span class="mini-note" style="margin:0">Vendor filter optional · one vendor per payment · partial pay edits Remaining on blur</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Selection rules">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Blank vendor → up to <strong>150</strong> open bills. One payment = <strong>one vendor</strong> (checked rows must match).
-                    <strong>Partial pay:</strong> edit <strong>Pay</strong>; <strong>Remaining</strong> / <strong>Status</strong> follow (capped at open balance on blur).
-                  </span>
-                </span>
+                
               </div>
               <div class="mr-filter-bar mr-filter-bar--bp-open" role="group" aria-label="Filter loaded open bills">
                 <div class="mr-filter-bar__grow">
@@ -3718,30 +3252,15 @@
               </div>
               <div class="mini-note" style="margin-bottom:8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span id="bpOpenBillsStatus" role="status" aria-live="polite" aria-atomic="true" style="min-width:0;flex:1 1 240px"></span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Open bills data source">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Live <strong>QuickBooks</strong> rows when connected. Stale? Sidebar <strong>Refresh data</strong>. Vendor, search, min $, bill-id narrow the load.
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;font-weight:500;line-height:1.45;color:var(--color-text-body)">
                 <span id="bpSelectionTotal" role="status" aria-live="polite" aria-atomic="true" style="min-width:0;flex:1 1 220px">Draft payment total: $0.00</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How the draft total is calculated">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Sums <strong>Pay</strong> for checked bills across the full loaded set (all pages). Caps at open balance on blur. Rules: hint row <strong>?</strong> above.
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 240px">Grid resets on QBO load, filters, or pager — draft total stays in sync.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Open bills table body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadAccountingOpenBills()</code> → <code>bpMountOpenBillsInTable()</code> → <code>bpRenderOpenBillsPage()</code> → <code>#bpOpenBillsBody</code> (<code>bpHtmlForOpenBillRows</code>), <code>__bpOpenBillsSelection</code>, pager <code>#bpOpenBillsPagerHost</code> / <code>erpPagerRender</code>. <code>bpApplyOpenBillsFilter()</code> resets page.
-                  </span>
-                </span>
+                
               </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap" style="min-width:0">
                 <table class="st-settlement erp-bp-open-table" style="min-width:1120px">
@@ -3779,12 +3298,7 @@
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
                   <div class="panel-title" style="margin:0">Recent bill payments (this app)</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Local payment log">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      ERP log of <strong>Bill Payment</strong> posts from <strong>Bill payment</strong> (not full QBO audit). Filter + export for recon; body <strong>?</strong> for date presets vs export scope.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                   <button type="button" class="qb-btn-add" onclick="loadAccountingBillPaymentLog()">Refresh log</button>
@@ -3796,12 +3310,7 @@
               <div id="acctBpLogDateBarHost" class="acct-bp-log-df-host" aria-label="Payment log date range"></div>
               <div class="mr-bp-hintrow" style="margin-bottom:10px">
                 <span class="mini-note" style="margin:0">Local log when you post above · date filters apply to export</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Payment log">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Written on each bill payment post. Filter by payment date (blank = newest). <strong>Export CSV</strong> uses the same filters.
-                  </span>
-                </span>
+                
               </div>
               <div
                 class="mr-filter-bar erp-ops-filter-bar"
@@ -3851,12 +3360,7 @@
               <div id="bpLogStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 240px">Rows rebuild on filter/pager changes; status line shows counts.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Bill payment log table">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderBpBillPaymentLogTable()</code> → <code>bpRenderBillPaymentLogPage()</code> → <code>#bpLogBody</code> (<code>bpHtmlForBillPaymentLogRow</code>) + <code>#bpLogPagerHost</code> / <code>erpPagerRender</code> when filtered list &gt; page size.
-                  </span>
-                </span>
+                
               </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll mr-bp-table-wrap mr-bp-log-wrap" style="min-width:0">
                 <table class="st-settlement erp-bp-log-table" style="min-width:960px">
@@ -3888,12 +3392,7 @@
             <div class="panel-head">
               <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;flex-wrap:wrap">
                 <div class="panel-title">Fuel &amp; DEF</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel tab overview">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    One row = one QBO <strong>Purchase</strong>. Default <strong>expense category</strong> lines (Diesel / DEF / Reefer → your accounts) with <strong>Class</strong> = truck. Uncheck <strong>Post as expense category line</strong> for QBO <strong>items</strong> (gal × rate). Vendor + optional driver/customer. Autosaves when <strong>ERP write secret</strong> is set.
-                  </span>
-                </span>
+                
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <button type="button" class="qb-btn-add" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">
@@ -3937,12 +3436,7 @@
                       <div class="fuel-manual-doc-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                         <span id="erpFuelDocTitleAccent" class="erp-ap-doc-accent hidden" aria-hidden="true"></span>
                         <h2 class="qb-doc-h2" id="fuelManualDocTitleH2">Fuel bill / expense (manual)</h2>
-                        <span class="erp-help-tip">
-                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Manual fuel form">?</button>
-                          <span class="erp-help-tip__panel" role="tooltip">
-                            Same pattern as <strong>Maintenance expense</strong>: vendor header (payment, pay-from, expense #) + <strong>product lines</strong>. <strong>Confirm &amp; record to QuickBooks</strong> posts each line as a Purchase in one step; <strong>Save to fuel ledger</strong> first if you prefer posting from the grid.
-                          </span>
-                        </span>
+                        
                       </div>
                     </div>
                     <div class="qb-doc-total-block">
@@ -4040,12 +3534,7 @@
                     <div class="erp-qb-cost-shell__headrow">
                       <div class="erp-qb-cost-shell__label erp-qb-cost-shell__label--with-tip">
                         <span>Cost lines (same shape as maintenance)</span>
-                        <span class="erp-help-tip">
-                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Cost lines">?</button>
-                          <span class="erp-help-tip__panel" role="tooltip">
-                            <strong>Category</strong> (expense account) or <strong>Item</strong> (QBO product + gal × $/gal). Catalog or free text. <strong>Lock line $</strong> to back-calc gallons from a fixed total.
-                          </span>
-                        </span>
+                        
                       </div>
                       <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new fuel cost lines">
                         <span class="erp-qb-cost-global__label">New lines</span>
@@ -4055,12 +3544,7 @@
                         <label class="erp-qb-cost-global__opt"
                           ><input type="radio" name="fuelManualCostGlobalMode" value="item" /> Item</label
                         >
-                        <span class="erp-help-tip erp-qb-cost-global__tip">
-                          <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Line type default">?</button>
-                          <span class="erp-help-tip__panel" role="tooltip">
-                            Default for <strong>new</strong> manual fuel rows. Existing rows keep their own line type selector.
-                          </span>
-                        </span>
+                        
                       </div>
                     </div>
                     <div class="maint-cost-table-wrap">
@@ -4097,12 +3581,7 @@
                       <textarea id="fuelManualMemo" class="qb-memo" rows="2" placeholder="e.g. Pilot 35 · card last 4"></textarea>
                     </div>
                     <div class="fuel-manual-memo-aside" style="align-self:end;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Lines &amp; posting">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          Shared header; each line = one ledger row. Extra lines append <code>-L2</code>, <code>-L3</code>… to DocNumber when an expense # is set. Payment method + pay-from stored per row for posting.
-                        </span>
-                      </span>
+                      
                     </div>
                   </div>
                 </div>
@@ -4160,12 +3639,7 @@
                     <input type="checkbox" id="fuelExpUseCategory" checked />
                     Post as expense category line
                   </label>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Category vs item">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Checked (default): <strong>expense accounts</strong> for Diesel / DEF / Reefer. Unchecked: QBO <strong>item</strong> lines (gallons × rate).
-                    </span>
-                  </span>
+                  
                 </div>
                   </div>
                 </div>
@@ -4173,13 +3647,7 @@
               <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-card)">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
                   <div class="qb-l" style="margin:0">Relay / Love’s fuel file (CSV or Excel)</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Relay import">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Preview Love’s / Relay <strong>All Transactions</strong> (CSV/Excel). Needs <strong>ERP write secret</strong>. <strong>Confirm import</strong> loads the grid; each <strong>Record to QuickBooks</strong> posts one Purchase.
-                      <span style="display:block;margin-top:8px">Unit, gallons, totals, vendor, dates (<code>4/15/26</code> → ISO). Category mode maps accounts. <strong>Already in QuickBooks</strong> = staging only.</span>
-                    </span>
-                  </span>
+                  
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
                   <input type="file" id="acctFuelRelayImportFile" accept=".csv,.xlsx,.xls" />
@@ -4190,12 +3658,7 @@
                 <div id="acctFuelRelayImportPreview" class="acct-fuel-import-preview" hidden>
                   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
                     <span style="font-weight:500;font-size:13px">Import preview</span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="After confirm">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        ERP append only. Each <strong>Record to QuickBooks</strong> = one Purchase (not batched). Default category mode maps Relay paths to expense accounts.
-                      </span>
-                    </span>
+                    
                   </div>
                   <div id="acctFuelRelayImportSummary" class="mini-note"></div>
                   <label class="mini-note" style="display:flex;gap:8px;align-items:center;margin:10px 0">
@@ -4256,24 +3719,14 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
                 <span>QuickBooks Live Master</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendors vs items vs accounts">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Create <strong>vendors</strong> here — syncs immediately. <strong>Accounts</strong> and <strong>items</strong>: usually add in QuickBooks Online, then <strong>Refresh Live QuickBooks Master</strong>. Payroll employees live in QBO — refresh after changes.
-                  </span>
-                </span>
+                
               </div>
               <div><button onclick="refreshQboMaster()">Refresh Live QuickBooks Master</button></div>
             </div>
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span id="qboMasterStatus" role="status" aria-live="polite" style="margin:0;min-width:0;flex:1 1 280px"></span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What this summary shows">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    In-memory QBO cache line. Updates after <strong>Refresh Live QuickBooks Master</strong> and the creates above. <strong>Last refresh</strong> = catalog pull; <strong>classes</strong> / <strong>bank accounts</strong> = counts used elsewhere. Each column shows first <strong>50</strong> matches (search narrows).
-                  </span>
-                </span>
+                
               </div>
 
               <div class="form-stack" style="margin-top:12px;">
@@ -4313,12 +3766,7 @@
                 <button type="button" onclick="createQboItem()">Create Item in QuickBooks</button>
                 <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span id="newItemHint" role="status" aria-live="polite" aria-atomic="true" style="margin:0;min-width:0;flex:1 1 200px"></span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create item in QBO">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Posts <strong>Product &amp; service</strong> to QBO. <strong>Income account</strong> required by API; <strong>expense account</strong> optional for purchases. <strong>Service</strong> vs <strong>Non-inventory</strong> = how you buy/sell. Status = validation, progress, QBO id.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
 
@@ -4339,12 +3787,7 @@
                 <button type="button" onclick="createQboAccount()">Create Account in QuickBooks</button>
                 <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                   <span id="newAccountHint" role="status" aria-live="polite" aria-atomic="true" style="margin:0;min-width:0;flex:1 1 200px"></span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create account in QBO">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      New <strong>chart-of-accounts</strong> row (type + optional sub-type). Complex trees: build in QBO first, then <strong>Refresh Live QuickBooks Master</strong>. Status = validation, progress, errors, new id.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
 
@@ -4365,23 +3808,13 @@
                   <div class="panel-head">
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                       <div class="panel-title" style="margin:0">Vendors</div>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor list">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          <strong>Vendors</strong> from cache after <strong>Refresh Live QuickBooks Master</strong>. Create new in the form above; search narrows this column.
-                        </span>
-                      </span>
+                      
                     </div>
                   </div>
                   <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
                     <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
                       <span style="min-width:0;flex:1 1 160px">Cards follow vendor search; title <strong>?</strong> for QBO workflow.</span>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendor list host">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          <code>renderQboMaster()</code> → <code>cacheVendors()</code> + <code>#qboVendorFilter</code>, first <strong>50</strong> → <code>#qboVendorList</code> (<code>.record-card</code> or empty message).
-                        </span>
-                      </span>
+                      
                     </div>
                     <div id="qboVendorList"></div>
                   </div>
@@ -4390,23 +3823,13 @@
                   <div class="panel-head">
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                       <div class="panel-title" style="margin:0">Items</div>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Item list">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          QBO <strong>Products &amp; services</strong> — add most in QBO, then refresh master.
-                        </span>
-                      </span>
+                      
                     </div>
                   </div>
                   <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
                     <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
                       <span style="min-width:0;flex:1 1 160px">Cards follow item search; title <strong>?</strong> for QBO edits.</span>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Item list host">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          <code>renderQboMaster()</code> → <code>cacheItems()</code> + <code>#qboItemFilter</code>, first <strong>50</strong> → <code>#qboItemList</code> (<code>.record-card</code> or empty message).
-                        </span>
-                      </span>
+                      
                     </div>
                     <div id="qboItemList"></div>
                   </div>
@@ -4415,23 +3838,13 @@
                   <div class="panel-head">
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                       <div class="panel-title" style="margin:0">Accounts</div>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Account list">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          <strong>Chart of accounts</strong> for expense mapping — new categories usually in QBO first, then refresh.
-                        </span>
-                      </span>
+                      
                     </div>
                   </div>
                   <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;min-height:0">
                     <div class="mini-note" style="margin:0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body);flex-shrink:0">
                       <span style="min-width:0;flex:1 1 160px">Cards follow account filter; title <strong>?</strong> for mapping.</span>
-                      <span class="erp-help-tip">
-                        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Account list host">?</button>
-                        <span class="erp-help-tip__panel" role="tooltip">
-                          <code>renderQboMaster()</code> → <code>cacheAccounts()</code> + <code>#qboAccountFilter</code>, first <strong>50</strong> → <code>#qboAccountList</code> (<code>.record-card</code> or empty message).
-                        </span>
-                      </span>
+                      
                     </div>
                     <div id="qboAccountList"></div>
                   </div>
@@ -4447,12 +3860,7 @@
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
                   <div class="panel-title" id="expHistPanelTitle" style="margin:0">Expense history log</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Log scope (title)">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      One grid: AP, WO lines, unit records, Relay staging, bill payments (see intro <strong>?</strong> below). Use the <strong>Bill history</strong> tab or Source <strong>Bills only</strong> for bill-type WO/AP rows. <strong>Export filtered CSV</strong> = all matching rows, not only this page.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                   <button type="button" onclick="renderExpenseHistory()">Apply filters</button>
@@ -4464,13 +3872,7 @@
               <div id="acctExpHistDateBarHost" class="acct-exp-hist-df-host" aria-label="Date range (unified)"></div>
               <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap">
                 <span class="mini-note" style="margin:0">Combined expense history</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What this log includes">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Maintenance AP</strong>, <strong>WO lines</strong>, <strong>unit records</strong> (cost lines), <strong>Relay staging</strong>, <strong>bill payments</strong> from this app.
-                    Filter by date + source. QBO columns = posting status where applicable; Relay rows use import flags when already in QBO.
-                  </span>
-                </span>
+                
               </div>
               <div
                 class="mr-filter-bar erp-ops-filter-bar"
@@ -4525,30 +3927,15 @@
                 style="margin:0 0 10px;padding:8px 14px;border-radius:8px;border:1px solid var(--color-border-input);background:var(--color-bg-header);line-height:1.45;font-size:13px;color:var(--color-text-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0"
               >
                 <span>Use <strong>Check QBO</strong> on posted rows to verify Purchase/Bill still exists.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO verification">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    For posted AP, WO, and unit rows, <strong>Check QBO</strong> confirms Purchase/Bill still exists. Not for bill payments or Relay staging.
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin-bottom:8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0">
                 <span id="expHistSummary" style="min-width:0;flex:1 1 220px"></span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Stale counts and refresh">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Counts/totals = data loaded for this tab. Stale after imports or QBO changes? Open <strong>Accounting → Expense history</strong> + sidebar <strong>Refresh data</strong>.
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 240px">Rows rebuild on filter/search/pager; summary stays in sync.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Expense history table body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderExpenseHistory()</code> → <code>buildExpenseHistoryRows()</code> → <code>filterExpenseHistoryRows()</code> → <code>#expHistSummary</code>, page slice → <code>#expHistBody</code>, <code>#expHistPagerHost</code> / <code>erpPagerRender</code>. <code>expHistSearchDebounce()</code> re-runs after typing pauses.
-                  </span>
-                </span>
+                
               </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="min-width:0">
                 <table class="st-settlement" style="min-width:1240px">
@@ -4588,25 +3975,14 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
                 <span>QuickBooks rollback &amp; import safety</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Revert vs undo import">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Revert in QBO</strong> deletes Purchase/Bill in QBO and clears posting flags here.
-                    <strong>Undo spreadsheet import</strong> drops ERP import rows only — not QBO. Already posted? <strong>Revert in QBO</strong> first to stay aligned.
-                  </span>
-                </span>
+                
               </div>
               <div><button type="button" class="qb-btn-add" onclick="loadErpImportBatchesUi()">Refresh</button></div>
             </div>
             <div class="panel-body form-stack">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-label)">
                 <span style="min-width:0;flex:1 1 220px"><strong>Refresh</strong> loads posted rows, bulk revert list, import tables. Revert vs undo — panel title <strong>?</strong>.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posted-to-QBO bulk revert host">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadErpImportBatchesUi()</code> scans <code>erp.workOrders</code>, <code>erp.apTransactions</code>, <code>erp.records</code>, <code>erp.fuelPurchases</code> for <code>qboPosted*</code> hits → <code>#erpRollbackPostedSection</code> (none note or checkbox list, first <strong>80</strong>) + <code>revertQboPostedBatchClient()</code>.
-                  </span>
-                </span>
+                
               </div>
               <div id="erpRollbackPostedSection" class="mini-note" style="margin:0 0 12px;color:var(--color-text-label)">
                 <p class="mini-note" style="margin:0">Click <strong>Refresh</strong> to load posted QuickBooks rows and batch lists.</p>
@@ -4615,43 +3991,23 @@
               <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:4px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <div class="panel-title" style="font-size:14px;margin:0">ERP import batches (maintenance &amp; AP files)</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP import batches">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Spreadsheet upload batches. <strong>Undo spreadsheet import</strong> = ERP-only by batch id — QBO unchanged until you revert posted rows there.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 200px">Batch table updates on <strong>Refresh</strong> — subhead <strong>?</strong> for undo vs QBO revert.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP import batches table host">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadErpImportBatchesUi()</code> → <code>GET /api/erp/import-batches</code> → <code>#erpImportBatchesBody</code> (error / empty / reverse-chron table) + <strong>Undo import</strong> → <code>undoErpImportBatch</code> when active.
-                  </span>
-                </span>
+                
               </div>
               <div id="erpImportBatchesBody" style="margin-top:4px"><span class="mini-note">—</span></div>
               <div class="panel-head" style="padding:8px 0;border-bottom:1px solid var(--color-border);margin-top:16px">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <div class="panel-title" style="font-size:14px;margin:0">Fuel / Relay import batches</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel / Relay batches">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Fuel / Relay CSV staging. Undo clears ERP staging; if posted to QBO, <strong>Revert in QBO</strong> those rows first.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 200px">Fuel / Relay staging batches — same <strong>Refresh</strong> as ERP batches above.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fuel import batches table host">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Same load: <code>#fuelImportBatchesBody</code> clears on fetch error; else empty-state → <strong>Fuel Board</strong> or <code>fuelImportBatches</code> table + <strong>Undo import</strong> → <code>undoFuelImportBatchFromMaint</code>.
-                  </span>
-                </span>
+                
               </div>
               <div id="fuelImportBatchesBody" style="margin-top:4px"><span class="mini-note">—</span></div>
             </div>
@@ -4707,12 +4063,7 @@
           <header class="erp-reports-toolbar" role="banner">
             <div class="erp-reports-toolbar__title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
               <span>Reports</span>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How this hub works">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  <strong>Sidebar</strong> or <strong>tile hub</strong> opens a report; search filters <strong>link labels</strong> in both. Per-tab <strong>Refresh</strong> / QBO actions sit in each report body — this row is navigation only.
-                </span>
-              </span>
+              
             </div>
             <input
               type="search"
@@ -4730,12 +4081,7 @@
           </header>
           <div class="mini-note print-hide-actions" style="margin:0 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-label)">
             <span style="min-width:0;flex:1 1 220px">Yellow roadmap strip below appears when <strong>+ New custom report</strong> or <strong>Scheduled reports</strong> is used; opening <strong>Reports</strong> from the rail clears it.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Reports roadmap banner">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                <code>repReportsRoadmapMsg(kind)</code> sets <code>#repRoadmapBanner</code> <code>textContent</code> (stub copy for custom vs scheduled), removes <code>hidden</code>, and scrolls into view. <code>openSection('reports', …)</code> clears <code>textContent</code> and hides the banner again.
-              </span>
-            </span>
+            
           </div>
           <div id="repRoadmapBanner" class="mini-note erp-reports-roadmap hidden" role="status" aria-live="polite"></div>
           <div id="erpFleetMileageBannerRep" class="mini-note print-hide-actions" style="display:none;margin:0 0 10px;padding:8px 12px;border-radius:6px;border:1px solid #c5d9f7;background:#f0f7ff;color:#1557a0;font-size:11px;line-height:1.45"></div>
@@ -4917,12 +4263,7 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
                 <span>Executive overview</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About executive overview">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Connect <strong>QuickBooks</strong> for live bills/invoices. <strong>Refresh reports</strong> rebuilds metrics from cached ERP+QBO; <strong>Sync QuickBooks lists + activity</strong> reloads catalog + recent QBO window first.
-                  </span>
-                </span>
+                
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <button type="button" onclick="loadReportsData()">Refresh reports</button>
@@ -4932,12 +4273,7 @@
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Metric cards below are replaced on each <strong>Refresh reports</strong> — this note stays fixed.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Executive overview body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadReportsData()</code> → <code>GET /api/reports/summary</code> → <code>reportsSummaryCache</code>; <code>renderReportsAll()</code> → <code>#repOverviewBody</code> (QBO hints + ERP/QBO metric grids). Errors → short <code>&lt;p&gt;</code> only.
-                  </span>
-                </span>
+                
               </div>
               <div id="repOverviewBody">
               <p class="mini-note" style="margin:0;color:var(--color-text-label)">Run <strong>Refresh reports</strong> — title <strong>?</strong> for QBO + snapshot behavior.</p>
@@ -4950,23 +4286,13 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span>TMS load pipeline</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About TMS loads report">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Loads/trips from <strong>TMS / Postgres</strong> when configured; revenue uses <code>revenue_amount</code>. Still empty after setup → <strong>Refresh reports</strong> on Overview.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Pipeline counts below replace after <strong>Refresh reports</strong> on the overview — Postgres TMS only.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="TMS report body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderReportsAll()</code> → <code>reportsSummaryCache.tms</code> → <code>#repTmsBody</code>: not-configured note, error string, or summary + status×count table (<code>tms.byStatus</code>).
-                  </span>
-                </span>
+                
               </div>
               <div id="repTmsBody"></div>
             </div>
@@ -4976,23 +4302,13 @@
         <div id="rep-settlement" class="reports-tab hidden">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;max-width:90ch">
             <span class="mini-note" style="margin:0">Revenue vs rolled-up costs for one load #.</span>
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">
-                Merges <strong>WO</strong>, <strong>AP</strong>, and <strong>unit maintenance</strong> on the same load/invoice #; TMS (Postgres) trip header/stops under the rollup when present. Keeps heavy P&amp;L out of <strong>Accounting</strong> entry screens.
-              </span>
-            </span>
+            
           </div>
           <div class="panel qb-panel">
             <div class="panel-head">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <div class="panel-title" style="margin:0">Trip cost rollup (load # = invoice #)</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Rollup panel">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Same <strong>load / invoice #</strong> rolls WO + AP + maint into one trip. <strong>Run lookup</strong> fills the grid; <strong>Download CSV</strong> exports. TMS block when Postgres has the load.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body form-stack">
@@ -5021,12 +4337,7 @@
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Headline + PDFs refresh on <strong>Run lookup</strong>; TMS card + cost lines fill in the same pass.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement summary host">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>runSettlementLookup()</code> → <code>GET /api/settlement/by-load/&lt;load&gt;</code> → <code>#settlementSummary</code> (totals, revenue/net, PDF/QBO); <code>#settlementTmsBox</code> (trip/miles or hidden); <code>#settlementLinesBody</code> (paged or empty).
-                  </span>
-                </span>
+                
               </div>
               <div id="settlementSummary" class="mini-note" style="margin-bottom:10px">Enter a load number and run lookup.</div>
               <div id="settlementTmsBox" class="mini-note hidden" style="margin-bottom:12px;padding:10px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg-card)"></div>
@@ -5053,24 +4364,14 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
                 <span>Driver pay settlements</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About driver pay settlements">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Per <strong>QBO driver vendor</strong>: revenue, rolled-up expenses (same rules as trip lookup), net. Optional server <code>DRIVER_SETTLEMENT_PAY_PCT</code> (0–1) → suggested % of linehaul.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadDriverPaySettlements()">Refresh driver settlements</button>
               <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 240px">Vendor blocks + load tables refresh on <strong>Refresh driver settlements</strong>; this line stays during load/errors.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Driver pay settlements body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadDriverPaySettlements()</code> → loading <code>innerHTML</code> on <code>#driverPaySettlementsBox</code>, then <code>renderDriverPaySettlementsBox()</code> (per-vendor tables + optional <code>driverPaySettPager_*</code> or empty/error). Pagers re-call <code>renderDriverPaySettlementsBox()</code> for the slice.
-                  </span>
-                </span>
+                
               </div>
               <div id="driverPaySettlementsBox" class="mini-note" style="margin-top:12px">Use <strong>Refresh driver settlements</strong> — title <strong>?</strong> for fields.</div>
             </div>
@@ -5079,24 +4380,14 @@
             <div class="panel-head">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <div class="panel-title" style="margin:0">Loads with recorded costs (index)</div>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement index">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Loads with maint / AP / unit-record costs already. <strong>View</strong> → same # in <strong>Trip cost rollup</strong> for lines or CSV.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
               <button type="button" class="qb-btn-add" onclick="loadSettlementIndex()">Refresh index</button>
               <div class="mini-note" style="margin:10px 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 240px">Index rows refresh on <strong>Refresh index</strong>; <strong>Load / invoice #</strong> autocomplete comes from the same response (this page’s datalist).</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Settlement cost index">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadSettlementIndex()</code> → <code>GET /api/settlement/index</code> → paged rows in <code>#settlementIndexBody</code> (WO/AP/rec counts, total, View+PDF) or empty/error; rebuilds <code>#settlementLoadHints</code> (≤100 <code>&lt;option&gt;</code>s for <code>#settlementLoadInput</code> <code>list</code>).
-                  </span>
-                </span>
+                
               </div>
               <div class="table-wrap st-settlement-wrap erp-table-scroll" style="margin-top:10px;min-width:0">
                 <table class="st-settlement" style="min-width:520px">
@@ -5125,12 +4416,7 @@
             <div class="panel-head" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
                 <span>Maintenance spend by unit (ERP records)</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Server rollup of <strong>saved maintenance expense</strong> by unit (same universe as Maintenance Table). <strong>Download CSV</strong> for export.
-                  </span>
-                </span>
+                
               </div>
               <div>
                 <a class="qb-btn-add" style="text-decoration:none;display:inline-block" href="/api/reports/export/maintenance-by-unit.csv">Download CSV</a>
@@ -5140,12 +4426,7 @@
               <div id="repMaintByUnitPagerHost" hidden></div>
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Table or empty state below replaces after <strong>Refresh reports</strong> on Overview — pager row above appears when the unit list spans pages.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Spend by unit report body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderRepMaintSpendByUnitTable()</code> replaces <code>#repMaintBody</code> <code>innerHTML</code> with either a short empty-state note or a scroll-wrapped table built from <code>reportsSummaryCache.maintenanceCostByUnit</code> for the current page. <code>erpPagerRender</code> fills <code>#repMaintByUnitPagerHost</code> when the slice needs paging.
-                  </span>
-                </span>
+                
               </div>
               <div id="repMaintBody"></div>
             </div>
@@ -5157,12 +4438,7 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span>Maintenance detailed report (records + cost breakdown)</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Each maint record + full <strong>cost breakdown</strong>. Position-based parts (tires, batteries, …) add position + part reference columns.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body form-stack">
@@ -5215,12 +4491,7 @@
               <div id="repMaintDetailPagerHost" hidden></div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 240px">Record cards below rebuild when filters change or the pager moves — the status line above shows the filtered count.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Maintenance detailed report body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderMaintDetailedReport()</code> filters <code>erp.records</code> by unit / dates / type / search, updates <code>#repMaintDetailStatus</code> <code>textContent</code>, then replaces <code>#repMaintDetailBody</code> <code>innerHTML</code> with paged card markup (or a no-rows line). <code>erpPagerRender</code> on <code>#repMaintDetailPagerHost</code> re-calls with <code>keepPagerPage</code> when only the slice changes.
-                  </span>
-                </span>
+                
               </div>
               <div id="repMaintDetailBody" class="mini-note">—</div>
             </div>
@@ -5231,23 +4502,13 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span>QuickBooks — bills, purchases, credits, invoices</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this report">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Recent <strong>QuickBooks</strong> bills, purchases, vendor credits, invoices after <strong>Refresh reports</strong> (same snapshot window as accounting board). Read-only tables here.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Transaction tables below rebuild from the same reports snapshot as the overview.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="QBO activity report body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderReportsAll()</code> → <code>reportsSummaryCache.qboCache.transactionActivity</code> → <code>#repQboBody</code>: connect/sync hint or window meta + Σ $ chips + four <code>reportTxnTableHtml</code> blocks (bills / purchases / vendor credits / invoices).
-                  </span>
-                </span>
+                
               </div>
               <div id="repQboBody"></div>
             </div>
@@ -5258,23 +4519,13 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span>Local ERP vs QuickBooks posting</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About sync comparison">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>ERP maint / expense</strong> rows vs <strong>QuickBooks</strong> posted state — drift, dupes, misses. Stale table → <strong>Refresh reports</strong>.
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Posting mix table below swaps when the reports cache refreshes.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="ERP vs QBO sync body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>renderReportsAll()</code> → <code>reportsSummaryCache.posting</code> → <code>#repSyncBody</code>: intro + table (totals / posted / local-only / errors) for maint records, WOs, AP.
-                  </span>
-                </span>
+                
               </div>
               <div id="repSyncBody"></div>
             </div>
@@ -5285,24 +4536,14 @@
             <div class="panel-head" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
                 <span>Team activity &amp; security posture</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this panel">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>Refresh panel</strong> → sign-in posture, checks, (admins) ERP activity. Same APIs as <strong>Maintenance → Security alerts</strong> where applicable.
-                  </span>
-                </span>
+                
               </div>
               <button type="button" onclick="loadTeamSecurityPanel()">Refresh panel</button>
             </div>
             <div class="panel-body form-stack" style="max-width:min(960px,100%)">
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Panel content below reloads only when you press <strong>Refresh panel</strong> — not part of <strong>Refresh reports</strong>.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Team security panel body">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>loadTeamSecurityPanel()</code> → loading line → <code>GET /api/security/posture</code> → <code>#repTeamBody</code> (or error). Admins: extra activity blocks. Auth off → single explanatory paragraph.
-                  </span>
-                </span>
+                
               </div>
               <div id="repTeamBody">
               <p class="mini-note" style="margin:0">Loading…</p>
@@ -5315,14 +4556,7 @@
             <div class="panel-head">
               <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span>IFTA, fuel tax &amp; DOT compliance (roadmap)</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="IFTA roadmap">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <strong>IFTA</strong> needs auditable miles-by-state + fuel-by-jurisdiction — usually <strong>Samsara</strong> ELD/GPS + <strong>QBO</strong> fuel coding; settlement views already roll revenue/maint/AP.<br /><br />
-                    <strong>Roadmap:</strong> persist Samsara <code>vehicleId</code> on <code>trucks</code>/<code>trailers</code>; nightly miles-by-state; fuel import; quarterly export; driver profile ↔ <code>drivers.qbo_vendor_id</code>.<br /><br />
-                    <strong>Today:</strong> <a href="/fuel.html" target="_blank" rel="noopener">Fuel planner</a>, fleet/HOS, <strong>Accounting → Settlement</strong> + driver pay, QBO sync. Schema updates: <code>npm run db:migrate</code> (see <code>011_fleet_driver_compliance.sql</code>).
-                  </span>
-                </span>
+                
               </div>
             </div>
             <div class="panel-body form-stack" style="max-width:min(820px,100%)">
@@ -5455,12 +4689,7 @@
           <div class="panel-head">
             <div class="panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span>Lists &amp; catalogs</span>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About lists">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  <strong>Service types</strong>, <strong>QuickBooks</strong>, <strong>Vendors &amp; drivers</strong>, <strong>Operational status</strong>, <strong>Fleet &amp; Samsara</strong> — same sidebar hub as the rest of Maintenance.
-                </span>
-              </span>
+              
             </div>
             <div class="mini-note" style="margin:0;color:var(--color-text-label)">Sidebar or tabs below.</div>
           </div>
@@ -5476,12 +4705,7 @@
             <div id="catalog-panel-service" class="catalog-subpanel active">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
                 <span class="mini-note" style="margin:0">Stored in Postgres when <code>DATABASE_URL</code> is set.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About service types">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Postgres <code>maintenance_service_catalog</code> when <code>DATABASE_URL</code> is set; WO pickers refresh after edits.
-                  </span>
-                </span>
+                
               </div>
               <div class="catalog-add-card" style="margin-bottom:16px;max-width:520px">
                 <div class="catalog-add-card__head">
@@ -5493,23 +4717,13 @@
                   <button type="button" class="catalog-plus-btn" onclick="addCatalogServiceFromCatalogsSection()">Add to Postgres catalog</button>
                   <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0">
                     <span id="catalogSectionServiceHint" role="status" aria-live="polite" aria-atomic="true" style="margin:0;min-width:0;flex:1 1 200px"></span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="API and permissions">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        <code>POST /api/maintenance/service-types</code> (same as WO form). Needs <code>DATABASE_URL</code> + admin / server write policy.
-                      </span>
-                    </span>
+                    
                   </div>
                 </div>
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Loads on open or <strong>R&amp;M Status</strong> refresh; search + pager.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Service catalog admin API">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/maintenance/service-catalog-admin</code> → <code>renderServiceCatalogAdmin</code> → <code>#serviceCatalogAdminBody</code>. Requires Postgres catalog; adds → <code>POST …/service-types</code>. Sidebar <strong>Refresh data</strong> reloads pickers.
-                  </span>
-                </span>
+                
               </div>
               <div id="erpFleetMileageBannerCat" class="mini-note" style="display:none;margin:0 0 10px;padding:8px 12px;border-radius:6px;border:1px solid #c5d9f7;background:#f0f7ff;color:#1557a0;font-size:11px;line-height:1.45"></div>
               <div class="mini-note" style="margin:0 0 6px;font-weight:600">Service interval catalog (Postgres)</div>
@@ -5532,21 +4746,11 @@
             <div id="catalog-panel-qbo" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
                 <span class="mini-note" style="margin:0"><strong>QBO</strong> vendors/items/accounts — <strong>Refresh QuickBooks lists</strong>, then pick on WO/AP.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About QuickBooks lists">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    QBO cache — refresh here, then pick on bills/maint lines. Driver ↔ vendor links: <strong>Vendors &amp; drivers</strong>.
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin:0 0 10px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px"><strong>Refresh QuickBooks lists</strong> after QBO edits or stale pickers (same as top bar / Accounting).</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="What Refresh QuickBooks lists does">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>refreshQboMaster()</code> → <code>GET /api/qbo/master</code> → <code>erp.qboCache</code> + pickers; also Live Master + home when open. Does not post bills — <strong>Accounting → QuickBooks live master</strong>. Toasts on failure.
-                  </span>
-                </span>
+                
               </div>
               <button type="button" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
               <button type="button" style="margin-left:8px" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); openAccountingTab('acct-qbo', document.getElementById('acctQbDdTrigger'));">Open Accounting → QuickBooks live master</button>
@@ -5570,12 +4774,7 @@
                   <button type="button" class="catalog-plus-btn" onclick="createQboVendorFromCatalogForm()">+ Create vendor in QuickBooks</button>
                   <div class="mini-note" style="margin:8px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                     <span id="qboNewVendorCatalogHint" role="status" aria-live="polite" aria-atomic="true" style="margin:0;min-width:0;flex:1 1 200px"></span>
-                    <span class="erp-help-tip">
-                      <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Create vendor from Lists">?</button>
-                      <span class="erp-help-tip__panel" role="tooltip">
-                        Same as <strong>Accounting → Live Master</strong>. <strong>Display name</strong> required; <strong>Refresh QuickBooks lists</strong> if pickers lag. Status = validation / progress / QBO id.
-                      </span>
-                    </span>
+                    
                   </div>
                 </div>
               </div>
@@ -5586,21 +4785,11 @@
                 <button type="button" class="btn btn--small" style="flex-shrink:0" onclick="openDedupeTool()">Find duplicates</button>
               </div>
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About vendors & drivers">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    QBO vendors + TMS drivers as payees in one grid. After QBO adds vendors, <strong>Refresh QuickBooks lists</strong>.
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Brief <strong>Loading…</strong>, then payees, QBO search, cached lists.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Vendors &amp; drivers workspace">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/maintenance/vendor-catalog</code> — QBO vendors + TMS payees + link UI. Needs QBO; driver search = read-only Samsara. Errors? <strong>Refresh QuickBooks lists</strong> or fix the connection strip.
-                  </span>
-                </span>
+                
               </div>
               <div id="vendorCatalogBody" class="mini-note">Not loaded yet.</div>
             </div>
@@ -5622,21 +4811,11 @@
             <div id="catalog-panel-operational" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
                 <span class="mini-note" style="margin:0"><strong>Operational status</strong> picker codes/labels — defaults included; add yard-specific rows.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About operational status">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    Values on the maintenance board. Defaults ship with the ERP; add rows (yard hold, wash bay, …).
-                  </span>
-                </span>
+                
               </div>
               <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px">Load on open; add below, then sidebar <strong>Refresh data</strong> if pickers look stale.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Operational status catalog">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>GET /api/maintenance/operational-status-catalog</code> → value/label rows. <strong>+ Add status to ERP</strong> POSTs here; sidebar <strong>Refresh data</strong> reloads pickers.
-                  </span>
-                </span>
+                
               </div>
               <div id="operationalCatalogBody" class="mini-note">Not loaded yet.</div>
               <div class="catalog-add-card" style="margin-top:14px;max-width:520px">
@@ -5656,33 +4835,18 @@
             <div id="catalog-panel-fleet" class="catalog-subpanel">
               <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
                 <span class="mini-note" style="margin:0"><strong>Samsara</strong> assets/GPS — POST renames need write token + admin or ERP write secret.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Fleet & Samsara">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    POST renames here with write token + admin or ERP write secret; otherwise edit in Samsara Cloud.
-                  </span>
-                </span>
+                
               </div>
               <button type="button" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]')); openTrackingTab('tr-assets', document.querySelector('#section-tracking .subtab[onclick*=\'tr-assets\']'));">Open Vehicle Tracking → Assets</button>
               <button type="button" style="margin-left:8px" onclick="window.open('https://cloud.samsara.com','_blank','noopener')">Samsara Cloud</button>
               <div class="mini-note" style="margin:10px 0 0;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0;line-height:1.45;color:var(--color-text-body)">
                 <span style="min-width:0;flex:1 1 220px"><strong>POST</strong> via this ERP (write-capable token); toasts + list refresh may follow.</span>
-                <span class="erp-help-tip">
-                  <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara rename API paths">?</button>
-                  <span class="erp-help-tip__panel" role="tooltip">
-                    <code>pushSamsaraVehicleName</code> / <code>pushSamsaraDriverName</code> → <code>POST …/samsara/vehicle|driver/&lt;id&gt;</code> JSON <code>{&quot;name&quot;}</code> + auth + <code>erpWriteHeaders()</code> when required. Success → <code>loadAll()</code>; errors show server text.
-                  </span>
-                </span>
+                
               </div>
               <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border);max-width:560px" class="form-stack">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span class="qb-l" style="margin:0">Rename vehicle in Samsara</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara id and API token">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Samsara vehicle id (API/board). Needs write-scoped token — re-issue after scope changes or expect <strong>403</strong>.
-                    </span>
-                  </span>
+                  
                 </div>
                 <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Samsara vehicle id + new name, then POST.</p>
                 <input id="samsaraVehicleIdInput" class="qb-in maint-field" placeholder="Samsara vehicle id">
@@ -5690,12 +4854,7 @@
                 <button type="button" onclick="pushSamsaraVehicleName()">POST update to Samsara</button>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px">
                   <span class="qb-l" style="margin:0">Rename driver in Samsara</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara driver id and API token">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Samsara driver id (API/HOS/Cloud). Same write-token rules as vehicle — re-issue after scope changes or expect <strong>403</strong>.
-                    </span>
-                  </span>
+                  
                 </div>
                 <p class="mini-note" style="margin:6px 0 0;color:var(--color-text-label);font-size:12px">Samsara driver id + new name, then POST.</p>
                 <input id="samsaraDriverIdInput" class="qb-in maint-field" placeholder="Samsara driver id">
@@ -5712,12 +4871,7 @@
           <div class="panel-head">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="panel-title" style="margin:0">Upload center</div>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About uploads">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  Pick a tab; upload CSV/Excel where supported. Fuel/Relay: confirm under <strong>Accounting</strong> before QBO.
-                </span>
-              </span>
+              
             </div>
           </div>
           <div class="panel-body">
@@ -5735,12 +4889,7 @@
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span>Bank CSV import</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About bank CSV">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Matching runs in the banking app (<strong>Bank CSV matching</strong>). This tab opens that workspace; any standard bank CSV works.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="mr-upload-panel-card">
@@ -5758,12 +4907,7 @@
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span>Comdata / Relay import</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About Comdata / Relay">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Comdata/Relay <strong>All Transactions</strong> CSV/Excel — same parser as <strong>Fuel / DEF</strong>. Confirm under <strong>Accounting → Fuel &amp; DEF</strong> before QBO.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="mr-upload-panel-card">
@@ -5790,12 +4934,7 @@
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span>Connections</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About connections">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Status only (no CSV). Samsara: <strong>Configure</strong> / <strong>Refresh data</strong> (reloads board here). QBO: <strong>Connect</strong>, <strong>Test connection</strong>, <strong>Refresh lists</strong>.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="mr-upload-conn-grid">
@@ -5822,12 +4961,7 @@
                 <summary>Samsara write scopes (advanced)</summary>
                 <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:8px">
                   <span class="mini-note" style="margin:0">Renames need write scopes — <strong>Lists → Fleet &amp; Samsara</strong>.</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Samsara API write scopes">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Without write scopes, renames stay read-only. After scope changes, re-issue the token — otherwise Samsara returns <strong>403</strong>.
-                    </span>
-                  </span>
+                  
                 </div>
               </details>
             </div>
@@ -5836,12 +4970,7 @@
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span>Fuel / DEF import</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About fuel import">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>Import</strong> previews Comdata, Relay, or manual fuel. Use carrier <strong>All Transactions</strong> (or similar) CSV/Excel. Post from <strong>Accounting → Fuel &amp; DEF</strong> before QBO.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="mr-upload-panel-card">
@@ -5867,12 +4996,7 @@
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span>Maintenance AP import</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance AP import">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      <strong>CSV or Excel</strong> AP export — align columns with your source so rows map to WOs / expense lines when the parser can match.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
                   <button type="button" class="btn btn--small" onclick="uploadCenterDownloadTemplate('ap')">Download blank CSV template</button>
@@ -5902,12 +5026,7 @@
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span>Maintenance history import</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About maintenance history import">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Use the template headers, then upload <strong>CSV or Excel</strong>. Validation follows those columns.
-                    </span>
-                  </span>
+                  
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
                   <button type="button" class="btn btn--small" onclick="uploadCenterDownloadTemplate('maint')">Download blank CSV template</button>
@@ -5937,12 +5056,7 @@
               <div class="mr-upload-panel-card">
                 <div class="mr-upload-panel-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <span>Other import</span>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About other import">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      No automatic parser — file is logged for <strong>manual</strong> follow-up.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="mr-upload-panel-card">
@@ -8832,11 +7946,7 @@
         const connLead =
           '<div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">' +
           '<span style="min-width:0;flex:1 1 160px">QBO status + refresh snapshot — only the bordered box below updates each poll.</span>' +
-          '<span class="erp-help-tip">' +
-          '<button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Accounting sidebar Connections">?</button>' +
-          '<span class="erp-help-tip__panel" role="tooltip">' +
-          '<code>paintAcctSidebarConnections()</code> fills <code>#erpAcctSbConnectionsBody</code> from cache (QBO status, last refresh, fleet line, posting-alert counts). Separate from top <code>#erpConnectionStrip</code> (<code>textContent</code> in <code>erp-ui.js</code>).' +
-          '</span></span></div>';
+          '</div>';
         const connBody = connLead + '<div id="erpAcctSbConnectionsBody" class="erp-acct-sb-conn"></div>';
         inner.innerHTML =
           erpSbGroup('accounting', 'expenses', 'Expenses', true, expensesBody) +
@@ -11029,12 +10139,7 @@
           <div class="panel-head">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="panel-title" style="margin:0">CMMS benchmark (industry reference)</div>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="How to read this">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  <strong>Reference</strong> only — not a grade. Expand below for typical CMMS themes vs what this ERP already covers.
-                </span>
-              </span>
+              
             </div>
           </div>
           <div class="panel-body" style="padding-top:10px">
@@ -11066,12 +10171,7 @@
               <div class="panel-head">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <div class="panel-title" style="margin:0">ERP user activity</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Roster data">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      ERP <strong>JWT</strong> sign-ins and throttled API hits — not QuickBooks or Samsara portals. Idle rules use the env vars at the table foot.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="panel-body mini-note" style="margin-bottom:10px;line-height:1.5">${escapeHtml(team.disclaimer || '')}</div>
@@ -11133,12 +10233,7 @@
               <div class="panel-head">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                   <div class="panel-title" style="margin:0">Security audit log (recent)</div>
-                  <span class="erp-help-tip">
-                    <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Audit file">?</button>
-                    <span class="erp-help-tip__panel" role="tooltip">
-                      Last lines of the server <strong>security audit</strong> (logins + sensitive writes). Full file stays on disk.
-                    </span>
-                  </span>
+                  
                 </div>
               </div>
               <div class="panel-body">
@@ -11161,23 +10256,13 @@
       host.innerHTML = `
         <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 8px">
           <span class="mini-note" style="margin:0;line-height:1.5">Fraud resistance and ERP usage — QBO and Samsara keep their own login histories.</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="About this board">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              Use for <strong>fraud resistance</strong> (who can change money data) and <strong>ERP engagement</strong>. QBO and Samsara still hold accounting and ELD logins separately.
-            </span>
-          </span>
+          
         </div>
         <div class="panel" style="box-shadow:none;border:1px solid var(--color-border)">
           <div class="panel-head">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="panel-title" style="margin:0">Configuration posture</div>
-              <span class="erp-help-tip">
-                <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Posture checks">?</button>
-                <span class="erp-help-tip__panel" role="tooltip">
-                  Live <strong>server-side</strong> checks (auth, write secret, TLS, etc.). <strong>OK / Fix</strong> from the posture API — clear Fix before widening access.
-                </span>
-              </span>
+              
             </div>
           </div>
           <div class="panel-body"><ul style="margin:0;padding-left:1.2rem">${checks}</ul></div>
@@ -20223,10 +19308,7 @@
         </div>
         <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border)">
           <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Fleet roster
-            <span class="erp-help-tip">
-              <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Fleet roster">?</button>
-              <span class="erp-help-tip__panel" role="tooltip">Retired units are hidden from this list, the board, fuel pickers, and maintenance alerts. History and imports for that unit name remain.</span>
-            </span>
+            
           </span>
           <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px;margin-top:4px">
             <select id="assetFleetActiveSelect" class="qb-in maint-field">
