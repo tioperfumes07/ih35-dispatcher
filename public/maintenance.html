@@ -391,6 +391,7 @@
   </div>
   <datalist id="unitOptions"></datalist>
   <datalist id="serviceOptions"></datalist>
+  <datalist id="partsOptions"></datalist>
   <datalist id="qboVendorOptions"></datalist>
   <datalist id="qboItemOptions"></datalist>
   <datalist id="qboAccountOptions"></datalist>
@@ -1236,7 +1237,13 @@
                         <div id="serviceMileageHint" class="mini-note maint-field-hint"></div>
                       </div>
                       <div class="maint-field-cell maint-field-cell--grow">
-                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Planned service / repair
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Parts lookup
+                          
+                        </span>
+                        <input id="partsLookupInput" class="qb-in maint-field" list="partsOptions" placeholder="Search parts catalog" autocomplete="off" oninput="resolvePartsLookupSearch()" onblur="resolvePartsLookupSearch()" />
+                        <input id="partsLookupValue" type="hidden" />
+                        <div class="mini-note maint-field-hint">Suggestions come from <code>vehicle_parts_reference</code> catalog.</div>
+                        <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px">Planned service / repair
                           
                         </span>
                         <div id="maintPlannedServicesHost"></div>
@@ -5752,6 +5759,8 @@
     let __servicePresetList = [];
     /** From GET /api/maintenance/service-types (Postgres catalog or server defaults). */
     let catalogServiceNames = [];
+    /** From GET /api/maintenance/parts-reference (Postgres catalog or server defaults). */
+    let catalogPartNames = [];
 
     const MAINT_TIRE_POSITIONS = [
       'Steer Left',
@@ -6038,6 +6047,26 @@
 
     catalogServiceNames = [...DEFAULT_MAINT_SERVICE_TYPES];
 
+    const DEFAULT_PART_LOOKUP_NAMES = [
+      'Oil Filter',
+      'Fuel Filter',
+      'Air Filter',
+      'Cabin Filter',
+      'Drive Tire',
+      'Steer Tire',
+      'Brake Pad Set',
+      'Brake Drum',
+      'Brake Chamber',
+      'Battery 12V',
+      'Alternator',
+      'Starter',
+      'Serpentine Belt',
+      'Coolant',
+      'DEF Filter'
+    ];
+
+    catalogPartNames = [...DEFAULT_PART_LOOKUP_NAMES];
+
     const REPAIR_LOCATION_DEFS = [
       { code: 'in-house', label: 'Internal shop' },
       { code: 'external', label: 'External shop' },
@@ -6153,7 +6182,7 @@
       const typed = String(typedRaw || '').trim().toLowerCase();
       if (!typed || !Array.isArray(rows)) return null;
       const norm = row =>
-        [row.name, row.companyName]
+        [row.name, row.displayName, row.companyName, row.vendorName]
           .map(x => String(x || '').trim().toLowerCase())
           .filter(Boolean);
       let hit = rows.find(row => norm(row).some(n => n === typed));
@@ -7098,7 +7127,8 @@
         30
       );
       styleFieldToLongest('linkedBankAccountSearch', cacheBankAccounts().map(b => b.name), 34);
-      styleFieldToLongest('vendorInput', cacheVendors().map(v => v.name || v.companyName));
+      styleFieldToLongest('vendorInput', cacheVendors().map(v => qboVendorDisplayName(v)));
+      styleFieldToLongest('partsLookupInput', catalogPartNames, 42);
       styleFieldToLongest(
         'recordLoadNumberInput',
         tmsLoadsCache.length
@@ -7617,7 +7647,29 @@
       return String(a.name || a.unit || '').localeCompare(String(b.name || b.unit || ''));
     }
 
-    function cacheVendors() { return erp.qboCache?.vendors || []; }
+    function qboVendorDisplayName(v) {
+      return String(v?.name || v?.displayName || v?.companyName || v?.vendorName || '').trim();
+    }
+
+    function normalizeQboVendorRows(rows) {
+      if (!Array.isArray(rows)) return [];
+      return rows
+        .map(v => {
+          const label = qboVendorDisplayName(v);
+          if (!label) return null;
+          return {
+            ...v,
+            name: label,
+            displayName: String(v?.displayName || label).trim(),
+            companyName: String(v?.companyName || v?.displayName || label).trim()
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function cacheVendors() {
+      return normalizeQboVendorRows(erp.qboCache?.vendors || []);
+    }
     function cacheQboClasses() {
       return Array.isArray(erp.qboCache?.classes) ? erp.qboCache.classes : [];
     }
@@ -10862,7 +10914,7 @@
       try {
         const data = await j('/api/qbo/master');
         erp.qboCache = {
-          vendors: data.vendors || [],
+          vendors: normalizeQboVendorRows(data.vendors || []),
           items: data.items || [],
           accounts: data.accounts || [],
           accountsExpense: data.accountsExpense || [],
@@ -11368,7 +11420,7 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes] =
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes] =
           await Promise.all([
             j('/api/maintenance/dashboard').catch(err => ({ ok: false, error: err?.message || String(err), vehicles: [], dashboard: [], tireAlerts: [] })),
             j('/api/maintenance/records'),
@@ -11388,7 +11440,9 @@
               connected: false
             })),
             j('/api/health').catch(err => ({ ok: false, error: err?.message || String(err) })),
-            j('/api/qbo/status').catch(() => null)
+            j('/api/qbo/status').catch(() => null),
+            j('/api/qbo/master').catch(() => null),
+            j('/api/maintenance/parts-reference').catch(() => ({ ok: false, parts: [], names: [] }))
           ]);
         if (bar) {
           bar.classList.add('hidden');
@@ -11417,10 +11471,41 @@
           );
         }
 
+        {
+          const apiPartNames = partsRes && partsRes.ok
+            ? Array.isArray(partsRes.names)
+              ? partsRes.names
+              : Array.isArray(partsRes.parts)
+                ? partsRes.parts.map(p => p?.label || p?.part_name || p?.name)
+                : []
+            : [];
+          catalogPartNames = Array.from(new Set([...DEFAULT_PART_LOOKUP_NAMES, ...apiPartNames].map(n => String(n || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+        }
+
         vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
         dashboard = dashRes.dashboard || [];
         tireAlerts = dashRes.tireAlerts || [];
         erp = erpRes || {};
+        const master = qboMasterRes && typeof qboMasterRes === 'object' ? qboMasterRes : null;
+        const prevCache = erp.qboCache && typeof erp.qboCache === 'object' ? erp.qboCache : {};
+        erp.qboCache = {
+          ...prevCache,
+          ...(master ? {
+            vendors: normalizeQboVendorRows(master.vendors || []),
+            items: Array.isArray(master.items) ? master.items : (prevCache.items || []),
+            accounts: Array.isArray(master.accounts) ? master.accounts : (prevCache.accounts || []),
+            accountsExpense: Array.isArray(master.accountsExpense) ? master.accountsExpense : (prevCache.accountsExpense || []),
+            accountsIncome: Array.isArray(master.accountsIncome) ? master.accountsIncome : (prevCache.accountsIncome || []),
+            customers: Array.isArray(master.customers) ? master.customers : (prevCache.customers || []),
+            classes: Array.isArray(master.classes) ? master.classes : (prevCache.classes || []),
+            accountsBank: Array.isArray(master.accountsBank) ? master.accountsBank : (prevCache.accountsBank || []),
+            paymentMethods: Array.isArray(master.paymentMethods) ? master.paymentMethods : (prevCache.paymentMethods || []),
+            employees: Array.isArray(master.employees) ? master.employees : (prevCache.employees || []),
+            terms: Array.isArray(master.terms) ? master.terms : (prevCache.terms || []),
+            transactionActivity: master.transactionActivity ?? prevCache.transactionActivity ?? null,
+            refreshedAt: master.refreshedAt || prevCache.refreshedAt || ''
+          } : {})
+        };
         syncPrintCompanyInfoFromErp(erp);
         board = boardRes || {};
         driverProfiles = Array.isArray(drvRes?.drivers) ? drvRes.drivers : [];
@@ -11731,8 +11816,19 @@
       bindMaintCostGlobalModeSeg();
       bindCostTotalCoordination();
 
+      const vendorValues = Array.from(
+        new Set(
+          cacheVendors()
+            .map(v => qboVendorDisplayName(v))
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b));
       document.getElementById('qboVendorOptions').innerHTML =
-        cacheVendors().map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
+        vendorValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+
+      const partValues = Array.from(new Set((catalogPartNames || []).map(v => String(v || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+      const partsDl = document.getElementById('partsOptions');
+      if (partsDl) partsDl.innerHTML = partValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
 
       const expenseAccRows = cacheExpenseCategoryAccounts();
       const expOptHtml = expenseAccRows.map(v => `<option value="${escapeHtml(v.name)}"></option>`).join('');
@@ -15711,6 +15807,22 @@
 
     function resolveServiceSearch() {
       document.getElementById('serviceTypeInput').value = document.getElementById('serviceSearchInput').value.trim();
+    }
+
+    function resolvePartsLookupSearch() {
+      const inp = document.getElementById('partsLookupInput');
+      const hid = document.getElementById('partsLookupValue');
+      if (!inp || !hid) return;
+      const typed = String(inp.value || '').trim();
+      if (!typed) {
+        hid.value = '';
+        return;
+      }
+      const lower = typed.toLowerCase();
+      const rows = Array.isArray(catalogPartNames) ? catalogPartNames : [];
+      const exact = rows.find(n => String(n || '').trim().toLowerCase() === lower);
+      const starts = exact || rows.find(n => String(n || '').trim().toLowerCase().startsWith(lower));
+      hid.value = starts ? String(starts).trim() : '';
     }
 
     function resolveRepairLocationSearch() {

@@ -36,6 +36,32 @@ const samsaraHealthCache = {
   refreshing: null
 };
 
+const COMMON_WORK_ORDER_SERVICE_TYPE_SEEDS = [
+  'Oil Change',
+  'Tire Rotation',
+  'Brake Inspection',
+  'PM Service',
+  'DOT Inspection',
+  'Engine Diagnostic',
+  'Battery Service',
+  'Air System Repair',
+  'Suspension Repair',
+  'Trailer Repair'
+];
+
+const COMMON_PARTS_REFERENCE_SEEDS = [
+  { part_key: 'oil_filter', label: 'Oil Filter', avg_replacement_miles: 25000, avg_replacement_months: 2, avg_cost_mid: 24 },
+  { part_key: 'fuel_filter', label: 'Fuel Filter', avg_replacement_miles: 25000, avg_replacement_months: 2, avg_cost_mid: 58 },
+  { part_key: 'air_filter', label: 'Air Filter', avg_replacement_miles: 30000, avg_replacement_months: 3, avg_cost_mid: 36 },
+  { part_key: 'brake_pad_set', label: 'Brake Pad Set', avg_replacement_miles: 60000, avg_replacement_months: 6, avg_cost_mid: 280 },
+  { part_key: 'drive_tire', label: 'Drive Tire', avg_replacement_miles: 150000, avg_replacement_months: 12, avg_cost_mid: 450 },
+  { part_key: 'battery_12v', label: 'Battery 12V', avg_replacement_miles: 80000, avg_replacement_months: 24, avg_cost_mid: 160 },
+  { part_key: 'serpentine_belt', label: 'Serpentine Belt', avg_replacement_miles: 90000, avg_replacement_months: 18, avg_cost_mid: 98 },
+  { part_key: 'def_filter', label: 'DEF Filter', avg_replacement_miles: 100000, avg_replacement_months: 12, avg_cost_mid: 130 }
+];
+
+let fleetCatalogSeedState = { done: false, inFlight: null };
+
 function summarizeSamsaraVehiclesPayload(payload) {
   const arr = Array.isArray(payload?.data)
     ? payload.data
@@ -233,6 +259,64 @@ function qboConnectionFlags() {
     lastRefreshError: errRecent ? lastErr : undefined,
     lastRefreshErrorAt: errRecent ? String(h.lastErrorAt) : undefined
   };
+}
+
+function dedupeCatalogNames(names = []) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of names) {
+    const v = String(raw || '').trim();
+    if (!v) continue;
+    const k = v.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(v);
+  }
+  return out.sort((a, b) => a.localeCompare(b));
+}
+
+async function ensureFleetCatalogSeedRows(logError) {
+  if (!getPool()) return;
+  if (fleetCatalogSeedState.done) return;
+  if (fleetCatalogSeedState.inFlight) {
+    await fleetCatalogSeedState.inFlight;
+    return;
+  }
+  fleetCatalogSeedState.inFlight = (async () => {
+    try {
+      const st = await dbQuery('SELECT COUNT(*)::int AS c FROM service_types');
+      if ((st?.rows?.[0]?.c ?? 0) === 0) {
+        await dbQuery(`INSERT INTO service_types (slug, name, category, interval_miles, interval_months, notes, vehicle_make, vehicle_model) VALUES
+          ('oil_change', 'Oil Change', 'Engine', 25000, 2, 'Auto-seeded common service type for work orders.', NULL, NULL),
+          ('tire_rotation', 'Tire Rotation', 'Tires', 30000, 3, 'Auto-seeded common service type for work orders.', NULL, NULL),
+          ('brake_inspection', 'Brake Inspection', 'Brakes', 25000, 2, 'Auto-seeded common service type for work orders.', NULL, NULL),
+          ('pm_service', 'PM Service', 'Preventive Maintenance', 25000, 2, 'Auto-seeded common service type for work orders.', NULL, NULL),
+          ('dot_inspection', 'DOT Inspection', 'Inspection', 12000, 12, 'Auto-seeded common service type for work orders.', NULL, NULL),
+          ('engine_diagnostic', 'Engine Diagnostic', 'Engine', 10000, 6, 'Auto-seeded common service type for work orders.', NULL, NULL)
+        ON CONFLICT (slug) DO NOTHING`);
+      }
+
+      const pr = await dbQuery('SELECT COUNT(*)::int AS c FROM vehicle_parts_reference');
+      if ((pr?.rows?.[0]?.c ?? 0) === 0) {
+        await dbQuery(`INSERT INTO vehicle_parts_reference (part_key, label, avg_replacement_miles, avg_replacement_months, avg_cost_mid) VALUES
+          ('oil_filter', 'Oil Filter', 25000, 2, 24.00),
+          ('fuel_filter', 'Fuel Filter', 25000, 2, 58.00),
+          ('air_filter', 'Air Filter', 30000, 3, 36.00),
+          ('brake_pad_set', 'Brake Pad Set', 60000, 6, 280.00),
+          ('drive_tire', 'Drive Tire', 150000, 12, 450.00),
+          ('battery_12v', 'Battery 12V', 80000, 24, 160.00),
+          ('serpentine_belt', 'Serpentine Belt', 90000, 18, 98.00),
+          ('def_filter', 'DEF Filter', 100000, 12, 130.00)
+        ON CONFLICT (part_key) DO NOTHING`);
+      }
+    } catch (e) {
+      logError('[fleet catalog seed] ensure rows failed', e);
+    } finally {
+      fleetCatalogSeedState.done = true;
+      fleetCatalogSeedState.inFlight = null;
+    }
+  })();
+  await fleetCatalogSeedState.inFlight;
 }
 
 function fleetApiOrigin() {
@@ -621,18 +705,65 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/maintenance/service-types', async (_req, res) => {
     try {
+      const fallback = dedupeCatalogNames([
+        ...COMMON_WORK_ORDER_SERVICE_TYPE_SEEDS,
+        ...MAINTENANCE_SERVICE_CATALOG_SEEDS
+      ]);
       if (!getPool()) {
-        return res.json({ ok: true, names: [...MAINTENANCE_SERVICE_CATALOG_SEEDS] });
+        return res.json({ ok: true, names: fallback });
       }
-      const { rows } = await dbQuery(
-        `SELECT name FROM maintenance_service_catalog WHERE active = true ORDER BY sort_order, name`
-      );
-      const names = (rows || []).map(r => String(r.name || '').trim()).filter(Boolean);
-      if (names.length) return res.json({ ok: true, names });
-      return res.json({ ok: true, names: [...MAINTENANCE_SERVICE_CATALOG_SEEDS] });
+      await ensureFleetCatalogSeedRows(logError);
+      const [maintRows, serviceRows] = await Promise.all([
+        dbQuery(`SELECT name FROM maintenance_service_catalog WHERE active = true ORDER BY sort_order, name`)
+          .then(r => r.rows || [])
+          .catch(() => []),
+        dbQuery(`SELECT name FROM service_types ORDER BY name`)
+          .then(r => r.rows || [])
+          .catch(() => [])
+      ]);
+      const names = dedupeCatalogNames([
+        ...fallback,
+        ...maintRows.map(r => String(r.name || '').trim()),
+        ...serviceRows.map(r => String(r.name || '').trim())
+      ]);
+      return res.json({ ok: true, names: names.length ? names : fallback });
     } catch (e) {
       logError('GET /api/maintenance/service-types', e);
-      return res.json({ ok: true, names: [...MAINTENANCE_SERVICE_CATALOG_SEEDS] });
+      return res.json({ ok: true, names: dedupeCatalogNames([...COMMON_WORK_ORDER_SERVICE_TYPE_SEEDS, ...MAINTENANCE_SERVICE_CATALOG_SEEDS]) });
+    }
+  });
+
+  app.get('/api/maintenance/parts-reference', async (_req, res) => {
+    const fallbackParts = COMMON_PARTS_REFERENCE_SEEDS.map(p => ({ ...p }));
+    const fallbackNames = dedupeCatalogNames(fallbackParts.map(p => p.label));
+    try {
+      if (!getPool()) {
+        return res.json({ ok: true, names: fallbackNames, parts: fallbackParts });
+      }
+      await ensureFleetCatalogSeedRows(logError);
+      const { rows } = await dbQuery(
+        `SELECT part_key, label, avg_replacement_miles, avg_replacement_months, avg_cost_mid
+           FROM vehicle_parts_reference
+          ORDER BY label`
+      );
+      const parts = (rows || [])
+        .map(r => ({
+          part_key: String(r.part_key || '').trim(),
+          label: String(r.label || '').trim(),
+          avg_replacement_miles: r.avg_replacement_miles == null ? null : Number(r.avg_replacement_miles),
+          avg_replacement_months: r.avg_replacement_months == null ? null : Number(r.avg_replacement_months),
+          avg_cost_mid: r.avg_cost_mid == null ? null : Number(r.avg_cost_mid)
+        }))
+        .filter(r => r.part_key && r.label);
+      const names = dedupeCatalogNames(parts.map(p => p.label));
+      return res.json({
+        ok: true,
+        names: names.length ? names : fallbackNames,
+        parts: parts.length ? parts : fallbackParts
+      });
+    } catch (e) {
+      logError('GET /api/maintenance/parts-reference', e);
+      return res.json({ ok: true, names: fallbackNames, parts: fallbackParts });
     }
   });
 
