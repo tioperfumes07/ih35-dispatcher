@@ -22,7 +22,7 @@ import {
 } from '../lib/fleet-mileage-settings.mjs';
 import { MAINTENANCE_SERVICE_CATALOG_SEEDS } from '../lib/maintenance-service-catalog.mjs';
 import { readQboStore, clearQboConnectionFailure } from '../lib/qbo-attachments.mjs';
-import { getVehicles } from '../services/samsara.js';
+import { getVehicles, samsaraGet } from '../services/samsara.js';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
 const SAMSARA_HEALTH_CACHE_MS = 60 * 1000;
@@ -45,6 +45,100 @@ function summarizeSamsaraVehiclesPayload(payload) {
         ? payload
         : [];
   return { rows: arr, count: arr.length };
+}
+
+
+function summarizeSamsaraVehicleStatsPayload(payload) {
+  const arr = Array.isArray(payload?.data)
+    ? payload.data
+    : Array.isArray(payload?.stats)
+      ? payload.stats
+      : Array.isArray(payload)
+        ? payload
+        : [];
+  return { rows: arr, count: arr.length };
+}
+
+function mapSamsaraVehicleStatsRow(raw = {}) {
+  const id = String(raw.vehicleId || raw.id || raw.vehicle?.id || '').trim();
+  if (!id) return null;
+
+  const odometerMeters = Number(
+    raw.obdOdometerMeters ??
+      raw.odometerMeters ??
+      raw.obdOdometer?.meters ??
+      raw.odometer?.meters ??
+      raw.stats?.obdOdometerMeters ??
+      NaN
+  );
+  const odometerMiles =
+    Number.isFinite(odometerMeters) && odometerMeters > 0
+      ? Math.round(odometerMeters * 0.000621371)
+      : null;
+
+  const engineSeconds = Number(
+    raw.engineSeconds ??
+      raw.engine?.seconds ??
+      raw.engineState?.seconds ??
+      raw.stats?.engineSeconds ??
+      NaN
+  );
+  const engineHours =
+    Number.isFinite(engineSeconds) && engineSeconds >= 0
+      ? Number((engineSeconds / 3600).toFixed(2))
+      : null;
+
+  const gps = raw.gps || raw.lastGps || raw.location || raw.lastLocation || raw.stats?.gps || {};
+  const lat = Number(gps.latitude ?? gps.lat ?? gps.latitudeDegrees ?? NaN);
+  const lng = Number(gps.longitude ?? gps.lng ?? gps.longitudeDegrees ?? NaN);
+  const lastGpsLat = Number.isFinite(lat) ? lat : null;
+  const lastGpsLng = Number.isFinite(lng) ? lng : null;
+  const lastGpsTime = String(gps.time || gps.timestamp || gps.timeMs || '').trim() || null;
+
+  return {
+    id,
+    odometerMiles,
+    engineHours,
+    lastGpsLat,
+    lastGpsLng,
+    lastGpsTime,
+    lastLocation: Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null,
+  };
+}
+
+async function fetchSamsaraVehicleStatsMap(token, rawRows, logError, scope = 'board') {
+  if (!token) return new Map();
+  const ids = Array.isArray(rawRows)
+    ? rawRows
+        .map((r) => String(r?.id || r?.vehicleId || r?.uuid || '').trim())
+        .filter(Boolean)
+    : [];
+  if (!ids.length) return new Map();
+
+  try {
+    const payload = await samsaraGet('/fleet/vehicles/stats', token, {
+      types: 'gps,obdOdometerMeters,engineSeconds,engineStates,fuelPercents',
+      vehicleIds: ids.join(',')
+    });
+    const { rows } = summarizeSamsaraVehicleStatsPayload(payload);
+    const out = new Map();
+    for (const row of rows) {
+      const mapped = mapSamsaraVehicleStatsRow(row);
+      if (mapped?.id) out.set(mapped.id, mapped);
+    }
+    try {
+      console.log(
+        `[${scope}] samsara stats snapshot:`,
+        JSON.stringify({ count: out.size, sample: rows[0] || null }).slice(0, 500)
+      );
+    } catch {
+      /* ignore logging serialization failures */
+    }
+    return out;
+  } catch (e) {
+    logError(`[${scope}] samsara stats call failed`, e);
+    return new Map();
+  }
 }
 
 async function fetchSamsaraVehicleCountCached(token, logError) {
@@ -171,7 +265,7 @@ function normalizeMaintenanceUnitRow(raw = {}) {
   };
 }
 
-function mapSamsaraVehicleRow(raw = {}) {
+function mapSamsaraVehicleRow(raw = {}, statsById = new Map()) {
   const rawId = String(raw.id || raw.vehicleId || raw.uuid || '').trim();
   const unit = String(
     raw.name ||
@@ -182,6 +276,7 @@ function mapSamsaraVehicleRow(raw = {}) {
       rawId
   ).trim();
   if (!unit) return null;
+
   const odometerMeters = Number(
     raw.odometerMeters ??
       raw.odometer_meters ??
@@ -189,9 +284,59 @@ function mapSamsaraVehicleRow(raw = {}) {
       raw.attributes?.odometerMeters ??
       NaN
   );
-  const odometerMiles = Number.isFinite(odometerMeters) && odometerMeters > 0
-    ? Math.round(odometerMeters * 0.000621371)
-    : null;
+  const rawOdometerMiles =
+    Number.isFinite(odometerMeters) && odometerMeters > 0
+      ? Math.round(odometerMeters * 0.000621371)
+      : null;
+
+  const engineHoursRaw = Number(
+    raw.engineHours ??
+      raw.engine_hours ??
+      raw.engine?.hours ??
+      raw.attributes?.engineHours ??
+      NaN
+  );
+  const rawEngineHours = Number.isFinite(engineHoursRaw) && engineHoursRaw >= 0 ? engineHoursRaw : null;
+
+  const rawLat = Number(
+    raw.lastLocation?.latitude ??
+      raw.lastLocation?.lat ??
+      raw.location?.latitude ??
+      raw.location?.lat ??
+      raw.gps?.latitude ??
+      raw.gps?.lat ??
+      raw.attributes?.lastLocation?.latitude ??
+      raw.attributes?.lastLocation?.lat ??
+      NaN
+  );
+  const rawLng = Number(
+    raw.lastLocation?.longitude ??
+      raw.lastLocation?.lng ??
+      raw.location?.longitude ??
+      raw.location?.lng ??
+      raw.gps?.longitude ??
+      raw.gps?.lng ??
+      raw.attributes?.lastLocation?.longitude ??
+      raw.attributes?.lastLocation?.lng ??
+      NaN
+  );
+  const rawGpsTime = String(
+    raw.lastLocation?.time ||
+      raw.lastLocation?.timestamp ||
+      raw.location?.time ||
+      raw.location?.timestamp ||
+      raw.gps?.time ||
+      raw.gps?.timestamp ||
+      ''
+  ).trim() || null;
+
+  const stats = statsById.get(rawId) || null;
+  const lastGpsLat = stats?.lastGpsLat ?? (Number.isFinite(rawLat) ? rawLat : null);
+  const lastGpsLng = stats?.lastGpsLng ?? (Number.isFinite(rawLng) ? rawLng : null);
+  const lastGpsTime = stats?.lastGpsTime ?? rawGpsTime;
+  const odometerMiles = stats?.odometerMiles ?? rawOdometerMiles;
+  const engineHours = stats?.engineHours ?? rawEngineHours;
+
   return {
     id: rawId || unit,
     name: unit,
@@ -207,6 +352,14 @@ function mapSamsaraVehicleRow(raw = {}) {
     ).trim() || null,
     status: String(raw.status || raw.attributes?.status || 'active').trim() || 'active',
     odometerMiles,
+    engineHours,
+    lastGpsLat,
+    lastGpsLng,
+    lastGpsTime,
+    lastLocation:
+      Number.isFinite(Number(lastGpsLat)) && Number.isFinite(Number(lastGpsLng))
+        ? { lat: Number(lastGpsLat), lng: Number(lastGpsLng) }
+        : null,
   };
 }
 
@@ -219,7 +372,7 @@ async function fetchSamsaraVehiclesFallback(token, logError) {
       'vehicles from cache, first:',
       cachedRows[0]?.name || cachedRows[0]?.id
     );
-    return cachedRows.map(mapSamsaraVehicleRow).filter(Boolean);
+    return cachedRows.map((row) => mapSamsaraVehicleRow(row)).filter(Boolean);
   }
   if (!token) return [];
   try {
@@ -232,7 +385,7 @@ async function fetchSamsaraVehiclesFallback(token, logError) {
       'vehicles from live api, first:',
       rows[0]?.name || rows[0]?.id
     );
-    return rows.map(mapSamsaraVehicleRow).filter(Boolean);
+    return rows.map((row) => mapSamsaraVehicleRow(row)).filter(Boolean);
   } catch (e) {
     logError('[samsara] fallback vehicle fetch failed', e);
     return [];
@@ -410,7 +563,8 @@ export function mountErpCoreApi(app, opts = {}) {
         try {
           const payload = await getVehicles(token);
           const { rows } = summarizeSamsaraVehiclesPayload(payload);
-          vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
+          const statsById = await fetchSamsaraVehicleStatsMap(token, rows, logError, 'dashboard');
+          vehicles = rows.map((row) => mapSamsaraVehicleRow(row, statsById)).filter(Boolean);
           console.log('[dashboard] samsara direct:', vehicles.length, 'vehicles');
         } catch (e) {
           logError('[dashboard] samsara call failed', e);
@@ -442,7 +596,8 @@ export function mountErpCoreApi(app, opts = {}) {
         try {
           const payload = await getVehicles(token);
           const { rows } = summarizeSamsaraVehiclesPayload(payload);
-          vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
+          const statsById = await fetchSamsaraVehicleStatsMap(token, rows, logError, 'board');
+          vehicles = rows.map((row) => mapSamsaraVehicleRow(row, statsById)).filter(Boolean);
           console.log('[board] samsara direct:', vehicles.length, 'vehicles');
         } catch (e) {
           logError('[board] samsara call failed', e);
