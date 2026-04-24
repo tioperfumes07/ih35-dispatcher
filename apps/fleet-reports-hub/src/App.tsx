@@ -40,11 +40,12 @@ import { ModalFullscreenToggle } from './components/ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from './hooks/useFullScreen'
 import { TelematicsFleetPage } from './components/telematics/TelematicsFleetPage'
 
-function matchesSearch(r: ReportDef, q: string) {
+function matchesSearch(r: ReportDef, q: string, titleOverride?: string) {
   if (!q.trim()) return true
   const s = q.toLowerCase()
+  const title = String(titleOverride || r.title || '').toLowerCase()
   return (
-    r.title.toLowerCase().includes(s) ||
+    title.includes(s) ||
     r.description.toLowerCase().includes(s) ||
     r.id.toLowerCase().includes(s) ||
     r.tags.some((t) => t.toLowerCase().includes(s))
@@ -362,6 +363,7 @@ export default function App() {
     initialLocation.listsList,
   )
   const [homeKpis, setHomeKpis] = useState<HomeKpis>(FALLBACK_HOME_KPIS)
+  const [reportTitleOverrides, setReportTitleOverrides] = useState<Record<string, string>>({})
 
   const openSection = useCallback((section: AppSection) => {
     setActiveSection(section)
@@ -827,8 +829,8 @@ export default function App() {
   /** Report cards: each tab shows only its own category (no duplicated grouped headers below tabs). */
   const catalogReportsForGrid = useMemo(() => {
     const list = REPORTS.filter((r) => r.category === reportTabForSection)
-    return list.filter((r) => matchesSearch(r, search))
-  }, [reportTabForSection, search])
+    return list.filter((r) => matchesSearch(r, search, reportTitleOverrides[r.id]))
+  }, [reportTabForSection, reportTitleOverrides, search])
 
   /** Maintenance workspace nav cards — always maintenance category. */
   const maintenanceListReports = useMemo(() => {
@@ -837,6 +839,11 @@ export default function App() {
 
   const openReport = (r: ReportDef) => {
     recent.recordOpen(r.id)
+    const override = String(reportTitleOverrides[r.id] || '').trim()
+    if (override && override !== r.title) {
+      setActive({ ...r, title: override })
+      return
+    }
     setActive(r)
   }
 
@@ -844,6 +851,16 @@ export default function App() {
     const r = REPORTS.find((x) => x.id === 'form-425c')
     if (r) openReport(r)
   }
+
+  const renameReport = useCallback((report: ReportDef, nextTitle: string) => {
+    const next = String(nextTitle || '').trim()
+    setReportTitleOverrides((prev) => {
+      const updated = { ...prev }
+      if (!next || next === report.title) delete updated[report.id]
+      else updated[report.id] = next
+      return updated
+    })
+  }, [])
 
   const appThemeStyle = useMemo<CSSProperties | undefined>(() => {
     if (!erpHostedSurface) return undefined
@@ -1155,7 +1172,13 @@ export default function App() {
                   ) : (
                     <section className="report-cards-grid fr-report-cards-grid" aria-live="polite">
                       {catalogReportsForGrid.map((r) => (
-                        <ReportCard key={r.id} report={r} onOpen={() => openReport(r)} />
+                        <ReportCard
+                          key={r.id}
+                          report={r}
+                          title={reportTitleOverrides[r.id] || r.title}
+                          onOpen={() => openReport(r)}
+                          onRename={(nextTitle) => renameReport(r, nextTitle)}
+                        />
                       ))}
                     </section>
                   )}

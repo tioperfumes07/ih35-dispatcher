@@ -9099,6 +9099,59 @@ nav.tabs {
 .reports-page--redesign .fr-reports-domain {
   display: none !important;
 }
+
+
+/* Report card edit / rename controls */
+.reports-page--redesign .fr-report-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reports-page--redesign .fr-report-card__edit,
+.reports-page--redesign .fr-report-card__rename-cancel {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.reports-page--redesign .fr-report-card__edit:hover,
+.reports-page--redesign .fr-report-card__rename-cancel:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.reports-page--redesign .fr-report-card__rename {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+
+.reports-page--redesign .fr-report-card__rename-input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.reports-page--redesign .fr-report-card__rename-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
 /* ============================================================================
    End Change 5 overrides
    ============================================================================ */

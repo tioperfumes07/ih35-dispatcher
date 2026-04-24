@@ -8481,6 +8481,7 @@
         '</div>';
       modal.classList.remove('hidden');
       modal.setAttribute('aria-hidden', 'false');
+      modal.setAttribute('data-erp-ap-preset', window.__erpDedicatedApPreset || '');
       document.body.classList.add('erp-dedicated-modal-open');
       erpDedicatedModalBindEscape(true);
       const mt = document.getElementById('erpDedModalTitle');
@@ -8714,6 +8715,7 @@
       erpRefreshBillPayChrome();
       modal.classList.remove('hidden');
       modal.setAttribute('aria-hidden', 'false');
+      modal.setAttribute('data-erp-ap-preset', window.__erpDedicatedApPreset || '');
       document.body.classList.add('erp-dedicated-modal-open');
       erpDedicatedModalBindEscape(true);
       if (!fromHash && !fromTab) {
@@ -9074,6 +9076,7 @@
       window.__erpDedicatedModalKind = '';
       modal.classList.add('hidden');
       modal.setAttribute('aria-hidden', 'true');
+      modal.removeAttribute('data-erp-ap-preset');
       document.body.classList.remove('erp-dedicated-modal-open');
       erpDedicatedModalBindEscape(false);
       const mt = document.getElementById('erpDedModalTitle');
@@ -9205,6 +9208,7 @@
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
         modal.setAttribute('data-erp-acct-layout', 'fuel');
+        modal.setAttribute('data-erp-ap-preset', 'fuel-expense');
         document.body.classList.add('erp-dedicated-modal-open');
         erpDedicatedModalBindEscape(true);
         if (!fromHash) window.location.hash = 'accounting-fuel-expense-new';
@@ -9276,6 +9280,7 @@
       }
       modal.classList.remove('hidden');
       modal.setAttribute('aria-hidden', 'false');
+      modal.setAttribute('data-erp-ap-preset', window.__erpDedicatedApPreset || '');
       document.body.classList.add('erp-dedicated-modal-open');
       erpDedicatedModalBindEscape(true);
       const hashMap = {
@@ -24617,5 +24622,95 @@
   <script src="/js/erp-use-column-resize.js"></script>
   <script src="/js/erp-qbo-dedupe.js"></script>
   <script src="/js/erp-name-management.js"></script>
+
+  <script>
+    (function () {
+      function isSearchLikeInput(el) {
+        if (!el || el.disabled || el.readOnly) return false;
+        const t = String(el.type || '').toLowerCase();
+        if (t && ['hidden', 'checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'date', 'datetime-local', 'time', 'month', 'week', 'color'].includes(t)) return false;
+        if (el.hasAttribute('list')) return false;
+        const id = String(el.id || '').toLowerCase();
+        const cls = String(el.className || '').toLowerCase();
+        const ph = String(el.placeholder || '').toLowerCase();
+        const meta = [id, cls, ph].join(' ');
+        if (t === 'search') return true;
+        if (cls.includes('mr-filter-search')) return true;
+        return /(search|filter|vendor|unit|driver|service|location|account|category|item|load|payee|merchant)/.test(meta);
+      }
+
+      function ensureSuggestionHost() {
+        let host = document.getElementById('erpUniversalSuggestions');
+        if (host) return host;
+        host = document.createElement('datalist');
+        host.id = 'erpUniversalSuggestions';
+        document.body.appendChild(host);
+        return host;
+      }
+
+      function collectPool() {
+        const pool = new Set();
+        const datalists = Array.from(document.querySelectorAll('datalist')).filter((dl) => dl.id !== 'erpUniversalSuggestions');
+        datalists.forEach((dl) => {
+          Array.from(dl.querySelectorAll('option')).forEach((opt) => {
+            const v = String(opt.value || opt.textContent || '').trim();
+            if (v) pool.add(v);
+          });
+        });
+        [
+          'Maintenance bill',
+          'Repair bill',
+          'Vendor bill',
+          'Fuel expense',
+          'Repair expense',
+          'QuickBooks vendor',
+          'Unit number',
+          'Service type',
+          'Driver',
+          'Bill payment'
+        ].forEach((v) => pool.add(v));
+        return Array.from(pool).sort((a, b) => a.localeCompare(b));
+      }
+
+      function bindInput(input, allOptions, host) {
+        if (!isSearchLikeInput(input)) return;
+        if (!input.classList.contains('erp-uniform-search-input')) input.classList.add('erp-uniform-search-input');
+        if (!input.hasAttribute('list')) input.setAttribute('list', host.id);
+
+        const refresh = () => {
+          const q = String(input.value || '').trim().toLowerCase();
+          host.innerHTML = '';
+          let shown = 0;
+          for (const option of allOptions) {
+            if (q && !option.toLowerCase().includes(q)) continue;
+            const opt = document.createElement('option');
+            opt.value = option;
+            host.appendChild(opt);
+            shown += 1;
+            if (shown >= 20) break;
+          }
+        };
+
+        input.addEventListener('focus', refresh);
+        input.addEventListener('input', refresh);
+      }
+
+      function erpBindUniversalSearchSuggestions() {
+        if (!document.body || !document.body.classList.contains('erp-maintenance')) return;
+        const host = ensureSuggestionHost();
+        const allOptions = collectPool();
+        const inputs = Array.from(document.querySelectorAll('input, textarea'));
+        inputs.forEach((input) => bindInput(input, allOptions, host));
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', erpBindUniversalSearchSuggestions, { once: true });
+      } else {
+        erpBindUniversalSearchSuggestions();
+      }
+      window.erpBindUniversalSearchSuggestions = erpBindUniversalSearchSuggestions;
+    })();
+  </script>
+
 </body>
 </html>

@@ -930,11 +930,14 @@
     return wrapHtml(fn, parts.join(''), foot, d);
   }
 
-  function buildExpenseHtml(data) {
+  function buildExpenseHtml(data, docTitle, filenameType, footerLabel) {
     const d = data || {};
     const ref = pick(d.refNumber, d.refNo, d.vendorInvoice, '—');
     const sub = `Ref #: ${ref} · ${formatIsoDateShortPlain(pick(d.paymentDate, ''))}`;
-    const co = buildLetterhead(d, 'EXPENSE RECORD', sub);
+    const title = docTitle || 'EXPENSE RECORD';
+    const fileType = filenameType || 'expense';
+    const footTitle = footerLabel || title;
+    const co = buildLetterhead(d, title, sub);
     const pay = buildFieldGrid(
       [
         { label: 'Payee / vendor', value: d.vendor || d.payee || '' },
@@ -980,16 +983,19 @@
       buildSection('3', 'Expense lines', cost) +
       memo +
       sig;
-    return wrapHtml(generateFilename('expense', d, 'pdf').replace(/\.pdf$/i, ''), body, {
-      center: ['EXPENSE RECORD', ref, formatIsoDateShortPlain(d.paymentDate || '')].filter(Boolean).join(' · ')
+    return wrapHtml(generateFilename(fileType, d, 'pdf').replace(/\.pdf$/i, ''), body, {
+      center: [footTitle, ref, formatIsoDateShortPlain(d.paymentDate || '')].filter(Boolean).join(' · ')
     }, d);
   }
 
-  function buildBillHtml(data) {
+  function buildBillHtml(data, docTitle, filenameType, footerLabel) {
     const d = data || {};
     const billNo = pick(d.billNumber, d.vendorInvoice, '—');
     const sub = `Bill #: ${billNo} · Due: ${formatIsoDateShortPlain(pick(d.dueDate, ''))}`;
-    const co = buildLetterhead(d, 'BILL', sub);
+    const title = docTitle || 'BILL';
+    const fileType = filenameType || 'bill';
+    const footTitle = footerLabel || title;
+    const co = buildLetterhead(d, title, sub);
     const bal = Number(d.balanceDue);
     const balDisp = Number.isFinite(bal) ? money(bal) : pick(d.amountDisplay, '');
     const s1 = buildFieldGrid(
@@ -1009,8 +1015,8 @@
     const memo = pick(d.memo) ? buildSection('3', 'Memo', `<div class="note-box">${esc(d.memo)}</div>`) : '';
     const stub = buildPaymentStub(billNo, d.vendor || d.payee || '', d.dueDate || '', Number.isFinite(bal) ? bal : 0);
     const body = co + buildSection('1', 'Bill information', s1 + extra) + buildSection('2', 'Bill lines', cost) + memo + stub;
-    return wrapHtml(generateFilename('bill', d, 'pdf').replace(/\.pdf$/i, ''), body, {
-      center: ['BILL', billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, ''))].filter(Boolean).join(' · ')
+    return wrapHtml(generateFilename(fileType, d, 'pdf').replace(/\.pdf$/i, ''), body, {
+      center: [footTitle, billNo, formatIsoDateShortPlain(pick(d.billDate, d.paymentDate, ''))].filter(Boolean).join(' · ')
     }, d);
   }
 
@@ -1284,16 +1290,28 @@
   function generatePrintDoc(documentType, data) {
     const t = String(documentType || '');
     if (WO_TITLE[t]) return buildWorkOrderHtml(t, data);
-    if (t === 'expense' || t === 'maintenance-expense' || t === 'repair-expense') return buildExpenseHtml(data);
-    if (
-      t === 'bill' ||
-      t === 'maintenance-bill' ||
-      t === 'repair-bill' ||
-      t === 'driver-bill' ||
-      t === 'vendor-bill' ||
-      t === 'vendor-driver-bill'
-    )
-      return buildBillHtml(data);
+
+    const expenseVariantTitles = {
+      expense: 'EXPENSE RECORD',
+      'maintenance-expense': 'MAINTENANCE EXPENSE',
+      'repair-expense': 'REPAIR EXPENSE'
+    };
+    if (t in expenseVariantTitles) {
+      return buildExpenseHtml(data, expenseVariantTitles[t], t, expenseVariantTitles[t]);
+    }
+
+    const billVariantTitles = {
+      bill: 'BILL',
+      'maintenance-bill': 'MAINTENANCE BILL',
+      'repair-bill': 'REPAIR BILL',
+      'driver-bill': 'DRIVER BILL',
+      'vendor-bill': 'VENDOR BILL',
+      'vendor-driver-bill': 'VENDOR / DRIVER BILL'
+    };
+    if (t in billVariantTitles) {
+      return buildBillHtml(data, billVariantTitles[t], t, billVariantTitles[t]);
+    }
+
     if (t === 'fuel-bill') return buildFuelBillHtml(data);
     if (t === 'fuel-expense') return buildFuelExpenseHtml(data);
     if (t === 'payment-receipt' || t === 'bill-payment') return buildPaymentReceiptHtml(data);

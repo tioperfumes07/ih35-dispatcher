@@ -3680,3 +3680,61 @@ body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-
 /* ============================================================================
    End Change 8 overrides
    ============================================================================ */
+
+
+/* ============================================================================
+   ITEM 1 + ITEM 3 — universal search/input suggestions + vendor-bill alignment
+   ============================================================================ */
+body.erp-maintenance .erp-uniform-search-input,
+body.erp-maintenance input[type='search'],
+body.erp-maintenance .mr-filter-search,
+body.erp-maintenance .maint-search-input,
+body.erp-maintenance .qb-in {
+  min-height: 32px;
+  height: 32px;
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance .mr-filter-search,
+body.erp-maintenance .maint-search-input,
+body.erp-maintenance input[type='search'] {
+  min-width: 200px;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='vendor-bill'] .ap-exp-grid,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='vendor-driver-bill'] .ap-exp-grid,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='maintenance-bill'] .ap-exp-grid,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='repair-bill'] .ap-exp-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  align-items: start;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='vendor-bill'] .ap-exp-field--vendor,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='vendor-driver-bill'] .ap-exp-field--vendor,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='maintenance-bill'] .ap-exp-field--vendor,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='repair-bill'] .ap-exp-field--vendor {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='vendor-bill'] .ap-exp-field,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='vendor-driver-bill'] .ap-exp-field,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='maintenance-bill'] .ap-exp-field,
+body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='repair-bill'] .ap-exp-field {
+  align-items: stretch;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='vendor-bill'] .ap-exp-grid,
+  body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='vendor-driver-bill'] .ap-exp-grid,
+  body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='maintenance-bill'] .ap-exp-grid,
+  body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='repair-bill'] .ap-exp-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
