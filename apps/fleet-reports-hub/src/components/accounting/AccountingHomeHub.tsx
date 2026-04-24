@@ -17,9 +17,6 @@ type Props = {
   onRequestMaintenanceNav: (target: AccountingMaintNavTarget) => void
   onOpenRecurring: () => void
   onOpenLists: (tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => void
-  onOpenTracking: () => void
-  onOpenUploadCenter: () => void
-  onOpenSettingsUsers: () => void
   onSetHomeOverlay: (o: AccountingHomeOverlay) => void
   kpis?: {
     openBillsCount: string
@@ -40,7 +37,6 @@ type CategoryId =
   | 'bill-payment'
   | 'specialized'
   | 'quickbooks'
-  | 'tools-data'
 
 type RowDef = {
   key: string
@@ -60,13 +56,9 @@ export function AccountingHomeHub({
   onRequestMaintenanceNav,
   onOpenRecurring,
   onOpenLists,
-  onOpenTracking,
-  onOpenUploadCenter,
-  onOpenSettingsUsers,
   onSetHomeOverlay,
   kpis,
 }: Props) {
-  // On first load, show KPI home + category tabs only (no default item list).
   const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null)
 
   const categories = useMemo<CategoryDef[]>(() => {
@@ -98,7 +90,6 @@ export function AccountingHomeHub({
           { key: 'fuel-bill', label: 'Fuel bill', onActivate: () => onOpenFuel('fuel-bill') },
           { key: 'vendor-bill', label: 'Vendor bill', onActivate: () => onSetHomeOverlay('vendor-bill') },
           { key: 'multiple-bills', label: 'Multiple bills', onActivate: onOpenRecurring },
-          { key: 'driver-bill', label: 'Driver bill', onActivate: () => onOpenSpecialized('driver-settlement') },
         ],
       },
       {
@@ -114,26 +105,18 @@ export function AccountingHomeHub({
         id: 'specialized',
         label: 'Specialized',
         rows: [
-          { key: 'driver-settlement', label: 'Driver settlement', onActivate: () => onOpenSpecialized('driver-settlement') },
-          { key: 'load-tms', label: 'TMS loads', onActivate: () => onOpenSpecialized('load-tms') },
+          { key: 'transfer', label: 'Transfer', onActivate: () => onOpenSpecialized('transfer') },
+          { key: 'journal-entry', label: 'Journal entry', onActivate: () => onOpenSpecialized('journal') },
+          { key: 'bank-reconciliation', label: 'Bank reconciliation', onActivate: () => onOpenSpecialized('bank-reconciliation') },
         ],
       },
       {
         id: 'quickbooks',
         label: 'QuickBooks',
         rows: [
+          { key: 'quickconnect-qbo', label: 'QuickConnect QuickBooks', onActivate: () => onOpenLists('qbo-items', 'qbo-items-list') },
           { key: 'qbo-items', label: 'Items & accounts', onActivate: () => onOpenLists('qbo-items', 'qbo-items-list') },
           { key: 'qbo-sync-status', label: 'Sync status', onActivate: () => onOpenLists('qbo-items', 'qbo-items-list') },
-        ],
-      },
-      {
-        id: 'tools-data',
-        label: 'Tools & Data',
-        rows: [
-          { key: 'bank-csv', label: 'Bank CSV matching', onActivate: () => onOpenLists('vendors-drivers', 'bank-csv') },
-          { key: 'upload-center', label: 'Upload center', onActivate: onOpenUploadCenter },
-          { key: 'settings-users', label: 'Settings & users', onActivate: onOpenSettingsUsers },
-          { key: 'tracking', label: 'Samsara cloud', onActivate: onOpenTracking },
         ],
       },
     ]
@@ -141,10 +124,7 @@ export function AccountingHomeHub({
     onOpenFuel,
     onOpenLists,
     onOpenRecurring,
-    onOpenSettingsUsers,
     onOpenSpecialized,
-    onOpenTracking,
-    onOpenUploadCenter,
     onRequestMaintenanceNav,
     onSetHomeOverlay,
   ])
@@ -155,24 +135,24 @@ export function AccountingHomeHub({
     <div className="acct-hub">
       <div className="acct-hub__kpis" aria-label="Accounting KPIs">
         <div className="acct-hub__kpi">
-          <span className="acct-hub__kpi-lbl">Open bills</span>
-          <span className="acct-hub__kpi-val">{kpis?.openBillsCount ?? '—'}</span>
-          <span className="acct-hub__kpi-sub muted">{kpis?.openBillsSub ?? 'No open bill data yet'}</span>
-        </div>
-        <div className="acct-hub__kpi">
           <span className="acct-hub__kpi-lbl">Expenses this month</span>
           <span className="acct-hub__kpi-val">{kpis?.expensesMonthAmount ?? '—'}</span>
           <span className="acct-hub__kpi-sub muted">{kpis?.expensesMonthSub ?? 'No expense transactions this month'}</span>
         </div>
         <div className="acct-hub__kpi">
-          <span className="acct-hub__kpi-lbl">QBO vendors</span>
-          <span className="acct-hub__kpi-val">{kpis?.qboVendors ?? '—'}</span>
-          <span className="acct-hub__kpi-sub muted">{kpis?.qboVendorsSub ?? 'QuickBooks cache not loaded'}</span>
+          <span className="acct-hub__kpi-lbl">Bills due</span>
+          <span className="acct-hub__kpi-val">{kpis?.openBillsCount ?? '—'}</span>
+          <span className="acct-hub__kpi-sub muted">{kpis?.openBillsSub ?? 'No open bill data yet'}</span>
         </div>
         <div className={'acct-hub__kpi' + (kpis?.pendingQboPostsWarn ? ' acct-hub__kpi--warn' : '')}>
-          <span className="acct-hub__kpi-lbl">Pending QBO posts</span>
-          <span className="acct-hub__kpi-val">{kpis?.pendingQboPosts ?? '—'}</span>
+          <span className="acct-hub__kpi-lbl">QBO sync errors</span>
+          <span className="acct-hub__kpi-val">{kpis?.pendingQboPosts ?? '0'}</span>
           <span className="acct-hub__kpi-sub muted">{kpis?.pendingQboPostsSub ?? 'No pending sync alerts'}</span>
+        </div>
+        <div className="acct-hub__kpi">
+          <span className="acct-hub__kpi-lbl">Unreconciled</span>
+          <span className="acct-hub__kpi-val">{kpis?.pendingQboPosts ?? '0'}</span>
+          <span className="acct-hub__kpi-sub muted">Awaiting bank reconciliation</span>
         </div>
       </div>
 
@@ -184,7 +164,7 @@ export function AccountingHomeHub({
             className={activeCategory === c.id ? 'acct-hub__category-tab acct-hub__category-tab--active' : 'acct-hub__category-tab'}
             onClick={() => setActiveCategory(c.id)}
           >
-            {c.label}
+            {c.label} ▾
           </button>
         ))}
       </nav>

@@ -6,7 +6,6 @@ import { appliedChips } from './components/FilterPanel'
 import { FilterSidebar } from './components/reports/FilterSidebar'
 import { PartsCatalogPanel } from './components/reports/PartsCatalogPanel'
 import { useServiceCatalogRows } from './hooks/useServiceCatalogRows'
-import { ReportCard } from './components/ReportCard'
 import { ReportViewer } from './components/ReportViewer'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import {
@@ -82,7 +81,6 @@ type AppSection =
   | 'lists'
   | 'reports'
   | 'safety'
-  | 'tracking'
   | 'fuel'
   | 'loads'
 
@@ -93,7 +91,6 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'lists', label: 'Lists & Catalogs' },
   { id: 'reports', label: 'Reports' },
   { id: 'safety', label: 'Safety' },
-  { id: 'tracking', label: 'Tracking' },
   { id: 'fuel', label: 'Fuel' },
   { id: 'loads', label: 'Loads' },
 ]
@@ -102,7 +99,7 @@ const ORDERED_APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'home', label: 'Home' },
   ...APP_SECTIONS.filter((s) => s.id !== 'home').sort((a, b) => a.label.localeCompare(b.label)),
 ]
-const REPORT_SECTION_IDS = new Set<AppSection>(['reports', 'safety', 'fuel', 'loads'])
+const REPORT_SECTION_IDS = new Set<AppSection>(['reports', 'fuel', 'loads'])
 const SECTION_REPORT_TAB_OVERRIDES: Partial<Record<AppSection, ReportCategory>> = {
   safety: 'safety',
   fuel: 'fuel',
@@ -164,7 +161,6 @@ const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   lists: 'Open inline catalogs and registries with search, filters, CRUD, and export.',
   reports: 'Use filters and search to open report viewers and exports by domain.',
   safety: 'Review safety report cards and open related audits and drill-downs.',
-  tracking: 'Monitor telematics fleet inventory, integrity, and connection status.',
   fuel: 'Open fuel report cards and launch transaction workflows directly.',
   loads: 'Review operations and load-facing reporting surfaces.',
 }
@@ -363,7 +359,7 @@ export default function App() {
     initialLocation.listsList,
   )
   const [homeKpis, setHomeKpis] = useState<HomeKpis>(FALLBACK_HOME_KPIS)
-  const [reportTitleOverrides, setReportTitleOverrides] = useState<Record<string, string>>({})
+  const [selectedReportForTab, setSelectedReportForTab] = useState<Record<string, string>>({})
 
   const openSection = useCallback((section: AppSection) => {
     setActiveSection(section)
@@ -829,8 +825,8 @@ export default function App() {
   /** Report cards: each tab shows only its own category (no duplicated grouped headers below tabs). */
   const catalogReportsForGrid = useMemo(() => {
     const list = REPORTS.filter((r) => r.category === reportTabForSection)
-    return list.filter((r) => matchesSearch(r, search, reportTitleOverrides[r.id]))
-  }, [reportTabForSection, reportTitleOverrides, search])
+    return list.filter((r) => matchesSearch(r, search))
+  }, [reportTabForSection, search])
 
   /** Maintenance workspace nav cards — always maintenance category. */
   const maintenanceListReports = useMemo(() => {
@@ -839,11 +835,6 @@ export default function App() {
 
   const openReport = (r: ReportDef) => {
     recent.recordOpen(r.id)
-    const override = String(reportTitleOverrides[r.id] || '').trim()
-    if (override && override !== r.title) {
-      setActive({ ...r, title: override })
-      return
-    }
     setActive(r)
   }
 
@@ -851,16 +842,6 @@ export default function App() {
     const r = REPORTS.find((x) => x.id === 'form-425c')
     if (r) openReport(r)
   }
-
-  const renameReport = useCallback((report: ReportDef, nextTitle: string) => {
-    const next = String(nextTitle || '').trim()
-    setReportTitleOverrides((prev) => {
-      const updated = { ...prev }
-      if (!next || next === report.title) delete updated[report.id]
-      else updated[report.id] = next
-      return updated
-    })
-  }, [])
 
   const appThemeStyle = useMemo<CSSProperties | undefined>(() => {
     if (!erpHostedSurface) return undefined
@@ -1110,9 +1091,6 @@ export default function App() {
                     onOpenMaintenanceIntegrity={openMaintenanceIntegrityView}
                     onNewWorkOrder={() => setAppWoPickOpen(true)}
                     homeKpis={homeKpis}
-                    onOpenTrackingSection={() => openSection('tracking')}
-                    onOpenUploadCenter={() => openListsSection('vendors-drivers', 'bank-csv')}
-                    onOpenSettingsUsers={() => openListsSection('name-management', 'name-registry')}
                     onOpenListsSection={(tabId, listId) =>
                       openListsSection(tabId, listId === undefined ? null : listId)
                     }
@@ -1132,8 +1110,8 @@ export default function App() {
                     onDeepLinkConsumed={() => setListsDeepLink(null)}
                   />
                 </ErrorBoundary>
-              ) : activeSection === 'tracking' ? (
-                <ErrorBoundary name="Tracking">
+              ) : activeSection === 'safety' ? (
+                <ErrorBoundary name="Safety">
                   <TelematicsFleetPage />
                 </ErrorBoundary>
               ) : reportsSectionVisible ? (
@@ -1170,16 +1148,44 @@ export default function App() {
                   {catalogReportsForGrid.length === 0 ? (
                     <p className="empty">No reports match this search.</p>
                   ) : (
-                    <section className="report-cards-grid fr-report-cards-grid" aria-live="polite">
-                      {catalogReportsForGrid.map((r) => (
-                        <ReportCard
-                          key={r.id}
-                          report={r}
-                          title={reportTitleOverrides[r.id] || r.title}
-                          onOpen={() => openReport(r)}
-                          onRename={(nextTitle) => renameReport(r, nextTitle)}
-                        />
-                      ))}
+                    <section className="fr-report-dropdown-shell" aria-live="polite">
+                      <label className="fr-report-dropdown-label" htmlFor="frReportDropdown">
+                        Reports in this section
+                      </label>
+                      <div className="fr-report-dropdown-row">
+                        <select
+                          id="frReportDropdown"
+                          className="fr-report-dropdown"
+                          value={selectedReportForTab[reportTabForSection] || ''}
+                          onChange={(e) => {
+                            const id = e.target.value
+                            setSelectedReportForTab((prev) => ({ ...prev, [reportTabForSection]: id }))
+                            const picked = catalogReportsForGrid.find((r) => r.id === id)
+                            if (picked) openReport(picked)
+                          }}
+                        >
+                          <option value="">Select a report…</option>
+                          {catalogReportsForGrid.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.title + ' — ' + r.id}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <ul className="fr-report-dropdown-list">
+                        {catalogReportsForGrid.map((r) => (
+                          <li key={r.id}>
+                            <button
+                              type="button"
+                              className="fr-report-dropdown-item"
+                              onClick={() => openReport(r)}
+                            >
+                              <span>{r.title}</span>
+                              <span className="muted">{r.id}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     </section>
                   )}
                   <PartsCatalogPanel />

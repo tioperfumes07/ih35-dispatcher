@@ -65,8 +65,8 @@ type CategoryId =
   | 'operational-status'
   | 'quickbooks'
   | 'drivers'
-  | 'trucks-units'
   | 'parts-repairs'
+  | 'vendors'
 
 type CategoryDef = {
   id: CategoryId
@@ -79,7 +79,7 @@ function mapTabToCategory(tab: ListsCatalogsTab): CategoryId {
   if (tab === 'operational-status') return 'operational-status'
   if (tab === 'qbo-items' || tab === 'vendors-drivers') return 'quickbooks'
   if (tab === 'drivers-database' || tab === 'name-management') return 'drivers'
-  if (tab === 'assets-database' || tab === 'vendors-database') return 'trucks-units'
+  if (tab === 'vendors-database') return 'vendors'
   if (tab === 'service-types') return 'parts-repairs'
   return 'fleet-samsara'
 }
@@ -88,7 +88,7 @@ function mapListToCategory(listId: ListsCatalogListId): CategoryId {
   if (listId === 'op-status') return 'operational-status'
   if (listId === 'qbo-items-list' || listId === 'bank-csv' || listId === 'vendors-payees') return 'quickbooks'
   if (listId === 'drivers-db' || listId === 'name-registry' || listId === 'rename-vendors' || listId === 'find-merge') return 'drivers'
-  if (listId === 'assets-db' || listId === 'vendors-db') return 'trucks-units'
+  if (listId === 'vendors-db') return 'vendors'
   if (listId === 'parts-ref' || listId === 'service-types-db') return 'parts-repairs'
   return 'fleet-samsara'
 }
@@ -165,8 +165,13 @@ export function ListsCatalogsWorkspace({
       {
         id: 'fleet-samsara',
         label: 'Fleet & Samsara',
-        tabForUrl: 'fleet-samsara',
+        tabForUrl: 'assets-database',
         items: [
+          {
+            id: 'assets-db',
+            label: 'Vehicles database',
+            description: 'Master fleet records (Samsara sync + local editable fields)',
+          },
           {
             id: 'fleet-writes',
             label: 'Fleet & Samsara writes',
@@ -208,11 +213,10 @@ export function ListsCatalogsWorkspace({
         ],
       },
       {
-        id: 'trucks-units',
-        label: 'Trucks & Units',
-        tabForUrl: 'assets-database',
+        id: 'vendors',
+        label: 'Vendors',
+        tabForUrl: 'vendors-database',
         items: [
-          { id: 'assets-db', label: 'Assets (Samsara mirror)', description: 'Units and fleet asset records' },
           { id: 'vendors-db', label: 'Vendors database', description: 'Vendor master table' },
         ],
       },

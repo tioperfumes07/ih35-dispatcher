@@ -3738,3 +3738,39 @@ body.erp-maintenance #erpDedicatedFormModal[data-erp-ap-preset='repair-bill'] .a
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+/* ============================================================================
+   FIX 3 + FIX 4 — maintenance topbar/type alignment + sticky snapshot
+   ============================================================================ */
+body.erp-maintenance .erp-topbar {
+  align-items: center;
+}
+
+body.erp-maintenance .erp-topbar .title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+body.erp-maintenance #erpNewMenuBtn,
+body.erp-maintenance .maint-action-strip__btn,
+body.erp-maintenance #maintActionFleetPills .maint-fleet-pill,
+body.erp-maintenance .maint-kpi-strip__dash {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em;
+}
+
+body.erp-maintenance .maint-action-strip__top,
+body.erp-maintenance .erp-topbar__actions,
+body.erp-maintenance .erp-topbar__left,
+body.erp-maintenance .erp-topbar__search {
+  align-items: center;
+}
+
+body.erp-maintenance #section-maintenance .maint-kpi-strip {
+  position: sticky;
+  top: 0;
+  z-index: 7;
+}

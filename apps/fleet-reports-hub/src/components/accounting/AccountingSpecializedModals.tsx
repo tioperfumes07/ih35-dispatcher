@@ -13,6 +13,7 @@ export type SpecializedModalId =
   | 'load-tms'
   | 'journal'
   | 'transfer'
+  | 'bank-reconciliation'
 
 type Props = {
   open: SpecializedModalId | null
@@ -961,6 +962,18 @@ export function AccountingSpecializedModals({ open, onClose }: Props) {
       return <JournalEntryModal onClose={onClose} />
     case 'transfer':
       return <TransferModal onClose={onClose} />
+    case 'bank-reconciliation':
+      return (
+        <ModalShell
+          open={true}
+          title="Bank reconciliation"
+          subtitle="Use this workspace to match ledger balances and close unreconciled periods."
+          onClose={onClose}
+          saveBar={<button type="button" className="btn sm ghost" onClick={onClose}>Close</button>}
+        >
+          <p className="muted">Reconciliation staging is available here. Connect bank feeds and post matched rows to close the period.</p>
+        </ModalShell>
+      )
     default:
       return null
   }

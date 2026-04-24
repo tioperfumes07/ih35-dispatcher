@@ -418,8 +418,8 @@
     <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show lists &amp; shortcuts column">»</button>
 
     <nav id="erpIconNav" class="erp-icon-nav" aria-label="Company navigation">
-      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Casa overview" onclick="openSection('dashboard', this)">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Casa</span>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Home overview" onclick="openSection('dashboard', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Home</span>
       </button>
       <button type="button" class="erp-icon-nav__btn nav-btn active" data-section="maintenance" title="Maintenance — work orders, fleet, shop" aria-current="true" onclick="openSection('maintenance', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">◆</span><span class="erp-icon-nav__lbl">Maintenance</span>
@@ -431,9 +431,7 @@
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="safety" title="Safety &amp; compliance" onclick="openSection('safety', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">◎</span><span class="erp-icon-nav__lbl">Safety</span>
       </button>
-      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="tracking" title="Fleet tracking &amp; assets" onclick="openSection('tracking', this)">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">▣</span><span class="erp-icon-nav__lbl">Tracking</span>
-      </button>
+
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="fuel" title="Fuel planner — routes, stops, fuel ledger" onclick="openSection('fuel', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">⛽</span><span class="erp-icon-nav__lbl">Fuel planner</span>
       </button>
@@ -1033,6 +1031,7 @@
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Assigned / working</div><div class="maint-kpi-card__val" id="maintDashAssignedAssets">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Maintenance past due</div><div class="maint-kpi-card__val" id="maintDashPastDue">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
+              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Vehicles in service</div><div class="maint-kpi-card__val" id="maintDashVehiclesInService">0</div></div>
             </div>
             <div id="maintDashSummaryLine" class="maint-kpi-strip__meta mini-note"></div>
             <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--color-text-label)"></div>
@@ -1043,7 +1042,7 @@
           <div class="maint-action-strip" aria-label="Maintenance actions">
             <div class="maint-action-strip__top">
               <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
-                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
+                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
                 <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
@@ -1059,12 +1058,12 @@
             </div>
           </div>
           <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
-            <button type="button" class="maint-nav-tab active" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
+            <button type="button" class="maint-nav-tab" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
             <button type="button" class="maint-nav-tab" data-maint-main="fleet" tabindex="-1" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
             <button type="button" class="maint-nav-tab" data-maint-main="rm" tabindex="-1" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
             <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
           </div>
-        <div id="maintMainTabRecord" class="maint-main-tab-panel active">
+        <div id="maintMainTabRecord" class="maint-main-tab-panel">
         <div id="maintWorkOrderFormMount">
         <div class="maint-wo-columns" id="maintenanceSplit">
           <div class="maint-wo-col-units">
@@ -5676,7 +5675,7 @@
     let activeSection = 'maintenance';
     /** Top bar, sidebar brand, and `document.title` (see `openSection`). */
     const ERP_MODULE_TITLE_BY_SECTION = {
-      dashboard: 'Casa',
+      dashboard: 'Home',
       maintenance: 'Maintenance',
       fuel: 'Fuel planner',
       safety: 'Safety',
@@ -6518,6 +6517,12 @@
       loadSecurityCatalogUi().catch(() => {});
       const sl = document.getElementById('maintMainTabShopLoc');
       if (sl && sl.classList.contains('active')) renderMaintLocationBoard();
+    }
+
+    function openMaintHomeView() {
+      closeMaintWorkOrderModal();
+      document.querySelectorAll('.maint-main-tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.maint-nav-tab[data-maint-main]').forEach(b => b.classList.remove('active'));
     }
 
     function openMaintMainTab(tab, btn, opts) {
@@ -7823,7 +7828,7 @@
       const admOpts = name === 'uploads' ? { hideUploadLink: true } : undefined;
       const adm = erpSbAdmin(admOpts);
       const mt = (tab, label) =>
-        `<button type="button" class="erp-sb-link sidebar-child-item" onclick="openMaintMainTab('${tab}', document.querySelector('#maintMainSubtabs [data-maint-main=&quot;${tab}&quot;]'))">${label}</button>`;
+        `<button type="button" class="erp-sb-link sidebar-child-item" onclick="openMaintMainTab('${tab}', document.querySelector('#maintMainSubtabs [data-maint-main=&quot;${tab}&quot;]'), { skipModal: true })">${label}</button>`;
       const ast = (cat, label) => {
         const esc = String(cat).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         return `<button type="button" class="erp-sb-link sidebar-child-item" onclick="setAssetCategory('${esc}')">${label}</button>`;
@@ -7840,10 +7845,9 @@
             'board',
             'Board',
             true,
-            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Casa overview (KPIs)</button>' +
-              mt('record', 'Maintenance board') +
-              mt('rm', 'Maintenance intelligence') +
-              mt('fleet', 'Fleet table') +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;dashboard&quot;, document.querySelector(&quot;.nav-btn[data-section=dashboard]&quot;));">Overview (KPIs)</button>' +
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;maintenance&quot;); openMaintHomeView();">Maintenance board</button>' +
+              mt('rm', 'Shop status') +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;reports&quot;, document.querySelector(&quot;.nav-btn[data-section=reports]&quot;)); openReportsTabFromSidebar(&quot;rep-integrity&quot;);">Integrity alerts <span id="maintIntegritySidebarBadge" class="erp-sb-badge hidden" aria-live="polite"></span></button>'
           ) +
           erpSbGroup(
@@ -7860,10 +7864,9 @@
           erpSbGroup(
             'maintenance',
             'views',
-            'Views',
+            'Shop status',
             true,
-            mt('record', 'Create work order') +
-              mt('fleet', 'Fleet table') +
+            mt('fleet', 'Fleet table') +
               mt('rm', 'R&amp;M status') +
               mt('shop-loc', 'Service / location')
           ) +
@@ -7878,7 +7881,6 @@
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewWorkOrder(&quot;pm&quot;)">PM service</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewWorkOrder(&quot;tire&quot;)">Tire record</button>'
           ) +
-          erpSbGroup('maintenance', 'tools', 'Tools &amp; Data', false, toolsBody) +
           erpSbGroup('maintenance', 'settings', 'Settings', false, settingsBody);
         return;
       }
@@ -8609,6 +8611,20 @@
       openSection('maintenance', document.querySelector('#erpIconNav .nav-btn[data-section="maintenance"]'));
       const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
       openMaintMainTab('record', rb);
+      if (!String(selectedUnit || '').trim()) {
+        const placeholders = {
+          repair: 'Select a unit first to create a repair order.',
+          maintenance_order: 'Select a unit first to create a maintenance order.',
+          accident: 'Select a unit first to create an accident repair order.',
+          pm: 'Select a unit first to create a PM service order.',
+          tire: 'Select a unit first to create a tire service order.'
+        };
+        const msg = placeholders[String(preset || '').trim()] || 'Select a unit first to create a service order.';
+        const ph = document.getElementById('maintWoNoUnitPlaceholder');
+        if (ph) ph.textContent = msg;
+        if (typeof erpNotify === 'function') erpNotify(msg, 'warning');
+        return;
+      }
       const pre = typeof preset === 'string' ? String(preset).trim() : '';
       if (pre) {
         requestAnimationFrame(() => {
@@ -9345,8 +9361,7 @@
       if (brandEl) brandEl.textContent = t;
       document.title = `${t} — IH35 ERP`;
       if (name === 'maintenance') {
-        const rb = document.querySelector('#maintMainSubtabs [data-maint-main="record"]');
-        openMaintMainTab('record', rb, { skipModal: true });
+        openMaintHomeView();
       }
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());

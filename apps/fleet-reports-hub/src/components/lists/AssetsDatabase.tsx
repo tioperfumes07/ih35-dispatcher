@@ -13,11 +13,18 @@ import {
 } from '../../lib/fleetRegistriesApi'
 
 const SAMSARA_REGISTRY_POLL_MS = 60_000
+const ASSET_META_STORAGE_KEY = 'fleet-assets-local-meta-v1'
 
 type Row = AssetRow & Record<string, unknown>
 
+type LocalMeta = {
+  name?: string
+  notes?: string
+}
+
 type Draft = {
   unit_number: string
+  name: string
   year: string
   make: string
   model: string
@@ -27,12 +34,56 @@ type Draft = {
   odometer_miles: string
   engine_hours: string
   fuel_type: string
+  asset_type: string
   status: string
+  notes: string
 }
 
-function rowToDraft(r: AssetRow): Draft {
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'in_shop', label: 'In Shop' },
+  { value: 'out_of_service', label: 'Out of Service' },
+  { value: 'sold', label: 'Sold' },
+  { value: 'crashed_total_loss', label: 'Crashed/Total Loss' },
+  { value: 'permanently_removed', label: 'Permanently Removed' },
+]
+
+function normalizeStatus(status: string | null | undefined): string {
+  const s = String(status || '').trim().toLowerCase()
+  if (s === 'maintenance') return 'in_shop'
+  if (s === 'inactive') return 'out_of_service'
+  if (STATUS_OPTIONS.some((o) => o.value === s)) return s
+  return 'active'
+}
+
+function statusLabel(value: string): string {
+  return STATUS_OPTIONS.find((o) => o.value === value)?.label || value
+}
+
+function loadMetaMap(): Record<string, LocalMeta> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(ASSET_META_STORAGE_KEY)
+    const parsed = raw ? (JSON.parse(raw) as Record<string, LocalMeta>) : {}
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveMetaMap(next: Record<string, LocalMeta>) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(ASSET_META_STORAGE_KEY, JSON.stringify(next))
+  } catch {
+    // ignore localStorage limits
+  }
+}
+
+function rowToDraft(r: AssetRow, meta: LocalMeta | undefined): Draft {
   return {
     unit_number: r.unit_number ?? '',
+    name: String(meta?.name || r.unit_number || '').trim(),
     year: r.year != null ? String(r.year) : '',
     make: r.make ?? '',
     model: r.model ?? '',
@@ -42,13 +93,16 @@ function rowToDraft(r: AssetRow): Draft {
     odometer_miles: r.odometer_miles != null ? String(r.odometer_miles) : '',
     engine_hours: r.engine_hours != null ? String(r.engine_hours) : '',
     fuel_type: r.fuel_type ?? '',
-    status: r.status ?? 'active',
+    asset_type: r.asset_type ?? 'truck',
+    status: normalizeStatus(r.status),
+    notes: String(meta?.notes || '').trim(),
   }
 }
 
 function emptyDraft(): Draft {
   return {
     unit_number: '',
+    name: '',
     year: '',
     make: '',
     model: '',
@@ -58,7 +112,9 @@ function emptyDraft(): Draft {
     odometer_miles: '',
     engine_hours: '',
     fuel_type: '',
+    asset_type: 'truck',
     status: 'active',
+    notes: '',
   }
 }
 
@@ -71,7 +127,8 @@ function toPatch(d: Draft): AssetPatch {
     license_plate: d.license_plate.trim() || null,
     license_state: d.license_state.trim() || null,
     fuel_type: d.fuel_type.trim() || null,
-    status: d.status.trim() || 'active',
+    asset_type: d.asset_type.trim() || 'truck',
+    status: normalizeStatus(d.status),
   }
   const y = Number(d.year)
   if (d.year.trim() && Number.isFinite(y)) p.year = y
@@ -93,6 +150,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [draft, setDraft] = useState<Draft>(emptyDraft())
+  const [metaMap, setMetaMap] = useState<Record<string, LocalMeta>>(() => loadMetaMap())
 
   const load = useCallback(async () => {
     setErr(null)
@@ -107,6 +165,14 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   useEffect(() => {
     void load()
   }, [load])
+
+  const updateMetaForId = useCallback((id: number, meta: LocalMeta) => {
+    setMetaMap((prev) => {
+      const next = { ...prev, [String(id)]: meta }
+      saveMetaMap(next)
+      return next
+    })
+  }, [])
 
   const runSamsaraSync = useCallback(
     async (opts?: { quiet?: boolean }) => {
@@ -163,7 +229,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const openEdit = (r: AssetRow) => {
     setErr(null)
     setEditingId(r.id)
-    setDraft(rowToDraft(r))
+    setDraft(rowToDraft(r, metaMap[String(r.id)]))
     setModalOpen(true)
   }
 
@@ -180,27 +246,39 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
     if (editingId == null) {
       const { asset } = await createAsset({ unit_number: draft.unit_number.trim() })
       await patchAsset(asset.id, toPatch(draft))
-    } else {
-      await patchAsset(editingId, toPatch(draft))
+      return asset.id
     }
+    await patchAsset(editingId, toPatch(draft))
+    return editingId
+  }
+
+  const saveMetaFromDraft = (id: number) => {
+    updateMetaForId(id, {
+      name: draft.name.trim() || draft.unit_number.trim(),
+      notes: draft.notes.trim(),
+    })
   }
 
   const save = async () => {
+    let id = -1
     try {
-      await persist()
+      id = await persist()
     } catch {
       return
     }
+    if (id > 0) saveMetaFromDraft(id)
     await load()
     closeModal()
   }
 
   const saveAndSyncClasses = async () => {
+    let id = -1
     try {
-      await persist()
+      id = await persist()
     } catch {
       return
     }
+    if (id > 0) saveMetaFromDraft(id)
     await syncAssetsQboClasses()
     await load()
     closeModal()
@@ -208,49 +286,30 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
 
   const cols: SharedListColumn<Row>[] = useMemo(
     () => [
-      {
-        id: 'unit',
-        label: 'Unit #',
-        width: 72,
-        render: (r) => <span className="lists-db__pill lists-db__pill--info">{r.unit_number}</span>,
-      },
-      { id: 'year', label: 'Year', width: 52, render: (r) => r.year ?? '—' },
-      { id: 'make', label: 'Make', width: 88, render: (r) => r.make ?? '—' },
-      { id: 'model', label: 'Model', width: 88, render: (r) => r.model ?? '—' },
+      { id: 'unit', label: 'Unit#', width: 70, render: (r) => <span className="lists-db__pill lists-db__pill--info">{r.unit_number}</span> },
+      { id: 'name', label: 'Name', width: 100, render: (r) => metaMap[String(r.id)]?.name || r.unit_number },
+      { id: 'make', label: 'Make', width: 80, render: (r) => r.make ?? '—' },
+      { id: 'model', label: 'Model', width: 80, render: (r) => r.model ?? '—' },
+      { id: 'year', label: 'Year', width: 56, render: (r) => r.year ?? '—' },
       { id: 'vin', label: 'VIN', width: 120, render: (r) => r.vin ?? '—' },
-      { id: 'odo', label: 'Odometer', width: 88, render: (r) => r.odometer_miles ?? '—' },
-      { id: 'plate', label: 'License plate', width: 88, render: (r) => r.license_plate ?? '—' },
-      {
-        id: 'sid',
-        label: 'Samsara ID',
-        width: 100,
-        render: (r) =>
-          r.samsara_id ? <span className="lists-db__mono">{r.samsara_id}</span> : '—',
-      },
-      {
-        id: 'cls',
-        label: 'QBO Class',
-        width: 96,
-        render: (r) =>
-          r.qbo_class_name || r.qbo_class_id ? (
-            <span className="lists-db__pill lists-db__pill--info">{r.qbo_class_name ?? r.qbo_class_id}</span>
-          ) : (
-            '—'
-          ),
-      },
+      { id: 'plate', label: 'License Plate', width: 92, render: (r) => r.license_plate ?? '—' },
+      { id: 'type', label: 'Type', width: 88, render: (r) => r.asset_type || 'truck' },
       {
         id: 'status',
         label: 'Status',
-        width: 96,
+        width: 120,
         render: (r) => {
-          const s = String(r.status || 'active').toLowerCase()
-          if (s === 'inactive') return <span className="muted">Inactive</span>
-          if (s === 'maintenance') return <span className="lists-db__pill lists-db__pill--warn">Maintenance</span>
-          return <span className="lists-db__pill lists-db__pill--ok">Active</span>
+          const s = normalizeStatus(r.status)
+          const warn = s === 'in_shop' || s === 'out_of_service'
+          const bad = s === 'sold' || s === 'crashed_total_loss' || s === 'permanently_removed'
+          if (bad) return <span className="lists-db__pill lists-db__pill--danger">{statusLabel(s)}</span>
+          if (warn) return <span className="lists-db__pill lists-db__pill--warn">{statusLabel(s)}</span>
+          return <span className="lists-db__pill lists-db__pill--ok">{statusLabel(s)}</span>
         },
       },
+      { id: 'notes', label: 'Notes', width: 160, render: (r) => metaMap[String(r.id)]?.notes || '—' },
     ],
-    [],
+    [metaMap],
   )
 
   const data: Row[] = rows.map((r) => ({ ...r }))
@@ -259,20 +318,20 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
     <div className="lists-db">
       <div className="lists-db__head">
         <div>
-          <h3 className="lists-db__title">Assets — Samsara mirror (trucks)</h3>
+          <h3 className="lists-db__title">Vehicles database — Fleet & Samsara</h3>
           <p className="muted tiny lists-db__sub">
-            Vehicles upsert from Samsara; QBO class name mirrors unit # in demo mode.
+            Master vehicle records for maintenance/accounting. Pulls from Samsara and remains editable locally.
           </p>
         </div>
         <div className="lists-db__actions">
           <button type="button" className="btn sm primary shared-list__head-btn" onClick={openAdd}>
-            + Add asset
+            + Add vehicle
           </button>
         </div>
       </div>
       <div className="lists-db__banner lists-db__banner--ok muted tiny">
         {samMsg ??
-          `Samsara mirror · ${rows.length} trucks${lastSamSyncAt ? ` · last sync ${new Date(lastSamSyncAt).toLocaleString()}` : ''} · auto every 60s · Mirror is read-only from Samsara · editable locally · changes here do NOT push to Samsara.`}
+          `Samsara mirror · ${rows.length} vehicles${lastSamSyncAt ? ` · last sync ${new Date(lastSamSyncAt).toLocaleString()}` : ''} · auto every 60s · local edits do NOT push to Samsara.`}
       </div>
       {err ? (
         <p className="nm-banner nm-banner--err" role="alert">
@@ -282,8 +341,8 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
 
       <ListItemEditModal
         open={modalOpen}
-        title={editingId == null ? 'Add asset' : 'Edit asset'}
-        subtitle="Local edits only — Samsara sync overwrites telemetry fields when re-synced."
+        title={editingId == null ? 'Add vehicle' : 'Edit vehicle'}
+        subtitle="Samsara sync refreshes telemetry fields; operational status, type, name, and notes are editable here."
         onClose={closeModal}
         onSave={save}
         extraSaveButton={
@@ -295,109 +354,64 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         <div className="list-edit-form">
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">Unit #</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.unit_number}
-              onChange={(e) => setDraft((d) => ({ ...d, unit_number: e.target.value }))}
-              disabled={editingId != null}
-            />
+            <input className="list-edit-field__inp" value={draft.unit_number} onChange={(e) => setDraft((d) => ({ ...d, unit_number: e.target.value }))} disabled={editingId != null} />
+          </label>
+          <label className="list-edit-field">
+            <span className="list-edit-field__lbl">Name</span>
+            <input className="list-edit-field__inp" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
           </label>
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">Year</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.year}
-              onChange={(e) => setDraft((d) => ({ ...d, year: e.target.value }))}
-            />
+            <input className="list-edit-field__inp" value={draft.year} onChange={(e) => setDraft((d) => ({ ...d, year: e.target.value }))} />
           </label>
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">Make</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.make}
-              onChange={(e) => setDraft((d) => ({ ...d, make: e.target.value }))}
-            />
+            <input className="list-edit-field__inp" value={draft.make} onChange={(e) => setDraft((d) => ({ ...d, make: e.target.value }))} />
           </label>
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">Model</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.model}
-              onChange={(e) => setDraft((d) => ({ ...d, model: e.target.value }))}
-            />
+            <input className="list-edit-field__inp" value={draft.model} onChange={(e) => setDraft((d) => ({ ...d, model: e.target.value }))} />
           </label>
           <label className="list-edit-field list-edit-field--full">
             <span className="list-edit-field__lbl">VIN</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.vin}
-              onChange={(e) => setDraft((d) => ({ ...d, vin: e.target.value }))}
-            />
+            <input className="list-edit-field__inp" value={draft.vin} onChange={(e) => setDraft((d) => ({ ...d, vin: e.target.value }))} />
           </label>
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">License plate</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.license_plate}
-              onChange={(e) => setDraft((d) => ({ ...d, license_plate: e.target.value }))}
-            />
+            <input className="list-edit-field__inp" value={draft.license_plate} onChange={(e) => setDraft((d) => ({ ...d, license_plate: e.target.value }))} />
           </label>
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">License state</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.license_state}
-              onChange={(e) => setDraft((d) => ({ ...d, license_state: e.target.value }))}
-            />
+            <input className="list-edit-field__inp" value={draft.license_state} onChange={(e) => setDraft((d) => ({ ...d, license_state: e.target.value }))} />
           </label>
           <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Odometer</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.odometer_miles}
-              onChange={(e) => setDraft((d) => ({ ...d, odometer_miles: e.target.value }))}
-            />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Engine hours</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.engine_hours}
-              onChange={(e) => setDraft((d) => ({ ...d, engine_hours: e.target.value }))}
-            />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Fuel type</span>
-            <input
-              className="list-edit-field__inp"
-              value={draft.fuel_type}
-              onChange={(e) => setDraft((d) => ({ ...d, fuel_type: e.target.value }))}
-            />
+            <span className="list-edit-field__lbl">Type</span>
+            <input className="list-edit-field__inp" value={draft.asset_type} onChange={(e) => setDraft((d) => ({ ...d, asset_type: e.target.value }))} />
           </label>
           <label className="list-edit-field">
             <span className="list-edit-field__lbl">Status</span>
-            <select
-              className="list-edit-field__sel"
-              value={draft.status}
-              onChange={(e) => setDraft((d) => ({ ...d, status: e.target.value }))}
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="maintenance">Maintenance</option>
+            <select className="list-edit-field__sel" value={draft.status} onChange={(e) => setDraft((d) => ({ ...d, status: e.target.value }))}>
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
+          </label>
+          <label className="list-edit-field list-edit-field--full">
+            <span className="list-edit-field__lbl">Notes</span>
+            <textarea className="list-edit-field__inp" value={draft.notes} onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))} rows={3} />
           </label>
         </div>
       </ListItemEditModal>
 
       <SharedListTable<Row>
-        title="Assets"
+        title="Vehicles"
         itemCount={rows.length}
         columns={cols}
         data={data}
         rowKey={(r) => String(r.id)}
-        searchPlaceholder="Search unit, VIN, make…"
-        searchKeys={['unit_number', 'vin', 'make', 'model']}
-        exportFilename="AssetsDatabase"
+        searchPlaceholder="Search unit, name, VIN, make, model…"
+        searchKeys={['unit_number', 'vin', 'make', 'model', 'asset_type', 'status']}
+        exportFilename="VehiclesDatabase"
         onCloseList={onCloseList}
         onAddNew={openAdd}
         toolbarExtra={
@@ -415,12 +429,12 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         }
         onEdit={(r) => openEdit(r as AssetRow)}
         onDelete={async (r) => {
-          if (!window.confirm(`Delete asset ${(r as AssetRow).unit_number}?`)) return
+          if (!window.confirm(`Delete vehicle ${(r as AssetRow).unit_number}?`)) return
           await deleteAsset((r as AssetRow).id)
           await load()
         }}
         onDeactivate={async (r) => {
-          await patchAsset((r as AssetRow).id, { status: 'inactive' })
+          await patchAsset((r as AssetRow).id, { status: 'out_of_service' })
           await load()
         }}
         onActivate={async (r) => {

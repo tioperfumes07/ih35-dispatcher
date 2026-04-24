@@ -36,9 +36,6 @@ type Props = {
   onOpenForm425c?: () => void
   /** Open global Lists section in App shell (preferred). */
   onOpenListsSection: (tab: ListsCatalogsTab, listId?: ListsCatalogListId | null) => void
-  onOpenTrackingSection?: () => void
-  onOpenUploadCenter?: () => void
-  onOpenSettingsUsers?: () => void
   homeKpis?: {
     accountingTitle: string
     environmentSub: string
@@ -65,9 +62,6 @@ export function AccountingDashboard({
   onFuelOpenFromAccounting,
   onOpenForm425c,
   onOpenListsSection,
-  onOpenTrackingSection,
-  onOpenUploadCenter,
-  onOpenSettingsUsers,
   homeKpis,
 }: Props) {
   const [recurringOpen, setRecurringOpen] = useState(false)
@@ -423,13 +417,6 @@ export function AccountingDashboard({
         onRequestMaintenanceNav={onRequestMaintenanceNav}
         onOpenRecurring={() => setRecurringOpen(true)}
         onOpenLists={openLists}
-        onOpenTracking={() => onOpenTrackingSection?.()}
-        onOpenUploadCenter={() =>
-          onOpenUploadCenter ? onOpenUploadCenter() : openLists('vendors-drivers', 'bank-csv')
-        }
-        onOpenSettingsUsers={() =>
-          onOpenSettingsUsers ? onOpenSettingsUsers() : openLists('name-management', 'name-registry')
-        }
         onSetHomeOverlay={openHomeOverlay}
         kpis={homeKpis}
       />

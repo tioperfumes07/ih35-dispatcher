@@ -9288,3 +9288,68 @@ nav.tabs {
 /* ============================================================================
    End Change 6/7 overrides
    ============================================================================ */
+
+
+/* ============================================================================
+   FIX 12 — reports dropdown list layout
+   ============================================================================ */
+.fr-report-dropdown-shell {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 12px;
+}
+
+.fr-report-dropdown-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fr-report-dropdown-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.fr-report-dropdown {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 0 10px;
+}
+
+.fr-report-dropdown-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fr-report-dropdown-item {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--text);
+  min-height: 32px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+}
+
+.fr-report-dropdown-item:hover {
+  border-color: var(--accent);
+}
