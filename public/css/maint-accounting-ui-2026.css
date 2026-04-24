@@ -3619,3 +3619,64 @@ body.erp-maintenance .acct-type-row:hover .acct-type-row__btn {
   color: var(--color-border-focus);
 }
 
+
+
+/* ============================================================================
+   Change 8 — Dedicated accounting forms match WO layout + uniform controls
+   ============================================================================ */
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform {
+  border-radius: 10px;
+}
+
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .qb-doc-topbar,
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .maint-wo-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+}
+
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .qb-in,
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform select.qb-in,
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform input[type='text'],
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform input[type='search'],
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform input[type='number'],
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform input[type='date'],
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform input[type='datetime-local'] {
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 10px !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box;
+}
+
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform textarea,
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .qb-ta {
+  min-height: 70px;
+  font-size: 13px !important;
+  line-height: 1.3;
+  padding: 8px 10px;
+  border-radius: 4px;
+}
+
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .ap-exp-field--vendor,
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .maint-field-cell--vendor,
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .maint-field-cell--service-vendor {
+  align-items: stretch !important;
+}
+
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform input[list] {
+  width: 100%;
+}
+
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .maint-ap-grid,
+body.erp-maintenance[data-erp-uniform-controls='1'] #erpDedicatedFormModal .erp-dedicated-form-modal__shell--wo-uniform .qb-grid {
+  gap: 10px 12px;
+}
+/* ============================================================================
+   End Change 8 overrides
+   ============================================================================ */

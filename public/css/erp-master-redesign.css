@@ -3968,3 +3968,59 @@ body.settings-page textarea {
 /* ============================================================================
    End Change 4 overrides
    ============================================================================ */
+
+
+/* ============================================================================
+   Change 10 — Top banner alignment consistency across pages
+   ============================================================================ */
+body.erp-maintenance .erp-topbar.topbar,
+body.dispatch-page #dispatchApp .erp-topbar.topbar,
+body.fuel-board .topbar,
+body.banking-page .topbar,
+body.settings-page .topbar {
+  min-height: 42px;
+  display: flex;
+  align-items: center !important;
+  gap: 8px;
+}
+
+body.erp-maintenance .erp-topbar__lead,
+body.dispatch-page #dispatchApp .erp-topbar__lead,
+body.erp-maintenance .erp-topbar__search,
+body.dispatch-page #dispatchApp .erp-topbar__search,
+body.erp-maintenance .erp-topbar__actions,
+body.dispatch-page #dispatchApp .erp-topbar__actions {
+  align-items: center;
+  align-self: center;
+}
+
+body.erp-maintenance .erp-topbar .title,
+body.dispatch-page #dispatchApp .erp-topbar .title,
+body.erp-maintenance .erp-topbar .topbar-home-link,
+body.dispatch-page #dispatchApp .erp-topbar .topbar-home-link {
+  line-height: 1.2;
+  margin: 0;
+}
+
+body.erp-maintenance .erp-topbar .qb-in,
+body.dispatch-page #dispatchApp .erp-topbar .qb-in,
+body.fuel-board .topbar .qb-in {
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+body.erp-maintenance .erp-topbar__actions > button,
+body.dispatch-page #dispatchApp .erp-topbar__actions > button,
+body.fuel-board .topbar .top-actions > button {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 16px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+/* ============================================================================
+   End Change 10 overrides
+   ============================================================================ */

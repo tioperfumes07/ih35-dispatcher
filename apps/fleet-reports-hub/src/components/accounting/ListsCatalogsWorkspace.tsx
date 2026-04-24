@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { VendorCustomerDedupWorkspace } from './VendorCustomerDedupWorkspace'
 import { NameManagementPage } from './NameManagementPage'
 import { ServiceCatalogTab } from '../catalog/ServiceCatalogTab'
 import { PartsReferenceCatalogTab } from '../catalog/PartsReferenceCatalogTab'
-import { SharedListTable, type SharedListColumn } from '../lists/SharedListTable'
 import { DriversDatabase } from '../lists/DriversDatabase'
 import { VendorsDatabase } from '../lists/VendorsDatabase'
 import { AssetsDatabase } from '../lists/AssetsDatabase'
 import { OperationalStatusListPanel } from '../lists/OperationalStatusListPanel'
 import { FleetSamsaraWritesListPanel } from '../lists/FleetSamsaraWritesListPanel'
 import { BankCsvMatchingListPanel } from '../lists/BankCsvMatchingListPanel'
-import { INITIAL_FLEET_WRITE_ROWS, INITIAL_OPERATIONAL_STATUS_ROWS } from '../../data/mockCatalogLists'
+import { SharedListTable, type SharedListColumn } from '../lists/SharedListTable'
 import { fetchQboItems, type QboItemRow } from '../../lib/qboItemsApi'
+import { INITIAL_FLEET_WRITE_ROWS, INITIAL_OPERATIONAL_STATUS_ROWS } from '../../data/mockCatalogLists'
 import { useServiceCatalogRows } from '../../hooks/useServiceCatalogRows'
 
 export type ListsCatalogsTab =
@@ -40,37 +40,18 @@ export type ListsCatalogListId =
   | 'vendors-db'
   | 'assets-db'
 
-type TabDef = { id: ListsCatalogsTab; label: string }
-
-const TAB_DEFS_SOURCE: TabDef[] = [
-  { id: 'assets-database', label: 'Assets (Samsara mirror)' },
-  { id: 'drivers-database', label: 'Drivers database' },
-  { id: 'fleet-samsara', label: 'Fleet & Samsara writes' },
-  { id: 'name-management', label: 'Name management' },
-  { id: 'operational-status', label: 'Operational status labels' },
-  { id: 'qbo-items', label: 'QuickBooks items & accounts' },
-  { id: 'service-types', label: 'Service types (DB)' },
-  { id: 'vendors-database', label: 'Vendors database' },
-  { id: 'vendors-drivers', label: 'Vendors & driver payees' },
-]
-
-/** Lists & catalogs tab bar — alphabetical by label (Packet 8 + 9). */
-const TAB_DEFS: TabDef[] = [...TAB_DEFS_SOURCE].sort((a, b) => a.label.localeCompare(b.label))
-
-/** Tab ids for `?acctLists=1&listsTab=` deep links from ERP maintenance. */
-export const LISTS_CATALOG_TAB_IDS: ListsCatalogsTab[] = TAB_DEFS_SOURCE.map((t) => t.id)
-
-const DB_TABS = new Set<ListsCatalogsTab>([
+/** Keep legacy tab ids for URL/deep-link compatibility from ERP shell. */
+export const LISTS_CATALOG_TAB_IDS: ListsCatalogsTab[] = [
   'assets-database',
   'drivers-database',
+  'fleet-samsara',
+  'name-management',
+  'operational-status',
+  'qbo-items',
+  'service-types',
   'vendors-database',
-])
-
-type CardDef = {
-  id: ListsCatalogListId
-  name: string
-  description: string
-}
+  'vendors-drivers',
+]
 
 type Props = {
   activeTab: ListsCatalogsTab
@@ -79,88 +60,37 @@ type Props = {
   onDeepLinkConsumed?: () => void
 }
 
-function sortCatalogCardsAlpha(cards: CardDef[]): CardDef[] {
-  return cards.slice().sort((a, b) => a.name.localeCompare(b.name))
+type CategoryId =
+  | 'fleet-samsara'
+  | 'operational-status'
+  | 'quickbooks'
+  | 'drivers'
+  | 'trucks-units'
+  | 'parts-repairs'
+
+type CategoryDef = {
+  id: CategoryId
+  label: string
+  tabForUrl: ListsCatalogsTab
+  items: { id: ListsCatalogListId; label: string; description: string }[]
 }
 
-function cardsForTab(tab: ListsCatalogsTab, serviceCount: number): CardDef[] {
-  let cards: CardDef[]
-  switch (tab) {
-    case 'fleet-samsara':
-      cards = [
-        {
-          id: 'fleet-writes',
-          name: 'Fleet & Samsara writes',
-          description: `Telemetry write log · ${INITIAL_FLEET_WRITE_ROWS.length} demo rows`,
-        },
-        {
-          id: 'op-status',
-          name: 'Operational status labels',
-          description: `${INITIAL_OPERATIONAL_STATUS_ROWS.length} labels`,
-        },
-      ]
-      break
-    case 'name-management':
-      cards = [
-        {
-          id: 'find-merge',
-          name: 'Find & merge duplicates',
-          description: 'Vendor / customer dedup',
-        },
-        { id: 'name-registry', name: 'Name management', description: 'Registry & links' },
-        {
-          id: 'rename-vendors',
-          name: 'Rename vendors & drivers',
-          description: 'Bulk rename tools',
-        },
-      ]
-      break
-    case 'operational-status':
-      cards = [
-        {
-          id: 'op-status',
-          name: 'Operational status labels',
-          description: `${INITIAL_OPERATIONAL_STATUS_ROWS.length} labels`,
-        },
-      ]
-      break
-    case 'qbo-items':
-      cards = [
-        {
-          id: 'qbo-items-list',
-          name: 'QuickBooks items & accounts',
-          description: 'Catalog items',
-        },
-      ]
-      break
-    case 'service-types':
-      cards = [
-        {
-          id: 'parts-ref',
-          name: 'Parts reference',
-          description: 'Parts catalog list',
-        },
-        {
-          id: 'service-types-db',
-          name: 'Service types (DB)',
-          description: `${serviceCount} types`,
-        },
-      ]
-      break
-    case 'vendors-drivers':
-      cards = [
-        { id: 'bank-csv', name: 'Bank CSV matching', description: 'Import & match' },
-        {
-          id: 'vendors-payees',
-          name: 'Vendors & driver payees',
-          description: 'Name registry',
-        },
-      ]
-      break
-    default:
-      cards = []
-  }
-  return sortCatalogCardsAlpha(cards)
+function mapTabToCategory(tab: ListsCatalogsTab): CategoryId {
+  if (tab === 'operational-status') return 'operational-status'
+  if (tab === 'qbo-items' || tab === 'vendors-drivers') return 'quickbooks'
+  if (tab === 'drivers-database' || tab === 'name-management') return 'drivers'
+  if (tab === 'assets-database' || tab === 'vendors-database') return 'trucks-units'
+  if (tab === 'service-types') return 'parts-repairs'
+  return 'fleet-samsara'
+}
+
+function mapListToCategory(listId: ListsCatalogListId): CategoryId {
+  if (listId === 'op-status') return 'operational-status'
+  if (listId === 'qbo-items-list' || listId === 'bank-csv' || listId === 'vendors-payees') return 'quickbooks'
+  if (listId === 'drivers-db' || listId === 'name-registry' || listId === 'rename-vendors' || listId === 'find-merge') return 'drivers'
+  if (listId === 'assets-db' || listId === 'vendors-db') return 'trucks-units'
+  if (listId === 'parts-ref' || listId === 'service-types-db') return 'parts-repairs'
+  return 'fleet-samsara'
 }
 
 function QboItemsPanel({ onClose }: { onClose: () => void }) {
@@ -168,7 +98,7 @@ function QboItemsPanel({ onClose }: { onClose: () => void }) {
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = async () => {
     setErr(null)
     setLoading(true)
     try {
@@ -178,11 +108,11 @@ function QboItemsPanel({ onClose }: { onClose: () => void }) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
     void load()
-  }, [load])
+  }, [])
 
   type R = QboItemRow & Record<string, unknown>
   const cols: SharedListColumn<R>[] = [
@@ -207,17 +137,12 @@ function QboItemsPanel({ onClose }: { onClose: () => void }) {
         columns={cols}
         data={data}
         rowKey={(r) => r.id}
-        searchPlaceholder="Search name, SKU…"
+        searchPlaceholder="Search name, SKU..."
         exportFilename="QboItems"
         onCloseList={onClose}
         toolbarExtra={
-          <button
-            type="button"
-            className="btn sm ghost"
-            onClick={() => void load()}
-            disabled={loading}
-          >
-            {loading ? 'Refreshing…' : 'Refresh'}
+          <button type="button" className="btn sm ghost" onClick={() => void load()} disabled={loading}>
+            {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         }
       />
@@ -233,101 +158,102 @@ export function ListsCatalogsWorkspace({
 }: Props) {
   const { rows: svcRows } = useServiceCatalogRows('all')
   const [openedListId, setOpenedListId] = useState<ListsCatalogListId | null>(null)
-  const [cardSearch, setCardSearch] = useState('')
+  const [expandedCategory, setExpandedCategory] = useState<CategoryId | null>(mapTabToCategory(activeTab))
+
+  const categories = useMemo<CategoryDef[]>(
+    () => [
+      {
+        id: 'fleet-samsara',
+        label: 'Fleet & Samsara',
+        tabForUrl: 'fleet-samsara',
+        items: [
+          {
+            id: 'fleet-writes',
+            label: 'Fleet & Samsara writes',
+            description: `Telemetry write log (${INITIAL_FLEET_WRITE_ROWS.length} demo rows)`,
+          },
+        ],
+      },
+      {
+        id: 'operational-status',
+        label: 'Operational Status',
+        tabForUrl: 'operational-status',
+        items: [
+          {
+            id: 'op-status',
+            label: 'Operational status labels',
+            description: `${INITIAL_OPERATIONAL_STATUS_ROWS.length} labels`,
+          },
+        ],
+      },
+      {
+        id: 'quickbooks',
+        label: 'QuickBooks',
+        tabForUrl: 'qbo-items',
+        items: [
+          { id: 'qbo-items-list', label: 'QuickBooks items & accounts', description: 'Catalog items and chart mappings' },
+          { id: 'vendors-payees', label: 'Vendors & driver payees', description: 'Name registry links' },
+          { id: 'bank-csv', label: 'Bank CSV matching', description: 'Import and match transactions' },
+        ],
+      },
+      {
+        id: 'drivers',
+        label: 'Drivers',
+        tabForUrl: 'drivers-database',
+        items: [
+          { id: 'drivers-db', label: 'Drivers database', description: 'Driver registry and sync controls' },
+          { id: 'name-registry', label: 'Name management', description: 'Shared name registry and links' },
+          { id: 'rename-vendors', label: 'Rename vendors & drivers', description: 'Bulk rename helper' },
+          { id: 'find-merge', label: 'Find & merge duplicates', description: 'Duplicate cleanup workspace' },
+        ],
+      },
+      {
+        id: 'trucks-units',
+        label: 'Trucks & Units',
+        tabForUrl: 'assets-database',
+        items: [
+          { id: 'assets-db', label: 'Assets (Samsara mirror)', description: 'Units and fleet asset records' },
+          { id: 'vendors-db', label: 'Vendors database', description: 'Vendor master table' },
+        ],
+      },
+      {
+        id: 'parts-repairs',
+        label: 'Parts & Repairs',
+        tabForUrl: 'service-types',
+        items: [
+          { id: 'parts-ref', label: 'Parts reference', description: 'Parts catalog table' },
+          { id: 'service-types-db', label: 'Service types (DB)', description: `${svcRows.length} types` },
+        ],
+      },
+    ],
+    [svcRows.length],
+  )
 
   useEffect(() => {
-    if (deepLinkList) {
-      setOpenedListId(deepLinkList)
-      onDeepLinkConsumed?.()
-    }
+    setExpandedCategory(mapTabToCategory(activeTab))
+  }, [activeTab])
+
+  useEffect(() => {
+    if (!deepLinkList) return
+    setOpenedListId(deepLinkList)
+    setExpandedCategory(mapListToCategory(deepLinkList))
+    onDeepLinkConsumed?.()
   }, [deepLinkList, onDeepLinkConsumed])
 
-  const cards = useMemo(
-    () => cardsForTab(activeTab, svcRows.length),
-    [activeTab, svcRows.length],
-  )
-  const visibleCards = useMemo(() => {
-    const q = cardSearch.trim().toLowerCase()
-    if (!q) return cards
-    return cards.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q),
-    )
-  }, [cards, cardSearch])
-
   const closeList = () => setOpenedListId(null)
-
-  const isDbTab = DB_TABS.has(activeTab)
-  const showCards = !isDbTab && !openedListId
-  const showListPanel = !isDbTab && Boolean(openedListId)
-
-  const dbClose = () => onTabChange('fleet-samsara')
 
   const listPanel = (() => {
     switch (openedListId) {
       case 'find-merge':
-        return (
-          <div className="lists-catalogs__embedded">
-            <header className="lists-catalogs__list-head">
-              <span className="lists-catalogs__list-title">Find & merge duplicates</span>
-              <div className="lists-catalogs__list-head-actions">
-                <button type="button" className="btn sm ghost lists-catalogs__list-btn" onClick={closeList}>
-                  ← Close list
-                </button>
-              </div>
-            </header>
-            <VendorCustomerDedupWorkspace />
-          </div>
-        )
+        return <VendorCustomerDedupWorkspace />
       case 'name-registry':
       case 'rename-vendors':
       case 'vendors-payees':
-        return (
-          <div className="lists-catalogs__embedded">
-            <header className="lists-catalogs__list-head">
-              <span className="lists-catalogs__list-title">
-                {openedListId === 'rename-vendors'
-                  ? 'Rename vendors & drivers'
-                  : openedListId === 'name-registry'
-                    ? 'Name management'
-                    : 'Vendors & driver payees'}
-              </span>
-              <div className="lists-catalogs__list-head-actions">
-                <button type="button" className="btn sm ghost lists-catalogs__list-btn" onClick={closeList}>
-                  ← Close list
-                </button>
-              </div>
-            </header>
-            <NameManagementPage />
-          </div>
-        )
+        return <NameManagementPage />
       case 'service-types-db':
-        return (
-          <div className="lists-catalogs__embedded">
-            <header className="lists-catalogs__list-head">
-              <span className="lists-catalogs__list-title">Service types (DB)</span>
-              <div className="lists-catalogs__list-head-actions">
-                <button type="button" className="btn sm ghost lists-catalogs__list-btn" onClick={closeList}>
-                  ← Close list
-                </button>
-              </div>
-            </header>
-            <ServiceCatalogTab recordType="maintenance" />
-          </div>
-        )
+        return <ServiceCatalogTab recordType="maintenance" />
       case 'parts-ref':
-        return (
-          <div className="lists-catalogs__embedded">
-            <header className="lists-catalogs__list-head">
-              <span className="lists-catalogs__list-title">Parts reference</span>
-              <div className="lists-catalogs__list-head-actions">
-                <button type="button" className="btn sm ghost lists-catalogs__list-btn" onClick={closeList}>
-                  ← Close list
-                </button>
-              </div>
-            </header>
-            <PartsReferenceCatalogTab />
-          </div>
-        )
+        return <PartsReferenceCatalogTab />
       case 'qbo-items-list':
         return <QboItemsPanel onClose={closeList} />
       case 'op-status':
@@ -347,96 +273,68 @@ export function ListsCatalogsWorkspace({
     }
   })()
 
-  const dbBody =
-    activeTab === 'drivers-database' ? (
-      <DriversDatabase onCloseList={dbClose} />
-    ) : activeTab === 'vendors-database' ? (
-      <VendorsDatabase onCloseList={dbClose} />
-    ) : activeTab === 'assets-database' ? (
-      <AssetsDatabase onCloseList={dbClose} />
-    ) : null
-
-  if (showCards) {
-    return (
-      <div className="lists-catalogs lists-catalogs--hub">
-        <div
-          className="lists-catalogs__tabs integrity-tabs lists-catalogs__tabs--many"
-          role="tablist"
-        >
-          {TAB_DEFS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              className={activeTab === t.id ? 'integrity-tab active' : 'integrity-tab'}
-              onClick={() => {
-                onTabChange(t.id)
-                setCardSearch('')
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <div className="lists-catalogs__body tab-panel lists-catalogs__cards-wrap">
-          <div className="fr-reports-toolbar">
-            <label className="search fr-reports-search">
-              <span className="sr-only">Search lists</span>
-              <input
-                value={cardSearch}
-                onChange={(e) => setCardSearch(e.target.value)}
-                placeholder="Search lists and catalogs..."
-              />
-            </label>
-          </div>
-          <div className="lists-catalogs__cards">
-            {visibleCards.map((c) => (
-              <button
-                key={`${activeTab}-${c.id}`}
-                type="button"
-                className="lists-catalogs__card"
-                onClick={() => setOpenedListId(c.id)}
-              >
-                <span className="lists-catalogs__card-name">{c.name}</span>
-                <span className="lists-catalogs__card-desc muted">{c.description}</span>
-                <span className="lists-catalogs__card-btn">Open list</span>
-              </button>
-            ))}
-            {visibleCards.length === 0 ? (
-              <p className="empty" style={{ margin: 0 }}>
-                No lists match this search.
-              </p>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="lists-catalogs">
-      <div
-        className="lists-catalogs__tabs integrity-tabs lists-catalogs__tabs--many"
-        role="tablist"
-      >
-        {TAB_DEFS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            className={activeTab === t.id ? 'integrity-tab active' : 'integrity-tab'}
-            onClick={() => {
-              onTabChange(t.id)
-              setCardSearch('')
-              setOpenedListId(null)
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
+    <div className="lists-catalogs lists-catalogs--hub lists-catalogs--categories-home">
+      <div className="lists-catalogs__home" aria-label="Lists and catalogs categories">
+        {categories.map((category) => {
+          const expanded = expandedCategory === category.id
+          return (
+            <section key={category.id} className="lists-catalogs__cat">
+              <button
+                type="button"
+                className="lists-catalogs__cat-head"
+                aria-expanded={expanded}
+                onClick={() => {
+                  setExpandedCategory((prev) => (prev === category.id ? null : category.id))
+                  onTabChange(category.tabForUrl)
+                  setOpenedListId(null)
+                }}
+              >
+                <span>{category.label}</span>
+                <span aria-hidden>{expanded ? '▾' : '▸'}</span>
+              </button>
+              {expanded ? (
+                <ul className="lists-catalogs__cat-items">
+                  {category.items.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        className="lists-catalogs__cat-item"
+                        onClick={() => setOpenedListId(item.id)}
+                      >
+                        <span className="lists-catalogs__cat-item-name">{item.label}</span>
+                        <span className="lists-catalogs__cat-item-desc muted">{item.description}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          )
+        })}
       </div>
+
       <div className="lists-catalogs__body tab-panel">
-        {isDbTab ? dbBody : showListPanel ? listPanel : null}
+        {openedListId ? (
+          <div className="lists-catalogs__embedded">
+            <header className="lists-catalogs__list-head">
+              <span className="lists-catalogs__list-title">
+                {categories
+                  .flatMap((c) => c.items)
+                  .find((item) => item.id === openedListId)
+                  ?.label ?? 'List'}
+              </span>
+              <div className="lists-catalogs__list-head-actions">
+                <button type="button" className="btn sm ghost lists-catalogs__list-btn" onClick={closeList}>
+                  ← Close list
+                </button>
+              </div>
+            </header>
+            {listPanel}
+          </div>
+        ) : (
+          <p className="lists-catalogs__empty muted">Select a category and list to open it in the panel.</p>
+        )}
       </div>
     </div>
   )

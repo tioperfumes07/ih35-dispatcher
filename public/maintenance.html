@@ -19,11 +19,11 @@
   <link rel="stylesheet" href="/css/erp-responsive-global-2026.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
-<body class="erp-app erp-maintenance">
+<body class="erp-app erp-maintenance" data-erp-uniform-controls="1">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="erpDedicatedFormModal" class="erp-dedicated-form-modal hidden" aria-hidden="true">
     <div class="erp-dedicated-form-modal__backdrop" data-erp-ded-close="1"></div>
-    <div class="erp-dedicated-form-modal__shell" role="dialog" aria-modal="true" aria-label="Dedicated expense form — drag the lower-right corner to resize, or use Maximize / Full screen">
+    <div class="erp-dedicated-form-modal__shell erp-dedicated-form-modal__shell--wo-uniform" role="dialog" aria-modal="true" aria-label="Dedicated expense form — drag the lower-right corner to resize, or use Maximize / Full screen">
       <div class="erp-dedicated-form-modal__inner">
         <div class="erp-dedicated-form-modal__bar">
           <button type="button" class="erp-dedicated-form-modal__x" data-erp-ded-close="1" title="Close">×</button>
@@ -673,10 +673,6 @@
                 style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:320px;overflow:auto"
               ></div>
             </div>
-          </div>
-          <div class="topbar-hint-wrap" aria-label="Workspace tips">
-            <span class="mini-note topbar-hint topbar-hint--lead">Tip: left rail, search, and the green <strong>+ New</strong> (left of the title).</span>
-            
           </div>
           <div class="erp-topbar__actions print-hide-actions">
             <button type="button" title="Reload lists and boards (auto-refresh also runs in the background)" onclick="loadAll()">Refresh</button>

@@ -25,8 +25,9 @@ import { readQboStore, clearQboConnectionFailure } from '../lib/qbo-attachments.
 import { getVehicles } from '../services/samsara.js';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
-const SAMSARA_HEALTH_CACHE_MS = 10 * 60 * 1000;
+const SAMSARA_HEALTH_CACHE_MS = 60 * 1000;
 const SAMSARA_HEALTH_TIMEOUT_MS = 5000;
+const QBO_LIVE_REFRESH_MS = 60 * 1000;
 const samsaraHealthCache = {
   fetchedAt: 0,
   vehicles: null,
@@ -269,7 +270,11 @@ export function mountErpCoreApi(app, opts = {}) {
       hasDatabaseUrl: Boolean(process.env.DATABASE_URL?.trim()),
       samsaraVehicles,
       samsaraStatsRows,
-      samsaraError
+      samsaraError,
+      samsaraRefreshMs: SAMSARA_HEALTH_CACHE_MS,
+      qboRefreshMs: QBO_LIVE_REFRESH_MS,
+      qboLiveConnection: qbo.connected ? 'connected' : qbo.configured ? 'disconnected' : 'not-configured',
+      samsaraLiveConnection: token ? (samsaraError ? 'degraded' : 'connected') : 'not-configured'
     });
   });
 
@@ -327,8 +332,10 @@ export function mountErpCoreApi(app, opts = {}) {
       companyName: companyName || undefined,
       lastRefreshError: lastRefreshError || undefined,
       lastRefreshErrorAt: lastRefreshErrorAt || undefined,
-      catalogUiPollMinutes: 0,
-      catalogLastSyncedAt: null
+      catalogUiPollMinutes: 1,
+      catalogUiPollMs: QBO_LIVE_REFRESH_MS,
+      catalogLastSyncedAt: null,
+      liveConnectionStatus: connected ? 'connected' : configured ? 'disconnected' : 'not-configured'
     });
   });
 

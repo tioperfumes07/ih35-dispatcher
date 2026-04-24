@@ -89,7 +89,7 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'home', label: 'Home' },
   { id: 'maintenance', label: 'Maintenance' },
   { id: 'accounting', label: 'Accounting' },
-  { id: 'lists', label: 'Lists' },
+  { id: 'lists', label: 'Lists & Catalogs' },
   { id: 'reports', label: 'Reports' },
   { id: 'safety', label: 'Safety' },
   { id: 'tracking', label: 'Tracking' },
@@ -677,7 +677,7 @@ export default function App() {
     void safeLoadHomeKpis()
     const refreshId = window.setInterval(() => {
       void safeLoadHomeKpis()
-    }, 120000)
+    }, 60000)
 
     return () => {
       window.clearInterval(refreshId)

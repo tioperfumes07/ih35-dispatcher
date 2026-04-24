@@ -34,7 +34,7 @@ const IntegrationConnectionsContext =
   createContext<IntegrationConnectionsContextValue | null>(null)
 
 /** Background probe interval shown in the connection strip. */
-const PROBE_INTERVAL_MS = 5 * 60 * 1000
+const PROBE_INTERVAL_MS = 60 * 1000
 
 function delay(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms))
