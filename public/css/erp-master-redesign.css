@@ -3817,3 +3817,52 @@ body.hub-page .hub-footer-tip {
     padding: 14px max(16px, env(safe-area-inset-right, 0px)) max(32px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   }
 }
+
+
+/* ============================================================================
+   Change 3 — Global button standardization + section dropdown arrows
+   ============================================================================ */
+body.erp-maintenance button,
+body.dispatch-page button,
+body.fuel-board button,
+body.banking-page button,
+body.settings-page button,
+body.erp-maintenance .btn,
+body.dispatch-page .btn,
+body.fuel-board .btn,
+body.banking-page .btn,
+body.settings-page .btn,
+body.erp-maintenance .qb-btn-primary,
+body.erp-maintenance .erp-btn-primary {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  border-radius: 4px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+}
+
+body.erp-maintenance .erp-topbar button,
+body.dispatch-page #dispatchApp .erp-topbar button,
+body.fuel-board .topbar button {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Section buttons: add compact dropdown indicator */
+body.erp-maintenance .erp-icon-nav__btn.nav-btn::after {
+  content: '▾';
+  font-size: 9px;
+  line-height: 1;
+  margin-top: 1px;
+  opacity: 0.8;
+}
