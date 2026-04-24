@@ -462,11 +462,8 @@ export function mountErpCoreApi(app, opts = {}) {
     try {
       const erp = readFullErpJson();
       const erpVehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
-      // Read directly from health cache which already has vehicles
-      const cachedRows = Array.isArray(samsaraHealthCache?.rows)
-        ? samsaraHealthCache.rows
-        : [];
-      let mappedVehicles = cachedRows.map(mapSamsaraVehicleRow).filter(Boolean);
+      const freshRows = Array.isArray(samsaraHealthCache?.rows) ? samsaraHealthCache.rows : [];
+      let mappedVehicles = freshRows.map(mapSamsaraVehicleRow).filter(Boolean);
       console.log('[board] from samsaraHealthCache:', mappedVehicles.length, 'vehicles');
       if (!mappedVehicles.length && erpVehicles.length) {
         mappedVehicles = erpVehicles;
