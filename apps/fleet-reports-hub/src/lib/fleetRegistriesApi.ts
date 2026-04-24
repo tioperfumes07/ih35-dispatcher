@@ -71,6 +71,38 @@ export type AssetRow = {
   updated_at: string
 }
 
+
+export type FleetAssetProfile = {
+  samsara_id: string
+  unit_number: string
+  asset_type: 'Truck' | 'Reefer Van' | 'Flatbed' | 'Dry Van' | 'Company Vehicle' | 'Trailer' | 'Other'
+  status: 'Active' | 'In Shop' | 'Out of Service' | 'Sold' | 'Crashed/Total Loss' | 'Permanently Removed'
+  year: number | null
+  make: string | null
+  model: string | null
+  vin: string | null
+  licensePlate: string | null
+  notes: string | null
+  odometerMiles: number | null
+  engineHours: number | null
+  lastGpsLat: number | null
+  lastGpsLng: number | null
+  lastGpsTime: string | null
+  updated_at: string | null
+}
+
+export type FleetAssetProfilePatch = {
+  unit_number?: string | null
+  asset_type?: FleetAssetProfile['asset_type']
+  status?: FleetAssetProfile['status']
+  vin_override?: string | null
+  license_plate_override?: string | null
+  year_override?: number | null
+  make_override?: string | null
+  model_override?: string | null
+  notes?: string | null
+}
+
 async function j<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init)
   if (!res.ok) throw new Error(await res.text())
@@ -250,4 +282,35 @@ export async function patchAsset(id: number, body: AssetPatch) {
 
 export async function deleteAsset(id: number) {
   return j<{ ok: boolean; deleted: number }>(`/api/assets/${id}`, { method: 'DELETE' })
+}
+
+
+export async function fetchFleetAssetProfiles() {
+  return j<{ ok: boolean; assets: FleetAssetProfile[]; count: number }>('/api/fleet/assets')
+}
+
+export async function updateFleetAssetProfile(samsaraId: string, body: FleetAssetProfilePatch) {
+  return j<{ ok: boolean; asset: FleetAssetProfile | null }>(`/api/fleet/assets/${encodeURIComponent(samsaraId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function fetchFleetAssetUnits() {
+  return j<{
+    ok: boolean
+    units: Array<{
+      samsara_id: string
+      unit_number: string
+      asset_type: FleetAssetProfile['asset_type']
+      status: FleetAssetProfile['status']
+      make: string | null
+      model: string | null
+      year: number | null
+      vin: string | null
+      licensePlate: string | null
+    }>
+    count: number
+  }>('/api/fleet/assets/units')
 }

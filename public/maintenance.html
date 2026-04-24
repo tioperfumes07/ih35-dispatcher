@@ -11420,7 +11420,7 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes] =
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes] =
           await Promise.all([
             j('/api/maintenance/dashboard').catch(err => ({ ok: false, error: err?.message || String(err), vehicles: [], dashboard: [], tireAlerts: [] })),
             j('/api/maintenance/records'),
@@ -11442,7 +11442,8 @@
             j('/api/health').catch(err => ({ ok: false, error: err?.message || String(err) })),
             j('/api/qbo/status').catch(() => null),
             j('/api/qbo/master').catch(() => null),
-            j('/api/maintenance/parts-reference').catch(() => ({ ok: false, parts: [], names: [] }))
+            j('/api/maintenance/parts-reference').catch(() => ({ ok: false, parts: [], names: [] })),
+            j('/api/fleet/assets/units').catch(() => ({ ok: false, units: [] }))
           ]);
         if (bar) {
           bar.classList.add('hidden');
@@ -11482,7 +11483,21 @@
           catalogPartNames = Array.from(new Set([...DEFAULT_PART_LOOKUP_NAMES, ...apiPartNames].map(n => String(n || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
         }
 
-        vehicles = (dashRes.vehicles || []).sort(byUnitOrder);
+        const assetUnits = assetUnitsRes && assetUnitsRes.ok && Array.isArray(assetUnitsRes.units)
+          ? assetUnitsRes.units
+          : [];
+        const preferredUnits = assetUnits.map((u) => ({
+          id: String(u.samsara_id || u.unit_number || '').trim(),
+          name: String(u.unit_number || '').trim(),
+          make: u.make || null,
+          model: u.model || null,
+          year: Number.isFinite(Number(u.year)) ? Number(u.year) : null,
+          vin: u.vin || null,
+          licensePlate: u.licensePlate || null,
+          status: u.status || 'Active',
+        })).filter((u) => u.name);
+
+        vehicles = (preferredUnits.length ? preferredUnits : (dashRes.vehicles || [])).sort(byUnitOrder);
         dashboard = dashRes.dashboard || [];
         tireAlerts = dashRes.tireAlerts || [];
         erp = erpRes || {};

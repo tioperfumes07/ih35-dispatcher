@@ -426,6 +426,7 @@ function mapSamsaraVehicleRow(raw = {}, statsById = new Map()) {
     name: unit,
     make: String(raw.make || raw.attributes?.make || '').trim() || null,
     model: String(raw.model || raw.attributes?.model || '').trim() || null,
+    year: Number.isFinite(Number(raw.year ?? raw.attributes?.year)) ? Number(raw.year ?? raw.attributes?.year) : null,
     vin: String(raw.vin || raw.attributes?.vin || '').trim() || null,
     licensePlate: String(
       raw.licensePlate ||
@@ -474,6 +475,106 @@ async function fetchSamsaraVehiclesFallback(token, logError) {
     logError('[samsara] fallback vehicle fetch failed', e);
     return [];
   }
+}
+
+function isTruckUnitNumber(unitRaw) {
+  const unit = String(unitRaw || '').trim().toUpperCase();
+  const m = unit.match(/^T(\d{3})$/);
+  if (!m) return false;
+  const n = Number(m[1]);
+  return Number.isFinite(n) && n >= 120 && n <= 177;
+}
+
+function normalizeFleetAssetType(unitNumber, existingType) {
+  const t = String(existingType || '').trim();
+  if (t) return t;
+  return isTruckUnitNumber(unitNumber) ? 'Truck' : 'Trailer';
+}
+
+function normalizeFleetAssetStatus(rawStatus) {
+  const s = String(rawStatus || '').trim();
+  return s || 'Active';
+}
+
+function mergeFleetAssetWithSamsara(samsaraRow, assetRow) {
+  const unitNumber = String(assetRow?.unit_number || samsaraRow?.name || '').trim();
+  const yearOverride = Number(assetRow?.year_override);
+  return {
+    samsara_id: String(samsaraRow?.id || assetRow?.samsara_id || '').trim(),
+    unit_number: unitNumber,
+    asset_type: normalizeFleetAssetType(unitNumber, assetRow?.asset_type),
+    status: normalizeFleetAssetStatus(assetRow?.status),
+    year: Number.isFinite(yearOverride) ? yearOverride : (samsaraRow?.year ?? null),
+    make: String(assetRow?.make_override || samsaraRow?.make || '').trim() || null,
+    model: String(assetRow?.model_override || samsaraRow?.model || '').trim() || null,
+    vin: String(assetRow?.vin_override || samsaraRow?.vin || '').trim() || null,
+    licensePlate: String(assetRow?.license_plate_override || samsaraRow?.licensePlate || '').trim() || null,
+    notes: String(assetRow?.notes || '').trim() || null,
+    odometerMiles: samsaraRow?.odometerMiles ?? null,
+    engineHours: samsaraRow?.engineHours ?? null,
+    lastGpsLat: samsaraRow?.lastGpsLat ?? null,
+    lastGpsLng: samsaraRow?.lastGpsLng ?? null,
+    lastGpsTime: samsaraRow?.lastGpsTime ?? null,
+    lastLocation: samsaraRow?.lastLocation ?? null,
+    updated_at: assetRow?.updated_at || null,
+  };
+}
+
+async function fetchSamsaraVehiclesForProfiles(logError, scope = 'fleet-assets') {
+  const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+  if (!token) return [];
+  try {
+    const payload = await getVehicles(token);
+    const { rows } = summarizeSamsaraVehiclesPayload(payload);
+    const statsById = await fetchSamsaraVehicleStatsMap(token, rows, logError, scope);
+    return rows.map((row) => mapSamsaraVehicleRow(row, statsById)).filter(Boolean);
+  } catch (e) {
+    logError(`[${scope}] samsara fetch failed`, e);
+    return [];
+  }
+}
+
+async function seedFleetAssetsFromSamsaraRows(rows = []) {
+  if (!getPool() || !Array.isArray(rows) || !rows.length) return;
+  await dbQuery('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+  for (const r of rows) {
+    const samsaraId = String(r?.id || '').trim();
+    if (!samsaraId) continue;
+    const unitNumber = String(r?.name || '').trim();
+    const defaultType = normalizeFleetAssetType(unitNumber, '');
+    await dbQuery(
+      `INSERT INTO fleet_assets (samsara_id, unit_number, asset_type, status, updated_at)
+       VALUES ($1, $2, $3, 'Active', now())
+       ON CONFLICT (samsara_id)
+       DO UPDATE SET
+         unit_number = EXCLUDED.unit_number,
+         asset_type = COALESCE(NULLIF(fleet_assets.asset_type, ''), EXCLUDED.asset_type),
+         updated_at = now()`,
+      [samsaraId, unitNumber || null, defaultType]
+    );
+  }
+}
+
+async function getMergedFleetAssetProfiles(logError) {
+  const samsaraRows = await fetchSamsaraVehiclesForProfiles(logError, 'fleet-assets');
+  const samsaraById = new Map(samsaraRows.map((r) => [String(r.id), r]));
+
+  if (!getPool()) {
+    return samsaraRows.map((r) => mergeFleetAssetWithSamsara(r, null));
+  }
+
+  await seedFleetAssetsFromSamsaraRows(samsaraRows);
+  const { rows: assetRows } = await dbQuery('SELECT * FROM fleet_assets');
+  const merged = [];
+  for (const a of assetRows || []) {
+    const sid = String(a.samsara_id || '').trim();
+    const sam = samsaraById.get(sid) || { id: sid, name: a.unit_number || sid };
+    merged.push(mergeFleetAssetWithSamsara(sam, a));
+    samsaraById.delete(sid);
+  }
+  for (const rest of samsaraById.values()) merged.push(mergeFleetAssetWithSamsara(rest, null));
+  merged.sort((a, b) => String(a.unit_number || '').localeCompare(String(b.unit_number || '')));
+  return merged;
 }
 
 /**
@@ -700,6 +801,92 @@ export function mountErpCoreApi(app, opts = {}) {
       logError('GET /api/board', e);
       return res.json({ vehicles: [], live: [], hos: [],
         assignments: [], refreshedAt: new Date().toISOString(), source: 'error' });
+    }
+  });
+
+    app.get('/api/fleet/assets', async (_req, res) => {
+    try {
+      const assets = await getMergedFleetAssetProfiles(logError);
+      return res.json({ ok: true, assets, count: assets.length });
+    } catch (e) {
+      logError('GET /api/fleet/assets', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), assets: [] });
+    }
+  });
+
+  app.put('/api/fleet/assets/:samsara_id', async (req, res) => {
+    const samsaraId = String(req.params.samsara_id || '').trim();
+    if (!samsaraId) return res.status(400).json({ ok: false, error: 'samsara_id required' });
+    if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const allowedType = new Set(['Truck', 'Reefer Van', 'Flatbed', 'Dry Van', 'Company Vehicle', 'Trailer', 'Other']);
+    const allowedStatus = new Set(['Active', 'In Shop', 'Out of Service', 'Sold', 'Crashed/Total Loss', 'Permanently Removed']);
+
+    const unitNumber = String(b.unit_number || '').trim() || null;
+    const assetTypeRaw = String(b.asset_type || '').trim();
+    const assetType = allowedType.has(assetTypeRaw) ? assetTypeRaw : normalizeFleetAssetType(unitNumber, '');
+    const statusRaw = String(b.status || '').trim();
+    const status = allowedStatus.has(statusRaw) ? statusRaw : 'Active';
+    const yearNum = Number(b.year_override);
+
+    await dbQuery(
+      `INSERT INTO fleet_assets (
+         samsara_id, unit_number, asset_type, status, vin_override, license_plate_override,
+         year_override, make_override, model_override, notes, updated_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
+       ON CONFLICT (samsara_id)
+       DO UPDATE SET
+         unit_number = EXCLUDED.unit_number,
+         asset_type = EXCLUDED.asset_type,
+         status = EXCLUDED.status,
+         vin_override = EXCLUDED.vin_override,
+         license_plate_override = EXCLUDED.license_plate_override,
+         year_override = EXCLUDED.year_override,
+         make_override = EXCLUDED.make_override,
+         model_override = EXCLUDED.model_override,
+         notes = EXCLUDED.notes,
+         updated_at = now()`,
+      [
+        samsaraId,
+        unitNumber,
+        assetType,
+        status,
+        String(b.vin_override || '').trim() || null,
+        String(b.license_plate_override || '').trim() || null,
+        Number.isFinite(yearNum) ? yearNum : null,
+        String(b.make_override || '').trim() || null,
+        String(b.model_override || '').trim() || null,
+        String(b.notes || '').trim() || null,
+      ]
+    );
+
+    const assets = await getMergedFleetAssetProfiles(logError);
+    const updated = assets.find((a) => String(a.samsara_id) === samsaraId) || null;
+    return res.json({ ok: true, asset: updated });
+  });
+
+  app.get('/api/fleet/assets/units', async (_req, res) => {
+    try {
+      const assets = await getMergedFleetAssetProfiles(logError);
+      const units = assets
+        .filter((a) => isTruckUnitNumber(a.unit_number) && String(a.status || '') === 'Active')
+        .map((a) => ({
+          samsara_id: a.samsara_id,
+          unit_number: a.unit_number,
+          asset_type: a.asset_type,
+          status: a.status,
+          make: a.make,
+          model: a.model,
+          year: a.year,
+          vin: a.vin,
+          licensePlate: a.licensePlate,
+        }))
+        .sort((a, b) => String(a.unit_number || '').localeCompare(String(b.unit_number || '')));
+      return res.json({ ok: true, units, count: units.length });
+    } catch (e) {
+      logError('GET /api/fleet/assets/units', e);
+      return res.json({ ok: true, units: [], count: 0 });
     }
   });
 

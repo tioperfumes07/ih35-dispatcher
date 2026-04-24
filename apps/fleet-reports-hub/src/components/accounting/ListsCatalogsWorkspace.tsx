@@ -5,7 +5,7 @@ import { ServiceCatalogTab } from '../catalog/ServiceCatalogTab'
 import { PartsReferenceCatalogTab } from '../catalog/PartsReferenceCatalogTab'
 import { DriversDatabase } from '../lists/DriversDatabase'
 import { VendorsDatabase } from '../lists/VendorsDatabase'
-import { AssetsDatabase } from '../lists/AssetsDatabase'
+import { FleetAssetsDatabase } from '../lists/FleetAssetsDatabase'
 import { OperationalStatusListPanel } from '../lists/OperationalStatusListPanel'
 import { FleetSamsaraWritesListPanel } from '../lists/FleetSamsaraWritesListPanel'
 import { BankCsvMatchingListPanel } from '../lists/BankCsvMatchingListPanel'
@@ -271,7 +271,7 @@ export function ListsCatalogsWorkspace({
       case 'vendors-db':
         return <VendorsDatabase onCloseList={closeList} />
       case 'assets-db':
-        return <AssetsDatabase onCloseList={closeList} />
+        return <FleetAssetsDatabase onCloseList={closeList} />
       default:
         return null
     }
