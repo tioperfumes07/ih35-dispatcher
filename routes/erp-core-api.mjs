@@ -396,37 +396,25 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/maintenance/dashboard', async (_req, res) => {
-    const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
-    if (token) {
-      try {
-        const payload = await getVehicles(token);
-        const { rows } = summarizeSamsaraVehiclesPayload(payload);
-        const vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
-        if (vehicles.length > 0) {
-          return res.json({
-            ok: true,
-            vehicles,
-            dashboard: [],
-            tireAlerts: [],
-            refreshedAt: new Date().toISOString(),
-            source: 'samsara-live'
-          });
-        }
-      } catch(e) {
-        console.error('[maintenance/dashboard] samsara direct call failed:', e.message);
-      }
-    }
-
     const erp = readFullErpJson();
-    let vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+    const erpVehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
     const dashboard = Array.isArray(erp.maintenanceDashboard) ? erp.maintenanceDashboard : [];
     const tireAlerts = Array.isArray(erp.tireAlerts) ? erp.tireAlerts : [];
+    const cachedRows = Array.isArray(samsaraHealthCache?.rows)
+      ? samsaraHealthCache.rows
+      : [];
+    let mappedVehicles = cachedRows.map(mapSamsaraVehicleRow).filter(Boolean);
+    console.log('[maintenance/dashboard] from samsaraHealthCache:', mappedVehicles.length, 'vehicles');
+    if (!mappedVehicles.length && erpVehicles.length) {
+      mappedVehicles = erpVehicles;
+    }
     res.json({
       ok: true,
-      vehicles,
+      vehicles: mappedVehicles,
       dashboard,
       tireAlerts,
-      refreshedAt: erp.refreshedAt || null
+      refreshedAt: erp.refreshedAt || null,
+      source: mappedVehicles.length > 0 ? 'samsara-cache' : 'empty'
     });
   });
 
@@ -466,52 +454,25 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/board', async (_req, res) => {
-    // DIRECT CACHE READ - samsaraHealthCache always has vehicles
-    const cachedRows = Array.isArray(samsaraHealthCache && samsaraHealthCache.rows ? samsaraHealthCache.rows : []) ? (samsaraHealthCache.rows || []) : [];
-    if (cachedRows.length > 0) {
-      const vehicles = cachedRows.map(mapSamsaraVehicleRow).filter(Boolean);
-      if (vehicles.length > 0) {
-        console.log('[board] served', vehicles.length, 'vehicles from samsaraHealthCache');
-        return res.json({ vehicles, live: [], hos: [], assignments: [], refreshedAt: new Date().toISOString(), source: 'samsara-cache' });
-      }
-    }
     try {
-      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
-      if (token) {
-        try {
-          console.log('[board] calling getVehicles, token length:', token.length);
-          const payload = await getVehicles(token);
-          const { rows } = summarizeSamsaraVehiclesPayload(payload);
-          const vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
-          if (vehicles.length > 0) {
-            return res.json({
-              vehicles,
-              live: [],
-              hos: [],
-              assignments: [],
-              refreshedAt: new Date().toISOString(),
-              source: 'samsara-live'
-            });
-          }
-        } catch (e) {
-          logError('[board] samsara live vehicle fetch failed', e);
-          console.error('[board] VEHICLE FETCH ERROR DETAIL:', e.message, e.stack);
-        }
-      }
-
       const erp = readFullErpJson();
-      const vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
-      const live = Array.isArray(erp.live) ? erp.live : [];
-      const hos = Array.isArray(erp.hos) ? erp.hos : [];
-      const assignments = Array.isArray(erp.assignments) ? erp.assignments : [];
-
+      const erpVehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
+      // Read directly from health cache which already has vehicles
+      const cachedRows = Array.isArray(samsaraHealthCache?.rows)
+        ? samsaraHealthCache.rows
+        : [];
+      let mappedVehicles = cachedRows.map(mapSamsaraVehicleRow).filter(Boolean);
+      console.log('[board] from samsaraHealthCache:', mappedVehicles.length, 'vehicles');
+      if (!mappedVehicles.length && erpVehicles.length) {
+        mappedVehicles = erpVehicles;
+      }
       return res.json({
-        vehicles,
-        live,
-        hos,
-        assignments,
+        vehicles: mappedVehicles,
+        live: [],
+        hos: [],
+        assignments: [],
         refreshedAt: new Date().toISOString(),
-        source: vehicles.length > 0 ? 'erp-json' : 'empty',
+        source: mappedVehicles.length > 0 ? 'samsara-cache' : 'empty'
       });
     } catch (e) {
       logError('GET /api/board', e);
