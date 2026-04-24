@@ -454,6 +454,11 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/board', async (_req, res) => {
+    const cachedRows = Array.isArray(samsaraHealthCache.rows) ? samsaraHealthCache.rows : [];
+    if (cachedRows.length === 0) {
+      const tok = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      if (tok) { try { await fetchSamsaraVehicleCountCached(tok, ()=>{}); } catch(e) {} }
+    }
     try {
       const erp = readFullErpJson();
       const erpVehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
