@@ -9028,3 +9028,77 @@ nav.tabs {
   border: 0.5px solid var(--color-border-tertiary);
 }
 
+
+
+/* ============================================================================
+   Change 5 — Reports cards compact redesign + no duplicate headers
+   ============================================================================ */
+.reports-page--redesign .fr-report-cards-grid {
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.reports-page--redesign .fr-report-card {
+  cursor: pointer;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  gap: 4px;
+  min-height: 0;
+  box-shadow: none;
+}
+
+.reports-page--redesign .fr-report-card:hover {
+  background: color-mix(in srgb, var(--panel-2) 88%, var(--accent));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.reports-page--redesign .fr-report-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.reports-page--redesign .fr-report-card__cat {
+  margin: 0 0 2px;
+  font-size: 10px;
+  padding: 1px 6px;
+}
+
+.reports-page--redesign .fr-report-card__title {
+  font-size: 13px;
+  margin: 0 0 2px;
+}
+
+.reports-page--redesign .fr-report-card__desc {
+  font-size: 11px;
+  margin: 0 0 4px;
+  line-height: 1.35;
+}
+
+.reports-page--redesign .fr-report-card__tags {
+  margin-top: 2px;
+}
+
+.reports-page--redesign .fr-report-card__tags .tag {
+  font-size: 10px;
+  padding: 1px 5px;
+}
+
+.reports-page--redesign .fr-report-card__hint {
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+/* Remove old footer/open-button blank area */
+.reports-page--redesign .fr-report-card__foot,
+.reports-page--redesign .fr-report-card__open,
+.reports-page--redesign .fr-report-card__fs-hit,
+.reports-page--redesign .fr-reports-kicker,
+.reports-page--redesign .fr-reports-domain {
+  display: none !important;
+}
+/* ============================================================================
+   End Change 5 overrides
+   ============================================================================ */

@@ -63,9 +63,16 @@ const REPORT_TAB_QUERY_VALUES: ReportCategory[] = [
   'custom',
 ]
 const REPORT_TAB_SET = new Set<ReportCategory>(REPORT_TAB_QUERY_VALUES)
-const REPORTS_PAGE_TAB_IDS: ReportCategory[] = REPORT_TAB_QUERY_VALUES.filter(
-  (id) => id !== 'safety' && id !== 'fuel' && id !== 'operations',
-)
+const REPORTS_PAGE_TAB_IDS: ReportCategory[] = [
+  'overview',
+  'maintenance',
+  'accounting',
+  'safety',
+  'fuel',
+  'operations',
+  'dot',
+  'custom',
+]
 
 type AppSection =
   | 'home'
@@ -787,43 +794,11 @@ export default function App() {
     return SECTION_REPORT_TAB_OVERRIDES[activeSection] ?? tab
   }, [activeSection, tab])
 
-  /** Report cards on the right: Overview = all reports; other tabs = that category only. */
+  /** Report cards: each tab shows only its own category (no duplicated grouped headers below tabs). */
   const catalogReportsForGrid = useMemo(() => {
-    const list =
-      reportTabForSection === 'overview'
-        ? REPORTS
-        : REPORTS.filter((r) => r.category === reportTabForSection)
+    const list = REPORTS.filter((r) => r.category === reportTabForSection)
     return list.filter((r) => matchesSearch(r, search))
   }, [reportTabForSection, search])
-
-  /** Domain section headings + cards (Overview = one block per category). */
-  const reportCardGroups = useMemo(() => {
-    const list = catalogReportsForGrid
-    if (reportTabForSection !== 'overview') {
-      const meta = TABS.find((t) => t.id === reportTabForSection)
-      return [
-        {
-          key: String(reportTabForSection),
-          section: meta?.label ?? reportTabForSection,
-          reports: list,
-        },
-      ]
-    }
-    const catOrder = TABS.filter((t) => t.id !== 'overview').map((t) => t.id)
-    const byCat = new Map<ReportCategory, typeof list>()
-    for (const r of list) {
-      const arr = byCat.get(r.category) ?? []
-      arr.push(r)
-      byCat.set(r.category, arr)
-    }
-    return catOrder
-      .filter((id) => (byCat.get(id)?.length ?? 0) > 0)
-      .map((id) => ({
-        key: id,
-        section: TABS.find((t) => t.id === id)?.label ?? id,
-        reports: byCat.get(id)!,
-      }))
-  }, [reportTabForSection, catalogReportsForGrid])
 
   /** Maintenance workspace nav cards — always maintenance category. */
   const maintenanceListReports = useMemo(() => {
@@ -915,18 +890,21 @@ export default function App() {
                 role="tablist"
                 aria-label="Report categories"
               >
-                {TABS.filter((t) => REPORTS_PAGE_TAB_IDS.includes(t.id)).map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={t.id === tab}
-                    className={t.id === tab ? 'reports-tab reports-tab--active' : 'reports-tab'}
-                    onClick={() => setTab(t.id)}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+                {REPORTS_PAGE_TAB_IDS.map((tabId) => {
+                  const t = TABS.find((x) => x.id === tabId)
+                  return (
+                    <button
+                      key={tabId}
+                      type="button"
+                      role="tab"
+                      aria-selected={tabId === tab}
+                      className={tabId === tab ? 'reports-tab reports-tab--active' : 'reports-tab'}
+                      onClick={() => setTab(tabId)}
+                    >
+                      {t?.label ?? tabId}
+                    </button>
+                  )
+                })}
               </nav>
             </header>
           ) : !erpEmbed && !erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
@@ -1145,18 +1123,11 @@ export default function App() {
                   {catalogReportsForGrid.length === 0 ? (
                     <p className="empty">No reports match this search.</p>
                   ) : (
-                    reportCardGroups.map((g) => (
-                      <div key={g.key} className="fr-reports-domain">
-                        <div className="fr-reports-kicker" role="heading" aria-level={2}>
-                          {g.section}
-                        </div>
-                        <section className="report-cards-grid fr-report-cards-grid" aria-live="polite">
-                          {g.reports.map((r) => (
-                            <ReportCard key={r.id} report={r} onOpen={() => openReport(r)} />
-                          ))}
-                        </section>
-                      </div>
-                    ))
+                    <section className="report-cards-grid fr-report-cards-grid" aria-live="polite">
+                      {catalogReportsForGrid.map((r) => (
+                        <ReportCard key={r.id} report={r} onOpen={() => openReport(r)} />
+                      ))}
+                    </section>
                   )}
                   <PartsCatalogPanel />
                 </ErrorBoundary>
