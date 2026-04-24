@@ -472,15 +472,48 @@
         </div>
       </div>
       <div class="erp-module-sidebar__footer">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 6px;min-width:0">
-          <div class="erp-sb-heading" style="margin:0">Connections</div>
-          
+        <div class="erp-connections-section erp-connections-section--collapsed" id="erpConnectionsSection">
+          <button
+            type="button"
+            class="erp-connections-section__toggle"
+            id="erpConnectionsToggleBtn"
+            onclick="erpToggleConnectionsSection()"
+            aria-expanded="false"
+            aria-controls="erpConnectionsPanel"
+          >
+            Connections ▸
+          </button>
+          <div id="erpConnectionsPanel" class="erp-connections-section__panel" hidden>
+            <div id="sidebarQboStatus" class="mini-note">QuickBooks: checking connection…</div>
+            <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
+            <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: waiting for first refresh…</div>
+            <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Last refresh: waiting…</div>
+          </div>
         </div>
-        <div id="sidebarQboStatus" class="mini-note">QuickBooks: checking connection…</div>
-        <div id="sidebarQboAlertBrief" class="mini-note" style="margin-top:6px;line-height:1.4"></div>
-        <div id="sidebarFleetStatus" class="mini-note" style="margin-top:6px;">Samsara: waiting for first refresh…</div>
-        <div id="sidebarLastUpdated" class="mini-note" style="margin-top:8px;">Last refresh: waiting…</div>
       </div>
+      <style>
+        .erp-connections-section__toggle {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border: 1px solid var(--color-border);
+          background: var(--color-surface-soft);
+          color: var(--color-text-heading);
+          border-radius: 8px;
+          padding: 6px 8px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .erp-connections-section__panel {
+          margin-top: 8px;
+          padding: 8px;
+          border: 1px solid var(--color-border);
+          border-radius: 8px;
+          background: var(--color-surface-soft);
+        }
+      </style>
     </aside>
 
     <div class="erp-main-col">
@@ -10514,6 +10547,40 @@
       });
       listEl.innerHTML = lines.join('');
       if (moreEl) moreEl.classList.toggle('hidden', filtered.length <= 3);
+    }
+
+
+    let __erpConnectionsAutoCollapseTimer = null;
+
+    function erpSetConnectionsSectionExpanded(expanded) {
+      const section = document.getElementById('erpConnectionsSection');
+      const panel = document.getElementById('erpConnectionsPanel');
+      const btn = document.getElementById('erpConnectionsToggleBtn');
+      if (!section || !panel || !btn) return;
+      panel.hidden = !expanded;
+      section.classList.toggle('erp-connections-section--collapsed', !expanded);
+      btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      btn.textContent = expanded ? 'Connections ▾' : 'Connections ▸';
+    }
+
+    function erpToggleConnectionsSection() {
+      const panel = document.getElementById('erpConnectionsPanel');
+      const opening = !!(panel && panel.hidden);
+      if (__erpConnectionsAutoCollapseTimer) {
+        clearTimeout(__erpConnectionsAutoCollapseTimer);
+        __erpConnectionsAutoCollapseTimer = null;
+      }
+      erpSetConnectionsSectionExpanded(opening);
+      if (opening) {
+        __erpConnectionsAutoCollapseTimer = setTimeout(() => {
+          erpSetConnectionsSectionExpanded(false);
+          __erpConnectionsAutoCollapseTimer = null;
+        }, 5000);
+      }
+    }
+
+    function erpInitConnectionsSection() {
+      erpSetConnectionsSectionExpanded(false);
     }
 
     function paintAcctSidebarConnections() {
@@ -24467,6 +24534,7 @@
       });
     }
     renderErpModuleSidebar(activeSection || 'maintenance');
+    erpInitConnectionsSection();
     loadUnitListPreference();
     bindMaintPrintWorkOrderOnlyListeners();
     renderRepairLocationChips();
