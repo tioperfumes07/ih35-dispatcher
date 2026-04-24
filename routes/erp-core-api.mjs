@@ -454,38 +454,36 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
   app.get('/api/board', async (_req, res) => {
-    const cachedRows = Array.isArray(samsaraHealthCache.rows) ? samsaraHealthCache.rows : [];
-    if (cachedRows.length === 0) {
-      const tok = String(process.env.SAMSARA_API_TOKEN || '').trim();
-      if (tok) { try { await fetchSamsaraVehicleCountCached(tok, ()=>{}); } catch(e) {} }
-    }
     try {
-      const erp = readFullErpJson();
-      const erpVehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
-      const freshRows = Array.isArray(samsaraHealthCache?.rows) ? samsaraHealthCache.rows : [];
-      let mappedVehicles = freshRows.map(mapSamsaraVehicleRow).filter(Boolean);
-      console.log('[board] from samsaraHealthCache:', mappedVehicles.length, 'vehicles');
-      if (!mappedVehicles.length && erpVehicles.length) {
-        mappedVehicles = erpVehicles;
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      let vehicles = [];
+      if (token) {
+        try {
+          const payload = await getVehicles(token);
+          const { rows } = summarizeSamsaraVehiclesPayload(payload);
+          vehicles = rows.map(mapSamsaraVehicleRow).filter(Boolean);
+          console.log('[board] samsara direct:', vehicles.length, 'vehicles');
+        } catch (e) {
+          logError('[board] samsara call failed', e);
+        }
+      }
+      if (!vehicles.length) {
+        const erp = readFullErpJson();
+        vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
       }
       return res.json({
-        vehicles: mappedVehicles,
+        vehicles,
         live: [],
         hos: [],
         assignments: [],
         refreshedAt: new Date().toISOString(),
-        source: mappedVehicles.length > 0 ? 'samsara-cache' : 'empty'
+        source: vehicles.length > 0 ? 'samsara-live' : 'empty'
       });
     } catch (e) {
       logError('GET /api/board', e);
-      return res.json({
-        vehicles: [],
-        live: [],
-        hos: [],
-        assignments: [],
-        refreshedAt: new Date().toISOString(),
-        source: 'error',
-      });
+      return res.json({ vehicles: [], live: [], hos: [],
+        assignments: [], refreshedAt: new Date().toISOString(),
+        source: 'error' });
     }
   });
 
