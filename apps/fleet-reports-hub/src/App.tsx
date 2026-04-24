@@ -391,6 +391,36 @@ export default function App() {
   }, [activeSection])
 
   useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const scrubHelpQuestionNodes = () => {
+      const root = document.querySelector('.app--fleet-reports')
+      if (!root) return
+      const nodes = root.querySelectorAll<HTMLElement>('button, span, div')
+      nodes.forEach((el) => {
+        const txt = String(el.textContent || '').trim()
+        if (txt !== '?') return
+        const cls = String(el.className || '').toLowerCase()
+        const aria = String(el.getAttribute('aria-label') || '').toLowerCase()
+        const title = String(el.getAttribute('title') || '').toLowerCase()
+        const isHelpLike =
+          cls.includes('help') ||
+          cls.includes('hint') ||
+          cls.includes('tooltip') ||
+          aria.includes('help') ||
+          title.includes('help')
+        if (isHelpLike) el.remove()
+      })
+    }
+
+    scrubHelpQuestionNodes()
+    const obs = new MutationObserver(() => scrubHelpQuestionNodes())
+    obs.observe(document.body, { childList: true, subtree: true })
+    return () => obs.disconnect()
+  }, [])
+
+
+  useEffect(() => {
     if (activeSection !== 'reports') return
     if (!REPORTS_PAGE_TAB_IDS.includes(tab)) setTab('overview')
   }, [activeSection, tab])
