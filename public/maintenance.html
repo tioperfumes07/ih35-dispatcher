@@ -8416,6 +8416,7 @@ body.erp-maintenance.erp-modal-lock {
             'Shortcuts',
             true,
             '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>' +
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;tracking&quot;);">Fleet / loads</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;fuel&quot;);">Fuel &amp; route planning</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;accounting&quot;);">Accounting</button>'
           ) +
@@ -8424,9 +8425,8 @@ body.erp-maintenance.erp-modal-lock {
             'reports-hint',
             'Reports',
             false,
-            '<p class="mini-note" style="margin:0;line-height:1.45">Open the <strong>Reports</strong> icon (≡) in company navigation for financial and operational reports.</p>'
-          ) +
-          erpSbGroup('dashboard', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
+            '<p class="mini-note" style="margin:0;line-height:1.45">Use the <strong>Reports</strong> icon (≡) for reporting. Home sidebar stays operations-only.</p>'
+          );
         return;
       }
       if (name === 'fuel') {
