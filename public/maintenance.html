@@ -18,6 +18,26 @@
   <link rel="stylesheet" href="/css/erp-responsive-global-2026.css" />
   <link rel="stylesheet" href="/css/erp-responsive-global-2026.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+.erp-icon-nav__lbl { 
+  font-size: 9px !important; 
+  display: block !important; 
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 74px !important;
+  text-align: center !important;
+}
+.erp-icon-nav, #erpIconNav {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  flex: 0 0 80px !important;
+}
+.erp-icon-nav__btn, .erp-icon-nav__link {
+  width: 76px !important;
+}
+</style>
 </head>
 <body class="erp-app erp-maintenance" data-erp-uniform-controls="1">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
@@ -25716,10 +25736,11 @@
 
   <style id="erpSidebarNavFix2026">
     #erpIconNav.erp-icon-nav {
-      width: 90px !important;
-      min-width: 72px !important;
-      max-width: 72px !important;
-    }
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  flex: 0 0 80px !important;
+}
     #erpIconNav .erp-icon-nav__btn,
     #erpIconNav .erp-icon-nav__link {
       min-height: 52px !important;
