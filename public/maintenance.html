@@ -2797,6 +2797,17 @@ body.erp-maintenance.erp-modal-lock {
           </div>
           <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
 
+          <details id="erpEntryAuditMatrix" class="maint-section-card" style="margin:0 0 12px;padding:10px 12px">
+            <summary style="cursor:pointer;font-weight:600">Entry-point audit matrix</summary>
+            <div class="mini-note" style="margin:8px 0">Checks that + New, sidebar shortcuts, and Accounting board cards open the same canonical modal routes.</div>
+            <div class="table-wrap">
+              <table class="table" style="font-size:12px">
+                <thead><tr><th>Entry key</th><th>Target</th><th>+ New</th><th>Sidebar</th><th>Board</th></tr></thead>
+                <tbody id="erpEntryAuditBody"><tr><td colspan="5" class="muted">Loading audit matrix…</td></tr></tbody>
+              </table>
+            </div>
+          </details>
+
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Expenses</h3>
             <div class="acct-type-list">
@@ -2814,26 +2825,26 @@ body.erp-maintenance.erp-modal-lock {
                 </div>
                 <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); window.open('/form-425c.html', '_blank')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('fuel-expense')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Fuel expense</div>
                   <div class="acct-type-row__desc">Fuel purchase expense — QBO vendor auto-link</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('fuel-expense')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('maintenance-expense')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Maintenance expense</div>
                   <div class="acct-type-row__desc">Maintenance-related expense — can link to a work order</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('maintenance-expense')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('maintenance-expense')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('repair-expense')">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('repair-expense')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Repair expense</div>
                   <div class="acct-type-row__desc">Repair-related expense record</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('repair-expense')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('repair-expense')">Open →</button>
               </div>
             </div>
             <div id="acctBoardExpDateFilterHost" class="erp-date-filter-bar-host"></div>
@@ -2859,47 +2870,47 @@ body.erp-maintenance.erp-modal-lock {
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Bills</h3>
             <div class="acct-type-list">
-              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('driver-bill')">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('driver-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Driver bill</div>
                   <div class="acct-type-row__desc">Driver-related expense bill — links to driver vendor in QuickBooks</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('driver-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('driver-bill')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('fuel-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Fuel bill</div>
                   <div class="acct-type-row__desc">Fuel purchase — vendor address auto-fills, unit = QBO Class automatically</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('fuel-bill')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('maintenance-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Maintenance bill</div>
                   <div class="acct-type-row__desc">Shop or repair vendor bill — can link to an existing work order</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('maintenance-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('maintenance-bill')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenMultiBillsModal()">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('multi-bills')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Multiple bills</div>
                   <div class="acct-type-row__desc">Enter multiple bills at once from a vendor statement</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenMultiBillsModal()">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('multi-bills')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenRepairBill()">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('repair-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Repair bill</div>
                   <div class="acct-type-row__desc">Repair order related bill — syncs to QBO expense record</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenRepairBill()">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('repair-bill')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('vendor-bill')">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('vendor-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Vendor bill</div>
                   <div class="acct-type-row__desc">General vendor bill — any QuickBooks vendor</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('vendor-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('vendor-bill')">Open →</button>
               </div>
             </div>
             <div id="acctBoardBillsDateFilterHost" class="erp-date-filter-bar-host"></div>
@@ -2926,19 +2937,19 @@ body.erp-maintenance.erp-modal-lock {
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Bill payment</h3>
             <div class="acct-type-list">
-              <div class="acct-type-row" onclick="erpNewPayBills()">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('bill-payment')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Bill payment</div>
                   <div class="acct-type-row__desc">Pay a standard vendor bill — links to QuickBooks and auto-posts</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpNewPayBills()">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('bill-payment')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenDriverBillPay()">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('driver-bill-payment')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Driver bill payment</div>
                   <div class="acct-type-row__desc">Pay a driver bill — auto-links to driver vendor in QuickBooks</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDriverBillPay()">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('driver-bill-payment')">Open →</button>
               </div>
               <div class="acct-type-row" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">
                 <div class="acct-type-row__info">
@@ -2979,12 +2990,12 @@ body.erp-maintenance.erp-modal-lock {
                 </div>
                 <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">
+              <div class="acct-type-row" onclick="erpOpenFromNewMenu('fuel-expense')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Open Fuel/DEF combined ↗</div>
                   <div class="acct-type-row__desc">Open the combined fuel/DEF workspace in full view</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-expense')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('fuel-expense')">Open →</button>
               </div>
             </div>
           </div>
@@ -3428,7 +3439,7 @@ body.erp-maintenance.erp-modal-lock {
                   
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                  <button type="button" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
+                  <button type="button" onclick="erpOpenFromNewMenu('multi-bills')">Multiple bills</button>
                   <button type="button" onclick="downloadWorkOrdersCsv()">Export work orders CSV</button>
                   <button type="button" onclick="downloadExpenseTransactionsCsv()">Export AP transactions CSV</button>
                 </div>
@@ -3686,7 +3697,7 @@ body.erp-maintenance.erp-modal-lock {
                 
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <button type="button" class="qb-btn-add" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">
+                <button type="button" class="qb-btn-add" onclick="erpOpenFromNewMenu('fuel-expense')">
                   Open fuel fast entry ↗
                 </button>
                 <button type="button" class="qb-btn-add" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
@@ -8473,27 +8484,27 @@ body.erp-maintenance.erp-modal-lock {
         }
 
         const expensesBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;, { fuelVariant: &quot;fuel-expense&quot; })">Fuel expense</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;fuel-expense&quot;)">Fuel expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewExpense()">Expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;repair-expense&quot;)">Repair expense</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;repair-expense&quot;)">Repair expense</button>';
         const billsBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-bill&quot;)">Fuel bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenRepairBill()">Repair bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenMultiBillsModal()">Multiple bills</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;driver-bill&quot;)">Driver bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-bill&quot;)">Vendor bill</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;fuel-bill&quot;)">Fuel bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('repair-bill')">Repair bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('multi-bills')">Multiple bills</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;driver-bill&quot;)">Driver bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;vendor-bill&quot;)">Vendor bill</button>';
         const billPayBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpNewPayBills()">Bill payment</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenFromNewMenu('bill-payment')">Bill payment</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenFromNewMenu('driver-bill-payment')">Driver bill payment</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Payment history</button>';
         const specializedBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel &amp; DEF fast entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('fuel-fast-entry')">Fuel &amp; DEF fast entry</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewDriverSettlement()">Driver settlement</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;journal-entry&quot;)">Journal entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;transfer&quot;)">Transfer</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-expense-history" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-history" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-fuel-expense" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
@@ -8712,31 +8723,102 @@ body.erp-maintenance.erp-modal-lock {
       erpOpenDedicatedAccountingForm('standard-bill');
     }
 
+    const ERP_UNIFIED_ENTRY_REGISTRY = {
+      expense: { label: 'Expense', open: () => erpNewExpense(), newMenu: true, sidebar: true, board: true },
+      bill: { label: 'Bill', open: () => erpNewBill(), newMenu: true, sidebar: false, board: false },
+      'maintenance-expense': { label: 'Maintenance expense', open: () => erpOpenDedicatedAccountingForm('maintenance-expense'), newMenu: true, sidebar: true, board: true },
+      'repair-expense': { label: 'Repair expense', open: () => erpOpenDedicatedAccountingForm('repair-expense'), newMenu: true, sidebar: true, board: true },
+      'fuel-expense': { label: 'Fuel expense', open: () => erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense' }), newMenu: true, sidebar: true, board: true },
+      'fuel-fast-entry': { label: 'Fuel/DEF fast entry', open: () => erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry' }), newMenu: true, sidebar: true, board: false },
+      'maintenance-bill': { label: 'Maintenance bill', open: () => erpOpenDedicatedAccountingForm('maintenance-bill'), newMenu: true, sidebar: true, board: true },
+      'repair-bill': { label: 'Repair bill', open: () => erpOpenDedicatedAccountingForm('repair-bill'), newMenu: true, sidebar: true, board: true },
+      'fuel-bill': { label: 'Fuel bill', open: () => erpOpenDedicatedAccountingForm('fuel-bill'), newMenu: true, sidebar: true, board: true },
+      'driver-bill': { label: 'Driver bill', open: () => erpOpenDedicatedAccountingForm('driver-bill'), newMenu: true, sidebar: true, board: true },
+      'vendor-bill': { label: 'Vendor bill', open: () => erpOpenDedicatedAccountingForm('vendor-bill'), newMenu: true, sidebar: true, board: true },
+      'multi-bills': { label: 'Multiple bills', open: () => erpOpenMultiBillsModal(), newMenu: true, sidebar: true, board: true },
+      'bill-payment': { label: 'Bill payment', open: () => erpNavigateBillPaymentWorkspace({ driverMode: false }), newMenu: true, sidebar: true, board: true },
+      'driver-bill-payment': { label: 'Driver bill payment', open: () => erpNavigateBillPaymentWorkspace({ driverMode: true }), newMenu: true, sidebar: true, board: true },
+      check: { label: 'Check', open: () => erpOpenDedicatedAccountingForm('check-expense'), newMenu: true, sidebar: false, board: false },
+      'vendor-credit': { label: 'Vendor credit', open: () => erpOpenDedicatedAccountingForm('vendor-credit-bill'), newMenu: true, sidebar: false, board: false },
+      'item-receipt': { label: 'Item receipt', open: () => erpOpenDedicatedAccountingForm('item-receipt-expense'), newMenu: true, sidebar: false, board: false },
+      'purchase-order': { label: 'Purchase order', open: () => erpOpenDedicatedAccountingForm('purchase-order-bill'), newMenu: true, sidebar: false, board: false },
+      transfer: { label: 'Transfer', open: () => erpOpenLedgerStubModal('transfer'), newMenu: true, sidebar: true, board: false },
+      'journal-entry': { label: 'Journal entry', open: () => erpOpenLedgerStubModal('journal'), newMenu: true, sidebar: true, board: false },
+      'work-order-blank': { label: 'Work order', open: () => erpNewWorkOrder(''), newMenu: true, sidebar: false, board: false },
+      'wo-repair': { label: 'Repair order', open: () => erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair order' }), newMenu: true, sidebar: false, board: false },
+      'wo-maintenance': { label: 'Maintenance order', open: () => erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Maintenance order' }), newMenu: true, sidebar: false, board: false },
+      'wo-accident': {
+        label: 'Accident repair',
+        open: () =>
+          erpNewWorkOrder('accident', {
+            driverRow: true,
+            driverRequired: true,
+            expandAccident: true,
+            recordTypeLabel: 'Accident repair'
+          }),
+        newMenu: true,
+        sidebar: false,
+        board: false
+      },
+      'wo-pm': { label: 'PM service', open: () => erpNewWorkOrder('pm', { recordTypeLabel: 'PM service' }), newMenu: true, sidebar: false, board: false },
+      'wo-inspection': { label: 'Inspection', open: () => erpNewWorkOrder('inspection', { expandInspection: true, recordTypeLabel: 'Inspection' }), newMenu: true, sidebar: false, board: false },
+      'wo-tire': { label: 'Tire record', open: () => erpNewWorkOrder('tire', { expandTireParts: true, recordTypeLabel: 'Tire record' }), newMenu: true, sidebar: false, board: false },
+      'wo-air-bag': { label: 'Air bag record', open: () => erpNewWorkOrder('air_bag', { recordTypeLabel: 'Air bag record' }), newMenu: true, sidebar: false, board: false },
+      'wo-battery': { label: 'Battery record', open: () => erpNewWorkOrder('battery', { recordTypeLabel: 'Battery record' }), newMenu: true, sidebar: false, board: false }
+    };
+
+    function erpOpenUnifiedEntry(kind, opts) {
+      const k = String(kind || '').trim();
+      const def = ERP_UNIFIED_ENTRY_REGISTRY[k];
+      if (!def || typeof def.open !== 'function') return false;
+      const o = opts || {};
+      if (o.closeMenu !== false) erpCloseNewMenu();
+      def.open();
+      return true;
+    }
+
+    function renderErpEntryAuditMatrix() {
+      const body = document.getElementById('erpEntryAuditBody');
+      if (!body) return;
+      const yesNo = v => (v ? 'Yes' : '—');
+      const rows = Object.entries(ERP_UNIFIED_ENTRY_REGISTRY).map(([key, def]) =>
+        `<tr>
+          <td><code>${escapeHtml(key)}</code></td>
+          <td>${escapeHtml(def.label || key)}</td>
+          <td>${yesNo(!!def.newMenu)}</td>
+          <td>${yesNo(!!def.sidebar)}</td>
+          <td>${yesNo(!!def.board)}</td>
+        </tr>`
+      );
+      body.innerHTML = rows.join('');
+    }
+
     /** + New menu: single entry point (keeps modal wiring in one place). */
     function erpOpenFromNewMenu(kind) {
       const k = String(kind || '').trim();
       if (!k) return;
+      if (erpOpenUnifiedEntry(k, { source: 'new-menu', closeMenu: true })) return;
       erpCloseNewMenu();
       if (k === 'expense') return erpNewExpense();
       if (k === 'bill') return erpNewBill();
-      if (k === 'maintenance-expense') return erpOpenDedicatedAccountingForm('maintenance-expense');
-      if (k === 'repair-expense') return erpOpenDedicatedAccountingForm('repair-expense');
-      if (k === 'fuel-expense') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense' });
-      if (k === 'fuel-fast-entry') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry' });
-      if (k === 'maintenance-bill') return erpOpenDedicatedAccountingForm('maintenance-bill');
-      if (k === 'repair-bill') return erpOpenDedicatedAccountingForm('repair-bill');
-      if (k === 'fuel-bill') return erpOpenDedicatedAccountingForm('fuel-bill');
-      if (k === 'driver-bill') return erpOpenDedicatedAccountingForm('driver-bill');
-      if (k === 'vendor-bill') return erpOpenDedicatedAccountingForm('vendor-bill');
-      if (k === 'multi-bills') return erpOpenMultiBillsModal();
-      if (k === 'bill-payment') return erpNavigateBillPaymentWorkspace({ driverMode: false });
-      if (k === 'driver-bill-payment') return erpNavigateBillPaymentWorkspace({ driverMode: true });
-      if (k === 'check') return erpOpenDedicatedAccountingForm('check-expense');
-      if (k === 'vendor-credit') return erpOpenDedicatedAccountingForm('vendor-credit-bill');
-      if (k === 'item-receipt') return erpOpenDedicatedAccountingForm('item-receipt-expense');
-      if (k === 'purchase-order') return erpOpenDedicatedAccountingForm('purchase-order-bill');
-      if (k === 'transfer') return erpOpenLedgerStubModal('transfer');
-      if (k === 'journal-entry') return erpOpenLedgerStubModal('journal');
+      if (k === 'maintenance-expense') return erpOpenUnifiedEntry('maintenance-expense', { source: 'new-menu' });
+      if (k === 'repair-expense') return erpOpenUnifiedEntry('repair-expense', { source: 'new-menu' });
+      if (k === 'fuel-expense') return erpOpenUnifiedEntry('fuel-expense', { source: 'new-menu' });
+      if (k === 'fuel-fast-entry') return erpOpenUnifiedEntry('fuel-fast-entry', { source: 'new-menu' });
+      if (k === 'maintenance-bill') return erpOpenUnifiedEntry('maintenance-bill', { source: 'new-menu' });
+      if (k === 'repair-bill') return erpOpenUnifiedEntry('repair-bill', { source: 'new-menu' });
+      if (k === 'fuel-bill') return erpOpenUnifiedEntry('fuel-bill', { source: 'new-menu' });
+      if (k === 'driver-bill') return erpOpenUnifiedEntry('driver-bill', { source: 'new-menu' });
+      if (k === 'vendor-bill') return erpOpenUnifiedEntry('vendor-bill', { source: 'new-menu' });
+      if (k === 'multi-bills') return erpOpenUnifiedEntry('multi-bills', { source: 'new-menu' });
+      if (k === 'bill-payment') return erpOpenUnifiedEntry('bill-payment', { source: 'new-menu' });
+      if (k === 'driver-bill-payment') return erpOpenUnifiedEntry('driver-bill-payment', { source: 'new-menu' });
+      if (k === 'check') return erpOpenUnifiedEntry('check', { source: 'new-menu' });
+      if (k === 'vendor-credit') return erpOpenUnifiedEntry('vendor-credit', { source: 'new-menu' });
+      if (k === 'item-receipt') return erpOpenUnifiedEntry('item-receipt', { source: 'new-menu' });
+      if (k === 'purchase-order') return erpOpenUnifiedEntry('purchase-order', { source: 'new-menu' });
+      if (k === 'transfer') return erpOpenUnifiedEntry('transfer', { source: 'new-menu' });
+      if (k === 'journal-entry') return erpOpenUnifiedEntry('journal-entry', { source: 'new-menu' });
       if (k === 'find-merge-dupes') {
         erpCloseNewMenu();
         if (typeof openDedupeTool === 'function') return openDedupeTool();
@@ -8747,22 +8829,15 @@ body.erp-maintenance.erp-modal-lock {
         if (typeof openNameMgmtTool === 'function') return openNameMgmtTool();
         return openSectionByName('name-mgmt');
       }
-      if (k === 'work-order-blank') return erpNewWorkOrder('');
-      if (k === 'wo-repair') return erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair order' });
-      if (k === 'wo-maintenance') return erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Maintenance order' });
-      if (k === 'wo-accident')
-        return erpNewWorkOrder('accident', {
-          driverRow: true,
-          driverRequired: true,
-          expandAccident: true,
-          recordTypeLabel: 'Accident repair'
-        });
-      if (k === 'wo-pm') return erpNewWorkOrder('pm', { recordTypeLabel: 'PM service' });
-      if (k === 'wo-inspection')
-        return erpNewWorkOrder('inspection', { expandInspection: true, recordTypeLabel: 'Inspection' });
-      if (k === 'wo-tire') return erpNewWorkOrder('tire', { expandTireParts: true, recordTypeLabel: 'Tire record' });
-      if (k === 'wo-air-bag') return erpNewWorkOrder('air_bag', { recordTypeLabel: 'Air bag record' });
-      if (k === 'wo-battery') return erpNewWorkOrder('battery', { recordTypeLabel: 'Battery record' });
+      if (k === 'work-order-blank') return erpOpenUnifiedEntry('work-order-blank', { source: 'new-menu' });
+      if (k === 'wo-repair') return erpOpenUnifiedEntry('wo-repair', { source: 'new-menu' });
+      if (k === 'wo-maintenance') return erpOpenUnifiedEntry('wo-maintenance', { source: 'new-menu' });
+      if (k === 'wo-accident') return erpOpenUnifiedEntry('wo-accident', { source: 'new-menu' });
+      if (k === 'wo-pm') return erpOpenUnifiedEntry('wo-pm', { source: 'new-menu' });
+      if (k === 'wo-inspection') return erpOpenUnifiedEntry('wo-inspection', { source: 'new-menu' });
+      if (k === 'wo-tire') return erpOpenUnifiedEntry('wo-tire', { source: 'new-menu' });
+      if (k === 'wo-air-bag') return erpOpenUnifiedEntry('wo-air-bag', { source: 'new-menu' });
+      if (k === 'wo-battery') return erpOpenUnifiedEntry('wo-battery', { source: 'new-menu' });
     }
 
     function erpNewRepairExpense() {
@@ -9960,6 +10035,7 @@ body.erp-maintenance.erp-modal-lock {
           syncAcctDashFromQboPayload();
           showAccountingHomeOnly();
           syncAccountingSidebarActive();
+          renderErpEntryAuditMatrix();
         });
       }
     }
@@ -12277,6 +12353,7 @@ body.erp-maintenance.erp-modal-lock {
         renderQboSyncAlerts(qboSyncRes);
         runPostingPreflight();
         syncAcctDashFromQboPayload();
+        renderErpEntryAuditMatrix();
         if (document.getElementById('maintAutoQboMasterRefresh')?.checked) {
           refreshQboMaster().catch(() => {});
         }
