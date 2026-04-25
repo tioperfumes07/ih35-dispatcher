@@ -8,7 +8,6 @@ import {
   deleteAsset,
   fetchAssets,
   patchAsset,
-  patchFleetAssetsBulk,
   syncAssetsQboClasses,
   syncAssetsSamsara,
 } from '../../lib/fleetRegistriesApi'
@@ -415,29 +414,29 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         exportFilename="VehiclesDatabase"
         onCloseList={onCloseList}
         onAddNew={openAdd}
-        bulkActions={[
-          {
-            label: 'Set Active',
-            onClick: async (selectedRows) => {
-              await patchFleetAssetsBulk(
-                selectedRows.map((row) => Number((row as AssetRow).id)).filter((id) => Number.isFinite(id)),
-                'active',
-              )
-              await load()
-            },
-          },
-          {
-            label: 'Set Inactive',
-            variant: 'warning',
-            onClick: async (selectedRows) => {
-              await patchFleetAssetsBulk(
-                selectedRows.map((row) => Number((row as AssetRow).id)).filter((id) => Number.isFinite(id)),
-                'inactive',
-              )
-              await load()
-            },
-          },
-        ]}
+        onBulkStatusChange={async (status, selectedRows) => {
+          const ids = selectedRows
+            .map((row) => String((row as AssetRow).unit_number || '').trim())
+            .filter(Boolean)
+          if (!ids.length) return
+          setErr(null)
+          try {
+            const resp = await fetch('/api/fleet/assets/bulk', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids, status }),
+            })
+            const data = await resp.json().catch(() => ({ ok: false, error: 'Invalid server response' }))
+            if (!resp.ok || !data?.ok) {
+              setErr(String(data?.error || 'Bulk update failed'))
+              return
+            }
+            setSamMsg(`${Number(data.updated || 0)} unit(s) set to ${status}.`)
+            await load()
+          } catch (e) {
+            setErr(String((e as Error).message || e))
+          }
+        }}
         toolbarExtra={
           <>
             <button type="button" className="btn sm ghost shared-list__head-btn" onClick={() => void load()}>

@@ -1146,7 +1146,7 @@ export function mountErpCoreApi(app, opts = {}) {
       const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(v => String(v)).filter(Boolean) : [];
       const statusRaw = String(req.body?.status || '').trim();
       if (!ids.length) return res.status(400).json({ ok: false, error: 'ids required' });
-      const valid = ['Active', 'Inactive', 'Out of Service', 'Sold', 'In Shop'];
+      const valid = ['Active', 'Inactive', 'Out of Service', 'Sold', 'In Shop', 'Accident'];
       const normalized = valid.find(s => s.toLowerCase() === statusRaw.toLowerCase()) || statusRaw;
       const { rowCount } = await dbQuery(
         'UPDATE fleet_assets SET status=$2, updated_at=now() WHERE unit_number = ANY($1::text[])',

@@ -46,6 +46,7 @@ type Props<T extends Record<string, unknown>> = {
   onExportExcel?: () => void
   toolbarExtra?: ReactNode
   bulkActions?: SharedListBulkAction<T>[]
+  onBulkStatusChange?: (status: string, rows: T[]) => void | Promise<void>
 }
 
 const PAGE_OPTS = [10, 25, 50] as const
@@ -91,6 +92,7 @@ export function SharedListTable<T extends Record<string, unknown>>({
   onExportExcel,
   toolbarExtra,
   bulkActions = [],
+  onBulkStatusChange,
 }: Props<T>) {
   const uid = useId()
   const [q, setQ] = useState('')
@@ -396,6 +398,10 @@ export function SharedListTable<T extends Record<string, unknown>>({
         onSelectAll={selectAllFiltered}
         onClearSelection={clearSelection}
         actions={resolvedBulkActions}
+        onStatusChange={(status) => {
+          if (!onBulkStatusChange) return
+          void onBulkStatusChange(status, selectedRows)
+        }}
       />
 
       <TableResizeHintFooter />

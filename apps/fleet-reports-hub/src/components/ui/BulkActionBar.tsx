@@ -13,6 +13,7 @@ export interface BulkActionBarProps {
   onSelectAll: () => void
   onClearSelection: () => void
   actions: BulkActionBarAction[]
+  onStatusChange?: (status: string) => void
 }
 
 const baseButtonStyle: CSSProperties = {
@@ -23,6 +24,15 @@ const baseButtonStyle: CSSProperties = {
   color: '#fff',
   cursor: 'pointer',
 }
+
+const STATUS_BUTTON_LABELS = new Set([
+  'set active',
+  'set inactive',
+  'out of service',
+  'sold',
+  'in shop',
+  'accident',
+])
 
 function actionStyle(variant: BulkActionBarAction['variant']): CSSProperties {
   if (variant === 'danger') return { ...baseButtonStyle, background: '#dc2626' }
@@ -36,8 +46,13 @@ export function BulkActionBar({
   onSelectAll,
   onClearSelection,
   actions,
+  onStatusChange,
 }: BulkActionBarProps) {
   if (selectedCount <= 0) return null
+
+  const renderedActions = actions.filter(
+    (action) => !STATUS_BUTTON_LABELS.has(String(action.label || '').trim().toLowerCase()),
+  )
 
   return (
     <div
@@ -62,8 +77,48 @@ export function BulkActionBar({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        {actions.map((action) => (
-          <button key={action.label} type="button" style={actionStyle(action.variant)} onClick={action.onClick}>
+        <select
+          defaultValue=""
+          onChange={(e) => {
+            const status = e.target.value
+            if (!status) return
+            if (window.confirm('Set ' + selectedCount + ' selected unit(s) to "' + status + '"?')) {
+              onStatusChange && onStatusChange(status)
+            }
+            e.target.selectedIndex = 0
+          }}
+          style={{
+            padding: '6px 10px',
+            background: '#1a1f2e',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '6px',
+            color: '#e2e8f0',
+            fontSize: '13px',
+            cursor: 'pointer',
+          }}
+        >
+          <option value="">Change status...</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Out of Service">Out of Service</option>
+          <option value="In Shop">In Shop</option>
+          <option value="Accident">Accident</option>
+          <option value="Sold">Sold</option>
+        </select>
+
+        {renderedActions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            style={actionStyle(action.variant)}
+            onClick={() => {
+              const ok = window.confirm(
+                'Apply "' + action.label + '" to ' + selectedCount + ' selected record(s)? This cannot be undone.',
+              )
+              if (!ok) return
+              action.onClick()
+            }}
+          >
             {action.icon ? `${action.icon} ` : ''}
             {action.label}
           </button>
