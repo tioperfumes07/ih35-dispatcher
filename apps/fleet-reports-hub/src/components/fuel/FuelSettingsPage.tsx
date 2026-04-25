@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
-type QboOpt = { id: string; name: string }
+type QboAccount = { id: string; name: string; accountType: string }
+type QboItem = { id: string; name: string; itemType: string }
 type FuelType = 'truck_diesel' | 'reefer_diesel' | 'def'
 
 type FuelSetting = {
@@ -18,8 +19,8 @@ const FUEL_TYPES: Array<{ key: FuelType; label: string }> = [
 ]
 
 export function FuelSettingsPage() {
-  const [accounts, setAccounts] = useState<QboOpt[]>([])
-  const [items, setItems] = useState<QboOpt[]>([])
+  const [accounts, setAccounts] = useState<QboAccount[]>([])
+  const [items, setItems] = useState<QboItem[]>([])
   const [settings, setSettings] = useState<Record<FuelType, FuelSetting>>({
     truck_diesel: { fuel_type: 'truck_diesel' },
     reefer_diesel: { fuel_type: 'reefer_diesel' },
@@ -36,32 +37,57 @@ export function FuelSettingsPage() {
     def: false,
   })
 
+  const [customName, setCustomName] = useState('')
+  const [customAccountId, setCustomAccountId] = useState('')
+  const [customItemId, setCustomItemId] = useState('')
+  const [customMsg, setCustomMsg] = useState('')
+
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      const [optsRes, settingsRes] = await Promise.all([
-        fetch('/api/fuel/qbo-accounts', { headers: { Accept: 'application/json' } }).then((r) => r.json()).catch(() => ({ ok: false, accounts: [], items: [] })),
-        fetch('/api/fuel/settings', { headers: { Accept: 'application/json' } }).then((r) => r.json()).catch(() => ({ ok: false, settings: [] })),
+      const [masterRes, settingsRes] = await Promise.all([
+        fetch('/api/qbo/master', { headers: { Accept: 'application/json' } }).then((r) => r.json()).catch(() => ({})),
+        fetch('/api/fuel/settings', { headers: { Accept: 'application/json' } }).then((r) => r.json()).catch(() => ({ settings: [] })),
       ])
       if (cancelled) return
 
-      const nextAccounts = Array.isArray(optsRes?.accounts) ? optsRes.accounts : []
-      const nextItems = Array.isArray(optsRes?.items) ? optsRes.items : []
-      setAccounts(nextAccounts.map((a: any) => ({ id: String(a.id || ''), name: String(a.name || '') })).filter((a: QboOpt) => a.id && a.name))
-      setItems(nextItems.map((i: any) => ({ id: String(i.id || ''), name: String(i.name || '') })).filter((i: QboOpt) => i.id && i.name))
+      const rawAccounts = Array.isArray((masterRes as any)?.accountsExpense)
+        ? (masterRes as any).accountsExpense
+        : Array.isArray((masterRes as any)?.accounts)
+          ? (masterRes as any).accounts
+          : []
+      const rawItems = Array.isArray((masterRes as any)?.items) ? (masterRes as any).items : []
 
-      const rows = Array.isArray(settingsRes?.settings) ? settingsRes.settings : []
+      const acc = rawAccounts
+        .map((a: any) => ({
+          id: String(a?.Id || a?.id || '').trim(),
+          name: String(a?.Name || a?.name || '').trim(),
+          accountType: String(a?.AccountType || a?.accountType || '').trim(),
+        }))
+        .filter((a: QboAccount) => Boolean(a.id && a.name))
+      const itm = rawItems
+        .map((i: any) => ({
+          id: String(i?.Id || i?.id || '').trim(),
+          name: String(i?.Name || i?.name || '').trim(),
+          itemType: String(i?.Type || i?.type || '').trim(),
+        }))
+        .filter((i: QboItem) => Boolean(i.id && i.name))
+
+      setAccounts(acc)
+      setItems(itm)
+
+      const rows = Array.isArray((settingsRes as any)?.settings) ? (settingsRes as any).settings : []
       setSettings((prev) => {
         const next = { ...prev }
         rows.forEach((r: any) => {
-          const k = String(r.fuel_type || '') as FuelType
+          const k = String(r?.fuel_type || '') as FuelType
           if (!FUEL_TYPES.some((f) => f.key === k)) return
           next[k] = {
             fuel_type: k,
-            qbo_account_id: String(r.qbo_account_id || ''),
-            qbo_account_name: String(r.qbo_account_name || ''),
-            qbo_item_id: String(r.qbo_item_id || ''),
-            qbo_item_name: String(r.qbo_item_name || ''),
+            qbo_account_id: String(r?.qbo_account_id || ''),
+            qbo_account_name: String(r?.qbo_account_name || ''),
+            qbo_item_id: String(r?.qbo_item_id || ''),
+            qbo_item_name: String(r?.qbo_item_name || ''),
           }
         })
         return next
@@ -78,10 +104,7 @@ export function FuelSettingsPage() {
     }
   }, [])
 
-  const allConfigured = useMemo(
-    () => FUEL_TYPES.every((f) => Boolean(settings[f.key]?.qbo_account_id)),
-    [settings],
-  )
+  const allConfigured = useMemo(() => FUEL_TYPES.every((f) => Boolean(settings[f.key]?.qbo_account_id)), [settings])
 
   const setField = (key: FuelType, patch: Partial<FuelSetting>) => {
     setSettings((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }))
@@ -108,6 +131,45 @@ export function FuelSettingsPage() {
       setSaved((prev) => ({ ...prev, [key]: true }))
     } finally {
       setSaving((prev) => ({ ...prev, [key]: false }))
+    }
+  }
+
+  const addCustomExpenseType = async () => {
+    const customType = String(customName || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+    if (!customType) {
+      setCustomMsg('Enter a custom expense type name.')
+      return
+    }
+    const account = accounts.find((a) => a.id === customAccountId)
+    if (!account) {
+      setCustomMsg('Pick a QBO account for the custom type.')
+      return
+    }
+    const item = items.find((i) => i.id === customItemId)
+    const resp = await fetch('/api/fuel/expense-mapping', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        expense_type: customType,
+        qbo_account_id: account.id,
+        qbo_account_name: account.name,
+        qbo_item_id: item?.id || '',
+        qbo_item_name: item?.name || '',
+        requires_load_number: 'optional',
+        requires_reefer_number: false,
+        requires_receipt: false,
+        requires_odometer: false,
+        auto_post_qbo: false,
+      }),
+    }).then((r) => r.json()).catch(() => ({ ok: false }))
+
+    if (resp?.ok) {
+      setCustomMsg('Custom expense type added.')
+      setCustomName('')
+      setCustomAccountId('')
+      setCustomItemId('')
+    } else {
+      setCustomMsg(String(resp?.error || 'Unable to add custom type.'))
     }
   }
 
@@ -146,10 +208,10 @@ export function FuelSettingsPage() {
                     })
                   }
                 >
-                  <option value="">Select account…</option>
+                  <option value="">Select account...</option>
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.name}
+                      {a.name} ({a.accountType || 'Account'})
                     </option>
                   ))}
                 </select>
@@ -182,7 +244,7 @@ export function FuelSettingsPage() {
                   onClick={() => void saveRow(row.key)}
                   disabled={saving[row.key] || !val.qbo_account_id}
                 >
-                  {saving[row.key] ? 'Saving…' : 'Save'}
+                  {saving[row.key] ? 'Saving...' : 'Save'}
                 </button>
                 {saved[row.key] ? <span className="ok">✅ Saved</span> : null}
               </div>
@@ -190,6 +252,50 @@ export function FuelSettingsPage() {
           </div>
         )
       })}
+
+      <div className="panel">
+        <div className="panel-head">
+          <div className="panel-title" style={{ margin: 0 }}>Add custom expense type</div>
+        </div>
+        <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
+          <label>
+            Expense type name
+            <input
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="e.g. parking_fees"
+            />
+          </label>
+          <label>
+            QBO Account
+            <select value={customAccountId} onChange={(e) => setCustomAccountId(e.target.value)}>
+              <option value="">Select account...</option>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name} ({a.accountType || 'Account'})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            QBO Item
+            <select value={customItemId} onChange={(e) => setCustomItemId(e.target.value)}>
+              <option value="">None</option>
+              {items.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button type="button" className="btn" onClick={() => void addCustomExpenseType()}>
+              Add
+            </button>
+            {customMsg ? <span className="muted">{customMsg}</span> : null}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

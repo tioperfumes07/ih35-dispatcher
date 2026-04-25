@@ -62,6 +62,7 @@ type Props = {
   onTabChange: (tab: ListsCatalogsTab) => void
   deepLinkList?: ListsCatalogListId | null
   onDeepLinkConsumed?: () => void
+  activeParentSection?: string
 }
 
 type CategoryId =
@@ -77,6 +78,16 @@ type CategoryDef = {
   label: string
   tabForUrl: ListsCatalogsTab
   items: { id: ListsCatalogListId; label: string; description: string }[]
+}
+
+
+const SECTION_LISTS_FILTER: Record<string, ListsCatalogListId[] | null> = {
+  drivers: ['drivers-db', 'assets-db', 'name-registry'],
+  accounting: ['vendors-db', 'vendors-payees', 'qbo-items-list', 'bank-csv', 'rename-vendors'],
+  maintenance: ['parts-ref', 'service-types-db', 'assets-db', 'fleet-writes'],
+  fuel: ['vendors-db', 'qbo-items-list'],
+  safety: ['drivers-db', 'op-status'],
+  lists: null,
 }
 
 function mapTabToCategory(tab: ListsCatalogsTab): CategoryId {
@@ -161,6 +172,7 @@ export function ListsCatalogsWorkspace({
   onTabChange,
   deepLinkList,
   onDeepLinkConsumed,
+  activeParentSection,
 }: Props) {
   const { rows: svcRows } = useServiceCatalogRows('all')
   const [openedListId, setOpenedListId] = useState<ListsCatalogListId | null>(null)
@@ -244,16 +256,39 @@ export function ListsCatalogsWorkspace({
     [svcRows.length],
   )
 
+  const normalizedSection = String(activeParentSection || 'lists').trim().toLowerCase() || 'lists'
+  const allowedLists = SECTION_LISTS_FILTER[normalizedSection] ?? null
+  const filteredCategories = useMemo(() => {
+    if (!allowedLists) return categories
+    const set = new Set(allowedLists)
+    return categories
+      .map((category) => ({
+        ...category,
+        items: category.items.filter((item) => set.has(item.id)),
+      }))
+      .filter((category) => category.items.length > 0)
+  }, [allowedLists, categories])
+
   useEffect(() => {
-    setExpandedCategory(mapTabToCategory(activeTab))
-  }, [activeTab])
+    const defaultCategory = filteredCategories[0]?.id ?? mapTabToCategory(activeTab)
+    setExpandedCategory((prev) => prev ?? defaultCategory)
+  }, [activeTab, filteredCategories])
+
+  const allowedDeepLinkIds = useMemo(() => {
+    if (!allowedLists) return null
+    return new Set(allowedLists)
+  }, [allowedLists])
 
   useEffect(() => {
     if (!deepLinkList) return
+    if (allowedDeepLinkIds && !allowedDeepLinkIds.has(deepLinkList)) {
+      onDeepLinkConsumed?.()
+      return
+    }
     setOpenedListId(deepLinkList)
     setExpandedCategory(mapListToCategory(deepLinkList))
     onDeepLinkConsumed?.()
-  }, [deepLinkList, onDeepLinkConsumed])
+  }, [allowedDeepLinkIds, deepLinkList, onDeepLinkConsumed])
 
   const closeList = () => setOpenedListId(null)
 
@@ -293,7 +328,7 @@ export function ListsCatalogsWorkspace({
   return (
     <div className="lists-catalogs lists-catalogs--hub lists-catalogs--categories-home">
       <div className="lists-catalogs__home" aria-label="Lists and catalogs categories">
-        {categories.map((category) => {
+        {filteredCategories.map((category) => {
           const expanded = expandedCategory === category.id
           return (
             <section key={category.id} className="lists-catalogs__cat">
@@ -336,7 +371,7 @@ export function ListsCatalogsWorkspace({
           <div className="lists-catalogs__embedded">
             <header className="lists-catalogs__list-head">
               <span className="lists-catalogs__list-title">
-                {categories
+                {filteredCategories
                   .flatMap((c) => c.items)
                   .find((item) => item.id === openedListId)
                   ?.label ?? 'List'}

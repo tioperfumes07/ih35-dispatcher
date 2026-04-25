@@ -12,17 +12,20 @@ type QboAccount = {
   id: string
   name: string
   accountType: string
+  active: boolean
 }
 
 type QboItem = {
   id: string
   name: string
   itemType: string
+  active: boolean
 }
 
 type QboVendor = {
   id: string
   name: string
+  active: boolean
 }
 
 type MappingRow = {
@@ -40,28 +43,38 @@ type MappingRow = {
   auto_post_qbo?: boolean | null
 }
 
-const EXPENSE_TYPES: ExpenseTypeDef[] = [
+const BASE_EXPENSE_TYPES: ExpenseTypeDef[] = [
   { id: 'truck_diesel', icon: '⛽', label: 'Truck Diesel' },
   { id: 'reefer_diesel', icon: '❄️', label: 'Reefer Diesel' },
   { id: 'def', icon: '🟦', label: 'DEF' },
-  { id: 'maintenance_expense', icon: '🔧', label: 'Maintenance expense' },
+  { id: 'maintenance_expense', icon: '🔧', label: 'Maintenance' },
   { id: 'tire_expense', icon: '🛞', label: 'Tire expense' },
   { id: 'parts_supplies', icon: '🔩', label: 'Parts & supplies' },
   { id: 'tolls', icon: '🛣️', label: 'Tolls' },
   { id: 'parking', icon: '🅿️', label: 'Parking' },
   { id: 'meals_per_diem', icon: '🍽️', label: 'Meals (per diem)' },
   { id: 'lumper_fees', icon: '📦', label: 'Lumper fees' },
-  { id: 'hotel_lodging', icon: '🏨', label: 'Hotel / lodging' },
-  { id: 'other_expense', icon: '🔄', label: 'Other expense' },
+  { id: 'hotel_lodging', icon: '🏨', label: 'Hotel/lodging' },
+  { id: 'other_expense', icon: '🔄', label: 'Other' },
 ]
 
-const LOAD_MODE_OPTIONS: Array<{ value: MappingMode; label: string }> = [
-  { value: 'required', label: 'Required' },
-  { value: 'optional', label: 'Optional' },
-  { value: 'not_needed', label: 'Not needed' },
-]
+function normalizeId(v: string): string {
+  return String(v || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+}
 
-function rowForExpense(expenseType: string): MappingRow {
+function normalizeLoadMode(v: unknown): MappingMode {
+  const mode = String(v || '').trim().toLowerCase()
+  if (mode === 'required' || mode === 'optional' || mode === 'not_needed') return mode
+  if (mode === 'true') return 'required'
+  if (mode === 'false') return 'optional'
+  return 'optional'
+}
+
+function defaultRow(expenseType: string): MappingRow {
   return {
     expense_type: expenseType,
     qbo_account_id: '',
@@ -78,158 +91,223 @@ function rowForExpense(expenseType: string): MappingRow {
   }
 }
 
-function toId(v: unknown): string {
-  return String(v ?? '').trim()
+function toAccount(a: any): QboAccount | null {
+  const id = String(a?.Id || a?.id || '').trim()
+  const name = String(a?.Name || a?.name || '').trim()
+  const accountType = String(a?.AccountType || a?.accountType || '').trim()
+  const active = a?.Active !== false
+  if (!id || !name) return null
+  return { id, name, accountType, active }
 }
 
-function toName(v: unknown): string {
-  return String(v ?? '').trim()
+function toItem(i: any): QboItem | null {
+  const id = String(i?.Id || i?.id || '').trim()
+  const name = String(i?.Name || i?.name || '').trim()
+  const itemType = String(i?.Type || i?.type || '').trim()
+  const active = i?.Active !== false
+  if (!id || !name) return null
+  return { id, name, itemType, active }
+}
+
+function toVendor(v: any): QboVendor | null {
+  const id = String(v?.Id || v?.id || '').trim()
+  const name = String(v?.DisplayName || v?.display_name || v?.Name || v?.name || '').trim()
+  const active = v?.Active !== false
+  if (!id || !name) return null
+  return { id, name, active }
 }
 
 export function DriverExpenseMappingPage() {
-  const [activeType, setActiveType] = useState<string>(EXPENSE_TYPES[0].id)
+  const [expenseTypes, setExpenseTypes] = useState<ExpenseTypeDef[]>(BASE_EXPENSE_TYPES)
+  const [activeType, setActiveType] = useState<string>(BASE_EXPENSE_TYPES[0].id)
+  const [rows, setRows] = useState<Record<string, MappingRow>>({})
+
   const [accounts, setAccounts] = useState<QboAccount[]>([])
   const [items, setItems] = useState<QboItem[]>([])
   const [vendors, setVendors] = useState<QboVendor[]>([])
-  const [rows, setRows] = useState<Record<string, MappingRow>>({})
+
+  const [accountSearch, setAccountSearch] = useState('')
+  const [itemSearch, setItemSearch] = useState('')
+  const [vendorSearch, setVendorSearch] = useState('')
+
   const [saving, setSaving] = useState(false)
-  const [savedLabel, setSavedLabel] = useState('')
+  const [savedMsg, setSavedMsg] = useState('')
   const [statusMsg, setStatusMsg] = useState('')
+
+  const [showAddCustom, setShowAddCustom] = useState(false)
+  const [customName, setCustomName] = useState('')
 
   useEffect(() => {
     let cancelled = false
+
     const load = async () => {
       const [masterRes, mappingRes] = await Promise.all([
         fetch('/api/qbo/master', { headers: { Accept: 'application/json' } })
           .then((r) => r.json())
-          .catch(() => ({ ok: false })),
+          .catch(() => ({})),
         fetch('/api/fuel/expense-mapping', { headers: { Accept: 'application/json' } })
           .then((r) => r.json())
-          .catch(() => ({ ok: false, mappings: [] })),
+          .catch(() => ({ mappings: [] })),
       ])
       if (cancelled) return
 
-      const master = masterRes && typeof masterRes === 'object' ? masterRes : {}
-      const rawAccounts = Array.isArray((master as any).accounts) ? (master as any).accounts : []
-      const rawItems = Array.isArray((master as any).items) ? (master as any).items : []
-      const rawVendors = Array.isArray((master as any).vendors) ? (master as any).vendors : []
+      const rawAccounts = Array.isArray((masterRes as any)?.accountsExpense)
+        ? (masterRes as any).accountsExpense
+        : Array.isArray((masterRes as any)?.accounts)
+          ? (masterRes as any).accounts
+          : []
+      const rawItems = Array.isArray((masterRes as any)?.items) ? (masterRes as any).items : []
+      const rawVendors = Array.isArray((masterRes as any)?.vendors) ? (masterRes as any).vendors : []
 
       const normalizedAccounts = rawAccounts
-        .map((a: any) => ({
-          id: toId(a.id || a.Id),
-          name: toName(a.name || a.Name),
-          accountType: toName(a.AccountType || a.accountType || a.Classification),
-        }))
+        .map((a: any) => toAccount(a))
+        .filter((a: QboAccount | null): a is QboAccount => Boolean(a))
         .filter((a: QboAccount) => {
           const t = a.accountType.toLowerCase()
-          return a.id && a.name && (t === 'expense' || t === 'cost of goods sold')
+          return t === 'expense' || t === 'cost of goods sold'
         })
       const normalizedItems = rawItems
-        .map((i: any) => ({
-          id: toId(i.id || i.Id),
-          name: toName(i.name || i.Name),
-          itemType: toName(i.Type || i.type),
-        }))
-        .filter((i: QboItem) => i.id && i.name)
+        .map((i: any) => toItem(i))
+        .filter((i: QboItem | null): i is QboItem => Boolean(i))
       const normalizedVendors = rawVendors
-        .map((v: any) => ({
-          id: toId(v.id || v.Id),
-          name: toName(v.display_name || v.DisplayName || v.name || v.Name),
-        }))
-        .filter((v: QboVendor) => v.id && v.name)
+        .map((v: any) => toVendor(v))
+        .filter((v: QboVendor | null): v is QboVendor => Boolean(v))
 
       setAccounts(normalizedAccounts)
       setItems(normalizedItems)
       setVendors(normalizedVendors)
 
       const baseRows: Record<string, MappingRow> = {}
-      EXPENSE_TYPES.forEach((t) => {
-        baseRows[t.id] = rowForExpense(t.id)
+      BASE_EXPENSE_TYPES.forEach((t) => {
+        baseRows[t.id] = defaultRow(t.id)
       })
 
-      const dbRows = Array.isArray((mappingRes as any)?.mappings) ? (mappingRes as any).mappings : []
-      dbRows.forEach((m: any) => {
-        const key = String(m.expense_type || '').trim()
-        if (!key || !baseRows[key]) return
-        const loadModeRaw = String(m.requires_load_number ?? '').trim().toLowerCase()
-        const loadMode: MappingMode =
-          loadModeRaw === 'required' || loadModeRaw === 'not_needed' ? (loadModeRaw as MappingMode) : 'optional'
-        baseRows[key] = {
-          expense_type: key,
-          qbo_account_id: toId(m.qbo_account_id),
-          qbo_account_name: toName(m.qbo_account_name),
-          qbo_item_id: toId(m.qbo_item_id),
-          qbo_item_name: toName(m.qbo_item_name),
-          default_vendor_id: toId(m.default_vendor_id),
-          default_vendor_name: toName(m.default_vendor_name),
-          requires_load_number: loadMode,
-          requires_reefer_number: Boolean(m.requires_reefer_number),
-          requires_receipt: Boolean(m.requires_receipt),
-          requires_odometer: Boolean(m.requires_odometer),
-          auto_post_qbo: Boolean(m.auto_post_qbo),
+      const dbMappings = Array.isArray((mappingRes as any)?.mappings) ? (mappingRes as any).mappings : []
+      const extraTypes: ExpenseTypeDef[] = []
+      dbMappings.forEach((m: any) => {
+        const id = String(m?.expense_type || '').trim()
+        if (!id) return
+        if (!BASE_EXPENSE_TYPES.some((t) => t.id === id)) {
+          extraTypes.push({ id, icon: '➕', label: String(m?.expense_type_label || id).replace(/_/g, ' ') })
+        }
+        baseRows[id] = {
+          expense_type: id,
+          qbo_account_id: String(m?.qbo_account_id || '').trim(),
+          qbo_account_name: String(m?.qbo_account_name || '').trim(),
+          qbo_item_id: String(m?.qbo_item_id || '').trim(),
+          qbo_item_name: String(m?.qbo_item_name || '').trim(),
+          default_vendor_id: String(m?.default_vendor_id || '').trim(),
+          default_vendor_name: String(m?.default_vendor_name || '').trim(),
+          requires_load_number: normalizeLoadMode(m?.requires_load_number),
+          requires_reefer_number: Boolean(m?.requires_reefer_number),
+          requires_receipt: Boolean(m?.requires_receipt),
+          requires_odometer: Boolean(m?.requires_odometer),
+          auto_post_qbo: Boolean(m?.auto_post_qbo),
         }
       })
+
       setRows(baseRows)
+      if (extraTypes.length) setExpenseTypes((prev) => [...prev, ...extraTypes])
     }
+
     void load()
     return () => {
       cancelled = true
     }
   }, [])
 
-  const activeRow = rows[activeType] || rowForExpense(activeType)
+  const activeExpense = useMemo(
+    () => expenseTypes.find((t) => t.id === activeType) || expenseTypes[0],
+    [expenseTypes, activeType],
+  )
+  const activeRow = rows[activeType] || defaultRow(activeType)
 
   const mappedCount = useMemo(
-    () => EXPENSE_TYPES.filter((t) => Boolean(rows[t.id]?.qbo_account_id)).length,
-    [rows],
+    () => expenseTypes.filter((t) => Boolean(rows[t.id]?.qbo_account_id)).length,
+    [expenseTypes, rows],
   )
+  const completionPercent = expenseTypes.length ? Math.round((mappedCount / expenseTypes.length) * 100) : 0
 
-  const setRow = (patch: Partial<MappingRow>) => {
+  const filteredAccounts = useMemo(() => {
+    const q = accountSearch.trim().toLowerCase()
+    if (!q) return accounts
+    return accounts.filter((a) => `${a.name} ${a.accountType}`.toLowerCase().includes(q))
+  }, [accounts, accountSearch])
+
+  const filteredItems = useMemo(() => {
+    const q = itemSearch.trim().toLowerCase()
+    if (!q) return items
+    return items.filter((i) => `${i.name} ${i.itemType}`.toLowerCase().includes(q))
+  }, [items, itemSearch])
+
+  const filteredVendors = useMemo(() => {
+    const q = vendorSearch.trim().toLowerCase()
+    if (!q) return vendors
+    return vendors.filter((v) => v.name.toLowerCase().includes(q))
+  }, [vendors, vendorSearch])
+
+  const patchActive = (patch: Partial<MappingRow>) => {
     setRows((prev) => ({
       ...prev,
       [activeType]: {
-        ...(prev[activeType] || rowForExpense(activeType)),
+        ...(prev[activeType] || defaultRow(activeType)),
         ...patch,
       },
     }))
-    setSavedLabel('')
+    setSavedMsg('')
   }
 
-  const saveMapping = async () => {
-    const selected = rows[activeType] || rowForExpense(activeType)
-    if (!selected.qbo_account_id) {
-      setSavedLabel('Pick an expense account first.')
+  const saveCurrent = async () => {
+    const row = rows[activeType] || defaultRow(activeType)
+    if (!row.qbo_account_id) {
+      setSavedMsg('Select a QBO expense account first.')
       return
     }
     setSaving(true)
-    setSavedLabel('')
+    setSavedMsg('')
     try {
       const payload = {
         expense_type: activeType,
-        qbo_account_id: selected.qbo_account_id || '',
-        qbo_account_name: selected.qbo_account_name || '',
-        qbo_item_id: selected.qbo_item_id || '',
-        qbo_item_name: selected.qbo_item_name || '',
-        default_vendor_id: selected.default_vendor_id || '',
-        default_vendor_name: selected.default_vendor_name || '',
-        requires_load_number: selected.requires_load_number || 'optional',
-        requires_reefer_number: Boolean(selected.requires_reefer_number),
-        requires_receipt: Boolean(selected.requires_receipt),
-        requires_odometer: Boolean(selected.requires_odometer),
-        auto_post_qbo: Boolean(selected.auto_post_qbo),
+        qbo_account_id: row.qbo_account_id || '',
+        qbo_account_name: row.qbo_account_name || '',
+        qbo_item_id: row.qbo_item_id || '',
+        qbo_item_name: row.qbo_item_name || '',
+        default_vendor_id: row.default_vendor_id || '',
+        default_vendor_name: row.default_vendor_name || '',
+        requires_load_number: row.requires_load_number || 'optional',
+        requires_reefer_number: Boolean(row.requires_reefer_number),
+        requires_receipt: Boolean(row.requires_receipt),
+        requires_odometer: Boolean(row.requires_odometer),
+        auto_post_qbo: Boolean(row.auto_post_qbo),
       }
       const resp = await fetch('/api/fuel/expense-mapping', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
       }).then((r) => r.json())
-      if (resp?.ok) setSavedLabel('✅ Saved')
-      else setSavedLabel(String(resp?.error || 'Save failed'))
+      setSavedMsg(resp?.ok ? '✅ Saved' : String(resp?.error || 'Save failed'))
     } catch (e: any) {
-      setSavedLabel(String(e?.message || e || 'Save failed'))
+      setSavedMsg(String(e?.message || e || 'Save failed'))
     } finally {
       setSaving(false)
     }
+  }
+
+  const addCustomExpense = async () => {
+    const name = customName.trim()
+    const id = normalizeId(name)
+    if (!name || !id) return
+    if (expenseTypes.some((t) => t.id === id)) {
+      setStatusMsg('Custom expense already exists.')
+      return
+    }
+    const next: ExpenseTypeDef = { id, icon: '➕', label: name }
+    setExpenseTypes((prev) => [...prev, next])
+    setRows((prev) => ({ ...prev, [id]: defaultRow(id) }))
+    setActiveType(id)
+    setCustomName('')
+    setShowAddCustom(false)
+    setStatusMsg('Custom expense type added. Configure and save mapping.')
   }
 
   const testQbo = async () => {
@@ -245,27 +323,37 @@ export function DriverExpenseMappingPage() {
   }
 
   return (
-    <div className="acct-hub" style={{ gap: 10 }}>
-      <div className="panel">
-        <div className="panel-head">
-          <h2 className="panel-title" style={{ margin: 0 }}>Driver App Expenses</h2>
-        </div>
-        <div className="panel-body">
-          <p className="muted" style={{ margin: 0 }}>
-            Configure once, then driver app expense submissions follow this QuickBooks mapping.
-          </p>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 40%) minmax(420px, 60%)', gap: 10 }}>
-        <div className="panel">
-          <div className="panel-head">
-            <div className="panel-title" style={{ margin: 0 }}>Driver App Expenses</div>
-          </div>
-          <div className="panel-body" style={{ display: 'grid', gap: 6 }}>
-            {EXPENSE_TYPES.map((t) => {
-              const row = rows[t.id] || rowForExpense(t.id)
-              const mapped = Boolean(row.qbo_account_id)
+    <div className="acct-hub" style={{ height: '100%', minHeight: 560, gap: 10 }}>
+      <div
+        className="panel"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 520,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
+          <aside
+            style={{
+              width: '35%',
+              minWidth: 280,
+              borderRight: '1px solid var(--border)',
+              overflowY: 'auto',
+              padding: 14,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <h3 style={{ margin: 0 }}>Driver App Expense Types</h3>
+            {expenseTypes.map((t) => {
+              const mapped = Boolean(rows[t.id]?.qbo_account_id)
               return (
                 <button
                   key={t.id}
@@ -276,179 +364,195 @@ export function DriverExpenseMappingPage() {
                     justifyContent: 'space-between',
                     display: 'flex',
                     alignItems: 'center',
+                    background: activeType === t.id ? 'rgba(11,102,214,0.1)' : 'transparent',
                     borderColor: activeType === t.id ? 'var(--accent)' : 'var(--border)',
-                    background: activeType === t.id ? 'rgba(11, 102, 214, 0.1)' : undefined,
                   }}
                 >
                   <span>{t.icon} {t.label}</span>
-                  {mapped ? (
-                    <span className="chip" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' }}>
-                      {row.qbo_account_name || 'Mapped'}
-                    </span>
-                  ) : (
-                    <span className="chip" style={{ background: 'rgba(250, 204, 21, 0.14)', color: '#eab308' }}>
-                      Not mapped
-                    </span>
-                  )}
+                  <span
+                    className="chip"
+                    style={{
+                      background: mapped ? 'rgba(34,197,94,0.16)' : 'rgba(250,204,21,0.16)',
+                      color: mapped ? '#16a34a' : '#ca8a04',
+                    }}
+                  >
+                    {mapped ? 'Mapped' : 'Not mapped'}
+                  </span>
                 </button>
               )
             })}
-          </div>
-        </div>
 
-        <div className="panel">
-          <div className="panel-head">
-            <div className="panel-title" style={{ margin: 0 }}>
-              {(EXPENSE_TYPES.find((t) => t.id === activeType)?.label || 'Expense type') + ' → QuickBooks'}
+            <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+              <button type="button" className="btn sm" onClick={() => setShowAddCustom((s) => !s)}>
+                + Add custom expense type
+              </button>
+              {showAddCustom ? (
+                <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
+                  <input
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="Custom expense name"
+                  />
+                  <button type="button" className="btn sm ghost" onClick={() => void addCustomExpense()}>
+                    Save type
+                  </button>
+                </div>
+              ) : null}
             </div>
-          </div>
-          <div className="panel-body" style={{ display: 'grid', gap: 10 }}>
-            <label>
-              Expense account
-              <select
-                value={String(activeRow.qbo_account_id || '')}
-                onChange={(e) => {
-                  const picked = accounts.find((a) => a.id === e.target.value)
-                  setRow({
-                    qbo_account_id: e.target.value,
-                    qbo_account_name: picked?.name || '',
-                  })
-                }}
-              >
-                <option value="">Select expense account...</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name + ' (' + (a.accountType || 'Expense') + ')'}
-                  </option>
-                ))}
-              </select>
-            </label>
+          </aside>
 
-            <label>
-              Item / product (optional)
-              <select
-                value={String(activeRow.qbo_item_id || '')}
-                onChange={(e) => {
-                  const picked = items.find((i) => i.id === e.target.value)
-                  setRow({
-                    qbo_item_id: e.target.value,
-                    qbo_item_name: picked?.name || '',
-                  })
-                }}
-              >
-                <option value="">None</option>
-                {items.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.name + (i.itemType ? ' (' + i.itemType + ')' : '')}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Default vendor
-              <select
-                value={String(activeRow.default_vendor_id || '')}
-                onChange={(e) => {
-                  const picked = vendors.find((v) => v.id === e.target.value)
-                  setRow({
-                    default_vendor_id: e.target.value,
-                    default_vendor_name: picked?.name || '',
-                  })
-                }}
-              >
-                <option value="">None</option>
-                {vendors.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <section
+            style={{
+              width: '65%',
+              overflowY: 'auto',
+              padding: 20,
+              display: 'grid',
+              gap: 12,
+            }}
+          >
+            <h3 style={{ margin: 0 }}>{activeExpense?.icon || '🔧'} {activeExpense?.label || activeType}</h3>
 
             <div className="panel" style={{ margin: 0 }}>
-              <div className="panel-head">
-                <div className="panel-title" style={{ margin: 0 }}>Requires fields</div>
-              </div>
               <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
-                <label>
-                  Load number
-                  <select
-                    value={String(activeRow.requires_load_number || 'optional')}
-                    onChange={(e) => setRow({ requires_load_number: e.target.value as MappingMode })}
-                  >
-                    {LOAD_MODE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
+                <label>QBO Expense Account (required)</label>
+                <input
+                  value={accountSearch}
+                  onChange={(e) => setAccountSearch(e.target.value)}
+                  placeholder="Search accounts..."
+                />
+                <select
+                  size={8}
+                  value={String(activeRow.qbo_account_id || '')}
+                  onChange={(e) => {
+                    const picked = accounts.find((a) => a.id === e.target.value)
+                    patchActive({
+                      qbo_account_id: e.target.value,
+                      qbo_account_name: picked?.name || '',
+                    })
+                  }}
+                >
+                  {filteredAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name + ' (' + (a.accountType || 'Expense') + ')'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="panel" style={{ margin: 0 }}>
+              <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
+                <label>QBO Item/Product (optional)</label>
+                <input value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} placeholder="Search items..." />
+                <select
+                  size={7}
+                  value={String(activeRow.qbo_item_id || '')}
+                  onChange={(e) => {
+                    const picked = items.find((i) => i.id === e.target.value)
+                    patchActive({
+                      qbo_item_id: e.target.value,
+                      qbo_item_name: picked?.name || '',
+                    })
+                  }}
+                >
+                  {filteredItems.map((i) => (
+                    <option key={i.id} value={i.id}>{i.name + (i.itemType ? ` (${i.itemType})` : '')}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="panel" style={{ margin: 0 }}>
+              <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
+                <label>Default Vendor (optional)</label>
+                <input value={vendorSearch} onChange={(e) => setVendorSearch(e.target.value)} placeholder="Search vendors..." />
+                <select
+                  size={7}
+                  value={String(activeRow.default_vendor_id || '')}
+                  onChange={(e) => {
+                    const picked = vendors.find((v) => v.id === e.target.value)
+                    patchActive({
+                      default_vendor_id: e.target.value,
+                      default_vendor_name: picked?.name || '',
+                    })
+                  }}
+                >
+                  {filteredVendors.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="panel" style={{ margin: 0 }}>
+              <div className="panel-body" style={{ display: 'grid', gap: 10 }}>
+                <strong>Required fields</strong>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={activeRow.requires_load_number === 'required'}
+                    onChange={(e) => patchActive({ requires_load_number: e.target.checked ? 'required' : 'optional' })}
+                    style={{ width: 18, height: 18 }}
+                  />
+                  Load number required
                 </label>
+
                 {activeType === 'reefer_diesel' ? (
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <input
                       type="checkbox"
                       checked={Boolean(activeRow.requires_reefer_number)}
-                      onChange={(e) => setRow({ requires_reefer_number: e.target.checked })}
+                      onChange={(e) => patchActive({ requires_reefer_number: e.target.checked })}
                       style={{ width: 18, height: 18 }}
                     />
                     Reefer unit number required
                   </label>
                 ) : null}
+
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input
                     type="checkbox"
                     checked={Boolean(activeRow.requires_receipt)}
-                    onChange={(e) => setRow({ requires_receipt: e.target.checked })}
+                    onChange={(e) => patchActive({ requires_receipt: e.target.checked })}
                     style={{ width: 18, height: 18 }}
                   />
                   Receipt photo required
                 </label>
+
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input
                     type="checkbox"
-                    checked={Boolean(activeRow.requires_odometer)}
-                    onChange={(e) => setRow({ requires_odometer: e.target.checked })}
+                    checked={Boolean(activeRow.auto_post_qbo)}
+                    onChange={(e) => patchActive({ auto_post_qbo: e.target.checked })}
                     style={{ width: 18, height: 18 }}
                   />
-                  Odometer reading required
+                  Auto-post to QuickBooks
                 </label>
               </div>
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={Boolean(activeRow.auto_post_qbo)}
-                onChange={(e) => setRow({ auto_post_qbo: e.target.checked })}
-                style={{ width: 18, height: 18 }}
-              />
-              Auto-post to QBO
-            </label>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <button type="button" className="btn" onClick={() => void saveMapping()} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button type="button" className="btn" onClick={() => void saveCurrent()} disabled={saving}>
+                {saving ? 'Saving...' : 'Save mapping'}
               </button>
-              {savedLabel ? <span className="muted">{savedLabel}</span> : null}
+              {savedMsg ? <span className="muted">{savedMsg}</span> : null}
+            </div>
+          </section>
+        </div>
+
+        <footer style={{ borderTop: '1px solid var(--border)', padding: 12, display: 'grid', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <strong>{mappedCount} of {expenseTypes.length} expense types mapped to QuickBooks</strong>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button type="button" className="btn sm ghost" onClick={() => void testQbo()}>Test QBO connection</button>
+              <button type="button" className="btn sm ghost" onClick={() => { window.location.href = '/maintenance.html#drivers-fuel' }}>View all driver expenses</button>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="panel">
-        <div className="panel-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-          <strong>{mappedCount + ' of ' + EXPENSE_TYPES.length + ' expense types mapped'}</strong>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button type="button" className="btn ghost" onClick={() => void testQbo()}>
-              Test QBO connection
-            </button>
-            <button type="button" className="btn ghost" onClick={() => { window.location.href = '/maintenance.html#drivers-fuel' }}>
-              View all driver expenses
-            </button>
+          <div style={{ height: 8, borderRadius: 999, background: 'rgba(148,163,184,0.22)', overflow: 'hidden' }}>
+            <div style={{ width: `${completionPercent}%`, height: '100%', background: '#2563eb' }} />
           </div>
-        </div>
-        {statusMsg ? <p className="muted" style={{ margin: '0 12px 12px' }}>{statusMsg}</p> : null}
+          {statusMsg ? <span className="muted">{statusMsg}</span> : null}
+        </footer>
       </div>
     </div>
   )

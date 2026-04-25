@@ -273,6 +273,22 @@ export const REPORTS: ReportDef[] = [
     tags: ['qbo', 'cash'],
     ...qbo('CashFlow'),
   },
+  {
+    id: 'B17',
+    title: 'Payment history',
+    description: 'Historical bill payments and settlements by period.',
+    category: 'accounting',
+    tags: ['history', 'payments', 'erp'],
+    apiHint: 'GET /api/reports/erp/payment-history',
+  },
+  {
+    id: 'B18',
+    title: 'Settlement history',
+    description: 'Historical driver settlements for accounting reconciliation.',
+    category: 'accounting',
+    tags: ['history', 'settlement', 'erp'],
+    apiHint: 'GET /api/reports/erp/settlement-history',
+  },
 
   // Safety C1–C10
   {

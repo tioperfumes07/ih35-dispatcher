@@ -98,7 +98,6 @@ export function AccountingHomeHub({
         rows: [
           { key: 'bill-payment', label: 'Bill payment', onActivate: () => onSetHomeOverlay('bill-payment') },
           { key: 'driver-bill-payment', label: 'Driver bill payment', onActivate: () => onOpenSpecialized('driver-settlement') },
-          { key: 'payment-history', label: 'Payment history', onActivate: () => onSetHomeOverlay('payment-history') },
         ],
       },
       {

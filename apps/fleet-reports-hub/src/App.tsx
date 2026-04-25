@@ -378,6 +378,7 @@ export default function App() {
   const [listsDeepLink, setListsDeepLink] = useState<ListsCatalogListId | null>(
     initialLocation.listsList,
   )
+  const [listsParentSection, setListsParentSection] = useState<string>('lists')
   const [homeKpis, setHomeKpis] = useState<HomeKpis>(FALLBACK_HOME_KPIS)
   const [selectedReportForTab, setSelectedReportForTab] = useState<Record<string, string>>({})
   const [schedulerFocusUnit, setSchedulerFocusUnit] = useState<string | null>(null)
@@ -392,16 +393,22 @@ export default function App() {
     if (section === 'lists') {
       setListsTab('fleet-samsara')
       setListsDeepLink(null)
+      setListsParentSection('lists')
       return
     }
     if (section === 'reports') setTab('overview')
     setListsDeepLink(null)
   }, [])
   const openListsSection = useCallback(
-    (tabId: ListsCatalogsTab = 'fleet-samsara', listId: ListsCatalogListId | null = null) => {
+    (
+      tabId: ListsCatalogsTab = 'fleet-samsara',
+      listId: ListsCatalogListId | null = null,
+      parentSection: string = 'lists',
+    ) => {
       openSection('lists')
       setListsTab(tabId)
       setListsDeepLink(listId)
+      setListsParentSection(parentSection || 'lists')
     },
     [openSection],
   )
@@ -454,7 +461,7 @@ export default function App() {
     if (!isValidListsTab(listsTabRaw)) return
     const listsListRaw = p.get('listsList') || ''
     const list = normalizeListsListId(listsListRaw)
-    openListsSection(listsTabRaw, list)
+    openListsSection(listsTabRaw, list, 'maintenance')
     p.delete('acctLists')
     p.delete('listsTab')
     p.delete('listsList')
@@ -1141,7 +1148,7 @@ export default function App() {
                     onNewWorkOrder={() => setAppWoPickOpen(true)}
                     homeKpis={homeKpis}
                     onOpenListsSection={(tabId, listId) =>
-                      openListsSection(tabId, listId === undefined ? null : listId)
+                      openListsSection(tabId, listId === undefined ? null : listId, 'accounting')
                     }
                     erpFuelHost={erpFuelEmbed || erpFuelModalHost}
                     onFuelOpenFromAccounting={
@@ -1157,6 +1164,7 @@ export default function App() {
                     onTabChange={setListsTab}
                     deepLinkList={listsDeepLink}
                     onDeepLinkConsumed={() => setListsDeepLink(null)}
+                    activeParentSection={listsParentSection}
                   />
                 </ErrorBoundary>
               ) : activeSection === 'drivers' ? (
@@ -1390,7 +1398,8 @@ export default function App() {
         }}
         onOpenVendorDirectory={() => {
           setFuelPlannerTxn(null)
-          openListsSection('name-management', 'name-registry')
+          const ctx = activeSection === 'accounting' ? 'accounting' : activeSection === 'fuel' ? 'fuel' : 'lists'
+          openListsSection('name-management', 'name-registry', ctx)
         }}
         onViewAllIntegrity={() => {
           setFuelPlannerTxn(null)
