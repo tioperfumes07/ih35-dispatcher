@@ -12,823 +12,90 @@
   <link rel="apple-touch-icon" href="/driver/icon-192.png" />
   <title>IH35 Driver Portal</title>
   <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: #0f1219;
-      color: #e2e8f0;
-      font-size: 16px;
-      min-height: 100vh;
-    }
-    .app {
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
-      padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .screen { display: none; }
-    .screen.active { display: block; }
-    .card {
-      background: #1a1f2e;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 10px;
-    }
-    .muted { color: #8892a4; }
-    .row { display: flex; gap: 10px; align-items: center; }
-    .between { justify-content: space-between; }
-    .title { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
-    .subtitle { font-size: 13px; color: #8892a4; margin: 0 0 14px; }
-    label { display: block; font-size: 12px; color: #8892a4; margin: 10px 0 6px; }
-    input, select, textarea, button {
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: #111827;
-      color: #e2e8f0;
-      padding: 12px;
-      font-size: 16px;
-    }
-    button {
-      min-height: 56px;
-      background: #3b82f6;
-      border-color: #2563eb;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button.secondary { background: transparent; }
-    button.small { min-height: 42px; padding: 8px 10px; font-size: 13px; }
-    .grid { display: grid; gap: 10px; }
-    .chip {
-      display: inline-flex;
-      border-radius: 999px;
-      padding: 2px 10px;
-      background: rgba(59,130,246,.2);
-      color: #93c5fd;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .tap-card {
-      background: #1a1f2e;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 16px;
-      min-height: 72px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-    }
-    .status-bar {
-      margin-top: 12px;
-      border-radius: 12px;
-      padding: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: #131a27;
-    }
-    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-    .dot.green { background: #22c55e; }
-    .dot.gray { background: #6b7280; }
-    .item-row { border-bottom: 1px solid rgba(255,255,255,.08); padding: 10px 0; }
-    .item-row:last-child { border-bottom: none; }
-    .thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); }
-    .calendar { overflow-x: auto; }
-    .calendar table { border-collapse: collapse; min-width: 680px; width: 100%; }
-    .calendar th, .calendar td { border: 1px solid rgba(255,255,255,.08); text-align: center; padding: 6px; font-size: 12px; }
-    .hos { font-size: 12px; color: #8892a4; margin-top: 10px; }
-    .ok { color: #22c55e; }
-    .err { color: #ef4444; }
+    :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0f1219;color:#e2e8f0}
+    .app{width:100%;max-width:520px;margin:0 auto;padding:14px}.screen{display:none}.screen.active{display:block}.card{background:#1a1f2e;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;margin-bottom:10px}
+    .row{display:flex;gap:10px;align-items:center}.between{justify-content:space-between}.grid{display:grid;gap:10px}.title{font-size:20px;font-weight:700;margin:0 0 4px}.subtitle{margin:0 0 12px;color:#8892a4;font-size:13px}
+    .muted{color:#8892a4}.ok{color:#22c55e}.err{color:#ef4444}.chip{display:inline-flex;border-radius:999px;padding:2px 10px;background:rgba(59,130,246,.2);color:#93c5fd;font-size:12px;font-weight:600}
+    .tap-card{background:#1a1f2e;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;min-height:72px;display:flex;align-items:center;cursor:pointer}
+    label{display:block;font-size:12px;color:#8892a4;margin:10px 0 6px}input,select,textarea,button{width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#111827;color:#e2e8f0;padding:12px;font-size:16px}
+    button{min-height:56px;background:#3b82f6;border-color:#2563eb;font-weight:600;cursor:pointer}button.secondary{background:transparent}button.small{min-height:42px;padding:8px 10px;font-size:13px;width:auto;min-width:90px}
+    .thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)}.item-row{border-bottom:1px solid rgba(255,255,255,.08);padding:10px 0}.item-row:last-child{border-bottom:none}
+    .status-bar{margin-top:12px;border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.1);background:#131a27}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}.dot.green{background:#22c55e}
+    .calendar{overflow-x:auto}.calendar table{border-collapse:collapse;min-width:680px;width:100%}.calendar th,.calendar td{border:1px solid rgba(255,255,255,.08);text-align:center;padding:6px;font-size:12px}
+    .fuel-type-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.fuel-type-btn{min-height:50px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#1f2937;color:#e2e8f0;font-weight:600}.fuel-type-btn.active{background:#1d4ed8;border-color:#3b82f6}
   </style>
-<style>
-.screen label, .screen h2, .screen p, .screen span { color: #e2e8f0 !important; }
-.screen input, .screen select, .screen textarea { color: #e2e8f0 !important; background: #1a1f2e !important; border: 1px solid rgba(255,255,255,0.15) !important; }
-.screen .title { color: #ffffff !important; }
-</style></head>
+</head>
 <body>
   <main class="app">
     <section id="screen-login" class="screen active">
       <div class="card">
-        <h1 class="title">IH35 Transportation LLC</h1>
-        <p class="subtitle">Driver Portal</p>
-        <label for="loginUnit">Unit number</label>
-        <select id="loginUnit"></select>
-        <label for="loginDriver">Driver name</label>
-        <input id="loginDriver" type="text" placeholder="Your full name" />
-        <label for="loginPin">PIN (4 digits)</label>
-        <input id="loginPin" type="password" inputmode="numeric" maxlength="4" placeholder="1234" />
-        <button id="loginBtn" type="button">Sign in</button>
-        <p id="loginMsg" class="muted"></p>
+        <h1 class="title">IH35 Transportation LLC</h1><p class="subtitle">Driver Portal</p>
+        <label for="loginUnit">Unit number</label><select id="loginUnit"></select>
+        <label for="loginDriver">Driver name</label><input id="loginDriver" type="text" placeholder="Your full name" />
+        <label for="loginPin">PIN (4 digits)</label><input id="loginPin" type="password" inputmode="numeric" maxlength="4" placeholder="1234" />
+        <button id="loginBtn" type="button">Sign in</button><p id="loginMsg" class="muted"></p>
       </div>
     </section>
 
     <section id="screen-home" class="screen">
-      <div class="card">
-        <div class="row between">
-          <div>
-            <p class="subtitle" style="margin:0">Good morning, <span id="homeDriverName">Driver</span></p>
-            <h2 class="title" style="margin:4px 0 0">Driver Dashboard</h2>
-          </div>
-          <span id="homeUnitBadge" class="chip">T120</span>
-        </div>
-      </div>
+      <div class="card"><div class="row between"><div><p class="subtitle" style="margin:0">Good morning, <span id="homeDriverName">Driver</span></p><h2 class="title" style="margin:4px 0 0">Driver Dashboard</h2></div><span id="homeUnitBadge" class="chip">T120</span></div></div>
       <div class="grid">
         <button class="tap-card" type="button" data-nav="screen-checklist">🔧 Equipment checklist</button>
         <button class="tap-card" type="button" data-nav="screen-damage">📷 Report damage</button>
         <button class="tap-card" type="button" data-nav="screen-schedule">📅 My schedule</button>
         <button class="tap-card" type="button" data-nav="screen-fuel">⛽ Fuel expense</button>
         <button class="tap-card" type="button" data-nav="screen-leave">📅 Request time off</button>
-        <button class="tap-card" type="button" id="inspectionPlaceholder" data-nav="screen-pretrip">📋 Pre-trip inspection</button>
+        <button class="tap-card" type="button" data-nav="screen-pretrip">📋 Pre-trip inspection</button>
       </div>
-      <div class="status-bar">
-        <div class="row" style="gap:8px"><span class="dot green"></span> <strong>Samsara connected</strong></div>
-        <div class="muted" style="margin-top:6px">Last sync: <span id="homeSync">--</span></div>
-      </div>
+      <div class="status-bar"><div class="row" style="gap:8px"><span class="dot green"></span><strong>Samsara connected</strong></div><div class="muted" style="margin-top:6px">Last sync: <span id="homeSync">--</span></div></div>
     </section>
 
-    <section id="screen-checklist" class="screen">
-      <div class="row between card">
-        <div>
-          <h2 class="title" id="checklistTitle">T120 Equipment</h2>
-          <p class="subtitle" style="margin:0">Confirm your required items</p>
-        </div>
-        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
-      </div>
-      <div class="card" id="checklistItems">Loading checklist…</div>
-      <button id="submitChecklistBtn" type="button">Submit checklist</button>
-      <p id="checklistMsg" class="muted"></p>
-    </section>
+    <section id="screen-checklist" class="screen"><div class="row between card"><div><h2 class="title" id="checklistTitle">T120 Equipment</h2><p class="subtitle" style="margin:0">Confirm your required items</p></div><button class="small secondary" type="button" data-nav="screen-home">Back</button></div><div class="card" id="checklistItems">Loading checklist…</div><button id="submitChecklistBtn" type="button">Submit checklist</button><p id="checklistMsg" class="muted"></p></section>
 
-    <section id="screen-damage" class="screen">
-      <div class="row between card">
-        <h2 class="title" style="margin:0">Report Damage</h2>
-        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
-      </div>
-      <div class="card">
-        <label>Unit number</label>
-        <input id="damageUnit" readonly />
-        <label>Damage type</label>
-        <select id="damageType">
-          <option>Truck body</option>
-          <option>Trailer</option>
-          <option>Tires</option>
-          <option>Equipment</option>
-          <option>Other</option>
-        </select>
-        <label>Description</label>
-        <textarea id="damageDesc" rows="4" placeholder="Describe what happened"></textarea>
-        <label>Photos (up to 4)</label>
-        <input id="damagePhotosInput" type="file" accept="image/*" capture="environment" multiple />
-        <div id="damageThumbs" class="row" style="flex-wrap:wrap;margin-top:8px"></div>
-        <label>Location</label>
-        <input id="damageLocation" readonly placeholder="Getting GPS…" />
-      </div>
-      <button id="submitDamageBtn" type="button">Submit report</button>
-      <p id="damageMsg" class="muted"></p>
-    </section>
+    <section id="screen-damage" class="screen"><div class="row between card"><h2 class="title" style="margin:0">Report Damage</h2><button class="small secondary" type="button" data-nav="screen-home">Back</button></div><div class="card"><label>Unit number</label><input id="damageUnit" readonly /><label>Damage type</label><select id="damageType"><option>Truck body</option><option>Trailer</option><option>Tires</option><option>Equipment</option><option>Other</option></select><label>Description</label><textarea id="damageDesc" rows="4" placeholder="Describe what happened"></textarea><label>Photos (up to 4)</label><input id="damagePhotosInput" type="file" accept="image/*" capture="environment" multiple /><div id="damageThumbs" class="row" style="flex-wrap:wrap;margin-top:8px"></div><label>Location</label><input id="damageLocation" readonly placeholder="Getting GPS…" /></div><button id="submitDamageBtn" type="button">Submit report</button><p id="damageMsg" class="muted"></p></section>
 
-    <section id="screen-schedule" class="screen">
-      <div class="row between card">
-        <div>
-          <h2 class="title" style="margin:0">My Schedule</h2>
-          <p class="subtitle" style="margin:0" id="scheduleMonth">Current month</p>
-        </div>
-        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
-      </div>
-      <div class="card calendar" id="scheduleCalendar">Loading schedule…</div>
-      <div class="card hos" id="scheduleHos">HOS status: --</div>
-    </section>
+    <section id="screen-schedule" class="screen"><div class="row between card"><div><h2 class="title" style="margin:0">My Schedule</h2><p class="subtitle" style="margin:0" id="scheduleMonth">Current month</p></div><button class="small secondary" type="button" data-nav="screen-home">Back</button></div><div class="card calendar" id="scheduleCalendar">Loading schedule…</div><div class="card" id="scheduleHos">HOS status: --</div></section>
+
+    <section id="screen-fuel" class="screen" style="display:none; padding: 20px; max-width:480px; margin:0 auto;"><div class="row between card"><h2 class="title" style="margin:0">Fuel Expense</h2><button class="small secondary" type="button" data-nav="screen-home">Back</button></div><div class="card"><label>Unit</label><input id="fuelUnit" readonly /><label>Driver</label><input id="fuelDriver" readonly /><label>Fuel type</label><div class="fuel-type-grid"><button type="button" class="fuel-type-btn" data-fuel-type="truck_diesel">Truck Diesel</button><button type="button" class="fuel-type-btn" data-fuel-type="reefer_diesel">Reefer Diesel</button><button type="button" class="fuel-type-btn" data-fuel-type="def">DEF</button></div><input id="fuelType" type="hidden" /><label>Gallons</label><input id="fuelGallons" type="number" step="0.1" min="0" placeholder="0.0" /><label>Price per gallon</label><input id="fuelPrice" type="number" step="0.001" min="0" placeholder="0.000" /><label>Total</label><input id="fuelTotal" readonly placeholder="0.00" /><label>Load number</label><input id="fuelLoadNumber" type="text" placeholder="Load #" /><label>Station name</label><input id="fuelStation" type="text" placeholder="Station name" /><label>Location</label><input id="fuelLocation" type="text" placeholder="Auto-filled from GPS" /><label>Receipt photo</label><input id="fuelReceipt" type="file" accept="image/*" capture="environment" /><div id="fuelReceiptThumbWrap" style="margin-top:8px;display:none"><img id="fuelReceiptThumb" class="thumb" alt="Receipt preview" /></div></div><button id="submitFuelBtn" type="button">Submit fuel expense</button><p id="fuelMsg" class="muted"></p></section>
+
+    <section id="screen-leave" class="screen"><div class="row between card"><h2 class="title" style="margin:0">Request Time Off</h2><button class="small secondary" type="button" data-nav="screen-home">Back</button></div><div class="card"><label>Start date</label><input id="leaveStartDate" type="date" /><label>End date</label><input id="leaveEndDate" type="date" /><label>Type</label><select id="leaveType"><option value="Vacation">Vacation</option><option value="Personal">Personal</option><option value="Sick">Sick</option><option value="Other">Other</option></select><label>Note</label><textarea id="leaveNotes" rows="3" placeholder="Optional note"></textarea></div><button id="submitLeaveBtn" type="button">Submit request</button><p id="leaveMsg" class="muted"></p></section>
+
+    <section id="screen-pretrip" class="screen"><div class="row between card"><h2 class="title" style="margin:0">Pre-trip Inspection</h2><button class="small secondary" type="button" data-nav="screen-home">Back</button></div><div class="card"><label>Odometer reading</label><input id="pretripOdometer" type="number" min="0" placeholder="Enter odometer" /><div id="pretripChecklistRows"></div><label>Overall result</label><input id="pretripOverall" readonly placeholder="Pass" /><label>Driver signature</label><input id="pretripSignature" type="text" placeholder="Type full name to sign" /></div><button id="submitPretripBtn" type="button">Submit inspection</button><p id="pretripMsg" class="muted"></p></section>
   </main>
-
   <script>
-    const SCREEN_IDS = ['screen-login', 'screen-home', 'screen-checklist', 'screen-damage', 'screen-schedule', 'screen-fuel', 'screen-leave', 'screen-pretrip']
-    const STORAGE_KEY = 'ih35_driver_profile_v1'
-    const LEAVE_COLORS = {
-      'Vacacion': { bg:'#1e3a5f', text:'#93c5fd', label:'Vac' },
-      'Sick': { bg:'#431407', text:'#fed7aa', label:'Sick' },
-      'Personal': { bg:'#422006', text:'#fde68a', label:'Per' },
-      'Sin Aviso': { bg:'#450a0a', text:'#fca5a5', label:'SA' },
-      'Bank Holiday': { bg:'#1f2937', text:'#9ca3af', label:'Hol' },
-      'WFH': { bg:'#052e16', text:'#86efac', label:'WFH' }
-    }
-
-    let auth = { unit: '', driver: '', pin: '' }
-    let checklistState = []
-    let damagePhotos = []
-
-    function units() { return Array.from({ length: 58 }, (_, i) => `T${120 + i}`) }
-    function setSyncNow() { document.getElementById('homeSync').textContent = new Date().toLocaleString() }
-    function showScreen(id) {
-      document.querySelectorAll('[id^="screen-"]').forEach((el) => {
-        el.style.display = 'none'
-        el.classList.remove('active')
-      })
-      const target = document.getElementById(id)
-      if (target) {
-        target.style.display = 'block'
-        target.classList.add('active')
-      }
-      window.scrollTo(0,0)
-      if (id === 'screen-checklist') loadChecklist()
-      if (id === 'screen-schedule') loadSchedule()
-      if (id === 'screen-damage') { document.getElementById('damageUnit').value = auth.unit || '' }
-      if (id === 'screen-home') setSyncNow()
-    }
-
-    async function jsonFetch(url, opts) {
-      const r = await fetch(url, opts)
-      const d = await r.json().catch(() => ({}))
-      return d
-    }
-
-    function initLogin() {
-      const unitSel = document.getElementById('loginUnit')
-      unitSel.innerHTML = units().map((u) => `<option value="${u}">${u}</option>`).join('')
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        try { auth = JSON.parse(saved) || auth } catch (_) {}
-      }
-      if (auth.unit) unitSel.value = auth.unit
-      if (auth.driver) document.getElementById('loginDriver').value = auth.driver
-      document.getElementById('loginBtn').addEventListener('click', () => {
-        const unit = unitSel.value
-        const driver = String(document.getElementById('loginDriver').value || '').trim()
-        const pin = String(document.getElementById('loginPin').value || '').trim()
-        if (!unit || !driver || !/^\d{4}$/.test(pin)) {
-          document.getElementById('loginMsg').textContent = 'Enter unit, driver name, and a 4-digit PIN.'
-          document.getElementById('loginMsg').className = 'err'
-          return
-        }
-        auth = { unit, driver, pin }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(auth))
-        document.getElementById('homeDriverName').textContent = auth.driver
-        document.getElementById('homeUnitBadge').textContent = auth.unit
-        document.getElementById('checklistTitle').textContent = `${auth.unit} Equipment`
-        document.getElementById('damageUnit').value = auth.unit
-        document.getElementById('loginMsg').textContent = ''
-        showScreen('screen-home')
-      })
-      if (auth.unit && auth.driver) {
-        document.getElementById('homeDriverName').textContent = auth.driver
-        document.getElementById('homeUnitBadge').textContent = auth.unit
-        document.getElementById('checklistTitle').textContent = `${auth.unit} Equipment`
-        document.getElementById('damageUnit').value = auth.unit
-        showScreen('screen-home')
-      }
-    }
-
-    function checklistItemTemplate(row, idx) {
-      const status = row.status || 'confirmed'
-      return `<div class="item-row" data-idx="${idx}">
-        <div class="row between" style="align-items:flex-start">
-          <label style="margin:0;display:flex;gap:8px;align-items:center;color:#e2e8f0">
-            <input type="checkbox" ${status === 'confirmed' ? 'checked' : ''} onchange="window.driverSetChecklistStatus(${idx}, this.checked ? 'confirmed' : 'missing')" style="width:18px;height:18px" />
-            <span>${row.item_name}</span>
-          </label>
-          <span class="muted">x${row.quantity || 1}</span>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <select onchange="window.driverSetChecklistStatus(${idx}, this.value)">
-            <option value="confirmed" ${status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-            <option value="missing" ${status === 'missing' ? 'selected' : ''}>Missing</option>
-            <option value="damaged" ${status === 'damaged' ? 'selected' : ''}>Damaged</option>
-          </select>
-          <input type="file" accept="image/*" capture="environment" onchange="window.driverAttachChecklistPhoto(${idx}, this)" style="max-width:160px" />
-        </div>
-      </div>`
-    }
-
-    window.driverSetChecklistStatus = (idx, status) => {
-      checklistState[idx].status = status
-      const host = document.getElementById('checklistItems')
-      host.innerHTML = checklistState.map(checklistItemTemplate).join('')
-    }
-
-    window.driverAttachChecklistPhoto = (idx, input) => {
-      const f = input.files && input.files[0]
-      if (!f) return
-      const rd = new FileReader()
-      rd.onload = () => { checklistState[idx].photo_base64 = String(rd.result || '') }
-      rd.readAsDataURL(f)
-    }
-
-    async function loadChecklist() {
-      const host = document.getElementById('checklistItems')
-      host.textContent = 'Loading checklist…'
-      const d = await jsonFetch(`/api/equipment/checklist?unit=${encodeURIComponent(auth.unit || '')}`)
-      const items = Array.isArray(d.items) ? d.items : []
-      checklistState = items.map((i) => ({ ...i, status: 'confirmed', photo_base64: '' }))
-      if (!checklistState.length) {
-        host.innerHTML = '<p class="muted">No checklist items found for this unit.</p>'
-        return
-      }
-      host.innerHTML = checklistState.map(checklistItemTemplate).join('')
-    }
-
-    async function submitChecklist() {
-      const btn = document.getElementById('submitChecklistBtn')
-      const msg = document.getElementById('checklistMsg')
-      btn.disabled = true
-      msg.className = 'muted'
-      msg.textContent = 'Submitting…'
-      const body = {
-        unit: auth.unit,
-        driver: auth.driver,
-        items: checklistState.map((i) => ({ item_id: i.id, status: i.status || 'confirmed', photo_base64: i.photo_base64 || '' })),
-        timestamp: new Date().toISOString()
-      }
-      const d = await jsonFetch('/api/equipment/checklist/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      btn.disabled = false
-      if (d && d.ok) {
-        msg.className = 'ok'
-        msg.textContent = `Checklist submitted. Confirmation #${d.report_id || ''}`
-      } else {
-        msg.className = 'err'
-        msg.textContent = d.error || 'Could not submit checklist.'
-      }
-    }
-
-    function setGeoField() {
-      const el = document.getElementById('damageLocation')
-      if (!navigator.geolocation) { el.value = 'GPS unavailable'; return }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { el.value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}` },
-        () => { el.value = 'Location not available' },
-        { enableHighAccuracy: true, timeout: 8000 }
-      )
-    }
-
-    function bindDamagePhotos() {
-      const inp = document.getElementById('damagePhotosInput')
-      inp.addEventListener('change', () => {
-        const files = Array.from(inp.files || []).slice(0, 4)
-        damagePhotos = []
-        const thumbs = document.getElementById('damageThumbs')
-        thumbs.innerHTML = ''
-        files.forEach((f) => {
-          const rd = new FileReader()
-          rd.onload = () => {
-            const b64 = String(rd.result || '')
-            damagePhotos.push(b64)
-            const img = document.createElement('img')
-            img.className = 'thumb'
-            img.src = b64
-            thumbs.appendChild(img)
-          }
-          rd.readAsDataURL(f)
-        })
-      })
-    }
-
-    async function submitDamageReport() {
-      const msg = document.getElementById('damageMsg')
-      const body = {
-        unit: auth.unit,
-        driver: auth.driver,
-        damage_type: document.getElementById('damageType').value,
-        description: String(document.getElementById('damageDesc').value || '').trim(),
-        photos: damagePhotos,
-        location: { text: document.getElementById('damageLocation').value },
-        timestamp: new Date().toISOString()
-      }
-      msg.className = 'muted'
-      msg.textContent = 'Submitting…'
-      const d = await jsonFetch('/api/damage/report', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      if (d && d.ok) {
-        msg.className = 'ok'
-        msg.textContent = `Report submitted: ${d.report_id}`
-      } else {
-        msg.className = 'err'
-        msg.textContent = d.error || 'Could not submit report.'
-      }
-    }
-
-    async function loadSchedule() {
-      const cal = document.getElementById('scheduleCalendar')
-      const hosEl = document.getElementById('scheduleHos')
-      const dt = new Date()
-      const y = dt.getFullYear()
-      const m = dt.getMonth()
-      const month = `${y}-${String(m + 1).padStart(2,'0')}`
-      document.getElementById('scheduleMonth').textContent = new Intl.DateTimeFormat('en-US', { month:'long', year:'numeric' }).format(dt)
-
-      const [sched, hos] = await Promise.all([
-        jsonFetch(`/api/drivers/schedule?month=${encodeURIComponent(month)}`),
-        jsonFetch('/api/drivers/hos-status')
-      ])
-      const rows = (Array.isArray(sched.rows) ? sched.rows : []).filter((r) => String(r.unit_number || '') === String(auth.unit || ''))
-      const map = {}
-      rows.forEach((r) => { map[String(r.date).slice(0,10)] = String(r.leave_type || '') })
-      const days = new Date(y, m + 1, 0).getDate()
-      let html = '<table><thead><tr>' + Array.from({length:days}, (_,i)=>`<th>${i+1}</th>`).join('') + '</tr></thead><tbody><tr>'
-      for (let d=1; d<=days; d++) {
-        const iso = `${month}-${String(d).padStart(2,'0')}`
-        const type = map[iso] || ''
-        const c = LEAVE_COLORS[type]
-        html += `<td>${c ? `<span style="display:inline-block;padding:2px 6px;border-radius:8px;background:${c.bg};color:${c.text};font-size:11px">${c.label}</span>` : '—'}</td>`
-      }
-      html += '</tr></tbody></table>'
-      cal.innerHTML = html
-
-      const hosRows = Array.isArray(hos.rows) ? hos.rows : []
-      const matched = hosRows.find((r) => String(r.driverName || r.driver || '').toLowerCase() === String(auth.driver || '').toLowerCase() || String(r.unit_number || r.vehicleName || '').toLowerCase() === String(auth.unit || '').toLowerCase())
-      hosEl.textContent = matched ? `HOS status: ${String(matched.dutyStatus || 'unknown')}` : 'HOS status: not available'
-    }
-
-    function bindNav() {
-      document.querySelectorAll('[data-nav]').forEach((btn) => {
-        btn.addEventListener('click', () => showScreen(btn.getAttribute('data-nav')))
-      })
-      const inspectionPlaceholder = document.getElementById('inspectionPlaceholder'); if (inspectionPlaceholder && !inspectionPlaceholder.hasAttribute('data-nav')) inspectionPlaceholder.addEventListener('click', () => alert('Pre-trip inspection screen coming soon.'))
-      document.getElementById('submitChecklistBtn').addEventListener('click', submitChecklist)
-      document.getElementById('submitDamageBtn').addEventListener('click', submitDamageReport)
-    }
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/driver/sw.js').catch(() => {})
-      })
-    }
-
-    initLogin()
-    bindNav()
-    bindDamagePhotos()
-    setGeoField()
+    const STORAGE_KEY='ih35_driver_profile_v1';
+    const SCREEN_IDS=['screen-login','screen-home','screen-checklist','screen-damage','screen-schedule','screen-fuel','screen-leave','screen-pretrip'];
+    const LEAVE_COLORS={'Vacacion':{bg:'#1e3a5f',text:'#93c5fd',label:'Vac'},'Sick':{bg:'#431407',text:'#fed7aa',label:'Sick'},'Personal':{bg:'#422006',text:'#fde68a',label:'Per'},'Sin Aviso':{bg:'#450a0a',text:'#fca5a5',label:'SA'},'Bank Holiday':{bg:'#1f2937',text:'#9ca3af',label:'Hol'},'WFH':{bg:'#052e16',text:'#86efac',label:'WFH'}};
+    const PRETRIP_ITEMS=['Headlights','Taillights','Turn signals','Brake lights','Air pressure','Parking brake','Brake lines','All tires condition','Spare tire','Oil level','Coolant','Fuel level','Mirrors','Seatbelt','Horn','Wipers','Registration','Insurance card','Medical card'];
+    let auth={unit:'',driver:'',pin:''},checklistState=[],damagePhotos=[],fuelReceiptBase64='';
+    const units=()=>Array.from({length:58},(_,i)=>`T${120+i}`);
+    const setSyncNow=()=>document.getElementById('homeSync').textContent=new Date().toLocaleString();
+    const jsonFetch=async(url,opts)=>{const r=await fetch(url,opts);return await r.json().catch(()=>({}))};
+    function showScreen(id){document.querySelectorAll('[id^="screen-"]').forEach(el=>{el.style.display='none';el.classList.remove('active')});const t=document.getElementById(id);if(t){t.style.display='block';t.classList.add('active')}window.scrollTo(0,0);if(id==='screen-checklist')loadChecklist();if(id==='screen-schedule')loadSchedule();if(id==='screen-damage')document.getElementById('damageUnit').value=auth.unit||'';if(id==='screen-home')setSyncNow();if(id==='screen-fuel'){document.getElementById('fuelUnit').value=auth.unit||'';document.getElementById('fuelDriver').value=auth.driver||'';autoFillFuelLocation()}if(id==='screen-pretrip')calcPretripOverall()}
+    function hydrateAuthUi(){document.getElementById('homeDriverName').textContent=auth.driver||'Driver';document.getElementById('homeUnitBadge').textContent=auth.unit||'T120';document.getElementById('checklistTitle').textContent=`${auth.unit||'T120'} Equipment`;document.getElementById('damageUnit').value=auth.unit||'';document.getElementById('fuelUnit').value=auth.unit||'';document.getElementById('fuelDriver').value=auth.driver||''}
+    function initLogin(){const s=document.getElementById('loginUnit');s.innerHTML=units().map(u=>`<option value="${u}">${u}</option>`).join('');const saved=localStorage.getItem(STORAGE_KEY);if(saved){try{auth=JSON.parse(saved)||auth}catch(_){}}if(auth.unit)s.value=auth.unit;if(auth.driver)document.getElementById('loginDriver').value=auth.driver;document.getElementById('loginBtn').addEventListener('click',()=>{const unit=s.value,driver=String(document.getElementById('loginDriver').value||'').trim(),pin=String(document.getElementById('loginPin').value||'').trim();if(!unit||!driver||!/^\d{4}$/.test(pin)){const m=document.getElementById('loginMsg');m.className='err';m.textContent='Enter unit, driver name, and a 4-digit PIN.';return}auth={unit,driver,pin};localStorage.setItem(STORAGE_KEY,JSON.stringify(auth));hydrateAuthUi();document.getElementById('loginMsg').textContent='';showScreen('screen-home')});if(auth.unit&&auth.driver){hydrateAuthUi();showScreen('screen-home')}}
+    function checklistItemTemplate(row,idx){const st=row.status||'confirmed';return `<div class="item-row"><div class="row between" style="align-items:flex-start"><label style="margin:0;display:flex;gap:8px;align-items:center;color:#e2e8f0"><input type="checkbox" ${st==='confirmed'?'checked':''} onchange="window.driverSetChecklistStatus(${idx}, this.checked ? 'confirmed' : 'missing')" style="width:18px;height:18px" /><span>${row.item_name}</span></label><span class="muted">x${row.quantity||1}</span></div><div class="row" style="margin-top:8px"><select onchange="window.driverSetChecklistStatus(${idx}, this.value)"><option value="confirmed" ${st==='confirmed'?'selected':''}>Confirmed</option><option value="missing" ${st==='missing'?'selected':''}>Missing</option><option value="damaged" ${st==='damaged'?'selected':''}>Damaged</option></select><input type="file" accept="image/*" capture="environment" onchange="window.driverAttachChecklistPhoto(${idx}, this)" style="max-width:160px" /></div></div>`}
+    window.driverSetChecklistStatus=(idx,status)=>{checklistState[idx].status=status;document.getElementById('checklistItems').innerHTML=checklistState.map(checklistItemTemplate).join('')};
+    window.driverAttachChecklistPhoto=(idx,input)=>{const f=input.files&&input.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{checklistState[idx].photo_base64=String(rd.result||'')};rd.readAsDataURL(f)};
+    async function loadChecklist(){const host=document.getElementById('checklistItems');host.textContent='Loading checklist…';const d=await jsonFetch(`/api/equipment/checklist?unit=${encodeURIComponent(auth.unit||'')}`);const items=Array.isArray(d.items)?d.items:[];checklistState=items.map(i=>({...i,status:'confirmed',photo_base64:''}));if(!checklistState.length){host.innerHTML='<p class="muted">No checklist items found for this unit.</p>';return}host.innerHTML=checklistState.map(checklistItemTemplate).join('')}
+    async function submitChecklist(){const btn=document.getElementById('submitChecklistBtn'),msg=document.getElementById('checklistMsg');btn.disabled=true;msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/equipment/checklist/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,items:checklistState.map(i=>({item_id:i.id,status:i.status||'confirmed',photo_base64:i.photo_base64||''})),timestamp:new Date().toISOString()})});btn.disabled=false;if(d&&d.ok){msg.className='ok';msg.textContent=`Checklist submitted. Confirmation #${d.report_id||''}`}else{msg.className='err';msg.textContent=d.error||'Could not submit checklist.'}}
+    function setDamageGeoField(){const el=document.getElementById('damageLocation');if(!navigator.geolocation){el.value='GPS unavailable';return}navigator.geolocation.getCurrentPosition(pos=>{el.value=`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`},()=>{el.value='Location not available'},{enableHighAccuracy:true,timeout:8000})}
+    function bindDamagePhotos(){const inp=document.getElementById('damagePhotosInput');inp.addEventListener('change',()=>{const files=Array.from(inp.files||[]).slice(0,4);damagePhotos=[];const thumbs=document.getElementById('damageThumbs');thumbs.innerHTML='';files.forEach(f=>{const rd=new FileReader();rd.onload=()=>{const b64=String(rd.result||'');damagePhotos.push(b64);const img=document.createElement('img');img.className='thumb';img.src=b64;thumbs.appendChild(img)};rd.readAsDataURL(f)})})}
+    async function submitDamageReport(){const msg=document.getElementById('damageMsg');msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/damage/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,damage_type:document.getElementById('damageType').value,description:String(document.getElementById('damageDesc').value||'').trim(),photos:damagePhotos,location:{text:document.getElementById('damageLocation').value},timestamp:new Date().toISOString()})});if(d&&d.ok){msg.className='ok';msg.textContent=`Report submitted: ${d.report_id}`}else{msg.className='err';msg.textContent=d.error||'Could not submit report.'}}
+    async function loadSchedule(){const cal=document.getElementById('scheduleCalendar'),hosEl=document.getElementById('scheduleHos'),dt=new Date(),y=dt.getFullYear(),m=dt.getMonth(),month=`${y}-${String(m+1).padStart(2,'0')}`;document.getElementById('scheduleMonth').textContent=new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric'}).format(dt);const [sched,hos]=await Promise.all([jsonFetch(`/api/drivers/schedule?month=${encodeURIComponent(month)}`),jsonFetch('/api/drivers/hos-status')]);const rows=(Array.isArray(sched.rows)?sched.rows:[]).filter(r=>String(r.unit_number||'')===String(auth.unit||''));const map={};rows.forEach(r=>{map[String(r.date).slice(0,10)]=String(r.leave_type||'')});const days=new Date(y,m+1,0).getDate();let html='<table><thead><tr>'+Array.from({length:days},(_,i)=>`<th>${i+1}</th>`).join('')+'</tr></thead><tbody><tr>';for(let d=1;d<=days;d++){const iso=`${month}-${String(d).padStart(2,'0')}`,type=map[iso]||'',c=LEAVE_COLORS[type];html+=`<td>${c?`<span style="display:inline-block;padding:2px 6px;border-radius:8px;background:${c.bg};color:${c.text};font-size:11px">${c.label}</span>`:'—'}</td>`}html+='</tr></tbody></table>';cal.innerHTML=html;const hosRows=Array.isArray(hos.rows)?hos.rows:[];const matched=hosRows.find(r=>String(r.driverName||r.driver||'').toLowerCase()===String(auth.driver||'').toLowerCase()||String(r.unit_number||r.vehicleName||'').toLowerCase()===String(auth.unit||'').toLowerCase());hosEl.textContent=matched?`HOS status: ${String(matched.dutyStatus||'unknown')}`:'HOS status: not available'}
+    function setFuelType(v){document.getElementById('fuelType').value=v;document.querySelectorAll('.fuel-type-btn').forEach(btn=>btn.classList.toggle('active',btn.getAttribute('data-fuel-type')===v))}
+    const updateFuelTotal=()=>{const g=Number(document.getElementById('fuelGallons').value||0),p=Number(document.getElementById('fuelPrice').value||0);document.getElementById('fuelTotal').value=(g*p).toFixed(2)};
+    function autoFillFuelLocation(){const el=document.getElementById('fuelLocation');if(navigator.geolocation){navigator.geolocation.getCurrentPosition(pos=>{el.value=pos.coords.latitude.toFixed(4)+','+pos.coords.longitude.toFixed(4)})}}
+    function bindFuelReceiptThumb(){const i=document.getElementById('fuelReceipt');i.addEventListener('change',()=>{const f=i.files&&i.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{fuelReceiptBase64=String(rd.result||'');document.getElementById('fuelReceiptThumb').src=fuelReceiptBase64;document.getElementById('fuelReceiptThumbWrap').style.display='block'};rd.readAsDataURL(f)})}
+    async function submitFuelExpense(){const msg=document.getElementById('fuelMsg'),fuelType=String(document.getElementById('fuelType').value||'').trim();if(!fuelType){msg.className='err';msg.textContent='Select fuel type before submitting.';return}msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/fuel/driver-expense',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,fuel_type:fuelType,gallons:Number(document.getElementById('fuelGallons').value||0),price_per_gallon:Number(document.getElementById('fuelPrice').value||0),total_amount:Number(document.getElementById('fuelTotal').value||0),load_number:String(document.getElementById('fuelLoadNumber').value||'').trim(),station:String(document.getElementById('fuelStation').value||'').trim(),location:String(document.getElementById('fuelLocation').value||'').trim(),receipt_photo_base64:fuelReceiptBase64})});if(d&&d.ok){msg.className='ok';msg.textContent='Expense submitted'}else{msg.className='err';msg.textContent=d.error||'Could not submit expense.'}}
+    async function submitLeaveRequest(){const msg=document.getElementById('leaveMsg');msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/drivers/leave-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,start_date:document.getElementById('leaveStartDate').value,end_date:document.getElementById('leaveEndDate').value,leave_type:document.getElementById('leaveType').value,notes:String(document.getElementById('leaveNotes').value||'').trim()})});if(d&&d.ok){msg.className='ok';msg.textContent='Request submitted — pending approval'}else{msg.className='err';msg.textContent=d.error||'Could not submit request.'}}
+    function pretripRow(item,idx){return `<div class="item-row"><div><strong>${item}</strong></div><div class="row" style="margin-top:8px;gap:14px;justify-content:flex-start"><label style="margin:0;color:#e2e8f0;display:flex;align-items:center;gap:6px"><input type="radio" name="pretrip-${idx}" value="Pass" checked style="width:auto" /> Pass</label><label style="margin:0;color:#e2e8f0;display:flex;align-items:center;gap:6px"><input type="radio" name="pretrip-${idx}" value="Fail" style="width:auto" /> Fail</label></div><label style="margin-top:8px">Notes</label><input id="pretrip-notes-${idx}" type="text" placeholder="Optional note" /></div>`}
+    function renderPretripChecklist(){const host=document.getElementById('pretripChecklistRows');host.innerHTML=PRETRIP_ITEMS.map((i,idx)=>pretripRow(i,idx)).join('');host.querySelectorAll('input').forEach(el=>{el.addEventListener('change',calcPretripOverall);el.addEventListener('input',calcPretripOverall)});calcPretripOverall()}
+    function calcPretripOverall(){let pass=true;PRETRIP_ITEMS.forEach((_i,idx)=>{const s=document.querySelector(`input[name="pretrip-${idx}"]:checked`);if(!s||s.value!=='Pass')pass=false});document.getElementById('pretripOverall').value=pass?'Pass':'Fail'}
+    async function submitPretripInspection(){const msg=document.getElementById('pretripMsg');const checklist=PRETRIP_ITEMS.map((item,idx)=>{const s=document.querySelector(`input[name="pretrip-${idx}"]:checked`);return{item,value:s?s.value:'Fail',notes:String(document.getElementById(`pretrip-notes-${idx}`).value||'').trim()}});msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/pre-trip/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,odometer_reading:Number(document.getElementById('pretripOdometer').value||0),checklist,overall_result:document.getElementById('pretripOverall').value||'Fail',driver_signature:String(document.getElementById('pretripSignature').value||'').trim()})});if(d&&d.ok){msg.className='ok';msg.textContent='Inspection submitted'}else{msg.className='err';msg.textContent=d.error||'Could not submit inspection.'}}
+    function bindNav(){document.querySelectorAll('[data-nav]').forEach(btn=>btn.addEventListener('click',()=>showScreen(btn.getAttribute('data-nav'))));document.getElementById('submitChecklistBtn').addEventListener('click',submitChecklist);document.getElementById('submitDamageBtn').addEventListener('click',submitDamageReport);document.getElementById('submitFuelBtn').addEventListener('click',submitFuelExpense);document.getElementById('submitLeaveBtn').addEventListener('click',submitLeaveRequest);document.getElementById('submitPretripBtn').addEventListener('click',submitPretripInspection);document.getElementById('fuelGallons').addEventListener('input',updateFuelTotal);document.getElementById('fuelPrice').addEventListener('input',updateFuelTotal);document.querySelectorAll('.fuel-type-btn').forEach(btn=>btn.addEventListener('click',()=>setFuelType(btn.getAttribute('data-fuel-type')||'')))}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/driver/sw.js').catch(()=>{}))}
+    initLogin();bindNav();bindDamagePhotos();bindFuelReceiptThumb();setDamageGeoField();renderPretripChecklist();setFuelType('truck_diesel');showScreen(auth.unit&&auth.driver?'screen-home':'screen-login');
   </script>
-
-
-    <section id="screen-fuel" class="screen" style="display:none;padding:20px;max-width:480px;margin:0 auto;min-height:100vh;background:#0f1219" style="display:none;padding:20px;max-width:480px;margin:0 auto;min-height:100vh;background:#0f1219;color:#e2e8f0">
-      <div class="row between card">
-        <h2 class="title" style="margin:0">Fuel Expense</h2>
-        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
-      </div>
-      <div class="card">
-        <label>Unit</label>
-        <input id="fuelUnit" readonly />
-        <label>Driver</label>
-        <input id="fuelDriver" readonly />
-        <label>Gallons</label>
-        <input id="fuelGallons" type="number" step="0.1" min="0" placeholder="0.0" />
-        <label>Price per gallon</label>
-        <input id="fuelPrice" type="number" step="0.001" min="0" placeholder="0.000" />
-        <label>Total</label>
-        <input id="fuelTotal" readonly placeholder="0.00" />
-        <label>Station name</label>
-        <input id="fuelStation" type="text" placeholder="Station name" />
-        <label>Location</label>
-        <input id="fuelLocation" type="text" placeholder="Auto-filled from GPS" />
-        <label>Receipt photo</label>
-        <input id="fuelReceipt" type="file" accept="image/*" capture="environment" />
-        <div id="fuelReceiptThumbWrap" style="margin-top:8px;display:none">
-          <img id="fuelReceiptThumb" class="thumb" alt="Receipt preview" />
-        </div>
-      </div>
-      <button id="submitFuelBtn" type="button">Submit fuel expense</button>
-      <p id="fuelMsg" class="muted"></p>
-    </section>
-
-    <section id="screen-leave" style="display:none;padding:20px;max-width:480px;margin:0 auto;min-height:100vh;background:#0f1219;color:#e2e8f0" class="screen">
-      <div class="row between card">
-        <h2 class="title" style="margin:0">Request Time Off</h2>
-        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
-      </div>
-      <div class="card">
-        <label>Start date</label>
-        <input id="leaveStartDate" type="date" />
-        <label>End date</label>
-        <input id="leaveEndDate" type="date" />
-        <label>Days count</label>
-        <input id="leaveDays" readonly placeholder="0" />
-        <label>Type</label>
-        <select id="leaveType">
-          <option value="Vacation">Vacation</option>
-          <option value="Personal">Personal</option>
-          <option value="Sick">Sick</option>
-          <option value="Other">Other</option>
-        </select>
-        <label>Note (optional)</label>
-        <textarea id="leaveNotes" rows="3" placeholder="Optional note"></textarea>
-      </div>
-      <button id="submitLeaveBtn" type="button">Submit request</button>
-      <p id="leaveMsg" class="muted"></p>
-      <div class="card">
-        <h3 style="margin:0 0 10px">My requests</h3>
-        <div id="leaveRequestsList" class="muted">Loading…</div>
-      </div>
-    </section>
-
-    <section id="screen-pretrip" style="display:none;padding:20px;max-width:480px;margin:0 auto;min-height:100vh;background:#0f1219;color:#e2e8f0" class="screen">
-      <div class="row between card">
-        <h2 class="title" style="margin:0">Pre-trip Inspection</h2>
-        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
-      </div>
-      <div class="card">
-        <label>Odometer reading</label>
-        <input id="pretripOdometer" type="number" min="0" placeholder="Enter odometer" />
-        <div id="pretripChecklistRows"></div>
-        <label>Overall result</label>
-        <input id="pretripOverall" readonly placeholder="Pass" />
-        <label>Driver signature</label>
-        <input id="pretripSignature" type="text" placeholder="Type full name to sign" />
-      </div>
-      <button id="submitPretripBtn" type="button">Submit inspection</button>
-      <p id="pretripMsg" class="muted"></p>
-    </section>
-
-  <script>
-    const PRETRIP_ITEMS = [
-      'Headlights', 'Taillights', 'Turn signals', 'Brake lights',
-      'Parking brake', 'Brake lines', 'Spare tire', 'Oil level',
-      'Coolant', 'Fuel level', 'Mirrors', 'Seatbelt', 'Horn', 'Wipers',
-      'Registration', 'Insurance card', 'Medical card'
-    ]
-
-    let fuelReceiptBase64 = ''
-
-    function calcMoney(v) {
-      return (Number(v || 0) || 0).toFixed(2)
-    }
-
-    function updateFuelTotal() {
-      const gallons = Number(document.getElementById('fuelGallons').value || 0)
-      const price = Number(document.getElementById('fuelPrice').value || 0)
-      document.getElementById('fuelTotal').value = calcMoney(gallons * price)
-    }
-
-    function bindFuelReceiptThumb() {
-      const input = document.getElementById('fuelReceipt')
-      if (!input) return
-      input.addEventListener('change', () => {
-        const f = input.files && input.files[0]
-        if (!f) return
-        const rd = new FileReader()
-        rd.onload = () => {
-          fuelReceiptBase64 = String(rd.result || '')
-          const wrap = document.getElementById('fuelReceiptThumbWrap')
-          const img = document.getElementById('fuelReceiptThumb')
-          img.src = fuelReceiptBase64
-          wrap.style.display = 'block'
-        }
-        rd.readAsDataURL(f)
-      })
-    }
-
-    function autoFillFuelLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          document.getElementById('fuelLocation').value =
-            pos.coords.latitude.toFixed(4) + ',' + pos.coords.longitude.toFixed(4)
-        })
-      }
-    }
-
-    async function submitFuelExpense() {
-      const msg = document.getElementById('fuelMsg')
-      const body = {
-        unit: auth.unit,
-        driver: auth.driver,
-        gallons: Number(document.getElementById('fuelGallons').value || 0),
-        price_per_gallon: Number(document.getElementById('fuelPrice').value || 0),
-        total_amount: Number(document.getElementById('fuelTotal').value || 0),
-        station: String(document.getElementById('fuelStation').value || '').trim(),
-        location: String(document.getElementById('fuelLocation').value || '').trim(),
-        receipt_photo_base64: fuelReceiptBase64
-      }
-      msg.className = 'muted'
-      msg.textContent = 'Submitting…'
-      const d = await jsonFetch('/api/fuel/driver-expense', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      })
-      if (d && d.ok) {
-        msg.className = 'ok'
-        msg.textContent = 'Expense submitted'
-      } else {
-        msg.className = 'err'
-        msg.textContent = d.error || 'Could not submit expense.'
-      }
-    }
-
-    function calcLeaveDays() {
-      const start = document.getElementById('leaveStartDate').value
-      const end = document.getElementById('leaveEndDate').value
-      const out = document.getElementById('leaveDays')
-      if (!start || !end) { out.value = '0'; return }
-      const s = new Date(start + 'T00:00:00')
-      const e = new Date(end + 'T00:00:00')
-      const days = Math.floor((e - s) / 86400000) + 1
-      out.value = String(days > 0 ? days : 0)
-    }
-
-    async function loadLeaveRequests() {
-      const unit = encodeURIComponent(auth.unit || 'T120')
-      const host = document.getElementById('leaveRequestsList')
-      host.textContent = 'Loading…'
-      const d = await jsonFetch(`/api/drivers/leave-requests?unit=${unit}`)
-      const rows = Array.isArray(d.rows) ? d.rows : []
-      if (!rows.length) {
-        host.innerHTML = '<p class="muted" style="margin:0">No requests yet.</p>'
-        return
-      }
-      host.innerHTML = rows.map((r) => {
-        const start = String(r.start_date || '').slice(0,10)
-        const end = String(r.end_date || '').slice(0,10)
-        const type = r.leave_type || 'Other'
-        const status = r.status || 'Pending'
-        return `<div class="item-row">${start} to ${end} | ${type} | <strong>${status}</strong></div>`
-      }).join('')
-    }
-
-    async function submitLeaveRequest() {
-      const msg = document.getElementById('leaveMsg')
-      const body = {
-        unit: auth.unit,
-        driver: auth.driver,
-        start_date: document.getElementById('leaveStartDate').value,
-        end_date: document.getElementById('leaveEndDate').value,
-        leave_type: document.getElementById('leaveType').value,
-        notes: String(document.getElementById('leaveNotes').value || '').trim()
-      }
-      msg.className = 'muted'
-      msg.textContent = 'Submitting…'
-      const d = await jsonFetch('/api/drivers/leave-request', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      })
-      if (d && d.ok) {
-        msg.className = 'ok'
-        msg.textContent = 'Request submitted — pending approval'
-        await loadLeaveRequests()
-      } else {
-        msg.className = 'err'
-        msg.textContent = d.error || 'Could not submit request.'
-      }
-    }
-
-    function pretripRow(item, idx) {
-      if (item === 'Air pressure (PSI input)') {
-        return `<div class="item-row">
-          <div><strong>${item}</strong></div>
-          <input id="pretrip-psi-${idx}" type="number" min="0" placeholder="PSI" />
-          <label style="margin-top:8px">Notes</label>
-          <input id="pretrip-notes-${idx}" type="text" placeholder="Optional note" />
-        </div>`
-      }
-      if (item === 'All tires condition (Good/Low/Flat)') {
-        return `<div class="item-row">
-          <div><strong>${item}</strong></div>
-          <select id="pretrip-tires-${idx}">
-            <option value="Good">Good</option>
-            <option value="Low">Low</option>
-            <option value="Flat">Flat</option>
-          </select>
-          <label style="margin-top:8px">Notes</label>
-          <input id="pretrip-notes-${idx}" type="text" placeholder="Optional note" />
-        </div>`
-      }
-      return `<div class="item-row">
-        <div><strong>${item}</strong></div>
-        <div class="row" style="margin-top:8px;gap:14px;justify-content:flex-start">
-          <label style="margin:0;color:#e2e8f0;display:flex;align-items:center;gap:6px"><input type="radio" name="pretrip-${idx}" value="Pass" checked style="width:auto" /> Pass</label>
-          <label style="margin:0;color:#e2e8f0;display:flex;align-items:center;gap:6px"><input type="radio" name="pretrip-${idx}" value="Fail" style="width:auto" /> Fail</label>
-        </div>
-        <label style="margin-top:8px">Notes</label>
-        <input id="pretrip-notes-${idx}" type="text" placeholder="Optional note" />
-      </div>`
-    }
-
-    function renderPretripChecklist() {
-      const items = [
-        'Headlights', 'Taillights', 'Turn signals', 'Brake lights',
-        'Air pressure (PSI input)', 'Parking brake', 'Brake lines',
-        'All tires condition (Good/Low/Flat)', 'Spare tire',
-        'Oil level', 'Coolant', 'Fuel level',
-        'Mirrors', 'Seatbelt', 'Horn', 'Wipers',
-        'Registration', 'Insurance card', 'Medical card'
-      ]
-      const host = document.getElementById('pretripChecklistRows')
-      host.innerHTML = items.map((it, idx) => pretripRow(it, idx)).join('')
-      host.dataset.items = JSON.stringify(items)
-      bindPretripOverallCalc()
-      calcPretripOverall()
-    }
-
-    function calcPretripOverall() {
-      const host = document.getElementById('pretripChecklistRows')
-      const items = JSON.parse(host.dataset.items || '[]')
-      let overall = 'Pass'
-      items.forEach((item, idx) => {
-        if (item === 'All tires condition (Good/Low/Flat)') {
-          const v = document.getElementById(`pretrip-tires-${idx}`)?.value || 'Good'
-          if (v !== 'Good') overall = 'Fail'
-          return
-        }
-        if (item === 'Air pressure (PSI input)') {
-          const psi = Number(document.getElementById(`pretrip-psi-${idx}`)?.value || 0)
-          if (psi <= 0) overall = 'Fail'
-          return
-        }
-        const selected = document.querySelector(`input[name="pretrip-${idx}"]:checked`)
-        if (!selected || selected.value !== 'Pass') overall = 'Fail'
-      })
-      document.getElementById('pretripOverall').value = overall
-    }
-
-    function bindPretripOverallCalc() {
-      const host = document.getElementById('pretripChecklistRows')
-      host.querySelectorAll('input, select').forEach((el) => {
-        el.addEventListener('change', calcPretripOverall)
-        el.addEventListener('input', calcPretripOverall)
-      })
-    }
-
-    async function submitPretripInspection() {
-      const host = document.getElementById('pretripChecklistRows')
-      const items = JSON.parse(host.dataset.items || '[]')
-      const rows = items.map((item, idx) => {
-        if (item === 'Air pressure (PSI input)') {
-          return { item, value: Number(document.getElementById(`pretrip-psi-${idx}`).value || 0), notes: String(document.getElementById(`pretrip-notes-${idx}`).value || '').trim() }
-        }
-        if (item === 'All tires condition (Good/Low/Flat)') {
-          return { item, value: document.getElementById(`pretrip-tires-${idx}`).value, notes: String(document.getElementById(`pretrip-notes-${idx}`).value || '').trim() }
-        }
-        const selected = document.querySelector(`input[name="pretrip-${idx}"]:checked`)
-        return { item, value: selected ? selected.value : 'Fail', notes: String(document.getElementById(`pretrip-notes-${idx}`).value || '').trim() }
-      })
-
-      const msg = document.getElementById('pretripMsg')
-      const body = {
-        unit: auth.unit,
-        driver: auth.driver,
-        odometer_reading: Number(document.getElementById('pretripOdometer').value || 0),
-        checklist: rows,
-        overall_result: document.getElementById('pretripOverall').value || 'Fail',
-        driver_signature: String(document.getElementById('pretripSignature').value || '').trim()
-      }
-      msg.className = 'muted'
-      msg.textContent = 'Submitting…'
-      const d = await jsonFetch('/api/pre-trip/submit', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      })
-      if (d && d.ok) {
-        msg.className = 'ok'
-        msg.textContent = 'Inspection submitted'
-      } else {
-        msg.className = 'err'
-        msg.textContent = d.error || 'Could not submit inspection.'
-      }
-    }
-
-    function bindNewDriverScreens() {
-      const gallons = document.getElementById('fuelGallons')
-      const price = document.getElementById('fuelPrice')
-      if (gallons) gallons.addEventListener('input', updateFuelTotal)
-      if (price) price.addEventListener('input', updateFuelTotal)
-
-      const leaveStart = document.getElementById('leaveStartDate')
-      const leaveEnd = document.getElementById('leaveEndDate')
-      if (leaveStart) leaveStart.addEventListener('change', calcLeaveDays)
-      if (leaveEnd) leaveEnd.addEventListener('change', calcLeaveDays)
-
-      const fuelBtn = document.getElementById('submitFuelBtn')
-      if (fuelBtn) fuelBtn.addEventListener('click', submitFuelExpense)
-
-      const leaveBtn = document.getElementById('submitLeaveBtn')
-      if (leaveBtn) leaveBtn.addEventListener('click', submitLeaveRequest)
-
-      const pretripBtn = document.getElementById('submitPretripBtn')
-      if (pretripBtn) pretripBtn.addEventListener('click', submitPretripInspection)
-
-      bindFuelReceiptThumb()
-      renderPretripChecklist()
-      autoFillFuelLocation()
-    }
-
-    const _showScreen = showScreen
-    showScreen = function(id) {
-      _showScreen(id)
-      if (id === 'screen-fuel') {
-        document.getElementById('fuelUnit').value = auth.unit || ''
-        document.getElementById('fuelDriver').value = auth.driver || ''
-        autoFillFuelLocation()
-      }
-      if (id === 'screen-leave') loadLeaveRequests()
-      if (id === 'screen-pretrip') calcPretripOverall()
-    }
-
-    bindNewDriverScreens()
-  </script>
-
 </body>
 </html>
-# deploy Fri Apr 24 23:30:15 CDT 2026
