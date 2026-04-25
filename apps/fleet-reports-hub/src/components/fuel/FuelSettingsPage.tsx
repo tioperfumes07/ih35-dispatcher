@@ -57,11 +57,11 @@ export function FuelSettingsPage() {
         setTimeout(()=>setStatus(p=>({...p,[fuelType]:""})),3000);
       } else {
         setStatus(p=>({...p,[fuelType]:"error"}));
-        showToast("\u274c Error saving","error");
+        showToast("❌ Error saving","error");
       }
     } catch {
       setStatus(p=>({...p,[fuelType]:"error"}));
-      showToast("\u274c Error saving","error");
+      showToast("❌ Error saving","error");
     }
   };
 
@@ -69,7 +69,19 @@ export function FuelSettingsPage() {
     <div style={{marginBottom:"24px",paddingBottom:"24px",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>
       <div style={{fontWeight:600,fontSize:"15px",color:"#e2e8f0",marginBottom:"12px"}}>{title}</div>
       <div style={{marginBottom:"8px"}}>
-        <label style={{fontSize:"12px",color:"#8892a4"}}>QBO Expense Account</label>
+        <div style={{display:"flex",gap:"12px",marginBottom:"8px"}}>
+        <label style={{fontSize:"12px",color:"#8892a4",cursor:"pointer"}}>
+          <input type="radio" name={"mode_"+fuelType} value="account" 
+            defaultChecked style={{marginRight:"4px"}}/>
+          Expense Account
+        </label>
+        <label style={{fontSize:"12px",color:"#8892a4",cursor:"pointer"}}>
+          <input type="radio" name={"mode_"+fuelType} value="item"
+            style={{marginRight:"4px"}}/>
+          Item/Product
+        </label>
+      </div>
+      <label style={{fontSize:"12px",color:"#8892a4"}}>QBO Account / Category</label>
         <input type="text" list={"accts_"+fuelType} value={account}
           onChange={e=>setAccount(e.target.value)} style={inputStyle}
           placeholder="Type to search accounts..." />
@@ -91,8 +103,8 @@ export function FuelSettingsPage() {
                 borderRadius:"6px",fontSize:"13px",fontWeight:500,cursor:"pointer"}}>
         Save
       </button>
-      {status[fuelType]==="saved" && <span style={{marginLeft:"12px",color:"#22c55e",fontSize:"13px"}}>\u2705 Saved</span>}
-      {status[fuelType]==="error" && <span style={{marginLeft:"12px",color:"#ef4444",fontSize:"13px"}}>\u274c Error</span>}
+      {status[fuelType]==="saved" && <span style={{marginLeft:"12px",color:"#22c55e",fontSize:"13px"}}>✅ Saved</span>}
+      {status[fuelType]==="error" && <span style={{marginLeft:"12px",color:"#ef4444",fontSize:"13px"}}>❌ Error</span>}
     </div>
   );
 
@@ -102,13 +114,13 @@ export function FuelSettingsPage() {
       <p style={{color:"#8892a4",fontSize:"13px",marginBottom:"24px"}}>
         Map driver fuel types to QuickBooks accounts/items for auto-posting.
       </p>
-      <Row title="\u26fd Truck Diesel" fuelType="truck_diesel"
+      <Row title="⛽ Truck Diesel" fuelType="truck_diesel"
         account={truckAccount} setAccount={setTruckAccount}
         item={truckItem} setItem={setTruckItem} />
-      <Row title="\u2744\ufe0f Reefer Diesel" fuelType="reefer_diesel"
+      <Row title="❄️ Reefer Diesel" fuelType="reefer_diesel"
         account={reeferAccount} setAccount={setReeferAccount}
         item={reeferItem} setItem={setReeferItem} />
-      <Row title="\U0001f7e6 DEF" fuelType="def"
+      <Row title="🟦 DEF" fuelType="def"
         account={defAccount} setAccount={setDefAccount}
         item={defItem} setItem={setDefItem} />
     </div>
