@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchDriverProfiles, type DriverProfile, upsertDriverProfile } from '../../lib/fleetRegistriesApi'
+import { fetchDriverProfiles, patchDriversBulk, type DriverProfile, upsertDriverProfile } from '../../lib/fleetRegistriesApi'
+import { BulkActionBar } from '../ui/BulkActionBar'
 
 type Props = {
   onViewSchedule: (unitNumber: string) => void
@@ -49,13 +50,19 @@ function emptyDraft(): Partial<DriverTableRow> {
 }
 
 function fallbackUnitsRows(): DriverTableRow[] {
-  const placeholders = Array.from({length:58}, (_,i) => ({
-    id: -(i+1),
-    unit_number: `T${120+i}`,
+  const placeholders = Array.from({ length: 58 }, (_, i) => ({
+    id: -(i + 1),
+    unit_number: `T${120 + i}`,
     full_name: 'Vacante',
-    team: '', manager: '', cdl_number: '',
-    cdl_expiry: null, medical_expiry: null,
-    phone: '', email: '', status: 'Vacante', notes: ''
+    team: '',
+    manager: '',
+    cdl_number: '',
+    cdl_expiry: null,
+    medical_expiry: null,
+    phone: '',
+    email: '',
+    status: 'Vacante',
+    notes: '',
   }))
   return placeholders.map((r) => ({ ...r, placeholder: true }))
 }
@@ -86,12 +93,35 @@ async function fetchFleetUnitsRows(): Promise<DriverTableRow[]> {
   }
 }
 
+function exportSelectedCsv(rows: DriverTableRow[]) {
+  const headers = ['Unit', 'Full Name', 'Team', 'Manager', 'CDL #', 'CDL Expiry', 'Medical Expiry', 'Phone', 'Status']
+  const esc = (v: unknown) => {
+    const text = String(v ?? '')
+    if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`
+    return text
+  }
+  const body = rows
+    .map((r) => [r.unit_number, r.full_name || '', r.team || '', r.manager || '', r.cdl_number || '', r.cdl_expiry || '', r.medical_expiry || '', r.phone || '', r.status || ''].map(esc).join(','))
+    .join('\n')
+  const csv = `${headers.map(esc).join(',')}\n${body}`
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const href = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = href
+  a.download = 'driver-profiles-selected.csv'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(href)
+}
+
 export function DriverProfilesPage({ onViewSchedule }: Props) {
   const [rows, setRows] = useState<DriverTableRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [draft, setDraft] = useState<Partial<DriverTableRow> | null>(null)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
 
   const load = async () => {
     setLoading(true)
@@ -137,6 +167,20 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
     if (!q) return rows
     return rows.filter((r) => `${r.unit_number || ''} ${r.full_name || ''}`.toLowerCase().includes(q))
   }, [rows, search])
+
+  const selectedRows = useMemo(() => filtered.filter((r) => selected.has(r.id)), [filtered, selected])
+
+  useEffect(() => {
+    setSelected((prev) => {
+      if (!prev.size) return prev
+      const allowed = new Set(filtered.map((r) => r.id))
+      const next = new Set<number>()
+      prev.forEach((id) => {
+        if (allowed.has(id)) next.add(id)
+      })
+      return next.size === prev.size ? prev : next
+    })
+  }, [filtered])
 
   const save = async () => {
     if (!draft?.unit_number) {
@@ -187,6 +231,13 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
         <table>
           <thead>
             <tr>
+              <th style={{ width: 40, padding: '8px' }}>
+                <input
+                  type="checkbox"
+                  checked={filtered.length > 0 && selected.size === filtered.length}
+                  onChange={(e) => setSelected(e.target.checked ? new Set(filtered.map((r) => r.id)) : new Set())}
+                />
+              </th>
               <th>Unit</th><th>Full Name</th><th>Team</th><th>Manager</th><th>CDL #</th><th>CDL Expiry</th><th>Medical Expiry</th><th>Phone</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
@@ -203,9 +254,27 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
                     opacity: r.placeholder ? 0.5 : 1,
                     fontStyle: r.placeholder ? 'italic' : 'normal',
                     color: r.placeholder ? 'var(--color-text-label)' : undefined,
-                    background: critical ? 'rgba(239,68,68,.12)' : warning ? 'rgba(234,179,8,.12)' : undefined,
+                    background: selected.has(r.id)
+                      ? 'rgba(59,130,246,0.1)'
+                      : critical
+                        ? 'rgba(239,68,68,.12)'
+                        : warning
+                          ? 'rgba(234,179,8,.12)'
+                          : undefined,
                   }}
                 >
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(r.id)}
+                      onChange={(e) => {
+                        const next = new Set(selected)
+                        if (e.target.checked) next.add(r.id)
+                        else next.delete(r.id)
+                        setSelected(next)
+                      }}
+                    />
+                  </td>
                   <td title={r.make || r.model ? `${r.make || ''} ${r.model || ''}`.trim() : ''}>{r.unit_number || '—'}</td>
                   <td>{r.full_name || 'Vacante'}</td>
                   <td>{r.team || '—'}</td>
@@ -225,11 +294,43 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
               )
             })}
             {!filtered.length ? (
-              <tr><td colSpan={10} className="muted">No drivers found.</td></tr>
+              <tr><td colSpan={11} className="muted">No drivers found.</td></tr>
             ) : null}
           </tbody>
         </table>
       </div>
+
+      <BulkActionBar
+        selectedCount={selectedRows.length}
+        totalCount={filtered.length}
+        onSelectAll={() => setSelected(new Set(filtered.map((r) => r.id)))}
+        onClearSelection={() => setSelected(new Set())}
+        actions={[
+          {
+            label: 'Set Active',
+            onClick: () => {
+              void (async () => {
+                await patchDriversBulk(selectedRows.map((row) => row.id), 'active')
+                await load()
+              })()
+            },
+          },
+          {
+            label: 'Set Inactive',
+            variant: 'warning',
+            onClick: () => {
+              void (async () => {
+                await patchDriversBulk(selectedRows.map((row) => row.id), 'inactive')
+                await load()
+              })()
+            },
+          },
+          {
+            label: 'Export selected',
+            onClick: () => exportSelectedCsv(selectedRows),
+          },
+        ]}
+      />
 
       {draft ? (
         <div className="maint-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setDraft(null)}>
@@ -265,8 +366,8 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
                   value={String(draft.status || 'Active')}
                   onChange={(e) => setDraft((prev) => ({ ...(prev || {}), status: e.target.value }))}
                 >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>{s}</option>
+                  {STATUSES.map((status) => (
+                    <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
               </label>

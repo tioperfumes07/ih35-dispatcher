@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { BulkActionBar } from '../ui/BulkActionBar'
 
 type ChecklistItem = {
   id?: number
@@ -20,6 +21,25 @@ type SubmissionRow = {
 
 const DEFAULT_UNITS = Array.from({ length: 58 }, (_, i) => `T${120 + i}`)
 
+function exportCsv(filename: string, headers: string[], rows: Array<Array<string | number>>) {
+  const esc = (v: unknown) => {
+    const text = String(v ?? '')
+    if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`
+    return text
+  }
+  const body = rows.map((r) => r.map(esc).join(',')).join('\n')
+  const csv = `${headers.map(esc).join(',')}\n${body}`
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const href = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = href
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(href)
+}
+
 export function EquipmentPage() {
   const [unit, setUnit] = useState('T120')
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
@@ -27,6 +47,8 @@ export function EquipmentPage() {
   const [itemName, setItemName] = useState('')
   const [itemQty, setItemQty] = useState('1')
   const [message, setMessage] = useState('')
+  const [selectedChecklist, setSelectedChecklist] = useState<Set<string>>(new Set())
+  const [selectedSubmissions, setSelectedSubmissions] = useState<Set<number>>(new Set())
 
   const loadChecklist = async (u: string) => {
     const r = await fetch(`/api/equipment/checklist?unit=${encodeURIComponent(u)}`)
@@ -54,6 +76,16 @@ export function EquipmentPage() {
       return rows.some((i) => String(i.status || '').toLowerCase() === 'missing')
     })
   }, [submissions])
+
+  const selectedChecklistRows = useMemo(
+    () => checklist.filter((it, i) => selectedChecklist.has(`${it.item_name}-${i}`)),
+    [checklist, selectedChecklist],
+  )
+
+  const selectedSubmissionRows = useMemo(
+    () => submissions.filter((row) => selectedSubmissions.has(row.id)),
+    [submissions, selectedSubmissions],
+  )
 
   const addAssignment = () => {
     if (!itemName.trim()) return
@@ -95,21 +127,66 @@ export function EquipmentPage() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>Item</th><th>Qty</th><th>Category</th><th>Status</th></tr>
+              <tr>
+                <th style={{ width: 40, padding: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={checklist.length > 0 && selectedChecklist.size === checklist.length}
+                    onChange={(e) =>
+                      setSelectedChecklist(
+                        e.target.checked ? new Set(checklist.map((it, i) => `${it.item_name}-${i}`)) : new Set(),
+                      )
+                    }
+                  />
+                </th>
+                <th>Item</th><th>Qty</th><th>Category</th><th>Status</th>
+              </tr>
             </thead>
             <tbody>
-              {checklist.map((it, i) => (
-                <tr key={`${it.item_name}-${i}`}>
-                  <td>{it.item_name}</td>
-                  <td>{it.quantity || 1}</td>
-                  <td>{it.category || '—'}</td>
-                  <td>{it.status || 'active'}</td>
-                </tr>
-              ))}
-              {!checklist.length ? <tr><td colSpan={4} className="muted">No items for this unit.</td></tr> : null}
+              {checklist.map((it, i) => {
+                const rowId = `${it.item_name}-${i}`
+                return (
+                  <tr key={rowId} style={{ background: selectedChecklist.has(rowId) ? 'rgba(59,130,246,0.1)' : undefined }}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedChecklist.has(rowId)}
+                        onChange={(e) => {
+                          const next = new Set(selectedChecklist)
+                          if (e.target.checked) next.add(rowId)
+                          else next.delete(rowId)
+                          setSelectedChecklist(next)
+                        }}
+                      />
+                    </td>
+                    <td>{it.item_name}</td>
+                    <td>{it.quantity || 1}</td>
+                    <td>{it.category || '—'}</td>
+                    <td>{it.status || 'active'}</td>
+                  </tr>
+                )
+              })}
+              {!checklist.length ? <tr><td colSpan={5} className="muted">No items for this unit.</td></tr> : null}
             </tbody>
           </table>
         </div>
+        <BulkActionBar
+          selectedCount={selectedChecklistRows.length}
+          totalCount={checklist.length}
+          onSelectAll={() => setSelectedChecklist(new Set(checklist.map((it, i) => `${it.item_name}-${i}`)))}
+          onClearSelection={() => setSelectedChecklist(new Set())}
+          actions={[
+            {
+              label: 'Export selected',
+              onClick: () =>
+                exportCsv(
+                  'equipment-inventory-selected.csv',
+                  ['Item', 'Qty', 'Category', 'Status'],
+                  selectedChecklistRows.map((row) => [row.item_name, row.quantity || 1, row.category || '', row.status || 'active']),
+                ),
+            },
+          ]}
+        />
       </div>
 
       <div className="card" style={{ padding: 10 }}>
@@ -117,22 +194,68 @@ export function EquipmentPage() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>ID</th><th>Unit</th><th>Driver</th><th>Submitted</th><th>All confirmed</th></tr>
+              <tr>
+                <th style={{ width: 40, padding: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={submissions.length > 0 && selectedSubmissions.size === submissions.length}
+                    onChange={(e) =>
+                      setSelectedSubmissions(e.target.checked ? new Set(submissions.map((row) => row.id)) : new Set())
+                    }
+                  />
+                </th>
+                <th>ID</th><th>Unit</th><th>Driver</th><th>Submitted</th><th>All confirmed</th>
+              </tr>
             </thead>
             <tbody>
-              {submissions.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.id}</td>
-                  <td>{s.unit_number}</td>
-                  <td>{s.driver_name || '—'}</td>
-                  <td>{s.submitted_at ? new Date(s.submitted_at).toLocaleString() : '—'}</td>
-                  <td>{s.all_confirmed ? 'Yes' : 'No'}</td>
+              {submissions.map((row) => (
+                <tr key={row.id} style={{ background: selectedSubmissions.has(row.id) ? 'rgba(59,130,246,0.1)' : undefined }}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedSubmissions.has(row.id)}
+                      onChange={(e) => {
+                        const next = new Set(selectedSubmissions)
+                        if (e.target.checked) next.add(row.id)
+                        else next.delete(row.id)
+                        setSelectedSubmissions(next)
+                      }}
+                    />
+                  </td>
+                  <td>{row.id}</td>
+                  <td>{row.unit_number}</td>
+                  <td>{row.driver_name || '—'}</td>
+                  <td>{row.submitted_at ? new Date(row.submitted_at).toLocaleString() : '—'}</td>
+                  <td>{row.all_confirmed ? 'Yes' : 'No'}</td>
                 </tr>
               ))}
-              {!submissions.length ? <tr><td colSpan={5} className="muted">No submissions yet.</td></tr> : null}
+              {!submissions.length ? <tr><td colSpan={6} className="muted">No submissions yet.</td></tr> : null}
             </tbody>
           </table>
         </div>
+        <BulkActionBar
+          selectedCount={selectedSubmissionRows.length}
+          totalCount={submissions.length}
+          onSelectAll={() => setSelectedSubmissions(new Set(submissions.map((row) => row.id)))}
+          onClearSelection={() => setSelectedSubmissions(new Set())}
+          actions={[
+            {
+              label: 'Export selected',
+              onClick: () =>
+                exportCsv(
+                  'equipment-submissions-selected.csv',
+                  ['ID', 'Unit', 'Driver', 'Submitted', 'All confirmed'],
+                  selectedSubmissionRows.map((row) => [
+                    row.id,
+                    row.unit_number,
+                    row.driver_name,
+                    row.submitted_at,
+                    row.all_confirmed ? 'Yes' : 'No',
+                  ]),
+                ),
+            },
+          ]}
+        />
       </div>
 
       <div className="card" style={{ padding: 10 }}>

@@ -339,6 +339,20 @@ export function VendorsDatabase({ onCloseList }: { onCloseList: () => void }) {
         exportFilename="VendorList"
         onCloseList={onCloseList}
         onAddNew={openAdd}
+        bulkActions={[
+          {
+            label: 'Mark reviewed',
+            onClick: async (selectedRows) => {
+              await Promise.all(
+                selectedRows.map((row) =>
+                  patchVendorLocal((row as VendorLocalRow).id, { status: 'active', payment_terms: (row as VendorLocalRow).payment_terms || 'reviewed' }),
+                ),
+              )
+              setSyncMsg(`Marked ${selectedRows.length} vendor${selectedRows.length === 1 ? '' : 's'} as reviewed.`)
+              await load()
+            },
+          },
+        ]}
         toolbarExtra={
           <>
             <button type="button" className="btn sm ghost shared-list__head-btn" onClick={() => void load()}>

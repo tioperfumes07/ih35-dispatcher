@@ -8,6 +8,7 @@ import {
   deleteAsset,
   fetchAssets,
   patchAsset,
+  patchFleetAssetsBulk,
   syncAssetsQboClasses,
   syncAssetsSamsara,
 } from '../../lib/fleetRegistriesApi'
@@ -414,6 +415,29 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         exportFilename="VehiclesDatabase"
         onCloseList={onCloseList}
         onAddNew={openAdd}
+        bulkActions={[
+          {
+            label: 'Set Active',
+            onClick: async (selectedRows) => {
+              await patchFleetAssetsBulk(
+                selectedRows.map((row) => Number((row as AssetRow).id)).filter((id) => Number.isFinite(id)),
+                'active',
+              )
+              await load()
+            },
+          },
+          {
+            label: 'Set Inactive',
+            variant: 'warning',
+            onClick: async (selectedRows) => {
+              await patchFleetAssetsBulk(
+                selectedRows.map((row) => Number((row as AssetRow).id)).filter((id) => Number.isFinite(id)),
+                'inactive',
+              )
+              await load()
+            },
+          },
+        ]}
         toolbarExtra={
           <>
             <button type="button" className="btn sm ghost shared-list__head-btn" onClick={() => void load()}>

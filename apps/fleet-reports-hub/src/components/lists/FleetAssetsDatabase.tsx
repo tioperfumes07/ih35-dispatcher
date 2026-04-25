@@ -5,6 +5,7 @@ import {
   type FleetAssetProfile,
   type FleetAssetProfilePatch,
 } from '../../lib/fleetRegistriesApi'
+import { BulkActionBar } from '../ui/BulkActionBar'
 
 type Props = { onCloseList: () => void }
 
@@ -44,6 +45,42 @@ function emptyPatchFrom(asset: FleetAssetProfile | null): FleetAssetProfilePatch
   }
 }
 
+function exportSelectedAsCsv(rows: FleetAssetProfile[]) {
+  const headers = ['Unit#', 'Make', 'Model', 'Year', 'VIN', 'License Plate', 'Type', 'Status', 'Notes']
+  const esc = (v: unknown) => {
+    const text = String(v ?? '')
+    if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`
+    return text
+  }
+  const body = rows
+    .map((r) =>
+      [
+        r.unit_number,
+        r.make || '',
+        r.model || '',
+        r.year ?? '',
+        r.vin || '',
+        r.licensePlate || '',
+        r.asset_type,
+        r.status,
+        r.notes || '',
+      ]
+        .map(esc)
+        .join(','),
+    )
+    .join('\n')
+  const csv = `${headers.map(esc).join(',')}\n${body}`
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const href = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = href
+  a.download = 'fleet-assets-selected.csv'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(href)
+}
+
 function isTruck(unit: string): boolean {
   const m = String(unit || '').trim().toUpperCase().match(/^T(\d{3})$/)
   if (!m) return false
@@ -56,6 +93,7 @@ export function FleetAssetsDatabase({ onCloseList }: Props) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterKey>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [draft, setDraft] = useState<FleetAssetProfilePatch>({})
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -118,6 +156,23 @@ export function FleetAssetsDatabase({ onCloseList }: Props) {
     () => rows.find((r) => r.samsara_id === selectedId) || null,
     [rows, selectedId],
   )
+  const selectedFilteredRows = useMemo(
+    () => filtered.filter((r) => selectedRows.has(r.samsara_id)),
+    [filtered, selectedRows],
+  )
+
+  useEffect(() => {
+    setSelectedRows((prev) => {
+      if (!prev.size) return prev
+      const allowed = new Set(filtered.map((r) => r.samsara_id))
+      const next = new Set<string>()
+      prev.forEach((id) => {
+        if (allowed.has(id)) next.add(id)
+      })
+      return next.size === prev.size ? prev : next
+    })
+  }, [filtered])
+
 
   useEffect(() => {
     setDraft(emptyPatchFrom(selected))
@@ -202,10 +257,20 @@ export function FleetAssetsDatabase({ onCloseList }: Props) {
       ) : null}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(620px, 1fr) 360px', gap: 12 }}>
-        <div className="table-wrap" style={{ maxHeight: 640, overflow: 'auto' }}>
+        <div>
+          <div className="table-wrap" style={{ maxHeight: 640, overflow: 'auto' }}>
           <table>
             <thead>
               <tr>
+                <th style={{ width: 40, padding: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && selectedRows.size === filtered.length}
+                    onChange={(e) =>
+                      setSelectedRows(e.target.checked ? new Set(filtered.map((r) => r.samsara_id)) : new Set())
+                    }
+                  />
+                </th>
                 <th>Unit#</th>
                 <th>Make</th>
                 <th>Model</th>
@@ -224,8 +289,28 @@ export function FleetAssetsDatabase({ onCloseList }: Props) {
                   <tr
                     key={r.samsara_id}
                     onClick={() => setSelectedId(r.samsara_id)}
-                    style={{ cursor: 'pointer', background: active ? 'var(--surface-hover, rgba(37,99,235,.07))' : undefined }}
+                    style={{
+                      cursor: 'pointer',
+                      background: selectedRows.has(r.samsara_id)
+                        ? 'rgba(59,130,246,0.1)'
+                        : active
+                          ? 'var(--surface-hover, rgba(37,99,235,.07))'
+                          : undefined,
+                    }}
                   >
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.has(r.samsara_id)}
+                        onChange={(e) => {
+                          const next = new Set(selectedRows)
+                          if (e.target.checked) next.add(r.samsara_id)
+                          else next.delete(r.samsara_id)
+                          setSelectedRows(next)
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </td>
                     <td>{r.unit_number}</td>
                     <td>{r.make || '—'}</td>
                     <td>{r.model || '—'}</td>
@@ -240,6 +325,38 @@ export function FleetAssetsDatabase({ onCloseList }: Props) {
               })}
             </tbody>
           </table>
+          </div>
+          <BulkActionBar
+            selectedCount={selectedFilteredRows.length}
+            totalCount={filtered.length}
+            onSelectAll={() => setSelectedRows(new Set(filtered.map((r) => r.samsara_id)))}
+            onClearSelection={() => setSelectedRows(new Set())}
+            actions={[
+              {
+                label: 'Set Active',
+                onClick: () => {
+                  void (async () => {
+                    await Promise.all(selectedFilteredRows.map((row) => updateFleetAssetProfile(row.samsara_id, { status: 'Active' })))
+                    await load()
+                  })()
+                },
+              },
+              {
+                label: 'Set Inactive',
+                variant: 'warning',
+                onClick: () => {
+                  void (async () => {
+                    await Promise.all(selectedFilteredRows.map((row) => updateFleetAssetProfile(row.samsara_id, { status: 'Out of Service' })))
+                    await load()
+                  })()
+                },
+              },
+              {
+                label: 'Export selected',
+                onClick: () => exportSelectedAsCsv(selectedFilteredRows),
+              },
+            ]}
+          />
         </div>
 
         <aside className="panel" style={{ alignSelf: 'start' }}>

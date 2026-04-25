@@ -10,14 +10,21 @@ import { useColumnResize } from '../../hooks/useColumnResize'
 import { useTableTabOrder } from '../../hooks/useTableTabOrder'
 import { exportJsonRowsToXlsx } from '../../lib/tableExportXlsx'
 import { TableResizeHintFooter } from '../table/TableResizeHintFooter'
+import { BulkActionBar, type BulkActionBarAction } from '../ui/BulkActionBar'
 
 export type SharedListColumn<T extends Record<string, unknown>> = {
   id: string
   label: string
-  /** Default column width in px (excludes drag column). */
   width: number
   render: (row: T) => ReactNode
   className?: string
+}
+
+export type SharedListBulkAction<T extends Record<string, unknown>> = {
+  label: string
+  icon?: string
+  variant?: 'danger' | 'warning' | 'default'
+  onClick: (rows: T[]) => void | Promise<void>
 }
 
 type Props<T extends Record<string, unknown>> = {
@@ -35,14 +42,35 @@ type Props<T extends Record<string, unknown>> = {
   onDelete?: (row: T) => void
   onActivate?: (row: T) => void
   onDeactivate?: (row: T) => void
-  /** Optional: render inputs in footer add-row; parent handles submit via onAddRow */
   addRowFields?: ReactNode
   onExportExcel?: () => void
-  /** Extra controls rendered in the list header toolbar (e.g. sync actions). */
   toolbarExtra?: ReactNode
+  bulkActions?: SharedListBulkAction<T>[]
 }
 
 const PAGE_OPTS = [10, 25, 50] as const
+
+function exportRowsToCsv<T extends Record<string, unknown>>(rows: T[], columns: SharedListColumn<T>[], filename: string) {
+  const esc = (value: unknown) => {
+    const text = String(value ?? '')
+    if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`
+    return text
+  }
+  const header = columns.map((c) => esc(c.label)).join(',')
+  const body = rows
+    .map((row) => columns.map((c) => esc(c.render(row))).join(','))
+    .join('\n')
+  const csv = `${header}\n${body}`
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const href = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = href
+  a.download = `${filename}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(href)
+}
 
 export function SharedListTable<T extends Record<string, unknown>>({
   title,
@@ -62,6 +90,7 @@ export function SharedListTable<T extends Record<string, unknown>>({
   addRowFields,
   onExportExcel,
   toolbarExtra,
+  bulkActions = [],
 }: Props<T>) {
   const uid = useId()
   const [q, setQ] = useState('')
@@ -69,13 +98,14 @@ export function SharedListTable<T extends Record<string, unknown>>({
   const [pageSize, setPageSize] = useState<(typeof PAGE_OPTS)[number]>(25)
   const [page, setPage] = useState(1)
   const [order, setOrder] = useState<T[]>(() => [...data])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     setOrder([...data])
   }, [data])
 
   const initialWidths = useMemo(
-    () => [36, ...columns.map((c) => c.width), 132],
+    () => [36, 40, ...columns.map((c) => c.width), 132],
     [columns],
   )
   const col = useColumnResize(initialWidths)
@@ -95,6 +125,27 @@ export function SharedListTable<T extends Record<string, unknown>>({
       return Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(qq))
     })
   }, [order, q, status, searchKeys])
+
+  const filteredKeySet = useMemo(() => new Set(filtered.map((row) => rowKey(row))), [filtered, rowKey])
+  const selectedCount = useMemo(() => {
+    let count = 0
+    selected.forEach((id) => {
+      if (filteredKeySet.has(id)) count += 1
+    })
+    return count
+  }, [filteredKeySet, selected])
+
+  const selectedRows = useMemo(() => filtered.filter((row) => selected.has(rowKey(row))), [filtered, rowKey, selected])
+
+  useEffect(() => {
+    setSelected((prev) => {
+      if (!prev.size) return prev
+      const next = new Set<string>()
+      for (const id of prev) if (filteredKeySet.has(id)) next.add(id)
+      if (next.size === prev.size) return prev
+      return next
+    })
+  }, [filteredKeySet])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const pageSafe = Math.min(page, pageCount)
@@ -141,6 +192,38 @@ export function SharedListTable<T extends Record<string, unknown>>({
     })
     void exportJsonRowsToXlsx(rows, exportFilename, 'Lines')
   }, [columns, exportFilename, filtered])
+
+  const toggleRow = useCallback((id: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+
+  const selectAllFiltered = useCallback(() => {
+    setSelected(new Set(filtered.map((row) => rowKey(row))))
+  }, [filtered, rowKey])
+
+  const clearSelection = useCallback(() => setSelected(new Set()), [])
+
+  const resolvedBulkActions = useMemo<BulkActionBarAction[]>(() => {
+    const provided = bulkActions.map((action) => ({
+      label: action.label,
+      icon: action.icon,
+      variant: action.variant,
+      onClick: () => void action.onClick(selectedRows),
+    }))
+    return [
+      ...provided,
+      {
+        label: 'Export selected',
+        icon: '⬇',
+        onClick: () => exportRowsToCsv(selectedRows, columns, `${exportFilename}-selected`),
+      },
+    ]
+  }, [bulkActions, columns, exportFilename, selectedRows])
 
   return (
     <div className="shared-list">
@@ -204,6 +287,13 @@ export function SharedListTable<T extends Record<string, unknown>>({
           <thead>
             <tr>
               <th className="shared-list__th shared-list__th--drag" aria-label="Reorder" />
+              <th className="shared-list__th" aria-label="Select all">
+                <input
+                  type="checkbox"
+                  checked={filtered.length > 0 && selectedCount === filtered.length}
+                  onChange={(e) => (e.target.checked ? selectAllFiltered() : clearSelection())}
+                />
+              </th>
               {columns.map((c, i) => (
                 <th
                   key={c.id}
@@ -214,7 +304,7 @@ export function SharedListTable<T extends Record<string, unknown>>({
                     <span
                       className="fr-col-resize"
                       role="presentation"
-                      onMouseDown={col.onResizeMouseDown(i + 1)}
+                      onMouseDown={col.onResizeMouseDown(i + 2)}
                     />
                   ) : null}
                 </th>
@@ -224,12 +314,15 @@ export function SharedListTable<T extends Record<string, unknown>>({
           </thead>
           <tbody>
             {slice.map((row, i) => {
+              const id = rowKey(row)
+              const isSelected = selected.has(id)
               return (
                 <tr
-                  key={rowKey(row)}
+                  key={id}
                   className="shared-list__tr"
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={onDropRow(i)}
+                  style={{ backgroundColor: isSelected ? 'rgba(59,130,246,0.1)' : 'transparent' }}
                 >
                   <td className="shared-list__drag">
                     <span
@@ -240,6 +333,13 @@ export function SharedListTable<T extends Record<string, unknown>>({
                     >
                       ⠿
                     </span>
+                  </td>
+                  <td className="shared-list__td">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => toggleRow(id, e.target.checked)}
+                    />
                   </td>
                   {columns.map((c) => (
                     <td key={c.id} className={`shared-list__td ${c.className ?? ''}`.trim()}>
@@ -281,7 +381,7 @@ export function SharedListTable<T extends Record<string, unknown>>({
             })}
             {slice.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 2} className="empty-cell">
+                <td colSpan={columns.length + 3} className="empty-cell">
                   No rows match the current search/filter.
                 </td>
               </tr>
@@ -289,6 +389,15 @@ export function SharedListTable<T extends Record<string, unknown>>({
           </tbody>
         </table>
       </div>
+
+      <BulkActionBar
+        selectedCount={selectedCount}
+        totalCount={filtered.length}
+        onSelectAll={selectAllFiltered}
+        onClearSelection={clearSelection}
+        actions={resolvedBulkActions}
+      />
+
       <TableResizeHintFooter />
 
       {addRowFields ? <div className="shared-list__addrow">{addRowFields}</div> : null}

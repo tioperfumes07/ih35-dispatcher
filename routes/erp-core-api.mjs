@@ -1139,6 +1139,52 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
 
+
+  app.patch('/api/fleet/assets/bulk', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
+      const statusRaw = String(req.body?.status || '').trim().toLowerCase();
+      if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required' });
+      if (statusRaw !== 'active' && statusRaw !== 'inactive') {
+        return res.status(400).json({ ok: false, error: "status must be 'active' or 'inactive'" });
+      }
+      const mappedStatus = statusRaw === 'active' ? 'Active' : 'Out of Service';
+      const { rowCount } = await dbQuery(
+        `UPDATE fleet_assets
+           SET status = $2, updated_at = now()
+         WHERE id = ANY($1::int[])`,
+        [ids, mappedStatus]
+      );
+      return res.json({ ok: true, updated: Number(rowCount || 0) });
+    } catch (e) {
+      logError('PATCH /api/fleet/assets/bulk', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.patch('/api/drivers/bulk', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
+      const statusRaw = String(req.body?.status || '').trim().toLowerCase();
+      if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required' });
+      if (statusRaw !== 'active' && statusRaw !== 'inactive') {
+        return res.status(400).json({ ok: false, error: "status must be 'active' or 'inactive'" });
+      }
+      const { rowCount } = await dbQuery(
+        `UPDATE drivers
+           SET status = $2, updated_at = now()
+         WHERE id = ANY($1::int[])`,
+        [ids, statusRaw]
+      );
+      return res.json({ ok: true, updated: Number(rowCount || 0) });
+    } catch (e) {
+      logError('PATCH /api/drivers/bulk', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
   app.get('/api/drivers/profiles', async (_req, res) => {
     try {
       if (!getPool()) return res.json({ ok: true, drivers: [] });
@@ -1417,6 +1463,24 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('POST /api/damage/reports/:id/acknowledge', e);
       res.json({ ok: false });
+    }
+  });
+
+
+  app.post('/api/damage/reports/bulk-acknowledge', async (req, res) => {
+    try {
+      const pool = getPool();
+      if (!pool) return res.json({ ok: true, updated: 0 });
+      const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
+      if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required', updated: 0 });
+      const { rowCount } = await dbQuery(
+        "UPDATE damage_reports SET status='acknowledged' WHERE id = ANY($1::int[])",
+        [ids]
+      );
+      return res.json({ ok: true, updated: Number(rowCount || 0) });
+    } catch (e) {
+      logError('POST /api/damage/reports/bulk-acknowledge', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), updated: 0 });
     }
   });
 
@@ -2045,6 +2109,89 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('POST /api/drivers/leave-request/:id/deny', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+
+  app.post('/api/drivers/leave-requests/bulk-approve', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureDriverSchedulerTables();
+      const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
+      if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required', updated: 0 });
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS leave_requests (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          start_date DATE,
+          end_date DATE,
+          leave_type TEXT,
+          notes TEXT,
+          status TEXT DEFAULT 'pending',
+          reviewed_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )`
+      );
+      const { rows } = await dbQuery(
+        `UPDATE leave_requests
+           SET status = 'approved', reviewed_at = NOW()
+         WHERE id = ANY($1::int[])
+         RETURNING *`,
+        [ids]
+      );
+      const updatedRows = rows || [];
+      for (const reqRow of updatedRows) {
+        const start = String(reqRow.start_date || '').slice(0, 10);
+        const end = String(reqRow.end_date || '').slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) continue;
+        const leaveType = String(reqRow.leave_type || 'Leave').trim() || 'Leave';
+        let d = new Date(`${start}T00:00:00Z`);
+        const until = new Date(`${end}T00:00:00Z`);
+        while (d <= until) {
+          const iso = d.toISOString().slice(0, 10);
+          await dbQuery(
+            `INSERT INTO driver_schedules (unit_number, driver_id, date, leave_type, notes, created_at, updated_at)
+             VALUES ($1,$2,$3,$4,$5,now(),now())
+             ON CONFLICT (unit_number, date)
+             DO UPDATE SET
+               driver_id = EXCLUDED.driver_id,
+               leave_type = EXCLUDED.leave_type,
+               notes = EXCLUDED.notes,
+               updated_at = now()`,
+            [
+              String(reqRow.unit_number || '').trim() || null,
+              String(reqRow.driver_name || '').trim() || null,
+              iso,
+              leaveType,
+              String(reqRow.notes || '').trim() || `Auto-approved leave request #${reqRow.id}`,
+            ]
+          );
+          d.setUTCDate(d.getUTCDate() + 1);
+        }
+      }
+      return res.json({ ok: true, updated: updatedRows.length });
+    } catch (e) {
+      logError('POST /api/drivers/leave-requests/bulk-approve', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), updated: 0 });
+    }
+  });
+
+  app.post('/api/drivers/leave-requests/bulk-deny', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
+      if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required', updated: 0 });
+      const { rowCount } = await dbQuery(
+        `UPDATE leave_requests
+           SET status = 'denied', reviewed_at = NOW()
+         WHERE id = ANY($1::int[])`,
+        [ids]
+      );
+      return res.json({ ok: true, updated: Number(rowCount || 0) });
+    } catch (e) {
+      logError('POST /api/drivers/leave-requests/bulk-deny', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), updated: 0 });
     }
   });
 

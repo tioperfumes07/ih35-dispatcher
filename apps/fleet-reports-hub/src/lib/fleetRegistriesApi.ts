@@ -392,3 +392,44 @@ export async function importFleetAssetsBulk(records: Array<Record<string, unknow
     },
   )
 }
+
+
+export async function patchFleetAssetsBulk(ids: Array<number | string>, status: 'active' | 'inactive') {
+  return j<{ ok: boolean; updated: number }>('/api/fleet/assets/bulk', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids, status }),
+  })
+}
+
+export async function patchDriversBulk(ids: Array<number | string>, status: 'active' | 'inactive') {
+  return j<{ ok: boolean; updated: number }>('/api/drivers/bulk', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids, status }),
+  })
+}
+
+export async function acknowledgeDamageReportsBulk(ids: Array<number | string>) {
+  return j<{ ok: boolean; updated: number }>('/api/damage/reports/bulk-acknowledge', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+}
+
+export async function approveLeaveRequestsBulk(ids: Array<number | string>) {
+  return j<{ ok: boolean; updated: number }>('/api/drivers/leave-requests/bulk-approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+}
+
+export async function denyLeaveRequestsBulk(ids: Array<number | string>) {
+  return j<{ ok: boolean; updated: number }>('/api/drivers/leave-requests/bulk-deny', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+}

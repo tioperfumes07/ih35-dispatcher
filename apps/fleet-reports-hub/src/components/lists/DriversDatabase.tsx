@@ -8,6 +8,7 @@ import {
   deleteDriver,
   fetchDrivers,
   patchDriver,
+  patchDriversBulk,
   syncDriversQbo,
   syncDriversSamsara,
 } from '../../lib/fleetRegistriesApi'
@@ -449,6 +450,29 @@ export function DriversDatabase({
         onCloseList={onCloseList}
         onAddNew={openAdd}
         toolbarExtra={toolbarExtra}
+        bulkActions={[
+          {
+            label: 'Set Active',
+            onClick: async (selectedRows) => {
+              await patchDriversBulk(
+                selectedRows.map((row) => Number((row as DriverRow).id)).filter((id) => Number.isFinite(id)),
+                'active',
+              )
+              await load()
+            },
+          },
+          {
+            label: 'Set Inactive',
+            variant: 'warning',
+            onClick: async (selectedRows) => {
+              await patchDriversBulk(
+                selectedRows.map((row) => Number((row as DriverRow).id)).filter((id) => Number.isFinite(id)),
+                'inactive',
+              )
+              await load()
+            },
+          },
+        ]}
         onEdit={(r) => openEdit(r as DriverRow)}
         onDelete={async (r) => {
           if (!window.confirm(`Delete driver ${(r as DriverRow).full_name}?`)) return
